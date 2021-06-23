@@ -1,0 +1,625 @@
+#include "rwmake.ch"
+#include "protheus.ch"
+#include "font.ch"
+#Include "Topconn.ch"
+
+/*/{Protheus.doc} User Function TELAMTZ
+	Tela Matriz para Tabela de preço
+	@type  Function
+	@author Mauricio Silva
+	@since 05/04/2011
+	@version 01
+	@history Chamado 020821 - Everson       - 12/12/2018 - Alterada a quantidade de linhas que podem ser incluídas na rotina FOB matriz de 150 para 200 linhas
+	@history Chamado 055885 - William       - 20/02/2020 - Adicionado pergunta se deseja mostrar os produtos bloqueados sim ou não.
+	@history Chamado 057846 - William Costa - 06/05/2020 - Retirado toda a referencia ao campo B1_ATIVO ou B1_ATIVO1
+	@history Chamado 050729 - FWNM          - 14/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Migração Release 27
+/*/
+User Function TELAMTZ()
+
+	Private cPerg	:= "TELAMTZ"
+
+	MontaPerg()
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela Matriz para Tabela de preço')
+
+	// Chamado 050729 - FWNM          - 14/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Migração Release 27
+	MsAguarde({||xGeraInter()},"Aguarde","Gerando interface...")
+	//MsAguarde({||selec()},"Aguarde","Gerando interface...")
+
+Return
+
+//Static Function selec()
+Static Function xGeraInter()
+
+	Private aArray     := {}
+	Private aOrdProd   := {}
+	Private aChave     := {}
+	Private cIndex1, cChave, cFiltro, nIndex
+	Private nLinGetD, cTitulo, aC, aR, aCGD, cLinhaOK, cTudoOk, nOpcx, aAlter, lRetMod2
+	Private nPosPed, nPosIt, nPosEnt, nPosPri, nPosCor, nPosPig, nX
+	Private aHeader, aCols
+	Private Altera   := .F.
+	Private _cTabMin := GETMV("MV_TBPRMN")
+	Private _cTabMax := GETMV("MV_TBPRMX")
+	Private _cRevisao:= ""
+
+	DbSelectArea("ZZK")
+	ZZK->(DbSetOrder(1))
+	ZZK->(DbGoTop())
+
+	aHeader  := {}
+	aCols    := {} 
+	_aTabDA0 := {}
+
+	DbSelectArea("DA0")
+	DA0->(DbSetOrder(1))
+	DA0->(DbSeek(cFilAnt))
+
+	While ! DA0->(Eof()) .And. DA0->DA0_FILIAL == cFilAnt  ////as tabelas tem de estar gravadas em somente uma filial.
+		////Mauricio - MDS TEC - 15/01/14 - alterado IF abaixo, pois não só as tabelas do parametro devem ser ignoradas e sim todas que se iniciem por Z ou Y. 
+
+		If ! (Alltrim(DA0->DA0_CODTAB) $ Alltrim(_cTabMin)) .AND. ! (Alltrim(DA0->DA0_CODTAB) $ Alltrim(_cTabMax)) .And. !(Substr(DA0->DA0_CODTAB,1,1) == "Z" ).And. !(Substr(DA0->DA0_CODTAB,1,1) == "Y") .And. !( Alltrim(cValToChar(DA0->DA0_CODTAB)) == "ZIP")  
+			Aadd(_aTabDA0,DA0->DA0_CODTAB)
+
+		Endif    
+
+		DA0->(DbSkip())
+
+	EndDo
+
+	_nTabs := Len(_aTabDA0) //quantidade de tabelas em DA0 que sera a quantidade de colunas a aparecer na tela
+
+	//Montando aHeader com campos e conteudos conForme tabelas de preco
+
+	MsAguarde({||excTab("ZZJ")},"Aguarde","Excluíndo dados tabela ZZJ...")
+
+	DbSelectArea("SX3")
+	SX3->(DbSetOrder(1))
+	SX3->(DbSeek("ZZK"))
+
+	nUsado  := 0
+	aHeader := {}
+
+	While ! SX3->(Eof()) .And. (SX3->X3_arquivo == "ZZK")   ////adiciono os campos que ira compor a tela
+
+		If AllTrim(SX3->X3_CAMPO) $ "ZZK_PRODUT/ZZK_DESCRI/ZZK_UNIDAD/ZZK_PRBASE"
+
+			nUsado := nUsado+1
+
+			Aadd(aHeader,{TRIM(SX3->X3_titulo),SX3->X3_CAMPO,SX3->X3_picture,;
+			SX3->X3_tamanho, SX3->X3_decimal,"AllwaysTrue()",;
+			"û", SX3->X3_tipo, SX3->X3_arquivo, SX3->X3_context } )
+			SX3->(DbSkip())
+
+		ElseIf SUBSTR(ALLTRIM(SX3->X3_CAMPO),1,8) == "ZZK_COEF" .OR. SUBSTR(ALLTRIM(SX3->X3_CAMPO),1,7) == "ZZK_VAL"	     
+			For _xx := 1 To len(_aTabDA0)  ////cria aheader baseado na quantidade de tabelas do DA0.
+				If SUBSTR(ALLTRIM(SX3->X3_CAMPO),1,8) == "ZZK_COEF"
+
+					_cCpo  := " %"
+					_cNome := ALLTRIM(_aTabDA0[_xx])+_cCpo
+
+					nUsado := nUsado+1
+
+					Aadd(aHeader,{TRIM(_cNome),SX3->X3_CAMPO,SX3->X3_picture,SX3->X3_tamanho,;
+					SX3->X3_decimal,"AllwaysTrue()","û",SX3->X3_tipo, ;
+					SX3->X3_arquivo, SX3->X3_context } )	        
+
+					DbSelectArea("SX3")            	
+					Reclock("ZZJ",.T.) ////atualizo tabela de amarracao(ZZJ) com DA0 x posicao.
+					ZZJ->ZZJ_FILIAL  := cFilAnt
+					ZZJ->ZZJ_TABELA  := _aTabDA0[_xx]
+					ZZJ->ZZJ_POSICAO := SUBSTR(ALLTRIM(SX3->X3_CAMPO),9,1)
+					MsUnlock()
+					SX3->(DbSkip())
+				EndIf
+
+				If SUBSTR(ALLTRIM(SX3->X3_CAMPO),1,7) == "ZZK_VAL"	   	                                          
+
+					_cCpo  := " PL"   	
+					_cNome := ALLTRIM(_aTabDA0[_xx])+_cCpo
+
+					nUsado:=nUsado+1
+
+					Aadd(aHeader,{ TRIM(_cNome), SX3->X3_CAMPO, SX3->X3_picture,;
+					SX3->X3_tamanho, SX3->X3_decimal,"AllwaysTrue()",;
+					"û", SX3->X3_tipo, SX3->X3_arquivo, SX3->X3_context } )
+					SX3->(DbSkip())   	
+				EndIf
+			Next
+			//// se precisar acrescentar demais campos, adiciono aqui...
+			Exit
+		Else
+			SX3->(DbSkip())
+
+		EndIf    
+
+	EndDo
+
+	DbSelectArea("ZZK")
+	ZZK->(DbSetOrder(1))
+	ZZK->(DbSeek(cFilAnt))
+
+	While ! ZZK->(Eof()) .And. ZZK->ZZK_FILIAL == cFilAnt
+
+			IF MV_PAR01 == 1 ///Não
+
+				 IF Posicione("SB1",1,FWXFILIAL("SB1")+ZZK->ZZK_PRODUT,"B1_MSBLQL") == "2"
+
+					DbSelectArea("ZZK")
+					Aadd(aChave, ZZK->(Recno()) )
+					Aadd(aCols,Array(nUsado+1))
+
+					For _ni := 1 To nUsado
+						aCols[Len(aCols),_ni] := FieldGet(FieldPos(aHeader[_ni,2]))
+
+					Next
+
+					aCols[Len(aCols),nUsado+1] := .F.	
+
+				ENDIF
+
+			ELSE //Sim
+
+				DbSelectArea("ZZK")
+				Aadd(aChave, ZZK->(Recno()) )
+				Aadd(aCols,Array(nUsado+1))
+
+				For _ni := 1 To nUsado
+					aCols[Len(aCols),_ni] := FieldGet(FieldPos(aHeader[_ni,2]))
+
+				Next
+
+				aCols[Len(aCols),nUsado+1] := .F.		
+
+			ENDIF
+
+		ZZK->(DbSkip())
+
+	ENDDO
+
+	If Len(aCols) == 0
+		aCols := {Array(nUsado+1)}
+		aCols[1,nUsado+1] := .F.
+
+		For _ni := 1 To nUsado
+			aCols[1,_ni] := CriaVar(aHeader[_ni,2])
+
+		Next
+
+	EndIf
+
+	// Desenha tela padrao do browse 
+	
+	nLinGetD := 0
+	cTitulo  := "Tabela Matriz"
+
+	// Array com descricao dos campos do Cabecalho do Modelo 2 
+	
+	aC:={}
+	// aC[n,1] = Nome da Variavel Ex.:"cCliente"
+	// aC[n,2] = Array com coordenadas do Get [x,y], em Windows estao em PIXEL
+	// aC[n,3] = Titulo do Campo
+	// aC[n,4] = Picture
+	// aC[n,5] = Validacao
+	// aC[n,6] = F3
+	// aC[n,7] = Se campo e' editavel .t. se nao .f.
+
+	// Array com descricao dos campos do Rodape do Modelo 2 
+	
+	aR:={}
+
+	// Array com coordenadas da GetDados no Modelo 2 
+	
+	aCGD := {35,5,128,300}
+
+	// Validacoes na GetDados da Modelo 2 
+	
+	cLinhaOk:="U_MTZVLDL()"
+	cTudoOk :="U_MTZVLDT()"   
+
+	// Chamada da Modelo 2 
+	
+	nOpcx    := 3
+	aAlter   := {"ZZK_PRODUT","ZZK_PRBASE","ZZK_COEF1","ZZK_COEF2","ZZK_COEF3","ZZK_COEF4","ZZK_COEF5","ZZK_COEF6","ZZK_COEF7","ZZK_COEF8","ZZK_COEF9","ZZK_COEF10","ZZK_COEF11","ZZK_COEF12"}
+	// RICARDO LIMA - 22/11/17 -  INCLUIDO O DECIMO QUARTO PARAMETRO (.T.), PARA FIXAR A TELA MAXIMIZADA
+	lRetMod2 := Modelo2(cTitulo,aC,aR,aCGD,nOpcx,cLinhaOk,cTudoOk,aAlter,,,200,,,.T.) //Everson - 12/12/2018. Chamado 045766.
+
+	If lRetMod2
+
+		Processa({||processar()},"Aguarde","Processando registros....",.T.)
+
+	EndIf
+
+Return Nil
+
+/*{Protheus.doc} Static Function ³excTab
+	Exclui dados da tabela
+	@type  Function
+	@author Everson
+	@since 05/04/2018
+	@version 01
+
+*/
+
+Static Function excTab(cTab)
+
+	Local aArea	 := GetArea()
+	Local cUpd := ""
+	
+	cTab := Alltrim(cValToChar(cTab))
+
+	cUpd := " UPDATE " + RetSqlName(cTab) + " SET D_E_L_E_T_ = '*' WHERE " + cTab + "_FILIAL = '" + cFilAnt + "' AND D_E_L_E_T_ = '' "
+	
+	If ( TCSqlExec(cUpd) ) < 0
+   
+		MsgStop("Ocorreu erro ao excluir os registros da tabela " + cTab + "." + Chr(13) + Chr(10) + TCSQLError())
+    
+    EndIf
+    
+    RestArea(aArea)
+	
+Return Nil
+
+Static Function processar()
+	
+	Local cUpSB1 	:= ""
+	Local cProdutos	:= ""
+	
+	nPosProd := Ascan(aHeader,{|x| Trim(x[2]) == "ZZK_PRODUT"})
+	nPosDesc := Ascan(aHeader,{|x| Trim(x[2]) == "ZZK_DESCRI"})
+	nPosUN   := Ascan(aHeader,{|x| Trim(x[2]) == "ZZK_UNIDAD"})
+	nPosVlBa := Ascan(aHeader,{|x| Trim(x[2]) == "ZZK_PRBASE"}) 
+
+	_nPos := 0 ////importante - variavel que define a quantidade para tabelas/campos
+
+	Begin Transaction     //Incluido controle de transacoes para nao efetivar nenhum comando, caso ocorra uma falha na execucao - em 25/08/16 por Adriana - chamado 030334
+
+		For _nn := 1 To len(aHeader)
+
+			If _nn >= 5 ////apenas do quinto campo em diante (ZZK_COEF1) ate o limite de campos criados para a tela(ZZK_COEFn).
+				_nPos++
+				_cVar1 := "nPosCF"+ALltrim(STR(_nPos))
+				_cVar2 := "nPosVL"+Alltrim(STR(_nPos))	       
+				&_cVar1 := _nn
+				_nn++
+				&_cVar2 := _nn
+			EndIf
+
+		Next   
+
+		MsAguarde({||excTab("ZZK")},"Aguarde","Excluíndo dados tabela ZZK...")
+		
+		MsAguarde({|| _cRevisao := obtRev() },"Aguarde","Obtendo sequência de revisão ZZL...")
+		
+		_citem    := "0000"
+		_cItem2   := "0000"           
+
+		Procregua(Len(aCols) * _nPos)
+
+		For nX := 1 To Len(aCols)////efetua a gravacao dos dados em tela na tabela. 
+		
+		    cProdutos += "'" + Alltrim(cValToChar(aCols[nX][nPosProd])) + "',"
+
+			If ! aCols[nX,Len(aCols[nX])]
+
+				DbSelectArea("ZZK")
+				ZZK->(DbSetOrder(1))
+				Reclock("ZZK",.T.)
+					ZZK->ZZK_FILIAL  := cFilAnt
+					ZZK->ZZK_PRODUT  := aCols[nX][nPosProd] 
+					ZZK->ZZK_DESCRI  := aCols[nX][nPosDesc] 
+					ZZK->ZZK_UNIDAD  := aCols[nX][nPosUN] 
+					ZZK->ZZK_PRBASE  := aCols[nX][nPosVlBa] 
+					ZZK->ZZK_USUARI := SubStr(cUsuario,7,15)
+					ZZK->ZZK_DATA   := ddatabase
+					ZZK->ZZK_HORA   := TIME()
+	
+					_cV := ""
+					For _yy := 1 To _nPos
+						_cV := Alltrim(STR(_yy))
+						_cCampo1  := "ZZK->ZZK_COEF"+_cV
+						_cCampo2  := "ZZK->ZZK_VAL"+_cV
+						_nCF      := "nPosCF"+_cV
+						_nVL      := "nPosVL"+_cV
+						&_cCampo1 := aCols[nX][&_nCF]
+						&_cCampo2 := aCols[nX][&_nVL]
+						ZZK->ZZK_USUARI := SubStr(cUsuario,7,15)
+						ZZK->ZZK_DATA   := ddatabase
+						ZZK->ZZK_HORA   := TIME()
+					Next  
+
+				MsUnlock()
+
+				DbSelectArea("DA1")    ////atualizo as tabelas na DA1 para a primeira linha do acols(ZZK).
+				DA1->(DbSetOrder(1))
+				DA1->(DbGoTop())
+
+				For _yy := 1 To _nPos  ////gravo tabela a tabela.
+					_cV  := Alltrim(STR(_yy))
+					_nVL := "nPosVL"+_cV                
+
+					DbSelectArea("ZZJ")
+					ZZJ->(DbSetOrder(2))
+
+					If ZZJ->(DbSeek(xFilial("ZZJ")+_cV))
+
+						IncProc( Alltrim(cValToChar(ZZJ->ZZJ_TABELA)) + "/" +  Alltrim(aCols[nX][nPosProd]) )
+
+						DbSelectArea("DA1")
+						DA1->(DbSetOrder(1))
+						DA1->(DbGoTop())
+
+						//Everson - 04/04/2018. Chamado 037261. Atualizar o registro, não deletá-lo para preservar o Id do SalesForce, para que o envio de dados seja mais rápido.
+						If DA1->(DbSeek( cFilAnt + Padr(ZZJ->ZZJ_TABELA,TamSX3("DA1_CODTAB")[1]," ") + Alltrim(aCols[nX][nPosProd])  ))
+
+							Reclock("DA1",.F.) //Altera o preço.
+								DA1->DA1_XPRLIQ := aCols[nX][&_nVL]  
+							MsUnlock()							
+
+						Else
+
+							Reclock("DA1",.T.) //Cria o registro.
+								DA1->DA1_FILIAL := cFilAnt //// P R E C I S A   V E R I F I C A R   S E   F I L I A L   E X C L U S I V A   O U   N A O.
+								DA1->DA1_ITEM   := itemDA1(Alltrim(cValToChar(ZZJ->ZZJ_TABELA)))//Soma1(_cItem)
+								DA1->DA1_CODPRO := aCols[nX][nPosProd]
+								DA1->DA1_CODTAB := ZZJ->ZZJ_TABELA
+								DA1->DA1_XPRLIQ := aCols[nX][&_nVL]
+								DA1->DA1_TPOPER := "4"
+								DA1->DA1_ATIVO  := "1"
+								DA1->DA1_QTDLOT := 999999.99
+								DA1->DA1_MOEDA  := 1
+								DA1->DA1_INDLOT := "000000000999999.99  "  
+							MsUnlock()
+
+						EndIf
+
+						DbSelectArea("ZZM")     ////gravacao tabela log/revisao.
+						ZZM->(DbSetOrder(1))
+
+						Reclock("ZZM",.T.)
+							ZZM->ZZM_FILIAL := cFilAnt //// P R E C I S A   V E R I F I C A R   S E   F I L I A L   E X C L U S I V A   O U   N A O.
+							ZZM->ZZM_REVISA := SOMA1(_cRevisao)
+							ZZM->ZZM_ITEM   := DA1->DA1_ITEM
+							ZZM->ZZM_CODPRO := aCols[nX][nPosProd]
+							ZZM->ZZM_CODTAB := ZZJ->ZZJ_TABELA
+							ZZM->ZZM_XPRLIQ := aCols[nX][&_nVL]
+							ZZM->ZZM_TPOPER := "4"
+							ZZM->ZZM_ATIVO  := "1"
+							ZZM->ZZM_QTDLOT := 999999.99
+							ZZM->ZZM_MOEDA  := 1
+							ZZM->ZZM_INDLOT := "000000000999999.99  "
+							ZZM->ZZM_USUARI := SubStr(cUsuario,7,15)
+							ZZM->ZZM_DATA   := ddatabase
+							ZZM->ZZM_HORA   := TIME()       
+						MsUnlock()
+						
+						cUpSB1 := ""
+						cUpSB1 := " UPDATE " + RetSqlName("SB1") + " SET B1_XSALES = '2' WHERE B1_FILIAL = '" + xFilial("SB1") + "' AND B1_COD = '" + Alltrim(aCols[nX][nPosProd]) + "' AND D_E_L_E_T_ = '' "
+						
+						If ( TCSqlExec(cUpSB1) ) < 0
+   
+							MsgStop("Ocorreu erro ao alterar o flag SalesForce (liberação) " + Alltrim(aCols[nX][nPosProd]) + "." + Chr(13) + Chr(10) + TCSQLError())
+					    
+					    EndIf
+
+					Else
+						IncProc()
+
+					EndIf
+
+				Next
+
+				//_cItem := Soma1(_cItem)
+
+				////Gravação da tabela clone de log/revisão (ZZL)
+				Reclock("ZZL",.T.)
+					ZZL->ZZL_FILIAL  := cfilAnt
+					ZZL->ZZL_REVISA  := SOMA1(_cRevisao)
+					ZZL->ZZL_PRODUT  := aCols[nX][nPosProd] 
+					ZZL->ZZL_DESCRI  := aCols[nX][nPosDesc] 
+					ZZL->ZZL_UNIDAD  := aCols[nX][nPosUN] 
+					ZZL->ZZL_PRBASE  := aCols[nX][nPosVlBa] 
+	
+					For _yy := 1 To _nPos
+						_cV := Alltrim(STR(_yy))
+						_cCampo1  := "ZZL->ZZL_COEF"+_cV
+						_cCampo2  := "ZZL->ZZL_VAL"+_cV
+						_nCF      := "nPosCF"+_cV
+						_nVL      := "nPosVL"+_cV
+						&_cCampo1 := aCols[nX][&_nCF]
+						&_cCampo2 := aCols[nX][&_nVL]
+					Next
+					ZZL->ZZL_USUARI := SubStr(cUsuario,7,15)
+					ZZL->ZZL_DATA   := ddatabase
+					ZZL->ZZL_HORA   := TIME()     
+				MsUnlock()
+
+			Else
+
+				//Everson - 04/04/2018. Chamado 037261. SalesForce.
+				_cV := ""
+				For _yy := 1 To _nPos
+
+					_cV  := Alltrim(STR(_yy))              			
+					DbSelectArea("ZZJ")
+					ZZJ->(DbSetOrder(2))
+					ZZJ->(DbGoTop())
+
+					If ZZJ->(DbSeek(xFilial("ZZJ")+_cV))
+
+						IncProc( Alltrim(cValToChar(ZZJ->ZZJ_TABELA)) + "/" +  Alltrim(aCols[nX][nPosProd]) )
+
+						DbSelectArea("DA1")
+						DA1->(DbSetOrder(1))
+						DA1->(DbGoTop())
+						If DA1->(DbSeek( cFilAnt + Padr(ZZJ->ZZJ_TABELA,TamSX3("DA1_CODTAB")[1]," ") + Alltrim(aCols[nX][nPosProd])  ))
+
+							Reclock("DA1",.F.)
+								DA1->(DbDelete())
+							MsUnlock()	
+
+						EndIf
+						
+						cUpSB1 := ""
+						cUpSB1 := " UPDATE " + RetSqlName("SB1") + " SET B1_XSALES = '1' WHERE B1_FILIAL = '" + xFilial("SB1") + "' AND B1_COD = '" + Alltrim(aCols[nX][nPosProd]) + "' AND D_E_L_E_T_ = '' "
+						
+						If ( TCSqlExec(cUpSB1) ) < 0
+   
+							MsgStop("Ocorreu erro ao alterar o flag SalesForce (bloqueio) " + Alltrim(aCols[nX][nPosProd]) + "." + Chr(13) + Chr(10) + TCSQLError())
+					    
+					    EndIf
+					    
+					Else
+						IncProc()
+
+					EndIf
+
+				Next _yy
+
+			EndIf
+
+		Next
+
+	End transaction     //fim controle de transacoes
+
+	//Envia produtos para o SalesForce.
+	If FindFunction("U_ADVEN069P") .And. ! Empty(Alltrim(cValToChar(cProdutos)))
+		cProdutos := Substr(cProdutos,1,Len(cProdutos) -1)
+		U_ADVEN069P("",.F.," AND B1_COD IN (" + cProdutos + ") ")
+	
+	EndIf
+
+	MsgInfo("Processamento concluido com sucesso!")
+
+	DbSelectArea("ZZK")
+	ZZK->(DbSetOrder(1))
+
+Return Nil
+
+User Function MTZVLDL()
+
+	Local _lRet := .T.
+
+	U_ADINF009P('TELAMTZ' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela Matriz para Tabela de preço')
+
+	nLinGetD:=n
+
+	_nPosPrd := Ascan(aHeader,{|x| Trim(x[2]) == "ZZK_PRODUT"})
+	_cProd	:=	aCols[n,_nPosPrd]
+
+	If !aCols[n,Len(aCols[n])]
+		_cAtivo := Posicione('SB1',1,xFilial("SB1")+_cProd,"B1_MSBLQL")
+		If _cAtivo == "1"
+			_lRet := .F.
+			MsgInfo("O produto "+_cProd+" esta inativo no cadastro!","Atenção")
+		EndIf
+	Endif       
+Return(_lRet) 
+
+User Function MTZVLDT()
+
+	Local _lRet := .T.
+
+	U_ADINF009P('TELAMTZ' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela Matriz para Tabela de preço')
+
+	_nPosPrd := Ascan(aHeader,{|x| Trim(x[2]) == "ZZK_PRODUT"})
+
+	For _nX := 1 To Len(aCols)
+		If !aCols[_nX,Len(aCols[_nX])]
+			_cProd	:=	aCols[_nX,_nPosPrd]    // corrigido em 25/08/2016 por Adriana - chamado 030334 (contador estava "n" ao invez de _nX
+			_cAtivo := Posicione('SB1',1,xFilial("SB1")+_cProd,"B1_MSBLQL")
+			If _cAtivo == "1"
+				_lRet := .F.
+				MsgInfo("O produto "+_cProd+" esta inativo no cadastro!.","Atenção")
+			EndIf
+		Endif      
+	next
+
+Return(_lRet) 
+
+/*{Protheus.doc} Static Function obtRev
+	Retorna número da revisão ZZL.
+	@type  Function
+	@author Everson
+	@since 05/04/2018
+	@version 01
+
+*/
+
+Static Function obtRev()
+	Local aArea	 := GetArea()	
+	Local cQuery := ""
+	Local cRev	 := ""
+	
+	cQuery := " SELECT ISNULL(MAX(ZZL_REVISA),'000') AS ZZL_REVISA FROM " + RetSqlName("ZZL") + " WHERE ZZL_FILIAL = '" + cFilAnt + "' AND D_E_L_E_T_ = '' "
+
+	If Select("SEQ_ZZL") > 0
+		SEQ_ZZL->(DbCloseArea())
+
+	EndIf
+
+	TcQuery cQuery New Alias "SEQ_ZZL"
+	DbSelectArea("SEQ_ZZL")
+	SEQ_ZZL->(DbGoTop())
+		cRev := Alltrim(cValToChar(SEQ_ZZL->ZZL_REVISA))
+	SEQ_ZZL->(DbCloseArea())
+	
+	cRev := Soma1(cRev)
+
+	RestArea(aArea)
+	
+Return cRev
+
+/*{Protheus.doc} Static Function itemDA1
+	Retorna número do próximo item da tabela DA1.
+	@type  Function
+	@author Everson
+	@since 05/04/2018
+	@version 01
+
+*/
+
+Static Function itemDA1(cTabela)
+
+	Local aArea	 := GetArea()	
+	Local cQuery := ""
+	Local cPrx	 := ""
+
+	cTabela := Alltrim(cValToChar(cTabela))
+
+	cQuery += " SELECT " 
+	cQuery += " ISNULL(CAST(MAX(DA1_ITEM) AS INTEGER),0) + 1 AS PRXITEM " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("DA1") + " AS DA1 " 
+	cQuery += " WHERE " 
+	cQuery += " DA1_FILIAL = '" + cFilAnt + "' " 
+	cQuery += " AND DA1_CODTAB = '" + cTabela + "' " 
+	cQuery += " AND DA1.D_E_L_E_T_ = '' " 
+
+	If Select("PRX_DA1") > 0
+		PRX_DA1->(DbCloseArea())
+
+	EndIf
+
+	TcQuery cQuery New Alias "PRX_DA1"
+	DbSelectArea("PRX_DA1")
+	PRX_DA1->(DbGoTop())
+		cPrx := Padl(Alltrim(cValToChar(PRX_DA1->PRXITEM)),4,"0")
+	PRX_DA1->(DbCloseArea())
+
+	RestArea(aArea)
+
+Return cPrx
+
+Static Function MontaPerg()  
+                                
+	Private bValid := Nil 
+	Private cF3	   := Nil
+	Private cSXG   := Nil
+	Private cPyme  := Nil
+	
+	u_xPutSx1(cPerg,"01","Mostrar Produtos Bloqueados ?",'','','mv_ch01',"N",1 ,0,1,"C",bValid,cF3  ,cSXG,cPyme,'MV_PAR01',"Não","Não","Não","1","Sim","Sim","Sim","","","","","","","","","")
+
+    Pergunte(cPerg,.T.)
+	
+Return Nil            

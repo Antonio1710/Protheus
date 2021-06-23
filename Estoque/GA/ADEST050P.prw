@@ -1,0 +1,20 @@
+#INCLUDE 'PROTHEUS.ch'
+#INCLUDE 'PARMTYPE.ch'
+
+/*/{Protheus.doc} User Function ADEST050P
+	Gatilho do campo CP_XUPRC
+	@type  Function
+	@author WILLIAM COSTA
+	@since 28/10/2020
+/*/
+
+USER FUNCTION ADEST050P()
+
+	Local nValor := 0
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+	
+	nValor := IIF(!RetArqProd(M->CP_PRODUTO),POSICIONE("SBZ",1,FWxFilial("SBZ")+M->CP_PRODUTO,"BZ_UPRC"),POSICIONE("SB1",1,FWxFilial("SB1")+M->CP_PRODUTO,"B1_UPRC"))
+	
+RETURN(nValor)
+	

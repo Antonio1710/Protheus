@@ -1,0 +1,7 @@
+#include "Protheus.ch"
+User Function AXSZG
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tabela Preco Frete')
+
+AXCADASTRO("SZG","Tabela Preco Frete ")
+Return()

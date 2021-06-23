@@ -1,0 +1,211 @@
+#include "rwmake.ch"        // incluido pelo assistente de conversao do AP5 IDE em 10/10/01
+#IFDEF  WINDOWS
+	#DEFINE SAY PSAY
+#ENDIF
+
+User Function CALCEST()        // incluido pelo assistente de conversao do AP5 IDE em 10/10/01
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Declaracao de variaveis utilizadas no programa atraves da funcao    ³
+//³ SetPrvt, que criara somente as variaveis definidas pelo usuario,    ³
+//³ identificando as variaveis publicas do sistema utilizadas no codigo ³                                       p
+//³ Incluido pelo assistente de conversao do AP5 IDE                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+SetPrvt("CALIAS_,NREC_,CSAVIND1,NVCES_,NPCES_,NDESC_")
+SetPrvt("NFALT_,CHDIA_,ATABREF,BBLOCK,IX,APD")
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Altera Desconto de Cesta Basica Se Ha Faltas Injustificadas')
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³ CALCEST  ³ Autor ³ Jose Carlos Gouveia   ³ Data ³ 19.02.99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Altera Desconto de Cesta Basica Se Ha Faltas Injustificadas³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ RDMake ( DOS e Windows )                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Especifico para AD'ORO                                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³         ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL.             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programador ³ Data   ³ BOPS ³  Motivo da Alteracao                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Jose Carlos ³07.02.00³xxxxx ³Alteracao na Forma de Calculo da Falta    ³±±
+±±³Jose Carlos ³21.07.00³xxxxx ³Horas da Falta de 8.90 para 8.80          ³±±
+±±³            ³        ³      ³                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+
+// Verifica Existencia da Verba Desconto Cesta Basica
+If fBuscaPD(aCodFol[156][1],"V") == 0
+	Return
+End
+
+// Verifica Existencia da Verba de Faltas
+//If fBuscaPD(aCodFol[054][1],"V") == 0
+//        Return
+//End
+
+// Verifica Filial Deve ser Processada (Parte da Reconstrucao do Roteiro de Calculo) - By Asr
+//If cEmpAnt == "01"
+//   If !( SRA->RA_FILIAL $ "02*06" )
+
+If (cEmpAnt == "01" .and. SRA->RA_FILIAL <> "02") .or. !(cEmpAnt $ "01*02")        //somente para empresa 01, filial 02 e empresa 02 - Chamado 036115 por Adriana em 27/07/2017
+	Return("")
+EndIf
+
+//Acordo coletivo 2017 que em caso de falta do funcionario (conforme informado pela Michele > 2 horas), 
+//este nao tera direito a cesta basica e logo nao tera o desconto - Chamado 036115 por Adriana em 27/07/2017
+If Abs(fBuscaPd( aCodFol[054][1], "H" )) > 2   
+	if Abs(fBuscaPd( aCodFol[156][1], "V" )) > 0      
+		fDelPd("441")
+		fDelPd("770")
+		fDelPd("788")     
+	endif
+	Return("")
+endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Salva Ambiente                                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cAlias_  := Alias()
+nRec_    := Recno()
+cSavInd1 := IndexOrd()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Montando Variaveis de Trabalho                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+nVces_  := 0
+nPces_  := 0
+nDesc_  := 0
+nFalt_  := 0
+cHdia_  := ' '
+aTabref := {}
+bBlock  := {|X,Y| X[1] < Y[1]} //Classificacao do array
+
+/* ***Desabilitado devido ao acordo coletivo 2017 que em caso de falta do funcionario este nao tera direito a cesta basica e logo nao tera o desconto - Chamado 036115 por Adriana em 27/07/2017
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Processamento                                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//Verifica Dias de Falta
+If Abs(fBuscaPd( aCodFol[054][1], "H" )) > 0
+If aPD[fLocaliaPD(aCodFol[054][1]),6] == "H"
+nFalt_ := fBuscaPD(aCodFol[054][1],"H") * -1
+//     nFalt_ := Round(nFalt_/(SRA->RA_HRSMES/30),2) Alterado por solicitacao
+//                                                        da Sandra em 07.02.00
+//     nFalt_ := Int(nFalt_/8.80)   //Alterado de 8.90 para 8.80 em 21.07.00
+
+nFalt_ := Int(nFalt_/7.10)   //Alterado de 8.90 para 8.80 em 21.07.00
+//Alterado de 8.80 para 7.20 em 04.04.02
+// em decorencia da mudanca de horario
+//Alterado de 7.20 para 7.10 em 03.08.2011 porque para os funcionarios que trabalham em turnos
+//que a carga horaria e 7.18 o sistema nao considerava um dia de faltas para abatimento da cesta basica
+Else
+nFalt_ := fBuscaPD(aCodFol[054][1],"H") * -1
+End
+EndIf
+
+// fim Chamado 036115 por Adriana em 27/07/2017 */
+
+//Se Falta Menor que 1 Dia de Falta
+/*
+If nFalt_ < 1
+
+//Retorna Ambiente
+dbSelectArea(cAlias_)
+dbSetOrder(cSavInd1)
+dbGoto(nRec_)
+
+Return
+End
+*/
+
+// Valor da Cesta Basica
+nVces_ := Val(Subst(GetAdvFval("SRX","RX_TXT","  35            1        ",1,"       "),01,11))
+nPces_ := Val(Subst(GetAdvFval("SRX","RX_TXT","  35            1        ",1,"       "),34,07))
+
+If nVces_ == 0
+	//       nVces_ := Val(Subst(GetAdvFval("SRX","RX_TXT","  35" + xFilial()+"1",1,"       "),1,11))
+	nVces_ := Val(Subst(GetAdvFval("SRX","RX_TXT","  35" + xFilial()+"          1        ",1,"       "),01,11))
+	nPces_ := Val(Subst(GetAdvFval("SRX","RX_TXT","  35" + xFilial()+"          1        ",1,"       "),34,07))
+Endif
+
+// Percentual de Desconto                
+/* ***Desabilitado devido ao acordo coletivo 2017 que em caso de falta do funcionario este nao tera direito 
+// a cesta basica e logo nao tera o desconto - Chamado 036115 por Adriana em 27/07/2017
+
+dbSelectArea("SZ1")
+If nFalt_ > 0
+	If SZ1->(dbSeek(xFilial()+"04"))
+		
+		while SZ1->Z1_COD == '04'
+			aadd(aTabref,{SZ1->Z1_VAL01,SZ1->Z1_VAL02})
+			SZ1->(dbSkip())
+		end
+		
+		// Classifica Array
+		aSort(aTabref,,,bBlock)
+		
+		For ix := 1 to Len(aTabref)
+			If aTabref[ix][1] >= nFalt_
+				nPces_ := aTabref[ix][2]
+				Exit
+			End
+		Next
+		
+	Else
+		//Exibe Help
+		Help(' ',1,'SEMTAB04')
+		
+		//Retorna Ambiente
+		dbSelectArea(cAlias_)
+		dbSetOrder(cSavInd1)
+		dbGoto(nRec_)
+		
+		Return
+	end
+EndIf
+// fim Chamado 036115 por Adriana em 27/07/2017 */    
+
+// Calculo do Desconto
+nDesc_ := Round(nVces_ * (nPces_/100),2)
+
+// Verifica Se Verba Nao Informada e Gera Valor e Valor Desconto Maior que Zero
+If aPd[fLocaliaPd(aCodfol[156][1]),7] != "I" .and. nDesc_ > 0
+	aPd[fLocaliaPd(aCodfol[156][1]),5] := nDesc_
+End
+
+// Recalcula a Parte da Empresa		// Incluido em 08/01/2016 by Asr
+If Abs(fBuscaPd("788")) > 0
+	If aPd[fLocaliaPd("788"),7] != "I" .and. nDesc_ > 0
+		aPd[fLocaliaPd("788"),5] := nVces_ - nDesc_
+		If nVces_ - nDesc_ <= 0
+			fDelPd("788")
+		EndIf
+	EndIf
+ElseIf nDesc_ > 0 .And. ( nVces_ - nDesc_ ) > 0
+	fGeraVerba("788",( nVces_ - nDesc_ ),,,,,,,,,.T.)
+	aPd[fLocaliaPd("788"),7] := "G"
+EndIf
+
+//Retorna Ambiente
+dbSelectArea(cAlias_)
+dbSetOrder(cSavInd1)
+dbGoto(nRec_)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³                          Fim do Programa                              ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß/*/

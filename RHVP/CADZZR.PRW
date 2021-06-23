@@ -1,0 +1,8 @@
+User Function CADZZR()
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+	
+	AxCadastro("ZZR", "Cadastro de Estrutura")
+
+Return()
+

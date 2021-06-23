@@ -1,0 +1,7 @@
+#INCLUDE "rwmake.ch"
+User Function AXSZJ
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tipo Desconto/Acrescimo')
+
+AXCADASTRO("SZJ","Tipo Desconto/Acrescimo ")
+Return()

@@ -1,0 +1,405 @@
+#include 'rwmake.ch'
+#include 'protheus.ch'   
+#include "AP5MAIL.CH"
+#include "topconn.ch"
+#INCLUDE "tbiconn.ch"
+#INCLUDE 'Protheus.ch'
+#INCLUDE "FWEVENTVIEWCONSTS.CH"                            
+#INCLUDE "FWADAPTEREAI.CH"
+#INCLUDE "FWMVCDEF.CH" 
+#INCLUDE 'Parmtype.ch'
+#INCLUDE "rwmake.ch"
+#INCLUDE "MSMGADD.CH"  
+#INCLUDE "FWBROWSE.CH"   
+#INCLUDE "DBINFO.CH"
+#INCLUDE 'FILEIO.CH'
+  
+Static cTitulo      := "Extrato Manutencao Preventiva"
+
+/*/{Protheus.doc} User Function ADR1R010
+	Extratificação das informações referentes a manutenção preventiva
+	@type  Function
+	@author Rafael Diogo Richter
+	@since 10/03/2009
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history chamado 050729  - FWNM         - 25/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
+/*/
+User Function ADR1R010()
+
+	Local WNREL      := "ADR1R010"
+	Local LIMITE     := 232
+	Local cDESC1     := "O relatório apresentará as informações referentes à manutenção preventiva"
+	Local cDESC2     := ""
+	Local cDESC3     := ""
+	Local cSTRING    := "ST9"
+
+	Private cCadastro := OemtoAnsi("Estratificação das informações referentes à manutenção preventiva")
+	Private cPerg     := "ADR010"
+	Private aPerg     := {}
+	Private NOMEPROG := "ADR1R010"
+	Private TAMANHO  := "G"
+	Private aRETURN  := {"Zebrado",1,"Administracao",1,2,1,"",1}
+	Private TITULO   := "Estratificação das informações referentes à manutenção preventiva"
+	Private nTIPO    := 0
+	Private nLASTKEY := 0
+	Private CABEC1,CABEC2
+	Private aVETINR := {}
+	Private lGera := .t., lExcel := .F.
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Estratificação das informações referentes à manutenção preventiva')
+
+	SETKEY(VK_F9, {|| NGVersao("ADR1R010",1)})
+
+	DbSelectarea("SX1")
+	DbSetorder(01)
+	If !Dbseek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"01")
+
+		AAdd(aPerg, {"De Data            ?","D",08,0,"NaoVazio()","","G"})
+		AAdd(aPerg, {"Ate Data           ?","D",08,0,"(mv_par02 >= mv_par01) .And. NaoVazio()","","G"})
+		AAdd(aPerg, {"De Plano           ?","C",06,0,"If(Empty(mv_par03),.t.,ExistCpo('STI',mv_par03))","STI","G"})
+		AAdd(aPerg, {"Ate Plano          ?","C",06,0,"If(Atecodigo('STI',mv_par03,mv_par04,06),.T.,.F.)","STI","G"})
+		AAdd(aPerg, {"De Ordem           ?","C",06,0,"If(Empty(mv_par05),.t.,ExistCpo('STJ',mv_par05))","STJ","G"})
+		AAdd(aPerg, {"Ate Ordem          ?","C",06,0,"If(Atecodigo('STJ',mv_par05,mv_par06,06),.T.,.F.)","STJ","G"})
+		AAdd(aPerg, {"De Funcionario     ?","C",06,0,"If(Empty(mv_par07),.t.,ExistCpo('ST1',mv_par07))","ST1","G"})
+		AAdd(aPerg, {"Ate Funcionario    ?","C",06,0,"If(Atecodigo('ST1',mv_par07,mv_par08,06),.T.,.F.)","ST1","G"})
+		AAdd(aPerg, {"De Local           ?","C",03,0,"NGChkEstOr(MV_PAR09,MV_PAR10,'L',1)","MNTAF2","G"})
+		AAdd(aPerg, {"Ate Local          ?","C",03,0,"NGChkEstOr(MV_PAR09,MV_PAR10,'L',2)","MNTAF2","G"})
+		AAdd(aPerg, {"Gerar              ?","N",01,0,"NaoVazio()","","C","Relatorio","Excel"})
+
+		NGchksx1(cperg,aperg)
+
+	Endif
+
+	Pergunte(cPERG,.F.)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Envia controle para a funcao SETPRINT                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	WNREL:=SetPrint(cSTRING,WNREL,cPERG,TITULO,cDESC1,cDESC2,cDESC3,.F.,"")
+	If nLASTKEY = 27
+		Set Filter To
+		Return
+	EndIf
+	SetDefault(aReturn,cSTRING)
+
+	Processa({|lEND| ADR010Imp(@lEND,WNREL,TITULO,TAMANHO)},"Processando Registros...")
+
+Return .T.
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 25/06/2020
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function ADR010Imp(lEND,WNREL,TITULO,TAMANHO)
+
+	Local cPath	   := AllTrim(GetTempPath())
+	Local cDirDocs := MsDocPath()
+
+     // Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - FWNM - 25/06/2020
+	Local oExcel    := FWMsExcelEx():New()
+    Local nLinha    := 0
+    Local nExcel    := 1
+
+    Private aLinhas   := {}
+	Private li := 80 ,m_pag := 1
+	Private cRODATXT := ""
+	Private nCNTIMPR := 0
+	Private cArqExcel  := "TRB"
+
+	aDBF :=	{{"ORDEM_SERV"			, "C", 06,0},;
+				{"COD_FUNC"			, "C", 06,0},;
+				{"NOME_FUNC"			, "C", 40,2},;
+				{"COD_SERV"			, "C", 06,0},;
+				{"NOME_SERV"			, "C", 40,0},;
+				{"COD_BEM"				, "C", 16,0},;
+				{"NOME_BEM"			, "C", 40,0},;
+				{"COD_LOCAL"			, "C", 03,0},;
+				{"DESC_LOCAL"			, "C", 40,0},;
+				{"DT_INICIO"			, "D", 08,0},;
+				{"HR_INICIO"			, "C", 05,0}}
+
+	cArq := CriaTrab(aDBF)
+	dbCreate(cDirDocs+"\"+cArq,aDBF)
+	//dbCreate(cDirDocs+"\"+cArq,aDBF,"DBFCDXADS")
+	cInd1ADR010 := Left(cArq,7)+"A"
+	cInd2ADR010 := Left(cArq,7)+"B"
+	dbUseArea(.T.,,cDirDocs+"\"+cArq,cArqExcel,.F.,.F.)
+	//dbUseArea(.T.,"DBFCDXADS",cDirDocs+"\"+cArq,cArqExcel,.F.,.F.)
+
+	IndRegua("TRB",cInd1ADR010,"ORDEM_SERV+COD_FUNC",,,"Selecionando Registros...")
+	IndRegua("TRB",cInd2ADR010,"COD_LOCAL+ORDEM_SERV",,,"Selecionando Registros...")
+
+	dbClearIndex()
+	dbSetIndex(cInd1ADR010 + OrdBagExt())
+	dbSetIndex(cInd2ADR010 + OrdBagExt())
+
+	MsgRun(OemToAnsi("Processando Arquivo..."),OemToAnsi("Aguarde"),{|| ADR010TMP()})
+
+	If MV_PAR11 == 2 .And. lGera
+
+		lGera := .F.
+		lExcel := .T.
+		
+		dbSelectArea(cArqExcel)
+		(cArqExcel)->( dbGoTop() )
+
+		// Cabecalho Excel
+		oExcel:AddworkSheet(cArq)
+		oExcel:AddTable (cArq,cTitulo)
+		oExcel:AddColumn(cArq,cTitulo,"ORDEM_SERV"    ,1,1) // 01 A
+		oExcel:AddColumn(cArq,cTitulo,"COD_FUNC"      ,1,1) // 02 B
+		oExcel:AddColumn(cArq,cTitulo,"NOME_FUNC"     ,1,1) // 03 C
+		oExcel:AddColumn(cArq,cTitulo,"COD_SERV"      ,1,1) // 04 D
+		oExcel:AddColumn(cArq,cTitulo,"NOME_SERV"     ,1,1) // 05 E
+		oExcel:AddColumn(cArq,cTitulo,"COD_BEM"       ,1,1) // 06 F
+		oExcel:AddColumn(cArq,cTitulo,"NOME_BEM"      ,1,1) // 07 G
+		oExcel:AddColumn(cArq,cTitulo,"COD_LOCAL"     ,1,1) // 08 H
+		oExcel:AddColumn(cArq,cTitulo,"DESC_LOCAL"    ,1,1) // 09 I
+		oExcel:AddColumn(cArq,cTitulo,"DT_INICIO"     ,1,1) // 10 I
+		oExcel:AddColumn(cArq,cTitulo,"HR_INICIO"     ,1,1) // 11 I
+
+		// Gera Excel
+		(cArqExcel)->( dbGoTop() )
+		Do While (cArqExcel)->( !EOF() )
+
+			nLinha++
+
+			aAdd(aLinhas,{ "", ; // 01 A  
+						"", ; // 02 B   
+						"", ; // 03 C  
+						"", ; // 04 D  
+						"", ; // 05 E  
+						"", ; // 06 F   
+						"", ; // 07 G 
+						"", ; // 07 G 
+						"", ; // 07 G 
+						"", ; // 07 G 
+						""  ; // 09 I  
+							})
+
+			aLinhas[nLinha][01] := ORDEM_SERV
+			aLinhas[nLinha][02] := COD_FUNC
+			aLinhas[nLinha][03] := NOME_FUNC
+			aLinhas[nLinha][04] := COD_SERV
+			aLinhas[nLinha][05] := NOME_SERV
+			aLinhas[nLinha][06] := COD_BEM
+			aLinhas[nLinha][07] := NOME_BEM
+			aLinhas[nLinha][08] := COD_LOCAL
+			aLinhas[nLinha][09] := DESC_LOCAL
+			aLinhas[nLinha][10] := DT_INICIO
+			aLinhas[nLinha][11] := HR_INICIO
+
+			(cArqExcel)->( dbSkip() )
+
+		EndDo
+
+		// IMPRIME LINHA NO EXCEL
+		For nExcel := 1 to nLinha
+			oExcel:AddRow(cArq,cTitulo,{aLinhas[nExcel][01],; // 01 A  
+											aLinhas[nExcel][02],; // 02 B  
+											aLinhas[nExcel][03],; // 03 C  
+											aLinhas[nExcel][04],; // 04 D  
+											aLinhas[nExcel][05],; // 05 E  
+											aLinhas[nExcel][06],; // 06 F  
+											aLinhas[nExcel][07],; // 07 G 
+											aLinhas[nExcel][08],; // 08 H  
+											aLinhas[nExcel][09],; // 08 H  
+											aLinhas[nExcel][10],; // 08 H  
+											aLinhas[nExcel][11] ; // 09 I  
+																}) //GRAVANDO NA LINHA MANDANDO PARA O EXCEL O ARRAY COM AS LINHAS
+		Next nExcel 
+
+		oExcel:Activate()
+		oExcel:GetXMLFile(cPath + cArq)
+
+		//dbCloseArea()
+		//CpyS2T( cDirDocs+"\"+cArq+".DBF" , cPath, .T. )
+
+		If !ApOleClient('MsExcel')
+			MsgStop('MsExcel não instalado!')
+			Return
+		EndIf
+
+		oExcel := MsExcel():New()
+		oExcel:WorkBooks:Open( cPath+cArq+".XLS" ) // Abre uma planilha
+		oExcel:SetVisible(.T.)
+
+	EndIf
+
+	If	!lGera
+
+		If !lExcel
+			DbSelectArea("TRB")
+			Use
+		EndIf
+
+		FErase(cArq + GetDbExtension())
+		FErase(cInd1ADR010 + OrdBagExt())
+		FErase(cInd2ADR010 + OrdBagExt())
+
+		Return .f.
+
+	Endif
+
+	/* 
+	0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7
+	01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
+	*******************************************************************************************************************************************************************************************************************************
+	Ordem   Funcionario                               Nome Servico                              Bem               Nome                                      Loc.  Descricao                                 Dt. Inicio  Hr. Inicio
+	*******************************************************************************************************************************************************************************************************************************
+
+	XXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  99/99/9999  99:99
+	XXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  99/99/9999  99:99
+	XXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  99/99/9999  99:99
+	XXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  99/99/9999  99:99
+	XXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  99/99/9999  99:99
+	/*/                                                
+
+	CABEC1 := "Ordem   Funcionario                               Nome Servico                              Bem               Nome                                      Loc.  Descricao                                 Dt. Inicio  Hr. Inicio"
+	CABEC2 := ""
+
+	dbSelectArea("TRB")
+	dbSetOrder(1)
+	dbGoTop()
+
+	ProcRegua(TRB->(RecCount()))
+
+	While !Eof()
+
+		IncProc()
+		
+		NgSomaLi(58)
+
+		@Li,000 PSay TRB->ORDEM_SERV
+		@Li,008 PSay TRB->NOME_FUNC
+		@Li,050 PSay TRB->NOME_SERV
+		@Li,092 PSay TRB->COD_BEM
+		@Li,110 PSay TRB->NOME_BEM
+		@Li,152 PSay TRB->COD_LOCAL
+		@Li,158 PSay TRB->DESC_LOCAL
+		@Li,200 PSay TRB->DT_INICIO Picture "99/99/9999"
+		@Li,212 PSay TRB->HR_INICIO Picture "99:99"
+				
+		dbSelectArea("TRB")
+		dbSetOrder(1)
+		dbSkip()
+
+	End
+
+	dbSelectArea("TRB")
+	Use
+
+	FErase(cArq + GetDbExtension())
+	FErase(cInd1ADR010 + OrdBagExt())
+	FErase(cInd2ADR010 + OrdBagExt())
+
+	RODA(nCNTIMPR,cRODATXT,TAMANHO)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Devolve a condicao original do arquivo principal             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	RetIndex("ST9")
+
+	Set Filter To
+	Set Device To Screen
+
+	If aReturn[5] == 1
+		Set Printer To
+		dbCommitAll()
+		OurSpool(WNREL)
+	EndIf
+
+	MS_FLUSH()
+
+Return .T.
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 25/06/2020
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function ADR010TMP()
+
+	Local cAliasQry
+
+	cAliasQry := GetNextAlias()
+
+	cQuery := " SELECT STJ.TJ_ORDEM, STL.TL_CODIGO, SRA.RA_NOME, STJ.TJ_SERVICO, ST4.T4_NOME, STJ.TJ_CODBEM, ST9.T9_NOME, TAF.TAF_CODNIV, "
+	cQuery += " 	TAF.TAF_NOMNIV, STL.TL_DTINICI, STL.TL_HOINICI FROM "+RetSqlName("STJ")+" STJ "
+	cQuery += " JOIN "+RetSqlName("TAF")+" TAF ON (TAF.TAF_FILIAL = '"+xFilial("TAF")+"' AND TAF.TAF_CODNIV IN (SELECT TAF2.TAF_NIVSUP FROM "+RetSqlName("TAF")+" TAF2 "
+	cQuery += " 	WHERE TAF2.TAF_FILIAL = TAF.TAF_FILIAL AND TAF2.TAF_INDCON = '1' AND TAF2.TAF_CODCON = STJ.TJ_CODBEM AND "
+	cQuery += " 	TAF2.TAF_NIVSUP BETWEEN '"+MV_PAR09+"' AND '"+MV_PAR10+"' AND TAF2.D_E_L_E_T_ <> '*') AND TAF.D_E_L_E_T_ <> '*') "
+	cQuery += " JOIN "+RetSqlName("STL")+" STL ON (STL.TL_FILIAL = '"+xFilial("STL")+"' AND STL.TL_ORDEM = STJ.TJ_ORDEM AND STL.TL_SEQRELA = '0  ' AND STL.TL_TIPOREG = 'M' "
+	cQuery += " 	AND STL.TL_DTINICI BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND STL.TL_CODIGO BETWEEN  '"+MV_PAR07+"' AND '"+MV_PAR08+"' "
+	cQuery += " 	AND STL.D_E_L_E_T_ <> '*') "
+	cQuery += " JOIN "+RetSqlName("SRA")+" SRA ON (SRA.RA_FILIAL = '"+xFilial("SRA")+"' AND SRA.RA_MAT = STL.TL_CODIGO AND SRA.D_E_L_E_T_ <> '*') "
+	cQuery += " JOIN "+RetSqlName("ST4")+" ST4 ON (ST4.T4_FILIAL = '"+xFilial("ST4")+"' AND ST4.T4_SERVICO = STJ.TJ_SERVICO AND ST4.D_E_L_E_T_ <> '*') "
+	cQuery += " JOIN "+RetSqlName("ST9")+" ST9 ON (ST9.T9_FILIAL = '"+xFilial("ST9")+"' AND ST9.T9_CODBEM = STJ.TJ_CODBEM AND ST9.D_E_L_E_T_ <> '*') "
+	cQuery += " WHERE STJ.TJ_FILIAL = '"+xFilial("STJ")+"' AND STJ.TJ_ORDEM BETWEEN '"+MV_PAR05+"' AND '"+MV_PAR06+"' AND STJ.TJ_PLANO BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"' "
+	cQuery += " 	AND STJ.TJ_SITUACA = 'L' AND STJ.TJ_TERMINO = 'N' AND STJ.D_E_L_E_T_ <> '*' "
+
+	cQuery := ChangeQuery(cQuery)
+
+	dbUseArea( .T., "TOPCONN", TCGENQRY(,,cQuery),cAliasQry, .F., .T.)
+
+	dbSelectArea(cAliasQry)
+	dbGoTop()
+	If Eof()
+		MsgInfo("Não existem dados para montar o relatório!","ATENÇÃO")
+		(cAliasQry)->(dbCloseArea())
+		lGera := .F.
+		Return
+	Endif
+
+	While (cAliasQry)->( !Eof() )
+
+		dbSelectArea("TRB")
+		dbSetOrder(1)
+
+		If !dbSeek((cAliasQry)->(TJ_ORDEM)+AllTrim((cAliasQry)->(TL_CODIGO)))
+			RecLock("TRB", .T.)
+		Else
+			RecLock("TRB", .F.)
+		EndIf
+
+			TRB->ORDEM_SERV		:= (cAliasQry)->(TJ_ORDEM)
+			TRB->COD_FUNC			:= AllTrim((cAliasQry)->(TL_CODIGO))
+			TRB->NOME_FUNC			:= (cAliasQry)->(RA_NOME)
+			TRB->COD_SERV			:= (cAliasQry)->(TJ_SERVICO)
+			TRB->NOME_SERV			:= (cAliasQry)->(T4_NOME)
+			TRB->COD_BEM			:= (cAliasQry)->(TJ_CODBEM)
+			TRB->NOME_BEM			:= (cAliasQry)->(T9_NOME)
+			TRB->COD_LOCAL			:= (cAliasQry)->(TAF_CODNIV)
+			TRB->DESC_LOCAL		:= (cAliasQry)->(TAF_NOMNIV)
+			TRB->DT_INICIO			:= STOD((cAliasQry)->(TL_DTINICI))
+			TRB->HR_INICIO			:= (cAliasQry)->(TL_HOINICI)
+
+		MsUnlock("TRB")
+
+		(cAliasQry)->(dbSkip())
+	
+	End
+	
+	(cAliasQry)->(dbCloseArea())
+
+Return .T.

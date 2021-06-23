@@ -1,0 +1,11 @@
+USER FUNCTION Reg()
+Local _cArea := GetArea()  
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+
+nModelo:=Posicione("SEA",1,XFilial("SEA")+SE2->E2_NUMBOR,"EA_MODELO")     
+
+nReg:=IIF(SEA->EA_MODELO$"01",NSEQ+2,NSEQ*2+2)           
+
+RestArea(_cArea)
+return(nReg)

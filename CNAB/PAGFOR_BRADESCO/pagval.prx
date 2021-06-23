@@ -1,0 +1,32 @@
+#include "rwmake.ch"        // incluido pelo assistente de conversao do AP5 IDE em 26/09/00
+
+User Function Pagval()        // incluido pelo assistente de conversao do AP5 IDE em 26/09/00
+
+//旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴?
+//?Declaracao de variaveis utilizadas no programa atraves da funcao    ?
+//?SetPrvt, que criara somente as variaveis definidas pelo usuario,    ?
+//?identificando as variaveis publicas do sistema utilizadas no codigo ?
+//?Incluido pelo assistente de conversao do AP5 IDE                    ?
+//읕컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴?
+
+SetPrvt("_VALOR,")
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+
+/// VALOR DO DOCUMENTO  DO CODIGO DE BARRA DA POSICAO 06 - 19, NO ARQUIVO E
+/// DA POSICAO 190 - 204, QUANDO NAO FOR CODIGO DE BARRA VAI O VALOR DO SE2
+
+_VALOR :=Replicate("0",10)
+
+IF SUBSTR(SE2->E2_CODBAR,1,3) == "   "
+
+    _VALOR   :=  STRZERO((SE2->E2_SALDO*100),10,0)
+
+Else
+
+    _VALOR  :=   STRZERO(VAL(SUBSTR(SE2->E2_CODBAR,10,10)),10)
+
+Endif
+
+// Substituido pelo assistente de conversao do AP5 IDE em 26/09/00 ==> __return(_VALOR)
+Return(_VALOR)        // incluido pelo assistente de conversao do AP5 IDE em 26/09/00

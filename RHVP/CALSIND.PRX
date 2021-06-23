@@ -1,0 +1,89 @@
+#include "rwmake.ch"        // incluido pelo assistente de conversao do AP5 IDE em 10/10/01
+
+#IFDEF  WINDOWS
+        #DEFINE SAY PSAY
+#ENDIF        
+
+User Function CALSIND()        // incluido pelo assistente de conversao do AP5 IDE em 10/10/01
+
+//SetPrvt("CALIAS_,NREC_,CSAVIND1,NPERC_,NLIMI_,NVALO_,cAnoMesDem,cFolMes")  
+
+Local aArea := GetArea()
+Private cAlias_
+Private nRec_
+Private CSAVIND1
+Private NPERC_
+Private NLIMI_
+Private NVALO_
+Private cAnoMesDem
+Private cFolMes
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+
+// Verifica Filial Deve ser Processada (Parte da Reconstrucao do Roteiro de Calculo) - By Asr
+If cEmpAnt == "01"
+   If !( SRA->RA_FILIAL $ "02/06" )
+      Return("")
+   EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Salva Ambiente                                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cAnoMesDem := Subs(Dtos(dDataDem),1,6)
+cFolMes := Alltrim(GetMv("MV_FOLMES"))
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Montando Variaveis de Trabalho                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+nPerc_  := 0
+nLimi_  := 0
+nValo_  := 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Processamento                                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+//Localiza Parametros
+dbSelectArea("SZ1")
+
+If SZ1->(dbSeek(xFilial()+"03"))
+
+        //Carrega Variaveis
+        nPerc_ := SZ1->Z1_VAL01
+        nLimi_ := SZ1->Z1_VAL02
+
+        //Se Valores Zerados
+        If nPerc_ + nLimi_ == 0
+
+            Return
+        End             
+else
+
+        //Exibe Help
+        Help(' ',1,'SEMTAB03')
+                                       
+        Return
+end
+
+// Verifica Categoria do Funcionario 
+If SRA->RA_CATFUNC == "H"
+        nValo_ := (SalMes * SRA->RA_HRSMES * nPerc_)/100
+Else
+        nValo_ := (SalMes * nPerc_)/100
+Endif
+
+If (nPerc_ == 0 .or. nValo_ > nLimi_) .and. nLimi_ > 0 
+         nValo_ := nLimi_
+Endif        
+
+// Gera Verba 
+// Ajuste para atender resc. complementar no mës. 
+If (c__Roteiro=="FOL") .or. (c__Roteiro == "RES" .and. cCompl # "S") .or.;
+	(c__Roteiro == "RES" .and. cCompl == "S" .and. cAnoMesDem==cFolMes )
+    fGeraVerba('408',nValo_,nPerc_)
+Endif
+
+RestArea(aArea)
+
+Return
