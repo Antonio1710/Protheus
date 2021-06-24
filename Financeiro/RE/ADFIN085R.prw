@@ -14,9 +14,10 @@
 	@since 14/04/2020
 	@version 01
     @history Chamado 056404 - WILLIAM COSTA - 20/05/2020 - Alterado o SQl do F2_TIPO
+    @history Chamado 15661  - Everson - 22/06/2021 - Tratamento para desconsiderar cargas exportação e subproduto. 
 /*/
 
-User Function ADFIN085R()
+User Function ADFIN085R() // U_ADFIN085R()
 
     Local aArea        := GetArea()
     Private cNomeRel   := "rel_co-Participacao_"+dToS(Date())+StrTran(Time(), ':', '-')
@@ -577,6 +578,28 @@ Static Function SqlLogistica()
                     SUM(F2_XVLCOPA) AS F2_XVLCOPA,
                     CASE WHEN F2_EST = 'SP' THEN '6110' ELSE '6210' END AS F2_XCC
                 FROM %Table:SF2%
+
+                    //Everson - 22/06/2021. Chamado 15661.
+                    INNER JOIN 
+                    (
+                        SELECT 
+                        DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                        FROM 
+                        %Table:SD2%
+                        INNER JOIN
+                        %Table:SB1% ON
+                        D2_COD = B1_COD
+                        WHERE 
+                        D2_FILIAL = %EXP:cFilAtual%
+                        AND D2_TIPO <> 'D' 
+                        AND D2_EMISSAO >= %EXP:cDtIni%
+                        AND D2_EMISSAO <= %EXP:cDtFin%
+                        AND B1_GRUPO NOT IN ('0911','0912','0913')
+                        AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                        AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                    ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                    ////Fim - Everson - 22/06/2021. Chamado 15661.           
+
                 WHERE F2_FILIAL   = %EXP:cFilAtual%
                   AND F2_EMISSAO >= %EXP:cDtIni%
                   AND F2_EMISSAO <= %EXP:cDtFin%
@@ -584,6 +607,8 @@ Static Function SqlLogistica()
                   AND F2_TPFRETE  = 'C'
                   AND F2_TIPO    <> 'D'
                   AND D_E_L_E_T_ <> '*'
+
+                  AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                 GROUP BY F2_PLACA,CASE WHEN F2_EST = 'SP' THEN '6110' ELSE '6210' END
 
@@ -602,6 +627,28 @@ Static Function SqlCC6110()
 			%NoPARSER%  
              SELECT SUM(F2_XVLCOPA) AS F2_XVLCOPA
                 FROM %Table:SF2%
+
+                    //Everson - 22/06/2021. Chamado 15661.
+                    INNER JOIN 
+                    (
+                        SELECT 
+                        DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                        FROM 
+                        %Table:SD2%
+                        INNER JOIN
+                        %Table:SB1% ON
+                        D2_COD = B1_COD
+                        WHERE 
+                        D2_FILIAL = %EXP:cFilAtual%
+                        AND D2_TIPO <> 'D' 
+                        AND D2_EMISSAO >= %EXP:cDtIni%
+                        AND D2_EMISSAO <= %EXP:cDtFin%
+                        AND B1_GRUPO NOT IN ('0911','0912','0913')
+                        AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                        AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                    ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                    ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
                 WHERE F2_FILIAL   = %EXP:cFilAtual%
                   AND F2_EMISSAO >= %EXP:cDtIni%
                   AND F2_EMISSAO <= %EXP:cDtFin%
@@ -610,6 +657,8 @@ Static Function SqlCC6110()
                   AND F2_TPFRETE  = 'C'
                   AND F2_TIPO    <> 'D'
                   AND D_E_L_E_T_ <> '*'
+
+                  AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                 GROUP BY F2_EST
 
@@ -628,6 +677,28 @@ Static Function SqlCC6210()
 			%NoPARSER%  
              SELECT SUM(F2_XVLCOPA) AS F2_XVLCOPA
                 FROM %Table:SF2%
+
+                    //Everson - 22/06/2021. Chamado 15661.
+                    INNER JOIN 
+                    (
+                        SELECT 
+                        DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                        FROM 
+                        %Table:SD2%
+                        INNER JOIN
+                        %Table:SB1% ON
+                        D2_COD = B1_COD
+                        WHERE 
+                        D2_FILIAL = %EXP:cFilAtual%
+                        AND D2_TIPO <> 'D' 
+                        AND D2_EMISSAO >= %EXP:cDtIni%
+                        AND D2_EMISSAO <= %EXP:cDtFin%
+                        AND B1_GRUPO NOT IN ('0911','0912','0913')
+                        AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                        AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                    ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                    ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
                 WHERE F2_FILIAL   = %EXP:cFilAtual%
                   AND F2_EMISSAO >= %EXP:cDtIni%
                   AND F2_EMISSAO <= %EXP:cDtFin%
@@ -636,6 +707,8 @@ Static Function SqlCC6210()
                   AND F2_TPFRETE  = 'C'
                   AND F2_TIPO    <> 'D'
                   AND D_E_L_E_T_ <> '*'
+
+                  AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                 GROUP BY F2_EST
 
@@ -654,6 +727,28 @@ Static Function SqlTransportador()
 			%NoPARSER%  
             SELECT  F2_TRANSP,A4_NOME,A4_MUN,A4_EST
         FROM %Table:SF2%
+
+            //Everson - 22/06/2021. Chamado 15661.
+            INNER JOIN 
+            (
+                SELECT 
+                DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                FROM 
+                %Table:SD2%
+                INNER JOIN
+                %Table:SB1% ON
+                D2_COD = B1_COD
+                WHERE 
+                D2_FILIAL = %EXP:cFilAtual%
+                AND D2_TIPO <> 'D' 
+                AND D2_EMISSAO >= %EXP:cDtIni%
+                AND D2_EMISSAO <= %EXP:cDtFin%
+                AND B1_GRUPO NOT IN ('0911','0912','0913')
+                AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                AND %Table:SB1%.D_E_L_E_T_ <> '*'
+            ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+            ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
 		INNER JOIN %Table:SA4%
 		        ON A4_COD = F2_TRANSP
 			   AND SA4010.D_E_L_E_T_ <> '*'
@@ -664,6 +759,8 @@ Static Function SqlTransportador()
             AND F2_TPFRETE  = 'C'
             AND F2_TIPO    <> 'D'
             AND SF2010.D_E_L_E_T_ <> '*'
+
+            AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
         GROUP BY F2_TRANSP,A4_NOME,A4_MUN,A4_EST
 
@@ -686,6 +783,28 @@ Static Function SqlCCCONT(cTransp)
                     SUM(F2_PBRUTO) AS F2_PBRUTO,
                     SUM(F2_XVLCOPA) AS F2_XVLCOPA 
                 FROM %Table:SF2%
+
+                        //Everson - 22/06/2021. Chamado 15661.
+                        INNER JOIN 
+                        (
+                            SELECT 
+                            DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                            FROM 
+                            %Table:SD2%
+                            INNER JOIN
+                            %Table:SB1% ON
+                            D2_COD = B1_COD
+                            WHERE 
+                            D2_FILIAL = %EXP:cFilAtual%
+                            AND D2_TIPO <> 'D' 
+                            AND D2_EMISSAO >= %EXP:cDtIni%
+                            AND D2_EMISSAO <= %EXP:cDtFin%
+                            AND B1_GRUPO NOT IN ('0911','0912','0913')
+                            AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                            AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                        ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                        ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
                 WHERE F2_FILIAL             = %EXP:cFilAtual%
                 AND F2_EMISSAO             >= %EXP:cDtIni%
                 AND F2_EMISSAO             <= %EXP:cDtFin%
@@ -694,6 +813,8 @@ Static Function SqlCCCONT(cTransp)
                 AND F2_TPFRETE              = 'C'
                 AND F2_TIPO                <> 'D'
                 AND %Table:SF2%.D_E_L_E_T_ <> '*'
+
+                AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                 GROUP BY F2_TRANSP,CASE WHEN F2_EST = 'SP' THEN '6110' ELSE '6210' END 
 
@@ -717,6 +838,28 @@ Static Function SqlCONTAB1(cTransp)
                     F2_VALBRUT,
                     F2_XVLCOPA
                     FROM %Table:SF2%
+
+                        //Everson - 22/06/2021. Chamado 15661.
+                        INNER JOIN 
+                        (
+                            SELECT 
+                            DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                            FROM 
+                            %Table:SD2%
+                            INNER JOIN
+                            %Table:SB1% ON
+                            D2_COD = B1_COD
+                            WHERE 
+                            D2_FILIAL = %EXP:cFilAtual%
+                            AND D2_TIPO <> 'D' 
+                            AND D2_EMISSAO >= %EXP:cDtIni%
+                            AND D2_EMISSAO <= %EXP:cDtFin%
+                            AND B1_GRUPO NOT IN ('0911','0912','0913')
+                            AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                            AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                        ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                        ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
                     INNER JOIN %Table:SA1%
                             ON A1_COD                  = F2_CLIENTE
                            AND A1_LOJA                 = F2_LOJA
@@ -730,6 +873,8 @@ Static Function SqlCONTAB1(cTransp)
                            AND F2_TPFRETE              = 'C'
                            AND F2_TIPO                <> 'D'
                            AND %Table:SF2%.D_E_L_E_T_ <> '*'
+
+                           AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                     ORDER BY F2_DOC
 	
@@ -751,6 +896,28 @@ Static Function SqlCONTAB2(cTransp)
                     F2_VALBRUT,
                     F2_XVLCOPA
                     FROM %Table:SF2%
+
+                        //Everson - 22/06/2021. Chamado 15661.
+                        INNER JOIN 
+                        (
+                            SELECT 
+                            DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                            FROM 
+                            %Table:SD2%
+                            INNER JOIN
+                            %Table:SB1% ON
+                            D2_COD = B1_COD
+                            WHERE 
+                            D2_FILIAL = %EXP:cFilAtual%
+                            AND D2_TIPO <> 'D' 
+                            AND D2_EMISSAO >= %EXP:cDtIni%
+                            AND D2_EMISSAO <= %EXP:cDtFin%
+                            AND B1_GRUPO NOT IN ('0911','0912','0913')
+                            AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                            AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                        ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                        ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
                     INNER JOIN %Table:SA1%
                             ON A1_COD                  = F2_CLIENTE
                            AND A1_LOJA                 = F2_LOJA
@@ -764,6 +931,8 @@ Static Function SqlCONTAB2(cTransp)
                            AND F2_TPFRETE              = 'C'
                            AND F2_TIPO                <> 'D'
                            AND %Table:SF2%.D_E_L_E_T_ <> '*'
+
+                           AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                     ORDER BY F2_DOC
 	
@@ -783,6 +952,28 @@ Static Function SqlRESCONT()
                     SUM(F2_XVLCOPA) AS F2_XVLCOPA,
                     CASE WHEN F2_EST = 'SP' THEN '6110' ELSE '6210' END AS F2_XCC
             FROM %Table:SF2%
+
+                //Everson - 22/06/2021. Chamado 15661.
+                INNER JOIN 
+                (
+                    SELECT 
+                    DISTINCT D2_FILIAL, D2_DOC, D2_SERIE 
+                    FROM 
+                    %Table:SD2%
+                    INNER JOIN
+                    %Table:SB1% ON
+                    D2_COD = B1_COD
+                    WHERE 
+                    D2_FILIAL = %EXP:cFilAtual%
+                    AND D2_TIPO <> 'D' 
+                    AND D2_EMISSAO >= %EXP:cDtIni%
+                    AND D2_EMISSAO <= %EXP:cDtFin%
+                    AND B1_GRUPO NOT IN ('0911','0912','0913')
+                    AND %Table:SD2%.D_E_L_E_T_ <> '*'
+                    AND %Table:SB1%.D_E_L_E_T_ <> '*'
+                ) AS SD2 ON F2_FILIAL = SD2.D2_FILIAL AND F2_DOC = SD2.D2_DOC AND F2_SERIE = SD2.D2_SERIE
+                ////Fim - Everson - 22/06/2021. Chamado 15661. 
+
             LEFT JOIN %Table:SA4%
                     ON A4_COD = F2_TRANSP
                     AND %Table:SA4%.D_E_L_E_T_ <> '*'
@@ -793,6 +984,8 @@ Static Function SqlRESCONT()
                 AND F2_TPFRETE  = 'C'
                 AND F2_TIPO    <> 'D'
                 AND %Table:SF2%.D_E_L_E_T_ <> '*'
+
+                AND F2_EST <> 'EX' //Everson - 22/06/2021 - Chamado 15661.
 
                 GROUP BY F2_TRANSP,A4_NOME,CASE WHEN F2_EST = 'SP' THEN '6110' ELSE '6210' END
 
