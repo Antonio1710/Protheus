@@ -9,8 +9,9 @@
 	@author William Costa
 	@since 08/04/2020
 	@version 01
-	@history ticket T.I - Fernando Sigoli - 18/01/2021 - Correção error LOG  
-	@history ticket T.I - Fernando Sigoli - 21/05/2021 - Alteração de senha de acesso Webservice CISP	
+	@history ticket T.I   - Fernando Sigoli - 18/01/2021 - Correção error LOG  
+	@history ticket T.I   - Fernando Sigoli - 21/05/2021 - Alteração de senha de acesso Webservice CISP
+	@history ticket 16039 - Leonardo Monteiro - 23/05/2021 - retirada de espaço do CNPJ na importação dos arquivos.
 /*/
 
 USER FUNCTION ADFIN009P() 
@@ -137,7 +138,8 @@ USER Function IMPORTCSVWSCISP()
 		cBuffer    := FT_FREADLN() //LENDO LINHA
 		
 		nPosCnpj := at(";",cBuffer)
-	    cCnpj    := STRZERO(VAL(SUBSTR(cBuffer,1,8)),8)
+		//@history ticket 16039 - Leonardo Monteiro - 23/05/2021 - retirada de espaço do CNPJ na importação dos arquivos.
+	    cCnpj    := STRZERO(VAL( Alltrim(SUBSTR(cBuffer,1,8)) ),8)
 		
 		
 	    //IMPORTA DADOS PARA A TABELA
