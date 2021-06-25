@@ -10,7 +10,8 @@
     @author Denis Guedes
     @since 02/06/2021
     @version 01
-    @history Ticket: TI - 11/06/2021 - ADRIANO SAVOINE - Corrigida a query da consulta para agrupar os dados.
+    @history Ticket: TI    - 11/06/2021 - ADRIANO SAVOINE - Corrigida a query da consulta para agrupar os dados.
+    @history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
     
 /*/
 
@@ -37,13 +38,22 @@ Private cMVPAR04
 Private czEMP
 Private czFIL
 
+
 If lJob
 	RpcSetType(3)
 	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
     czEMP    := aParam[1]   
-    czFIL    := aParam[2]   
+    czFIL    := aParam[2]  
+    
+    //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
+    dMVPAR01	:= Stod( Left( Dtos( Date() ),6 )+"01" )
+    dMVPAR02	:= Date()
+    
     cMVPAR03 := czFIL
     cMVPAR04 := czFIL
+    
+    Qout(" JOB ADMNT-Protheus - 01 - Parametros dMVPAR01="+ Dtoc(dMVPAR01) + ", dMVPAR02=" + Dtoc(dMVPAR02) +", cMVPAR03="+ cMVPAR03 +", cMVPAR04="+cMVPAR04+" ")
+    
     PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
     cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"sonia.silva@adoro.com.br;hercules.moreira@adoro.com.br;debora.silva@adoro.com.br" )
     
@@ -67,13 +77,8 @@ Private cNomArq
 Private cDIRARQ
 Private cDIRREDE
 
-
-If lJob
-
-    dMVPAR01	:= CTOD("01/01/2021")//FirstDate(date()) 
-    dMVPAR02	:= LastDate(date()) 
-
-Else
+//@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
+If !lJob
 
     dMVPAR01	:= MV_PAR01
     dMVPAR02	:= MV_PAR02
@@ -88,7 +93,7 @@ oExcel:AddTable ("Custo","RelCusto") // Titulo da Planilha (CabeÃ§alho)
 oExcel:AddColumn("Custo","RelCusto","FILIAL"         ,1,1)
 oExcel:AddColumn("Custo","RelCusto","GRUPO"	         ,1,1)
 oExcel:AddColumn("Custo","RelCusto","DESCRIÇÃO"	     ,1,1)
-oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,1,1)
+oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,3,3,.T.)
 
 
 cQry    := " SELECT "
