@@ -1,7 +1,7 @@
 # Descrição (Description)
  
 - Por favor, incluir o número do ticket do Movidesk. 
-(Please, include the ticket number of Movidesk)
+(Please, include the ticket number of Movidesk.)
 
 # Tipo de Mudança (Type of change)
 
