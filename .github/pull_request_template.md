@@ -1,7 +1,12 @@
 # Descrição (Description)
- 
+
+- Incluir a descrição referente as modifições feitas no fonte.
+(Include a description of modifications made in the source code.)
+# Ticket (Ticket number)
+
 - Por favor, incluir o número do ticket do Movidesk. 
 (Please, include the ticket number of Movidesk.)
+
 
 # Tipo de Mudança (Type of change)
 
