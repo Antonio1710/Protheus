@@ -10,7 +10,7 @@
 
 # Tipo de Mudança (Type of change)
 
-- [] Correções de Bug (Bug fix - Non-breaking change which fixes and issue)
+- [] Correções de Bug (Bugfix - Non-breaking change which fixes and issue)
 - [] Nova funcionalidade (New feature - Non-breaking change which adds functionality)
 - [] Correção urgente (Hotfix - Fix or feature of highest impact)
 
