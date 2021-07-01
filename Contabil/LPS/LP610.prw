@@ -20,6 +20,7 @@
 	@history Chamado 060629 - Everson         - 17/08/2020 - || OS 062127 || CONTROLADORIA || TAMIRES_SERAFIM || 8503 || LANC PADRAO
 	@history ticket     483 - FWNM            - 26/08/2020 - CONTROLADORIA || DRIELE_LEME || 8507 || AJUSTE LP 610-001
 	@history ticket    9226 - Fernando Maciei - 25/02/2021 - Lançamento Padrão 610-001 - abertura/alteração
+	@history ticket   16175 - Fernando Maciei - 30/06/2021 - Alteração LP -Receita serviço Ceres
 /*/
 User Function LP610cc()
 
@@ -453,6 +454,17 @@ User Function LP610cta()
 	If cFilAnt == "04" .and. Right(AllTrim(SD2->D2_CF),3) == "124"
 		_cConta := "311110002"
 	EndIf
+
+	// @history ticket   16175 - Fernando Maciei - 30/06/2021 - Alteração LP -Receita serviço Ceres
+	If AllTrim(cEmpAnt) == "02"
+
+		// Se CFOP "5124/6124"; produto "151296" = CONTA 311110002.
+		If Right(AllTrim(SD2->D2_CF),3) == "124" .and. AllTrim(SD2->D2_COD) == "151296"
+			_cConta := "311110002"
+		EndIf
+
+	EndIf
+	//
 
 	RestArea(aArea) 
     // Fim do Tratamento (CELLVLA)
