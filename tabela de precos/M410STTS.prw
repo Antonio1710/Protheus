@@ -3551,6 +3551,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 			SC5.C5_CONDPAG, 
 			SC5.C5_VEND1,
 			SC5.C5_EMISSAO,
+			C5_XTOTPED,
 			CASE WHEN (SF4.F4_DUPLIC = 'S' AND SC5.C5_TIPO IN ('N','C') AND SC5.C5_EST <> 'EX') THEN SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) ELSE 0 END AS C6_PRCTOT
 		FROM %TABLE:SC5% SC5 (NOLOCK)
 		INNER JOIN %TABLE:SC6% SC6 (NOLOCK) ON
@@ -3576,6 +3577,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 			SC5.C5_CONDPAG, 
 			SC5.C5_VEND1,
 			SC5.C5_EMISSAO,
+			SC5.C5_XTOTPED,
 			SF4.F4_DUPLIC,
 			SC5.C5_EST
 		ORDER BY SC5.C5_FILIAL ASC, SC5.C5_DTENTR ASC, SC5.C5_NUM ASC
@@ -3586,8 +3588,14 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 		_nValLim -= (cAls002)->C6_PRCTOT
 		_nVlPed  += (cAls002)->C6_PRCTOT
 
-		//VALIDA CRÉDITO DO PEDIDO
-		fVldCrd(_cTipoCli, (cAls002)->C5_CLIENTE, (cAls002)->C5_LOJACLI, _cCdClIn, (cAls002)->C5_FILIAL, (cAls002)->C5_NUM, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, (cAls002)->C6_PRCTOT, (cAls002)->C5_CONDPAG, (cAls002)->C5_EMISSAO, _lDiasAtras, _nValLim, (cAls002)->C5_VEND1, lBlqAtr, aTpBlqAt)
+		//INICIO Ticket  8      - Abel B.  - 05/07/2021 - Adiciona validação para apenas refazer a liberação caso o pedido não tenha sido liberado ainda.
+		aVrLbAnt := fVrLbAnt((cAls002)->C5_FILIAL, (cAls002)->C5_NUM)
+		IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < (cAls002)->C5_XTOTPED)
+			
+			//VALIDA CRÉDITO DO PEDIDO
+			fVldCrd(_cTipoCli, (cAls002)->C5_CLIENTE, (cAls002)->C5_LOJACLI, _cCdClIn, (cAls002)->C5_FILIAL, (cAls002)->C5_NUM, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, (cAls002)->C6_PRCTOT, (cAls002)->C5_CONDPAG, (cAls002)->C5_EMISSAO, _lDiasAtras, _nValLim, (cAls002)->C5_VEND1, lBlqAtr, aTpBlqAt)
+
+		ENDIF
 
 		(cAls002)->(dbSkip())
 	ENDDO

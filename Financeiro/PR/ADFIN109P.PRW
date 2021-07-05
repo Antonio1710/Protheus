@@ -80,6 +80,7 @@ Static Function fTlAprov()
 	Local oMotLib
 	Local nMotLib := 0
 
+	//A condição lTESTE foi criada exclusivamente para testes durante o desenvolvimento da rotina.
 	Private lTESTE := .F.
 	Private dDtIni 	:= date()+1
   Private dDtFim 	:= date()+1
@@ -114,9 +115,10 @@ Static Function fTlAprov()
 	Private aX3Loja	:= FWTamSX3("C5_LOJACLI")
 	Private aX3NomC	:= FWTamSX3("C5_NOMECLI")
 	Private aX3TotP	:= FWTamSX3("C5_XTOTPED")
-	Private aX3NumP := {7 , 0, "N"}
-	Private aX3TpCl	:= {6 , 0, "C"}
-	Private aX3TpBl	:= {20 , 0, "C"}
+	Private aX3NumP := {7  , 0, "N"}
+	Private aX3TpCl	:= {6  , 0, "C"}
+	Private aX3TpBl	:= {5 , 0, "C"}
+  Private aX3StPd	:= {1  , 0, "C"}
   Private aX3DscBl:= {254, 0, "C"}
 
 	Private aX3BlMt	:= FWTamSX3("ZBH_MOTIVO")
@@ -281,24 +283,16 @@ Static Function fTlAprov()
     @ 119,045 MSGET cRedAte									SIZE 035,008 	OF oPnSt01 PIXEL PICTURE '@!' F3 "SZF"
 
 		//Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
+		// @ aBtnPos[9],000 BUTTON OemToAnsi('UP')												SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xGoUP()) OF oPnSt01 PIXEL //"Exportar Excel"
+		// @ aBtnPos[8],000 BUTTON OemToAnsi('DOWN')											SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xGoDown()) OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[7],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda...")) 			OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[5],000 BUTTON OemToAnsi('Posição do Cliente')				SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA)) 																		OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[4],000 BUTTON OemToAnsi('Liberação de Estoque')			SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnSt01 PIXEL //"Exportar Excel"
 		// @ aBtnPos[3],000 BUTTON OemToAnsi('Painel Contas á Receber')	SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN030P()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
-		// @ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')				SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (StaticCall(ADFIN071R,geraRelatorio,nil,nil,nil,nil)) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')				SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xRlRdSeg()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[2],000 BUTTON OemToAnsi('Excluir Pedido')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xDelSC5()) 																																		OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[1],000 BUTTON OemToAnsi('Sair')											SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (oDlgxPg:End()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
-
-    // oTBtn010	:=	tButton():New(aBtnPos[7], 000 ,"Filtrar"		  						,oPnSt01,{ || xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte) },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-    // oTBtn020	:=	tButton():New(aBtnPos[6], 000 ,"Aprovar"		  						,oPnSt01,{ || MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda...") },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-		// oTBtn030	:=	tButton():New(aBtnPos[5], 000 ,"Posição do Cliente"				,oPnSt01,{ || PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA) },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-		// oTBtn030	:=	tButton():New(aBtnPos[4], 000 ,"Liberação de Estoque"			,oPnSt01,{ || xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte) },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-		// oTBtn040	:=	tButton():New(aBtnPos[3], 000 ,"Painel Contas á Receber "	,oPnSt01,{ || U_ADFIN030P() },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-    // oTBtn090	:=	tButton():New(aBtnPos[2], 000 ,"Excluir Pedido"		  			,oPnSt01,{ || xDelSC5() },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-    // oTBtn999	:=	tButton():New(aBtnPos[1], 000 ,"Sair"		  								,oPnSt01,{ || oDlgxPg:End() },085,nBtnAlt,,,.f.,.t.,.f.,,.f.,,,.f.)
-		//oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| U_ADFIN071R() },111,nBtnAlt,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
 		
     //**********************************************
     //ABA LIBERAÇÃO
@@ -418,26 +412,27 @@ Return
 	/*/
 Static Function xVerStsP(cQuery)
 	Local aAreaSC9    := SC9->(GetArea())
-	Local aRet	:= {'','','','',''}
-	Local cStsPed := ''
-	Local cStsCom := ''
-	Local cStsEst := 'Liberado'
-	Local cStsCrd := 'Liberado'
-
+	Local aRet	:= {'L','L','L','L','L'}
+	Local cStsCom := 'L'
+	Local cStsCrd := 'L'
+	Local cStsFin := 'L'
+	Local cStsEst := 'L'
+	Local cStsPed := 'L'
+	
 	IF Alltrim((cQuery)->C5_BLQ) == '1' 
-		cStsCom := 'Bloqueado'
+		cStsCom := 'B'
 	ELSE
-		cStsCom := 'Liberado'
+		cStsCom := 'L'
 	ENDIF
 	
 	IF Alltrim((cQuery)->C5_XPREAPR) == 'B'
-		cStsPed := 'Pré Bloqueio' //PRE BLOQUEIO DE CREDITO
+		cStsCrd := 'B' //PRE BLOQUEIO DE CREDITO
 		nVlTtBl += 1
 	ELSEIF Alltrim((cQuery)->C5_XPREAPR) == 'L'
-		cStsPed := 'Pré Liberado' //PRE LIBERACAO DE CREDITO
+		cStsCrd := 'L' //PRE LIBERACAO DE CREDITO
 		nVlTtLb += 1
 	ELSEIF Empty(Alltrim((cQuery)->C5_XPREAPR))
-		cStsPed := 'Não Processado' //NÃO PROCESSADO
+		cStsCrd := 'N' //NÃO PROCESSADO
 		nVlTtNP	+= 1		
 	ENDIF
 	
@@ -447,12 +442,12 @@ Static Function xVerStsP(cQuery)
 		WHILE SC9->(!Eof()) .And. (cQuery)->C5_NUM == SC9->C9_PEDIDO
 
 			IF Empty(Alltrim(SC9->C9_NFISCAL)) 
-				IF !Empty(Alltrim(SC9->C9_BLCRED)) .AND. Empty(cStsCrd)
-					cStsCrd	:= 'Bloqueado' //Alltrim(SC9->C9_BLCRED)
+				IF !Empty(Alltrim(SC9->C9_BLCRED)) .AND. !Alltrim(SC9->C9_BLCRED) == '10' .AND. cStsFin == 'L'
+					cStsFin	:= 'B' //Alltrim(SC9->C9_BLCRED)
 				ENDIF
 
-				IF !Empty(Alltrim(SC9->C9_BLEST))  .AND. Empty(cStsEst)
-					cStsEst := 'Bloqueado' //Alltrim(SC9->C9_BLEST)
+				IF !Empty(Alltrim(SC9->C9_BLEST)) .AND. !Alltrim(SC9->C9_BLEST) == '10' .AND. cStsEst == 'L'
+					cStsEst := 'B' //Alltrim(SC9->C9_BLEST)
 				ENDIF
 				
 			ENDIF
@@ -462,24 +457,16 @@ Static Function xVerStsP(cQuery)
 
 	ENDIF
 
-	// IF cStsPed == 'Pré Liberado' .AND. cStsCrd	== 'Bloqueado'
-	// 	cStsPed := 'Bloq. Crédito'
-	// ELSEIF cStsPed == 'Pré Liberado' .AND. cStsEst	== 'Bloqueado'
-	// 	cStsPed := 'Bloq. Estoque'
-	// ENDIF
 	
+	IF cStsCrd == 'B'.OR. cStsCrd == 'N' .OR. cStsFin == 'B'// .OR. cStsEst == 'Bloqueado' .OR. cStsCom == 'Bloqueado'
+		cStsPed := 'B'
+	ENDIF
+
 	aRet[1]:= cStsCom
-	aRet[2]:= cStsPed
-	aRet[3]:= cStsEst
-	aRet[4]:= cStsCrd
-
-	IF cStsPed == 'Pré Bloqueio'.OR. cStsPed == 'Não Processado' .OR. cStsCrd == 'Bloqueado' .OR. cStsEst == 'Bloqueado' .OR. cStsCom == 'Bloqueado'
-		aRet[5]:= 'B'
-	ENDIF
-
-	IF cStsPed == 'Pré Liberado' 
-		cStsPed := 'Pré Liberado' 
-	ENDIF
+	aRet[2]:= cStsCrd
+	aRet[3]:= cStsFin
+	aRet[4]:= cStsEst
+	aRet[5]:= cStsPed
 	RestArea(aAreaSC9)
 Return aRet
 
@@ -495,6 +482,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
   Local cQuery := GetNextAlias()
 	// Local cQryC6
 	Local cQryBlq
+	Local i := 1
 	// Local _cCdClIn := '%'+''+'%'
 
   nVlRdBl := 0
@@ -605,12 +593,20 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 	(cQuery)->(dbGoTop())
   While !(cQuery)->(eof())
 		aStsPed := xVerStsP(cQuery)
-
+		/*
+		cToBlq:
+		Bl Comercial (C5_BLQ = 1)
+		Bl Crédito (C5_XPREAPR = B OU C5_XPREAPR = N)
+		Bl Financeiro (C9_BLCRD <> '' OU C9_BLCRD <> '10')
+		Bl Estoque (C9_BLEST <> '' OU C9_BLEST <> '10')
+		*/
+		cTpBlq	:= aStsPed[1]+aStsPed[2]+aStsPed[3]+aStsPed[4]
+		
     // IF (cQuery)->E4_CTRADT == '1' //ANTECIPADO
 
-		//A condição lTESTE foi criada exclusivamente para testes durante o desenvolvimento da rotina.
-		// IF Alltrim((cQuery)->C5_XPREAPR) == 'B' .OR. lTESTE
-		IF aStsPed[2] == 'Pré Bloqueio'
+		
+		// IF Alltrim((cQuery)->C5_XPREAPR) == 'B'
+		// IF aStsPed[5] == 'B'
 
 			IF !(cTbClie)->(DbSeek((cQuery)->C5_FILIAL+'REDE  '+(cQuery)->A1_CODRED)) .AND. !Empty(Alltrim((cQuery)->A1_CODRED))
 
@@ -623,10 +619,8 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 					(cTbClie)->TOTAL  := (cQuery)->C5_XTOTPED
 					(cTbClie)->NUMPED	:= 1
 					(cTbClie)->TPCLI  := 'REDE  '
-					(cTbClie)->TPBLOQ := Alltrim(aStsPed[2]) //Alltrim((cQuery)->C5_XPREAPR)
-					(cTbClie)->BLQCOM   := Alltrim(aStsPed[1])
-					(cTbClie)->BLQEST   := Alltrim(aStsPed[3])
-					(cTbClie)->BLQCRD   := Alltrim(aStsPed[4])
+					(cTbClie)->TPBLOQ := cTpBlq //Alltrim((cQuery)->C5_XPREAPR)
+					(cTbClie)->STSPED	:= aStsPed[5]
 
 					/*
 						1 - FATURADO
@@ -634,8 +628,6 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 						3 - BLOQUEIO DE ESTOQUE
 					*/
 					(cTbClie)->DSCREGRA := ''
-
-
 					(cTbClie)->XRISCO := (cQuery)->A1_XRISCO
 					(cTbClie)->XDTRISC := (cQuery)->A1_XDTRISC
 					(cTbClie)->DTULTRE := (cQuery)->A1_DTULTRE
@@ -647,21 +639,20 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			ELSEIF Empty(Alltrim((cQuery)->A1_CODRED)) .AND. !(cTbClie)->(DbSeek((cQuery)->C5_FILIAL+'VAREJO'+(cQuery)->C5_CLIENTE+(cQuery)->C5_LOJACLI))
 
 				RECLOCK(cTbClie,.T.)      
-					(cTbClie)->RELACAO			:= (cQuery)->C5_FILIAL+'VAREJO'+(cQuery)->C5_CLIENTE+(cQuery)->C5_LOJACLI
+					(cTbClie)->RELACAO	:= (cQuery)->C5_FILIAL+'VAREJO'+(cQuery)->C5_CLIENTE+(cQuery)->C5_LOJACLI
 					(cTbClie)->FILIAL   := (cQuery)->C5_FILIAL
 					(cTbClie)->CODIGO   := (cQuery)->C5_CLIENTE
-					(cTbClie)->LOJA   := (cQuery)->C5_LOJACLI
-					(cTbClie)->NOME   := (cQuery)->C5_NOMECLI
+					(cTbClie)->LOJA   	:= (cQuery)->C5_LOJACLI
+					(cTbClie)->NOME   	:= (cQuery)->C5_NOMECLI
 					(cTbClie)->TOTAL    := (cQuery)->C5_XTOTPED
 					(cTbClie)->NUMPED		:= 1
 					(cTbClie)->TPCLI    := 'VAREJO'
-					(cTbClie)->TPBLOQ   := Alltrim(aStsPed[2])
-					(cTbClie)->BLQCOM   := Alltrim(aStsPed[1])
-					(cTbClie)->BLQEST   := Alltrim(aStsPed[3])
-					(cTbClie)->BLQCRD   := Alltrim(aStsPed[4])
-					(cTbClie)->DSCREGRA   := ''
-					(cTbClie)->LIMCRED   := (cQuery)->A1_LC
 
+					(cTbClie)->TPBLOQ 	:= cTpBlq //Alltrim((cQuery)->C5_XPREAPR)
+					(cTbClie)->STSPED		:= aStsPed[5]
+
+					(cTbClie)->DSCREGRA := ''
+					(cTbClie)->LIMCRED  := (cQuery)->A1_LC
 					(cTbClie)->XRISCO := (cQuery)->A1_XRISCO
 					(cTbClie)->XDTRISC := (cQuery)->A1_XDTRISC
 					(cTbClie)->DTULTRE := (cQuery)->A1_DTULTRE
@@ -673,9 +664,17 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 				RECLOCK(cTbClie,.F.)
 					(cTbClie)->TOTAL    += (cQuery)->C5_XTOTPED
 					(cTbClie)->NUMPED		+= 1
-					// (cTbClie)->TPCLI    := ''
-					// (cTbClie)->TPBLOQ   := Alltrim((cQuery)->C5_XPREAPR)
-					// (cTbClie)->DSCREGRA   := ''
+
+					IF (cTbClie)->STSPED == 'L' .AND. aStsPed[5] <> 'L'
+						(cTbClie)->STSPED		:= aStsPed[5]
+					ENDIF
+
+					For i:=1 to Len(cTpBlq)
+						if Substr((cTbClie)->TPBLOQ,i,1) <> Substr(cTpBlq,i,1) .AND. Substr((cTbClie)->TPBLOQ,i,1) == 'L'							
+							(cTbClie)->TPBLOQ := Substr(cTpBlq,1,i-1)+Substr(cTpBlq,i,1)+Substr(cTpBlq,i+1,Len(cTpBlq)-i)
+						endif
+					Next i
+
 				(cTbClie)->(MSUNLOCK())
 
 			ENDIF
@@ -705,10 +704,12 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 				(cTbPed)->REFATUR    	:= (cQuery)->C5_REFATUR
 
 				(cTbPed)->TIPO    		:= ''
-				(cTbPed)->TPBLOQ   		:= Alltrim((cQuery)->C5_XPREAPR)
+		
+				(cTbPed)->TPBLOQ 			:= cTpBlq //Alltrim((cQuery)->C5_XPREAPR)
+				(cTbPed)->STSPED			:= aStsPed[5]
+
 				(cTbPed)->DSCREGRA  	:= ''
 			(cTbPed)->(MSUNLOCK())
-
 
 			// oChart:AddSerie((cTbClie)->TPBLOQ,{ {(cTbClie)->TOTAL} })
 			cQryBlq := GetNextAlias()
@@ -739,7 +740,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			ENDDO
 			(cQryBlq)->(dbCloseArea())
 
-		ENDIF
+		// ENDIF
 
     (cQuery)->(dbSkip())
   ENDDO
@@ -774,17 +775,12 @@ Static Function xGrdClie()
 	//Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
 	// oGrd10:AddLegend( "TPCLI == 'REDE  '" , "BR_AMARELO", "Cliente Rede" )
 	// oGrd10:AddLegend( "TPCLI == 'VAREJO'" , "BR_AZUL", "Cliente Varejo" )
-	oGrd10:AddLegend( "TPBLOQ == 'Pré Bloqueio        '" , "DISABLE", "Pré Bloqueio" )
-	oGrd10:AddLegend( "TPBLOQ == 'Não Processado      '" , "BR_AZUL", "Não Processado" )
-	oGrd10:AddLegend( "TPBLOQ == 'Pré Liberado        ' .AND. BLQCOM == 'Bloqueado           ' " , "BR_LARANJA", "Bloqueio Comercial" )
-	oGrd10:AddLegend( "TPBLOQ == 'Pré Liberado        ' .AND. BLQCRD == 'Bloqueado           ' " , "BR_BRANCO", "Bloqueio Crédito" )
-	oGrd10:AddLegend( "TPBLOQ == 'Pré Liberado        ' .AND. BLQEST == 'Bloqueado           ' " , "BR_PRETO", "Bloqueio Estoque" )
-	oGrd10:AddLegend( "TPBLOQ == 'Pré Liberado        ' .AND. BLQCOM == 'Liberado            '  .AND. BLQCRD == 'Liberado            ' .AND. BLQEST == 'Liberado            '" , "ENABLE", "Pré Liberado" )
-	
-	// oGrd10:SetColumns(AddCols("BLQCOM"		,"Blq. Comercial"	,01,"@!"                          ,1	,aX3TpCl[1]	,aX3TpCl[2] , .T.,"C"))
-	// oGrd10:SetColumns(AddCols("BLQEST"		,"Blq. Estoque"	  ,01,"@!"                          ,1	,aX3TpCl[1]	,aX3TpCl[2] , .T.,"C"))
-	// oGrd10:SetColumns(AddCols("BLQCRD"		,"Blq. Crédito"	  ,01,"@!"                          ,1	,aX3TpCl[1]	,aX3TpCl[2] , .T.,"C"))
 
+	oGrd10:AddLegend( "STSPED == 'B'" , "DISABLE", "Bloqueado" )
+	oGrd10:AddLegend( "STSPED == 'L'" , "BR_AZUL", "Liberado" )
+	oGrd10:AddLegend( "STSPED == 'F'" , "ENABLE" , "Faturado" )
+
+	oGrd10:SetColumns(AddCols("TPBLOQ"		,"Tipo Bloqueio"	,01,"@!"												  ,1	,aX3TpBl[1]	,aX3TpBl[2] , .T.,"C"))
 	oGrd10:SetColumns(AddCols("TPCLI"		  ,"Tipo Cliente"	  ,01,"@!"                          ,1	,aX3TpCl[1]	,aX3TpCl[2] , .T.,"C"))
 	oGrd10:SetColumns(AddCols("FILIAL"		,"Filial"			    ,01,PesqPict("SC5","C5_FILIAL")	  ,1	,aX3Fil[1]	,aX3Fil[2]  , .T.,"C"))
 	// oGrd10:SetColumns(AddCols("REDE"			,"Rede"		     	 	,01,PesqPict("SZF","ZF_REDE")			,1	,aX3CdRd[1]	,aX3CdRd[2] , .T.,"C"))
@@ -1213,12 +1209,16 @@ Static Function CriaExtr(_table)
 		aadd(_aFields,{"LOJA"				,aX3Loja[3]	,aX3Loja[1]	,aX3Loja[2]})
 		aadd(_aFields,{"NOME"		    ,aX3NomC[3]	,aX3NomC[1]	,aX3NomC[2]})
 		aadd(_aFields,{"TOTAL"	    ,aX3TotP[3]	,aX3TotP[1]	,aX3TotP[2]})
-		aadd(_aFields,{"NUMPED"	    ,aX3NumP[3]	,aX3NumP[1]	,aX3NumP[2]})
 		aadd(_aFields,{"TPCLI"      ,aX3TpCl[3]	,aX3TpCl[1]	,aX3TpCl[2]})
+		aadd(_aFields,{"NUMPED"	    ,aX3NumP[3]	,aX3NumP[1]	,aX3NumP[2]})
+		aadd(_aFields,{"STSPED"	    ,aX3StPd[3]	,aX3StPd[1]	,aX3StPd[2]})
+
+		aadd(_aFields,{"NUMPBCO"   ,aX3NumP[3]	,aX3NumP[1]	,aX3NumP[2]}) //Numero de Pedidos com Bloqueio Comercial
+		aadd(_aFields,{"NUMPBCR"   ,aX3NumP[3]	,aX3NumP[1]	,aX3NumP[2]}) //Numero de Pedidos com Bloqueio Crédito
+		aadd(_aFields,{"NUMPBFI"   ,aX3NumP[3]	,aX3NumP[1]	,aX3NumP[2]}) //Numero de Pedidos com Bloqueio Financeiro
+		aadd(_aFields,{"NUMPBES"   ,aX3NumP[3]	,aX3NumP[1]	,aX3NumP[2]}) //Numero de Pedidos com Bloqueio Estoque
+
 		aadd(_aFields,{"TPBLOQ"     ,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
-		aadd(_aFields,{"BLQCOM"  		,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
-		aadd(_aFields,{"BLQEST"  		,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
-		aadd(_aFields,{"BLQCRD"  		,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
 		aadd(_aFields,{"DSCREGRA"		,aX3DscBl[3],aX3DscBl[1],aX3DscBl[2]})
 		aadd(_aFields,{"RELACAO"		,aX3Fil[3],aX3Fil[1]+aX3CdRd[1]+aX3Clie[1]+aX3Loja[1],aX3Fil[2]})
 
@@ -1249,10 +1249,8 @@ Static Function CriaExtr(_table)
 		aadd(_aFields,{"XCOPIA"			,aX3PdXCp[3],aX3PdXCp[1],aX3PdXCp[2]})
 		aadd(_aFields,{"FLAGFIN"		,aX3PdFlg[3],aX3PdFlg[1],aX3PdFlg[2]})
 		aadd(_aFields,{"REFATUR"		,aX3PdRft[3],aX3PdRft[1],aX3PdRft[2]})
+		aadd(_aFields,{"STSPED"	    ,aX3StPd[3]	,aX3StPd[1]	,aX3StPd[2]})
 		aadd(_aFields,{"TPBLOQ"     ,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
-		aadd(_aFields,{"BLQCOM"  		,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
-		aadd(_aFields,{"BLQEST"  		,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
-		aadd(_aFields,{"BLQCRD"  		,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
 		aadd(_aFields,{"DSCREGRA"		,aX3DscBl[3],aX3DscBl[1],aX3DscBl[2]})
 		aadd(_aFields,{"RELACAO"		,aX3Fil[3],aX3Fil[1]+aX3CdRd[1]+aX3Clie[1]+aX3Loja[1],aX3Fil[2]})
 	ELSEIF _table $ 'BLOQUEIOS'
@@ -1675,6 +1673,13 @@ Return
 Static Function xAprvPed()
 	Local aAreaSC5    := SC5->(GetArea())
 	Local aAreaSC9    := SC9->(GetArea())
+
+	Local lLbCrd := .F.
+	Local lLbFin := .F.
+	Local lLbEst := .F.
+
+	Local i := 0 
+
 	Private _nQtdLiber := 0
 	Private lLiber	 := .F.
 	Private	lTrans	 := .F.
@@ -1688,192 +1693,199 @@ Static Function xAprvPed()
 	IF MsgBox("Tem certeza que deseja liberar o(s) Pedido(s) marcados ?","CONFIRMACAO","YESNO")
 		(cTbPed)->(dbGoTop())
 		While !(cTbPed)->(eof())
-			//TODO VERIFICAR O TIPO DE BLOQUEIO E SE O PEDIDO NÃO FOI FATURADO.
-			//TODO AS REGRAS ABAIXO SE APLICAM APENAS PARA BLOQUEIO DE CRÉDITO.
-			//TODO SE NÃO POSSUIR SC9, CONSIDERAR BLOQUEIO DE ESTOQUE E CRÉDITO. NA LIBERAÇÃO DEVE-SE GERAR O SC9
+			lLbCrd := .F.
+			lLbFin := .F.
+			lLbEst := .F.
 
 			IF (cTbPed)->OMARK == oGrd20:Mark() 
 			
 				If SC5->(dbSeek(xFilial("SC5")+(cTbPed)->NUMERO))
-					/**/
-					//TODO NECESSÁRIO AVALIAR O PROPOCESSO DE BLOQUEIO COMERCIAL
-					//TODO SUGESTÃO: SE NÃO ESTIVER LIBERADO COMERCIALMENTE, NÃO O FAZ, MAS REGISTRA NA ZEJ A LIBERAÇÃO
-					//TODO ASSIM, QUANDO OCORRER A LIBERAÇÃO COMERCIAL E JÁ ESTIVER LIBERADO O CREDITO, NÃO PRECISARÁ MAIS LIBERAR O CRÉDITO, GERANDO SC9 SEM BLOQUEIOS.
-					//Força liberação do pedido.
-					// RecLock("SC5",.F.)
-					// SC5->C5_BLQ     := " "
-					// SC5->C5_LIBEROK := "S"
-					// SC5->(MsUnlock())
-					
-					dbSelectArea("ZBE")
-					RecLock("ZBE",.T.)
-						Replace ZBE_FILIAL WITH xFilial("ZBE")
-						Replace ZBE_DATA   WITH dDataBase
-						Replace ZBE_HORA   WITH TIME()
-						Replace ZBE_USUARI WITH UPPER(Alltrim(cUserName))
-						Replace ZBE_LOG    WITH "PEDIDO " + SC5->C5_NUM + " C5_FLAGFIN: "+SC5->C5_FLAGFIN + " C5_XPREAPR: "+SC5->C5_XPREAPR
-						Replace ZBE_MODULO WITH "SC5"
-						Replace ZBE_ROTINA WITH "ADFIN109P"
-					ZBE->(MsUnlock())
+					//VERIFICAR O TIPO DE BLOQUEIO E SE O PEDIDO NÃO FOI FATURADO.
+					if !Empty(SC5->C5_NOTA)
+						alert('O pedido nº '+(cTbPed)->NUMERO+' já foi faturado! A liberação prossegirá com os demais pedidos selecionados.')
+						loop
+					endif
 
-					//TODO VERIFICA SE EXISTE SC9. EM CASO AFIRMATIVO, VERIFICA SE POSSUI BLOQUEIO DE CRED E EST E LIBE. EM CASO NEGATIVO EXECUTA MALIBDOFAT ABAIXO
-					DbSelectArea("SC9")
-					SC9->(dbSetOrder(1))
-					IF SC9->(dbseek(xFilial("SC9")+SC5->C5_NUM))
-						WHILE SC9->(!Eof()) .And. SC5->C5_NUM == SC9->C9_PEDIDO
+					//AS REGRAS ABAIXO SE APLICAM APENAS PARA BLOQUEIO DE CRÉDITO.
+					//SE O ITEM POSSUIR SC9, A FUNÇÃO MALIBDOFAT IRÁ LIBERAR CREDITO E ESTOQUE QUE PORVENTURA ESTEJAM BLOQUEADOS.
+					//SE O ITEM NÃO POSSUIR SC9 E NÃO TIVER BLOQUEIO DE REGRA COMERCIAL, IRÁ GERAR TAMBÉM SEM RESTRICAO DE CREDITO E ESTOQUE
+					//SE O ITEM NÃO POSSUIR SC9 E TIVER BLOQUEIO DE REGRA COMERCIAL, NÃO IRÁ GERAR SC9 NESSE MOMENTO.
+					if Substr((cTbPed)->TPBLOQ,2,1) == 'B' .or. Substr((cTbPed)->TPBLOQ,3,1) == 'B' .or. Substr((cTbPed)->TPBLOQ,4,1) == 'B'
 
-							IF Empty(Alltrim(SC9->C9_NFISCAL)) .AND. (!Empty(Alltrim(SC9->C9_BLCRED)) .or. !Empty(Alltrim(SC9->C9_BLEST)))
-								RecLock("SC9",.F.)
-									SC9->C9_BLEST		:= ''
-									SC9->C9_BLCRED	:= ''
-								SC9->(MsUnlock())
-							ENDIF
+						IF lTESTE == .F.
 
-							SC9->(dbSkip())
+							dbSelectArea("ZBE")
+							RecLock("ZBE",.T.)
+								Replace ZBE_FILIAL WITH xFilial("ZBE")
+								Replace ZBE_DATA   WITH dDataBase
+								Replace ZBE_HORA   WITH TIME()
+								Replace ZBE_USUARI WITH UPPER(Alltrim(cUserName))
+								Replace ZBE_LOG    WITH "PEDIDO " + SC5->C5_NUM + " C5_FLAGFIN: "+SC5->C5_FLAGFIN + " C5_XPREAPR: "+SC5->C5_XPREAPR
+								Replace ZBE_MODULO WITH "SC5"
+								Replace ZBE_ROTINA WITH "ADFIN109P"
+							ZBE->(MsUnlock())
+
+						ENDIF	
+						
+						//VERIFICA SE EXISTE SC9. EM CASO AFIRMATIVO, VERIFICA SE POSSUI BLOQUEIO DE CRED E EST E LIBE. EM CASO NEGATIVO EXECUTA MALIBDOFAT ABAIXO
+						DbSelectArea("SC9")
+						SC9->(dbSetOrder(1))
+						IF SC9->(dbseek(xFilial("SC9")+SC5->C5_NUM))
+							WHILE SC9->(!Eof()) .And. SC5->C5_NUM == SC9->C9_PEDIDO
+
+								IF Empty(Alltrim(SC9->C9_NFISCAL)) .AND. (!Empty(Alltrim(SC9->C9_BLCRED)) .or. !Empty(Alltrim(SC9->C9_BLEST)))
+
+									IF lTESTE == .F.
+
+										RecLock("SC9",.F.)
+											SC9->C9_BLEST		:= ''
+											SC9->C9_BLCRED	:= ''
+										SC9->(MsUnlock())
+
+									ENDIF
+
+									lLbFin := .T.
+									lLbEst := .T.
+								ENDIF
+
+								SC9->(dbSkip())
+							ENDDO
+
+						ELSE
+							dbSelectArea("SC6")
+							dbSetOrder(1)
+							dbGotop()
+							If dbSeek(xFilial("SC6")+SC5->C5_NUM)
+								While SC6->(!Eof()) .And. SC5->C5_NUM == SC6->C6_NUM
+									_nQtdLiber := SC6->C6_QTDVEN
+									// RecLock("SC6")
+									// Efetua a liberação item a item de cada pedido
+									//Begin transaction
+									
+									IF lTESTE == .F.
+									
+										MaLibDoFat( SC6->( Recno() ), @_nQtdLiber, @lCredito, @lEstoque, lAvCred, lAvEst, lLiber, lTrans )
+										// MaLibDoFat( SC6->( RecNo() ), @_nQtdLiber, .F.      , .F.      , .T.    , .T.   , .T.   , .T.    )
+										//End transaction
+										// SC6->(MsUnLock())
+
+										Begin Transaction
+											SC6->(MaLiberOk({SC5->C5_NUM},.F.))
+										End Transaction
+
+									ENDIF
+
+									SC6->(dbSkip())
+								EndDo
+							EndIf
+							DbSelectArea("SC9") //gravo a data de entrega e vendedor(carteira) para os pedidos liberados
+							dbSetOrder(1)
+							if dbseek(xFilial("SC9")+SC5->C5_NUM)
+								While SC9->(!Eof()) .And. SC5->C5_NUM == SC9->C9_PEDIDO
+
+									IF lTESTE == .F.
+
+										RecLock("SC9",.F.)
+											SC9->C9_DTENTR := SC5->C5_DTENTR
+											SC9->C9_VEND1  := SC5->C5_VEND1
+										SC9->(MsUnlock())
+
+									ENDIF
+
+									lLbFin := .T.
+									lLbEst := .T.
+									SC9->(dbSkip())
+								EndDo
+							Endif
+						ENDIF
+							
+						IF lTESTE == .F.
+
+							If RecLock("SC5",.F.)
+								SC5->C5_XPREAPR := "L"
+								SC5->C5_FLAGFIN := "L"
+								If Findfunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt = "02" .And. Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
+									U_ADVEN050P(,.F.,.T., " AND C5_NUM IN ('" + SC5->C5_NUM + "') AND C5_XPEDSAL <> '' " ,.T.)
+								EndIf
+								SC5->(MsUnlock())
+								
+
+								//GRAVA REGISTRO DA LIBERAÇÃO DE CRÉDITO
+								If RecLock("ZEJ",.T.)
+									ZEJ->ZEJ_FILIAL	:= SC5->C5_FILIAL
+									ZEJ->ZEJ_NUM		:= SC5->C5_NUM
+									ZEJ->ZEJ_DTLIB	:= MsDate()
+									ZEJ->ZEJ_HRLIB	:= TIME()
+									ZEJ->ZEJ_USRLIB	:= cUserName
+									ZEJ->ZEJ_VLLIB	:= (cTbPed)->TOTAL
+									ZEJ->ZEJ_MOTLIB	:= ''
+									ZEJ->ZEJ_PARECE	:= ''
+
+									ZEJ->(MsUnlock())
+								Endif
+
+							EndIf
+
+						ENDIF
+
+						lLbCrd := .T.
+
+						// Apaga registro do browser de bloqueios
+						(cTbBlq)->(dbGoTop())
+						WHILE !(cTbBlq)->(eof())
+							RECLOCK(cTbBlq,.F.)
+								(cTbBlq)->( DbDelete() )
+							(cTbBlq)->(MSUnlock())
+
+							(cTbBlq)->(dbSkip())
 						ENDDO
 
-					ELSE
-						dbSelectArea("SC6")
-						dbSetOrder(1)
-						dbGotop()
-						If dbSeek(xFilial("SC6")+SC5->C5_NUM)
-							While SC6->(!Eof()) .And. SC5->C5_NUM == SC6->C6_NUM
-								_nQtdLiber := SC6->C6_QTDVEN
-								// RecLock("SC6")
-								// Efetua a liberação item a item de cada pedido
-								//Begin transaction
-								MaLibDoFat( SC6->( Recno() ), @_nQtdLiber, @lCredito, @lEstoque, lAvCred, lAvEst, lLiber, lTrans )
-								// MaLibDoFat( SC6->( RecNo() ), @_nQtdLiber, .F.      , .F.      , .T.    , .T.   , .T.   , .T.    )
-								//End transaction
-								// SC6->(MsUnLock())
+						RECLOCK(cTbPed,.F.)
+							(cTbPed)->TPBLOQ := Substr((cTbPed)->TPBLOQ,1,1)+IIF(lLbCrd,'L',Substr((cTbPed)->TPBLOQ,2,1))+IIF(lLbFin,'L',Substr((cTbPed)->TPBLOQ,3,1))+IIF(lLbEst,'L',Substr((cTbPed)->TPBLOQ,4,1))
+							(cTbPed)->STSPED := 'L'
+						(cTbPed)->(MSUnlock())
 
-								Begin Transaction
-									SC6->(MaLiberOk({SC5->C5_NUM},.F.))
-								End Transaction
-								SC6->(dbSkip())
-							EndDo
-						EndIf
-						DbSelectArea("SC9") //gravo a data de entrega e vendedor(carteira) para os pedidos liberados
-						dbSetOrder(1)
-						if dbseek(xFilial("SC9")+SC5->C5_NUM)
-							While SC9->(!Eof()) .And. SC5->C5_NUM == SC9->C9_PEDIDO
-								RecLock("SC9",.F.)
-									SC9->C9_DTENTR := SC5->C5_DTENTR
-									SC9->C9_VEND1  := SC5->C5_VEND1
-								SC9->(MsUnlock())
-								SC9->(dbSkip())
-							EndDo
-						Endif
-					ENDIF
+					endif
+
+				endif
 					
-					If RecLock("SC5",.F.)
-						SC5->C5_XPREAPR := "L"
-						SC5->C5_FLAGFIN := "L"
-						If Findfunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt = "02" .And. Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
-							U_ADVEN050P(,.F.,.T., " AND C5_NUM IN ('" + SC5->C5_NUM + "') AND C5_XPEDSAL <> '' " ,.T.)
-						EndIf
-						SC5->(MsUnlock())
+				//TODO NECESSÁRIO AVALIAR O PROPOCESSO DE BLOQUEIO COMERCIAL
+				//TODO SUGESTÃO: SE NÃO ESTIVER LIBERADO COMERCIALMENTE, NÃO O FAZ, MAS REGISTRA NA ZEJ A LIBERAÇÃO
+				//TODO ASSIM, QUANDO OCORRER A LIBERAÇÃO COMERCIAL E JÁ ESTIVER LIBERADO O CREDITO, NÃO PRECISARÁ MAIS LIBERAR O CRÉDITO, GERANDO SC9 SEM BLOQUEIOS.
+				//Força liberação COMERCIAL do pedido.
+				// SC5->C5_BLQ     := " "
+				// SC5->C5_LIBEROK := "S"
+				
+			Endif
 
-						//GRAVA REGISTRO DA LIBERAÇÃO DE CRÉDITO
-						If RecLock("ZEJ",.T.)
-							ZEJ->ZEJ_FILIAL	:= SC5->C5_FILIAL
-							ZEJ->ZEJ_NUM		:= SC5->C5_NUM
-							ZEJ->ZEJ_DTLIB	:= MsDate()
-							ZEJ->ZEJ_HRLIB	:= TIME()
-							ZEJ->ZEJ_USRLIB	:= cUserName
-							ZEJ->ZEJ_VLLIB	:= (cTbPed)->TOTAL
-							ZEJ->ZEJ_MOTLIB	:= ''
-							ZEJ->ZEJ_PARECE	:= ''
 
-							ZEJ->(MsUnlock())
-						Endif
-
-					EndIf
-					/**/
-					
-					// //WS BRADESCO - Pedidos Vendas com Adiantamento que não foram autorizados pelo retorno do CNAB 
-					// FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
-					// If FIE->( msSeek(FWxFilial("FIE")+"R"+SC5->C5_NUM) ) .or. AllTrim(Posicione("SE4",1,FWxFilial("SE4")+SC5->C5_CONDPAG,"E4_CTRADT")) == "1" // Cond Adiantamento = SIM 
-
-					// 			// ticket 745 - FWNM - 30/09/2020 - C5_XWSPAGO com identificação para liberação manual
-					// 			/*
-					// 			RecLock("SC5", .f.)
-					// 				SC5->C5_XWSPAGO := "S"
-					// 			SC5->( msUnLock() )
-					// 			*/
-
-					// 			dbSelectArea("ZBE")
-					// 			RecLock("ZBE", .T.)
-					// 				Replace ZBE_FILIAL WITH FWxFilial("ZBE")
-					// 				Replace ZBE_DATA   WITH msDate()
-					// 				Replace ZBE_HORA   WITH TIME()
-					// 				Replace ZBE_USUARI WITH UPPER(Alltrim(cUserName))
-					// 				Replace ZBE_LOG    WITH "PV ADIANT N " + SC5->C5_NUM + " C5_XWSPAGO: " + SC5->C5_XWSPAGO + " LIBERADO FATURAMENTO MANUALMENTE"
-					// 				Replace ZBE_MODULO WITH "SC5"
-					// 				Replace ZBE_ROTINA WITH "ADFIN023P"
-					// 			ZBE->( msUnLock() )
-
-					// 		EndIf	
-					// Apaga registro do browser de bloqueios
-					(cTbBlq)->(dbGoTop())
-					WHILE !(cTbBlq)->(eof())
-						RECLOCK(cTbBlq,.F.)
-							(cTbBlq)->( DbDelete() )
-						(cTbBlq)->(MSUnlock())
-
-						(cTbBlq)->(dbSkip())
-					ENDDO
-						
-					RECLOCK(cTbPed,.F.)
-						(cTbPed)->( DbDelete() )
-					(cTbPed)->(MSUnlock())
-				Endif
-
-			ENDIF
 			(cTbPed)->(dbSkip())
 			(cTbBlq)->(dbGoTop())
 		EndDO
 
-		// (cTbPed)->(dbGoTop())
-		
 		IF (cTbPed)->(eof())
+		  //
+			(cTbPed)->(dbGoTop())
+			cVarLb := 'LLLL'
+			While !(cTbPed)->(eof())
+				
+				For i:=1 to Len((cTbPed)->TPBLOQ)
+					if Substr((cTbPed)->TPBLOQ,i,1) == 'B'
+						cVarLb := Substr(cVarLb,1,i-1)+Substr((cTbPed)->TPBLOQ,i,1)+Substr(cVarLb,i+1,Len(cVarLb)-i)
+					endif
+
+				Next i
+
+				(cTbPed)->(dbSkip())
+			Enddo
+
 			RECLOCK(cTbClie,.F.)
-				(cTbClie)->( DbDelete() )
+				(cTbClie)->TPBLOQ := cVarLb
+			// 	(cTbClie)->( DbDelete() )
 			(cTbClie)->(MSUnlock())
-
-			IF !(cTbClie)->(eof())
-				(cTbClie)->(dbSkip())
-			ELSE 
-				(cTbClie)->(dbGoTop())
-			endif
-
-			// oGrd10:oBrowse:Refresh()
-			// nPosBrw := oGrd10:oBrowse:At()
-			// nRegTCli := (cTbClie)->(Recno())
-			// oGrd10:Refresh(.T.)
-			// (cTbClie)->(dbGoTo(nRegTCli))
-			// oGrd10:oBrowse:GoTo(nPosBrw)
-			// oGrd10:oBrowse:Refresh()
-			
-			// oGrd20:Refresh(.T.)
-			// oGrd20:oBrowse:Refresh()
-
-			// oRelGr12:DeActivate()
-			// oRelGr12:= FWBrwRelation():New()
-			// oRelGr12:AddRelation(oGrd10 , oGrd20 , { { 'RELACAO','RELACAO'} } )
-			// oRelGr12:Activate()
-
-			// nRegACli := oGrd10:oBrowse:At()
-
-			(cTbClie)->(dbGoTop())
 			oGrd10:oBrowse:Refresh()
-			oGrd10:GoBottom()
-			oGrd10:GoTop()
-			oGrd10:Refresh(.T.)
-			// (cTbClie)->(dbGoTo(nRegTCli))
-			
-			// oGrd10:GoDown(1)
-			// oGrd10:oBrowse:Goto(nRegACli+1, .F.)
+			oGrd20:oBrowse:Refresh()
+			oGrd30:oBrowse:Refresh()
 
 		ENDIF
 
@@ -1881,19 +1893,6 @@ Static Function xAprvPed()
 	// ELSE
 	// 	Alert('Não é possível liberar pedido sem informar o Parecer de Liberação! (Mínimo de 10 caracteres)')
 	// ENDIF
-
-	// xChgLinC()	
-	(cTbPed)->(dbGoTop())
-	oGrd20:oBrowse:Refresh()
-	oGrd20:GoBottom()
-	oGrd20:GoTop()
-	oGrd20:Refresh(.T.)
-
-	(cTbBlq)->(dbGoTop())
-	oGrd30:oBrowse:Refresh()
-	oGrd30:GoBottom()
-	oGrd30:GoTop()
-	oGrd30:Refresh(.T.)
 
 	RestArea(aAreaSC9)
 	RestArea(aAreaSC5)
@@ -1907,9 +1906,11 @@ Return
 	/*/
 Static Function xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)
 	Private oProcess	
+	IF MsgBox("Deseja liberar Estoque de todos os pedidos conforme parâmetros (lote)? Apenas pedidos sem bloqueio comercial serão liberados.","CONFIRMACAO","YESNO")
+		oProcess := MsNewProcess():New({|| xLibEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)  },"Liberando Pedidos com bloqueio de estoque...","Liberação de Estoque",.T.)
+		oProcess:Activate()
+	ENDIF
 
-	oProcess := MsNewProcess():New({|| xLibEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)  },"Liberando Pedidos com bloqueio de estoque...","Liberação de Estoque",.T.)
-	oProcess:Activate()
 Return 
 
 /*/{Protheus.doc} Static Function xLibEst
@@ -2053,54 +2054,58 @@ Static Function xRlRdSeg()
 
 	Private oPrcRlRd
 
-	If Select("TREDE") > 0
-		TREDE->(DbCloseArea())
-	EndIf
+	if (cTbClie)->TPCLI  == 'REDE  '
+		If Select("TREDE") > 0
+			TREDE->(DbCloseArea())
+		EndIf
 
-	oTempMRede := FWTemporaryTable():New("TREDE")
-	aCampos := {}
-	Aadd(aCampos,{"OK" 	   ,"C",02,0})
-	Aadd(aCampos,{"TMP_RED"  ,"C",10,0})
-	Aadd(aCampos,{"TMP_DESC" ,"C",40,0})
-	oTempMRede:SetFields(aCampos)
-	oTempMRede:AddIndex("01", {"TMP_RED"} )
-	oTempMRede:Create()
+		oTempMRede := FWTemporaryTable():New("TREDE")
+		aCampos := {}
+		Aadd(aCampos,{"OK" 	   ,"C",02,0})
+		Aadd(aCampos,{"TMP_RED"  ,"C",10,0})
+		Aadd(aCampos,{"TMP_DESC" ,"C",40,0})
+		oTempMRede:SetFields(aCampos)
+		oTempMRede:AddIndex("01", {"TMP_RED"} )
+		oTempMRede:Create()
 
-	RecLock("TREDE",.T.)		
-	TREDE->OK		:= ""
-	TREDE->TMP_RED	:= (cTbClie)->CODIGO
-	TREDE->TMP_DESC	:= (cTbClie)->NOME
-	MsunLock()
+		RecLock("TREDE",.T.)		
+		TREDE->OK		:= ""
+		TREDE->TMP_RED	:= (cTbClie)->CODIGO
+		TREDE->TMP_DESC	:= (cTbClie)->NOME
+		MsunLock()
 
-	Aadd(aCpoBro,{"OK"	     ,, ""})		
-	Aadd(aCpoBro,{"TMP_RED"  ,,"Rede"})	
-	Aadd(aCpoBro,{"TMP_DESC" ,,"Nome"})
+		Aadd(aCpoBro,{"OK"	     ,, ""})		
+		Aadd(aCpoBro,{"TMP_RED"  ,,"Rede"})	
+		Aadd(aCpoBro,{"TMP_DESC" ,,"Nome"})
 
-	oMkRede := MsSelect():New("TREDE","OK","",aCpoBro ,.F.,gETmARK() ,{1000,1000,1,1},,,oPnlFilt1,,)
-	// oMkRede:bMark := {| | DispRede(oMkRede,cMark)} 
-	// oMkRede:oBrowse:bAllMark := {|| RedeInvert(oMkRede,cMark) }
-	// Eval(oMkRede:oBrowse:bGoTop)
-	oMkRede:oBrowse:Refresh()
+		oMkRede := MsSelect():New("TREDE","OK","",aCpoBro ,.F.,gETmARK() ,{1000,1000,1,1},,,oPnlFilt1,,)
+		// oMkRede:bMark := {| | DispRede(oMkRede,cMark)} 
+		// oMkRede:oBrowse:bAllMark := {|| RedeInvert(oMkRede,cMark) }
+		// Eval(oMkRede:oBrowse:bGoTop)
+		oMkRede:oBrowse:Refresh()
 
-	If Select("TCLI") > 0
-		TCLI->(DbCloseArea())
-	EndIf
+		If Select("TCLI") > 0
+			TCLI->(DbCloseArea())
+		EndIf
 
-	oTempMCli := FWTemporaryTable():New("TCLI")
-	aCampos := {}
-	Aadd(aCampos,{"OK" 	     ,"C",02,0})
-	Aadd(aCampos,{"TMP_COD"  ,"C",06,0})
-	Aadd(aCampos,{"TMP_LOJA" ,"C",02,0})
-	Aadd(aCampos,{"TMP_NOME" ,"C",40,0})
-	oTempMCli:SetFields(aCampos)
-	oTempMCli:AddIndex("01", {"TMP_COD"} )
-	oTempMCli:Create()
+		oTempMCli := FWTemporaryTable():New("TCLI")
+		aCampos := {}
+		Aadd(aCampos,{"OK" 	     ,"C",02,0})
+		Aadd(aCampos,{"TMP_COD"  ,"C",06,0})
+		Aadd(aCampos,{"TMP_LOJA" ,"C",02,0})
+		Aadd(aCampos,{"TMP_NOME" ,"C",40,0})
+		oTempMCli:SetFields(aCampos)
+		oTempMCli:AddIndex("01", {"TMP_COD"} )
+		oTempMCli:Create()
 
-	// StaticCall(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)
-	oPrcRlRd := MsNewProcess():New({|| StaticCall(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)  },"Aguarde a geração do relatório...","Relatório Rede Segmento",.T.)
-	oPrcRlRd:Activate()
+		// StaticCall(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)
+		oPrcRlRd := MsNewProcess():New({|| StaticCall(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)  },"Aguarde a geração do relatório...","Relatório Rede Segmento",.T.)
+		oPrcRlRd:Activate()
 
-	oPnlFilt1:FreeChildren()
+		oPnlFilt1:FreeChildren()
+	else
+		Alert('Atenção!','Para exucutar essa opção é necessário estar posicionado em um cliente do tipo REDE.')
+	endif
 
 	RestArea(aArea)
 Return

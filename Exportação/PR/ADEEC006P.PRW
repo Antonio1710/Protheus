@@ -43,6 +43,7 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 15/03/2021 - Desenvolvimento da consulta para gestão das exportações.
     @history Chamado 8465 - Leonardo P. Monteiro - 16/03/2021 - Correção no filtro de datas.
     @history Chamado 8465 - Leonardo P. Monteiro - 16/03/2021 - Correção nos saldos em estoque do eData.
+    @history Chamado 8465 - Leonardo P. Monteiro - 02/07/2021 - Implementação dos novos recursos de integração com o App da qualidade.
 /*/
 user function ADEEC006P()
     Local cTitle    := "..:: Monitor de Exportação ::.."
@@ -570,10 +571,12 @@ Static Function layPanel()
     oMenu0201 := tMenuItem():new(oWnd, "Consulta/Confecção"     , , ,       , {|| fAcao(2,   1, .F.)},,,,,,,,,.T.)
     oMenu0202 := tMenuItem():new(oWnd, "Cons. Manutenção"       , , ,       , {|| fAcao(2,   2, .F.)},,,,,,,,,.T.)
     oMenu0203 := tMenuItem():new(oWnd, "Atual. Dados"           , , ,       , {|| fAcao(2,   3, .T.)},,,,,,,,,.T.)
+    oMenu0204 := tMenuItem():new(oWnd, "Consulta"               , , ,       , {|| fAcao(2,   4, .T.)},,,,,,,,,.T.)
 
     oMenu02:add(oMenu0201)
     oMenu02:add(oMenu0202)
     oMenu02:add(oMenu0203)
+    oMenu02:add(oMenu0204)
     oButPed:setPopupMenu(oMenu02)
 
     oButEmb := TButton():New( 0, oSize:GetDimension("OBJ03","COLINI"), "Workflows", oOpc,{|| fAcao(3, nil, .F.)}  , oSize:GetDimension("OBJ03","XSIZE"),;
@@ -582,11 +585,13 @@ Static Function layPanel()
     oMenu03 := tMenu():new(0, 0, 0, 0, .T.)
     // cria os itens dos submenus
     
-    oMenu0301 := tMenuItem():new(oWnd, "Prev. Embarques", , ,       , {|| fAcao(3,   1, .F.)},,,,,,,,,.T.)
-    oMenu0302 := tMenuItem():new(oWnd, "Noti. Embarques", , ,       , {|| fAcao(3,   2, .F.)},,,,,,,,,.T.)
-    
+    oMenu0301 := tMenuItem():new(oWnd, "Prev. Embarques"    , , ,       , {|| fAcao(3,   1, .F.)},,,,,,,,,.T.)
+    oMenu0302 := tMenuItem():new(oWnd, "Noti. Embarques"    , , ,       , {|| fAcao(3,   2, .F.)},,,,,,,,,.T.)
+    oMenu0303 := tMenuItem():new(oWnd, "Inspec. Qualidade"  , , ,       , {|| fAcao(3,   3, .F.)},,,,,,,,,.T.)
+
     oMenu03:add(oMenu0301)
     oMenu03:add(oMenu0302)
+    oMenu03:add(oMenu0303)
     oButEmb:setPopupMenu(oMenu03)
 
     oButDet := TButton():New( 0, oSize:GetDimension("OBJ04","COLINI"), "Monitor", oOpc,{|| }    , oSize:GetDimension("OBJ04","XSIZE"),;
@@ -625,7 +630,10 @@ Static Function fAcao(nAcao, nOper, lRefresh)
     Local cTitulo       := ""
     Local cModel        := ""
     Local nOperation    := 4
+    Local aParamBox     := {}
+    Local aRet          := {}
     Private cPedExp     := ""
+    
 
     // 1. Relatório/Exportação de dados
     if nAcao == 1
@@ -659,6 +667,11 @@ Static Function fAcao(nAcao, nOper, lRefresh)
             cModel      := "ADEEC009P"
             nOperation  := 4
             nConfirma := FWExecView(cTitulo,cModel, nOperation, , { || .T. }, , 0, )
+        elseif nOper == 4
+            cTitulo     := "Pedido de Exportação - Consulta"
+            cModel      := "ADEEC009P"
+            nOperation  := 1
+            nConfirma := FWExecView(cTitulo,cModel, nOperation, , { || .T. }, , 0, )
         endif
     
     // 3. Workflows e Integrações.
@@ -669,11 +682,22 @@ Static Function fAcao(nAcao, nOper, lRefresh)
             If msgYesNo("Deseja enviar o workflow das previsões de embarque?")
                 U_ADEEC008P()
             endif
-        //LPM
+
         // Processa envio do workflow de notificação de embarque.
         elseif nOper == 2
             If msgYesNo("Deseja enviar o workflow de notificação de embarque?")
                 U_ADEEC010P()
+            endif
+        // Importa as inspeções da qualidade.
+        elseif nOper == 3
+            Aadd( aParamBox ,{1,"Data Embarque?"						,dDatabase,"" ,'.T.',"",'.T.',80,.F.})
+            aAdd( aParamBox	,{3,"Reprocessar todos?"		        ,1,{'Importar todos','Somente pendentes'},100,"",.F.})
+            
+            if ParamBox(aParamBox,"Parâmetros",@aRet)
+                MsAguarde({|| U_ADQUA002(MV_PAR01, MV_PAR02) }, "Processando", "Importando os resultados das inspeções...")
+                msginfo("Processamento finalizado!")
+            else
+                msginfo("Operação cancelada pelo operador!")
             endif
         endif
     
