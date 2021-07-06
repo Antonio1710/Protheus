@@ -7,6 +7,7 @@
 	@author Adriana Oliveira
 	@since 30/05/11
 	@history Chamado 057012 - Abel Babini - 30/03/2020 - Rel. Conferência. Ajustar para permitir geração para empresas 07 e 09
+	@history Ticket  16374  - Abel Babini - 05/07/2021 - Rel. Conferência. Informações faltantes no relatório para a SAFEGG
 	/*/
 
 USER FUNCTION ADFIS001()
@@ -49,7 +50,7 @@ USER FUNCTION ADFIS001()
 	
 	If cEmpAnt =  "01" 
 
-		_aEntidade  :={{"01","000011"},{"02","000001"},{"03","000002"},{"04","000005"},{"05","000007"},{"06","000004"},{"07","000013"},{"08","000014"},{"09","000015"}}
+		_aEntidade  :={{"01","000011"},{"02","000001"},{"03","000002"},{"04","000005"},{"05","000007"},{"06","000004"},{"07","000013"},{"08","000014"},{"09","000015"},{"0A","000021"}}
 
 	ElseIf cEmpAnt =  "02"
 
@@ -61,7 +62,7 @@ USER FUNCTION ADFIS001()
 
 	ElseIf cEmpAnt =  "09" //SAFEGG
 
-		_aEntidade  :={{"01","000018"}}
+		_aEntidade  :={{"01","000020"}}
 	//FIM Chamado 057012 - Abel Babini - 30/03/2020 - Rel. Conferência. Ajustar para permitir geração para empresas 07 e 09
 	EndIf
 	//+-------------------------------------------------------------------------+

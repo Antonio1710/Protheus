@@ -283,10 +283,10 @@ Static Function fTlAprov()
     @ 119,045 MSGET cRedAte									SIZE 035,008 	OF oPnSt01 PIXEL PICTURE '@!' F3 "SZF"
 
 		//Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
-		// @ aBtnPos[9],000 BUTTON OemToAnsi('UP')												SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xGoUP()) OF oPnSt01 PIXEL //"Exportar Excel"
-		// @ aBtnPos[8],000 BUTTON OemToAnsi('DOWN')											SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xGoDown()) OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[7],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda...")) 			OF oPnSt01 PIXEL //"Exportar Excel"
+		
+		@ aBtnPos[8],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[7],000 BUTTON OemToAnsi('Libera Pedido')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda...")) 			OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[6],000 BUTTON OemToAnsi('Pedidos Venda Adiantamento')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN090P()) OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[5],000 BUTTON OemToAnsi('Posição do Cliente')				SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA)) 																		OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[4],000 BUTTON OemToAnsi('Liberação de Estoque')			SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnSt01 PIXEL //"Exportar Excel"
 		// @ aBtnPos[3],000 BUTTON OemToAnsi('Painel Contas á Receber')	SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN030P()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
@@ -419,6 +419,10 @@ Static Function xVerStsP(cQuery)
 	Local cStsEst := 'L'
 	Local cStsPed := 'L'
 	
+	// if (cQuery)->C5_CLIENTE == '055389'
+	// 	ALERT('ACHOU!')	
+	// endif
+
 	IF Alltrim((cQuery)->C5_BLQ) == '1' 
 		cStsCom := 'B'
 	ELSE
@@ -458,7 +462,7 @@ Static Function xVerStsP(cQuery)
 	ENDIF
 
 	
-	IF cStsCrd == 'B'.OR. cStsCrd == 'N' .OR. cStsFin == 'B'// .OR. cStsEst == 'Bloqueado' .OR. cStsCom == 'Bloqueado'
+	IF cStsCrd == 'B'.OR. cStsCrd == 'N' //.OR. cStsFin == 'B' .OR. cStsEst == 'Bloqueado' .OR. cStsCom == 'Bloqueado'
 		cStsPed := 'B'
 	ENDIF
 
@@ -637,7 +641,6 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 				(cTbClie)->(MSUNLOCK())
 
 			ELSEIF Empty(Alltrim((cQuery)->A1_CODRED)) .AND. !(cTbClie)->(DbSeek((cQuery)->C5_FILIAL+'VAREJO'+(cQuery)->C5_CLIENTE+(cQuery)->C5_LOJACLI))
-
 				RECLOCK(cTbClie,.T.)      
 					(cTbClie)->RELACAO	:= (cQuery)->C5_FILIAL+'VAREJO'+(cQuery)->C5_CLIENTE+(cQuery)->C5_LOJACLI
 					(cTbClie)->FILIAL   := (cQuery)->C5_FILIAL
@@ -821,6 +824,8 @@ Static Function xGrdPed()
 	// oGrd20:AddLegend( "REGRA == '  '" , "ENABLE", "Borderô OK" )
 	// oGrd20:AddLegend( "REGRA == ' 1'" , "DISABLE", "Borderô com títulos com restrição" )
 	// oGrd20:AddLegend( "REGRA == ' 2'" , "BR_AZUL", "Borderô com títulos em aprovação" )
+	oGrd20:AddLegend( "STSPED == 'B'" , "DISABLE", "Bloqueio Crédito" )
+	oGrd20:AddLegend( "STSPED == 'L'" , "ENABLE" , "Bloqueio Comercial/ Financeiro / Estoque" )
 
 	oGrd20:SetColumns(AddCols("FILIAL"		,"Filial"			    ,01,PesqPict("SC5","C5_FILIAL")	  ,1	,aX3Fil[1]	,aX3Fil[2]  , .T.,"P"))
 	// oGrd20:SetColumns(AddCols("REDE"			,"Rede"		     	 	,01,PesqPict("SZF","ZF_REDE")			,1	,aX3CdRd[1]	,aX3CdRd[2] , .T.,"P"))
@@ -840,9 +845,9 @@ Static Function xGrdPed()
 
 	oGrd20:SetColumns(AddCols("TOTAL"		  ,"Total Ped."	    ,01,PesqPict("SC5","C5_XTOTPED")	,2	,aX3TotP[1] ,aX3TotP[2]	, .T.,"P"))
 
-	oGrd20:SetColumns(AddCols("TIPO"		  ,"Tipo Pedido"	  ,01,PesqPict("SC5","C5_TIPO")  		,1	,aX3PdTp[1]	,aX3PdTp[2] , .T.,"P"))
+	// oGrd20:SetColumns(AddCols("TIPO"		  ,"Tipo Pedido"	  ,01,PesqPict("SC5","C5_TIPO")  		,1	,aX3PdTp[1]	,aX3PdTp[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("TPBLOQ"		,"Tipo Bloqueio"	,01,"@!"												  ,1	,aX3TpBl[1]	,aX3TpBl[2] , .T.,"P"))
-	oGrd20:SetColumns(AddCols("DSCREGRA"	,"Bloqueio"       ,01,"@!"												  ,1	,aX3DscBl[1],aX3DscBl[2], .T.,"P"))		
+	// oGrd20:SetColumns(AddCols("DSCREGRA"	,"Bloqueio"       ,01,"@!"												  ,1	,aX3DscBl[1],aX3DscBl[2], .T.,"P"))		
 
 	oGrd20:DisableReport()
 
