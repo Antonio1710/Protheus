@@ -7,7 +7,6 @@
 - Por favor, incluir o número do ticket do Movidesk. 
 (Please, include the ticket number of Movidesk.)
 
-
 # Tipo de Mudança (Type of change)
 
 - [] Correções de Bug (Bugfix - Non-breaking change which fixes and issue)
