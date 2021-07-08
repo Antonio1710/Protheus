@@ -14,7 +14,7 @@ Static cFormatRet := "application/json"
     @version 01
     @history Everson, 18/05/2021, Chamado 7936. Tratamento para apontamento das horas no fechamento da OS, adicionado  login.
     @history Everson, 07/07/2021, Chamado 16369. Tratamento para apontamento de fechamento na SS.
-    /*/
+    //*/
 User Function ADMNT015P
 Return Nil
 WsRestFul manutencao Description "Serviço REST para controle de ordens de serviço de manutenção"
