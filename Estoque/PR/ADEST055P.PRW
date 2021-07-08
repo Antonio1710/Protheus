@@ -31,6 +31,8 @@
 #DEFINE GRI_REQMER          8
 #DEFINE HOM_PAIS            9
 #DEFINE HOM_CLI            10
+#DEFINE HOM_EXI            11
+#DEFINE HOM_CSI            12
 
 // Defines dos campos.
 #DEFINE CONSULTA_PAIS_CAMPOS        "YA_CODGI,YA_DESCR"
@@ -42,9 +44,11 @@
 #DEFINE PGA_PRD_HOMOL_CAMPOS        "B1_COD,B1_DESC,B1_TIPO"
 #DEFINE HOM_PAIS_CAMPOS             "YA_CODGI,YA_DESCR"
 #DEFINE HOM_CLI_CAMPOS              "A1_COD, A1_LOJA, A1_NOME,A1_NREDUZ"
+#DEFINE HOM_EXI_CAMPOS              "ZEZ_COD,ZEZ_DESCRI,ZEZ_OBSERV"
+#DEFINE HOM_CSI_CAMPOS              "ZEA_COD,ZEA_DESCRI,ZEA_OBSERV"
 //#DEFINE HOM_PAIS_CAMPOS           "B1_COD,B1_DESC,B1_TIPO"
 
-/*/{Protheus.doc} User Function ADEST055P
+/*/{Protheus.doc} User Function ADEST055P u_ADEST055P()
     Tela de gestão dos cadastros PGA.
     Chamado 8465
     @type  Function
@@ -56,6 +60,7 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 30/04/2021 - Melhoria na rotina para criação da sub-categoria do PGA.
     @history Chamado 8465 - Leonardo P. Monteiro - 05/05/2021 - Correção de error.log na execução da rotina.
     @history Chamado 8465 - Leonardo P. Monteiro - 28/05/2021 - Inclusão da opção de integração via Web-bot PGA.
+    @history Chamado 8465 - Leonardo P. Monteiro - 06/07/2021 - Implementação dos modelos CSI e exigências por país.
 /*/
 
 user function ADEST055P(nOperac)
@@ -108,6 +113,8 @@ Static Function fProcessa(nOperac)
     Private bPgBMer     := {|| iif(nBrwFocused == PGA_MERCADO, foBrwPrd(PGA_PRODUTO), ) }
 
     Private bCoBPro     := {|| fCoBPro() }
+    //Private bHoBPai     := {|| fHoBPai() }
+
 
     PRIVATE oFoCol1
     // --------------------------------------------
@@ -148,6 +155,9 @@ Static Function fProcessa(nOperac)
     Private oPgBPrd
     Private oHoBPai
     Private oHoBCli
+    Private oHoBExi
+    Private oHoBCsi
+    
 
     //Dbtree
     Private oPgTRMe
@@ -223,10 +233,15 @@ Static Function fProcessa(nOperac)
     Private aHoCliCam       := {}
     Private aHoCliDad       := {}
 
-    //Array o Browser HOM_PAIS
-    //Private aHoPaiCab       := {}
-    //Private aHoPaiCam       := {}
-    //Private aHoPaiDad       := {}
+    //Array o Browser HOM_CSI
+    Private aHoCsiCab       := {}
+    Private aHoCsiCam       := {}
+    Private aHoCsiDad       := {}
+
+    //Array o Browser HOM_EXI
+    Private aHoExiCab       := {}
+    Private aHoExiCam       := {}
+    Private aHoExiDad       := {}
 
     // Campos
     Private oZE1REGT
@@ -405,14 +420,16 @@ return nil
 Static Function fCoBPro() // oCoBPro
     //Local nPos  := oCoBPrd:At()
     //Local cProd	:= aCoPrdDad[oBrwProntos:At(), aScan(aCoPrdCam, "B1_COD")]
+    
+    
     if Type("oCoBPHo") == "O"
 
         aCoPHoDad := getDadosBrw(CONSULTA_PAIS)
         
         oCoBPHo:setArray(aCoPHoDad)
         oCoBPHo:Refresh()
-
-        fGrafico()
+        //TMP    
+        //fGrafico()
     endif
 
 Return
@@ -578,7 +595,8 @@ Static function fPanel1(cDescri, nRow, nCol, nHeight, nWidth)
     //oCoGd01   := tGridLayout():New(oCoWin02,CONTROL_ALIGN_ALLCLIENT)
     oChart := FWChartFactory():New()
     oChart:SetOwner(oCoWin02)
-    fGrafico()
+    //TMP
+    //fGrafico()
     
 
     //********************************************
@@ -959,6 +977,18 @@ Static function fChgTrG()
         oHoBCli:setArray(aHoCliDad)         
         oHoBCli:Refresh()
 
+        if type("oHoBCsi") == "O"
+            aHoCsiDad		:= getDadosBrw(HOM_CSI)
+            oHoBCsi:setArray(aHoCsiDad)
+            oHoBCsi:Refresh()
+        ENDIF
+
+        if type("oHoBExi") == "O"
+            aHoExiDad		:= getDadosBrw(HOM_EXI)
+            oHoBExi:setArray(aHoExiDad)
+            oHoBExi:Refresh()
+        Endif
+
     endif
 
 return
@@ -1207,6 +1237,140 @@ Static Function fPgAcao(nGrp,nAcao)
         // Integração PGA.
         Elseif nGrp == "007"
             fIntPGA()
+        // Opções de países/Requisito de Mercado
+        Elseif nGrp == "008"
+
+            if nAcao == 1
+                cTitulo := "Países/Requisitos de Mercado ("+ cAcao +")"
+                cModel  := "ADEST067P"
+                lValid  := .T.
+                
+                DbSelectArea("SYA")
+                SYA->(DbsetOrder(1))
+
+                if Len(aHoPaiDad) > 0
+                    if (SYA->(Dbseek(xFilial("SYA")+ALLTRIM(aHoPaiDad[oHoBPai:Nat][01])) ))
+                        if SYA->YA_CODGI == ALLTRIM( aHoPaiDad[oHoBPai:Nat][01])
+                            nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
+                        endif
+                    ENDIF
+                else
+                    MSGSTOP( "Não existem registros para visualização", "Em branco" )
+                endif
+
+            // Inclusão
+            Elseif nAcao == 3
+                if !(oRmTRMe:isEmpty())
+                    if oRmTRMe:nivel() == 2
+                        U_ADEST067P(Alltrim(oRmTRMe:getCargo()))
+                    else
+                        MSGSTOP( "Selecione um requisito de mercado para a inclusão de um novo país." , "Requisito de Mercado" )
+                    endif
+                
+                else
+                    MSGSTOP( "Não existe requisitos de mercado cadastrado." , "Incorreto" )
+                endif
+
+            // Exclusão
+            Elseif nAcao == 5
+                DbSelectArea("SYA")
+                SYA->(DbsetOrder(1))
+
+                if Len(aHoPaiDad) > 0
+                    if (SYA->(Dbseek(xFilial("SYA")+ALLTRIM(aHoPaiDad[oHoBPai:Nat][01])) ))
+                        if SYA->YA_CODGI == ALLTRIM( aHoPaiDad[oHoBPai:Nat][01])
+                            Reclock("SYA",.F.)
+                                SYA->YA_XGRPINS := ""
+                            Msunlock("SYA")
+                        ENDIF
+                    endif
+                endif    
+            endif
+
+            if nAcao == 3 .or. nAcao == 5
+                aHoPaiDad		:= getDadosBrw(HOM_PAIS)
+                oHoBPai:setArray(aHoPaiDad)         
+                oHoBPai:Refresh()
+            endif
+
+        // Opções de Clientes/Requisito de Mercado
+        Elseif nGrp == "009"
+            
+            if nAcao == 1
+                cTitulo := "Cliente/Requisitos de Mercado ("+ cAcao +")"
+                cModel  := "ADEST068P"
+                lValid  := .T.
+                
+                DbSelectArea("SA1")
+                SA1->(DbsetOrder(1))
+
+                if Len(aHoCliDad) > 0
+                    If MSGYESNO(" Confirma a exclusão do registro? ")
+                        if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(aHoCliDad[oHoBPai:Nat][01])+ALLTRIM(aHoCliDad[oHoBPai:Nat][02]) ) ) )
+                            if SA1->A1_COD == ALLTRIM( aHoCliDad[oHoBCli:Nat][01]) .and. SA1->A1_LOJA == ALLTRIM( aHoCliDad[oHoBCli:Nat][02])
+                                nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
+                            endif
+                        ENDIF
+                    endif
+                else
+                    MSGSTOP( "Não existem registros para visualização", "Em branco" )
+                endif
+
+            // Inclusão
+            Elseif nAcao == 3
+                if !(oRmTRMe:isEmpty())
+                    if oRmTRMe:nivel() == 2
+                        U_ADEST068P(Alltrim(oRmTRMe:getCargo()))
+                    else
+                        MSGSTOP( "Selecione um requisito de mercado para a inclusão de um novo cliente." , "Requisito de Mercado" )
+                    endif
+                
+                else
+                    MSGSTOP( "Não existe requisitos de mercado cadastrado." , "Incorreto" )
+                endif
+
+            // Exclusão
+            Elseif nAcao == 5
+                DbSelectArea("SA1")
+                SA1->(DbsetOrder(1))
+
+                if Len(aHoCliDad) > 0
+                    If MSGYESNO(" Confirma a exclusão do registro? ")
+                        if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(aHoCliDad[oHoBCli:Nat][01])+ALLTRIM(aHoCliDad[oHoBCli:Nat][02]) ) ))
+                            if SA1->A1_COD == ALLTRIM( aHoCliDad[oHoBCli:Nat][01]) .and. SA1->A1_LOJA == ALLTRIM( aHoCliDad[oHoBCli:Nat][02])
+                                Reclock("SA1",.F.)
+                                    SA1->A1_XGRPINS := ""
+                                Msunlock("SA1")
+                            ENDIF
+                        endif
+                    endif
+                endif    
+            endif
+
+            if nAcao == 3 .or. nAcao == 5
+                aHoCliDad		:= getDadosBrw(HOM_CLI)
+                oHoBCli:setArray(aHoCliDad)
+                oHoBCli:Refresh()
+            endif
+
+        // Opções de Certificados CSI
+        Elseif nGrp == "010"
+            if nAcao == 1
+
+            Elseif nAcao == 3
+
+            Elseif nAcao == 5
+
+            endif
+        // Opções de Requisitos de Mercado
+        Elseif nGrp == "011"
+            if nAcao == 1
+
+            Elseif nAcao == 3
+
+            Elseif nAcao == 5
+
+            endif
         endif
     Else
         Msginfo("Não existem registros cadastrados!")
@@ -1282,19 +1446,126 @@ Static function fPanel3(cDescri, nRow, nCol, nHeight, nWidth)
     oHoLay01:init(oHoPnl01,.T.)
 
     oHoLay01:addLine("LMAIN",100, .F.)
-    oHoLay01:addCollumn("C01", 40, .F., "LMAIN")
-    oHoLay01:addCollumn("C02", 60, .F., "LMAIN")
-    
+    oHoLay01:addCollumn("C01", 20, .F., "LMAIN")
+    //oHoLay01:addCollumn("C02", 04, .F., "LMAIN")
+    oHoLay01:addCollumn("C03", 28, .F., "LMAIN")
+    oHoLay01:addCollumn("C04", 04, .F., "LMAIN")
+    oHoLay01:addCollumn("C05", 44, .F., "LMAIN")
+    oHoLay01:addCollumn("C06", 04, .F., "LMAIN")
+
+    // U_ADEST055P()
     oHoLay01:addWindow("C01", "Win01", "Grupos de Inspeção"     , 100,.F.,.F.,{||"" },"LMAIN",{||""})
-    oHoLay01:addWindow("C02", "Win02", "Países Vinculados"      , 050,.F.,.F.,{||"" },"LMAIN",{||""})
-    oHoLay01:addWindow("C02", "Win03", "Clientes Vinculados"    , 050,.F.,.F.,{||"" },"LMAIN",{||""})
-    
+    //oHoLay01:addWindow("C02", "Win02", "Op"                     , 100,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C03", "Win03", "Países Vinculados"      , 050,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C03", "Win04", "Clientes Vinculados"    , 050,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C04", "Win05", "Op"                     , 050,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C04", "Win06", "Op"                     , 050,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C05", "Win07", "Modelos CSI"            , 040,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C05", "Win08", "Exigências p/ País"     , 060,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C06", "Win09", "Op"                     , 040,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C06", "Win10", "Op"                     , 060,.F.,.F.,{||"" },"LMAIN",{||""})
+
     oHoLay01:GetLinePanel("LMAIN"):SetCSS("QFrame{ background-color: #FFFFFF;}")
 
     oHoLay01:show()
 
     //********************************************
-    // Sessão de Países Homologados
+    // Sessão dos Botões Grupos de Inspeção
+    //********************************************
+    /*
+    oHoWin02    := oHoLay01:GetWinPanel("C02","Win02","LMAIN")
+    oHoGd02     := tLinearLayout():New(oHoWin02, LAYOUT_LINEAR_T2B ,CONTROL_ALIGN_ALLCLIENT)
+
+    oBGrpCons := TButton():New( 0, 0, ""        , oHoWin02,{|| fPgAcao("001", 1) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| .T.},,.F. )
+    oBGrpCons:setCss("QPushButton{ background-image: url(rpo:BMPVISUAL_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBGrpIncl := TButton():New( 0, 0, ""        , oHoWin02  ,{|| fPgAcao("001", 3) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBGrpIncl:setCss("QPushButton{ background-image: url(rpo:BMPINCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBGrpAlte := TButton():New( 0, 0, ""        , oHoWin02  ,{|| fPgAcao("001", 4) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBGrpAlte:setCss("QPushButton{ background-image: url(rpo:ALTERA_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBGrpExcl := TButton():New( 0, 0, ""        , oHoWin02  ,{|| fPgAcao("001", 5) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBGrpExcl:setCss("QPushButton{ background-image: url(rpo:EXCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    
+    oHoGd02:addInLayout(oBGrpCons)
+    oHoGd02:addInLayout(oBGrpIncl)
+    oHoGd02:addInLayout(oBGrpAlte)
+    oHoGd02:addInLayout(oBGrpExcl)
+    oHoGd02:addSpacer(5)
+    */
+
+    //********************************************
+    // Sessão dos Botões Países
+    //********************************************
+    oHoWin05    := oHoLay01:GetWinPanel("C04","Win05","LMAIN")
+    oHoGd05     := tLinearLayout():New(oHoWin05, LAYOUT_LINEAR_T2B ,CONTROL_ALIGN_ALLCLIENT)
+
+    oBPaiCons := TButton():New( 0, 0, ""        , oHoWin05,{|| fPgAcao("008", 1) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| .T.},,.F. )
+    oBPaiCons:setCss("QPushButton{ background-image: url(rpo:BMPVISUAL_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBPaiIncl := TButton():New( 0, 0, ""        , oHoWin05  ,{|| fPgAcao("008", 3) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBPaiIncl:setCss("QPushButton{ background-image: url(rpo:BMPINCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBPaiExcl := TButton():New( 0, 0, ""        , oHoWin05  ,{|| fPgAcao("008", 5) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBPaiExcl:setCss("QPushButton{ background-image: url(rpo:EXCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    
+    oHoGd05:addInLayout(oBPaiCons)
+    oHoGd05:addInLayout(oBPaiIncl)
+    oHoGd05:addInLayout(oBPaiExcl)
+    oHoGd05:addSpacer(4)
+
+    //********************************************
+    // Sessão dos Botões Clientes
+    //********************************************
+    oHoWin06    := oHoLay01:GetWinPanel("C04","Win06","LMAIN")
+    oHoGd06     := tLinearLayout():New(oHoWin06, LAYOUT_LINEAR_T2B ,CONTROL_ALIGN_ALLCLIENT)
+
+    oBCliCons := TButton():New( 0, 0, ""        , oHoWin06,{|| fPgAcao("009", 1) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| .T.},,.F. )
+    oBCliCons:setCss("QPushButton{ background-image: url(rpo:BMPVISUAL_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBCliIncl := TButton():New( 0, 0, ""        , oHoWin06  ,{|| fPgAcao("009", 3) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBCliIncl:setCss("QPushButton{ background-image: url(rpo:BMPINCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBCliExcl := TButton():New( 0, 0, ""        , oHoWin06  ,{|| fPgAcao("009", 5) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBCliExcl:setCss("QPushButton{ background-image: url(rpo:EXCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    
+    oHoGd06:addInLayout(oBCliCons)
+    oHoGd06:addInLayout(oBCliIncl)
+    oHoGd06:addInLayout(oBCliExcl)
+    oHoGd06:addSpacer(4)
+
+    //********************************************
+    // Sessão dos Botões CSI
+    //********************************************
+    oHoWin09    := oHoLay01:GetWinPanel("C06","Win09","LMAIN")
+    oHoGd09     := tLinearLayout():New(oHoWin09, LAYOUT_LINEAR_T2B ,CONTROL_ALIGN_ALLCLIENT)
+
+    oBCsiCons := TButton():New( 0, 0, ""        , oHoWin09,{|| fPgAcao("010", 1) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| .T.},,.F. )
+    oBCsiCons:setCss("QPushButton{ background-image: url(rpo:BMPVISUAL_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBCsiIncl := TButton():New( 0, 0, ""        , oHoWin09  ,{|| fPgAcao("010", 3) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBCsiIncl:setCss("QPushButton{ background-image: url(rpo:BMPINCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBCsiExcl := TButton():New( 0, 0, ""        , oHoWin09  ,{|| fPgAcao("010", 5) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBCsiExcl:setCss("QPushButton{ background-image: url(rpo:EXCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    
+    oHoGd09:addInLayout(oBCsiCons)
+    oHoGd09:addInLayout(oBCsiIncl)
+    oHoGd09:addInLayout(oBCsiExcl)
+    oHoGd09:addSpacer(4)
+
+    //********************************************
+    // Sessão dos Botões Exigência do Mercado
+    //********************************************
+    oHoWin10    := oHoLay01:GetWinPanel("C06","Win10","LMAIN")
+    oHoGd10     := tLinearLayout():New(oHoWin10, LAYOUT_LINEAR_T2B ,CONTROL_ALIGN_ALLCLIENT)
+
+    oBExiCons := TButton():New( 0, 0, ""        , oHoWin10,{|| fPgAcao("011", 1) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| .T.},,.F. )
+    oBExiCons:setCss("QPushButton{ background-image: url(rpo:BMPVISUAL_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBExiIncl := TButton():New( 0, 0, ""        , oHoWin10  ,{|| fPgAcao("011", 3) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBExiIncl:setCss("QPushButton{ background-image: url(rpo:BMPINCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    oBExiExcl := TButton():New( 0, 0, ""        , oHoWin10  ,{|| fPgAcao("011", 5) }, 10,15,,,.F.,.T.,.F.,,.F.,{|| nOper == 3 .OR. nOper == 4 },,.F. )
+    oBExiExcl:setCss("QPushButton{ background-image: url(rpo:EXCLUIR_MDI.PNG); background-repeat: none; border: 0px solid ; margin: 0px ;background-position: center    }")
+    
+    oHoGd10:addInLayout(oBExiCons)
+    oHoGd10:addInLayout(oBExiIncl)
+    oHoGd10:addInLayout(oBExiExcl)
+    oHoGd10:addSpacer(4)
+
+    //********************************************
+    // Sessão de Grupos de Inspeção
     //********************************************
     //aHoPaiCab		:= getCampos(HOM_PAIS)
     //aHoPaiDad		:= getDadosBrw(HOM_PAIS)
@@ -1312,15 +1583,16 @@ Static function fPanel3(cDescri, nRow, nCol, nHeight, nWidth)
     oRmTRMe:lShowHint:= .T.
 
     //********************************************
-    // Sessão de Produtos Homologados
+    // Sessão de Países
     //********************************************
     aHoPaiCab		:= getCampos(HOM_PAIS)
     aHoPaiDad		:= getDadosBrw(HOM_PAIS)
 
-    oHoWin02 := oHoLay01:GetWinPanel("C02","Win02","LMAIN")
+    oHoWin03 := oHoLay01:GetWinPanel("C03","Win03","LMAIN")
 
-    oHoBPai := FWBrowse():New(oHoWin02)
+    oHoBPai := FWBrowse():New(oHoWin03)
     oHoBPai:setColumns(aHoPaiCab)
+    //oHoBPai:setChange(bHoBPai)
 	oHoBPai:setDataArray()
 	oHoBPai:disableReport()
 	oHoBPai:disableConfig()
@@ -1329,12 +1601,15 @@ Static function fPanel3(cDescri, nRow, nCol, nHeight, nWidth)
     oHoBPai:bGotFocus := {|| nBrwFocused := 9}
     oHoBPai:Activate()
 
-    oHoWin03 := oHoLay01:GetWinPanel("C02","Win03","LMAIN")
+    //********************************************
+    // Sessão de Clientes
+    //********************************************
+    oHoWin04 := oHoLay01:GetWinPanel("C03","Win04","LMAIN")
 
     aHoCliCab		:= getCampos(HOM_CLI)
     aHoCliDad		:= getDadosBrw(HOM_CLI)
 
-    oHoBCli := FWBrowse():New(oHoWin03)
+    oHoBCli := FWBrowse():New(oHoWin04)
     oHoBCli:setColumns(aHoCliCab)
 	oHoBCli:setDataArray()
 	oHoBCli:disableReport()
@@ -1344,7 +1619,44 @@ Static function fPanel3(cDescri, nRow, nCol, nHeight, nWidth)
     oHoBCli:bGotFocus := {|| nBrwFocused := 10}
     oHoBCli:Activate()
 
+    //********************************************
+    // Sessão Modelo CSI
+    //********************************************
+    oHoWin07 := oHoLay01:GetWinPanel("C05","Win07","LMAIN")
+    
+    aHoCsiCab		:= getCampos(HOM_CSI)
+    aHoCsiDad		:= getDadosBrw(HOM_CSI)
+
+    oHoBCsi := FWBrowse():New(oHoWin07)
+    oHoBCsi:setColumns(aHoCsiCab)
+	oHoBCsi:setDataArray()
+	oHoBCsi:disableReport()
+	oHoBCsi:disableConfig()
+    oHoBCsi:setArray(aHoCsiDad)
+    
+    oHoBCsi:bGotFocus := {|| nBrwFocused := 11}
+    oHoBCsi:Activate()
+
+    //********************************************
+    // Sessão Exigências por país
+    //********************************************
+    oHoWin08 := oHoLay01:GetWinPanel("C05","Win08","LMAIN")
+    
+    aHoExiCab		:= getCampos(HOM_EXI)
+    aHoExiDad		:= getDadosBrw(HOM_EXI)
+
+    oHoBExi := FWBrowse():New(oHoWin08)
+    oHoBExi:setColumns(aHoExiCab)
+	oHoBExi:setDataArray()
+	oHoBExi:disableReport()
+	oHoBExi:disableConfig()
+    oHoBExi:setArray(aHoExiDad)
+    
+    oHoBExi:bGotFocus := {|| nBrwFocused := 12}
+    oHoBExi:Activate()
+
 return nil
+
 
 
 /* Layoutdet - Carrega os componentes de botões. */
@@ -1530,12 +1842,7 @@ static function getCampos(nTypeBrowse)
         aAdd(aPgPrdCam, "MARCA")
 
         nPgPrdCam   := Len(aPgPrdCam)
-    /*
-    Elseif nTypeBrowse == HOM_PAIS
-        aCampos		:= strToKarr(HOM_PAIS_CAMPOS, ",")
-		aHoPaiCab	:= {}
-        aHoPaiCam   := aCampos
-    */
+
     Elseif nTypeBrowse == HOM_PAIS
         aCampos		:= strToKarr(HOM_PAIS_CAMPOS, ",")
 		aHoPaiCab	:= {}
@@ -1545,6 +1852,17 @@ static function getCampos(nTypeBrowse)
         aCampos		:= strToKarr(HOM_CLI_CAMPOS, ",")
 		aHoCliCab	:= {}
         aHoCliCam   := aCampos
+    Elseif nTypeBrowse == HOM_EXI
+        aCampos		:= strToKarr(HOM_EXI_CAMPOS, ",")
+		aHoExiCab	:= {}
+        aHoExiCam   := aCampos
+
+        //aAdd(aHoExiCam, "MARCA")
+
+    Elseif nTypeBrowse == HOM_CSI
+        aCampos		:= strToKarr(HOM_CSI_CAMPOS, ",")
+		aHoCsiCab	:= {}
+        aHoCsiCam   := aCampos
 	endIf
 
     nCampos := Len(aCampos)
@@ -1574,17 +1892,18 @@ static function getCampos(nTypeBrowse)
         Elseif nTypeBrowse == PGA_PRD_HOMOL
             cValue := "{|| aPgPrdDad[oPgBPrd:At(), " + cValToChar(nX) + "]}"
 			aAdd(aPgPrdCab, cCampo)
-        /*
-        Elseif nTypeBrowse == HOM_PAIS
-            cValue := "{|| aHoPaiDad[oHoBPai:At(), " + cValToChar(nX) + "]}"
-			aAdd(aHoPaiCab, cCampo)
-        */
         Elseif nTypeBrowse == HOM_PAIS
             cValue := "{|| aHoPaiDad[oHoBPai:At(), " + cValToChar(nX) + "]}"
 			aAdd(aHoPaiCab, cCampo)
         Elseif nTypeBrowse == HOM_CLI
             cValue := "{|| aHoCliDad[oHoBCli:At(), " + cValToChar(nX) + "]}"
 			aAdd(aHoCliCab, cCampo)
+        Elseif nTypeBrowse == HOM_EXI
+            cValue := "{|| aHoExiDad[oHoBExi:At(), " + cValToChar(nX) + "]}"
+			aAdd(aHoExiCab, cCampo)
+        Elseif nTypeBrowse == HOM_CSI
+            cValue := "{|| aHoCsiDad[oHoBCsi:At(), " + cValToChar(nX) + "]}"
+			aAdd(aHoCsiCab, cCampo)
 		endIf
 
 		oColumn := FWBrwColumn():New()
@@ -1808,6 +2127,49 @@ static function getDadosBrw(nTypeBrowse)
         endif
 
         cQuery += " ORDER BY A1_COD, A1_LOJA; "
+
+    Elseif nTypeBrowse == HOM_EXI
+        DbSelectarea("ZEZ")
+
+        aCampos := strToKarr(HOM_EXI_CAMPOS, ",")
+
+		cQuery := " SELECT " + HOM_EXI_CAMPOS
+        cQuery += " FROM "+ RetSqlName("ZEZ") +" (NOLOCK) ZEZ "
+        cQuery += " WHERE ZEZ.D_E_L_E_T_='' AND ZEZ.ZEZ_FILIAL='"+ xFilial("ZEZ") +"' "
+        
+        if !(oRmTRMe:isEmpty())
+            if oRmTRMe:nivel() == 2
+                cQuery += " AND ZEZ.ZEZ_CODZCO = '"+ Alltrim(oRmTRMe:getCargo()) +"' "
+            else
+                cQuery += " AND ZEZ.ZEZ_CODZCO = 'ZZZZ'"
+            endif
+        else
+            cQuery += " AND ZEZ.ZEZ_CODZCO = 'ZZZZ'"
+        endif
+
+        cQuery += " ORDER BY ZEZ_CODZCO, ZEZ_COD; "
+
+    Elseif nTypeBrowse == HOM_CSI
+        DbSelectarea("ZEA")
+        
+        aCampos := strToKarr(HOM_CSI_CAMPOS, ",")
+
+		cQuery := " SELECT " + HOM_CSI_CAMPOS
+        cQuery += " FROM "+ RetSqlName("ZEA") +" (NOLOCK) ZEA "
+        cQuery += " WHERE ZEA.D_E_L_E_T_='' AND ZEA.ZEA_FILIAL='"+ xFilial("ZEA") +"' "
+        
+        if !(oRmTRMe:isEmpty())
+            if oRmTRMe:nivel() == 2
+                cQuery += " AND ZEA.ZEA_CODZCO = '"+ Alltrim(oRmTRMe:getCargo()) +"' "
+            else
+                cQuery += " AND ZEA.ZEA_CODZCO = 'ZZZZ'"
+            endif
+        else
+            cQuery += " AND ZEA.ZEA_CODZCO = 'ZZZZ'"
+        endif
+
+        cQuery += " ORDER BY ZEA_CODZCO, ZEA_COD; "
+
     endif
 
 	tcQuery cQuery new alias &cAlias
