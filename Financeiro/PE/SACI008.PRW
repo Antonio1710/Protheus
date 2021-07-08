@@ -8,9 +8,7 @@
 	@since 12/04/2006
 	@history Ticket 8       - Abel Babini  - 05/07/2021 - Efetua avaliação de crédito do cliente após a baixa.
 	/*/
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Grava ambiente inicial     ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
 User Function SACI008()        
 
 _sAlias := Alias()

@@ -11,9 +11,9 @@
   @author Abel Babini
   @since 01/03/2021
   @history Ticket 8      - Abel Babini - 01/03/2021 - Versão inicial
-	@history Ticket 8      - Abel Babini - 11/05/2021 - Inclusão da Liberação de Estoque.
-	@history Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
-	/*/
+  @history Ticket 8      - Abel Babini - 11/05/2021 - Inclusão da Liberação de Estoque.
+  @history Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
+/*/
 
 User Function ADFIN109P()
   Local aArea := GetArea()

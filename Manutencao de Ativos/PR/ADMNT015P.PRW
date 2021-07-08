@@ -13,6 +13,7 @@ Static cFormatRet := "application/json"
     @since 28/01/2021
     @version 01
     @history Everson, 18/05/2021, Chamado 7936. Tratamento para apontamento das horas no fechamento da OS, adicionado  login.
+    @history Everson, 07/07/2021, Chamado 16369. Tratamento para apontamento de fechamento na SS.
     /*/
 User Function ADMNT015P
 Return Nil
@@ -20,7 +21,7 @@ WsRestFul manutencao Description "Serviço REST para controle de ordens de serviç
 
 	WsMethod Post Description "Efetua login no sistema."  WsSyntax "/data/{resource}"
 	WsMethod Get  Description "Obtém as ordens de serviço pendentes."  WsSyntax "/data/{resource}" //Não foi possível utilizar o ID para haver métodos repetidos.
-	WsMethod Put  Description "Alteração de pedido de venda." WsSyntax "/data/{resource}/{id}"
+	WsMethod Put  Description "Alteração de ordem de serviço." WsSyntax "/data/{resource}/{id}"
 
 End WsRestFul
 /*/{Protheus.doc} Post
@@ -379,9 +380,6 @@ User Function ADMNT15B(cEmpresa, cFil, cOS, cBody, cUser)
     Local oJson     := JsonObject():New()
     Local xRet      := Nil
     Local cErro     := ""
-    Local dDtFim    := ""
-    Local cHrFim    := ""
-    Local cHrTot    := ""
 
     //
     RpcSetType(3)
@@ -455,12 +453,7 @@ User Function ADMNT15B(cEmpresa, cFil, cOS, cBody, cUser)
         If ! Empty(STJ->TJ_SOLICI)
 
             //
-            dDtFim    := SToD(oJson["serviceOrder"]["header"]["fim"]["data"])
-            cHrFim    := oJson["serviceOrder"]["header"]["fim"]["hora"]
-            cHrTot    := oJson["serviceOrder"]["hrTotal"]
-
-            //
-            cErro := encerSS(STJ->TJ_ORDEM, oJson, dDtFim, cHrFim, cHrTot)
+            cErro := encerSS(STJ->TJ_ORDEM)
             If ! Empty(Alltrim(cErro))
                 DisarmTransaction()
                 Aadd(aErro,{400,cErro})
@@ -966,6 +959,51 @@ Static Function hrPVal(cHora, cSep)
     RestArea(aArea)
 
 Return nValor
+/*/{Protheus.doc} valPHrF
+    Função convert valor para hora.
+    @type  Static Function
+    @author Everson
+    @since 07/07/2021
+    @version 01
+    /*/
+Static Function valPHrF(cVal, cSep)
+
+    //Variáveis.
+    Local aArea   := GetArea()
+    Local nAuxH   := 0
+    Local nAuxM   := 0
+    Local cMin    := ""
+    Local cHora   := ""
+    Local nPosSep := 0
+
+    Default cVal := ""
+    Default cSep := "."
+
+    //
+    cVal := Alltrim(cValToChar(cVal))
+
+    //
+    If !Empty(cVal)
+
+        nPosSep := RAt(cSep, cVal)
+        if nPosSep > 0
+            nAuxH   := Right("0000" + Left(cVal, nPosSep-1),4)
+            nAuxM   := Int(Round(Val(Substr(cVal, nPosSep+1, Len(cVal)))*0.60,0))
+            cMin    := Iif(nAuxM >= 10, cValToChar(nAuxM), "0" + cValToChar(nAuxM))
+            cHora   := nAuxH + ":" + cMin + ":00"
+
+        Else 
+            //0000:30:00
+            cHora := Right("00000" + cVal + ":00:00",10)
+
+        EndIf
+
+    EndIf
+
+    //
+    RestArea(aArea)
+
+Return cHora
 /*/{Protheus.doc} lancaMtr
     Função lança motivo de atraso.
     @type  Static Function
@@ -1470,15 +1508,69 @@ Return ""
     @since 23/02/2021
     @version 01
     /*/
-Static Function encerSS(cOS, oJson, dDtFim, cHrFim, cHrTot)
+Static Function encerSS(cOS)
 
     //Variáveis.
 	Local aArea     := GetArea()
 
+    //Everson - 07/07/2021. Chamado 16369.
+    Local cHrTot    := ""
+    Local dDtFim    := STJ->TJ_DTMRFIM
+    Local cHrFim    := STJ->TJ_HOMRFIM
+
+    //Everson - 07/07/2021. Chamado 16369.
+    cQuery := ""
+    cQuery += " SELECT " 
+    cQuery += " RIGHT('0000' +  " 
+    cQuery += " RIGHT('0' + CAST(FONTE.TL_QUANTID / 3600 AS VARCHAR),2) + ':' + " 
+    cQuery += " RIGHT('0' + CAST((FONTE.TL_QUANTID / 60) % 60 AS VARCHAR),2) + ':' + " 
+    cQuery += " RIGHT('0' + CAST(FONTE.TL_QUANTID % 60 AS VARCHAR),2),10) AS TL_QUANTID " 
+    cQuery += " FROM " 
+    cQuery += " ( " 
+    cQuery += " SELECT " 
+    cQuery += " SUM( " 
+    cQuery += " DATEDIFF(SECOND,'0:00:00', " 
+    cQuery += " CAST( " 
+    cQuery += " CASE " 
+    cQuery += " WHEN CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR)) > 0  " 
+    cQuery += " THEN  " 
+    cQuery += " RIGHT('00'+ SUBSTRING(CAST(TL_QUANTID AS VARCHAR),1,CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))-1),2) + ':' + " 
+    cQuery += " LEFT(SUBSTRING(CAST(TL_QUANTID AS VARCHAR),CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))+1,10) + '00',2) + ':00' " 
+    cQuery += " ELSE " 
+    cQuery += " RIGHT('00' + CAST(TL_QUANTID AS VARCHAR),2) + ':00:00' " 
+    cQuery += " END " 
+    cQuery += " AS DATETIME))) " 
+    cQuery += " AS TL_QUANTID " 
+    cQuery += " FROM   " 
+    cQuery += " " + RetSqlName("STL") + " (NOLOCK) AS STL   " 
+    cQuery += " WHERE   " 
+    cQuery += " TL_FILIAL = '" + FWxFilial("STL") +  "'   " 
+    cQuery += " AND TL_ORDEM = '" + cOS + "'   " 
+    cQuery += " AND TL_SEQRELA <> '0'   " 
+    cQuery += " AND TL_TIPOREG = 'M'  " 
+    cQuery += " AND STL.D_E_L_E_T_ = '' " 
+    cQuery += " ) AS FONTE  " 
+
+    //
+    TcQuery cQuery New Alias "D_DATAS"
+    DbSelectArea("D_DATAS")
+    If D_DATAS->(Eof())
+        D_DATAS->(DbCloseArea())
+        RestArea(aArea)
+        Return "Não há horas apontadas para OS " + cOS + "."
+
+    EndIf
+
+    //
+    cHrTot := D_DATAS->TL_QUANTID
+
+    //
+    D_DATAS->(DbCloseArea())
+
     //
     DbSelectArea("TQB")
     TQB->(DbSetOrder(04))
-    If TQB->(DbSeek(FWxFilial("TQB")+cOS))
+    If TQB->(DbSeek(FWxFilial("TQB") + cOS))
         MNW29502(TQB->TQB_CDSOLI)
 
     EndIf
@@ -1498,7 +1590,7 @@ Static Function encerSS(cOS, oJson, dDtFim, cHrFim, cHrTot)
         EndIf
 
     Else
-        cErro := "Não existe SS para a OS"  //"Não existe SS para a OS "
+        cErro := "Não existe SS para a OS"
 
     EndIf
 

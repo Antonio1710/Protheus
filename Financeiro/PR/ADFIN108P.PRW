@@ -27,6 +27,7 @@
     @history ticket 10355   - Leonardo P. Monteiro - 22/03/2021 - Implementada a tratativa para o estorno das contabilizações de títulos cancelados/excluídos do tipo 'AB-' e que já tenham sido contabilizado.
     @history ticket 10355   - Leonardo P. Monteiro - 25/03/2021 - Ajuste na data da contabilização para o dia em que a rotina está sendo executada, conforme pedido da Jade.
     @history ticket 13678   - Leonardo P. Monteiro - 12/05/2021 - Tratamento dos cancelamentos de baixas dos títulos AB- para uma nova contabilização.
+    @history ticket 15279   - Fernando Macieira    - 02/07/2021 - Mensagem de duplicidade em todos os títulos
 /*/
 User Function ADFIN108P()
 
@@ -575,11 +576,14 @@ Static Function ABIsDuplic()
     if QCV3->(!EOF())
         IF QCV3->CONTADOR <> 0
             //@history ticket 13678   - Leonardo P. Monteiro - 12/05/2021 - Tratamento dos cancelamentos de títulos AB-.
+            /*
             if msgYesNo("Já existe lançamento contábil para o título "+ alltrim(WORK->E1_PREFIXO)+"/"+ALLTRIM(work->E1_NUM)+"/"+ALLTRIM(work->E1_TIPO)+"/"+ ALLTRIM(Work->E1_PARCELA) +", deseja confirmar mesmo assim a contabilização?")
                 lDuplic := .F.
             else
                 lDuplic := .T.
             endif
+            */
+            lDuplic := .t. // @history ticket 15279   - Fernando Macieira    - 02/07/2021 - Mensagem de duplicidade em todos os títulos
         ENDIF
     endif
     
