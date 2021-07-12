@@ -2,7 +2,7 @@
 #Include "protheus.ch"
 #Include "topconn.ch"
 
-/*/{Protheus.doc} User Function ADEST068P
+/*/{Protheus.doc} User Function ADEST069P
     Rotina para seleção de cliente.
     Chamado 8465
     @type  Function
@@ -13,10 +13,10 @@
 	
     /*/
 
-User Function ADEST068P(cZEDCod)
+User Function ADEST069P(cZEDCod)
 
 	//Define quais colunas (campos da TTRB) serao exibidas na MsSelect
-	Local cCampos			:= "A1_COD, A1_LOJA, A1_NOME"
+	Local cCampos			:= "ZEL_COD, ZEL_DESCRI,ZEL_OBSERV"
 	
 	Private oGetPesq
 	Private oGroup1
@@ -27,7 +27,7 @@ User Function ADEST068P(cZEDCod)
 	Private aCampos 		:= {}
 	Private aColsBco		:= {}
 	Private aHeaderBco		:= {}
-	Private aItens			:= {"Código/Loja","Nome"}
+	Private aItens			:= {"Código","Descrição"}
 	Private cPesquisa		:= space(60)
 	Private cOrdem			:= ""
 	Private aButtons		:= {}
@@ -46,13 +46,13 @@ User Function ADEST068P(cZEDCod)
 	aColsBco	:= MontDados(cZEDCod)
 
 	if !Empty(aColsBco[1][2])
-		@ 050,001 TO 600, 600 DIALOG oDlg TITLE "..:: Seleção de Clientes ::.."
+		@ 050,001 TO 600, 600 DIALOG oDlg TITLE "..:: Seleção de Modelos CSI ::.."
 
 		oGroup1 	:= tGroup():New(033,002,75,300,'Pesquisar',oDlg,,,.T.)
 		oOrdem 		:= tComboBox():New(43,10,{|u|if(PCount()>0,cOrdem:=u,cOrdem)},aItens,80,20,oGroup1,,{|| fOrdena()},,,,.T.,,,,,,,,,'nOrdem')
 		oGetPesq	:= TGet():New(43,90,{|u| if(PCount()>0,cPesquisa:=u,cPesquisa)}, oGroup1,133,14,'',,,,,,,.T.,,,,,,,,,,'cPesquisa')
 		oButton		:=tButton():New(43,227,'Pesquisa',oDlg,{||fPesquisa(1)},70,14,,,,.T.)
-		oGet		:= MsNewGetDados():New(077,003,260,300, 2,"AllwaysTrue","AllwaysTrue",,{"A1_NOME"},,nCont,"AllwaysTrue", "AllwaysTrue","", oDlg, aHeaderBco, aColsBco, "AllwaysTrue")	
+		oGet		:= MsNewGetDados():New(077,003,260,300, 2,"AllwaysTrue","AllwaysTrue",,{"ZEL_COD"},,nCont,"AllwaysTrue", "AllwaysTrue","", oDlg, aHeaderBco, aColsBco, "AllwaysTrue")	
 		oGet:oBrowse:BldBlclick := {|| fSeleciona()}
 		
 		ACTIVATE DIALOG oDlg On Init (EnchoiceBar(oDlg,{|| MsAguarde(bOk,"Processando, aguarde...","Aguarde..." )},{|| cRetorno := "", oDlg:End()},,aButtons)) CENTER
@@ -70,20 +70,28 @@ Static Function fOk(cZEDCod)
 	Local nRet := 0
 
 	Local nPosOk		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"  })
-	Local nPosCod		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "A1_COD" })
-	Local nPosLoja		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "A1_LOJA" })
+	Local nPosCod		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "ZEL_COD" })
 	local nA			:= 0
 	
-	DbSelectArea("SA1")
-	SA1->(DbsetOrder(1))
+	DbSelectArea("ZEA")
+	ZEA->(DbsetOrder(1))
+
+	DbSelectArea("ZEL")
+	ZEL->(DbsetOrder(1))
 
 	For nA := 1 TO Len(oGet:aCols)  
 		If oGet:aCols[nA][nPosOk] == oOk
 			
-			if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(oGet:aCols[nA][nPosCod])+ALLTRIM(oGet:aCols[nA][nPosLoja])) ))
-				if Reclock("SA1",.F.)
-					SA1->A1_XGRPINS := cZEDCod
-					SA1->(MsUnlock())
+			if (ZEL->(Dbseek(xFilial("ZEL")+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
+				if !(ZEA->(Dbseek(xFilial("ZEA")+cZEDCod+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
+					if Reclock("ZEA",.T.)
+						ZEA->ZEA_FILIAL := xFilial("ZEA")
+						ZEA->ZEA_CODZCO	:= cZEDCod
+						ZEA->ZEA_COD	:= ZEL->ZEL_COD
+						ZEA->ZEA_DESCRI	:= ZEL->ZEL_DESCRI
+						ZEA->ZEA_OBSERV	:= ZEL->ZEL_OBSERV
+						ZEA->(MsUnlock())
+					endif
 				endif
 			Endif
 		EndIf
@@ -110,8 +118,8 @@ Static Function fCriaTrab(cAlias)
 	Local cArqTrab 	:= NIL  
 
 	cArqTrab			:= FWTemporaryTable():New(cAlias, aStrut)
-	cArqTrab:AddIndex("01",{"A1_COD","A1_LOJA"})
-    cArqTrab:AddIndex("02",{"A1_NOME"})
+	cArqTrab:AddIndex("01",{"ZEL_COD"})
+    cArqTrab:AddIndex("02",{"ZEL_DESCRI"})
 	
 	cArqTrab:Create()
  
@@ -128,7 +136,7 @@ Static Function fOrdena()
 	//alert("Ordena")
 	//Código
 	If oOrdem:Nat == 1
-		aSort(oGet:aCols,,,{|x,y| x[1]+x[2]<y[1]+y[2]})
+		aSort(oGet:aCols,,,{|x,y| x[1]<y[1]})
 	ElseIf oOrdem:Nat == 2
 		aSort(oGet:aCols,,,{|x,y| x[3]<y[3]})
 	EndIf
@@ -283,26 +291,11 @@ STATIC FUNCTION MontDados(cZEDCod)
 		QRY->(DBCLOSEAREA())
 	EndIF
 
-	Aadd( aParamBox ,{1,"Cliente De"  					,Space(06)	,"" ,'.T.',"SA1",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Loja De"  						,Space(02)	,"" ,'.T.',"",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Cliente Até"  					,Space(06)	,"" ,'.T.',"SA1",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Loja Até" 						,Space(02)	,"" ,'.T.',"",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Nome" 							,Space(40)	,"" ,'.T.',"",'.T.',80,.F.})
-	
-    if ParamBox(aParamBox,"Parâmetros",@aRet)
-			cWhere := " AND A1_COD  BETWEEN '"+ MV_PAR01 +"' AND '"+ MV_PAR03 +"' "
-			cWhere += " AND A1_LOJA BETWEEN '"+ MV_PAR02 +"' AND '"+ MV_PAR04 +"' "
-			if !Empty(MV_PAR05)
-				cWhere += " AND A1_NOME '%"+ MV_PAR05 +"%' "
-			Endif
-	endif
-
-	cQry := " SELECT TOP 3000 A1.A1_COD, A1.A1_LOJA, A1.A1_NOME " + cEOL
-	cQry += " FROM "+ RetSqlName("SA1") +" (NOLOCK) A1 " + cEOL
-	cQry += " WHERE A1.D_E_L_E_T_='' AND A1.A1_FILIAL = '"+ xFilial("SA1") +"' AND A1.A1_COD !='' AND A1.A1_MSBLQL !='1' AND A1.A1_EST='EX' AND A1.A1_MSBLQL !='1' " + cEOL
-	cQry += " 		AND A1.A1_XGRPINS !='"+cZEDCod+"' " + cEOL
-	cQry += cWhere
-	cQry += " ORDER BY A1.A1_COD, A1.A1_LOJA; " + cEOL
+	cQry := " SELECT ZEL.ZEL_COD, ZEL.ZEL_DESCRI, ZEL.ZEL_OBSERV " + cEOL
+	cQry += " FROM "+ RetSqlName("ZEL") +" (NOLOCK) ZEL LEFT JOIN "+ RetSqlName("ZEA") +" (NOLOCK) ZEA ON ZEL.D_E_L_E_T_='' AND ZEA.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL='"+ xFilial("ZEL") +"' AND ZEA.ZEA_FILIAL='"+ xFilial("ZEA") +"' AND ZEL.ZEL_COD=ZEA.ZEA_COD AND ZEA.ZEA_CODZCO='"+ cZEDCod +"' " + cEOL
+	cQry += " WHERE ZEL.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL = '"+ xFilial("ZEL") +"' AND ZEL.ZEL_COD !='' " + cEOL
+	cQry += " 		AND ISNULL(ZEA.ZEA_CODZCO,'') ='' " + cEOL
+	cQry += " ORDER BY ZEL.ZEL_COD; " + cEOL
 
 	TcQuery cQry alias "QRY" new
 	
@@ -356,38 +349,38 @@ RETURN aColsA
 // InÃ­cio da ViewDef e ModelDef.
 // --------------------------------------------------------------------------------------------------------
 Static Function ModelDef()
- Local oModel		:= MPFormModel():New("mdlADEST068P",, {|| .T.})
- Local oStrutSA1	:= FWFormStruct(1,"SA1")
+ Local oModel		:= MPFormModel():New("mdlADEST069P",, {|| .T.})
+ Local oStrutZEA	:= FWFormStruct(1,"ZEA")
  
- oModel:SetDescription("..:: Cadastro de Cliente ::..")
+ oModel:SetDescription("..:: Modelos CSI ::..")
  
  // CabeÃ§alho ZT3 (Pedidos)
- oModel:addFields("CABEC_SA1",nil,oStrutSA1)
+ oModel:addFields("CABEC_ZEA",nil,oStrutZEA)
 
- oModel:setPrimaryKey({"SA1_FILIAL","SA1_CODGI"})
+ oModel:setPrimaryKey({"ZEA_FILIAL","ZEA_CODZCO","ZEA_COD"})
 
 return oModel
 
 
 Static Function viewDef()
  Local oView		:= Nil
- Local oModel		:= FWLoadModel("ADEST068P")
- Local oStrutSA1	:= FWFormStruct(2,"SA1")
+ Local oModel		:= FWLoadModel("ADEST069P")
+ Local oStrutZEA	:= FWFormStruct(2,"ZEA")
   
- DbSelectArea("SA1")
+ DbSelectArea("ZEA")
  
- SA1->(DbSetOrder(1))
+ ZEA->(DbSetOrder(1))
   
  oView	:= FWFormView():New()
  oView:setModel(oModel)
  
  oView:GetProgressBar(.T.)
  
- oView:addField("V_CABEC_SA1",oStrutSA1,"CABEC_SA1")
+ oView:addField("V_CABEC_ZEA",oStrutZEA,"CABEC_ZEA")
    
  oView:createHorizontalBox("H_CABEC",100)
  oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
  
- oView:setOwnerView("V_CABEC_SA1","V_CABEC")
+ oView:setOwnerView("V_CABEC_ZEA","V_CABEC")
   
 Return oView

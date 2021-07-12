@@ -43,7 +43,7 @@
 #DEFINE PGA_PRODUTO_CAMPOS          "B1_COD,B1_DESC,B1_TIPO,B1_XREQTEC,B1_XDTUPLD"
 #DEFINE PGA_PRD_HOMOL_CAMPOS        "B1_COD,B1_DESC,B1_TIPO"
 #DEFINE HOM_PAIS_CAMPOS             "YA_CODGI,YA_DESCR"
-#DEFINE HOM_CLI_CAMPOS              "A1_COD, A1_LOJA, A1_NOME,A1_NREDUZ"
+#DEFINE HOM_CLI_CAMPOS              "A1_NOME,A1_COD, A1_LOJA"
 #DEFINE HOM_EXI_CAMPOS              "ZEZ_COD,ZEZ_DESCRI,ZEZ_OBSERV"
 #DEFINE HOM_CSI_CAMPOS              "ZEA_COD,ZEA_DESCRI,ZEA_OBSERV"
 //#DEFINE HOM_PAIS_CAMPOS           "B1_COD,B1_DESC,B1_TIPO"
@@ -1002,6 +1002,7 @@ Static Function fPgAcao(nGrp,nAcao)
     Local cModel    := ""
     Local cAcao     := ""
     Local lValid    := .F.
+    Local lAcao     := .T.
     Local cTitulo   := ""
     Local aArea     := GetArea()
     Local oEST055P  := ADEST055P():new()
@@ -1277,12 +1278,14 @@ Static Function fPgAcao(nGrp,nAcao)
                 SYA->(DbsetOrder(1))
 
                 if Len(aHoPaiDad) > 0
-                    if (SYA->(Dbseek(xFilial("SYA")+ALLTRIM(aHoPaiDad[oHoBPai:Nat][01])) ))
-                        if SYA->YA_CODGI == ALLTRIM( aHoPaiDad[oHoBPai:Nat][01])
-                            Reclock("SYA",.F.)
-                                SYA->YA_XGRPINS := ""
-                            Msunlock("SYA")
-                        ENDIF
+                    If MSGYESNO("Deseja excluir o país "+ ALLTRIM(aHoPaiDad[oHoBPai:Nat][01])+"-"+ALLTRIM(aHoPaiDad[oHoBPai:Nat][02])+"?" )
+                        if (SYA->(Dbseek(xFilial("SYA")+ALLTRIM(aHoPaiDad[oHoBPai:Nat][01])) ))
+                            if SYA->YA_CODGI == ALLTRIM( aHoPaiDad[oHoBPai:Nat][01])
+                                Reclock("SYA",.F.)
+                                    SYA->YA_XGRPINS := ""
+                                Msunlock("SYA")
+                            ENDIF
+                        endif
                     endif
                 endif    
             endif
@@ -1305,13 +1308,11 @@ Static Function fPgAcao(nGrp,nAcao)
                 SA1->(DbsetOrder(1))
 
                 if Len(aHoCliDad) > 0
-                    If MSGYESNO(" Confirma a exclusão do registro? ")
-                        if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(aHoCliDad[oHoBPai:Nat][01])+ALLTRIM(aHoCliDad[oHoBPai:Nat][02]) ) ) )
-                            if SA1->A1_COD == ALLTRIM( aHoCliDad[oHoBCli:Nat][01]) .and. SA1->A1_LOJA == ALLTRIM( aHoCliDad[oHoBCli:Nat][02])
-                                nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
-                            endif
-                        ENDIF
-                    endif
+                    if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(aHoCliDad[oHoBPai:Nat][02])+ALLTRIM(aHoCliDad[oHoBPai:Nat][03]) ) ) )
+                        if SA1->A1_COD == ALLTRIM( aHoCliDad[oHoBCli:Nat][02]) .and. SA1->A1_LOJA == ALLTRIM( aHoCliDad[oHoBCli:Nat][03])
+                            nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
+                        endif
+                    ENDIF
                 else
                     MSGSTOP( "Não existem registros para visualização", "Em branco" )
                 endif
@@ -1321,6 +1322,7 @@ Static Function fPgAcao(nGrp,nAcao)
                 if !(oRmTRMe:isEmpty())
                     if oRmTRMe:nivel() == 2
                         U_ADEST068P(Alltrim(oRmTRMe:getCargo()))
+                        nConfirma := 0
                     else
                         MSGSTOP( "Selecione um requisito de mercado para a inclusão de um novo cliente." , "Requisito de Mercado" )
                     endif
@@ -1336,18 +1338,20 @@ Static Function fPgAcao(nGrp,nAcao)
 
                 if Len(aHoCliDad) > 0
                     If MSGYESNO(" Confirma a exclusão do registro? ")
-                        if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(aHoCliDad[oHoBCli:Nat][01])+ALLTRIM(aHoCliDad[oHoBCli:Nat][02]) ) ))
-                            if SA1->A1_COD == ALLTRIM( aHoCliDad[oHoBCli:Nat][01]) .and. SA1->A1_LOJA == ALLTRIM( aHoCliDad[oHoBCli:Nat][02])
+                        if (SA1->(Dbseek(xFilial("SA1")+ALLTRIM(aHoCliDad[oHoBCli:Nat][02])+ALLTRIM(aHoCliDad[oHoBCli:Nat][03]) ) ))
+                            if SA1->A1_COD == ALLTRIM( aHoCliDad[oHoBCli:Nat][02]) .and. SA1->A1_LOJA == ALLTRIM( aHoCliDad[oHoBCli:Nat][03])
                                 Reclock("SA1",.F.)
                                     SA1->A1_XGRPINS := ""
                                 Msunlock("SA1")
+
+                                nConfirma := 0
                             ENDIF
                         endif
                     endif
                 endif    
             endif
 
-            if nAcao == 3 .or. nAcao == 5
+            if (nAcao == 3 .or. nAcao == 5) .and. nConfirma == 0
                 aHoCliDad		:= getDadosBrw(HOM_CLI)
                 oHoBCli:setArray(aHoCliDad)
                 oHoBCli:Refresh()
@@ -1355,21 +1359,106 @@ Static Function fPgAcao(nGrp,nAcao)
 
         // Opções de Certificados CSI
         Elseif nGrp == "010"
-            if nAcao == 1
+            
+            // Visualização  ou exclusão.
+            if nAcao == 1 .OR. nAcao == 5
+                if !(oRmTRMe:isEmpty())
+                    cTitulo := "Modelo CSI vinculados ("+ cAcao +")"
+                    cModel  := "ADEST069P"
+                    lValid  := .T.
+                    
+                    DbSelectArea("ZEA")
+                    ZEA->(DbsetOrder(1))
 
+                    if nAcao == 5
+                        lAcao := MSGYESNO(" Confirma a exclusão do registro? ")
+                    else
+                        lAcao := .T.
+                    endif
+
+                    if Len(aHoCsiDad) > 0
+                        if lAcao
+                            if (ZEA->(Dbseek(xFilial("ZEA")+Alltrim(oRmTRMe:getCargo())+ALLTRIM(aHoCsiDad[oHoBCsi:Nat][01]) ) ) )
+                                if ZEA->ZEA_CODZCO == Alltrim(oRmTRMe:getCargo()) .and. ZEA->ZEA_COD == ALLTRIM(aHoCsiDad[oHoBCsi:Nat][01])
+                                    nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
+                                endif
+                            ENDIF
+                        endif
+                    else
+                        MSGSTOP( "Não existem registros para visualização", "Em branco" )
+                    endif
+                endif
+            // Inclusão
             Elseif nAcao == 3
+                if !(oRmTRMe:isEmpty())
+                    if oRmTRMe:nivel() == 2
+                        U_ADEST069P(Alltrim(oRmTRMe:getCargo()))
+                        nConfirma := 0
+                    else
+                        MSGSTOP( "Selecione um requisito de mercado para a inclusão de um novo Modelo CSI." , "Requisito de Mercado" )
+                    endif
+                
+                else
+                    MSGSTOP( "Não existe requisitos de mercado cadastrado." , "Incorreto" )
+                endif
+                    
+            endif
 
-            Elseif nAcao == 5
-
+            if (nAcao == 3 .or. nAcao == 5) .and. nConfirma == 0
+                aHoCsiDad		:= getDadosBrw(HOM_CSI)
+                oHoBCsi:setArray(aHoCsiDad)
+                oHoBCsi:Refresh()
             endif
         // Opções de Requisitos de Mercado
         Elseif nGrp == "011"
-            if nAcao == 1
+           // Visualização  ou exclusão.
+            if nAcao == 1 .OR. nAcao == 5
+                if !(oRmTRMe:isEmpty())
+                    cTitulo := "Exigências de Mercado vinculados ("+ cAcao +")"
+                    cModel  := "ADEST070P"
+                    lValid  := .T.
+                    
+                    DbSelectArea("ZEZ")
+                    ZEZ->(DbsetOrder(1))
 
+                    if nAcao == 5
+                        lAcao := MSGYESNO(" Confirma a exclusão do registro? ")
+                    else
+                        lAcao := .T.
+                    endif
+
+                    if Len(aHoExiDad) > 0
+                        if lAcao
+                            if (ZEZ->(Dbseek(xFilial("ZEZ")+Alltrim(oRmTRMe:getCargo())+ALLTRIM(aHoExiDad[oHoBExi:Nat][01]) ) ) )
+                                if ZEZ->ZEZ_CODZCO == Alltrim(oRmTRMe:getCargo()) .and. ZEZ->ZEZ_COD == ALLTRIM(aHoExiDad[oHoBExi:Nat][01])
+                                    nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
+                                endif
+                            ENDIF
+                        endif
+                    else
+                        MSGSTOP( "Não existem registros para visualização", "Em branco" )
+                    endif
+                endif
+            // Inclusão
             Elseif nAcao == 3
+                if !(oRmTRMe:isEmpty())
+                    if oRmTRMe:nivel() == 2
+                        U_ADEST070P(Alltrim(oRmTRMe:getCargo()))
+                        nConfirma := 0
+                    else
+                        MSGSTOP( "Selecione um requisito de mercado para a inclusão de um novo Modelo CSI." , "Requisito de Mercado" )
+                    endif
+                
+                else
+                    MSGSTOP( "Não existe requisitos de mercado cadastrado." , "Incorreto" )
+                endif
+                    
+            endif
 
-            Elseif nAcao == 5
-
+            if (nAcao == 3 .or. nAcao == 5) .and. nConfirma == 0
+                aHoExiDad		:= getDadosBrw(HOM_EXI)
+                oHoBExi:setArray(aHoExiDad)
+                oHoBExi:Refresh()
             endif
         endif
     Else
@@ -1908,7 +1997,7 @@ static function getCampos(nTypeBrowse)
 
 		oColumn := FWBrwColumn():New()
 		oColumn:SetData(&(cValue))
-		if cCampo$"YA_CODGI,ZE2_MERCAD"
+		if cCampo$"YA_CODGI,ZE2_MERCAD,YA_CODGI,ZAZ_COD,ZEA_COD,A1_COD,A1_LOJA"
             oColumn:SetTitle('')
 		    oColumn:SetSize(05)
         ELSE
