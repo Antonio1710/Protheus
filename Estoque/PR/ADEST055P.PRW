@@ -45,7 +45,7 @@
 #DEFINE HOM_PAIS_CAMPOS             "YA_CODGI,YA_DESCR"
 #DEFINE HOM_CLI_CAMPOS              "A1_NOME,A1_COD, A1_LOJA"
 #DEFINE HOM_EXI_CAMPOS              "ZEZ_COD,ZEZ_DESCRI,ZEZ_OBSERV"
-#DEFINE HOM_CSI_CAMPOS              "ZEA_COD,ZEA_DESCRI,ZEA_OBSERV"
+#DEFINE HOM_CSI_CAMPOS              "ZFZ_COD,ZFZ_DESCRI,ZFZ_PRODUT"
 //#DEFINE HOM_PAIS_CAMPOS           "B1_COD,B1_DESC,B1_TIPO"
 
 /*/{Protheus.doc} User Function ADEST055P u_ADEST055P()
@@ -429,7 +429,7 @@ Static Function fCoBPro() // oCoBPro
         oCoBPHo:setArray(aCoPHoDad)
         oCoBPHo:Refresh()
         //TMP    
-        //fGrafico()
+        fGrafico()
     endif
 
 Return
@@ -596,7 +596,7 @@ Static function fPanel1(cDescri, nRow, nCol, nHeight, nWidth)
     oChart := FWChartFactory():New()
     oChart:SetOwner(oCoWin02)
     //TMP
-    //fGrafico()
+    fGrafico()
     
 
     //********************************************
@@ -1367,8 +1367,8 @@ Static Function fPgAcao(nGrp,nAcao)
                     cModel  := "ADEST069P"
                     lValid  := .T.
                     
-                    DbSelectArea("ZEA")
-                    ZEA->(DbsetOrder(1))
+                    DbSelectArea("ZFZ")
+                    ZFZ->(DbsetOrder(1))
 
                     if nAcao == 5
                         lAcao := MSGYESNO(" Confirma a exclusão do registro? ")
@@ -1378,8 +1378,8 @@ Static Function fPgAcao(nGrp,nAcao)
 
                     if Len(aHoCsiDad) > 0
                         if lAcao
-                            if (ZEA->(Dbseek(xFilial("ZEA")+Alltrim(oRmTRMe:getCargo())+ALLTRIM(aHoCsiDad[oHoBCsi:Nat][01]) ) ) )
-                                if ZEA->ZEA_CODZCO == Alltrim(oRmTRMe:getCargo()) .and. ZEA->ZEA_COD == ALLTRIM(aHoCsiDad[oHoBCsi:Nat][01])
+                            if (ZFZ->(Dbseek(xFilial("ZFZ")+Alltrim(oRmTRMe:getCargo())+ALLTRIM(aHoCsiDad[oHoBCsi:Nat][01]) ) ) )
+                                if ZFZ->ZFZ_CODZCO == Alltrim(oRmTRMe:getCargo()) .and. ZFZ->ZFZ_COD == ALLTRIM(aHoCsiDad[oHoBCsi:Nat][01])
                                     nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
                                 endif
                             ENDIF
@@ -1550,7 +1550,7 @@ Static function fPanel3(cDescri, nRow, nCol, nHeight, nWidth)
     oHoLay01:addWindow("C04", "Win05", "Op"                     , 050,.F.,.F.,{||"" },"LMAIN",{||""})
     oHoLay01:addWindow("C04", "Win06", "Op"                     , 050,.F.,.F.,{||"" },"LMAIN",{||""})
     oHoLay01:addWindow("C05", "Win07", "Modelos CSI"            , 040,.F.,.F.,{||"" },"LMAIN",{||""})
-    oHoLay01:addWindow("C05", "Win08", "Exigências p/ País"     , 060,.F.,.F.,{||"" },"LMAIN",{||""})
+    oHoLay01:addWindow("C05", "Win08", "Exigências p/ Mercado"  , 060,.F.,.F.,{||"" },"LMAIN",{||""})
     oHoLay01:addWindow("C06", "Win09", "Op"                     , 040,.F.,.F.,{||"" },"LMAIN",{||""})
     oHoLay01:addWindow("C06", "Win10", "Op"                     , 060,.F.,.F.,{||"" },"LMAIN",{||""})
 
@@ -1997,7 +1997,7 @@ static function getCampos(nTypeBrowse)
 
 		oColumn := FWBrwColumn():New()
 		oColumn:SetData(&(cValue))
-		if cCampo$"YA_CODGI,ZE2_MERCAD,YA_CODGI,ZAZ_COD,ZEA_COD,A1_COD,A1_LOJA"
+		if cCampo$"YA_CODGI,ZE2_MERCAD,YA_CODGI,ZAZ_COD,ZFZ_COD,A1_COD,A1_LOJA"
             oColumn:SetTitle('')
 		    oColumn:SetSize(05)
         ELSE
@@ -2239,25 +2239,25 @@ static function getDadosBrw(nTypeBrowse)
         cQuery += " ORDER BY ZEZ_CODZCO, ZEZ_COD; "
 
     Elseif nTypeBrowse == HOM_CSI
-        DbSelectarea("ZEA")
+        DbSelectarea("ZFZ")
         
         aCampos := strToKarr(HOM_CSI_CAMPOS, ",")
 
 		cQuery := " SELECT " + HOM_CSI_CAMPOS
-        cQuery += " FROM "+ RetSqlName("ZEA") +" (NOLOCK) ZEA "
-        cQuery += " WHERE ZEA.D_E_L_E_T_='' AND ZEA.ZEA_FILIAL='"+ xFilial("ZEA") +"' "
+        cQuery += " FROM "+ RetSqlName("ZFZ") +" (NOLOCK) ZFZ "
+        cQuery += " WHERE ZFZ.D_E_L_E_T_='' AND ZFZ.ZFZ_FILIAL='"+ xFilial("ZFZ") +"' "
         
         if !(oRmTRMe:isEmpty())
             if oRmTRMe:nivel() == 2
-                cQuery += " AND ZEA.ZEA_CODZCO = '"+ Alltrim(oRmTRMe:getCargo()) +"' "
+                cQuery += " AND ZFZ.ZFZ_CODZCO = '"+ Alltrim(oRmTRMe:getCargo()) +"' "
             else
-                cQuery += " AND ZEA.ZEA_CODZCO = 'ZZZZ'"
+                cQuery += " AND ZFZ.ZFZ_CODZCO = 'ZZZZ'"
             endif
         else
-            cQuery += " AND ZEA.ZEA_CODZCO = 'ZZZZ'"
+            cQuery += " AND ZFZ.ZFZ_CODZCO = 'ZZZZ'"
         endif
 
-        cQuery += " ORDER BY ZEA_CODZCO, ZEA_COD; "
+        cQuery += " ORDER BY ZFZ_CODZCO, ZFZ_COD; "
 
     endif
 

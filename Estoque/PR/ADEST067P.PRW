@@ -9,7 +9,7 @@
     @author Leonardo P. Monteiro
     @since 07/07/2021
     @version 01
-	@history Chamado 8465 - Leonardo P. Monteiro - 07/07/2021 - Desenvolvimento inicial.
+	@history Chamado 8465 - Leonardo P. Monteiro - 12/07/2021 - Desenvolvimento inicial.
 	
     /*/
 
