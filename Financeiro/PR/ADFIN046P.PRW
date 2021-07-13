@@ -36,6 +36,7 @@
 	@history Ticket 4883    - Abel Babini   - 15/12/2020 - Unificação das tabelas da Central de Aprovação (ZG5 para ZCF)
 	@history Ticket 11556   - Fernando Maci - 27/04/2021 - Processo Trabalhista - Títulos
 	@history Ticket 15609   - Abel Babini   - 15/06/2021 - Ajuste na validação de datas de vencimento
+	@history Ticket 16838   - Fernando Maci - 13/07/2021 - Título bloqueado - Alçada Central de aprovação
 /*/
 User Function ADFIN046P()
 
@@ -1320,8 +1321,11 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 									lVldApv := .F.
 								endif
 							Endif
+
 						ELSEIF ZC7->ZC7_TPBLQ = "000004"  // alçada
+
 							if !empty(ZC7->ZC7_NDTVEN)
+
 								//INICIO Ticket 15609 - Abel Babini - 15/06/2021 - Ajuste na validação de datas de vencimento
 								DbSelectArea("SE1")
 								DbSetorder(2)  // E1_FILIAL, E1_CLIENTE, E1_LOJA, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO
@@ -1344,7 +1348,10 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 										endif
 									endif
 
-									/*
+								Else
+
+									// CONTAS PAGAR - @history Ticket 16838   - Fernando Maci - 13/07/2021 - Título bloqueado - Alçada Central de aprovação
+									// Reativado em 13/07
 									if ZC7->ZC7_NDTVEN < dEVENCTO
 										nDdif := dEVENCTO - ZC7->ZC7_NDTVEN
 										if nDiasAnt >= nDdif .AND. nLimAL >= (nValALApr + ZC7->ZC7_CUSFIN)
@@ -1362,10 +1369,12 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 											lVldApv := .F.
 										endif
 									endif
-									*/
+								
 								ENDIF
 								//FIM Ticket 15609 - Abel Babini - 15/06/2021 - Ajuste na validação de datas de vencimento
+
 							endif
+
 							IF !EMPTY(nPercJur) .AND. !EMPTY(ZC7->ZC7_VLRJUR) // Analisa alcada de aprovacao para Juros
 								nVdif := cEVALOR + ZC7->ZC7_VLRJUR
 								if (nPercJur/100) >= ( Round( (nVdif/cEVALOR)-1 , 2) ) .AND. nLimAL >= ( nValALApr + ZC7->ZC7_VLRJUR ) // Ricardo Lima - 22/03/18
@@ -1375,6 +1384,7 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 									lVldApv := .F.
 								endif
 							ENDIF
+
 							IF !EMPTY(nPercAcs) .AND. !EMPTY(ZC7->ZC7_ACRESC)// Analisa alcada de aprovacao para Acrescimo
 								nVdif := cEVALOR + ZC7->ZC7_ACRESC
 								if (nPercAcs/100) >= ( Round( (nVdif/cEVALOR)-1 , 2) ) .AND. nLimAL >= (nValALApr + ZC7->ZC7_ACRESC ) // Ricardo Lima - 23/03/18

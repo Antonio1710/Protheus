@@ -28,6 +28,7 @@
 	@history Chamado 8566 	- André Mendes 	  - 29/04/2021 - Transferência entre Filiais
 	@history ticket  6652   - Fernando Macieir- 18/01/2021 - Projeto 0022003001 - Revitalização Posto de Combustível, o pedido 401511 consumiu o valor do projeto e o fiscal não esta conseguindo lançar Nota fiscal  (Mensagem projeto com saldo insuficiente)
 	@history ticket 14352   - Fernando Macieir- 21/05/2021 - Saldo Negativo (identificamos que a solução do ticket 6652 não foi publicada!)
+	@history ticket 16401   - Fernando Macieir- 12/07/2021 - Saldo Negativo (PC com qtd parcial, porém, valor unitário muito diferente do PC e também com valor total muito próximo do PC)
 /*/
 User Function MT100TOK()
 
@@ -43,6 +44,7 @@ User Function MT100TOK()
 	Local cSpecLo  := "" //IIF(AllTrim(FunName()) == "MATA116",c116Especie,cEspecie)
 	Local dDtLEmis := GetMV('MV_#DTEMIS') //Everson - 09/05/2019. Chamado TI.
 	Local i        := 0
+	Local _i       := 0
 	Local nTtNF    := 0
 	Local cCFOP    := 0
 	Local nTt      := 0
@@ -846,14 +848,13 @@ Return lRetorno
 /*/
 Static Function ChkPrjPCNF(cPCPrj, cPCItem)
 
+	Local lRet       := .t.
 	Local i          := 0
 	Local nTtQtd     := 0
 	Local nTtVlr     := 0
-	Local lRet       := .t.
 	Local cQuery     := ""
 	Local cNumPC     := ""
 	Local aPCPrj     := Separa(cPCPrj, ";")
-	Local aPCItemPrj := Separa(cPCItem, ";")
 	Local aAreaSC7   := SC7->( GetArea() )
 	Local nC7_TOTAL  := 0
 	Local nTolera    := GetMV("MV_#PRJTOL",,10)
@@ -863,71 +864,121 @@ Static Function ChkPrjPCNF(cPCPrj, cPCItem)
 
 		If !gdDeleted(i)
 
-			cNumPC     := gdFieldGet("D1_PEDIDO",i)
-			cNumPCItem := gdFieldGet("D1_ITEMPC",i)
+			If !Empty(AllTrim(gdFieldGet("D1_PROJETO",i))) .or. Left(AllTrim(gdFieldGet("D1_CC",i)),1) == "9"
 
-			If aScan(aPCPrj, {|x| x == cNumPC})
-			//If aScan(aPCItemPrj, {|x| x == cNumPCItem})
+				cNumPC     := gdFieldGet("D1_PEDIDO",i)
+				cNumPCItem := gdFieldGet("D1_ITEMPC",i)
 
-				nTtQtd := gdFieldGet("D1_QUANT",i)
-				nTtVlr := gdFieldGet("D1_TOTAL",i)
-		
-				// base dados
-				If Select("Work")
-					Work->( dbCloseArea() )
-				EndIf
+				If aScan(aPCPrj, {|x| x == cNumPC})
 
-				cQuery := " SELECT ISNULL(SUM(D1_QUANT),0) D1_QUANT, ISNULL(SUM(D1_TOTAL),0) D1_TOTAL
-				cQuery += " FROM " + RetSqlName("SD1") + " SD1 (NOLOCK)
-				cQuery += " WHERE D1_PEDIDO='"+cNumPC+"' 
-				cQuery += " AND D1_ITEMPC='"+cNumPCItem+"' 
-				cQuery += " AND D_E_L_E_T_=''
+					nTtQtd := gdFieldGet("D1_QUANT",i)
+					nTtVlr := gdFieldGet("D1_TOTAL",i)
+			
+					// base dados
+					If Select("Work")
+						Work->( dbCloseArea() )
+					EndIf
 
-				tcQuery cQuery New Alias "Work"
+					cQuery := " SELECT ISNULL(SUM(D1_QUANT),0) D1_QUANT, ISNULL(SUM(D1_TOTAL),0) D1_TOTAL
+					cQuery += " FROM " + RetSqlName("SD1") + " SD1 (NOLOCK)
+					cQuery += " WHERE D1_PEDIDO='"+cNumPC+"' 
+					cQuery += " AND D1_ITEMPC='"+cNumPCItem+"' 
+					cQuery += " AND D_E_L_E_T_=''
 
-				aTamSX3	:= TamSX3("D1_QUANT")
-				tcSetField("Work", "D1_QUANT", aTamSX3[3], aTamSX3[1], aTamSX3[2])
+					tcQuery cQuery New Alias "Work"
 
-				aTamSX3	:= TamSX3("D1_TOTAL")
-				tcSetField("Work", "D1_TOTAL", aTamSX3[3], aTamSX3[1], aTamSX3[2])
+					aTamSX3	:= TamSX3("D1_QUANT")
+					tcSetField("Work", "D1_QUANT", aTamSX3[3], aTamSX3[1], aTamSX3[2])
 
-				Work->( dbGoTop() )
-				If Work->( !EOF() )
+					aTamSX3	:= TamSX3("D1_TOTAL")
+					tcSetField("Work", "D1_TOTAL", aTamSX3[3], aTamSX3[1], aTamSX3[2])
 
-					SC7->( dbSetOrder(1) ) // C7_FILIAL+C7_NUM+C7_ITEM
-					If SC7->( dbSeek(FWxFilial("SC7")+cNumPC+cNumPCItem) )
+					Work->( dbGoTop() )
+					If Work->( !EOF() )
 
-						If (Work->D1_QUANT + nTtQtd) >= SC7->C7_QUANT
+						SC7->( dbSetOrder(1) ) // C7_FILIAL+C7_NUM+C7_ITEM
+						If SC7->( dbSeek(FWxFilial("SC7")+cNumPC+cNumPCItem) )
 
-							nC7_TOTAL := SC7->C7_TOTAL
-							If SC7->C7_MOEDA >= 2
-								nC7_TOTAL := Round(SC7->C7_TOTAL * SC7->C7_XTXMOED,2)
-							EndIf
+							If (Work->D1_QUANT + nTtQtd) >= SC7->C7_QUANT
 
-							If lTolVlr // Param que liga/desliga a tolerância por valor/percentual
+								nC7_TOTAL := SC7->C7_TOTAL
+								If SC7->C7_MOEDA >= 2
+									nC7_TOTAL := Round(SC7->C7_TOTAL * SC7->C7_XTXMOED,2)
+								EndIf
+
+								If lTolVlr // Param que liga/desliga a tolerância por valor/percentual
+									
+									// Cálculo da tolerância por valor 
+									If ( (Work->D1_TOTAL + nTtVlr) + nTolera ) < nC7_TOTAL
+										lRet := .f.
+										Exit
+									EndIf
 								
-								// Cálculo da tolerância por valor 
-								If ( (Work->D1_TOTAL + nTtVlr) + nTolera ) < nC7_TOTAL
-									lRet := .f.
-									Exit
+								Else
+								
+									// Cálculo da tolerância por percentual (default)
+									If ( (Work->D1_TOTAL + nTtVlr) + (nTtVlr * (nTolera/100)) ) < nC7_TOTAL
+										lRet := .f.
+										Exit
+									EndIf
 								EndIf
-							
-							Else
-							
-								// Cálculo da tolerância por percentual (default)
-								If ( (Work->D1_TOTAL + nTtVlr) + (nTtVlr * (nTolera/100)) ) < nC7_TOTAL
-									lRet := .f.
-									Exit
-								EndIf
-							EndIf
 
+							EndIf
+						
 						EndIf
-					
+
 					EndIf
 
 				EndIf
 
+				// @history ticket 16401   - Fernando Macieir- 12/07/2021 - Saldo Negativo (PC com qtd parcial, porém, valor unitário muito diferente do PC e também com valor total muito próximo do PC)
+				SC7->( dbSetOrder(1) ) // C7_FILIAL+C7_NUM+C7_ITEM
+				If SC7->( dbSeek(FWxFilial("SC7")+cNumPC+cNumPCItem) )
+
+					nPrcC7 := SC7->C7_PRECO
+					nTotC7 := SC7->C7_TOTAL
+					
+					nPrcD1 := gdFieldGet("D1_VUNIT",i)
+					nTotD1 := gdFieldGet("D1_TOTAL",i)
+
+					// Valor unitário da NF muito maior que o contido no PC (exemplo: PV A04H7M, NF 000203477)
+					If nPrcD1 > (nPrcC7 + (nPrcC7 * (nTolera/100)))
+
+						lRet := .f.
+
+						Aviso( "MT100TOK-12",;
+							"Valor unitário da NF muito maior que o contido no PC! Verifique... " + chr(13) + chr(10) +;
+							"MV_#PRJTOL permite tratar exceções... " + chr(13) + chr(10) + chr(13) + chr(10) +;
+							"" + chr(13) + chr(10) +;
+							"" ,;
+							{ "&OK" },,;
+							"Projeto de Investimento ficará negativo no futuro após reprocessamento!" )
+
+						Exit
+
+					EndIf
+
+					// Valor total da NF muito maior que o contido no PC (exemplo: PV A04H7M, NF 000203477)
+					If nTotD1 > (nTotC7 + (nTotC7 * (nTolera/100)))
+
+						lRet := .f.
+
+						Aviso( "MT100TOK-13",;
+							"Valor Total da NF muito maior que o contido no PC! Verifique... " + chr(13) + chr(10) +;
+							"MV_#PRJTOL permite tratar exceções... " + chr(13) + chr(10) + chr(13) + chr(10) +;
+							"" + chr(13) + chr(10) +;
+							"" ,;
+							{ "&OK" },,;
+							"Projeto de Investimento ficará negativo no futuro após reprocessamento!" )
+
+						Exit
+
+					EndIf
+
+				EndIf
+			
 			EndIf
+			//
 
 		EndIf
 
