@@ -41,7 +41,9 @@
     @history ticket 1768 - FWNM - 23/09/2020 - PV com adiantamento superior a NF
     @history ticket 745  - FWNM - 30/09/2020 - C5_XWSPAGO com identificação para liberação manual
     @history ticket TI   - FWNM - 21/10/2020 - Registro manual mesmo com o E1_XWSBRAC em branco 
+    @history ticket TI   - FWNM - 14/07/2020 - Trouxe essa regras de liberação de pedido pago C5_XWSPAGO
 /*/
+
 User Function FA740BRW()
     
     Local aBotao := {}
@@ -204,30 +206,41 @@ User Function PgtoWS(lManual)
                     
                     If msgYesNo(cMsgYesNo)
 
-                        // ticket 745 - FWNM - 17/09/2020 - Implementação título PR
+                        // ticket T.I - Fernando Sigoli - 14/07/2021 - trouxe essa regras de liberação de pedido pago C5_XWSPAGO
                         If lManual
-                           lBxPROk := .t. 
+                            lBxPROk := .T. 
+						   
+						    RecLock("SC5", .f.)
+							    SC5->C5_XWSPAGO := "M" 
+                                SC5->C5_XPREAPR := "L" //@history ticket 102 - FWNM - 18/08/2020 - WS Bradesco - Gravar C5_XAPREAPR=L quando C5_XWSPAGO=S
+							    SC5->( msUnLock() )
+						    SC5->( msUnLock() )
+
+							logZBE(SC5->C5_NUM + " FOI GRAVADO O CAMPO C5_XWSPAGO = " + Iif(lManual,"M","S") + " PELA ROTINA MANUAL") // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
+							
+							SendManual() // Envia email 
+							
                         Else
                             msAguarde( { || lBxPROk := u_BxWSPR(lManual, SE1->E1_FILIAL, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_CLIENTE, SE1->E1_LOJA) }, "Substituindo boleto por (RA), PV n. " + SC5->C5_NUM )
-                        EndIf
+                        
+							logZBE(SC5->C5_NUM + " PEDIDO NAO LIBERADO NA ROTINA u_BxWSPR = " + Iif(lBxPROk,"T","F") + " PELA ROTINA MANUAL") // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
+
+						EndIf
                         
                         If lBxPROk
+							
+							If !lManual
+								
+								RecLock("SC5", .f.)
+                                    SC5->C5_XWSPAGO := "S" 
+                                    SC5->C5_XPREAPR := "L" //@history ticket 102 - FWNM - 18/08/2020 - WS Bradesco - Gravar C5_XAPREAPR=L quando C5_XWSPAGO=S
+                                SC5->( msUnLock() )
+								
+								logZBE(SC5->C5_NUM + " FOI GRAVADO O CAMPO C5_XWSPAGO = " + Iif(lManual,"M","S") + " PELA ROTINA MANUAL") // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
 
-                            RecLock("SC5", .f.)
-
-                                // ticket 745 - FWNM - 30/09/2020 - C5_XWSPAGO com identificação para liberação manual
-                                If lManual
-                                    SC5->C5_XWSPAGO := "M" 
-                                Else
-                                    SC5->C5_XWSPAGO := "S"
-                                EndIf
-                                
-                                SC5->C5_XPREAPR := "L" //@history ticket 102 - FWNM - 18/08/2020 - WS Bradesco - Gravar C5_XAPREAPR=L quando C5_XWSPAGO=S
-
-                            SC5->( msUnLock() )
-
-                            logZBE(SC5->C5_NUM + " FOI GRAVADO O CAMPO C5_XWSPAGO = " + Iif(lManual,"M","S") + " PELA ROTINA MANUAL") // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
-
+							EndIF
+							
+                            
                             // Desvincula PV x PR para que a rotina padrão não efetue a compensação automaticamente
                             RecLock("FIE", .F.)
                                 FIE->( dbDelete() )
