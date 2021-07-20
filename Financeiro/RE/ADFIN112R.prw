@@ -3,30 +3,37 @@
 #Include "Colors.ch"
 
 /*/{Protheus.doc} User Function ADFIN112R
-  Relatorio de titulos de bonificação
+  (long_description)
   @type  Function
-  @author Eduardo Romão
-  @since 15/06/2021
-/*/
+  @author user
+  @since 20/05/2021
+  @version version
+  @param param_name, param_type, param_descr
+  @return return_var, return_type, return_description
+  @example
+  (examples)
+  @see (links_or_references)
+  @Ticket 12116, 17/06/2021, André Mendes, Desenvolvimento e validação do relatório.
+  /*/
 User Function ADFIN112R()
   
   local cTitulo       := "Relação de Bonificação"
   
-  private cPerg         := "ADFIN112R"	
-  private dEmissaoDe    := ctod("")
+  	private cPerg         := "ADFIN112R"	
+  	private dEmissaoDe    := ctod("")
 	private dEmissaoAte   := ctod("")
 	private cClienteDe    := ""
 	private cClienteAte   := ""
 	private cRedeDe       := ""
 	private cRedeAte      := ""
-  private cContaDebito  := ""
+  	private cContaDebito  := ""
 
 	lPerguntas := Perguntas()
 
 	if lPerguntas
 
 		oReport := TReport():New(cPerg,cTitulo,{|| Perguntas() },{|oReport| PrintReport(oReport) })
-		oReport:SetTitle(cTitulo)
+		oReport:SetTitle(cTitulo + " " + Dtoc(MV_PAR01) + " - " + Dtoc(MV_PAR02))
 
 		oReport:SetLandScape(.T.)
 
@@ -55,7 +62,7 @@ Static Function ReportDef(oReport)
 
 	oSection1 := TRSection():New(oReport,"Bonificação")
 	TRCell():New(oSection1,"CLIENTE"   	            ,"","Cliente"           ,"@!"               	,008,  ,,"LEFT"   ,,"LEFT"  ,,,,,,,) //01
-	TRCell():New(oSection1,"NOME"   	              ,"","Nome"              ,"@!"               	,040,  ,,"LEFT"   ,,"LEFT"  ,,,,,,,) //02
+	// TRCell():New(oSection1,"NOME"   	              ,"","Nome"              ,"@!"               	,040,  ,,"LEFT"   ,,"LEFT"  ,,,,,,,) //02
 	TRCell():New(oSection1,"VLRORIGINAL"            ,"","Vlr. Original"     ,"@E 999,999,999.99"  ,030,  ,,"RIGHT"  ,,"RIGHT" ,,,,,,,) //03
 	TRCell():New(oSection1,"VLRBONIFICACAO"         ,"","Vlr. Bonificacao"  ,"@E 999,999,999.99"  ,030,  ,,"RIGHT"  ,,"RIGHT" ,,,,,,,) //04
 
@@ -83,38 +90,39 @@ Static Function PrintReport(oReport)
 	local cAlias    := getNextAlias()
 
 	cQuery := "SELECT " + CRLF
-  cQuery += "	 SA1.A1_CODRED      AS CODCLIENTE, " + CRLF
-  // cQuery += "	 SA1.A1_NOME        AS NOME_CLIENTE, " + CRLF
-  cQuery += "	 SUM(SE1.E1_VALOR)  AS VALOR_ORIGINAL, " + CRLF
+  	cQuery += "	 SA1.A1_CODRED      AS CODCLIENTE, " + CRLF
+  	// cQuery += "	 SA1.A1_NOME        AS NOME_CLIENTE, " + CRLF
+  	cQuery += "	 SUM(SE1.E1_VALOR)  AS VALOR_ORIGINAL, " + CRLF
 	cQuery += "	 SUM(CT2.CT2_VALOR) AS VALOR_BONIFICACAO " + CRLF
 
-  cQuery += "FROM " + RetSqlTab("CT2") + " " + CRLF
+  	cQuery += "FROM " + RetSqlTab("CT2") + " " + CRLF
   
-  cQuery += " INNER JOIN " + RetSqlTab("SE1") + " " + CRLF
-  cQuery += "   ON  SE1.E1_NUM     = CT2.CT2_NUMDOC " + CRLF
-  cQuery += "   AND SE1.E1_PARCELA = CT2.CT2_PARCEL" + CRLF
-  cQuery += "   AND SE1.E1_CLIENTE = CT2.CT2_CLIFOR" + CRLF
-  cQuery += "   AND SE1.E1_LOJA = CT2.CT2_LOJACF" + CRLF
-  cQuery += "   AND SE1.E1_TIPO = 'NF'" + CRLF
-  cQuery += "   AND SE1.D_E_L_E_T_ <> '*' " + CRLF
+  	cQuery += " INNER JOIN " + RetSqlTab("SE1") + " " + CRLF
+  	cQuery += "   ON  SE1.E1_PREFIXO = CT2.CT2_PREFIX " + CRLF
+	cQuery += "   AND SE1.E1_NUM     = CT2.CT2_NUMDOC " + CRLF
+  	cQuery += "   AND SE1.E1_PARCELA = CT2.CT2_PARCEL" + CRLF
+  	cQuery += "   AND SE1.E1_CLIENTE = CT2.CT2_CLIFOR" + CRLF
+  	cQuery += "   AND SE1.E1_LOJA    = CT2.CT2_LOJACF" + CRLF
+  	cQuery += "   AND SE1.E1_TIPO    = 'NF'" + CRLF
+  	cQuery += "   AND SE1.D_E_L_E_T_ <> '*' " + CRLF
   
-  cQuery += " INNER JOIN " + RetSqlTab("SA1") + " " + CRLF
+  	cQuery += " INNER JOIN " + RetSqlTab("SA1") + " " + CRLF
 	cQuery += "  ON  SA1.A1_COD  = SE1.E1_CLIENTE " + CRLF	
 	cQuery += "  AND SA1.A1_LOJA = SE1.E1_LOJA " + CRLF	
 	cQuery += "  AND SA1.D_E_L_E_T_ <> '*'" + CRLF
   
-  cQuery += "WHERE 1=1 " + CRLF
-  cQuery += " AND CT2.D_E_L_E_T_ <> '*' " + CRLF
-  cQuery += " AND CT2.CT2_FILIAL = '" + xFilial("CT2") + "' " + CRLF
+  	cQuery += "WHERE 1=1 " + CRLF
+  	cQuery += " AND CT2.D_E_L_E_T_ <> '*' " + CRLF
+  	cQuery += " AND CT2.CT2_FILIAL = '" + xFilial("CT2") + "' " + CRLF
 	cQuery += " AND SA1.A1_CODRED BETWEEN '" + cRedeDe          + "' AND '" + cRedeAte          + "'" + CRLF
 	cQuery += " AND SA1.A1_COD    BETWEEN '" + cClienteDe       + "' AND '" + cClienteAte       + "'" + CRLF
 	cQuery += " AND CT2.CT2_DATA  BETWEEN '" + dTos(dEmissaoDe) + "' AND '" + dTos(dEmissaoAte) + "'" + CRLF
-  cQuery += " AND CT2.CT2_DEBITO = '" + cContaDebito + "'" + CRLF
+  	cQuery += " AND CT2.CT2_DEBITO = '" + cContaDebito + "'" + CRLF
   
-  // cQuery += " AND SE1.E1_EMISSAO>='" + dTos(dEmissaoDe) + "'" + CRLF
+  	// cQuery += " AND SE1.E1_EMISSAO>='" + dTos(dEmissaoDe) + "'" + CRLF
   
-  cQuery += " GROUP BY  SA1.A1_CODRED " + CRLF
-  cQuery += " ORDER BY  SA1.A1_CODRED"
+  	cQuery += " GROUP BY  SA1.A1_CODRED " + CRLF
+  	cQuery += " ORDER BY  SA1.A1_CODRED"
 
 	TCQUERY cQuery NEW ALIAS (cAlias)
 	DbSelectArea(cAlias)
@@ -175,13 +183,13 @@ Static Function Perguntas()
 	lPergunta := ParamBox(aParBox,cPerg,,,,,,,,cPerg,.T.,.T.)
 
 	if lPergunta
-    dEmissaoDe    := MV_PAR01
-	  dEmissaoAte   := MV_PAR02
-	  cRedeDe       := MV_PAR03
-	  cRedeAte      := MV_PAR04
-	  cClienteDe    := MV_PAR05
-	  cClienteAte   := MV_PAR06
-    cContaDebito  := MV_PAR07
+    	dEmissaoDe    := MV_PAR01
+	  	dEmissaoAte   := MV_PAR02
+	  	cRedeDe       := MV_PAR03
+	  	cRedeAte      := MV_PAR04
+	  	cClienteDe    := MV_PAR05
+	  	cClienteAte   := MV_PAR06
+    	cContaDebito  := MV_PAR07
 	endif
 
 Return lPergunta

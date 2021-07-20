@@ -3,21 +3,22 @@
 #INCLUDE "TBICONN.CH"
 #Include 'TOTVS.ch'
 #INCLUDE "topconn.ch"
-
-
 /*/{Protheus.doc} ADMNT012R - Relatorio de Custo por OS / Eqto Exporta Excel
-
+)
     @type  Function
     @author Tiago Stocco
     @since 20/07/2020
-    @version 01
-    @history Ticket 11502, Data 05/04/2021, Leonardo P. Monteiro, Adição do tipo do cliente na inclusão ou alteração;
-	@history Ticket 13241, Data 10/05/2021, TIAGO STOCCO, adição do solicitante
-    @history Ticket 13242, Data 26/05/2021, DENIS GUEDES, Compatibilizado o relatório para ser envia por email através de Schedule
-    @history Ticket 13242, Data 26/05/2021, DENIS GUEDES, Incluído a coluna ST1.T1_NOME no relatório
-    @history Ticket 13242, Data 02/06/2021, DENIS GUEDES, Incluído funcionalidade para copiar a planilha gerada para a pasta "Relatorio"
-    @history Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE, Após validar o fonte para por em produção vimos que o mesmo estava pegando o tecnico erroneamente foi ajustada a query.
-    @history Ticket 14707, Data 21/06/2021, ADRIANO SAVOINE, Ajuste na Query para trazer valores sem repetir.
+    @version TKT - 7571
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    @see (links_or_references) u_ADMNT012R()
+    @Ticket 11502, Data 05/04/2021, Leonardo P. Monteiro, Adição do tipo do cliente na inclusão ou alteração;
+	@Ticket 13241, Data 10/05/2021, TIAGO STOCCO, adição do solicitante
+    @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Compatibilizado o relatório para ser envia por email através de Schedule
+    @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Incluído a coluna ST1.T1_NOME no relatório
+    @Ticket 13242, Data 02/06/2021, DENIS GUEDES, Incluído funcionalidade para copiar a planilha gerada para a pasta "Relatorio"
+    @Ticket 13242, Data 19/07/2021, Leonardo P. Monteiro, Melhoria no envio de e-mail zipando os arquivos em anexo 
 /*/
 
 User Function ADMNT012R(aParam)
@@ -59,10 +60,9 @@ If lJob
 	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
     czEMP    := aParam[1]   
     czFIL    := aParam[2]   
-    cMVPAR03 := czFIL
-    cMVPAR04 := czFIL
+    
     PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
-    cPara      :=  SuperGetMv('ZZ_MNT012R', .f. ,"" ) 
+    cPara      :=  SuperGetMv('ZZ_MNT012R', .f. ,"leonardo.monteiro@adoro.com.br" ) 
     
     oProcess := Executa()
 Else
@@ -87,9 +87,12 @@ Private cDIRREDE
 
 
 If lJob
-
-    dMVPAR01	:= ctod("01/01/2019")
+    //Solicitado pelo usuário que sem venha listado 2 anos de OS.
+    //dMVPAR01	:= ctod("01/01/2019")
+    dMVPAR01	:= YearSub(Date(), 2)
     dMVPAR02	:= date()
+    cMVPAR03    := czFIL
+    cMVPAR04    := czFIL
 
 Else
 
@@ -159,7 +162,7 @@ cQry    += " AND TQ4.D_E_L_E_T_ = ' ' "
 //cQry    += " TQB_FILIAL = T1_FILIAL "
 //cQry    += " AND TQB_CDEXEC = T1_CODFUNC "
 //cQry    += " AND ST1.D_E_L_E_T_ = ' ' "
-cQry    += " INNER JOIN "+RetSqlName("STL")+" (NOLOCK) STL ON " // Inicio Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE
+cQry    += " LEFT JOIN "+RetSqlName("STL")+" (NOLOCK) STL ON " // Inicio Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE
 cQry    += " TQB_FILIAL = TL_FILIAL "
 cQry    += " AND TL_ORDEM = TQB_ORDEM "
 cQry    += " AND STL.D_E_L_E_T_ = '' "
@@ -216,7 +219,8 @@ If (cAlias)->(!EOF())
         cNomArq := "REL_SS_"+cEmpAnt+"_"+cFilAnt+".XLS" 
     Else
         cDIRARQ := "\DATA\"
-        cNomArq := "REL_SS_"+czEMP+"_"+czFIL+".XLS" 
+        cNomArq := "REL_SS_"+czEMP+"_"+czFIL+".XLS"
+        cNomZip := "REL_SS_"+czEMP+"_"+czFIL+".ZIP"
     EndIf
 	
     
@@ -226,6 +230,8 @@ If (cAlias)->(!EOF())
         MsAguarde({||Processa({|| oExcel:GetXMLFile(cDIRARQ+cNomArq) })},"Processanento", "Gerando arquivo XML, aguarde....")
 	Else
         oExcel:GetXMLFile(cDIRARQ+cNomArq)
+
+        fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq},cDIRARQ)
      	//@Ticket 13242 ini
         cDIRREDE :="\RELATORIO\"
         nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 		
@@ -247,7 +253,7 @@ If (cAlias)->(!EOF())
         oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
         oExcelApp:SetVisible(.T.)
     Else
-        aAdd(aAnexos, cDIRARQ+cNomArq)
+        aAdd(aAnexos, cDIRARQ+cNomZip)
         fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
 	EndIf
 

@@ -44,6 +44,7 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 16/03/2021 - Correção no filtro de datas.
     @history Chamado 8465 - Leonardo P. Monteiro - 16/03/2021 - Correção nos saldos em estoque do eData.
     @history Chamado 8465 - Leonardo P. Monteiro - 02/07/2021 - Implementação dos novos recursos de integração com o App da qualidade.
+    @history Chamado 8465 - Leonardo P. Monteiro - 19/07/2021 - Inclusão do relatório de respaldo.
 /*/
 user function ADEEC006P()
     Local cTitle    := "..:: Monitor de Exportação ::.."
@@ -556,10 +557,13 @@ Static Function layPanel()
     oMenu01 := tMenu():new(0, 0, 0, 0, .T.)
     // cria os itens dos submenus
     
-    oMenu0101 := tMenuItem():new(oWnd, "Exp. Excel"         , , ,       , {|| fAcao(1, 1, .F.)},,,,,,,,,.T.)
-    oMenu0101 := tMenuItem():new(oWnd, "Ord. Carregametno"  , , ,       , {|| fAcao(1, 2, .F.)},,,,,,,,,.T.)
+    oMenu0101 := tMenuItem():new(oWnd, "Exp. Excel"                 , , ,       , {|| fAcao(1, 1, .F.)},,,,,,,,,.T.)
+    oMenu0102 := tMenuItem():new(oWnd, "Ord. Carregamento"          , , ,       , {|| fAcao(1, 2, .F.)},,,,,,,,,.T.)
+    oMenu0103 := tMenuItem():new(oWnd, "Relatório Respaldo (SIF)"   , , ,       , {|| fAcao(1, 3, .F.)},,,,,,,,,.T.)
     
     oMenu01:add(oMenu0101)
+    oMenu01:add(oMenu0102)
+    oMenu01:add(oMenu0103)
     oButExp:setPopupMenu(oMenu01)
 
     oButPed := TButton():New( 0, oSize:GetDimension("OBJ02","COLINI"), "Manutenção", oOpc,{|| } , oSize:GetDimension("OBJ02","XSIZE"),;
@@ -632,6 +636,7 @@ Static Function fAcao(nAcao, nOper, lRefresh)
     Local nOperation    := 4
     Local aParamBox     := {}
     Local aRet          := {}
+    Local nTable        := 1
     Private cPedExp     := ""
     
 
@@ -642,6 +647,8 @@ Static Function fAcao(nAcao, nOper, lRefresh)
             fExporta()
         elseif nOper == 2
             U_ADEEC011R()
+        elseif nOper == 3
+            U_ADEEC012R()
         endif
     
     //2. Manutenção.

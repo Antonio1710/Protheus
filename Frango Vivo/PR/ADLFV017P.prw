@@ -4,13 +4,14 @@
 
 #DEFINE STR0001 "Manutenção Frango Vivo"
 #DEFINE STR0002 "Manutenção Frango Vivo"
-#DEFINE STR0003 "Manutenção Frango Vivo"
+#DEFINE STR0003 "Manutenção Frango Vivo" 
 
-/*/{Protheus.doc} User Function ADLFV017P()
+/*/{Protheus.doc} User Function U_ADLFV017P()
   Tela de gestão de ordens de carregamento  - PCP 
   @type tkt -  13294
   @author Rodrigo Romão
   @since 18/05/2021
+  @history Chamado T.I - Leonardo P. Monteiro    - 16/07/2021 - Correção na função de upload dos registros no grid ZEH.
 /*/
 
 User Function ADLFV017P()
@@ -75,45 +76,32 @@ Static Function ModelDef()
 
 	// INSTANCIA O SUBMODELO
 	Local oStruZV1 := FwFormStruct(1, "ZV1")
-	Local oStruZEI := FwFormStruct(1, "ZEI")
+	//Local oStruZEI := FwFormStruct(1, "ZEI")
 	Local oStruZEH := FwFormStruct(1, "ZEH")
 
-
-	//oStruZV1:SetProperty( 'ZV1_MORTAL'  , MODEL_FIELD_VALID,FwBuildFeature( STRUCT_FEATURE_VALID,"ExecBlock('fillOrdMort')" )) //STRUCT_FEATURE_VALID OU STRUCT_FEATURE_WHEN
-
-	oStruZEI:SetProperty( 'ZEI_DESCRI'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEE','ZEE_DESCRI')" ))
-	oStruZEI:SetProperty( 'ZEI_DEPTO'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEE','ZEE_DEPTO')"  ))
-	oStruZEI:SetProperty( 'ZEI_DEPDES'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEE','ZEE_DESDEP')" ))
+	//oStruZEI:SetProperty( 'ZEI_DESCRI'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEE','ZEE_DESCRI')" ))
+	//oStruZEI:SetProperty( 'ZEI_DEPTO'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEE','ZEE_DEPTO')"  ))
+	//oStruZEI:SetProperty( 'ZEI_DEPDES'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEE','ZEE_DESDEP')" ))
 
 	oStruZEH:SetProperty( 'ZEH_DESCRI'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEG','ZEG_DESCRI')" ))
 	oStruZEH:SetProperty( 'ZEH_DEPTO'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEG','ZEG_DEPTO')"  ))
 	oStruZEH:SetProperty( 'ZEH_DESDEP'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_preencheCampo('ZEG','ZEG_DESDEP')" ))
 
-	// aGatilhos := getGatilhos()
-
-	// //Percorrendo os gatilhos e adicionando na Struct
-	// For nAtual := 1 To Len(aGatilhos)
-	// 	oStruZZ1:AddTrigger(  aGatilhos[nAtual][01],; //Campo Origem
-	// 	aGatilhos[nAtual][02],; //Campo Destino
-	// 	aGatilhos[nAtual][03],; //Bloco de cï¿½digo na validaï¿½ï¿½o da execuï¿½ï¿½o do gatilho
-	// 	aGatilhos[nAtual][04])  //Bloco de cï¿½digo de execuï¿½ï¿½o do gatilho
-	// Next
-
 	bLoad := {|oModel, oGridModel, lCopy| loadGrid(oModel, oGridModel, lCopy)}
 
 	// DEFINE O SUBMODELO COMO FIELD
 	oModel:AddFields("ZV1MASTER", NIL, oStruZV1)
-	oModel:AddGrid("ZEIDETAIL", "ZV1MASTER", oStruZEI)
-	// oModel:AddGrid("ZEHDETAIL", "ZV1MASTER", oStruZEH)
+	//oModel:AddGrid("ZEIDETAIL", "ZV1MASTER", oStruZEI)
+	//oModel:AddGrid("ZEHDETAIL", "ZV1MASTER", oStruZEH)
 	oModel:AddGrid("ZEHDETAIL", "ZV1MASTER", oStruZEH, /*bLinePre*/, /*bLinePost*/, /*bPre*/, /*bPost*/, bLoad)
 
-	oModel:GetModel("ZEHDETAIL"):SetUseOldGrid(.t.)
+	//oModel:GetModel("ZEHDETAIL"):SetUseOldGrid(.t.)
 	//oModel:GetModel( 'ZEHDETAIL' ):SetNoInsertLine(.F.)
 
-	oModel:SetRelation("ZEIDETAIL", {{"ZEI_FILIAL", "xFilial('ZEI')"},{"ZEI_NUMOC","ZV1_NUMOC"}}, ZEI->(IndexKey(1)))
+	//oModel:SetRelation("ZEIDETAIL", {{"ZEI_FILIAL", "xFilial('ZEI')"},{"ZEI_NUMOC","ZV1_NUMOC"}}, ZEI->(IndexKey(1)))
 	oModel:SetRelation("ZEHDETAIL", {{"ZEH_FILIAL", "xFilial('ZEH')"},{"ZEH_NUMOC","ZV1_NUMOC"}}, ZEH->(IndexKey(1)))
 
-	oModel:GetModel('ZEIDETAIL'):SetOptional(.T.)
+	//oModel:GetModel('ZEIDETAIL'):SetOptional(.T.)
 	oModel:GetModel('ZEHDETAIL'):SetOptional(.T.)
 
 	oModel:GetModel( 'ZEHDETAIL' ):SetNoInsertLine( .F. )
@@ -148,7 +136,7 @@ Static Function ViewDef()
 
 	// INSTANCIA AS SUBVIEWS
 	Local oStruZV1 := FwFormStruct(2, "ZV1")
-	Local oStruZEI := FwFormStruct(2, "ZEI")
+	//Local oStruZEI := FwFormStruct(2, "ZEI")
 	Local oStruZEH := FwFormStruct(2, "ZEH")
 
 	// RECEBE O MODELO DE DADOS
@@ -160,34 +148,34 @@ Static Function ViewDef()
 
 	// CRIA ESTRUTURA VISUAL DE CAMPOS
 	oView:AddField("VIEW_ZV1",oStruZV1 ,"ZV1MASTER")
-	oView:AddGrid("VIEW_ZEI" ,oStruZEI ,"ZEIDETAIL")
+	//oView:AddGrid("VIEW_ZEI" ,oStruZEI ,"ZEIDETAIL")
 	oView:AddGrid("VIEW_ZEH" ,oStruZEH ,"ZEHDETAIL")
 
 	oStruZV1:RemoveField('ZV1_MORTAL')
 
-	oStruZEI:RemoveField('ZEI_FILIAL')
-	oStruZEI:RemoveField('ZEI_NUMOC')
+	//oStruZEI:RemoveField('ZEI_FILIAL')
+	//oStruZEI:RemoveField('ZEI_NUMOC')
 
 	oStruZEH:RemoveField('ZEH_FILIAL')
 	oStruZEH:RemoveField('ZEH_NUMOC')
 
-	oView:AddIncrementField( "VIEW_ZEI", "ZEI_ITEM" )
+	//oView:AddIncrementField( "VIEW_ZEI", "ZEI_ITEM" )
 	oView:AddIncrementField( "VIEW_ZEH", "ZEH_ITEM" )
 
 	oView:CreateHorizontalBox("TELA_SUPERIOR",60)
-	oView:CreateHorizontalBox("GRID_MOTIVO_MORTALIDADE",15, nil, .F.)
-	oView:CreateHorizontalBox("GRID_MOTIVO_PARADA",25)
+	oView:CreateHorizontalBox("GRID_MOTIVO_MORTALIDADE",35, nil, .F.)
+	//oView:CreateHorizontalBox("GRID_MOTIVO_PARADA",25)
 
 	oView:SetOwnerView("VIEW_ZV1", "TELA_SUPERIOR")
 	oView:SetOwnerView("VIEW_ZEH", "GRID_MOTIVO_MORTALIDADE")
-	oView:SetOwnerView("VIEW_ZEI", "GRID_MOTIVO_PARADA")
+	//oView:SetOwnerView("VIEW_ZEI", "GRID_MOTIVO_PARADA")
 
-	oView:EnableTitleView("VIEW_ZEI", STR0002, RGB(224, 30, 43))
+	//oView:EnableTitleView("VIEW_ZEI", STR0002, RGB(224, 30, 43))
 	oView:EnableTitleView("VIEW_ZEH", STR0003, RGB(224, 30, 43))
 
 	// DEFINE OS TITULOS DAS SUBVIEWS
 	oView:EnableTitleView("VIEW_ZV1")
-	oView:EnableTitleView("VIEW_ZEI")
+	//oView:EnableTitleView("VIEW_ZEI")
 	oView:EnableTitleView("VIEW_ZEH")
 
 Return (oView)
@@ -220,7 +208,7 @@ Static Function getGatilhos()
 	"01");                             			  //Sequencia do gatilho
 	)
 
-Return aRet
+Return aRet 
 
 /*/{Protheus.doc} fillDescricao
   (long_description)
@@ -242,10 +230,6 @@ Static Function fillDescricao()
 	local oView		:= FwViewActive()
 	local cCodMM	:= FwFldGet("ZEH_NUMMM")
 
-	// oFilial:LoadValue('ZZ1_DESCR', "FILIAL1")
-	// FwFldPut("ZZ1_DESC","filial 00001",,,, .T.)
-	//cRet := FWFilialName(cEmpAnt,cFil,1)
-	// oView:refresh()
 
 	cQuery := "SELECT " + CRLF
 	cQuery += "	 ZEG.ZEG_DESCRI " + CRLF
@@ -319,6 +303,7 @@ Return lRet
 	(examples)
 	@see (links_or_references)
 	/*/
+/*
 User Function fillOrdMort()
 	local oModel 	:= FwModelActive()
 	local oView		:= FwViewActive()
@@ -334,15 +319,6 @@ User Function fillOrdMort()
 	// ZEG => CADASTO DE MOTIVOS DE MORTALIDADE
 	// ZEH => ORDERM DE CARREGAMENTO X MOTIVO DE MORTALIDADE
 
-	// aAdd(aTemp, xFilial("ZEG"))	//01-ZEH_FILIAL
-	// aAdd(aTemp, "0002") 					//02-ZEH_ITEM
-	// aAdd(aTemp, cNumOc) 					//03-ZEH_NUMOC
-	// aAdd(aTemp, "0000000001") 		//04-ZEH_NUMMM
-	// aAdd(aTemp, "") 							//05-ZEH_DESCRI
-	// aAdd(aTemp, "") 							//06-ZEH_DEPTO
-	// aAdd(aTemp, "") 							//07-ZEH_DESDEP
-	// aAdd(aTemp, 0) 							//08-ZEH_QUANT
-	// aAdd(aTemp, "") 							//09-ZEH_OBS
 
 	cNumOc	:= FwFldGet("ZV1_NUMOC")
 	nMortal	:= FwFldGet("ZV1_MORTAL")
@@ -353,19 +329,15 @@ User Function fillOrdMort()
 
 		cQuery := "SELECT ZEG.ZEG_CODIGO,ZEG.ZEG_DESCRI,ZEG.ZEG_DEPTO, ZEG.ZEG_DESDEP "
 		cQuery += " FROM " + RetSqlTab("ZEG") + " "
-		// cQuery += "		INNER JOIN " + RetSqlTab("ZEH") + " "
-		// cQuery += "    ON  ZEH.ZEH_NUMMM = ZEG.ZEG_CODIGO"
-		// cQuery += " 		AND ZEH.ZEH_FILIAL = '" + xFilial("ZEH") + "'"
-		// cQuery += "    AND ZEH.D_E_L_E_T_ = ''"
 		cQuery += " WHERE ZEG.D_E_L_E_T_ = ''"
 		cQuery += " AND ZEG.ZEG_FILIAL = '" + xFilial("ZEG") + "'"
 		cQuery += " AND ZEG.ZEG_AUTO = 'S'"
 		cQuery += " AND ZEG.ZEG_STATUS = '1'"
-		// cQuery += " AND ZEH.ZEH_NUMOC = '" + cNumOc + "'"
 
 		TCQUERY cQuery NEW ALIAS (cAlias)
-		DbSelectArea(cAlias)
+		(cAlias)->(dbgotop())
 
+		DbSelectArea(cAlias)
 		While (cAlias)->(!Eof())
 
 			cCodigo := (cAlias)->ZEG_CODIGO
@@ -391,6 +363,7 @@ User Function fillOrdMort()
 
 	oView:Refresh('ZEHDETAIL')
 Return .t.
+*/
 
 /*/{Protheus.doc} loadGrid
   (long_description)
@@ -405,54 +378,92 @@ Return .t.
   @see (links_or_references)
   /*/
 Static Function loadGrid(oModel, oGridModel, lCopy)
-	local aData 	:= {}
+	local oModelA 	:= FwModelActive()
+	local oViewA	:= FwViewActive()
 	local cQuery	:= ""
-	local cAlias 	:= ""
-	local aTemp		:= {}
+	local cAlias	:= ""
+	local aData 	:= {}
+	Local oGrid     := oModelA:GetModel('ZEHDETAIL')
+	//local aData		:= oGrid:getOldData()
+	//local cQuery	:= ""
+	//local cAlias 	:= ""
+	//local aTemp		:= {}
 	local nItem		:= 0
 
 	cNumOc	:= ZV1->ZV1_NUMOC
 	nMortal	:= ZV1->ZV1_MORTAL
 
-	aData := verificaInfo(cNumOc)
+	//aData := verificaInfo(cNumOc)
 
-	if Len(aData) == 0
-		cAlias := getNextAlias()
+	//if Len(aData) == 0
+	cAlias := getNextAlias()
 
-		cQuery := "SELECT ZEG.ZEG_CODIGO,ZEG.ZEG_DESCRI,ZEG.ZEG_DEPTO, ZEG.ZEG_DESDEP "
-		cQuery += " FROM " + RetSqlTab("ZEG") + " "
-		cQuery += " WHERE ZEG.D_E_L_E_T_ = ''"
-		cQuery += " AND ZEG.ZEG_FILIAL = '" + xFilial("ZEG") + "'"
-		cQuery += " AND ZEG.ZEG_AUTO = 'S'"
-		cQuery += " AND ZEG.ZEG_STATUS = '1'"
+	cQuery := "SELECT ZEG.ZEG_CODIGO,ZEG.ZEG_DESCRI,ZEG.ZEG_DEPTO, ZEG.ZEG_DESDEP, ZEG_DESCRI  "
+	cQuery += " FROM " + RetSqlTab("ZEG") + " LEFT JOIN "
+	cQuery += "  	(SELECT DISTINCT ZEH_FILIAL, ZEH_NUMMM "
+	cQuery += "		 FROM " + RetSqlTab("ZEH") + "	"
+	cQuery += "		 WHERE D_E_L_E_T_='' AND ZEH_FILIAL = '" + xFilial("ZEH") + "' AND ZEH_NUMOC = '" + cNumOc + "') ZEH "
+	cQuery += "  ON  ZEG.ZEG_CODIGO = ZEH.ZEH_NUMMM "
+	cQuery += "  AND ZEG.D_E_L_E_T_ = ''"
+	cQuery += "  AND ZEG.ZEG_FILIAL = '" + xFilial("ZEG") + "'"
+	cQuery += "  AND ZEH.ZEH_FILIAL = '" + xFilial("ZEH") + "'"
+	cQuery += " WHERE ZEG.D_E_L_E_T_ = ''"
+	cQuery += " AND ZEG.ZEG_FILIAL = '" + xFilial("ZEG") + "'"
+	cQuery += " AND ZEG.ZEG_AUTO = 'S'"
+	cQuery += " AND ISNULL(ZEH.ZEH_NUMMM,'') = '' "
+	cQuery += " AND ZEG.ZEG_STATUS = '1'"
 
-		TCQUERY cQuery NEW ALIAS (cAlias)
-		DbSelectArea(cAlias)
+	TCQUERY cQuery NEW ALIAS (cAlias)
+	DbSelectArea(cAlias)
+	
+	oGrid:setNoInsertLine(.F.)
 
-		While (cAlias)->(!Eof())
-			nItem++
-			nQuantidade := 0
+	While (cAlias)->(!Eof())
+		nItem++
+		nQuantidade := 0
 
-			IF Alltrim((cAlias)->ZEG_DESCRI) == "MORTALIDADE"
-				nQuantidade := nMortal
-			endif
+		IF Alltrim((cAlias)->ZEG_DESCRI) == "MORTALIDADE"
+			nQuantidade := nMortal
+		endif
+		
+		oGrid:GoLine(oGrid:Length())
 
-			RecLock("ZEH",.T.)
-			ZEH->ZEH_FILIAL	:= xFilial("ZEH")
-			ZEH->ZEH_ITEM  	:= StrZero(nItem,4)
-			ZEH->ZEH_NUMOC 	:= cNumOc
-			ZEH->ZEH_NUMMM 	:= (cAlias)->ZEG_CODIGO
-			ZEH->ZEH_QUANT 	:= nQuantidade
-			ZEH->ZEH_OBS 		:= SPACE(250)
-			ZEH->(MsUnLock())
+		if !Empty(oGrid:GetValue("ZEH_NUMMM"))
+			oGrid:AddLine()
+		endif
 
-			(cAlias)->(DbSkip())
-		endDo
+		oGrid:GoLine(oGrid:Length())
+		
+		//oGrid:loadValue("ZEH_FILIAL"	,xFilial("ZEH"))
+		oGrid:loadValue("ZEH_ITEM"		,StrZero(nItem,4))
+		oGrid:loadValue("ZEH_NUMOC"		,cNumOc)
+		oGrid:loadValue("ZEH_NUMMM"		,(cAlias)->ZEG_CODIGO)
+		oGrid:loadValue("ZEH_DESCRI"	,(cAlias)->ZEG_DESCRI)
+		oGrid:loadValue("ZEH_DEPTO"		,(cAlias)->ZEG_DEPTO)
+		oGrid:loadValue("ZEH_DESDEP"	,(cAlias)->ZEG_DESDEP)
+		oGrid:loadValue("ZEH_QUANT"		,nQuantidade)
+		oGrid:loadValue("ZEH_OBS"		,SPACE(250))
 
-		(cAlias)->(DbCloseArea())
-	endif
+		/*
+		RecLock("ZEH",.T.)
+		ZEH->ZEH_FILIAL	:= xFilial("ZEH")
+		ZEH->ZEH_ITEM  	:= StrZero(nItem,4)
+		ZEH->ZEH_NUMOC 	:= cNumOc
+		ZEH->ZEH_NUMMM 	:= (cAlias)->ZEG_CODIGO
+		ZEH->ZEH_QUANT 	:= nQuantidade
+		ZEH->ZEH_OBS 		:= SPACE(250)
+		ZEH->(MsUnLock())
+		*/
 
-	aData := verificaInfo(cNumOc)
+		(cAlias)->(DbSkip())
+	endDo
+
+	oGrid:setNoInsertLine(.T.)
+
+	(cAlias)->(DbCloseArea())
+	//endif
+
+	//aData := verificaInfo(cNumOc)
 
 Return aData
 
