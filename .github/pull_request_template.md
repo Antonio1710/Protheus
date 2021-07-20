@@ -16,7 +16,7 @@
 
 # Desenvolvedor (Developer)
 
-# Usuário solicitante (User request)
+# Usuário solicitante (Requester)
 
 - Informe aqui o requisitante e principalmente informações sobre os testes e validações. 
 (Include here the requester and mostly information about the tests and validations.)
