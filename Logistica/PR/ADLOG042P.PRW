@@ -67,6 +67,7 @@
 	@history Everson-13/02/2020-Ch:054941- Tratamento para geração de frete de ração.
 	@history Everson-21/02/2020-Ch:054941- Adicionada a função GetArea e filtros pela opção de execução.
 	@history Everson-12/08/2020-Ch:059326- Tratamento para geração de frete na empresa Ceres 02. 
+	@history Everson-20/07/2020-Ch:15478- Tratamento para geração de frete de subproduto na empresa Adoro 02 Filial 03.
 	/*/    
 User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr )
 	
@@ -77,6 +78,7 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 	Local aAreaZFD		:= {} //Everson-21/02/2020-Ch:054941.
 	Local lAutoJob 		:= .F.
 	Local cTpCrg 		:= ""
+	Local cRote 		:= ""	//Everson - 20/07/2021. Chamado 15478.
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Geração de frete a partir de emissão da Nota')
 
@@ -110,6 +112,10 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 	//
 	Conout( DToC(Date()) + " " + Time() + " ADLOG042P - cTpCrg " + cTpCrg )
 
+	//
+	cRote := cValToChar(Posicione("SC5",1, FWxFilial("SC5") + C5NUM, "C5_ROTEIRO")) //Everson - 20/07/2021. Chamado 15478.
+	Conout( DToC(Date()) + " " + Time() + " ADLOG042P - cRote " + cRote )
+
 	//Everson-20/01/2020-Ch:054941.
 	If cTpCrg == "1" //Everson - 07/02/2020. Chamado 0541941.
 		U_ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob)
@@ -125,7 +131,7 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 	ElseIf cTpCrg == "5" .And. cOpc == "1" //Frete Ração. //Everson-21/02/2020-Ch:054941.
 		U_ADLOG052P("2",cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 07/02/2020. Chamado 054941.
 
-	ElseIf Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0102" .Or. Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0201" //Frete combinado empresa 01, filial 02. //Everson - 07/02/2020. Chamado 0541941. //Everson - 12/08/2020. Chamado 059326.
+	ElseIf Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0102" .Or. Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0201" .Or. ( Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0103" .And. !Empty(cRote) )//Frete combinado empresa 01, filial 02. //Everson - 07/02/2020. Chamado 0541941. //Everson - 12/08/2020. Chamado 059326. //Everson - 20/07/2021. Chamado 15478.
 		U_ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 21/01/2020. Chamado 054941.
 
 	EndIf

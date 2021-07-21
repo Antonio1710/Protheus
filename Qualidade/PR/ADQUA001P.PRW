@@ -11,6 +11,7 @@ Static cFormatRet := "application/json"
     @since 31/05/2021
     @version 01
     @history Everson, 15/06/2021, Chamado 4257 Descomentadas as linhas de container e tara.
+    @history Everson, 20/07/2021, Chamado 4257 Tratamento para formatação da data do roteiro.
     /*/
 User Function ADQUA001P
 return Nil
@@ -170,7 +171,7 @@ Static Function getCarga(cErro, cId)
 
     //
     cJsonResp += ' { '
-        cJsonResp += ' "dataRoteiro": "' + Alltrim(cValToChar(D_CABEC->C5_DTENTR)) + '", '
+        cJsonResp += ' "dataRoteiro": "' + DToC(SToD(D_CABEC->C5_DTENTR)) + '", ' //Everson - 20/07/2021. Chamado 4257. 
         cJsonResp += ' "roteiro": "' + Alltrim(cValToChar(D_CABEC->C5_ROTEIRO)) + '", '
         cJsonResp += ' "pedido": "' + Alltrim(cValToChar(D_CABEC->C5_NUM)) + '", '
         cJsonResp += ' "placa":"' + Alltrim(cValToChar(D_CABEC->C5_PLACA)) + '", '
