@@ -10,7 +10,7 @@
 	@version 01
 	@history Chamado 045548 - William Costa   - 03/12/2018 - Ajustado Regra para pegar a empresa e filial dimep para func novos
 	@history Chamado 050189 - William Costa   - 03/07/2019 - Ajuste regra de integracao de ferias onde nao estava gravando na tabela de situacao pessoa multipla, ajustado uma verificacao se o funcionario esta de ferias verificar se esta na tabela se não tiver inclui novamente.
-	@history Chamado 053196 - William Costa   - 06/11/2019 - Identificado que após as alterações de Matricula para CPF, quando o funcionário é transferido entre empresa estava gerando erro pois as matriculas são diferentes e o CPF os mesmos então o Status do funcionário ficava demitido em uma empresa e trabalhando em outra gerando erro no Dimep.
+	@history Chamado 053196 - William Costa   - 06/11/2019 - Identificado que após UPDPESSas alterações de Matricula para CPF, quando o funcionário é transferido entre empresa estava gerando erro pois as matriculas são diferentes e o CPF os mesmos então o Status do funcionário ficava demitido em uma empresa e trabalhando em outra gerando erro no Dimep.
 	@history Chamado 053196 - William Costa   - 06/11/2019 - Identificado que no momento de bloquear o terceiro estava entrando errado no if quando a data é igual a vazio, bloqueando o terceiro indevidamente.
 	@history Chamado 053384 - William Costa   - 14/11/2019 - Identificado que após alterar as matriculas para CPF, o update de pessoa não precisa mais ter a empresa e filial no Where pq o CPF é unico, então foi retirado para entrar corretamente.
 	@history Chamado 055578 - William Costa   - 05/02/2020 - Identificado que após as alterações de Matricula para CPF, quando o funcionário é transferido entre filial estava gerando erro pois as matriculas são diferentes e o CPF os mesmos então o Status do funcionário ficava demitido em uma filial e trabalhando em outra gerando erro no Dimep.
@@ -28,20 +28,19 @@
 	@history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
-	@history Ticket  15680  - Everson - 16/06/2021 - Removido lockbyname.
+	@history Ticket  15680  - Everson         - 16/06/2021 - Removido lockbyname.
+	@history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
 /*/
-USER FUNCTION ADGPE024P(aParam)  
+USER FUNCTION ADGPE024P(aParam)
 
 	// @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
 	Default aParam    := Array(2)
 	Default aParam[1] := "01"
 	Default aParam[2] := "02"
-	//
 	
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 	Private cLinked := "" 
 	Private cSGBD   := "" 
-	//
 
 	PRIVATE lFuncIntegrar      := .F. 
 	PRIVATE lFuncSitFolha      := .F. 
@@ -100,15 +99,12 @@ USER FUNCTION ADGPE024P(aParam)
 	// ****************************FINAL PARA RODAR COM SCHEDULE**************************************** //	
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
-	// => DEBUG VOLTAR
-
 	// Ticket  15680  - Everson - 16/06/2021.
 	// If !LockByName("ADGPE024P"+aParam[1], .T., .F.)
 	// 	ConOut("[ADGPE024P] - Existe outro processamento sendo executado! Verifique...")
 	// 	RPCClearEnv()
 	// 	Return
 	// EndIf
-	// => DEBUG VOLTAR
     
 	// ****************************INICIO INTEGRACAO FUNCIONARIOS PROTHEUS x DIMEP**************************************** //	
 	
@@ -148,7 +144,7 @@ USER FUNCTION ADGPE024P(aParam)
 		tcQuery cQuery New Alias LS
 
 		If Select("LS") > 0
-			DimepRegraDeAcesso() 
+			DimepRegraDeAcesso() // DEBUG VOLTAR
 			DimepFuncionario()  
 		Else
 			LS->( dbCloseArea() )
@@ -163,16 +159,6 @@ USER FUNCTION ADGPE024P(aParam)
 	END SEQUENCE
 	//
 
-	// @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-	/*
-	IF CEMPANT == '01' //NAO EXISTE CADASTRO DE CAMINHONEIROS EM OUTRAS EMPRESAS WILLIAM 21/06/2017
-	
-		DimepCaminhoneiro()
-		//DimepBloqCaminhoneiro() //RETIRADO ATE A SEGUNDA ORDEM 
-	
-	ENDIF
-	*/
-	
 	DimepBloqTerceiro()  
 
 	logZBN("2") //Log fim.
@@ -188,6 +174,8 @@ USER FUNCTION ADGPE024P(aParam)
 RETURN(NIL)  	
 	
 STATIC FUNCTION DimepRegraDeAcesso()	
+
+	Local nCont2
 
 	// *** INICIO INTEGRACAO REGRA DE ACESSO *** //
 	
@@ -372,9 +360,7 @@ STATIC FUNCTION DimepRegraDeAcesso()
 						        INTPERACREGRA(TRP->CD_PERFIL_ACESSO,TRQ->CD_GRUPO,TRQ->CD_AREA,TRH->CD_TURNO,TRR->CD_FAIXA_HORARIA,nFlagAusente,cJornada,nQtdAcesso) // Integra Perfil de Regra
 						                
 						        IF nCont == 1
-						        
 						        	INTPERRESTRICAO(TRP->CD_PERFIL_ACESSO,TRQ->CD_GRUPO,TRQ->CD_AREA) // Integra PERFIL_ACESSO_RESTRICAO	
-						        
 						        ENDIF						        
 				    	   		
 				    	   		TRO->(dbSkip())
@@ -403,11 +389,9 @@ STATIC FUNCTION DimepRegraDeAcesso()
     				SqlVTurnoDimep(VAL(CEMPANT + TRL->CODIGO))
 		
 			    	IF TRH->(!EOF())  
-			    	
 						nQtdAcesso := 999
 						INTPERACREGRA(TRP->CD_PERFIL_ACESSO,TSE->CD_GRUPO,TSE->CD_AREA,'NULL','NULL','0','NULL',nQtdAcesso) // Integra Perfil de Regra
 						INTPERRESTRICAO(TRP->CD_PERFIL_ACESSO,TSE->CD_GRUPO,TSE->CD_AREA) // Integra PERFIL_ACESSO_RESTRICAO	
-						
 			    	ENDIF
     			    TRH->(dbCloseArea())                  
     			    
@@ -416,19 +400,12 @@ STATIC FUNCTION DimepRegraDeAcesso()
 				ENDDO
 			    TSE->(dbCloseArea()) 
 
-				// *** FINAL INTEGRA GRUPO CATRACA PORTARIA *** //
-    		
     		ENDIF            
     		TRP->(dbCloseArea()) 
     		
     	ELSE                     
-    	
     		TRP->(dbCloseArea()) 
-    	
-    	
     	ENDIF 
-    	
-    	// *** FINAL CARREGA PERFIL DE ACESSO *** //
     	
     	TRL->(dbSkip())
 				
@@ -436,9 +413,6 @@ STATIC FUNCTION DimepRegraDeAcesso()
 	
 	TRL->(dbCloseArea()) 
     
-    // *** FINAL BUSCA TURNO NO PROTHEUS *** //
-    // *** FINAL INTEGRACAO REGRA DE ACESSO *** //    
-                                     
 RETURN(NIL)    
         
 STATIC FUNCTION DimepFuncionario()	
@@ -486,33 +460,20 @@ STATIC FUNCTION DimepFuncionario()
         VEmpresaDimep(cFilFunc,cNu_Estrutura)
 		
 		// *** INICIO VERIFICA SITUACAO DO FUNCIONARIO *** //
-
-		//IF ALLTRIM(TRB->CODSITUACAO) $ 'A/V/X/K'  // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 		IF ALLTRIM(TRB->CODSITUACAO) $ 'A/V/X/Z'
-		
 			nSitFol := 11 // trabalhando
-			
 		ELSEIF ALLTRIM(TRB->CODSITUACAO) == 'D'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
-			
-			// *** INICIO CHAMADO 037769 VERIFICAR A DATA DE DEMISSAO DO FUNCIONARIO ANTES DE DEMITILO POIS PODE SER DEMITIDO COM DATA PARA FRENTE - WILLIAM COSTA *** //
 			IF DATE() >= STOD(DTOS(TRB->DATADEMISSAO)) + 1
 				nSitFol := 12 // demitido
 			ELSE                         
 				nSitFol := 11 // trabalhando   
 			ENDIF	
-			// *** INICIO CHAMADO 037769 VERIFICAR A DATA DE DEMISSAO DO FUNCIONARIO ANTES DE DEMITILO POIS PODE SER DEMITIDO COM DATA PARA FRENTE - WILLIAM COSTA *** //
-			
 		ELSEIF ALLTRIM(TRB->CODSITUACAO) == 'F'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
-
 			nSitFol     := 13 // Ausencia		
 			nSitFolMult := 14 // Ferias 
-			
-		//ELSEIF !(ALLTRIM(TRB->CODSITUACAO) $ 'A/V/X/K/D/F')  // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 		ELSEIF !(ALLTRIM(TRB->CODSITUACAO) $ 'A/V/X/D/F/Z')
-			
 			nSitFol     := 13 // Ausencia
 			nSitFolMult := 15 // Afastamento 
-			
 		ENDIF	
 
 		// @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
@@ -520,84 +481,52 @@ STATIC FUNCTION DimepFuncionario()
 			nSitFol       := 23 // C - Contrato de Trabalho Suspenso
 			lFuncSitFolha := .T. 
 		EndIf
-		//
 		
 		// *** INICIO VERIFICA AFASTAMENTO *** //
-		//IF ALLTRIM(TRB->CODSITUACAO) <> 'D'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 		IF ALLTRIM(TRB->CODSITUACAO) <> 'D' .AND. ALLTRIM(TRB->CODSITUACAO) <> 'C'	// @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
-
 			SqlFERIAS(CVALTOCHAR(VAL(CEMPANT)),TRB->CHAPA)
-			
-			// *** INICIO SE NAO FOR O DIA DO AFASTAMENTO O FUNCIONARIO FICA COMO TRABALHANDO *** //
 			TRE->( dbGoTop() )
 			IF TRE->( EOF() )
-			
 				nSitFol     := 11 // trabalhando   
 				nSitFolMult := 0
 				TRE->(dbCloseArea())
-				
 				SqlAfastamento(CVALTOCHAR(VAL(CEMPANT)),TRB->CHAPA)
-			
 			ENDIF
 
 			IF TRE->( EOF() )
-			
 				nSitFol     := 11 // trabalhando   
 				nSitFolMult := 0
-
 			ENDIF
 			
-			// *** FINAL SE NAO FOR O DIA DO AFASTAMENTO O FUNCIONARIO FICA COMO TRABALHANDO *** //
-			//If Select("TRE") > 0
-
-				While TRE->( !EOF() )
+			While TRE->( !EOF() )
+				nSitFol     := 13 // GERAL
+				nSitFolMult := IIF(nSitFolMult==11,15,nSitFolMult) // Afastamento   
+				cDataIni    := SUBSTR(DTOC(STOD(DTOS(TRE->DATAINICIO))),1,6) + CVALTOCHAR(YEAR(TRE->DATAINICIO))
+				cDataIni    := IIF(ALLTRIM(cDataIni) <> '',CVALTOCHAR(YEAR(TRE->DATAINICIO)) + '-' + Substr(cDataIni,4,2)+ '-' + Substr(cDataIni,1,2) +  "T" + '00:00:00', cDataIni)
+				cDataFin    := IIF(!EMPTY(TRE->DATAFIM),SUBSTR(DTOC(STOD(DTOS(TRE->DATAFIM))),1,6) + CVALTOCHAR(YEAR(TRE->DATAFIM)),'')
+				cDataFin    := IIF(ALLTRIM(cDataFin) <> '',CVALTOCHAR(YEAR(TRE->DATAFIM))+ '-' + Substr(cDataFin,4,2)+ '-' + Substr(cDataFin,1,2) +  "T" + '23:59:59', '9999-12-31')
 					
-					nSitFol     := 13 // GERAL
-					nSitFolMult := IIF(nSitFolMult==11,15,nSitFolMult) // Afastamento   
-					
-						cDataIni    := SUBSTR(DTOC(STOD(DTOS(TRE->DATAINICIO))),1,6) + CVALTOCHAR(YEAR(TRE->DATAINICIO))
-						cDataIni    := IIF(ALLTRIM(cDataIni) <> '',CVALTOCHAR(YEAR(TRE->DATAINICIO)) + '-' + Substr(cDataIni,4,2)+ '-' + Substr(cDataIni,1,2) +  "T" + '00:00:00', cDataIni)
-						cDataFin    := IIF(!EMPTY(TRE->DATAFIM),SUBSTR(DTOC(STOD(DTOS(TRE->DATAFIM))),1,6) + CVALTOCHAR(YEAR(TRE->DATAFIM)),'')
-						cDataFin    := IIF(ALLTRIM(cDataFin) <> '',CVALTOCHAR(YEAR(TRE->DATAFIM))+ '-' + Substr(cDataFin,4,2)+ '-' + Substr(cDataFin,1,2) +  "T" + '23:59:59', '9999-12-31')
-						
-						IF nSitFolMult == 0
-						
-							IF EMPTY(TRE->DATAFIM)
-							
-								nSitFolMult := 15
-							
-							ELSEIF !EMPTY(TRE->DATAFIM) 
-							
-								IF DATE() <= TRE->DATAFIM
-								
-									nSitFolMult := 15
-								
-								ENDIF
-								
-							ELSE	
-							
-								nSitFolMult := nSitFolMult
-								
-							ENDIF
-					
+				IF nSitFolMult == 0
+					IF EMPTY(TRE->DATAFIM)
+						nSitFolMult := 15
+					ELSEIF !EMPTY(TRE->DATAFIM) 
+						IF DATE() <= TRE->DATAFIM
+							nSitFolMult := 15
 						ENDIF
+					ELSE	
+						nSitFolMult := nSitFolMult
+					ENDIF
+				ENDIF
 
-					TRE->( dbSkip() )
-					
-				ENDDO
+				TRE->( dbSkip() )
+			ENDDO
 
-				TRE->( dbCloseArea() )
-
-			//EndIf
+			TRE->( dbCloseArea() )
 
 		ENDIF	
 
-		// *** FINAL VERIFICA AFASTAMENTO *** //	
-		
-		// *** FINAL VERIFICA SITUACAO DO FUNCIONARIO *** //
-		
-		SqlVTurno(CEMPANT,TRB->CHAPA)
     	//verifica o turno do funcionario no cadastro de alteração de turno do ponto eletronico
+		SqlVTurno(CEMPANT,TRB->CHAPA)
     	CcodTurno := CVALTOCHAR(VAL(CEMPANT + TRB->CODHORARIO))
 		TRG->( dbGoTop() )
     	While TRG->(!EOF())
@@ -607,7 +536,6 @@ STATIC FUNCTION DimepFuncionario()
 		TRG->(dbCloseArea()) 
 		
 		// *** INICIO VERIFICA PESSOA SE JA ESTA CADASTRADO NO DIMEP *** //
-	
 		SqlVFuncDimep(nMatProth,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada)) // chamado 049598
 		While TRC->(!EOF())
 		
@@ -621,7 +549,6 @@ STATIC FUNCTION DimepFuncionario()
 				TRC->(dbSkip())
 				LOOP
 			ENDIF
-			// *** FINAL CHAMADO 056610 WILLIAM COSTA 13/03/2020 ***//  
 
 			// Pega o Perfil de Acesso Correto
 			SqlNomePerAc(TRC->CD_PERFIL_ACESSO)
@@ -641,105 +568,69 @@ STATIC FUNCTION DimepFuncionario()
 			   ALLTRIM(cEmpDimep)           <> ALLTRIM(cEmpAnt)
 			   
 				lFuncIntegrar := .T.
-			   
 			ENDIF
 			   
-			// *** FINAL VERIFICA PESSOA *** // 
-			
 			// *** INICIO VERIFICA SITUACAO PESSOA AFASTAMENTO OU FERIAS *** //
-			
 			If nSitFol <> 23 // @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
-
 				IF TRC->CD_SITUACAO_PESSOA <> nSitFol
 					lFuncSitFolha := .T. 
 				ENDIF  
-				
+
 				SqlVSitPessoaDimep(nCdPessoa)
-				
-				// *** INICIO 03/07/2019 CHAMADO 050189 || OS 051489 || TECNOLOGIA || LUIZ || 8451 || INTEG. FUNC - FERIAS *** //
 				IF nSitFol == 13 .AND. (nSitFolMult == 14 .OR. nSitFolMult == 15) .AND. TRD->(EOF()) 
-				
 					lFuncSitFolha := .T. 
-				
 				ENDIF
-				// *** FINAL 03/07/2019 CHAMADO 050189 || OS 051489 || TECNOLOGIA || LUIZ || 8451 || INTEG. FUNC - FERIAS *** //
 				
 				While TRD->(!EOF()) 
-					
 					dDtIniDimep        := IIF(DTOC(TRD->DT_INI) == '01/01/00' .AND. ALLTRIM(cDataIni) == '',CTOD("  /  /  "),TRD->DT_INI)                      
 					dDtFinDimep        := IIF(DTOC(TRD->DT_FIN) == '01/01/00',CTOD("  /  /  "),TRD->DT_FIN)
-				
 					IF TRD->CD_SITUACAO_PESSOA <> nSitFolMult                                    .OR. ;
-					dDtIniDimep             <> STOD(STRTRAN(SUBSTRING(cDataIni,1,10),'-','')) .OR. ;
-					dDtFinDimep             <> STOD(STRTRAN(SUBSTRING(cDataFin,1,10),'-','')) 
+						dDtIniDimep             <> STOD(STRTRAN(SUBSTRING(cDataIni,1,10),'-','')) .OR. ;
+						dDtFinDimep             <> STOD(STRTRAN(SUBSTRING(cDataFin,1,10),'-','')) 
 					
-					lFuncSitFolha := .T. 
-				
+						lFuncSitFolha := .T. 
 					ENDIF  
 					
 					TRD->(dbSkip())
-				
 				ENDDO
 				TRD->(dbCloseArea())       
-				
-				// *** FINAL VERIFICA SITUACAO PESSOA AFASTAMENTO OU FERIAS *** //
-			
 			EndIf
 			
 			// *** INICIO VERIFICA SITUACAO CREDENCIAL *** //
-			
-			// *** Inicio Verifica se existe a credencial na tabela para o campo credencial*** //
 	    	SqlVCredencialDimep(nCredFunc)
 	   		IF TRF->(EOF()) 
 		   		lFuncCredencial := .T. 
 			ENDIF
 			TRF->(dbCloseArea()) 
 			
-	    	// *** Final Verifica se existe a credencial na tabela *** //
-	    	
 	    	// *** Inicio Verifica se a credencial e a Pessoa esta correta *** //
 	    	IF lFuncCredencial == .F. 
-	    	
 		    	SqlVCredencialDimep(nCredFunc)
 		   		IF TRF->(!EOF()) 
-		   		
 		   			SqlCredPessoa(TRF->CD_CREDENCIAL,TRC->CD_PESSOA)
 			   		IF TRT->(EOF()) 
-			   		
 			   			lFuncCredencial := .T. 
-					
 					ENDIF            
 					TRT->(dbCloseArea()) 
 		   		ENDIF
 		    	TRF->(dbCloseArea()) 
 		    ENDIF	
-	    	// *** Final Verifica se existe a credencial na tabela para o campo credencial*** // 
 	    	
 	    	// *** Inicio Verifica se existe a credencial na tabela para o campo credencial*** //
-	    	
 	    	IF lFuncCredencial == .F.
-	    	
 		    	SqlVCredencialDimep(nCredFunc)
 		   		IF TRF->(EOF()) 
-		   		
 			   		lFuncCredencial := .T. 
-				
 				ENDIF
 				TRF->(dbCloseArea()) 
 				
-		    	// *** Final Verifica se existe a credencial na tabela *** //
-		    	
 		    	// *** Inicio Verifica se a credencial e a Pessoa esta correta *** //
 		    	IF lFuncCredencial == .F. 
-		    	
 			    	SqlVCredencialDimep(nCredFunc)
 			   		IF TRF->(!EOF()) 
-			   		
 			   			SqlCredPessoa(TRF->CD_CREDENCIAL,TRC->CD_PESSOA)
 				   		IF TRT->(EOF()) 
-				   		
 				   			lFuncCredencial := .T. 
-						
 						ENDIF            
 						TRT->(dbCloseArea()) 
 			   		ENDIF
@@ -749,24 +640,18 @@ STATIC FUNCTION DimepFuncionario()
 		    
 		    // *** Inicio Credencial Codigo de Barras igual Matricula Se o funcionario estiver trabalho e a credencial tiver com data final libera a data da credencial *** //
 		    IF lFuncCredencial == .F. 
-		    	
 		    	SqlVCredencialDimep(nMatProth)
 		   		IF TRF->(!EOF()) 
-		   		
 		   			SqlCredPessoa(TRF->CD_CREDENCIAL,TRC->CD_PESSOA)
 		   			While TRT->(!EOF()) 
-		   				
 		   				IF TRT->DT_FIM <> CTOD("  /  /  ") 	//so entra se a data fim tiver valor  
-		   				                                                     
 		   					// *** Inicio Credencial igual a Matricula *** //
 						    IF TRF->NU_CREDENCIAL == nMatProth .AND. ;
 			   				   TRT->DT_FIM         < DATE()    .AND. ;
 			   				   nSitFol            == 11 //trabalhando
 				   		
 					   			lFuncCredencial := .T. 
-					   			
 						    ENDIF          
-						    // *** Final Credencial igual a Matricula *** //
 						ENDIF
 					    TRT->(dbSkip())
 					ENDDO
@@ -774,26 +659,20 @@ STATIC FUNCTION DimepFuncionario()
 		   		ENDIF
 		    	TRF->(dbCloseArea()) 
 		    ENDIF	
-		    // *** Final Credencial Codigo de Barras igual Matricula Se o funcionario estiver trabalho e a credencial tiver com data final libera a data da credencial *** // 
-		    
+
 		    // *** Inicio Credencial Proximidade diferente da MAtricula Se o funcionario estiver trabalho e a credencial tiver com data final libera a data da credencial *** //
 		    IF lFuncCredencial == .F. 
-		    	
 		    	SqlVCredencialDimep(nCredFunc)
 		   		IF TRF->(!EOF()) 
-		   		
 		   			SqlCredPessoa(TRF->CD_CREDENCIAL,TRC->CD_PESSOA)
 		   			While TRT->(!EOF()) 
-		   				
 		   				IF TRT->DT_FIM <> CTOD("  /  /  ") 	//so entra se a data fim tiver valor  
-		   				                                                     
 		   					// *** Inicio Credencial diferente a Matricula *** //
 			   				IF TRF->NU_CREDENCIAL <> nMatProth .AND. ;
 			   				   TRT->DT_FIM         < DATE()    .AND. ;
 			   				   nSitFol            == 11 //trabalhando
 				   		
 					   			lFuncCredencial := .T. 
-					   			
 						    ENDIF          
 						    // *** Final Credencial diferente a Matricula *** //
 						ENDIF
@@ -803,18 +682,30 @@ STATIC FUNCTION DimepFuncionario()
 		   		ENDIF
 		    	TRF->(dbCloseArea()) 
 		    ENDIF	
-		    // *** Final Credencial Proximidade diferente da MAtricula Se o funcionario estiver trabalho e a credencial tiver com data final libera a data da credencial *** // 
-		    
-	    	// *** Final Verifica se existe a credencial na tabela para o campo credencial*** // 
-	    	
-			// *** FINAL VERIFICA SITUACAO CREDENCIAL *** //
-			
+
+			// FWNM - 19/07/2021 - AQUI - ticket 17021
+			If !lFuncCredencial
+				
+				// Checo se existe amarração Credencial x Pessoa - Tecnologia 3 = Aproximação = FACE
+				lTpTecno3 := GetCredenc("3", TRC->CD_PESSOA, Val(TRB->PTOCREDENCIAL))
+				If lTpTecno3
+					lFuncCredencial := .t.
+				EndIf
+
+				// Checo se existe amarração Credencial x Pessoa - Tecnologia 1 = Codigo Barra = REP
+				lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)))
+				If lTpTecno1
+					lFuncCredencial := .t.
+				EndIf
+
+			EndIf
+			// 
+
 			TRC->(dbSkip())
 		
 		ENDDO
+
     	TRC->(dbCloseArea()) 
-    	
-    	// *** FINAL VERIFICA PESSOA SE JA ESTA CADASTRADO NO DIMEP *** //
     	
     	// *** INICIO INSERT NO DIMEP *** //
     	IF lFuncIntegrar == .F. .AND. lFuncSitFolha == .F. .AND. lFuncCredencial == .F. // Quando não existe o funcionario na DIMEP
@@ -999,69 +890,44 @@ Static Function CargaFuncDimep()
     	// *** Inicio Verifica se existe a credencial na tabela *** //
     	SqlVCredencialDimep(nCredFunc)
    		IF TRF->(EOF()) 
-    		
-    		//IF TRB->PTOCREDENCIAL > 0	
 			IF Val(TRB->PTOCREDENCIAL) > 0 // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-    		
-   				//INTCREDENCIAL(TRB->PTOCREDENCIAL,nEstOrgEmpresa,'3')
 				INTCREDENCIAL(Val(TRB->PTOCREDENCIAL),nEstOrgEmpresa,'3') // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-   			
-   			END
-   			
+   			ENDIF
    			IF ALLTRIM(TRB->CHAPA) <> ''
-    	
 	    		INTCREDENCIAL(SUBSTR(TRB->CHAPA,3,6),nEstOrgEmpresa,'1')
-	    		
 	    	ENDIF	
-   			
    		ELSE
-    			    
    			nCredencial := TRF->CD_CREDENCIAL   
    			nRep        := TRF->CD_CREDENCIAL   
-   			
    		ENDIF
     	TRF->(dbCloseArea())
     		
     	// *** INICIO CARREGA CODIGO CREDENCIAL *** //
     	IF nCredencial == 0 .AND. nRep == 0
-    		
     		SqlVCredencialDimep(nCredFunc)
     			IF TRF->(!EOF()) 
-    			
     				nCredencial := TRF->CD_CREDENCIAL   
     				nRep        := TRF->CD_CREDENCIAL   
-    			
     			ENDIF
     		TRF->(dbCloseArea())
-    			
     	ENDIF
-    	// *** FINAL CARREGA CODIGO CREDENCIAL *** //
-    	
+
     	// *** INICIO CARREGA CODIGO CREDENCIAL DA MATRICULA*** //
     	IF nCredMat == 0 
-    		
     		SqlVCredencialDimep(VAL(SUBSTR(TRB->CHAPA,3,6)))
-    			IF TRF->(!EOF()) 
-    			
-    				nCredMat    := TRF->CD_CREDENCIAL   
-    				nRep        := TRF->CD_CREDENCIAL   
-    			
-    			ENDIF
+			IF TRF->(!EOF()) 
+				nCredMat    := TRF->CD_CREDENCIAL   
+				nRep        := TRF->CD_CREDENCIAL   
+			ENDIF
     		TRF->(dbCloseArea())
-    			
     	ENDIF
-    	// *** INICIO CARREGA CODIGO CREDENCIAL DA MATRICULA*** //
-    	
-    	// *** Final Verifica se existe a credencial na tabela *** //   
-    	
+
     	TRC->(dbCloseArea())
     	
     	// Pega o Perfil de Acesso Correto
     	SqlPerAc(cCodTurno)
     	IF TRP->(!EOF()) 
-	    			
     		nPerfilAcesso := TRP->CD_PERFIL_ACESSO   
-    		
     	ENDIF
     	TRP->(dbCloseArea())
     	
@@ -1069,88 +935,109 @@ Static Function CargaFuncDimep()
     	INTUSUSISCREDENCIAL(nCredencial) 
     	
     	IF SUBSTR(TRB->CHAPA,3,6) <> ''
-    	
     		INTUSUSISCREDENCIAL(nCredMat)
-    		
     	ENDIF	
     	
     	// Integra Pessoa
-    	INTPESSOA(nMatProth,TRB->NOME,nSitFol,nEstOrganizacional,nEstOrgEmpres,TRB->CPF,TRB->CARTIDENTIDADE,TRB->PISPASEP,nPerfilAcesso,nRep,nCredencial)   
+    	//INTPESSOA(nMatProth,TRB->NOME,nSitFol,nEstOrganizacional,nEstOrgEmpres,TRB->CPF,TRB->CARTIDENTIDADE,TRB->PISPASEP,nPerfilAcesso,nRep,nCredencial)
+		INTPESSOA(nMatProth,TRB->NOME,nSitFol,nEstOrganizacional,nEstOrgEmpres,TRB->CPF,Left(AllTrim(TRB->CARTIDENTIDADE),9),TRB->PISPASEP,nPerfilAcesso,nRep,nCredencial) // fwnm - 19/07/2021  ticket 17021
     		                                     
     	// Verifica o numero do Funcionario
     	SqlVFuncDimep(nMatProth,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
     	
-    		IF TRC->(EOF()) 
+		IF TRC->(EOF()) 
+			// *** INICIO GERA LOG *** //              
+			cTexto := '6 Log Func:'                                                                                                         + ';' + ;
+						' Fil: '             + STRZERO(TRB->CODFILIAL,2)                                                                                 + ';' + ;
+						' Mat: '             + TRB->CHAPA                                                                                    + ';' + ;
+						' Nome: '            + TRB->NOME                                                                                   + ';' + ;
+						' Folha: '           + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
+						' Credencial: '      + CVALTOCHAR(nCredFunc)                                                                    + ';' + ;
+						' Sit Mult: '        + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
+						' Turno:'            + CcodTurno                                                                                      + ';' + ;
+						' lFuncIntegrar: '   + TRANSFORM(lFuncIntegrar,"@!")                                                                  + ';' + ;
+						' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                  + ';' + ;
+						' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
+				
+			GERALOG(STRZERO(TRB->CODFILIAL,2),cTexto,'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
+			// *** FINAL GERA LOG *** // 
+		ENDIF	
+    		
+		While TRC->(!EOF()) 
 			
-				// *** INICIO GERA LOG *** //              
-	    		cTexto := '6 Log Func:'                                                                                                         + ';' + ;
-		        	      ' Fil: '             + STRZERO(TRB->CODFILIAL,2)                                                                                 + ';' + ;
-		            	  ' Mat: '             + TRB->CHAPA                                                                                    + ';' + ;
-			              ' Nome: '            + TRB->NOME                                                                                   + ';' + ;
-			              ' Folha: '           + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
-					      ' Credencial: '      + CVALTOCHAR(nCredFunc)                                                                    + ';' + ;
-					      ' Sit Mult: '        + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
-					      ' Turno:'            + CcodTurno                                                                                      + ';' + ;
-				    	  ' lFuncIntegrar: '   + TRANSFORM(lFuncIntegrar,"@!")                                                                  + ';' + ;
-					      ' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                  + ';' + ;
-					      ' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
-				    
-		    	GERALOG(STRZERO(TRB->CODFILIAL,2),cTexto,'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
-				// *** FINAL GERA LOG *** // 
-			ENDIF	
-    		
-    		While TRC->(!EOF()) 
-	            
-	            //Integra Credencial X Pessoa
-				INTCREPESSOA(TRC->CD_PESSOA,nCredencial,cDataIni,cDataFin)
-				
-				//IF TRB->PTOCREDENCIAL <> 0
-				IF Val(TRB->PTOCREDENCIAL) > 0 // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-		    		INTCREPESSOA(TRC->CD_PESSOA,nCredMat,cDataIni,cDataFin)
-		    		
-		    	ENDIF	
-				
-				IF nSitFol == 13
-		                            
-					//Integrar situação de pessoa multipla
-					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
-		
-				ENDIF
-		
-				//Integra Historico da Pessoa
-				INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-		
-				// Integra USuario Sistema PESSOA
-    			INTUSUSISPESSOA(TRC->CD_PESSOA)   
-    			       
-    			
-    			// *** INICIO GERA LOG *** //              
-    			cTexto := '2 Log Func:'                                                                                                         + ';' + ;
-			              ' Fil: '             + STRZERO(TRB->CODFILIAL,2)                                                                                 + ';' + ;
-			              ' Mat: '             + TRB->CHAPA                                                                                    + ';' + ;
-			              ' Nome: '            + TRB->NOME                                                                                   + ';' + ;
-			              ' Folha: '           + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
-					      ' Credencial: '      + CVALTOCHAR(nCredFunc)                                                                    + ';' + ;
-					      ' Sit Mult: '        + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
-					      ' Turno:'            + CcodTurno                                                                                      + ';' + ;
-					      ' lFuncIntegrar: '   + TRANSFORM(lFuncIntegrar,"@!")                                                                  + ';' + ;
-					      ' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                  + ';' + ;
-					      ' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
-					    
-			    GERALOG(STRZERO(TRB->CODFILIAL,2),cTexto,'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
-				// *** FINAL GERA LOG *** // 
-    		
-    			TRC->(dbSkip())
+			//Integra Credencial 
+			nCredencial := 0
+			nRep        := 0
+			SqlVCredencialDimep(Val(TRB->PTOCREDENCIAL)) // Credencial = 10 digitos = PTOCREDENCIAL = Tecnologia 3 = Proximidade
+			If TRF->( EOF() )
+				IntCredencial(Val(TRB->PTOCREDENCIAL),nEstOrgEmpresa,'3') 
+			Else
+				nCredencial := TRF->CD_CREDENCIAL   
+			EndIf
+			TRF->(dbCloseArea())
+
+			SqlVCredencialDimep(Val(SUBSTR(TRB->CHAPA,3,6))) // Chapa = 5 digitos = REP = Tecnologia 1 = Código Barras
+			If TRF->( EOF() )
+				IntCredencial(Val(SUBSTR(TRB->CHAPA,3,6)),nEstOrgEmpresa,'1')
+			Else
+				nRep        := TRF->CD_CREDENCIAL   
+			EndIf	
+			TRF->(dbCloseArea())
+
+			//Integra Credencial e Credencial X Pessoa
+			lTpTecno3 := GetCredenc("3", TRC->CD_PESSOA, nCredencial)
+			If lTpTecno3
+				INTCREPESSOA(TRC->CD_PESSOA,nCredencial,"","","3") // enviar 3 = tipo tecnologia // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+			EndIf
+
+			lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, nRep)
+			If lTpTecno1
+				INTCREPESSOA(TRC->CD_PESSOA,nRep,"","","1") // enviar 1 = tipo tecnologia  // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				UPDPESS1('CD_CREDENCIAL_REP',nRep,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+			EndIf
+			// 
+
+			/////////////////////
+			/////////////////
+			
+			IF nSitFol == 13
+				//Integrar situação de pessoa multipla
+				INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
+			ENDIF
 	
-			ENDDO
+			//Integra Historico da Pessoa
+			INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
+	
+			// Integra USuario Sistema PESSOA
+			INTUSUSISPESSOA(TRC->CD_PESSOA)   
+					
+			
+			// *** INICIO GERA LOG *** //              
+			cTexto := '2 Log Func:'                                                                                                         + ';' + ;
+						' Fil: '             + STRZERO(TRB->CODFILIAL,2)                                                                                 + ';' + ;
+						' Mat: '             + TRB->CHAPA                                                                                    + ';' + ;
+						' Nome: '            + TRB->NOME                                                                                   + ';' + ;
+						' Folha: '           + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
+						' Credencial: '      + CVALTOCHAR(nCredFunc)                                                                    + ';' + ;
+						' Sit Mult: '        + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
+						' Turno:'            + CcodTurno                                                                                      + ';' + ;
+						' lFuncIntegrar: '   + TRANSFORM(lFuncIntegrar,"@!")                                                                  + ';' + ;
+						' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                  + ';' + ;
+						' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
+					
+			GERALOG(STRZERO(TRB->CODFILIAL,2),cTexto,'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
+			// *** FINAL GERA LOG *** // 
+		
+			TRC->(dbSkip())
+
+		ENDDO
+		
 		TRC->(dbCloseArea())
     		
     ELSE //caso a tabela não esteja vazia
-    	
     	TRC->(dbCloseArea())
-    			
-    ENDIF //fecha if TRC->(EOF()) == .T. 
-    // *** Final Verifica se existe o funcionario na tabela *** //
+    ENDIF
     		
 Return(NIL)
 
@@ -1278,27 +1165,19 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 			ENDIF
 			
 			IF SUBSTR(TRC->NM_PESSOA,1,30) <> SUBSTR(TRB->NOME,1,30)
-			
 				UPDPESSOA('NM_PESSOA',TRB->NOME,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
 			
 			IF VAL(TRC->NU_CPF) <> VAL(TRB->CPF)
-			
 				UPDPESSOA('NU_CPF',TRB->CPF,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
 			
 			IF VAL(TRC->NU_RG) <> VAL(TRB->CARTIDENTIDADE)
-			
 				UPDPESSOA('NU_RG',TRB->CARTIDENTIDADE,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
 			
 			IF VAL(TRC->NU_PIS) <> VAL(TRB->PISPASEP)
-			
 				UPDPESSOA('NU_PIS',TRB->PISPASEP,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
 			
 			IF ALLTRIM(cNomecPerfil) <> ALLTRIM(CcodTurno)
@@ -1312,26 +1191,23 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 					// Pega o Perfil de Acesso Correto
 					SqlPerAc(cCodTurno)
 					IF TRP->(!EOF())
-					
 						UPDPESS2('CD_PERFIL_ACESSO',TRP->CD_PERFIL_ACESSO,nCdPessoa) 
 						UPDPESS2('CD_PERFIL_ACESSO',TRP->CD_PERFIL_ACESSO,nCdPessoa)
-						
 					ENDIF
 					TRP->(dbCloseArea())
+
 				ENDIF	
+
 			ENDIF
 
 			IF cEmpDimep <> cEmpAnt
 
-				//Inicio Ajusta Centro de Custo do Funcionario
-
+				//Ajusta Centro de Custo do Funcionario
 				VEmpresaDimep(cFilFunc,cCcFunc)
 				UPDPESSOA('CD_ESTRUTURA_ORG_EMPRESA',CVALTOCHAR(nEstOrgEmpresa),nMatProth,TRC->CD_ESTRUTURA_ORG_EMPRESA,nEstOrgEmpresa)
 				UPDPESSOA('CD_ESTRUTURA_ORGANIZACIONAL',CVALTOCHAR(nEstOrganizacional),nMatProth,TRC->CD_ESTRORG,nEstOrgEmpresa)
 				cNu_Estrutura := BuscaEstrutura(cFilFunc,nMatProth)
 			    VEmpresaDimep(cFilFunc,cNu_Estrutura)
-
-				//Final Ajusta Centro de Custo do Funcionario
 
 			ENDIF
 			
@@ -1340,7 +1216,6 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 		// *** FINAL ALTERACAO CADASTRAL *** //
 		
 		// *** INICIO SITUACAO FOLHA *** //
-		 
 		IF lFuncSitFolha == .T.
 		
 		    // *** Inicio Quando Status Trabalhando *** //
@@ -1356,7 +1231,6 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
 				
 				ENDIF
-				// *** Final TrabalhandoXDemitido *** //
 				
 				// *** Inicio TrabalhandoXAfastado ou TrabalhandoXFerias *** //
 				IF nSitFol == 13  
@@ -1371,9 +1245,8 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
 				
 				ENDIF
-				// *** Final TrabalhandoXAfastado ou TrabalhandoXFerias *** //
+
 			ENDIF
-			// *** Final Quando Status Trabalhando *** //
 			
 			// *** Inicio Quando Status Ausencia *** //
 			IF TRC->CD_SITUACAO_PESSOA ==  13  //Ausencia
@@ -1391,10 +1264,8 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
 				
 				ENDIF
-				// *** Final AusenciaXTrabalhando *** //
-				
+
 				// *** Inicio AusenciaXDemitido *** //
-				//IF nSitFol == 12 
 				IF nSitFol == 12 .or. nSitFol == 23 // @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
                                     
 				    //Deleta Pessoa Multipla
@@ -1407,7 +1278,6 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
 				
 				ENDIF
-				// *** Final AusenciaXDemitido *** //
 				
 				// *** Inicio AusenciaXAAfastado ou AusenciaXFerias *** //
 				IF nSitFol == 13 
@@ -1425,16 +1295,13 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
 				
 				ENDIF
-				// *** Final AusenciaXAfastado ou AusenciaXFerias *** // *** //
+
 			ENDIF
-			// *** Final Quando Status Ausencia *** //
-		ENDIF //lFuncSitFolha == .T.
-		
-		// *** FINAL SITUACAO FOLHA *** //
+
+		ENDIF
 		
 		// *** INICIO CREDENCIAL *** //
-		
-		IF lFuncCredencial == .T.         
+		IF lFuncCredencial == .T.
 
 			nCont1 := 0		     
 			SqlTodaCredencial(TRC->CD_PESSOA)
@@ -1445,7 +1312,6 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 
 					IF VAL(TRB->CHAPA)    <> TRU->NU_CREDENCIAL .OR. ;
 						Val(TRB->PTOCREDENCIAL) <> TRU->NU_CREDENCIAL // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-		   			   //TRB->PTOCREDENCIAL <> TRU->NU_CREDENCIAL
 		   		             
 		   		        // QUANDO O CRACHA TA DIFERENTE DA CREDENCIAL
 		   				IF VAL(TRB->CHAPA) <> TRU->NU_CREDENCIAL .AND. ;
@@ -1589,9 +1455,57 @@ STATIC FUNCTION ALTERFUNCDIMEP()
 				UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
 			    
 			ENDIF 
-	    	// *** FINAL QUANDO VAI ADICIONAR O SEGUNDO CARTAO QUE SO TEM O DA MATRICULA *** //
-			
+		
 		ENDIF //lFuncCredencial == .T.
+
+		// fwnm - ticket 17021 - 19/07/2021
+
+		//Integra Credencial 
+    	nCredencial := 0
+		nRep        := 0
+		SqlVCredencialDimep(Val(TRB->PTOCREDENCIAL)) // Credencial = 10 digitos = PTOCREDENCIAL = Tecnologia 3 = Proximidade
+   		If TRF->( EOF() )
+			IntCredencial(Val(TRB->PTOCREDENCIAL),nEstOrgEmpresa,'3') 
+			// apos inclusao
+			TRF->(dbCloseArea())
+			SqlVCredencialDimep(Val(TRB->PTOCREDENCIAL)) // Credencial = 10 digitos = PTOCREDENCIAL = Tecnologia 3 = Proximidade
+			If TRF->( !EOF() )
+				nCredencial := TRF->CD_CREDENCIAL   
+			EndIf
+		Else
+   			nCredencial := TRF->CD_CREDENCIAL   
+		EndIf
+		TRF->(dbCloseArea())
+
+		SqlVCredencialDimep(Val(SUBSTR(TRB->CHAPA,3,6))) // Chapa = 5 digitos = REP = Tecnologia 1 = Código Barras
+   		If TRF->( EOF() )
+	    	IntCredencial(Val(SUBSTR(TRB->CHAPA,3,6)),nEstOrgEmpresa,'1')
+			// Após inclusão
+			TRF->(dbCloseArea())
+			SqlVCredencialDimep(Val(SUBSTR(TRB->CHAPA,3,6))) // Chapa = 5 digitos = REP = Tecnologia 1 = Código Barras
+			If TRF->( !EOF() )
+				nRep        := TRF->CD_CREDENCIAL   
+			EndIf
+		Else
+   			nRep        := TRF->CD_CREDENCIAL   
+	    EndIf	
+    	TRF->(dbCloseArea())
+
+		//Integra Credencial e Credencial X Pessoa
+		lTpTecno3 := GetCredenc("3", TRC->CD_PESSOA, Val(TRB->PTOCREDENCIAL))
+		If lTpTecno3
+			INTCREPESSOA(TRC->CD_PESSOA,nCredencial,"","","3") // enviar 3 = tipo tecnologia // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+			UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+		EndIf
+
+		lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)))
+		If lTpTecno1
+			INTCREPESSOA(TRC->CD_PESSOA,nRep,"","","1") // enviar 1 = tipo tecnologia  // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+			UPDPESS1('CD_CREDENCIAL_REP',nRep,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+		EndIf
+		// 
+
+		///////
 		
 		// *** INICIO GERA LOG *** //
 		cTexto := '4 Log Func:'                                                                                                        + ';' + ;
@@ -1619,7 +1533,6 @@ RETURN(NIL)
 STATIC FUNCTION AlterCamDimep()
 
 	// *** INICIO ALTERAR DADOS NO DIMEP PARA INCLUIR NOVOS *** //
-	
 	VEmpresaDimep(cFilMot,cCcMot)
 	
 	SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
@@ -1629,28 +1542,20 @@ STATIC FUNCTION AlterCamDimep()
 		IF lCamIntegrar == .T. 
 			
 			IF ALLTRIM(TRC->NM_PESSOA) <> ALLTRIM(cNomeMot)
-			
 				UPDPESSOA('NM_PESSOA',cNomeMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
 			
 			IF ALLTRIM(TRC->NU_CPF)    <> ALLTRIM(cCpfMot)
-			
 				UPDPESSOA('NU_CPF',cCpfMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
 			
 			IF ALLTRIM(TRC->NU_RG)     <> ALLTRIM(cRgMot)
-			
 				UPDPESSOA('NU_RG',cRgMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
-			
 			ENDIF
-		ENDIF // lCamIntegrar == .T. 
-		
-		// *** FINAL ALTERACAO CADASTRAL *** //
+
+		ENDIF 
 		
 		// *** INICIO SITUACAO FOLHA *** //
-		 
 		IF lCamSitFolha == .T.
 		
 		    // *** Inicio Quando Status Trabalhando *** //
@@ -1683,14 +1588,12 @@ STATIC FUNCTION AlterCamDimep()
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
 				
 				ENDIF
-				// *** Final DemitidoXTrabalhando *** //
+
 			ENDIF
-		ENDIF //lCamSitFolha == .T.
-		
-		// *** FINAL SITUACAO FOLHA *** //
+
+		ENDIF 
 		
 		// *** INICIO CREDENCIAL *** //
-		
 		IF lCamCredencial == .T. 
 		
 			SqlBuscaCredencialDimep(TRC->CD_CREDENCIAL_FACE)
@@ -1775,7 +1678,7 @@ STATIC FUNCTION VEmpresaDimep(cFil,cCC)
     		
     IF TRI->(!EOF()) 
     			
-    	nEstOrgEmpresa := TRI->ESTRUTURA   
+    	nEstOrgEmpresa := TRI->ESTRUTURA
     				
     ENDIF
     TRI->(dbCloseArea())
@@ -2153,49 +2056,6 @@ RETURN(cEmpresa)
 
 Static Function Sqlfuncionario(cEmpresa) 
 
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-	
-	/*
-	BeginSQL Alias "TRB"
-			%NoPARSER%  
-			 SELECT PFUNC.CODCOLIGADA,
-					PFUNC.CODFILIAL,
-					PFUNC.CODSITUACAO,
-					PFUNC.CHAPA,
-					PFUNC.NOME,
-					PFUNC.DATAADMISSAO,
-					PPESSOA.DTNASCIMENTO,
-					PPESSOA.SEXO,
-					PPESSOA.CPF,
-					PPESSOA.CARTIDENTIDADE,
-					PFUNC.PISPASEP,
-					PFUNC.CODHORARIO,
-					PFUNC.DATADEMISSAO,
-					PSECAO.NROCENCUSTOCONT,
-				 	CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,'0')) AS PTOCREDENCIAL
-				FROM [VPSRV16].[CORPORERM].[DBO].[PFUNC] WITH (NOLOCK)
-				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PPESSOA] WITH (NOLOCK)
-						ON PPESSOA.CODIGO                                   = PFUNC.CODPESSOA
-				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PSECAO] WITH (NOLOCK)
-						ON PSECAO.CODCOLIGADA                               = PFUNC.CODCOLIGADA
-					   AND PSECAO.CODIGO                                    = PFUNC.CODSECAO
-				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PFCOMPL] WITH (NOLOCK)
-					 ON PFCOMPL.CODCOLIGADA                                 = PFUNC.CODCOLIGADA
-					AND PFCOMPL.CHAPA                                       = PFUNC.CHAPA
-					AND CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,'0'))  > 0
-				  WHERE PFUNC.CODCOLIGADA                                   = %EXP:cEmpresa%
-				    AND PFUNC.CODTIPO                                      <> 'A'
-					AND PFUNC.CODSITUACAO                                  <> 'Z'
-					AND PFUNC.CODHORARIO                                   <> 'A001'
-					AND (PFUNC.DATADEMISSAO                                >= GETDATE() - 7
-					OR  PFUNC.DATADEMISSAO                                 IS NULL)
-					AND PFUNC.PISPASEP                                     NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [VPSRV16].[CORPORERM].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> 'D')
-					
-				ORDER BY PPESSOA.CPF
-			
-	EndSQl
-	*/
-
 	TRB := GetNextAlias()
 
 	cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
@@ -2215,7 +2075,6 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				PFUNC.DATADEMISSAO,
 	cQuery += "				PSECAO.NROCENCUSTOCONT,
 	cQuery += "			 	ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') AS PTOCREDENCIAL " // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-	//cQuery += "			 	CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,''0'')) AS PTOCREDENCIAL
 
 	cQuery += "				FROM [" + cSGBD + "].[DBO].[PFUNC] AS PFUNC WITH (NOLOCK)
 
@@ -2230,7 +2089,6 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				ON PFCOMPL.CODCOLIGADA                              = PFUNC.CODCOLIGADA
 	cQuery += "				AND PFCOMPL.CHAPA                                   = PFUNC.CHAPA
 	cQuery += "				AND ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') <> ''0'' "  // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-	//cQuery += "				AND CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,''0''))  > 0 
 	
 	cQuery += "			    WHERE PFUNC.CODCOLIGADA                             = ''"+cEmpresa+"''
 	cQuery += "			    AND PFUNC.CODTIPO                                   <> ''A''
@@ -2241,7 +2099,8 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				AND PFUNC.PISPASEP                                  NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
 
 	// => DEBUG inibir
-	//cQuery += " AND CODSITUACAO=''C''
+	//cQuery += " AND PPESSOA.CPF IN (''40999310801'',''32016494816'',''31451999860'')
+	//cQuery += " AND PPESSOA.CPF=''11620313871''
 	// => DEBUG inibir
 
 	cQuery += "			ORDER BY PPESSOA.CPF
@@ -2255,10 +2114,10 @@ RETURN(NIL)
 
 Static Function SqlVFuncDimep(cMat,cEstOrganizacional,cEstOrgEmpresa,cEstRelacionada)
 
-	Local cTeste:= ''
-
 	BeginSQL Alias "TRC"
+
 			%NoPARSER%
+
 			SELECT TOP(1) CD_PESSOA,
 				          NU_MATRICULA,
 				          NM_PESSOA,
@@ -2277,6 +2136,7 @@ Static Function SqlVFuncDimep(cMat,cEstOrganizacional,cEstOrgEmpresa,cEstRelacio
 			       WHERE NU_MATRICULA                          = %EXP:cMat%
 						
 	EndSQl
+
 RETURN(NIL)   	  
 
 Static Function SqlVSitPessoaDimep(nCdPessoa)
@@ -2296,7 +2156,7 @@ RETURN(NIL)
 
 Static Function SqlAfastamento(cEmp,cMat)
 
-	Local cTeste := ''
+	//Local cTeste := ''
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 
@@ -2340,7 +2200,7 @@ RETURN
 
 Static Function SqlFERIAS(cEmp,cMat)
 
-	Local cTeste := ''
+	//Local cTeste := ''
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 
@@ -2391,17 +2251,20 @@ RETURN
 Static Function SqlVCredencialDimep(cCredencial)
 
 	BeginSQL Alias "TRF"
+
 			%NoPARSER% 
+
 			 SELECT CD_CREDENCIAL,NU_CREDENCIAL 
 			   FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK)
 			  WHERE NU_CREDENCIAL = %EXP:cCredencial%
 			  
 	EndSQl             
+
 RETURN(NIL)   
 
 Static Function SqlVTurno(cEmpresa,cMat) 
 
-	Local cTeste:= ''
+	//Local cTeste:= ''
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 
@@ -2454,7 +2317,7 @@ RETURN(NIL)
 
 Static Function SqlVEmpresaDimep(cEmpresa)  
 
-	Local cTeste := ''
+	//Local cTeste := ''
 
 	BeginSQL Alias "TRI"
 			%NoPARSER%  
@@ -2476,7 +2339,7 @@ RETURN(NIL)
 
 Static Function SqlVDepartamentoDimep(nEstOrganizacional, cFil)
 
-	Local cTeste:= ''
+	//Local cTeste:= ''
 
 	BeginSQL Alias "TRJ"
 			%NoPARSER%  
@@ -2538,7 +2401,7 @@ RETURN(NIL)
 
 Static Function SqlTurno(cEmpresa)     
 
-	Local cTeste:= ''
+	//Local cTeste:= ''
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 
@@ -2580,7 +2443,7 @@ RETURN(NIL)
 
 Static Function SqlJorRM(cEmpresa,cTurno)    
 
-	Local cTeste:= ''
+	//Local cTeste:= ''
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 
@@ -2757,7 +2620,7 @@ RETURN(NIL)
 
 Static Function SqlVFilialDimep(nEstOrganizacional, cFil)
 
-	Local cTeste := ''
+	//Local cTeste := ''
 
 	BeginSQL Alias "TRZ"
 			%NoPARSER%  
@@ -2825,7 +2688,7 @@ RETURN(NIL)
 
 Static Function SqlVEstrutura(cFilFunc,nMatricula)
 
-	Local cTeste:= ''
+	//Local cTeste:= ''
 
 	BeginSQL Alias "TSC"
 			%NoPARSER% 
@@ -2840,7 +2703,7 @@ RETURN(NIL)
 
 Static Function SqlDiaSemanaRM(cEmpresa,cTurno)
 
-	Local cTeste:= ''
+	//Local cTeste:= ''
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 
@@ -3074,36 +2937,244 @@ Static Function INTCREDMOTORISTA(nCred,nEstrutura,cTipo)
 	
 RETURN(NIL)
 
-Static Function INTCREPESSOA(nPessoa,nCredencial,cDataIni,cDataFin)       
+Static Function INTCREPESSOA(nPessoa,nCredencial,cDataIni,cDataFin)
+
+	Local cSql     := ""
+	Local cQuery   := ""
+	Local cCredenc := ""
+	Local cChapa   := ""
+	Local cPtoCred := ""
 
 	IF ALLTRIM(cDataIni) == '' .AND. ALLTRIM(cDataFin) == '' 
-	   
 	   cDataIni    := DTOC(DATE())
 	   cDataIni    := IIF(ALLTRIM(cDataIni) <> '',CVALTOCHAR(YEAR(DATE()))+ '-' + Substr(cDataIni,4,2)+ '-' + Substr(cDataIni,1,2) +  "T" + '00:00:00', cDataFin)
-	   
  	ENDIF   
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
-	cQuery += "(CD_CREDENCIAL, " 
-	cQuery += "CD_PESSOA, " 
-	cQuery += "DT_INICIO, " 
-	cQuery += "DT_FIM, " 
-	cQuery += "FL_PERMANENTE, " 
-	cQuery += "TP_TECNOLOGIA " 
-    cQuery += ") "
-	cQuery += "VALUES (" + CVALTOCHAR(nCredencial)                                          + "," // Credencial
-	cQuery += ""         + CVALTOCHAR(nPessoa)                                              + "," // Pessoa
-    cQuery += "'"        + CVALTOCHAR(cDataIni)                                             + "'," // Data Inicial
-    cQuery += ""        + IIF(ALLTRIM(cDataFin) == '', 'NULL',"'"+CVALTOCHAR(cDataFin)+"'") + "," // Data Fim
-	cQuery += ""         + '1'                                                              + "," // Permanente
-	cQuery += ""         + '3'                                                              + ""  // Tecnologia	
-    cQuery += ") " 
+	// @history Ticket  17021 - Fernando Macieir- 19/07/2021 - Integração DImep
+	If ISINCALLSTACK("DIMEPCAMINHONEIRO")
 
-	If (TCSQLExec(cQuery) < 0)
-    	cIntregou += " TCSQLError() - INTCREPESSOA: "
-	EndIf        
+		cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+		cQuery += "(CD_CREDENCIAL, " 
+		cQuery += "CD_PESSOA, " 
+		cQuery += "DT_INICIO, " 
+		cQuery += "DT_FIM, " 
+		cQuery += "FL_PERMANENTE, " 
+		cQuery += "TP_TECNOLOGIA " 
+		cQuery += ") "
+		cQuery += "VALUES (" + CVALTOCHAR(nCredencial)                                          + "," // Credencial
+		cQuery += ""         + CVALTOCHAR(nPessoa)                                              + "," // Pessoa
+		cQuery += "'"        + CVALTOCHAR(cDataIni)                                             + "'," // Data Inicial
+		cQuery += ""        + IIF(ALLTRIM(cDataFin) == '', 'NULL',"'"+CVALTOCHAR(cDataFin)+"'") + "," // Data Fim
+		cQuery += ""         + '1'                                                              + "," // Permanente
+		cQuery += ""         + '3'                                                              + ""  // Tecnologia	
+		cQuery += ") " 
+
+		If (TCSQLExec(cQuery) < 0)
+			cIntregou += " TCSQLError() - INTCREPESSOA: "
+		EndIf        
 	
-RETURN(NIL)   	      	 	  
+	Else
+
+		cChapa   := Val(SUBSTR(TRB->CHAPA,3,6)) // TIPO 1
+		cPtoCred := Val(TRB->PTOCREDENCIAL)     // TIPO 3
+
+		///////////////////////////////////////
+		// SE NÃO EXISTIR NENHUMA AMARRAÇÃO 
+		///////////////////////////////////////
+		If Select("Work")
+			Work->( dbCloseArea() )
+		EndIf
+
+		cQuery := " SELECT AMARRA.CD_CREDENCIAL, AMARRA.TP_TECNOLOGIA
+		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+		cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+		cQuery += " WHERE AMARRA.CD_PESSOA='"+CVALTOCHAR(nPessoa)+"'
+	//	cQuery += " AND CRED.NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
+	//	cQuery += " AND AMARRA.TP_TECNOLOGIA='"+CVALTOCHAR(cTpTecno)+"'
+		cQuery += " AND ( ISNULL(DT_FIM,'')='' OR ISNULL(DT_BAIXA_CREDENCIAL,'')='' )
+
+		tcQuery cQuery New Alias "Work"
+		
+		Work->( dbGoTop() )
+		If Work->( EOF() )
+
+			// Codigo Barra
+			cTpTecno := 1 
+
+			cCredenc := GetCDCred(cChapa, 1)
+
+			If !Empty(cCredenc)
+
+				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql += "(CD_CREDENCIAL, " 
+				cSql += "CD_PESSOA, " 
+				cSql += "DT_INICIO, " 
+				cSql += "DT_FIM, " 
+				cSql += "FL_PERMANENTE, " 
+				cSql += "TP_TECNOLOGIA " 
+				cSql += ") "
+				cSql += "VALUES (" + CVALTOCHAR(cCredenc)                                          + "," // Credencial
+				cSql += ""         + CVALTOCHAR(nPessoa)                                              + "," // Pessoa
+				cSql += "'"        + CVALTOCHAR(cDataIni)                                             + "'," // Data Inicial
+				cSql += ""        + IIF(ALLTRIM(cDataFin) == '', 'NULL',"'"+CVALTOCHAR(cDataFin)+"'") + "," // Data Fim
+				cSql += ""         + '1'                                                              + "," // Permanente
+				cSql += ""         + CVALTOCHAR(cTpTecno)                                             + ""  // Tecnologia	 // // @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				cSql += ") " 
+
+				cIntregou := ""
+				If (TCSQLExec(cSql) < 0)
+					cIntregou += " TCSQLError() - INTCREPESSOA: "
+				EndIf
+
+			EndIf
+		
+			// Proximidade
+			cTpTecno := 3 
+
+			cCredenc := GetCDCred(cPtoCred, 3)
+
+			If !Empty(cCredenc)
+
+				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql += "(CD_CREDENCIAL, " 
+				cSql += "CD_PESSOA, " 
+				cSql += "DT_INICIO, " 
+				cSql += "DT_FIM, " 
+				cSql += "FL_PERMANENTE, " 
+				cSql += "TP_TECNOLOGIA " 
+				cSql += ") "
+				cSql += "VALUES (" + CVALTOCHAR(cCredenc)                                             + "," // Credencial
+				cSql += ""         + CVALTOCHAR(nPessoa)                                              + "," // Pessoa
+				cSql += "'"        + CVALTOCHAR(cDataIni)                                             + "'," // Data Inicial
+				cSql += ""        + IIF(ALLTRIM(cDataFin) == '', 'NULL',"'"+CVALTOCHAR(cDataFin)+"'") + "," // Data Fim
+				cSql += ""         + '1'                                                              + "," // Permanente
+				cSql += ""         + CVALTOCHAR(cTpTecno)                                             + ""  // Tecnologia	 // // @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				cSql += ") " 
+
+				cIntregou := ""
+				If (TCSQLExec(cSql) < 0)
+					cIntregou += " TCSQLError() - INTCREPESSOA: "
+				EndIf
+
+			EndIf
+
+		EndIf
+
+		////////////////////////////////////////////////////////
+		// SE NAÕ EXISTIR AMARRAÇÃO TECNOLOGIA 1 = CODIGO BARRA 
+		////////////////////////////////////////////////////////
+		If Select("Work")
+			Work->( dbCloseArea() )
+		EndIf
+
+		cTpTecno := 1 // Codigo Barra
+
+		cQuery := " SELECT AMARRA.CD_CREDENCIAL, AMARRA.TP_TECNOLOGIA
+		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+		cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+		cQuery += " WHERE AMARRA.CD_PESSOA='"+CVALTOCHAR(nPessoa)+"'
+	//	cQuery += " AND CRED.NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
+		cQuery += " AND AMARRA.TP_TECNOLOGIA='"+CVALTOCHAR(cTpTecno)+"'
+		cQuery += " AND ( ISNULL(DT_FIM,'')='' OR ISNULL(DT_BAIXA_CREDENCIAL,'')='' )
+
+		tcQuery cQuery New Alias "Work"
+		
+		Work->( dbGoTop() )
+		If Work->( EOF() )
+
+			// Codigo Barra
+			cTpTecno := 1 
+
+			cCredenc := GetCDCred(cChapa, 1)
+
+			If !Empty(cCredenc)
+
+				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql += "(CD_CREDENCIAL, " 
+				cSql += "CD_PESSOA, " 
+				cSql += "DT_INICIO, " 
+				cSql += "DT_FIM, " 
+				cSql += "FL_PERMANENTE, " 
+				cSql += "TP_TECNOLOGIA " 
+				cSql += ") "
+				cSql += "VALUES (" + CVALTOCHAR(cCredenc)                                              + "," // Credencial
+				cSql += ""         + CVALTOCHAR(nPessoa)                                               + "," // Pessoa
+				cSql += "'"        + CVALTOCHAR(cDataIni)                                              + "'," // Data Inicial
+				cSql += ""         + IIF(ALLTRIM(cDataFin) == '', 'NULL',"'"+CVALTOCHAR(cDataFin)+"'") + "," // Data Fim
+				cSql += ""         + '1'                                                               + "," // Permanente
+				cSql += ""         + CVALTOCHAR(cTpTecno)                                              + ""  // Tecnologia	 // // @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				cSql += ") " 
+
+				cIntregou := ""
+				If (TCSQLExec(cSql) < 0)
+					cIntregou += " TCSQLError() - INTCREPESSOA: "
+				EndIf
+
+			EndIf
+
+		EndIf
+
+		/////////////////////////////////////////////////////////
+		// SE NAÕ EXISTIR AMARRAÇÃO TECNOLOGIA 3 = APROXIMAÇÃO 
+		/////////////////////////////////////////////////////////
+		If Select("Work")
+			Work->( dbCloseArea() )
+		EndIf
+
+		cTpTecno := 3 // Proximidade
+		
+		cQuery := " SELECT AMARRA.CD_CREDENCIAL, AMARRA.TP_TECNOLOGIA
+		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+		cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+		cQuery += " WHERE AMARRA.CD_PESSOA='"+CVALTOCHAR(nPessoa)+"'
+	//	cQuery += " AND CRED.NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
+		cQuery += " AND AMARRA.TP_TECNOLOGIA='"+CVALTOCHAR(cTpTecno)+"'
+		cQuery += " AND ( ISNULL(DT_FIM,'')='' OR ISNULL(DT_BAIXA_CREDENCIAL,'')='' )
+
+		tcQuery cQuery New Alias "Work"
+		
+		Work->( dbGoTop() )
+		If Work->( EOF() )
+
+			// Proximidade
+			cTpTecno := 3
+
+			cCredenc := GetCDCred(cPtoCred, 3)
+
+			If !Empty(cCredenc)
+
+				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql += "(CD_CREDENCIAL, " 
+				cSql += "CD_PESSOA, " 
+				cSql += "DT_INICIO, " 
+				cSql += "DT_FIM, " 
+				cSql += "FL_PERMANENTE, " 
+				cSql += "TP_TECNOLOGIA " 
+				cSql += ") "
+				cSql += "VALUES (" + CVALTOCHAR(cCredenc)                                             + "," // Credencial
+				cSql += ""         + CVALTOCHAR(nPessoa)                                              + "," // Pessoa
+				cSql += "'"        + CVALTOCHAR(cDataIni)                                             + "'," // Data Inicial
+				cSql += ""         + IIF(ALLTRIM(cDataFin) == '', 'NULL',"'"+CVALTOCHAR(cDataFin)+"'") + "," // Data Fim
+				cSql += ""         + '1'                                                              + "," // Permanente
+				cSql += ""         + CVALTOCHAR(cTpTecno)                                             + ""  // Tecnologia	 // // @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				cSql += ") " 
+
+				cIntregou := ""
+				If (TCSQLExec(cSql) < 0)
+					cIntregou += " TCSQLError() - INTCREPESSOA: "
+				EndIf
+
+			EndIf
+
+		EndIf
+
+		If Select("Work") > 0
+			Work->( dbCloseArea() )
+		EndIf
+
+	EndIf
+	
+RETURN(NIL)
 
 Static Function INTHISTSITPESSOA(nPessoa,nSitFol,cDataIni,cDataFin)
 
@@ -3468,3 +3539,107 @@ Static Function DELUSUSISCREDENCIAL(cCredencialFace)
 	EndIf        
 	
 RETURN(NIL)                                                                                                                                  
+
+/*/{Protheus.doc} nomeStaticFunction
+	Checa Credencial
+	@type  Static Function
+	@author FWNM
+	@since 19/07/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function GetCredenc(cTpTecno, nPessoa, nKey)
+
+	Local lRet   := .f.
+	Local cQuery := ""
+	Local cSql   := ""
+
+	/*
+	cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] 
+	cSql += " WHERE CD_PESSOA='"+CVALTOCHAR(nPessoa)+"' 
+	cSql += " AND ( ISNULL(DT_FIM,'')<>'' OR ISNULL(DT_BAIXA_CREDENCIAL,'')<>'' )
+	TCSQLExec(cSql)
+	*/
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT TOP 1 AMARRA.CD_CREDENCIAL, AMARRA.CD_PESSOA, AMARRA.TP_TECNOLOGIA
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+	cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+	cQuery += " WHERE AMARRA.CD_PESSOA='"+CVALTOCHAR(nPessoa)+"'
+	cQuery += " AND CRED.NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
+	cQuery += " AND AMARRA.TP_TECNOLOGIA='"+CVALTOCHAR(cTpTecno)+"'
+	cQuery += " AND ( ISNULL(DT_FIM,'')='' OR ISNULL(DT_BAIXA_CREDENCIAL,'')='' )
+
+	tcQuery cQuery New Alias "Work"
+	
+	Work->( dbGoTop() )
+	If Work->( EOF() )
+		lRet := .t.
+	EndIf
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+	Checa Credencial
+	@type  Static Function
+	@author FWNM
+	@since 20/07/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function GetCDCred(nKey, nTpTecno)
+
+	Local cRet   := ""
+	Local cQuery := ""
+	Local cSql   := ""
+
+	Default nTpTecno := 0
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT CD_CREDENCIAL, TP_TECNOLOGIA
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK)
+	cQuery += " WHERE CRED.NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
+
+	tcQuery cQuery New Alias "Work"
+	
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+
+		cRet := Work->CD_CREDENCIAL
+
+		// Checa se o tipo de tecnologia está cadastrado errado na tabela de credencial
+		If Work->TP_TECNOLOGIA <> nTpTecno
+
+			cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
+			cSql += " SET TP_TECNOLOGIA='"+cvaltochar(nTpTecno)+"'
+			cSql += " WHERE NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
+
+			TCSQLExec(cSql)
+
+		EndIf
+
+	EndIf
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+Return cRet
