@@ -573,28 +573,26 @@ User Function FV4EDATA()
 Return Nil		
 
 Static Function fEnveData(cCPFPass, cFornece, cPlaca, cEmpresa)
-	Local lRet := .F.
+	Local lRet 		:= .F.
+	Local nStatus 	:= 0
 
 	if SqlMotorista(cCPFPass)
 		
 		nStatus :=  TcSQLExec('EXEC '+cLinkSe+'.[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+     "'"+cPlaca+"'"   +",'"+  cCPFPass +"',"+  "'"+cEmpresa+"'" )
 		//nStatus :=  TcSQLExec('EXEC '+cLinkSe+'.[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+"'"+cPlaca+"'"   +",'1',"+  "'"+cEmpresa+"'" )
-
+		
+		IF (nStatus < 0)
+			lRet := .F.
+		ELSE
+			lret := .T.
+		ENDIF
+		
 	else
 		MSGSTOP( 'Não foi encontrado o cadastro do Motorista com o CPF/Passaporte '+ cCPFPass + CHR(13) + CHR(10) + '. O registro não foi enviado ao E-data - AXFV4-03' )
-		lRet := .F.
+		lRet 	:= .F.
+		
 	Endif
 	
-	IF (nStatus < 0)
-
-		lRet := .F.
-
-	ELSE
-
-		lret := .T.
-
-	ENDIF
-
 return lRet
 
 
