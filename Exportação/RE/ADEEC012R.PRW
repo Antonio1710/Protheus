@@ -44,7 +44,8 @@ Static function fProcessa()
 
     Local lAdjustToLegacy 		:= .F. 
     Local lDisableSetup  		:= .T.
-
+    Local cMensagem             := ""
+    
     Private cEOL				:= chr(13)+Chr(10)
     
     Private oFOARNO04	  		:= TFont():New("Arial",07,04,.T.,.F.,,,,,.F.) // Arial, Normal,  Tam. 05
@@ -106,9 +107,10 @@ Static function fProcessa()
     Private cTempBau            := ""
     Private cBorrach            := ""
     Private cEquipFr            := ""
-
+    Private cLacArma            := ""
+    Private cLacOfic            := ""
+    Private cContain            := ""
     
-
     //cRelImp := __CUSERID+"_"+cNomRel+"_"+DtoS(dDatabase)+Replace(Time(),":","")
     cRelImp := __CUSERID+"_"+cNomRel
     
@@ -162,6 +164,19 @@ Static function fProcessa()
             // para compor as informações do cabeçalho.
             fGetInfo()
 
+            if cContain != ALLTRIM(TRB->EE7_CONTAI ) .or. cLacOfic != ALLTRIM(TRB->EE7_NLACR2 )
+                cMensagem := "Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL
+                
+                if cLacOfic != ALLTRIM(TRB->EE7_CONTAI )
+                    cMensagem += "Container: Exportação ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", cContain) +") " +cEOL
+                endif
+                
+                if cLacOfic != ALLTRIM(TRB->EE7_NLACR2 )
+                    cMensagem += "Lacre Oficial: Exportação ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", cLacOfic) +") " +cEOL
+                endif
+
+                MsgInfo(cMensagem, "Alerta")
+            endif
 
             //----------------------------------------------------------------------------------------
             // Impressão dos itens do pedido de exportação e 
@@ -463,20 +478,20 @@ Static Function fModelo02()
     nLinha += nAltura
 
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Navio:", oFOARNE09)
+    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Navio/Transportador:", oFOARNE09)
     oPrinter:Say(nLinha+017, aPerc[01]+010 , ALLTRIM(TRB->EE7_XEMBAR ) , oFOARNO09)
 
     oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
     oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nº Container:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(TRB->EE7_CONTAI ) , oFOARNO09)
+    oPrinter:Say(nLinha+017, aPerc[02]+010 , iif(Empty(cContain), ALLTRIM(TRB->EE7_CONTAI ), cContain) , oFOARNO09)
 
     oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
     oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nº Lacre Oficial:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[03]+010 , ALLTRIM(TRB->EE7_NLACR2 ) , oFOARNO09)
+    oPrinter:Say(nLinha+017, aPerc[03]+010 , iif(Empty(cLacOfic), ALLTRIM(TRB->EE7_NLACR2 ), cLacOfic) , oFOARNO09)
 
     oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
     oPrinter:Say(nLinha+007, aPerc[04]+002 , "Tara:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[04]+010 , TRANSFORM(TRB->EE7_XTARA, "@E 999999") , oFOARNO09)
+    oPrinter:Say(nLinha+017, aPerc[04]+010 , iif( TRB->EE7_XTARA == 0, "não se aplica", TRANSFORM(TRB->EE7_XTARA, "@E 999999")) , oFOARNO09)
 
     nLinha += nAltura
 
@@ -601,7 +616,7 @@ Static Function fModelo01()
 
         nAltura := 20
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-        oPrinter:Say(nLinha+007, aPerc[01]+002 , "Navio:", oFOARNE09)
+        oPrinter:Say(nLinha+007, aPerc[01]+002 , "Navio/Transportador:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[01]+010 , ALLTRIM(TRB->EE7_XEMBAR ) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
@@ -614,7 +629,7 @@ Static Function fModelo01()
 
         oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
         oPrinter:Say(nLinha+007, aPerc[04]+002 , "Tara:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[04]+010 , TRANSFORM(TRB->EE7_XTARA, "@E 999999") , oFOARNO09)
+        oPrinter:Say(nLinha+017, aPerc[04]+010 , iif( TRB->EE7_XTARA == 0, "não se aplica", TRANSFORM(TRB->EE7_XTARA, "@E 999999")) , oFOARNO09)
 
         nLinha += nAltura
 
@@ -1102,11 +1117,16 @@ Static function fGetInfo()
         cEmbHTer    := QINF->ZEX_HRFCAR
         dLacData    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_DTCARG, QINF->ZEX_DTLACR)
         cLacHora    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_HRFCAR, QINF->ZEX_HRLACR)
-        cLimpInt    := IIF(QINF->ZEX_LIMPIN == "S","Sim","Não")
-        cLimpExt    := IIF(QINF->ZEX_LIMPEX == "S","Sim","Não")
-        cTempBau    := IIF(QINF->ZEX_TEMPBA == "S","Sim","Não")
-        cBorrach    := IIF(QINF->ZEX_BORRAC == "S","Sim","Não")
-        cEquipFr    := IIF(QINF->ZEX_EQUIPF == "S","Sim","Não")
+        cLimpInt    := IIF(QINF->ZEX_LIMPIN == "S","Conforme","Não conforme")
+        cLimpExt    := IIF(QINF->ZEX_LIMPEX == "S","Conforme","Não conforme")
+        cTempBau    := IIF(QINF->ZEX_TEMPBA == "S","Conforme","Não conforme")
+        cBorrach    := IIF(QINF->ZEX_BORRAC == "S","Conforme","Não conforme")
+        cEquipFr    := IIF(QINF->ZEX_EQUIPF == "S","Conforme","Não conforme")
+
+        cLacArma    := Alltrim(QINF->ZEX_LACRE1)
+        cLacOfic    := Alltrim(QINF->ZEX_LACRE2)
+        cContain    := Alltrim(QINF->ZEX_CONTAI)
+
     endif
 
     QINF->(DbcloseArea())
@@ -1180,7 +1200,7 @@ Static function fGetQuery()
     cQuery += "                      LEFT  JOIN "+ RetSqlName("ZVC") +" (NOLOCK) ZVC ON ZVC.D_E_L_E_T_='' AND ( (ZV4.ZV4_CPF=ZVC.ZVC_CPF AND ZV4.ZV4_CPF!='') OR (ZV4.ZV4_PASPO=ZVC.ZVC_PASPOR AND ZV4.ZV4_PASPO!='') )  "+cEOL
     cQuery += "                      LEFT  JOIN "+ RetSqlName("ZEL") +" (NOLOCK) ZEL ON ZEL.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL='"+ xFilial("ZEL") +"' AND ZEL.ZEL_COD=EE7.EE7_XMODCS"
     cQuery += " 					 LEFT  JOIN "+ RetSqlName("ZE0") +" (NOLOCK) ZE0  ON ZE0.D_E_L_E_T_='' AND ZE0.ZE0_FILIAL='"+ xFilial("ZE0") +"' "+cEOL
-    cQuery += " WHERE  EE7.D_E_L_E_T_='' AND EE7.EE7_FILIAL='' AND EE7.EE7_PEDIDO ='"+ MV_PAR01 +"' "+cEOL
+    cQuery += " WHERE  EE7.D_E_L_E_T_='' AND EE7.EE7_FILIAL='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND EE7.EE7_PEDIDO ='"+ MV_PAR01 +"' "+cEOL
     cQuery += " ORDER BY EE7.EE7_PEDIDO; "
 	TCQUERY cQuery ALIAS "TRB" NEW
                 

@@ -3,7 +3,7 @@
 #INCLUDE "TBICONN.CH"
 
 /*/{Protheus.doc} User Function U_ADEEC010P()
-    Workflow de previs√£o de embarque para os processos de exporta√ß√£o.
+    Workflow de previs„o de embarque para os processos de exportaÁ„o.
     Chamado 8465
     @type  Function
     @author Leonardo P. Monteiro
@@ -25,21 +25,21 @@ user function ADEEC010P(aEmpFil)
 
 	if (!Empty(cCodEmp) .and. !Empty(cCodFil)) .AND. SELECT("SX2") == 0
 		Qout(" JOB ADEEC010P-Protheus - 01 - Executando em modo Schedule Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
-		Qout(" JOB ADEEC010P-Protheus - 02 - In√≠cio da rotina...")
+		Qout(" JOB ADEEC010P-Protheus - 02 - InÌcio da rotina...")
 
 		PREPARE ENVIRONMENT EMPRESA cCodEmp FILIAL cCodFil
 		lInJob := .F.
 		RPCSetType(3) //n√£o consome licen√ßa.
-		Qout(DtoC(dDatabase) + "-" + Time() + " JOB ADEEC010P-Protheus - 03 - In√≠cio da rotina na Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
+		Qout(DtoC(dDatabase) + "-" + Time() + " JOB ADEEC010P-Protheus - 03 - InÌcio da rotina na Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
 		// Executa as rotinas de WorkFlow
 		execWF(.T.)
 		Qout(DtoC(dDatabase) + "-" + Time() + " JOB ADEEC010P-Protheus - 04 - Fim da rotina na Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
 		RESET ENVIRONMENT
 		//PREPARE ENVIRONMENT EMPRESA "51" FILIAL "04"
-		Qout(" JOB ADEEC010P-Protheus - 05 - Fim da execu√ß√£o...") 
+		Qout(" JOB ADEEC010P-Protheus - 05 - Fim da execuÁ„o...") 
 	else
 		// Executa as rotinas de WorkFlow
-		MsAguarde({|| execWF(.F.)},"Aguarde...","Enviando notifica√ß√£o de embarques...")
+		MsAguarde({|| execWF(.F.)},"Aguarde...","Enviando notificaÁ„o de embarques...")
 	endIf
 return
 
@@ -113,9 +113,9 @@ Static Function execWF(lAutom)
  
         While QEXP->(!EOF())
             
-            cSubject      := iiF(!Empty(EE7_XWFNED),"[Altera√ß√£o]-","")+"Notifica√ß√£o de Embarque (INVOICE "+Alltrim(QEXP->EE7_PEDIDO)+")"
+            cSubject      := iiF(!Empty(EE7_XWFNED),"[AlteraÁ„o]-","")+"NotifiÁ„o de Embarque (INVOICE "+Alltrim(QEXP->EE7_PEDIDO)+")"
 
-            cBody	:= " <Strong>Para, Log√≠stica / Cr√©dito / Expedi√ß√£o / GCL</Strong>"
+            cBody	:= " <Strong>Para, LogÌstica / CrÈdito / ExpediÁ„o / GCL</Strong>"
             cBody	+= " <Br><br><br>"
             cBody   += " Favor notar os dados do pedido EXPORT: "
             cBody	+= " <Br><br><br>"
@@ -123,7 +123,7 @@ Static Function execWF(lAutom)
             cBody	+= " <br>"
             cBody	+= " <strong>Cliente:</strong> "+ Alltrim(QEXP->C5_NOMECLI) +"("+ QEXP->C5_CLIENTE +"/"+ QEXP->C5_LOJACLI +") "
             cBody	+= " <br>"
-            cBody	+= " <strong>Pa√≠s:</strong> "+ Alltrim(QEXP->YA_DESCR) +" "
+            cBody	+= " <strong>PaÌs:</strong> "+ Alltrim(QEXP->YA_DESCR) +" "
             cBody	+= " <br>"
             cBody	+= " <strong>Transportadora:</strong> "+iif(Empty(QEXP->C5_TRANSP), "", Alltrim(QEXP->A4_NOME)+"("+Alltrim(QEXP->C5_TRANSP)+")")
             cBody	+= " <br>"
@@ -133,7 +133,7 @@ Static Function execWF(lAutom)
             cBody	+= " <br>"
             cBody	+= " <strong>Data Estufagem:</strong> "+ Dtoc(QEXP->C5_DTENTR) +" "
             cBody	+= " <br>"
-            cBody	+= " <strong>Especifica√ß√£o de Embarque:</strong> <br>"
+            cBody	+= " <strong>EspecificaÁ„o de Embarque:</strong> <br>"
             cBody	+= " "+ Replace(QEXP->EE7_XESPEM,chr(13)+chr(10),"<br>") +" "
             cBody	+= " <br><br><br>"
              
@@ -179,7 +179,7 @@ Static Function execWF(lAutom)
         endif
     else
         if !lAutom
-            msginfo("N√£o h√° Pedidos de Exporta√ß√£o pendentes!")
+            msginfo("N„o h· Pedidos de ExportaÁ„o pendentes!")
         endif
     endif
     

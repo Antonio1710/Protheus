@@ -14,8 +14,9 @@
 	@history Everson - 08/05/2019. Chamado 044314. Adicionado nome do usuário que efetuou a operação de inclusão/alteraçaõ no e-mail de aviso.
 	@history Everson - 21/02/2020. Chamado 053926 Tratamento para envio de cadastro ao SAG.
 	@history Everson - 26/02/2020. Chamado 053926 Adiconadas rotinas para cadastramento de TAG SAG e caixas de transporte de ração.
-	@history Leonardo P. Monteiro - 16/04/2021. Chamado T.I. Integração do passaporte para o eData.
-	@history Leonardo P. Monteiro - 14/06/2021. Criação de melhoria na rotina para integração em lote de todos os veículos e transportadoras.
+	@history Ticket T.I.   - Leonardo P. Monteiro - 16/04/2021 - Integração do passaporte para o eData.
+	@history Ticket T.I.   - Leonardo P. Monteiro - 14/06/2021 - Criação de melhoria na rotina para integração em lote de todos os veículos e transportadoras.
+	@history Ticket T.I.   - Leonardo P. Monteiro - 22/07/2021 - Inclusão de validações para não deixar que manobristas sejam vinculados a veículos e a transportadoras.
 /*/
 
 User Function AXFV4() 
@@ -182,90 +183,134 @@ return lRet
 
 User Function COKVEIC()    
 
-	Local _aNomCpo := {}
-	Local dDataLog := ""
-
+	Local _aNomCpo 	:= {}
+	Local dDataLog 	:= ""
+	Local lOk		:= .T.
 	Local cCmpAlt	:= "" //Everson - 25/04/2019. Chamado 044314.
 
 	U_ADINF009P('AXFV4' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de veiculos')
+	// Valida se os CPFs cadastrados pertencem a algum manobrista.
+	lOk := fVldMan()
 
-	//rotina para aterar 	
-	If ALTERA
+	if lOk
+		//rotina para aterar 	
+		If ALTERA
 
-		DbSelectArea("SX3")
-		DbSetOrder(1)
-		SX3->(DbSetOrder(1))
-		SX3->(DbSeek('ZV4'))
-		While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == 'ZV4'
-			If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL .And. SX3->X3_CONTEXT <> "V"
-				AADD(_aNomCpo,{SX3->X3_CAMPO,SX3->X3_TIPO,X3Titulo()})
-			EndIf
-			SX3->(DbSkip())
-		Enddo
+			DbSelectArea("SX3")
+			DbSetOrder(1)
+			SX3->(DbSetOrder(1))
+			SX3->(DbSeek('ZV4'))
+			While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == 'ZV4'
+				If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL .And. SX3->X3_CONTEXT <> "V"
+					AADD(_aNomCpo,{SX3->X3_CAMPO,SX3->X3_TIPO,X3Titulo()})
+				EndIf
+				SX3->(DbSkip())
+			Enddo
 
-		dbSelectArea("ZV4")
-		DbSetOrder(1)
-		If dbseek(xFilial("ZV4")+M->ZV4_PLACA)
-			For _nx := 1 to len(_aNomCpo)
-				_mCampo := "M->"+_aNomCpo[_nx][1]
-				_cCampo := "ZV4->"+_aNomCpo[_nx][1]
-				IF &_mCampo <> &_cCampo  //Sendo diferentes campo foi alterado
-					//MsgInfo("Campo "+_cCampo+" foi alterado de "+&_cCampo+" para "+&_mCampo+" ")
-					_mCpoGrv := ""
-					_cCpoGrv := ""
-					If _aNomCpo[_nx][2] == "C"
-						_mCpoGrv := &_mCampo
-						_cCpoGrv	:= &_cCampo					
-					Elseif _aNomCpo[_nx][2] == "N"
-						_mCpoGrv := Alltrim(STR(&_mCampo))
-						_cCpoGrv	:= Alltrim(STR(&_cCampo))						
-					Elseif _aNomCpo[_nx][2] == "D"
-						_mCpoGrv := DTOC(&_mCampo)
-						_cCpoGrv	:= DTOC(&_cCampo)
-					Else
-						_mCpoGrv := "conteudo memo"    //conteudo memo não vai ser possivel gravar conteudo por conta do tamanho.
-						_cCpoGrv := "Conteudo memo"
+			dbSelectArea("ZV4")
+			DbSetOrder(1)
+			If dbseek(xFilial("ZV4")+M->ZV4_PLACA)
+	
+				For _nx := 1 to len(_aNomCpo)
+					_mCampo := "M->"+_aNomCpo[_nx][1]
+					_cCampo := "ZV4->"+_aNomCpo[_nx][1]
+					IF &_mCampo <> &_cCampo  //Sendo diferentes campo foi alterado
+						//MsgInfo("Campo "+_cCampo+" foi alterado de "+&_cCampo+" para "+&_mCampo+" ")
+						_mCpoGrv := ""
+						_cCpoGrv := ""
+						If _aNomCpo[_nx][2] == "C"
+							_mCpoGrv := &_mCampo
+							_cCpoGrv	:= &_cCampo					
+						Elseif _aNomCpo[_nx][2] == "N"
+							_mCpoGrv := Alltrim(STR(&_mCampo))
+							_cCpoGrv	:= Alltrim(STR(&_cCampo))						
+						Elseif _aNomCpo[_nx][2] == "D"
+							_mCpoGrv := DTOC(&_mCampo)
+							_cCpoGrv	:= DTOC(&_cCampo)
+						Else
+							_mCpoGrv := "conteudo memo"    //conteudo memo não vai ser possivel gravar conteudo por conta do tamanho.
+							_cCpoGrv := "Conteudo memo"
+						Endif
+
+						_cAlter := "Campo "+Alltrim(_cCampo)+" de "+Alltrim(_cCpoGrv)+" para "+Alltrim(_mCpoGrv)+" "
+						
+						//Everson - 25/04/2019. Chamado 044314.
+						cCmpAlt += "<p>Campo " + cValToChar(_aNomCpo[_nx][3]) +" de "+Alltrim(_cCpoGrv)+" para "+Alltrim(_mCpoGrv)+ "</p>" + Chr(13) + Chr(10)
+
+						dbSelectArea("ZBE")
+						RecLock("ZBE",.T.)
+						Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
+						Replace ZBE_DATA 	   	WITH Date()
+						Replace ZBE_HORA 	   	WITH TIME()
+						Replace ZBE_USUARI	    WITH UPPER(Alltrim(cUserName))
+						Replace ZBE_LOG	        WITH _cAlter
+						Replace ZBE_MODULO	    WITH "FV4-VEICULO"
+						Replace ZBE_ROTINA	    WITH "AXFV4"
+						Replace ZBE_PARAME	    WITH "PLACA VEICULO: " + M->ZV4_PLACA
+						ZBE->(MsUnlock())
+
 					Endif
+				Next
 
-					_cAlter := "Campo "+Alltrim(_cCampo)+" de "+Alltrim(_cCpoGrv)+" para "+Alltrim(_mCpoGrv)+" "
-					
-					//Everson - 25/04/2019. Chamado 044314.
-					cCmpAlt += "<p>Campo " + cValToChar(_aNomCpo[_nx][3]) +" de "+Alltrim(_cCpoGrv)+" para "+Alltrim(_mCpoGrv)+ "</p>" + Chr(13) + Chr(10)
+				If !Empty(_cAlter)
+					M->ZV4_XUSUAL	:= "USUARIO: "+UPPER(Alltrim(cUserName))+" DATA: "+DTOC(Date()) //grava o ultimo usuario na alteração	
+				EndIf
 
-					dbSelectArea("ZBE")
-					RecLock("ZBE",.T.)
-					Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-					Replace ZBE_DATA 	   	WITH Date()
-					Replace ZBE_HORA 	   	WITH TIME()
-					Replace ZBE_USUARI	    WITH UPPER(Alltrim(cUserName))
-					Replace ZBE_LOG	        WITH _cAlter
-					Replace ZBE_MODULO	    WITH "FV4-VEICULO"
-					Replace ZBE_ROTINA	    WITH "AXFV4"
-					Replace ZBE_PARAME	    WITH "PLACA VEICULO: " + M->ZV4_PLACA
-					ZBE->(MsUnlock())
+				//Everson - 25/04/2019. Chamado 044314.
+				envEmail("Alteração de cadastro " + cValToChar(M->ZV4_PLACA) + ".",cCmpAlt)
 
-				Endif
-			Next
-
-			If !Empty(_cAlter)
-				M->ZV4_XUSUAL	:= "USUARIO: "+UPPER(Alltrim(cUserName))+" DATA: "+DTOC(Date()) //grava o ultimo usuario na alteração	
-			EndIf
-
-			//Everson - 25/04/2019. Chamado 044314.
-			envEmail("Alteração de cadastro " + cValToChar(M->ZV4_PLACA) + ".",cCmpAlt)
+			Endif
 
 		Endif
 
-	Endif
+		//Everson - 25/04/2019. Chamado 044314.
+		If INCLUI
+			Conout( DToS(Date()) + " " + Time() + " AXFV4 - COKVEIC - INCLUI" )
+			envEmail("Inclusão de cadastro " + cValToChar(M->ZV4_PLACA) + ".","")
 
-	//Everson - 25/04/2019. Chamado 044314.
-	If INCLUI
-		Conout( DToS(Date()) + " " + Time() + " AXFV4 - COKVEIC - INCLUI" )
-		envEmail("Inclusão de cadastro " + cValToChar(M->ZV4_PLACA) + ".","")
+		EndIf
 
-	EndIf
+	endif
 
-Return(.T.)
+Return lOk
+
+Static Function fVldMan()
+	Local lRet 		:= .T.
+	Local cQuery 	:= ""
+	Local cMens		:= ""
+
+	cQuery := " SELECT ZEB_NOME, ZEB_CPF "
+	cQuery += " FROM "+ RetSqlName("ZEB") +" "
+	cQuery += " WHERE D_E_L_E_T_='' AND ZEB_FILIAL='"+ xFilial("ZEB") +"' AND "
+	cQuery += "  (   ZEB_CPF='"+ M->ZV4_CPF +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF1 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF2 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF3 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF4 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF5 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF6 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF7 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF8 +"' "
+	cQuery += "   OR ZEB_CPF ='"+ M->ZV4_CPF9 +"'); "
+
+	TcQuery cQuery ALIAS "QZEB" NEW
+
+	if QZEB->(!eof())
+
+		cMens := "Os CPFs abaixo estão cadastrados como manobristas e não pode ser vinculados a veículos e nem transportadoras:"+CHR(13)+CHR(10)+CHR(13)+CHR(10)
+		
+		while QZEB->(!eof())
+			cMens += " - "+QZEB->ZEB_NOME +"("+ QZEB->ZEB_CPF +")"+CHR(13)+CHR(10)
+			QZEB->(Dbskip())
+		end
+		MsgInfo(cMens, "Alerta")
+		lRet := .F.
+	endif
+	
+	QZEB->(DbCloseArea())
+
+return lRet
+
 
 /*/{Protheus.doc} envEmail
 	Envio de e-mail.

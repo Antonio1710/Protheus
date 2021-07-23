@@ -8,6 +8,7 @@
 	@since 22/04/2021
 	@version 1.0
 	@history Ticket T.I.   - Leonardo P. Monteiro - 22/04/2021 - Alteração no gatilho de validação do CPF e Passaporte no cadastro do veículo.
+	@history Ticket T.I.   - Leonardo P. Monteiro - 22/07/2021 - Correção no gatilho para limpeza correta dos campos.
 /*/
 User Function ADLOG037P(cCampo) // U_ADLOG037P()
     Local aArea   	:= GetArea()
@@ -22,13 +23,13 @@ User Function ADLOG037P(cCampo) // U_ADLOG037P()
 
 	cValor	:= &("M->"+cCampo)
 	if Empty(Alltrim(cValor))
-			&("M->ZV4_CPF"+cNumCp) 		:= ""
-			&("M->ZV4_RG"+cNumCp) 		:= ""
-			&("M->ZV4_PASPO"+cNumCp) 	:= ""
+			&("M->ZV4_CPF"+cNumCp) 		:= Criavar("ZV4_CPF"+cNumCp)
+			//&("M->ZV4_RG"+cNumCp) 		:= Criavar("ZV4_RG"+cNumCp)
+			&("M->ZV4_PASPO"+cNumCp) 	:= Criavar("ZV4_PASPO"+cNumCp)
 			IF Empty(cNumCp)
-				M->ZV4_MOTORI 	:= ""
+				M->ZV4_MOTORI 	:= Criavar("ZV4_MOTORI")
 			else
-				&("M->ZV4_MOTOR"+cNumCp) 	:= ""
+				&("M->ZV4_MOTOR"+cNumCp) 	:= criavar("ZV4_MOTOR"+cNumCp)
 			endif
 	else
 		if left(cCampo,7) == "ZV4_CPF"
@@ -43,7 +44,7 @@ User Function ADLOG037P(cCampo) // U_ADLOG037P()
 		else
 			lRet := .T.
 			&("M->ZV4_CPF"+cNumCp) 		:= aCad[01]
-			&("M->ZV4_RG"+cNumCp) 		:= aCad[02]
+			//&("M->ZV4_RG"+cNumCp) 		:= aCad[02]
 			&("M->ZV4_PASPO"+cNumCp) 	:= aCad[03]
 			if Empty(cNumCp)
 				M->ZV4_MOTORI 	:= aCad[04]

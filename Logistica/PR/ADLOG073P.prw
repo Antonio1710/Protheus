@@ -1,4 +1,5 @@
 #INCLUDE "rwmake.ch"
+#INCLUDE "topconn.ch"
 
 
 /*/{Protheus.doc} User Function ADLOG073P
@@ -9,6 +10,7 @@
 	@version 01
 	@history Ticket: 11427 - 25/03/2021 - ADRIANO SAVOINE - Solicitado pela Logistica para utilizar nas pesagens os manobristas entre DIMEP x Edata.
 	@history Ticket: T.I.  - 10/06/2021 - LEONARDO MONTEIRO - Ajuste na alteração do registro que estava posicionando no primeiro registro.
+	@history Ticket: T.I.  - 22/07/2021 - LEONARDO MONTEIRO - Inclusão de validações para não deixar que manobristas sejam vinculados a veículos e a transportadoras.
 	/*/
 
 User Function ADLOG073P()
@@ -58,10 +60,46 @@ USER Function INCLUI()
 	Local nOpca := ""
    
     dbSelectArea("ZEB")
-    nOpca := AxInclui("ZEB",ZEB->(Recno()), 3,,"u_CARREZEB()",,,.T.,,,,,,.T.,,,.T.,,)
+    nOpca := AxInclui("ZEB",ZEB->(Recno()), 3,,"u_CARREZEB()",,"U_VLDZEB()",.T.,,,,,,.T.,,,.T.,,)
 
 Return 
 
+User Function VldZEB()
+	Local lRet 		:= .T.
+	Local cQuery 	:= ""
+	Local cMens		:= ""
+
+	cQuery := " SELECT ZV4_PLACA, ZV4_NOMFOR "
+	cQuery += " FROM "+ RetSqlName("ZV4") +" "
+	cQuery += " WHERE D_E_L_E_T_='' AND ZV4_FILIAL='"+ xFilial("ZV4") +"' AND "
+	cQuery += "  (   ZV4_CPF  ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF1 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF2 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF3 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF4 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF5 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF6 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF7 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF8 ='"+ M->ZEB_CPF +"' "
+	cQuery += "   OR ZV4_CPF9 ='"+ M->ZEB_CPF +"'); "
+
+	TcQuery cQuery ALIAS "QZV4" NEW
+
+	if QZV4->(!eof())
+
+		cMens := "O CPF cadastrado tem vínculo com as seguintes placas e transportadoras:"+CHR(13)+CHR(10)+CHR(13)+CHR(10)
+		
+		while QZV4->(!eof())
+			cMens += " - Fornecedor: "+QZV4->ZV4_NOMFOR +", Placa: "+ QZV4->ZV4_PLACA +""+CHR(13)+CHR(10)
+			QZV4->(Dbskip())
+		end
+		MsgInfo(cMens, "Alerta")
+		lRet := .F.
+	endif
+	
+	QZV4->(DbCloseArea())
+
+return lRet
 
 USER Function CARREZEB()
 
@@ -105,7 +143,7 @@ Local aArea       := GetArea()
      
     //Se conseguir posicionar no produto
     If ZEB->(DbSeek(FWxFilial('ZEB') + ZEB->ZEB_CODIGO))
-        nOpcao := AxAltera('ZEB', ZEB->(RecNo()), 4)
+        nOpcao := AxAltera('ZEB', ZEB->(RecNo()), 4,,,,,"U_VldZEB()")
         If nOpcao == 1
             MsgInfo("CADASTRO ALTERADO.", "Atenção")
         EndIf

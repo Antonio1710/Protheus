@@ -18,6 +18,7 @@
     @history 22/05/2021 - Chamado   8465 Leonardo P. Monteiro - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção.
     @history 22/05/2021 - Chamado   8465 Leonardo P. Monteiro - Alteração na validação para considerar o número da placa ao invés do roteiro.
     @history 04/06/2021 - Chamado   8465 Leonardo P. Monteiro - Correção do error.log na linha 85.
+    @history 22/07/2021 - Chamado   8465 Leonardo P. Monteiro - Limpa os campos na cópia do pedido de exportação.
 /*/
 
 User Function EECAP100
@@ -169,7 +170,11 @@ User Function EECAP100
         EndIf
     // Preenchimento dos campos na cópia dos processos de exportação.
     ELSEIF cRespAux == 'PE_COPYPED'    
-        
+        // Limpa os campos quando é feita a cópia dos pedidos de exportação. 
+        M->EE7_XWFEMD   := Stod("")
+        M->EE7_XWFNED   := Stod("")
+        M->EE7_XWFEMH   := ""
+        M->EE7_XWFNEE   := "N"
         RunTrigger(1,nil,nil,,'EE7_VIA')
         RunTrigger(1,nil,nil,,'EE7_PAISET')
     EndIf
