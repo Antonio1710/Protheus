@@ -683,6 +683,18 @@ STATIC FUNCTION DimepFuncionario()
 		    	TRF->(dbCloseArea()) 
 		    ENDIF	
 
+			// FWNM - 22/070/2021 - TICKET 17021 - Checo se o tipo de tecnologia está diferente entre CREDENCIAL e CREDENCIAL_PESSOA
+			UpdTecno( TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+
+			// FWNM - 22/07/2021 - AQUI - ticket 17021 - Checo se existem 2 credenciais iguais com tecnologias diferentes
+			If !lFuncCredencial
+				lTpTecno13 := ChkAllCred( TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+				If lTpTecno13
+					lFuncCredencial := .t.
+				EndIf
+			EndIf
+			//
+
 			// FWNM - 19/07/2021 - AQUI - ticket 17021
 			If !lFuncCredencial
 				
@@ -1492,16 +1504,18 @@ STATIC FUNCTION ALTERFUNCDIMEP()
     	TRF->(dbCloseArea())
 
 		//Integra Credencial e Credencial X Pessoa
-		lTpTecno3 := GetCredenc("3", TRC->CD_PESSOA, Val(TRB->PTOCREDENCIAL))
-		If lTpTecno3
-			INTCREPESSOA(TRC->CD_PESSOA,nCredencial,"","","3") // enviar 3 = tipo tecnologia // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
-			UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-		EndIf
+		If nRep <> nCredencial
+			lTpTecno3 := GetCredenc("3", TRC->CD_PESSOA, Val(TRB->PTOCREDENCIAL))
+			If lTpTecno3
+				INTCREPESSOA(TRC->CD_PESSOA,nCredencial,"","","3") // enviar 3 = tipo tecnologia // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+			EndIf
 
-		lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)))
-		If lTpTecno1
-			INTCREPESSOA(TRC->CD_PESSOA,nRep,"","","1") // enviar 1 = tipo tecnologia  // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
-			UPDPESS1('CD_CREDENCIAL_REP',nRep,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+			lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)))
+			If lTpTecno1
+				INTCREPESSOA(TRC->CD_PESSOA,nRep,"","","1") // enviar 1 = tipo tecnologia  // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+				UPDPESS1('CD_CREDENCIAL_REP',nRep,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+			EndIf
 		EndIf
 		// 
 
@@ -2100,7 +2114,7 @@ Static Function Sqlfuncionario(cEmpresa)
 
 	// => DEBUG inibir
 	//cQuery += " AND PPESSOA.CPF IN (''40999310801'',''32016494816'',''31451999860'')
-	//cQuery += " AND PPESSOA.CPF=''11620313871''
+	//cQuery += " AND PPESSOA.CPF=''26642025881''
 	// => DEBUG inibir
 
 	cQuery += "			ORDER BY PPESSOA.CPF
@@ -2156,27 +2170,6 @@ RETURN(NIL)
 
 Static Function SqlAfastamento(cEmp,cMat)
 
-	//Local cTeste := ''
-
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-
-	/*
-	BeginSQL Alias "TRE"
-			%NoPARSER% 
-			SELECT TOP(1) CHAPA,
-						  TIPO,
-						  DTINICIO AS DATAINICIO,
-						  DTFINAL AS DATAFIM
-					  FROM [VPSRV16].[CORPORERM].[DBO].[PFHSTAFT] WITH (NOLOCK)
-					 WHERE CODCOLIGADA = %EXP:cEmp%
-					   AND CHAPA       = %EXP:cMat%
-					   AND (GETDATE()  BETWEEN DTINICIO AND DTFINAL
-					    OR DTFINAL  IS NULL)
-				  ORDER BY PFHSTAFT.DTINICIO DESC
-					
-	EndSQl             
-	*/
-
 	TRE := GetNextAlias()
 
 	cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
@@ -2199,30 +2192,6 @@ Static Function SqlAfastamento(cEmp,cMat)
 RETURN
 
 Static Function SqlFERIAS(cEmp,cMat)
-
-	//Local cTeste := ''
-
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-
-	/*
-	BeginSQL Alias "TRE"
-			%NoPARSER%
-			  SELECT TOP(1) PFUFERIASPER.CHAPA,
-							SITUACAOFERIAS,
-							DATAINICIO,
-							DATAFIM
-						FROM [VPSRV16].[CORPORERM].[DBO].[PFUFERIASPER] WITH (NOLOCK)
-						INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PFUFERIASRECIBO] WITH (NOLOCK)
-								ON PFUFERIASRECIBO.CODCOLIGADA = PFUFERIASPER.CODCOLIGADA
-							   AND PFUFERIASRECIBO.CHAPA       = PFUFERIASPER.CHAPA
-							   AND PFUFERIASRECIBO.DATAPAGTO   = PFUFERIASPER.DATAPAGTO
-						     WHERE PFUFERIASPER.CODCOLIGADA    = %EXP:cEmp%'
-						       AND PFUFERIASPER.CHAPA          = %EXP:cMat%
-						       AND (GETDATE()            BETWEEN DATAINICIO AND DATAFIM
-						        OR DATAFIM                     = '')
-					ORDER BY PFUFERIASPER.DATAINICIO DESC
-	EndSQl             
-	*/
 
 	TRE := GetNextAlias()
 
@@ -2263,26 +2232,6 @@ Static Function SqlVCredencialDimep(cCredencial)
 RETURN(NIL)   
 
 Static Function SqlVTurno(cEmpresa,cMat) 
-
-	//Local cTeste:= ''
-
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-
-	/*
-	BeginSQL Alias "TRG"
-			%NoPARSER%  
-			SELECT TOP(1) CODCOLIGADA,
-						  CHAPA,
-						  DTMUDANCA,
-						  CODHORARIO
-					 FROM [VPSRV16].[CORPORERM].[DBO].[PFHSTHOR] WITH (NOLOCK)
-					WHERE CODCOLIGADA = %exp:cEmpresa%
-					  AND CHAPA       = %exp:cMat%
-					  AND CODHORARIO <> 'A001'
-					  ORDER BY DTMUDANCA DESC
-			
-	EndSQl             
-	*/
 
 	TRG := GetNextAlias()
 
@@ -2401,27 +2350,6 @@ RETURN(NIL)
 
 Static Function SqlTurno(cEmpresa)     
 
-	//Local cTeste:= ''
-
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-
-	/*
-
-	BeginSQL Alias "TRL"
-			%NoPARSER%  
-			SELECT CODIGO,
-				   DESCRICAO,
-				   HORARIOJOR
-			  FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO] WITH(NOLOCK)
-			 WHERE CODCOLIGADA = %EXP:cEmpresa%
-			   AND INATIVO     = 0
-			   
-			ORDER BY CODIGO
- 			 
- 	EndSQl             
-	
-	*/
-
 	TRL := GetNextAlias()
 
 	cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
@@ -2442,29 +2370,6 @@ Static Function SqlTurno(cEmpresa)
 RETURN(NIL)  
 
 Static Function SqlJorRM(cEmpresa,cTurno)    
-
-	//Local cTeste:= ''
-
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-
-	/*
-
-	BeginSQL Alias "TRM"
-			%NoPARSER% 
-			 SELECT CODHORARIO,
-					INDINICIO,
-					BATINICIO,
-					CONVERT(DECIMAL(10,2),CONVERT(NUMERIC,BATINICIO) / 60) AS HR_INI,
-					INDFIM,
-					BATFIM,
-					CONVERT(DECIMAL(10,2),CONVERT(NUMERIC,BATFIM) / 60) AS HR_FIN
-				FROM [VPSRV16].[CORPORERM].[DBO].[AJORHOR] WITH (NOLOCK)
-				WHERE CODCOLIGADA = %EXP:cEmpresa%
-				AND CODHORARIO    = %EXP:cTurno%
-	 
- 	EndSQl             
-
-	*/
 
 	TRM := GetNextAlias()
 
@@ -2702,37 +2607,6 @@ Static Function SqlVEstrutura(cFilFunc,nMatricula)
 RETURN(NIL) 
 
 Static Function SqlDiaSemanaRM(cEmpresa,cTurno)
-
-	//Local cTeste:= ''
-
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-
-	/*
-
-	cQuery:= " SELECT [COLUNA], [VALOR] "
-	cQuery+= "   FROM (SELECT CODIGO, "
-	cQuery+= "	   	  (SELECT DATENAME(weekday, DATABASEHOR)    FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA1, "
-	cQuery+= "	      (SELECT DATENAME(weekday, DATABASEHOR +1) FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA2, "
-	cQuery+= "	 	  (SELECT DATENAME(weekday, DATABASEHOR +2) FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA3, "
-	cQuery+= "		  (SELECT DATENAME(weekday, DATABASEHOR +3) FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA4, "
-	cQuery+= "		  (SELECT DATENAME(weekday, DATABASEHOR +4) FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA5, "
-	cQuery+= "		  (SELECT DATENAME(weekday, DATABASEHOR +5) FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA6, "
-	cQuery+= "		  (SELECT DATENAME(weekday, DATABASEHOR +6) FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO]  WHERE CODCOLIGADA = '" + cEmpresa + "' AND CODIGO = '" + cTurno + "') AS DIA7 "
-	cQuery+= "   FROM [VPSRV16].[CORPORERM].[DBO].[AHORARIO] "
-	cQuery+= "  WHERE CODCOLIGADA = '" + cEmpresa + "' "
-	cQuery+= "	  AND CODIGO      = '" + cTurno + "' "
-	cQuery+= "		  ) C "
-	cQuery+= "	UNPIVOT ([VALOR] FOR [COLUNA] IN ( [DIA1], "
-	cQuery+= "		                               [DIA2], "
-	cQuery+= "				                       [DIA3], "
-	cQuery+= "				                       [DIA4], "
-	cQuery+= "				                       [DIA5], "
-	cQuery+= "				                       [DIA6], "
-	cQuery+= "				                       [DIA7] "
-	cQuery+= "			) "
-	cQuery+= " ) AS U " 
-
-	*/
 
 	TSD := GetNextAlias()
 
@@ -3558,13 +3432,6 @@ Static Function GetCredenc(cTpTecno, nPessoa, nKey)
 	Local cQuery := ""
 	Local cSql   := ""
 
-	/*
-	cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] 
-	cSql += " WHERE CD_PESSOA='"+CVALTOCHAR(nPessoa)+"' 
-	cSql += " AND ( ISNULL(DT_FIM,'')<>'' OR ISNULL(DT_BAIXA_CREDENCIAL,'')<>'' )
-	TCSQLExec(cSql)
-	*/
-
 	If Select("Work")
 		Work->( dbCloseArea() )
 	EndIf
@@ -3622,20 +3489,7 @@ Static Function GetCDCred(nKey, nTpTecno)
 	
 	Work->( dbGoTop() )
 	If Work->( !EOF() )
-
 		cRet := Work->CD_CREDENCIAL
-
-		// Checa se o tipo de tecnologia está cadastrado errado na tabela de credencial
-		If Work->TP_TECNOLOGIA <> nTpTecno
-
-			cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
-			cSql += " SET TP_TECNOLOGIA='"+cvaltochar(nTpTecno)+"'
-			cSql += " WHERE NU_CREDENCIAL='"+CVALTOCHAR(nKey)+"'
-
-			TCSQLExec(cSql)
-
-		EndIf
-
 	EndIf
 
 	If Select("Work")
@@ -3643,3 +3497,191 @@ Static Function GetCDCred(nKey, nTpTecno)
 	EndIf
 
 Return cRet
+
+/*/{Protheus.doc} Static Function ChkAllCred( TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+	Checa se existem 2 credenciais iguais com tipos de tecnologias difernetes
+	@type  Static Function
+	@author FWNM
+	@since 22/07/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function ChkAllCred(nCD_PESSOA, nCHAPA, nPTOCREDENCIAL)
+
+	Local lRet := .f.
+	Local cQuery := ""
+	Local nTtCred := 0
+	Local cSql := ""
+
+	// Checo duplicidade pela Chapa
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT COUNT(1) TT_CREDENCIAL
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK) 
+	cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL 
+	cQuery += " WHERE AMARRA.CD_PESSOA='"+CVALTOCHAR(nCD_PESSOA)+"' 
+	cQuery += " AND CRED.NU_CREDENCIAL='"+CVALTOCHAR(nCHAPA)+"'
+	cQuery += " AND AMARRA.TP_TECNOLOGIA IN ('1','3')
+	cQuery += " AND ( ISNULL(DT_FIM,'')='' OR ISNULL(DT_BAIXA_CREDENCIAL,'')='' )
+
+	tcQuery cQuery New Alias "Work"
+	
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+		nTtCred := Work->TT_CREDENCIAL
+	EndIf
+
+	If nTtCred >= 2
+
+		lRet := .t.
+
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+		cSql += " WHERE CD_PESSOA='"+CVALTOCHAR(nCD_PESSOA)+"' 
+
+		TCSQLExec(cSql)
+	
+	EndIf
+
+	// Checo duplicidade pela Credencial
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT COUNT(1) TT_CREDENCIAL
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK) 
+	cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL 
+	cQuery += " WHERE AMARRA.CD_PESSOA='"+CVALTOCHAR(nCD_PESSOA)+"' 
+	cQuery += " AND CRED.NU_CREDENCIAL='"+CVALTOCHAR(nPTOCREDENCIAL)+"'
+	cQuery += " AND AMARRA.TP_TECNOLOGIA IN ('1','3')
+	cQuery += " AND ( ISNULL(DT_FIM,'')='' OR ISNULL(DT_BAIXA_CREDENCIAL,'')='' )
+
+	tcQuery cQuery New Alias "Work"
+	
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+		nTtCred := Work->TT_CREDENCIAL
+	EndIf
+
+	If nTtCred >= 2
+
+		lRet := .t.
+
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+		cSql += " WHERE CD_PESSOA='"+CVALTOCHAR(nCD_PESSOA)+"' 
+
+		TCSQLExec(cSql)
+	
+	EndIf
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+Return lRet
+
+/*/{Protheus.doc} UpdTecno( TRC->CD_PESSOA, Val(SUBSTR(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+	Equalizo tipo tecnologia qdo estão divergentes entre as tabelas CREDENCIAL x CREDENCIAL_PESSOA
+	@type  Static Function
+	@author FWNM
+	@since 22/07/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function UpdTecno( nCD_PESSOA, nCHAPA, nPTOCREDENCIAL )
+
+	Local cQuery := ""
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT CD_CREDENCIAL, TP_TECNOLOGIA
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+	cQuery += " WHERE CD_PESSOA='"+cValToChar(nCD_PESSOA)+"' 
+
+	tcQuery cQuery New Alias "Work"
+
+	Work->( dbGoTop() )
+	Do While Work->( !EOF() )
+
+		// Checo o TP de Tecnologia da credencial 
+		If Select("WorkCRED") > 0
+			WorkCRED->( dbCloseArea() )
+		EndIf
+
+		cQuery := " SELECT TP_TECNOLOGIA, NU_CREDENCIAL
+		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
+		cQuery += " WHERE CD_CREDENCIAL='"+cValToChar(Work->CD_CREDENCIAL)+"' 
+
+		tcQuery cQuery New Alias "WorkCRED"
+
+		WorkCRED->( dbGoTop() )
+		If WorkCRED->( !EOF() )
+
+			If Work->TP_TECNOLOGIA <> WorkCRED->TP_TECNOLOGIA
+
+				// Codigo Barra
+				If Len(cValToChar(WorkCRED->NU_CREDENCIAL)) == 5
+				
+					cTpTecno := "1"
+				
+					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
+					cSql += " SET TP_TECNOLOGIA = '"+cTpTecno+"' "
+					cSql += " WHERE CD_CREDENCIAL='"+cValToChar(Work->CD_CREDENCIAL)+"' 
+					TCSQLEXEC(cSql)
+
+					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+					cSql += " SET TP_TECNOLOGIA = '"+cTpTecno+"' "
+					cSql += " WHERE CD_PESSOA='"+cValToChar(nCD_PESSOA)+"' 
+					cSql += " AND CD_CREDENCIAL='"+cValToChar(Work->CD_CREDENCIAL)+"' 
+					TCSQLEXEC(cSql)
+
+				EndIf
+
+				// Proximidade
+				If Len(cValToChar(WorkCRED->NU_CREDENCIAL)) == 10
+				
+					cTpTecno := "3"
+				
+					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
+					cSql += " SET TP_TECNOLOGIA = '"+cTpTecno+"' "
+					cSql += " WHERE CD_CREDENCIAL='"+cValToChar(Work->CD_CREDENCIAL)+"' 
+					TCSQLEXEC(cSql)
+
+					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+					cSql += " SET TP_TECNOLOGIA = '"+cTpTecno+"' "
+					cSql += " WHERE CD_PESSOA='"+nCD_PESSOA+"' 
+					cSql += " AND CD_CREDENCIAL='"+cValToChar(Work->CD_CREDENCIAL)+"' 
+					TCSQLEXEC(cSql)
+
+				EndIf
+
+			EndIf
+
+		EndIf
+
+		Work->( dbSkip() )
+
+	EndDo
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	If Select("WorkCRED") > 0
+		WorkCRED->( dbCloseArea() )
+	EndIf
+
+Return

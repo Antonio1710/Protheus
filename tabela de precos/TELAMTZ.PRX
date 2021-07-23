@@ -13,6 +13,7 @@
 	@history Chamado 055885 - William       - 20/02/2020 - Adicionado pergunta se deseja mostrar os produtos bloqueados sim ou não.
 	@history Chamado 057846 - William Costa - 06/05/2020 - Retirado toda a referencia ao campo B1_ATIVO ou B1_ATIVO1
 	@history Chamado 050729 - FWNM          - 14/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Migração Release 27
+	@history Chamado 17381	- Leonardo P. Monteiro - 23/07/2021 - Aumento do limitador do grid de 200 para 100000 registros na aCols.
 /*/
 User Function TELAMTZ()
 
@@ -222,7 +223,7 @@ Static Function xGeraInter()
 	nOpcx    := 3
 	aAlter   := {"ZZK_PRODUT","ZZK_PRBASE","ZZK_COEF1","ZZK_COEF2","ZZK_COEF3","ZZK_COEF4","ZZK_COEF5","ZZK_COEF6","ZZK_COEF7","ZZK_COEF8","ZZK_COEF9","ZZK_COEF10","ZZK_COEF11","ZZK_COEF12"}
 	// RICARDO LIMA - 22/11/17 -  INCLUIDO O DECIMO QUARTO PARAMETRO (.T.), PARA FIXAR A TELA MAXIMIZADA
-	lRetMod2 := Modelo2(cTitulo,aC,aR,aCGD,nOpcx,cLinhaOk,cTudoOk,aAlter,,,200,,,.T.) //Everson - 12/12/2018. Chamado 045766.
+	lRetMod2 := Modelo2(cTitulo,aC,aR,aCGD,nOpcx,cLinhaOk,cTudoOk,aAlter,,,100000,,,.T.) //Leonardo P. Monteiro - 23/07/2021. Chamado 17381.
 
 	If lRetMod2
 
