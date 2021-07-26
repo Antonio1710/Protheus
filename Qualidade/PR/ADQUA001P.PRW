@@ -12,6 +12,7 @@ Static cFormatRet := "application/json"
     @version 01
     @history Everson, 15/06/2021, Chamado 4257 Descomentadas as linhas de container e tara.
     @history Everson, 20/07/2021, Chamado 4257 Tratamento para formatação da data do roteiro.
+    @history Everson, 26/07/2021, Chamado 4257 Tratamento para inserir informações por lote, data de vencimento, data de produção e produto.
     /*/
 User Function ADQUA001P
 return Nil
@@ -269,7 +270,7 @@ Static Function getPalete(cErro, cPallete)
                 For nAux := 1 To Len(xCaixas)
                     oItem := xCaixas[nAux]
                     Aadd(aDados,{;
-                         Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)) + StrTran(Substr(Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),1,10),"-",""),; //Chave. 1
+                         Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)) + StrTran(Substr(Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),1,10),"-","") + StrTran(Substr(Alltrim(cValToChar(oItem:_EXPIRATIONDATE:TEXT)),1,10),"-","") + StrTran(Alltrim(cValToChar(oItem:_LOTNO:TEXT))," ",""),; //Chave. 1. Everson - 26/07/2021. Chamado 4257.
                          Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)),; //Código do produto no Protheus. 2
                          Alltrim(cValToChar(oItem:_PRODUCTIONCODE:TEXT)),; //Código do produto no Edata. 3
                          Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),; //Data padrão. 4
