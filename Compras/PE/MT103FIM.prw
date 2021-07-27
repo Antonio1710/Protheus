@@ -37,6 +37,7 @@
   @history Ticket  1794   - Adriana Oliveira- 23/09/2020 - Correção aliquota quando produtor rural, e geração por item
   @history Ticket 11265   - Abel Babini     - 19/03/2021 - Ajuste na rotina que gera os registros C197 para gravar o campo D1_ITEM. A não gravação do campo causava a delação do registro no reprocessamento dos livros. Correção na formula da aliquota interestadual
   @history Ticket 15063   - Abel Babini     - 08/06/2021 - Criação de regra para garantir a baixa dos pedidos de Frete relacionados aos CTE´s de complemento de preço
+  @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -381,13 +382,28 @@ User Function MT103FIM()
             IF SC7->C7_QUANT == 1 .AND. SC7->C7_QUJE == 0
 
               Reclock("SC7",.F.)
-                SC7->C7_QUJE 	:= 1
+                SC7->C7_QUJE 	  := 1
+                SC7->C7_XDTENTR := SF1->F1_DTDIGIT
               MsUnlock("SC7")
             ENDIF
 
           ENDIF
-        ENDIF
         //FIM Ticket 15063   - Abel Babini     - 08/06/2021 - Criação de regra para garantir a baixa dos pedidos de Frete relacionados aos CTE´s de complemento de preço
+        //Início @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+        ELSEIF !Empty(SD1->D1_PEDIDO) .and. !Empty(SD1->D1_ITEMPC)
+          
+          dbselectarea("SC7")
+          SC7->(dbsetorder(1))
+
+          IF SC7->(dbSeek(SD1->D1_FILIAL+SD1->D1_PEDIDO+SD1->D1_ITEMPC))
+            
+            Reclock("SC7",.F.)
+              SC7->C7_XDTENTR := SF1->F1_DTDIGIT
+            MsUnlock("SC7")
+          ENDIF
+
+        ENDIF
+        //Final @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
 
         SD1->(dbskip())
       EndDo              

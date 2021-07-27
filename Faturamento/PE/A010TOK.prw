@@ -25,6 +25,7 @@
 			  de exportação.
 	@history Chamado T.I. - Everson - 29/11/2019. Tratamento para enviar produto para aprovação, mediante consulta o Edata.
 	@history Chamado T.I. - Everson - 11/12/2019. Chamado 053902, adicionado tratamento no script sql.
+	@history Chamado 17407 - Leonardo P. Monteiro - 26/07/2021. - Adição de validação na confirmação do produto para checar se existe outro código EAN vinculado a outro produto.
 	/*/
 User Function A010TOK()  
 
@@ -53,7 +54,7 @@ User Function A010TOK()
 			lExecuta := .F.   
 			
 		ENDIF
-		
+
 		IF ALLTRIM(M->B1_TIPO)    == 'PA' .AND. ;
 		   ALLTRIM(M->B1_LOCPAD)  == '10' .AND. ;
 		   ALLTRIM(M->B1_MSBLQL)  == '2'  .AND. ;
@@ -109,6 +110,20 @@ User Function A010TOK()
 			lExecuta := .F.
 		    
 		ENDIF
+
+		IF ALLTRIM(M->B1_MSBLQL)  == '2'  .AND. ALLTRIM(M->B1_CODBAR)  != ''
+		    
+			//@history Chamado 17407 - Leonardo P. Monteiro - 26/07/2021. - Adição de validação na confirmação do produto para checar se existe outro código EAN vinculado a outro produto.
+		    IF !fDupEAN(M->B1_COD, M->B1_CODBAR)
+				
+				//Chamado: 049875 - Fernando Sigoli 21/06/2019     
+				ShowHelpDlg("A010TOK-06", {"O código de barras informado: " + ALLTRIM(M->B1_CODBAR),;
+											" está vinculado a outros produtos ativos. "},5,;
+											{"Favor entrar em contato com o fiscal ou comercial"},5)   
+					
+					lExecuta := .F.   
+			ENDIF
+		ENDIF
 		
 		// FINAL WILLIAM COSTA 21/06/2019 CHAMADO 049973 || OS 051277 || FISCAL || VALERIA || 8389 || PEDIDO X FATURAMENTO
 	EndIf
@@ -126,6 +141,30 @@ User Function A010TOK()
 	//
 	
 Return (lExecuta)
+
+/* fDupEAN - Verifica se o código EAN informado está vinculado a outro produto. */
+Static Function fDupEAN(cCod, cCodEAN)
+	Local lRet 		:= .T.
+	Local cQuery 	:= ""
+	Local aArea		:= GetArea()
+
+	cQuery := " SELECT count(*) CONTADOR "
+	cQuery += " FROM "+ RetSqlName("SB1") +" "
+	cQuery += " WHERE D_E_L_E_T_='' AND B1_COD != '"+ Alltrim(cCod) +"' AND B1_MSBLQL !='1' AND B1_CODBAR = '"+ AllTrim(cCodEAN) +"' "
+
+	tcquery cQuery ALIAS "QSB1" NEW
+
+	IF QSB1->(!EOF())
+		IF QSB1->CONTADOR > 0
+			lRet := .F.
+		ENDIF
+	ENDIF
+
+	QSB1->(DbCloseArea())
+
+	RestArea(aArea)
+return lRet
+
 /*/{Protheus.doc} chkEdata
 	Checa se o produto possui cadastro no Edata.
 	@type  Static Function

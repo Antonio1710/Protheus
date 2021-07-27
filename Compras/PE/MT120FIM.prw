@@ -13,15 +13,19 @@
     (examples)
     @see (links_or_references)
     @chamado 057440 || OS 058919 || TECNOLOGIA || LUIZ || 8451 || HIST. APROVACAO
-    @history Chamado 057827 - FWNM          - 30/04/2020 - || OS 059306 || SUPRIMENTOS || IARA_MOURA || 8415 || ERRO LOG
-    @history Chamado TI     - FWNM          - 14/05/2020 - Preencher campo CR_XLEGAPP
+    @history Chamado 057827 - FWNM                  - 30/04/2020 - || OS 059306 || SUPRIMENTOS || IARA_MOURA || 8415 || ERRO LOG
+    @history Chamado TI     - FWNM                  - 14/05/2020 - Preencher campo CR_XLEGAPP
+    @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
 /*/
 User Function MT120FIM()
-
+    Local aArea       := GetArea()
     Local nQtdApr    := 0
     Local aAreaSC7   := SC7->( GetArea() )
     Local lCYCONAPRO := .f.
     Local cQuery     := ""
+    Local cSolic     := ""
+    Local cRazao     := ""
+    Local cEst       := ""
     
     Private cPCOri   := ""
     Private nOpc     := PARAMIXB[1] // 9 = Cópia
@@ -31,6 +35,62 @@ User Function MT120FIM()
     If nOpc == 2 .or. nBotao == 0 // Visualizar ou Cancelar
         Return
     EndIf
+
+    //@history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+    if (ALTERA .or. nOpc == 4) .or. (INCLUI .or. nOpc == 3) .OR. nOpc == 9
+        // Gravo campo C7_XQTDAPR
+        SC7->( dbGoTop() )
+        SC7->( dbSetOrder(1) ) // C7_FILIAL, C7_NUM, C7_ITEM, C7_SEQUEN, R_E_C_N_O_, D_E_L_E_T_
+        If SC7->( dbSeek(FWxFilial("SC7")+cNumPC) )
+            DbSelectArea("SA2")
+            SA2->(dbSetOrder(1))
+
+            if SA2->(DbSeek(xFilial("SA2")+SC7->C7_FORNECE + SC7->C7_LOJA))
+                cRazao  := SA2->A2_NOME
+                cEst    := SA2->A2_EST
+            else
+                cRazao  := ""
+                cEst    := ""
+            ENDIF
+
+            While SC7->( !EOF() ) .and. SC7->C7_FILIAL==FWxFilial("SC7") .and. SC7->C7_NUM==cNumPC
+                
+                
+                if EMPTY(SC7->C7_XSOLIC)
+                    if !Empty(SC7->C7_NUMSC) .and. !Empty(SC7->C7_ITEMSC)
+                        cSolic := Posicione("SC1", 1, xFilial("SC1")+SC7->C7_NUMSC+SC7->C7_ITEMSC, "C1_USER")
+                        cSolic := Alltrim(cSolic)+"-"+AllTrim(UsrFullName(cSolic))
+                    else
+                        cSolic := Alltrim(SC7->C7_USER)+"-"+AllTrim(UsrFullName(SC7->C7_USER))
+                    endif
+                ELSE
+                    cSolic := ""
+                endif
+
+                RecLock("SC7", .f.)
+                    
+                    if !EMPTY(cSolic)
+                        SC7->C7_XSOLIC := cSolic
+                    Endif
+                    
+                    if !EMPTY(cRazao)
+                        SC7->C7_XRAZAO := cRazao
+                    Endif
+
+                    if !EMPTY(cEst)
+                        SC7->C7_XEST := cEst
+                    Endif
+
+
+                SC7->( msUnLock() )
+
+                SC7->( dbSkip() )
+
+            EndDo
+
+        EndIf
+    ENDIF
+
 
     If ALTERA .or. nOpc == 4
 
@@ -66,6 +126,7 @@ User Function MT120FIM()
 
                     RecLock("SC7", .f.)
                         SC7->C7_XQTDAPR := nQtdApr
+
                     SC7->( msUnLock() )
 
                     SC7->( dbSkip() )
@@ -115,7 +176,7 @@ User Function MT120FIM()
     UpAPP() 
 
     RestArea( aAreaSC7 )
-
+    RestArea(aArea)
 Return
 
 /*/{Protheus.doc} Static Function UpApp

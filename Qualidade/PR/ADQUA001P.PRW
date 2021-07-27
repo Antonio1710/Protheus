@@ -13,7 +13,7 @@ Static cFormatRet := "application/json"
     @history Everson, 15/06/2021, Chamado 4257 Descomentadas as linhas de container e tara.
     @history Everson, 20/07/2021, Chamado 4257 Tratamento para formatação da data do roteiro.
     @history Everson, 26/07/2021, Chamado 4257 Tratamento para inserir informações por lote, data de vencimento, data de produção e produto.
-    /*/
+/*/
 User Function ADQUA001P
 return Nil
 
