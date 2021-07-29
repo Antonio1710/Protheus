@@ -1,24 +1,17 @@
 #Include "Protheus.ch"
 #Include "Topconn.ch"
 #Include "Tbiconn.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณADFIS022R บAutor  ณFernando Sigoli     บData ณ  29/03/2018  บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDescricao ณRelat๓rio de Entradas sem passar pela Central XML           บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ Adoro S/A.                                                 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบChamado   ณChamado n. 048580 || OS 049871 || FISCAL || DEJAIME ||      บฑฑ
-ฑฑบ          ณ|| 8921 || REL. WOKFLOW - FWNM - 13/05/2019                 บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑบAdriana     ณ24/05/2019ณTI-Devido a substituicao email para shared     บฑฑ
-ฑฑบ            ณ          ณrelay, substituido MV_RELACNT p/ MV_RELFROM    บฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
+/*/{Protheus.doc} User Function ADFIS022R
+	Relat๓rio de Entradas sem passar pela Central XML
+	@type  Function
+	@author Fernando Sigoli
+	@since 29/03/2018
+	@version 1
+	@history Chamado 048580 - FWNM        - 13/05/2019 - OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW
+	@history Chamado TI     - Adriana     - 24/05/2019 - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
+	@history Ticket  17013  - Abel Babini - 27/07/2021 - Criado filtro para nใo demonstrar Pr้-Notas (F1_STATUS <> '')
+	/*/
+
 User Function ADFIS022R()   //U_ADFIS022R()
 
 	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
@@ -194,6 +187,7 @@ Static Function scriptSql()
 	cQuery += "  AND SF1.D_E_L_E_T_ = ''  "   
 	cQuery += "  AND SF1.F1_FORMUL  <> 'S'  "
 	cQuery += "  AND SF1.F1_ORIGEM  <> '" + cF1Origem + "'  " // Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 13/05/2019
+	cQuery += "  AND SF1.F1_STATUS  <> '' " //Ticket  17013  - Abel Babini - 27/07/2021 - Criado filtro para nใo demonstrar Pr้-Notas (F1_STATUS <> '')
 	cQuery += "  AND NFXML.XML_KEYF1 IS NULL  "
 	
 	cQuery += "  UNION ALL "
@@ -217,6 +211,7 @@ Static Function scriptSql()
 	cQuery += "  AND SF1.D_E_L_E_T_ = '' "
 	cQuery += "  AND SF1.F1_FORMUL  <> 'S'  "
 	cQuery += "  AND SF1.F1_ORIGEM  <> '" + cF1Origem + "'  " // Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 13/05/2019
+	cQuery += "  AND SF1.F1_STATUS  <> '' " //Ticket  17013  - Abel Babini - 27/07/2021 - Criado filtro para nใo demonstrar Pr้-Notas (F1_STATUS <> '')
 	cQuery += "  AND XML_KEYF1 IS NULL "
 	cQuery += "  ORDER BY SF1.F1_FILIAL, SF1.F1_DOC  "
 		

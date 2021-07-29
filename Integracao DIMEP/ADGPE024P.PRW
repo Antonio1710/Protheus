@@ -30,6 +30,7 @@
 	@history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
 	@history Ticket  15680  - Everson         - 16/06/2021 - Removido lockbyname.
 	@history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
+	@history Ticket  16699  - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
 /*/
 USER FUNCTION ADGPE024P(aParam)
 
@@ -749,7 +750,6 @@ STATIC FUNCTION DimepCaminhoneiro()
 	SqlCaminhoneiro(cDtVlCNH)
 		
 	// *** INICIO BUSCA CAMINHONEIRO NO PROTHEUS *** //
-	
 	While TRK->(!EOF())       
 	
 		lCamIntegrar       := .F.
@@ -780,23 +780,16 @@ STATIC FUNCTION DimepCaminhoneiro()
         cIntregou          := ''
         cTexto             := ''
         
-        VEmpresaDimep(cFilMot,cCcMot)
+        VEmpresaDimep(cFilMot,cCcMot) // aqui checa código organização/organograma/centro custo
+
 		// *** INICIO VERIFICA SITUACAO DO CAMINHONEIRO *** //
-	    
 		IF ALLTRIM(cBloqMot) = 'F'
-		
 			nSitFol := 11 // trabalhando   
-			
 		ELSE
-			
 			nSitFol := 12 // demitido
-			
 		ENDIF	
 		
-		// *** FINAL VERIFICA SITUACAO DO CAMINHONEIRO *** //
-		
 		// *** INICIO VERIFICA PESSOA SE JA ESTA CADASTRADO NO DIMEP *** //
-	
 		SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
 		While TRC->(!EOF())
 		
@@ -804,65 +797,55 @@ STATIC FUNCTION DimepCaminhoneiro()
 			
 			// *** INICIO VERIFICA PESSOA *** //
 		
-			IF TRC->NM_PESSOA          <> cNomeMot     .OR. ;
-			   TRC->NU_CPF             <> cCpfMot      .OR. ;
-			   TRC->NU_RG              <> cRgMot      
+			IF TRC->NM_PESSOA           <> cNomeMot     .OR. ;
+			   TRC->NU_CPF              <> cCpfMot      .OR. ;
+			   TRC->NU_RG               <> cRgMot       .OR. ;
+			   TRC->CD_ESTRORG          <> nEstOrganizacional // @history Ticket  16699  - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
 			   
 			   lCamIntegrar := .T. 
 		
 			ENDIF  
 			
-			// *** FINAL VERIFICA PESSOA *** // 
-			
 			// *** INICIO VERIFICA SITUACAO PESSOA TRABALHANDO OU DEMITIDA *** //
-			
 			IF TRC->CD_SITUACAO_PESSOA <> nSitFol
-			   
 				lCamSitFolha := .T. 
-		
 			ENDIF  
 				
-			// *** FINAL VERIFICA SITUACAO PESSOA TRABALHANDO OU DEMITIDA *** //
-			
 			// *** INICIO VERIFICA SITUACAO CREDENCIAL *** //
-			
-			// *** Inicio Verifica se existe a credencial na tabela *** //
 	    	SqlVCredencialDimep(nCredMot)
 	   		IF TRF->(EOF()) 
-	   		
 		   		lCamCredencial := .T. 
-			
 			ENDIF
 			TRF->(dbCloseArea()) 
 			
-	    	// *** Final Verifica se existe a credencial na tabela *** //
-	    	
 	    	// *** Inicio Verifica se a credencial e a Pessoa esta correta *** //
 	    	IF lCamCredencial == .F. 
 	    	
 		    	SqlVCredencialDimep(nCredMot)
+
 		   		IF TRF->(!EOF()) 
 		   		
 		   			SqlCredPessoa(TRF->CD_CREDENCIAL,TRC->CD_PESSOA)
+
 			   		IF TRT->(EOF()) 
 			   		
 			   			lCamCredencial := .T. 
 					
 					ENDIF            
+
 					TRT->(dbCloseArea()) 
+
 		   		ENDIF
+
 		    	TRF->(dbCloseArea()) 
+
 		    ENDIF	
-	    	// *** Inicio Verifica se a credencial e a Pessoa esta correta *** //
-	    	
-			// *** FINAL VERIFICA SITUACAO CREDENCIAL *** //
-			
+
 			TRC->(dbSkip())
 		
 		ENDDO
+
     	TRC->(dbCloseArea()) 
-    	
-    	// *** FINAL VERIFICA PESSOA SE JA ESTA CADASTRADO NO DIMEP *** //
     	
     	// *** INICIO INSERT NO DIMEP *** //
     	IF lCamIntegrar == .F. .AND. lCamSitFolha == .F. .AND. lCamCredencial == .F. // Quando não existe o CAMINHONEIRO na DIMEP
@@ -873,7 +856,7 @@ STATIC FUNCTION DimepCaminhoneiro()
     	
     	    AlterCamDimep()
 	    	
-    	ENDIF // fecha lCamIntegrar == .F. 
+    	ENDIF
     	// *** FINAL INSERT NO DIMEP *** //
     	
     	TRK->(dbSkip())
@@ -1066,42 +1049,29 @@ Static Function CargaMotDimep()
     		
     	// *** Inicio Verifica se existe a credencial na tabela *** //
     	SqlVCredencialDimep(nCredMot)
-    		IF TRF->(EOF()) 
-    				
-    			INTCREDMOTORISTA(nCredMot,nEstOrgEmpresa,'3')
-    			
-    		ELSE
-    			    
-    			nCredencial := TRF->CD_CREDENCIAL   
-    			nRep        := TRF->CD_CREDENCIAL   
-    			
-    		ENDIF
+    	IF TRF->(EOF()) 
+    		INTCREDMOTORISTA(nCredMot,nEstOrgEmpresa,'3')
+   		ELSE
+			nCredencial := TRF->CD_CREDENCIAL   
+			nRep        := TRF->CD_CREDENCIAL   
+   		ENDIF
     	TRF->(dbCloseArea())
     		
     	// *** INICIO CARREGA CODIGO CREDENCIAL *** //
     	IF nCredencial == 0 .AND. nRep == 0
-    		
     		SqlVCredencialDimep(nCredMot)
-    			IF TRF->(!EOF()) 
-    			
-    				nCredencial := TRF->CD_CREDENCIAL   
-    				nRep        := TRF->CD_CREDENCIAL   
-    			
-    			ENDIF
+    		IF TRF->(!EOF()) 
+				nCredencial := TRF->CD_CREDENCIAL   
+				nRep        := TRF->CD_CREDENCIAL   
+   			ENDIF
     		TRF->(dbCloseArea())
-    			
     	ENDIF
-    	// *** FINAL CARREGA CODIGO CREDENCIAL *** //
-    	// *** Final Verifica se existe a credencial na tabela *** //   
-    		
     	TRC->(dbCloseArea())
     	
     	// Pega o Perfil de Acesso Correto
     	SqlPerAc('102999')
     	IF TRP->(!EOF()) 
-	    			
     		nPerfilAcesso := TRP->CD_PERFIL_ACESSO   
-    		
     	ENDIF
     	TRP->(dbCloseArea())
     	
@@ -1109,48 +1079,48 @@ Static Function CargaMotDimep()
     	INTUSUSISCREDENCIAL(nCredencial) 
     	
     	// Integra PESSOA
-    	INTPESSOA(VAL(cCpfMot),cNomeMot,nSitFol,nEstOrganizacional,nEstOrgEmpres,cCpfMot,cRgMot,'0',nPerfilAcesso,'NULL',nCredencial)   
+    	INTPESSOA(VAL(cCpfMot),cNomeMot,nSitFol,nEstOrganizacional,nEstOrgEmpres,cCpfMot,cRgMot,'0',nPerfilAcesso,'NULL',nCredencial)
     		                                     
     	// Verifica o numero do CAMINHONEIRO
     	SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
-			While TRC->(!EOF()) 
-	                  
-				//Integra Credencial X Pessoa
-				INTCREPESSOA(TRC->CD_PESSOA,nCredencial,cDataIni,cDataFin)
-		
-				//Integra Historico da Pessoa
-				INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-		
-				// Integra USuario Sistema PESSOA
-    			INTUSUSISPESSOA(TRC->CD_PESSOA)   
-    			
-    			// *** INICIO GERA LOG *** //              
-    			cTexto := '3 Log Cam'                                                                                                          + ';' + ;
-			              ' Fil: '            + '02'                                                                                           + ';' + ;
-			              ' Mat: '            + cCpfMot                                                                                        + ';' + ;
-			              ' Nome: '           + cNomeMot                                                                                       + ';' + ;
-			              ' Folha: '          + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
-					      ' Credencial: '     + CVALTOCHAR(nCredMot)                                                                           + ';' + ;
-					      ' Sit Mult: '       + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
-					      ' Turno:'           + '102999'                                                                                          + ';' + ;
-					      ' lCamIntegrar: '   + TRANSFORM(lCamIntegrar,"@!")                                                                   + ';' + ;
-					      ' lCamSitFolha: '   + TRANSFORM(lCamSitFolha,"@!")                                                                   + ';' + ;
-					      ' lCamCredencial: ' + TRANSFORM(lCamCredencial,"@!")
-					        
-			    GERALOG(cFilMot,cTexto,'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
-				// *** FINAL GERA LOG *** // 
-    		
-    			TRC->(dbSkip())
+
+		While TRC->(!EOF()) 
+					
+			//Integra Credencial X Pessoa
+			INTCREPESSOA(TRC->CD_PESSOA,nCredencial,cDataIni,cDataFin)
 	
-			ENDDO
+			//Integra Historico da Pessoa
+			INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
+	
+			// Integra USuario Sistema PESSOA
+			INTUSUSISPESSOA(TRC->CD_PESSOA)   
+			
+			// *** INICIO GERA LOG *** //              
+			cTexto := '3 Log Cam'                                                                                                          + ';' + ;
+						' Fil: '            + '02'                                                                                           + ';' + ;
+						' Mat: '            + cCpfMot                                                                                        + ';' + ;
+						' Nome: '           + cNomeMot                                                                                       + ';' + ;
+						' Folha: '          + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
+						' Credencial: '     + CVALTOCHAR(nCredMot)                                                                           + ';' + ;
+						' Sit Mult: '       + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
+						' Turno:'           + '102999'                                                                                          + ';' + ;
+						' lCamIntegrar: '   + TRANSFORM(lCamIntegrar,"@!")                                                                   + ';' + ;
+						' lCamSitFolha: '   + TRANSFORM(lCamSitFolha,"@!")                                                                   + ';' + ;
+						' lCamCredencial: ' + TRANSFORM(lCamCredencial,"@!")
+						
+			GERALOG(cFilMot,cTexto,'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
+		
+			TRC->(dbSkip())
+
+		ENDDO
+
     	TRC->(dbCloseArea())
     		
     ELSE //caso a tabela não esteja vazia
     	
     	TRC->(dbCloseArea())
     			
-    ENDIF //fecha if TRC->(EOF()) == .T. 
-    // *** Final Verifica se existe o CAMINHONEIRO na tabela *** //
+    ENDIF
     		
 Return(NIL)
 
@@ -1566,6 +1536,12 @@ STATIC FUNCTION AlterCamDimep()
 			IF ALLTRIM(TRC->NU_RG)     <> ALLTRIM(cRgMot)
 				UPDPESSOA('NU_RG',cRgMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
 			ENDIF
+
+			// @history Ticket 16699 - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
+			IF TRC->CD_ESTRORG <> nEstOrganizacional
+				UPDPESSOA('CD_ESTRUTURA_ORGANIZACIONAL',AllTrim(Str(nEstOrganizacional)),VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+			ENDIF
+			//
 
 		ENDIF 
 		
@@ -2269,7 +2245,9 @@ Static Function SqlVEmpresaDimep(cEmpresa)
 	//Local cTeste := ''
 
 	BeginSQL Alias "TRI"
+
 			%NoPARSER%  
+
 			SELECT CD_ESTRUTURA_ORGANIZACIONAL AS ESTRUTURA,
 			       NU_ESTRUTURA,
 			       NM_ESTRUTURA,
@@ -2278,12 +2256,13 @@ Static Function SqlVEmpresaDimep(cEmpresa)
 			       DS_CEI,
 			       CD_ESTRUTURA_RELACIONADA,
 			       TP_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
-			  WHERE NU_ESTRUTURA = %EXP:cEmpresa%
-			    AND TP_ESTRUTURA = '0'
+			FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			WHERE NU_ESTRUTURA = %EXP:cEmpresa%
+				AND TP_ESTRUTURA = '0'
 			    AND NU_CNPJ <> 0
      
 	EndSQl             
+
 RETURN(NIL)            
 
 Static Function SqlVDepartamentoDimep(nEstOrganizacional, cFil)
@@ -2342,7 +2321,9 @@ Static Function SqlCaminhoneiro(cDtVlCNH)
 				  AND (LEN(ZVC.ZVC_CC)      = 4 
 				   OR LEN(DA4.DA4_XCC)      = 4)  
 				  AND ZVC.ZVC_CNHVCT       <= %EXP:cDtVlCNH%
-				   //and ZVC_XCREDE='3425407910' // debug
+					
+					//and ZVC.ZVC_CPF='38489231818' // debug
+
 			ORDER BY ZVC.ZVC_MOTORI
 			
 	EndSQl             

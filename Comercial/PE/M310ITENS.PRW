@@ -6,15 +6,17 @@
 	@since  28/04/21 
 	@version 01
     @history Chamado 8566 	- André Mendes 	- 29/04/2021 - Transferência entre Filiais 
-	
+    @history Ticket  16982  - Abel Babini   - 27/07/2021 - Ajuste no armazém padrão de destino
 /*/
 User Function M310ITENS
     Local cPrograma:=PARAMIXB[1]
     Local aItens   :=PARAMIXB[2]
     Local lRet
     Local aCpos := {}
-
-    
+    //Ticket  16982  - Abel Babini   - 27/07/2021 - Ajuste no armazém padrão de destino
+    Local i := 0
+    Local j := 0
+    Local cLocPad := ''
 
     If cPrograma $ "MATA140,MATA103" // Pedido de venda
     // ARRAY AITENS (PADRAO DAS ROTINAS AUTOMATICAS)
@@ -26,7 +28,32 @@ User Function M310ITENS
 
     // Exemplo MUDANDO ARMAZEM
         aCpos:={"D1_CC","D1_ITEMCTA"}
+        // aItens
         lRet := fGetCps(@aItens, aCpos, cPrograma)
+        //INICIO Ticket  16982  - Abel Babini   - 27/07/2021 - Ajuste no armazém padrão de destino
+        for i:=1 to Len(aItens)
+            for j:=1 to Len(aItens[i])
+                if Alltrim(aItens[i][j][1]) == 'D1_COD'
+                    dbSelectArea("SBZ")
+                    SBZ->(dbSetOrder(1))
+                    if SBZ->(dbSeek(cFilAnt+Alltrim(aItens[i][j][2])))
+                        cLocPad := SBZ->BZ_LOCPAD
+                    endif
+                    exit
+                endif
+            next j
+        next i
+        if cLocPad <> ''
+            for i:=1 to Len(aItens)
+                for j:=1 to Len(aItens[i])
+                    if Alltrim(aItens[i][j][1]) == 'D1_LOCAL'
+                        aItens[i][j][2]:=cLocPad
+                        exit
+                    endif
+                next j
+            next i
+        endif
+        //FIM Ticket  16982  - Abel Babini   - 27/07/2021 - Ajuste no armazém padrão de destino
     ElseIf cPrograma $ "MATA410"
         If MsgYesNo("Deseja informar Lote x CC para os itens do pedido de venda?", "Lote x CC")
             aCpos:={"C6_XLOTECC"}
