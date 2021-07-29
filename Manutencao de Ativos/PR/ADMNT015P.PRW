@@ -14,6 +14,7 @@ Static cFormatRet := "application/json"
     @version 01
     @history Everson, 18/05/2021, Chamado 7936. Tratamento para apontamento das horas no fechamento da OS, adicionado  login.
     @history Everson, 07/07/2021, Chamado 16369. Tratamento para apontamento de fechamento na SS.
+    @history Everson, 29/07/2021, Chamado 17344. Tratamento para apontamento de horas maior que 24, no fechamento da OS.
     */
 User Function ADMNT015P
 Return Nil
@@ -1518,38 +1519,36 @@ Static Function encerSS(cOS)
     Local dDtFim    := STJ->TJ_DTMRFIM
     Local cHrFim    := STJ->TJ_HOMRFIM
 
-    //Everson - 07/07/2021. Chamado 16369.
+    //Everson - 07/07/2021. Chamado 16369. //Everson - 29/07/2021. Chamado 17344.
     cQuery := ""
     cQuery += " SELECT " 
-    cQuery += " RIGHT('0000' +  " 
-    cQuery += " RIGHT('0' + CAST(FONTE.TL_QUANTID / 3600 AS VARCHAR),2) + ':' + " 
-    cQuery += " RIGHT('0' + CAST((FONTE.TL_QUANTID / 60) % 60 AS VARCHAR),2) + ':' + " 
-    cQuery += " RIGHT('0' + CAST(FONTE.TL_QUANTID % 60 AS VARCHAR),2),10) AS TL_QUANTID " 
+    
+    cQuery += " RIGHT('0000'+RIGHT('00'+CAST(CAST(BASE_SEC.TL_QUANTID AS INT)/3600 AS VARCHAR),2)+ " 
+    cQuery += " ':'+LEFT(CAST(CAST(BASE_SEC.TL_QUANTID AS INT)%3600/60 AS VARCHAR(2))+'00' ,2) + ':00',10) AS TL_QUANTID " 
+
     cQuery += " FROM " 
     cQuery += " ( " 
     cQuery += " SELECT " 
     cQuery += " SUM( " 
-    cQuery += " DATEDIFF(SECOND,'0:00:00', " 
-    cQuery += " CAST( " 
-    cQuery += " CASE " 
-    cQuery += " WHEN CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR)) > 0  " 
-    cQuery += " THEN  " 
-    cQuery += " RIGHT('00'+ SUBSTRING(CAST(TL_QUANTID AS VARCHAR),1,CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))-1),2) + ':' + " 
-    cQuery += " LEFT(SUBSTRING(CAST(TL_QUANTID AS VARCHAR),CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))+1,10) + '00',2) + ':00' " 
-    cQuery += " ELSE " 
-    cQuery += " RIGHT('00' + CAST(TL_QUANTID AS VARCHAR),2) + ':00:00' " 
+    cQuery += " CASE   " 
+    cQuery += " WHEN CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR)) > 0    " 
+    cQuery += " THEN    " 
+    cQuery += " SUBSTRING(CAST(TL_QUANTID AS VARCHAR),1,CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))-1)*3600 +   " 
+    cQuery += " SUBSTRING(CAST(TL_QUANTID AS VARCHAR),CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))+1,10)*60  " 
+    cQuery += " ELSE   " 
+    cQuery += " TL_QUANTID*3600   " 
     cQuery += " END " 
-    cQuery += " AS DATETIME))) " 
+    cQuery += " )  " 
     cQuery += " AS TL_QUANTID " 
-    cQuery += " FROM   " 
-    cQuery += " " + RetSqlName("STL") + " (NOLOCK) AS STL   " 
-    cQuery += " WHERE   " 
-    cQuery += " TL_FILIAL = '" + FWxFilial("STL") +  "'   " 
-    cQuery += " AND TL_ORDEM = '" + cOS + "'   " 
-    cQuery += " AND TL_SEQRELA <> '0'   " 
-    cQuery += " AND TL_TIPOREG = 'M'  " 
+    cQuery += " FROM     " 
+    cQuery += " " + RetSqlName("STL") + "  (NOLOCK) AS STL     " 
+    cQuery += " WHERE     " 
+    cQuery += " TL_FILIAL = '" + FWxFilial("STL") + "' " 
+    cQuery += " AND TL_ORDEM = '" + cOS + "'     " 
+    cQuery += " AND TL_SEQRELA <> '0'     " 
+    cQuery += " AND TL_TIPOREG = 'M'    " 
     cQuery += " AND STL.D_E_L_E_T_ = '' " 
-    cQuery += " ) AS FONTE  " 
+    cQuery += " ) AS BASE_SEC   " 
 
     //
     TcQuery cQuery New Alias "D_DATAS"
