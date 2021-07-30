@@ -13,6 +13,7 @@ Static cFormatRet := "application/json"
     @history Everson, 15/06/2021, Chamado 4257 Descomentadas as linhas de container e tara.
     @history Everson, 20/07/2021, Chamado 4257 Tratamento para formatação da data do roteiro.
     @history Everson, 26/07/2021, Chamado 4257 Tratamento para inserir informações por lote, data de vencimento, data de produção e produto.
+    @history Everson, 29/07/2021, Chamado 4257 Tratamento para quebra de informações.
 /*/
 User Function ADQUA001P
 return Nil
@@ -220,6 +221,9 @@ Static Function getPalete(cErro, cPallete)
     Local cKgRP     := ""
     Local cTaraP    := ""
     Local cStatusP  := ""
+    Local cTurno    := "" //Everson - 29/07/2021. Chamado 4257.   
+    Local cDtVenc   := "" //Everson - 29/07/2021. Chamado 4257.   
+    Local cDtVencT  := "" //Everson - 29/07/2021. Chamado 4257.   
 
     //
     If ! Empty(cErro)
@@ -234,7 +238,6 @@ Static Function getPalete(cErro, cPallete)
         Return .F.
 
     EndIf
-    
     //Valida o status de retorno
     If Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS3_WEBSERVICERETURN:_STATUS:TEXT)) == "wrsFailed"
         cErro := Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS3_WEBSERVICERETURN:_MESSAGE:TEXT))
@@ -269,16 +272,17 @@ Static Function getPalete(cErro, cPallete)
                 aDados := {}
                 For nAux := 1 To Len(xCaixas)
                     oItem := xCaixas[nAux]
+                    cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2) //Everson - 29/07/2021. Chamado 4257. 
                     Aadd(aDados,{;
-                         Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)) + StrTran(Substr(Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),1,10),"-","") + StrTran(Substr(Alltrim(cValToChar(oItem:_EXPIRATIONDATE:TEXT)),1,10),"-","") + StrTran(Alltrim(cValToChar(oItem:_LOTNO:TEXT))," ",""),; //Chave. 1. Everson - 26/07/2021. Chamado 4257.
-                         Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)),; //Código do produto no Protheus. 2
-                         Alltrim(cValToChar(oItem:_PRODUCTIONCODE:TEXT)),; //Código do produto no Edata. 3
-                         Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),; //Data padrão. 4
-                         Alltrim(cValToChar(oItem:_EXPIRATIONDATE:TEXT)),; //Data de validade. 5
-                         Alltrim(cValToChar(oItem:_LOTNO:TEXT)),; //Lote. 6
-                         Alltrim(cValToChar(oItem:_StandardWeight:TEXT)),; //Peso padrão. 7
-                         Alltrim(cValToChar(oItem:_NetWeight:TEXT)),; //Peso real. 8
-                         Alltrim(cValToChar(oItem:_Tare:TEXT)); //Tara da embalagem. 9
+                        Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)) + StrTran(Substr(Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),1,10),"-","") + cTurno,; //Chave. 1. Everson - 26/07/2021. Chamado 4257.
+                        Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)),; //Código do produto no Protheus. 2
+                        Alltrim(cValToChar(oItem:_PRODUCTIONCODE:TEXT)),; //Código do produto no Edata. 3
+                        Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),; //Data padrão. 4
+                        Alltrim(cValToChar(oItem:_EXPIRATIONDATE:TEXT)),; //Data de validade. 5
+                        cTurno,; //Turno. 6
+                        Alltrim(cValToChar(oItem:_StandardWeight:TEXT)),; //Peso padrão. 7
+                        Alltrim(cValToChar(oItem:_NetWeight:TEXT)),; //Peso real. 8
+                        Alltrim(cValToChar(oItem:_Tare:TEXT)); //Tara da embalagem. 9
                     })
                 Next nAux
 
@@ -305,7 +309,6 @@ Static Function getPalete(cErro, cPallete)
                     cJsonResp += '"statusPalete": "' + rmvAcento(cValtoChar(cStatusP)) + '",'
 
                     cJsonResp += '"dataFabricacao": "' + StrTran(Substr(Alltrim(cValToChar(aDados[nAux][4])),1,10),"-","") + '",' 
-                    cJsonResp += '"dataValidade": "' + StrTran(Substr(Alltrim(cValToChar(aDados[nAux][5])),1,10),"-","") + '",' 
                     cJsonResp += '"turno": "' + rmvAcento(Alltrim(cValToChar(aDados[nAux][6]))) + '",'
                     cJsonResp += '"produtoEd": "' + Alltrim(cValToChar(aDados[nAux][3])) + '",'
                     cJsonResp += '"produto": "' + rmvAcento(rmvAcento(Alltrim(cValToChar(aDados[nAux][2])))) + '",'
@@ -316,12 +319,21 @@ Static Function getPalete(cErro, cPallete)
                     nTotKg    := 0
                     nTotTara  := 0
                     nTotCx    := 0
+                    cDtVencT  := ""
+                    cDtVenc   := ""
 
                     //
                     While aDados[nAux][1] == cChave
                         nTotKgS   += Val(cValToChar(aDados[nAux][7]))
                         nTotKg    += Val(cValToChar(aDados[nAux][8]))
                         nTotTara  += Val(cValToChar(aDados[nAux][9]))
+                        cDtVenc   := DToC(SToD(StrTran(Substr(Alltrim(cValToChar(aDados[nAux][5])),1,10),"-",""))) //Everson - 29/07/2021. Chamado 4257. 
+                        
+                        //
+                        If ! (cDtVenc $cDtVencT)
+                            cDtVencT  += cDtVenc + "," //Everson - 29/07/2021. Chamado 4257.
+                        EndIf
+
                         nTotCx++
                         nAux++
 
@@ -333,6 +345,9 @@ Static Function getPalete(cErro, cPallete)
 
                     End
 
+                    cDtVencT := Substr(cDtVencT,1,Len(cDtVencT)-1) //Everson - 29/07/2021. Chamado 4257. 
+
+                    cJsonResp += '"dataValidade": "' + cDtVencT + '",' //Everson - 29/07/2021. Chamado 4257. 
                     cJsonResp += '"TotKgS": "' + cValToChar(nTotKgS)  + '",'
                     cJsonResp += '"TotKg": "'  + cValToChar(nTotKg)   + '",'
                     cJsonResp += '"TotCx": "'  + cValToChar(nTotCx)   + '",'
