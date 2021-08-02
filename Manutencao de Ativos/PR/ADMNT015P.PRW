@@ -14,7 +14,7 @@ Static cFormatRet := "application/json"
     @version 01
     @history Everson, 18/05/2021, Chamado 7936. Tratamento para apontamento das horas no fechamento da OS, adicionado  login.
     @history Everson, 07/07/2021, Chamado 16369. Tratamento para apontamento de fechamento na SS.
-    @history Everson, 29/07/2021, Chamado 17344. Tratamento para apontamento de horas maior que 24, no fechamento da OS.
+    @history Everson, 29/07/2021, Chamado 17344. Tratamento para apontamento de horas maior que 24, no fechamento da OS. Compilação dia 02/08/2021.
     */
 User Function ADMNT015P
 Return Nil

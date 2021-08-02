@@ -13,6 +13,7 @@
     @since 25/05/2021
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro - 18/07/2021 - Desenvolvimento inicial.
+    @history Chamado 8465 - Leonardo P. Monteiro - 01/08/2021 - Inclusão de novos recuros e rastreabilidades no relatório.
     
 /*/
 #Define IMP_SPOOL  2
@@ -23,9 +24,12 @@ User Function ADEEC012R()
     Private aRet        := {}
     Private aParamBox   := {}
 
-    Aadd( aParamBox ,{1,"Ped. Exportação"           ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.})
-	aAdd( aParamBox	,{3,"Imprime Imagens"		    ,1,{'Sim','Não'},100,"",.F.})
+    Aadd( aParamBox ,{1,"Ped. Exportação"           ,Space(20)  ,"" ,'.T.',"",'.T.',80,.F.})
 	aAdd( aParamBox	,{3,"Imprime Dec. Exportação"   ,1,{'Sim','Não'},100,"",.F.})
+	aAdd( aParamBox	,{3,"Imprime Imagens"           ,1,{'Sim','Não'},100,"",.F.})
+    aAdd( aParamBox	,{3,"Imprime dados embarque"   ,1,{'Sim','Não'},100,"",.F.})
+    aAdd( aParamBox	,{3,"Imprime dados embalagens" ,1,{'Sim','Não'},100,"",.F.})
+    //aAdd( aParamBox	,{3,"Imprime Dec. Exportação"   ,1,{'Sim','Não'},100,"",.F.})
 
     if ParamBox(aParamBox,"Parâmetros",@aRet)
         MsAguarde({|| fProcessa() },"Gerando...","Gerando o relatório, aguarde...")
@@ -147,6 +151,7 @@ Static function fProcessa()
 
     nRight  := oPrinter:nHorzSize()-010
     nBottom := oPrinter:nVertSize()-060
+    nLinha  := 0
     nLimite := nBottom*0.95
 
     // Consulta o cabeçalho do processo de exportação.
@@ -185,27 +190,54 @@ Static function fProcessa()
             aItens  := fSqlItem()
             nItens  := Len(aItens)
             
-            for nA := 1 to nItens
-                //if nQuantReg > 9 .OR. nQuantReg == 1
-                if nLinha >= nLimite .or. nLinha == 0
-                    if !oPrinter:isFirstPage
-                        oPrinter:endpage()
-                        nQuantReg   := 1
-                    endif
+            //-----------------------------------------------------
+            // Impressão da sessão da Declaração de Exportação.
+            //-----------------------------------------------------
+            if MV_PAR02 == 1
+                
+                //aItens  := fSqlItDe()
+                //nItens  := Len(aItens)
+                nLinha      := 0
+                nQuantReg   := 1
+                nLimite     := nBottom*0.95
+
+                for nA := 1 to nItens
                     
-                    fImpCabec(1)
-                endif
+                    nQuantReg := 1
 
-                // Imprime as linhas dos produtos.
+                    if aItens[nA][01] == "05"
+                        fImpCabec(3)
+                        // Imprime as linhas dos produtos.
+                        fImpDec()
+                        
+                        nQuantReg += 1
+                    endif
+                next nA
+
+                //QITEM->(DbcloseArea())
+            endif
+            
+            nLinha      := 0
+            nQuantReg   := 1
+            nLimite     := nBottom*0.95
+
+            for nA := 1 to nItens
+                
                 if aItens[nA][01] == "01"
-                    fImpItens()
-                // Imprime as linhas de rastreabilidade (App)
-                elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
-                    fImpRast()
+                    if nLinha >= nLimite .or. nLinha == 0                        
+                        fImpCabec(1)
+                    endif
+
+                    // Imprime as linhas dos produtos.
+                    if aItens[nA][01] == "01"
+                        fImpItens()
+                    // Imprime as linhas de rastreabilidade (App)
+                    //elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
+                        //fImpRast()
+                    endif
+
+                    nQuantReg += 1
                 endif
-
-                nQuantReg += 1
-
             next nA
 
             //QITEM->(DbcloseArea())
@@ -213,67 +245,89 @@ Static function fProcessa()
             //-----------------------------------------------------
             // Impressão da sessão de imagens.
             //-----------------------------------------------------
-            if MV_PAR02 == 1
-                aItens  := fSqlImg()
-                nItens  := Len(aItens)
+            if MV_PAR03 == 1
+                //aItens  := fSqlImg()
+                //nItens  := Len(aItens)
                 
                 // Reinicia a página para a sessão de imagens.
-                nLinha  := 0
-                nLimite := nBottom*0.80
+                nLinha      := 0
+                nQuantReg   := 1
+                nLimite     := nBottom*0.80
 
                 for nA := 1 to nItens
-                    //if nQuantReg > 9 .OR. nQuantReg == 1
-                    if nLinha >= nLimite .or. nLinha == 0
-                        if !oPrinter:isFirstPage
-                            oPrinter:endpage()
-                            nQuantReg   := 1
+                    if aItens[nA][01] == "04"
+                        //if nQuantReg > 9 .OR. nQuantReg == 1
+                        if nLinha >= nLimite .or. nLinha == 0
+                            fImpCabec(2)
+                            nRowImg     := (nBottom-nLinha)
                         endif
 
-                        fImpCabec(2)
-
-                        nRowImg     := (nBottom-nLinha)
-                    endif
-
-                    // Imprime a sessão das imagens
-                    if aItens[nA][01] == "04"
                         fImpImg()
+
+                        nQuantReg += 1
                     endif
-
-                    nQuantReg += 1
-
                 next nA
 
             endif
 
-            //-----------------------------------------------------
-            // Impressão da sessão da Declaraçaõ de Exportação.
-            //-----------------------------------------------------
-            if MV_PAR03 == 1
-                
-                aItens  := fSqlItDe()
-                nItens  := Len(aItens)
+            //----------------------------------------------------------------------------------------
+            // Impressão dos dados de embarque Ad'oro.
+            //----------------------------------------------------------------------------------------
+            if MV_PAR04 == 1
+                nLinha      := 0
+                nQuantReg   := 1
+                nLimite     := nBottom*0.95
                 
                 for nA := 1 to nItens
-                    
-                    if !oPrinter:isFirstPage
-                        oPrinter:endpage()
-                        nQuantReg   := 1
-                    endif
-                    
-                    fImpCabec(3)
-                
-                    // Imprime as linhas dos produtos.
-                    if aItens[nA][01] == "05"
-                        fImpDec()
-                    endif
+                    if aItens[nA][01] == "01" .or. aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
+                        //if nQuantReg > 9 .OR. nQuantReg == 1
+                        if nLinha >= nLimite .or. nLinha == 0
+                            fImpCabec(4)
+                        endif
 
-                    nQuantReg += 1
+                        // Imprime as linhas dos produtos.
+                        if aItens[nA][01] == "01"
+                            fImpItens()
+                        // Imprime as linhas de rastreabilidade (App)
+                        elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
+                            fImpRast()
+                        endif
 
+                        nQuantReg += 1
+                    endif
                 next nA
 
-                //QITEM->(DbcloseArea())
             endif
+            
+            //----------------------------------------------------------------------------------------
+            // Impressão dos itens de rastreabilidade Ad'oro.
+            //----------------------------------------------------------------------------------------
+            if MV_PAR05 == 1
+                nLinha      := 0
+                nQuantReg   := 1
+                nLimite     := nBottom*0.95
+                
+                for nA := 1 to nItens
+                    if aItens[nA][01] == "01" .or. aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
+                    
+                        if nLinha >= nLimite .or. nLinha == 0
+                            fImpCabec(5)
+                        endif
 
+                        // Imprime as linhas dos produtos.
+                        if aItens[nA][01] == "01"
+                            fImpItens()
+                        // Imprime as linhas de rastreabilidade (App)
+                        elseif aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
+                            fImpEmba()
+                        endif
+
+                        nQuantReg += 1
+                    endif
+                next nA
+
+            endif
+            
             TRB->(DbSkip())
         EndDo
         
@@ -360,16 +414,19 @@ Static Function fImpDec()
     
     nLinha += 63
     oPrinter:Line(nLinha, nCol+nColDis*0.30 ,nLinha,nCol+nColDis*0.68)
-    nLinha += 13
-    oPrinter:Say( nLinha, nCol+nColDis*0.35  , "Aline Andrades Zen da Silva", oFOARNO15)
-    nLinha += 13
-    oPrinter:Say( nLinha, nCol+nColDis*0.30  , "Coordenadora da Garantia da Qualidade", oFOARNO15)
+    //nLinha += 13
+    //oPrinter:Say( nLinha, nCol+nColDis*0.35  , "Aline Andrades Zen da Silva", oFOARNO15)
+    //nLinha += 13
+    //oPrinter:Say( nLinha, nCol+nColDis*0.30  , "Coordenadora da Garantia da Qualidade", oFOARNO15)
 return
 
 /* Impressão de cabeçalho */
 Static Function fImpCabec(nModelo)
     Local aPerc     := {}
 
+    if !oPrinter:isFirstPage
+        oPrinter:endpage()
+    endif
     oPrinter:StartPage() 
     
     
@@ -410,8 +467,116 @@ Static Function fImpCabec(nModelo)
     // Impressão da sessão da declaração para exportação
     elseif nModelo == 3
     
+    // Dados do carregamento
+    elseif nModelo == 4
+        fModelo04()
+    // Rastreabilidade
+    elseif nModelo == 5
+        fModelo05()
     endif
 
+Return
+
+/*/{Protheus.doc} fModelo05
+    (long_description)
+    @type  Static Function
+    @author user
+    @since 14/07/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function fModelo05()
+    
+    //------------------------------------------
+    // Sessão 13 - 11.Rastreabilidade:
+    //------------------------------------------
+    
+    nAltura := 12
+
+    aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
+    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+    oPrinter:Say( nLinha+08, aPerc[01]+010 , "13. Rastreabilidade", oFOARNE09)
+    
+    nLinha += nAltura
+    
+    aPerc   := {nCol, round(nRight*0.15,0), round(nRight*0.25,0), round(nRight*0.70,0), round(nRight*0.80,0), round(nRight*0.90,0), nRight}
+    nAltura := 20
+    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
+    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Nº Registro", oFOARNE09)
+    oPrinter:Say(nLinha+017, aPerc[01]+002 , "Rótulo", oFOARNE09)
+    
+    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
+    oPrinter:Say(nLinha+007, aPerc[02]+002 , "Código", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
+    oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nome Produto", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
+    oPrinter:Say(nLinha+007, aPerc[04]+002 , "Quantidade", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
+    oPrinter:Say(nLinha+007, aPerc[05]+002 , "Líquido (KG)", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
+    oPrinter:Say(nLinha+007, aPerc[06]+002 , "Bruto (KG)", oFOARNE09)
+
+    nLinha += nAltura
+
+Return
+
+/*/{Protheus.doc} fModelo04
+    (long_description)
+    @type  Static Function
+    @author user
+    @since 14/07/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function fModelo04()
+    
+    //------------------------------------------
+    // Sessão 12 - 12.Dados do Carregamento
+    //------------------------------------------
+    
+    nAltura := 12
+
+    aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
+    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+    oPrinter:Say( nLinha+08, aPerc[01]+010 , "12. Dados do Embarque", oFOARNE09)
+    
+    nLinha += nAltura
+    
+    aPerc   := {nCol, round(nRight*0.15,0), round(nRight*0.25,0), round(nRight*0.70,0), round(nRight*0.80,0), round(nRight*0.90,0), nRight}
+    nAltura := 20
+    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
+    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Nº Registro", oFOARNE09)
+    oPrinter:Say(nLinha+017, aPerc[01]+002 , "Rótulo", oFOARNE09)
+    
+    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
+    oPrinter:Say(nLinha+007, aPerc[02]+002 , "Código", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
+    oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nome Produto", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
+    oPrinter:Say(nLinha+007, aPerc[04]+002 , "Quantidade", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
+    oPrinter:Say(nLinha+007, aPerc[05]+002 , "Líquido (KG)", oFOARNE09)
+
+    oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
+    oPrinter:Say(nLinha+007, aPerc[06]+002 , "Bruto (KG)", oFOARNE09)
+
+    nLinha += nAltura    
+    
 Return
 
 /*/{Protheus.doc} fModelo02
@@ -439,62 +604,8 @@ Static Function fModelo02()
     oPrinter:Say( nLinha+08, aPerc[01]+010 , "11. Imagens", oFOARNE09)
 
     nLinha += nAltura
-
-    nAltura := 20
-    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
-    oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
-    oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
     
-    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Nº Invoice", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[01]+010 , TRB->EE7_PEDIDO , oFOARNO09)
-
-    oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nº Ordem Coleta:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[02]+010 , IIF(EMPTY(TRB->EE7_XORDCO),"", TRB->EE7_XORDCO) , oFOARNO09)
-
-    oPrinter:Say(nLinha+007, aPerc[03]+002 , "Térmografo no Carregamento:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[03]+010 , iif(TRB->EE7_XOPCTE=="S","Sim","Não") , oFOARNO09)
     
-    oPrinter:Say(nLinha+007, aPerc[04]+002 , "Nº Termógrafo:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[04]+010 , IIF(EMPTY(TRB->EE7_XCODTE),"não se aplica",TRB->EE7_XCODTE) , oFOARNO09)
-    
-    nLinha += nAltura
-    //------------------------------------------
-    // Sessão 04 - Dados do Veículo
-    //------------------------------------------
-    
-    nAltura := 20
-    aPerc   := {nCol, nRight*0.7, nRight}
-    
-    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Transportadora:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[01]+010 , ALLTRIM(TRB->A4_NOME) , oFOARNO09)
-
-    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
-    oPrinter:Say(nLinha+007, aPerc[02]+002 , "Placa:", oFOARNE09)
-    oPrinter:Say(nLinha+0017, aPerc[02]+010 , alltrim(TRB->C5_PLACA ) , oFOARNO09)
-
-    aPerc   := {nCol, nRight*0.4, nRight*0.6, nRight*0.8, nRight}
-    nLinha += nAltura
-
-    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Navio/Transportador:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[01]+010 , ALLTRIM(TRB->EE7_XEMBAR ) , oFOARNO09)
-
-    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
-    oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nº Container:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[02]+010 , iif(Empty(cContain), ALLTRIM(TRB->EE7_CONTAI ), cContain) , oFOARNO09)
-
-    oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
-    oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nº Lacre Oficial:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[03]+010 , iif(Empty(cLacOfic), ALLTRIM(TRB->EE7_NLACR2 ), cLacOfic) , oFOARNO09)
-
-    oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
-    oPrinter:Say(nLinha+007, aPerc[04]+002 , "Tara:", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[04]+010 , iif( TRB->EE7_XTARA == 0, "não se aplica", TRANSFORM(TRB->EE7_XTARA, "@E 999999")) , oFOARNO09)
-
-    nLinha += nAltura
-
 Return
 
 
@@ -512,7 +623,7 @@ Return
     /*/
 Static Function fModelo01()
     
-    if oPrinter:nPagecount == 1
+    if nQuantReg == 1
         //------------------------------------------
         // Sessão 01 - 1.Informação de Embarque:
         //------------------------------------------
@@ -651,14 +762,23 @@ Static Function fModelo01()
         oPrinter:Say(nLinha+017, aPerc[01]+010 , ALLTRIM(TRB->YA_DESCR ) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
-        oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nome:", oFOARNE09)
+        oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nome/Importador:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(TRB->CONSIG ) , oFOARNO08)
         
         //oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         //IF len(alltrim(TRB->A1_END)) > 60
             oPrinter:Say(nLinha+007, aPerc[03]+002 , "Endereço:", oFOARNE08)
-            oPrinter:Say(nLinha+017, aPerc[03]+010 , alltrim(TRB->A1_END) , oFOARNO07)
-            oPrinter:Say(nLinha+027, aPerc[03]+010 , alltrim(TRB->A1_COMPLEM)+"-"+Alltrim(TRB->YA_DESCR) , oFOARNO07)
+            cEnd := Alltrim(TRB->EE7_MENSG)+Alltrim(TRB->EE7_MENSG2)+Alltrim(TRB->EE7_MENSG3)
+            cEnd := Replace(cEnd,"IMPORTADOR: ","")
+            if Len(cEnd) > 60
+                oPrinter:Say(nLinha+017, aPerc[03]+010 , Left(cEnd,60) , oFOARNO07)
+                oPrinter:Say(nLinha+027, aPerc[03]+010 , substr(cEnd,61, len(cEnd))  , oFOARNO07)
+            else
+                oPrinter:Say(nLinha+017, aPerc[03]+010 , cEnd , oFOARNO07)
+            endif
+
+            //oPrinter:Say(nLinha+017, aPerc[03]+010 , alltrim(TRB->A1_END) , oFOARNO07)
+            //oPrinter:Say(nLinha+027, aPerc[03]+010 , alltrim(TRB->A1_COMPLEM)+"-"+Alltrim(TRB->YA_DESCR) , oFOARNO07)
         /*
         else
             oPrinter:Say(nLinha+007, aPerc[03]+002 , "Endereço:", oFOARNE09)
@@ -683,7 +803,7 @@ Static Function fModelo01()
 
         nAltura := 20
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-        oPrinter:Say(nLinha+007, aPerc[01]+002 , "Cliente:", oFOARNE09)
+        oPrinter:Say(nLinha+007, aPerc[01]+002 , "Cliente/Consignee:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[01]+010 , ALLTRIM(TRB->A1_NOME ) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
@@ -882,7 +1002,7 @@ Static Function fImpRast()
             nAltura := 12
 
             oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
-            oPrinter:Say(nLinha+008, aPerc[01]+015 , "11. Dados do Carregamento " , oFOARNE07)
+            oPrinter:Say(nLinha+008, aPerc[01]+015 , "12. Dados do Carregamento - Resumido " , oFOARNE07)
             
             nLinha += nAltura
             nAltura := 17
@@ -958,47 +1078,110 @@ Static Function fImpRast()
 
     nLinha += nAltura
 
-    
+return
+
+
+/* Impressão dos itens de rastreabilidade - embalagens */
+Static Function fImpEmba()
+    Local cDescri   := ""
+    Local nQuebra   := 50
+    Local nColDis   := nRight-nCol
+
+
+    aPerc   := {nCol,; 
+                round(nCol+nColDis*0.025,2),; 
+                round(nCol+nColDis*0.095,0),;
+                round(nCol+nColDis*0.245,0),;
+                round(nCol+nColDis*0.395,0),; 
+                round(nCol+nColDis*0.525,0),;
+                round(nCol+nColDis*0.655,0),;
+                round(nCol+nColDis*0.805,0),;
+                round(nCol+nColDis*0.975,0),; 
+                nRight}
+
+    if aItens[nA][02] == 1
+            nAltura := 12
+
+            oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
+            oPrinter:Say(nLinha+008, aPerc[01]+015 , "13. Dados do Carregamento - Analítico " , oFOARNE07)
+            
+            nLinha += nAltura
+            nAltura := 17
+            nLinha += 5
+            oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aperc[03])
+            oPrinter:Say(nLinha+007, aPerc[02]+002 , ":.. Item" , oFOARNE07)
+
+            oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aperc[04])
+            oPrinter:Say(nLinha+007, aPerc[03]+002 , ":.. Identificação " , oFOARNE07)
+
+            oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aperc[05])
+            oPrinter:Say(nLinha+007, aPerc[04]+002 , ":.. Data Fabricação " , oFOARNE07)
+            
+            oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aperc[06])
+            oPrinter:Say(nLinha+007, aPerc[05]+002 , ":.. Data Validade " , oFOARNE07)
+            
+            oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aperc[07])
+            oPrinter:Say(nLinha+007, aPerc[06]+002 , ":.. Lote/Turno " , oFOARNE07)
+
+            oPrinter:Box(nLinha, aPerc[07], nLinha+nAltura, aperc[08])
+            oPrinter:Say(nLinha+007, aPerc[07]+002 , ":.. Qtd. Caixa " , oFOARNE07)
+            
+            oPrinter:Box(nLinha, aPerc[08], nLinha+nAltura, aperc[09])
+            oPrinter:Say(nLinha+007, aPerc[08]+002 , ":.. Peso Venda " , oFOARNE07)
+
+            nLinha += nAltura
+    endif
+
+    nAltura := 12
+
+    // Impressão dos itens da rastreabilidade
+    if aItens[nA][01] == "06"
+        
+        // Item
+        oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
+        oPrinter:Say(nLinha+008, aPerc[02]+008 , aItens[nA][03] , oFOARNE07)
+        
+        // Identificação
+        oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
+        oPrinter:Say(nLinha+008, aPerc[03]+005 , aItens[nA][04] , oFOARNE07)
+        
+        // Data de Fabricação
+        oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
+        oPrinter:Say(nLinha+008, aPerc[04]+022 , aItens[nA][05] , oFOARNE07)
+        
+        // Data de Validade
+        oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
+        oPrinter:Say(nLinha+008, aPerc[05]+022 , aItens[nA][06] , oFOARNE07)
+        
+        // Lote/Turno
+        oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
+        oPrinter:Say(nLinha+008, aPerc[06]+015 , aItens[nA][07], oFOARNE07)
+
+        // Qtd. Caixa
+        oPrinter:Box(nLinha, aPerc[07], nLinha+nAltura, aPerc[08])
+        oPrinter:Say(nLinha+008, aPerc[07]+037 , Transform(aItens[nA][08] ,"@E 99,999,999.9999"), oFOARNE07)
+
+        // Peso venda
+        oPrinter:Box(nLinha, aPerc[08], nLinha+nAltura, aPerc[09])
+        oPrinter:Say(nLinha+008, aPerc[08]+037 , Transform(aItens[nA][09] ,"@E 99,999,999.9999"), oFOARNE07)
+    elseif aItens[nA][01] == "07"
+        // Total
+        oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[07])
+        oPrinter:Say(nLinha+008, aPerc[02]+008 , alltrim(aItens[nA][03]) , oFOARNE07)
+
+        // Qtd. Caixa
+        oPrinter:Box(nLinha, aPerc[07], nLinha+nAltura, aPerc[08])
+        oPrinter:Say(nLinha+008, aPerc[07]+037 , Transform(aItens[nA][04] ,"@E 99,999,999.9999"), oFOARNE07)
+
+        // Peso venda
+        oPrinter:Box(nLinha, aPerc[08], nLinha+nAltura, aPerc[09])
+        oPrinter:Say(nLinha+008, aPerc[08]+037 , Transform(aItens[nA][05] ,"@E 99,999,999.9999"), oFOARNE07)
+    endif
+
+    nLinha += nAltura
 
 return
 
-/* fSQlImg - Retorna a listagem de imagens do aplicativo de inspeção da qualidade. */
-Static Function fSQlImg()
-    Local aRet      := {}
-    Local nTotCa    := 0
-    Local nTotVe    := 0
-    Local nCo3      := 1
-    Local cEOL      := Chr(13)+chr(10)
-    
-
-    cQuery := " SELECT * "+cEOL
-	cQuery += " FROM "+ RetSqlName("ZEY") +" (nolock) ZEY  "+cEOL
-    cQuery += " WHERE  ZEY.D_E_L_E_T_='' AND ZEY.ZEY_FILIAL='"+ xfilial("ZEY") +"' AND ZEY.ZEY_NUMERO ='"+ TRB->EE7_PEDFAT +"' "+cEOL
-    cQuery += " ORDER BY ZEY.ZEY_NUMERO, ZEY.ZEY_DESCRI; "
-
-	TCQUERY cQuery ALIAS "QZEY" NEW
-    
-    QZEY->(dbgotop())
-
-    nCo3 := 1
-    while QZEY->(!EOF())
-        AADD(aret, {"04",;
-                    nCo3,;
-                    ALLTRIM(QZEY->ZEY_ID),;
-                    ALLTRIM(QZEY->ZEY_DESCRI),;
-                    ALLTRIM(QZEY->ZEY_ARQUIV),;
-                    0,;
-                    0;
-        })
-
-        nCo3 += 1
-        QZEY->(Dbskip())
-    enddo
-
-    QZEY->(DbcloseArea())
-
-
-Return aRet
 
 /* fSqlItem - Consulta aos itens do processo de exportação e seus itens de rastreabilidade. */
 Static function fSqlItem()
@@ -1010,7 +1193,12 @@ Static function fSqlItem()
     Local nTotCa    := 0
     Local nTotVe    := 0
 
-    cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, EE8.EE8_COD_I, B1.B1_DESC, EE8.EE8_QTDEM1, EE8.EE8_PSLQTO, EE8.EE8_PSBRTO, LTRIM(RTRIM(ISNULL(ZE1.ZE1_DENOMI,'')))+' '+ LTRIM(RTRIM(ISNULL(ZED.ZED_DESCAT,'')))	PGA_DESCRI, ZE1_REGIST "+cEOL
+    /* 01/02/03-Registros dos Itens de exportação e rastreabilidade do APP.
+        01 - Itens do pedido de exportação.
+        02 - Rastreabilidade por lote.
+        03 - Total da rastreabilidade.
+    */
+    cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, EE8.EE8_COD_I, B1.B1_DESC, EE8.EE8_QTDEM1, EE8.EE8_PSLQTO, EE8.EE8_PSBRTO, LTRIM(RTRIM(ISNULL(ZE1.ZE1_DENOMI,'')))+' '+ LTRIM(RTRIM(ISNULL(ZED.ZED_DESCAT,'')))	PGA_DESCRI, ZE1_REGIST "
 	cQuery += " FROM "+ RetSqlName("EE7") +" (nolock) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8  ON EE7.D_E_L_E_T_='' AND EE8.D_E_L_E_T_='' AND EE7.EE7_PEDIDO=EE8.EE8_PEDIDO "+cEOL
  	cQuery += " 				 LEFT  JOIN "+ RetSqlName("SB1") +" (NOLOCK) B1  ON B1.D_E_L_E_T_='' AND B1.B1_COD=EE8.EE8_COD_I  "+cEOL
  	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZE1") +" (NOLOCK) ZE1 ON ZE1.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZE1.ZE1_REGIST "+cEOL
@@ -1038,6 +1226,8 @@ Static function fSqlItem()
                     QITEM->EE8_PSBRTO;
         })
 
+
+        /* Dados do embarque resumido */
         cQuery := " SELECT ZEX_FILIAL, ZEX_NUMERO, ZEX_DTFABR, ZEX_DTVALD, ZEX_TURNO, MIN(ZEX_TEMPER) ZEX_TEMPER, SUM(ZEX_QUANTI) QTD_VENDA, SUM(ZEX_QTDSUM) QTD_CAIXA "+cEOL
         cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+cEOL
         cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xfilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ QITEM->EE7_PEDFAT +"' AND ZEX.ZEX_PRODUT='"+ Alltrim(QITEM->EE8_COD_I) +"' "+cEOL
@@ -1084,14 +1274,127 @@ Static function fSqlItem()
                 ntotVe;
             })
 
-
         QZEX->(DbcloseArea())
         
+        /* Rastreabilidade */
+
+        cQuery := " SELECT ZGB_FILIAL, ZGB_NUMERO, ZGB_DTFABR, ZGB_DTVALD, ZGB_TURNO, ZGB_IDENTI, ZGB_QUANTI QTD_VENDA, ZGB_QTDSUM QTD_CAIXA "+cEOL
+        cQuery += " FROM "+ RetSqlName("ZGB") +" ZGB "+cEOL
+        cQuery += " WHERE ZGB.D_E_L_E_T_='' AND ZGB.ZGB_FILIAL='"+ xfilial("ZGB") +"' AND ZGB.ZGB_NUMERO='"+ QITEM->EE7_PEDFAT +"' AND ZGB.ZGB_PRODUT='"+ Alltrim(QITEM->EE8_COD_I) +"' "+cEOL
+        cQuery += " ORDER BY ZGB_FILIAL, ZGB_NUMERO,ZGB_IDENTI, ZGB_TURNO; "
+
+        TCQUERY cQuery ALIAS "QZGB" NEW
+        
+        TCSETFIELD("QZGB","QTD_CAIXA"		,"N",10,03)
+        TCSETFIELD("QZGB","QTD_VENDA"		,"N",10,03)
+        TCSETFIELD("QZGB","ZGB_DTFABR"		,"D",08,00)
+        TCSETFIELD("QZGB","ZGB_DTVALD"		,"D",08,00)
+
+        QZGB->(dbgotop())
+
+        nCo2    := 1
+        nTotCa  := 0
+        nTotVe  := 0
+
+        while QZGB->(!EOF())
+            AADD(aret, {"06",;
+                nCo2,;
+                StrZero(nCo1,2)+"."+StrZero(nCo2,2),;
+                ALLTRIM(QZGB->ZGB_IDENTI),;
+                DTOC(QZGB->ZGB_DTFABR),;
+                DTOC(QZGB->ZGB_DTVALD),;
+                ALLTRIM(Replace(QZGB->ZGB_TURNO," ","")),;
+                QZGB->QTD_CAIXA,;
+                QZGB->QTD_VENDA;
+            })
+
+            nTotCa  += QZGB->QTD_CAIXA
+            nTotVe  += QZGB->QTD_VENDA
+
+            nCo2    += 1
+            QZGB->(Dbskip())
+        ENDDO
+
+        AADD(aret, {"07",;
+                0,;
+                "Total do Produto ("+ alltrim(QITEM->EE8_COD_I) +")" ,;
+                nTotCa,;
+                ntotVe;
+            })
+
+        QZGB->(DbcloseArea())
+
         nCo1 += 1
         QITEM->(Dbskip())
     enddo
 
     QITEM->(DbcloseArea())
+
+    /* 04-Registro de imagens. */
+
+    cQuery := " SELECT * "+cEOL
+	cQuery += " FROM "+ RetSqlName("ZEY") +" (nolock) ZEY  "+cEOL
+    cQuery += " WHERE  ZEY.D_E_L_E_T_='' AND ZEY.ZEY_FILIAL='"+ xfilial("ZEY") +"' AND ZEY.ZEY_NUMERO ='"+ TRB->EE7_PEDFAT +"' "+cEOL
+    cQuery += " ORDER BY ZEY.ZEY_NUMERO, ZEY.ZEY_DESCRI; "
+
+	TCQUERY cQuery ALIAS "QZEY" NEW
+    
+    QZEY->(dbgotop())
+
+    nCo3 := 1
+    while QZEY->(!EOF())
+        AADD(aret, {"04",;
+                    nCo3,;
+                    ALLTRIM(QZEY->ZEY_ID),;
+                    ALLTRIM(QZEY->ZEY_DESCRI),;
+                    ALLTRIM(QZEY->ZEY_ARQUIV),;
+                    0,;
+                    0;
+        })
+
+        nCo3 += 1
+        QZEY->(Dbskip())
+    enddo
+
+    QZEY->(DbcloseArea())
+
+    /* 05-Registros para a declaração de exportação. */
+
+    cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, C5.C5_NOTA, C5.C5_SERIE, EE8.EE8_COD_I, B1.B1_DESC, EE8.EE8_QTDEM1, EE8.EE8_PSLQTO, EE8.EE8_PSBRTO, LTRIM(RTRIM(ISNULL(ZE1.ZE1_DENOMI,'')))+' '+ LTRIM(RTRIM(ISNULL(ZED.ZED_DESCAT,'')))	PGA_DESCRI, ZE1_REGIST "+cEOL
+	cQuery += " FROM "+ RetSqlName("EE7") +" (nolock) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8  ON EE7.D_E_L_E_T_='' AND EE8.D_E_L_E_T_='' AND EE7.EE7_PEDIDO=EE8.EE8_PEDIDO "+cEOL
+ 	cQuery += " 				 INNER JOIN "+ RetSqlName("SC5") +" (NOLOCK) C5  ON C5.D_E_L_E_T_=''  AND C5.C5_FILIAL='"+ XFILIAL("SC5") +"' AND C5.C5_NUM=EE7.EE7_PEDFAT  "+cEOL
+    cQuery += " 				 LEFT  JOIN "+ RetSqlName("SB1") +" (NOLOCK) B1  ON B1.D_E_L_E_T_=''  AND B1.B1_COD=EE8.EE8_COD_I  "+cEOL
+ 	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZE1") +" (NOLOCK) ZE1 ON ZE1.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZE1.ZE1_REGIST "+cEOL
+	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZED") +" (NOLOCK) ZED ON ZED.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZED.ZED_REGZE1 AND B1.B1_XPGACAT =ZED.ZED_CODCAT
+    cQuery += " WHERE  EE8.D_E_L_E_T_='' AND EE8.EE8_FILIAL='' AND EE8.EE8_PEDIDO ='"+ TRB->EE7_PEDIDO +"' "+cEOL
+    cQuery += " ORDER BY EE7.EE7_PEDIDO; "
+	
+    TCQUERY cQuery ALIAS "QITDE" NEW
+    
+    TCSETFIELD("QITDE","EE8_SLDINI"		,"N",10,03)
+    TCSETFIELD("QITDE","EE8_PSLQTO"		,"N",10,03)
+    TCSETFIELD("QITDE","EE8_PSBRTO"		,"N",10,03)
+
+    QITDE->(dbgotop())
+
+    nCo1 := 1
+    while QITDE->(!EOF())
+        AADD(aret, {"05",;
+                    nCo1,;
+                    alltrim(QITDE->ZE1_REGIST)+"/"+AllTrim(TRB->ZE0_REGIST ),;
+                    alltrim(QITDE->EE8_COD_I),;
+                    alltrim(QITDE->B1_DESC),;
+                    alltrim(QITDE->PGA_DESCRI),;
+                    QITDE->EE8_QTDEM1,;
+                    QITDE->EE8_PSLQTO,;
+                    QITDE->EE8_PSBRTO;
+        })
+
+        nCo1 += 1
+        QITDE->(Dbskip())
+    enddo
+
+    QITDE->(DbcloseArea())
 
 return aRet
 
@@ -1134,6 +1437,7 @@ Static function fGetInfo()
 return
 
 /* fSqlItDe - Consulta aos itens da declaração da exportação. */
+/*
 Static function fSqlItDe()
     Local cQuery    := ""
     Local aRet      := {}
@@ -1141,44 +1445,8 @@ Static function fSqlItDe()
     
     Local cEOL      := Chr(13)+chr(10)
     
-    cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, C5.C5_NOTA, C5.C5_SERIE, EE8.EE8_COD_I, B1.B1_DESC, EE8.EE8_QTDEM1, EE8.EE8_PSLQTO, EE8.EE8_PSBRTO, LTRIM(RTRIM(ISNULL(ZE1.ZE1_DENOMI,'')))+' '+ LTRIM(RTRIM(ISNULL(ZED.ZED_DESCAT,'')))	PGA_DESCRI, ZE1_REGIST "+cEOL
-	cQuery += " FROM "+ RetSqlName("EE7") +" (nolock) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8  ON EE7.D_E_L_E_T_='' AND EE8.D_E_L_E_T_='' AND EE7.EE7_PEDIDO=EE8.EE8_PEDIDO "+cEOL
- 	cQuery += " 				 INNER JOIN "+ RetSqlName("SC5") +" (NOLOCK) C5  ON C5.D_E_L_E_T_=''  AND C5.C5_FILIAL='"+ XFILIAL("SC5") +"' AND C5.C5_NUM=EE7.EE7_PEDFAT  "+cEOL
-    cQuery += " 				 LEFT  JOIN "+ RetSqlName("SB1") +" (NOLOCK) B1  ON B1.D_E_L_E_T_=''  AND B1.B1_COD=EE8.EE8_COD_I  "+cEOL
- 	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZE1") +" (NOLOCK) ZE1 ON ZE1.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZE1.ZE1_REGIST "+cEOL
-	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZED") +" (NOLOCK) ZED ON ZED.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZED.ZED_REGZE1 AND B1.B1_XPGACAT =ZED.ZED_CODCAT
-    cQuery += " WHERE  EE8.D_E_L_E_T_='' AND EE8.EE8_FILIAL='' AND EE8.EE8_PEDIDO ='"+ TRB->EE7_PEDIDO +"' "+cEOL
-    cQuery += " ORDER BY EE7.EE7_PEDIDO; "
-	
-    TCQUERY cQuery ALIAS "QITDE" NEW
-    
-    TCSETFIELD("QITDE","EE8_SLDINI"		,"N",10,03)
-    TCSETFIELD("QITDE","EE8_PSLQTO"		,"N",10,03)
-    TCSETFIELD("QITDE","EE8_PSBRTO"		,"N",10,03)
-
-    QITDE->(dbgotop())
-
-    nCo1 := 1
-    while QITDE->(!EOF())
-        AADD(aret, {"05",;
-                    nCo1,;
-                    alltrim(QITDE->ZE1_REGIST)+"/"+AllTrim(TRB->ZE0_REGIST ),;
-                    alltrim(QITDE->EE8_COD_I),;
-                    alltrim(QITDE->B1_DESC),;
-                    alltrim(QITDE->PGA_DESCRI),;
-                    QITDE->EE8_QTDEM1,;
-                    QITDE->EE8_PSLQTO,;
-                    QITDE->EE8_PSBRTO;
-        })
-
-        nCo1 += 1
-        QITDE->(Dbskip())
-    enddo
-
-    QITDE->(DbcloseArea())
-
 return aRet
-
+*/
 
 /* fGetQuery - Consulta geral para os pedidos de venda. */
 Static function fGetQuery()
@@ -1189,7 +1457,8 @@ Static function fGetQuery()
 	cQuery += " 	   EE7.EE7_XTARA, A1.A1_COD, A1.A1_LOJA, A1.A1_NOME, A1A.A1_NOME CONSIG, A1A.A1_END, A1A.A1_BAIRRO, A1A.A1_COMPLEM, YA.YA_DESCR, " +cEOL
     cQuery += "        EE6.EE6_NOME, C5.C5_NUM, C5.C5_ROTEIRO, C5.C5_DTENTR, C5.C5_PLACA, A4.A4_NOME, ZVC.ZVC_MOTORI, "+cEOL
     cQuery += "        C5.C5_NOTA, C5.C5_SERIE, ZEL.ZEL_DESCRI,   "+cEOL
-    cQuery += "        ZE0.ZE0_REGIST, ZE0.ZE0_CNPJ, ZE0.ZE0_RAZAO   "+cEOL
+    cQuery += "        ZE0.ZE0_REGIST, ZE0.ZE0_CNPJ, ZE0.ZE0_RAZAO,   "+cEOL
+    cQuery += "        EE7_MENSG, EE7_MENSG2, EE7_MENSG3 "+cEOL
     cQuery += " FROM "+ RetSqlName("EE7") +" (nolock) EE7 INNER JOIN "+ RetSqlName("SC5") +" (NOLOCK) C5  ON C5.D_E_L_E_T_='' AND EE7.D_E_L_E_T_='' AND EE7.EE7_PEDFAT=C5.C5_NUM "+cEOL
     cQuery += " 					 LEFT  JOIN "+ RetSqlName("SA1") +" (NOLOCK) A1  ON EE7.D_E_L_E_T_='' AND A1.D_E_L_E_T_='' AND EE7.EE7_IMPORT=A1.A1_COD AND EE7.EE7_IMLOJA=A1.A1_LOJA "+cEOL
 	cQuery += " 					 LEFT  JOIN "+ RetSqlName("SA1") +" (NOLOCK) A1A ON EE7.D_E_L_E_T_='' AND A1A.D_E_L_E_T_='' AND EE7.EE7_CONSIG=A1A.A1_COD AND EE7.EE7_COLOJA=A1A.A1_LOJA "+cEOL

@@ -923,7 +923,7 @@ static function getDadosBrw(nTypeBrowse)
         cQuery += "         CASE WHEN C9.C9_NFISCAL !='' THEN C9.C9_NFISCAL+'/'+C9.C9_SERIENF ELSE '' END C9_NFISCAL " +cQebra
         cQuery += "    FROM "+ RetSqlName("EE7") +" (NOLOCK) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8 ON EE8.EE8_FILIAL=EE7.EE7_FILIAL AND EE8.EE8_PEDIDO=EE7.EE7_PEDIDO " +cQebra
         cQuery += "                    INNER JOIN "+ RetSqlName("SB1") +" (NOLOCK)  B1 ON B1.D_E_L_E_T_='' AND B1.B1_COD=EE8.EE8_COD_I " +cQebra
-        cQuery += "                    LEFT  JOIN "+ RetSqlName("SC5") +" (NOLOCK)  C5 ON C5.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND EE7.EE7_FILIAL='"+ xFilial("EE7") +"' AND C5.C5_PEDEXP=EE7.EE7_PEDIDO " +cQebra
+        cQuery += "                    INNER JOIN "+ RetSqlName("SC5") +" (NOLOCK)  C5 ON C5.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND EE7.EE7_FILIAL='"+ xFilial("EE7") +"' AND C5.C5_PEDEXP=EE7.EE7_PEDIDO " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SC9") +" (NOLOCK)  C9 ON C9.D_E_L_E_T_='' AND C9.C9_FILIAL=C5.C5_FILIAL AND C9.C9_PEDIDO=EE7.EE7_PEDFAT AND C9.C9_ITEM=EE8.EE8_FATIT " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("EEC") +" (NOLOCK) EEC ON EEC.D_E_L_E_T_='' AND EEC.EEC_FILIAL='"+ xFilial("EEC") +"' AND  EE7.EE7_FILIAL='"+ xFilial("EE7") +"' AND EE7.EE7_PEDIDO=EEC.EEC_PEDREF " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("EE6") +" (NOLOCK) EE6 ON EE6.D_E_L_E_T_='' AND EE6.EE6_FILIAL='"+ xFilial("EE6") +"' AND  EE6.EE6_COD = EEC.EEC_EMBARC " +cQebra
@@ -932,7 +932,7 @@ static function getDadosBrw(nTypeBrowse)
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SY6") +" (NOLOCK)  Y6 ON Y6.D_E_L_E_T_=''  AND Y6.Y6_FILIAL='"+ xFilial("SYA") +"' AND Y6.Y6_COD =EE7.EE7_CONDPA " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SYP") +" (NOLOCK) YPA ON Y6.D_E_L_E_T_=''  AND YPA.D_E_L_E_T_='' AND YPA.YP_CAMPO='Y6_DESC_P' AND Y6.Y6_DESC_P= YPA.YP_CHAVE AND YPA.YP_SEQ='001' " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SYP") +" (NOLOCK) YPB ON Y6.D_E_L_E_T_=''  AND YPB.D_E_L_E_T_='' AND YPB.YP_CAMPO='Y6_DESC_P' AND Y6.Y6_DESC_P= YPB.YP_CHAVE AND YPB.YP_SEQ='002' " +cQebra
-        cQuery += "    WHERE EE7.D_E_L_E_T_='' " +cQebra
+        cQuery += "    WHERE EE7.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' " +cQebra
         
         if !Empty(dDtDe) .or. !Empty(dDtAte)
             cQuery += " AND EE8.EE8_DTENTR BETWEEN '"+ Dtos(dDtDe) +"' AND '"+ Dtos(dDtAte) +"' "

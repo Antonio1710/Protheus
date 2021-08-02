@@ -8,6 +8,7 @@
     @since 31/05/2021
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro    - 19/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
+    @history Chamado 8465 - Leonardo P. Monteiro    - 01/08/2021 - Adição do detalhamento das embalagens (ZGA/ZGB).
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 
@@ -522,11 +523,62 @@ Static Function grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte,
 
             //Id da inspeção, descrição da foto, caminho relativo.
             fGrvImg(cPdVend, cPalId, cTurno, cProd, aImagens)
-            
+            //Grava os dados detalhados do Pallet.
+            fGrvDet(cPdVend, cInspId, cPalId, cTurno)
         endif
     endif
     
 Return Nil
+
+
+Static function fGrvDet(cPdVend, cInspId, cPalId, cTurno)
+    Local cQuery    := ""
+    Local cEOL      := Chr(13)+chr(10)
+
+    DbSelectArea("ZGB")
+    ZGB->(DbSetOrder(1))
+
+    cQuery := " SELECT * "+cEOL
+    cQuery += " FROM "+ RetSqlName("ZGA") +" ZGA "
+    cQuery += " WHERE D_E_L_E_T_='' AND ZGA_FILIAL='"+ xFilial("ZGA") +"' AND ZGA_PALLET = '"+ cPalId +"' AND ZGA_TURNO = '"+ cTurno +"' "
+
+    TcQuery cQuery ALIAS "QZGA" NEW
+
+    while QZGA->(!eof())
+        
+        if Reclock("ZGB", .T.)
+            ZGB->ZGB_FILIAL := xFilial("ZGB")
+            ZGB->ZGB_ID     := cInspId
+            ZGB->ZGB_NUMERO := cPdVend
+            ZGB->ZGB_PRODUT := QZGA->ZGA_PRODUT
+            ZGB->ZGB_EDTPRD := QZGA->ZGA_EDTPRD
+            ZGB->ZGB_DTFABR := Stod(QZGA->ZGA_DTFABR)
+            ZGB->ZGB_DTVALD := Stod(QZGA->ZGA_DTVALD)
+            ZGB->ZGB_TURNO  := QZGA->ZGA_TURNO
+            ZGB->ZGB_QUANTI := QZGA->ZGA_QUANTI
+            ZGB->ZGB_QTDREA := QZGA->ZGA_QTDREA
+            ZGB->ZGB_TARAEM := QZGA->ZGA_TARAEM
+            ZGB->ZGB_LOTE   := QZGA->ZGA_LOTE
+            ZGB->ZGB_IDENTI := QZGA->ZGA_IDENTI
+            ZGB->ZGB_TOTSEG := QZGA->ZGA_TOTSEG
+            ZGB->ZGB_DTPALL := Stod(QZGA->ZGA_DTPALL)
+            ZGB->ZGB_TOTQTD := QZGA->ZGA_TOTQTD
+            ZGB->ZGB_TOTREA := QZGA->ZGA_TOTREA
+            ZGB->ZGB_TOTTAR := QZGA->ZGA_TOTTAR
+            ZGB->ZGB_STATUS := QZGA->ZGA_STATUS
+            ZGB->ZGB_PALLET := QZGA->ZGA_PALLET
+            ZGB->ZGB_QTDSUM := QZGA->ZGA_QTDSUM
+            ZGB->ZGB_LOGDAT := Stod(QZGA->ZGA_LOGDAT)
+            ZGB->ZGB_LOGHOR := QZGA->ZGA_LOGHOR
+
+            ZGB->(MsUnlock())
+        endif
+    QZGA->(DbSkip())
+    ENDDO
+
+    QZGA->(Dbclosearea())
+
+return
 
 /* fGrvImg - Registra as imagens na tabela. */
 Static Function fGrvImg(cPdVend, cPalId, cTurno, cProd, aImagens)
@@ -678,4 +730,22 @@ Static Function fExcluir(cInspId)
 
     QZEY->(DbCloseArea())
 
+    cQuery := "SELECT R_E_C_N_O_ REGISTRO FROM "+RetSqlName("ZGB")+" (NOLOCK) WHERE D_E_L_E_T_='' AND ZGB_FILIAL='"+ xFilial("ZGB") +"' AND ZGB_ID ='"+ cInspId +"';"
+    
+    TcQuery cQuery ALIAS "QZGB" NEW
+
+    while QZGB->(!eof())
+        ZGB->(DbGoTo(QZGB->REGISTRO))
+
+        if ZGB->(RECNO()) == QZGB->REGISTRO
+            If reclock("ZGB",.F.)
+                Dbdelete()
+                ZGB->(Msunlock())
+            endif
+        endif
+
+        QZGB->(Dbskip())
+    enddo
+
+    QZGB->(DbCloseArea())
 Return lRet
