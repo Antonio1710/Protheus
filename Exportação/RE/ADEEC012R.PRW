@@ -74,6 +74,7 @@ Static function fProcessa()
     Private oFOARNE30	 		:= TFont():New("Arial",09,30,.T.,.T.,,,,,.F.) // Arial, Negrito, Tam. 30
     Private oFOARNE35	 		:= TFont():New("Arial",09,35,.T.,.T.,,,,,.F.) // Arial, Negrito, Tam. 35
     Private oPrint
+    PRivate oBrush              := TBrush():New2( , Rgb(217,217,217) )
     
     //Private cLogo				:= AllTrim(GetMV("MV_XLOGOGV")) //Imagem dentro do SYSTEM
     
@@ -114,6 +115,7 @@ Static function fProcessa()
     Private cLacArma            := ""
     Private cLacOfic            := ""
     Private cContain            := ""
+    Private nPageAct            := 0
     
     //cRelImp := __CUSERID+"_"+cNomRel+"_"+DtoS(dDatabase)+Replace(Time(),":","")
     cRelImp := __CUSERID+"_"+cNomRel
@@ -156,7 +158,7 @@ Static function fProcessa()
 
     // Consulta o cabeçalho do processo de exportação.
     fGetQuery()
-
+    
     TRB->(dbgotop()) 
 
     nQuantReg   := 1
@@ -189,7 +191,7 @@ Static function fProcessa()
             //----------------------------------------------------------------------------------------
             aItens  := fSqlItem()
             nItens  := Len(aItens)
-            
+            nTotPag := fTotPag(nItens)
             //-----------------------------------------------------
             // Impressão da sessão da Declaração de Exportação.
             //-----------------------------------------------------
@@ -306,6 +308,7 @@ Static function fProcessa()
                 nLinha      := 0
                 nQuantReg   := 1
                 nLimite     := nBottom*0.95
+                nPageAct    := oPrinter:nPagecount
                 
                 for nA := 1 to nItens
                     if aItens[nA][01] == "01" .or. aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
@@ -321,7 +324,8 @@ Static function fProcessa()
                         elseif aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
                             fImpEmba()
                         endif
-
+                        
+                        nPageAct    := oPrinter:nPagecount
                         nQuantReg += 1
                     endif
                 next nA
@@ -358,6 +362,14 @@ Static function fProcessa()
 
 Return
 
+Static function fTotPag(nItens)
+    Local nRet := 0
+    
+    
+
+
+Return nRet
+
 /* Impressão da sessão da declaração da importação. */
 Static Function fImpDec()
     Local nColDis   := nRight-nCol
@@ -370,7 +382,7 @@ Static Function fImpDec()
     nLinha += 23
     oPrinter:Say( nLinha, nCol+010  , "Prezados AFFAs,", oFOARNO15)
     nLinha += 30
-    oPrinter:Say( nLinha, nCol+010  , "        A empresa AD´ORO S/A, inscrita no CNPJ/MF nº "+ TRANSFORM(TRB->ZE0_CNPJ,"999,999,999/9999-99") +", estabelecida na Estrada", oFOARNO15)
+    oPrinter:Say( nLinha, nCol+010  , "        A empresa AD´ORO S/A, inscrita no CNPJ/MF nº "+ TRANSFORM(TRB->ZE0_CNPJ,"@R 99.999.999/9999-99") +", estabelecida na Estrada", oFOARNO15)
     nLinha += 13
     oPrinter:Say( nLinha, nCol+010  , "de acesso SP 053/332, Km 04, s/n, bairro do Mursa,  Várzea Paulista/SP,  CEP 13.226-400, vem por", oFOARNO15)
     nLinha += 13
@@ -449,7 +461,7 @@ Static Function fImpCabec(nModelo)
     if nModelo == 3
         oPrinter:Say( nLinha+033, aPerc[02]+(aPerc[03]-aPerc[02])/2-030 , "Declaração para Exportação", oFOARNO09)
     else
-        oPrinter:Say( nLinha+033, aPerc[02]+(aPerc[03]-aPerc[02])/2-060 , "RELATÓRIO DE RESPALDO PARA CERTIFICAÇÃO", oFOARNO09)
+        oPrinter:Say( nLinha+033, aPerc[02]+(aPerc[03]-aPerc[02])/2-080 , "RELATÓRIO DE RESPALDO PARA CERTIFICAÇÃO", oFOARNO09)
     endif    
     oPrinter:Say( nLinha+010, aPerc[03]+015 , "Data de Emissão:", oFOARNE09)
     oPrinter:Say( nLinha+020, aPerc[03]+015 , cDataEmi, oFOARNO09)
@@ -494,37 +506,39 @@ Static Function fModelo05()
     //------------------------------------------
     // Sessão 13 - 11.Rastreabilidade:
     //------------------------------------------
-    
-    nAltura := 12
+    if aItens[nA][01] == "01"
+        nAltura := 12
 
-    aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
-    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
-    oPrinter:Say( nLinha+08, aPerc[01]+010 , "13. Rastreabilidade", oFOARNE09)
-    
-    nLinha += nAltura
-    
-    aPerc   := {nCol, round(nRight*0.15,0), round(nRight*0.25,0), round(nRight*0.70,0), round(nRight*0.80,0), round(nRight*0.90,0), nRight}
-    nAltura := 20
-    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
-    oPrinter:Say(nLinha+007, aPerc[01]+002 , "Nº Registro", oFOARNE09)
-    oPrinter:Say(nLinha+017, aPerc[01]+002 , "Rótulo", oFOARNE09)
-    
-    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
-    oPrinter:Say(nLinha+007, aPerc[02]+002 , "Código", oFOARNE09)
+        aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
+        oPrinter:Say( nLinha+08, aPerc[01]+010 , "13. Rastreabilidade", oFOARNE09)
+        
+        nLinha += nAltura
+        
+        aPerc   := {nCol, round(nRight*0.15,0), round(nRight*0.25,0), round(nRight*0.70,0), round(nRight*0.80,0), round(nRight*0.90,0), nRight}
+        nAltura := 20
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
+        oPrinter:Say(nLinha+007, aPerc[01]+002 , "Nº Registro", oFOARNE09)
+        oPrinter:Say(nLinha+017, aPerc[01]+002 , "Rótulo", oFOARNE09)
+        
+        oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
+        oPrinter:Say(nLinha+007, aPerc[02]+002 , "Código", oFOARNE09)
 
-    oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
-    oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nome Produto", oFOARNE09)
+        oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
+        oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nome Produto", oFOARNE09)
 
-    oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
-    oPrinter:Say(nLinha+007, aPerc[04]+002 , "Quantidade", oFOARNE09)
+        oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
+        oPrinter:Say(nLinha+007, aPerc[04]+002 , "Quantidade", oFOARNE09)
 
-    oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
-    oPrinter:Say(nLinha+007, aPerc[05]+002 , "Líquido (KG)", oFOARNE09)
+        oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
+        oPrinter:Say(nLinha+007, aPerc[05]+002 , "Líquido (KG)", oFOARNE09)
 
-    oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
-    oPrinter:Say(nLinha+007, aPerc[06]+002 , "Bruto (KG)", oFOARNE09)
+        oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
+        oPrinter:Say(nLinha+007, aPerc[06]+002 , "Bruto (KG)", oFOARNE09)
 
-    nLinha += nAltura
+        nLinha += nAltura
+    endif
 
 Return
 
@@ -550,6 +564,7 @@ Static Function fModelo04()
 
     aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+    oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
     oPrinter:Say( nLinha+08, aPerc[01]+010 , "12. Dados do Embarque", oFOARNE09)
     
     nLinha += nAltura
@@ -601,6 +616,7 @@ Static Function fModelo02()
 
     aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+    oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
     oPrinter:Say( nLinha+08, aPerc[01]+010 , "11. Imagens", oFOARNE09)
 
     nLinha += nAltura
@@ -632,6 +648,7 @@ Static Function fModelo01()
 
         aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "1. Informação de Embarque", oFOARNE09)
 
         nLinha += nAltura
@@ -665,8 +682,10 @@ Static Function fModelo01()
         
         aPerc   := {nCol, nRight*0.25, nRight*0.5, nRight*0.75, nRight}
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[03])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[03] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "2. Identificação", oFOARNE09)
         //oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, nRight)
+        oPrinter:fillRect( { nLinha, aPerc[03], nLinha+nAltura, nRight }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[03]+010 , "3. Dados do Faturamento", oFOARNE09)
         
         nLinha += nAltura
@@ -698,6 +717,7 @@ Static Function fModelo01()
 
         aPerc   := {nCol, nRight*0.7, nRight}
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[03])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[03] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "4. Dados do Veículo", oFOARNE09)
         
         nLinha += nAltura
@@ -721,6 +741,7 @@ Static Function fModelo01()
 
         aPerc   := {nCol, nRight*0.4, nRight*0.6, nRight*0.8, nRight}
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "5. Dados do Embarque", oFOARNE09)
         
         nLinha += nAltura
@@ -732,11 +753,11 @@ Static Function fModelo01()
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
         oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nº Container:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(TRB->EE7_CONTAI ) , oFOARNO09)
+        oPrinter:Say(nLinha+017, aPerc[02]+010 , IIF(Empty(cContain), ALLTRIM(TRB->EE7_CONTAI ), alltrim(cContain)) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         oPrinter:Say(nLinha+007, aPerc[03]+002 , "Nº Lacre Oficial:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[03]+010 , ALLTRIM(TRB->EE7_NLACR2 ) , oFOARNO09)
+        oPrinter:Say(nLinha+017, aPerc[03]+010 , ALLTRIM(IIF(empty(cLacOfic), TRB->EE7_NLACR2,alltrim(cLacOfic)) ) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
         oPrinter:Say(nLinha+007, aPerc[04]+002 , "Tara:", oFOARNE09)
@@ -750,8 +771,9 @@ Static Function fModelo01()
         
         nAltura := 12
 
-        aPerc   := {nCol, nRight*0.20, nRight*0.50, nRight}
+        aPerc   := {nCol, nRight*0.20, round(nRight*0.50,0), nRight}
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, nRight }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "6. Destino", oFOARNE09)
         
         nLinha += nAltura
@@ -765,7 +787,7 @@ Static Function fModelo01()
         oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nome/Importador:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(TRB->CONSIG ) , oFOARNO08)
         
-        //oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
+        oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         //IF len(alltrim(TRB->A1_END)) > 60
             oPrinter:Say(nLinha+007, aPerc[03]+002 , "Endereço:", oFOARNE08)
             cEnd := Alltrim(TRB->EE7_MENSG)+Alltrim(TRB->EE7_MENSG2)+Alltrim(TRB->EE7_MENSG3)
@@ -797,6 +819,7 @@ Static Function fModelo01()
 
         aPerc   := {nCol, nRight*0.7, nRight}
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[03])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[03] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "7. Dados do Cliente", oFOARNE09)
         
         nLinha += nAltura
@@ -819,7 +842,8 @@ Static Function fModelo01()
         nAltura := 12
 
         aPerc   := {nCol, nRight*0.334, nRight*0.667, nRight}
-        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[03])
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[04])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[04] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "8. Dados de Carregamento", oFOARNE09)
         
         nLinha += nAltura
@@ -846,7 +870,8 @@ Static Function fModelo01()
         nAltura := 12
 
         aPerc   := {nCol, nRight*0.20, nRight*0.40, nRight*0.60, nRight*0.80, nRight}
-        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[03])
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[06])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[06] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "9. Condições do Veículo", oFOARNE09)
         
         nLinha += nAltura
@@ -884,6 +909,7 @@ Static Function fModelo01()
 
     aPerc   := {nCol, round(nRight*0.15,0), round(nRight*0.25,0), round(nRight*0.70,0), round(nRight*0.80,0), round(nRight*0.90,0), nRight}
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
+    oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, nRight }, oBrush )
     oPrinter:Say( nLinha+08, aPerc[01]+010 , "10. Identificação de carga", oFOARNE09)
     
     nLinha += nAltura
@@ -914,7 +940,7 @@ return
 
 Static function fImpImg()
     Local nColDis   := nRight-nCol
-
+    Local nWeid     := 0
 
     aPerc   := {nCol, round(nCol+nColDis*0.025,2), round((nColDis)*0.95,0), nRight}
 
@@ -927,8 +953,13 @@ Static function fImpImg()
     
     nAltura := nRowImg/2*0.90
     //nLinha += nAltura
+    nWeid := nAltura*0.75/2
 
-    oPrinter:SayBitmap(nLinha, aPerc[02], aItens[nA][05], aPerc[03], nAltura )
+    if left(aItens[nA][04],3) != "Plt"
+        oPrinter:SayBitmap(nLinha, ((aPerc[03]-aPerc[02])/2)-nWeid, aItens[nA][05], ((aPerc[03]-aPerc[02])/2)+nWeid, nAltura )
+    else
+        oPrinter:SayBitmap(nLinha, aPerc[02], aItens[nA][05], aPerc[03], nAltura )
+    endif
 
     nLinha += nAltura
 return
@@ -992,7 +1023,7 @@ Static Function fImpRast()
                 round(nCol+nColDis*0.095,0),;
                 round(nCol+nColDis*0.245,0),;
                 round(nCol+nColDis*0.395,0),; 
-                round(nCol+nColDis*0.525,0),;
+                round(nCol+nColDis*0.485,0),;
                 round(nCol+nColDis*0.655,0),;
                 round(nCol+nColDis*0.805,0),;
                 round(nCol+nColDis*0.975,0),; 
@@ -1002,7 +1033,8 @@ Static Function fImpRast()
             nAltura := 12
 
             oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
-            oPrinter:Say(nLinha+008, aPerc[01]+015 , "12. Dados do Carregamento - Resumido " , oFOARNE07)
+            oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, nRight }, oBrush )
+            oPrinter:Say(nLinha+008, aPerc[01]+015 , "12.1 Dados do Embarque - Itens " , oFOARNE07)
             
             nLinha += nAltura
             nAltura := 17
@@ -1049,11 +1081,15 @@ Static Function fImpRast()
         
         // Lote/Turno
         oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
-        oPrinter:Say(nLinha+008, aPerc[05]+015 , aItens[nA][06], oFOARNE07)
+        oPrinter:Say(nLinha+008, aPerc[05]+020 , aItens[nA][06], oFOARNE07)
 
         // Temperatura
         oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
-        oPrinter:Say(nLinha+008, aPerc[06]+017 , Transform(aItens[nA][07] ,"@E 9999") +" °C", oFOARNE07)
+        if Len(Alltrim(aItens[nA][07])) > 9
+            oPrinter:Say(nLinha+008, aPerc[06]+002 , Alltrim(aItens[nA][07]), oFOARNE06)
+        else
+            oPrinter:Say(nLinha+008, aPerc[06]+017 , Alltrim(aItens[nA][07]), oFOARNE07)
+        endif
 
         // Qtd. Caixa
         oPrinter:Box(nLinha, aPerc[07], nLinha+nAltura, aPerc[08])
@@ -1099,11 +1135,13 @@ Static Function fImpEmba()
                 round(nCol+nColDis*0.975,0),; 
                 nRight}
 
-    if aItens[nA][02] == 1
+    //if aItens[nA][02] == 1
+    if nPageAct != oPrinter:nPagecount .OR. aItens[nA][02] == 1
             nAltura := 12
 
             oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
-            oPrinter:Say(nLinha+008, aPerc[01]+015 , "13. Dados do Carregamento - Analítico " , oFOARNE07)
+            oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, nRight }, oBrush )
+            oPrinter:Say(nLinha+008, aPerc[01]+015 , "13.1 Rastreabilidade - Itens " , oFOARNE07)
             
             nLinha += nAltura
             nAltura := 17
@@ -1155,7 +1193,7 @@ Static Function fImpEmba()
         
         // Lote/Turno
         oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
-        oPrinter:Say(nLinha+008, aPerc[06]+015 , aItens[nA][07], oFOARNE07)
+        oPrinter:Say(nLinha+008, aPerc[06]+029 , aItens[nA][07], oFOARNE07)
 
         // Qtd. Caixa
         oPrinter:Box(nLinha, aPerc[07], nLinha+nAltura, aPerc[08])
@@ -1228,7 +1266,7 @@ Static function fSqlItem()
 
 
         /* Dados do embarque resumido */
-        cQuery := " SELECT ZEX_FILIAL, ZEX_NUMERO, ZEX_DTFABR, ZEX_DTVALD, ZEX_TURNO, MIN(ZEX_TEMPER) ZEX_TEMPER, SUM(ZEX_QUANTI) QTD_VENDA, SUM(ZEX_QTDSUM) QTD_CAIXA "+cEOL
+        cQuery := " SELECT ZEX_FILIAL, ZEX_NUMERO, ZEX_DTFABR, ZEX_DTVALD, ZEX_TURNO, SUM(ZEX_QUANTI) QTD_VENDA, SUM(ZEX_QTDSUM) QTD_CAIXA "+cEOL
         cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+cEOL
         cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xfilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ QITEM->EE7_PEDFAT +"' AND ZEX.ZEX_PRODUT='"+ Alltrim(QITEM->EE8_COD_I) +"' "+cEOL
         cQuery += " GROUP BY ZEX_FILIAL, ZEX_NUMERO,ZEX_DTFABR, ZEX_DTVALD, ZEX_TURNO "+cEOL
@@ -1251,11 +1289,11 @@ Static function fSqlItem()
         while QZEX->(!EOF())
             AADD(aret, {"02",;
                 nCo2,;
-                StrZero(nCo1,2)+"."+StrZero(nCo2,2),;
+                StrZero(nCo1,2)+"."+StrZero(nCo2,3),;
                 DTOC(QZEX->ZEX_DTFABR),;
                 DTOC(QZEX->ZEX_DTVALD),;
                 ALLTRIM(Replace(QZEX->ZEX_TURNO," ","")),;
-                QZEX->ZEX_TEMPER,;
+                fTemper(QITEM->EE7_PEDFAT, Alltrim(QITEM->EE8_COD_I), DTOs(QZEX->ZEX_DTFABR), DTOs(QZEX->ZEX_DTVALD)),;
                 QZEX->QTD_CAIXA,;
                 QZEX->QTD_VENDA;
             })
@@ -1299,7 +1337,7 @@ Static function fSqlItem()
         while QZGB->(!EOF())
             AADD(aret, {"06",;
                 nCo2,;
-                StrZero(nCo1,2)+"."+StrZero(nCo2,2),;
+                StrZero(nCo1,2)+"."+StrZero(nCo2,4),;
                 ALLTRIM(QZGB->ZGB_IDENTI),;
                 DTOC(QZGB->ZGB_DTFABR),;
                 DTOC(QZGB->ZGB_DTVALD),;
@@ -1335,7 +1373,7 @@ Static function fSqlItem()
     cQuery := " SELECT * "+cEOL
 	cQuery += " FROM "+ RetSqlName("ZEY") +" (nolock) ZEY  "+cEOL
     cQuery += " WHERE  ZEY.D_E_L_E_T_='' AND ZEY.ZEY_FILIAL='"+ xfilial("ZEY") +"' AND ZEY.ZEY_NUMERO ='"+ TRB->EE7_PEDFAT +"' "+cEOL
-    cQuery += " ORDER BY ZEY.ZEY_NUMERO, ZEY.ZEY_DESCRI; "
+    cQuery += " ORDER BY ZEY.ZEY_NUMERO, ZEY.ZEY_PRODUT, ZEY.ZEY_DESCRI; "
 
 	TCQUERY cQuery ALIAS "QZEY" NEW
     
@@ -1397,6 +1435,33 @@ Static function fSqlItem()
     QITDE->(DbcloseArea())
 
 return aRet
+
+Static function fTemper(cPedVen, cProdut, cDtFab, cDtVld)
+    Local cQuery    := ""
+    //Local nCont     := 1
+    Local cRet      := ""
+
+    cQuery := " SELECT ZEX_PALLET, ZEX.ZEX_TEMPER "+cEOL
+    cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+cEOL
+    cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_TEMPER != 0 AND ZEX.ZEX_FILIAL='"+ xfilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ cPedVen +"' "
+    cQuery += "         AND ZEX.ZEX_PRODUT='"+ cProdut +"' AND ZEX.ZEX_DTFABR ='"+ cDtFab +"' AND ZEX.ZEX_DTVALD = '"+ cDtVld +"' "+cEOL
+    cQuery += " ORDER BY ZEX_PALLET; "
+
+    TCQUERY cQuery ALIAS "QTMP" NEW
+    
+    TCSETFIELD("QTMP","ZEX_TEMPER"		,"N",10,02)
+    
+    QTMP->(dbgotop())
+
+    while QTMP->(!EOF())
+        cRet += iif(Empty(cRet),"",", ")+Alltrim(Transform(QTMP->ZEX_TEMPER ,"@E 999.99")) +" °C"
+        //nCont += 1
+        QTMP->(Dbskip())
+    enddo
+
+    QTMP->(Dbclosearea())
+
+return cRet
 
 /* Recupera as informações retornadas do aplicativo da qualidade que compôem as informações do cabeçalho. */
 Static function fGetInfo()

@@ -351,7 +351,7 @@ Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
                             cTurno  := oProduto["turno"]
                             cDtFab  := oProduto["dataFabricacao"]
                             cDtVal  := oProduto["dataValidade"]
-
+                            
                             grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
                                     nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, cDtCarreg, cHrIniCar, cHrTerCar,;
                                     cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, aImagens)
@@ -484,7 +484,10 @@ Static Function grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte,
 
     IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
         IF SC5->C5_NUM == cPdVend
-        
+
+            //Faz a correção na variável vinda do aplicativo.
+            //Revisar depois com o Everson.
+            
             if Reclock("ZEX",.T.)
                 ZEX_FILIAL  := SC5->C5_FILIAL
                 ZEX_NUMERO  := SC5->C5_NUM //cPdVend - Pedido de venda.
@@ -503,7 +506,7 @@ Static Function grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte,
                 ZEX_TARAEM  := nTotTara     //Total tara das embalagens.
                 ZEX_TURNO   := cTurno       //Turno.
                 ZEX_DTFABR  := stod(cDtFab) //Data de fabricação.
-                ZEX_DTVALD  := stod(cDtVal) //Data de validade.
+                ZEX_DTVALD  := Ctod(cDtVal) //Data de validade.
                 ZEX_TEMPER  := Val(cTemp)   //Temperatura.
                 ZEX_LACRE1  := cLacreArm    //Lacre Armador
                 ZEX_LACRE2  := cLacreSIF    //Lacre SIF
