@@ -14,6 +14,7 @@
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro - 02/06/2021 - Ajuste de layout e quebras de linha.
     @history Chamado 8465 - Leonardo P. Monteiro - 02/06/2021 - Correção na impressão dos lacres de inspeção.
+    @history Chamado 8465 - Leonardo P. Monteiro - 04/08/2021 - Correção de error.log no cancelamento do relatório.
 /*/
 #Define IMP_SPOOL  2
 #Define IMP_PDF    1
@@ -173,7 +174,9 @@ User Function ADEEC011R()
         msginfo("Operação cancelada pelo operador!")
     endif
 
-    TRB->(DbCloseArea())
+    if Select("TRB") > 0
+        TRB->(DbCloseArea())
+    endif
 
     IF FErase( "c:\relato\"+__CUSERID+"\"+cRelImp+".rel" ) == -1
     EndIf
