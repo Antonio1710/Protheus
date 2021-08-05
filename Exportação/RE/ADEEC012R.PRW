@@ -49,7 +49,8 @@ Static function fProcessa()
     Local lAdjustToLegacy 		:= .F. 
     Local lDisableSetup  		:= .T.
     Local cMensagem             := ""
-    
+    Private nTotReg             := 0
+
     Private cEOL				:= chr(13)+Chr(10)
     
     Private oFOARNO04	  		:= TFont():New("Arial",07,04,.T.,.F.,,,,,.F.) // Arial, Normal,  Tam. 05
@@ -101,7 +102,8 @@ Static function fProcessa()
     Private aColTmp             := {}
     Private aItens              := {}
     
-    Private dEmbData            := Stod("")
+    Private dDtICar            := Stod("")
+    Private dDtTCar            := Stod("")
     
     Private cEmbHIni            := ""
     Private cEmbHTer            := ""
@@ -115,6 +117,9 @@ Static function fProcessa()
     Private cLacArma            := ""
     Private cLacOfic            := ""
     Private cContain            := ""
+    Private cTermog             := ""
+    Private nTarCon             := 0
+    Private cMonQua             := ""
     Private nPageAct            := 0
     
     //cRelImp := __CUSERID+"_"+cNomRel+"_"+DtoS(dDatabase)+Replace(Time(),":","")
@@ -155,7 +160,7 @@ Static function fProcessa()
     nBottom := oPrinter:nVertSize()-060
     nLinha  := 0
     nLimite := nBottom*0.95
-
+    
     // Consulta o cabeçalho do processo de exportação.
     fGetQuery()
     
@@ -172,17 +177,21 @@ Static function fProcessa()
             fGetInfo()
 
             if cContain != ALLTRIM(TRB->EE7_CONTAI ) .or. cLacOfic != ALLTRIM(TRB->EE7_NLACR2 )
-                cMensagem := "Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL
+                cMensagem := "- Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL
                 
+                if Empty(TRB->C5_NOTA)
+                    cMensagem += "- Pedido de exportação ainda não faturado. A NFe/Serie não inclusa no relatório." +cEOL
+                endif
+
                 if cLacOfic != ALLTRIM(TRB->EE7_CONTAI )
-                    cMensagem += "Container: Exportação ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", cContain) +") " +cEOL
+                    cMensagem += "- Container: Exportação ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", cContain) +") " +cEOL
                 endif
                 
                 if cLacOfic != ALLTRIM(TRB->EE7_NLACR2 )
-                    cMensagem += "Lacre Oficial: Exportação ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", cLacOfic) +") " +cEOL
+                    cMensagem += "- Lacre Oficial: Exportação ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", cLacOfic) +") " +cEOL
                 endif
 
-                MsgInfo(cMensagem, "Alerta")
+                MsgAlert(cMensagem, "Alerta")
             endif
 
             //----------------------------------------------------------------------------------------
@@ -191,7 +200,6 @@ Static function fProcessa()
             //----------------------------------------------------------------------------------------
             aItens  := fSqlItem()
             nItens  := Len(aItens)
-            nTotPag := fTotPag(nItens)
             //-----------------------------------------------------
             // Impressão da sessão da Declaração de Exportação.
             //-----------------------------------------------------
@@ -362,20 +370,33 @@ Static function fProcessa()
 
 Return
 
-Static function fTotPag(nItens)
-    Local nRet := 0
-    
-    
-
-
-Return nRet
-
 /* Impressão da sessão da declaração da importação. */
 Static Function fImpDec()
     Local nColDis   := nRight-nCol
+    Local nAltura   := 0
+    Local cObserv   := ""
+    Local nObserv   := ""
+    Local cLin      := ""
+    LOCAL nLineLen  := 90 
+    Local nTabSize  := 3
+    Local lWrap     := .T.
+    
+    nAltura := 12
+    aPerc   := {nCol, nRight*0.6, nRight*0.8, nRight}
+
+    oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
+    oPrinter:Say(nLinha+08, aPerc[01]+010 , "Código formulário: FORM-VP-QUA-0419", oFOARNE09)
+    oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
+    oPrinter:Say(nLinha+08, aPerc[02]+010 , "Data da revisão: 07/07/2021", oFOARNE09)
+    oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
+    oPrinter:Say(nLinha+08, aPerc[03]+010 , "Revisão: 04", oFOARNE09)
+    nLinha += nAltura
 
     nLinha += 30
-
+    
+    oPrinter:Say( nLinha, (nRight+nCol)/2-080 , "DECLARAÇÃO DE EXPORTAÇÃO", oFOARNO15)
+    
+    nLinha += 030
     oPrinter:Say( nLinha, nCol+010  , "De: "+ AllTrim(TRB->ZE0_RAZAO), oFOARNO15)
     nLinha += 17
     oPrinter:Say( nLinha, nCol+010  , "Ao SIF "+ ALLTRIM(TRB->ZE0_REGIST) +" - Equipe de Auditores Fiscais Federais Agropecuários", oFOARNO15)
@@ -413,9 +434,22 @@ Static Function fImpDec()
     oPrinter:Say( nLinha, nCol+010  , "VOLUME LÍQUIDO: "+ Alltrim(Transform(aItens[nA][08] ,"@E 99,999,999.999")) +" kg", oFOARNE15)
 
     nLinha += 30
-    oPrinter:Say( nLinha, nCol+025  , "Declaramos a conformidade de nossos elementos de inspeção e programas de auto controle,", oFOARIT15)
-    nLinha += 17
-    oPrinter:Say( nLinha, nCol+010  , "sendo que a EMPRESA atende aos requisitos apresentados na Certificação Sanitária em questão.", oFOARIT15)
+    
+    cObserv := alltrim(aItens[nA][10])
+
+    if !Empty(cObserv)
+        nObserv := mlcount(cObserv,nLineLen, nTabSize, lWrap )
+    
+        For i := 1 to nObserv
+            cLin := alltrim(memoline(cObserv,90,i, nLineLen, lWrap))
+            oPrinter:Say( nLinha, nCol+iif(Upper(Left(cLin,1))==Left(cLin,1),020, 010), cLin, oFOARIT15)
+            nLinha += 17
+        Next i
+    endif
+    
+    //oPrinter:Say( nLinha, nCol+025  , "Declaramos a conformidade de nossos elementos de inspeção e programas de auto controle,", oFOARIT15)
+    //nLinha += 17
+    //oPrinter:Say( nLinha, nCol+010  , "sendo que a EMPRESA atende aos requisitos apresentados na Certificação Sanitária em questão.", oFOARIT15)
     //nLinha += 17
     //oPrinter:Say( nLinha, nCol+010  , "", oFOARIT15)
     
@@ -424,8 +458,9 @@ Static Function fImpDec()
     nLinha += 13
     oPrinter:Say( nLinha, nCol+010  , "desabilitasse para o destino pretendido.", oFOARNO15)
     
-    nLinha += 63
-    oPrinter:Line(nLinha, nCol+nColDis*0.30 ,nLinha,nCol+nColDis*0.68)
+    nLinha += 100
+    oPrinter:Line(nLinha, nCol+nColDis*0.05 ,nLinha,nCol+nColDis*0.49)
+    oPrinter:Line(nLinha, nCol+nColDis*0.51 ,nLinha,nCol+nColDis*0.95)
     //nLinha += 13
     //oPrinter:Say( nLinha, nCol+nColDis*0.35  , "Aline Andrades Zen da Silva", oFOARNO15)
     //nLinha += 13
@@ -458,15 +493,15 @@ Static Function fImpCabec(nModelo)
 
     oPrinter:SayBitmap(nLinha+04, aPerc[01]+018,"\imagens\Logo001.png", 44,33)
     oPrinter:Say( nLinha+023, aPerc[02]+(aPerc[03]-aPerc[02])/2-15 , "AD'ORO S/A", oFOARNE10)
-    if nModelo == 3
-        oPrinter:Say( nLinha+033, aPerc[02]+(aPerc[03]-aPerc[02])/2-030 , "Declaração para Exportação", oFOARNO09)
-    else
+    //if nModelo == 3
+        //oPrinter:Say( nLinha+033, aPerc[02]+(aPerc[03]-aPerc[02])/2-030 , "Declaração para Exportação", oFOARNO09)
+    //else
         oPrinter:Say( nLinha+033, aPerc[02]+(aPerc[03]-aPerc[02])/2-080 , "RELATÓRIO DE RESPALDO PARA CERTIFICAÇÃO", oFOARNO09)
-    endif    
+    //endif    
     oPrinter:Say( nLinha+010, aPerc[03]+015 , "Data de Emissão:", oFOARNE09)
     oPrinter:Say( nLinha+020, aPerc[03]+015 , cDataEmi, oFOARNO09)
     oPrinter:Say( nLinha+030, aPerc[03]+015 , "Página:", oFOARNE09)
-    oPrinter:Say( nLinha+040, aPerc[03]+015 , StrZero(oPrinter:nPagecount,3) , oFOARNO09)
+    oPrinter:Say( nLinha+040, aPerc[03]+015 , StrZero(oPrinter:nPagecount,3) +"/"+StrZero(nTotReg,3) , oFOARNO09)
 
     nLinha += nAltura
 
@@ -646,9 +681,10 @@ Static Function fModelo01()
         
         nAltura := 12
 
-        aPerc   := {nCol, nRight*0.3, nRight*0.6, nRight*0.8, nRight}
-        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
-        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
+        aPerc   := {nCol, nRight*0.2, nRight*0.4, nRight*0.6, nRight*0.8, nRight}
+
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[06])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[06] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "1. Informação de Embarque", oFOARNE09)
 
         nLinha += nAltura
@@ -658,7 +694,8 @@ Static Function fModelo01()
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
         oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
-        
+        oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
+
         oPrinter:Say(nLinha+007, aPerc[01]+002 , "Nº Invoice", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[01]+010 , TRB->EE7_PEDIDO , oFOARNO09)
 
@@ -669,8 +706,17 @@ Static Function fModelo01()
         oPrinter:Say(nLinha+017, aPerc[03]+010 , iif(TRB->EE7_XOPCTE=="S","Sim","Não") , oFOARNO09)
         
         oPrinter:Say(nLinha+007, aPerc[04]+002 , "Nº Termógrafo:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[04]+010 , IIF(EMPTY(TRB->EE7_XCODTE),"não se aplica",TRB->EE7_XCODTE) , oFOARNO09)
+        if Empty(cTermog) .and. Empty(TRB->EE7_XCODTE)
+            oPrinter:Say(nLinha+017, aPerc[04]+010 , "não se aplica" , oFOARNO09)
+        elseif !Empty(cTermog)
+            oPrinter:Say(nLinha+017, aPerc[04]+010 , cTermog , oFOARNO09)
+        else
+            oPrinter:Say(nLinha+017, aPerc[04]+010 , TRB->EE7_XCODTE, oFOARNO09)
+        endif
         
+        oPrinter:Say(nLinha+007, aPerc[05]+002 , "Temp. Padrão:", oFOARNE09)
+        oPrinter:Say(nLinha+017, aPerc[05]+010 , "-18 °C" , oFOARNO09)
+
         nLinha += nAltura
 
         //------------------------------------------
@@ -761,7 +807,14 @@ Static Function fModelo01()
 
         oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
         oPrinter:Say(nLinha+007, aPerc[04]+002 , "Tara:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[04]+010 , iif( TRB->EE7_XTARA == 0, "não se aplica", TRANSFORM(TRB->EE7_XTARA, "@E 999999")) , oFOARNO09)
+        
+        if nTarCon == 0 .and. TRB->EE7_XTARA == 0
+            oPrinter:Say(nLinha+017, aPerc[04]+010 , "não se aplica" , oFOARNO09)
+        elseif nTarCon > 0
+            oPrinter:Say(nLinha+017, aPerc[04]+010 , TRANSFORM( nTarCon, "@E 999999") , oFOARNO09)
+        else
+            oPrinter:Say(nLinha+017, aPerc[04]+010 , TRANSFORM(TRB->EE7_XTARA, "@E 999999") , oFOARNO09)
+        endif
 
         nLinha += nAltura
 
@@ -841,9 +894,9 @@ Static Function fModelo01()
         
         nAltura := 12
 
-        aPerc   := {nCol, nRight*0.334, nRight*0.667, nRight}
-        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[04])
-        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[04] }, oBrush )
+        aPerc   := {nCol, nRight*0.20, nRight*0.40, nRight*0.60, nRight}
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[05])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[05] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "8. Dados de Carregamento", oFOARNE09)
         
         nLinha += nAltura
@@ -851,15 +904,19 @@ Static Function fModelo01()
         nAltura := 20
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
         oPrinter:Say(nLinha+007, aPerc[01]+002 , "Início Carregamento:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[01]+010 , alltrim(dToc(dEmbData) +" "+ cEmbHIni) , oFOARNO09)
+        oPrinter:Say(nLinha+017, aPerc[01]+010 , alltrim(dToc(dDtICar) +" "+ cEmbHIni) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
         oPrinter:Say(nLinha+007, aPerc[02]+002 , "Hora término Carregamento:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(dToc(dEmbData) +" "+ cEmbHTer) , oFOARNO09)
+        oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(dToc(dDtTCar) +" "+ cEmbHTer) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         oPrinter:Say(nLinha+007, aPerc[03]+002 , "Data/Hora lacre:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[03]+010 , ALLTRIM(dToc(dLacData) +" "+ cLacHora) , oFOARNO09)
+
+        oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
+        oPrinter:Say(nLinha+007, aPerc[04]+002 , "Monitor da Qualidade:", oFOARNE09)
+        oPrinter:Say(nLinha+017, aPerc[04]+010 , ALLTRIM(cMonQua) , oFOARNO09)
 
         nLinha += nAltura
 
@@ -941,12 +998,20 @@ return
 Static function fImpImg()
     Local nColDis   := nRight-nCol
     Local nWeid     := 0
+    Local cLabel    := ""
 
     aPerc   := {nCol, round(nCol+nColDis*0.025,2), round((nColDis)*0.95,0), nRight}
 
     nLinha += 010
 
-    oPrinter:Say(nLinha+002, aPerc[02]+002 , aItens[nA][04] , oFOARNE07)
+    if aItens[nA][06] == "LabelCamera"
+        cLabel := "Etiqueta do produto - " + aItens[nA][04]
+    elseif aItens[nA][06] == "ThermographCamera"
+        cLabel := "Temperatura - " + aItens[nA][04]
+    else
+        cLabel := aItens[nA][04]
+    endif
+    oPrinter:Say(nLinha+002, aPerc[02]+002 , cLabel , oFOARNE07)
     
     nLinha += 010
     
@@ -1225,12 +1290,20 @@ return
 Static function fSqlItem()
     Local cQuery    := ""
     Local aRet      := {}
+    Local nA        := 0
     Local nCo1      := 1
     Local nCo2      := 1
     Local cEOL      := Chr(13)+chr(10)
     Local nTotCa    := 0
     Local nTotVe    := 0
-
+    Local nReg01    := 0
+    Local nReg02    := 0
+    Local nReg03    := 0
+    Local nReg04    := 0
+    Local nReg05    := 0
+    Local nReg06    := 0
+    Local nReg07    := 0
+ 
     /* 01/02/03-Registros dos Itens de exportação e rastreabilidade do APP.
         01 - Itens do pedido de exportação.
         02 - Rastreabilidade por lote.
@@ -1263,8 +1336,8 @@ Static function fSqlItem()
                     QITEM->EE8_PSLQTO,;
                     QITEM->EE8_PSBRTO;
         })
-
-
+        nReg01 +=1
+        
         /* Dados do embarque resumido */
         cQuery := " SELECT ZEX_FILIAL, ZEX_NUMERO, ZEX_DTFABR, ZEX_DTVALD, ZEX_TURNO, SUM(ZEX_QUANTI) QTD_VENDA, SUM(ZEX_QTDSUM) QTD_CAIXA "+cEOL
         cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+cEOL
@@ -1297,6 +1370,7 @@ Static function fSqlItem()
                 QZEX->QTD_CAIXA,;
                 QZEX->QTD_VENDA;
             })
+            nReg02 +=1
 
             nTotCa  += QZEX->QTD_CAIXA
             nTotVe  += QZEX->QTD_VENDA
@@ -1311,6 +1385,7 @@ Static function fSqlItem()
                 nTotCa,;
                 ntotVe;
             })
+        nReg03 +=1
 
         QZEX->(DbcloseArea())
         
@@ -1319,7 +1394,7 @@ Static function fSqlItem()
         cQuery := " SELECT ZGB_FILIAL, ZGB_NUMERO, ZGB_DTFABR, ZGB_DTVALD, ZGB_TURNO, ZGB_IDENTI, ZGB_QUANTI QTD_VENDA, ZGB_QTDSUM QTD_CAIXA "+cEOL
         cQuery += " FROM "+ RetSqlName("ZGB") +" ZGB "+cEOL
         cQuery += " WHERE ZGB.D_E_L_E_T_='' AND ZGB.ZGB_FILIAL='"+ xfilial("ZGB") +"' AND ZGB.ZGB_NUMERO='"+ QITEM->EE7_PEDFAT +"' AND ZGB.ZGB_PRODUT='"+ Alltrim(QITEM->EE8_COD_I) +"' "+cEOL
-        cQuery += " ORDER BY ZGB_FILIAL, ZGB_NUMERO,ZGB_IDENTI, ZGB_TURNO; "
+        cQuery += " ORDER BY ZGB_FILIAL, ZGB_NUMERO, ZGB_DTFABR, ZGB_DTVALD, ZGB_TURNO, ZGB_IDENTI; "
 
         TCQUERY cQuery ALIAS "QZGB" NEW
         
@@ -1345,6 +1420,7 @@ Static function fSqlItem()
                 QZGB->QTD_CAIXA,;
                 QZGB->QTD_VENDA;
             })
+            nReg06 +=1
 
             nTotCa  += QZGB->QTD_CAIXA
             nTotVe  += QZGB->QTD_VENDA
@@ -1359,6 +1435,7 @@ Static function fSqlItem()
                 nTotCa,;
                 ntotVe;
             })
+        nReg07 +=1
 
         QZGB->(DbcloseArea())
 
@@ -1386,9 +1463,11 @@ Static function fSqlItem()
                     ALLTRIM(QZEY->ZEY_ID),;
                     ALLTRIM(QZEY->ZEY_DESCRI),;
                     ALLTRIM(QZEY->ZEY_ARQUIV),;
+                    ALLTRIM(QZEY->ZEY_COMPON),;
                     0,;
                     0;
         })
+        nReg04 +=1
 
         nCo3 += 1
         QZEY->(Dbskip())
@@ -1398,9 +1477,11 @@ Static function fSqlItem()
 
     /* 05-Registros para a declaração de exportação. */
 
-    cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, C5.C5_NOTA, C5.C5_SERIE, EE8.EE8_COD_I, B1.B1_DESC, EE8.EE8_QTDEM1, EE8.EE8_PSLQTO, EE8.EE8_PSBRTO, LTRIM(RTRIM(ISNULL(ZE1.ZE1_DENOMI,'')))+' '+ LTRIM(RTRIM(ISNULL(ZED.ZED_DESCAT,'')))	PGA_DESCRI, ZE1_REGIST "+cEOL
-	cQuery += " FROM "+ RetSqlName("EE7") +" (nolock) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8  ON EE7.D_E_L_E_T_='' AND EE8.D_E_L_E_T_='' AND EE7.EE7_PEDIDO=EE8.EE8_PEDIDO "+cEOL
+    cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, C5.C5_NOTA, C5.C5_SERIE, EE8.EE8_COD_I, B1.B1_DESC, EE8.EE8_QTDEM1, EE8.EE8_PSLQTO, EE8.EE8_PSBRTO, LTRIM(RTRIM(ISNULL(ZE1.ZE1_DENOMI,'')))+' '+ LTRIM(RTRIM(ISNULL(ZED.ZED_DESCAT,'')))	PGA_DESCRI, ZE1_REGIST, "+cEOL
+	cQuery += " isnull(CAST(CAST(ZCO_OBSDEC AS varbinary(4000)) AS varchar(4000)),'') ZCO_OBSDEC "
+    cQuery += " FROM "+ RetSqlName("EE7") +" (nolock) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8  ON EE7.D_E_L_E_T_='' AND EE8.D_E_L_E_T_='' AND EE7.EE7_PEDIDO=EE8.EE8_PEDIDO "+cEOL
  	cQuery += " 				 INNER JOIN "+ RetSqlName("SC5") +" (NOLOCK) C5  ON C5.D_E_L_E_T_=''  AND C5.C5_FILIAL='"+ XFILIAL("SC5") +"' AND C5.C5_NUM=EE7.EE7_PEDFAT  "+cEOL
+    cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZCO") +" (NOLOCK) ZCO ON ZCO.D_E_L_E_T_=''  AND ZCO.ZCO_CODIGO=EE7.EE7_XGRPIN  "+cEOL
     cQuery += " 				 LEFT  JOIN "+ RetSqlName("SB1") +" (NOLOCK) B1  ON B1.D_E_L_E_T_=''  AND B1.B1_COD=EE8.EE8_COD_I  "+cEOL
  	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZE1") +" (NOLOCK) ZE1 ON ZE1.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZE1.ZE1_REGIST "+cEOL
 	cQuery += " 				 LEFT  JOIN "+ RetSqlName("ZED") +" (NOLOCK) ZED ON ZED.D_E_L_E_T_='' AND B1.B1_XPGAMER=ZED.ZED_REGZE1 AND B1.B1_XPGACAT =ZED.ZED_CODCAT
@@ -1425,8 +1506,10 @@ Static function fSqlItem()
                     alltrim(QITDE->PGA_DESCRI),;
                     QITDE->EE8_QTDEM1,;
                     QITDE->EE8_PSLQTO,;
-                    QITDE->EE8_PSBRTO;
+                    QITDE->EE8_PSBRTO,;
+                    QITDE->ZCO_OBSDEC;
         })
+        nReg05 +=1
 
         nCo1 += 1
         QITDE->(Dbskip())
@@ -1434,7 +1517,41 @@ Static function fSqlItem()
 
     QITDE->(DbcloseArea())
 
+    nTotReg := fGetTot(nReg01, nReg02, nReg03, nReg04, nReg05, nReg06, nReg07)
+
 return aRet
+
+Static function fGetTot(nReg01, nReg02, nReg03, nReg04, nReg05, nReg06, nReg07)
+    Local nRet      := 0
+    Local nTmp      := 0
+    Local nRegPg    := 0
+
+    //Itens da exportação.
+    nRegPg := 28
+    nTmp := (nReg01+14)/nRegPg
+    nRet += int(nTmp)+iif( (nTmp)-int(nTmp) > 0,1,0)
+
+    //detalhes do carregamento.
+    nRegPg := 32
+    nTmp := (nReg02+nReg03)/nRegPg
+    nRet += int(nTmp)+iif( (nTmp)-int(nTmp) > 0,1,0)
+
+    //Imagens.
+    nRegPg := 2
+    nTmp := (nReg04)/nRegPg
+    nRet += int(nTmp)+iif( (nTmp)-int(nTmp) > 0,1,0)
+
+    //Declaração de exportação.
+    nRegPg := 1
+    nTmp := (nReg05)/nRegPg
+    nRet += int(nTmp)+iif( (nTmp)-int(nTmp) > 0,1,0)
+
+    //detalhes do carregamento.
+    nRegPg := 57
+    nTmp := (nReg06+nReg07 - nReg01*2)/nRegPg
+    nRet += int(nTmp)+iif( (nTmp)-int(nTmp) > 0,1,0)
+    
+return nRet
 
 Static function fTemper(cPedVen, cProdut, cDtFab, cDtVld)
     Local cQuery    := ""
@@ -1468,23 +1585,26 @@ Static function fGetInfo()
     Local cQuery := ""
     Local cEOL      := Chr(13)+chr(10)
 
-    cQuery := " SELECT DISTINCT ZEX_DTCARG, ZEX_HRICAR, ZEX_HRFCAR, convert(varchar, getdate(),112) ZEX_DTLACR,left(convert(time, getdate()),8) ZEX_HRLACR, "+ cEOL
-	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, "+ cEOL
+    cQuery := " SELECT DISTINCT ZEX_DTICAR, ZEX_DTTCAR, ZEX_HRICAR, ZEX_HRTCAR, ZEX_MONQUA, convert(varchar, getdate(),112) ZEX_DTLACR,left(convert(time, getdate()),8) ZEX_HRLACR, "+ cEOL
+	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, "+ cEOL
 	cQuery += "  ZEX_LIMPIN, ZEX_LIMPEX, ZEX_TEMPBA, ZEX_BORRAC, ZEX_EQUIPF "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+ cEOL
     cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xFilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ TRB->C5_NUM +"'; "
 
     Tcquery cQuery ALIAS "QINF" NEW
 
-    TCSETFIELD("QINF","ZEX_DTCARG"		,"D",08,00)
+    TCSETFIELD("QINF","ZEX_DTICAR"		,"D",08,00)
+    TCSETFIELD("QINF","ZEX_DTTCAR"		,"D",08,00)
     TCSETFIELD("QINF","ZEX_DTLACR"		,"D",08,00)
     
     if QINF->(!EOF())
-        dEmbData    := QINF->ZEX_DTCARG
+        dDtICar     := QINF->ZEX_DTICAR
+        dDtTCar     := QINF->ZEX_DTTCAR
         cEmbHIni    := QINF->ZEX_HRICAR
-        cEmbHTer    := QINF->ZEX_HRFCAR
-        dLacData    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_DTCARG, QINF->ZEX_DTLACR)
-        cLacHora    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_HRFCAR, QINF->ZEX_HRLACR)
+        cEmbHTer    := QINF->ZEX_HRTCAR
+        cMonQua     := QINF->ZEX_MONQUA
+        dLacData    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_DTICAR, QINF->ZEX_DTLACR)
+        cLacHora    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_HRTCAR, QINF->ZEX_HRLACR)
         cLimpInt    := IIF(QINF->ZEX_LIMPIN == "S","Conforme","Não conforme")
         cLimpExt    := IIF(QINF->ZEX_LIMPEX == "S","Conforme","Não conforme")
         cTempBau    := IIF(QINF->ZEX_TEMPBA == "S","Conforme","Não conforme")
@@ -1494,6 +1614,9 @@ Static function fGetInfo()
         cLacArma    := Alltrim(QINF->ZEX_LACRE1)
         cLacOfic    := Alltrim(QINF->ZEX_LACRE2)
         cContain    := Alltrim(QINF->ZEX_CONTAI)
+        cTermog     := Alltrim(QINF->ZEX_TERMOG)
+        nTarCon     := QINF->ZEX_TARCON
+
 
     endif
 

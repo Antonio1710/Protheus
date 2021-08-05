@@ -16,6 +16,8 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
     Local cErro         := ""
     Local cToken        := ""
     Local cResponse     := ""
+    Local cMens         := ""
+    Private cEOL        := Chr(13)+chr(10)
     //Default dParData    := Date()  
     Default dParData    := Stod("20210615")
     Default nReproc     := 2
@@ -26,8 +28,11 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
         //
         If login(@cErro, @cToken) //Realiza login.
             If consulta(@cErro, cToken, @cResponse, dParData) //Executa consulta.
-                procRes(@cErro, cResponse, cToken, dParData, nReproc) //Processa o resultado da consulta.
-
+                procRes(@cErro, @cMens, cResponse, cToken, dParData, nReproc) //Processa o resultado da consulta.
+                
+                if !Empty(cMens)
+                    MsgInfo("Eventos de processamento: "+ cMens, "Término da rotina")
+                endif
             EndIf
 
         EndIf
@@ -168,7 +173,7 @@ Return .T.
     @since 31/05/2021
     @version 01
     /*/
-Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
+Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
 
     //Variáveis.
     Local aArea      := GetArea()
@@ -189,6 +194,7 @@ Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
     Local aAnexos    := {}
     Local oAnexo     := ""
     Local cUrlAnx    := ""
+    Local cCompon    := ""
     Local cDescAnx   := ""
     Local cPalId     := ""
     Local nAux4      := 1
@@ -208,9 +214,6 @@ Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
     Local cCarga     := ""
     Local cLacreSIF  := ""
     Local cLacreArm  := ""
-    Local cDtCarreg  := ""
-    Local cHrIniCar  := ""
-    Local cHrTerCar  := ""
     Local cLacData   := ""
     Local cLacHora   := ""
     Local cLimpInt   := ""
@@ -218,7 +221,16 @@ Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
     Local cTempBau   := ""
     Local cBorrach   := ""
     Local cEquipFr   := ""
-
+    Local dDtICar    := Stod("")
+    Local dDtTCar    := Stod("")
+    Local cHrICar    := ""
+    Local cHrTCar    := ""
+    Local cDtIQld    := ""
+    Local cHrIQld    := ""
+    Local cHrTQld    := ""
+    Local cMonQua    := ""
+    Local cTaraCo    := ""
+    Local cTermog    := ""
 
     //Converte a string json em objeto.
     oJson := JSONObject():New()
@@ -237,136 +249,180 @@ Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
     For nAux := 1 To Len(oJson)
 
         //
-        cInspecao := oJson[nAux] //Objeto inspeção.
-        cInspId   := cInspecao["_id"] // Id da Inspeção.
-        aElementos:= cInspecao["data"]["content"]["elements"] //Elementos inspecionados.
+        cInspecao   := oJson[nAux] //Objeto inspeção.
+        cInspId     := cInspecao["_id"] // Id da Inspeção.
+        cMonQua     := cInspecao["inspectionHeaderPerformed"]["userRealName"]
+        aElementos  := cInspecao["data"]["content"]["elements"] //Elementos inspecionados.
+
+        
+        cDtRot      := ""
+        cRot        := ""
+        cPdVend     := ""
+        cPlaca      := ""
+        cCarga      := ""
+        cConte      := ""
+        cLacreSIF   := ""
+        cLacreArm   := ""
+        cDtIQld     := ""
+        cHrIQld     := ""
+        cHrTQld     := ""
+        cLacData    := ""
+        cLacHora    := ""
+        cLimpInt    := ""
+        cLimpExt    := ""
+        cDesc       := ""
+        cTempBau    := ""
+        cBorrach    := ""
+        cEquipFr    := ""
+        cTaraCo     := ""
+        cTermog     := ""
+    
         
         if fProcessa(cInspId, nReproc)
-            //
-            For nAux2 := 1 To Len(aElementos)
-                
-                //
-                oElemento := aElementos[nAux2]
-                
-                //
-                If ! oElemento:hasProperty("inspection")
-                    Loop
-
-                EndIf
-                
-                //
-                cDesc  := Alltrim(cValToChar(oElemento["value"])) //Descrição do elemento inspecionado.
-                cResul := Alltrim(cValToChar(oElemento["inspection"]["value"])) //Resultado da inspeção.
-
-                //
-                If cDesc == "Data do roteiro"
-                    cDtRot := cResul
-                elseIf cDesc == "Roteiro"
-                    cRot   := cResul
-                ElseIf cDesc == "Pedido"
-                    cPdVend := cResul
-                ElseIf cDesc == "Placa"
-                    cPlaca := cResul
-                ElseIf cDesc == "Carga"
-                    cCarga := cResul
-                ElseIf cDesc == "Conteiner"
-                    cConte := cResul
-                ElseIf cDesc == "NÂº Lacre Oficial:"
-                    cLacreSIF   := cResul
-                ElseIf cDesc == "NÂº Lacre do Armador:"
-                    cLacreArm   := cResul
-                ElseIf cDesc == "Data do carregamento"
-                    cDtCarreg := cResul
-                ElseIf cDesc == "Hora de inÃ­cio do carregamento"
-                    cHrIniCar   := cResul
-                ElseIf cDesc == "Hora de tÃ©rmino do carregamento"
-                    cHrTerCar   := cResul
-                // Data Lacre - Pendente.
-                ElseIf cDesc == "cLacData"
-                    cLacData    := cResul
-                // Hora Lacre - Pendente.
-                ElseIf cDesc == "cLacHora"
-                    cLacHora  := cResul
-                ElseIf cDesc == "Limpeza interna do baÃº"
-                    cLimpInt    := iif(alltrim(cResul)=="c","S","N")
-                ElseIf cDesc == "Limpeza externa do baÃº"
-                    cLimpExt  := iif(alltrim(cResul)=="c","S","N")
-                ElseIf cDesc == "Tempera 0 â„ƒ"
-                    cDesc       := "Temperatura"
-                    cTempBau    := iif(alltrim(cResul)=="c","S","N")
-                ElseIf cDesc == "Borracha de vedaÃ§Ã£o das portas"
-                    cBorrach    := iif(alltrim(cResul)=="c","S","N")
-                ElseIf cDesc == "Equipamento de frio adequado"
-                    cEquipFr  := iif(alltrim(cResul)=="c","S","N")
-                EndIf
-
-                aAnexos := oElemento["inspection"]["attachements"] //Anexos.
-
-                //Donwload de anexos.
-                aImagens := {}
-                For nAux3 := 1 To Len(aAnexos)
-                    oAnexo := aAnexos[nAux3]
             
-                    //
-                    If oAnexo:hasProperty("url")
-                        cUrlAnx := oAnexo["url"]
-                        cDescAnx:= StrTran(StrTran(cDesc,Chr(13)," "),Chr(10)," ")
-                        downImg(cUrlAnx, cToken, dParData, @aImagens, cInspId, cDescAnx)
-                    EndIf
-
-                Next nAux3
+            if fStEData(aElementos, @cPdVend, @cCarga, @dDtICar, @dDtTCar, @cHrICar, @cHrTCar)
                 
                 //
-                If ! oElemento["inspection"]:hasProperty("extraData")
-                    //Id da inspeção, descrição da foto, caminho relativo.
-                    fGrvImg(cPdVend, "", "", "", aImagens)
-                            
-                    Loop
-
-                else
-
-                    If !oElemento["inspection"]['extraData']:hasProperty("pallet")
+                For nAux2 := 1 To Len(aElementos)
+                    
+                    //
+                    oElemento := aElementos[nAux2]
+                    
+                    //
+                    If ! oElemento:hasProperty("inspection")
                         Loop
 
-                    endif
+                    EndIf
+                    
+                        //
+                        cDesc  := Alltrim(cValToChar(oElemento["value"])) //Descrição do elemento inspecionado.
+                        cResul := Alltrim(cValToChar(oElemento["inspection"]["value"])) //Resultado da inspeção.
 
-                    aProdutos:= oElemento["inspection"]['extraData']['products']
-                    cTemp := cResul
+                        //
+                        If cDesc == "Data do roteiro"
+                            cDtRot := cResul
+                        elseIf cDesc == "Roteiro"
+                            cRot   := cResul
+                        ElseIf cDesc == "Pedido"
+                            cPdVend := cResul
+                        ElseIf cDesc == "Placa"
+                            cPlaca := cResul
+                        ElseIf cDesc == "Carga"
+                            cCarga := cResul
+                        ElseIf cDesc == "Conteiner"
+                            cConte := cResul
+                        ElseIf cDesc == "NÂº Lacre Oficial:"
+                            cLacreSIF   := cResul
+                        ElseIf cDesc == "NÂº Lacre do Armador:"
+                            cLacreArm   := cResul
+                        ElseIf cDesc == "Data do carregamento" .OR. cDesc == "Data da inspeÃ§Ã£o"
+                            cDtIQld := cResul
+                        ElseIf cDesc == "Hora de inÃ­cio do carregamento" .OR. cDesc == "Hora de inÃ­cio da inspeÃ§Ã£o"
+                            cHrIQld   := cResul
+                        ElseIf cDesc == "Hora de tÃ©rmino do carregamento" .OR. cDesc == "Hora de tÃ©rmino da inspeÃ§Ã£o"
+                            cHrTQld   := cResul
+                        // Data Lacre - Pendente.
+                        ElseIf cDesc == "cLacData"
+                            cLacData    := cResul
+                        // Hora Lacre - Pendente.
+                        ElseIf cDesc == "cLacHora"
+                            cLacHora  := cResul
+                        ElseIf cDesc == "Limpeza interna do baÃº"
+                            cLimpInt    := iif(alltrim(cResul)=="c","S","N")
+                        ElseIf cDesc == "Limpeza externa do baÃº"
+                            cLimpExt  := iif(alltrim(cResul)=="c","S","N")
+                        ElseIf cDesc == "Tempera 0 â„ƒ"
+                            cDesc       := "Temperatura"
+                            cTempBau    := iif(alltrim(cResul)=="c","S","N")
+                        ElseIf cDesc == "Borracha de vedaÃ§Ã£o das portas"
+                            cBorrach    := iif(alltrim(cResul)=="c","S","N")
+                        ElseIf cDesc == "Equipamento de frio adequado"
+                            cEquipFr  := iif(alltrim(cResul)=="c","S","N")
+                        elseif cDesc == "Tara do Conteiner"
+                            cTaraCo := cResul
+                        elseif cDesc == "NÂº TermÃ³grafo:"
+                            cTermog := cResul
+                        EndIf
 
-                    //
-                    Begin Transaction
+                        aAnexos := oElemento["inspection"]["attachements"] //Anexos.
 
-                        For nAux4 := 1 To Len(aProdutos)
-                            oProduto := aProdutos[nAux4]
+                        //Donwload de anexos.
+                        aImagens := {}
+                        For nAux3 := 1 To Len(aAnexos)
+                            oAnexo := aAnexos[nAux3]
+                    
+                            //
+                            If oAnexo:hasProperty("url")
+                                cUrlAnx := oAnexo["url"]
+                                cCompon := oAnexo["component"]
+                                cDescAnx:= StrTran(StrTran(cDesc,Chr(13)," "),Chr(10)," ")
+                                downImg(cUrlAnx, cToken, dParData, @aImagens, cInspId, cDescAnx, cCompon)
+                            EndIf
 
-                            cPalId  := oProduto["codigoPalete"]
-                            cProd   := oProduto["produto"]
-                            cProdEdt:= oProduto["produtoEd"]
+                        Next nAux3
+                        
+                        //
+                        If ! oElemento["inspection"]:hasProperty("extraData")
+                            //Id da inspeção, descrição da foto, caminho relativo.
+                            fGrvImg(cPdVend, "", "", "", aImagens)
+                                    
+                            Loop
 
-                            nTotCx  := Val(cValToChar(oProduto["TotCx"]))
-                            nTotKg  := Val(cValToChar(oProduto["TotKgS"]))
-                            nTotKgR := Val(cValToChar(oProduto["TotKg"]))
-                            nTotTara:= Val(cValToChar(oProduto["TotTara"]))
+                        else
 
-                            cTurno  := oProduto["turno"]
-                            cDtFab  := oProduto["dataFabricacao"]
-                            cDtVal  := oProduto["dataValidade"]
-                            
-                            grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
-                                    nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, cDtCarreg, cHrIniCar, cHrTerCar,;
-                                    cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, aImagens)
+                            If !oElemento["inspection"]['extraData']:hasProperty("pallet")
+                                Loop
 
-                        Next nAux4
+                            endif
 
-                    End Transaction
-                
-                endif
+                            aProdutos:= oElemento["inspection"]['extraData']['products']
+                            cTemp := cResul
 
-            Next nAux2
+                            //
+                            Begin Transaction
+
+                                For nAux4 := 1 To Len(aProdutos)
+                                    oProduto := aProdutos[nAux4]
+
+                                    cPalId  := oProduto["codigoPalete"]
+                                    cProd   := oProduto["produto"]
+                                    cProdEdt:= oProduto["produtoEd"]
+
+                                    nTotCx  := Val(cValToChar(oProduto["TotCx"]))
+                                    nTotKg  := Val(cValToChar(oProduto["TotKgS"]))
+                                    nTotKgR := Val(cValToChar(oProduto["TotKg"]))
+                                    nTotTara:= Val(cValToChar(oProduto["TotTara"]))
+
+                                    cTurno  := oProduto["turno"]
+                                    cDtFab  := oProduto["dataFabricacao"]
+                                    cDtVal  := oProduto["dataValidade"]
+                                    
+                                    grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
+                                            nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, dDtICar, dDtTCar, cHrICar, cHrTCar,;
+                                            cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cDtIQld,cHrIQld, cHrTQld,;
+                                            cTaraCo, cTermog, aImagens)
+                                    
+                                Next nAux4
+                                
+                            End Transaction
+
+                        endif
+                    
+                Next nAux2
+
+                cMens += cEOL+" -(Importado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Inspeção importada."
+
+            else
+                u_GrLogZBE(Date(),TIME(),cUserName,"Inspeção da Qualidade Pedido de Venda "+ cPdVend +", ID "+ cInspId +" ","SIGAEEC","ADQUA002",;
+			        "procRes - Inspeção da qualidade do Pedido de Venda "+ cPdVend +", ID  "+ cInspId +;
+                    ". Inspeção não importada por a carga estar em aberto no eData "+ cCarga +". ",ComputerName(),LogUserName())
+                cMens += cEOL+" -(Rejeitado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Embarque em aberto."
+            endif
         else 
             u_GrLogZBE(Date(),TIME(),cUserName,"Inspeção da Qualidade Pedido de Venda "+ cPdVend +", ID "+ cInspId +" ","SIGAEEC","ADQUA002",;
 			        "procRes - Inspeção da qualidade do Pedido de Venda "+ cPdVend +", ID  "+ cInspId +;
                     ". Opção selecionada pelo usuário não permite a atualização dos registros gravados. ",ComputerName(),LogUserName())
+            cMens += cEOL+" -(Ignorado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Inspeção já importada."
         endif
     Next nAux
 
@@ -376,6 +432,76 @@ Static Function procRes(cErro, cResponse, cToken, dParData, nReproc)
     RestArea(aArea)
 
 Return Nil
+
+Static Function fStEData(aElementos, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar, cHrTCar)
+    Local lRet          := .F.
+    Local nAuxZ         := 0
+    Local nElementos    := Len(aElementos)
+
+    cPdVend := ""
+    cCarga  := ""
+    dDtICar := Stod("")
+    dDtTCar := sTod("")
+    cHrICar := ""
+    cHrTCar := ""
+
+    For nAuxZ := 1 To nElementos
+                
+        //
+        oElemento := aElementos[nAuxZ]
+        
+        //
+        If !oElemento:hasProperty("inspection")
+            Loop
+
+        EndIf
+        
+        cDesc  := Alltrim(cValToChar(oElemento["value"])) //Descrição do elemento inspecionado.
+        cResul := Alltrim(cValToChar(oElemento["inspection"]["value"])) //Resultado da inspeção.
+
+        //
+        If cDesc == "Pedido"
+            cPdVend := cResul
+        ElseIf cDesc == "Carga"
+            cCarga := cResul
+        endif
+
+        if !Empty(cPdVend) .AND. !Empty(cCarga)
+            nAuxZ := nElementos+1
+        endif
+        
+    next nAuxZ
+
+    if !Empty(cPdVend) .AND. !Empty(cCarga)
+        BeginSQL Alias "QSTED"
+            %NoPARSER%
+            SELECT TOP 1 EMPRESA, 
+                         FILIAL, 
+                         ID_CARGEXPE, 
+                         FL_STATCARGEXPE,
+                         DT_FECHCARG,
+                         HR_FECHCARG,
+                         DT_ABERTCARG,
+                         HR_ABERTCARG 
+            FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_02] 
+            WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE='FE' 
+                                
+        EndSQl
+
+        if QSTED->(!EOF())
+            dDtICar := cTod(QSTED->DT_ABERTCARG)
+            dDtTCar := cTod(QSTED->DT_FECHCARG)
+            cHrICar := QSTED->HR_ABERTCARG
+            cHrTCar := QSTED->HR_FECHCARG
+
+            lRet := .T.
+        endif
+
+        QSTED->(Dbclosearea())
+    endif
+return lRet
+
+
 /*/{Protheus.doc} downImg
     Faz download de imagens.
     @type  Static Function
@@ -383,7 +509,7 @@ Return Nil
     @since 31/05/2021
     @version 01
     /*/
-Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx)
+Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx, cCompon)
     
     //Variáveis.
     Local aArea     := GetArea()
@@ -420,7 +546,7 @@ Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx)
 
     // Transfere o arquivo redimensionado para a pasta do servidor e grava na array que irá registrar na tabela do BD.
     if CpyT2S(cPastaLoc+cArq, cPasta, .F., .F. )
-        Aadd(aImagens,{cInspId, cPasta + cArq, cDescAnx})
+        Aadd(aImagens,{cInspId, cPasta + cArq, cDescAnx, cCompon})
     endif
     
     RestArea(aArea)
@@ -466,9 +592,10 @@ Return lRet
     @since 31/05/2021
     @version 01
     /*/
-Static Function grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
-                         nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, cDtCarreg,cHrIniCar, cHrTerCar,;
-                         cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, aImagens)
+Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
+                        nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, dDtICar, dDtTCar, cHrICar, cHrTCar,;
+                        cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cDtIQld,cHrIQld, cHrTQld,;
+                        cTaraCo, cTermog, aImagens)
     
     //Nova tabela.
     varinfo('aImagens',aImagens)  //aImagens. //Id da inspeção, descrição da foto, caminho relativo.
@@ -510,9 +637,10 @@ Static Function grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte,
                 ZEX_TEMPER  := Val(cTemp)   //Temperatura.
                 ZEX_LACRE1  := cLacreArm    //Lacre Armador
                 ZEX_LACRE2  := cLacreSIF    //Lacre SIF
-                ZEX_DTCARG  := Ctod(cDtCarreg)    //Data de carregamento.
-                ZEX_HRICAR  := cHrIniCar    //Hora de início de carregamento.
-                ZEX_HRFCAR  := cHrTerCar    //Hora de término do carregamento.
+                ZEX_DTICAR  := dDtICar      //Data de início carregamento.
+                ZEX_DTTCAR  := dDtTCar      //Data de término carregamento.
+                ZEX_HRICAR  := cHrICar      //Hora de início de carregamento.
+                ZEX_HRTCAR  := cHrTCar      //Hora de término do carregamento.
                 ZEX_DTLACR  := Stod(cLacData) //Data do lacre.
                 ZEX_HRLACR  := cLacHora     //Hora do lacre.
                 ZEX_LIMPIN  := cLimpInt     //Limpeza interna.
@@ -520,7 +648,12 @@ Static Function grvDados(cInspId, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte,
                 ZEX_TEMPBA  := cTempBau     //Temperatura do baú.
                 ZEX_BORRAC  := cBorrach     //Borracha de vedação.
                 ZEX_EQUIPF  := cEquipFr     //Equipamento de frio conforme.
-
+                ZEX_DTIQLD  := Stod(cDtIQld)      //Data de início da qualidade.
+                ZEX_HRIQLD  := cHrIQld      //Hora de início da qualidade.
+                ZEX_HRTQLD  := cHrTQld      //Hora de término da qualidade.
+                ZEX_MONQUA  := cMonQua
+                ZEX_TARCON  := Val(cTaraCo)
+                ZEX_TERMOG  := cTermog
                 ZEX->(Msunlock())
             endif
 
@@ -617,6 +750,7 @@ Static Function fGrvImg(cPdVend, cPalId, cTurno, cProd, aImagens)
                     ZEY_PRODUT  := cProd
                     ZEY_ARQUIV  := aImagens[nA][02]
                     ZEY_DESCRI  := cDescri
+                    ZEY_COMPON  := aImagens[nA][04]
                     ZEY->(Msunlock())
                 endif
         
