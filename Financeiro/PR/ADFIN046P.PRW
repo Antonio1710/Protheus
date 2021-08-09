@@ -37,6 +37,7 @@
 	@history Ticket 11556   - Fernando Maci - 27/04/2021 - Processo Trabalhista - Títulos
 	@history Ticket 15609   - Abel Babini   - 15/06/2021 - Ajuste na validação de datas de vencimento
 	@history Ticket 16838   - Fernando Maci - 13/07/2021 - Título bloqueado - Alçada Central de aprovação
+	@history Ticket 17988 	- ADRIANO SAVOINE 06/08/2021 - Receber Workflows de Rio Claro.
 /*/
 User Function ADFIN046P()
 
@@ -2227,6 +2228,16 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 										cMail  := GetMV("MV_#AF8MAI",,"daiane.moreira@adoro.com.br")
 									EndIf
 								EndIf
+
+								//Ticket 17988 - 06/08/2021 - ADRIANO SAVOINE - INI
+								If Left(cCodPrj,2) == "04" // Projetos RC
+									If !Empty(cMail)
+										cMail  += ";" + GetMV("MV_#AF8MAI",,"daiane.moreira@adoro.com.br")
+									Else
+										cMail  := GetMV("MV_#AF8MAI",,"daiane.moreira@adoro.com.br")
+									EndIf
+								EndIf
+								//Ticket 17988 - 06/08/2021 - ADRIANO SAVOINE - FIM
 								
 								aAdd( aDadWF, { cCodPrj, cRevPrj, AllTrim( __cUserID ), AllTrim(UsrRetName(__cUserID)), msDate(), Time(), "[APROVADO] " + cDscObs, cMail, AllTrim(AF8->AF8_DESCRI), AF8->AF8_XUSER } )
 								u_ADPRJ004P(aDadWF, "APROVACAO") //ALTERACAO WILLIAM COSTA ERRO NA FUNCAO ENVIAWF

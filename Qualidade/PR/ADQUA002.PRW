@@ -18,9 +18,11 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
     Local cResponse     := ""
     Local cMens         := ""
     Private cEOL        := Chr(13)+chr(10)
-    //Default dParData    := Date()  
+    Private cStatCar    := SuperGetMV("MV_XSTACAR",,"FE,AP")
+    
     Default dParData    := Stod("20210615")
     Default nReproc     := 2
+    
     //
 	//RPCSetType(3)
 	//RpcSetEnv("01","02",,,,GetEnvServer(),{ })
@@ -473,6 +475,7 @@ Static Function fStEData(aElementos, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar,
     next nAuxZ
 
     if !Empty(cPdVend) .AND. !Empty(cCarga)
+        //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.
         BeginSQL Alias "QSTED"
             %NoPARSER%
             SELECT TOP 1 EMPRESA, 
@@ -484,10 +487,10 @@ Static Function fStEData(aElementos, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar,
                          DT_ABERTCARG,
                          HR_ABERTCARG 
             FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_02] 
-            WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE='FE' 
-                                
+            WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE NOT IN ('AB')
+            
         EndSQl
-
+        
         if QSTED->(!EOF())
             dDtICar := cTod(QSTED->DT_ABERTCARG)
             dDtTCar := cTod(QSTED->DT_FECHCARG)

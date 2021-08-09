@@ -227,7 +227,7 @@ Static Function fsetPanel1()
                              {"EE8_COD_I"   ,getSx3Cache("EE8_COD_I", "X3_TITULO")  ,getSx3Cache("EE8_COD_I", "X3_TIPO")  ,getSx3Cache("EE8_COD_I", "X3_TAMANHO")  ,getSx3Cache("EE8_COD_I", "X3_DECIMAL")  ,getSx3Cache("EE8_COD_I", "X3_PICTURE")  };
 						    })
     
-    oBExpo:SetBlkBackColor({|| IIF(!Empty(aExpoDad[oBExpo:At(), aScan(aExpoCam, "EE7_XBOOKI")]) , CLR_HGREEN,; 
+    oBExpo:SetBlkBackColor({|| IIF(!Empty(aExpoDad[oBExpo:At(), aScan(aExpoCam, "EE7_XBOOKI")]) , Rgb(198,239,206),; 
                                     IIF(!Empty(aExpoDad[oBExpo:At(), aScan(aExpoCam, "EEC_EMBARC")]) , CLR_YELLOW , Nil ) ) })
     
     oBExpo:bGotFocus := {|| nBrwFocused := 1}
