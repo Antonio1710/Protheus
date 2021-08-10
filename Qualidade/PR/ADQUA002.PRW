@@ -9,6 +9,7 @@
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro    - 19/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
     @history Chamado 8465 - Leonardo P. Monteiro    - 01/08/2021 - Adição do detalhamento das embalagens (ZGA/ZGB).
+    @history Chamado 8465 - Leonardo P. Monteiro    - 09/08/2021 - Correção e implementação de melhorias como formatação de campos.
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 
@@ -324,10 +325,10 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                         ElseIf cDesc == "Hora de tÃ©rmino do carregamento" .OR. cDesc == "Hora de tÃ©rmino da inspeÃ§Ã£o"
                             cHrTQld   := cResul
                         // Data Lacre - Pendente.
-                        ElseIf cDesc == "cLacData"
+                        ElseIf cDesc == "Data do lacre oficial"
                             cLacData    := cResul
                         // Hora Lacre - Pendente.
-                        ElseIf cDesc == "cLacHora"
+                        ElseIf cDesc == "Hora do lacre oficial"
                             cLacHora  := cResul
                         ElseIf cDesc == "Limpeza interna do baÃº"
                             cLimpInt    := iif(alltrim(cResul)=="c","S","N")
@@ -644,14 +645,14 @@ Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga
                 ZEX_DTTCAR  := dDtTCar      //Data de término carregamento.
                 ZEX_HRICAR  := cHrICar      //Hora de início de carregamento.
                 ZEX_HRTCAR  := cHrTCar      //Hora de término do carregamento.
-                ZEX_DTLACR  := Stod(cLacData) //Data do lacre.
+                ZEX_DTLACR  := ctod(cLacData) //Data do lacre.
                 ZEX_HRLACR  := cLacHora     //Hora do lacre.
                 ZEX_LIMPIN  := cLimpInt     //Limpeza interna.
                 ZEX_LIMPEX  := cLimpExt     //Limpeza Externa.
                 ZEX_TEMPBA  := cTempBau     //Temperatura do baú.
                 ZEX_BORRAC  := cBorrach     //Borracha de vedação.
                 ZEX_EQUIPF  := cEquipFr     //Equipamento de frio conforme.
-                ZEX_DTIQLD  := Stod(cDtIQld)      //Data de início da qualidade.
+                ZEX_DTIQLD  := Ctod(cDtIQld)      //Data de início da qualidade.
                 ZEX_HRIQLD  := cHrIQld      //Hora de início da qualidade.
                 ZEX_HRTQLD  := cHrTQld      //Hora de término da qualidade.
                 ZEX_MONQUA  := cMonQua

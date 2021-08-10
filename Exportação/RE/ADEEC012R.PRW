@@ -14,6 +14,7 @@
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro - 18/07/2021 - Desenvolvimento inicial.
     @history Chamado 8465 - Leonardo P. Monteiro - 01/08/2021 - Inclusão de novos recuros e rastreabilidades no relatório.
+    @history Chamado 8465 - Leonardo P. Monteiro - 09/08/2021 - Melhorias e ajustes solicitadas pelos usuários e SIF.
     
 /*/
 #Define IMP_SPOOL  2
@@ -177,23 +178,25 @@ Static function fProcessa()
             // para compor as informações do cabeçalho.
             fGetInfo()
 
-            if cContain != ALLTRIM(TRB->EE7_CONTAI ) .or. cLacOfic != ALLTRIM(TRB->EE7_NLACR2 )
-                cMensagem := "- Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL
-                
-                if Empty(TRB->C5_NOTA)
-                    cMensagem += "- Pedido de exportação ainda não faturado. A NFe/Serie não inclusa no relatório." +cEOL
-                endif
-
-                if cLacOfic != ALLTRIM(TRB->EE7_CONTAI )
-                    cMensagem += "- Container: Exportação ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", cContain) +") " +cEOL
-                endif
-                
-                if cLacOfic != ALLTRIM(TRB->EE7_NLACR2 )
-                    cMensagem += "- Lacre Oficial: Exportação ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", cLacOfic) +") " +cEOL
-                elseif Empty(cLacOfic) .AND. Empty(ALLTRIM(TRB->EE7_NLACR2 ))
-                    cMensagem += "- Lacre oficial em branco ou não informado no pedido de exportação. " +cEOL
-                endif
-
+            
+            if Alltrim(cContain) != ALLTRIM(TRB->EE7_CONTAI )
+                cMensagem += "- Container: Exportação ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", cContain) +") " +cEOL
+            elseif Empty(cContain) .AND. Empty(ALLTRIM(TRB->EE7_CONTAI ))
+                cMensagem += "- Contêiner em branco e não informado. " +cEOL
+            endif
+            
+            if Alltrim(cLacOfic) != ALLTRIM(TRB->EE7_NLACR2 )
+                cMensagem += "- Lacre Oficial: Exportação ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", cLacOfic) +") " +cEOL
+            elseif Empty(cLacOfic) .AND. Empty(ALLTRIM(TRB->EE7_NLACR2 ))
+                cMensagem += "- Lacre oficial em branco e não informado. " +cEOL
+            endif
+            
+            if Empty(TRB->C5_NOTA)
+                cMensagem += "- Pedido de exportação ainda não faturado. A NFe/Serie não inclusa no relatório." +cEOL
+            endif
+            
+            if !Empty(cMensagem)
+                cMensagem := "Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL
                 MsgAlert(cMensagem, "Alerta")
             endif
 
@@ -413,9 +416,9 @@ Static Function fImpDec()
     nLinha += 13
     oPrinter:Say( nLinha, nCol+010  , "de acesso SP 053/332, Km 04, s/n, bairro do Mursa,  Várzea Paulista/SP,  CEP 13.226-400, vem por", oFOARNO15)
     nLinha += 13
-    oPrinter:Say( nLinha, nCol+010  , "meio deste, apresentar ao Serviço de Inspeção Federal encaminhando a documentação, onde afirm-", oFOARNO15)
+    oPrinter:Say( nLinha, nCol+010  , "meio deste, apresentar ao Serviço de Inspeção Federal encaminhando a documentação, onde ", oFOARNO15)
     nLinha += 13
-    oPrinter:Say( nLinha, nCol+010  , "amos o seguinte carregamento:", oFOARNO15)
+    oPrinter:Say( nLinha, nCol+010  , "afirmamos o seguinte carregamento:", oFOARNO15)
     nLinha += 20
     nAltura := 155
     oPrinter:Box(nLinha, nCol, nLinha+nAltura, nRight)
@@ -428,7 +431,7 @@ Static Function fImpDec()
     nLinha += 17
     oPrinter:Say( nLinha, nCol+010  , "PAÍS/MERCADO DE DESTINO: "+ ALLTRIM(TRB->YA_DESCR) +" ", oFOARNE15) 
     nLinha += 17
-    oPrinter:Say( nLinha, nCol+010  , "LINGUA DE CERTIFICADO: " + iif(Empty(aItens[na][11]),"PORTUGUES / INGLES","PORTUGUES / "+Alltrim(aItens[na][11])), oFOARNE15)
+    oPrinter:Say( nLinha, nCol+010  , "LINGUA DE CERTIFICADO: " + iif(Empty(aItens[na][11]),"Português / Inglês",Alltrim(aItens[na][11])), oFOARNE15)
     nLinha += 17
     oPrinter:Say( nLinha, nCol+010  , "MODELO DE CERTIFICADO: "+ Alltrim(TRB->ZEL_DESCRI) +" ", oFOARNE15) 
     nLinha += 17
@@ -738,7 +741,7 @@ Static Function fModelo01()
         endif
         
         oPrinter:Say(nLinha+007, aPerc[05]+002 , "Temp. Padrão:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[05]+010 , "-18 °C" , oFOARNO09)
+        oPrinter:Say(nLinha+017, aPerc[05]+010 , alltrim(TRB->EE7_TEMPER) +" °C" , oFOARNO09)
 
         nLinha += nAltura
 
@@ -1160,10 +1163,10 @@ Static Function fImpRast()
             oPrinter:Say(nLinha+007, aPerc[06]+002 , ":.. Temperatura " , oFOARNE07)
             
             oPrinter:Box(nLinha, aPerc[07], nLinha+nAltura, aperc[08])
-            oPrinter:Say(nLinha+007, aPerc[07]+002 , ":.. Qtd. Caixa " , oFOARNE07)
+            oPrinter:Say(nLinha+007, aPerc[07]+002 , ":.. Qtd. Caixa/Blocos " , oFOARNE07)
             
             oPrinter:Box(nLinha, aPerc[08], nLinha+nAltura, aperc[09])
-            oPrinter:Say(nLinha+007, aPerc[08]+002 , ":.. Peso Venda " , oFOARNE07)
+            oPrinter:Say(nLinha+007, aPerc[08]+002 , ":.. Peso Líquido " , oFOARNE07)
 
             nLinha += nAltura
     endif
@@ -1498,7 +1501,7 @@ Static function fSqlItem()
         cQuery := " SELECT * "+cEOL
         cQuery += " FROM "+ RetSqlName("ZEY") +" (nolock) ZEY  "+cEOL
         cQuery += " WHERE  ZEY.D_E_L_E_T_='' AND ZEY.ZEY_FILIAL='"+ xfilial("ZEY") +"' AND ZEY.ZEY_NUMERO ='"+ TRB->EE7_PEDFAT +"' "+cEOL
-        cQuery += " ORDER BY ZEY.ZEY_NUMERO, ZEY.ZEY_PRODUT, ZEY.ZEY_DESCRI; "
+        cQuery += " ORDER BY ZEY.ZEY_NUMERO, ZEY.ZEY_PRODUT, SUBSTRING(ZEY_DESCRI,70,4)+SUBSTRING(ZEY_DESCRI,67,2)+SUBSTRING(ZEY_DESCRI,64,2)+SUBSTRING(ZEY_DESCRI,90,2), ZEY.ZEY_COMPON; "
 
         TCQUERY cQuery ALIAS "QZEY" NEW
         
@@ -1636,7 +1639,7 @@ Static function fTemper(cPedVen, cTurno, cProdut, cDtFab, cDtVld)
     QTMP->(dbgotop())
 
     while QTMP->(!EOF())
-        cRet += iif(Empty(cRet),"",", ")+Alltrim(Transform(QTMP->ZEX_TEMPER ,"@E 999.99")) +" °C"
+        cRet += iif(Empty(cRet),"",", ")+Alltrim(Transform(QTMP->ZEX_TEMPER ,"@E 999.9")) +" °C"
         //nCont += 1
         QTMP->(Dbskip())
     enddo
@@ -1650,7 +1653,7 @@ Static function fGetInfo()
     Local cQuery := ""
     Local cEOL      := Chr(13)+chr(10)
 
-    cQuery := " SELECT DISTINCT ZEX_DTICAR, ZEX_DTTCAR, ZEX_HRICAR, ZEX_HRTCAR, ZEX_MONQUA, convert(varchar, getdate(),112) ZEX_DTLACR,left(convert(time, getdate()),8) ZEX_HRLACR, "+ cEOL
+    cQuery := " SELECT DISTINCT ZEX_DTICAR, ZEX_DTTCAR, ZEX_HRICAR, ZEX_HRTCAR, ZEX_MONQUA, ZEX_DTLACR, ZEX_HRLACR, "+ cEOL
 	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, "+ cEOL
 	cQuery += "  ZEX_LIMPIN, ZEX_LIMPEX, ZEX_TEMPBA, ZEX_BORRAC, ZEX_EQUIPF "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+ cEOL
@@ -1668,8 +1671,8 @@ Static function fGetInfo()
         cEmbHIni    := QINF->ZEX_HRICAR
         cEmbHTer    := QINF->ZEX_HRTCAR
         cMonQua     := QINF->ZEX_MONQUA
-        dLacData    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_DTICAR, QINF->ZEX_DTLACR)
-        cLacHora    := iif(Empty(QINF->ZEX_DTLACR), QINF->ZEX_HRTCAR, QINF->ZEX_HRLACR)
+        dLacData    := QINF->ZEX_DTLACR
+        cLacHora    := QINF->ZEX_HRLACR
         cLimpInt    := IIF(QINF->ZEX_LIMPIN == "S","Conforme","Não conforme")
         cLimpExt    := IIF(QINF->ZEX_LIMPEX == "S","Conforme","Não conforme")
         cTempBau    := IIF(QINF->ZEX_TEMPBA == "S","Conforme","Não conforme")
