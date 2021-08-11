@@ -13,7 +13,7 @@
 /*/
 
 User Function ADLFV019P()
-
+	
 	Local oBrowse := FwLoadBrw("ADLFV019P")
 	oBrowse:Activate()
 

@@ -14,6 +14,7 @@
 	@see (links_or_references)
 	@history chamado 044314 - Everson Silva     - 31/07/2019 - Remover flag da integração da tabela ZFK (CT-e)
 	@history ticket 14352   - Fernando Macieira - 24/05/2021 - Saldo Negativo
+	@history ticket 18137   - Fernando Macieira - 09/08/2021 - Estorno NF de projeto
 /*/
 User Function MT103EXC()
 
@@ -157,7 +158,7 @@ Static Function ChkPrjNeg()
 	Work->( dbGoTop() )
 	Do While Work->( !EOF() )
 
-		// Consumo Projeto
+		// Consumo Projeto sem a NF que está sendo estornada/excluída
 		nConsumo := u_ADCOM017P(Work->D1_PROJETO,"BROWSE",/*cPCItemKey*/,,cNFKey) 
 
 		RecLock("TRB", .T.)
@@ -182,23 +183,24 @@ Static Function ChkPrjNeg()
 			If SC7->C7_MOEDA<=1
 
 				nC7_TOTAL   := Round((TRB->D1_QUANT*SC7->C7_PRECO),2)
-				nC7_VALIPI  := Round((TRB->D1_QUANT*SC7->C7_VALIPI),2)
-				nC7_VALFRE  := Round((TRB->D1_QUANT*SC7->C7_VALFRE),2)
-				nC7_DESPESA := Round((TRB->D1_QUANT*SC7->C7_DESPESA),2)
-				nC7_SEGURO  := Round((TRB->D1_QUANT*SC7->C7_SEGURO),2)
-				nC7_ICMSRET := Round((TRB->D1_QUANT*SC7->C7_ICMSRET),2)
+				nC7_VALIPI  := Round(SC7->C7_VALIPI,2)
+				nC7_VALFRE  := Round(SC7->C7_VALFRE,2)
+				nC7_DESPESA := Round(SC7->C7_DESPESA,2)
+				nC7_SEGURO  := Round(SC7->C7_SEGURO,2)
+				nC7_ICMSRET := Round(SC7->C7_ICMSRET,2)
 				nC7_VLDESC  := Round(SC7->C7_VLDESC,2)
 
 				nConsumo := TRB->CONSUMO + nC7_TOTAL + nC7_VALIPI + nC7_VALFRE + nC7_DESPESA + nC7_SEGURO + nC7_ICMSRET - nC7_VLDESC
 
 			Else
 
+				// @history ticket 18137   - Fernando Macieira - 09/08/2021 - Estorno NF de projeto (Ação: Corrigido cálculo)
 				nC7_TOTAL   := Round(((TRB->D1_QUANT*SC7->C7_PRECO)*SC7->C7_XTXMOED),2)
-				nC7_VALIPI  := Round(((TRB->D1_QUANT*SC7->C7_VALIPI)*SC7->C7_XTXMOED),2)
-				nC7_VALFRE  := Round(((TRB->D1_QUANT*SC7->C7_VALFRE)*SC7->C7_XTXMOED),2)
-				nC7_DESPESA := Round(((TRB->D1_QUANT*SC7->C7_DESPESA)*SC7->C7_XTXMOED),2)
-				nC7_SEGURO  := Round(((TRB->D1_QUANT*SC7->C7_SEGURO)*SC7->C7_XTXMOED),2)
-				nC7_ICMSRET := Round(((TRB->D1_QUANT*SC7->C7_ICMSRET)*SC7->C7_XTXMOED),2)
+				nC7_VALIPI  := Round(((SC7->C7_VALIPI)*SC7->C7_XTXMOED),2)
+				nC7_VALFRE  := Round(((SC7->C7_VALFRE)*SC7->C7_XTXMOED),2)
+				nC7_DESPESA := Round(((SC7->C7_DESPESA)*SC7->C7_XTXMOED),2)
+				nC7_SEGURO  := Round(((SC7->C7_SEGURO)*SC7->C7_XTXMOED),2)
+				nC7_ICMSRET := Round(((SC7->C7_ICMSRET)*SC7->C7_XTXMOED),2)
 				nC7_VLDESC  := Round(SC7->C7_VLDESC,2)
 
 				nConsumo := TRB->CONSUMO + nC7_TOTAL + nC7_VALIPI + nC7_VALFRE + nC7_DESPESA + nC7_SEGURO + nC7_ICMSRET - nC7_VLDESC

@@ -1,42 +1,23 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "RWMAKE.CH"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Fun‡…o    ³ EPCP002  ³ Autor ³ Erike Yuri da Silva   ³ Data ³31/01/2006³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡…o ³ Gera requisicoes e devolucoes para acertar estoque de acor-³±±
-±±³          ³ do com a digitacao do inventario                           ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Uso      ³ Generico                                                   ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ PROGRAMADOR  ³ DATA   ³         MOTIVO DA ALTERACAO                   ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³              ³        ³                                               ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-// ---------+-------------------+-----------------------------------------------------------+---------------
-// Data     | Autor             | Descricao                                                 | Chamado
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  19/09/18| Ricardo Lima      | ajuste nas casas decimanis e acerto da diferenca para op  | 
-//          |                   | de maior valor                                            |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  27/03/19| FWNM              | Mudanca de mensagem p/ usuario identificar a ocorrencia   | 048140
-//          |                   | de maior valor                                            |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  13/08/19| FWNM              | 051064 || OS 052377 || CONTROLADORIA ||                   | 051064
-//          |                   | || REINALDO_FRANCISCHINELLI || 8947 || RATEIO             |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  13/08/19| FWNM              | 051089 || OS 052389 || CONTROLADORIA ||                   | 051089
-//          |                   | || REINALDO_FRANCISCHINELLI || 8947 || MV_DBLQMOV         |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-// #########################################################################################################
-*/
+/*/{Protheus.doc} User Function EPCP002
+	Gera requisicoes e devolucoes para acertar estoque de acordo com a digitacao do inventario
+	@type  Function
+	@author Erike Yuri da Silva
+	@since 31/01/2006
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket SN     - Ricardo Lima - 19/09/2018 - ajuste nas casas decimanis e acerto da diferenca para op de maior valor
+	@history ticket 048140 - FWNM         - 27/03/2019 - Mudanca de mensagem p/ usuario identificar a ocorrencia de maior valor
+	@history ticket 051064 - FWNM         - 13/08/2019 -  051064 || OS 052377 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || RATEIO
+	@history ticket 051089 - FWNM         - 13/08/2019 -  051089 || OS 052389 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || MV_DBLQMOV
+	@history ticket 15796  - FWNM         - 10/08/2021 -  ERRO ROTINA GERA AJUSTE - Objeto: EPCP002
+/*/
 User Function EPCP002(lBatch,cCodInv)
 
 	LOCAL oDlg
@@ -95,7 +76,7 @@ User Function EPCP002(lBatch,cCodInv)
 			If lBatch
 				EPCP002Proc(lBatch,cCodInv)
 			Else		
-				Processa({|lend| EPCP002Proc(lBatch,NIL)},"Pre-Processamento do Inventario","Efetuando Calculo dos Ajustes...",.F.)	
+				Processa({|lend| EPCP002Proc(lBatch,NIL)},"Pre-Processamento do Inventario","Efetuando Calculo dos Ajustes...",.F.)
 			Endif
 		Endif	
 	EndIf
@@ -500,7 +481,7 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 		EndIf
 	EndDo
 	
-	If lContinua 
+	If lContinua
 		If INV->(RecCount()> 0)
 			If ViewPreProc() == 1
 				If MsgYesNo ("Confirma processamento?","Ajuste de Inventário") 
@@ -1087,7 +1068,8 @@ Static Function ViewPreProc()
 	
 	//Gets com os totais
 	@ 201,295 SAY "Total Vlr. Rateio: " SIZE 65,8 OF oFolder:aDialogs[2] PIXEL 
-	@ 200,340 MSGET oTotRat Var nTotRat  PICTURE "@E 999999999999.999" SIZE 50,03 PIXEL OF oFolder:aDialogs[2] When .F.
+	@ 200,340 MSGET oTotRat Var nTotRat  PICTURE "@E 999999999999.9999" SIZE 50,03 PIXEL OF oFolder:aDialogs[2] When .F. // @history ticket 15796  - FWNM         - 10/08/2021 -  ERRO ROTINA GERA AJUSTE - Objeto: EPCP002
+	//@ 200,340 MSGET oTotRat Var nTotRat  PICTURE "@E 999999999999.999" SIZE 50,03 PIXEL OF oFolder:aDialogs[2] When .F.
 	@ 201,435 SAY "Total %: " SIZE 65,8 OF oFolder:aDialogs[2] PIXEL 
 	@ 200,460 MSGET oTotPerc Var nTotPerc PICTURE "@E 999.99" SIZE 25,03 PIXEL OF oFolder:aDialogs[2] When .F.
 	
@@ -1582,9 +1564,9 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 			Endif                               //--Valdir 29-08-2007
 	
 			If lRet
-				For j:= 1 To Len(aCampos1[i][23])	
+				For j:= 1 To Len(aCampos1[i][23]) // array contendo o rateio do produto principal contido na primeira aba
 				
-					If aCampos1[i][23][j][1]
+					If aCampos1[i][23][j][1] // se estiver marcado o markbrowse do rateio então faça
 						cOp     := aCampos1[i][23][j][2]
 						dData   := aCampos1[i][23][j][11]
 						nQtdRat := aCampos1[i][23][j][9] 
@@ -1600,7 +1582,7 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 					   		dDataSC2 := SC2->C2_DATRF
 					   		Reclock("SC2",.F.)
 					   			SC2->C2_DATRF := Ctod("  /  /  ")
-					   		MsUnlock()			
+					   		SC2->( MsUnlock() )
 						Endif  
 	
 		    
@@ -1627,12 +1609,13 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 						Endif
 											
 						//Inicio da Transacao
-						Begin Transaction
-	   	   			lMSErroAuto := .F.
-	       				MsExecAuto({|x|Mata240(x)},aMata)
+						//Begin Transaction
+	   	   				lMSErroAuto := .F.
+	       				MsExecAuto({|x|Mata240(x)},aMata) // Movimentos Internos Simples
 	   
 	       				If lMSErroAuto  // Se der erro
-		  						cLog := "ERRO"
+		  						
+								cLog := "ERRO"
 		  						If IsBlind()
 									Conout("Erro na gravacao da movimentacao")
 								Else	
@@ -1644,7 +1627,9 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 		  									Aadd(aErro,{cNumInv,7,.T.,cOp,cErro,cProd,nQtdRat,nPerc})
 		  								Endif	
 									Next
-									DisarmTransaction()
+									
+									logZBE("ERRO MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", ERRO: " + AllTrim(cErro))
+									//DisarmTransaction()
 								Endif	
 		   				Else // naum deu erro 
 		    					EvalTrigger()
@@ -1661,7 +1646,9 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 									nSaldFim := nQtdSB2 + nSaldRat
 								Endif
 								
-								U_TotalZAM(cNumInv,,nDif,nQtdSB2,nSaldFim)	 		        
+								U_TotalZAM(cNumInv,,nDif,nQtdSB2,nSaldFim)	 
+
+								logZBE( "OK MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", DIF: " + TRANSFORM(nDif, "@E 999,999.99") + "INI: " + TRANSFORM(nQtdSB2, "@E 999,999,999.99") + "FIM: " + TRANSFORM(nSaldFim, "@E 999,999,999.99") )
 			  			        
 	      						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 								//³ Alteracao realizada conforme orientacao da Inteligencia Protheus - 		³
@@ -1687,7 +1674,7 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 									DbSkip()
 								EndDo  	
 							Endif
-	   				End Transaction           
+	   				//End Transaction           
 					Endif
 				Next j
 		   Else
@@ -1699,25 +1686,36 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 		//Carrega Vetor com Historicos
 		Do Case
 			Case cLog == "SBF " .Or. cLog == "SB8 " .Or. cLog == "SB2E" .Or. cLog == "IRRV"
-				Aadd(aErro,{cNumInv,0})// Processamento OK
+				Aadd(aErro,{cNumInv,0}) // Processamento OK
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Processamento OK" )
 			Case cLog == "B2D3"
-				Aadd(aErro,{cNumInv,1})// Sem OP no periodo
+				Aadd(aErro,{cNumInv,1}) // Sem OP no periodo
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Sem OP no periodo" )
 			Case cLog == "SLD"
-				Aadd(aErro,{cNumInv,2})// Saldo SB2 Bloqueado
+				Aadd(aErro,{cNumInv,2}) // Saldo SB2 Bloqueado
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Saldo SB2 Bloqueado" )
 			Case cLog == "SB2 "
-				Aadd(aErro,{cNumInv,3})// Saldo Insuficiente	
+				Aadd(aErro,{cNumInv,3}) // Saldo Insuficiente	
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Saldo Insuficiente" )
 			Case cLog == "B2BF"
-				Aadd(aErro,{cNumInv,4})// Divergencia SB2 X SBF 
+				Aadd(aErro,{cNumInv,4}) // Divergencia SB2 X SBF 
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Divergencia SB2 X SBF" )
 			Case cLog == "S/OP"
-				Aadd(aErro,{cNumInv,6})// Qtd OPs Insuficiente	
+				Aadd(aErro,{cNumInv,6}) // Qtd OPs Insuficiente	
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Qtd OPs Insuficiente" )
 			Case cLog == "NULO"
-				Aadd(aErro,{cNumInv,8})// Inventario Nulo	
+				Aadd(aErro,{cNumInv,8}) // Inventario Nulo	
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Inventario Nulo" )
 			Case cLog == "SBF0"
-				Aadd(aErro,{cNumInv,9})// Sem Saldo no Endereco
+				Aadd(aErro,{cNumInv,9}) // Sem Saldo no Endereco
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Sem Saldo no Endereco" )
 			Case cLog == "SB2-"
 				Aadd(aErro,{cNumInv,10})// Saldo Atual Negativo			
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Saldo Atual Negativo" )
+			OTHERWISE
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: STATUS DESCONHECIDO" )
 		End Case
-			
+
 		// Grava o historico do processamento
 		For K:= 1 to Len(aErro)
 			If aErro[k][2] <> 7
@@ -2224,3 +2222,24 @@ Static Function MenuDef()
    Local aRotina := { {"Processar","EPCP002" ,0 ,1 ,19}} 
 
 Return(aRotina)
+
+/*/{Protheus.doc} Static Function LOGZBE
+	Gera log ZBE
+	@type  Static Function
+	@author Everson
+	@since 24/05/2019
+	@version 01
+/*/
+Static Function logZBE(cMensagem)
+
+	RecLock("ZBE", .T.)
+		Replace ZBE_FILIAL 	   	With FWxFilial("ZBE")
+		Replace ZBE_DATA 	   	With msDate()
+		Replace ZBE_HORA 	   	With Time()
+		Replace ZBE_USUARI	    With Upper(Alltrim(cUserName))
+		Replace ZBE_LOG	        With cMensagem
+		Replace ZBE_MODULO	    With "SIGAEST"
+		Replace ZBE_ROTINA	    With "EPCP002" 
+	ZBE->( msUnlock() )
+
+Return

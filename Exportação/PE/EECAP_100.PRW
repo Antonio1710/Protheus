@@ -175,6 +175,7 @@ User Function EECAP100
         M->EE7_XWFNED   := Stod("")
         M->EE7_XWFEMH   := ""
         M->EE7_XWFNEE   := "N"
+        M->EE7_XMODCS   := ""
         RunTrigger(1,nil,nil,,'EE7_VIA')
         RunTrigger(1,nil,nil,,'EE7_PAISET')
     EndIf

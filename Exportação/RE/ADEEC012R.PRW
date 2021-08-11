@@ -116,6 +116,7 @@ Static function fProcessa()
     Private cTempBau            := ""
     Private cBorrach            := ""
     Private cEquipFr            := ""
+    Private cTraDobr            := ""
     Private cLacArma            := ""
     Private cLacOfic            := ""
     Private cContain            := ""
@@ -969,9 +970,9 @@ Static Function fModelo01()
         
         nAltura := 12
 
-        aPerc   := {nCol, nRight*0.20, nRight*0.40, nRight*0.60, nRight*0.80, nRight}
-        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[06])
-        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[06] }, oBrush )
+        aPerc   := {nCol, round(nRight*0.16,0), round(nRight*0.32,0), round(nRight*0.49,0), round(nRight*0.66,0), round(nRight*0.83,0), nRight}
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[07])
+        oPrinter:fillRect( { nLinha, aPerc[01], nLinha+nAltura, aPerc[07] }, oBrush )
         oPrinter:Say( nLinha+08, aPerc[01]+010 , "8. Condições do Veículo", oFOARNE09)
         
         nLinha += nAltura
@@ -990,13 +991,16 @@ Static Function fModelo01()
         oPrinter:Say(nLinha+017, aPerc[03]+010 , alltrim(cTempBau) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[04], nLinha+nAltura, aPerc[05])
-        oPrinter:Say(nLinha+007, aPerc[04]+002 , "Borracha:", oFOARNE09)
+        oPrinter:Say(nLinha+007, aPerc[04]+002 , "Borrachas/Dobradiças:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[04]+010 , ALLTRIM(cBorrach) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[05], nLinha+nAltura, aPerc[06])
-        oPrinter:Say(nLinha+007, aPerc[05]+002 , "Equipamento de frio adequado:", oFOARNE09)
+        oPrinter:Say(nLinha+007, aPerc[05]+002 , "Equipamento de frio:", oFOARNE09)
         oPrinter:Say(nLinha+017, aPerc[05]+010 , ALLTRIM(cEquipFr) , oFOARNO09)
 
+        oPrinter:Box(nLinha, aPerc[06], nLinha+nAltura, aPerc[07])
+        oPrinter:Say(nLinha+007, aPerc[06]+002 , "Trancas e Dobradiças:", oFOARNE09)
+        oPrinter:Say(nLinha+017, aPerc[06]+010 , ALLTRIM(cTraDobr) , oFOARNO09)
         nLinha += nAltura
     
     ENDIF
@@ -1654,7 +1658,7 @@ Static function fGetInfo()
     Local cEOL      := Chr(13)+chr(10)
 
     cQuery := " SELECT DISTINCT ZEX_DTICAR, ZEX_DTTCAR, ZEX_HRICAR, ZEX_HRTCAR, ZEX_MONQUA, ZEX_DTLACR, ZEX_HRLACR, "+ cEOL
-	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, "+ cEOL
+	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, ZEX_TRADOB,"+ cEOL
 	cQuery += "  ZEX_LIMPIN, ZEX_LIMPEX, ZEX_TEMPBA, ZEX_BORRAC, ZEX_EQUIPF "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+ cEOL
     cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xFilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ TRB->C5_NUM +"'; "
@@ -1678,7 +1682,7 @@ Static function fGetInfo()
         cTempBau    := IIF(QINF->ZEX_TEMPBA == "S","Conforme","Não conforme")
         cBorrach    := IIF(QINF->ZEX_BORRAC == "S","Conforme","Não conforme")
         cEquipFr    := IIF(QINF->ZEX_EQUIPF == "S","Conforme","Não conforme")
-
+        cTraDobr    := IIF(QINF->ZEX_TRADOB == "S","Conforme","Não conforme")
         cLacArma    := Alltrim(QINF->ZEX_LACRE1)
         cLacOfic    := Alltrim(QINF->ZEX_LACRE2)
         cContain    := Alltrim(QINF->ZEX_CONTAI)

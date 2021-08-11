@@ -223,6 +223,7 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
     Local cLimpExt   := ""
     Local cTempBau   := ""
     Local cBorrach   := ""
+    Local cTraDobr   := ""
     Local cEquipFr   := ""
     Local dDtICar    := Stod("")
     Local dDtTCar    := Stod("")
@@ -341,6 +342,8 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                             cBorrach    := iif(alltrim(cResul)=="c","S","N")
                         ElseIf cDesc == "Equipamento de frio adequado"
                             cEquipFr  := iif(alltrim(cResul)=="c","S","N")
+                        elseif cDesc == "DobradiÃ§as e trancas das portas"
+                            cTraDobr  := iif(alltrim(cResul)=="c","S","N")
                         elseif cDesc == "Tara do Conteiner"
                             cTaraCo := cResul
                         elseif cDesc == "NÂº TermÃ³grafo:"
@@ -402,7 +405,7 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                                     
                                     grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
                                             nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, dDtICar, dDtTCar, cHrICar, cHrTCar,;
-                                            cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cDtIQld,cHrIQld, cHrTQld,;
+                                            cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cTraDobr, cDtIQld,cHrIQld, cHrTQld,;
                                             cTaraCo, cTermog, aImagens)
                                     
                                 Next nAux4
@@ -598,7 +601,7 @@ Return lRet
     /*/
 Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
                         nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, dDtICar, dDtTCar, cHrICar, cHrTCar,;
-                        cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cDtIQld,cHrIQld, cHrTQld,;
+                        cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cTraDobr, cDtIQld,cHrIQld, cHrTQld,;
                         cTaraCo, cTermog, aImagens)
     
     //Nova tabela.
@@ -623,7 +626,7 @@ Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga
                 ZEX_FILIAL  := SC5->C5_FILIAL
                 ZEX_NUMERO  := SC5->C5_NUM //cPdVend - Pedido de venda.
                 ZEX_ID      := cInspId      //Id da inspeção.
-                ZEX_ROTEDT  := stod(cDtRot) //Data do roteiro.
+                ZEX_ROTEDT  := Ctod(cDtRot) //Data do roteiro.
                 ZEX_ROTEIR  := cRot         //Roteiro.
                 ZEX_PLACA   := cPlaca       //Placa.
                 ZEX_CARGA   := cCarga       //Carga.
@@ -652,12 +655,16 @@ Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga
                 ZEX_TEMPBA  := cTempBau     //Temperatura do baú.
                 ZEX_BORRAC  := cBorrach     //Borracha de vedação.
                 ZEX_EQUIPF  := cEquipFr     //Equipamento de frio conforme.
+                ZEX_TRADOB  := cTraDobr     //Dobradiças e trancas das portas.
                 ZEX_DTIQLD  := Ctod(cDtIQld)      //Data de início da qualidade.
                 ZEX_HRIQLD  := cHrIQld      //Hora de início da qualidade.
                 ZEX_HRTQLD  := cHrTQld      //Hora de término da qualidade.
                 ZEX_MONQUA  := cMonQua
                 ZEX_TARCON  := Val(cTaraCo)
                 ZEX_TERMOG  := cTermog
+                ZEX_LOGDAT  := Date()
+                ZEX_LOGHOR  := Time()
+                ZEX_LOGUSR  := __CUSERID
                 ZEX->(Msunlock())
             endif
 

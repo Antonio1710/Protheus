@@ -17,6 +17,7 @@
 	@history Ticket T.I.   - Leonardo P. Monteiro - 16/04/2021 - Integração do passaporte para o eData.
 	@history Ticket T.I.   - Leonardo P. Monteiro - 14/06/2021 - Criação de melhoria na rotina para integração em lote de todos os veículos e transportadoras.
 	@history Ticket T.I.   - Leonardo P. Monteiro - 22/07/2021 - Inclusão de validações para não deixar que manobristas sejam vinculados a veículos e a transportadoras.
+	@history ticket 18125 - 10/08/2021 - ADRIANO SAVOINE - Bloqueio de Exclusão e Bloqueio do campo em modo de edição.
 /*/
 
 User Function AXFV4() 
@@ -48,7 +49,8 @@ User Function AXFV4()
 	DbSetOrder(1)
 	Dbgotop()
 
-	AXCADASTRO("ZV4","Cadastro de Veiculos ",,"U_COKVEIC()",aRotAdic,,,,bNoTTs,,,aButtons) //Everson - 26/02/2020. Chamado 
+
+	AXCADASTRO("ZV4","Cadastro de Veiculos ","U_EXCLUI()","U_COKVEIC()",aRotAdic,,,,bNoTTs,,,aButtons) //Everson - 26/02/2020. Chamado 
 
 Return Nil
 
@@ -171,6 +173,28 @@ Static function FCEDATA()
 	endif
 return lRet
 
+
+/*/{Protheus.doc} User Function EXCLUI
+	(VALIDAÇÃO ANTES DA EXCLUSÃO)
+	@type  Function
+	@author ADRIANO SAVOINE
+	@since 10/08/2021
+	@history ticket 18125 - 10/08/2021 - ADRIANO SAVOINE - Bloqueio de Exclusão e Bloqueio do campo em modo de edição.
+	/*/
+User Function EXCLUI()
+
+Local eXcluir := .F.
+
+IF RetCodUsr() $ GetMV("MV_#ALTPLC") 
+	eXcluir := .T.
+	
+	Else
+	
+	MsgInfo('<h1>Atenção:</h1><br>Você não pode excluir cadastros de placa para isso você tem que estar cadastrado no parametro,</b><font color="#FF0000"> MV_#ALTPLC </font>', "Abrir Ticket para aprovação do Gerente ou Supervisor.")
+
+EndIf
+
+Return eXcluir
 
 
 /*/{Protheus.doc} User Function COKVEIC

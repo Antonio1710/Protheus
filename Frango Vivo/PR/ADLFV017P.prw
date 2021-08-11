@@ -383,6 +383,7 @@ Static Function loadGrid(oModel, oGridModel, lCopy)
 	local cQuery	:= ""
 	local cAlias	:= ""
 	local aData 	:= {}
+	Local nLin		:= 0
 	Local oGrid     := oModelA:GetModel('ZEHDETAIL')
 	//local aData		:= oGrid:getOldData()
 	//local cQuery	:= ""
@@ -426,10 +427,16 @@ Static Function loadGrid(oModel, oGridModel, lCopy)
 			nQuantidade := nMortal
 		endif
 		
-		oGrid:GoLine(oGrid:Length())
-
-		if !Empty(oGrid:GetValue("ZEH_NUMMM"))
+		//if !Empty(oGrid:GetValue("ZEH_NUMMM"))
+		if oGrid:Length() == 0
 			oGrid:AddLine()
+		else
+			oGrid:GoLine(oGrid:Length())
+			
+			if !Empty(oGrid:GetValue("ZEH_NUMMM"))
+				oGrid:AddLine()
+			endif
+			
 		endif
 
 		oGrid:GoLine(oGrid:Length())
