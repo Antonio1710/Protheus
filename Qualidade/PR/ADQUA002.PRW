@@ -34,7 +34,12 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
                 procRes(@cErro, @cMens, cResponse, cToken, dParData, nReproc) //Processa o resultado da consulta.
                 
                 if !Empty(cMens)
-                    MsgInfo("Eventos de processamento: "+ cMens, "Término da rotina")
+                    
+                    if "(Importado)"$cMens .OR. "(Rejeitado)"$cMens .OR. "(Ignorado)"$cMens
+                        MsgStop("Eventos de processamento com erros: "+ cMens, "Término da rotina")
+                    else
+                        MsgInfo("Eventos de processamento: "+ cMens, "Término da rotina")
+                    endif
                 endif
             EndIf
 
@@ -284,7 +289,7 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
         
         if fProcessa(cInspId, nReproc)
             
-            if fStEData(aElementos, @cPdVend, @cCarga, @dDtICar, @dDtTCar, @cHrICar, @cHrTCar)
+            if fStEData(aElementos, @cMens, @cPdVend, @cCarga, @dDtICar, @dDtTCar, @cHrICar, @cHrTCar)
                 
                 //
                 For nAux2 := 1 To Len(aElementos)
@@ -422,13 +427,12 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                 u_GrLogZBE(Date(),TIME(),cUserName,"Inspeção da Qualidade Pedido de Venda "+ cPdVend +", ID "+ cInspId +" ","SIGAEEC","ADQUA002",;
 			        "procRes - Inspeção da qualidade do Pedido de Venda "+ cPdVend +", ID  "+ cInspId +;
                     ". Inspeção não importada por a carga estar em aberto no eData "+ cCarga +". ",ComputerName(),LogUserName())
-                cMens += cEOL+" -(Rejeitado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Embarque em aberto."
             endif
         else 
             u_GrLogZBE(Date(),TIME(),cUserName,"Inspeção da Qualidade Pedido de Venda "+ cPdVend +", ID "+ cInspId +" ","SIGAEEC","ADQUA002",;
 			        "procRes - Inspeção da qualidade do Pedido de Venda "+ cPdVend +", ID  "+ cInspId +;
                     ". Opção selecionada pelo usuário não permite a atualização dos registros gravados. ",ComputerName(),LogUserName())
-            cMens += cEOL+" -(Ignorado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Inspeção já importada."
+            cMens += cEOL+" -(Processado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Inspeção já importada."
         endif
     Next nAux
 
@@ -439,7 +443,7 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
 
 Return Nil
 
-Static Function fStEData(aElementos, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar, cHrTCar)
+Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar, cHrTCar)
     Local lRet          := .F.
     Local nAuxZ         := 0
     Local nElementos    := Len(aElementos)
@@ -479,33 +483,53 @@ Static Function fStEData(aElementos, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar,
     next nAuxZ
 
     if !Empty(cPdVend) .AND. !Empty(cCarga)
-        //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.
-        BeginSQL Alias "QSTED"
-            %NoPARSER%
-            SELECT TOP 1 EMPRESA, 
-                         FILIAL, 
-                         ID_CARGEXPE, 
-                         FL_STATCARGEXPE,
-                         DT_FECHCARG,
-                         HR_FECHCARG,
-                         DT_ABERTCARG,
-                         HR_ABERTCARG 
-            FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_02] 
-            WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE NOT IN ('AB')
-            
-        EndSQl
-        
-        if QSTED->(!EOF())
-            dDtICar := cTod(QSTED->DT_ABERTCARG)
-            dDtTCar := cTod(QSTED->DT_FECHCARG)
-            cHrICar := QSTED->HR_ABERTCARG
-            cHrTCar := QSTED->HR_FECHCARG
 
-            lRet := .T.
+        DbSelectArea("SC5")
+        SC5->(DbSetOrder(1))
+
+        IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
+
+            if Empty(SC5->C5_NOTA)
+
+                //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.
+                BeginSQL Alias "QSTED"
+                    %NoPARSER%
+                    SELECT TOP 1 EMPRESA, 
+                                FILIAL, 
+                                ID_CARGEXPE, 
+                                FL_STATCARGEXPE,
+                                DT_FECHCARG,
+                                HR_FECHCARG,
+                                DT_ABERTCARG,
+                                HR_ABERTCARG 
+                    FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_02] 
+                    WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE NOT IN ('AB')
+                    
+                EndSQl
+                
+                if QSTED->(!EOF())
+                    dDtICar := cTod(QSTED->DT_ABERTCARG)
+                    dDtTCar := cTod(QSTED->DT_FECHCARG)
+                    cHrICar := QSTED->HR_ABERTCARG
+                    cHrTCar := QSTED->HR_FECHCARG
+
+                    lRet := .T.
+                endif
+
+                QSTED->(Dbclosearea())
+
+            else
+                cMens += cEOL+" -(Rejeitado) Ped. Venda "+cPdVend+" já faturado e não é possível reprocessar."
+            endif
+
+        else
+            cMens += cEOL+" -(Rejeitado) Ped. Venda "+cPdVend+"não encontrado."
         endif
 
-        QSTED->(Dbclosearea())
+    else
+        cMens += cEOL+" -(Rejeitado) Ped. Venda "+cPdVend+" não encontrado."
     endif
+
 return lRet
 
 

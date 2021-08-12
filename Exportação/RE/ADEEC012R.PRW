@@ -49,7 +49,7 @@ Static function fProcessa()
 
     Local lAdjustToLegacy 		:= .F. 
     Local lDisableSetup  		:= .T.
-    Local cMensagem             := ""
+    Private cMensagem             := ""
     Private nTotReg             := 0
 
     Private cEOL				:= chr(13)+Chr(10)
@@ -123,6 +123,7 @@ Static function fProcessa()
     Private cTermog             := ""
     Private nTarCon             := 0
     Private cMonQua             := ""
+    Private cPlaca              := ""
     Private nPageAct            := 0
     
     //cRelImp := __CUSERID+"_"+cNomRel+"_"+DtoS(dDatabase)+Replace(Time(),":","")
@@ -178,28 +179,7 @@ Static function fProcessa()
             // Obtêm informações dos registros retornados pelo App da Qualidade
             // para compor as informações do cabeçalho.
             fGetInfo()
-
-            
-            if Alltrim(cContain) != ALLTRIM(TRB->EE7_CONTAI )
-                cMensagem += "- Container: Exportação ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", cContain) +") " +cEOL
-            elseif Empty(cContain) .AND. Empty(ALLTRIM(TRB->EE7_CONTAI ))
-                cMensagem += "- Contêiner em branco e não informado. " +cEOL
-            endif
-            
-            if Alltrim(cLacOfic) != ALLTRIM(TRB->EE7_NLACR2 )
-                cMensagem += "- Lacre Oficial: Exportação ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", cLacOfic) +") " +cEOL
-            elseif Empty(cLacOfic) .AND. Empty(ALLTRIM(TRB->EE7_NLACR2 ))
-                cMensagem += "- Lacre oficial em branco e não informado. " +cEOL
-            endif
-            
-            if Empty(TRB->C5_NOTA)
-                cMensagem += "- Pedido de exportação ainda não faturado. A NFe/Serie não inclusa no relatório." +cEOL
-            endif
-            
-            if !Empty(cMensagem)
-                cMensagem := "Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL
-                MsgAlert(cMensagem, "Alerta")
-            endif
+            fGetAler()
 
             //----------------------------------------------------------------------------------------
             // Impressão dos itens do pedido de exportação e 
@@ -376,6 +356,51 @@ Static function fProcessa()
     EndIf
 
 Return
+
+Static Function fGetAler()
+
+    if Alltrim(cContain) != ALLTRIM(TRB->EE7_CONTAI )
+        cMensagem += "- Container: Ped. Export ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", ALLTRIM(cContain) ) +") " +cEOL
+    elseif Empty(cContain) .AND. Empty(ALLTRIM(TRB->EE7_CONTAI ))
+        cMensagem += "- Contêiner em branco e não informado. " +cEOL
+    endif
+    
+    // Lacre oficial
+    if Alltrim(cLacOfic) != ALLTRIM(TRB->EE7_NLACR2 )
+        cMensagem += "- Lacre Oficial: Ped. Export ("+ iif(Empty(TRB->EE7_NLACR2),"Vazio", ALLTRIM(TRB->EE7_NLACR2 ) ) +") e Embarque ("+ iif(Empty(cLacOfic),"Vazio", alltrim(cLacOfic) ) +") " +cEOL
+    elseif Empty(cLacOfic) .AND. Empty(ALLTRIM(TRB->EE7_NLACR2 ))
+        cMensagem += "- Lacre oficial em branco e não informado. " +cEOL
+    endif
+
+    //Placa
+    if Alltrim(cPlaca) != ALLTRIM(TRB->C5_PLACA )
+        cMensagem += "- Placa: Ped. Export ("+ iif(Empty(TRB->C5_PLACA),"Vazio", ALLTRIM(TRB->C5_PLACA ) ) +") e Embarque ("+ iif(Empty(cPlaca),"Vazio", alltrim(cPlaca) ) +") " +cEOL
+    elseif Empty(cPlaca) .AND. Empty(ALLTRIM(TRB->C5_PLACA ))
+        cMensagem += "- Placa em branco e não informado. " +cEOL
+    endif
+
+    //Termógrafo
+    if Alltrim(cTermog) != ALLTRIM(TRB->EE7_XCODTE )
+        cMensagem += "- Termógrafo: Ped. Export ("+ iif(Empty(TRB->EE7_XCODTE),"Vazio", ALLTRIM(TRB->EE7_XCODTE ) ) +") e Embarque ("+ iif(Empty(cTermog),"Vazio", Alltrim(cTermog) ) +") " +cEOL
+    elseif Empty(cTermog) .AND. Empty(ALLTRIM(TRB->EE7_XCODTE ))
+        cMensagem += "- Termógrafo em branco e não informado. " +cEOL
+    endif
+    
+    //Termógrafo      := QINF->ZEX_TARCON
+    if nTarCon != TRB->EE7_XTARA
+        cMensagem += "- Termógrafo: Ped. Export ("+ cValtochar(TRB->EE7_XTARA) +") e Embarque ("+ CValToChar(nTarCon) +") " +cEOL
+    elseif nTarCon == 0 .AND. TRB->EE7_XTARA == 0
+        cMensagem += "- Termógrafo em branco e não informado. " +cEOL
+    endif
+
+    if Empty(TRB->C5_NOTA)
+        cMensagem += "- Pedido de exportação ainda não faturado. A NFe/Serie não inclusa no relatório." +cEOL
+    endif
+    
+    if !Empty(cMensagem)
+        MsgAlert("Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL+cMensagem, "Alerta")
+    endif
+RETURN
 
 /* Impressão da sessão da declaração da importação. */
 Static Function fImpDec()
@@ -804,7 +829,7 @@ Static Function fModelo01()
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
         oPrinter:Say(nLinha+007, aPerc[02]+002 , "Placa:", oFOARNE09)
-        oPrinter:Say(nLinha+0017, aPerc[02]+010 , alltrim(TRB->C5_PLACA ) , oFOARNO09)
+        oPrinter:Say(nLinha+0017, aPerc[02]+010 , alltrim(IIF(empty(cPlaca), TRB->C5_PLACA, cPlaca) ) , oFOARNO09)
 
         nLinha += nAltura
 
@@ -1658,7 +1683,7 @@ Static function fGetInfo()
     Local cEOL      := Chr(13)+chr(10)
 
     cQuery := " SELECT DISTINCT ZEX_DTICAR, ZEX_DTTCAR, ZEX_HRICAR, ZEX_HRTCAR, ZEX_MONQUA, ZEX_DTLACR, ZEX_HRLACR, "+ cEOL
-	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, ZEX_TRADOB,"+ cEOL
+	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, ZEX_TRADOB, ZEX_PLACA,"+ cEOL
 	cQuery += "  ZEX_LIMPIN, ZEX_LIMPEX, ZEX_TEMPBA, ZEX_BORRAC, ZEX_EQUIPF "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+ cEOL
     cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xFilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ TRB->C5_NUM +"'; "
@@ -1677,6 +1702,7 @@ Static function fGetInfo()
         cMonQua     := QINF->ZEX_MONQUA
         dLacData    := QINF->ZEX_DTLACR
         cLacHora    := QINF->ZEX_HRLACR
+        cPlaca      := QINF->ZEX_PLACA
         cLimpInt    := IIF(QINF->ZEX_LIMPIN == "S","Conforme","Não conforme")
         cLimpExt    := IIF(QINF->ZEX_LIMPEX == "S","Conforme","Não conforme")
         cTempBau    := IIF(QINF->ZEX_TEMPBA == "S","Conforme","Não conforme")
@@ -1713,7 +1739,7 @@ Static function fGetQuery()
     Local cEOL      := Chr(13)+chr(10)
 
     cQuery := " SELECT EE7_PEDIDO, EE7.EE7_XORDCO, EE7.EE7_XOPCTE, EE7.EE7_XCODTE, EE7.EE7_XEMBAR, EE7.EE7_CONTAI, EE7.EE7_NLACR1, EE7.EE7_NLACR2, EE7.EE7_TEMPER, EE7_XBOOKI, EE7_PEDFAT,"+cEOL
-	cQuery += " 	   EE7.EE7_XTARA, A1.A1_COD, A1.A1_LOJA, A1.A1_NOME, A1A.A1_NOME CONSIG, A1A.A1_END, A1A.A1_BAIRRO, A1A.A1_COMPLEM, YA.YA_DESCR, " +cEOL
+	cQuery += " 	   EE7.EE7_XTARA, EE7.EE7_XCODTE, A1.A1_COD, A1.A1_LOJA, A1.A1_NOME, A1A.A1_NOME CONSIG, A1A.A1_END, A1A.A1_BAIRRO, A1A.A1_COMPLEM, YA.YA_DESCR, " +cEOL
     cQuery += "        EE6.EE6_NOME, C5.C5_NUM, C5.C5_ROTEIRO, C5.C5_DTENTR, C5.C5_PLACA, A4.A4_NOME, ZVC.ZVC_MOTORI, "+cEOL
     cQuery += "        C5.C5_NOTA, C5.C5_SERIE, ZEL.ZEL_DESCRI,   "+cEOL
     cQuery += "        ZE0.ZE0_REGIST, ZE0.ZE0_CNPJ, ZE0.ZE0_RAZAO,   "+cEOL
