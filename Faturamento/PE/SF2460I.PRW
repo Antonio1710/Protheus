@@ -33,6 +33,7 @@
 	@history Ticket 4220    - William Costa	- 16/11/2020 - Gravar o campo E2_LOGDTHR
 	@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção. 
 	@history Ticket 8465 	- Leonardo P. Monteiro - 09/08/2021 - Implementação da carga automática das informações referente a inspeção da qualidade. 
+	@history Ticket 8465 	- Leonardo P. Monteiro - 13/08/2021 - Inclusão do comando DbselectArea para a tabela ZEX. 
 /*/
 User Function SF2460I()
 
@@ -509,6 +510,8 @@ Static Function fGetInfo(cSC5Fil, cSC5Num, cRePlac, cReCont, cReDtFa, cReLac1, c
 	Local cEOL      := Chr(13)+chr(10)
 	Local dDtIni	:= Stod("")
 	Local dDtFim	:= Stod("")
+	
+	DbSelectArea("ZEX")
 
     cQuery := " SELECT ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, MIN(ZEX_DTFABR) DT_MIN, MAX(ZEX_DTFABR) DT_MAX  "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" (NOLOCK) ZEX "+ cEOL

@@ -7,6 +7,7 @@
   @type tkt -  13294
   @author Rodrigo Romão
   @since 20/05/2021
+  @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
 /*/
 
 User Function ADLFV020R()
@@ -54,9 +55,9 @@ Return
 Static Function ReportDef(oReport)
 
 	oSection1 := TRSection():New(oReport,"Dados Paradas")
-	TRCell():New(oSection1,"NUMOC"   	              ,"","N. DA OC"      ,"@!"               	,008,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
-	TRCell():New(oSection1,"ITEM"   	              ,"","Item"          ,"@!"               	,008,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //02
-	TRCell():New(oSection1,"GRANJA"  	              ,"","Granja"        ,"@!"               	,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //03
+	TRCell():New(oSection1,"NUMOC"   	            ,"","N. DA OC"      ,"@!"               	,008,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
+	TRCell():New(oSection1,"ITEM"   	            ,"","Item"          ,"@!"               	,008,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //02
+	TRCell():New(oSection1,"GRANJA"  	            ,"","Granja"        ,"@!"               	,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //03
 	TRCell():New(oSection1,"DTABATE"  	            ,"","Dt. Abate"     ,"@!"               	,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //04
 	TRCell():New(oSection1,"PLACA"     	            ,"","Placa"         ,"@!"               	,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //05
 	TRCell():New(oSection1,"CODPARADA" 	            ,"","Cod. Parada"   ,"@!"               	,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //06
@@ -92,20 +93,35 @@ Static Function PrintReport(oReport)
 	cQuery := "SELECT " + CRLF
 	cQuery += "	 ZEI.ZEI_NUMOC, ZEI.ZEI_ITEM, ZEI.ZEI_NUMMP, ZEI.ZEI_MINUTO, ZEI.ZEI_OBS, " + CRLF
 	cQuery += "	 ZV1.ZV1_PGRANJ, ZV1.ZV1_DTABAT, ZV1.ZV1_RPLACA, " + CRLF
-	cQuery += "	 ZEE.ZEE_DESCRI,ZEE.ZEE_DEPTO,ZEE.ZEE_DESDEP " + CRLF
-  cQuery += "FROM " + RetSqlTab("ZEI") + " " + CRLF
-  cQuery += " INNER JOIN " + RetSqlTab("ZV1") + " " + CRLF
+	cQuery += "	 ZEE.ZEE_DESCRI,ZEE.ZEE_DEPTO,ZGC.ZGC_NOME " + CRLF
+  	cQuery += "FROM " + RetSqlTab("ZEI") + " " + CRLF
+  	cQuery += " INNER JOIN " + RetSqlTab("ZV1") + " " + CRLF
 	cQuery += "  ON  ZEI.ZEI_NUMOC  = ZV1.ZV1_NUMOC" + CRLF
 	cQuery += "  AND ZV1.ZV1_FILIAL = '" + xFilial("ZV1") + "'" + CRLF
 	cQuery += "  AND ZV1.D_E_L_E_T_ <> '*' " + CRLF
-  cQuery += " INNER JOIN " + RetSqlTab("ZEE") + " " + CRLF
+  	cQuery += "  INNER JOIN  "+ RetSqlName("ZGC") +" ZGC " + CRLF
+  	cQuery += "  ON  ZEI.ZEI_DEPTO = ZGC.ZGC_DEPTO " + CRLF
+  	cQuery += "  AND ZGC.ZGC_FILIAL = '  ' " + CRLF
+  	cQuery += "  AND ZGC.D_E_L_E_T_ <> '*' " + CRLF
+ 	cQuery += "  INNER JOIN  "+ RetSqlName("ZEE") +" ZEE " + CRLF
+  	cQuery += "  ON  ZEI.ZEI_DEPTO = ZEE.ZEE_DEPTO " + CRLF 
+  	cQuery += "  AND ZEI.ZEI_NUMMP = ZEE.ZEE_CODIGO " + CRLF
+  	cQuery += "  AND ZEE.ZEE_FILIAL = '  ' " + CRLF
+  	cQuery += "  AND ZEE.D_E_L_E_T_ <> '*' " + CRLF
+	/*
+	cQuery += " INNER JOIN " + RetSqlTab("ZEE") + " " + CRLF
 	cQuery += "  ON  ZEI.ZEI_NUMMP = ZEE.ZEE_CODIGO " + CRLF
 	cQuery += "  AND ZEE.ZEE_FILIAL = '" + xFilial("ZEE") + "'" + CRLF
 	cQuery += "  AND ZEE.D_E_L_E_T_ <> '*'" + CRLF
-  cQuery += "WHERE ZEI.D_E_L_E_T_ <> '*' " + CRLF
+	cQuery += " INNER JOIN " + RetSqlTab("ZGC") + " ZGC " + CRLF
+	cQuery += "  ON  ZEI.ZEI_DEPTO = ZEE.ZEE_CODIGO " + CRLF
+	cQuery += "  AND ZEE.ZEE_FILIAL = '" + xFilial("ZEE") + "'" + CRLF
+	cQuery += "  AND ZEE.D_E_L_E_T_ <> '*'" + CRLF
+  	*/
+	cQuery += "WHERE ZEI.D_E_L_E_T_ <> '*' " + CRLF
 	cQuery += " AND ZEI.ZEI_NUMOC BETWEEN '" + cOrdCarrDe + "' AND '" + cOrdCarrAte + "'" + CRLF
 	cQuery += " AND ZV1.ZV1_DTABAT BETWEEN '" + dTos(dDtAbatDe) + "' AND '" + dTos(dDtAbatATE) + "'" + CRLF
-  cQuery += " ORDER BY ZEI.ZEI_NUMOC, ZEI.ZEI_ITEM "
+  	cQuery += " ORDER BY ZEI.ZEI_NUMOC, ZEI.ZEI_ITEM "
 
 	TCQUERY cQuery NEW ALIAS (cAlias)
 	DbSelectArea(cAlias)
@@ -130,7 +146,7 @@ Static Function PrintReport(oReport)
 		oSection1:Cell("CODPARADA" 	            ):SetValue((cAlias)->ZEI_NUMMP)
 		oSection1:Cell("PARADADESCRICAO"        ):SetValue((cAlias)->ZEE_DESCRI)
 		oSection1:Cell("DEPARTAMENTO"           ):SetValue((cAlias)->ZEE_DEPTO)
-		oSection1:Cell("DEPARTAMENTODESCRICAO"  ):SetValue((cAlias)->ZEE_DESDEP)
+		oSection1:Cell("DEPARTAMENTODESCRICAO"  ):SetValue((cAlias)->ZGC_NOME)
 		oSection1:Cell("MINUTOS"                ):SetValue((cAlias)->ZEI_MINUTO)
 		oSection1:Cell("OBSERVACAO"             ):SetValue((cAlias)->ZEI_OBS)
 
