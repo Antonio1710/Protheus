@@ -84,6 +84,7 @@ Static Function Modeldef()
 	oStruCab:SetProperty( "EE7_TEMPER"   , MODEL_FIELD_WHEN, {|| .T. } )
 	oStruCab:SetProperty( "EE7_DTPROD"   , MODEL_FIELD_WHEN, {|| .T. } )
 	oStruCab:SetProperty( "EE7_XTARA"    , MODEL_FIELD_WHEN, {|| .T. } )
+	oStruCab:SetProperty( "EE7_XMODCS"   , MODEL_FIELD_WHEN, {|| .T. } )
 	
 	if Empty(SC5->C5_NOTA) .AND. Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
 		oStruCab:SetProperty( "EE7_XETQUE"   , MODEL_FIELD_WHEN, {|| .T. } )

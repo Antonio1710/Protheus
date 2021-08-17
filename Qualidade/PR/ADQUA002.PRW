@@ -7,9 +7,10 @@
     @author Everson
     @since 31/05/2021
     @version 01
-    @history Chamado 8465 - Leonardo P. Monteiro    - 19/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
-    @history Chamado 8465 - Leonardo P. Monteiro    - 01/08/2021 - Adição do detalhamento das embalagens (ZGA/ZGB).
-    @history Chamado 8465 - Leonardo P. Monteiro    - 09/08/2021 - Correção e implementação de melhorias como formatação de campos.
+    @history Chamado 8465  - Leonardo P. Monteiro    - 19/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
+    @history Chamado 8465  - Leonardo P. Monteiro    - 01/08/2021 - Adição do detalhamento das embalagens (ZGA/ZGB).
+    @history Chamado 8465  - Leonardo P. Monteiro    - 09/08/2021 - Correção e implementação de melhorias como formatação de campos.
+    @history Chamado 18431 - Leonardo P. Monteiro    - 16/08/2021 - Correção no programa para excluir os registros somente após todas as checagens e modificar a mesagem de alerta.
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 
@@ -35,7 +36,7 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
                 
                 if !Empty(cMens)
                     
-                    if "(Importado)"$cMens .OR. "(Rejeitado)"$cMens .OR. "(Ignorado)"$cMens
+                    if "(Rejeitado)"$cMens .OR. "(Ignorado)"$cMens
                         MsgStop("Eventos de processamento com erros: "+ cMens, "Término da rotina")
                     else
                         MsgInfo("Eventos de processamento: "+ cMens, "Término da rotina")
@@ -240,6 +241,7 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
     Local cMonQua    := ""
     Local cTaraCo    := ""
     Local cTermog    := ""
+    Local nReg       := 0
 
     //Converte a string json em objeto.
     oJson := JSONObject():New()
@@ -285,12 +287,18 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
         cEquipFr    := ""
         cTaraCo     := ""
         cTermog     := ""
-    
-        
-        if fProcessa(cInspId, nReproc)
-            
+        nReg        := 0
+
+        // verifica as opções selecionadas dos usuários.
+        if fProcessa(cInspId, nReproc, @nReg)
+
+            // Valida as regras de negócio para permitir que o processo seja integrado.
             if fStEData(aElementos, @cMens, @cPdVend, @cCarga, @dDtICar, @dDtTCar, @cHrICar, @cHrTCar)
                 
+                // Excluir os registros na base de dados caso estejam integrados.
+                if nReg > 0
+                    fExcluir(cInspId)
+                endif
                 //
                 For nAux2 := 1 To Len(aElementos)
                     
@@ -300,7 +308,6 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                     //
                     If ! oElemento:hasProperty("inspection")
                         Loop
-
                     EndIf
                     
                         //
@@ -432,6 +439,9 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
             u_GrLogZBE(Date(),TIME(),cUserName,"Inspeção da Qualidade Pedido de Venda "+ cPdVend +", ID "+ cInspId +" ","SIGAEEC","ADQUA002",;
 			        "procRes - Inspeção da qualidade do Pedido de Venda "+ cPdVend +", ID  "+ cInspId +;
                     ". Opção selecionada pelo usuário não permite a atualização dos registros gravados. ",ComputerName(),LogUserName())
+            
+            cPdVend := fGetPV(cInspId)
+
             cMens += cEOL+" -(Processado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Inspeção já importada."
         endif
     Next nAux
@@ -442,6 +452,27 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
     RestArea(aArea)
 
 Return Nil
+
+Static function fGetPV(cInspId)
+    Local cRet := ""
+
+    BeginSQL Alias "QPV"
+        %NoPARSER%
+        SELECT DISTINCT ZEX_NUMERO
+        FROM %TABLE:ZEX%
+        WHERE ZEX_ID = %EXP:cInspId% AND D_E_L_E_T_ = ''
+    EndSQl
+    
+    if QPV->(!EOF())
+        cRet := QPV->ZEX_NUMERO
+    else
+        cRet := ""
+    endif
+
+    QPV->(Dbclosearea())
+
+
+return cRet
 
 Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, cHrICar, cHrTCar)
     Local lRet          := .F.
@@ -490,6 +521,7 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
         IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
 
             if Empty(SC5->C5_NOTA)
+            //if .t.
 
                 //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.
                 BeginSQL Alias "QSTED"
@@ -796,18 +828,14 @@ Static Function fGrvImg(cPdVend, cPalId, cTurno, cProd, aImagens)
     endif
 return
 
-Static Function fProcessa(cInspId, nReproc)
+Static Function fProcessa(cInspId, nReproc, nReg)
     Local lRet      := .T.
-    Local nReg      := fRegistro(cInspId)
+    
+    nReg      := fRegistro(cInspId)
     
     DbSelectArea("ZEX")
 
     if nReproc == 1
-
-        if nReg > 0
-            fExcluir(cInspId)
-        endif
-
         lRet := .T.
     Elseif nReproc == 2 .and. nReg == 0
         lRet := .T.
