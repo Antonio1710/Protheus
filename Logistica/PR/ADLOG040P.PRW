@@ -97,6 +97,7 @@ Static nTipoFrt	:= 0
 	@history Chamado 11607 - Leonardo P. Monteiro - 30/04/2021 - Extração das CTe averbadas e adição no menu da rotina.
 	@history 05/05/2021, Everson, Ch:13434  - Tratamento para não emitir CT-e globalizado quando a UF da transportadora não estiver no parâmetro MV_#UFTCAT.
     @history ticket 14223 - Fernando Macieira - 09/06/2021 - E-mail automático adiantamento de frete
+	@history TICKET 18451 - ADRIANO SAVOINE   - 17/08/2021 - Retirada a limpeza da variavel "cEmailC" a mesma é carregada via parametro para enviar email´s de copia e não pode ser Limpa ficando vazia.
 /*/
 User Function ADLOG040P()
 
@@ -7568,7 +7569,7 @@ Static Function SendADI()
 		
 		cHtml   := ""
 		cEmail  := ""
-		cEmailC := ""
+		//cEmailC := "" TICKET 18451 - ADRIANO SAVOINE - 17/08/2021
 		nTotal  := 0
 				
 		//Work->( dbSkip() )

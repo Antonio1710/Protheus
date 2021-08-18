@@ -9,14 +9,11 @@
     @type  Function
     @author Everson
     @since 21/05/2020
-    @version 01
-    @history Everson, 27/05/2020, Chamado T.I. - Altera a atualização por credencial para empresa+filial+matrícula.
-    @history Everson, 07/07/2020, Chamado 059352 - Tratamento para subir todos os cadastros de funcionários, não
-    apenas os que possuem o flag de transporte.
-    @history Everson, 09/07/2020, Chamado 059555. Tratamento para obter status (férias afastamento) da tabela SR8.
-    @history ticket 7791 - Fernando Macieira - 19/01/2021 - INTEGRAÇÃO RM X AUTTRAN
-    @history ticket   39 - Fernando Macieira - 10/02/2021 - Padronização do parâmetro Linked Server RM, de/para no campo CODSITUACAO
-    @history ticket   TI - Fernando Macieira - 05/03/2021 - Tratativa nome banco CORPORERM
+    @version 02
+    @history ticket 7791  - Fernando Macieira - 19/01/2021 - INTEGRAÇÃO RM X AUTTRAN
+    @history ticket   39  - Fernando Macieira - 10/02/2021 - Padronização do parâmetro Linked Server RM, de/para no campo CODSITUACAO
+    @history ticket   TI  - Fernando Macieira - 05/03/2021 - Tratativa nome banco CORPORERM
+    @history Ticket 18425 - ADRIANO SAVOINE   - 17/08/2021 - Ajuste na query enviada pelo Marcos Cavalcante Consultor RM, para integrar no JOB os dados do RM.
 /*/
 User Function ADGPE056P() // U_ADGPE056P()
 
@@ -306,249 +303,85 @@ Static Function scptSql()
     //Variáveis.
     Local cQuery := ""
 
-    //As empresas e filiais estão hardcoded.
-    
-    //  @history ticket 7791 - Fernando Macieira - 19/01/2021 - INTEGRAÇÃO RM X AUTTRAN
-
-    // Migração folha PROTHEUS => RM
-    /*
-    cQuery := ""
-    cQuery += " SELECT   " 
-    cQuery += " '01' AS company,    'ADORO S.A.' AS name_company,     " 
-    cQuery += " '02' AS subsidiary, 'VARZEA' AS name_subsidiary,     " 
-    cQuery += " RA_XCREDEN AS key_code,     " 
-    cQuery += " RTRIM(LTRIM(RA_NOME)) AS name,     " 
-    cQuery += " RTRIM(LTRIM(RA_MAT)) AS code,      " 
-    cQuery += " CASE WHEN  " 
-
-    //Everson - 09/07/2020. Chamado 059555.
-    cQuery += " RA_SITFOLH <> 'D' AND R8_TIPOAFA IS NULL THEN '' " 
-    cQuery += " ELSE  " 
-    cQuery += " RA_SITFOLH " 
-    cQuery += " END " 
-    cQuery += " AS status,   " 
-    cQuery += " RA_SITFOLH, " 
-    //
-
-    cQuery += " RA_CC AS code_cc,     " 
-    cQuery += " CTT_DESC01 AS desc_cc,   " 
-    cQuery += " RA_XIDAWS AS cod_AWS, " 
-    cQuery += " AFAST.R8_TIPOAFA " 
-    cQuery += " FROM      " 
-    cQuery += " SRA010 (NOLOCK) AS SRA     " 
-    cQuery += " INNER JOIN     " 
-    cQuery += " CTT010 (NOLOCK) AS CTT ON     " 
-    cQuery += " RA_CC  = CTT_CUSTO     " 
-
-    //Everson - 09/07/2020. Chamado 059555.
-    cQuery += " LEFT OUTER JOIN " 
-    cQuery += " ( " 
-    cQuery += " SELECT  " 
-    cQuery += " R8_FILIAL, R8_MAT, R8_TIPOAFA " 
-    cQuery += " FROM " 
-    cQuery += " SR8010 (NOLOCK) AS SR8 " 
-    cQuery += " WHERE " 
-    cQuery += " R8_FILIAL = '02' " 
-    cQuery += " AND (CONVERT(VARCHAR(8), (GETDATE()+1), 112)  BETWEEN SR8.R8_DATAINI AND SR8.R8_DATAFIM " 
-    cQuery += " OR SR8.R8_DATAFIM = '') " 
-    cQuery += " AND SR8.D_E_L_E_T_ = '' " 
-    cQuery += " ) AS AFAST ON " 
-    cQuery += " RA_FILIAL = AFAST.R8_FILIAL " 
-    cQuery += " AND RA_MAT= AFAST.R8_MAT " 
-    //
-
-    cQuery += " WHERE      " 
-    cQuery += " RA_FILIAL = '02'      " 
-    //cQuery  += " AND RA_TRANS_ = 'S'    " //Everson - 07/07/2020. Chamado 059352.
-    cQuery += " AND RA_XCREDEN > 0      " 
-    cQuery += " AND SRA.D_E_L_E_T_ = ''      " 
-    cQuery += " AND CTT.D_E_L_E_T_ = ''   " 
-
-    cQuery += " UNION ALL " 
-
-    cQuery += " SELECT   " 
-    cQuery += " '02' AS company,    'CERES'  AS name_company,     " 
-    cQuery += " '01' AS subsidiary, 'VARZEA' AS name_subsidiary,    " 
-    cQuery += " RA_XCREDEN AS key_code,     " 
-    cQuery += " RTRIM(LTRIM(RA_NOME)) AS name,     " 
-    cQuery += " RTRIM(LTRIM(RA_MAT)) AS code,      " 
-
-    //Everson - 09/07/2020. Chamado 059555.
-    cQuery += " CASE WHEN  " 
-    cQuery += " RA_SITFOLH <> 'D' AND R8_TIPOAFA IS NULL THEN '' " 
-    cQuery += " ELSE  " 
-    cQuery += " RA_SITFOLH " 
-    cQuery += " END " 
-    cQuery += " AS status,   " 
-    cQuery += " RA_SITFOLH, " 
-    //
-    
-    cQuery += " RA_CC AS code_cc,     " 
-    cQuery += " CTT_DESC01 AS desc_cc,   " 
-    cQuery += " RA_XIDAWS AS cod_AWS, " 
-    cQuery += " AFAST.R8_TIPOAFA " 
-    cQuery += " FROM      " 
-    cQuery += " SRA020 (NOLOCK) AS SRA     " 
-    cQuery += " INNER JOIN     " 
-    cQuery += " CTT020 (NOLOCK) AS CTT ON     " 
-    cQuery += " RA_CC  = CTT_CUSTO     " 
-
-    //Everson - 09/07/2020. Chamado 059555.
-    cQuery += " LEFT OUTER JOIN " 
-    cQuery += " ( " 
-    cQuery += " SELECT  " 
-    cQuery += " R8_FILIAL, R8_MAT, R8_TIPOAFA " 
-    cQuery += " FROM " 
-    cQuery += " SR8020 (NOLOCK) AS SR8 " 
-    cQuery += " WHERE " 
-    cQuery += " R8_FILIAL = '01' " 
-    cQuery += " AND (CONVERT(VARCHAR(8), (GETDATE()+1), 112)  BETWEEN SR8.R8_DATAINI AND SR8.R8_DATAFIM " 
-    cQuery += " OR SR8.R8_DATAFIM = '') " 
-    cQuery += " AND SR8.D_E_L_E_T_ = '' " 
-    cQuery += " ) AS AFAST ON " 
-    cQuery += " RA_FILIAL = AFAST.R8_FILIAL " 
-    cQuery += " AND RA_MAT= AFAST.R8_MAT "
-    //
-
-    cQuery += " WHERE      " 
-    cQuery += " RA_FILIAL = '01'      " 
-    //cQuery  += " AND RA_TRANS_ = 'S'    "  //Everson - 07/07/2020. Chamado 059352.
-    cQuery += " AND RA_XCREDEN > 0      " 
-    cQuery += " AND SRA.D_E_L_E_T_ = ''      " 
-    cQuery += " AND CTT.D_E_L_E_T_ = ''   " 
-    cQuery += " ORDER BY company, subsidiary, key_code " 
-    
-    */
-
-    // RM - CorporeRM - Linked Server
+     //As empresas e filiais estão hardcoded.
+     // RM - CorporeRM - Linked Server
     // Adoro
+    //Ticket 18425 - ADRIANO SAVOINE   - 17/08/2021
+
     cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ",
     
-    cQuery += " ' SELECT SRA.CODCOLIGADA              AS company,    
-	cQuery += "	  ''ADORO S.A.''                      AS name_company,      
-	cQuery += "	  LEFT(SRA.CHAPA,2)                   AS subsidiary, 
-	cQuery += "	  ''VARZEA''                          AS name_subsidiary,      
-	cQuery += "	  PFCOMPL.PTOCREDENCIAL               AS key_code,      
-	cQuery += "	  SRA.NOME                            AS name,      
-	cQuery += "	  SRA.CHAPA                           AS code,       
-		  
-	cQuery += "	  case
-    cQuery += "        when ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), FERIAS.DATAINICIO, 112) AND CONVERT(VARCHAR(8), FERIAS.DATAFIM, 112) AND FERIAS.DATAFIM IS NOT NULL AND AFAST.MOTIVO IS NULL) THEN ''F''
-	cQuery += "		   when ( ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), AFAST.DTINICIO, 112) AND CONVERT(VARCHAR(8), AFAST.DTFINAL, 112) OR AFAST.DTFINAL IS NULL ) AND AFAST.MOTIVO IS NOT NULL ) THEN ''A''
-	cQuery += "		   when CODSITUACAO = ''D'' THEN CODSITUACAO
-	cQuery += "		   when CODSITUACAO = ''A'' THEN ''''
-
-    // @history ticket   39 - Fernando Macieira - 10/02/2021 - Padronização do parâmetro Linked Server RM, de/para no campo CODSITUACAO
-    cQuery += "	       when CODSITUACAO = ''F'' THEN ''''
-	cQuery += "	       when CODSITUACAO IN (''C'',''E'',''G'',''I'',''K'',''L'',''M'',''N'',''O'',''P'',''Q'',''R'',''S'',''T'',''U'',''W'',''Y'') THEN ''A''
-	cQuery += "	       when CODSITUACAO IN (''V'',''X'',''Z'') THEN ''''
-    //
-
-	cQuery += "		   else CODSITUACAO
-    cQuery += "   end as status,
-		  
-	cQuery += "	  SRA.CODSITUACAO,  
-	cQuery += "	  RIGHT(RTRIM(LTRIM(SRA.CODSECAO)),4) AS code_cc,      
-	cQuery += "	  RTRIM(LTRIM(PSECAO.DESCRICAO))      AS desc_cc,    
-	cQuery += "	  PFCOMPL.RA_XIDAWS                   AS cod_AWS,
-	cQuery += "	  AFAST.MOTIVO,
-	cQuery += "	  AFAST.DTINICIO,
-	cQuery += "	  AFAST.DTFINAL,
-	cQuery += "	  FERIAS.DATAINICIO,
-	cQuery += "	  FERIAS.DATAFIM
+    cQuery += " ' SELECT SRA.CODCOLIGADA                        AS company,    
+    cQuery += "        ''ADORO S.A.''                           AS name_company,      
+    cQuery += "        LEFT(SRA.CHAPA,2)                        AS subsidiary, 
+    cQuery += "        ''VARZEA''                               AS name_subsidiary,      
+    cQuery += "        PFCOMPL.PTOCREDENCIAL                    AS key_code,      
+    cQuery += "        SRA.NOME                                 AS name,      
+    cQuery += "        SRA.CHAPA                                AS code,       
+    cQuery += "        CASE
+    cQuery += "           when ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), FERIAS.DATAINICIO, 112) AND CONVERT(VARCHAR(8), FERIAS.DATAFIM, 112) AND FERIAS.DATAFIM IS NOT NULL AND AFAST.MOTIVO IS NULL) 
+    cQuery += "               THEN ''F''
+    cQuery += "           when ( ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), AFAST.DTINICIO, 112) AND CONVERT(VARCHAR(8), AFAST.DTFINAL, 112) OR AFAST.DTFINAL IS NULL ) AND AFAST.MOTIVO IS NOT NULL ) 
+    cQuery += "               THEN ''A''
+    cQuery += "           when CODSITUACAO = ''D'' 
+    cQuery += "               THEN CODSITUACAO
+    cQuery += "           when CODSITUACAO = ''A'' 
+    cQuery += "               THEN ''''
+    cQuery += "           when CODSITUACAO = ''F'' 
+    cQuery += "               THEN ''''
+    cQuery += "           when CODSITUACAO IN (''C'',''E'',''G'',''I'',''K'',''L'',''M'',''N'',''O'',''P'',''Q'',''R'',''S'',''T'',''U'',''W'',''Y'') 
+    cQuery += "               THEN ''A''
+    cQuery += "           when CODSITUACAO IN (''V'',''X'',''Z'') 
+    cQuery += "               THEN ''''
+    cQuery += "                    else CODSITUACAO 
+    cQuery += "        end as status,
+    cQuery += "        SRA.CODSITUACAO,  
+    cQuery += "        RIGHT(RTRIM(LTRIM(SRA.CODSECAO)),4)    AS code_cc,      
+    cQuery += "        RTRIM(LTRIM(PSECAO.DESCRICAO))         AS desc_cc,    
+    cQuery += "        PFCOMPL.RA_XIDAWS                      AS cod_AWS,
+    cQuery += "        AFAST.MOTIVO,
+    cQuery += "        AFAST.DTINICIO,
+    cQuery += "        AFAST.DTFINAL,
+    cQuery += "        FERIAS.DATAINICIO,
+    cQuery += "        FERIAS.DATAFIM
 
     cQuery += " FROM [" + cSGBD + "].[DBO].[PFUNC] (NOLOCK) AS SRA
-
-    cQuery += " INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] (NOLOCK) AS PFCOMPL ON PFCOMPL.CODCOLIGADA=SRA.CODCOLIGADA AND PFCOMPL.CHAPA=SRA.CHAPA AND ( PFCOMPL.PTOCREDENCIAL IS NOT NULL AND PFCOMPL.PTOCREDENCIAL <> ''0'' )
-    cQuery += " INNER JOIN [" + cSGBD + "].[DBO].[PSECAO]  (NOLOCK) AS PSECAO  ON PSECAO.CODCOLIGADA=SRA.CODCOLIGADA AND PSECAO.CODIGO=SRA.CODSECAO
-
-    cQuery += " LEFT OUTER JOIN  (  
-    cQuery += "    SELECT CODCOLIGADA, CHAPA, MOTIVO, CONVERT(VARCHAR(8),DTINICIO,112) DTINICIO, CONVERT(VARCHAR(8),DTFINAL,112) DTFINAL
-    cQuery += "    FROM [" + cSGBD + "].[DBO].[PFHSTAFT] (NOLOCK) AS SR8
-    cQuery += "    WHERE CODCOLIGADA=''1''
-    cQuery += "    AND CHAPA LIKE ''02%''
-    cQuery += "    AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DTINICIO, 112) AND CONVERT(VARCHAR(8), DTFINAL, 112) OR DTFINAL IS NULL )
-    cQuery += "    ) AS AFAST 
-    cQuery += "    ON SRA.CODCOLIGADA = AFAST.CODCOLIGADA AND SRA.CHAPA = AFAST.CHAPA
-
-    cQuery += " LEFT OUTER JOIN  (  
-    cQuery += "    SELECT CODCOLIGADA, CHAPA, CONVERT(VARCHAR(8), DATAINICIO, 112) DATAINICIO, CONVERT(VARCHAR(8), DATAFIM, 112) DATAFIM
-    cQuery += "    FROM [" + cSGBD + "].[DBO].[PFUFERIASPER] (NOLOCK) AS SRF
-    cQuery += "    WHERE CODCOLIGADA=''1''
-    cQuery += "    AND CHAPA LIKE ''02%''
-    cQuery += "    AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DATAINICIO, 112) AND CONVERT(VARCHAR(8), DATAFIM, 112) )
-    cQuery += "    ) AS FERIAS
-    cQuery += "    ON SRA.CODCOLIGADA = FERIAS.CODCOLIGADA AND SRA.CHAPA = FERIAS.CHAPA
-
-    cQuery += " WHERE SRA.CODCOLIGADA=''1''
-    cQuery += " AND SRA.CHAPA LIKE ''02%''
-
-    // DEBUG - INIBIR
-    //cQuery += " AND SRA.CHAPA = ''02015584''
-    // DEBUG - INIBIR
-
-    /*
-    
-    cQuery += " UNION ALL
-
-    // CERES
-    cQuery += "   SELECT SRA.CODCOLIGADA              AS company,    
-	cQuery += "	  ''CERES''                           AS name_company,      
-	cQuery += "	  LEFT(SRA.CHAPA,2)                   AS subsidiary, 
-	cQuery += "	  ''MATRIZ''                          AS name_subsidiary,      
-	cQuery += "	  PFCOMPL.PTOCREDENCIAL               AS key_code,      
-	cQuery += "	  SRA.NOME                            AS name,      
-	cQuery += "	  SRA.CHAPA                           AS code,       
-		  
-	cQuery += "	  case
-    cQuery += "        when ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), FERIAS.DATAINICIO, 112) AND CONVERT(VARCHAR(8), FERIAS.DATAFIM, 112) AND FERIAS.DATAFIM IS NOT NULL AND AFAST.MOTIVO IS NULL) THEN ''F''
-	cQuery += "		   when ( ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), AFAST.DTINICIO, 112) AND CONVERT(VARCHAR(8), AFAST.DTFINAL, 112) OR AFAST.DTFINAL IS NULL ) AND AFAST.MOTIVO IS NOT NULL ) THEN ''A''
-	cQuery += "		   when CODSITUACAO = ''D'' THEN CODSITUACAO
-	cQuery += "		   when CODSITUACAO = ''A'' THEN ''''
-	cQuery += "		   else CODSITUACAO
-    cQuery += "   end as status,
-		  
-	cQuery += "	  SRA.CODSITUACAO,  
-	cQuery += "	  RIGHT(RTRIM(LTRIM(SRA.CODSECAO)),4) AS code_cc,      
-	cQuery += "	  RTRIM(LTRIM(PSECAO.DESCRICAO))      AS desc_cc,    
-	cQuery += "	  PFCOMPL.RA_XIDAWS                   AS cod_AWS,
-	cQuery += "	  AFAST.MOTIVO,
-	cQuery += "	  AFAST.DTINICIO,
-	cQuery += "	  AFAST.DTFINAL,
-	cQuery += "	  FERIAS.DATAINICIO,
-	cQuery += "	  FERIAS.DATAFIM
-
-    cQuery += " FROM [CORPORERM].[DBO].[PFUNC] (NOLOCK) AS SRA      
-
-    cQuery += " INNER JOIN [CORPORERM].[DBO].[PFCOMPL] (NOLOCK) AS PFCOMPL ON PFCOMPL.CODCOLIGADA=SRA.CODCOLIGADA AND PFCOMPL.CHAPA=SRA.CHAPA AND ( PFCOMPL.PTOCREDENCIAL IS NOT NULL AND PFCOMPL.PTOCREDENCIAL <> ''0'' )
-    cQuery += " INNER JOIN [CORPORERM].[DBO].[PSECAO]  (NOLOCK) AS PSECAO  ON PSECAO.CODCOLIGADA=SRA.CODCOLIGADA AND PSECAO.CODIGO=SRA.CODSECAO
-
-    cQuery += " LEFT OUTER JOIN  (  
-    cQuery += "    SELECT CODCOLIGADA, CHAPA, MOTIVO, CONVERT(VARCHAR(8),DTINICIO,112) DTINICIO, CONVERT(VARCHAR(8),DTFINAL,112) DTFINAL
-    cQuery += "    FROM [CORPORERM].[DBO].[PFHSTAFT] (NOLOCK) AS SR8
-    cQuery += "    WHERE CODCOLIGADA=''2''
-    cQuery += "    AND CHAPA LIKE ''01%''
-    cQuery += "    AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DTINICIO, 112) AND CONVERT(VARCHAR(8), DTFINAL, 112) OR DTFINAL IS NULL )
-    cQuery += "    ) AS AFAST 
-    cQuery += "    ON SRA.CODCOLIGADA = AFAST.CODCOLIGADA AND SRA.CHAPA = AFAST.CHAPA
-
-    cQuery += " LEFT OUTER JOIN  (  
-    cQuery += "    SELECT CODCOLIGADA, CHAPA, CONVERT(VARCHAR(8), DATAINICIO, 112) DATAINICIO, CONVERT(VARCHAR(8), DATAFIM, 112) DATAFIM
-    cQuery += "    FROM [CORPORERM].[DBO].[PFUFERIASPER] (NOLOCK) AS SRF
-    cQuery += "    WHERE CODCOLIGADA=''2''
-    cQuery += "    AND CHAPA LIKE ''01%''
-    cQuery += "    AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DATAINICIO, 112) AND CONVERT(VARCHAR(8), DATAFIM, 112) )
-    cQuery += "    ) AS FERIAS
-    cQuery += "    ON SRA.CODCOLIGADA = FERIAS.CODCOLIGADA AND SRA.CHAPA = FERIAS.CHAPA
-
-    cQuery += " WHERE SRA.CODCOLIGADA=''2''
-    cQuery += " AND SRA.CHAPA LIKE ''01%''
-
-    */
+    cQuery += "       INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] (NOLOCK) AS PFCOMPL 
+    cQuery += "    ON PFCOMPL.CODCOLIGADA=SRA.CODCOLIGADA 
+    cQuery += "   AND PFCOMPL.CHAPA=SRA.CHAPA 
+    cQuery += "   AND ( PFCOMPL.PTOCREDENCIAL IS NOT NULL 
+    cQuery += "   AND PFCOMPL.PTOCREDENCIAL <> ''0'' )
+    cQuery += "       INNER JOIN [" + cSGBD + "].[DBO].[PSECAO]  (NOLOCK) AS PSECAO  
+    cQuery += "    ON PSECAO.CODCOLIGADA=SRA.CODCOLIGADA 
+    cQuery += "   AND PSECAO.CODIGO=SRA.CODSECAO
+    cQuery += "       LEFT OUTER JOIN  (  
+    cQuery += "                         SELECT CODCOLIGADA, 
+    cQuery += "                                CHAPA, 
+    cQuery += "                                MOTIVO, 
+    cQuery += "                                CONVERT(VARCHAR(8),DTINICIO,112) DTINICIO, 
+    cQuery += "                                CONVERT(VARCHAR(8),DTFINAL,112) DTFINAL
+    cQuery += "                         FROM [" + cSGBD + "].[DBO].[PFHSTAFT] (NOLOCK) AS SR8
+    cQuery += "                         WHERE ((CODCOLIGADA = ''1'' AND CODFILIAL = ''2'') OR (CODCOLIGADA = ''2''))
+    cQuery += "                         AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DTINICIO, 112) 
+    cQuery += "                         AND CONVERT(VARCHAR(8), DTFINAL, 112) OR DTFINAL IS NULL )) AS AFAST 
+    cQuery += "    ON SRA.CODCOLIGADA = AFAST.CODCOLIGADA 
+    cQuery += "   AND SRA.CHAPA = AFAST.CHAPA
+    cQuery += "       LEFT OUTER JOIN  (  
+    cQuery += "                         SELECT CODCOLIGADA, 
+    cQuery += "                                CHAPA, 
+    cQuery += "                                CONVERT(VARCHAR(8), DATAINICIO, 112) DATAINICIO, 
+    cQuery += "                                CONVERT(VARCHAR(8), DATAFIM, 112) DATAFIM
+    cQuery += "                         FROM [" + cSGBD + "].[DBO].[PFUFERIASPER] (NOLOCK) AS SRF
+    cQuery += "                         WHERE ((CODCOLIGADA = ''1'' AND CODFILIAL = ''2'') OR (CODCOLIGADA = ''2''))
+    cQuery += "                           AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DATAINICIO, 112) AND CONVERT(VARCHAR(8), DATAFIM, 112) )) AS FERIAS
+    cQuery += "    ON SRA.CODCOLIGADA = FERIAS.CODCOLIGADA 
+    cQuery += "   AND SRA.CHAPA = FERIAS.CHAPA
+    cQuery += " WHERE WHERE ((CODCOLIGADA = ''1'' AND CODFILIAL = ''2'') OR (CODCOLIGADA = ''2''))
 
     cQuery += " ORDER BY company, subsidiary, key_code
 
     cQuery += " ')
+    
+    //Ticket 18425 - ADRIANO SAVOINE   - 17/08/2021 
 
     //  
 
@@ -719,10 +552,6 @@ Static Function tratSucess(cMsg,cEmp,cFil,cMat)
     //
     // @history ticket 7791 - Fernando Macieira - 19/01/2021 - INTEGRAÇÃO RM X AUTTRAN
     
-    //cUpt  := " UPDATE SRA" + cEmp + "0 SET RA_XIDAWS = " + cId + " WHERE RTRIM(LTRIM(RA_FILIAL)) + RTRIM(LTRIM(RA_MAT)) = '" + cFil + cMat + "' AND D_E_L_E_T_ = '' "
-
-    //tratSucess( cMsg, Alltrim(cValToChar((cAlias)->company)), Alltrim(cValToChar((cAlias)->subsidiary)), Alltrim(cValToChar((cAlias)->code)) )
-    //tratSucess(cMsg,cEmp,cFil,cMat)
 
     cUpt := " UPDATE OPENQUERY ( " + cLinked + ",
     cUpt += " ' SELECT RA_XIDAWS
@@ -776,9 +605,6 @@ Return Nil
 /*/
 Static Function logZBN(cStatus)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variávies.
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea	:= GetArea()
 
 	DbSelectArea("ZBN") 

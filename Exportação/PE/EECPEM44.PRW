@@ -11,6 +11,7 @@
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro - 04/03/2021 - Inclusão das validações do projeto de exportação.
     @history Chamado 8465 - Leonardo P. Monteiro - 04/03/2021 - Alteração do campo chave do roteiro para a placa.
+    @history Chamado 8465 - Leonardo P. Monteiro - 18/03/2021 - Valida se o campo Modelo Certificado foi incluso.
 /*/
 
 User Function EECPEM44()
@@ -39,9 +40,15 @@ User Function EECPEM44()
     ELSE
 
         lRet    := .F.        
-        MsgStop("Olá " + Alltrim(cUserName) + ", o único usuário que pode colocar pedido de exportação é o: " + cUsrVend + '-' + UsrFullName(cUsrVend) + " conforme carteira do comercial nº 000800")
+        MsgStop("[EECPEM44-02] - Olá " + Alltrim(cUserName) + ", o único usuário que pode colocar pedido de exportação é o: " + cUsrVend + '-' + UsrFullName(cUsrVend) + " conforme carteira do comercial nº 000800")
 
     ENDIF
+    
+    if Empty( M->EE7_XMODCS )
+        lRet    := .F.        
+        MsgStop("[EECPEM44-03] - É necessário informar o Modelo de Certificado para finalizar a inclusão do processo de exportação.")
+    ENDIF
+
     DbSelectArea("SC5")
     SC5->(DbsetOrder(1))
 

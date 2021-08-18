@@ -19,6 +19,8 @@
     @history 22/05/2021 - Chamado   8465 Leonardo P. Monteiro - Alteração na validação para considerar o número da placa ao invés do roteiro.
     @history 04/06/2021 - Chamado   8465 Leonardo P. Monteiro - Correção do error.log na linha 85.
     @history 22/07/2021 - Chamado   8465 Leonardo P. Monteiro - Limpa os campos na cópia do pedido de exportação.
+    @history 17/08/2021 - Chamado  18514 Leonardo P. Monteiro - Gravação das mensagens nos pedidos de venda.
+    
 /*/
 
 User Function EECAP100
@@ -120,6 +122,12 @@ User Function EECAP100
                     SC5->C5_TEMPERA := EE7->EE7_TEMPER
                     SC5->C5_DTPROD  := EE7->EE7_DTPROD
 
+                    //Grava os dados da mensagem.
+                    SC5->C5_MENNOTA  := EE7->EE7_MENSG
+                    SC5->C5_MENNOT2  := EE7->EE7_MENSG2
+                    SC5->C5_MENNOT3  := EE7->EE7_MENSG3
+
+
                 MsUnlock("SC5")
                 //INICIO Chamado 050701 - Abel Babini - Corrigi Local Padrão baseado no Indicador de Produtos - 06/08/2019
                 If SC6->(dbSeek( FWxFilial("SC6") + EE7->EE7_PEDFAT ))
@@ -175,7 +183,7 @@ User Function EECAP100
         M->EE7_XWFNED   := Stod("")
         M->EE7_XWFEMH   := ""
         M->EE7_XWFNEE   := "N"
-        M->EE7_XMODCS   := ""
+        M->EE7_XMODCS   := Criavar("EE7_XMODCS")
         RunTrigger(1,nil,nil,,'EE7_VIA')
         RunTrigger(1,nil,nil,,'EE7_PAISET')
     EndIf
