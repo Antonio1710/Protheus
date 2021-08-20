@@ -28,7 +28,13 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
     //
 	//RPCSetType(3)
 	//RpcSetEnv("01","02",,,,GetEnvServer(),{ })
-
+    //Garanto uma única thread sendo executada.
+    If !LockByName("ADQUA002", .T., .F.)
+	    u_GrLogZBE(Date(),TIME(),cUserName,"Início da rotina Qualidade Pedido de Venda","SIGAEEC","ADQUA002",;
+			    "Rotina não inicada por estar sendo executada por outro usuário. ",ComputerName(),LogUserName())
+        
+        MsgInfo("Rotina sendo executada por outro usuário ou agendamento! Aguarde o término da execução.", "..:: Em execução ::.. ")
+    else
         //
         If login(@cErro, @cToken) //Realiza login.
             If consulta(@cErro, cToken, @cResponse, dParData) //Executa consulta.
@@ -45,7 +51,8 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
             EndIf
 
         EndIf
-
+    
+    endif
     //
     //RpcClearEnv()
 

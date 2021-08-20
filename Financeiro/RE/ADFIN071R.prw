@@ -14,6 +14,7 @@
 	@version version
 	@history Chamado TI    - William Costa   - 29/01/2020 - Retirado o campo A1_MSBLQL para listar todos os clientes até os inativos, para verificar se tem divida financeira.
 	@history Ticket 001545 - Abel Babini     - 14/09/2020 - Ajuste no fechamento das tabelas temporárias
+	@history Ticket 18602  - Fernando Sigoli - 20/08/2021 - Alterado rotina para trazer como defult nos parametros Ano-1
 /*/
 
 User Function ADFIN071R()
@@ -53,9 +54,9 @@ User Function ADFIN071R()
 	Private aHistRede	:= {}
 	Private aHisTCli	:= {}
 	Private oCobranca   := NIL
-	Private dDtIniFat	:= CTOD('01/' + '01/' + CVALTOCHAR((YEAR(DATE()) - 2)))
+	Private dDtIniFat	:= CTOD('01/' + '01/' + CVALTOCHAR((YEAR(DATE()) - 1))) //Ticket 18602  - Fernando Sigoli - 20/08/2021 
 	Private dDtFinFat	:= CTOD('31/' + '12/' + CVALTOCHAR((YEAR(DATE()))))
-	Private dDtIniFin	:= CTOD('01/' + '01/' + CVALTOCHAR((YEAR(DATE()) - 2)))
+	Private dDtIniFin	:= CTOD('01/' + '01/' + CVALTOCHAR((YEAR(DATE()) - 1))) //Ticket 18602  - Fernando Sigoli - 20/08/2021 
 	Private dDtFinFin	:= CTOD('31/' + '12/' + CVALTOCHAR((YEAR(DATE()))))
 	Private oTFFiltro   := NIL
 	Private aplanfat    := {}

@@ -12,11 +12,13 @@
 	@example
 	(examples)
 	@see (links_or_references)
-	@history ticket SN     - Ricardo Lima - 19/09/2018 - ajuste nas casas decimanis e acerto da diferenca para op de maior valor
-	@history ticket 048140 - FWNM         - 27/03/2019 - Mudanca de mensagem p/ usuario identificar a ocorrencia de maior valor
-	@history ticket 051064 - FWNM         - 13/08/2019 -  051064 || OS 052377 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || RATEIO
-	@history ticket 051089 - FWNM         - 13/08/2019 -  051089 || OS 052389 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || MV_DBLQMOV
-	@history ticket 15796  - FWNM         - 10/08/2021 -  ERRO ROTINA GERA AJUSTE - Objeto: EPCP002
+	@history ticket SN     - Ricardo Lima      - 19/09/2018 - ajuste nas casas decimanis e acerto da diferenca para op de maior valor
+	@history ticket 048140 - Fernando Macieira - 27/03/2019 - Mudanca de mensagem p/ usuario identificar a ocorrencia de maior valor
+	@history ticket 051064 - Fernando Macieira - 13/08/2019 - 051064 || OS 052377 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || RATEIO
+	@history ticket 051089 - Fernando Macieira - 13/08/2019 - 051089 || OS 052389 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || MV_DBLQMOV
+	@history ticket 15796  - Fernando Macieira - 10/08/2021 - ERRO ROTINA GERA AJUSTE - Objeto: EPCP002
+	@history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+	@history ticket 18558  - Fernando Macieira - 19/08/2021 - Erro Processamento Inventário
 /*/
 User Function EPCP002(lBatch,cCodInv)
 
@@ -380,7 +382,8 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 				EndIf
 				If Localiza(cCod)
 					nTotEnd := SaldoSBF(cLocal,"",cCod)
-					If QtdComp(SB2->B2_QATU)-QtdComp(SB2->B2_QACLASS)-QtdComp(SB2->B2_QEMP) # QtdComp(nTotEnd)-QtdComp(SB2->B2_QEMP)
+					//If QtdComp(SB2->B2_QATU)-QtdComp(SB2->B2_QACLASS)-QtdComp(SB2->B2_QEMP) # QtdComp(nTotEnd)-QtdComp(SB2->B2_QEMP)
+					If QtdComp(SB2->B2_QATU)-QtdComp(SB2->B2_QEMP) # QtdComp(nTotEnd)-QtdComp(SB2->B2_QEMP) // @history ticket 18558  - Fernando Macieira - 19/08/2021 - Erro Processamento Inventário
 						cLog     := 'B2BF'												
 					EndIf   						
 				EndIf
@@ -1111,7 +1114,7 @@ Static Function CriaApur()
 	Local lCLocal	:= .F.   
 	Local cLog      := ""
 	
-	Local cEnd,cNumSeri,cLoteCtl,cNumLote
+	Local cEnd,cNumSeri,cLoteCtl,cNumLote,i,ii
 	Local aAreaZAM	:= ZAM->(GetArea("ZAM"))
 	Local aAreaSDB	:= SDB->(GetArea("SDB"))
 	Local aAreaSD5	:= SD5->(GetArea("SD5"))
@@ -1292,9 +1295,10 @@ Static Function CriaApur()
 		//³Faz ajuste das quantidades fracionadas nao permitindo ³ 
 		//³a existencia de percentuais zerados                   ³
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-		For nCount:=1 To Len(aOp)	
-			Aadd(aOpAux,SldSD3OPDia(INV->COD,INV->ARMAZEM,MV_PAR01,INV->LOTECTL,INV->NUMLOTE,INV->LOCALIZ,INV->NUMSERI,aOp[nCount,2],aOp[nCount,5]))
-			nTotal += aOpAux[nCount]	
+		i := 1
+		For i:=1 To Len(aOp)	
+			Aadd(aOpAux,SldSD3OPDia(INV->COD,INV->ARMAZEM,MV_PAR01,INV->LOTECTL,INV->NUMLOTE,INV->LOCALIZ,INV->NUMSERI,aOp[i,2],aOp[i,5]))
+			nTotal += aOpAux[i]
 		Next
 		
 		//Valdir 29-06 acrescentei INV->TM == '499' porque o nTotal é absoluto e quando o saldo do estoque é maior que a OP dava erro dizendo que não tinha saldo na OP.
@@ -1304,44 +1308,62 @@ Static Function CriaApur()
 			MsUnlocK()
 		EndIf
 		
-		For nCount:=1 To Len(aOp)
+		ii := 1
+		For ii:=1 To Len(aOp)
 			
 			// Nao carrega valores saldo SD3 = 0
-			If aOpAux[nCount] <> 0 
+			If aOpAux[ii] <> 0 
+		
 				RecLock("APU",.T.)
+					
 					APU->FILIAL  := INV->FILIAL 
 					APU->COD	 := INV->COD
 					APU->ARMAZEM := INV->ARMAZEM
 					APU->LOCALIZ := INV->LOCALIZ
-					APU->OP		 := aOp[nCount,2]
-					APU->CC		 := aOp[nCount,5]			      			
+					APU->OP		 := aOp[ii,2]
+					APU->CC		 := aOp[ii,5]			      			
 					APU->DIF	 := INV->DIF
 					APU->TOTAL   := nTotal 
-					APU->EMISSAO := STOD(aOp[nCount,6])			      			
+					APU->EMISSAO := STOD(aOp[ii,6])
 	
 			   		// Calcula o percentual a ser distribuidos nas Ops				                                   
-					APU->QTDSD3		:= aOpAux[nCount]
-				   	APU->PERC		:= NoRound((APU->QTDSD3*100)/nTotal,4)  // Ricardo Lima - 19/09/18 
-			   		APU->QTDRAT	    := NoRound((APU->DIF*APU->PERC)/100,4)  
-			   		
+					APU->QTDSD3	 := aOpAux[ii]
+				   	APU->PERC	 := NoRound((APU->QTDSD3*100)/nTotal,4)  // Ricardo Lima - 19/09/18 
+
+					// @history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+
+			   		APU->QTDRAT	 := NoRound((APU->DIF*APU->PERC)/100,4) 
+					/*
+					If Len(AllTrim(Str(NoRound((APU->DIF*APU->PERC)/100,4)))) < 6
+						APU->QTDRAT	 := Round((APU->DIF*APU->PERC)/100,4) 
+					Else
+						APU->QTDRAT	 := NoRound((APU->DIF*APU->PERC)/100,4)
+					EndIf
+					*/
+					//
+
 			   		//Faz o Arredondamento conforme regra do campo B1_TIPODEC
-					APU->QTDRAT   := A250AvalQt(APU->QTDRAT,APU->COD)
-				MsUnlock()
+					APU->QTDRAT  := A250AvalQt(APU->QTDRAT,APU->COD)
+					
+				APU->( MsUnlock() )
 	
 				// Caso existe alguma OP com D3_QUANT < 0.001, o ajuste e irrelevante
-				If NoRound(((aOpAux[nCount]*100)/nTotal),2) < 0.00001
+				If NoRound(((aOpAux[ii]*100)/nTotal),2) < 0.00001
 					cLog := "IRRV"
 				Endif
 					
 				If cLog == "IRRV" .And. (INV->LOG <> "B2BF" .And. INV->LOG <> "SB2 " .And. INV->LOG <> "SBF0" .And. INV->LOG <> "SB2-")
 					RecLock("INV",.F.)
 						INV->LOG := cLog
-					MsUnlock("INV")
+					INV->( MsUnlock() )
 				Endif 	
 					
 			Endif
+
 		Next 
+
 		INV->(DbSkip())
+
 	EndDo	
 
 Return .T.
@@ -1821,12 +1843,13 @@ Return Nil
 
 Static Function MudaLin(nPos)
 
-	Local nX,cTm
+	Local nX,cTm,iii
 	Local lOk      := .F.
 	Local cProd    := aCampos1[nPos][2]
 	Local cDescr   := Posicione("SB1",1,xFilial("SB1")+cProd,"B1_DESC")
 	Local cNum     := aCampos1[nPos][24]
 	Local nVlrMMp  := 0 // Ricardo Lima - 19/09/18
+	Local nNewDif  := 0
 	
 	nDif      := 0
 	nTot      := 0
@@ -1880,11 +1903,24 @@ Static Function MudaLin(nPos)
 			aCampos1[nPos][25]:= "SBF "		
 		Endif	
 		
+		// AQUI - FWNM
 		For nX := 1 To Len(aCampos1[nPos][23])
+			
 			If aCampos1[nPos][23][nX][1]
 				// Calcula o percentual a ser distribuidos nas Ops
 				aCampos1[nPos][23][nX][10]	:= NoRound((aCampos1[nPos][23][nX][8]*100)/nTot,4)   // Ricardo Lima - 19/09/18
-				aCampos1[nPos][23][nX][9]	:= NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)   
+				
+				// @history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+				
+				aCampos1[nPos][23][nX][9]	:= NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)
+				/*
+				If Len(AllTrim(Str(NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)))) < 6
+					aCampos1[nPos][23][nX][9]	:= Round((nDif*aCampos1[nPos][23][nX][10])/100,4)
+				Else
+					aCampos1[nPos][23][nX][9]	:= NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)  
+				EndIf
+				*/
+				//
 				
 				//Faz o Arredondamento conforme regra do campo B1_TIPODEC
 				aCampos1[nPos][23][nX][9]  := A250AvalQt(aCampos1[nPos][23][nX][9],cProd)
@@ -1894,17 +1930,59 @@ Static Function MudaLin(nPos)
 					aCampos1[nPos][23][nX][9]	:= 0
 					aCampos1[nPos][23][nX][10]	:= 0 				
 				Endif
+		
 			Else
 				aCampos1[nPos][23][nX][9]	:= 0
 				aCampos1[nPos][23][nX][10]	:= 0
 			Endif
+		
 			nTotRat  := nTotRat + aCampos1[nPos][23][nX][9]
 			nTotPerc := nTotPerc + aCampos1[nPos][23][nX][10]		
+		
 		Next nX
 		
+		// @history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+		/*
+		nTotRat <> nDif
+
+		Thais.Fumagalli, 17/08/2021 - 15:29
+		Macieira encontrei um item que o total do acerto com o total do rateio não batem
+
+		Produtos:
+		- 313358
+		- 320185
+		*/
+
+		If nTotRat <> nDif
+
+			nNewDif := Abs(nDif - nTotRat)
+
+			For iii := 1 To Len(aCampos1[nPos][23])
+			
+				If aCampos1[nPos][23][iii][1]
+
+					////
+					aCampos1[nPos][23][iii][9] := aCampos1[nPos][23][iii][9] + nNewDif
+					//Faz o Arredondamento conforme regra do campo B1_TIPODEC
+					aCampos1[nPos][23][iii][9]  := A250AvalQt(aCampos1[nPos][23][iii][9],cProd)
+
+					nTotRat  := nTotRat + nNewDif
+					//nTotPerc := nTotPerc + aCampos1[nPos][23][nX][10]
+					////
+
+					Exit
+
+				EndIf
+
+			Next iii
+			//
+			
+		EndIf
+		// 
+
 		//Se a somatoria do percentual distribuidos nas Ops for menor que 100,
 		//adiciona a diferenca na primeira OP encontrada com % maior que 0.001.
-		If (100.00 - nTotPerc) > 0  
+		If (100.00 - nTotPerc) > 0
 			// Ricardo Lima - 19/09/18
 			For nX:=1 to Len(aCampos1[nPos][23])
 				if aCampos1[nPos][23][nX][8] > nVlrMMp 
@@ -1924,6 +2002,7 @@ Static Function MudaLin(nPos)
 				Endif	
 			Next
 		EndIf
+
 	Endif
 	
 	If !IsInCallStack("RefazVetOP")

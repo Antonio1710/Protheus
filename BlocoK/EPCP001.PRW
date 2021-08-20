@@ -14,6 +14,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 15798 - Fernando Macieira - 02/08/2021 - OTIMIZAÇÃO ROTINA EPCP001
+	@history ticket 18340 - Fernando Macieira - 17/08/2021 - Tratamento de vírgula e pontuação 
 /*/
 User Function EPCP001(aRotAuto)
 
@@ -1552,6 +1553,7 @@ RETURN(aRotina)
     @example
     (examples)
     @see (links_or_references)
+	@ticket 15798 - Fernando Macieira - 02/08/2021 - OTIMIZAÇÃO ROTINA EPCP001
 /*/
 User Function ImpXLS1M()
 
@@ -1683,7 +1685,7 @@ Static Function RunIMPZAM()
 				cZAM_COD    := AllTrim(aDadZAM[3])
                 cZAMLOCAL   := AllTrim(aDadZAM[4])
                 cZAM_DOC    := Left(AllTrim(aDadZAM[5]),6)
-                nZAM_QUANT  := Val(StrTran(aDadZAM[6],",","."))
+                nZAM_QUANT  := Val(StrTran(StrTran(aDadZAM[6],".",""),",",".")) // @history ticket 18340 - Fernando Macieira - 17/08/2021 - Tratamento de vírgula e pontuação 
                 cZAMLOCALI  := AllTrim(aDadZAM[7])
 
                 // Efetua consistências

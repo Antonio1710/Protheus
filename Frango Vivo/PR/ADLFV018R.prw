@@ -90,6 +90,8 @@ User Function ADLFV018R()
 	Private PerMort:=0			//Percentual de Perda
 	Private _nTotPmo:=0			//total de Perda
 	Private TGPMOT  :=0			//total geral de percentual
+	Private _cNumGta	:= ""	//Número da GTA
+	Private _cNomMun	:= ""	//Nome do município.
 	Private _nSomaPeso := 0
 	Private _nSomaQtd := 0
 
@@ -233,35 +235,37 @@ Static Function ReportDef(oReport)
 
 	oSection2 := TRSection():New(oReport,"Dados Aves")
 	TRCell():New(oSection2,"NUMOC"   	            ,cAlias,"N. DA OC"    	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //01
+	TRCell():New(oSection2,"GTA"   	            	,cAlias,"GTA"        	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //03
 	TRCell():New(oSection2,"GRNJ"   	            ,cAlias,"GRNJ"        	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //02
-	TRCell():New(oSection2,"VEICULO"   	            ,cAlias,"VEICULO"     	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //03
-	TRCell():New(oSection2,"QTD_AVES_ORIGEM" 	    ,cAlias,"ORIGEM"      	,"@E 99,999,999.99" 	,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //04
-	TRCell():New(oSection2,"QTD_AVES_RECEBIDA"      ,cAlias,"RECEBIDAV" 	,"@!"               	,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //05
-	TRCell():New(oSection2,"QTD_AVES_DIFERENCA"     ,cAlias,"DIFERENÇA" 	,"@!"               	,010,  ,,"RIGHT",,"RIGHT",,,,,,,) //06
-	TRCell():New(oSection2,"PESO_LIQUIDO_ORIGEM"    ,cAlias,"ORIGEM" 		,"@E 9,999,999.99"		,020,  ,,"RIGHT",,"RIGHT",,,,,,,) //07
-	TRCell():New(oSection2,"PESO_LIQUIDO_RECEBIDO"  ,cAlias,"RECEBIDO" 		,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //08
-	TRCell():New(oSection2,"PESO_LIQUIDO_QUEBRA"    ,cAlias,"QUEBRA" 		,"@E 99999999"			,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //09
-	TRCell():New(oSection2,"TURNO"                  ,cAlias,"TURNO" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //10
-	TRCell():New(oSection2,"PESO_MEDIO"             ,cAlias,"PESO MEDIO"	,"@E 99.999"        	,020,  ,,"RIGHT",,"RIGHT",,,,,,,) //11
-	TRCell():New(oSection2,"AVES_GAIOLA"            ,cAlias,"GAIOLA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //12
-	TRCell():New(oSection2,"MORTALIDADE_QUANT"      ,cAlias,"QUANT" 		,"@!"               	,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //13
-	TRCell():New(oSection2,"MORTALIDADE_PESO"       ,cAlias,"PESO" 			,"@E 99999"         	,010,  ,,"RIGHT",,"RIGHT",,,,,,,) //14
-	TRCell():New(oSection2,"NUMERO_NF"              ,cAlias,"No NF" 		,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //15
-	TRCell():New(oSection2,"TURMA"                  ,cAlias,"TURMA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //16
-	TRCell():New(oSection2,"PEDXML"                 ,cAlias,"PedXml" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //17
-	TRCell():New(oSection2,"TEMPO_ESPERA"           ,cAlias,"ESPERA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //18
-	TRCell():New(oSection2,"HORA_CHEGADA"           ,cAlias,"CHEGADA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //19
-	TRCell():New(oSection2,"HORA_ABATE"             ,cAlias,"ABATE" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //20
-	TRCell():New(oSection2,"DATA_CHEGADA"           ,cAlias,"CHEGADA" 		,"@!"               	,015,  ,,"LEFT",,"LEFT",,,,,,,) //21
-	TRCell():New(oSection2,"DATA_ABATE"             ,cAlias,"ABATE" 		,"@!"               	,015,  ,,"LEFT",,"LEFT",,,,,,,) //22
-	TRCell():New(oSection2,"MORTALIDADE"            ,cAlias,"Mortalidade"	,"@R 99999"          	,015,  ,,"LEFT",,"LEFT",,,,,,,) //23
-	TRCell():New(oSection2,"CAQUETICOS"             ,cAlias,"Caqueticos" 	,"@R 99999"          	,015,  ,,"LEFT",,"LEFT",,,,,,,) //24
+	TRCell():New(oSection2,"MUNICIPIO"            	,cAlias,"MUNICÍPIO"    	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //04
+	TRCell():New(oSection2,"VEICULO"   	            ,cAlias,"VEICULO"     	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //05
+	TRCell():New(oSection2,"QTD_AVES_ORIGEM" 	    ,cAlias,"QTD ORIGEM"   	,"@E 99,999,999" 		,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //06
+	TRCell():New(oSection2,"QTD_AVES_RECEBIDA"      ,cAlias,"RECEBIDAV" 	,"@!"               	,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //07
+	TRCell():New(oSection2,"QTD_AVES_DIFERENCA"     ,cAlias,"DIFERENÇA" 	,"@!"               	,010,  ,,"RIGHT",,"RIGHT",,,,,,,) //08
+	TRCell():New(oSection2,"PESO_LIQUIDO_ORIGEM"    ,cAlias,"PESO ORIGEM"	,"@E 9,999,999.99"		,020,  ,,"RIGHT",,"RIGHT",,,,,,,) //09
+	TRCell():New(oSection2,"PESO_LIQUIDO_RECEBIDO"  ,cAlias,"RECEBIDO" 		,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //10
+	TRCell():New(oSection2,"PESO_LIQUIDO_QUEBRA"    ,cAlias,"QUEBRA" 		,"@E 99999999"			,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //11
+	TRCell():New(oSection2,"TURNO"                  ,cAlias,"TURNO" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //12
+	TRCell():New(oSection2,"PESO_MEDIO"             ,cAlias,"PESO MEDIO"	,"@E 99,999.999"       	,020,  ,,"RIGHT",,"RIGHT",,,,,,,) //13
+	TRCell():New(oSection2,"AVES_GAIOLA"            ,cAlias,"GAIOLA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //14
+	TRCell():New(oSection2,"MORTALIDADE_QUANT"      ,cAlias,"MORTAL. TOTAL" ,"@!"               	,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //15
+	TRCell():New(oSection2,"MORTALIDADE_PESO"       ,cAlias,"PESO MORTALID"	,"@E 99,999.99"        	,010,  ,,"RIGHT",,"RIGHT",,,,,,,) //16
+	TRCell():New(oSection2,"NUMERO_NF"              ,cAlias,"No NF" 		,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //17
+	TRCell():New(oSection2,"TURMA"                  ,cAlias,"TURMA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //18
+	TRCell():New(oSection2,"PEDXML"                 ,cAlias,"PedXml" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //19
+	TRCell():New(oSection2,"TEMPO_ESPERA"           ,cAlias,"ESPERA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //20
+	TRCell():New(oSection2,"HORA_CHEGADA"           ,cAlias,"CHEGADA" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //21
+	TRCell():New(oSection2,"HORA_ABATE"             ,cAlias,"ABATE" 		,"@!"               	,005,  ,,"LEFT",,"LEFT",,,,,,,) //22
+	TRCell():New(oSection2,"DATA_CHEGADA"           ,cAlias,"CHEGADA" 		,"@!"               	,015,  ,,"LEFT",,"LEFT",,,,,,,) //23
+	TRCell():New(oSection2,"DATA_ABATE"             ,cAlias,"ABATE" 		,"@!"               	,015,  ,,"LEFT",,"LEFT",,,,,,,) //24
+	TRCell():New(oSection2,"MORTALIDADE"            ,cAlias,"MORTAL PLATAFO","@R 99999"          	,015,  ,,"LEFT",,"LEFT",,,,,,,) //25
+	TRCell():New(oSection2,"CAQUETICOS"             ,cAlias,"CAQUÉTICOS"	,"@R 99999"          	,015,  ,,"LEFT",,"LEFT",,,,,,,) //26
 
 	oSection5 := TRSection():New(oReport,"Dados Apanha")
 	TRCell():New(oSection5,"NUMOC"   	            ,cAlias,"N. DA OC"    	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //01
 	TRCell():New(oSection5,"GRNJ"   	            ,cAlias,"GRNJ"        	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //02
 	TRCell():New(oSection5,"VEICULO"   	            ,cAlias,"VEICULO"     	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //02
-	TRCell():New(oSection5,"QTD_AVES_ORIGEM" 	    ,cAlias,"ORIGEM"      	,"@E 99,999,999.99" 	,030,  ,,"LEFT",,"LEFT",,,,,,,) //03
+	TRCell():New(oSection5,"QTD_AVES_ORIGEM" 	    ,cAlias,"ORIGEM"      	,"@E 99,999,999"	 	,030,  ,,"LEFT",,"LEFT",,,,,,,) //03
 	TRCell():New(oSection5,"QTD_AVES_RECEBIDA"      ,cAlias,"RECEBIDAV" 	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //04
 	TRCell():New(oSection5,"QTD_AVES_DIFERENCA"     ,cAlias,"DIFERENÇA" 	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //05
 	TRCell():New(oSection5,"PESO_LIQUIDO_ORIGEM"    ,cAlias,"ORIGEM" 		,"@E 999,999,999.99"	,030,  ,,"LEFT",,"LEFT",,,,,,,) //06
@@ -275,7 +279,7 @@ Static Function ReportDef(oReport)
 
 	//totalização da oSection1
 	// TRFunction():New(oSection2:Cell("QTD_AVES_ORIGEM"	),NIL,"SUM", oBreak1,NIL,NIL,NIL,.T.,.F.,.F.)
-	TRFunction():New(oSection2:Cell("QTD_AVES_ORIGEM")			,NIL,"SUM"		,oBreak1,NIL	,"@E 999,999,999.99"	,NIL,.F.,.F.)
+	TRFunction():New(oSection2:Cell("QTD_AVES_ORIGEM")			,NIL,"SUM"		,oBreak1,NIL	,"@E 999,999,999"		,NIL,.F.,.F.)
 	TRFunction():New(oSection2:Cell("QTD_AVES_RECEBIDA")		,NIL,"SUM"		,oBreak1,NIL	,"@E 999,999,999.99"	,NIL,.F.,.F.)
 	TRFunction():New(oSection2:Cell("QTD_AVES_DIFERENCA")		,NIL,"SUM"		,oBreak1,NIL	,"@E 999,999,999.99"	,NIL,.F.,.F.)
 	TRFunction():New(oSection2:Cell("PESO_LIQUIDO_ORIGEM")		,NIL,"SUM"		,oBreak1,NIL	,"@E 999,999,999.99"	,NIL,.F.,.F.)
@@ -484,6 +488,8 @@ Static Function PrintReport(oReport)
 			oSection2:Cell("DATA_ABATE"            ):SetValue(aDadosRel[nX][23])
 			oSection2:Cell("MORTALIDADE"           ):SetValue(aDadosRel[nX][24])
 			oSection2:Cell("CAQUETICOS"            ):SetValue(aDadosRel[nX][25])
+			oSection2:Cell("GTA"		           ):SetValue(aDadosRel[nX][27])
+			oSection2:Cell("MUNICIPIO"	           ):SetValue(aDadosRel[nX][28])
 
 			oSection2:PrintLine()
 
@@ -529,8 +535,8 @@ Static Function getDadosRel()
 	cAlias := getNextAlias()
 
 	cQuery:=" SELECT "
-	cQuery+=" ZV1_NUMOC, ZV1_RGRANJ, ZV1_CAVES , ZV1_RAVES,ZV1_QTDQBR, ZV1_AVESGA, "
-	cQuery+=" ZV1_PAVES, ZV1_PESOME, ZV1_MORTAL, ZV1_NUMNFS, ZV1_TURMA, "
+	cQuery+=" ZV1_NUMOC, ZV1_RGRANJ, ZV1_CAVES , ZV1_RAVES,ZV1_QTDQBR, ZV1_AVESGA, ZV1_TURNO, "
+	cQuery+=" ZV1_PAVES, ZV1_PESOME, ZV1_MORTAL, ZV1_NUMNFS, ZV1_TURMA, ZV1_NUMGTA, ZV1_PCIDAD, "
 	cQuery+=" ZV2_1PESO, ZV2_2PESO, ZV1_RPLACA , ZV1_PESONF,  "
 	cQuery+=" ZV1_VALTNF,ZV1_VALUNF,ZV1_DTABAT , ZV1_DTAREA,  "
 	cQuery+=" ZV1_LOJFOR, ZV1_CODFOR,ZV1_TARAPD,ZV1_AJUSPS, ZV1_SERIE , "
@@ -627,8 +633,10 @@ Static Function getDadosRel()
 
 			_cRGRANJ  :=SUBSTR((cAlias)->ZV1_RGRANJ,1,5)     //OBTEM O INTEGRADO    // Chamado Silvana em 13/10/2014
 			_cPPLACA  :=(cAlias)->ZV1_RPLACA                 //OBTEM A PLACA
-			_nMORTAL  :=(cAlias)->ZV1_MORTAL                 //OBTEM A QUANTIDADE DA MORTALIDADE
+			_nMORTAL  :=(cAlias)->ZV1_MORTAL+(cAlias)->ZV1_QTDCAQ                 //OBTEM A QUANTIDADE DA MORTALIDADE
 			_nNUMNFS  :=(cAlias)->ZV1_NUMNFS                 //NUMERO DA NF
+			_cNumGta  := (cAlias)->ZV1_NUMGTA                 //NÚMERO DA GTA.
+			_cNomMun  := (cAlias)->ZV1_PCIDAD                 //NOME DO MUNICÍPIO.
 			_nTURMA   :=(cAlias)->ZV1_TURMA
 			_nVALUNF  :=(cAlias)->ZV1_VALUNF                 //VALOR UNITARIO DA NF
 			_nLojFor  :=(cAlias)->ZV1_LOJFOR					//LOJA FORNECEDOR
@@ -649,7 +657,7 @@ Static Function getDadosRel()
 			_cCliVol  :=(cAlias)->ZV1_CLIVOL					//CLIMA NA VOLTA
 
 			_nAvesGa  :=(cAlias)->ZV1_AVESGA					//Aves por gaiola //Chamado:049564 - Fernando Sigoli 09/07/2019
-			_cTurAbt  := ""//BuscaTur((cAlias)->ZV1_NUMOC)       //Turno de abate  //Chamado:049564 - Fernando Sigoli 09/07/2019
+			_cTurAbt  := fGetTurno((cAlias)->ZV1_TURNO) //BuscaTur((cAlias)->ZV1_NUMOC)       //Turno de abate  //Chamado:049564 - Fernando Sigoli 09/07/2019
 
 
 
@@ -757,6 +765,8 @@ Static Function getDadosRel()
 			aAdd(aTemp,nMortalidade)    //24 - 208
 			aAdd(aTemp,nCaqueticos)     //25 - 208
 			aAdd(aTemp,_dDTBatF)        //26 - 208
+			aAdd(aTemp,_cNumGta)        //27 - 208
+			aAdd(aTemp,_cNomMun)        //28 - 208
 
 			aAdd(aDados, aTemp)
 
@@ -775,6 +785,20 @@ Static Function getDadosRel()
 	(cAlias)->(DbCloseArea())
 
 Return (aDados)
+
+Static Function fGetTurno(nturno)
+	Local cRet := ""
+
+	if nturno == 1
+		cRet := "1º Turno"
+	Elseif nturno == 2
+		cRet := "2º Turno"
+	Elseif nturno == 3
+		cRet := "3º Turno"
+	endif
+
+
+return cRet
 
 /*/{Protheus.doc} PROCFUNCTIONS
   (long_description)
@@ -1128,62 +1152,6 @@ Static Function getParadas(cNumOrdCarregamento)
 
 Return aRet
 
-/*/{Protheus.doc} getParadas
-  (long_description)
-  @type  Static Function
-  @author user
-  @since 20/05/2021
-  @version version
-  @param param_name, param_type, param_descr
-  @return return_var, return_type, return_description
-  @example
-  (examples)
-  @see (links_or_references)
-  /*/
-Static Function getMortalidade(cNumOrdCarregamento)
-	local aRet    := {}
-	local aTemp   := {}
-	local cQuery  := ""
-	local cAlias  := getNextAlias()
-
-	cQuery := "SELECT " + CRLF
-	cQuery += " ZEH.ZEH_ITEM ," + CRLF
-	cQuery += " ZEH.ZEH_NUMMM ," + CRLF
-	cQuery += " ZEG.ZEG_DESCRI ," + CRLF
-	cQuery += " ZEG.ZEG_DEPTO ," + CRLF
-	cQuery += " ZEG.ZEG_DESDEP, " + CRLF
-	cQuery += " ZEH.ZEH_QUANT" + CRLF
-	cQuery += " FROM " + RetSqlTab("ZEH") + " " + CRLF
-	cQuery += "   INNER JOIN " + RetSqlTab("ZEG") + " " + CRLF
-	cQuery += "     ON  ZEG.ZEG_CODIGO = ZEH.ZEH_NUMMM " + CRLF
-	cQuery += "     AND ZEG.ZEG_FILIAL = '" + xFilial("ZEG") + "'" + CRLF
-	cQuery += "     AND ZEG.D_E_L_E_T_ <> '*' " + CRLF
-	cQuery += " WHERE 1=1 " + CRLF
-	cQuery += "   AND ZEH.D_E_L_E_T_ <> '*' " + CRLF
-	cQuery += "   AND ZEH.ZEH_NUMOC = '" + cNumOrdCarregamento + "'"
-
-	TCQUERY cQuery NEW ALIAS (cAlias)
-	DbSelectArea(cAlias)
-
-	While (cAlias)->(!Eof())
-
-		aTemp := {}
-
-		aAdd(aTemp, (cAlias)->ZEH_ITEM)
-		aAdd(aTemp, (cAlias)->ZEH_NUMMM)
-		aAdd(aTemp, (cAlias)->ZEG_DESCRI)
-		aAdd(aTemp, (cAlias)->ZEG_DEPTO)
-		aAdd(aTemp, (cAlias)->ZEG_DESDEP)
-		aAdd(aTemp, (cAlias)->ZEH_QUANT)
-		aAdd(aRet, aTemp)
-
-		(cAlias)->(DbSkip())
-	End
-
-	(cAlias)->(DbCloseArea())
-
-Return aRet
-
 /*/{Protheus.doc} Apanha
 	(long_description)
 	@type  Static Function
@@ -1222,7 +1190,7 @@ Static function Apanha(cNumOrdCarregamento,oReport,oSection)
 			oSection:Cell("NUMOC"   	              ):SetValue("[APANHA]")
 			oSection:Cell("GRNJ"   	              	):SetValue(_cGranj)
 			oSection:Cell("VEICULO"   	            ):SetValue("")
-			oSection:Cell("QTD_AVES_ORIGEM" 	      ):SetValue(_nQtdave)
+			oSection:Cell("QTD_AVES_ORIGEM" 	      ):SetValue(Int(_nQtdave))
 			oSection:Cell("QTD_AVES_RECEBIDA"      	):SetValue(_nQtdave)
 			oSection:Cell("QTD_AVES_DIFERENCA"     	):SetValue(0)
 			oSection:Cell("PESO_LIQUIDO_ORIGEM"    	):SetValue(ROUND((_nQtdPeso)+ (_nQtdPeso*(_nContud/100)),0))

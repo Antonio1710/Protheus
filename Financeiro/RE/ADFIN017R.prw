@@ -1,29 +1,24 @@
+
 #INCLUDE "PROTHEUS.CH"  
 #INCLUDE "FILEIO.CH"
 #INCLUDE "TopConn.CH"  
 #INCLUDE "rwmake.ch"     
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณADFIN017R บAutor  ณWilliam COSTA       บ Data ณ  22/09/2016 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณ Relat๓rio para utilizar como compensacao do contas a       บฑฑ
-ฑฑบ          ณ receber financeiro                                         บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ SIGAFAT                                                    บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
-
+/*/{Protheus.doc} User Function ADFIN017R
+	Relat๓rio de apoio para compensa็ใo entre carteiras
+	@type  Function
+	@author William COSTA
+	@since 22/09/2016
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 18495 - Fernando Macieira - 18/08/2021 - PARAMENTROS COMPESAวรO DE CONTAS
+/*/
 User Function ADFIN017R()
 
-	&&Mauricio - 01/03/17 - Alterado conforme chamado 033727
-	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
-	//ณ Define Variaveis                                             ณ
-	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
 	Private aSays		:={}
 	Private aButtons	:={}   
 	Private cCadastro	:="Relatorio de Compensacao Financeira"    
@@ -34,6 +29,11 @@ User Function ADFIN017R()
 	PRIVATE oPrn		:=TMSPrinter():New()
 	Private nOpca		:=0
 	Private cPerg		:= 'ADFIN017R'
+
+	// @history ticket 18495 - Fernando Macieira - 18/08/2021 - PARAMENTROS COMPESAวรO DE CONTAS
+	Private cTipos    := GetMV("MV_#CECTIP",,"NF|REN") 
+	Private cEmbTipos := '%'+FormatIn(cTipos,"|")+'%'
+	//
 	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relat๓rio para utilizar como compensacao do contas a receber financeiro')
 	
@@ -55,17 +55,17 @@ User Function ADFIN017R()
 	FormBatch( cCadastro, aSays, aButtons )  
 	
 Return (Nil)  
-         
-
+        
 Static Function LOGADFIN017R()    
-	Public oExcel      := FWMSEXCEL():New()
-	Public cPath       := 'D:\Totvs\Protheus11_Homolog\protheus_data\system\'
-	Public cArquivo    := 'REL_FIN_COMPENSACAO.XML'
-	Public oMsExcel
-	Public cPlanilha   := "COMPENSACAO"
-    Public cTitulo     := "COMPENSACAO"
-    Public cCodProdSql := ''
-    Public aLinhas    := {}
+
+	Private oExcel      := FWMSEXCEL():New()
+	Private cPath       := 'D:\Totvs\Protheus11_Homolog\protheus_data\system\'
+	Private cArquivo    := 'REL_FIN_COMPENSACAO.XML'
+	Private oMsExcel
+	Private cPlanilha   := "COMPENSACAO"
+    Private cTitulo     := "COMPENSACAO"
+    Private cCodProdSql := ''
+    Private aLinhas    := {}
    
 	BEGIN SEQUENCE
 		
@@ -152,19 +152,23 @@ Return()
 
 Static Function SqlGeral()
                      	  
-	  BeginSQL Alias "TRB"
-			%NoPARSER%   
-        SELECT A1_COD, 
-		       A1_NOME,
-		       A1_TIPO, 
-		 	   A1_VEND, 
-			   A1_CGC,
-			   A2_COD,
-			   A2_NOME,			   			   
-			   MIN(E2_VENCREA) AS E2_VENCREA,
-			   MAX(E2_VENCREA) AS E2VENCREA 
-		  FROM %Table:SA1%,%Table:SA2%,%Table:SE1%, %Table:SE2%
-		 WHERE (%Table:SA1%.D_E_L_E_T_  <> '*'
+	BeginSQL Alias "TRB"
+
+	%NoPARSER%
+        
+	SELECT A1_COD,
+			A1_NOME,
+		    A1_TIPO,
+		 	A1_VEND,
+			A1_CGC,
+			A2_COD,
+			A2_NOME,
+			MIN(E2_VENCREA) AS E2_VENCREA,
+			MAX(E2_VENCREA) AS E2VENCREA
+
+		FROM %Table:SA1%,%Table:SA2%,%Table:SE1%, %Table:SE2%
+
+		WHERE (%Table:SA1%.D_E_L_E_T_  <> '*'
 		   AND A1_VEND             >= %EXP:MV_PAR01%
 		   AND A1_VEND             <= %EXP:MV_PAR02%
 		   AND A1_COD              <> '035232'
@@ -172,14 +176,14 @@ Static Function SqlGeral()
 		   AND A2_CGC              = A1_CGC 
 		   AND %Table:SA2%.D_E_L_E_T_  <> '*')
 		   AND E1_SALDO           > 0
-		   AND E1_TIPO             = 'NF'
+		   AND E1_TIPO             IN %Exp:cEmbTipos% // @history ticket 18495 - Fernando Macieira - 18/08/2021 - PARAMENTROS COMPESAวรO DE CONTAS
 		   AND E1_CLIENTE          = A1_COD
 		   AND E1_LOJA             = A1_LOJA
 		   AND %Table:SE1%.D_E_L_E_T_  <> '*'
 		   AND E2_FORNECE          = A2_COD
 		   AND E2_LOJA             = A2_LOJA
 		   AND E2_SALDO            > 0
-		   AND E2_TIPO             = 'NF'
+		   AND E2_TIPO             IN %Exp:cEmbTipos% // @history ticket 18495 - Fernando Macieira - 18/08/2021 - PARAMENTROS COMPESAวรO DE CONTAS
 		   AND %Table:SE2%.D_E_L_E_T_  <> '*' 
 		
 		   GROUP BY A1_COD, 
@@ -193,6 +197,7 @@ Static Function SqlGeral()
 		   ORDER BY A1_NOME	    
         	
 	EndSQl
+
 RETURN(NIL)  
 
 Static Function SalvaXml()
@@ -243,48 +248,51 @@ Static Function Cabec()
 RETURN(NIL)
 
 Static function FBSCSLD(_cCOD,_nTp)
-_nResult := 0
 
-IF _nTp == 1
-	If Select ("TSE1") > 0
-		DbSelectArea("TSE1")
-		TSE1->(DbCloseArea())
-	Endif
-	
-	_cQuery := ""
-	_cQuery += "SELECT SUM(E1_SALDO) AS SALDO, E1_CLIENTE FROM "+RetSqlName("SE1")+" "
-	_cQuery += " WHERE E1_CLIENTE = '"+_cCod+"' AND E1_TIPO = 'NF' "
-	_cQuery += "AND E1_SALDO > 0 AND D_E_L_E_T_ <> '*' "
-	_cQuery+= " GROUP BY E1_CLIENTE "
-	_cQuery+= " ORDER BY E1_CLIENTE "
-	
-	TcQuery _cQuery NEW ALIAS "TSE1"
-	
-	DbSelectArea("TSE1")
-	DbGotop()
-	
-	_nResult := TSE1->SALDO
-	
-Else
-	If Select ("TSE2") > 0
-		DbSelectArea("TSE2")
-		TSE2->(DbCloseArea())
-	Endif
-	
-	_cQuery := ""
-	_cQuery += "SELECT SUM(E2_SALDO) AS SALDO, E2_FORNECE FROM "+RetSQLNAME("SE2")+" "
-	_cQuery += "WHERE E2_FORNECE = '"+_cCod+"' AND E2_TIPO = 'NF' "
-	_cQuery += "AND E2_SALDO > 0 AND D_E_L_E_T_ <> '*' "
-	_cQuery += " GROUP BY E2_FORNECE "
-	_cQuery += " ORDER BY E2_FORNECE "
-	
-	TcQuery _cQuery NEW ALIAS "TSE2"
-	
-	DbSelectArea("TSE2")
-	DbGotop()
-	
-	_nResult := TSE2->SALDO
+	_nResult := 0
+
+	IF _nTp == 1
+
+		If Select ("TSE1") > 0
+			DbSelectArea("TSE1")
+			TSE1->(DbCloseArea())
+		Endif
 		
-Endif
+		_cQuery := ""
+		_cQuery += " SELECT SUM(E1_SALDO) AS SALDO, E1_CLIENTE FROM "+RetSqlName("SE1")+" "
+		_cQuery += " WHERE E1_CLIENTE = '"+_cCod+"' AND E1_TIPO IN "+FormatIn(cTipos,"|")+" " // @history ticket 18495 - Fernando Macieira - 18/08/2021 - PARAMENTROS COMPESAวรO DE CONTAS
+		_cQuery += " AND E1_SALDO > 0 AND D_E_L_E_T_ <> '*' "
+		_cQuery += " GROUP BY E1_CLIENTE "
+		_cQuery += " ORDER BY E1_CLIENTE "
+		
+		TcQuery _cQuery NEW ALIAS "TSE1"
+		
+		DbSelectArea("TSE1")
+		DbGotop()
+		
+		_nResult := TSE1->SALDO
+		
+	Else
+
+		If Select ("TSE2") > 0
+			DbSelectArea("TSE2")
+			TSE2->(DbCloseArea())
+		Endif
+		
+		_cQuery := ""
+		_cQuery += "SELECT SUM(E2_SALDO) AS SALDO, E2_FORNECE FROM "+RetSQLNAME("SE2")+" "
+		_cQuery += "WHERE E2_FORNECE = '"+_cCod+"' AND E2_TIPO IN "+FormatIn(cTipos,"|")+" " // @history ticket 18495 - Fernando Macieira - 18/08/2021 - PARAMENTROS COMPESAวรO DE CONTAS
+		_cQuery += "AND E2_SALDO > 0 AND D_E_L_E_T_ <> '*' "
+		_cQuery += " GROUP BY E2_FORNECE "
+		_cQuery += " ORDER BY E2_FORNECE "
+		
+		TcQuery _cQuery NEW ALIAS "TSE2"
+		
+		DbSelectArea("TSE2")
+		DbGotop()
+		
+		_nResult := TSE2->SALDO
+			
+	Endif
 
 Return(_nResult)
