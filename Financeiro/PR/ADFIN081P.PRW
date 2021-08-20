@@ -19,6 +19,7 @@
 	@history Ticket  n.9969   - Andre Mendes - 24/02/2021 - Inclusão de PA no sistema - O valor de validação está incorreto.
 	@history Ticket  n.11157  - Abel Babini  - 22/03/2021 - Ajuste saldo do pedido - valor frete
 	@history Ticket  n.11157  - Abel Babini  - 26/03/2021 - Ajuste saldo do pedido - solicitações de PA compensadas com NF´s atreladas ao mesmo pedido
+	@hisotry Ticket  n.18667  - Abel Babini  - 20/08/2021 - Ajuste na somatória do saldo do Pedidop para que os valores de Descontos, Seguro e Despesas sejam considerados por item.
 /*/
 User Function ADFIN081P()
 
@@ -98,7 +99,8 @@ User Function ADFIN081P()
 		if (SC7->C7_QUJE < SC7->C7_QUANT) .AND. (SC7->C7_CONAPRO == 'L') .AND. (SC7->C7_RESIDUO != 'S')
 			//Chamado n.053482 - Considerar Valor de Frete, Despesas, IPI e Desconto no Saldo da Solicitação de PA - Abel Babini - 02/12/2019
 			//nVlSldPC += Round((SC7->C7_QUANT - SC7->C7_QUJE )*C7_PRECO ,2)
-			nVlSldPC += Round((SC7->C7_QUANT - SC7->C7_QUJE )*C7_PRECO,2)+ROUND(SC7->C7_VALIPI/SC7->C7_QUANT*(SC7->C7_QUANT - SC7->C7_QUJE ),2)
+			//Ticket  n.18667  - Abel Babini  - 20/08/2021 - Ajuste na somatória do saldo do Pedidop para que os valores de Descontos, Seguro e Despesas sejam considerados por item.
+			nVlSldPC += Round((SC7->C7_QUANT - SC7->C7_QUJE )*C7_PRECO,2)+ROUND(SC7->C7_VALIPI/SC7->C7_QUANT*(SC7->C7_QUANT - SC7->C7_QUJE ),2)+Round(((SC7->C7_DESPESA+SC7->C7_SEGURO- SC7->C7_VLDESC)/SC7->C7_QUANT)*(SC7->C7_QUANT-SC7->C7_QUJE),2)
 		endif
 		
 		SC7->(dbSkip())
@@ -109,7 +111,9 @@ User Function ADFIN081P()
 	//Chamado n.053482 - Considerar Valor de Frete, Despesas, IPI e Desconto no Saldo da Solicitação de PA - Abel Babini - 02/12/2019
 	//Ticket  n.9969   - Andre Mendes - 24/02/2021 - Inclusão de PA no sistema
 	//Ticket  n.11157  - Abel Babini  - 22/03/2021 - Ajuste saldo do pedido - valor frete
-	nVlSldPC += SC7->C7_FRETE + SC7->C7_DESPESA + SC7->C7_SEGURO - SC7->C7_VLDESC
+	//Ticket  n.18667  - Abel Babini  - 20/08/2021 - Ajuste na somatória do saldo do Pedidop para que os valores de Descontos, Seguro e Despesas sejam considerados por item. 
+	// nVlSldPC += SC7->C7_FRETE + SC7->C7_DESPESA + SC7->C7_SEGURO - SC7->C7_VLDESC
+	nVlSldPC += SC7->C7_FRETE 
 	nC7VlFre := 0
 	IF SC7->C7_FRETE == 0
 		SC7->(dbSeek(xFilial('SC7')+_nNumPed))

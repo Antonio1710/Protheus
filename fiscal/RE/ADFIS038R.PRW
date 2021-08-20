@@ -7266,3 +7266,359 @@ Static Function fAddCl36( pLin , cBrw)
 Return( NIL )
 
 //FIM Ticket 10535										- Abel Babini - 09/03/2021 - Criar relatório de conferência de faturamento por tipo de cliente e regime de apuração.
+
+//INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+/*/{Protheus.doc} Static Function xABrw37
+	Carrega da dados Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 17/08/2021
+	@version 01
+	/*/
+Static Function xABrw37()
+	If Select(cAlB37Rs) > 0
+		(cAlB37Rs)->(dbCloseArea())
+	Endif
+	cAlB37Rs:=GetNextAlias()
+
+	//Inicializa Variáveis
+	aBrw37Rs	:= {}
+	aBrw37Dt	:= {}
+	nA37T01		:= 0
+	nA37T02		:= 0
+	nA37T03		:= 0
+	nA37T04		:= 0
+	nA37T05		:= 0
+	nA37T06		:= 0
+
+	BeginSQL  Alias cAlB37Rs
+		column DTENTRADA as Date
+		SELECT
+			SFT.FT_FILIAL		AS FILIAL,
+			SFT.FT_ENTRADA		AS DTENTRADA,
+			SFT.FT_SERIE		AS SERIE,
+			SFT.FT_NFISCAL		AS NFISCAL,
+			SFT.FT_ITEM			AS ITEM,
+			SFT.FT_CLIEFOR		AS CLIEFOR,
+			SFT.FT_LOJA			AS LOJA,
+			CASE WHEN (SFT.FT_TIPOMOV = 'E' AND SFT.FT_TIPO NOT IN ('D','B') ) OR (SFT.FT_TIPOMOV = 'S' AND SFT.FT_TIPO IN ('D','B') ) THEN SA2.A2_NOME ELSE SA1.A1_NOME END AS NOME,
+			CASE WHEN (SFT.FT_TIPOMOV = 'E' AND SFT.FT_TIPO NOT IN ('D','B') ) OR (SFT.FT_TIPOMOV = 'S' AND SFT.FT_TIPO IN ('D','B') ) THEN SA2.A2_CGC ELSE SA1.A1_CGC END AS CGC,
+			CASE WHEN (SFT.FT_TIPOMOV = 'E' AND SFT.FT_TIPO NOT IN ('D','B') ) OR (SFT.FT_TIPOMOV = 'S' AND SFT.FT_TIPO IN ('D','B') ) THEN (CASE WHEN SA2.A2_SIMPNAC = '1' THEN 'SIM' ELSE 'NÃO' END) ELSE (CASE WHEN SA1.A1_SIMPNAC = '1' THEN 'SIM' ELSE 'NÃO' END) END AS SIMPLESNAC,
+			SFT.FT_PRODUTO		AS CODPROD,
+			SB1.B1_DESC			AS PRODUTO,
+			SFT.FT_QUANT		AS QUANT,
+			SFT.FT_PRCUNIT		AS PRCUNIT,
+			SFT.FT_TOTAL		AS TOTAL,
+			SFT.FT_VALCONT		AS VALCONT,
+			SFT.FT_BASEICM		AS ICMSBASE,
+			SFT.FT_ALIQICM		AS ICMSALIQ,
+			SFT.FT_VALICM		AS ICMSVAL,
+			SFT.FT_ICMSRET		AS ICMSRET,
+			SFT.FT_OUTRICM		AS ICMSOUTR,
+			SFT.FT_DESCONT		AS DESCONT,
+			SFT.FT_SEGURO		AS SEGURO,
+			SFT.FT_DESPESA		AS DESPESA,
+			SFT.FT_FRETE		AS FRETE,
+			SFT.FT_DTCANC		AS DTCANC,
+			SFT.FT_OBSERV		AS OBSERV,
+			SFT.FT_TES			AS TES,
+			SFT.FT_CFOP			AS CFOP,
+			SFT.FT_TIPO			AS TIPO,
+			SFT.FT_ESPECIE		AS ESPECIE,
+			SFT.FT_FORMUL		AS FORMULARIO,
+			SD1.D1_CC			AS CCUSTO
+		FROM %TABLE:SFT% SFT (NOLOCK) 
+		LEFT JOIN %TABLE:SB1% SB1 (NOLOCK) ON
+			SB1.B1_FILIAL = %xFilial:SB1%
+			AND SB1.B1_COD = SFT.FT_PRODUTO
+			AND SB1.%notDel%
+		LEFT JOIN %TABLE:SA2% SA2 (NOLOCK) ON
+			SA2.A2_FILIAL = %xFilial:SA2%
+			AND SA2.A2_COD = SFT.FT_CLIEFOR
+			AND SA2.A2_LOJA = SFT.FT_LOJA
+			AND ( (SFT.FT_TIPOMOV = 'E' AND SFT.FT_TIPO NOT IN ('D','B') ) OR (SFT.FT_TIPOMOV = 'S' AND SFT.FT_TIPO IN ('D','B') ) )
+			AND SA2.%notDel%
+		LEFT JOIN %TABLE:SA1% SA1 (NOLOCK) ON
+			SA1.A1_FILIAL = %xFilial:SA1%
+			AND SA1.A1_COD = SFT.FT_CLIEFOR
+			AND SA1.A1_LOJA = SFT.FT_LOJA
+			AND ( (SFT.FT_TIPOMOV = 'S' AND SFT.FT_TIPO NOT IN ('D','B') ) OR (SFT.FT_TIPOMOV = 'E' AND SFT.FT_TIPO IN ('D','B') ) )
+			AND SA1.%notDel%
+		LEFT JOIN %TABLE:SD1% SD1 (NOLOCK) ON
+			SD1.D1_FILIAL = SFT.FT_FILIAL
+			AND SD1.D1_SERIE = SFT.FT_SERIE
+			AND SD1.D1_DOC = SFT.FT_NFISCAL
+			AND SD1.D1_FORNECE = SFT.FT_CLIEFOR
+			AND SD1.D1_LOJA = SFT.FT_LOJA
+			AND SD1.D1_ITEM = SFT.FT_ITEM
+			AND SD1.%notDel%
+		WHERE SFT.FT_FILIAL = %xFilial:SFT%
+			AND SFT.FT_ENTRADA BETWEEN %Exp:DToS(_mvpr01)% AND %Exp:DToS(_mvpr02)%
+			AND SFT.FT_PRODUTO IN %Exp:_cInPrSI%
+			AND SFT.FT_CFOP IN %Exp:_cInCfDS%
+			AND SFT.FT_DTCANC = ''
+			AND SFT.%notDel%
+	EndSQL
+	DbSelectArea(cAlB37Rs)
+	(cAlB37Rs)->(DbGoTop())
+	While !(cAlB37Rs)->(eof())
+		nPos := ASCAN(aBrw37Rs, {|X| X[1] == Alltrim((cAlB37Rs)->CFOP)+Alltrim((cAlB37Rs)->CODPROD)})
+		IF nPos == 0
+			aAdd(aBrw37Rs,{Alltrim((cAlB37Rs)->CFOP)+Alltrim((cAlB37Rs)->CODPROD),;
+										(cAlB37Rs)->FILIAL,;							
+										(cAlB37Rs)->CFOP,;
+										(cAlB37Rs)->CODPROD+' - '+(cAlB37Rs)->PRODUTO,;
+										(cAlB37Rs)->QUANT,;
+										(cAlB37Rs)->VALCONT,;
+										(cAlB37Rs)->ICMSVAL,;
+										Round((cAlB37Rs)->VALCONT/(cAlB37Rs)->QUANT,2)})
+		ELSE
+			aBrw37Rs[nPos,05] += (cAlB37Rs)->QUANT
+			aBrw37Rs[nPos,06] += (cAlB37Rs)->VALCONT
+			aBrw37Rs[nPos,07] += (cAlB37Rs)->ICMSVAL
+			aBrw37Rs[nPos,08] += Round(aBrw37Rs[nPos,06]/aBrw37Rs[nPos,05],2)
+		ENDIF
+		IF (cAlB37Rs)->CFOP > '5000'
+			nA37T01 += (cAlB37Rs)->QUANT
+			nA37T02 += (cAlB37Rs)->VALCONT
+			nA37T03 += (cAlB37Rs)->ICMSVAL
+		ELSE
+			nA37T04 += (cAlB37Rs)->QUANT
+			nA37T05 += (cAlB37Rs)->VALCONT
+			// nA37T06 += (cAlB37Rs)->ICMSVAL
+		ENDIF
+		aAdd(aBrw37Dt,{	(cAlB37Rs)->FILIAL,;
+										(cAlB37Rs)->DTENTRADA,;
+										(cAlB37Rs)->SERIE,;
+										(cAlB37Rs)->NFISCAL,;
+										(cAlB37Rs)->ITEM,;
+										(cAlB37Rs)->CLIEFOR,;
+										(cAlB37Rs)->LOJA,;
+										(cAlB37Rs)->NOME,;
+										(cAlB37Rs)->CGC,;
+										(cAlB37Rs)->SIMPLESNAC,;
+										(cAlB37Rs)->CODPROD,;
+										(cAlB37Rs)->PRODUTO,;
+										(cAlB37Rs)->QUANT,;
+										(cAlB37Rs)->PRCUNIT,;
+										(cAlB37Rs)->TOTAL,;
+										(cAlB37Rs)->VALCONT,;
+										(cAlB37Rs)->ICMSBASE,;
+										(cAlB37Rs)->ICMSALIQ,;
+										(cAlB37Rs)->ICMSVAL,;
+										(cAlB37Rs)->ICMSRET,;
+										(cAlB37Rs)->ICMSOUTR,;
+										(cAlB37Rs)->DESCONT,;
+										(cAlB37Rs)->SEGURO,;
+										(cAlB37Rs)->DESPESA,;
+										(cAlB37Rs)->FRETE,;
+										(cAlB37Rs)->DTCANC,;
+										(cAlB37Rs)->OBSERV,;
+										(cAlB37Rs)->TES,;
+										(cAlB37Rs)->CFOP,;
+										(cAlB37Rs)->TIPO,;
+										(cAlB37Rs)->ESPECIE,;
+										(cAlB37Rs)->CCUSTO})
+		(cAlB37Rs)->(DbSkip())
+	EndDo
+
+	nA37T06 := Round(nA37T05*0.18,2)
+
+	(cAlB37Rs)->(dbCloseArea())
+	SysRefresh()
+Return
+
+/*/{Protheus.doc} Static Function xRelBr37
+	Gera Relatório Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 17/08/2021
+	@version version
+	/*/
+Static Function xRelBr37()
+	Local aSays			:= {}
+	Local aButtons		:= {}
+	Local nOpca			:= 0
+	//+-----------------------------------------------+
+	//|Monta Form Batch - Interface com o Usuario     |
+	//+-----------------------------------------------+
+	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
+	AADD(aSays,"Relatorio de Débito Serv. Industrialização" )
+
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({||xRelBr37b()},"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})
+	FormBatch( cCadastr, aSays, aButtons )
+
+	MsgInfo("Arquivo Excel gerado!")
+
+Return
+
+/*/{Protheus.doc} Static Function xRelBr37b
+	Gera Relatório Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 28/10/2019
+	@version version
+	/*/
+Static Function xRelBr37b()
+	Private oExcel     := FWMSEXCELEX():New()
+	//Private cArquivo	:= cGetFile("Arquivo XML", "Selecione o diretório para salvar o relatório",,'C:\',.T.,GETF_RETDIRECTORY + GETF_LOCALHARD + GETF_NETWORKDRIVE)
+	Private oMsExcel   := NIL
+
+	cArquivo := cPathRel +  'RDSRVIND_' + DTOS(DATE()) + STRTRAN(TIME(),':','') + '.XML'
+	BEGIN SEQUENCE
+
+		//IF .NOT.( ApOleClient("MsExcel") )   // se nao existir o excel sai fora..
+		//	Alert("Nao Existe Excel Instalado")
+		//	BREAK
+		//EndIF
+
+		//Planilha1 - Resumo
+		Cab37P1()
+		GEx37P1()
+
+		//Planilha2 - Detalhe
+		Cab37P2()
+		GEx37P2()
+
+		StaticCall(ADFIS028R,SalvaXml)
+		StaticCall(ADFIS028R,CriaExcel)
+
+	END SEQUENCE
+
+Return
+
+/*/{Protheus.doc} Static Function Cab15P1
+	Gera Relatório Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 17/08/2021
+	@version version
+	/*/
+Static Function Cab37P1()
+	oExcel:AddworkSheet(cFld371)
+	oExcel:AddTable(cFld371,cFld37t1)
+	oExcel:AddColumn(cFld371,cFld37t1,"Filial",1,1)
+	oExcel:AddColumn(cFld371,cFld37t1,"CFOP",1,1)
+	oExcel:AddColumn(cFld371,cFld37t1,"Produto",1,1)
+	oExcel:AddColumn(cFld371,cFld37t1,"Quantidade",2,3,.t.)
+	oExcel:AddColumn(cFld371,cFld37t1,"Vl. Contábil",2,3,.t.)
+	oExcel:AddColumn(cFld371,cFld37t1,"Vl. ICMS",2,3,.t.)
+	oExcel:AddColumn(cFld371,cFld37t1,"Média Preço Unit.",2,3)
+RETURN(NIL)
+
+/*/{Protheus.doc} Static Function GEx37P1
+	Gera Relatório Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 17/08/2021
+	@version version
+	/*/
+Static Function GEx37P1()
+	Local i
+	For i:=1 to Len(aBrw37Rs)
+		oExcel:AddRow(cFld371,cFld37t1,{	aBrw37Rs[i,2],;
+																			aBrw37Rs[i,3],;
+																			aBrw37Rs[i,4],;
+																			aBrw37Rs[i,5],;
+																			aBrw37Rs[i,6],;
+																			aBrw37Rs[i,7],;
+																			aBrw37Rs[i,8]})
+	Next i
+
+	oExcel:AddRow(cFld371,cFld37t1,{"","","","","","",""})
+	//
+Return
+
+/*/{Protheus.doc} Static Function Cab37P2
+	Gera Relatório Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 17/08/2021
+	@version version
+	/*/
+Static Function Cab37P2()
+	oExcel:AddworkSheet(cFld372)
+	oExcel:AddTable(cFld372,cFld37t2)
+	oExcel:AddColumn(cFld372,cFld37t2,"Filial"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Dt.Entrada"	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Série"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"NF"			,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Item"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Cod.Forn."	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Loja.Forn."	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Fornecedor"	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"CNPJ"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Opt.Simples"	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Cod.Prod."	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Produto"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Quant."		,2,2,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Prc.Unit"	,2,3)
+	oExcel:AddColumn(cFld372,cFld37t2,"Total"		,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Vl.Cont."	,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Base ICMS"	,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Aliq.ICMS"	,2,3)
+	oExcel:AddColumn(cFld372,cFld37t2,"Vl.ICMS"		,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Vl.ICMS Ret.",2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Vl.ICMS Out.",2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Desconto"	,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Seguro"		,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Despesa"		,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Frete"		,2,3,.T.)
+	oExcel:AddColumn(cFld372,cFld37t2,"Dt.Canc."	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Observações"	,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"TES"			,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"CFOP"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Tipo"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Espécie"		,1,1)
+	oExcel:AddColumn(cFld372,cFld37t2,"Centro Custo",1,1)
+
+RETURN(NIL)
+
+/*/{Protheus.doc} Static Function GEx37P2
+	Gera Relatório Ref. Débito Serv. Industrialização
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 17/08/2021
+	@version version
+	/*/
+Static Function GEx37P2()
+	Local nExcel1
+	FOR nExcel1 := 1 TO Len(aBrw37Dt)
+		oExcel:AddRow(cFld372,cFld37t2,{aBrw37Dt[nExcel1,01],;
+			aBrw37Dt[nExcel1,02],;
+			aBrw37Dt[nExcel1,03],;
+			aBrw37Dt[nExcel1,04],;
+			aBrw37Dt[nExcel1,05],;
+			aBrw37Dt[nExcel1,06],;
+			aBrw37Dt[nExcel1,07],;
+			aBrw37Dt[nExcel1,08],;
+			aBrw37Dt[nExcel1,09],;
+			aBrw37Dt[nExcel1,10],;
+			aBrw37Dt[nExcel1,11],;
+			aBrw37Dt[nExcel1,12],;
+			aBrw37Dt[nExcel1,13],;
+			aBrw37Dt[nExcel1,14],;
+			aBrw37Dt[nExcel1,15],;
+			aBrw37Dt[nExcel1,15],;
+			aBrw37Dt[nExcel1,17],;
+			aBrw37Dt[nExcel1,18],;
+			aBrw37Dt[nExcel1,19],;
+			aBrw37Dt[nExcel1,20],;
+			aBrw37Dt[nExcel1,21],;
+			aBrw37Dt[nExcel1,22],;
+			aBrw37Dt[nExcel1,23],;
+			aBrw37Dt[nExcel1,24],;
+			aBrw37Dt[nExcel1,25],;
+			aBrw37Dt[nExcel1,26],;
+			aBrw37Dt[nExcel1,27],;
+			aBrw37Dt[nExcel1,28],;
+			aBrw37Dt[nExcel1,29],;
+			aBrw37Dt[nExcel1,30],;
+			aBrw37Dt[nExcel1,31],;
+			aBrw37Dt[nExcel1,32]})
+	Next nExcel1
+	//Linha Em branco
+	oExcel:AddRow(cFld372,cFld37t2,{"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+RETURN
+//FIM Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização

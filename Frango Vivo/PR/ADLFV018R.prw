@@ -8,6 +8,7 @@
   @author Rodrigo Romão
   @since 20/05/2021
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
+  @history Ticket 13294 - Leonardo P. Monteiro - 20/08/2021 - Correção na coluna de tempo de espera.
 /*/
 
 User Function ADLFV018R()
@@ -591,6 +592,11 @@ Static Function getDadosRel()
 	TCQUERY cQuery NEW ALIAS (cAlias)
 	DbSelectArea(cAlias)
 
+	TCSETFIELD(cAlias,"ZV1_DTABAT"	,"D",08,00)
+	TCSETFIELD(cAlias,"ZV1_DTAREA"	,"D",08,00)
+	TCSETFIELD(cAlias,"ZV2_DATA1"	,"D",08,00)
+	
+
 	If (cAlias)->(!Eof())
 
 		_dDTBatF := (cAlias)->ZV1_DTABAT
@@ -713,14 +719,14 @@ Static Function getDadosRel()
 			DbSelectArea((cAlias))//valotano para areal atual
 
 
-			_dDatEntr :=  SUBSTR (_dDTBatF,7,2)+ "/" + SUBSTR (_dDTBatF,5,2) +"/"+ SUBSTR (_dDTBatF,1,4)
+			//_dDatEntr :=  _dDTBatF
 
 			nLin := PROCFUNCTIONS(nLin)	//Processando calculos
 
 			// _nMulPemRav := TRANSFORM(_nMulPemRav, "@E 999,999,999.99")
-			_dDtEntPort := SUBSTR(_dEntPort,7,2) + "/" + SUBSTR(_dEntPort,5,2) + "/" + SUBSTR(_dEntPort,1,4)
-			_dDtEntRea  := SUBSTR(_dDtaRea,7,2)  + "/" + SUBSTR(_dDtaRea,5,2)  + "/" + SUBSTR(_dDtaRea,1,4)
-			_dDTBatF    := SUBSTR(_dDTBatF,7,2)  + "/" + SUBSTR(_dDTBatF,5,2)  + "/" + SUBSTR(_dDTBatF,1,4)
+			//_dDtEntPort := SUBSTR(_dEntPort,7,2) + "/" + SUBSTR(_dEntPort,5,2) + "/" + SUBSTR(_dEntPort,1,4)
+			//_dDtEntRea  := SUBSTR(_dDtaRea,7,2)  + "/" + SUBSTR(_dDtaRea,5,2)  + "/" + SUBSTR(_dDtaRea,1,4)
+			//_dDTBatF    := SUBSTR(_dDTBatF,7,2)  + "/" + SUBSTR(_dDTBatF,5,2)  + "/" + SUBSTR(_dDTBatF,1,4)
 
 			/*
 			aItMortal := getMortalidade(_cNUMOC)
@@ -759,7 +765,8 @@ Static Function getDadosRel()
 			aAdd(aTemp,_dView)					//19 - tempo de espera 168
 			aAdd(aTemp,_dRHVP)					//20 - Hora de Chegada 179
 			aAdd(aTemp,_dRHAbt)					//21 - Hora de Abate 188
-			aAdd(aTemp,_dDtEntPort)     //22 - DATA DA GUIA 197
+			//aAdd(aTemp,_dDtEntPort)     //22 - DATA DA GUIA 197
+			aAdd(aTemp,_dEntPort)     //22 - DATA DA GUIA 197
 			// aAdd(aTemp,_dDtEntRea)      //23 - 208
 			aAdd(aTemp,_dDTBatF) 	      //23 - 208
 			aAdd(aTemp,nMortalidade)    //24 - 208
@@ -1021,14 +1028,55 @@ return(_nSomaQtd)
   @see (links_or_references)
   /*/
 Static function HoraEsp() //Funcao que verifica a Data e Hora de abate e calcula tempo de espera.
-//Verifico se as datas sao branco
-	if 	(_dEntPort="")
-		_dEntPort:="00:00"
-	endif
-	if (_dAbtPla="")
-		_dAbtPla:="00:00"
-	endif
+	Local nDayDif 	:= 0
+	Local nMinutos	:= 0
+	Local nSegTmp	:= 0
+	Local nSegI		:= 0
+	Local nSegF		:= 0
+	Local nHora		:= 0
+	Local nMinutos	:= 0
+	Local nSegundos	:= 0
 
+	//Verifico se as datas sao branco
+	
+	if !Empty(_dEntPort) .and. !Empty(_dDTBatF) .and.; 
+		len(_dRHVP) == 5 .and. len(_dRHAbt) == 5 .and.;
+		at(":",_dRHVP) == 3 .and. at(":",_dRHAbt) == 3
+	
+		nDayDif := DateDiffDay(_dEntPort,_dDTBatF)
+
+
+		aHorI 	:= Separa(_dRHVP,":")
+		nSegI	:= val(aHorI[01])*3600
+		nSegI	+= val(aHorI[02])*60
+
+		aHorF 	:= Separa(_dRHAbt,":")
+		if _dEntPort == _dDTBatF .AND. aHorF[01] == "00" .AND. aHorI[01] > aHorF[01]
+			nSegF	:= 24*3600
+		else
+			nSegF	:= val(aHorF[01])*3600
+		endif
+		nSegF	+= val(aHorF[02])*60
+		
+		//Soma os dias, hora inicial e hora final convertidos em minutos.
+		if nDaydif > 0
+			nSegTmp := ((nDaydif-1)*(3600))+((86400)-nSegI)+nSegF
+		Else
+			nSegTmp := (nDaydif*(3600))+nSegF-nSegI
+		endif
+
+		nHora 		:= INT(nSegTmp/3600)
+		nSegTmp		:= nSegTmp-INT(nSegTmp/3600)*3600
+		nMinutos	:= int(nSegTmp/60)
+		nSegTmp		:= nSegTmp-INT(nSegTmp/60)*60
+		nSegundos	:= nSegTmp
+
+		_dView	:= StrZero(nHora,3)+":"+Strzero(nMinutos,2)
+
+	ELSE
+		_dView:= "--:--"
+	endif
+	/*
 	If 	_dEntPort <> _dAbtPla
 		// Dias do Mes  trocar por uma função do Protheus
 		_nHorMes1 := 0
@@ -1086,16 +1134,21 @@ Static function HoraEsp() //Funcao que verifica a Data e Hora de abate e calcula
 		_nTotT2 :=_nHr2+_nMin2     //convertendo
 		_dHresp := ( _nTotT2 - _nTotT1)    //voltado para hora fracionada
 	Endif
-
+	*/
+	/*
 	_dHR  := INT(_dHresp/60)     //calculando a Inteira da hora
 	_dMR  :=  _dHresp/60
 	_dM1  := ( (_dHresp/60) - _dHR )*60  //calculando a parte fracionaria dos minutos
 	_dM2  := str((_dM1+100),3)
 	_dM3  := substr(_dM2,2,2)
 	_dView:=alltrim(str(ABS(_dHR )))+":"+_dM3//Mostarndo a data no formato 99:99h
-// Faço somatoria para tirar a média aritmetica
+	
+	// Faço somatoria para tirar a média aritmetica
 	_nMedi_Hr := _nMedi_Hr + _dHresp
 	_nCount_Hr := _nCount_Hr + 1
+	*/
+
+
 
 Return
 
