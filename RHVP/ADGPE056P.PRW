@@ -13,7 +13,7 @@
     @history ticket 7791  - Fernando Macieira - 19/01/2021 - INTEGRAÇÃO RM X AUTTRAN
     @history ticket   39  - Fernando Macieira - 10/02/2021 - Padronização do parâmetro Linked Server RM, de/para no campo CODSITUACAO
     @history ticket   TI  - Fernando Macieira - 05/03/2021 - Tratativa nome banco CORPORERM
-    @history Ticket 18425 - ADRIANO SAVOINE   - 17/08/2021 - Ajuste na query enviada pelo Marcos Cavalcante Consultor RM, para integrar no JOB os dados do RM.
+    @history Ticket 18425 - ADRIANO SAVOINE   - 23/08/2021 - Ajuste na query enviada pelo Marcos Cavalcante Consultor RM, para integrar no JOB os dados do RM.
 /*/
 User Function ADGPE056P() // U_ADGPE056P()
 
@@ -306,14 +306,14 @@ Static Function scptSql()
      //As empresas e filiais estão hardcoded.
      // RM - CorporeRM - Linked Server
     // Adoro
-    //Ticket 18425 - ADRIANO SAVOINE   - 17/08/2021
+    //Ticket 18425 - ADRIANO SAVOINE   - 23/08/2021
 
     cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ",
     
-    cQuery += " ' SELECT SRA.CODCOLIGADA                        AS company,    
-    cQuery += "        ''ADORO S.A.''                           AS name_company,      
+    cQuery += " 'SELECT SRA.CODCOLIGADA                        AS company,    
+    cQuery += "        ''ADORO S.A.''                          AS name_company,      
     cQuery += "        LEFT(SRA.CHAPA,2)                        AS subsidiary, 
-    cQuery += "        ''VARZEA''                               AS name_subsidiary,      
+    cQuery += "        ''VARZEA''                              AS name_subsidiary,      
     cQuery += "        PFCOMPL.PTOCREDENCIAL                    AS key_code,      
     cQuery += "        SRA.NOME                                 AS name,      
     cQuery += "        SRA.CHAPA                                AS code,       
@@ -322,11 +322,11 @@ Static Function scptSql()
     cQuery += "               THEN ''F''
     cQuery += "           when ( ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), AFAST.DTINICIO, 112) AND CONVERT(VARCHAR(8), AFAST.DTFINAL, 112) OR AFAST.DTFINAL IS NULL ) AND AFAST.MOTIVO IS NOT NULL ) 
     cQuery += "               THEN ''A''
-    cQuery += "           when CODSITUACAO = ''D'' 
+    cQuery += "           when CODSITUACAO = ''D''
     cQuery += "               THEN CODSITUACAO
-    cQuery += "           when CODSITUACAO = ''A'' 
+    cQuery += "           when CODSITUACAO = ''A''
     cQuery += "               THEN ''''
-    cQuery += "           when CODSITUACAO = ''F'' 
+    cQuery += "           when CODSITUACAO = ''F''
     cQuery += "               THEN ''''
     cQuery += "           when CODSITUACAO IN (''C'',''E'',''G'',''I'',''K'',''L'',''M'',''N'',''O'',''P'',''Q'',''R'',''S'',''T'',''U'',''W'',''Y'') 
     cQuery += "               THEN ''A''
@@ -343,14 +343,15 @@ Static Function scptSql()
     cQuery += "        AFAST.DTFINAL,
     cQuery += "        FERIAS.DATAINICIO,
     cQuery += "        FERIAS.DATAFIM
-
+    cQuery += " 
     cQuery += " FROM [" + cSGBD + "].[DBO].[PFUNC] (NOLOCK) AS SRA
     cQuery += "       INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] (NOLOCK) AS PFCOMPL 
     cQuery += "    ON PFCOMPL.CODCOLIGADA=SRA.CODCOLIGADA 
     cQuery += "   AND PFCOMPL.CHAPA=SRA.CHAPA 
+    cQuery += "   AND ((PFCOMPL.CODCOLIGADA = ''1'' AND SUBSTRING(PFCOMPL.CHAPA,1,2) = ''02'') OR (PFCOMPL.CODCOLIGADA = ''2''))
     cQuery += "   AND ( PFCOMPL.PTOCREDENCIAL IS NOT NULL 
-    cQuery += "   AND PFCOMPL.PTOCREDENCIAL <> ''0'' )
-    cQuery += "       INNER JOIN [" + cSGBD + "].[DBO].[PSECAO]  (NOLOCK) AS PSECAO  
+    cQuery += "   AND PFCOMPL.PTOCREDENCIAL <> ''0'')
+    cQuery += "       INNER JOIN [" + cSGBD + "].[DBO].[PSECAO] (NOLOCK) AS PSECAO  
     cQuery += "    ON PSECAO.CODCOLIGADA=SRA.CODCOLIGADA 
     cQuery += "   AND PSECAO.CODIGO=SRA.CODSECAO
     cQuery += "       LEFT OUTER JOIN  (  
@@ -360,7 +361,7 @@ Static Function scptSql()
     cQuery += "                                CONVERT(VARCHAR(8),DTINICIO,112) DTINICIO, 
     cQuery += "                                CONVERT(VARCHAR(8),DTFINAL,112) DTFINAL
     cQuery += "                         FROM [" + cSGBD + "].[DBO].[PFHSTAFT] (NOLOCK) AS SR8
-    cQuery += "                         WHERE ((CODCOLIGADA = ''1'' AND CODFILIAL = ''2'') OR (CODCOLIGADA = ''2''))
+    cQuery += "                         WHERE ((SR8.CODCOLIGADA = ''1'' AND SUBSTRING(SR8.CHAPA,1,2) = ''02'') OR (SR8.CODCOLIGADA = ''2''))
     cQuery += "                         AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DTINICIO, 112) 
     cQuery += "                         AND CONVERT(VARCHAR(8), DTFINAL, 112) OR DTFINAL IS NULL )) AS AFAST 
     cQuery += "    ON SRA.CODCOLIGADA = AFAST.CODCOLIGADA 
@@ -371,17 +372,18 @@ Static Function scptSql()
     cQuery += "                                CONVERT(VARCHAR(8), DATAINICIO, 112) DATAINICIO, 
     cQuery += "                                CONVERT(VARCHAR(8), DATAFIM, 112) DATAFIM
     cQuery += "                         FROM [" + cSGBD + "].[DBO].[PFUFERIASPER] (NOLOCK) AS SRF
-    cQuery += "                         WHERE ((CODCOLIGADA = ''1'' AND CODFILIAL = ''2'') OR (CODCOLIGADA = ''2''))
+    cQuery += "                         WHERE ((SRF.CODCOLIGADA = ''1'' AND SUBSTRING(SRF.CHAPA,1,2) = ''02'') OR (SRF.CODCOLIGADA = ''2''))
     cQuery += "                           AND ( CONVERT(VARCHAR(8), (GETDATE()), 112) BETWEEN CONVERT(VARCHAR(8), DATAINICIO, 112) AND CONVERT(VARCHAR(8), DATAFIM, 112) )) AS FERIAS
     cQuery += "    ON SRA.CODCOLIGADA = FERIAS.CODCOLIGADA 
     cQuery += "   AND SRA.CHAPA = FERIAS.CHAPA
-    cQuery += " WHERE WHERE ((CODCOLIGADA = ''1'' AND CODFILIAL = ''2'') OR (CODCOLIGADA = ''2''))
+    cQuery += " WHERE ((SRA.CODCOLIGADA = ''1'') OR (SRA.CODCOLIGADA = ''2''))
+
 
     cQuery += " ORDER BY company, subsidiary, key_code
 
     cQuery += " ')
     
-    //Ticket 18425 - ADRIANO SAVOINE   - 17/08/2021 
+    //Ticket 18425 - ADRIANO SAVOINE   - 23/08/2021 
 
     //  
 

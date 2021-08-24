@@ -21,7 +21,8 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
     Local cMens         := ""
     Private cEOL        := Chr(13)+chr(10)
     Private cStatCar    := SuperGetMV("MV_XSTACAR",,"FE,AP")
-    
+    Private lImpFat     := SuperGetMV("MV_XQLDFAT",,.F.)
+
     Default dParData    := Stod("20210615")
     Default nReproc     := 2
     
@@ -527,7 +528,7 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
 
         IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
 
-            if Empty(SC5->C5_NOTA)
+            if Empty(SC5->C5_NOTA) .OR. lImpFat
             //if .t.
 
                 //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.

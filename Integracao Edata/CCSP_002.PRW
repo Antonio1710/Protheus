@@ -27,6 +27,7 @@ Static nQtdePerg := 4
 	@history chamado 056247 - FWNM         - 29/05/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history Chamado 059415 - FWNM         - 12/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação.
 	@history chamado 8465   - LeonardoMont - 02/06/2021 - Correção no fonte para não gravas as informações do lacre SIF no retorno da integração com eData.
+	@history chamado     ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
 /*/
 User Function CCSP_002()
 
@@ -498,10 +499,6 @@ Static Function CCS_002PN()
 				DbSelectArea(cAliasSC9)
 				dbCloseArea()
 
-				// debug
-				//nReg := 1
-				//
-
 				If nReg==0
 					Aviso("CCSP_002","Problema - Carga não liberada no eData - Verificar!!!",{"OK"},3)
 					Return
@@ -530,21 +527,21 @@ Static Function CCS_002PN()
 						dbSelectArea("SC9")
 						dbGoto((cAliasSC9)->C9_RECNO)        				
 
-						// @history Chamado 059415 - FWNM         - 12/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação
-						/*
-						// Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 08/05/2020
-						FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
-						If FIE->( dbSeek(FWxFilial("FIE")+"R"+SC9->C9_PEDIDO) )
+						// @history chamado ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
+						If SC9->( EOF() ) .or. ( AllTrim(SC9->C9_PRODUTO) <> AllTrim((cAliasSC9)->IE_MATEEMBA) ) .or. ( SC9->(RecNo()) <> (cAliasSC9)->C9_RECNO )
 
-							If AllTrim(Posicione("SC5",1,FWxFilial("SC5")+SC9->C9_PEDIDO,"C5_XWSPAGO")) <> "S"
+							u_GrLogZBE( msDate(), TIME(), cUserName, "CCSP_002", "FATURAMENTO", "CCSP_002",;
+							"C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) + " DA VW_EXPECARG_01 DIVERGENTE NA SC9 PROTHEUS - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE),;
+							ComputerName(), LogUserName() )
 
-								(cAliasSC9)->(DbSkip())
-								Loop
+							Alert("[CCSP_002-01] - Dados da Integração com problema entre EDATA e Protheus! Contate o TI...")
+							Alert("[CCSP_002-02] - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE) + " não será processado! Verifique...")
+							Alert("[CCSP_002-03] - C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) )
 
-							EndIf
+							(cAliasSC9)->(DbSkip())
+							Loop
 
 						EndIf
-						*/
 						//
 
 						// acerto do lacre no SC5
@@ -555,10 +552,10 @@ Static Function CCS_002PN()
 								cChave:= SC9->(C9_FILIAL+C9_PEDIDO)       
 								//zera o volume caso haja corte
 								RecLock("SC5",.F.)
-								SC5->C5_VOLUME1:= 0
-								SC5->C5_PESOL  := 0
-								SC5->C5_PBRUTO := 0
-								MsUnLock()    				
+									SC5->C5_VOLUME1:= 0
+									SC5->C5_PESOL  := 0
+									SC5->C5_PBRUTO := 0
+								MsUnLock()
 							EndIf 
 							
 							//Everson - 12/06/2019. Chamado 044314.
@@ -568,19 +565,37 @@ Static Function CCS_002PN()
 							if SC5->C5_EST !="EX"
 								//grava o lacre
 								RecLock("SC5",.F.)
-								SC5->C5_NLACRE1	:= (cAliasSC9)->NR_LACRCARGEXPE
+									SC5->C5_NLACRE1	:= (cAliasSC9)->NR_LACRCARGEXPE
 								MsUnLock()
 							ENDIF
 							//Posiciona no SC9
 							dbSelectArea("SC9")
 							dbGoto((cAliasSC9)->C9_RECNO)        				
+
+							// @history chamado ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
+							If SC9->( EOF() ) .or. ( AllTrim(SC9->C9_PRODUTO) <> AllTrim((cAliasSC9)->IE_MATEEMBA) ) .or. ( SC9->(RecNo()) <> (cAliasSC9)->C9_RECNO )
+
+								u_GrLogZBE( msDate(), TIME(), cUserName, "CCSP_002", "FATURAMENTO", "CCSP_002",;
+								"C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) + " DA VW_EXPECARG_01 DIVERGENTE NA SC9 PROTHEUS - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE),;
+								ComputerName(), LogUserName() )
+
+								Alert("[CCSP_002-04] - Dados da Integração com problema entre EDATA e Protheus! Contate o TI...")
+								Alert("[CCSP_002-05] - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE) + " não será processado! Verifique...")
+								Alert("[CCSP_002-06] - C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) )
+
+								(cAliasSC9)->(DbSkip())
+								Loop
+
+							EndIf
+							//
+
 							_cLacre:= ""                         			
 							If Empty(SC9->C9_BLCRED)	        										
 								If (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND <> SC9->C9_QTDLIB // compara quantidade de caixas do pedido com as caixas expedidas								
 									aPedidos[Len(aPedidos)][2]:=.T.
 									If (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND == 0
 										Reclock("SC9",.F.)
-										dbdelete()
+											dbdelete()
 										Msunlock()
 									Else
 										_cLacre:=(cAliasSC9)->NR_LACRCARGEXPE                									
@@ -1011,21 +1026,20 @@ Static Function CCS_002PD()
 					dbSelectArea("SC5")
 					dbGoto((cAliasSC5)->ID_PEDIVEND)        				
 
-					//@history Chamado 059415 - FWNM         - 12/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação
-					/*
-					// Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 08/05/2020
-					FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
-					If FIE->( dbSeek(FWxFilial("FIE")+"R"+SC5->C5_NUM) )
+					// @history chamado ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
+					If SC5->( EOF() ) .or. ( SC5->(RecNo()) <> (cAliasSC5)->ID_PEDIVEND )
 
-						If AllTrim(SC5->C5_XWSPAGO) <> "S"
+						u_GrLogZBE( msDate(), TIME(), cUserName, "CCSP_002", "FATURAMENTO", "CCSP_002",;
+						"ID_PEDIVEND (RECNO DA SC5) DA VW_EXPECARG_01 DIVERGENTE NA SC5 PROTHEUS - PV (C5_RECNO): " + AllTrim(Str((cAliasSC5)->ID_PEDIVEND)),;
+						ComputerName(), LogUserName() )
 
-							(cAliasSC5)->( dbSkip() )
-							Loop
+						Alert("[CCSP_002-07] - Dados da Integração com problema entre EDATA e Protheus! Contate o TI...")
+						Alert("[CCSP_002-08] - PV (C5_RECNO): " + AllTrim(Str((cAliasSC5)->ID_PEDIVEND)) )
 
-						EndIf
+						(cAliasSC5)->(DbSkip())
+						Loop
 
 					EndIf
-					*/
 					//
 
 					_AntVolume1 := SC5->C5_VOLUME1

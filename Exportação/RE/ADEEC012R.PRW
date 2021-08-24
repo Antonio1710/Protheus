@@ -892,15 +892,28 @@ Static Function fModelo01()
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
         oPrinter:Say(nLinha+007, aPerc[02]+002 , "Nome/Importador:", oFOARNE09)
-        oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(TRB->CONSIG ) , oFOARNO08)
+        
+        cConsig := ALLTRIM(TRB->CONSIG )
+        if !Empty(cConsig)
+            nConsig := mlcount(cConsig,32, 2, .T. )
+            
+            For i := 1 to nConsig
+                cLin := alltrim(memoline(cConsig,32,i, 32, .T.))
+                //oPrinter:Say(nLinha+007+i*10, aPerc[03]+010 , cLin , oFOARNO07)
+                oPrinter:Say(nLinha+017+(i-1)*10, aPerc[02]+010 , cLin , oFOARNO08)
+            Next i
+
+        endif
+            
         
         oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         //IF len(alltrim(TRB->A1_END)) > 60
             oPrinter:Say(nLinha+007, aPerc[03]+002 , "Endereço:", oFOARNE08)
             cEnd := Alltrim(TRB->EE7_MENSG)+Alltrim(TRB->EE7_MENSG2)+Alltrim(TRB->EE7_MENSG3)
-            cEnd := Replace(cEnd,"IMPORTADOR: ","")
-            cEnd := Replace(cEnd,Alltrim(TRB->A1_NOME),"")
-            cEnd := Replace(cEnd,Alltrim(TRB->CONSIG),"")
+            cEnd := Replace(upper(cEnd),"IMPORTADOR: ","")
+            cEnd := Replace(upper(cEnd),"CONSIGNEE: ","")
+            cEnd := Replace(upper(cEnd),Alltrim(TRB->A1_NOME),"")
+            cEnd := Replace(upper(cEnd),Alltrim(TRB->CONSIG),"")
             
             
             if !Empty(cEnd)
