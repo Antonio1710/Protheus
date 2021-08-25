@@ -12,9 +12,10 @@
     @author Leonardo P. Monteiro
     @since 25/05/2021
     @version 01
-    @history Chamado 8465 - Leonardo P. Monteiro - 18/07/2021 - Desenvolvimento inicial.
-    @history Chamado 8465 - Leonardo P. Monteiro - 01/08/2021 - Inclusão de novos recuros e rastreabilidades no relatório.
-    @history Chamado 8465 - Leonardo P. Monteiro - 09/08/2021 - Melhorias e ajustes solicitadas pelos usuários e SIF.
+    @history Chamado 8465  - Leonardo P. Monteiro - 18/07/2021 - Desenvolvimento inicial.
+    @history Chamado 8465  - Leonardo P. Monteiro - 01/08/2021 - Inclusão de novos recuros e rastreabilidades no relatório.
+    @history Chamado 8465  - Leonardo P. Monteiro - 09/08/2021 - Melhorias e ajustes solicitadas pelos usuários e SIF.
+    @history Chamado 18816 - Leonardo P. Monteiro - 09/08/2021 - Inclusão de espaço entre os campos de observação. E quebra do nome do importador.
     
 /*/
 #Define IMP_SPOOL  2
@@ -908,22 +909,23 @@ Static Function fModelo01()
         
         oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
         //IF len(alltrim(TRB->A1_END)) > 60
-            oPrinter:Say(nLinha+007, aPerc[03]+002 , "Endereço:", oFOARNE08)
-            cEnd := Alltrim(TRB->EE7_MENSG)+Alltrim(TRB->EE7_MENSG2)+Alltrim(TRB->EE7_MENSG3)
-            cEnd := Replace(upper(cEnd),"IMPORTADOR: ","")
-            cEnd := Replace(upper(cEnd),"CONSIGNEE: ","")
-            cEnd := Replace(upper(cEnd),Alltrim(TRB->A1_NOME),"")
-            cEnd := Replace(upper(cEnd),Alltrim(TRB->CONSIG),"")
-            
-            
-            if !Empty(cEnd)
-                nObserv := mlcount(cEnd,nLineLen, nTabSize, lWrap )
-            
-                For i := 1 to nObserv
-                    cLin := alltrim(memoline(cEnd,60,i, nLineLen, lWrap))
-                    oPrinter:Say(nLinha+007+i*10, aPerc[03]+010 , cLin , oFOARNO07)
-                Next i
-            endif
+        oPrinter:Say(nLinha+007, aPerc[03]+002 , "Endereço:", oFOARNE08)
+        // Inclusão de espaço entre os campos de observação.
+        cEnd := Alltrim(TRB->EE7_MENSG)+" "+Alltrim(TRB->EE7_MENSG2)+" "+Alltrim(TRB->EE7_MENSG3)
+        cEnd := Replace(upper(cEnd),"IMPORTADOR: ","")
+        cEnd := Replace(upper(cEnd),"CONSIGNEE: ","")
+        cEnd := Replace(upper(cEnd),Alltrim(TRB->A1_NOME),"")
+        cEnd := Replace(upper(cEnd),Alltrim(TRB->CONSIG),"")
+        
+        
+        if !Empty(cEnd)
+            nObserv := mlcount(cEnd,nLineLen, nTabSize, lWrap )
+        
+            For i := 1 to nObserv
+                cLin := alltrim(memoline(cEnd,60,i, nLineLen, lWrap))
+                oPrinter:Say(nLinha+007+i*10, aPerc[03]+010 , cLin , oFOARNO07)
+            Next i
+        endif
             
             /*
             if Len(cEnd) > 60

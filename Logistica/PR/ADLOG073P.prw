@@ -11,6 +11,7 @@
 	@history Ticket: 11427 - 25/03/2021 - ADRIANO SAVOINE - Solicitado pela Logistica para utilizar nas pesagens os manobristas entre DIMEP x Edata.
 	@history Ticket: T.I.  - 10/06/2021 - LEONARDO MONTEIRO - Ajuste na alteração do registro que estava posicionando no primeiro registro.
 	@history Ticket: T.I.  - 22/07/2021 - LEONARDO MONTEIRO - Inclusão de validações para não deixar que manobristas sejam vinculados a veículos e a transportadoras.
+	@history Ticket: 18822 - 24/08/2021 - LEONARDO MONTEIRO - Correção de error.log relacionado ao ticket 18822.
 	/*/
 
 User Function ADLOG073P()
@@ -106,8 +107,8 @@ USER Function CARREZEB()
 
 Local cQuery := ""
    
-
-    cQuery := "SELECT MAX ((ZEB.ZEB_CODIGO) + 1)MX FROM "+RetSqlName("ZEB")+" ZEB, WHERE  ZEB.D_E_L_E_T_ = '' AND ZEB.ZEB_FILIAL = "+xFilial("ZEB")+" 
+	// Correção de error.log relacionado ao ticket 18822.
+    cQuery := "SELECT MAX ((ZEB.ZEB_CODIGO) + 1)MX FROM "+RetSqlName("ZEB")+" ZEB WHERE  ZEB.D_E_L_E_T_ = '' AND ZEB.ZEB_FILIAL = '"+xFilial("ZEB")+"';"
     cQuery := changequery(cQuery)
 
     dbUsearea(.T.,"TOPCONN",TCGenQry(,,cQuery), "TMPQRY")

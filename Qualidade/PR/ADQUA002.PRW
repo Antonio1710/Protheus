@@ -52,11 +52,12 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
             EndIf
 
         EndIf
-    
+
+        UnLockByName("ADQUA002")
     endif
     //
     //RpcClearEnv()
-
+    
 Return Nil
 /*/{Protheus.doc} login
     Efetua login na api.
