@@ -14,6 +14,7 @@
 	@version 01
 	@history Chamado 058410 - WILLIAM COSTA - 27/05/2020 - Alterado o cálculo do Km quando vier do ravex
 	@history Chamado 058641 - WILLIAM COSTA - 04/06/2020 - Identificado que quando a loja do cliente tem letra o ravex não manda o cliente e loja correto então foi alterado o campo de cliente e loja para pegar da tabela do Protheus não mais do WebService
+	@history Chamado 18824  - Leonardo P. Monteiro - 26/08/2020 - Declaração da variável M_PAG para prevenção do erro variable does not exist M_PAG on SENDCABEC(APLIB080.PRW) 18/05/2020 17:21:57 line : 3218.
 */
  
 User Function ADLOG056P()
@@ -24,7 +25,8 @@ User Function ADLOG056P()
 	Private oResp       := ''
 	Private cPerg       := 'ADLOG056P' 
 	Private nId         := 0
-	Private oTxtTela    := NIL	
+	Private oTxtTela    := NIL
+	//Private m_pag      	:= 01	
 		
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa consumir de webservice ravex para Retornar Roteiros')
 	
@@ -138,6 +140,8 @@ STATIC FUNCTION IMPORTAXML()
 	Private cPedido     := '' 
 	Private nRotIni     := 0
 	Private nRotFin     := 0
+	//Tkt 18824 - Declaração da varíavel faltante.
+	Private m_pag      	:= 01
 
 	IF ISALPHA(MV_PAR03) .OR. ALLTRIM(MV_PAR03) == ''
 		

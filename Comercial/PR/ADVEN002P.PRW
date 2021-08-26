@@ -18,6 +18,7 @@
 	@history Ticket 12379   - Leonardo P. Monteiro - 14/04/2021 - Correção no preenchimento dos emails dos vendedores quando há erros na integração do EDI.
 	@history Ticket 12379   - Leonardo P. Monteiro - 15/04/2021 - Tratamento do EDI para evitar a inclusão de pedidos em duplicidade. Isso evita erros na importação de arquivos.
 	@history Ticket 12379   - Leonardo P. Monteiro - 19/04/2021 - Correção nas mensagens de erros quando não há produto cadastrado.
+	@history Ticket 18915   - Leonardo P. Monteiro - 26/08/2021 - Tratamento na conversão dos itens com valor 0.
 */
 
 User Function ADVEN002P()
@@ -306,17 +307,24 @@ User Function ADVEN002P()
                 	nVlUnit  := (nVlUnit/100)        
                 	nQtd     := INT((nQtd / 100))   
                 	
+					
+
                 	IF UPPER(ALLTRIM(cUnidade)) == 'KG' .OR. UPPER(ALLTRIM(cUnidade)) == '' //William Costa adicionado igual a branco para poder resolver pedidos do GPA que vem sem unidade de medida 11/01/2018
                 	
 	                	IF UPPER(ALLTRIM(TRB->B1_TIPCONV)) == 'D' //Divisor
 	                	
 	                		nQtdConv := INT(nQtd / IIF(TRB->B1_CONV == 0,1,TRB->B1_CONV))
-	                		nVlTotal := nVlUnit * nQtd
+							//Tkt 18915 - Tratamento na conversão dos itens com valor 0.
+							if nQtdConv == 0
+								nQtdConv 	:= 1
+								nQtd		:= TRB->B1_CONV
+							endif
+							nVlTotal := nVlUnit * nQtd
 	                		
 	                	ELSE //MULTIPLICADOR
 	                	                                                    
 	                		nQtdConv := INT(nQtd * IIF(TRB->B1_CONV == 0,1,TRB->B1_CONV))
-	                		nVlTotal := nVlUnit * nQtd
+							nVlTotal := nVlUnit * nQtd
 							
 	                	ENDIF
                 	
@@ -326,7 +334,8 @@ User Function ADVEN002P()
 	                	
 	                		nQtdConv  := nQtd
 	                		nQtdConv2 := INT(nQtd * IIF(TRB->B1_CONV == 0,1,TRB->B1_CONV))
-	                		nVlUnit   := nVlUnit / IIF(TRB->B1_CONV == 0,1,TRB->B1_CONV)
+	                		nQtdConv2 := iif(nQtdConv==0,1,nQtdConv)
+							nVlUnit   := nVlUnit / IIF(TRB->B1_CONV == 0,1,TRB->B1_CONV)
 	                		nVlTotal  := nVlUnit * nQtdConv2
 	                			                		
 	                	ENDIF
