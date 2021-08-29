@@ -12,6 +12,7 @@ STATIC lAltPraz   := .F.
 STATIC lBlqLote   := .f.
 STATIC cMotRej    := "" 
 STATIC cCodMotivo := ''
+STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 
 /*{Protheus.doc} User Function ADOA005
 	Aprovacao de credito de clientes, considerando regras predeterminada
@@ -49,6 +50,7 @@ STATIC cCodMotivo := ''
 	@history Ticket 423 	- Adriana		  - 01/10/2020 - Liberar demais empresas pelo parâmetro MV_#PRECLI
 	@history Ticket 8099    - ADRIANO SAVOINE - 15/01/2021 - Ajustada a Rotina para atualizar o Lim. de Credito para Toda Rede quando alterado.
 	@history Ticket 8191    - ADRIANO SAVOINE - 19/01/2021 - Alteração na rede de Banco e condição de pagamento para toda Rede.
+	@history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
 */
 
 User Function ADOA005() // U_ADOA005()
@@ -103,8 +105,9 @@ User Function ADOA005() // U_ADOA005()
 	Local nY			:= 90
 	Local nLimApAnt     := 0
 	Local nHRes			:= oMainWnd:nClientWidth			// Resolucao horizontal do monitor
-	Local aButtons 		:= { { 'CADEADO', { || AdoBloq(	oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_COD' }) ],	oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_LOJA' })])}, "Bloqueio" },;
-							 {   'FILTRO' , { || ( AdoFiltros( "h", "C") , fGetDados('PB3', PB3->(Recno()), 4,aAlter, cComboMotivo, cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData )) }, "Filtro" },;
+	Local aButtons 		:= { { 'CADEADO'   , { || AdoBloq(	oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_COD' }) ],	oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_LOJA' })])}, "Bloqueio" },;
+							 {   'FILTRO'  , { || ( AdoFiltros( "h", "C") , fGetDados('PB3', PB3->(Recno()), 4,aAlter, cComboMotivo, cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData )) }, "Filtro" },;
+							 {   'LIMITES' , { || FixLimits() }, "Ajusta Limites em Lote" },; // @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
 							 {   '' , { || alVldCrd() }, "Alt. Validade Cred" }} //Everson - 31/07/2020. Chamado 059398.
 	Local _lUsaPreCli	:= GETMV("MV_#PRECLI",,.F.) //Ticket 423 por Adriana em 01/10/2020
 
@@ -2848,175 +2851,200 @@ Return lRet
 	@since 22/09/2009
 	@version 01
 	@history 
-*/
-
-Static Function Adoa5Parec( cCodCli, cLojaCli )
+/*/
+Static Function Adoa5Parec( cCodCli, cLojaCli, cLtParecer )
 
 	Local aArea 	:= GetArea()
-	//Local cNomeUsr 	:= Posicione( 'PB1', 1, xFilial( 'PB1' ) + __cUserId, 'PB1_NOME')
-	//Local cNivel	:= Posicione( 'PB1', 1, xFilial( 'PB1' ) + __cUserId, 'PB1_NIVEL')
 	Local cNomeUsr 	:= GetAdvFVal( 'PB1', 'PB1_NOME', xFilial( 'PB1' ) + __cUserId, 1)
 	Local cNivel	:= GetAdvFVal( 'PB1', 'PB1_NIVEL', xFilial( 'PB1' ) + __cUserId, 1)
 	Local oFont		:= NIL
 	Local oDlg		:= NIL
 	Local oParecer	:= NIL
 	Local oHistorico:= NIL
-	Local cHistorico:= AdoGetHist( cCodCli, cLojaCli, cNivel )
-	//Local aBotao	:= {{ "FILTRO",   { ||  AdoFiltroP( "h", "C") }, "Filtro" }}
+	Local cHistorico:= ""
 	Local cParecer	:= ''
 	Local nOpcao	:= 0
 	Local cFilPBA	:= xFilial( 'PBA' )
-	//Local cLerParec	:= Posicione( 'PB2', 1, xFilial( 'PB2' ) +  __cUserId, 'PB2_LER')
-	//Local cIncluiPar:= Posicione( 'PB2', 1, xFilial( 'PB2' ) +  __cUserId, 'PB2_INCLUI')
-	//Local nLimitSol	:= Posicione( 'PB3', 1, xFilial( 'PB3' ) + cCodCli + cLojaCli, 'PB3_CREDSU')
-	//Local nPrazoSol	:= Posicione( 'PB3', 1, xFilial( 'PB3' ) + cCodCli + cLojaCli, 'PB3_PRAZOS')
 	Local cLerParec	:= GetAdvFVal( 'PB2', 'PB2_LER', xFilial( 'PB2' ) +  __cUserId, 1)
 	Local cIncluiPar:= GetAdvFVal( 'PB2', 'PB2_INCLUI', xFilial( 'PB2' ) +  __cUserId, 1)
-	Local nLimitSol	:= GetAdvFVal( 'PB3', 'PB3_CREDSU', xFilial( 'PB3' ) + cCodCli + cLojaCli, 1)
-	Local nPrazoSol	:= GetAdvFVal( 'PB3', 'PB3_PRAZOS', xFilial( 'PB3' ) + cCodCli + cLojaCli, 1)
-	Local lVendor   := .F.
-	Local aAreaA3   := {}
-	Local i := 0
+	Local nLimitSol	:= 0
+	Local nPrazoSol	:= 0
 	Local lPodeCred := .F.
 	Local nEnca
-	Local cSituaca	:= GetAdvFVal( 'PB3', 'PB3_SITUAC', xFilial( 'PB3' ) + cCodCli + cLojaCli, 1) &&Mauricio - Chamado 035857 - 14/07/17
-	Local cDepto	:= GetAdvFVal( 'PB1', 'PB1_DEPTO', xFilial( 'PB1' ) + __cUserId, 1)    &&Mauricio - Chamado 035857 - 14/07/17 
+	Local cSituaca	:= ""
+	Local cDepto	:= GetAdvFVal( 'PB1', 'PB1_DEPTO', xFilial( 'PB1' ) + __cUserId, 1)    //&&Mauricio - Chamado 035857 - 14/07/17 
 	Local lBkOffice :=  GetAdvFVal( 'PB2', 'PB2_BCKOFI', xFilial( 'PB2' ) + __cUserId, 1) = '1' // fernando sigoli 19/04/2018- CHAMADO: 040989
 
-	If cLerParec <> '1' .And. ! IsInCallStack('RESTEXECUTE') //Everson - 09/10/2017. Chamado 037261.
-		Alert( 'Usuario sem acesso a visualização de pareceres. Verificar cadastro de Permissões')
-		RestArea( aArea )
-		Return
-	Endif
+	Default cCodCli    := ""
+	Default cLojaCli   := ""
+	Default cLtParecer := ""
 
-	If ! IsInCallStack('RESTEXECUTE') //Everson - 09/10/2017. Chamado 037261.
+	cHistorico:= AdoGetHist( cCodCli, cLojaCli, cNivel )
+	nLimitSol	:= GetAdvFVal( 'PB3', 'PB3_CREDSU', xFilial( 'PB3' ) + cCodCli + cLojaCli, 1)
+	nPrazoSol	:= GetAdvFVal( 'PB3', 'PB3_PRAZOS', xFilial( 'PB3' ) + cCodCli + cLojaCli, 1)
+	cSituaca	:= GetAdvFVal( 'PB3', 'PB3_SITUAC', xFilial( 'PB3' ) + cCodCli + cLojaCli, 1) //&&Mauricio - Chamado 035857 - 14/07/17
 
-		DEFINE MSDIALOG oDlg TITLE "Pareceres " FROM 10,10 To 400,640 OF oMainWnd PIXEL
+	If Empty(cLtParecer) // @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
 
-		@ 57, 33 Say 'Nível     Usuario          Data           Hora          Parecer' SIZE 200,15 OF oDlg PIXEL
-		@ 110, 10 Say 'Historico' SIZE 200,15 OF oDlg PIXEL
-		// Historico de pareceres
-		oHistorico := tMultiGet():New( 03, 04, {|u|If( pCount()>0, cHistorico:= u, cHistorico) }, oDlg, 250, 090,;
-		oFont,.T.,,,,.F.,,,,,,.T.,,,,,.T.)
-		oHistorico:lWordWrap := .F.
-		oHistorico:EnableHScroll(.T.)
-
-		If cIncluiPar == '1'
-			IF !cSituaca $ '2/4' .Or. (cSituaca $ '2/4' .And. cDepto $ '000002/000001') //credito/financeiro   &&Mauricio - Chamado 035857 - 14/07/17 Em analise não pode ser incluido novo parecer
-				@ 200, 10 Say 'Parecer' SIZE 200,15 OF oDlg PIXEL
-				// Get do Parecer.
-				oParecer := tMultiget():New( 11, 04, {|u|if(Pcount()>0, cParecer:=u, cParecer) }, oDlg, 250, 30, oFont,.F.,,,,.F.)
-				oParecer:lWordWrap := .T.
-			Endif	  
+		If cLerParec <> '1' .And. ! IsInCallStack('RESTEXECUTE') //Everson - 09/10/2017. Chamado 037261.
+			Alert( 'Usuario sem acesso a visualização de pareceres. Verificar cadastro de Permissões')
+			RestArea( aArea )
+			Return
 		Endif
 
-		ACTIVATE MSDIALOG oDlg CENTERED ON INIT EnchoiceBar(oDlg,{||nOpcao:=1, oDlg:End()},{||nOpcao:=0,oDlg:End()},,/*aBotao*/)
+		If ! IsInCallStack('RESTEXECUTE') 
 
-	EndIf
+			DEFINE MSDIALOG oDlg TITLE "Pareceres " FROM 10,10 To 400,640 OF oMainWnd PIXEL
 
-	If (nOpcao == 1 .And. !Empty( cParecer )) .Or. IsInCallStack('RESTEXECUTE') //Everson - 09/10/2017. Chamado 037261.
+			@ 57, 33 Say 'Nível     Usuario          Data           Hora          Parecer' SIZE 200,15 OF oDlg PIXEL
+			@ 110, 10 Say 'Historico' SIZE 200,15 OF oDlg PIXEL
+			// Historico de pareceres
+			oHistorico := tMultiGet():New( 03, 04, {|u|If( pCount()>0, cHistorico:= u, cHistorico) }, oDlg, 250, 090,;
+			oFont,.T.,,,,.F.,,,,,,.T.,,,,,.T.)
+			oHistorico:lWordWrap := .F.
+			oHistorico:EnableHScroll(.T.)
 
-		DbSelectArea( 'PBA' )
-		RecLock( 'PBA', .T. )
-
-		PBA_FILIAL	:= cFilPBA
-		PBA_CODCLI	:= cCodCli
-		PBA_LOJACL	:= cLojaCli
-		PBA_NIVEL	:= cNivel
-		PBA_USUARI	:= __cUserId
-		PBA_NOME	:= cNomeUsr
-		PBA_DATA	:= dDatabase
-		PBA_HORA	:= TIME()
-		MSMM(,TamSx3("PBA_PARECE")[1],,UPPER(Iif(! IsInCallStack('RESTEXECUTE'),cParecer,cRestParecer)),1,,,"PBA","PBA_CODMEM")
-
-		PBA->( MsUnLock())
-
-		dbSelectArea("PB3")
-		PB3->( DbSetOrder(1))
-
-		If PB3->( DbSeek( xFilial( 'PB3' ) + cCodCli + cLojaCli )) .and. PB3->PB3_VENENC = __cUserId
-			recLock("PB3",.F.)
-			PB3->PB3_PARECE := .T.
-			msUnlock()
-		endif
-
-		If cDepto $ '000002/000001'  &&Mauricio - Chamado 035857 - 14/07/17 Em analise não pode ser incluido novo parecer
-			DbSelectArea("PB3")
-			PB3->( DbSetOrder(1))	
-			If PB3->( DbSeek( xFilial( 'PB3' ) + cCodCli + cLojaCli ))
-				If PB3->PB3_SITUAC <> '2'	
-					recLock("PB3",.F.)
-					PB3->PB3_SITUAC := "4"
-					PB3->(MsUnlock())
-				EndIf
-			Endif	
-		Endif
-
-		// Varredura entre os niveis
-		if cNivel <> '1' .and. nLimitSol <= SuperGetMv("FS_CREDI0" + cNivel, .F., 0 ) .and. nPrazoSol <= SuperGetMv("FS_PRZMED" + cNivel, .F., 0 )
-			lPodeCred := .T.
-		endif
-
-		if cNivel = '3' // Gerente sempre pode enviar para credito
-			lPodeCred := .T.
-		endif
-        
-        If lBkOffice // fernando sigoli 19/04/2018- CHAMADO: 040989
-			lPodeCred := .T.
-        EndIf
-        
-		If lPodeCred
-			nEnca := Aviso('Atenção','Deseja encaminhar o cliente ?',{'Não','Superior','Crédito'},1)
-		Else
-			nEnca := Aviso('Atenção','Deseja encaminhar o cliente ?',{'Não','Superior'},1)
-		Endif
-
-		//Everson - 09/10/2017. Chamado 037261.
-		If IsInCallStack('RESTEXECUTE')
-
-			If cNivel <> '1' //Se o cadastro foi gerado pelo serviço rest e o nível do usuário é diferente de 1 (vendedor). O cadastro é encaminhado para o crédito.
-				nEnca := 3
-
-			Else
-				nEnca := 2
-
-			EndIf
-
-		EndIf
-		//
-
-		If nEnca = 2 //Enviar ao Superior
-
-			If cNivel < '4'
-				AutSndEnc( cCodCli, cLojaCli, __cUserId ) //__cUserId
-			Else
-				Adoa5Enc( cCodCli, cLojaCli, __cUserId )
+			If cIncluiPar == '1'
+				IF !cSituaca $ '2/4' .Or. (cSituaca $ '2/4' .And. cDepto $ '000002/000001') //credito/financeiro   &&Mauricio - Chamado 035857 - 14/07/17 Em analise não pode ser incluido novo parecer
+					@ 200, 10 Say 'Parecer' SIZE 200,15 OF oDlg PIXEL
+					// Get do Parecer.
+					oParecer := tMultiget():New( 11, 04, {|u|if(Pcount()>0, cParecer:=u, cParecer) }, oDlg, 250, 30, oFont,.F.,,,,.F.)
+					oParecer:lWordWrap := .T.
+				Endif	  
 			Endif
 
-		Elseif nEnca = 3 // Enviar ao Credito
-			Adoa5Enc( cCodCli, cLojaCli, __cUserId )
+			ACTIVATE MSDIALOG oDlg CENTERED ON INIT EnchoiceBar(oDlg,{||nOpcao:=1, oDlg:End()},{||nOpcao:=0,oDlg:End()},,/*aBotao*/)
 
-		ElseIf nEnca = 1 //nao enviar para nenhum superior 
+		EndIf
 
-			If cSituaca <> '2' .and. !Empty( cParecer ) .And. cDepto $ '000002/000001'
+		cLtParecer := cParecer
+
+	Else
+
+		If IsInCallStack("FIXLIMITS")
+			cParecer := cLtParecer
+		EndIf
+	
+	EndIf
+
+	// @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
+	If Empty(cParecer) .and. Empty(cLtParecer)
+		cParecer := "Login " + cUserName + " não informou um parecer em " + DtoC(msDate()) + " " + Time()
+	EndIf
+	//
+
+	If nOpcao == 1 .And. !Empty( cParecer ) .Or. IsInCallStack('RESTEXECUTE') .or. IsInCallStack("FIXLIMITS")
+
+		If !Empty(cCodCli)
+
+			DbSelectArea( 'PBA' )
+			RecLock( 'PBA', .T. )
+
+				PBA_FILIAL	:= cFilPBA
+				PBA_CODCLI	:= cCodCli
+				PBA_LOJACL	:= cLojaCli
+				PBA_NIVEL	:= cNivel
+				PBA_USUARI	:= __cUserId
+				PBA_NOME	:= cNomeUsr
+				PBA_DATA	:= dDatabase
+				PBA_HORA	:= TIME()
+				MSMM(,TamSx3("PBA_PARECE")[1],,UPPER(Iif(! IsInCallStack('RESTEXECUTE'),cParecer,cRestParecer)),1,,,"PBA","PBA_CODMEM")
+
+			PBA->( MsUnLock())
+
+			dbSelectArea("PB3")
+			PB3->( DbSetOrder(1))
+
+			If PB3->( DbSeek( xFilial( 'PB3' ) + cCodCli + cLojaCli )) .and. PB3->PB3_VENENC = __cUserId
+				recLock("PB3",.F.)
+					PB3->PB3_PARECE := .T.
+				msUnlock()
+			endif
+
+			If cDepto $ '000002/000001' // &&Mauricio - Chamado 035857 - 14/07/17 Em analise não pode ser incluido novo parecer
 				DbSelectArea("PB3")
 				PB3->( DbSetOrder(1))	
 				If PB3->( DbSeek( xFilial( 'PB3' ) + cCodCli + cLojaCli ))
-					recLock("PB3",.F.)
-					PB3->PB3_SITUAC := "1"    
-					PB3->(MsUnlock())
+					If PB3->PB3_SITUAC <> '2'	
+						recLock("PB3",.F.)
+							PB3->PB3_SITUAC := "4"
+						PB3->(MsUnlock())
+					EndIf
 				Endif	
 			Endif
 
-		Endif
+			// Varredura entre os niveis
+			if cNivel <> '1' .and. nLimitSol <= SuperGetMv("FS_CREDI0" + cNivel, .F., 0 ) .and. nPrazoSol <= SuperGetMv("FS_PRZMED" + cNivel, .F., 0 )
+				lPodeCred := .T.
+			endif
 
-	Elseif nOpcao == 1 .And. Empty( cParecer ) .And. cDepto $ '000002/000001'  &&Mauricio - Chamado 035857 - 14/07/17 Em analise não pode ser incluido novo parecer
+			if cNivel = '3' // Gerente sempre pode enviar para credito
+				lPodeCred := .T.
+			endif
+			
+			If lBkOffice // fernando sigoli 19/04/2018- CHAMADO: 040989
+				lPodeCred := .T.
+			EndIf
+			
+			If !IsInCallStack("FIXLIMITS") // @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
+				If lPodeCred
+					nEnca := Aviso('Atenção','Deseja encaminhar o cliente ?',{'Não','Superior','Crédito'},1)
+				Else
+					nEnca := Aviso('Atenção','Deseja encaminhar o cliente ?',{'Não','Superior'},1)
+				Endif
+			Else
+				nEnca := 1 // @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
+			EndIf
+
+			//Everson - 09/10/2017. Chamado 037261.
+			If IsInCallStack('RESTEXECUTE')
+
+				If cNivel <> '1' //Se o cadastro foi gerado pelo serviço rest e o nível do usuário é diferente de 1 (vendedor). O cadastro é encaminhado para o crédito.
+					nEnca := 3
+
+				Else
+					nEnca := 2
+
+				EndIf
+
+			EndIf
+			//
+
+			If nEnca = 2 //Enviar ao Superior
+
+				If cNivel < '4'
+					AutSndEnc( cCodCli, cLojaCli, __cUserId ) //__cUserId
+				Else
+					Adoa5Enc( cCodCli, cLojaCli, __cUserId )
+				Endif
+
+			Elseif nEnca = 3 // Enviar ao Credito
+				
+				Adoa5Enc( cCodCli, cLojaCli, __cUserId )
+
+			ElseIf nEnca = 1 //nao enviar para nenhum superior 
+
+				If cSituaca <> '2' .and. !Empty( cParecer ) .And. cDepto $ '000002/000001'
+					DbSelectArea("PB3")
+					PB3->( DbSetOrder(1))	
+					If PB3->( DbSeek( xFilial( 'PB3' ) + cCodCli + cLojaCli ))
+						recLock("PB3",.F.)
+							PB3->PB3_SITUAC := "1"    
+						PB3->(MsUnlock())
+					Endif	
+				Endif
+
+			Endif
+
+		EndIf
+
+	Elseif nOpcao == 1 .And. Empty( cParecer ) .And. cDepto $ '000002/000001' // &&Mauricio - Chamado 035857 - 14/07/17 Em analise não pode ser incluido novo parecer
 
 		DbSelectArea("PB3")
 		PB3->( DbSetOrder(1))	
 		If PB3->( DbSeek( xFilial( 'PB3' ) + cCodCli + cLojaCli ))
 			RecLock("PB3",.F.)
-			PB3->PB3_SITUAC := "4"
+				PB3->PB3_SITUAC := "4"
 			PB3->(MsUnlock())
 		Endif
 
@@ -3024,7 +3052,7 @@ Static Function Adoa5Parec( cCodCli, cLojaCli )
 
 	RestArea( aArea )
 
-Return NIL
+Return cParecer
 
 /*{Protheus.doc} Static Function ADOGETHIST
 	Retorna variavel char com o historico dos pareceres do nivel cliente e loja informados no parametro
@@ -3478,8 +3506,8 @@ Static Function AdoIncA1( cCodCli, cLojaCli)
 
 					If SZF->( DbSeek( xFilial('SZF') + PB3->PB3_CODRED))
 
-						_lAchou   := .T.   &&checa CNPJ
-						_lSemLim  := .T.   &&checa registros sem ter nenhum com limite cadastrado - Mauricio - 13/07/16
+						_lAchou   := .T.   //&&checa CNPJ
+						_lSemLim  := .T.   //&&checa registros sem ter nenhum com limite cadastrado - Mauricio - 13/07/16
 						While !SZF->( EOF()) .And. SZF->ZF_FILIAL = xFilial("SZF") .And. SZF->ZF_REDE = PB3->PB3_CODRED
 							IF SZF->ZF_CGCMAT == Left( PB3->PB3_CGC, 8 )
 								_lAchou := .F.
@@ -4985,6 +5013,11 @@ Static Function Ado5IprA()
 	Endif
 
 	cQuery := ChangeQuery( cQuery )
+
+	If Select("TRB") > 0
+		TRB->( dbCloseArea() )
+	EndIf
+
 	DbUseArea( .T., "TOPCONN", TCGENQRY(,, cQuery ), "TRB", .F., .T. )
 	dbSelectArea( "TRB" )
 	dbGoTop()
@@ -5619,6 +5652,10 @@ User function FltPB305( aHeader, aCols, cMotivo, cCNPJ, cRazao, cCliente, cVende
 
 	cQuery += " AND PB3.D_E_L_E_T_ = ' ' "
 	cQuery += " ORDER BY PB3_CODSA1, PB3_LOJSA1"
+
+	If Select("TRB") > 0
+		TRB->( dbCloseArea() )
+	EndIf
 
 	DbUseArea( .T., "TOPCONN", TCGENQRY(,, cQuery ), "TRB", .F., .T. )
 	dbSelectArea( "TRB" )
@@ -7537,3 +7574,668 @@ Static Function AdoAtuRev(cCoPb3,cLjPb3)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} Static Function FixLimits()
+	Ajuste limites em lote - cliente e redes
+	@type  Static Function
+	@author FWNM
+	@since 26/08/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	// @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
+/*/
+Static Function FixLimits()
+
+    Local lOk		:= .F.
+    Local alSay		:= {}
+    Local alButton	:= {}
+    Local clTitulo	:= 'Ajuste de Limites em Lote - Clientes e Redes'
+    Local clDesc1   := 'O objetivo desta rotina é alterar os valores nas tabelas SA1, PB3 e SZF'
+    Local clDesc2   := 'e alimentar os LOGs na PB9'
+    Local clDesc3   := ''
+    Local clDesc4   := '( Necessário converter, previamente, esta planilha em arquivo CSV = Separado por ";" )'
+    Local clDesc5   := ''
+
+	Private cAliasTRB := ""
+
+    // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
+    If !LockByName("FIXLIMITS", .T., .F.)
+        Alert("[FixLimits] - Existe outro processamento sendo executado! Verifique...")
+        Return
+    EndIf
+
+    // Mensagens de Tela Inicial
+    aAdd(alSay, clDesc1)
+    aAdd(alSay, clDesc2)
+    aAdd(alSay, clDesc3)
+    aAdd(alSay, clDesc4)
+    aAdd(alSay, clDesc5)
+
+    // Botoes do Formatch
+    aAdd(alButton, {1, .T., {|| lOk := .T., FechaBatch()}})
+    aAdd(alButton, {2, .T., {|| lOk := .F., FechaBatch()}})
+
+    FormBatch(clTitulo, alSay, alButton)
+
+    If lOk
+        Processa( { || RunFixLimits() }, "Atualizando limites em lote..." )
+    EndIf
+
+    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
+    //³Destrava a rotina para o usuário	    ?
+    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
+    UnLockByName("FIXLIMITS")
+
+Return
+
+/*/{Protheus.doc} Static Function RunFixLimits
+    (long_description)
+    @type  Static Function
+    @author FWNM
+    @since 26/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function RunFixLimits()
+
+    Local lFile     := .f.
+    Local nCount    := 0
+    Local aDadLC    := {}
+    Local aCampos   := {}
+	
+	Private cMsgLim   := ""
+	Private lCliente  := .f.
+	Private lRede     := .f.
+    Private cVerCli   := ""
+	Private	cVerRed   := ""
+	Private cTxt      := ""
+    Private nLinhaXLS := 0
+	Private cNumAudit := ""
+
+	Private cCNPJ      := ""
+	Private cRazao     := ""
+	Private nLimiteXLS := 0
+	Private nSA1Recno  := 0
+	Private nPB3Recno  := 0
+	Private nLimiteNew := 0
+	Private cRede      := ""
+	Private nSZFRecno  := 0
+	Private nLimiteNew := 0
+
+    cFile := cGetFile("Arquivos CSV (Separados por Vírgula) | *.CSV",;
+    ("Selecione o diretorio onde encontra-se o arquivo a ser processado"), 0, "Servidor\", .t., GETF_LOCALFLOPPY + GETF_LOCALHARD + GETF_NETWORKDRIVE)// + GETF_RETDIRECTORY)
+
+    If At(".CSV", upper(cFile)) > 0
+        lFile := .t.
+        ft_fUse(cFile)
+    Else
+        Aviso("RunFixLimits-01", "Não foi possível abrir o arquivo...", {"&Ok"},, "Arquivo não identificado!")
+		Return
+    EndIf
+
+    // Arquivo TXT
+    If lFile
+        
+        ft_fGoTop()
+        
+        cVerCli := "CNPJ;RAZÃO SOCIAL; LIMITE ;SA1.RECNO;PB3.RECNO;Score; vlr maior acumulo AD'ORO ; EM ABERTO ;LIMITE + 30%;AÇÃO; % AUMENTO LIMITE ; NOVO LIMITE"
+		cVerRed := "REDE;R_E_C_N_O_; Soma de LIM.REDE ; Média de SCORE ; Soma de vlr maior acumulo AD'ORO ; Soma de SLD.REDE ;LIMITE + 30%;AÇÃO; NOVO LIMITE ; % AUMENTO LIMITE"
+        
+        cTxt := AllTrim( ft_fReadLn() )
+        
+        cMsgLim := ""
+		If cVerCli == cTxt
+			lCliente := .t.
+			cMsgLim := "Ajuste de Limites em lote - Clientes "
+		ElseIf cVerRed == cTxt
+			lRede := .t.
+			cMsgLim := "Ajuste de Limites em lote - Redes "
+		Else
+            Aviso("RunFixLimits-02", "A importação não será realizada! As colunas do excel precisam ser " + cVerTab, {"&Ok"},, "Versão/Leiaute da planilha incorreta!")
+			Return
+		EndIf
+            
+		// Confirmação
+		If !MsgYesNo("Confirma Ajuste de Limites em lote?", cMsgLim)
+			Return
+		EndIf
+		
+		If Select("TRB") > 0
+			TRB->( dbCloseArea() )
+		EndIf
+			
+		// Crio TRB para impressão
+		// https://tdn.totvs.com.br/display/framework/FWTemporaryTable
+		oTempTable := FWTemporaryTable():New("TRB")
+		
+		// Arquivo TRB - CONSISTÊNCIAS
+		aAdd( aCampos, {'NUMLINHA'   ,"N"    ,6 , 0} )
+		aAdd( aCampos, {'STATUS'     ,"C"    ,100, 0} )
+		aAdd( aCampos, {'LINHA'      ,"C"    ,254, 0} )
+		aAdd( aCampos, {'VALOR_OLD'  ,"N"    ,TamSX3("A1_LC")[1] , TamSX3("A1_LC")[2]} )
+		aAdd( aCampos, {'VALOR_NEW'  ,"N"    ,TamSX3("A1_LC")[1] , TamSX3("A1_LC")[2]} )
+
+		oTempTable:SetFields(aCampos)
+		oTempTable:AddIndex("01", {"NUMLINHA"} )
+		oTempTable:Create()
+
+		ProcRegua(0)
+
+		// Consistência
+		ft_fSkip() // Pula linha do cabeçalho
+		Do While !ft_fEOF()
+			
+			IncProc( "Consistindo CSV antes de atualizar... " + StrZero(nCount++, 9) )
+			
+			nLinhaXLS++
+			cTxt    := ft_fReadLn()
+			aDadLC  := Separa(cTxt, ";")
+
+			If lCliente
+			
+				cCNPJ      := aDadLC[1]
+				cRazao     := aDadLC[2]
+				nLimiteXLS := Val(StrTran(StrTran(aDadLC[3],".",""),",","."))
+				nSA1Recno  := Val(aDadLC[4])
+				nPB3Recno  := Val(aDadLC[5])
+				nLimiteNew := Val(StrTran(StrTran(aDadLC[12],".",""),",","."))
+			
+			ElseIf lRede
+
+				cRede      := aDadLC[1]
+				nSZFRecno  := Val(aDadLC[2])
+				nLimiteNew := Val(StrTran(StrTran(aDadLC[9],".",""),",","."))
+			
+			EndIf
+
+			// Efetua consistências
+			lLimOK := ChkDadLim(aDadLC)
+
+			aDadLC := {}
+			
+			ft_fSkip()
+			
+		EndDo
+
+		TRB->( dbGoTop() )
+		If TRB->( !EOF() )
+
+			If msgYesNo("Consistência finalizada! Existem problemas nos dados que impediram a importação dos títulos de acordo. Deseja listá-las agora?")
+				ReportLIM()
+			EndIf
+		
+		Else
+
+			cLtParecer := Adoa5Parec()
+
+			cNumAudit := UpAudit()
+			
+			ProcRegua(0)
+
+			nCount    := 0
+			nLinhaXLS := 0
+			aDadLC    := {}
+
+			ft_fGoTop()
+			ft_fSkip() // Pula linha do cabeçalho
+
+			// Importação
+			Do While !ft_fEOF()
+				
+				IncProc( "Ajustando " + cMsgLim + StrZero(nCount++, 9) )
+				
+				nLinhaXLS++
+				cTxt   := ft_fReadLn()
+				aDadLC := Separa(cTxt, ";")
+				
+				If lCliente
+				
+					cCNPJ      := aDadLC[1]
+					cRazao     := aDadLC[2]
+					nLimiteXLS := Val(StrTran(StrTran(aDadLC[3],".",""),",","."))
+					nSA1Recno  := Val(aDadLC[4])
+					nPB3Recno  := Val(aDadLC[5])
+					nLimiteNew := Val(StrTran(StrTran(aDadLC[12],".",""),",","."))
+				
+					// Cliente
+					SA1->( dbGoTo(nSA1Recno) )
+					If SA1->( !EOF() ) .and. AllTrim(cCNPJ) == Left(AllTrim(SA1->A1_CGC),8) //.and. AllTrim(cRazao) == AllTrim(SA1->A1_NOME)
+
+						// Log antes alteracao
+						u_GrLogZBE( msDate(), TIME(), cUserName,;
+						"(SA1) A1_LC ANTES: " + AllTrim(TransForm(SA1->A1_LC,PesqPict("SA1","A1_LC"))) + " RECNO " + AllTrim(Str(nSA1Recno)) + " CNPJ " + AllTrim(cCNPJ) + " RAZAO " + AllTrim(cRazao),;
+						cModuloZBE, cNumAudit, "Aglutinador: " + cNumAudit + " - Arquivo: " + cFile + " - Linha: " + AllTrim(Str(nLinhaXLS)),;
+						ComputerName(), LogUserName() )
+						
+						// Log PB9
+						U_Ado05Log( SA1->A1_COD, SA1->A1_LOJA, cUserName, msDate(), Posicione('SX3', 2, 'A1_LC', 'X3_Titulo' ), SA1->A1_LC, nLimiteNew )
+
+						RecLock("SA1",.f.)
+							SA1->A1_LC := nLimiteNew
+						SA1->( MsUnlock() )
+
+						// Log APOS alteracao
+						u_GrLogZBE( msDate(), TIME(), cUserName,;
+						"(SA1) A1_LC AJUSTADO: " + AllTrim(TransForm(SA1->A1_LC,PesqPict("SA1","A1_LC"))) + " RECNO " + AllTrim(Str(nSA1Recno)) + " CNPJ " + AllTrim(cCNPJ) + " RAZAO " + AllTrim(cRazao),;
+						cModuloZBE, cNumAudit, "Aglutinador: " + cNumAudit + " - Arquivo: " + cFile + " - Linha: " + AllTrim(Str(nLinhaXLS)),;
+						ComputerName(), LogUserName() )
+
+						// Log Parecer
+						Adoa5Parec(SA1->A1_COD, SA1->A1_LOJA, cLtParecer)
+
+					Else
+
+						GrvTRB("Algum problema ocorreu que não permitiu o ajuste do Limite crédito - agrupador/auditoria n. " + cNumAudit, nLinhaXLS, cTXT, nValorXLS, nValorNew)
+
+					EndIf
+
+					// Pré-Cadastro
+					PB3->( dbGoTo(nPB3Recno) )
+					If PB3->( !EOF() ) .and. AllTrim(cCNPJ) == Left(AllTrim(PB3->PB3_CGC),8) //.and. AllTrim(cRazao) == AllTrim(PB3->PB3_NOME)
+					
+						// Log antes alteracao
+						u_GrLogZBE( msDate(), TIME(), cUserName,;
+						"(PB3) PB3_LC ANTES: " + AllTrim(TransForm(PB3->PB3_LIMAPR,PesqPict("PB3","PB3_LC"))) + " RECNO " + AllTrim(Str(nPB3Recno)) + " CNPJ " + AllTrim(cCNPJ) + " RAZAO " + AllTrim(cRazao),;
+						cModuloZBE, cNumAudit, "Aglutinador: " + cNumAudit + " - Arquivo: " + cFile + " - Linha: " + AllTrim(Str(nLinhaXLS)),;
+						ComputerName(), LogUserName() )
+
+						// Log PB9
+						U_Ado05Log( PB3->PB3_COD, PB3->PB3_LOJA, cUserName, msDate(), Posicione('SX3', 2, 'PB3_LC', 'X3_Titulo' ), PB3->PB3_LIMAPR, nLimiteNew )
+
+						RecLock("PB3",.f.)
+							PB3->PB3_LC     := nLimiteNew
+							PB3->PB3_LIMAPR := nLimiteNew
+						PB3->( MsUnlock() )
+
+						// Log APOS alteracao
+						u_GrLogZBE( msDate(), TIME(), cUserName,;
+						"(PB3) PB3_LC AJUSTADO: " + AllTrim(TransForm(PB3->PB3_LIMAPR,PesqPict("PB3","PB3_LC"))) + " RECNO " + AllTrim(Str(nPB3Recno)) + " CNPJ " + AllTrim(cCNPJ) + " RAZAO " + AllTrim(cRazao),;
+						cModuloZBE, cNumAudit, "Aglutinador: " + cNumAudit + " - Arquivo: " + cFile + " - Linha: " + AllTrim(Str(nLinhaXLS)),;
+						ComputerName(), LogUserName() )
+
+						// Log Parecer
+						Adoa5Parec(PB3->PB3_COD, PB3->PB3_LOJA, cLtParecer)
+
+						GrvTRB("CLIENTE - Limite crédito ajustado com sucesso - agrupador/auditoria n. " + cNumAudit, nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+
+					Else
+
+						GrvTRB("Algum problema ocorreu que não permitiu o ajuste do Limite crédito - agrupador/auditoria n. " + cNumAudit, nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+
+					EndIf
+
+				ElseIf lRede
+
+					cRede      := aDadLC[1]
+					nSZFRecno  := Val(aDadLC[2])
+					nLimiteNew := Val(StrTran(StrTran(aDadLC[9],".",""),",","."))
+
+					SZF->( dbGoTo(nSZFRecno) )
+					If SZF->( !EOF() ) .and. AllTrim(cRede) == AllTrim(SZF->ZF_REDE)
+
+						nLimiteXLS := SZF->ZF_LCREDE
+
+						// Log antes alteracao
+						u_GrLogZBE( msDate(), TIME(), cUserName,;
+						"(SZF) ZF_LCREDE ANTES: " + AllTrim(TransForm(SZF->ZF_LCREDE,PesqPict("SZF","ZF_LCREDE"))) + " RECNO " + AllTrim(Str(nSZFRecno)) + " REDE " + AllTrim(cRede),;
+						cModuloZBE, cNumAudit, "Aglutinador: " + cNumAudit + " - Arquivo: " + cFile + " - Linha: " + AllTrim(Str(nLinhaXLS)),;
+						ComputerName(), LogUserName() )
+
+						///////////
+						// Log PB9
+						///////////
+
+						// SA1
+						If Select("WorkLOG") > 0
+							WorkLOG->( dbCloseArea() )
+						EndIf
+
+						cQuery := " SELECT A1_COD, A1_LOJA, A1_CODRED 
+						cQuery += " FROM " + RetSqlName("SA1") + " (NOLOCK)
+						cQuery += " WHERE A1_FILIAL='"+FWxFilial("SA1")+"'
+						cQuery += " AND A1_CODRED='"+SZF->ZF_REDE+"'
+						cQuery += " AND D_E_L_E_T_=''
+
+						tcQuery cQuery New Alias "WorkLOG"
+
+						WorkLOG->( dbGoTop() )
+						Do While WorkLOG->( !EOF() )
+							U_Ado05Log( WorkLOG->A1_COD, WorkLOG->A1_LOJA, cUserName, msDate(), Posicione('SX3', 2, 'ZF_LCREDE', 'X3_Titulo' ), SZF->ZF_LCREDE, nLimiteNew )
+							Adoa5Parec( WorkLOG->A1_COD, WorkLOG->A1_LOJA, cLtParecer )
+							WorkLOG->( dbSkip() )
+						EndDo
+
+						// PB3
+						If Select("WorkLOG") > 0
+							WorkLOG->( dbCloseArea() )
+						EndIf
+
+						cQuery := " SELECT PB3_COD, PB3_LOJA, PB3_CODRED 
+						cQuery += " FROM " + RetSqlName("PB3") + " (NOLOCK)
+						cQuery += " WHERE PB3_FILIAL='"+FWxFilial("PB3")+"'
+						cQuery += " AND PB3_CODRED='"+SZF->ZF_REDE+"'
+						cQuery += " AND D_E_L_E_T_=''
+
+						tcQuery cQuery New Alias "WorkLOG"
+
+						WorkLOG->( dbGoTop() )
+						Do While WorkLOG->( !EOF() )
+							U_Ado05Log( WorkLOG->PB3_COD, WorkLOG->PB3_LOJA, cUserName, msDate(), Posicione('SX3', 2, 'ZF_LCREDE', 'X3_Titulo' ), SZF->ZF_LCREDE, nLimiteNew )
+							Adoa5Parec( WorkLOG->PB3_COD, WorkLOG->PB3_LOJA, cLtParecer )
+							WorkLOG->( dbSkip() )
+						EndDo
+
+						If Select("WorkLOG") > 0
+							WorkLOG->( dbCloseArea() )
+						EndIf
+
+						RecLock("SZF",.f.)
+							SZF->ZF_LCREDE := nLimiteNew
+						SZF->( MsUnlock() )
+
+						// Log APOS alteracao
+						u_GrLogZBE( msDate(), TIME(), cUserName,;
+						"(SZF) ZF_LCREDE AJUSTADO: " + AllTrim(TransForm(SZF->ZF_LCREDE,PesqPict("SZF","ZF_LCREDE"))) + " RECNO " + AllTrim(Str(nSZFRecno)) + " REDE " + AllTrim(cRede),;
+						cModuloZBE, cNumAudit, "Aglutinador: " + cNumAudit + " - Arquivo: " + cFile + " - Linha: " + AllTrim(Str(nLinhaXLS)),;
+						ComputerName(), LogUserName() )
+
+						GrvTRB("REDE - Limite crédito ajustado com sucesso - agrupador/auditoria n. " + cNumAudit, nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+
+					Else
+					
+						GrvTRB("Algum problema ocorreu que não permitiu o ajuste do Limite crédito - agrupador/auditoria n. " + cNumAudit, nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+
+					EndIf
+
+				EndIf
+
+				aDadLC := {}
+				
+				ft_fSkip()
+				
+			EndDo
+		
+			Aviso("ADOA005-01", "Limites de créditos ajustados com sucesso! Será gerado um excel com o detalhamento para sua conferência..." , {"OK"},, "Agrupador/Auditoria (ZBE) n. " + cNumAudit)
+			ReportLIM()
+
+		EndIf
+            
+    EndIf
+    
+Return
+
+/*/{Protheus.doc} Static Function GrvTRB(1, RC1_NUMTIT, cTXT)
+    Popula TRB para listagem
+    @type  Static Function
+    @author FWNM
+    @since 26/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function GrvTRB(cDetalhe, nNumLinha, cTXT, nValorXLS, nValorNew)
+
+    Default cDetalhe  := ""
+	Default nNumLinha := ""
+	Default cTXT      := ""
+	Default nValorXLS := 0
+	Default nValorNew := 0
+	
+    RecLock("TRB", .T.)
+
+		TRB->STATUS    := cDetalhe
+	    TRB->NUMLINHA  := nNumLinha
+		TRB->LINHA     := cTXT
+        TRB->VALOR_OLD := nValorXLS
+        TRB->VALOR_NEW := nValorNew
+
+	TRB->( msUnLock() )
+	
+Return
+
+/*/{Protheus.doc} Static Function ReportLIM
+    Gera listagem de inconsistência
+    @type  Static Function
+    @author FWNM
+    @since 26/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function ReportLIM()
+
+	oReport := ReportDef(@cAliasTRB)
+	oReport:PrintDialog()
+
+Return
+
+/*/{Protheus.doc} Static Function ReportDef
+	ReportDef
+	@type  Function
+	@author Fernando Macieira
+	@version 01
+/*/
+Static Function ReportDef(cAliasTRB)
+                                   
+	Local oReport
+	Local oTitulos
+	Local aOrdem := {}
+	  
+	Local cTitulo := cMsgLim
+
+	cAliasTRB := "TRB"
+	
+	oReport := TReport():New("IMPLIMITE"+AllTrim(cUserName)+time(),OemToAnsi(cTitulo), /*cPerg*/, ;
+	{|oReport| ReportPrint(cAliasTRB)},;
+	OemToAnsi(" ")+CRLF+;
+	OemToAnsi("")+CRLF+;
+	OemToAnsi("") )
+
+	oReport:nDevice     := 4 // XLS
+
+	oReport:SetLandscape()
+	//oReport:SetTotalInLine(.F.)
+	
+	oTitulos := TRSection():New(oReport, OemToAnsi(cTitulo),{"TRB"}, aOrdem /*{}*/, .F., .F.)
+	//oReport:SetTotalInLine(.F.)
+	
+    TRCell():New(oTitulos,	"NUMLINHA"   ,"","Número Linha"                /*Titulo*/,  /*Picture*/ ,10 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"STATUS"     ,"","Detalhamento da Ocorrência"  /*Titulo*/,  /*Picture*/ ,50 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"LINHA"      ,"","Conteúdo Linha"              /*Titulo*/,  /*Picture*/ ,150 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"VALOR_OLD"  ,"","Limite Crédito Antigo"       /*Titulo*/,  "@E 999,999,999.99" ,20 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"VALOR_NEW"  ,"","Limite Crédito Novo"         /*Titulo*/,  "@E 999,999,999.99" ,20 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+
+Return oReport
+
+/*/{Protheus.doc} Static Function ReportPrint
+	ReportPrint
+	@type  Function
+	@version 01
+/*/
+Static Function ReportPrint(cAliasTRB)
+
+	Local oTitulos := oReport:Section(1)
+	
+	dbSelectArea("TRB")
+	TRB->( dbSetOrder(1) )
+	
+	oTitulos:SetMeter( LastRec() )
+	
+	TRB->( dbGoTop() )
+	Do While TRB->( !EOF() )
+		
+		oTitulos:IncMeter()
+		
+		oTitulos:Init()
+		
+		If oReport:Cancel()
+			oReport:PrintText(OemToAnsi("Cancelado"))
+			Exit
+		EndIf
+		
+		//Impressao propriamente dita....
+		oTitulos:Cell("NUMLINHA")  :SetBlock( {|| TRB->NUMLINHA} )
+		oTitulos:Cell("STATUS")    :SetBlock( {|| TRB->STATUS} )
+		oTitulos:Cell("LINHA")     :SetBlock( {|| TRB->LINHA} )
+		oTitulos:Cell("VALOR_OLD") :SetBlock( {|| TRB->VALOR_OLD} )
+    	oTitulos:Cell("VALOR_NEW") :SetBlock( {|| TRB->VALOR_NEW} )
+
+		oTitulos:PrintLine()
+		oReport:IncMeter()
+	
+		TRB->( dbSkip() )
+		
+	EndDo
+	
+	oTitulos:Finish()
+
+	If Select("TRB") > 0
+		TRB->( dbCloseArea() )
+	EndIf
+	
+	If Select("QRY") > 0
+		QRY->( dbCloseArea() )
+	EndIf
+	
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+	
+	//oTempTable:Delete()  
+
+Return
+
+/*/{Protheus.doc} Static Function ChkDadLim(aDadLC)
+    Checa dados da planilha em busca de inconsistências
+    @type  Static Function
+    @author FWNM
+    @since 26/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function ChkDadLim(aDadLC)
+
+    Local lRet := .t.
+    //Local cQuery  := ""
+
+	If lCliente
+
+		SA1->( dbGoTo(nSA1Recno) )
+		If SA1->( !EOF() )
+
+			If AllTrim(cCNPJ) <> Left(AllTrim(SA1->A1_CGC),8)
+				lRet := .f.
+				GrvTRB("CNPJ Cliente (SA1) divergente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+			EndIf
+
+			/*
+			If AllTrim(cRazao) <> AllTrim(SA1->A1_NOME)
+				lRet := .f.
+				GrvTRB("Nome/Razão Cliente (SA1) divergente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+			EndIf
+			*/
+
+		Else
+			lRet := .f.
+			GrvTRB("RECNO Cliente (SA1) não existente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+		EndIf
+
+		PB3->( dbGoTo(nPB3Recno) )
+		If PB3->( !EOF() )
+
+			If AllTrim(cCNPJ) <> Left(AllTrim(PB3->PB3_CGC),8)
+				lRet := .f.
+				GrvTRB("CNPJ Pré-Cadastro (PB3) divergente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+			EndIf
+
+			/*
+			If AllTrim(cRazao) <> AllTrim(PB3->PB3_NOME)
+				lRet := .f.
+				GrvTRB("Nome/Razão Pré-Cadastro (PB3) divergente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+			EndIf
+			*/
+
+		Else
+			lRet := .f.
+			GrvTRB("RECNO Pré-Cadastro (PB3) não existente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+		EndIf
+
+	ElseIf lRede
+
+		SZF->( dbGoTo(nSZFRecno) )
+		If SZF->( !EOF() )
+			If AllTrim(cRede) <> AllTrim(SZF->ZF_REDE)
+				lRet := .f.
+				GrvTRB("Rede (ZF_REDE) divergente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+			EndIf
+		Else
+			lRet := .f.
+			GrvTRB("RECNO Rede (ZSF) não existente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+		EndIf
+
+	EndIf
+
+	If nLimiteNew < 0
+		lRet := .f.
+		GrvTRB("Novo Limite de Crédito negativo", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+	EndIf
+
+Return lRet
+
+/*/{Protheus.doc} Static Function UpAudit()
+    Agrupador para auditoria
+    @type  Static Function
+    @author FWNM
+    @since 26/04/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function UpAudit()
+
+    Local cNextCod := "00000000000000000001"
+    Local cQuery   := ""
+
+    If Select("WorkNext") > 0
+        WorkNext->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT ISNULL(MAX(ZBE_ROTINA),'FIRST') AS NEXT_COD
+    cQuery += " FROM " + RetSqlName("ZBE") + " (NOLOCK) 
+    cQuery += " WHERE D_E_L_E_T_='' 
+	cQuery += " AND ZBE_MODULO='LIMITE_CREDITO_LOTE'
+
+    tcQuery cQuery New Alias "WorkNext"
+
+	If AllTrim(WorkNext->NEXT_COD) == "FIRST"
+		cNextCod := "00000000000000000001"	
+	Else
+        cNextCod := Soma1(AllTrim(WorkNext->NEXT_COD))
+    EndIf
+
+    If Select("WorkNext") > 0
+        WorkNext->( dbCloseArea() )
+    EndIf
+
+Return cNextCod

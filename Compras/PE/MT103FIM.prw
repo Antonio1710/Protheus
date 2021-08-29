@@ -38,6 +38,7 @@
   @history Ticket 11265   - Abel Babini     - 19/03/2021 - Ajuste na rotina que gera os registros C197 para gravar o campo D1_ITEM. A não gravação do campo causava a delação do registro no reprocessamento dos livros. Correção na formula da aliquota interestadual
   @history Ticket 15063   - Abel Babini     - 08/06/2021 - Criação de regra para garantir a baixa dos pedidos de Frete relacionados aos CTE´s de complemento de preço
   @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+  @history Ticket 18347   - Abel Babini     - 16/08/2021 - Não era gravado o valor do ICMS 18% para notas de complemento
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -1630,7 +1631,13 @@ Static Function atlzCDA()
 		RecLock("CDA", .T.)
 		cCodLan		:= "SP40090207"
 		nAliqICMS	:= 18
-		nValICMS	:= nBaseICMS * nAliqICMS / 100
+    //INICIO Ticket 18347   - Abel Babini     - 16/08/2021 - Não era gravado o valor do ICMS 18% para notas de complemento quando
+    IF Alltrim(SF1->F1_TIPO) $ 'I/C/P' .AND. nBaseICMS == 0
+      nValICMS	:= ( SD1->D1_VALICM / (SD1->D1_PICM / 100) ) * ( nAliqICMS / 100 )
+    ELSE
+		  nValICMS	:= nBaseICMS * nAliqICMS / 100
+    ENDIF
+    //FIM Ticket 18347   - Abel Babini     - 16/08/2021 - Não era gravado o valor do ICMS 18% para notas de complemento quando
 		CDA->CDA_FILIAL		:= xFilial("CDA")
 		CDA->CDA_TPMOVI		:= cTpMov
 		CDA->CDA_ESPECI		:= cEspecie

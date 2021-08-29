@@ -12,6 +12,7 @@
     (examples)
     @see (links_or_references)
     @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+    @history Chamado 15804  - Leonardo P. Monteiro  - 26/08/2021 - Inclusão do nome do município.
 /*/
 
 user function MT120SCR()

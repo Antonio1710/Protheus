@@ -110,6 +110,7 @@
 	@history Chamado Interno TI - OS        - Abel Babini - 05/06/2020 - Painel Fiscal ICMS - Ajuste no Painel Fiscal trazer CFOP´s com valores destacados de ICMS sem definição anterior no Painel Fiscal
 	@history Ticket 751                     - Abel Babini - 01/09/2020 - Painel Fiscal ICMS - Correção na soma do campo 57
 	@history Ticket 10535			              - Abel Babini - 09/03/2021 - Criar relatório de conferência de faturamento por tipo de cliente e regime de apuração.
+	@history Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
   /*/
 
 User Function ADFIS038R()
@@ -442,9 +443,9 @@ Static Function xABrw27
 
 	//Chamado n.060517 - OS n.062030 - Abel Babini - 17/08/2020 - Altera regra de calculo do ICMS sobre Frete para os modelos 2 e 4
 	IF _lMVCrFt			
-		nVFrt := nA24T06
+		nVFrt := nA24T21 //Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
 	ELSE
-		nVFrt	:= Round(nA24T05 * 0.12,2)
+		nVFrt	:= Round(nA24T20 * 0.12,2) //Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
 	ENDIF
 	//24T01
 	//24T17
@@ -455,7 +456,7 @@ Static Function xABrw27
 	IF nOpMdl == 4
 		nCp56 := n1101+n2101+n1102+n2102+n1118+n2118+n1122+n2122+nVDVVen+nA26T022+nA26T032+nA26T042+nA26T052+nA26T062+nA26T072+nA26T082+nA26T092+nA26T102+nA26T112+nA26T122+nA26T132+nA26T142+nA26T152+n1252+n2252+_nVlBoni+nTotCFAc //Chamado Interno TI - OS        - Abel Babini - 05/06/2020 - Painel Fiscal ICMS - Ajuste no Painel Fiscal trazer CFOP´s com valores destacados de ICMS sem definição anterior no Painel Fiscal
 	ELSE
-		nCp56 := n1101+n2101+nVDVVen+nA26T022+nA26T032+nA26T042+nA26T052+nA26T062+nA26T072+nA26T082+nA26T092+nA26T102+nA26T112+nA26T122+nA26T132+nA26T142+nA26T152+n1252+n2252+nTotCFAc //Chamado Interno TI - OS        - Abel Babini - 05/06/2020 - Painel Fiscal ICMS - Ajuste no Painel Fiscal trazer CFOP´s com valores destacados de ICMS sem definição anterior no Painel Fiscal
+		nCp56 := n1101+n2101+nVDVVen+nA26T022+nA26T032+nA26T042+nA26T052+nA26T062+nA26T072+nA26T082+nA26T092+nA26T102+nA26T112+nA26T122+nA26T132+nA26T142+nA26T152+n1252+n2252+nTotCFAc+nVCiap //Chamado Interno TI - OS        - Abel Babini - 05/06/2020 - Painel Fiscal ICMS - Ajuste no Painel Fiscal trazer CFOP´s com valores destacados de ICMS sem definição anterior no Painel Fiscal
 	ENDIF
 
 	//INICIO @history Ticket 751 - Abel Babini - 01/09/2020 - Painel Fiscal ICMS - Correção na soma do campo 57

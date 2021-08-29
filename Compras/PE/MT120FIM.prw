@@ -16,6 +16,7 @@
     @history Chamado 057827 - FWNM                  - 30/04/2020 - || OS 059306 || SUPRIMENTOS || IARA_MOURA || 8415 || ERRO LOG
     @history Chamado TI     - FWNM                  - 14/05/2020 - Preencher campo CR_XLEGAPP
     @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+    @history Chamado 15804  - Leonardo P. Monteiro  - 26/08/2021 - Inclusão do nome do município.
 /*/
 User Function MT120FIM()
     Local aArea       := GetArea()

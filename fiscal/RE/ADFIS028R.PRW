@@ -1059,23 +1059,26 @@ Static Function PNCON001()
 	Private cFld241	 := 'Resumo'
 	Private cFld242 := 'Detalhes'
 	Private cFld243 := 'Exportação'
-	Private cFld244 := 'Subst Tributaria'
+	Private cFld244 := 'Subst Tribut Est'
 	Private cFld245 := 'Transp Funcion'
 	Private cFld246 := 'Tributado'
 	Private cFld247 := 'Anulacao'
 	Private cFld248 := 'Analise Forn'
+	Private cFld249 := 'Subst Tribut Interest'
 	Private cFld24t1 := cFld24 + ' - Resumo'
 	Private cFld24t2 := cFld24 + ' - Detalhes'
 	Private cFld24t3 := cFld24 + ' - Exportação'
-	Private cFld24t4 := cFld24 + ' - Subst Tributaria'
+	Private cFld24t4 := cFld24 + ' - Subst Tributaria Estadual'
 	Private cFld24t5 := cFld24 + ' - Transp Funcion'
 	Private cFld24t6 := cFld24 + ' - Tributado'
 	Private cFld24t7 := cFld24 + ' - Anulação de Frete'
 	Private cFld24t8 := cFld24 + ' - Análise Fornecedores'
+	Private cFld24t9 := cFld24 + ' - Subst Tributaria Interestadual'
 
 	Private aBrw24Dt := {}
 	Private aBrw24Ex := {}
 	Private aBrw24ST := {}
+	Private aBrw24IE := {}
 	Private aBrw24TF := {}
 	Private aBrw24Tr := {}
 	Private aBrw24An := {}
@@ -5146,7 +5149,7 @@ Static Function PNCON001()
 			oP24RE04:FreeChildren()
 			
 			//Cabecalho
-			@ 001,008 SAY OemToAnsi("Fretes relacionados à Substituição Tributária - Apuração ICMS sobre Fretes")		FONT oFont003 SIZE 300,15 OF oP24TE04 PIXEL
+			@ 001,008 SAY OemToAnsi("Fretes relacionados à Substituição Tributária Estadual - Apuração ICMS sobre Fretes")		FONT oFont003 SIZE 300,15 OF oP24TE04 PIXEL
 			
 			oBrw24ST:= TcBrowse():New(004,004,150,150,,,,oP24D104,,,,,,,,,,,,.f.,,.t.,,.f.,,,,)
 			
@@ -5198,6 +5201,83 @@ Static Function PNCON001()
 			ENDIF
 
 			////////////////////////////////////////////////////////////
+
+			oFLr24p9:= FWLayer():New()
+			oFLr24p9:Init( oFld24:aDialogs[5], .F., .T.) //Substituicao Tributaria Interestadual
+			
+			//Define os Paineis 
+			//TITULO
+			oFLr24p9:AddLine ('TIT_DET', 6, .F.)
+			oFLr24p9:AddCollumn('TIT_ESQ',100,.F.,'TIT_DET')
+
+			oFLr24p9:AddLine ('DETALHE1', 78, .F.)
+			oFLr24p9:AddCollumn('DET_ESQ1',100,.F.,'DETALHE1')
+
+			oFLr24p9:AddLine ('RESUMO', 16, .F.)
+			oFLr24p9:AddCollumn('RES_ESQ',100,.F.,'RESUMO')
+
+			oP24TE09	:= oFLr24p9:GetColPanel('TIT_ESQ','TIT_DET')
+			oP24D109	:= oFLr24p9:GetColPanel('DET_ESQ1','DETALHE1')
+			oP24RE09	:= oFLr24p9:GetColPanel('RES_ESQ','RESUMO')
+
+			oP24TE09:FreeChildren()
+			oP24D109:FreeChildren()
+			oP24RE09:FreeChildren()
+			
+			//Cabecalho
+			@ 001,008 SAY OemToAnsi("Fretes relacionados à Substituição Tributária Interestadual - Apuração ICMS sobre Fretes")		FONT oFont003 SIZE 300,15 OF oP24TE09 PIXEL
+			
+			oBrw24IE:= TcBrowse():New(004,004,150,150,,,,oP24D109,,,,,,,,,,,,.f.,,.t.,,.f.,,,,)
+			
+			oBrw24IE:AddColumn( TcColumn():New( "Filial"		, {|| aBrw24IE[oBrw24IE:nAt,01]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Dt.Entrada"	, {|| aBrw24IE[oBrw24IE:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Série"			, {|| aBrw24IE[oBrw24IE:nAt,03]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "NF"			, {|| aBrw24IE[oBrw24IE:nAt,04]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Item"			, {|| aBrw24IE[oBrw24IE:nAt,05]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Cod.Forn."		, {|| aBrw24IE[oBrw24IE:nAt,06]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Loja.Forn."	, {|| aBrw24IE[oBrw24IE:nAt,07]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Fornecedor"	, {|| aBrw24IE[oBrw24IE:nAt,08]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "CNPJ"			, {|| aBrw24IE[oBrw24IE:nAt,09]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Opt.Simples"	, {|| aBrw24IE[oBrw24IE:nAt,10]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Cod.Prod."		, {|| aBrw24IE[oBrw24IE:nAt,11]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Produto"		, {|| aBrw24IE[oBrw24IE:nAt,12]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Quant."		, {|| aBrw24IE[oBrw24IE:nAt,13]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Prc.Unit"		, {|| aBrw24IE[oBrw24IE:nAt,14]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Total"			, {|| aBrw24IE[oBrw24IE:nAt,15]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.Cont."		, {|| aBrw24IE[oBrw24IE:nAt,16]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Base ICMS"		, {|| aBrw24IE[oBrw24IE:nAt,17]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Aliq.ICMS"		, {|| aBrw24IE[oBrw24IE:nAt,18]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS"		, {|| aBrw24IE[oBrw24IE:nAt,19]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS Ret."	, {|| aBrw24IE[oBrw24IE:nAt,20]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS Out."	, {|| aBrw24IE[oBrw24IE:nAt,21]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Desconto"		, {|| aBrw24IE[oBrw24IE:nAt,22]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Seguro"		, {|| aBrw24IE[oBrw24IE:nAt,23]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Despesa"		, {|| aBrw24IE[oBrw24IE:nAt,24]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Frete"			, {|| aBrw24IE[oBrw24IE:nAt,25]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Dt.Canc."		, {|| aBrw24IE[oBrw24IE:nAt,26]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Observações"	, {|| aBrw24IE[oBrw24IE:nAt,27]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "TES"			, {|| aBrw24IE[oBrw24IE:nAt,28]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw24IE[oBrw24IE:nAt,29]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Tipo"			, {|| aBrw24IE[oBrw24IE:nAt,30]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Espécie"		, {|| aBrw24IE[oBrw24IE:nAt,31]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Centro Custo"	, {|| aBrw24IE[oBrw24IE:nAt,32]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Desc. CCusto"	, {|| aBrw24IE[oBrw24IE:nAt,33]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "UF Forn."		, {|| aBrw24IE[oBrw24IE:nAt,34]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "UF Origem"		, {|| aBrw24IE[oBrw24IE:nAt,35]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "UF Destino"	, {|| aBrw24IE[oBrw24IE:nAt,36]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS Anulação", {|| aBrw24IE[oBrw24IE:nAt,37]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+
+			oBrw24IE:SetArray(aBrw24IE)
+			oBrw24IE:Align		:=	CONTROL_ALIGN_ALLCLIENT	
+			oBrw24IE:bLine := {||{aBrw24IE[oBrw24IE:nAt] } }
+
+			IF nA24T15 > 0
+				@ 001,010 SAY OemToAnsi("ATENÇÃO: EXISTEM FORNECEDORES COM O CAMPO SIMPLES NACIONAL NÃO PREENCHIDO")		SIZE 600,15	FONT oFont003 OF oP24RE09 PIXEL
+				@ 010,010 SAY OemToAnsi("Foram identificados "+Alltrim(Str(nA24T15))+" documentos cujo fornecedor está com o campo Simples Naciona em branco. Verifique a aba 'Análise Fornecedores'")		SIZE 600,15	FONT oFont002 OF oP24RE09 PIXEL
+			ENDIF
+
+			////////////////////////////////////////////////////////////
+
 			oFLr24p5:= FWLayer():New()
 			oFLr24p5:Init( oFld24:aDialogs[6], .F., .T.) //Transporte de Funcionários
 			
@@ -5509,7 +5589,7 @@ Static Function PNCON001()
 			oP24RE04:FreeChildren()
 			
 			//Cabecalho
-			@ 001,008 SAY OemToAnsi("Fretes relacionados à Substituição Tributária - Apuração ICMS sobre Fretes")		FONT oFont003 SIZE 300,15 OF oP24TE04 PIXEL
+			@ 001,008 SAY OemToAnsi("Fretes relacionados à Substituição Tributária Estadual - Apuração ICMS sobre Fretes")		FONT oFont003 SIZE 300,15 OF oP24TE04 PIXEL
 			
 			oBrw24ST:= TcBrowse():New(004,004,150,150,,,,oP24D104,,,,,,,,,,,,.f.,,.t.,,.f.,,,,)
 			
@@ -5561,6 +5641,83 @@ Static Function PNCON001()
 			ENDIF
 
 			////////////////////////////////////////////////////////////
+
+			oFLr24p9:= FWLayer():New()
+			oFLr24p9:Init( oFld24:aDialogs[5], .F., .T.) //Substituicao Tributaria Interestadual
+			
+			//Define os Paineis 
+			//TITULO
+			oFLr24p9:AddLine ('TIT_DET', 6, .F.)
+			oFLr24p9:AddCollumn('TIT_ESQ',100,.F.,'TIT_DET')
+
+			oFLr24p9:AddLine ('DETALHE1', 78, .F.)
+			oFLr24p9:AddCollumn('DET_ESQ1',100,.F.,'DETALHE1')
+
+			oFLr24p9:AddLine ('RESUMO', 16, .F.)
+			oFLr24p9:AddCollumn('RES_ESQ',100,.F.,'RESUMO')
+
+			oP24TE09	:= oFLr24p9:GetColPanel('TIT_ESQ','TIT_DET')
+			oP24D109	:= oFLr24p9:GetColPanel('DET_ESQ1','DETALHE1')
+			oP24RE09	:= oFLr24p9:GetColPanel('RES_ESQ','RESUMO')
+
+			oP24TE09:FreeChildren()
+			oP24D109:FreeChildren()
+			oP24RE09:FreeChildren()
+			
+			//Cabecalho
+			@ 001,008 SAY OemToAnsi("Fretes relacionados à Substituição Tributária Interestadual - Apuração ICMS sobre Fretes")		FONT oFont003 SIZE 300,15 OF oP24TE09 PIXEL
+			
+			oBrw24IE:= TcBrowse():New(004,004,150,150,,,,oP24D109,,,,,,,,,,,,.f.,,.t.,,.f.,,,,)
+			
+			oBrw24IE:AddColumn( TcColumn():New( "Filial"		, {|| aBrw24IE[oBrw24IE:nAt,01]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Dt.Entrada"	, {|| aBrw24IE[oBrw24IE:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Série"			, {|| aBrw24IE[oBrw24IE:nAt,03]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "NF"			, {|| aBrw24IE[oBrw24IE:nAt,04]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Item"			, {|| aBrw24IE[oBrw24IE:nAt,05]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Cod.Forn."		, {|| aBrw24IE[oBrw24IE:nAt,06]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Loja.Forn."	, {|| aBrw24IE[oBrw24IE:nAt,07]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Fornecedor"	, {|| aBrw24IE[oBrw24IE:nAt,08]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "CNPJ"			, {|| aBrw24IE[oBrw24IE:nAt,09]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Opt.Simples"	, {|| aBrw24IE[oBrw24IE:nAt,10]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Cod.Prod."		, {|| aBrw24IE[oBrw24IE:nAt,11]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Produto"		, {|| aBrw24IE[oBrw24IE:nAt,12]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Quant."		, {|| aBrw24IE[oBrw24IE:nAt,13]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Prc.Unit"		, {|| aBrw24IE[oBrw24IE:nAt,14]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Total"			, {|| aBrw24IE[oBrw24IE:nAt,15]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.Cont."		, {|| aBrw24IE[oBrw24IE:nAt,16]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Base ICMS"		, {|| aBrw24IE[oBrw24IE:nAt,17]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Aliq.ICMS"		, {|| aBrw24IE[oBrw24IE:nAt,18]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS"		, {|| aBrw24IE[oBrw24IE:nAt,19]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS Ret."	, {|| aBrw24IE[oBrw24IE:nAt,20]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS Out."	, {|| aBrw24IE[oBrw24IE:nAt,21]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Desconto"		, {|| aBrw24IE[oBrw24IE:nAt,22]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Seguro"		, {|| aBrw24IE[oBrw24IE:nAt,23]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Despesa"		, {|| aBrw24IE[oBrw24IE:nAt,24]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Frete"			, {|| aBrw24IE[oBrw24IE:nAt,25]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Dt.Canc."		, {|| aBrw24IE[oBrw24IE:nAt,26]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Observações"	, {|| aBrw24IE[oBrw24IE:nAt,27]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "TES"			, {|| aBrw24IE[oBrw24IE:nAt,28]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw24IE[oBrw24IE:nAt,29]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Tipo"			, {|| aBrw24IE[oBrw24IE:nAt,30]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Espécie"		, {|| aBrw24IE[oBrw24IE:nAt,31]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Centro Custo"	, {|| aBrw24IE[oBrw24IE:nAt,32]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Desc. CCusto"	, {|| aBrw24IE[oBrw24IE:nAt,33]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "UF Forn."		, {|| aBrw24IE[oBrw24IE:nAt,34]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "UF Origem"		, {|| aBrw24IE[oBrw24IE:nAt,35]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "UF Destino"	, {|| aBrw24IE[oBrw24IE:nAt,36]}	, "@!"						,,,"LEFT"	,050,.f.,.f.,,,,.f.,) )
+			oBrw24IE:AddColumn( TcColumn():New( "Vl.ICMS Anulação", {|| aBrw24IE[oBrw24IE:nAt,37]}	, "@E 999,999,999.99"		,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
+
+			oBrw24IE:SetArray(aBrw24IE)
+			oBrw24IE:Align		:=	CONTROL_ALIGN_ALLCLIENT	
+			oBrw24IE:bLine := {||{aBrw24IE[oBrw24IE:nAt] } }
+
+			IF nA24T15 > 0
+				@ 001,010 SAY OemToAnsi("ATENÇÃO: EXISTEM FORNECEDORES COM O CAMPO SIMPLES NACIONAL NÃO PREENCHIDO")		SIZE 600,15	FONT oFont003 OF oP24RE09 PIXEL
+				@ 010,010 SAY OemToAnsi("Foram identificados "+Alltrim(Str(nA24T15))+" documentos cujo fornecedor está com o campo Simples Naciona em branco. Verifique a aba 'Análise Fornecedores'")		SIZE 600,15	FONT oFont002 OF oP24RE09 PIXEL
+			ENDIF
+
+			////////////////////////////////////////////////////////////
+
 			oFLr24p5:= FWLayer():New()
 			oFLr24p5:Init( oFld24:aDialogs[5], .F., .T.) //Transporte de Funcionários
 			
@@ -19062,43 +19219,84 @@ Static Function xABrw24()
 				nA24T04 += (cAlB24Rs)->ICMSVAL - aValAnul[3]
 				//Verifica se é Substituição Tributária
 			elseif Alltrim((cAlB24Rs)->SIMPLESNAC) $ 'SIM' 
-				aAdd(aBrw24ST,{	(cAlB24Rs)->FILIAL,;
-					(cAlB24Rs)->DTENTRADA,;
-					(cAlB24Rs)->SERIE,;
-					(cAlB24Rs)->NFISCAL,;
-					(cAlB24Rs)->ITEM,;
-					(cAlB24Rs)->CLIEFOR,;
-					(cAlB24Rs)->LOJA,;
-					(cAlB24Rs)->NOME,;
-					(cAlB24Rs)->CGC,;
-					(cAlB24Rs)->SIMPLESNAC,;
-					(cAlB24Rs)->CODPROD,;
-					(cAlB24Rs)->PRODUTO,;
-					(cAlB24Rs)->QUANT,;
-					(cAlB24Rs)->PRCUNIT,;
-					(cAlB24Rs)->TOTAL-aValAnul[1],;
-					(cAlB24Rs)->VALCONT-aValAnul[2],;
-					(cAlB24Rs)->ICMSBASE,;
-					(cAlB24Rs)->ICMSALIQ,;
-					(cAlB24Rs)->ICMSVAL-aValAnul[3],;
-					(cAlB24Rs)->ICMSRET,;
-					(cAlB24Rs)->ICMSOUTR,;
-					(cAlB24Rs)->DESCONT,;
-					(cAlB24Rs)->SEGURO,;
-					(cAlB24Rs)->DESPESA,;
-					(cAlB24Rs)->FRETE,;
-					(cAlB24Rs)->DTCANC,;
-					(cAlB24Rs)->OBSERV,;
-					(cAlB24Rs)->TES,;
-					(cAlB24Rs)->CFOP,;
-					(cAlB24Rs)->TIPO,;
-					(cAlB24Rs)->ESPECIE,;
-					(cAlB24Rs)->CCUSTO,;
-					(cAlB24Rs)->CCDESC,;
-					(cAlB24Rs)->EST,;
-					(cAlB24Rs)->UFDESTR,;
-					(cAlB24Rs)->UFORITR,;
-					aValAnul[3]})
+				IF _cUFFil == Alltrim((cAlB24Rs)->EST)
+					aAdd(aBrw24ST,{	(cAlB24Rs)->FILIAL,;
+						(cAlB24Rs)->DTENTRADA,;
+						(cAlB24Rs)->SERIE,;
+						(cAlB24Rs)->NFISCAL,;
+						(cAlB24Rs)->ITEM,;
+						(cAlB24Rs)->CLIEFOR,;
+						(cAlB24Rs)->LOJA,;
+						(cAlB24Rs)->NOME,;
+						(cAlB24Rs)->CGC,;
+						(cAlB24Rs)->SIMPLESNAC,;
+						(cAlB24Rs)->CODPROD,;
+						(cAlB24Rs)->PRODUTO,;
+						(cAlB24Rs)->QUANT,;
+						(cAlB24Rs)->PRCUNIT,;
+						(cAlB24Rs)->TOTAL-aValAnul[1],;
+						(cAlB24Rs)->VALCONT-aValAnul[2],;
+						(cAlB24Rs)->ICMSBASE,;
+						(cAlB24Rs)->ICMSALIQ,;
+						(cAlB24Rs)->ICMSVAL-aValAnul[3],;
+						(cAlB24Rs)->ICMSRET,;
+						(cAlB24Rs)->ICMSOUTR,;
+						(cAlB24Rs)->DESCONT,;
+						(cAlB24Rs)->SEGURO,;
+						(cAlB24Rs)->DESPESA,;
+						(cAlB24Rs)->FRETE,;
+						(cAlB24Rs)->DTCANC,;
+						(cAlB24Rs)->OBSERV,;
+						(cAlB24Rs)->TES,;
+						(cAlB24Rs)->CFOP,;
+						(cAlB24Rs)->TIPO,;
+						(cAlB24Rs)->ESPECIE,;
+						(cAlB24Rs)->CCUSTO,;
+						(cAlB24Rs)->CCDESC,;
+						(cAlB24Rs)->EST,;
+						(cAlB24Rs)->UFDESTR,;
+						(cAlB24Rs)->UFORITR,;
+						aValAnul[3]})
+				else
+					aAdd(aBrw24IE,{	(cAlB24Rs)->FILIAL,;
+						(cAlB24Rs)->DTENTRADA,;
+						(cAlB24Rs)->SERIE,;
+						(cAlB24Rs)->NFISCAL,;
+						(cAlB24Rs)->ITEM,;
+						(cAlB24Rs)->CLIEFOR,;
+						(cAlB24Rs)->LOJA,;
+						(cAlB24Rs)->NOME,;
+						(cAlB24Rs)->CGC,;
+						(cAlB24Rs)->SIMPLESNAC,;
+						(cAlB24Rs)->CODPROD,;
+						(cAlB24Rs)->PRODUTO,;
+						(cAlB24Rs)->QUANT,;
+						(cAlB24Rs)->PRCUNIT,;
+						(cAlB24Rs)->TOTAL-aValAnul[1],;
+						(cAlB24Rs)->VALCONT-aValAnul[2],;
+						(cAlB24Rs)->ICMSBASE,;
+						(cAlB24Rs)->ICMSALIQ,;
+						(cAlB24Rs)->ICMSVAL-aValAnul[3],;
+						(cAlB24Rs)->ICMSRET,;
+						(cAlB24Rs)->ICMSOUTR,;
+						(cAlB24Rs)->DESCONT,;
+						(cAlB24Rs)->SEGURO,;
+						(cAlB24Rs)->DESPESA,;
+						(cAlB24Rs)->FRETE,;
+						(cAlB24Rs)->DTCANC,;
+						(cAlB24Rs)->OBSERV,;
+						(cAlB24Rs)->TES,;
+						(cAlB24Rs)->CFOP,;
+						(cAlB24Rs)->TIPO,;
+						(cAlB24Rs)->ESPECIE,;
+						(cAlB24Rs)->CCUSTO,;
+						(cAlB24Rs)->CCDESC,;
+						(cAlB24Rs)->EST,;
+						(cAlB24Rs)->UFDESTR,;
+						(cAlB24Rs)->UFORITR,;
+						aValAnul[3]})					
+				endif
+				//Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
 				IF _cUFFil == Alltrim((cAlB24Rs)->EST)
 					nA24T05 += (cAlB24Rs)->VALCONT - aValAnul[2]
 				ELSE
@@ -19253,8 +19451,9 @@ Static Function xABrw24()
 		(cAlB24An)->(DbSkip())
 	EndDo
 
-	nA24T06 := nA24T05 * _nAlFrST
-	nA24T21 := nA24T06 * _nAlFrST
+	//Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+	// nA24T06 := nA24T05 * _nAlFrST
+	nA24T21 := nA24T20 * _nAlFrST
 	nA24T02 := nA24T21 //nA24T06
 
 	(cAlB24Rs)->(dbCloseArea())
@@ -19364,9 +19563,13 @@ Static Function xRelBr24b()
 			Cab24P3()
 			GEx24P3()
 
-			//Planilha2 - Subst.Tributária
+			//Planilha2 - Subst.Tributária Estadual
 			Cab24P4()
 			GEx24P4()
+
+			//Planilha2 - Subst.Tributária Interestadual
+			Cab24P9()
+			GEx24P9()
 
 			//Planilha2 - Transp.Funcionários
 			Cab24P5()
@@ -19382,7 +19585,7 @@ Static Function xRelBr24b()
 			GEx24P7()
 
 		ELSEIF nOpMdl == 2 .or. nOpMdl == 4 ////Ticket 6225                    - Abel Babini - 07/12/2020 - Painel Fiscal - Criar linha para anulação extemporânea de frete
-			//Planilha2 - Subst.Tributária
+			//Planilha2 - Subst.Tributária Estadual
 			Cab24P4()
 			GEx24P4()
 
@@ -19439,7 +19642,9 @@ Static Function GEx24P1()
 	//
 	IF nOpMdl == 1
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Exportação" 							, nA24T03	, nA24T04 })
-		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Subst.Tributária" 				, nA24T05	, nA24T06 })
+		//Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Subst.Tributária Estadual", nA24T05	, nA24T06 })
+		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Subst.Tributária Interestadual", nA24T20	, nA24T21 })
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Transp.Funcionários" 		, nA24T07	, nA24T08 })
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Tributado" 							, nA24T09	, nA24T10 })
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Anulação de Frete" 			, nA24T11	, nA24T12 })
@@ -19450,7 +19655,9 @@ Static Function GEx24P1()
 	ELSEIF nOpMdl == 2 
 		//Ticket 6225                    - Abel Babini - 07/12/2020 - Painel Fiscal - Criar linha para anulação extemporânea de frete
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Exportação" 							, nA24T03	, nA24T04 })
-		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Subst.Tributária" 				, nA24T05	, nA24T06 })
+		//Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Subst.Tributária Estadual", nA24T05	, nA24T06 })
+		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Subst.Tributária Interestadual", nA24T20	, nA24T21 })
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Transp.Funcionários" 		, nA24T07	, nA24T08 })
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Tributado" 							, nA24T09	, nA24T10 })
 		oExcel:AddRow(cFld241,cFld24t1,{ cFilAnt, "Anulação de Frete" 			, nA24T11	, nA24T12 })
@@ -19826,6 +20033,55 @@ Static Function Cab24P8()
 	oExcel:AddColumn(cFld248,cFld24t8,"UF Origem"	,1,1)
 	oExcel:AddColumn(cFld248,cFld24t8,"UF Destino"	,1,1)
 	oExcel:AddColumn(cFld248,cFld24t8,"Vl.Anulação"	,2,3,.T.)
+RETURN(NIL)
+
+/*/{Protheus.doc} Static Function Cab24P4
+	Gera Relatório Ref. Apuracao ICMS Frete
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 01/10/2019
+	@version version
+	/*/
+Static Function Cab24P9()
+	oExcel:AddworkSheet(cFld249)
+	oExcel:AddTable(cFld249,cFld24t9)
+	oExcel:AddColumn(cFld249,cFld24t9,"Filial"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Dt.Entrada"	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Série"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"NF"			,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Item"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Cod.Forn."	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Loja.Forn."	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Fornecedor"	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"CNPJ"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Opt.Simples"	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Cod.Prod."	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Produto"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Quant."		,2,2,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Prc.Unit"	,2,3)
+	oExcel:AddColumn(cFld249,cFld24t9,"Total"		,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Vl.Cont."	,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Base ICMS"	,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Aliq.ICMS"	,2,3)
+	oExcel:AddColumn(cFld249,cFld24t9,"Vl.ICMS"		,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Vl.ICMS Ret.",2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Vl.ICMS Out.",2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Desconto"	,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Seguro"		,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Despesa"		,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Frete"		,2,3,.T.)
+	oExcel:AddColumn(cFld249,cFld24t9,"Dt.Canc."	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Observações"	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"TES"			,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"CFOP"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Tipo"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Espécie"		,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Centro Custo",1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Desc. CCusto",1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"UF Forn."	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"UF Origem"	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"UF Destino"	,1,1)
+	oExcel:AddColumn(cFld249,cFld24t9,"Vl.Anulação"	,2,3,.T.)
 RETURN(NIL)
 
 /*/{Protheus.doc} Static Function GEx24P2
@@ -20207,6 +20463,59 @@ Static Function GEx24P8()
 	//Linha Em branco
 	oExcel:AddRow(cFld248,cFld24t8,{"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 RETURN
+
+/*/{Protheus.doc} Static Function GEx24P9
+	Gera Relatório Ref. Apuracao ICMS Frete
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 01/10/2019
+	@version version
+	/*/
+Static Function GEx24P9()
+	Local nExcel1
+	FOR nExcel1 := 1 TO Len(aBrw24IE)
+		oExcel:AddRow(cFld249,cFld24t9,{aBrw24IE[nExcel1,01],;
+			aBrw24IE[nExcel1,02],;
+			aBrw24IE[nExcel1,03],;
+			aBrw24IE[nExcel1,04],;
+			aBrw24IE[nExcel1,05],;
+			aBrw24IE[nExcel1,06],;
+			aBrw24IE[nExcel1,07],;
+			aBrw24IE[nExcel1,08],;
+			aBrw24IE[nExcel1,09],;
+			aBrw24IE[nExcel1,10],;
+			aBrw24IE[nExcel1,11],;
+			aBrw24IE[nExcel1,12],;
+			aBrw24IE[nExcel1,13],;
+			aBrw24IE[nExcel1,14],;
+			aBrw24IE[nExcel1,15],;
+			aBrw24IE[nExcel1,16],;
+			aBrw24IE[nExcel1,17],;
+			aBrw24IE[nExcel1,18],;
+			aBrw24IE[nExcel1,19],;
+			aBrw24IE[nExcel1,20],;
+			aBrw24IE[nExcel1,21],;
+			aBrw24IE[nExcel1,22],;
+			aBrw24IE[nExcel1,23],;
+			aBrw24IE[nExcel1,24],;
+			aBrw24IE[nExcel1,25],;
+			aBrw24IE[nExcel1,26],;
+			aBrw24IE[nExcel1,27],;
+			aBrw24IE[nExcel1,28],;
+			aBrw24IE[nExcel1,29],;
+			aBrw24IE[nExcel1,30],;
+			aBrw24IE[nExcel1,31],;
+			aBrw24IE[nExcel1,32],;
+			aBrw24IE[nExcel1,33],;
+			aBrw24IE[nExcel1,34],;
+			aBrw24IE[nExcel1,35],;
+			aBrw24IE[nExcel1,36],;
+			aBrw24IE[nExcel1,37]})
+	Next nExcel1
+	//Linha Em branco
+	oExcel:AddRow(cFld249,cFld24t9,{"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+RETURN
+
 // FIM n.050629  ³ Relatorio Apuração ICMS Frete - Abel Babini - 01/10/2019
 
 // INICIO  n.050629  ³ Relatorio Compra de Aves - Abel Babini - 29/10/2019
