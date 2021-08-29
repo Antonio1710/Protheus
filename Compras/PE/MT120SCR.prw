@@ -23,6 +23,7 @@ user function MT120SCR()
 			gdFieldPut("C7_XDTENTR"	, SToD(""), nX)
 			gdFieldPut("C7_XRAZAO"	, "", nX)
 			gdFieldPut("C7_XEST"	, "", nX)
+            gdFieldPut("C7_XMUN"	, "", nX)
 			
 		next nX
 	endIf

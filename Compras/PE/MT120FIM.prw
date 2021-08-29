@@ -19,14 +19,10 @@
 /*/
 User Function MT120FIM()
     Local aArea       := GetArea()
-    Local nQtdApr    := 0
     Local aAreaSC7   := SC7->( GetArea() )
-    Local lCYCONAPRO := .f.
-    Local cQuery     := ""
-    Local cSolic     := ""
-    Local cRazao     := ""
-    Local cEst       := ""
+    Local nQtdApr    := 0
     
+    //Local lCYCONAPRO := .f.
     Private cPCOri   := ""
     Private nOpc     := PARAMIXB[1] // 9 = Cópia
     Private cNumPC   := PARAMIXB[2]
@@ -35,61 +31,6 @@ User Function MT120FIM()
     If nOpc == 2 .or. nBotao == 0 // Visualizar ou Cancelar
         Return
     EndIf
-
-    //@history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
-    if (ALTERA .or. nOpc == 4) .or. (INCLUI .or. nOpc == 3) .OR. nOpc == 9
-        // Gravo campo C7_XQTDAPR
-        SC7->( dbGoTop() )
-        SC7->( dbSetOrder(1) ) // C7_FILIAL, C7_NUM, C7_ITEM, C7_SEQUEN, R_E_C_N_O_, D_E_L_E_T_
-        If SC7->( dbSeek(FWxFilial("SC7")+cNumPC) )
-            DbSelectArea("SA2")
-            SA2->(dbSetOrder(1))
-
-            if SA2->(DbSeek(xFilial("SA2")+SC7->C7_FORNECE + SC7->C7_LOJA))
-                cRazao  := SA2->A2_NOME
-                cEst    := SA2->A2_EST
-            else
-                cRazao  := ""
-                cEst    := ""
-            ENDIF
-
-            While SC7->( !EOF() ) .and. SC7->C7_FILIAL==FWxFilial("SC7") .and. SC7->C7_NUM==cNumPC
-                
-                
-                if EMPTY(SC7->C7_XSOLIC)
-                    if !Empty(SC7->C7_NUMSC) .and. !Empty(SC7->C7_ITEMSC)
-                        cSolic := Posicione("SC1", 1, xFilial("SC1")+SC7->C7_NUMSC+SC7->C7_ITEMSC, "C1_USER")
-                        cSolic := Alltrim(cSolic)+"-"+AllTrim(UsrFullName(cSolic))
-                    else
-                        cSolic := Alltrim(SC7->C7_USER)+"-"+AllTrim(UsrFullName(SC7->C7_USER))
-                    endif
-                ELSE
-                    cSolic := ""
-                endif
-
-                RecLock("SC7", .f.)
-                    
-                    if !EMPTY(cSolic)
-                        SC7->C7_XSOLIC := cSolic
-                    Endif
-                    
-                    if !EMPTY(cRazao)
-                        SC7->C7_XRAZAO := cRazao
-                    Endif
-
-                    if !EMPTY(cEst)
-                        SC7->C7_XEST := cEst
-                    Endif
-
-
-                SC7->( msUnLock() )
-
-                SC7->( dbSkip() )
-
-            EndDo
-
-        EndIf
-    ENDIF
 
 
     If ALTERA .or. nOpc == 4
@@ -174,10 +115,95 @@ User Function MT120FIM()
 
     // Legenda APP - Central Aprovação
     UpAPP() 
+    // Grava informações adicionais.
+    fGrvInf()
 
     RestArea( aAreaSC7 )
     RestArea(aArea)
 Return
+
+Static Function fGrvInf()
+    Local cQuery    := ""
+    Local cSolic    := ""
+    Local cRazao    := ""
+    Local cEst      := ""
+    Local cMun      := ""
+
+    //@history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+    if (ALTERA .or. nOpc == 4) .or. (INCLUI .or. nOpc == 3) .OR. nOpc == 9
+        // Gravo campo C7_XQTDAPR
+        SC7->( dbGoTop() )
+        SC7->( dbSetOrder(1) ) // C7_FILIAL, C7_NUM, C7_ITEM, C7_SEQUEN, R_E_C_N_O_, D_E_L_E_T_
+        If SC7->( dbSeek(FWxFilial("SC7")+cNumPC) )
+            cQuery  := " SELECT A2_NOME, A2_EST, A2_MUN "
+            cQuery  += " FROM "+ RetSqlName("SA2") +" SA2 "
+            cQuery  += " WHERE D_E_L_E_T_='' AND A2_FILIAL='"+ xFilial("SA2") +"' AND A2_COD='"+ SC7->C7_FORNECE +"' AND A2_LOJA='"+ C7->C7_LOJA +"'; "
+
+            tcQuery cQuery ALIAS "QSA2" NEW
+
+            if QSA2->(!eof())
+                cRazao  := QSA2->A2_NOME
+                cEst    := QSA2->A2_EST
+                cMun    := QSA2->A2_MUN
+            endif
+
+            QSA2->(dbCloseArea())
+            
+            While SC7->( !EOF() ) .and. SC7->C7_FILIAL==FWxFilial("SC7") .and. SC7->C7_NUM==cNumPC
+                
+                if EMPTY(SC7->C7_XSOLIC)
+                    if !Empty(SC7->C7_NUMSC) .and. !Empty(SC7->C7_ITEMSC)
+
+                        cQuery  := " SELECT C1_USER "
+                        cQuery  += " FROM "+ RetSqlName("SC1") +" SC1 "
+                        cQuery  += " WHERE D_E_L_E_T_='' AND C1_FILIAL='"+ xFilial("SC1") +"' AND C1_NUM='"+ C7->C7_NUMSC +"' AND C1_ITEM='"+ SC7->C7_ITEMSC +"'; "
+
+                        tcQuery cQuery ALIAS "QSC1" NEW
+
+                        if QSC1->(!eof())
+                            cSolic := QSC1->C1_USER
+                            cSolic := Alltrim(cSolic)+"-"+AllTrim(UsrFullName(cSolic))    
+                        endif
+
+                        QSC1->(dbCloseArea())
+
+                    else
+                        cSolic := Alltrim(SC7->C7_USER)+"-"+AllTrim(UsrFullName(SC7->C7_USER))
+                    endif
+                ELSE
+                    cSolic := ""
+                endif
+
+                RecLock("SC7", .f.)
+                    
+                    if !EMPTY(cSolic)
+                        SC7->C7_XSOLIC := cSolic
+                    Endif
+                    
+                    if !EMPTY(cRazao)
+                        SC7->C7_XRAZAO := cRazao
+                    Endif
+
+                    if !EMPTY(cEst)
+                        SC7->C7_XEST := cEst
+                    Endif
+
+                    if !EMPTY(cMun)
+                        SC7->C7_XMUN := cMun
+                    Endif
+
+
+                SC7->( msUnLock() )
+
+                SC7->( dbSkip() )
+
+            EndDo
+
+        EndIf
+    ENDIF
+
+return
+
 
 /*/{Protheus.doc} Static Function UpApp
     Função para gerenciar flag que será utilizado pelo APP na Central de Aprovação

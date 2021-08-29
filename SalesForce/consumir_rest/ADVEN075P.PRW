@@ -1400,7 +1400,7 @@ Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPed
 	cTmProc	 := Alltrim(cValToChar(cTmProc)) 
 	cPedSF   := Alltrim(cValToChar(cPedSF)) 
 	
-	//
+	
 	DbSelectArea("ZCI")
 	RecLock("ZCI",.T.)
 		ZCI->ZCI_FILIAL:= xFilial("ZCI")
@@ -1415,6 +1415,11 @@ Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPed
 		ZCI->ZCI_METD  := cMetodo
 		ZCI->ZCI_TMPR  := cTmProc
 		ZCI->ZCI_PEDSAL:= cPedSF
+		if Alltrim(URL) == "/pedidosdevenda" .and. Alltrim(cMetodo) == "POST"
+			ZCI->ZCI_UUID := "1"
+		ELSE
+			ZCI->ZCI_UUID := FWUUIDV4()
+		endif
 	MsUnlock()
 	nRecno := ZCI->( Recno() )
 	ZCI->(DbCloseArea())
