@@ -158,7 +158,7 @@ Static Function fGrvInf()
 
                         cQuery  := " SELECT C1_USER "
                         cQuery  += " FROM "+ RetSqlName("SC1") +" SC1 "
-                        cQuery  += " WHERE D_E_L_E_T_='' AND C1_FILIAL='"+ xFilial("SC1") +"' AND C1_NUM='"+ C7->C7_NUMSC +"' AND C1_ITEM='"+ SC7->C7_ITEMSC +"'; "
+                        cQuery  += " WHERE D_E_L_E_T_='' AND C1_FILIAL='"+ xFilial("SC1") +"' AND C1_NUM='"+ SC7->C7_NUMSC +"' AND C1_ITEM='"+ SC7->C7_ITEMSC +"'; "
 
                         tcQuery cQuery ALIAS "QSC1" NEW
 
