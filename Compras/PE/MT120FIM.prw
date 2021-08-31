@@ -17,6 +17,7 @@
     @history Chamado TI     - FWNM                  - 14/05/2020 - Preencher campo CR_XLEGAPP
     @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
     @history Chamado 15804  - Leonardo P. Monteiro  - 26/08/2021 - Inclusão do nome do município.
+    @history Chamado 15804  - Leonardo P. Monteiro  - 31/08/2021 - Correção de error.log.
 /*/
 User Function MT120FIM()
     Local aArea       := GetArea()
@@ -138,7 +139,7 @@ Static Function fGrvInf()
         If SC7->( dbSeek(FWxFilial("SC7")+cNumPC) )
             cQuery  := " SELECT A2_NOME, A2_EST, A2_MUN "
             cQuery  += " FROM "+ RetSqlName("SA2") +" SA2 "
-            cQuery  += " WHERE D_E_L_E_T_='' AND A2_FILIAL='"+ xFilial("SA2") +"' AND A2_COD='"+ SC7->C7_FORNECE +"' AND A2_LOJA='"+ C7->C7_LOJA +"'; "
+            cQuery  += " WHERE D_E_L_E_T_='' AND A2_FILIAL='"+ xFilial("SA2") +"' AND A2_COD='"+ SC7->C7_FORNECE +"' AND A2_LOJA='"+ SC7->C7_LOJA +"'; "
 
             tcQuery cQuery ALIAS "QSA2" NEW
 

@@ -11,6 +11,7 @@
 	@history chamado 999    - William Costa - 10/09/2020 - Retirado o If da empresa 01 e filial 02, pois para as outras empresas e filiais estava aparecendo o botão de incluir e alterar onde não pode.
 	@history Chamado 1860   - Everson       - 18/09/2020 - Tratamento para inclusão automática de CT-e na empresa 07.
 	@history Chamado 18452  - Sigoli        - 26/08/2021 - Adicionado no menu documento de entrada a opção Tracker Contabil
+	@history Chamado 18452  - Sigoli        - 30/08/2021 - Adicionado no menu documento de entrada a opção Tracker Contabil - ALTERADO POSIÇÃO DO MENU
 /*/
 
 USER FUNCTION MTA103MNU()
@@ -24,13 +25,13 @@ USER FUNCTION MTA103MNU()
 		aAdd(aRotina,{"Visualizar", "A103NFiscal"        , 0 , 2, 0, .F.}) 	//"Visualizar"
 		aAdd(aRotina,{"Imprimir", "A103Impri"            , 0 , 4, 0, .F.})	//"Imprimir"
 		aAdd(aRotina,{"Legenda", "A103Legenda"           , 0 , 2, 0, .F.})	//"Legenda"
-		aAdd(aRotina,{"Tracker Contabil", "CTBC662"      , 0 , 7, 0, .F.})	//"Tracker Contabil"  //Chamado 18452  - Sigoli        - 26/08/2021 
+		aAdd(aRotina,{"Tracker Contabil", "CTBC662"      , 0 , 2, 0, .F.})	//"Tracker Contabil"  //Chamado 18452 -Sigoli- 26/08/2021 
 		
 	ELSE //ADICIONAR ESSA ROTINA DE REFATURAMENTO, PARA ENVIO DE EMAIL WILLIAM COSTA - TI 11/11/2014 
 	
 		aAdd(aRotina,{"REFATURAMENTO", "U_ADCOM004P"   , 0 , 1, 0, .F.}) 		//"REFATURAMENTO"
 		
-	ENDIF   
+	ENDIF    
 
 	RestArea( _aArea )
 

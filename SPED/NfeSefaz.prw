@@ -37,6 +37,8 @@
 	@history Ticket 692 		- Adriana 				- 04/09/2020 - Incluido nr. protocolo na mensagem, quando cliente detentor regime 57608/11
 	@history Ticket 34 			- Adriana 				- 02/10/2020 - Retirada customização NFe Importação, ativado padrão p/ utilização da tabela CD5, habilitado MV_DIDANFE para impressao dados da DI
 	@history Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
+	@history Ticket     TI	- Abel Babini			- 31/05/2021 - Paramêtros do IP do Servidor de Produção
+	@history Ticket 16982   - Abel Babini     - 27/07/2021 - Específico Adoro - Caso não exista pagamento como nas NFs de Transferência, gera como 90 - Sem pagamento
 /*/
 User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 
@@ -405,6 +407,8 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 	Local cIndPag	:= ""
 	Local nValOutr	:= 0
 	Local cTpOrig 	:= ""
+	local cIntermediador:= ""
+	local cIndIntermed	:= ""
 
 	//Especifico ADORO
 	Local cFormul   := ""     
@@ -466,13 +470,14 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 	Private _aX5nNF				:= FWGetSX5("01")	//Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
 	Private _cUltNFe			:= "000000000"	//Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
 	Private _cNFNum				//Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
-	Private _cNFSer				//Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
+	Private _cNFSer				//Ticket  10292	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
+	Private _IPSvPrd 			:= ALLTRIM(GETMV("MV_#IPSPRD",,"10.5.1.1")) 	//Ticket     TI	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
 
 	//Incluido em 29/01/2019 - Abel - Validar Ambiente de Envio SEFAZ e Servidor utilizado, não permitindo transmitir NF em HOMOLOGAÇÃO do servidor de PRODUÇÃO
-	If (Alltrim(GetServerIP(.F.)) == '10.5.1.1') .AND. (PARAMIXB[3] == '2')
+	If (Alltrim(GetServerIP(.F.)) == _IPSvPrd) .AND. (PARAMIXB[3] == '2') //Ticket  10292	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
 		MsgAlert("Servidor de PRODUÇÃO está apontando para ambiente de HOMOLOGAÇÃO da SEFAZ. Contate o administrador do sistema!","Erro na Transmissão")
 		Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
-	Elseif (!Alltrim(GetServerIP(.F.)) == '10.5.1.1') .AND. (PARAMIXB[3] == '1')
+	Elseif (!Alltrim(GetServerIP(.F.)) == _IPSvPrd) .AND. (PARAMIXB[3] == '1') //Ticket  10292	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
 		MsgAlert("Servidor de TESTE está apontando para ambiente de PRODUÇÃO da SEFAZ. Contate o administrador do sistema!","Erro na Transmissão")
 		Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
 	Endif
@@ -666,7 +671,7 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 						MsSeek(xFilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA)
 						
 						cTpPessoa	:= SA1->A1_TPESSOA
-						_lDUN14		:= iif(Alltrim(SA1->A1_REDE) <> "" .and. Alltrim(SA1->A1_REDE) $ Alltrim(_cDUN14), .T., .F. ) // Incluido em 30/08/19 por Adriana para verificar se cliente utiliza DUN 14 no XML da NF - chamado 051408
+						_lDUN14		:= iif(Alltrim(SA1->A1_REDE) <> "" .and. Alltrim(SA1->A1_REDE) $ Alltrim(_cDUN14), .T., .F. ) // Específico Adoro Incluido em 30/08/19 por Adriana para verificar se cliente utiliza DUN 14 no XML da NF - chamado 051408
 							
 						If nCont == 1
 							Do While !SD2->(Eof ()) .And. xFilial("SD2") == (cAliasSD2)->D2_FILIAL .And.;
@@ -3149,7 +3154,33 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 								aadd(aPedCli,"")
 							Endif
 							//	
-							
+
+							cIntermediador := ""
+							//Indicador de presença do comprador no estabelecimento comercial no momento da operação - VERSÃO 3.10
+							If lNfCup .Or. (cAliasSD2)->D2_ORIGLAN $ "VD|LO"
+								SL1->(DbSetOrder(2)) //L1_FILIAL+L1_SERIE+L1_DOC+L1_PDV
+								If SL1->(DbSeek(xFilial('SL1') + SF2->F2_SERIE + SF2->F2_DOC))
+									If SL1->(ColumnPos("L1_INDPRES")) > 0
+										cIndPres := SL1->L1_INDPRES
+									Else
+										cIndPres := "1" //1=Operação presencial
+									EndIf
+
+									if SL1->(ColumnPos("L1_INTERMD")) > 0
+										cIntermediador := SL1->L1_INTERMD
+									endIf
+								EndIf
+							Else
+
+								cIndPres := retIndPres(cTipo, aNota, aProd)
+								if SC5->(ColumnPos("C5_CODA1U")) > 0
+									cIntermediador := SC5->C5_CODA1U
+								endIf
+
+							EndIf
+
+							cIndIntermed := retIntermed(cIndPres, cIntermediador)
+
 							cNCM := SB1->B1_POSIPI
 							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 							//³Tratamento para TAG Exportação quando existe a integração com a EEC     ³
@@ -3179,6 +3210,27 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 									aADD(aExp,(GETNFEEXP(,SC5->C5_PEDEXP,cCodProd,(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE,(cAliasSD2)->D2_PEDIDO,(cAliasSD2)->D2_ITEMPV,(cAliasSD2)->D2_LOTECTL)))
 								Else
 									aadd(aExp,{})
+									//INICIO ESPECIFICO ADORO TICKET 15969 NF DE SIMPLES REMESSA (CFOP 7949)*/
+									DbSelectArea("CDL")
+									DbSetOrder(1)
+									DbSeek(xFilial("CDL")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA)
+									While !CDL->(Eof()) .And. CDL->CDL_FILIAL+CDL->CDL_DOC+CDL->CDL_SERIE+CDL->CDL_CLIENT+CDL->CDL_LOJA == xFilial("CDL")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA
+										If CDL->(FieldPos("CDL_PRODNF")) <> 0 .And. CDL->(FieldPos("CDL_ITEMNF")) <> 0 .And. AllTrim(CDL->CDL_PRODNF)+AllTrim(CDL->CDL_ITEMNF) == AllTrim((cAliasSD2)->D2_COD)+AllTrim((cAliasSD2)->D2_ITEM)
+											aDados := {}
+											aAdd(aDados,{"ZA02","ufEmbarq"  , IIF(CDL->(FieldPos("CDL_UFEMB"))<>0 , CDL->CDL_UFEMB  ,"") })
+											aAdd(aDados,{"ZA03","xLocEmbarq", IIF(CDL->(FieldPos("CDL_LOCEMB"))<>0, CDL->CDL_LOCEMB ,"") })					
+											aAdd(aDados,{"I51","nDraw", IIF(CDL->(FieldPos("CDL_ACDRAW"))<>0, CDL->CDL_ACDRAW ,"") })
+											aAdd(aDados,{"I53","nRE", IIF(CDL->(FieldPos("CDL_NRREG"))<>0, CDL->CDL_NRREG ,"") })
+											aAdd(aDados,{"I54","chNFe", IIF(CDL->(FieldPos("CDL_CHVEXP"))<>0, CDL->CDL_CHVEXP ,"") })
+											aAdd(aDados,{"I55","qExport", IIF(CDL->(FieldPos("CDL_QTDEXP"))<>0, CDL->CDL_QTDEXP ,"") })
+											aAdd(aDados,{"ZA04","xLocDespacho", IIF(CDL->(FieldPos("CDL_LOCDES"))<>0, CDL->CDL_LOCDES ,"") })	
+										
+											aAdd(aExp[Len(aExp)],aDados)
+										EndIf
+			
+										CDL->(DbSkip())
+									EndDo									
+									//FIM ESPECIFICO ADORO TICKET 15969 NF DE SIMPLES REMESSA (CFOP 7949)*/
 								EndIf
 							ElseiF AliasIndic("CDL")
 								aadd(aExp,{})
@@ -6021,7 +6073,14 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 					dbSkip()
 				EndDo	
 
-						
+				cIndPres := retIndPres(cTipo, aNota, aProd)
+				cIntermediador := ""
+				if SF1->(ColumnPos("F1_CODA1U")) > 0
+					cIntermediador := SF1->F1_CODA1U
+				endIf
+
+				cIndIntermed := retIntermed(cIndPres, cIntermediador)
+	
 				//Retira o desconto referente ao RICMS 43080/2002
 				If nDesTotal > 0
 					aTotal[2] -= nDesTotal
@@ -6122,7 +6181,8 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 			cChvPag := SF1->F1_COND
 			EndIf
 
-			If	cTPNota $ '3-4'
+			//Ticket 16982   - Abel Babini     - 27/07/2021 - Específico Adoro - Caso não exista pagamento como nas NFs de Transferência, gera como 90 - Sem pagamento
+			If	cTPNota $ '3-4' .or. Len(aDupl)==0 
 				
 				cForma := "90"  //90=Sem Pagamento.
 				aadd(aDetPag, {cForma, aTotal[2]+aTotal[03], 0.00, "", "", "", "", cIndPag})   
@@ -11454,3 +11514,119 @@ Static Function getApolic(cTpVa)
 	RestArea(aArea)
 
 Return cApol
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} retIntermed
+	Retorna de acordo com o indicador de presença indica se pode ser informado
+	o indIntermed
+	@param		cIndPres, String, indicado de presença
+	@param		cIntermediador, String, Codigo do intermediador da operacao de venda
+	@return		lRet, boleano, se é necessario informar o IndIntermed ou não
+	@author  	Felipe Sales Martinez
+	@since   	11/03/2021
+	@version 	1.0
+/*/
+//-----------------------------------------------------------------------
+static function retIntermed(cIndPres, cIntermediador)
+	local cIndIntermed		:= ""
+
+	Default cIntermediador	:= ""
+
+	//Retirar o parametro apos a data de entrada em produção da NT 2020.006 (prevista para 01/09/2021)
+	if ( cIndPres $ "2,3,4,9" .or. (cIndPres == "1" .and. !empty(cIntermediador)) ) .and. date() >= cTod(SuperGetMv('MV_NT2006I',.F.,"05/04/2021"))
+		if empty(cIntermediador)
+			cIndIntermed := "0" //0=Operação sem intermediador (em site ou plataforma própria)
+		else
+			cIndIntermed := "1" //1=Operação em site ou plataforma de terceiros (intermediadores/marketplace)
+		endIf
+	endIf
+
+return cIndIntermed
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} indIntermed
+	Retorna a tag indIntermed
+	@param		cIndIntermed, String, Indicador de intermediador
+	@return		cString, String, TAG referente ao indIntermed
+	@author  	Felipe Sales Martinez
+	@since   	11/03/2021
+	@version 	1.0
+/*/
+//-----------------------------------------------------------------------
+static function indIntermed(cIndIntermed)
+	local cString	:= ""
+
+	if !empty(cIndIntermed)
+		cString += "<indIntermed>" + cIndIntermed + "</indIntermed>"
+	endIf
+
+return cString
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} infIntermed
+	Retorna a tag infIntermed
+	@param  	cIntermediador, String, Codigo de Cadastro de intermediador
+	@param  	cIndIntermed, String, Indicador de intermediador
+	@return		cString, String, TAG referente ao infIntermed
+	@author  	Felipe Sales Martinez
+	@since   	11/03/2021
+	@version 	1.0
+/*/
+//-----------------------------------------------------------------------
+static function infIntermed(cIntermediador, cIndIntermed)
+	local cString := ""
+
+	if !empty(cIntermediador) .and. cIndIntermed == "1" .and. aliasInDic("A1U")
+		dbSelectArea("A1U")
+		A1U->(dbSetOrder(1)) //A1U_FILIAL+A1U_CODIGO
+		if A1U->(msSeek(xFilial("A1U")+cIntermediador))
+			cString += "<infIntermed>"
+			cString +=		"<CNPJ>" + A1U->A1U_CGC + "</CNPJ>"
+			cString +=		"<idCadIntTran>" + ConvType(A1U->A1U_NOME,60,0)  + "</idCadIntTran>"
+			cString += "</infIntermed>"
+		endIf
+	endIf
+
+return cString
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} retIndPres
+	Retorna o conteudo da tag IndPres
+	@param		cTipo, String, 1-Saida e 2-Entrada
+	@param		aNota, Array, Informações da nota
+	@return		cString, String, conteudo da TAG indPres
+	@author  	Felipe Sales Martinez
+	@since   	17/03/2021
+	@version 	1.0
+/*/
+//-----------------------------------------------------------------------
+static function retIndPres(cTipo, aNota, aProd)
+	local cIndPres := ""
+	local cVENPRES := ""
+
+	if cTipo == "1" //Saida
+		cIndPres := Alltrim(SC5->C5_INDPRES)
+	else
+		if SF1->(ColumnPos("F1_INDPRES")) > 0
+			cIndPres := IIF(Empty(Alltrim(SF1->F1_INDPRES)),"0",Alltrim(SF1->F1_INDPRES))
+		endIf
+	endIf
+
+	//TODO: se valor de Default deverar ser retirado apos entrada da NT2020.006 em produção (prevista para 01/09/2021)
+	if empty(cIndPres)
+		If aNota[5] == "N"
+			cIndPres := "9" //Operação não presencial 
+		ElseIf aNota[5] == "D" .and. aNota[04] == "0" .and. (!Empty((cVENPRES:= AllTrim(aProd[1][42]) )) .and. cVENPRES == "1")
+			/*Manutenção para considerar o conteúdo do campo F4_VENPRES=1 na montagem da tag 
+			indPres = 1 – Operação Presencial, em notas de devolução de venda para contribuinte de 
+			outro Estado, com CFOP iniciado por 1 e sem frete, a fim de não apresentar a 
+			rejeição 521 - Operação Interna e UF do emitente difere da UF do destinatário/remetente 
+			contribuinte do ICMS.*/
+			cIndPres := "1"
+
+		Else
+			cIndPres := "0" //0-Não se Aplica
+		EndIf
+	endIf
+
+return cIndPres
