@@ -584,14 +584,15 @@ return lRet
 Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx, cCompon)
     
     //Variáveis.
-    Local aArea     := GetArea()
-    Local cErro     := ""
-    Local cResponse := ""
-    Local aUrl      := Separa(cUrlAnx,"/",.F.)
-    Local cArq      := Alltrim(cValToChar(aUrl[Len(aUrl)]))
-    Local cComm     := ""
-    PRivate cPasta    := Alltrim(SuperGetMV("ZZ_QUA002H",,"/fotos_inspecoes_qualidade/")) //Criar Mv.
-    Private cPastaLoc := Alltrim(SuperGetMV("ZZ_QUA002I",,"c:\fotos_inspecoes_qualidade\")) //Criar Mv.
+    Local aArea         := GetArea()
+    Local cErro         := ""
+    Local cResponse     := ""
+    Local aUrl          := Separa(cUrlAnx,"/",.F.)
+    Local cArq          := Alltrim(cValToChar(aUrl[Len(aUrl)]))
+    Local cComm         := ""
+    PRivate cPasta      := Alltrim(SuperGetMV("ZZ_QUA002H",,"/fotos_inspecoes_qualidade/")) //Criar Mv.
+    Private cPastaLoc   := Alltrim(SuperGetMV("ZZ_QUA002I",,"c:\fotos_inspecoes_qualidade\")) //Criar Mv.
+    Private cPercRed    := Alltrim(SuperGetMV("ZZ_QUA002J",,"55")) //Criar Mv.
 
     //
     If ! consulta(@ cErro, cToken, @cResponse, dParData, cUrlAnx, "")
@@ -612,7 +613,7 @@ Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx, 
     //Grava o arquivo de imagem na pasta local para ser reduzido o tamanho da imagem pelo aplicativo Magick.
     MemoWrite(cPastaLoc + cArq, cResponse)
     if file(cPastaLoc+"ImageMagick\magick.exe")
-        cComm := cPastaLoc+"ImageMagick\magick.exe mogrify -resize 25% "+cPastaLoc + cArq 
+        cComm := cPastaLoc+"ImageMagick\magick.exe mogrify -resize "+cPercRed+"% "+cPastaLoc + cArq 
         WaitRun(cComm, 0 )
     endif
 

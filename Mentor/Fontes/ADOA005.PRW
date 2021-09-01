@@ -12,9 +12,11 @@ STATIC lAltPraz   := .F.
 STATIC lBlqLote   := .f.
 STATIC cMotRej    := "" 
 STATIC cCodMotivo := ''
+STATIC aButtons   := {}
+STATIC oDlg
 STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 
-/*{Protheus.doc} User Function ADOA005
+/*/{Protheus.doc} User Function ADOA005
 	Aprovacao de credito de clientes, considerando regras predeterminada
 	@type  Function
 	@author Vogas Junior
@@ -51,8 +53,8 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Ticket 8099    - ADRIANO SAVOINE - 15/01/2021 - Ajustada a Rotina para atualizar o Lim. de Credito para Toda Rede quando alterado.
 	@history Ticket 8191    - ADRIANO SAVOINE - 19/01/2021 - Alteração na rede de Banco e condição de pagamento para toda Rede.
 	@history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
-*/
-
+	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar"
+/*/
 User Function ADOA005() // U_ADOA005()
 
 	Local aArea			:= GetArea()
@@ -685,7 +687,7 @@ Static Function AdoaDocto( cCliente, cLoja )
 		cDirServer += "\"
 	endif
 
-	Private cNomeLog	:= "ESPCLI" + DTOS(Date()) + __cUserId + StrTran(Time(),":","") + ".log"
+	Private cNomeLog	:= "ESPCLI" + DTOS(msDate()) + AllTrim(__cUserId) + StrTran(Time(),":","_") + ".log"
 
 	U_FSAbreLog(cNomeLog,.F.)
 
@@ -8039,7 +8041,7 @@ Static Function ReportDef(cAliasTRB)
 
 	cAliasTRB := "TRB"
 	
-	oReport := TReport():New("IMPLIMITE"+AllTrim(cUserName)+time(),OemToAnsi(cTitulo), /*cPerg*/, ;
+	oReport := TReport():New("IMPLIMITE"+AllTrim(cUserName)+DtoS(msDate())+StrTran(time(),":","_"),OemToAnsi(cTitulo), /*cPerg*/, ;
 	{|oReport| ReportPrint(cAliasTRB)},;
 	OemToAnsi(" ")+CRLF+;
 	OemToAnsi("")+CRLF+;
@@ -8182,10 +8184,40 @@ Static Function ChkDadLim(aDadLC)
 
 		SZF->( dbGoTo(nSZFRecno) )
 		If SZF->( !EOF() )
+
 			If AllTrim(cRede) <> AllTrim(SZF->ZF_REDE)
 				lRet := .f.
 				GrvTRB("Rede (ZF_REDE) divergente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+			Else
+
+				//@history Tickets TI - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar"
+				If Select("WorkSZF") > 0
+					WorkSZF->( dbCloseArea() )
+				EndIf
+
+				cQuery := " SELECT ZF_REDE, ZF_CGCMAT, ZF_LCREDE, R_E_C_N_O_ RECNO
+				cQuery += " FROM " + RetSqlName("SZF") + " (NOLOCK)
+				cQuery += " WHERE ZF_REDE='"+cRede+"'
+				cQuery += " AND ZF_LCREDE>0
+				cQuery += " AND R_E_C_N_O_<>'"+AllTrim(Str(nSZFRecno))+"'
+				cQuery += " AND D_E_L_E_T_=''
+
+				tcQuery cQuery New Alias "WorkSZF"
+
+				WorkSZF->( dbGoTop() )
+				Do While WorkSZF->( !EOF() )
+					lRet := .f.
+					GrvTRB("RECNO " + AllTrim(Str(nSZFRecno)) + " desta rede (ZF_REDE) possui valor! Verifique RECNO informado no xls", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)
+					WorkSZF->( dbSkip() )
+				EndDo
+
+				If Select("WorkSZF") > 0
+					WorkSZF->( dbCloseArea() )
+				EndIf
+				//
+
 			EndIf
+
 		Else
 			lRet := .f.
 			GrvTRB("RECNO Rede (ZSF) não existente", nLinhaXLS, cTXT, nLimiteXLS, nLimiteNew)

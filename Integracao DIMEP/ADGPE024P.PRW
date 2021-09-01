@@ -31,6 +31,7 @@
 	@history Ticket  15680  - Everson         - 16/06/2021 - Removido lockbyname.
 	@history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
 	@history Ticket  16699  - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
+	@history Ticket  18910  - Adriano Savoine - 31/08/2021 - Inserido no Programa para colocar para todos os colaboradores novos a catraca da Sala dos motoristas igual ao da Portaria.
 /*/
 USER FUNCTION ADGPE024P(aParam)
 
@@ -401,6 +402,25 @@ STATIC FUNCTION DimepRegraDeAcesso()
 				ENDDO
 			    TSE->(dbCloseArea()) 
 
+				// *** INICIO INTEGRA GRUPO CATRACA SALA DOS MOTORISTAS *** //  Ticket  18910  - Adriano Savoine - 31/08/2021	      	 	  
+    			CatracaSMotor()
+    			While TSEM->(!EOF())
+    				
+    				SqlVTurnoDimep(VAL(CEMPANT + TRL->CODIGO))
+		
+			    	IF TRH->(!EOF())  
+						nQtdAcesso := 999
+						INTPERACREGRA(TRP->CD_PERFIL_ACESSO,TSEM->CD_GRUPO,TSEM->CD_AREA,'NULL','NULL','0','NULL',nQtdAcesso) // Integra Perfil de Regra
+						INTPERRESTRICAO(TRP->CD_PERFIL_ACESSO,TSEM->CD_GRUPO,TSEM->CD_AREA) // Integra PERFIL_ACESSO_RESTRICAO	
+			    	ENDIF
+    			    TRH->(dbCloseArea())                  
+    			    
+			    	TSEM->(dbSkip())
+							
+				ENDDO
+			    TSEM->(dbCloseArea()) 
+
+				// FIM Ticket  18910  - Adriano Savoine - 31/08/2021
     		ENDIF            
     		TRP->(dbCloseArea()) 
     		
@@ -2635,6 +2655,22 @@ Static Function SqlCatracaPortaria()
  	EndSQl        
 
 RETURN(NIL)
+
+// Ticket  18910  - Adriano Savoine - 31/08/2021
+Static Function CatracaSMotor()
+
+	BeginSQL Alias "TSEM"
+			%NoPARSER%  
+			SELECT CD_GRUPO,
+			       CD_AREA,
+			       FL_AREA_ORIGEM
+			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
+		    WHERE CD_GRUPO = 2
+     	       		
+ 	EndSQl        
+
+RETURN(NIL)
+
 
 Static Function SqlEMP1(cEstLoc)
 
