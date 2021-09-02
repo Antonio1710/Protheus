@@ -3300,13 +3300,13 @@ Static Function fPreLibF()
 	// DbSelectArea("SA3")
 	// SA3->(DbSetOrder(1))
 	// SA3->(DbSeek(FWxFilial("SA3")+SC5->C5_VEND1))
-	_eMailVend := SA3->A3_EMAIL
+	// _eMailVend := SA3->A3_EMAIL
 	
 	//
-	DbSelectArea("SZR")
-	SZR->(DbSetOrder(1))
-	SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
-	_eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
+	// DbSelectArea("SZR")
+	// SZR->(DbSetOrder(1))
+	// SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
+	// _eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
 
 	IF lBlqPed
 		IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da função uptSC5
@@ -3551,7 +3551,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 			SC5.C5_CONDPAG, 
 			SC5.C5_VEND1,
 			SC5.C5_EMISSAO,
-			C5_XTOTPED,
+			SC5.C5_XTOTPED,
 			CASE WHEN (SF4.F4_DUPLIC = 'S' AND SC5.C5_TIPO IN ('N','C') AND SC5.C5_EST <> 'EX') THEN SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) ELSE 0 END AS C6_PRCTOT
 		FROM %TABLE:SC5% SC5 (NOLOCK)
 		INNER JOIN %TABLE:SC6% SC6 (NOLOCK) ON
@@ -3709,16 +3709,16 @@ Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumP
 		EndIf
 	EndIf
 
-	DbSelectArea("SA3")
-	SA3->(DbSetOrder(1))
-	SA3->(DbSeek(FWxFilial("SA3")+cSC5Vend))
-	_eMailVend := SA3->A3_EMAIL
+	// DbSelectArea("SA3")
+	// SA3->(DbSetOrder(1))
+	// SA3->(DbSeek(FWxFilial("SA3")+cSC5Vend))
+	// _eMailVend := SA3->A3_EMAIL
 	
 	//
-	DbSelectArea("SZR")
-	SZR->(DbSetOrder(1))
-	SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
-	_eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
+	// DbSelectArea("SZR")
+	// SZR->(DbSetOrder(1))
+	// SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
+	// _eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
 
 	dbSelectArea("SC5")
 	SC5->(dbSetOrder(1))

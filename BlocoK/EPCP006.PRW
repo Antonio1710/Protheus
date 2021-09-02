@@ -12,9 +12,11 @@
 	@example
 	(examples)
 	@see (links_or_references)
-	@history chamado 054451 - FWNM       - 29/01/2020 - OS 055846 || CONTROLADORIA || || 8947 || ESTORNO SEM ENDERECO
-	@history chamado 056607 - FWNM       - 16/03/2020 - || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE
-	@history chamado 056607 - FWNM       - 10/06/2020 - || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE
+	@history chamado 054451 - Fernando Macieira - 29/01/2020 - OS 055846 || CONTROLADORIA || || 8947 || ESTORNO SEM ENDERECO
+	@history chamado 056607 - Fernando Macieira - 16/03/2020 - || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE
+	@history chamado 056607 - Fernando Macieira - 10/06/2020 - || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE
+	@history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio
+	@history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
 /*/
 User Function EPCP006()
 
@@ -95,7 +97,7 @@ Static Function PCP006Proc()
 	Local dData1:=GETNEWPAR("MV_DBLQMOV",dData2)
 	Local dDataFec:=IIF(dData1>dData2,dData1,dData2)
 	Local aSaldo		:= Array(7)  
-	Local cNumInv,cLog,cCod,cLocal,nTotEnd,nTotSB2,cLocaliz,nQtd,cOp,cLotCtl,cLote,cNumLot,cTm ,i  
+	Local cNumInv,cLog,cCod,cLocal,nTotEnd,nTotSB2,cLocaliz,nQtd,cOp,cLotCtl,cLote,cNumLot,cTm,i
 	Local nCount 		:= 0
 	Local cQuerSD3      
 	Local cAreaSD3
@@ -110,7 +112,7 @@ Static Function PCP006Proc()
 	Local cNumOld       := Space(06) 
 	Local aSaldoSBF     := {}
 	Local lSB9 := .F. 
-	Local lSBK := .F. 
+	Local lSBK := .F.
 
 	Private lMSErroAuto    := .F.  
 
@@ -129,16 +131,16 @@ Static Function PCP006Proc()
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Totaliza registros de digitacao de inventario                          ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	cQuerSD3  := "SELECT D3_NUMINV, D3_TM, D3_COD, D3_UM, D3_QUANT, D3_OP, D3_LOCAL, D3_LOCALIZ, "
-	cQuerSD3  += "D3_CC, D3_EMISSAO, D3_LOTECTL, D3_NUMSERI, D3_NUMLOTE, D3_FLAGINV, D3_DTVALID, "
-	cQuerSD3  += "D3_DOC, D3_NUMSEQ "
-	cQuerSD3  += "FROM " + RetSqlName("SD3") + " SD3 "
-	cQuerSD3  += "WHERE D3_FLAGINV = '2' AND D3_COD >= '" + MV_PAR01 + "' AND "
-	cQuerSD3  += "D3_COD <= '" + MV_PAR02 + "' AND D3_EMISSAO LIKE '" + Left(DtoS(MV_PAR05),6) + "%' AND "
-	cQuerSD3  += "D3_NUMINV >= '" + MV_PAR03 + "' AND D3_NUMINV <= '" + MV_PAR04 + "' AND "   
-	cQuerSD3  += "D3_NUMINV <> '' AND D3_ESTORNO <> 'S' AND D_E_L_E_T_ <> '*'"
-	cQuerSD3  += "ORDER BY D3_NUMINV, D3_NUMSEQ "
-	cQuerSD3  := ChangeQuery(cQuerSD3)
+	cQuerSD3  := " SELECT D3_NUMINV, D3_TM, D3_COD, D3_UM, D3_QUANT, D3_OP, D3_LOCAL, D3_LOCALIZ, "
+	cQuerSD3  += " D3_CC, D3_EMISSAO, D3_LOTECTL, D3_NUMSERI, D3_NUMLOTE, D3_FLAGINV, D3_DTVALID, "
+	cQuerSD3  += " D3_DOC, D3_NUMSEQ "
+	cQuerSD3  += " FROM " + RetSqlName("SD3") + " SD3 (NOLOCK) " 
+	cQuerSD3  += " WHERE D3_COD >= '" + MV_PAR01 + "' AND D3_COD <= '" + MV_PAR02 + "' AND "
+	cQuerSD3  += " D3_EMISSAO LIKE '" + Left(DtoS(MV_PAR05),6) + "%' AND "
+	cQuerSD3  += " D3_NUMINV >= '" + MV_PAR03 + "' AND D3_NUMINV <= '" + MV_PAR04 + "' AND " 
+	cQuerSD3  += " D3_NUMINV <> '' AND D3_ESTORNO <> 'S' AND D3_FLAGINV = '2' AND D_E_L_E_T_ <> '*'"
+	cQuerSD3  += " ORDER BY D3_NUMINV, D3_NUMSEQ "
+	//cQuerSD3  := ChangeQuery(cQuerSD3) // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
 
 	If Select("TMPSD3") > 0
 		TMPSD3->(dbCloseArea())
@@ -189,38 +191,7 @@ Static Function PCP006Proc()
 				lSB9 := .T.
 				nTotSB2 := UpSB9(cCod, cLocal, dDataAte)
 			EndIf
-			//
 
-			// se for requisicao, verifica se tem saldo disponivel
-			/*
-			If nTotSB2 < nDif 
-				
-				If cTm == "999"
-
-					If U_PesqHist(aErro,cNumInv)
-						Aadd(aErro,{cNumInv,3,.F.})
-						Aviso("Aviso","Nao existe Saldo disponivel para o produto: " + cCod + " para o inventário " + cNumInv,{"OK"})
-					Endif	
-					
-					// verifica se existe o numero inventario no vetor de erros
-					If Ascan(aErroSaldo, cNumInv) == 0
-						AAdd(aErroSaldo, cNumInv)
-					Endif
-					
-					cNumOld := cNumInv
-
-					TMPSD3->(DbSkip())	
-					Loop
-
-				Endif 
-
-			Else
-
-				cLog := "SB8 "					
-
-			Endif
-			*/
-		
 			// verifica se o saldo no SB2 esta bloqueado
 			If Posicione("SB2",1,xFilial("SB2")+cCod+cLocal,"B2_STATUS") == "2" 
 
@@ -240,111 +211,6 @@ Static Function PCP006Proc()
 				Loop
 
 			Endif    
-		
-			// verifica se o produto controla enderecamento
-			/*
-			If Localiza(cCod)
-
-				cAreaSD3:= TMPSD3->(GetArea())
-			
-				DbSelectArea("SBF") 
-				DbSetOrder(1)
-				If !SBF->(DbSeek(xFilial("SBF")+cLocal+cLocaliz+cCod+cNumSer+cLotCtl+cNumLot)) .And. cTm == "999"
-
-					If U_PesqHist(aErro,cNumInv)
-						Aadd(aErro,{cNumInv,4,.F.})
-						Aviso("Aviso","Nao existe saldo para o Endereco/Produto/Local"+CRLF+cLocaliz+Space(2)+cCod+Space(02)+cLocal,{"OK"})
-					Endif	
-		
-					// verifica se existe o numero inventario no vetor de erros
-					If Ascan(aErroSaldo, cNumInv) == 0
-						AAdd(aErroSaldo, cNumInv)
-					Endif
-
-					cNumOld := cNumInv
-
-					TMPSD3->(DbSkip())	
-					Loop
-
-				Else
-				
-					aSaldo  := CalcEst(cCod,cLocal,dDatabase+1)
-					If !lSB9 // Chamado n. 056607 || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE - FWNM - 16/03/2020
-
-						nTotSB2 := aSaldo[1]
-
-					EndIf
-				
-					// *** INICIO CHAMADO WILLIAM 041657 || CONTROLADORIA || DANIELLE_MEIRA || SALDO ESTOQUE 16/05/2018 *** //
-					
-					aSaldoSBF := CalcEstL(cCod,cLocal,dDatabase+1,cLotCtl,cNumLot,cLocaliz,cNumSer)
-					nTotEnd   := aSaldoSBF[1]
-
-					// Chamado n. 056607 || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE - FWNM - 16/03/2020
-					If QtdComp(nTotSB2) # QtdComp(nTotEnd)
-						lSBK := .T.
-						nTotEnd := UpSBK(cCod, cLocal, dDataAte, cLocaliz)
-					EndIf
-					//
-		        
-					// *** FINAL CHAMADO WILLIAM 041657 || CONTROLADORIA || DANIELLE_MEIRA || SALDO ESTOQUE 16/05/2018 *** //
-				
-					// verifica se o saldo do SB2 e igual ao SBF
-					If QtdComp(nTotSB2) # QtdComp(nTotEnd)
-
-						If U_PesqHist(aErro,cNumInv)
-							Aadd(aErro,{cNumInv,4,.F.})
-							Aviso("Aviso","O Saldo do produto esta desbalanceado com o saldo do Endereco para o codigo: "+cCod,{"OK"})
-						Endif	
-
-						// verifica se existe o numero inventario no vetor de erros
-						If Ascan(aErroSaldo, cNumInv) == 0
-							AAdd(aErroSaldo, cNumInv)
-						Endif
-						
-						cNumOld := cNumInv
-
-						TMPSD3->(DbSkip())	
-						Loop
-
-					Else				
-				
-						// *** INICIO CHAMADO WILLIAM 041657 || CONTROLADORIA || DANIELLE_MEIRA || SALDO ESTOQUE 16/05/2018 *** //
-					
-						aSaldoSBF := CalcEstL(cCod,cLocal,dDatabase+1,cLotCtl,cNumLot,cLocaliz,cNumSer)
-						
-						If !lSBK// Chamado n. 056607 || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE - FWNM - 16/03/2020
-							nTotEnd   := aSaldoSBF[1]
-						EndIf
-						
-						// *** FINAL CHAMADO WILLIAM 041657 || CONTROLADORIA || DANIELLE_MEIRA || SALDO ESTOQUE 16/05/2018 *** //
-				                                                                     
-						If nDif > nTotEnd .and. cTm=="999"
-							Aadd(aErro,{cNumInv,4,.F.})                                                                               	   	   				
-							Aviso("Aviso","Saldo por endereço ficará negativo para o produto : "+cCod+", endereco: " + cLocaliz ,{"OK"})
-						
-							// verifica se existe o numero inventario no vetor de erros
-							If Ascan(aErroSaldo, cNumInv) == 0
-								AAdd(aErroSaldo, cNumInv)
-							Endif               
-							
-							cNumOld := cNumInv
-
-							TMPSD3->(DbSkip())	
-							Loop
-							
-						EndIF
-
-					Endif
-	
-					cLog := "SBF "
-	
-				Endif
-	
-				TMPSD3->(RestArea(cAreaSD3))        		
-	
-			Endif
-			*/
 	
 		Endif	
 		
@@ -353,9 +219,11 @@ Static Function PCP006Proc()
 				
 		If nAchou == 0
 		
-			Begin Transaction 	
+			//Begin Transaction // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
+		
 				// Inicio do movimentos de estorno
 				While TMPSD3->(!Eof()) .And. cNumInv == TMPSD3->D3_NUMINV
+		
 					cOp		  := TMPSD3->D3_OP		
 					cDoc      := TMPSD3->D3_DOC
 					nQtd      := TMPSD3->D3_QUANT
@@ -371,7 +239,7 @@ Static Function PCP006Proc()
 						dDataSC2 := SC2->C2_DATRF
 						Reclock("SC2",.F.)
 							SC2->C2_DATRF := Ctod("  /  /  ")
-						MsUnlock()			
+						SC2->( MsUnlock() )
 					Endif  
 									
 					aMata	:= {} 	
@@ -391,12 +259,12 @@ Static Function PCP006Proc()
 							Conout("Erro na gravacao da movimentacao")
 						Endif	
 	
-						DisarmTransaction()
+						//DisarmTransaction() // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
 						
 					Else // naum deu erro 
 	
 						EvalTrigger()
-						Commit
+						//Commit // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
 					
 						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 						//³ Alteracao realizada conforme orientacao da Inteligencia Protheus - 		³
@@ -406,7 +274,7 @@ Static Function PCP006Proc()
 						If SC2->(DbSeek(xFilial("SC2")+cOp))
 							Reclock("SC2",.F.)
 								SC2->C2_DATRF := dDataSC2
-							MsUnlock()			
+							SC2->( MsUnlock() )
 						Endif 			
 													
 						// Limpa o Flag da Op Original
@@ -418,7 +286,7 @@ Static Function PCP006Proc()
 								If SD3->D3_FLAGINV == "1"
 									SD3->D3_FLAGINV := "" // limpa o flag da op origem	
 								Endif	
-							MsUnLock()
+							SD3->( MsUnLock() )
 							SD3->(DbSkip())
 						EndDo	  	
 						
@@ -430,9 +298,10 @@ Static Function PCP006Proc()
 					Endif
 			
 					TMPSD3->(DbSkip())
+
 				Enddo
 		
-			End Transaction 
+			//End Transaction // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
 
 			If !lMSErroAuto 
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -467,6 +336,11 @@ Static Function PCP006Proc()
 
 	// Chamado n. 054451 || OS 055846 || CONTROLADORIA || || 8947 || ESTORNO SEM ENDERECO - FWNM - 29/01/2020
 	aParamJob := {cMV_PAR01, cMV_PAR02, cMV_PAR05, cEmpAnt, cFilAnt}
+
+	//gera log - @history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
+	u_GrLogZBE( msDate(), TIME(), cUserName," ESTORNO INVENTARIO","CONTROLADORIA","EPCP006",;
+	"ESTORNO INVENTARIO PARAMETROS: " + cMV_PAR01 + " " + cMV_PAR02 + " " + cMV_PAR05 + " " + cEmpAnt + "/" + cFilAnt, ComputerName(), LogUserName() )
+
 	StartJob("u_ChkEnd", GetEnvServer(), .F., aParamJob)
 	//
 
@@ -507,6 +381,11 @@ User Function ChkEnd(aParamJob)
 		
 	If !rpcSetEnv(cEmpAnt, cFilAnt,,,,,{"SM0"})
 		ConOut( "[EPCP006-01] - Não foi possível inicializar o ambiente, empresa/filial " + cEmpAnt + "/" + cFilAnt )
+
+		//gera log - @history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
+		u_GrLogZBE( msDate(), TIME(), cUserName," ESTORNO INVENTARIO","CONTROLADORIA","EPCP006",;
+		"ESTORNO NÃO REALIZADO", ComputerName(), LogUserName() )
+
 		Return
 	EndIf
 
@@ -558,7 +437,12 @@ User Function ChkEnd(aParamJob)
 		MATA265(aCabSDA, _aItensSDB, 3)
 
 		If lMSErroAuto
-			DisarmTransaction()
+			//DisarmTransaction() // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
+
+			//gera log - @history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
+			u_GrLogZBE( msDate(), TIME(), cUserName," ESTORNO INVENTARIO","CONTROLADORIA","EPCP006",;
+			"ESTORNO NAO REALIZADO EXECAUTO NAO REALIZADO - MATA265", ComputerName(), LogUserName() )
+
 			MostraErro()
 		Else
 			ConOut( "[EPCP006-02] - Endereçamento " + Work->DA_NUMSEQ + " OK em " + DtoC(msDate()) + " " + time() )
@@ -624,49 +508,3 @@ Static Function UpSB9(cCod, cLocal, dDataAte)
 	EndIf
 
 Return nQtdB9
-
-/*/{Protheus.doc} Static Function UpSBK(cCod, cLocal, dDataAte, cLocaliz)
-	(long_description)
-	@type  Static Function
-	@author FWNM
-	@since 16/03/2020
-	@version version
-	@param param_name, param_type, param_descr
-	@return return_var, return_type, return_description
-	@example
-	(examples)
-	@see (links_or_references)
-	@chamado 056607 || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE
-/*/
-Static Function UpSBK(cCod, cLocal, dDataAte, cLocaliz)
-
-	Local nQtdBK := 0
-	Local cQuery := ""
-
-	If Select("WorkBK") > 0
-		WorkBK->( dbCloseArea() )
-	EndIf
-
-	cQuery := " SELECT BK_QINI
-	cQuery += " FROM " + RetSqlName("SBK") + " (NOLOCK)
-	cQuery += " WHERE BK_FILIAL='"+FWxFilial("SBK")+"' 
-	cQuery += " AND BK_COD='"+cCod+"' 
-	cQuery += " AND BK_LOCAL='"+cLocal+"'
-	//cQuery += " AND B9_DATA>='"+DtoS(dDataAte)+"'
-	cQuery += " AND BK_LOCALIZ='"+cLocaliz+"'
-	cQuery += " AND D_E_L_E_T_=''
-	cQuery += " ORDER BY BK_DATA DESC
-
-	tcQuery cQuery New Alias "WorkBK"
-
-	WorkBK->( dbGoTop() )
-
-	If WorkBK->( !EOF() )
-		nQtdBK := WorkBK->BK_QINI
-	EndIf
-
-	If Select("WorkBK") > 0
-		WorkBK->( dbCloseArea() )
-	EndIf
-
-Return nQtdBK
