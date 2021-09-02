@@ -53,7 +53,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Ticket 8099    - ADRIANO SAVOINE - 15/01/2021 - Ajustada a Rotina para atualizar o Lim. de Credito para Toda Rede quando alterado.
 	@history Ticket 8191    - ADRIANO SAVOINE - 19/01/2021 - Alteração na rede de Banco e condição de pagamento para toda Rede.
 	@history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
-	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar"
+	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar".
 /*/
 User Function ADOA005() // U_ADOA005()
 

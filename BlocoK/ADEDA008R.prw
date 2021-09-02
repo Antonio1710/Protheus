@@ -20,6 +20,7 @@ Static nTamFil			:= 0
 	(examples)
 	@see (links_or_references)
 	@history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+    @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 /*/
 User Function ADEDA008R()
 
@@ -45,8 +46,10 @@ User Function ADEDA008R()
 							{"STATUS"		,"C"	,1			,"Status IntegraÁ„o"		,""		,					,.F.	,		,.T.},;
 							{"OPERACAO"		,"C"	,1			,"OperaÁ„o IntegraÁ„o"		,""		,					,.F.	,		,.T.},;
 							{"MSG"			,"C"	,100		,"Mensagem IntegraÁ„o"		,""		,					,.F.	,		,.T.},;
-							{"REC"			,"N"	,10			,"Num Registro"				,""		,					,.F.	,		,.T.} ;
-						}
+							{"REC"			,"N"	,10			,"Num Registro"				,""		,					,.F.	,		,.T.},;
+							{"LOCAL"	    ,"C"	,6		    ,"ArmazÈm Terceiro"		    ,""		,					,.F.	,		,.T.},;
+                            {"PRODUCAO"		,"C"	,1		    ,"PrÛprio/Terceiro"		    ,""		,					,.F.	,		,.T.} ;
+                            						}
 	Local aCabMOV010	:={	{"FILIAL"		,"C"	,2			,"Filial do LanÁamento"		,""		,					,.F.	,		,.T.},;
 							{"TM"			,"C"	,3			,"Tipo de MovimentaÁ„o"		,""		,					,.F.	,		,.T.},;
 							{"TMDESC"		,"C"	,30			,"DescriÁ„o Tp MovimentaÁ„o",""		,					,.F.	,		,.T.},;
@@ -169,45 +172,40 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
 */
-
 Static Function ADEDA008Def(cPerg,nOrienta, aCab)
 
-Local cTitulo			:= OemToAnsi("RelatÛrio")
+    Local cTitulo			:= OemToAnsi("RelatÛrio")
 
-PARAMTYPE 0	VAR cPerg		AS Character	OPTIONAL	DEFAULT ""
-PARAMTYPE 1	VAR nOrienta	AS Numeric		OPTIONAL	DEFAULT 1
+    PARAMTYPE 0	VAR cPerg		AS Character	OPTIONAL	DEFAULT ""
+    PARAMTYPE 1	VAR nOrienta	AS Numeric		OPTIONAL	DEFAULT 1
 
-//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-//≥Dados do relatorio  ?
-//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-oReport := tReport():New(U_RemCarac(cRotina,{"[","]"," "}),cTitulo,cPerg,{|oReport| ADEDA008Imp(oReport,cPerg,aCab)})
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥Dados do relatorio  ?
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+    oReport := tReport():New(U_RemCarac(cRotina,{"[","]"," "}),cTitulo,cPerg,{|oReport| ADEDA008Imp(oReport,cPerg,aCab)})
 
-//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-//≥Definicoes do relatorio e parametros  ?
-//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-oReport:lParamPage := .T.
-oReport:lPrtParamPage := .F.
-oReport:ParamReadOnly(.F.)
-oReport:ShowParamPage()
-oReport:SetLandscape()
-oReport:nFontBody := 7
-oReport:nLineHeight := 40
-oReport:DisableOrientation(.F.)
-oReport:SetTotalInLine(.F.)
-oReport:PageTotalInLine(.F.)
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥Definicoes do relatorio e parametros  ?
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+    oReport:lParamPage := .T.
+    oReport:lPrtParamPage := .F.
+    oReport:ParamReadOnly(.F.)
+    oReport:ShowParamPage()
+    oReport:SetLandscape()
+    oReport:nFontBody := 7
+    oReport:nLineHeight := 40
+    oReport:DisableOrientation(.F.)
+    oReport:SetTotalInLine(.F.)
+    oReport:PageTotalInLine(.F.)
 
-//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-//≥Dados do secao 01   ?
-//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-oSection1 := tRSection():New(oReport,cTitulo,,/*aOrder*/,/*lLoadCells*/,/*lLoadOrder*/,/*uTotalText*/,/*lTotalInLine*/,.F./*lHeaderPage*/)
-oSection1:SetLineStyle(.F.)
-U_MntTRCell(@oSection1,aCab,.T.)
-
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥Dados do secao 01   ?
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+    oSection1 := tRSection():New(oReport,cTitulo,,/*aOrder*/,/*lLoadCells*/,/*lLoadOrder*/,/*uTotalText*/,/*lTotalInLine*/,.F./*lHeaderPage*/)
+    oSection1:SetLineStyle(.F.)
+    U_MntTRCell(@oSection1,aCab,.T.)
 
 Return .T.
-
-
-
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
@@ -229,174 +227,162 @@ Return .T.
 */
 Static Function ADEDA008Imp(oReport,cPerg,aCab)
 
+    Local nTotREG		:= 0
+    Local nz			:= 0
+    Local aErros		:= {}
+    Local cErro			:= ""
+    Local cAliasT		:= GetNextAlias()
 
-Local nTotREG		:= 0
-Local nz			:= 0
-Local aErros		:= {}
-Local cErro			:= ""
-Local cAliasT		:= GetNextAlias()
+    PARAMTYPE 0	VAR oReport		AS Object		OPTIONAL	DEFAULT Nil
+    PARAMTYPE 1	VAR cPerg		AS Character	OPTIONAL	DEFAULT ""
+    PARAMTYPE 2	VAR cAliasT		AS Character	OPTIONAL	DEFAULT ""
+    PARAMTYPE 3	VAR aCab		AS Array		OPTIONAL	DEFAULT Array(0)
 
+    If (Empty(ALLTRIM(DTOS(mv_par02))) .OR. mv_par02 == Nil) .AND. (Empty(ALLTRIM(DTOS(mv_par03))) .OR. mv_par03 == Nil)
+        AADD(aErros, "N„o ?permitido as perguntas dos perÌodos estarem vazias!")
+    EndIf
 
-PARAMTYPE 0	VAR oReport		AS Object		OPTIONAL	DEFAULT Nil
-PARAMTYPE 1	VAR cPerg		AS Character	OPTIONAL	DEFAULT ""
-PARAMTYPE 2	VAR cAliasT		AS Character	OPTIONAL	DEFAULT ""
-PARAMTYPE 3	VAR aCab		AS Array		OPTIONAL	DEFAULT Array(0)
+    If (Empty(ALLTRIM(mv_par04)) .OR. mv_par04 == Nil) .AND. (Empty(ALLTRIM(mv_par05)) .OR. mv_par05 == Nil)
+        AADD(aErros, "N„o ?permitido as perguntas dos produtos estarem vazias!")
+    EndIf
 
+    For nz := 1 To Len(aErros)
+        cErro += aErros[nz] + Chr(13) + Chr(10)
+    Next nz 
 
+    If !Empty(ALLTRIM(cErro))
+        MsgAlert("Problemas", cErro)
+        Return Nil
+    EndIf
 
-If (Empty(ALLTRIM(DTOS(mv_par02))) .OR. mv_par02 == Nil) .AND. (Empty(ALLTRIM(DTOS(mv_par03))) .OR. mv_par03 == Nil)
-	AADD(aErros, "N„o ?permitido as perguntas dos perÌodos estarem vazias!")
-EndIf
+    //TcSetConn(_nTcConn2) // @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 
-If (Empty(ALLTRIM(mv_par04)) .OR. mv_par04 == Nil) .AND. (Empty(ALLTRIM(mv_par05)) .OR. mv_par05 == Nil)
-	AADD(aErros, "N„o ?permitido as perguntas dos produtos estarem vazias!")
-EndIf
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ?
+    //?												      ?
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ?
+    oSection1:BeginQuery()
 
-For nz := 1 To Len(aErros)
-	cErro += aErros[nz] + Chr(13) + Chr(10)
-Next nz 
+    ADORXQry(@cAliasT, mv_par01)
 
-If !Empty(ALLTRIM(cErro))
-	MsgAlert("Problemas", cErro)
-	Return Nil
-EndIf
+    oSection1:EndQuery()
 
-//TcSetConn(_nTcConn2) // @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+    (cAliasT)->(dbGoTop())
+    Eval({|| nTotREG := 0,(cAliasT)->(dbEval({|| nTotREG++})),(cAliasT)->(dbGoTop())})
 
+    oReport:SetMeter(nTotREG)
+    oReport:nMeter := 0
 
-//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ?
-//?												      ?
-//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ?
-oSection1:BeginQuery()
+    oReport:SetMeter((cAliasT)->(RecCount()))
 
-ADORXQry(@cAliasT, mv_par01)
+    If (cAliasT)->(Eof())
+        
+        If Select(cAliasT) > 0
+            dbSelectArea(cAliasT)
+            (cAliasT)->(dbCloseArea())
+        EndIf
+        
+        Return Nil
 
-oSection1:EndQuery()
+    Else
+        
+        //⁄ƒƒƒƒƒƒƒƒƒƒƒ?
+        //≥Impressao  ?
+        //¿ƒƒƒƒƒƒƒƒƒƒƒ?
+        oSection1:Init()
+        
+        Do While !(cAliasT)->(Eof())
 
-(cAliasT)->(dbGoTop())
-Eval({|| nTotREG := 0,(cAliasT)->(dbEval({|| nTotREG++})),(cAliasT)->(dbGoTop())})
+            oReport:IncMeter()
+            
+            For x:=1 To Len(aCab)
+                cValue := ""
+                If aCab[x,1] == "STATUS"
+                    cValue := (cAliasT)->&(aCab[x,1])
+                    DO CASE
+                        CASE cValue == "I"
+                            oSection1:Cell(aCab[x,1]):SetValue( "Integrado" )
+                        CASE cValue == "P"
+                            oSection1:Cell(aCab[x,1]):SetValue( "Processado" )
+                        CASE cValue == "E"
+                            oSection1:Cell(aCab[x,1]):SetValue( "Erro" )
+                        OTHERWISE
+                            oSection1:Cell(aCab[x,1]):SetValue( "" )
+                    ENDCASE
+                    
+                ElseIf aCab[x,1] == "OPERACAO"
+                    cValue := (cAliasT)->&(aCab[x,1])
+                    DO CASE
+                        CASE cValue == "I"
+                            oSection1:Cell(aCab[x,1]):SetValue( "Inclus„o" )
+                        CASE cValue == "A"
+                            oSection1:Cell(aCab[x,1]):SetValue( "AlteraÁ„o" )
+                        CASE cValue == "E"
+                            oSection1:Cell(aCab[x,1]):SetValue( "Exclus„o" )
+                        OTHERWISE
+                            oSection1:Cell(aCab[x,1]):SetValue( "" )
+                    ENDCASE				
+                ElseIf aCab[x,1] == "DESCRICAO"
+                    //TcSetConn(_nTcConn1)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+                
+                    SB1->(DbSetOrder(1))				
+                    If SB1->(DBSeek( xFilial("SB1") + (cAliasT)->PRODUTO ))
+                        oSection1:Cell(aCab[x,1]):SetValue( SB1->B1_DESC )
+                    Else
+                        oSection1:Cell(aCab[x,1]):SetValue( "" )
+                    EndIf
+                    
+                    //TcSetConn(_nTcConn2)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+                    
+                ElseIf aCab[x,1] == "UNITPROTH"
+                    //TcSetConn(_nTcConn1)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+                
+                    oSection1:Cell(aCab[x,1]):SetValue( ConvUM( (cAliasT)->PRODUTO, (cAliasT)->QUANT, 0, 2) )
 
-oReport:SetMeter(nTotREG)
-oReport:nMeter := 0
+                    //TcSetConn(_nTcConn2)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+                
+                Else
+                    /* se for a tabela de movimentaÁıes MOV010 (mv_par == 2) */
+                    If mv_par01 == 2 .AND. aCab[x,1] == "TMDESC"
+                        
+                        //TcSetConn(_nTcConn1)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+                        
+                        SF5->(DbSetOrder(1))
+                        If SF5->( DbSeek( xFilial("SF5") + ALLTRIM((cAliasT)->TM) ) )
+                            oSection1:Cell(aCab[x,1]):SetValue( SF5->F5_TEXTO )
+                        Else
+                            oSection1:Cell(aCab[x,1]):SetValue( "" )
+                        EndIf
+                        
+                        //TcSetConn(_nTcConn2)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+                    Else
+                        oSection1:Cell(aCab[x,1]):SetValue( (cAliasT)->&(aCab[x,1]) )	
+                    EndIf 
+                    
+                EndIf
+                
+            Next x
+                    
+            oSection1:PrintLine()
+            
+            (cAliasT)->(dbSkip())
 
-oReport:SetMeter((cAliasT)->(RecCount()))
+        EndDo
 
+        oSection1:Finish()
+        
+        
+    Endif
 
-If (cAliasT)->(Eof())
-	
-	If Select(cAliasT) > 0
-		dbSelectArea(cAliasT)
-	    (cAliasT)->(dbCloseArea())
-	EndIf
-	
-	Return Nil
-Else
-	
-	//⁄ƒƒƒƒƒƒƒƒƒƒƒ?
-	//≥Impressao  ?
-	//¿ƒƒƒƒƒƒƒƒƒƒƒ?
-	oSection1:Init()
-	
-	Do While !(cAliasT)->(Eof())
+    // @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+    /*
+    TcUnLink(_nTcConn1)
+    TcUnLink(_nTcConn2)
+    */
 
-		oReport:IncMeter()
-		
-		For x:=1 To Len(aCab)
-			cValue := ""
-			If aCab[x,1] == "STATUS"
-				cValue := (cAliasT)->&(aCab[x,1])
-				DO CASE
-					CASE cValue == "I"
-						oSection1:Cell(aCab[x,1]):SetValue( "Integrado" )
-					CASE cValue == "P"
-						oSection1:Cell(aCab[x,1]):SetValue( "Processado" )
-					CASE cValue == "E"
-						oSection1:Cell(aCab[x,1]):SetValue( "Erro" )
-					OTHERWISE
-						oSection1:Cell(aCab[x,1]):SetValue( "" )
-				ENDCASE
-				
-			ElseIf aCab[x,1] == "OPERACAO"
-				cValue := (cAliasT)->&(aCab[x,1])
-				DO CASE
-					CASE cValue == "I"
-						oSection1:Cell(aCab[x,1]):SetValue( "Inclus„o" )
-					CASE cValue == "A"
-						oSection1:Cell(aCab[x,1]):SetValue( "AlteraÁ„o" )
-					CASE cValue == "E"
-						oSection1:Cell(aCab[x,1]):SetValue( "Exclus„o" )
-					OTHERWISE
-						oSection1:Cell(aCab[x,1]):SetValue( "" )
-				ENDCASE				
-			ElseIf aCab[x,1] == "DESCRICAO"
-				//TcSetConn(_nTcConn1)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-			
-				SB1->(DbSetOrder(1))				
-				If SB1->(DBSeek( xFilial("SB1") + (cAliasT)->PRODUTO ))
-					oSection1:Cell(aCab[x,1]):SetValue( SB1->B1_DESC )
-				Else
-					oSection1:Cell(aCab[x,1]):SetValue( "" )
-				EndIf
-				
-				//TcSetConn(_nTcConn2)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-				
-			ElseIf aCab[x,1] == "UNITPROTH"
-				//TcSetConn(_nTcConn1)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-			
-				oSection1:Cell(aCab[x,1]):SetValue( ConvUM( (cAliasT)->PRODUTO, (cAliasT)->QUANT, 0, 2) )
-
-				//TcSetConn(_nTcConn2)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-			
-			Else
-				/* se for a tabela de movimentaÁıes MOV010 (mv_par == 2) */
-				If mv_par01 == 2 .AND. aCab[x,1] == "TMDESC"
-					
-					//TcSetConn(_nTcConn1)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-					
-					SF5->(DbSetOrder(1))
-					If SF5->( DbSeek( xFilial("SF5") + ALLTRIM((cAliasT)->TM) ) )
-						oSection1:Cell(aCab[x,1]):SetValue( SF5->F5_TEXTO )
-					Else
-						oSection1:Cell(aCab[x,1]):SetValue( "" )
-					EndIf
-					
-					//TcSetConn(_nTcConn2)// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-				Else
-					oSection1:Cell(aCab[x,1]):SetValue( (cAliasT)->&(aCab[x,1]) )	
-				EndIf 
-				
-			EndIf
-			
-	    Next x
-	            
-		oSection1:PrintLine()
-		
-		(cAliasT)->(dbSkip())
-
-	EndDo
-
-	oSection1:Finish()
-	
-	
-Endif
-
-// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-/*
-TcUnLink(_nTcConn1)
-TcUnLink(_nTcConn2)
-*/
-
-oReport:SkipLine()
-U_FecArTMP(cAliasT)
+    oReport:SkipLine()
+    U_FecArTMP(cAliasT)
 
 Return Nil
-
-
-
-
-
-
-
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹?
@@ -414,19 +400,19 @@ Return Nil
 */
 Static Function GerarArq(aCabOPR010, aCabMOV010, aCabINV010)
 
-Local oFwMsEx 	:= NIL
+    Local oFwMsEx 	:= NIL
 
-Local cArq		:= ""
-Local cDir 		:= GetSrvProfString("Startpath","")
-Local cDirTmp 	:= GetTempPath()
-Local aTabelas 	:= {{1, "OPR", "ProduÁ„o"}, {2, "MOV", "MovimentaÁ„o"}, {3, "INV", "Invent·rio"}}
-Local aCabs		:= {aCabOPR010, aCabMOV010, aCabINV010}
-Local cAliasT	:= GetNextAlias()
-Local aItens	:= {}
+    Local cArq		:= ""
+    Local cDir 		:= GetSrvProfString("Startpath","")
+    Local cDirTmp 	:= GetTempPath()
+    Local aTabelas 	:= {{1, "OPR", "ProduÁ„o"}, {2, "MOV", "MovimentaÁ„o"}, {3, "INV", "Invent·rio"}}
+    Local aCabs		:= {aCabOPR010, aCabMOV010, aCabINV010}
+    Local cAliasT	:= GetNextAlias()
+    Local aItens	:= {}
 
-Default aCabOPR010:= {}
-Default aCabMOV010:= {}
-Default aCabINV010:= {}
+    Default aCabOPR010:= {}
+    Default aCabMOV010:= {}
+    Default aCabINV010:= {}
 
 	oFwMsEx := FWMsExcel():New()
 	
@@ -580,13 +566,6 @@ Default aCabINV010:= {}
 
 Return
 
-
-
-
-
-
-
-
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹?
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±?
@@ -603,77 +582,74 @@ Return
 */
 Static Function ADORXQry(cAliasT, nOpc)
 
-Local cCampos 	:= "*"
-Local cSTATUS 	:= ""
-Local cOPERACAO	:= ""
+    Local cCampos 	:= "*"
+    Local cSTATUS 	:= ""
+    Local cOPERACAO	:= ""
 
-DO CASE
-	CASE mv_par06 == 1
-		cSTATUS := "I"
-	CASE mv_par06 == 2
-		cSTATUS := "S"
-	OTHERWISE
-		cSTATUS := "E"
-ENDCASE
+    DO CASE
+        CASE mv_par06 == 1
+            cSTATUS := "I"
+        CASE mv_par06 == 2
+            cSTATUS := "S"
+        OTHERWISE
+            cSTATUS := "E"
+    ENDCASE
 
-DO CASE
-	CASE mv_par07 == 1
-		cOPERACAO := "I"
-	CASE mv_par07 == 2
-		cOPERACAO := "A"
-	OTHERWISE
-		cOPERACAO := "E"
-ENDCASE
+    DO CASE
+        CASE mv_par07 == 1
+            cOPERACAO := "I"
+        CASE mv_par07 == 2
+            cOPERACAO := "A"
+        OTHERWISE
+            cOPERACAO := "E"
+    ENDCASE
 
-If nOpc == 1
-	BeginSQL Alias cAliasT
-		SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, OPEDATA, MSEXP, STATUS, OPERACAO, MSG, REC
-				
-		FROM OPR010
-		
-		WHERE DATA BETWEEN %Exp:mv_par02% AND %Exp:mv_par03%
-			AND PRODUTO BETWEEN %Exp:mv_par04% AND %Exp:mv_par05%
-			AND STATUS = %Exp:cSTATUS%
-			AND OPERACAO = %Exp:cOPERACAO%
-			AND D_E_L_E_T_=''
-	EndSQL
-	
-ElseIf nOpc == 2
-	BeginSQL Alias cAliasT
-		SELECT FILIAL, TM, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, LOTEEDATA, MSEXP, STATUS, OPERACAO, MSG, REC
-				
-		FROM MOV010
+    If nOpc == 1
 
-		WHERE DATA BETWEEN %Exp:mv_par02% AND %Exp:mv_par03%
-			AND PRODUTO BETWEEN %Exp:mv_par04% AND %Exp:mv_par05%
-			AND STATUS = %Exp:cSTATUS%
-			AND OPERACAO = %Exp:cOPERACAO%
-			AND D_E_L_E_T_=''
-	EndSQL
-	
-ElseIf nOpc == 3
-	BeginSQL Alias cAliasT
-		SELECT FILIAL, PRODUTO, DOC, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, MSG, REC
-				
-		FROM INV010
-		
-		WHERE DATA BETWEEN %Exp:mv_par02% AND %Exp:mv_par03%
-			AND PRODUTO BETWEEN %Exp:mv_par04% AND %Exp:mv_par05%
-			AND STATUS = %Exp:cSTATUS%
-			AND OPERACAO = %Exp:cOPERACAO%
-			AND D_E_L_E_T_=''
-	EndSQL
-EndIf
+        BeginSQL Alias cAliasT
 
+            //SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, OPEDATA, MSEXP, STATUS, OPERACAO, MSG, REC
+            SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, OPEDATA, MSEXP, STATUS, OPERACAO, MSG, REC, LOCAL, PRODUCAO // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+            FROM OPR010 (NOLOCK)
+            WHERE DATA BETWEEN %Exp:mv_par02% AND %Exp:mv_par03%
+                AND PRODUTO BETWEEN %Exp:mv_par04% AND %Exp:mv_par05%
+                AND STATUS = %Exp:cSTATUS%
+                AND OPERACAO = %Exp:cOPERACAO%
+                AND D_E_L_E_T_=''
+
+        EndSQL
+        
+    ElseIf nOpc == 2
+
+        BeginSQL Alias cAliasT
+
+            SELECT FILIAL, TM, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, LOTEEDATA, MSEXP, STATUS, OPERACAO, MSG, REC, '' LOCAL, '' PRODUCAO
+            FROM MOV010 (NOLOCK)
+            WHERE DATA BETWEEN %Exp:mv_par02% AND %Exp:mv_par03%
+                AND PRODUTO BETWEEN %Exp:mv_par04% AND %Exp:mv_par05%
+                AND STATUS = %Exp:cSTATUS%
+                AND OPERACAO = %Exp:cOPERACAO%
+                AND D_E_L_E_T_=''
+
+        EndSQL
+        
+    ElseIf nOpc == 3
+
+        BeginSQL Alias cAliasT
+
+            SELECT FILIAL, PRODUTO, DOC, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, MSG, REC, '' LOCAL, '' PRODUCAO
+            FROM INV010 (NOLOCK)
+            WHERE DATA BETWEEN %Exp:mv_par02% AND %Exp:mv_par03%
+                AND PRODUTO BETWEEN %Exp:mv_par04% AND %Exp:mv_par05%
+                AND STATUS = %Exp:cSTATUS%
+                AND OPERACAO = %Exp:cOPERACAO%
+                AND D_E_L_E_T_=''
+
+        EndSQL
+
+    EndIf
 
 Return cAliasT
-
-
-
-
-
-
-
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹?
@@ -693,23 +669,7 @@ Return cAliasT
 */
 Static Function ADEDA008SX1(cPerg)
 
-Local aMensSX1 := {}
-
-
-//			 	PERGUNTA			 TIPO	TAM						   	DEC					OBJETO	PS	COMBO							  				SXG		F3		VALID	HELP
-// aMensHlp[01] := {"Tipo"				,"N"	,1							,00					,"C"	,0	,{"OPR","MOV","INV","Todos",""}	   				,""		,""	 	,""		,"Tipo de Consulta"}
-// aMensHlp[02] := {"PerÌodo De"		,"D"	,8	 						,00					,"G"	,0	,{"","","","",""}				   				,""		,""	 	,""		,"PerÌodo Inicial"}
-// aMensHlp[03] := {"PerÌodo Ate"		,"D"	,8	 						,00					,"G"	,0	,{"","","","",""}				   				,""		,""	 	,""		,"PerÌodo final"}
-// aMensHlp[04] := {"Produto De"		,"C"	,TamSX3("B2_COD")[1]		,00					,"G"	,0	,{"","","","",""}				   				,""		,"SB1"	,""		,"Produto inicial"}
-// aMensHlp[05] := {"Produto Ate"		,"C"	,TamSX3("B2_COD")[1]		,00					,"G"	,0	,{"","","","",""}								,""		,"SB1"	,""		,"Produto final"}
-// aMensHlp[06] := {"Status"			,"C"	,1							,00					,"C"	,0	,{"Integrado","Processado","Erro","",""}		,""		,""		,""		,"Status de IntegraÁ„o"}
-// aMensHlp[07] := {"OperaÁ„o"	   		,"C"	,1							,00					,"C"	,0	,{"Inclus„o","AlteraÁ„o","Exclus„o","",""}		,""		,""		,""		,"Tipo de OperaÁ„o"}
-
-// U_GravaSX1(cPerg,aMensHlp)
-
-
-//					1					2				3					4				5						6					7				8					9					10					11						12					13				14						15					16					17					18				19						20					21					22					23				24						25					26					27					28				29						30					31					32					33				34					35					36						37						38				39
-    // AADD(/* 'X1_ORDEM' */, /* 'X1_PERGUNT'*/, /* 'X1_PERSPA' */, /* 'X1_PERENG' */, /* 'X1_TIPO' 	*/, /* 'X1_TAMANHO'*/, /* 'X1_DECIMAL'*/, /* 'X1_PRESEL' */, /* 'X1_GSC' 	*/, /* 'X1_VALID' 	*/	, /* 'X1_DEF01' 	*/, /* 'X1_DEFSPA1'*/, /* 'X1_DEFENG1'*/, /* 'X1_CNT01' 	*/, /* 'X1_VAR02' 	*/, /* 'X1_DEF02' 	*/, /* 'X1_DEFSPA2'*/, /* 'X1_DEFENG2'*/, /* 'X1_CNT02' 	*/, /* 'X1_VAR03' 	*/, /* 'X1_DEF03' 	*/, /* 'X1_DEFSPA3'*/, /* 'X1_DEFENG3'*/, /* 'X1_CNT03' 	*/, /* 'X1_VAR04' 	*/, /* 'X1_DEF04' 	*/, /* 'X1_DEFSPA4'*/, /* 'X1_DEFENG4'*/, /* 'X1_CNT04' 	*/, /* 'X1_VAR05' 	*/, /* 'X1_DEF05' 	*/, /* 'X1_DEFSPA5'*/, /* 'X1_DEFENG5'*/, /* 'X1_CNT05' 	*/, /* 'X1_F3'		*/, /* 'X1_PYME' 	*/, /* 'X1_GRPSXG' */	, /* 'X1_PICTURE'*/, /* 'X1_IDFIL' 	*/)
+    Local aMensSX1 := {}
 
 //					  1				2						3						4				  5			6						  7	 8		  9   10	 11	   		12  		13	  	  	  14  	  15  	 16  	 		17   	  		18   	  	  19  	  20  21  	  	  22  	  	 23  	  	  24  25  26  		27  	28  	  29  30  31  32  33  34  35      36   37  38  39	
     AADD( aMensSX1, {"01", "Tipo?"				, "Tipo?"				, "Tipo?"					,"N"	,001						,00, 0		,"C", ""	,"OPR"		,"OPR" 		,"OPR"		, ""	, ""	, "MOV"			, "MOV" 	 , "MOV"		, ""	, "", "INV"		, "INV"		, "INV" 	, "", "", "Todos", "Todos", "Todos"	, "", "", "", "", "", "", ""    , "S", "", "", "" })
@@ -719,9 +679,7 @@ Local aMensSX1 := {}
 	AADD( aMensSX1, {"05", "Produto Ate?"		, "Produto Ate?"		, "Produto Ate?"			,"C"	,TamSX3("B1_COD")[1]		,00, 0		,"G", ""	,""			,""			,"" 		, ""	, ""	, ""			, "" 	 	 , "" 			, ""	, "", ""		, ""		, ""		, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", "SB1" , "S", "", "", "" })
 	AADD( aMensSX1, {"06", "Status?"			, "Status?"				, "Status?"	    			,"C"	,001						,00, 0		,"C", ""	,"Integrado","Integrado","Integrado", ""	, ""	, "Processado" 	,"Processado", "Processado"	, ""	, "", "Erro"	, "Erro"	, "Erro"	, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
 	AADD( aMensSX1, {"07", "OperaÁ„o?"			, "OperaÁ„o?"			, "Lista C·lculo ?"	    	,"C"	,001						,00, 0		,"C", ""	,"Inclus„o"	,"Inclus„o"	,"Inclus„o"	, ""	, ""	, "AlteraÁ„o" 	,"AlteraÁ„o" , "AlteraÁ„o"	, ""	, "", "Exclus„o", "Exclus„o", "Exclus„o", "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
-	
 
     U_newGrSX1(cPerg, aMensSX1)
-
 
 Return Nil

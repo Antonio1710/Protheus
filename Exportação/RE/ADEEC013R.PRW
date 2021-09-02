@@ -81,9 +81,9 @@ User Function ADEEC013R() // U_ADEEC013R()
     Private aColTmp             := {}
     
     Aadd( aParamBox ,{1,"Quantidade Cópias"     ,nValor     ,"@E 999" ,'positivo()',"",'.T.',80,.F.}) /*01*/
-    Aadd( aParamBox ,{1,"Supplier Name"         ,LEFT("MARS PETCARE FRANCE"+SPACE(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*02*/
-	Aadd( aParamBox ,{1,"Supplier Address (L1)" ,left("Avenue de la Concorde"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*03*/
-    Aadd( aParamBox ,{1,"Supplier Address (L2)" ,left("67120 FRNOLSHEIM SUR BRUCHE"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*03*/
+    Aadd( aParamBox ,{1,"Supplier Name"         ,LEFT("MARS GmbH"+SPACE(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*02*/
+	Aadd( aParamBox ,{1,"Supplier Address (L1)" ,left("Eitzer Strasse 215"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*03*/
+    Aadd( aParamBox ,{1,"Supplier Address (L2)" ,left("27283 Verden (Aller)/Germany"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*03*/
     Aadd( aParamBox ,{1,"MAT NR (241)"          ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*04*/
     Aadd( aParamBox ,{1,"VENDOR CODE (93)"      ,LEFT("15140808"+Space(10),10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*05*/
     Aadd( aParamBox ,{1,"FEED MATERIAL"         ,LEFT("CATEGORY 3 UNFIT FOR HUMAN CONSUMPTION"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*06*/
@@ -140,9 +140,9 @@ User Function ADEEC013R() // U_ADEEC013R()
         nRight  := oPrinter:nHorzSize()-010
         nBottom := oPrinter:nVertSize()-060
 
-        fGetQuery()
+        //fGetQuery()
 
-        TRB->(dbgotop()) 
+        //TRB->(dbgotop()) 
 
         nQuantReg   := MV_PAR01
         
@@ -168,10 +168,6 @@ User Function ADEEC013R() // U_ADEEC013R()
 
     else
         msginfo("Operação cancelada pelo operador!")
-    endif
-
-    if Select("TRB") > 0
-        TRB->(DbCloseArea())
     endif
 
     IF FErase( "c:\relato\"+__CUSERID+"\"+cRelImp+".rel" ) == -1
@@ -290,7 +286,7 @@ Static Function fImpCabec()
     oPrinter:Say(nLinha+13, aPerc[03]+010 , "NET WEIGHT (KG) (3100)"    , oFOARNE17)
     cVarImp := Alltrim(TRANSFORM(MV_PAR17, "@E 999999"))
     nTamFont := GetStringPixSize( cVarImp, "Arial", 80, .T., .F., .F. )[02]/2
-    nPosStr  := ((aPerc[04]-aPerc[03])/2-nTamFont)+018
+    nPosStr  := ((aPerc[04]-aPerc[03])/2-nTamFont)+058
     oPrinter:Say(nLinha+68, aPerc[03]+nPosStr , cVarImp, oFOARNE80)
     
     nLinha += nAltura
