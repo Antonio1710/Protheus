@@ -16,6 +16,7 @@
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  T.I    - Adriano Savoine - 02/09/2021 - Catraca sala dos motoristas para todos os perfis.
 /*/
 USER FUNCTION ADGPE044P()
 
@@ -454,6 +455,28 @@ STATIC FUNCTION CARREGAPERFIL(cFilAtu,cCPF)
 					TSI->(dbCloseArea()) 
 
 					// *** FINAL INTEGRA GRUPO CATRACA PORTARIA *** //
+
+					// *** INICIO INTEGRA GRUPO CATRACA SALA DOS MOTORISTAS *** //  TICKET TI - ADRIANO SAVOINE - 02/09/2021	      	 	  
+					CatracaSMotor()
+					While TSIM->(!EOF())
+						
+						SqlVTurnoDimep(CVALTOCHAR(nUlTurno))
+			
+						IF TRH->(!EOF())  
+						
+							nQtdAcesso := 999
+							INTPERACREGRA(TRP->CD_PERFIL_ACESSO,TSIM->CD_GRUPO,TSIM->CD_AREA,'NULL','NULL','0','NULL',nQtdAcesso) // Integra Perfil de Regra
+							INTPERRESTRICAO(TRP->CD_PERFIL_ACESSO,TSIM->CD_GRUPO,TSIM->CD_AREA) // Integra PERFIL_ACESSO_RESTRICAO	
+							
+						ENDIF
+						TRH->(dbCloseArea())                  
+						
+						TSIM->(dbSkip())
+								
+					ENDDO
+					TSIM->(dbCloseArea()) 
+
+					// *** FINAL INTEGRA GRUPO CATRACA SALA DOS MOTORISTAS *** //
 				
 				ENDIF            
 				TRP->(dbCloseArea()) 
@@ -1442,6 +1465,21 @@ Static Function SqlCatracaPortaria()
 		    WHERE CD_GRUPO = 8
      	       		
  	EndSQl             
+RETURN(NIL)
+
+// Ticket  TI  - Adriano Savoine - 02/09/2021
+Static Function CatracaSMotor()
+
+	BeginSQL Alias "TSIM"
+			%NoPARSER%  
+			SELECT CD_GRUPO,
+			       CD_AREA,
+			       FL_AREA_ORIGEM
+			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
+		    WHERE CD_GRUPO = 2
+     	       		
+ 	EndSQl        
+
 RETURN(NIL)
 
 Static Function SqlDiaSemanaRM(cEmpresa,cTurno)

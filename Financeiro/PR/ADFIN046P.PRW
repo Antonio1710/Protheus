@@ -38,6 +38,7 @@
 	@history Ticket 15609   - Abel Babini   - 15/06/2021 - Ajuste na validação de datas de vencimento
 	@history Ticket 16838   - Fernando Maci - 13/07/2021 - Título bloqueado - Alçada Central de aprovação
 	@history Ticket 17988 	- ADRIANO SAVOINE 06/08/2021 - Receber Workflows de Rio Claro.
+	@history Ticket    TI 	- F. Macieira   - 03/09/2021 - Aplicativo Central Aprovação com internal error aprovação projetos
 /*/
 User Function ADFIN046P()
 
@@ -2215,7 +2216,8 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 						AF8->( dbSetOrder(1) ) // AF8_FILIAL+AF8_PROJET
 						If AF8->( dbSeek( FWxFilial("AF8") + cCodPrj ) )
 
-							//If cOpc == "1"
+							If cOpc == "1" // @history Ticket    TI 	- F. Macieira   - 03/09/2021 - Aplicativo Central Aprovação com internal error aprovação projetos
+								
 								aDadWF := {}
 								cMail  := ""
 								cMail  := UsrRetMail(AF8->AF8_XUSER)
@@ -2241,7 +2243,8 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 								
 								aAdd( aDadWF, { cCodPrj, cRevPrj, AllTrim( __cUserID ), AllTrim(UsrRetName(__cUserID)), msDate(), Time(), "[APROVADO] " + cDscObs, cMail, AllTrim(AF8->AF8_DESCRI), AF8->AF8_XUSER } )
 								u_ADPRJ004P(aDadWF, "APROVACAO") //ALTERACAO WILLIAM COSTA ERRO NA FUNCAO ENVIAWF
-							//EndIf
+							
+							EndIf
 							
 						EndIf
 						

@@ -53,6 +53,7 @@
 	@history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 	@history Ticket  13155  - Everson  - 04/05/2021 - Tratamento para liberação de pedido de venda por integração SAG (movimento de saída).
 	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histórico de liberação
+	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
 /*/
 User Function M410STTS()
 
@@ -1891,11 +1892,15 @@ User Function M410STTS()
 		
         If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 
-						aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
-						IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
-							//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-							fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-						ENDIF
+			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
+
+				aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
+				IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
+					//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+					fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+				ENDIF
+
+			EndIf
 
         Else
 
@@ -1913,7 +1918,6 @@ User Function M410STTS()
 	//Everson - 04/05/2021. Chamado 
 	If (INCLUI .Or. ALTERA) .And. !IsInCallStack('U_RESTEXECUTE')
 		libPedSAG()
-
 	EndIf
 	//
 
@@ -3346,9 +3350,10 @@ Return
 	@type  Function
 	@author Abel Babini
 	@since 09/02/2021
-	/*/
+/*/
 Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
-	Local aArea := GetArea()
+	
+	Local aArea   := GetArea()
 	Local cAls001 := GetNextAlias()
 	Local cAls002 := GetNextAlias()
 	Local cAls003 := GetNextAlias()
@@ -3585,6 +3590,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	(cAls002)->(dbgotop())
 
 	WHILE ! (cAls002)->(eof())
+	
 		_nValLim -= (cAls002)->C6_PRCTOT
 		_nVlPed  += (cAls002)->C6_PRCTOT
 
@@ -3598,7 +3604,9 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 		ENDIF
 
 		(cAls002)->(dbSkip())
+	
 	ENDDO
+	
 	(cAls002)->(DbCloseArea())
 
 	SA1->(DBGOTO(_nRecSA1))
@@ -3617,6 +3625,7 @@ Return
 	@since 09/02/2021
 	/*/
 Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumPedV, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, nValPed, cSC5CPag, dSC5Emis, _lDiasAtras, _nValLim, cSC5Vend, lBlqAtr, aTpBlqAt)
+
 	Local lBlqPed := .F.
 	Local aTpBloq := {}
 	Local lAvDtLm  		:= GetMv("MV_#AVDTLM",,.F.) //Habilita a avaliação de data de limite de crédito do cliente
@@ -3920,6 +3929,7 @@ Return Nil
 	@since 15/06/2021
 	/*/
 Static Function fVrLbAnt(cSC5Fil, cSC5Num)
+
 	Local aRet := {.F.,0}
 	Local cQryZEJ := GetNextAlias()
 
@@ -3939,4 +3949,5 @@ Static Function fVrLbAnt(cSC5Fil, cSC5Num)
 		aRet[2] := (cQryZEJ)->VALOR
 	ENDIF
 	(cQryZEJ)->(dbCloseArea())
+
 Return aRet

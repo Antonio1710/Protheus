@@ -40,7 +40,9 @@
 	@history Ch: 10055 - Andre Mendes    - 24/02/2021 - Diferença entre SD2 e SD3 na data de emissao
 	@history Ch: 10055 - Denis Guedes    - 24/02/2021 - Diferença entre SD2 (utiliza Date()) e SD3 (utiliza ddatabase) na data de emissao
     @history tic 15299 - Fer Macieira    - 09/06/2021 - Compensação Errada PR
+	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
 /*/
+
 User Function M460FIM()
 
 	Local Area		:= GetArea()
@@ -208,17 +210,6 @@ User Function M460FIM()
 		ENDIF
 		
 
-		// Ricardo Lima-CH:037647-17/10/18
-
-		// Chamado:047935 Fernando Sigoli - Comentado, para nao gerar mais a pre nota, apos faturamento.
-		// devido a implantação da central, a pre nota deverá ser gerado pelo recebimento do xml	
-		/*
-		If cFilAnt = sFilEmit
-		If sCliEmit = SF2->F2_CLIENTE+SF2->F2_LOJA
-		Processa({|| INTNFENT(SF2->F2_DOC,SF2->F2_SERIE,SF2->F2_CLIENTE,SF2->F2_LOJA) },,"Integração de Pré-Nota de entrada - Inclusão")
-		Endif
-		Endif	
-		*/
 
 	Endif	
 
@@ -669,41 +660,9 @@ Return(.T.)
 	/*/
 Static Function ValPED010()
 
-	/* Váriáveis para conexão entre a base de produção e a base intermediária */
-	//Local _cNomBco1 := GetPvProfString("INTSAGBD","BCO1","ERROR",GetADV97())
-	//Local _cSrvBco1 := GetPvProfString("INTSAGBD","SRV1","ERROR",GetADV97())
-	//Local _cPortBco1:= Val(GetPvProfString("INTSAGBD","PRT1","ERROR",GetADV97()) )
-	// Local _cNomBco2 := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
-	// Local _cSrvBco2 := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
-	// Local _cPortBco2:= Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-	// Local _nTcConn1 := advConnection()
-	// Local _nTcConn2 := 0
-
 	If SC5->C5_CODIGEN > 0
 
-		/*If _nTcConnn1 > 0
-		TcUnLink(_nTcConn1)
-		EndIf
-		If _nTcConnn2 > 0
-		TcUnLink(_nTcConn2)
-		EndIf
-		If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1)) < 0
-		_lRet     := .F.
-		cMsgError := "Não foi possível  conectar ao banco Protheus"
-		MsgInfo("Não foi possível  conectar ao banco produção, verifique com administrador","ERROR")
-		EndIf*/
-		// TcConType("TCPIP")
-		// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2)) < 0
-		// 	_lRet     := .F.
-		// 	cMsgError := "Não foi possível  conectar ao banco integração"
-		// 	MsgInfo("Não foi possível  conectar ao banco integração para ajustar a tabela SGNFE010, verifique com administrador","ERROR")
-
-		// EndIf
-
-		//TcSetConn(_nTcConn2)		
 		TcSqlExec("UPDATE SGPED010 SET STATUS_PRC = 'P', C5_MSEXP ='" +DTOS(DDATABASE)+ "'  WHERE CODIGENE= '" + ALLTRIM(STR(SC5->C5_CODIGEN)) + "' " )		
-		//TcUnLink(_nTcConn2)
-		//TcSetConn(_nTcConn1)
 
 	EndIf
 
@@ -792,16 +751,12 @@ Return Nil
 Static Function updSAG(cDoc,cSerie) //Everson - 26/02/2020. Chamado 057529.
 
 	Local aArea	    := GetArea()
-	// Local nTcConn1	:= advConnection()
 	Local nTcConn2  := 0
 	Local cPedido	:= Posicione("SD2",3,FWxFilial("SD2") + cDoc + cSerie,"D2_PEDIDO") //Everson - 26/02/2020. Chamado 057529.
 	Local cPedSAG   := Posicione("SC5",1,FWxFilial("SC5") + cPedido,"C5_PEDSAG") //Everson - 26/02/2020. Chamado 057529.
 	Local cTabegene	:= Posicione("SC5",1,FWxFilial("SC5") + cPedido,"C5_TABEGEN") //Everson - 26/02/2020. Chamado 057529.
-	// Local cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
-	// Local cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
-	// Local cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-
-	//
+	Local dDtEmiss  := Posicione("SF2",1,xFilial("SF2") + cDoc + cSerie, "F2_EMISSAO") // Jonathan  -  02/09/21 - Tkt 17937 
+	
 	cPedSAG	 := Alltrim(cValToChar(cPedSAG))
 	cTabegene:= Alltrim(cValToChar(cTabegene))
 
@@ -825,24 +780,11 @@ Static Function updSAG(cDoc,cSerie) //Everson - 26/02/2020. Chamado 057529.
 
 	EndIf
 
-	// //
-	// TcConType("TCPIP")
-	// If (nTcConn2 := TcLink(cNomBco2,cSrvBco2,cPortBco2)) < 0
-	// 	MsgInfo("Não foi possível  conectar ao banco integração para ajustar a tabela SGPED010, verifique com o administrador.","updSAG (M460FIM)")
-	// 	RestArea(aArea)
-	// 	Return Nil
-
-	// EndIf
-
-	//
-	//TcSetConn(nTcConn2)
-	If 0 > TcSqlExec("UPDATE SGPED010 SET C5_NOTA='" + cDoc + "' , C5_SERIE = '" + cSerie + "', STATUS_INT = '', OPERACAO_INT = 'A' WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM='" + cPedSAG + "' AND TABEGENE = '" + cTabegene + "' ") //Everson-CH:053926-26/02/2020.
+	If 0 > TcSqlExec("UPDATE SGPED010 SET C5_NOTA='" + cDoc + "' , C5_SERIE = '" + cSerie + "', STATUS_INT = '', OPERACAO_INT = 'A', C6_EMISSAO ='"+DToS(dDtEmiss)+"'  WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM='" + cPedSAG + "' AND TABEGENE = '" + cTabegene + "' ") //Everson-CH:053926-26/02/2020.
 		MsgInfo("Não foi possível atualizar o registro no banco interface: " + Chr(13) + Chr(10) + TCSQLError(),"updSAG (M460FIM)")
 
 	EndIf
 
-	//
-	//TcSetConn(nTcConn1)
 	RestArea(aArea)
 
 Return Nil
@@ -875,7 +817,6 @@ Static Function GeraPreNFE()
 	Local cItemCtb  := GetMV("MV_#LFVITC",,"121")
 	Local cLocal    := GetMV("MV_#LFVALM",,"16")
 	Local cEspLFV   := GetMV("MV_#LFVESP",,"SPED")
-	//Local cProduto  := GetMV("MV_#LFVPRD",,"100253")  //  APENAS DEBUG
 	Local cProduto  := GetMV("MV_#LFVPRD",,"300042")  //  publicar este em producao
 	Local cTESPre   := ''//GetMV("MV_#LFVTEE",,"031") //Ch:055979 - Abel Babini			- 28/02/20 - COMPLEMENTO FRANGO VIVO - Retirada da TES para não gerar erro nos filtros das outras rotinas do processo (INTNFEB)
 
@@ -887,10 +828,6 @@ Static Function GeraPreNFE()
 
 		// Posiciono CLIENTE
 		SA1->(dbSeek(xFilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA))
-
-		// Posiciono FORNECEDOR
-		//SA2->( dbSetOrder(3) ) // A2_FILIAL+A2_CGC
-		//If SA2->( dbSeek(xFilial("SA2")+SA1->A1_CGC) ) // // Inibido e tratado via parametros devido CNPJs em duplicidade ou incorretos
 
 		SA2->( dbSetOrder(1) ) // A2_FILIAL+A2_COD+A2_LOJA
 		If SA2->( dbSeek(xFilial("SA2")+cFornCod+cLojaCod) )
