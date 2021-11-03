@@ -45,6 +45,7 @@ Static lErroBI := .f.
 	@history ticket   10451 - Fernando Maciei - 22/04/2021 - Relatório, Visão = Previsto - Trazer títulos tipo = PA somente quando NÃO tiver SE5 para o registro.
 	@history ticket   10451 - Fernando Maciei - 03/05/2021 - Adaptar FIN010 para SGFIN010 dentro do banco DADOSADV
 	@history ticket   14822 - Fernando Maciei - 10/06/2021 - Despesa classificada errada
+	@history ticket   62700 - Leonardo P. Monteiro - 03/11/2021 - Correção da condição de classificação dos títulos como Intercompany. Adicionada a exceção quando os títulos forem do tipo "FOL".
 /*/
 User Function ADFIN050R()
 
@@ -201,6 +202,10 @@ Static Function PrintReport(oReport)
 	Local dDatFCVP	:= ""
 	Local nVlrFCVP	:= 0
 	Local dDtEmiss  := ""
+	Local nDadFCVP	:= 0
+	Local A			:= 0
+	Local i			:= 0
+	Local p			:= 0
 	
 	Local aDadFCSC	:= {}
 	Local cNatFCSC	:= ""
@@ -441,8 +446,12 @@ Static Function PrintReport(oReport)
 		EndDO
 		
 		IF LEN(aDadFCVP) > 0
-			
-			FOR A:=1 TO LEN(aDadFCVP)
+
+			nDadFCVP := Len(aDadFCVP)
+
+			//FOR A:=1 TO LEN(aDadFCVP)
+			FOR A := 1 TO nDadFCVP
+
 				If oReport:Cancel()
 					Exit
 				EndIf
@@ -1189,7 +1198,8 @@ Static Function PrintReport(oReport)
 					cTipo   := AllTrim(SE2->E2_TIPO)
 				EndIf
 				
-				If Left(cOrigem,3) <> "GPE"
+				//@history ticket   62700 - Leonardo P. Monteiro - 03/11/2021 - Correção da condição de classificação dos títulos como Intercompany. Adicionada a exceção quando os títulos forem do tipo "FOL".
+				If Left(cOrigem,3) <> "GPE" .AND. cTipo != "FOL"
 				 	If cTipo <> "NDI"
 						cGrpPrd := GetMV("MV_#BIGRFI",,"022") // Intercompany
 						cDscGrp := Posicione("ZFH",1, FWxFilial("ZFH") + cGrpPrd, "ZFH_DESCRI")
@@ -1261,7 +1271,7 @@ Static Function PrintReport(oReport)
 			// Chamado n. 051865 || OS 053202 || FINANCAS || DRIELE || 8376 || RELATORIO DE FLUXO - fwnm - 17/09/2019
 			If AllTrim(cTipDes) <> "OPERACIONAL"
 				aTipDes := RetSX3Box( Posicione('SX3', 2, 'ZFH_TIPO', 'X3CBox()' ),,, Len(ZFH->ZFH_TIPO) )
-				For i:=1 to Len(aTipDes)
+				For i := 1 to Len(aTipDes)
 					If AllTrim(aTipDes[i,2]) == AllTrim(ZFH->ZFH_TIPO)
 						cTipDes := Upper(aTipDes[i,3])
 						cTipDes := AllTrim(StrTran(cTipDes,"CAIXA",""))
