@@ -1,19 +1,25 @@
 #Include "Protheus.ch"
 #Include "Topconn.ch"
+
 /*/{Protheus.doc} User Function ADCON016R
     Relatório AgriStats.
     @type  Function
     @author Everson
     @since 30/06/2020
     @version 01
-    @Ticket 7192 - 28/12/2020 - ADRIANO SAVOINE - Alterada a tabela CT2050 para CT2050xx No SIG.
-    /*/
+    @Ticket 7192  - 28/12/2020 - ADRIANO SAVOINE   - Alterada a tabela CT2050 para CT2050xx No SIG.
+    @Ticket 51887 - 04/10/2021 - Fernando Macieira - Relatorio Agristats nao esta gerando
+/*/
 User Function ADCON016R() // U_ADCON016R()
 
     //Variáveis.
     Local aArea := GetArea()
     Local aPergs:= {}
     Local aRet  := {}
+
+    // @Ticket 51887 - 04/10/2021 - Fernando Macieira - Relatorio Agristats nao esta gerando
+    Private cLinked := GetMV("MV_#LINKPR",,"SBPL") 
+	Private cSGBD   := GetMV("MV_#SIGSQL",,"CCZERN_120609_PR_PD")
 
     //
     Aadd(aPergs,{1,"Mês ",cValToChar(Space(2)),"" ,'.T.',,'.T.',15,.T.})
@@ -129,15 +135,17 @@ Static Function scriptSql(cMes,cAno)
     cQuery += " SELECT * " 
     cQuery += " FROM " 
     cQuery += " ( " 
-    cQuery += " SELECT * FROM OPENQUERY ( VPSRV03 ,' " 
-    cQuery += " SELECT " 
+    //cQuery += " SELECT * FROM OPENQUERY ( VPSRV03 ,' " 
+    cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", ' " // @Ticket 51887 - 04/10/2021 - Fernando Macieira - Relatorio Agristats nao esta gerando
+    cQuery += " SELECT DISTINCT " 
     cQuery += " FONTE.*, CTT.CTT_DESC01, CT1.CT1_DESC01, CTD.CTD_DESC01 " 
     cQuery += " FROM " 
     cQuery += " ( " 
     cQuery += " SELECT " 
     cQuery += " CT2_DEBITO AS CONTA,CT2_CCD AS CC , CT2_ITEMD AS ITEM, SUM(CT2_VALOR) AS VALOR " 
     cQuery += " FROM " 
-    cQuery += " [SIG].[dbo].CT2050XX AS CT2 "  // Ticket 7192 - 28/12/2020 - ADRIANO SAVOINE
+    //cQuery += " [SIG].[dbo].CT2050XX AS CT2 "  // Ticket 7192 - 28/12/2020 - ADRIANO SAVOINE
+    cQuery += " [" + cSGBD + "].[dbo].CT2010 AS CT2 "  // @Ticket 51887 - 04/10/2021 - Fernando Macieira - Relatorio Agristats nao esta gerando
     cQuery += " WHERE " 
     cQuery += " CT2_CCD NOT IN(''ACLOC'') " 
     cQuery += " AND CT2_CCC NOT IN(''ACLOC'') " 
@@ -150,7 +158,7 @@ Static Function scriptSql(cMes,cAno)
     cQuery += " SELECT " 
     cQuery += " CT2_CREDIT,CT2_CCC , CT2_ITEMC, SUM(CT2_VALOR * -1) AS VALOR " 
     cQuery += " FROM " 
-    cQuery += " [SIG].[dbo].CT2050XX AS CT2 "  // Ticket 7192 - 28/12/2020 - ADRIANO SAVOINE
+    cQuery += " [" + cSGBD + "].[dbo].CT2010 AS CT2 "  // @Ticket 51887 - 04/10/2021 - Fernando Macieira - Relatorio Agristats nao esta gerando
     cQuery += " WHERE " 
     cQuery += " CT2_CCD NOT IN(''ACLOC'') " 
     cQuery += " AND CT2_CCC NOT IN(''ACLOC'') " 
@@ -161,16 +169,17 @@ Static Function scriptSql(cMes,cAno)
     cQuery += " GROUP BY CT2_CREDIT,CT2_CCC , CT2_ITEMC " 
     cQuery += " ) AS FONTE " 
     cQuery += " LEFT OUTER JOIN " 
-    cQuery += " (SELECT CTT_CUSTO, CTT_DESC01 FROM [SIG].[dbo].CTT010 AS CTT WHERE CTT.D_E_L_E_T_ = '''') AS CTT ON  FONTE.CC = CTT_CUSTO " 
+    cQuery += " (SELECT CTT_CUSTO, CTT_DESC01 FROM [" + cSGBD + "].[dbo].CTT010 AS CTT WHERE CTT.D_E_L_E_T_ = '''') AS CTT ON  FONTE.CC = CTT_CUSTO " 
     cQuery += " LEFT OUTER JOIN " 
-    cQuery += " (SELECT CT1_CONTA, CT1_DESC01 FROM [SIG].[dbo].CT1010 AS CT1 WHERE CT1.D_E_L_E_T_ = '''' ) AS CT1 ON FONTE.CONTA = CT1.CT1_CONTA " 
+    cQuery += " (SELECT CT1_CONTA, CT1_DESC01 FROM [" + cSGBD + "].[dbo].CT1010 AS CT1 WHERE CT1.D_E_L_E_T_ = '''' ) AS CT1 ON FONTE.CONTA = CT1.CT1_CONTA " 
     cQuery += " LEFT OUTER JOIN " 
-    cQuery += " (SELECT CTD_ITEM, CTD_DESC01 FROM [SIG].[dbo].CTD010 AS CTD WHERE CTD.D_E_L_E_T_ = '''') AS CTD ON FONTE.ITEM = CTD.CTD_ITEM " 
+    cQuery += " (SELECT CTD_ITEM, CTD_DESC01 FROM [" + cSGBD + "].[dbo].CTD010 AS CTD WHERE CTD.D_E_L_E_T_ = '''') AS CTD ON FONTE.ITEM = CTD.CTD_ITEM " 
     cQuery += " ORDER BY FONTE.ITEM ') " 
-    cQuery += " )AS FONTE " 
+    cQuery += " AS FONTE " 
 
     //CONOUT( DToC(Date()) + " " + Time() + " " + cQuery)
     //
+    MemoWrite("C:\TEMP\ADCON016R.TXT", cQuery)
 
 Return cQuery
 /*/{Protheus.doc} nomeStaticFunction

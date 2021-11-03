@@ -11,6 +11,8 @@
 	@history Chamado TI     - Paulo         - 13/07/2011 - Modificação da lógica de totalização de limite de crédito por REDE
 	@history Chamado 056381 - William Costa - 17/03/2020 - Adicionado log em todos os reclock do campo ZF_LCREDE para descobrir seu valor antes e depois 
 	@history Chamado 058873 - William Costa - 23/06/2020 - Voltado programação de quandoa rede tiver um unico raiz de CNPJ gravar o campo da data e valor do maior acumulo da SA1
+	@history Chamado 18572  - Everson       - 24/09/2021 - Alterada régua de processamento e adicionado conout.
+	@history Chamado 52317  - Fer Macieira  - 21/10/2021 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
 */
 
 User Function ADLCRED2() 
@@ -74,6 +76,14 @@ Return()
 
 Static Function Continua()
 
+	dbSelectArea("SZF")
+
+	// @history Chamado 52317  - Fer Macieira  - 21/10/2021 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+	IF lGeraAcumulo == .T.
+		MsAguarde({|| u_ADFIN114P() },"Maior Acumulo","Calculando... ")
+	ENDIF	
+
+	//
 	ODLG1:END()
 	bBloco := {|lEnd| ProcSql()}  
 	MsAguarde(bBloco,"Aguarde, Gerando Relatorio","Processando...",.F.)
@@ -82,111 +92,113 @@ Return()
 
 Static Function ProcSql()
 	
-	MsProcTxt("Selecionando Dados, Aguarde.")
+	//MsProcTxt("Selecionando Dados, Aguarde.") // @history Chamado 52317  - Fer Macieira  - 21/10/2021 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
 		
 	nTotCredRede := nTotSaldRede := nTotCred := nTotSld := 0
 	nTotVencRd   := nTotAvenRD   := nTotVCD   := nTotAVC  := 0
 
-	/* Mauricio - 21/09/16 - query original
-	cQuery := "SELECT ZF_REDE,ZF_NOMERED,SUBSTRING(A1_CGC,1,8) AS A1_CGC, "
-	cQuery += "       (CASE WHEN A1_LC>ZF_LCREDE THEN A1_LC         ELSE ZF_LCREDE END) AS LC, "
-	cQuery += "       (CASE WHEN E1_TIPO = 'RA'  THEN E1_SALDO*(-1) ELSE E1_SALDO  END) AS SALDO "
-	cQuery += "FROM "+RetSQLName("SZF")+" AS SZF, "+RetSQLName("SA1")+" AS SA1 LEFT OUTER JOIN "+RetSQLName("SE1")+" AS SE1 "
-	cQuery += "ON A1_COD = E1_CLIENTE AND A1_LOJA = E1_LOJA AND E1_TIPO NOT IN ('PR','NCC') AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14') AND E1_SALDO > 0  AND SE1.D_E_L_E_T_='' "
-	cQuery += "WHERE LEFT(A1_CGC,8) = ZF_CGCMAT AND SZF.D_E_L_E_T_='' AND SA1.D_E_L_E_T_='' "
-	cQuery += "ORDER BY ZF_REDE, LC DESC, ZF_NOMERED"
-	*/
-
-	//Mauricio - 21/09/16 implementado apuracao e gravacao dos campos ZF_VENCIDO e ZF_AVENCER solicitado por Alberto.
-	//e ajustado o relatorio com novos campos.
-
 	_dDT  := Date()
 	_dDTA := (Date() + 1)
-	cQuery := "SELECT ZF_REDE,ZF_NOMERED,ZF_XRISCO,SUBSTRING(A1_CGC,1,8) AS A1_CGC, A1_MSBLQL, "
+	cQuery := " SELECT ZF_REDE,ZF_NOMERED,ZF_XRISCO,SUBSTRING(A1_CGC,1,8) AS A1_CGC, A1_MSBLQL, "
 	cQuery += "       (CASE WHEN A1_LC>ZF_LCREDE THEN A1_LC         ELSE ZF_LCREDE END) AS LC, "
 	cQuery += "       (CASE WHEN E1_TIPO = 'RA'  THEN E1_SALDO*(-1) ELSE E1_SALDO  END) AS SALDO, "
 	cQuery += "       (CASE WHEN E1_TIPO = 'RA' AND (E1_VENCREA < '"+DTOS(_dDT)+"') THEN E1_SALDO*(-1) ELSE 0  END) AS VENC1, "
 	cQuery += "       (CASE WHEN E1_TIPO <> 'RA' AND (E1_VENCREA < '"+DTOS(_dDT)+"') THEN E1_SALDO ELSE 0  END) AS VENC2, "
 	cQuery += "       (CASE WHEN E1_TIPO = 'RA' AND (E1_VENCREA BETWEEN '"+DTOS(_dDT)+"' AND '"+DTOS(_dDTA)+"') THEN E1_SALDO*(-1) ELSE 0  END) AS AVENC1, "
 	cQuery += "       (CASE WHEN E1_TIPO <> 'RA' AND (E1_VENCREA BETWEEN '"+DTOS(_dDT)+"' AND '"+DTOS(_dDTA)+"') THEN E1_SALDO ELSE 0  END) AS AVENC2 "
-	cQuery += "FROM "+RetSQLName("SZF")+" AS SZF, "+RetSQLName("SA1")+" AS SA1 LEFT OUTER JOIN "+RetSQLName("SE1")+" AS SE1 "
-	cQuery += "ON A1_COD = E1_CLIENTE AND A1_LOJA = E1_LOJA AND E1_TIPO NOT IN ('PR','NCC','AB-') AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14') AND E1_SALDO > 0  AND SE1.D_E_L_E_T_='' "
-	cQuery += "WHERE LEFT(A1_CGC,8) = ZF_CGCMAT AND SZF.D_E_L_E_T_='' AND SA1.D_E_L_E_T_='' "
+	cQuery += " FROM "+RetSQLName("SZF")+" AS SZF, "+RetSQLName("SA1")+" AS SA1 LEFT OUTER JOIN "+RetSQLName("SE1")+" AS SE1 "
+	cQuery += " ON A1_COD = E1_CLIENTE AND A1_LOJA = E1_LOJA AND SE1.D_E_L_E_T_='' "
+	//cQuery += " AND E1_TIPO NOT IN ('PR','NCC','AB-') AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14') AND E1_SALDO > 0  
+	cQuery += " WHERE LEFT(A1_CGC,8) = ZF_CGCMAT AND SZF.D_E_L_E_T_='' AND SA1.D_E_L_E_T_='' "
+	
+	//cQuery += " AND ZF_REDE IN ('14BIS','DEMA') " // DEBUG - INIBIR
+	//cQuery += " AND ZF_REDE IN ('DEMA') " // DEBUG - INIBIR
+	
 	cQuery += "ORDER BY ZF_REDE, LC DESC, ZF_NOMERED"
-		
+
+	Conout("ADLCRED2 ProcSql cQuery" + cQuery) //Chamado 18572  - Everson       - 24/09/2021.
+	//
 	TCQUERY cQuery NEW ALIAS "ZF1"
 	Processa( {|| RunRel()},"Aguarde ..." )
 	
 Return
 
 Static Function RunRel
-
+	
 	dbSelectArea("ZF1")
-	dbGoTop()
-	ProcRegua(RecCount())
+	ZF1->(dbGoTop())
+	nTotRg := Contar("ZF1","!Eof()") //Chamado 18572  - Everson       - 24/09/2021.
+	ProcRegua(nTotRg)
+	ZF1->(dbGoTop())
 
-	While !Eof()
-	
-	nSld     := 0
-	_nVenc   := 0
-	_nAvenc  := 0
-	
-	IncProc(OemToAnsi("Processando: "+AllTrim(ZF1->ZF_REDE)+" - "+AllTrim(ZF1->ZF_NOMERED)))   
+	nAuxRg := 0
+
+	While ! ZF1->(Eof())
+		nAuxRg++
+		Conout("ADLCRED2 RunRel nAuxRg/nTotRg >>> " + cValToChar(nAuxRg) + "/" + cValToChar(nTotRg)) //Chamado 18572  - Everson       - 24/09/2021.
 		
-	If _nLin > 2000                      //2700 //3100  tamanho das linhas quando relatorio era paisagem
-		PrintCabec()
-	EndIf
-	
-	// Atribui valores as variáveis para impressão
-	cRede     := ZF1->ZF_REDE 
-	cNomeRede := Substr(ZF1->ZF_NOMERED,1,28)
-	cRisco    := ZF1->ZF_XRISCO
-	cCGC      := ZF1->A1_CGC
-	nLC       := ZF1->LC
-	_cAtivo := " "
-	If ZF1->A1_MSBLQL == "1"   //Bloqueado SIM
-		_cAtivo := "N"
-	Elseif ZF1->A1_MSBLQL == "2"   //Bloqueado NAO
-		_cAtivo := "S"   
-	Endif   
-	
-	// Efetua a somatória do Saldo, buscando o código da Rede mais o CNPJ - Paulo - TDS - 13/07/2011
-	While ZF1->ZF_REDE+ZF1->A1_CGC == cRede+cCGC
-		nSld    += ZF1->SALDO
-		_nVenc  += (ZF1->VENC1 + ZF1->VENC2) 
-		_nAVenc += (ZF1->AVENC1 + ZF1->AVENC2)
-		dbSkip()
-	EndDo
-	
-	GravaSZF()
-	
-	oPrn:Say(_nLin,0070,cRede    ,oFontA10,100 )                                //70
-	oPrn:Say(_nLin,0300,cNomeRede,oFontA10,100 )                                //0300
-	oPrn:Say(_nLin,0950,cCGC     ,oFontA10,100 )	                               //0850
-	
-	oPrn:Say(_nLin,1150,_cAtivo  ,oFontA10,100 )	                               //1050
-	
-	oPrn:Say(_nLin,1300,Transform(nLC ,"@E 999,999,999.99"),oFontA10,100)       //1200
-	oPrn:Say(_nLin,1600,Transform(nSld,"@E 999,999,999.99"),oFontA10,100)       //1500
-	oPrn:Say(_nLin,1900,Transform(_nVenc,"@E 999,999,999.99"),oFontA10,100)     //1800
-	oPrn:Say(_nLin,2200,Transform(_nAVenc,"@E 999,999,999.99"),oFontA10,100)    //2100
-	_nPerc := ((nSld/nLC) * 100)
-	oPrn:Say(_nLin,2500,Transform(_nPerc,"@E 999.99%"),oFontA10,100)    //2400
-	
-	oPrn:Say(_nLin,2750,cRisco,oFontA10,100)    //2400
-	
-	_nLin += nHeight
-	
-	// Ao invés de somente "atribuir" o saldo no total do LC da rede e estando na mesma rede, soma-se o total do LC da rede 
-	// Paulo - TDS - 13/07/2011
-	nTotCredRede += nLC 
-	nTotSaldRede += nSld
-	nTotVencRd   += _nVenc
-	nTotAvenRd   += _nAvenc
+		nSld     := 0
+		_nVenc   := 0
+		_nAvenc  := 0
 		
-	If ZF1->ZF_REDE != cRede
-		PrintSub()
-	EndIf   
+		IncProc(OemToAnsi(AllTrim(ZF1->ZF_REDE)+" - "+AllTrim(ZF1->ZF_NOMERED))+ " " + cValToChar(nAuxRg) + "|" + cValToChar(nTotRg))  //Chamado 18572  - Everson       - 24/09/2021. 
+			
+		If _nLin > 2000                      //2700 //3100  tamanho das linhas quando relatorio era paisagem
+			PrintCabec()
+		EndIf
+		
+		// Atribui valores as variáveis para impressão
+		cRede     := ZF1->ZF_REDE 
+		cNomeRede := Substr(ZF1->ZF_NOMERED,1,28)
+		cRisco    := ZF1->ZF_XRISCO
+		cCGC      := ZF1->A1_CGC
+		nLC       := ZF1->LC
+		_cAtivo := " "
+		If ZF1->A1_MSBLQL == "1"   //Bloqueado SIM
+			_cAtivo := "N"
+		Elseif ZF1->A1_MSBLQL == "2"   //Bloqueado NAO
+			_cAtivo := "S"   
+		Endif   
+		
+		// Efetua a somatória do Saldo, buscando o código da Rede mais o CNPJ - Paulo - TDS - 13/07/2011
+		Conout("ADLCRED2 RunRel Alltrim(ZF1->ZF_REDE)+ZF1->A1_CGC == Alltrim(cRede)+cCGC >>> " + cValToChar(Alltrim(ZF1->ZF_REDE)+ZF1->A1_CGC) + "/" + cValToChar(Alltrim(cRede)+cCGC))
+		While Alltrim(ZF1->ZF_REDE)+ZF1->A1_CGC == Alltrim(cRede)+cCGC
+			nSld    += ZF1->SALDO
+			_nVenc  += (ZF1->VENC1 + ZF1->VENC2) 
+			_nAVenc += (ZF1->AVENC1 + ZF1->AVENC2)
+			ZF1->(dbSkip())
+		EndDo
+		
+		GravaSZF()
+		
+		oPrn:Say(_nLin,0070,cRede    ,oFontA10,100 )                                //70
+		oPrn:Say(_nLin,0300,cNomeRede,oFontA10,100 )                                //0300
+		oPrn:Say(_nLin,0950,cCGC     ,oFontA10,100 )	                               //0850
+		
+		oPrn:Say(_nLin,1150,_cAtivo  ,oFontA10,100 )	                               //1050
+		
+		oPrn:Say(_nLin,1300,Transform(nLC ,"@E 999,999,999.99"),oFontA10,100)       //1200
+		oPrn:Say(_nLin,1600,Transform(nSld,"@E 999,999,999.99"),oFontA10,100)       //1500
+		oPrn:Say(_nLin,1900,Transform(_nVenc,"@E 999,999,999.99"),oFontA10,100)     //1800
+		oPrn:Say(_nLin,2200,Transform(_nAVenc,"@E 999,999,999.99"),oFontA10,100)    //2100
+		_nPerc := ((nSld/nLC) * 100)
+		oPrn:Say(_nLin,2500,Transform(_nPerc,"@E 999.99%"),oFontA10,100)    //2400
+		
+		oPrn:Say(_nLin,2750,cRisco,oFontA10,100)    //2400
+		
+		_nLin += nHeight
+		
+		// Ao invés de somente "atribuir" o saldo no total do LC da rede e estando na mesma rede, soma-se o total do LC da rede 
+		// Paulo - TDS - 13/07/2011
+		nTotCredRede += nLC 
+		nTotSaldRede += nSld
+		nTotVencRd   += _nVenc
+		nTotAvenRd   += _nAvenc
+			
+		If ZF1->ZF_REDE != cRede
+			Conout("ADLCRED2 RunRel ZF1->ZF_REDE != cRede PrintSub " + cValToChar(ZF1->ZF_REDE) + cValToChar(cRede))
+			PrintSub()
+		EndIf   
 	
 	EndDo
 
@@ -308,9 +320,9 @@ Static Function PrintSub()
 		
 	// *** INICIO CHAMADO 034477 *** //
 	IF lGeraAcumulo == .T.
-
-		GRAVAMAIORACUMULO()
-		
+		//GRAVAMAIORACUMULO() // // @history Chamado 52317  - Fer Macieira  - 21/10/2021 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+		//MsAguarde({|| u_ADFIN114P(cRede) },"Maior Acumulo","Calculando... ")
+		//
 	ENDIF	
 									
 	// *** FINAL CHAMADO 034477 *** //
@@ -328,10 +340,10 @@ Static Function GravaSZF
 					"CNPJ: "+ SZF->ZF_CGCMAT + " Saldo de: " + CVALTOCHAR(SZF->ZF_LCREDE) + " Saldo para: " + CVALTOCHAR(nLC),ComputerName(),LogUserName())
 		
 	RecLock("SZF",.F.)
-	SZF->ZF_LCREDE  := nLC
-	SZF->ZF_SLDREDE := nSld 
-	SZF->ZF_VENCIDO := _nVenc
-	SZF->ZF_AVENCER := _nAVENC
+		SZF->ZF_LCREDE  := nLC
+		SZF->ZF_SLDREDE := nSld 
+		SZF->ZF_VENCIDO := _nVenc
+		SZF->ZF_AVENCER := _nAVENC
 	SZF->(MsUnlock())
 	
 	EndIf
@@ -345,18 +357,12 @@ Static Function GRAVAMAIORACUMULO()
 	DBSELECTAREA("SZF")
 	DBSETORDER(3)
 	IF DBSEEK(xFilial("SZF") + cRede)
-	
 		While !SZF->(Eof()) .AND. SZF->(ZF_FILIAL+ZF_REDE) == (xFilial("SZF") + cRede)
-	
 			RecLock("SZF",.F.)
-				   
 				SZF->ZF_DTACUMU := CTOD("  /  /  ")
 			    SZF->ZF_VLACUMU := 0
-			 
-			   
 		    SZF->(MsUnlock())
 		    SZF->(dbSkip())
-		    
 		ENDDO
 	ENDIF
 	
@@ -366,7 +372,7 @@ Static Function GRAVAMAIORACUMULO()
 	DBSETORDER(3)
 	IF DBSEEK(xFilial("SZF") + cRede)
 
-		IncProc(OemToAnsi("Processando: "+AllTrim(SZF->ZF_REDE)+" - "+AllTrim(SZF->ZF_NOMERED)))   
+		//IncProc(OemToAnsi("Processando: "+AllTrim(SZF->ZF_REDE)+" - "+AllTrim(SZF->ZF_NOMERED)))   //Chamado 18572  - Everson       - 24/09/2021.
 	                                      
 	    SqlVerifRede(SZF->ZF_REDE)
    		While TRB->(!EOF())
@@ -375,15 +381,24 @@ Static Function GRAVAMAIORACUMULO()
 		       	
             TRB->(dbSkip())
 		ENDDO
-		TRB->(dbCloseArea()) 
+		TRB->(dbCloseArea())
+
+		Conout("ADLCRED2 INÍCIO " + cValToChar(cRede)) //Chamado 18572  - Everson       - 24/09/2021.
 		
    	    While !SZF->(Eof()) .AND. SZF->(ZF_FILIAL+ZF_REDE) == (xFilial("SZF") + cRede) 	
-   	    
-   	    	IF nContCgc >= 2 // SIGNIFICA QUE TEM VARIOS CNPJS NA REDE
-   	    	
-   	    		U_ADFIN052P(cRede)
 
-		   	ELSE // SIGNIFICA QUE TEM UM CNPJ SO    
+   	    	IF nContCgc >= 2 // SIGNIFICA QUE TEM VARIOS CNPJS NA REDE
+				
+				Conout("ADLCRED2 GRAVAMAIORACUMULO +1 CNPJ cRede " + cValToChar(cRede)) //Chamado 18572  - Everson       - 24/09/2021.
+				
+				// @history F.Macie, 05/10/2021, ticket 52317 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+				//u_ADFIN114P(cRede)
+   	    		//U_ADFIN052P(cRede)
+				//
+
+		   	ELSE // SIGNIFICA QUE TEM UM CNPJ SO 
+
+			   	Conout("ADLCRED2 GRAVAMAIORACUMULO 1 CNPJ cRede " + cValToChar(cRede))   //Chamado 18572  - Everson       - 24/09/2021.
 		   	
 		   		SqlBuscaRedCli(SZF->ZF_REDE)
 		   		While TRD->(!EOF())
@@ -401,6 +416,7 @@ Static Function GRAVAMAIORACUMULO()
 		   	
 		   	ENDIF    
 		   	
+			//DbSelectArea("SZF")
 		   	SZF->(dbSkip())
 	   	    
 	    ENDDO

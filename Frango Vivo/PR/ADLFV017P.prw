@@ -15,9 +15,10 @@
   @since 18/05/2021
   @history Chamado T.I - Leonardo P. Monteiro    - 16/07/2021 - Correção na função de upload dos registros no grid ZEH.
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo. 
+  @history Ticket 41586 - Everson = 05/10/2021 - Tratamento para validação de inclusão de nf.
 /*/
 
-User Function ADLFV017P()
+User Function ADLFV017P() // U_ADLFV017P()
 	local cPerg   := PadR("ADLFV017P",10)
 	Local oBrowse := nil
 	local cFiltro := ""
@@ -72,10 +73,10 @@ Return (aRotina)
 
 // REGRAS DE NEGÓCIO
 Static Function ModelDef()
-	local nAtual := 0
+	//local nAtual := 0
 	local oModel 		:= MPFormModel():New("ADLFV17M")
 	//local oModel 		:= MPFormModel():New("ADLFV17M",,,{|oModel| commitRot(oModel)},)
-	local aGatilhos := {}
+	//local aGatilhos := {}
 
 	// INSTANCIA O SUBMODELO
 	Local oStruZV1 := FwFormStruct(1, "ZV1")
@@ -253,11 +254,11 @@ Return cRet
   /*/
 Static Function loadGrid(oModel, oGridModel, lCopy)
 	local oModelA 	:= FwModelActive()
-	local oViewA	:= FwViewActive()
+	//local oViewA	:= FwViewActive()
 	local cQuery	:= ""
 	local cAlias	:= ""
 	local aData 	:= {}
-	Local nLin		:= 0
+	//Local nLin		:= 0
 	Local oGrid     := oModelA:GetModel('ZEHDETAIL')
 	//local aData		:= oGrid:getOldData()
 	//local cQuery	:= ""
@@ -403,7 +404,7 @@ User Function ADLFV17M()
 		If cIdPonto == 'MODELVLDACTIVE' .AND. nOpc == MODEL_OPERATION_UPDATE //FORMPRE ou MODELPRE
 
 			cIntegracao	:= ZV1->ZV1_INTEGR
-			cNumOc			:= ZV1->ZV1_NUMOC
+			cNumOc		:= ZV1->ZV1_NUMOC
 
 			if Alltrim(Upper(cIntegracao)) == "I"
 				cMsgError := "Atenção, Ordem ja integrada no SAG. Alteração nao permitida! " + cvaltochar(cNumOC)
@@ -413,7 +414,77 @@ User Function ADLFV17M()
 
 		endif
 
+		//Everson - 05/10/2021. Chamado 41586.
+		If cIdPonto == 'MODELPOS' .And. ( nOpc == MODEL_OPERATION_UPDATE .Or. nOpc == MODEL_OPERATION_INSERT) //FORMPRE ou MODELPRE
+
+			lRet := checkOp(M->ZV1_NUMOC, M->ZV1_NUMNFS, M->ZV1_SERIE, M->ZV1_FORREC, M->ZV1_LOJREC)
+
+		EndIf
+		//
+
 	endif
 
 Return (lRet)
+/*/{Protheus.doc} checkOp
+	Função valida se a nota fiscal já foi
+	utilizada. Chamado 41586.
+	@type  Static Function
+	@author Everson
+	@since 05/10/2021
+	@version 01
+/*/
+Static Function checkOp(cOrdem, cNF, cSerie, cCliNF, cCliSr)
 
+	//Variáveis.
+	Local aArea	:= GetArea()
+	Local lRet 	:= .T.
+	Local cQuery:= ""
+
+	//
+	If Select("VZV1") > 0
+		VZV1->(DbCloseArea())
+
+	EndIf  
+
+	//
+	TcQuery cQuery New Alias "VZV1" 
+
+	//
+	cQuery := ""
+	cQuery += " SELECT "
+		cQuery += " ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
+	cQuery += " FROM " 
+		cQuery += " " + RetSqlName("ZV1") + " (NOLOCK) AS ZV1 " 
+	cQuery += " WHERE "
+		cQuery += " RTRIM(LTRIM(ZV1_NUMNFS)) = '" + Alltrim(cNF) + "' AND "
+		cQuery += " RTRIM(LTRIM(ZV1_SERIE)) = '" + Alltrim(cSerie) + "' AND "
+		cQuery += " ZV1_FORREC = '" + cCliNF + "' AND "
+		cQuery += " ZV1_LOJREC = '" + cCliSr + "' AND "
+		cQuery += " ZV1.D_E_L_E_T_ = '' "
+	cQuery += " ORDER BY ZV1_NUMOC "
+
+	//
+	TcQuery cQuery New Alias "VZV1"
+	
+	//
+	DbSelectArea("VZV1")
+	VZV1->(DbGoTop())
+	If ! VZV1->(Eof())
+
+		//
+		If Alltrim(cValToChar(VZV1->ZV1_NUMOC)) <> Alltrim(cValToChar(cOrdem))
+			lRet := .F.
+			Help( ,, 'Help',, "A NF/Série " + cNF + " / " + cSerie +; 
+			        " informada já foi utilizada na OC: " + VZV1->ZV1_NUMOC + ". A Pesagem não foi gravada.", 1, 0 )
+			
+		EndIf     
+	
+	EndIf
+
+	//
+	VZV1->(DbCloseArea())
+
+	//
+	RestArea(aArea)
+
+Return lRet

@@ -3,24 +3,20 @@
 #INCLUDE "topconn.ch"
 #INCLUDE "tbiconn.ch"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณCCSP_003    บAutor  ณMicrosiga           บ Data ณ  02/05/10 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณ Integracao Protheus x Edata - Pedido de Devolu็ใo          บฑฑ
-ฑฑบ          ณ                                                            บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ Adoro                                                      บฑฑ
-++ 28/01/2019 - fernando sigoli 28/01 Chamado 046731 - tratamento na queryบฑฑ
-++ para trazer nota fiscal de entrada de Quebra - D1_LOCAL <> '11'         ฑฑ
-++ Chamado:047155 Fernando Sigoli 12/02/2019 - enviar carga para edata     ฑฑ
-++ apenas notas fiscais com volume fisico, excluimos nf de quebra          ฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
+
+/*/{Protheus.doc} User Function CCSP_003 
+    Integracao Protheus x Edata - Pedido de Devolu็ใo 
+    @type  Function
+    @author Microsiga
+    @since 02/05/10
+    @version version
+    @version 01
+    @history  28/01/2019 - Fernando Sigoli Chamado: 046731 - Tratamento na query para trazer nota fiscal de entrada de Quebra - D1_LOCAL <> '11' 
+	@history  12/02/2019 - Fernando Sigoli Chamado: 047155 - Enviar carga para edata apenas notas fiscais com volume fisico, excluimos nf de quebra
+	@history  08/10/2021 - Fernando Sigoli Ticket : 61334  - Comentado Begin Tran nao faz sentido essa rotina, desarmar.
+	@history chamado  62436 - Everson      - 14/10/2021 - Tratamento para verifica็ใo de conexใo com Edata.
+/*/
+
 
 //Posicao da estrutura TCBrowse
 #DEFINE TCB_POS_CMP	1
@@ -69,7 +65,7 @@ Static nLargEtq			:= 035
 Static nLargBot			:= 040
 Static cHK				:= "&"
 
-User Function CCSP_003 ()
+User Function CCSP_003 () // U_CCSP_003()
 
 	LOCAL oSay,oSay2,oSay3
 	LOCAL oBtn1,oBtn2,oBtn3
@@ -83,6 +79,8 @@ User Function CCSP_003 ()
 	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
 	//ณAcerta dicionแrio de perguntas       ณ
 	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+
+	chkEdtLk() //Everson - 14/10/2021. Chamado 62436.
 
 	AjustaSX1(cPerg)         
 
@@ -355,13 +353,19 @@ Local nCont				:= 0
 Local aDtRef			:= Array(2)
 Local cDtVz				:= Space(8)
 
+//Everson - 14/10/2021. Chamado 62436.
+If ! chkEdtLk()
+	Return Nil
+
+EndIf
+//
+
 //ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
 //ณDefinicoes de filtros  ณ
 //ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
 _aDados01 := Array(0)
 aDtRef[1] := MV_PAR01
 aDtRef[2] := DtoS(MV_PAR02)
-
 
 If MV_PAR03 == 1		//Pend. classificacao
 	cRest01 := "F1_XINT IN ('1', ' ') "
@@ -624,22 +628,27 @@ For ni := 1 to Len(aLstPED)
 				loop
 			EndIf
 
-
-			BeginTran()
+			//BeginTran() //TKT 61334 08/10/2021 - comentado Begin Tran nao faz sentido essa rotina, desarmar.
+						  //a mesma tem que mostrar o error	
+				
 				//Executa a Stored Procedure
 				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_DEVOCARG_01] ' +Str(Val(cSeq)) )
 				cErro := ""
 				cErro := U_RetErroED()
+				
 				If Empty(cErro)
 					// Flag pedido	   
 					CCSP_003F (cData,cPlaca,"3","OK",cSeq)
 				Else
-					DisarmTransaction()
 					// Flag pedido	   
 					cMens += "- Roteiro nใo processado: [" + AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
 					CCSP_003F (cData,cPlaca,"4",cErro,cSeq)							
+				
+					//DisarmTransaction()
+
 				Endif								
-			EndTran()					  
+			
+			//EndTran()					  
 					
         EndIf	        
 	Endif
@@ -709,7 +718,8 @@ For ni := 1 to Len(aLstPED)
 			cPlaca	 := AllTrim(aLstPED[ni][2])
 			cSeq	 := AllTrim(aLstPED[ni][4])
 
-			BeginTran()
+			//BeginTran()
+				
 				//Executa a Stored Procedure
 				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_DEVOCARG_01] ' +Str(Val(cSeq)) )
 				cErro := ""
@@ -718,13 +728,15 @@ For ni := 1 to Len(aLstPED)
 					// Flag pedido	   
 					CCSP_003F (cData,cPlaca,"2","OK",cSeq)
 				Else
-					DisarmTransaction()
-					// Flag pedido	   
 					cMens += "- Roteiro nใo estornado: [" + AllTrim(aLstPED[ni][4]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
-					//CCSP_003F (cData,cRoteiro,cPlaca,"4",cErro)							
+					
+					//CCSP_003F (cData,cRoteiro,cPlaca,"4",cErro)	
+					//DisarmTransaction()
+					// Flag pedido	   
+					//						
 				Endif
 								
-			EndTran()				
+			//EndTran()				
 			
         EndIf	        
 	Endif
@@ -1104,3 +1116,23 @@ aMensHlp[04] := {"Processo?"				,"N"	,001						,00	,"C"	,1	,aOpc[3]  	,""		,""		
 U_GravaSX1(cPerg,aMensHlp)
 
 Return Nil
+/*/{Protheus.doc} chkEdtLk
+	Fun็ใo checa comunica็ใo com bd do Edata.
+	Chamado 62436.
+	@type  Static Function
+	@author Everson
+	@since 14/10/2021
+	@version 01
+/*/
+Static Function chkEdtLk()
+
+	//Variแveis.
+	Local aArea := GetArea()
+	Local lRet	:= Nil
+
+	lRet := StaticCall(CCSP_002, chkEdtLk)
+
+	//
+	RestArea(aArea)
+
+Return lRet

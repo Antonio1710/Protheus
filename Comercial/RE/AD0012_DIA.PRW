@@ -652,7 +652,7 @@ Return
 
 Static Function MontaTra()
 
-	ProcRegua(RecCount())
+	//ProcRegua(RecCount())
 	XF2->(dbgotop())
 	_cTabela:=''
 	
@@ -660,10 +660,7 @@ Static Function MontaTra()
 	
 	While !eof()
 		nCount++
-		IncProc( " Filial-NF: " + XF2->F2_FILIAL+"-"+XF2->F2_DOC + " Dt.: "+XF2->F2_EMISSAO + "-Arq."+_cNomTrb + " - Regs: " + AllTrim(Str(nCount)) )
-		MsProcTxt( TIME() ) // Chamado n. TI - FWNM - 23/05/2019
-		MsProcTxt( "Filial-NF: " + XF2->F2_FILIAL+"-"+XF2->F2_DOC + " Dt.: "+XF2->F2_EMISSAO + " - Regs: " + AllTrim(Str(nCount)) + " " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
-		
+
 		If nLastKey == 27
 			Return
 		Endif
@@ -675,23 +672,17 @@ Static Function MontaTra()
 		dbSeek(xfilial() + _cVend)
 		_cNomeVen	:=	SA3->A3_NOME
 
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
-
 		If SA3->A3_COMSN == 'N'					//  VENDEDOR E COMISSIONADO
 			dbSelectArea("XF2")
 			dbskip()
 			Loop
 		Endif
-
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
 		
 		If (SA3->A3_REGIAO < mv_par08 .OR. SA3->A3_REGIAO > mv_par09) .AND. (mv_par05 == 2)  // REGIAO DE VENDAS
 			dbSelectArea("XF2")
 			dbskip()
 			Loop
 		Endif
-
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
 		
 		If (SA3->A3_CODSUP < mv_par06 .OR. SA3->A3_CODSUP > mv_par07)  .AND. (mv_par05 == 1) // SUPERVISOR
 			dbSelectArea("XF2")
@@ -699,15 +690,11 @@ Static Function MontaTra()
 			Loop
 		Endif
 
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
-
 		If SA3->A3_TABELA < mv_par10 .OR. SA3->A3_TABELA > mv_par11 	// CLASSE DE COMISSAO
 			dbSelectArea("XF2")
 			dbskip()
 			Loop
 		Endif
-
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
 
 		dbSelectArea("SZR")				// TABELA DE SUPERVISOR
 		DbSetOrder(1)
@@ -717,8 +704,6 @@ Static Function MontaTra()
 		DbSetOrder(1)
 		dbSeek(xfilial() + SA3->A3_REGIAO)
 
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
-		
 		_cSuper		:=	SA3->A3_CODSUP
 		_cNomSup	:=	SZR->ZR_DESCRIC
 		_cRegiao	:= 	SA3->A3_REGIAO
@@ -729,7 +714,7 @@ Static Function MontaTra()
 		//dbSeek(xfilial("SD2") + XF2->F2_DOC + XF2->F2_SERIE + XF2->F2_CLIENTE + XF2->F2_LOJA)
 		dbSeek(XF2->F2_FILIAL + XF2->F2_DOC + XF2->F2_SERIE + XF2->F2_CLIENTE + XF2->F2_LOJA)   &&Mauricio Chamado 006076.
 		
-		MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
+		//MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
 		
 		nCount := 0
 		DO WHILE !EOF() .AND. 	SD2->D2_DOC		  	== XF2->F2_DOC     	.AND. ;
@@ -739,7 +724,6 @@ Static Function MontaTra()
 			SD2->D2_LOJA		== XF2->F2_LOJA
 			
 			nCount++
-			MsProcTxt( "Itens da NF: " + AllTrim(Str(nCount)) + " " + time() )// Chamado n. TI - FWNM - 23/05/2019
 
 			If (LEFT(SD2->D2_CF,2) == "59" .OR. LEFT(SD2->D2_CF,2) == "69") .AND. SD2->D2_TES <> '526'  //REMESSA DESCONSIDERA
 				dbSelectArea("SD2")
@@ -753,7 +737,6 @@ Static Function MontaTra()
 				LOOP
 			Endif
 			
-			MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
 			
 			_cProduto 	:= 	SD2->D2_COD
 			_nQtd      	:= 	SD2->D2_QUANT
@@ -764,8 +747,7 @@ Static Function MontaTra()
 			_nMedio  	:=	_nVal / _nQtd
 			_nDesFin    :=	XF2->A1_DESC
 			
-			MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
-		
+	
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³DESCONTO FINANCEIRO                                                                                         ³
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -784,14 +766,11 @@ Static Function MontaTra()
 			_cDescGrN	:=	""
 			_cDescGrP	:=	""
 
-			MsProcTxt( "Procurando grupo... " + time() )// Chamado n. TI - FWNM - 23/05/2019
+				//MsProcTxt( "Procurando grupo... " + time() )// Chamado n. TI - FWNM - 23/05/2019
 			PROCURAGRUPO()
 
-			MsProcTxt( "Procurando grupo... " + time() )// Chamado n. TI - FWNM - 23/05/2019
 			dbSelectArea("TEM1")
 			IF !dbSeek(_cVend + _cGrupoN + _cProduto + dtos(_dData))
-				
-				MsProcTxt( "Incluindo TEMP1... " + time() )// Chamado n. TI - FWNM - 23/05/2019
 				
 				RecLock("TEM1",.T.)
 				TEM1->T1_SUPER		:=	_cSuper
@@ -816,7 +795,6 @@ Static Function MontaTra()
 				MsUnLock()
 
 			Else
-				MsProcTxt( "Alterando TEM1... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
 				
 				RecLock("TEM1",.F.)
 				_nQtdAc      	:= _nQtd	+ TEM1->T1_QTDADE
@@ -836,8 +814,7 @@ Static Function MontaTra()
 			dbSelectArea("TEM3")
 			IF !dbSeek(_cProduto+_cVend+_cGrpCom+DTos(_dData))
 				
-				MsProcTxt( "Incluindo TEMP3... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
-				
+			
 				RecLock("TEM3",.T.)
 				TEM3->T3_VEND  		:= 	_cVend
 				TEM3->T3_PROD		:=	_cProduto
@@ -848,8 +825,7 @@ Static Function MontaTra()
 				
 				dbSelectArea("TEM2")
 				IF !dbSeek(_cProduto+_cGrpCom+DTos(_dData))
-					MsProcTxt( "Incluindo TEMP2... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
-				
+						
 					RecLock("TEM2",.T.)
 					TEM2->T2_PROD		:=	_cProduto
 					TEM2->T2_GRPCOM		:=	_cGrpCom
@@ -857,15 +833,13 @@ Static Function MontaTra()
 					TEM2->T2_QTDADE  	:= 1
 					MsUnLock()
 				Else
-					MsProcTxt( "Alterando TEMP2... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
-					
+							
 					RecLock("TEM2",.F.)
 					TEM2->T2_QTDADE  	:= TEM2->T2_QTDADE + 1
 					MsUnLock()
 				Endif
 
 			Else
-				MsProcTxt( "Alterando TEMP3... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
 				
 				RecLock("TEM3",.F.)
 				TEM3->T3_QTDADE  	:= 	TEM3->T3_QTDADE  + 1
@@ -875,8 +849,7 @@ Static Function MontaTra()
 			dbSelectArea("TEM5")
 			IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+_cVend+DTos(_dData))
 				
-				MsProcTxt( "Incluindo TEMP5... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
-				
+			
 				RecLock("TEM5",.T.)
 				TEM5->T5_GRUPON		:=	_cGrupoN
 				TEM5->T5_VEND  		:= 	_cVend
@@ -888,7 +861,6 @@ Static Function MontaTra()
 				
 				dbSelectArea("TEM4")
 				IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+DTos(_dData))
-					MsProcTxt( "Incluindo TEMP4... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
 					
 					RecLock("TEM4",.T.)
 					TEM4->T4_GRUPON		:=	_cGrupoN
@@ -898,35 +870,30 @@ Static Function MontaTra()
 					TEM4->T4_QTDADE  	:= 1
 					MsUnLock()
 				Else
-					MsProcTxt( "Alterando TEMP4... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
 				
 					RecLock("TEM4",.F.)
 					TEM4->T4_QTDADE  	:= TEM4->T4_QTDADE + 1
 					MsUnLock()
 				Endif
 			Else
-				MsProcTxt( "Alterando TEMP5... " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
 				
 				RecLock("TEM5",.F.)
 				TEM5->T5_QTDADE  	:= 	TEM5->T5_QTDADE  + 1
 				MsUnLock()
 			Endif
 			
-			MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
-	
+
 			dbSelectArea("SD2")
 			dbskip()
 		ENDDO
 		
-		MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
 		
 		dbSelectArea("XF2")
 		dbskip()
 	ENDDO
 	
 	
-	MsProcTxt( "Devoluçoes: " + time() )// Chamado n. TI - FWNM - 23/05/2019
-	
+
 	dbclosearea("XF2")
 	
 	//DEVOLUCOES
@@ -947,7 +914,6 @@ Static Function MontaTra()
 		nCount++
 		//  INCREMENTA A BARRA DE EVOLUCAO
 		IncProc(" Filial-Devolucao: " + XF1->F1_FILIAL+"-"+XF1->F1_DOC + " - Dt.Emissao : "+XF1->F1_DTDIGIT + " - Regs: " + AllTrim(Str(nCount))) 
-		MsProcTxt( "Fil-Dev: " + XF1->F1_FILIAL+"-"+XF1->F1_DOC + " - Dt.Emissao : "+XF1->F1_DTDIGIT + " - Regs: " + AllTrim(Str(nCount)) + " " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
 
 		If nLastKey == 27
 			Return
@@ -966,8 +932,7 @@ Static Function MontaTra()
 			SD1->D1_LOJA		== XF1->F1_LOJA
 			
 			nCount++
-			MsProcTxt( "Itens Dev: " + AllTrim(Str(nCount)) + " " + TIME() )// Chamado n. TI - FWNM - 23/05/2019
-			
+
 			IF !EMPTY(SD1->D1_NFORI)
 				If LEFT(SD1->D1_CF,2) == "19" .OR. LEFT(SD1->D1_CF,2) == "29"  //REMESSA DESCONSIDERA
 					dbSelectArea("SD1")
@@ -979,7 +944,6 @@ Static Function MontaTra()
 				_cCLIENTE  	:= 	SD1->D1_FORNECE
 				_cLOJA     	:= 	SD1->D1_LOJA
 				
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
 				
 				dbSelectArea("SF2")
 				DBSETORDER(1)
@@ -993,7 +957,6 @@ Static Function MontaTra()
 					Loop
 				Endif
 				
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
 			
 				dbSelectArea("SA3")
 				dbSeek(xfilial() + _cVend)
@@ -1009,8 +972,7 @@ Static Function MontaTra()
 					Loop
 				Endif
 				
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
-				
+			
 				If (SA3->A3_CODSUP < mv_par06 .OR. SA3->A3_CODSUP > mv_par07)  .AND. (mv_par05 == 1) // SUPERVISOR
 					dbSelectArea("SD1")
 					dbskip()
@@ -1022,16 +984,13 @@ Static Function MontaTra()
 					dbskip()
 					Loop
 				Endif
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 				
 				_nQtd      	:= SD1->D1_QUANT	* (-1)
 				_nVal      	:= SD1->D1_TOTAL	* (-1)
 				_cProduto 	:= SD1->D1_COD
 				_dData		:= SD1->D1_DTDIGIT
 				//
-				
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
+
 				
 				dbSelectArea("SB1")
 				dbSeek(xfilial("SB1")+ _cProduto)
@@ -1040,8 +999,7 @@ Static Function MontaTra()
 					dbskip()
 					LOOP
 				Endif
-				
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
+
 				
 				_cGrupoN	:=	SB1->B1_GRUPO   //ALTERADO EM  28/12/06 - XGRPANT PRESERVA GRUPO
 				_cDescric :=	SB1->B1_DESC
@@ -1049,11 +1007,8 @@ Static Function MontaTra()
 				_cDescGrN	:=	""
 				_cDescGrP	:=	""
 				//
-				MsProcTxt( "Procurando grupo ... " + Time() )// Chamado n. TI - FWNM - 23/05/2019
 				PROCURAGRUPO()
-
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
-				
+			
 				dbSelectArea("SZR")				// TABELA DE SUPERVISOR
 				dbSeek(xfilial() + SA3->A3_CODSUP)
 				_cNomSup	:=	SZR->ZR_DESCRIC
@@ -1065,13 +1020,10 @@ Static Function MontaTra()
 				_cRegiao	:= 	SA3->A3_REGIAO
 				_cGrpCom	:= 	SA3->A3_TABELA
 				
-				MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
-				
 				dbSelectArea("TEM1")
 				IF !dbSeek(_cVend + _cGrupoN + _cProduto + dtos(_dData))
 					
-					MsProcTxt( "Incluindo TEM1... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-					
+			
 					RecLock("TEM1",.T.)
 					_nMedio		:=	_nVal / _nQtd
 					TEM1->T1_SUPER		:=	_cSuper
@@ -1094,7 +1046,6 @@ Static Function MontaTra()
 					TEM1->T1_TABELA    	:= _cTabela
 					MsUnLock()
 				Else
-					MsProcTxt( "Alterando TEM1... " + time() )// Chamado n. TI - FWNM - 23/05/2019
 					
 					RecLock("TEM1",.F.)
 					_nQtdAc      		:= 	_nQtd	+ TEM1->T1_QTDADE
@@ -1109,8 +1060,7 @@ Static Function MontaTra()
 				dbSelectArea("TEM3")
 				IF !dbSeek(_cProduto+_cVend+_cGrpCom+dTos(_dData))
 					
-					MsProcTxt( "Incluindo TEM3... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-					
+				
 					RecLock("TEM3",.T.)
 					TEM3->T3_VEND  		:= 	_cVend
 					TEM3->T3_PROD		:=	_cProduto
@@ -1121,9 +1071,7 @@ Static Function MontaTra()
 					
 					dbSelectArea("TEM2")
 					IF !dbSeek(_cProduto+_cGrpCom+dTos(_dData))
-						
-						MsProcTxt( "Incluindo TEM2... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-						
+				
 						RecLock("TEM2",.T.)
 						TEM2->T2_PROD		:=	_cProduto
 						TEM2->T2_GRPCOM		:=	_cGrpCom
@@ -1131,22 +1079,19 @@ Static Function MontaTra()
 						TEM2->T2_QTDADE  	:= 1
 						MsUnLock()
 					Else
-						MsProcTxt( "Alterando TEM2... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-						
+					
 						RecLock("TEM2",.F.)
 						TEM2->T2_QTDADE  	:= TEM2->T2_QTDADE - 1
 						MsUnLock()
 					Endif
 				Else
-					MsProcTxt( "Alterando TEM3... " + time() )// Chamado n. TI - FWNM - 23/05/2019
 					RecLock("TEM3",.F.)
 					TEM3->T3_QTDADE  	:= 	TEM3->T3_QTDADE  - 1
 					MsUnLock()
 				Endif
 				dbSelectArea("TEM5")
 				IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+_cVend+dTos(_dData))
-					MsProcTxt( "Incluindo TEM5... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-					
+				
 					RecLock("TEM5",.T.)
 					TEM5->T5_GRUPON		:=	_cGrupoN
 					TEM5->T5_VEND  		:= 	_cVend
@@ -1158,8 +1103,7 @@ Static Function MontaTra()
 					
 					dbSelectArea("TEM4")
 					IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+dTos(_dData))
-						MsProcTxt( "Incluindo TEM4... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-						
+					
 						RecLock("TEM4",.T.)
 						TEM4->T4_GRUPON		:=	_cGrupoN
 						TEM4->T4_TABELA		:=	_cTabela
@@ -1168,25 +1112,20 @@ Static Function MontaTra()
 						TEM4->T4_QTDADE  	:= 1
 						MsUnLock()
 					Else
-						MsProcTxt( "Alterando TEM4... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-						
 						RecLock("TEM4",.F.)
 						TEM4->T4_QTDADE  	:= TEM4->T4_QTDADE + 1
 						MsUnLock()
 					Endif
 				Else
-					MsProcTxt( "Alterando TEM5... " + time() )// Chamado n. TI - FWNM - 23/05/2019
 					
 					RecLock("TEM5",.F.)
 					TEM5->T5_QTDADE  	:= 	TEM5->T5_QTDADE  + 1
 					MsUnLock()
 				Endif
 			Endif
-			MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
 			dbSelectArea("SD1")
 			dbskip()
 		ENDDO
-		MsProcTxt( time() )// Chamado n. TI - FWNM - 23/05/2019
 		dbSelectArea("XF1")
 		dbskip()
 	ENDDO
@@ -1227,7 +1166,7 @@ Static Function RunCom()
 	DO WHILE !EOF()
 		nCount++
 		IncProc("Produtos: " + TEM1->T1_PROD +" Data "+dToC(TEM1->T1_DATA))
-		MsProcTxt("Produtos: " + TEM1->T1_PROD +" Data "+dToC(TEM1->T1_DATA) + " Regs: " + AllTrim(Str(nCount)) )
+		////MsProcTxt("Produtos: " + TEM1->T1_PROD +" Data "+dToC(TEM1->T1_DATA) + " Regs: " + AllTrim(Str(nCount)) )
 
 		If	_cProduto	!=	TEM1->T1_PROD .or. _dData <> TEM1->T1_DATA
 			_cProduto	:=	TEM1->T1_PROD
@@ -1245,7 +1184,7 @@ Static Function RunCom()
 			_nCoef2		:=	0
 			_cFaixa		:=	"A"
 			
-			MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
+			////MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
 			LETABELA(TEM1->T1_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 			
 			dbSelectArea("TEM2") 		//AQUI EU LEIO A QUANTIDADE DE VENDEDORES QUE ATUOU NESTE GRUPO DE PRODUTOS
@@ -1256,13 +1195,13 @@ Static Function RunCom()
 			_nQuant		:=	TEM2->T2_QTDADE
 			_nCoef1		:=	100/_nQuant    				// para classificar o vendedor
 		else
-			MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
+			////MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
 			LETABELA(TEM1->T1_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 		Endif
 		_nCoef2		:=	INT(_nQuant * (_nPerce/100))
 		_nClass		:=	_nClass	+ _nCoef1
 		
-		MsProcTxt( "Alterand TEMP1... " + time() )
+		//MsProcTxt( "Alterand TEMP1... " + time() )
 		dbSelectArea("TEM1")
 		RecLock("TEM1",.F.)
 		TEM1->T1_VLMEDIO  	        :=  TEM1->T1_FATUR     /  	TEM1->T1_QTDADE
@@ -1276,7 +1215,6 @@ Static Function RunCom()
 		// Gravo valor anterior
 		IF _nPos	>= _nCoef2
 			_cFaixa		:=	CHR(ASC(_cFaixa)+ 1)
-			MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
 			LETABELA(TEM1->T1_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 		ENDIF
 		dbSelectArea("TEM1")
@@ -1309,7 +1247,7 @@ STATIC FUNCTION RUNGRP
 	DO WHILE !EOF()
 		
 		nCount++
-		MsProcTxt( "RunGrp: " + AllTrim(Str(nCount)) )
+		////MsProcTxt( "RunGrp: " + AllTrim(Str(nCount)) )
 		
 		dbSelectArea("TEM6")
 		IF !dbSeek(TEM1->T1_GRUPON + TEM1->T1_TABELA + TEM1->T1_GRPCOM + TEM1->T1_VEND + DTOS(TEM1->T1_DATA ))
@@ -1370,7 +1308,6 @@ STATIC FUNCTION RUNGRP
 	DO WHILE !EOF()
 		
 		nCount++
-		MsProcTxt( "Regs: " + AllTrim(Str(nCount)) )
 		
 		If	_cGrupoN	<>	TEM6->T6_GRUPON .or. _dData <> TEM6->T6_DATA
 			_cGrupoN	:=	TEM6->T6_GRUPON
@@ -1472,7 +1409,7 @@ STATIC FUNCTION PROCURAGRUPO
 	Do While !EOF() .AND. !BOF()
 		nCount++
 		//Conout("Procurando grupo " + Alltrim(str(nCount)) + " PROCURAGRUPO " + cValToChar(nCount) + TIME())
-		MsProcTxt("Procurando grupo " + Alltrim(str(nCount)) + " " + TIME() )
+		////MsProcTxt("Procurando grupo " + Alltrim(str(nCount)) + " " + TIME() )
 	
 		If 	SBM->BM_NIVEL	== "2"
 			_cGrupoF		:=	SBM->BM_GRUPO
@@ -1484,7 +1421,7 @@ STATIC FUNCTION PROCURAGRUPO
 			Do While !EOF()
 				//conout("nCount >>>>>>>> " + cValToChar(nCount))
 				nCount++
-				MsProcTxt("Procurando Nivel " + Alltrim(str(nCount)) + " " + TIME() )
+				////("Procurando Nivel " + Alltrim(str(nCount)) + " " + TIME() )
 
 				If 	SBM->BM_NIVEL	== "1"
 					_cGrupoP				:=	SBM->BM_GRUPO
@@ -1496,21 +1433,21 @@ STATIC FUNCTION PROCURAGRUPO
 				else
 					dbskip(-1)
 				Endif
-				MsProcTxt( TIME() )
+				//MsProcTxt( TIME() )
 			Enddo
 			Exit
 		Else
-			MsProcTxt( TIME() )
+			//MsProcTxt( TIME() )
 			dbskip(-1)
 		Endif
-		MsProcTxt( TIME() )
+		//MsProcTxt( TIME() )
 	Enddo
 
 	If EMPTY(_cTabela)
 		//	MSGSTOP("GRUPO DE PRODUTOS SEM TABELA DE PRECOS")
 		_cTabela	:=	"0001"
 	Endif
-	MsProcTxt( TIME() )
+	//MsProcTxt( TIME() )
 
 RETURN
 
@@ -3187,7 +3124,7 @@ Static Function RunRep()
 			AADD(_aAcum,{_cVend,_cGrupoP,_nAcVR,_nAcTol})
 			_nAcVR	:=	0
 			_nAcTol	:=	0
-			_cVend	:=TEM1->T1_VEND
+			_cVend	:=TEM1->T1_VEND 
 			_cGrupoP	:=TEM1->T1_GRUPOP
 		Endif
 		If _cGrupoN	!=TEM1->T1_GRUPON
@@ -4169,7 +4106,6 @@ return
 
 User Function FXFIL_DIA()
 
-	Local cTitulo:=""
 	Local MvPar
 	Local MvParDef:=""
 	Local nTam := 2

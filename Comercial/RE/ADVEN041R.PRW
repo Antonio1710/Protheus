@@ -11,7 +11,8 @@
 	@history Chamado 045773 - Everson     - 12/12/2018 - Alterado o order by da consulta de totalizador geral.
 	@history Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	@history Ticket   15718 - Everson     - 16/06/2021 - Tratamento para errorlog.
-	/*/
+	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+/*/
 User Function ADVEN041R() // U_ADVEN041R()
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -175,10 +176,9 @@ Static Function imprimeRel()
 	//cQuery += " CONSOLIDADO.A3_CODSUP,  CONSOLIDADO.BM_QBRNVL, CONSOLIDADO.X5_DESCRI, CONSOLIDADO.BM_GRUPO "
 	cQuery += " ORDER BY " 
 	cQuery += " CONSOLIDADO.A3_CODSUP, CONSOLIDADO.X5_DESCRI, CONSOLIDADO.BM_QBRNVL, CONSOLIDADO.BM_GRUPO " 
-	
+
 	If Select("CONSOLIDADO") > 0
 		CONSOLIDADO->(DbCloseArea())
-		
 	EndIf
 	
 	MsAguarde({||execConsult(cQuery,"CONSOLIDADO")},"Aguarde","Consulta dados de vendas.")
@@ -599,7 +599,9 @@ Static Function scriptTotal()
 	//Everson - 12/12/2018. Chamado 045773.
 	//cQuery += " ORDER BY TOTAL.BM_QBRNVL, TOTAL.X5_DESCRI, TOTAL.BM_GRUPO "
 	cQuery += " ORDER BY TOTAL.X5_DESCRI, TOTAL.BM_QBRNVL, TOTAL.BM_GRUPO " 
-	
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+
 Return cQuery
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -1046,7 +1048,7 @@ Static Function scriptConsolidado()
 	cQuery += " WHERE "
 	cQuery += " CONSOLIDADO.A3_CODSUP >= '" + Alltrim(cValToChar(MV_PAR03)) + "' " 
 	cQuery += " AND CONSOLIDADO.A3_CODSUP <= '" + Alltrim(cValToChar(MV_PAR04)) + "' " 
-	
+
 Return cQuery
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -1080,10 +1082,11 @@ Static Function cobSuperv()
 	
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY VENDAS.A3_CODSUP ORDER BY VENDAS.A3_CODSUP "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBSUP") > 0
 		COBSUP->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBSUP"
@@ -1136,10 +1139,11 @@ Static Function cobNvTot()
 	
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY VENDAS.A3_CODSUP, X5_DESCRI, BM_QBRNVL ORDER BY VENDAS.A3_CODSUP, X5_DESCRI, BM_QBRNVL "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBNVBQL") > 0
 		COBNVBQL->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBNVBQL"
@@ -1190,10 +1194,11 @@ Static Function cobConsolidado()
 	
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY X5_DESCRI, BM_QBRNVL, BM_GRUPO ORDER BY X5_DESCRI, BM_QBRNVL, BM_GRUPO "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBCONS") > 0
 		COBCONS->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBCONS"
@@ -1243,10 +1248,11 @@ Static Function cobTConsolidado()
 	
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY X5_DESCRI, BM_QBRNVL ORDER BY X5_DESCRI, BM_QBRNVL "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBTCONS") > 0
 		COBTCONS->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBTCONS"
@@ -1299,10 +1305,11 @@ Static Function carteira()
 	EndIf
 	   
 	cQuery += " GROUP BY A3.A3_CODSUP ORDER BY A3.A3_CODSUP "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("CARTEIRA") > 0
 		CARTEIRA->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "CARTEIRA"
@@ -1368,10 +1375,11 @@ Static Function ativosSuper()
 	cQuery += " GROUP BY "
 	cQuery += " ATIVOS.A3_CODSUP "
 	cQuery += " ORDER BY ATIVOS.A3_CODSUP "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("ATIVOS") > 0
 		ATIVOS->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "ATIVOS"

@@ -21,27 +21,23 @@ STATIC oComboTipoSa := Nil
 	@example
 	(examples)
 	@see (links_or_references)
-	@history chamado 055188 - FWNM         - 17/02/2020 - OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA
+	@history chamado 055188 - FWNM    - 17/02/2020 - OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA
+	@history ticket  35699  - SIGOLI  - 01/10/2021 - Rotina estava desposicionada na exclusao da solciitação por item
 /*/
 User Function MT105SCR() 
     
-	Local  oDlg         := ParamIxb[1]
-	Local  nPosicao     := ParamIxb[2]
-	Local  OGet         := ParamIxb[3]
-	Local  oSize 
-	Local  oSize2  
-	Local aArea	:= GetArea()
-
-	// Chamado n. 055188 || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA - FWNM - 17/02/2020
+    Local aArea 	:= GetArea()
+	Local oDlg      := ParamIxb[1]
+	Local nPosicao  := ParamIxb[2]
+	Local oSize 
+	Local oSize2  
 	Local cComboTxt   := "Transf Manutencao"
 	Local cUsrManut := GetMV("MV_#MANUSU",,"001428") 
-	//
-	
-	//memowrite("\LOGRDM\"+ALLTRIM(PROCNAME())+".LOG",Dtoc(date()) + " - " + time() + " - " +alltrim(cusername))
 	
 	cComboTipoSa := Space(1) 
 	nComboTipoSa := 1
 	oComboTipoSa := Nil
+	
 	
 	IF __cUserID $ GETMV("MV_#USUTRA") .or. __cUserID $ cUsrManut 
 	
@@ -54,6 +50,7 @@ User Function MT105SCR()
 		
 		oSize:Process() // Dispara os calculos 
 		 
+		
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ Divide cabeçalho                                             ³
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -87,10 +84,6 @@ User Function MT105SCR()
 			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 111 COMBOBOX oComboTipoSa VAR cComboTipoSa ITEMS aComboTipoSA SIZE 50,10 PIXEL OF oDlg on change nComboTipoSa := oComboTipoSa:nAt
 		
 		ELSE
-		
-			DBSELECTAREA("SCP")
-			DBSETORDER(1)
-			DBGOTOP()
 				
 			IF DBSEEK(xFilial("SCP")+cA105Num, .T.) 
 				                                        
@@ -103,22 +96,22 @@ User Function MT105SCR()
 					cComboTipoSa := 'Transferencia'
 
 				ElseIf AllTrim(SCP->CP_XTIPO) == 'M' // Chamado n. 055188 || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA - FWNM - 17/02/2020
-					    
+					     
 					cComboTipoSa := cComboTxt
 
 				ENDIF
 				
 			ENDIF
 				
-			SCP->( DBCLOSEAREA() )  
-			
 			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 200 SAY OemToAnsi("Tipo") SIZE 268, 8 OF oDlg PIXEL
 			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 225 COMBOBOX oComboTipoSa VAR cComboTipoSa ITEMS aComboTipoSA SIZE 50,10 PIXEL OF oDlg on change nComboTipoSa := oComboTipoSa:nAt
 		
-		ENDIF
+		ENDIF 
+		
 
 	ENDIF
 	
+
 	RestArea(aArea)
 	
 Return(NIL) 
@@ -191,3 +184,5 @@ User Function ADEST021P()
 	cGatilho := Iif(__cUserID $ cUsrManut .and. nComboTipoSa == 3, M->CP_PRODUTO, '') // Chamado n. 055188 || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA - FWNM - 17/02/2020
 
 RETURN(cGatilho)
+
+

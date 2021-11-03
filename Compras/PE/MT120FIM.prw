@@ -18,6 +18,7 @@
     @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
     @history Chamado 15804  - Leonardo P. Monteiro  - 26/08/2021 - Inclusão do nome do município.
     @history Chamado 15804  - Leonardo P. Monteiro  - 31/08/2021 - Correção de error.log.
+    @history Chamado 34655  - Abel Babini           - 28/09/2021 - Correção preenchimento do campo C7_XSOLIC
 /*/
 User Function MT120FIM()
     Local aArea       := GetArea()
@@ -153,7 +154,7 @@ Static Function fGrvInf()
             
             While SC7->( !EOF() ) .and. SC7->C7_FILIAL==FWxFilial("SC7") .and. SC7->C7_NUM==cNumPC
                 
-                if EMPTY(SC7->C7_XSOLIC)
+                if EMPTY(Alltrim(SC7->C7_XSOLIC))
                     if !Empty(SC7->C7_NUMSC) .and. !Empty(SC7->C7_ITEMSC)
 
                         cQuery  := " SELECT C1_USER "
@@ -173,7 +174,7 @@ Static Function fGrvInf()
                         cSolic := Alltrim(SC7->C7_USER)+"-"+AllTrim(UsrFullName(SC7->C7_USER))
                     endif
                 ELSE
-                    cSolic := ""
+                    cSolic := Alltrim(SC7->C7_XSOLIC) //Chamado 34655  - Abel Babini           - 28/09/2021 - Correção preenchimento do campo C7_XSOLIC
                 endif
 
                 RecLock("SC7", .f.)

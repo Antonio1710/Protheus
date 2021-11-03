@@ -15,6 +15,7 @@
 	@see (links_or_references)
 	@history ticket 15798 - Fernando Macieira - 02/08/2021 - OTIMIZAÇÃO ROTINA EPCP001
 	@history ticket 18340 - Fernando Macieira - 17/08/2021 - Tratamento de vírgula e pontuação 
+	@history ticket 62623 - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
 /*/
 User Function EPCP001(aRotAuto)
 
@@ -1983,8 +1984,15 @@ Static Function ChkDadZAM(aDadZAM)
 			GrvTRB("Código endereço não cadastrado neste armazém", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
 		EndIf
 
-	EndIf
+	Else
 
+		// @history ticket 62623 - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
+		If !Empty(AllTrim(aDadZAM[7]))
+			lRet := .f.
+			GrvTRB("Produto não controla enderaçamento e possui endereço informado", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		EndIf
+
+	EndIf
 
     // Documento
     If Empty(AllTrim(aDadZAM[5]))

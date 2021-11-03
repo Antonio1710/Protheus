@@ -11,7 +11,6 @@
 	@since 26/04/2019
 	@version 01
 	@history Chamado 057643 - William Costa - 24/04/2020 - Identificado que a variavel cErro não estava declarada, onde gerava o erro e também logica para bloquear a criação do saldo quando o cErro estive preenchido estava errado, ajustado as duas logicas no programa
-	@history Chamado 016320 - Leonardo P. Monteiro - 01/07/2021 - Correção na rotina para a geração de saldo abatendo os valores já endereçados (SBF) e a endereçar (SDA). 
 /*/
 
 USER FUNCTION ADEST041P()     
@@ -255,13 +254,13 @@ Static Function SqlEndereco(cFilAtu,cProd,cLocal,cEnd)
 RETURN(NIL)    
 
 Static Function SqlQtdAtual(cFilAtu,cCodItem,cLocal)
-	// @history Chamado 016320 - Leonardo P. Monteiro - 01/07/2021 - Correção na rotina para a geração de saldo abatendo os valores já endereçados (SBF) e a endereçar (SDA). 
+
     BeginSQL Alias "TRC"
 			%NoPARSER%   
 			SELECT SB2.B2_FILIAL,
 			       SB2.B2_COD,
 			       SB2.B2_LOCAL,
-			       (SB2.B2_QATU-ISNULL(SBF.BF_QUANT,0)-ISNULL(SDA.DA_SALDO,0)) B2_QATU,
+			       SB2.B2_QATU,
 			       SB2.B2_QACLASS,
 			       SB2.B2_QEMP,
 			       SB2.B2_QEMPN,
@@ -275,22 +274,11 @@ Static Function SqlQtdAtual(cFilAtu,cCodItem,cLocal)
 			       SB2.B2_QEPRE2,
 			       SB2.B2_QPEDVE2,
 			       SB2.B2_RESERV2
-			  FROM %Table:SB2% SB2 LEFT JOIN 
-			  		(SELECT BF.BF_FILIAL, BF.BF_PRODUTO BF_COD, BF.BF_LOCAL, SUM(BF.BF_QUANT) BF_QUANT 
-					 FROM %Table:SBF% BF
-					 WHERE BF.D_E_L_E_T_=''
-					 GROUP BY BF.BF_FILIAL, BF.BF_PRODUTO, BF.BF_LOCAL) SBF
-				    ON SB2.D_E_L_E_T_='' AND SB2.B2_FILIAL=SBF.BF_FILIAL AND SB2.B2_COD=SBF.BF_COD AND SB2.B2_LOCAL=SBF.BF_LOCAL
-					LEFT JOIN
-					(SELECT DA.DA_FILIAL, DA.DA_PRODUTO DA_COD, DA.DA_LOCAL, SUM(DA.DA_SALDO) DA_SALDO
-					 FROM SDA010 DA
-					 WHERE DA.D_E_L_E_T_='' AND DA.DA_SALDO > 0
-					 GROUP BY DA.DA_FILIAL, DA.DA_PRODUTO, DA.DA_LOCAL) SDA
-				    ON SB2.B2_FILIAL=SDA.DA_FILIAL AND SB2.B2_COD=SDA.DA_COD AND SB2.B2_LOCAL=SDA.DA_LOCAL
+			  FROM SB2010 SB2
 			WHERE SB2.B2_FILIAL   = %EXP:cFilAtu%
 			  AND SB2.B2_COD      = %EXP:cCodItem%
 			  AND SB2.B2_LOCAL    = %EXP:cLocal% 
-			  AND SB2.B2_QATU-ISNULL(SBF.BF_QUANT,0)-ISNULL(SDA.DA_SALDO,0)     > 0
+			  AND SB2.B2_QATU     > 0
 			  AND SB2.D_E_L_E_T_ <> '*'
 	EndSQl
 	

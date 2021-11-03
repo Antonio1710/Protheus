@@ -54,6 +54,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Ticket 8191    - ADRIANO SAVOINE - 19/01/2021 - Alteração na rede de Banco e condição de pagamento para toda Rede.
 	@history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
 	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar".
+	@history Tickets 13526  - Everson - 14/10/2021 - Tratamento para gravar a relação A1_XTPDESC x PB3_XTPDES.
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -6013,9 +6014,10 @@ Static Function AdoAtuRed( cCodPB3, cLojaPB3,nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,c
 
 	Local aArea       := GetArea()
 	Local lRet 	      := .F.
-	Local dPB3_VENCLC := M->PB3_VENCLC  // Ticket 8099 - 15/01/2021 - ADRIANO SAVOINE
+	Local dPB3_VENCLC := M->PB3_VENCLC // Ticket 8099 - 15/01/2021 - ADRIANO SAVOINE
 	Local cPB3_BCO1   := M->PB3_BCO1   // Ticket 8191 - 19/01/2021 - ADRIANO SAVOINE
-	Local cPB3_COND   := M->PB3_COND   // Ticket 8191 - 19/01/2021 - ADRIANO SAVOINE		
+	Local cPB3_COND   := M->PB3_COND   // Ticket 8191 - 19/01/2021 - ADRIANO SAVOINE
+	Local cPB3_ANCC	  := M->PB3_XTPDES // Everson - 14/10/2021. Chamado 13526. 		
 	Private oDlg01
 	Private oFont1
 
@@ -6068,6 +6070,11 @@ Static Function AdoAtuRed( cCodPB3, cLojaPB3,nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,c
 		@125,180 SAY "Cond. Pagamento: " Font oFont1 OF oDlg01 PIXEL
 		@125,240 SAY cPB3_COND  SIZE 80,10 Font oFont1 OF oDlg01 PIXEL 
 
+		//Everson - 14/10/2021. Chamado 13526.
+		@140,007 SAY "Apuração NCC: " Font oFont1 OF oDlg01 PIXEL
+		@140,080 SAY cPB3_ANCC  SIZE 80,10 Font oFont1 OF oDlg01 PIXEL 
+		//
+		
 		@160,150 BMPBUTTON TYPE 1 ACTION(lRet := .T.,Close(oDlg01))
 		@160,185 BMPBUTTON TYPE 2 ACTION(lRet := .F.,Close(oDlg01))
 
@@ -6076,7 +6083,7 @@ Static Function AdoAtuRed( cCodPB3, cLojaPB3,nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,c
 		IF lRet
 			IF MsgYesNo(OEMTOANSI("Confirma inicio da atualização/replicação?"),OEMTOANSI("A T E N Ç Ã O"))
 
-				PROCESSA({||  fReplAss(nPB3_DESC,cCODPB3,cLojaPB3,cPB3_NOMEAS,cPB3_TPREDE,_cCGCPB3,_cPB3SA1,_cNMPB3)},"atualizando...")
+				PROCESSA({||  fReplAss(nPB3_DESC,cCODPB3,cLojaPB3,cPB3_NOMEAS,cPB3_TPREDE,_cCGCPB3,_cPB3SA1,_cNMPB3,cPB3_ANCC)},"atualizando...") // Everson - 14/10/2021. Chamado 13526.
 				U_CREDITOLOG(cCodPB3, cLojaPB3,ALLTRIM(cusername),"Atualiza SA1_PB3_SZF") //chamado 036175 05/01/2018 WILLIAM COSTA
 
 			ENDIF
@@ -6139,6 +6146,11 @@ Static Function AdoAtuRed( cCodPB3, cLojaPB3,nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,c
 			@125,180 SAY "Cond. Pagamento: " Font oFont1 OF oDlg01 PIXEL
 			@125,240 SAY cPB3_COND  SIZE 80,10 Font oFont1 OF oDlg01 PIXEL 
 
+			//Everson - 14/10/2021. Chamado 13526.
+			@140,007 SAY "Apuração NCC: " Font oFont1 OF oDlg01 PIXEL
+			@140,080 SAY cPB3_ANCC  SIZE 80,10 Font oFont1 OF oDlg01 PIXEL 
+			//
+
 			@160,150 BMPBUTTON TYPE 1 ACTION(lRet := .T.,Close(oDlg01))
 			@160,185 BMPBUTTON TYPE 2 ACTION(lRet := .F.,Close(oDlg01))
 
@@ -6147,7 +6159,7 @@ Static Function AdoAtuRed( cCodPB3, cLojaPB3,nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,c
 			IF lRet
 				IF MsgYesNo(OEMTOANSI("Confirma inicio da atualização/replicação?"),OEMTOANSI("A T E N Ç Ã O"))
 
-					PROCESSA({||  fReplica(nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,cPB3_TPREDE,dPB3_VENCLC,cPB3_COND,cPB3_BCO1)},"atualizando...")
+					PROCESSA({||  fReplica(nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,cPB3_TPREDE,dPB3_VENCLC,cPB3_COND,cPB3_BCO1,cPB3_ANCC)},"atualizando...") //Everson - 14/10/2021. Chamado 13526.
 					U_CREDITOLOG(cCodPB3, cLojaPB3,ALLTRIM(cusername),"Atualiza SA1_PB3_SZF") //chamado 036175 05/01/2018 WILLIAM COSTA
 
 				ENDIF
@@ -6176,7 +6188,7 @@ RETURN(NIL)
 	@history 
 */
 
-STATIC FUNCTION fReplica(nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,cPB3_TPREDE,dPB3_VENCLC,cPB3_COND,cPB3_BCO1)
+STATIC FUNCTION fReplica(nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,cPB3_TPREDE,dPB3_VENCLC,cPB3_COND,cPB3_BCO1,cPB3_ANCC)
 
 	Local aArea:= GetArea()
 	_nIndexSZF := IndexOrd()
@@ -6223,7 +6235,7 @@ STATIC FUNCTION fReplica(nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,cPB3_TPREDE,dPB3_VENC
 			&&atualizacao para SA1
 			_cQuery1:=""
 			_cQuery1:=" UPDATE 	"+retsqlname("SA1")+" WITH(UPDLOCK) SET A1_CODRED='"+alltrim(_cRede)+"' , A1_ZZDESCB="+alltrim(STR(_nDescB))+" , A1_TPREDE='"+_cTpRed+"' , A1_NOMEASS='"+_cAssoc+"' , A1_VENCLC='"+_cLimcred+"',"
-			_cQuery1+=" A1_BCO1='"+_cBanco+"', A1_COND='"+_cCondP+"'"		 
+			_cQuery1+=" A1_BCO1='"+_cBanco+"', A1_COND='"+_cCondP+"', A1_XTPDESC='" + cPB3_ANCC + "'"	// Everson - 14/10/2021. Chamado 13526.	 
 			_cQuery1+=" WHERE   "
 			_cQuery1+=" LEFT(A1_CGC,8) = '" + Alltrim(SZF->ZF_CGCMAT) + "' "		
 			_cQuery1+=" AND "+RETSQLNAME("SA1")+".D_E_L_E_T_=' ' "
@@ -6231,7 +6243,7 @@ STATIC FUNCTION fReplica(nPB3_DESC,cPB3_CODRED,cPB3_NOMEAS,cPB3_TPREDE,dPB3_VENC
 			&&atualizacao para PB3				
 			_cQuery2:=""
 			_cQuery2:=" UPDATE 	"+retsqlname("PB3")+" WITH(UPDLOCK) SET PB3_CODRED='"+alltrim(_cRede)+"' , PB3_DESC="+alltrim(STR(_nDescB))+" , PB3_TPREDE='"+_cTpRed+"' , PB3_NOMEAS='"+_cAssoc+"' , PB3_VENCLC='"+_cLimcred+"',"
-			_cQuery2+=" PB3_BCO1='"+_cBanco+"', PB3_COND='"+_cCondP+"'"		 
+			_cQuery2+=" PB3_BCO1='"+_cBanco+"', PB3_COND='"+_cCondP+"', PB3_XTPDES='" + cPB3_ANCC + "'"	// Everson - 14/10/2021. Chamado 13526.	 	 
 			_cQuery2+=" WHERE   "
 			_cQuery2+=" LEFT(PB3_CGC,8) = '" + Alltrim(SZF->ZF_CGCMAT) + "' "		
 			_cQuery2+=" AND "+RETSQLNAME("PB3")+".D_E_L_E_T_=' ' "
@@ -6467,7 +6479,7 @@ Return lRetpag
 	@history 
 */
 
-STATIC FUNCTION fReplAss(nPB3_DESC,cCODPB3,cLojaPB3,cPB3_NOMEAS,cPB3_TPREDE,_cCGCPB3,_cPB3SA1,_cNMPB3)
+STATIC FUNCTION fReplAss(nPB3_DESC,cCODPB3,cLojaPB3,cPB3_NOMEAS,cPB3_TPREDE,_cCGCPB3,_cPB3SA1,_cNMPB3,cPB3_ANCC)
 
 	Local aArea := GetArea()
 	//_nIndexSZF := IndexOrd()
@@ -6485,7 +6497,7 @@ STATIC FUNCTION fReplAss(nPB3_DESC,cCODPB3,cLojaPB3,cPB3_NOMEAS,cPB3_TPREDE,_cCG
 
 	&&atualizacao para SA1
 	_cQuery1:=""
-	_cQuery1:=" UPDATE 	"+retsqlname("SA1")+" WITH(UPDLOCK) SET A1_ZZDESCB="+alltrim(STR(_nDescB))+" , A1_NOMEASS='"+_cAssoc+"' "
+	_cQuery1:=" UPDATE 	"+retsqlname("SA1")+" WITH(UPDLOCK) SET A1_ZZDESCB="+alltrim(STR(_nDescB))+" , A1_NOMEASS='"+_cAssoc+"', A1_XTPDESC='" + cPB3_ANCC + "' " // Everson - 14/10/2021. Chamado 13526.
 	_cQuery1+=" WHERE   "
 	_cQuery1+=" A1_CGC = '" + _cCGCPB3 + "' "
 	_cQuery1+=" AND "+RETSQLNAME("SA1")+".D_E_L_E_T_=' ' "
@@ -6516,7 +6528,7 @@ STATIC FUNCTION fReplAss(nPB3_DESC,cCODPB3,cLojaPB3,cPB3_NOMEAS,cPB3_TPREDE,_cCG
 
 	&&atualizacao para PB3
 	_cQuery2:=""
-	_cQuery2:=" UPDATE 	"+retsqlname("PB3")+" WITH(UPDLOCK) SET PB3_DESC="+alltrim(STR(_nDescB))+" , PB3_NOMEAS='"+_cAssoc+"' "
+	_cQuery2:=" UPDATE 	"+retsqlname("PB3")+" WITH(UPDLOCK) SET PB3_DESC="+alltrim(STR(_nDescB))+" , PB3_NOMEAS='"+_cAssoc+"', PB3_XTPDES='" + cPB3_ANCC + "' " // Everson - 14/10/2021. Chamado 13526.
 	_cQuery2+=" WHERE   "
 	_cQuery2+=" PB3_CGC = '" + _cCGCPB3 + "' "
 	_cQuery2+=" AND "+RETSQLNAME("PB3")+".D_E_L_E_T_=' ' "

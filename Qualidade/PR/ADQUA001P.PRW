@@ -15,6 +15,8 @@ Static cFormatRet := "application/json"
     @history Everson, 26/07/2021, Chamado 4257 Tratamento para inserir informações por lote, data de vencimento, data de produção e produto.
     @history Everson, 29/07/2021, Chamado 4257 Tratamento para quebra de informações.
     @history Leonardo, 01/08/2021, Chamado 8465 Gravação na tabela ZGA os dados detalhados dos pallets pelo identificador das caixas.
+    @history Everson, 05/08/2021, Chamado 4257 Tratamento para alteração de tags do webservice do Edata.
+
 /*/
 User Function ADQUA001P
 return Nil
@@ -310,6 +312,12 @@ Static Function getPalete(cErro, aDados, cPallete)
     Local cTurno    := "" //Everson - 29/07/2021. Chamado 4257.   
     Local cDtVenc   := "" //Everson - 29/07/2021. Chamado 4257.   
     Local cDtVencT  := "" //Everson - 29/07/2021. Chamado 4257.   
+
+    //Everson - 05/08/2021. Chamado 4257.   
+    Local xChecTag  := nil
+    Local nOpcTag   := 1
+    //
+
     Default aDados    := {}
     //
     If ! Empty(cErro)
@@ -324,15 +332,40 @@ Static Function getPalete(cErro, aDados, cPallete)
         Return .F.
 
     EndIf
-    //Valida o status de retorno
-    If Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS3_WEBSERVICERETURN:_STATUS:TEXT)) == "wrsFailed"
-        cErro := Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS3_WEBSERVICERETURN:_MESSAGE:TEXT))
-        Return .F.
+
+    //Everson - 05/08/2021. Chamado 4257.
+    xChecTag := XmlChildEx(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY,"_NS3_WEBSERVICERETURN")
+    If ValType(xChecTag) <> "U"
+        nOpcTag := 2
 
     EndIf
 
-    //
-    xCaixas := XmlChildEx(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE,"_NS2_GETPALLETINFOCARTONITEM")
+    //Valida o status de retorno
+    //Everson - 05/08/2021. Chamado 4257.
+    If nOpcTag == 1
+        If Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS3_WEBSERVICERETURN:_STATUS:TEXT)) == "wrsFailed"
+            cErro := Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS3_WEBSERVICERETURN:_MESSAGE:TEXT))
+            Return .F.
+
+        EndIf
+
+    Else 
+        If Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS3_WEBSERVICERETURN:_STATUS:TEXT)) == "wrsFailed"
+            cErro := Alltrim(cValToChar(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS3_WEBSERVICERETURN:_MESSAGE:TEXT))
+            Return .F.
+
+        EndIf
+
+    EndIf
+
+    //Everson - 05/08/2021. Chamado 4257.
+    If nOpcTag == 1
+        xCaixas := XmlChildEx(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE,"_NS2_GETPALLETINFOCARTONITEM")
+
+    Else 
+        xCaixas := XmlChildEx(oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY,"_NS2_GETPALLETINFOCARTONITEM")
+
+    EndIf
 
     //
     If ValType(xCaixas) == "U"
@@ -341,14 +374,25 @@ Static Function getPalete(cErro, aDados, cPallete)
 
     ElseIf ValType(xCaixas) == "A"
 
-        //
-        cTotalCxP := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_DispatchQty:TEXT
-        cDataP    := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_PalletDate:TEXT
-        cKgP      := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_NetWeight:TEXT
-        cKgRP     := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_RealWeight:TEXT
-        cTaraP    := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_Tare:TEXT
-        cStatusP  := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_PalletStatus:TEXT
-            
+        //Everson - 05/08/2021. Chamado 4257.
+        If nOpcTag == 1
+            cTotalCxP := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_DispatchQty:TEXT
+            cDataP    := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_PalletDate:TEXT
+            cKgP      := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_NetWeight:TEXT
+            cKgRP     := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_RealWeight:TEXT
+            cTaraP    := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_Tare:TEXT
+            cStatusP  := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS1_GETPALLETINFORESPONSE:_NS2_PALLETINFODATA:_PalletStatus:TEXT
+
+        Else 
+            cTotalCxP := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_DispatchQty:TEXT
+            cDataP    := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_PalletDate:TEXT
+            cKgP      := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_NetWeight:TEXT
+            cKgRP     := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_RealWeight:TEXT
+            cTaraP    := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_Tare:TEXT
+            cStatusP  := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_PalletStatus:TEXT
+
+        EndIf
+     
         //
         cJsonResp += '['
 
@@ -478,7 +522,7 @@ Static Function wsEdata(cErro,cPallete)
     Local oWsdl     := Nil
     Local xRet      := Nil
     Local cResponse := ""
-
+    
     //    
     oWsdl := TWsdlManager():New()
 
@@ -559,5 +603,38 @@ Return Nil
     @since 31/05/2021
     @version 01
     /*/
-Static Function rmvAcento(cTexto)
-Return StaticCall(ADFIN064P, rmvAcento,cTexto)
+Static Function rmvAcento(cString)
+
+	cString := Alltrim(cValToChar(cString))
+	cString := StrTran(cString,"\" ," ")
+	cString := StrTran(cString,Chr(34) ," ")
+	cString := StrTran(cString,Chr(28) ," ")
+	cString := StrTran(cString,Chr(29) ," ")
+	cString := StrTran(cString,Chr(39) ," ")
+	cString := StrTran(cString,Chr(40) ," ")
+	cString := StrTran(cString,Chr(41) ," ")
+	cString := StrTran(cString,Chr(47) ," ")
+	cString := StrTran(cString,Chr(91) ," ")
+	cString := StrTran(cString,Chr(92) ," ")
+	cString := StrTran(cString,Chr(93) ," ")
+	cString := StrTran(cString,Chr(96) ," ")
+	cString := StrTran(cString,Chr(125)," ")
+	cString := StrTran(cString,Chr(123)," ")
+	cString := StrTran(cString,Chr(145)," ")
+	cString := StrTran(cString,Chr(146)," ")
+	cString := StrTran(cString,Chr(147)," ")
+	cString := StrTran(cString,Chr(148)," ")	
+	cString	:= StrTran(cString,Chr(129)," ")
+	cString	:= StrTran(cString,Chr(141)," ")
+	cString	:= StrTran(cString,Chr(143)," ")
+	cString	:= StrTran(cString,Chr(144)," ")
+	cString	:= StrTran(cString,Chr(157)," ")
+	cString	:= StrTran(cString,Chr(9)  ," ")
+	cString	:= StrTran(cString,Chr(10) ," ")
+	cString	:= StrTran(cString,Chr(13) ," ")
+	
+	cString := FwCutOff(cString,.T.)
+
+    Conout("rmvAcento " + cString)
+
+Return cString

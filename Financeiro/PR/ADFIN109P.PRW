@@ -14,6 +14,7 @@
 	@history Ticket 8      - Abel Babini - 11/05/2021 - Inclusão da Liberação de Estoque.
 	@history Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
 	@history Ticket 8      - Abel Babini - 19/07/2021 - Alterações no layout e sistemática de liberação
+	@history Ticket 8      - Abel Babini - 27/09/2021 - Retirado os pedidos Não Processados como bloqueados em 27/09/2021 conforme solicitação da Flávia
 /*/
 
 User Function ADFIN109P()
@@ -113,7 +114,7 @@ Static Function fTlAprov()
 	Private aX3NmRd	:= FWTamSX3("ZF_NOMERED")
 	Private aX3Clie	:= FWTamSX3("C5_CLIENTE")
 	Private aX3Loja	:= FWTamSX3("C5_LOJACLI")
-	Private aX3NomC	:= FWTamSX3("C5_NOMECLI")
+	Private aX3NomC	:= FWTamSX3("A1_NOME")
 	Private aX3TotP	:= FWTamSX3("C5_XTOTPED")
 	Private aX3NumP := {7  , 0, "N"}
 	Private aX3TpCl	:= {6  , 0, "C"}
@@ -137,7 +138,10 @@ Static Function fTlAprov()
 	Private aX3PdXCp:= FWTamSX3("C5_XCOPIA")
 	Private aX3PdRft:= FWTamSX3("C5_REFATUR")
 	Private aX3PdFlg:= FWTamSX3("C5_FLAGFIN")
-	
+	Private aX3PdCdV:= FWTamSX3("A3_COD")
+	Private aX3PdNmV:= FWTamSX3("A3_NOME")
+	Private aX3PdEmV:= FWTamSX3("A3_EMAIL")
+
 	Private aX3A1LCr:= FWTamSX3("A1_LC")
 	Private aX3A1Rsc:= FWTamSX3("A1_XRISCO")
 	Private aX3A1DAt:= FWTamSX3("A1_XDTRISC")
@@ -275,8 +279,19 @@ Static Function fTlAprov()
 		@ 132,003 SAY OemToAnsi("Relação Pedidos")FONT oFont001 SIZE 200,18 OF oPnSt01 PIXEL
     @ 142,003 MSGET cRelPed									SIZE 078,008 	OF oPnSt01 PIXEL PICTURE '@!'
 
-		//Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
-		@ aBtnPos[3],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)) OF oPnSt01 PIXEL //"Exportar Excel"
+		//@ 001,001 SAY OemToAnsi("Totais")						FONT oFont004 SIZE 200,15 OF oP03D101 PIXEL
+		@ 157,001 SAY OemToAnsi("Liberados")				FONT oFont003 SIZE 200,15 OF oPnSt01 PIXEL
+		@ 157,050 MSGET nVlTtLb									SIZE 035,008 	OF oPnSt01 PIXEL PICTURE '@E 999,999' WHEN .F.
+		
+		@ 167,001 SAY OemToAnsi("Bloqueados")				FONT oFont003 SIZE 200,15 OF oPnSt01 PIXEL
+		@ 167,050 MSGET nVlTtBl									SIZE 035,008 	OF oPnSt01 PIXEL PICTURE '@E 999,999' WHEN .F.
+		
+		@ 177,001 SAY OemToAnsi("Não Proces.")	FONT oFont003 SIZE 200,15 OF oPnSt01 PIXEL
+		@ 177,050 MSGET nVlTtNP									SIZE 035,008 	OF oPnSt01 PIXEL PICTURE '@E 999,999' WHEN .F.
+
+		@ aBtnPos[5],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)) OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[4],000 BUTTON OemToAnsi('Pré Liberação')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xPrcLbCr(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) ) OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[3],000 BUTTON OemToAnsi('Monitoramento PV')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADLOG031P() ) OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[2],000 BUTTON OemToAnsi('Analisar Pedidos')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xAnPedCl(aSize)) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[1],000 BUTTON OemToAnsi('Sair')											SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (oDlgxPg:End()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 		
@@ -356,6 +371,18 @@ Static Function fTlAprov()
 			oP03D101:FreeChildren()
 			oP03RE01:FreeChildren()
 
+			@ 001,001 SAY OemToAnsi("Totais")						FONT oFont004 SIZE 200,15 OF oP03D101 PIXEL
+			@ 011,001 SAY OemToAnsi("Liberados")				FONT oFont003 SIZE 200,15 OF oP03D101 PIXEL
+    	@ 011,065 MSGET nVlTtLb									SIZE 035,008 	OF oP03D101 PIXEL PICTURE '@E 999,999' WHEN .F.
+			
+			@ 021,001 SAY OemToAnsi("Bloqueados")				FONT oFont003 SIZE 200,15 OF oP03D101 PIXEL
+			@ 021,065 MSGET nVlTtBl									SIZE 035,008 	OF oP03D101 PIXEL PICTURE '@E 999,999' WHEN .F.
+			
+			@ 031,001 SAY OemToAnsi("Não Processados")	FONT oFont003 SIZE 200,15 OF oP03D101 PIXEL
+			@ 031,065 MSGET nVlTtNP									SIZE 035,008 	OF oP03D101 PIXEL PICTURE '@E 999,999' WHEN .F.
+			
+			// nVlTtTt := nVlTtLb + nVlTtBl + nVlTtNP
+			/*
 			// @ 001,001 SAY OemToAnsi("PARÂMETROS")	FONT oFont004 SIZE 200,15 OF oP03TE01 PIXEL
 			// Prepara o conector WebSocket
 			Private oWebChannel := TWebChannel():New()
@@ -367,6 +394,7 @@ Static Function fTlAprov()
 			oWebEngine:bLoadFinished := {|self,url| }
 			oWebEngine:navigate("https://app.powerbi.com/groups/me/dashboards/543b7ce9-8439-4bfe-9a9d-ddf7dc9f4a3f")
 			oWebEngine:Align := CONTROL_ALIGN_ALLCLIENT
+			*/
 
   	// xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)
 		MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)
@@ -445,8 +473,8 @@ Static Function xVerStsP(cQuery)
 
 	ENDIF
 
-	
-	IF cStsCrd == 'B'.OR. cStsCrd == 'N' //.OR. cStsFin == 'B' .OR. cStsEst == 'Bloqueado' .OR. cStsCom == 'Bloqueado'
+	//Ticket 8      - Abel Babini - 27/09/2021 - Retirado os pedidos Não Processados como bloqueados em 27/09/2021 conforme solicitação da Flávia
+	IF cStsCrd == 'B' //.OR. cStsCrd == 'N' //.OR. cStsFin == 'B' .OR. cStsEst == 'Bloqueado' .OR. cStsCom == 'Bloqueado'
 		cStsPed := 'B'
 	ENDIF
 
@@ -500,7 +528,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
       SC5.C5_TIPO,
       SC5.C5_CLIENTE,
       SC5.C5_LOJACLI,
-      SC5.C5_NOMECLI,
+      SA1.A1_NOME,
 			SA1.A1_CODRED,
 			SA1.A1_XRISCO,
 			SA1.A1_XDTRISC,
@@ -520,6 +548,12 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
       SC5.C5_REFATUR,
       SC5.C5_FLAGFIN,
 			SC5.C5_BLQ,
+			SC5.C5_VEND1 AS CODVEN,
+			SA3.A3_NOME AS NOMEVD,
+			SA3.A3_EMAIL AS EMAILV,
+			SA3B.A3_COD AS CODSUP,
+			SA3B.A3_NOME AS NOMESP,
+			SA3B.A3_EMAIL AS EMAILS,
 			SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) AS C5_XTOTPED
     FROM %TABLE:SC5% SC5 (NOLOCK)
 		INNER JOIN %TABLE:SC6% SC6 (NOLOCK) ON
@@ -541,6 +575,12 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			ZF_FILIAL = %xFilial:SZF%
       AND ZF_CGCMAT = SUBSTRING(A1_CGC,1,8)
       AND SZF.%notDel%
+		LEFT JOIN %TABLE:SA3% SA3 (NOLOCK) ON
+			A3_COD = C5_VEND1
+			AND SA3.%notDel%
+		LEFT JOIN %TABLE:SA3% SA3B (NOLOCK) ON
+			SA3B.A3_COD = SA3.A3_SUPER
+			AND SA3B.%notDel%
     WHERE C5_FILIAL = %xFilial:SC5%
 			AND SC5.C5_DTENTR BETWEEN %Exp:DTOS(dDtIni)% AND %Exp:DTOS(dDtFim)%
 			AND SC5.C5_NUM BETWEEN %Exp:cPedDe% AND %Exp:cPedAte%
@@ -557,7 +597,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
       SC5.C5_TIPO,
       SC5.C5_CLIENTE,
       SC5.C5_LOJACLI,
-      SC5.C5_NOMECLI,
+      SA1.A1_NOME,
 			SA1.A1_CODRED,
 			SA1.A1_LC,
 			SA1.A1_XRISCO,
@@ -576,7 +616,13 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
       SC5.C5_XCOPIA,
       SC5.C5_REFATUR,
       SC5.C5_FLAGFIN,
-			SC5.C5_BLQ
+			SC5.C5_BLQ,
+			SC5.C5_VEND1,
+			SA3.A3_NOME,
+			SA3.A3_EMAIL,
+			SA3B.A3_COD,
+			SA3B.A3_NOME,
+			SA3B.A3_EMAIL
   EndSQL
 
 	(cQuery)->(dbGoTop())
@@ -631,7 +677,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 					(cTbClie)->FILIAL   := (cQuery)->C5_FILIAL
 					(cTbClie)->CODIGO   := (cQuery)->C5_CLIENTE
 					(cTbClie)->LOJA   	:= (cQuery)->C5_LOJACLI
-					(cTbClie)->NOME   	:= (cQuery)->C5_NOMECLI
+					(cTbClie)->NOME   	:= (cQuery)->A1_NOME
 					(cTbClie)->TOTAL    := (cQuery)->C5_XTOTPED
 					(cTbClie)->NUMPED		:= 1
 					(cTbClie)->TPCLI    := 'VAREJO'
@@ -677,7 +723,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 				(cTbPed)->REDE   			:= (cQuery)->A1_CODRED
 				(cTbPed)->CODIGO   		:= (cQuery)->C5_CLIENTE
 				(cTbPed)->LOJA   			:= (cQuery)->C5_LOJACLI
-				(cTbPed)->NOME   			:= (cQuery)->C5_NOMECLI
+				(cTbPed)->NOME   			:= (cQuery)->A1_NOME
 				(cTbPed)->TOTAL    		:= (cQuery)->C5_XTOTPED
 
 				(cTbPed)->NUMERO    	:= (cQuery)->C5_NUM
@@ -690,6 +736,12 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 				(cTbPed)->XCOPIA    	:= (cQuery)->C5_XCOPIA
 				(cTbPed)->FLAGFIN    	:= (cQuery)->C5_FLAGFIN
 				(cTbPed)->REFATUR    	:= (cQuery)->C5_REFATUR
+				(cTbPed)->CODVEN    	:= (cQuery)->CODVEN
+				(cTbPed)->NOMEVD    	:= (cQuery)->NOMEVD
+				(cTbPed)->EMAILV    	:= (cQuery)->EMAILV
+				(cTbPed)->CODSUP    	:= (cQuery)->CODSUP
+				(cTbPed)->NOMESP    	:= (cQuery)->NOMESP
+				(cTbPed)->EMAILS    	:= (cQuery)->EMAILS
 
 				(cTbPed)->TIPO    		:= ''
 		
@@ -773,7 +825,7 @@ Static Function xGrdClie()
 	// oGrd10:SetColumns(AddCols("NOMEREDE"	,"Nome Rede"		  ,01,PesqPict("SZF","ZF_NOMERED")	,1	,aX3NmRd[1]	,aX3NmRd[2] , .T.,"C"))
 	oGrd10:SetColumns(AddCols("CODIGO"		,"Código"		      ,01,PesqPict("SC5","C5_CLIENTE")	,1	,aX3Clie[1]	,aX3Clie[2] , .T.,"C"))
 	oGrd10:SetColumns(AddCols("LOJA"		  ,"Loja"	          ,01,PesqPict("SC5","C5_LOJACLI")  ,1	,aX3Loja[1]	,aX3Loja[2] , .T.,"C"))
-	oGrd10:SetColumns(AddCols("NOME"		  ,"Cliente"			  ,01,PesqPict("SC5","C5_NOMECLI")	,1	,aX3NomC[1]	,aX3NomC[2] , .T.,"C"))
+	oGrd10:SetColumns(AddCols("NOME"		  ,"Cliente"			  ,01,PesqPict("SA1","A1_NOME")			,1	,aX3NomC[1]	,aX3NomC[2] , .T.,"C"))
 	oGrd10:SetColumns(AddCols("TOTAL"		  ,"Total Ped."	    ,01,PesqPict("SC5","C5_XTOTPED")	,2	,aX3TotP[1] ,aX3TotP[2]	, .T.,"C"))
 	oGrd10:SetColumns(AddCols("NUMPED"		,"Num Ped."	    	,01,"@E 999,999"									,2	,aX3NumP[1] ,aX3NumP[2]	, .T.,"C"))
 	oGrd10:SetColumns(AddCols("STSPED"		,"Status Crédito"	,01,"@!"												  ,1	,aX3TpBl[1]	,aX3TpBl[2] , .T.,"C"))
@@ -820,7 +872,7 @@ Static Function xGrdPed()
 	// oGrd20:SetColumns(AddCols("REDE"			,"Rede"		     	 	,01,PesqPict("SZF","ZF_REDE")			,1	,aX3CdRd[1]	,aX3CdRd[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("CODIGO"		,"Código"		      ,01,PesqPict("SC5","C5_CLIENTE")	,1	,aX3Clie[1]	,aX3Clie[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("LOJA"		  ,"Loja"	          ,01,PesqPict("SC5","C5_LOJACLI")  ,1	,aX3Loja[1]	,aX3Loja[2] , .T.,"P"))
-	oGrd20:SetColumns(AddCols("NOME"		  ,"Cliente"			  ,01,PesqPict("SC5","C5_NOMECLI")	,1	,aX3NomC[1]	,aX3NomC[2] , .T.,"P"))
+	oGrd20:SetColumns(AddCols("NOME"		  ,"Cliente"			  ,01,PesqPict("SA1","A1_NOME")			,1	,aX3NomC[1]	,aX3NomC[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("NUMERO"		 ,"Pedido"	  		,01,PesqPict("SC5","C5_NUM")  		,1	,aX3PdNum[1],aX3PdNum[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("ROTEIRO"		 ,"Roteiro"	  		,01,PesqPict("SC5","C5_ROTEIRO")  ,1	,aX3PdRot[1],aX3PdRot[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("CONDPAG"		 ,"Cond Pagto"	  ,01,PesqPict("SC5","C5_CONDPAG")  ,1	,aX3PdCp[1] ,aX3PdCp[2]  , .T.,"P"))
@@ -831,7 +883,10 @@ Static Function xGrdPed()
 	oGrd20:SetColumns(AddCols("XCOPIA"		 ,"Cópia Ped"	  	,01,PesqPict("SC5","C5_XCOPIA")  	,1	,aX3PdXCp[1],aX3PdXCp[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("FLAGFIN"		 ,"Flag Financ"	  ,01,PesqPict("SC5","C5_FLAGFIN")  ,1	,aX3PdFlg[1],aX3PdFlg[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("REFATUR"		 ,"Refatura"	  	,01,PesqPict("SC5","C5_REFATUR")  ,1	,aX3PdFlg[1],aX3PdFlg[2] , .T.,"P"))
-
+	oGrd20:SetColumns(AddCols("CODVEN"		 ,"Cod. Vend"	  	,01,PesqPict("SA3","A3_COD")  		,1	,aX3PdCdV[1],aX3PdCdV[2] , .T.,"P"))
+	oGrd20:SetColumns(AddCols("NOMEVD"		 ,"Nome Vend"	  	,01,PesqPict("SA3","A3_NOME")  		,1	,aX3PdNmV[1],aX3PdNmV[2] , .T.,"P"))
+	oGrd20:SetColumns(AddCols("CODSUP"		 ,"Cod. Superv."	,01,PesqPict("SA3","A3_COD")  		,1	,aX3PdCdV[1],aX3PdCdV[2] , .T.,"P"))
+	oGrd20:SetColumns(AddCols("NOMESP"		 ,"Nome Superv."	,01,PesqPict("SA3","A3_NOME")  		,1	,aX3PdNmV[1],aX3PdNmV[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("TOTAL"		  ,"Total Ped."	    ,01,PesqPict("SC5","C5_XTOTPED")	,2	,aX3TotP[1] ,aX3TotP[2]	, .T.,"P"))
 
 	// oGrd20:SetColumns(AddCols("TIPO"		  ,"Tipo Pedido"	  ,01,PesqPict("SC5","C5_TIPO")  		,1	,aX3PdTp[1]	,aX3PdTp[2] , .T.,"P"))
@@ -911,6 +966,10 @@ Static Function xGrdLib()
 	Local cQryVAtr := ''
 	Local cQryVAbr := ''
 	Local cQryPFtr := ''
+	Local cGLVend		:= ''
+	Local cGLSuper	:= ''
+	Local cGLEmlV		:= ''
+	Local cGLEmlS		:= ''
 	// Local _nMaior := Posicione("SA1",1,xFilial("SA1")+(cTbClie)->CODIGO+(cTbClie)->LOJA,"A1_VLACUMU")
 
 	Local _dDTM := DTOC((cTbClie)->DTACUMU)
@@ -959,7 +1018,9 @@ Static Function xGrdLib()
 			_nTotSdRede += (cQryRede)->ZF_SLDREDE
 			_nTotVenci  += (cQryRede)->ZF_VENCIDO
 			_nTotAVenc  += (cQryRede)->ZF_AVENCER
-			_nTotMAcum	+= (cQryRede)->ZF_VLACUMU
+			If _nTotMAcum  == 0
+				_nTotMAcum	:= (cQryRede)->ZF_VLACUMU
+			Endif
 
 			if !Empty(Alltrim(DTOS((cQryRede)->ZF_DTACUMU))) .and. (cQryRede)->ZF_DTACUMU > CTOD(_dDTM)
 				_dDTM := DTOC((cQryRede)->ZF_DTACUMU)
@@ -1061,6 +1122,47 @@ Static Function xGrdLib()
 		// ENDIF
 	ENDIF
 
+	//Carrega Informações de Vendedor e Supervisor
+	(cTbPed)->(dbGoTop())
+	While ! (cTbPed)->(eof())
+		If ! Alltrim((cTbPed)->CODVEN) $ cGLVend
+			If Empty(Alltrim(cGLVend))
+				cGLVend := Alltrim((cTbPed)->CODVEN) + ' ' + Substr(Alltrim((cTbPed)->NOMEVD),1,30)
+			else
+				cGLVend := ' | '+ Alltrim((cTbPed)->CODVEN) + ' ' + Substr(Alltrim((cTbPed)->NOMEVD),1,30)
+			endif
+		Endif
+
+		If ! Alltrim((cTbPed)->EMAILV) $ cGLEmlV
+			If Empty(Alltrim(cGLEmlV))
+				cGLEmlV := Alltrim((cTbPed)->EMAILV)
+			else
+				cGLEmlV := ' | '+ Alltrim((cTbPed)->EMAILV)
+			endif
+		Endif
+
+		If ! Alltrim((cTbPed)->CODSUP) $ cGLSuper
+			If Empty(Alltrim(cGLSuper))
+				cGLSuper := Alltrim((cTbPed)->CODSUP) + ' ' + Substr(Alltrim((cTbPed)->NOMESP),1,30)
+			else
+				cGLSuper := ' | '+ Alltrim((cTbPed)->CODSUP) + ' ' + Substr(Alltrim((cTbPed)->NOMESP),1,30)
+			endif
+		Endif
+
+		If ! Alltrim((cTbPed)->EMAILS) $ cGLEmlS
+			If Empty(Alltrim(cGLEmlS))
+				cGLEmlS := Alltrim((cTbPed)->EMAILS)
+			else
+				cGLEmlS := ' | '+ Alltrim((cTbPed)->EMAILS)
+			endif
+		Endif
+
+
+		(cTbPed)->(dbSkip())
+	EndDo
+	(cTbPed)->(dbGoTop())
+
+
 	@ 000,001 SAY OemToAnsi("Informações Adicionais para Liberação")	FONT oFont004 SIZE 200,15 OF oP05D201 PIXEL
 
 	//
@@ -1117,7 +1219,7 @@ Static Function xGrdLib()
 	//
 	//COLUNA 02
 	//
-	@ 009,165 TO 090,290 OF oP05D201 PIXEL
+	@ 009,165 TO 129,290 OF oP05D201 PIXEL
 	@ 010,170 SAY "RISCO: " of oP05D201 PIXEL
 	@ 010,240 SAY (cTbClie)->XRISCO of oP05D201 PIXEL
 	
@@ -1138,6 +1240,14 @@ Static Function xGrdLib()
 
 	@ 070,170 SAY "Perfil de Pagamento" of oP05D201 PIXEL FONT oFont002
 	@ 078,170 SAY cPerfPgt of oP05D201 PIXEL FONT oFont002
+
+	@ 088,170 SAY "Vendedor(es)" of oP05D201 PIXEL 
+	@ 088,210 SAY cGLVend of oP05D201 PIXEL 
+	@ 098,170 SAY cGLEmlV of oP05D201 PIXEL 
+
+	@ 108,170 SAY "Supervisor(es)" of oP05D201 PIXEL 
+	@ 108,210 SAY cGLSuper of oP05D201 PIXEL 
+	@ 118,170 SAY cGLEmlS of oP05D201 PIXEL 
 
 Return
 
@@ -1250,6 +1360,12 @@ Static Function CriaExtr(_table)
 		aadd(_aFields,{"TPBLOQ"     ,aX3TpBl[3]	,aX3TpBl[1]	,aX3TpBl[2]})
 		aadd(_aFields,{"DSCREGRA"		,aX3DscBl[3],aX3DscBl[1],aX3DscBl[2]})
 		aadd(_aFields,{"RELACAO"		,aX3Fil[3],aX3Fil[1]+aX3CdRd[1]+aX3Clie[1]+aX3Loja[1],aX3Fil[2]})
+		aadd(_aFields,{"CODVEN"			,aX3PdCdV[3],aX3PdCdV[1],aX3PdCdV[2]})
+		aadd(_aFields,{"NOMEVD"			,aX3PdNmV[3],aX3PdNmV[1],aX3PdNmV[2]})
+		aadd(_aFields,{"EMAILV"			,aX3PdEmV[3],aX3PdEmV[1],aX3PdEmV[2]})
+		aadd(_aFields,{"CODSUP"			,aX3PdCdV[3],aX3PdCdV[1],aX3PdCdV[2]})
+		aadd(_aFields,{"NOMESP"			,aX3PdNmV[3],aX3PdNmV[1],aX3PdNmV[2]})
+		aadd(_aFields,{"EMAILS"			,aX3PdEmV[3],aX3PdEmV[1],aX3PdEmV[2]})
 	ELSEIF _table $ 'BLOQUEIOS'
 		aadd(_aFields,{"FILIAL"			,aX3Fil[3]	,aX3Fil[1]	,aX3Fil[2]})
 		aadd(_aFields,{"NUMERO"			,aX3PdNum[3],aX3PdNum[1],aX3PdNum[2]})
@@ -1472,22 +1588,22 @@ Return {aColumn}
 	@since 30/04/2021
 	@version 1
 	/*/
-Static Function xChgLinC()
+// Static Function xChgLinC()
 
-	oP05D201	:= oFWLr02:GetColPanel('DET_DIR1','DET1')
+// 	oP05D201	:= oFWLr02:GetColPanel('DET_DIR1','DET1')
 
-	oP05D201:FreeChildren()
+// 	oP05D201:FreeChildren()
 
-	// Executar apenas se cliente posicionado é Rede
-	IF (cTbClie)->TPCLI  == 'REDE  '
-		bBloco := {|lEnd| xAtuRed((cTbClie)->CODIGO)}  
-		MsAguarde(bBloco,"Aguarde, Atualizando o credito da rede","Atualizando...",.F.)
+// 	// Executar apenas se cliente posicionado é Rede
+// 	IF (cTbClie)->TPCLI  == 'REDE  '
+// 		bBloco := {|lEnd| xAtuRed((cTbClie)->CODIGO)}  
+// 		MsAguarde(bBloco,"Aguarde, Atualizando o credito da rede","Atualizando...",.F.)
 
-	ENDIF
+// 	ENDIF
 
-	xGrdLib()
+// 	xGrdLib()
 
-Return
+// Return
 
 /*/{Protheus.doc} Static Function xDelSC5
 	Botão Apaga Pedido
@@ -1847,32 +1963,28 @@ Static Function xAprvPed()
 							ENDDO
 
 						ELSE
+							/*
 							dbSelectArea("SC6")
 							dbSetOrder(1)
 							dbGotop()
 							If dbSeek(xFilial("SC6")+SC5->C5_NUM)
 								While SC6->(!Eof()) .And. SC5->C5_NUM == SC6->C6_NUM
 									_nQtdLiber := SC6->C6_QTDVEN
-									// RecLock("SC6")
-									// Efetua a liberação item a item de cada pedido
-									//Begin transaction
 									
-									IF lTESTE == .F.
+									// IF lTESTE == .F.
 									
-										MaLibDoFat( SC6->( Recno() ), @_nQtdLiber, @lCredito, @lEstoque, lAvCred, lAvEst, lLiber, lTrans )
-										// MaLibDoFat( SC6->( RecNo() ), @_nQtdLiber, .F.      , .F.      , .T.    , .T.   , .T.   , .T.    )
-										//End transaction
-										// SC6->(MsUnLock())
+										// MaLibDoFat( SC6->( Recno() ), @_nQtdLiber, @lCredito, @lEstoque, lAvCred, lAvEst, lLiber, lTrans )
 
-										Begin Transaction
-											SC6->(MaLiberOk({SC5->C5_NUM},.F.))
-										End Transaction
+										// Begin Transaction
+										// 	SC6->(MaLiberOk({SC5->C5_NUM},.F.))
+										// End Transaction
 
-									ENDIF
+									// ENDIF
 
 									SC6->(dbSkip())
 								EndDo
 							EndIf
+							*/
 							DbSelectArea("SC9") //gravo a data de entrega e vendedor(carteira) para os pedidos liberados
 							dbSetOrder(1)
 							if dbseek(xFilial("SC9")+SC5->C5_NUM)
@@ -2228,7 +2340,7 @@ Static Function xRlRdSeg()
 		Aadd(aCpoBro,{"TMP_RED"  ,,"Rede"})	
 		Aadd(aCpoBro,{"TMP_DESC" ,,"Nome"})
 
-		oMkRede := MsSelect():New("TREDE","OK","",aCpoBro ,.F.,gETmARK() ,{1000,1000,1,1},,,oPnlFilt1,,)
+		oMkRede := MsSelect():New("TREDE","OK","",aCpoBro ,.F.,GetMark() ,{1000,1000,1,1},,,oPnlFilt1,,)
 		// oMkRede:bMark := {| | DispRede(oMkRede,cMark)} 
 		// oMkRede:oBrowse:bAllMark := {|| RedeInvert(oMkRede,cMark) }
 		// Eval(oMkRede:oBrowse:bGoTop)
@@ -2287,6 +2399,9 @@ Static Function xAnPedCl(aSize)
 	Local oMotLib
 	Local nMotLib := 0
 
+	Local bActLib := {|| MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda..."),oDlgPed:End() }
+	Local bActNex := {|| xProxCli(),oDlgPed:End() }
+
 	Private cParecer := space(240)
 	Private cMotLib := ''
 
@@ -2311,9 +2426,9 @@ Static Function xAnPedCl(aSize)
 		AADD(aBtnPos,nAltuLb - 040 - (nBtnAlt*7))//8
 		AADD(aBtnPos,nAltuLb - 040 - (nBtnAlt*8))//9
 
-		IF lTESTE == .T.
-			cParecer := 'TESTE DE LIBERACAO'+space(240)
-		ENDIF
+		// IF lTESTE == .T.
+		// 	cParecer := 'TESTE DE LIBERACAO'+space(240)
+		// ENDIF
 
 		//Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
 		cMotLib		:= ''
@@ -2365,14 +2480,19 @@ Static Function xAnPedCl(aSize)
 			// @ aBtnPos[6],000 BUTTON OemToAnsi('Pedidos Venda Adiantamento')	SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN090P()) OF oPnSt01 PIXEL //"Exportar Excel"
 			// @ aBtnPos[3],000 BUTTON OemToAnsi('Painel Contas á Receber')		SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN030P()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 
-			@ aBtnPos[7],000 BUTTON OemToAnsi('Próximo Cliente')						SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xProxCli(),oDlgPed:End()) 			OF oPnLb01 PIXEL //"Exportar Excel"
-			@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido')							SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda..."),oDlgPed:End()) 			OF oPnLb01 PIXEL //"Exportar Excel"
-			@ aBtnPos[5],000 BUTTON OemToAnsi('Posição do Cliente')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA)) 																		OF oPnLb01 PIXEL //"Exportar Excel"
-			@ aBtnPos[4],000 BUTTON OemToAnsi('Liberação de Estoque')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnLb01 PIXEL //"Exportar Excel"
-			@ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xRlRdSeg()) 																																OF oPnLb01 PIXEL WHEN (Alltrim((cTbClie)->TPCLI) == 'REDE') //"Exportar Excel"
-			// @ aBtnPos[2],000 BUTTON OemToAnsi('Excluir Pedido')							SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xDelSC5()) 																																		OF oPnLb01 PIXEL //"Exportar Excel"
-			@ aBtnPos[1],000 BUTTON OemToAnsi('Sair da Análise')						SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (lExitLb := .F.,oDlgPed:End()) 																																OF oPnLb01 PIXEL //"Exportar Excel"
+			@ aBtnPos[7],000 BUTTON OemToAnsi('Próximo Cliente Ctrl+N')			SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xProxCli(),oDlgPed:End()) 			OF oPnLb01 PIXEL //"Exportar Excel"
+			//@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda..."),oDlgPed:End()) 			OF oPnLb01 PIXEL
+			@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION {|| bActLib} 			OF oPnLb01 PIXEL
 
+			@ aBtnPos[5],000 BUTTON OemToAnsi('Posição do Cliente')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA)) 																		OF oPnLb01 PIXEL
+			@ aBtnPos[4],000 BUTTON OemToAnsi('Liberação de Estoque')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnLb01 PIXEL
+			// @ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xRlRdSeg()) 																																OF oPnLb01 PIXEL WHEN (Alltrim((cTbClie)->TPCLI) == 'REDE')
+			@ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (U_ADFIN071R()) 																																OF oPnLb01 PIXEL WHEN (Alltrim((cTbClie)->TPCLI) == 'REDE')
+			@ aBtnPos[2],000 BUTTON OemToAnsi('Excluir Pedido')							SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xDelSC5()) 																																		OF oPnLb01 PIXEL
+			@ aBtnPos[1],000 BUTTON OemToAnsi('Sair da Análise')						SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (lExitLb := .F.,oDlgPed:End()) 																																OF oPnLb01 PIXEL
+
+ 			SetKEY(K_CTRL_L,bActLib)
+			SetKEY(K_CTRL_N,bActNex)
 
 			oFWLr05	:= FWLayer():New()
 			oFWLr05:Init(oPnDLb, .T.)
@@ -2388,8 +2508,8 @@ Static Function xAnPedCl(aSize)
 			oFWLr05:AddCollumn('DET_DIR1',000,.F.,'DET1')
 
 			oFWLr05:AddLine ('DET2', 42, .F.)
-			oFWLr05:AddCollumn('DET_ESQ2',050,.F.,'DET2')
-			oFWLr05:AddCollumn('DET_DIR2',050,.F.,'DET2')
+			oFWLr05:AddCollumn('DET_ESQ2',060,.F.,'DET2')
+			oFWLr05:AddCollumn('DET_DIR2',040,.F.,'DET2')
 
 			oFWLr05:AddLine ('RESUMO', 10, .F.)
 			oFWLr05:AddCollumn('RES_ESQ',100,.F.,'RESUMO')'
@@ -2422,7 +2542,7 @@ Static Function xAnPedCl(aSize)
 			xGrdBlq()
 			xGrdLib()
 		Activate MsDialog oDlgPed Centered 
-
+		SetKEY(K_CTRL_L,nil)
 	EndDo
 
 	(cTbClie)->(DbGoTop())//(cTbClie)->(DbGoBottom())
@@ -2432,8 +2552,82 @@ Static Function xAnPedCl(aSize)
 
 Return
 
+/*/{Protheus.doc} Static Function xPrcLbCr()
+	Reprocessa Liberação de Crédito do período
+	@type  Static Function
+	@author Abel Babini Filho
+	@since /09/2021
+	@version 1
+	/*/
+Static Function xPrcLbCr(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed)
+	Private oPrc2
+	oPrc2 := MsNewProcess():New({|| xRpcLbCr()  },"Pré liberação de Crédito","Executando pré liberação de crédito",.T.)
+	oPrc2:Activate()
+	MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)
+Return
+
+/*/{Protheus.doc} Static Function xAnPedCl()
+	Reprocessa Liberação de Crédito do período
+	@type  Static Function
+	@author Abel Babini Filho
+	@since /09/2021
+	@version 1
+	/*/
+Static Function xRpcLbCr()
+	Local cQryClts 	:= GetNextAlias()
+	Local cRdAux 		:= ''
+	Local cClLjAux	:= ''
+	Local nRegCnt := 0
+	Local nCount 	:= 0
+	
+	BeginSQL alias cQryClts
+		Column C5_DTENTR as DATE
+		SELECT DISTINCT
+			C5_NUM,
+			C5_CLIENTE, 
+			C5_LOJACLI, 
+			C5_DTENTR,
+			ISNULL(ZF_REDE,'') AS ZF_REDE
+		FROM %TABLE:SC5% SC5
+		LEFT JOIN %TABLE:SA1% SA1 ON
+			A1_FILIAL = %xFilial:SA1%
+			AND A1_COD = C5_CLIENTE
+			AND A1_LOJA = C5_LOJACLI
+			AND SA1.%notDel%
+		LEFT JOIN %TABLE:SZF% SZF ON
+			ZF_FILIAL = %xFilial:SZF%
+			AND ZF_CGCMAT = SUBSTRING(A1_CGC,1,8)
+			AND SZF.%notDel%
+		WHERE SC5.C5_FILIAL = %xFilial:SC5%
+		AND SC5.C5_NOTA = ''
+		AND C5_XPREAPR IN ('','B')
+		AND SC5.C5_DTENTR BETWEEN %Exp:dDtIni% AND %Exp:dDtFim%
+		AND SC5.%notDel%
+		ORDER BY ZF_REDE, C5_NUM, C5_CLIENTE, C5_LOJACLI, C5_DTENTR
+	ENDSQL
+	//AND SC5.C5_DTENTR >= %Exp:msDate()%	
+	Count to nCount
+	oPrc2:SetRegua1(nCount)
+	(cQryClts)->(dbGoTop())
+	While !(cQryClts)->(eof())
+		oPrc2:IncRegua1("Registro " + StrZero( ++ nRegCnt,06) + " de " + StrZero(nCount,06))
+		// If cRdAux <> (cQryClts)->ZF_REDE .OR. (Empty(cRdAux) .AND. (cQryClts)->C5_CLIENTE+(cQryClts)->C5_LOJACLI <> cClLjAux )
+
+		StaticCall(M410STTS,fLibCred,(cQryClts)->C5_CLIENTE, (cQryClts)->C5_LOJACLI, (cQryClts)->C5_DTENTR, .F., '', (cQryClts)->C5_NUM)
+
+		// Endif
+		// cRdAux := (cQryClts)->ZF_REDE
+		// cNPvAux := (cQryClts)->C5_NUM
+		// cClLjAux := (cQryClts)->C5_CLIENTE+(cQryClts)->C5_LOJACLI
+		(cQryClts)->(dbSkip())
+	EndDo
+
+	(cQryClts)->(dbCloseArea())
+
+Return
 
 //TODO FORMA DE PAGAMENTO NO BROWSER DE CLIENTES
 //TODO VERIFICAR RECONSTRUÇÃO DA TELA
 //TODO COLOCAR BMP DA FORMA DE PAGAMENTO NA TELA DE ANALISE
 //
+

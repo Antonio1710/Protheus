@@ -181,52 +181,52 @@ User Function MT100TOK()
 
 						EndIf
 
-					EndIf
+						// CFOPs retorno insumos
+						If cCFOP $ GetMV("MV_#BENCFO",,"1902#2902#1903#2903#1925#2925#")
 
-					// CFOPs retorno insumos
-					If cCFOP $ GetMV("MV_#BENCFO",,"1902#2902#1903#2903#1925#2925#")
-
-						SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
-						If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
-							
-							// Insumos tem que controlar estoque próprio e ser retorno terceiro
-							If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) <> "D"
-								_lRet := .f.
-								Alert( "[MT100TOK-30] - Fornecedor " + CA100FOR + ", CFOP " + cCFOP + " tem que atualizar estoque próprio e controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
-										"TES: " + SF4->F4_CODIGO )
-								Return _lRet
-							EndIf
-
-						EndIf
-
-					EndIf
-
-					// Exceção - Para o CFOP 1125 (pois são utilizados demais produtos que não podem poluir armazém de retorno)
-					If cCFOP $ GetMV("MV_#BENCFE",,"1125#")
-
-						SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
-						If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
-							
-							// TES 14B = CFOP 1125 – Insumos adquiridos do Industrializador - Atualiza estoque e Não atualiza poder de terceiros
-							If AllTrim(cTES) $ GetMV("MV_#BENTE1",,"14B#")
-
-								If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) == "D"
+							SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
+							If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
+								
+								// Insumos tem que controlar estoque próprio e ser retorno terceiro
+								If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) <> "D"
 									_lRet := .f.
-									Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " tem que atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
+									Alert( "[MT100TOK-30] - Fornecedor " + CA100FOR + ", CFOP " + cCFOP + " tem que atualizar estoque próprio e controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
 											"TES: " + SF4->F4_CODIGO )
 									Return _lRet
 								EndIf
 
 							EndIf
 
-							// TES 13U = CFOP 1125 – Serviço de Industrialização - Não atualiza estoque / Não atualiza poder de terceiros / tipo do produto deve ser SV ou MO
-							If AllTrim(cTES) $ GetMV("MV_#BENTE2",,"13U#")
+						EndIf
 
-								If ( AllTrim(SF4->F4_ESTOQUE) <> "N" .or. AllTrim(SF4->F4_PODER3) == "D" ) .and. Posicione("SB1",1,FWxFilial("SB1")+cProd,"B1_TIPO") $ GetMV("MV_#BENPRO",,"SV#MO")
-									_lRet := .f.
-									Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " de produto Tipo SV/MO não pode atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
-											"TES: " + SF4->F4_CODIGO )
-									Return _lRet
+						// Exceção - Para o CFOP 1125 (pois são utilizados demais produtos que não podem poluir armazém de retorno)
+						If cCFOP $ GetMV("MV_#BENCFE",,"1125#")
+
+							SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
+							If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
+								
+								// TES 14B = CFOP 1125 – Insumos adquiridos do Industrializador - Atualiza estoque e Não atualiza poder de terceiros
+								If AllTrim(cTES) $ GetMV("MV_#BENTE1",,"14B#")
+
+									If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) == "D"
+										_lRet := .f.
+										Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " tem que atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
+												"TES: " + SF4->F4_CODIGO )
+										Return _lRet
+									EndIf
+
+								EndIf
+
+								// TES 13U = CFOP 1125 – Serviço de Industrialização - Não atualiza estoque / Não atualiza poder de terceiros / tipo do produto deve ser SV ou MO
+								If AllTrim(cTES) $ GetMV("MV_#BENTE2",,"13U#")
+
+									If ( AllTrim(SF4->F4_ESTOQUE) <> "N" .or. AllTrim(SF4->F4_PODER3) == "D" ) .and. Posicione("SB1",1,FWxFilial("SB1")+cProd,"B1_TIPO") $ GetMV("MV_#BENPRO",,"SV#MO")
+										_lRet := .f.
+										Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " de produto Tipo SV/MO não pode atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
+												"TES: " + SF4->F4_CODIGO )
+										Return _lRet
+									EndIf
+
 								EndIf
 
 							EndIf

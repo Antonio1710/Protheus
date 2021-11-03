@@ -220,7 +220,6 @@ User Function ADLOG072()
 RETURN(NIL)
 
 STATIC FUNCTION SQLSD2(cFilAtu,cPedido)
-
 	BeginSQL Alias "TRB"
 		     %NoPARSER%
 			  SELECT D2_DOC,D2_SERIE,STATUS
@@ -228,7 +227,7 @@ STATIC FUNCTION SQLSD2(cFilAtu,cPedido)
 		  INNER JOIN %TABLE:SD2% SD2 WITH(NOLOCK)
 		  		  ON D2_FILIAL        = C5_FILIAL
 				 AND D2_PEDIDO        = C5_NUM
-		  INNER JOIN [SPED].[dbo].[SPED050] WITH(NOLOCK)
+		  INNER JOIN [SPED].[CCZERN_120413_TS_PD].[dbo].[SPED050] WITH(NOLOCK)
 				  ON NFE_ID           = D2_SERIE + D2_DOC 
 			   WHERE C5_FILIAL        = %EXP:cFilAtu%
 				 AND C5_NUM           = %EXP:cPedido%

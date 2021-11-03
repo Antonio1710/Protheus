@@ -15,7 +15,6 @@ Static cFormatRet := "application/json"
     @history Everson, 18/05/2021, Chamado 7936. Tratamento para apontamento das horas no fechamento da OS, adicionado  login.
     @history Everson, 07/07/2021, Chamado 16369. Tratamento para apontamento de fechamento na SS.
     @history Everson, 29/07/2021, Chamado 17344. Tratamento para apontamento de horas maior que 24, no fechamento da OS.
-    @history Everson, 31/08/2021, Chamado 7936. Tratamento para autenticação padrão da API.
     */
 User Function ADMNT015P
 Return Nil
@@ -123,7 +122,7 @@ WsMethod Get WsService manutencao
     //Variáveis.
     Local cEmpresa      := Alltrim(Self:GetHeader("Empresa"))
     Local cFil          := Alltrim(Self:GetHeader("Filial"))
-    Local cAuth         := Alltrim(Self:GetHeader("Authorizationx")) //Everson, 31/08/2021, Chamado 7936.
+    Local cAuth         := Alltrim(Self:GetHeader("Authorization"))
     Local aCreden       := {}
     Local cUser         := ""
     Local cSenha        := ""
@@ -209,7 +208,7 @@ WsMethod Put WsService manutencao
     //Variáveis.
     Local cEmpresa      := Alltrim(Self:GetHeader("Empresa"))
     Local cFil          := Alltrim(Self:GetHeader("Filial"))
-    Local cAuth         := Alltrim(Self:GetHeader("Authorizationx")) //Everson, 31/08/2021, Chamado 7936.
+    Local cAuth         := Alltrim(Self:GetHeader("Authorization"))
     Local cRecurso      := ""
     Local cBody 	    := Self:GetContent()
     Local aCreden       := {}
@@ -968,44 +967,44 @@ Return nValor
     @since 07/07/2021
     @version 01
     /*/
-// Static Function valPHrF(cVal, cSep)
+Static Function valPHrF(cVal, cSep)
 
-//     //Variáveis.
-//     Local aArea   := GetArea()
-//     Local nAuxH   := 0
-//     Local nAuxM   := 0
-//     Local cMin    := ""
-//     Local cHora   := ""
-//     Local nPosSep := 0
+    //Variáveis.
+    Local aArea   := GetArea()
+    Local nAuxH   := 0
+    Local nAuxM   := 0
+    Local cMin    := ""
+    Local cHora   := ""
+    Local nPosSep := 0
 
-//     Default cVal := ""
-//     Default cSep := "."
+    Default cVal := ""
+    Default cSep := "."
 
-//     //
-//     cVal := Alltrim(cValToChar(cVal))
+    //
+    cVal := Alltrim(cValToChar(cVal))
 
-//     //
-//     If !Empty(cVal)
+    //
+    If !Empty(cVal)
 
-//         nPosSep := RAt(cSep, cVal)
-//         if nPosSep > 0
-//             nAuxH   := Right("0000" + Left(cVal, nPosSep-1),4)
-//             nAuxM   := Int(Round(Val(Substr(cVal, nPosSep+1, Len(cVal)))*0.60,0))
-//             cMin    := Iif(nAuxM >= 10, cValToChar(nAuxM), "0" + cValToChar(nAuxM))
-//             cHora   := nAuxH + ":" + cMin + ":00"
+        nPosSep := RAt(cSep, cVal)
+        if nPosSep > 0
+            nAuxH   := Right("0000" + Left(cVal, nPosSep-1),4)
+            nAuxM   := Int(Round(Val(Substr(cVal, nPosSep+1, Len(cVal)))*0.60,0))
+            cMin    := Iif(nAuxM >= 10, cValToChar(nAuxM), "0" + cValToChar(nAuxM))
+            cHora   := nAuxH + ":" + cMin + ":00"
 
-//         Else 
-//             //0000:30:00
-//             cHora := Right("00000" + cVal + ":00:00",10)
+        Else 
+            //0000:30:00
+            cHora := Right("00000" + cVal + ":00:00",10)
 
-//         EndIf
+        EndIf
 
-//     EndIf
+    EndIf
 
-//     //
-//     RestArea(aArea)
+    //
+    RestArea(aArea)
 
-// Return cHora
+Return cHora
 /*/{Protheus.doc} lancaMtr
     Função lança motivo de atraso.
     @type  Static Function
@@ -1013,60 +1012,60 @@ Return nValor
     @since 19/01/2021
     @version 01
     /*/
-// Static Function lancaMtr(cFil, cOS, cUser, oJson)
+Static Function lancaMtr(cFil, cOS, cUser, oJson)
 
-//     //Variáveis.
-//     Local aArea     := GetArea()
-//     Local cErro     := ""
-//     Local nAux      := 1
-//     Local aNGGRAVA  := Nil
-//     Local aMotAtrs  := oJson["serviceOrder"]["motivosDeAtrasos"]["dados"]
-//     Local dDtIni    := oJson["serviceOrder"]["header"]["inicio"]["data"]
-//     Local cHrIni    := oJson["serviceOrder"]["header"]["inicio"]["hora"]
-//     Local dDtFim    := oJson["serviceOrder"]["header"]["fim"]["data"]
-//     Local cHrFim    := oJson["serviceOrder"]["header"]["fim"]["hora"]
-//     Local cCod      := ""
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cErro     := ""
+    Local nAux      := 1
+    Local aNGGRAVA  := Nil
+    Local aMotAtrs  := oJson["serviceOrder"]["motivosDeAtrasos"]["dados"]
+    Local dDtIni    := oJson["serviceOrder"]["header"]["inicio"]["data"]
+    Local cHrIni    := oJson["serviceOrder"]["header"]["inicio"]["hora"]
+    Local dDtFim    := oJson["serviceOrder"]["header"]["fim"]["data"]
+    Local cHrFim    := oJson["serviceOrder"]["header"]["fim"]["hora"]
+    Local cCod      := ""
 
-//     //
-//     If Len(aMotAtrs) <= 0
-//         RestArea(aArea)
-//         Return cErro
+    //
+    If Len(aMotAtrs) <= 0
+        RestArea(aArea)
+        Return cErro
 
-//     EndIf
+    EndIf
     
-//     //
-//     For nAux := 1 To Len(aMotAtrs)
+    //
+    For nAux := 1 To Len(aMotAtrs)
 
-//         //
-//         cCod   := aMotAtrs[nAux]["codigo"]
+        //
+        cCod   := aMotAtrs[nAux]["codigo"]
 
-//         //
-//         aNGGRAVA := NGCKINTDAT(cOS, cCod, SToD(dDtIni), cHrIni, SToD(dDtFim), cHrFim,.T.)
+        //
+        aNGGRAVA := NGCKINTDAT(cOS, cCod, SToD(dDtIni), cHrIni, SToD(dDtFim), cHrFim,.T.)
         
-//         //
-//         If aNGGRAVA[1]
-//             RecLock("TPL",.T.)
-//                 TPL->TPL_FILIAL:= FWxFilial("TPL")
-//                 TPL->TPL_ORDEM := cOS
-//                 TPL->TPL_DTINIC:= SToD(dDtIni)
-//                 TPL->TPL_DTFIM := SToD(dDtFim)
-//                 TPL->TPL_HOINIC:= cHrIni
-//                 TPL->TPL_HOFIM := cHrFim
-//                 TPL->TPL_CODMOT:= cCod
-//             TPL->(MsUnlock())
+        //
+        If aNGGRAVA[1]
+            RecLock("TPL",.T.)
+                TPL->TPL_FILIAL:= FWxFilial("TPL")
+                TPL->TPL_ORDEM := cOS
+                TPL->TPL_DTINIC:= SToD(dDtIni)
+                TPL->TPL_DTFIM := SToD(dDtFim)
+                TPL->TPL_HOINIC:= cHrIni
+                TPL->TPL_HOFIM := cHrFim
+                TPL->TPL_CODMOT:= cCod
+            TPL->(MsUnlock())
 
-//         Else
-//             RestArea(aArea)
-//             Return ' Motivo de atraso | ' + Alltrim(cValToChar(aNGGRAVA[2]))
+        Else
+            RestArea(aArea)
+            Return ' Motivo de atraso | ' + Alltrim(cValToChar(aNGGRAVA[2]))
 
-//         EndIf 
+        EndIf 
 
-//     Next nAux
+    Next nAux
 
-//     //
-//     RestArea(aArea)
+    //
+    RestArea(aArea)
 
-// Return cErro
+Return cErro
 /*/{Protheus.doc} updtEtp
     Função realiza a atualização das etapas.
     @type  Static Function

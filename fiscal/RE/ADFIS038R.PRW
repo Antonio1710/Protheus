@@ -450,7 +450,8 @@ Static Function xABrw27
 	//24T01
 	//24T17
 
-	nCp52	:= nVFrt+nA07T91+nA05T03+nA05T07+(nA15T06 - nA15T03)
+	//Ticket 62140										- Abel Babini - 07/10/2021 - Ajustado relatório Porder 3 e adicionado Valores de Dev Serv Industr na Abertura da Gia para Safegg
+	nCp52	:= nVFrt+nA07T91+nA05T03+nA05T07+(nA15T06 - nA15T03)+(nA37T06 - nA37T03)
 	nCp55	:= nCp51+nCp52
 
 	IF nOpMdl == 4
@@ -526,6 +527,7 @@ Static Function xABrw27
 	//AADD(aBrw03Rs,{''		,'003400','002.19 - Recebimento Saldo Devedor Rio Claro',0} )
 	//AADD(aBrw03Rs,{''		,'003500','002.19 - Recebimento Saldo Devedor Matriz',0} )
 	AADD(aBrw03Rs,{'MAN','003600','***MANUAL*** '+IIF(Alltrim(cA05T03) <> '', Alltrim(cA05T03), '003.99 - Estorno de Créditos '),nA05T03} )
+	AADD(aBrw03Rs,{'MAN','003650','***MANUAL*** '+IIF(Alltrim(cA05T04) <> '', Alltrim(cA05T04), '002.99 - Outros Débitos - Déb. Serv. Industrialização'),nA37T06 - nA37T03} ) //Ticket 62140										- Abel Babini - 07/10/2021 - Ajustado relatório Porder 3 e adicionado Valores de Dev Serv Industr na Abertura da Gia para Safegg
 	AADD(aBrw03Rs,{'MAN','003700','***MANUAL*** '+IIF(Alltrim(cA05T04) <> '', Alltrim(cA05T04), '002.99 - Outros Débitos '),nA05T07} )
 	AADD(aBrw03Rs,{'TOT','004000','055-TOTAL DEBITO',nCp55} )
 	AADD(aBrw03Rs,{''		,'004100','',0} )

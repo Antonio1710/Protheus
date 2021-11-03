@@ -1,6 +1,7 @@
 #include 'protheus.ch'
 #include 'parmtype.ch'
 #include 'prtopdef.ch'
+#include 'topconn.ch'
 
 // chamado 056054 - FWNM - 02/03/2020 - || OS TI || CONTROLADORIA || DANIELLE_MEIRA || 8459 || ERRO CUSTO JAN2020 - MELHORIA MENSAGEM TEMPO
 #DEFINE  ENTER 		Chr(13)+Chr(10)
@@ -26,6 +27,8 @@ Static lOkEST017P := .t.
 	@history chamado 056054 - FWNM - 02/03/2020 - || OS TI || CONTROLADORIA || DANIELLE_MEIRA || 8459 || ERRO CUSTO JAN2020 - MELHORIA MENSAGEM TEMPO
 	@history chamado 056054 - FWNM - 03/03/2020 - || OS 057742 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || MASSA DE FRANGO
 	@history chamado 057910 - FWNM - 18/06/2020 - || OS 059411 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || PROJETO UEP
+	@history ticket   53251 - FWNM - 29/09/2021 - SIG NOVO - Lentidão Rotina Ajuste Cons. Massa Frango
+	@history ticket   62961 - FWNM - 26/10/2021 - URGENTE- Ajuste da massa de frango
 /*/
 User function ADEDA009P()
 
@@ -104,7 +107,7 @@ Return
 Static Function ADEDA009A()
 
 	/*Processamento*/
-	Local cAliasSG1 	:= GetNextAlias()
+	Local cAliasSG1 := GetNextAlias()
 	Local dDtFecha	:= SuperGetMV("MV_ULMES")	/*Data do último fechamento do estoque.*/
 
 	/*------------------------------------------------------------------------------------------*/
@@ -121,8 +124,9 @@ Static Function ADEDA009A()
 
 	cHrIni := Time() // Chamado n. 056054 || OS TI - FWNM - 02/03/2020
 
-	ProcLogIni( {},"ADEDA009P")
+	ProcLogIni( {}, "ADEDA009P" )
 	ProcLogAtu("INICIO")
+	
 	_cMens += "Empresa: " + cEmpAnt + CRLF
 	_cMens += "Módulo: " + cModulo + CRLF
 	_cMens += "Filial: " + cFilAnt + CRLF
@@ -155,16 +159,16 @@ Static Function ADEDA009A()
 		FROM %table:SB1% SB1 (NOLOCK), %table:SG1% SG1 (NOLOCK), %table:SD2% SD2 (NOLOCK), %table:SA1% SA1 (NOLOCK), %table:SF4% SF4 (NOLOCK)
 		
 		WHERE SB1.%notDel% AND SG1.%notDel% AND SD2.%notDel% AND SA1.%notDel% AND SF4.%notDel%
-			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
-			AND D2_FILIAL = %xfilial:SD2%
 			AND B1_COD = D2_COD
 			AND B1_COD = G1_COD
-			AND B1_COD BETWEEN %Exp:mv_par05% AND %Exp:mv_par06%
-			AND G1_COMP = %Exp:_cCodMassa%
-			AND G1_FILIAL = %xfilial:SG1%
 			AND A1_COD = D2_CLIENTE
 			AND A1_LOJA = D2_LOJA
 			AND F4_CODIGO = D2_TES
+			AND D2_FILIAL = %xfilial:SD2%
+			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
+			AND G1_FILIAL = %xfilial:SG1%
+			AND G1_COMP = %Exp:_cCodMassa%
+			AND B1_COD BETWEEN %Exp:mv_par05% AND %Exp:mv_par06%
 			AND F4_DUPLIC = 'S'
 		
 		GROUP BY D2_COD, B1_DESC
@@ -176,23 +180,28 @@ Static Function ADEDA009A()
 	DbSelectArea(cAliasSG1)
 	Dbgotop()
 	
-	ProcRegua((cAliasSG1)->(RecCount()))
+	ProcRegua( (cAliasSG1)->( RecCount()) )
 	
 	_cMens += "Calculando o Preço Médio das notas de saída retornadas da busca." + CRLF
 	
-	(cAliasSG1)->(Dbgotop())
+	(cAliasSG1)->( dbgotop() )
 	
-	IncProc("Buscando as informações..")
+	//IncProc("Buscando as informações..")
+
 	nSomaQuant := 0
 	nSomaTotal := 0
+
 	While !(cAliasSG1)->(EOF())
-		IncProc("Somando quantidade e total dos produtos")
+
+		//IncProc("Somando quantidade e total dos produtos")
+
 		AADD(_aDados, { (cAliasSG1)->D2_COD, (cAliasSG1)->B1_DESC, (cAliasSG1)->D2_QUANT, (cAliasSG1)->D2_QTDEDEV, (cAliasSG1)->D2_TOTAL, (cAliasSG1)->D2_VALDEV } )
 
 		nSomaQuant += ((cAliasSG1)->D2_QUANT - (cAliasSG1)->D2_QTDEDEV)
 		nSomaTotal += ((cAliasSG1)->D2_TOTAL - (cAliasSG1)->D2_VALDEV)
 
 		(cAliasSG1)->(DbSkip())
+
 	EndDo
 	
 	DbSelectArea(cAliasSG1)
@@ -240,7 +249,7 @@ User Function ADEST015P(lExterno, lRetorno)
 	Default lExterno := .F.
 	Default lRetorno := .F.
 
-	U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para mostrar o resultrado do Preço Médio de Venda calculado em uma tela e ter a opção de realizar o ajuste de consumo de massa de frango')
+	//U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para mostrar o resultrado do Preço Médio de Venda calculado em uma tela e ter a opção de realizar o ajuste de consumo de massa de frango')
 
 	nPrcFrango := ADEDA009E (_cFrangPad)
 	
@@ -377,18 +386,20 @@ Static Function ADEDA009D()
 	/*
 		Inicia o Ajuste da estrutura de massa dos produtos e das massas que possuem movimentações
 	*/
-	ProcRegua(Len(_aDados))
+	//ProcRegua(Len(_aDados))
 	
 	_cMens += "Atualizando o valor fator do campo da estrutura do produto(G1_QUANT) com os novos valores." + CRLF
-	IncProc("Atualizando os fatores nas estruturas..")
+	//IncProc("Atualizando os fatores nas estruturas..")
 	
 	nQuant := 0
 	nTotal := 0
 	For x:=1 To Len(_aDados)
 	
+		/*
 		If ALLTRIM(cAntCod) <> ALLTRIM(_aDados[x,01])
 			IncProc("Atualizando o fator da massa de frango na PA " + _aDados[x,01])
 		EndIf
+		*/
 		
 		nQuant 	:= _aDados[x,03] - _aDados[x,04]
 		nTotal	:= _aDados[x,05] - _aDados[x,06]
@@ -428,9 +439,11 @@ Static Function ADEDA009D()
 	If lRetProc
 		cAntCod := ""
 		For x:=1 To Len(_aDados)
+			/*
 			If ALLTRIM(cAntCod) <> ALLTRIM(_aDados[x,01])
 				IncProc("Atualizando o fator da massa de frango na PA " + _aDados[x,01])
 			EndIf
+			*/
 			cAntCod	:= ALLTRIM(_aDados[x,01])
 			ADEDA009I( ALLTRIM(_aDados[x,01]) )
 		Next x
@@ -509,7 +522,7 @@ User Function ADEST016P(cCod)
 	Local cSD3TM	:= ALLTRIM(GetMv('MV_XTMPRD',.F., "010"))
 	Local cFilCurren:= xFilial("SD3")
 
-	U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Calculo do total produzido')
+	//U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Calculo do total produzido')
 
 	BeginSql Alias cAliasSD3
 	
@@ -518,12 +531,12 @@ User Function ADEST016P(cCod)
 		FROM %table:SD3% SD3 (NOLOCK)
 		
 		WHERE SD3.%notDel% 
+			AND D3_FILIAL = %Exp:cFilCurren%
 			AND D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(mv_par01))% AND %Exp:DTOS(LASTDATE(mv_par01))%
-			AND D3_ESTORNO=''  
 			AND D3_COD= %Exp:cCod%
 			AND D3_TM = %Exp:cSD3TM%
 			AND D3_CF = 'PR0'
-			AND D3_FILIAL = %Exp:cFilCurren%
+			AND D3_ESTORNO=''  
 	
 	EndSql                      
 	
@@ -558,24 +571,25 @@ Static Function ADEDA009G(cCod)
 		Estruturas de massa dos produtos e das massas que possuem movimentações
 	*/
 	BeginSql Alias cAliasSD3
+
 		SELECT SUM(D3_QUANT) AS QTDE
 			
 		FROM %table:SD3% SD3A (NOLOCK)
 		
 		WHERE SD3A.%notDel% 
 			AND SD3A.D3_FILIAL = %xfilial:SD3A%
-			AND SD3A.D3_COD = %Exp:_cCodMassa%
 			AND SD3A.D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
+			AND SD3A.D3_COD = %Exp:_cCodMassa%
 			AND EXISTS (
 					SELECT 1 
 					
-					FROM %table:SD3% SD3B 
+					FROM %table:SD3% SD3B (NOLOCK)
 					
 					WHERE SD3B.D3_COD = %Exp:cCod%
 						AND SD3B.D3_FILIAL = %xfilial:SD3B%
+						AND SD3B.D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
 						AND SD3A.D3_OP = SD3B.D3_OP 
 						AND SD3B.D3_CF = 'PR0' 
-						AND SD3B.D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
 						AND SD3B.D3_ESTORNO = ' '
 						AND SD3B.%notDel%
 						)
@@ -618,13 +632,47 @@ User Function ADEST017(nTotal, nQuanti, cCod, lExterno, nPreco)
 	Default lExterno:= .F.
 	Default nPreco 	:= 0
 
-	U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+	//U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 
 	nNovoVal := _nFator * IIF( lExterno, nPreco, ( nTotal / nQuanti ) )
 
 	// Chamado n. 056054 || OS 057742 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || MASSA DE FRANGO - FWNM - 03/03/2020
-	Begin Transaction
+	//Begin Transaction
 
+		// @history ticket   53251 - FWNM - 29/09/2021 - SIG NOVO - Lentidão Rotina Ajuste Cons. Massa Frango
+		If Select("WorkUPDG1") > 0
+			WorkUPDG1->( dbCloseArea() )
+		EndIf
+
+		cQuery := " SELECT G1_FILIAL, G1_COD, G1_COMP, R_E_C_N_O_ RECNO
+		cQuery += " FROM " + RetSqlName("SG1") + " SG1 (NOLOCK)
+		cQuery += " WHERE G1_FILIAL BETWEEN '' AND 'z'
+		cQuery += " AND G1_COD = '" + cCod + "'
+		cQuery += " AND G1_COMP = '" + _cCodMassa + "'
+		cQuery += " AND D_E_L_E_T_=''
+
+		tcQuery cQuery New Alias "WorkUPDG1"
+
+		WorkUPDG1->( dbGoTop() )
+		Do While WorkUPDG1->( !EOF() )
+
+			SG1->( dbGoTo(WorkUPDG1->RECNO) )
+			If SG1->( !EOF() ) .and. SG1->G1_FILIAL == WorkUPDG1->G1_FILIAL .and. SG1->G1_COD == WorkUPDG1->G1_COD .and. SG1->G1_COMP == WorkUPDG1->G1_COMP .and. SG1->(RECNO()) == WorkUPDG1->RECNO
+				RecLock("SG1", .F.)
+					SG1->G1_XANTQNT := SG1->G1_QUANT
+					SG1->G1_QUANT   := nNovoVal // @history ticket   62961 - FWNM - 26/10/2021 - URGENTE- Ajuste da massa de frango
+				SG1->( msUnLock() )
+			EndIf
+
+			WorkUPDG1->( dbSkip() )
+
+		EndDo
+
+		If Select("WorkUPDG1") > 0
+			WorkUPDG1->( dbCloseArea() )
+		EndIf
+
+		/*
 		lUpdOk    := .t.
 		nStatus := TCSQLExec("UPDATE SG1010 SET G1_XANTQNT=G1_QUANT, G1_QUANT=" + ALLTRIM(STR(nNovoVal)) + " WHERE D_E_L_E_T_=' ' AND G1_COD='" + cCod + "'" +;
 					" AND G1_COMP='" + _cCodMassa + "'")
@@ -636,13 +684,8 @@ User Function ADEST017(nTotal, nQuanti, cCod, lExterno, nPreco)
 			DisarmTransaction()
 			Return lUpdOk
 		EndIf
-
-		/*
-		TCSQLExec("UPDATE SG1010 SET G1_XANTQNT=G1_QUANT, G1_QUANT=" + ALLTRIM(STR(nNovoVal)) + " WHERE D_E_L_E_T_=' ' AND G1_COD='" + cCod + "'" +;
-					" AND G1_COMP='" + _cCodMassa + "'")
 		*/
-		//
-		
+
 		/*Query usada para pegar todos os produtos de várzea que deverão ser feitos os ajustes de consumo de massa de frango*/ 
 		BeginSql Alias cAliasSD3
 			
@@ -651,21 +694,23 @@ User Function ADEST017(nTotal, nQuanti, cCod, lExterno, nPreco)
 			FROM %table:SD3% SD3A (NOLOCK), %table:SG1% SG1 (NOLOCK)
 			
 			WHERE SD3A.%notDel% AND SG1.%notDel%
-				AND D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(mv_par01))% AND %Exp:DTOS(LASTDATE(mv_par01))%
-				AND SD3A.D3_FILIAL = %xFilial:SD3%
-				AND G1_COMP = %Exp:_cCodMassa%
-				AND SG1.G1_FILIAL =	%xfilial:SG1%
 				AND D3_COD = SG1.G1_COMP
+
+				AND SD3A.D3_FILIAL = %xFilial:SD3%
+				AND D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(mv_par01))% AND %Exp:DTOS(LASTDATE(mv_par01))%
+				AND SG1.G1_FILIAL =	%xfilial:SG1%
+				AND G1_COMP = %Exp:_cCodMassa%
 				AND SG1.G1_COD = %Exp:cCod%
 				AND EXISTS	(
 								SELECT 1
 								FROM %table:SD3% SD3B (NOLOCK)
 								WHERE SD3B.%notDel%
-									AND SD3B.D3_FILIAL = %xFilial:SD3%
-									AND SD3B.D3_COD = %Exp:cCod%																	
-									AND SD3B.D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(mv_par01))% AND %Exp:DTOS(LASTDATE(mv_par01))%
-									AND SD3B.D3_TM = %Exp:cSD3TM%
 									AND SD3B.D3_OP = SD3A.D3_OP 
+
+									AND SD3B.D3_FILIAL = %xFilial:SD3%
+									AND SD3B.D3_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(mv_par01))% AND %Exp:DTOS(LASTDATE(mv_par01))%
+									AND SD3B.D3_COD = %Exp:cCod%																	
+									AND SD3B.D3_TM = %Exp:cSD3TM%
 							)
 		EndSql
 
@@ -673,29 +718,67 @@ User Function ADEST017(nTotal, nQuanti, cCod, lExterno, nPreco)
 		Dbgotop()
 
 		_cMens += "Corrigindo as movimentações da produção do mês vigente com os novos fatores da estrutura calculados." + CRLF
-		IncProc("Ajustando as movimentação da massa de frango..")
+		
+		//IncProc("Ajustando as movimentação da massa de frango..")
+		
 		While !(cAliasSD3)->(EOF())
+		
 			nValQntAnt := (cAliasSD3)->D3_QUANT
 
 			nQuantReal := 0
 			cAliasD32 := GetNextAlias()
 
 			cQuery := " SELECT D3_QUANT "
-			cQuery += " FROM " + RetSqlName("SD3") + " SD3 "
+			cQuery += " FROM " + RetSqlName("SD3") + " SD3 (NOLOCK) "
 			cQuery += " WHERE D_E_L_E_T_=' ' "
-			cQuery += " 	AND D3_ESTORNO = ' ' "		
-			cQuery += "  	AND D3_FILIAL = '" + (cAliasSD3)->D3_FILIAL + "' "					
+			cQuery += "  	AND D3_FILIAL = '" + (cAliasSD3)->D3_FILIAL + "' "
 			cQuery += "  	AND D3_EMISSAO = '" +  (cAliasSD3)->D3_EMISSAO + "' "
 			cQuery += "  	AND D3_TM = '" + cSD3TM + "' "
 			cQuery += "  	AND D3_OP = '" + (cAliasSD3)->D3_OP + "' "
 			cQuery += "  	AND D3_DOC = '" + (cAliasSD3)->D3_DOC + "' "
+			cQuery += " 	AND D3_ESTORNO = ' ' "
 
-			cQuery := ChangeQuery(cQuery)
+			//cQuery := ChangeQuery(cQuery)
 
 			DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasD32, .F., .T.)
 			
 			nQuantReal := (cAliasD32)->D3_QUANT
 
+			// @history ticket   53251 - FWNM - 29/09/2021 - SIG NOVO - Lentidão Rotina Ajuste Cons. Massa Frango
+			If Select("WorkUPDD3") > 0
+				WorkUPDD3->( dbCloseArea() )
+			EndIf
+
+			cQuery := " SELECT D3_FILIAL, D3_COD, D3_DOC, R_E_C_N_O_ RECNO
+			cQuery += " FROM " + RetSqlName("SD3") + " SD3 (NOLOCK)
+			cQuery += " WHERE D3_FILIAL BETWEEN '' AND 'z'
+			cQuery += " AND D3_COD = '" + (cAliasSD3)->D3_COD + "'
+			cQuery += " AND D3_OP = '" + (cAliasSD3)->D3_OP + "'
+			cQuery += " AND D3_DOC = '" + (cAliasSD3)->D3_DOC + "'
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery New Alias "WorkUPDD3"
+
+			WorkUPDD3->( dbGoTop() )
+			Do While WorkUPDD3->( !EOF() )
+
+				SD3->( dbGoTo(WorkUPDD3->RECNO) )
+				If SD3->( !EOF() ) .and. SD3->D3_FILIAL == WorkUPDD3->D3_FILIAL .and. SD3->D3_COD == WorkUPDD3->D3_COD .and. SD3->D3_DOC == WorkUPDD3->D3_DOC .and. SD3->(RECNO()) == WorkUPDD3->RECNO
+					RecLock("SD3", .F.)
+						SD3->D3_QUANT   := nQuantReal*(cAliasSD3)->G1_QUANT
+						SD3->D3_XQDEANT := nValQntAnt  // @history ticket   62961 - FWNM - 26/10/2021 - URGENTE- Ajuste da massa de frango
+					SD3->( msUnLock() )
+				EndIf
+
+				WorkUPDD3->( dbSkip() )
+
+			EndDo
+
+			If Select("WorkUPDD3") > 0
+				WorkUPDD3->( dbCloseArea() )
+			EndIf
+
+			/*
 			// Chamado n. 056054 || OS 057742 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || MASSA DE FRANGO - FWNM - 03/03/2020
 			If lUpdOk
 				nStatus := TCSQLExec("UPDATE SD3010 SET D3_QUANT=" + ALLTRIM(STR(nQuantReal*(cAliasSD3)->G1_QUANT)) + ", D3_XQDEANT=" + ALLTRIM(STR(nValQntAnt)) + " WHERE D_E_L_E_T_=' ' AND D3_COD='" + (cAliasSD3)->D3_COD + "'" +;
@@ -710,19 +793,18 @@ User Function ADEST017(nTotal, nQuanti, cCod, lExterno, nPreco)
 					Exit
 				EndIf
 			EndIf
-
-			/*
-			TCSQLExec("UPDATE SD3010 SET D3_QUANT=" + ALLTRIM(STR(nQuantReal*(cAliasSD3)->G1_QUANT)) + ", D3_XQDEANT=" + ALLTRIM(STR(nValQntAnt)) + " WHERE D_E_L_E_T_=' ' AND D3_COD='" + (cAliasSD3)->D3_COD + "'" +;
-						" AND D3_OP='" + (cAliasSD3)->D3_OP + "' AND D3_DOC='" + (cAliasSD3)->D3_DOC + "'")
 			*/
+
 			//
 
 			DbSelectArea(cAliasD32)
 			DbCloseArea(cAliasD32)
+			
 			(cAliasSD3)->(DbSkip())
+		
 		EndDo
 
-	End Transaction
+	//End Transaction
 
 	DbSelectArea(cAliasSD3)
 	DbCloseArea(cAliasSD3)
@@ -746,7 +828,7 @@ Static Function ADEDA009H(cCodItem)
 	Local nRet := 0
 
 	/*Processamento*/
-	Local cAliasSD2 	:= GetNextAlias()
+	Local cAliasSD2 := GetNextAlias()
 
 	If Empty(ALLTRIM(cCodItem))
 		Return nRet
@@ -759,14 +841,14 @@ Static Function ADEDA009H(cCodItem)
 		FROM %table:SB1% SB1 (NOLOCK), %table:SG1% SG1 (NOLOCK), %table:SD2% SD2 (NOLOCK), %table:SA1% SA1 (NOLOCK), %table:SF4% SF4 (NOLOCK)
 		
 		WHERE SB1.%notDel% AND SG1.%notDel% AND SD2.%notDel% AND SA1.%notDel% AND SF4.%notDel%
-			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
 			AND D2_FILIAL = %xfilial:SD2%
-			AND B1_COD = D2_COD
+			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
 			AND D2_COD = %Exp:cCodItem%
+			AND B1_COD = D2_COD
 			AND B1_COD = G1_COD
 			AND B1_COD BETWEEN %Exp:mv_par05% AND %Exp:mv_par06%
-			AND G1_COMP = %Exp:_cCodMassa%
 			AND G1_FILIAL = %xfilial:SG1%
+			AND G1_COMP = %Exp:_cCodMassa%
 			AND A1_COD = D2_CLIENTE
 			AND A1_LOJA = D2_LOJA
 			AND F4_CODIGO = D2_TES
@@ -778,9 +860,7 @@ Static Function ADEDA009H(cCodItem)
 	Dbgotop()
 
 	While !(cAliasSD2)->(EOF())
-		
 		nRet := ( (cAliasSD2)->TOT - (cAliasSD2)->TOTALDEV ) / ( (cAliasSD2)->QUANT - (cAliasSD2)->QUANTDEV )
-
 		(cAliasSD2)->(DbSkip())
 	EndDo
 
@@ -806,7 +886,7 @@ Static Function ADEDA009I(cCodPA)
 	Local cAliasSD2 	:= GetNextAlias()
 	Local cCodMasAux:= _cCodMassa
 
-	IncProc("Processando os itens..")
+	//IncProc("Processando os itens..")
 	
 	_cMens += "Buscando os itens que estão dentro da estrutura junto do ZMASSA são do tipo MO." + CRLF
 		
@@ -817,20 +897,23 @@ Static Function ADEDA009I(cCodPA)
 		FROM %table:SG1% SG1A (NOLOCK), %table:SB1% SB1A (NOLOCK), %table:SD2% SD2 (NOLOCK), %table:SA1% SA1 (NOLOCK), %table:SF4% SF4 (NOLOCK)
 		
 		WHERE SG1A.%notDel% AND SB1A.%notDel% AND SD2.%notDel% AND SA1.%notDel% AND SF4.%notDel%
-			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
-			AND D2_FILIAL = %xfilial:SD2%
 			AND SG1A.G1_COD = D2_COD
 			AND A1_COD = D2_CLIENTE
 			AND A1_LOJA = D2_LOJA
 			AND F4_CODIGO = D2_TES
-			AND F4_DUPLIC = 'S'
+			AND SB1A.B1_COD = SG1A.G1_COMP
+
+			AND D2_FILIAL = %xfilial:SD2%
+			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(MONTHSUB(mv_par01, 2)))% AND %Exp:DTOS(LASTDATE(mv_par01))%
+
 			AND SG1A.G1_FILIAL = %xfilial:SG1%
-			AND SB1A.B1_FILIAL = %xfilial:SB1%
 			AND SG1A.G1_COD = %Exp:ALLTRIM(cCodPA)%
 			AND SG1A.G1_COMP <> %Exp:ALLTRIM(cCodMasAux)%
-			AND SB1A.B1_COD = SG1A.G1_COMP
+
+			AND SB1A.B1_FILIAL = %xfilial:SB1%
 			AND SB1A.B1_CCCUSTO <> ' '
 			AND SB1A.B1_TIPO = 'MO'
+			AND F4_DUPLIC = 'S'
 			AND EXISTS
 			(
 				SELECT G1_COMP, G1_COD
@@ -887,7 +970,7 @@ Static Function ADEDA009I(cCodPA)
 			(cAliasSD2)->(DbSkip())
 
 			If cAntComp <> (cAliasSD2)->G1_COMP
-				IncProc("Atualizando o fator do componente " + cAntComp + " de massa de frango na PA " + cCodPA)
+				//IncProc("Atualizando o fator do componente " + cAntComp + " de massa de frango na PA " + cCodPA)
 
 				_cMens += "Pegando o item " + cAntComp + " para processar a atualizar o seu fator na estrutura da PA " + cCodPA + CRLF
 				_cMens += "Atualizando o fator" + CRLF

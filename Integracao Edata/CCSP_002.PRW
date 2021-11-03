@@ -28,11 +28,13 @@ Static nQtdePerg := 4
 	@history Chamado 059415 - FWNM         - 12/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação.
 	@history chamado 8465   - LeonardoMont - 02/06/2021 - Correção no fonte para não gravas as informações do lacre SIF no retorno da integração com eData.
 	@history chamado     ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
+	@history chamado     ti - Fernando Maci- 05/09/2021 - Correção urgente após problema golive cloud
+	@history chamado  62433 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
 /*/
-User Function CCSP_002()
+User Function CCSP_002() // U_CCSP_002()
 
-	LOCAL oSay,oSay2,oSay3
-	LOCAL oBtn1,oBtn2,oBtn3
+	// LOCAL oSay,oSay2,oSay3
+	// LOCAL oBtn1,oBtn2,oBtn3
 	LOCAL oDlg            
 	PRIVATE cPerg:="CCSP02" 
 	Private cRotDesc := "Integração Protheus x Edata"
@@ -43,6 +45,8 @@ User Function CCSP_002()
 	Private cEmpFrt	  := Alltrim(SuperGetMv( "MV_#M46F6" , .F. , '' ,  )) //Everson-CH:044314-06/08/19.    
 	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para fechamento de carga do edata')
+
+	chkEdtLk() //Everson - 14/10/2021. Chamado 62433.
 
 	AjustaSX1(cPerg)         
 
@@ -125,22 +129,22 @@ Static Function E001Proces(clAlias)
 	Local oButton1		:= NIL
 	Local oButton2		:= NIL
 	Local oButton3		:= NIL
-	Local oButton4		:= NIL
-	Local oButton5		:= NIL
-	Local oButton6		:= NIL
-	Local oButton7		:= NIL
+	// Local oButton4		:= NIL
+	// Local oButton5		:= NIL
+	// Local oButton6		:= NIL
+	// Local oButton7		:= NIL
 	Local oButton8		:= NIL //Everson³01/07/19³044314.
 	Local lGrCte		:= GetMv("MV_#HABCTE",,.F.)//Everson³01/07/19³044314.
 	Local oButtonP		:= NIL
-	Local oGetEnD		:= Nil
-	Local oGetEnA		:= Nil
-	Local oComboTp		:= Nil
-	Local oGetCliD		:= Nil
-	Local oGetLojD		:= Nil
-	Local oGetCliA		:= Nil
-	Local oGetLojA		:= Nil
+	// Local oGetEnD		:= Nil
+	// Local oGetEnA		:= Nil
+	// Local oComboTp		:= Nil
+	// Local oGetCliD		:= Nil
+	// Local oGetLojD		:= Nil
+	// Local oGetCliA		:= Nil
+	// Local oGetLojA		:= Nil
 	Local oComboSt 		:= Nil
-	Local alComboTP		:= {"1=Venda","2=Beneficiamento","3=OP"}
+	// Local alComboTP		:= {"1=Venda","2=Beneficiamento","3=OP"}
 	Local alComboST		:= {"1=Pendente","2=Liberado","3=Todos"}
 	Local nTimeATU		:= SuperGetMV("MV_XTIMEAT",,5000)
 	Local oTemporizador	:= Nil
@@ -320,6 +324,14 @@ Static Function CCS_002P(Par1,Par2,Par3,Par4)
 	Local lPVRAOK  := .t.
 	Local _cRot    := ""
 	Local cNumPVRA := ""
+	Local i := 0
+	//
+
+	//Everson - 14/10/2021. Chamado 62433.
+	If ! chkEdtLk()
+		Return Nil
+
+	EndIf
 	//
 
 	Pergunte(cPerg,.F.)
@@ -436,6 +448,7 @@ Static Function CCS_002P(Par1,Par2,Par3,Par4)
 		Return
 	EndIf
 
+	
 Return
 
 
@@ -460,12 +473,14 @@ Static Function CCS_002PN()
 
 	Local ni				:= 0
 	Local ni2				:= 0
+	Local nIX				:= 0
 	Local cChave			:= ""
 	Local cMens				:= ""
-	Local cMensok			:= ""
-	Local cRest01			:= ""
+	// Local cMensok			:= ""
+	// Local cRest01			:= ""
 	Local cQuery 			:= ""
 	Local cAliasSC9	    	:= CriaTrab(NIL,.F.)	
+	Local cAliasExp	    	:= CriaTrab(NIL,.F.)	
 	Local lContinua			:= .T.
 	Local aPedidos			:= {}
 	Local nReg				:= 0
@@ -492,34 +507,44 @@ Static Function CCS_002PN()
 				
 				dDtPed 	 := SToD(cData) //Everson - 12/06/19. Chamado 044314.
 
-				cQuery := "SELECT COUNT(*) AS REC FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "		
-				dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSC9,.T.,.F.)
-
-				nReg:=(cAliasSC9)->(REC)
-				DbSelectArea(cAliasSC9)
-				dbCloseArea()
-
+				//cQuery := "SELECT COUNT(ID_ITEMPEDIVEND) AS CONTAR FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "		
+				//dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasEXP,.T.,.F.)
+	
+				cQuery := "SELECT * FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "
+				cQuery += "ORDER BY FILIAL+ID_PEDIVEND"	
+				dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasEXP,.T.,.F.)		
+				
+				DbSelectArea(cAliasEXP)
+				Dbgotop()
+				Count to nReg
+				
 				If nReg==0
 					Aviso("CCSP_002","Problema - Carga não liberada no eData - Verificar!!!",{"OK"},3)
 					Return
 				EndIf
-
-				cQuery := "SELECT * FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "
-				cQuery += "ORDER BY FILIAL+ID_PEDIVEND"	
-
-				dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSC9,.T.,.F.)			
-				DbSelectArea(cAliasSC9)
-				Dbgotop()				
-				//ProcRegua(nReg)			
-				// Ricardo Lima - 10/01/18
-				//BeginTran()
+				
 				BEGIN TRANSACTION				
 					cChave:= ""				
-					While (cAliasSC9)->(!EOF())
-
+					(cAliasEXP)->(Dbgotop())
+					While (cAliasEXP)->(!EOF())
+					
+						cQuery := " SELECT C9.R_E_C_N_O_ AS C9_RECNO "
+						cQuery += " FROM " + RetSqlName("SC6") + " C6 , " + RetSqlName("SC9") + " C9 "
+						cQuery += " WHERE ((C6.C6_FILIAL=C9.C9_FILIAL) AND "
+						cQuery += " (C6.C6_NUM=C9.C9_PEDIDO) AND "
+						cQuery += " (C6.C6_PRODUTO=C9.C9_PRODUTO) AND "
+						cQuery += " (C6.C6_ITEM=C9.C9_ITEM)) "
+						cQuery += " AND (C9.D_E_L_E_T_ <> '*') "
+						cQuery += " AND (C6.D_E_L_E_T_ <> '*') "
+						cQuery += " AND (C6.R_E_C_N_O_= "+Alltrim(Str((cAliasEXP)->ID_ITEMPEDIVEND)) + ")"
+							
+						DbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSC9,.T.,.F.)
+						DbSelectArea(cAliasSC9)
+	
 						// desconsidera liberacoes já feitas quando não houve carregamento
 						If (cAliasSC9)->C9_RECNO == 0
-							(cAliasSC9)->(DbSkip())
+							(cAliasSC9)->(dbCloseArea())
+							(cAliasEXP)->(DbSkip())
 							Loop
 						EndIf
 
@@ -528,17 +553,17 @@ Static Function CCS_002PN()
 						dbGoto((cAliasSC9)->C9_RECNO)        				
 
 						// @history chamado ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
-						If SC9->( EOF() ) .or. ( AllTrim(SC9->C9_PRODUTO) <> AllTrim((cAliasSC9)->IE_MATEEMBA) ) .or. ( SC9->(RecNo()) <> (cAliasSC9)->C9_RECNO )
+						If SC9->( EOF() ) .or. ( AllTrim(SC9->C9_PRODUTO) <> AllTrim((cAliasEXP)->IE_MATEEMBA) ) .or. ( SC9->(RecNo()) <> (cAliasSC9)->C9_RECNO )
 
 							u_GrLogZBE( msDate(), TIME(), cUserName, "CCSP_002", "FATURAMENTO", "CCSP_002",;
-							"C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) + " DA VW_EXPECARG_01 DIVERGENTE NA SC9 PROTHEUS - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE),;
+							"C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) + " DA VW_EXPECARG_01 DIVERGENTE NA SC9 PROTHEUS - Produto: " + AllTrim((cAliasEXP)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasEXP)->ID_CARGEXPE),;
 							ComputerName(), LogUserName() )
 
 							Alert("[CCSP_002-01] - Dados da Integração com problema entre EDATA e Protheus! Contate o TI...")
-							Alert("[CCSP_002-02] - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE) + " não será processado! Verifique...")
+							Alert("[CCSP_002-02] - Produto: " + AllTrim((cAliasEXP)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasEXP)->ID_CARGEXPE) + " não será processado! Verifique...")
 							Alert("[CCSP_002-03] - C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) )
 
-							(cAliasSC9)->(DbSkip())
+							(cAliasEXP)->( dbSkip() )
 							Loop
 
 						EndIf
@@ -555,7 +580,7 @@ Static Function CCS_002PN()
 									SC5->C5_VOLUME1:= 0
 									SC5->C5_PESOL  := 0
 									SC5->C5_PBRUTO := 0
-								MsUnLock()
+								MsUnLock()    				
 							EndIf 
 							
 							//Everson - 12/06/2019. Chamado 044314.
@@ -565,7 +590,7 @@ Static Function CCS_002PN()
 							if SC5->C5_EST !="EX"
 								//grava o lacre
 								RecLock("SC5",.F.)
-									SC5->C5_NLACRE1	:= (cAliasSC9)->NR_LACRCARGEXPE
+								SC5->C5_NLACRE1	:= (cAliasEXP)->NR_LACRCARGEXPE
 								MsUnLock()
 							ENDIF
 							//Posiciona no SC9
@@ -573,17 +598,17 @@ Static Function CCS_002PN()
 							dbGoto((cAliasSC9)->C9_RECNO)        				
 
 							// @history chamado ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
-							If SC9->( EOF() ) .or. ( AllTrim(SC9->C9_PRODUTO) <> AllTrim((cAliasSC9)->IE_MATEEMBA) ) .or. ( SC9->(RecNo()) <> (cAliasSC9)->C9_RECNO )
+							If SC9->( EOF() ) .or. ( AllTrim(SC9->C9_PRODUTO) <> AllTrim((cAliasEXP)->IE_MATEEMBA) ) .or. ( SC9->(RecNo()) <> (cAliasSC9)->C9_RECNO )
 
 								u_GrLogZBE( msDate(), TIME(), cUserName, "CCSP_002", "FATURAMENTO", "CCSP_002",;
-								"C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) + " DA VW_EXPECARG_01 DIVERGENTE NA SC9 PROTHEUS - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE),;
+								"C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) + " DA VW_EXPECARG_01 DIVERGENTE NA SC9 PROTHEUS - Produto: " + AllTrim((cAliasEXP)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasEXP)->ID_CARGEXPE),;
 								ComputerName(), LogUserName() )
 
 								Alert("[CCSP_002-04] - Dados da Integração com problema entre EDATA e Protheus! Contate o TI...")
-								Alert("[CCSP_002-05] - Produto: " + AllTrim((cAliasSC9)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasSC9)->ID_CARGEXPE) + " não será processado! Verifique...")
+								Alert("[CCSP_002-05] - Produto: " + AllTrim((cAliasEXP)->IE_MATEEMBA) + " da carga: " + AllTrim((cAliasEXP)->ID_CARGEXPE) + " não será processado! Verifique...")
 								Alert("[CCSP_002-06] - C9_RECNO: " + AllTrim(Str((cAliasSC9)->C9_RECNO)) )
 
-								(cAliasSC9)->(DbSkip())
+								(cAliasEXP)->( dbSkip() )
 								Loop
 
 							EndIf
@@ -591,31 +616,32 @@ Static Function CCS_002PN()
 
 							_cLacre:= ""                         			
 							If Empty(SC9->C9_BLCRED)	        										
-								If (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND <> SC9->C9_QTDLIB // compara quantidade de caixas do pedido com as caixas expedidas								
+								//If (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND <> SC9->C9_QTDLIB2 // compara quantidade de caixas do pedido com as caixas expedidas
+								If (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND <> SC9->C9_QTDLIB // compara quantidade de caixas do pedido com as caixas expedidas // @history chamado     ti - Fernando Maci- 05/09/2021 - Correção urgente após problema golive cloud
 									aPedidos[Len(aPedidos)][2]:=.T.
-									If (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND == 0
+									If (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND == 0
 										Reclock("SC9",.F.)
-											dbdelete()
+										dbdelete()
 										Msunlock()
 									Else
-										_cLacre:=(cAliasSC9)->NR_LACRCARGEXPE                									
+										_cLacre:=(cAliasEXP)->NR_LACRCARGEXPE                									
 										Reclock("SC9",.F.)
 										If Alltrim(SC9->C9_PRODUTO) $ GETMV("MV_PRDREAL")   // fernando Sigoli 16/02/2017										
-											Replace C9_QTDLIB With (cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND // pegamos o peso real									
+											Replace C9_QTDLIB With (cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND // pegamos o peso real									
 										Else
 											Replace C9_QTDLIB    With iif(Alltrim((Posicione("SB1",1,xFilial("SB1")+SC9->C9_PRODUTO,"B1_SEGUM")))="BS",;
-											(cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND,;
-											(cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND)  //alterado por Adriana, se bolsa nao soma 1a unidade como peso
+											(cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND,;
+											(cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND)  //alterado por Adriana, se bolsa nao soma 1a unidade como peso
 										EndIf									
-										Replace C9_QTDLIB2   With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-										Replace C9_LACRE1    With (cAliasSC9)->NR_LACRCARGEXPE									
+										Replace C9_QTDLIB2   With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+										Replace C9_LACRE1    With (cAliasEXP)->NR_LACRCARGEXPE									
 										Msunlock()
 									Endif								
 									//ajusta SC6
 									dbSelectArea("SC6")
 									dbSetOrder(1)
 									dbSeek(SC9->C9_FILIAL+SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_PRODUTO)									
-									If (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND == 0								
+									If (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND == 0								
 										If Alltrim(C6_UM) == "KG"							
 											Reclock("SC6",.F.)
 											Replace C6_QTDORI   With C6_QTDVEN
@@ -637,49 +663,49 @@ Static Function CCS_002PN()
 												Reclock("SC6",.F.)
 												Replace C6_QTDORI  With C6_QTDVEN
 												Replace C6_QTDORI2 With C6_UNSVEN
-												Replace C6_QTDVEN  With (cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido
-												Replace C6_UNSVEN  With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-												Replace C6_QTDLIB  With (cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido
-												Replace C6_QTDLIB2 With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+												Replace C6_QTDVEN  With (cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido
+												Replace C6_UNSVEN  With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+												Replace C6_QTDLIB  With (cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido
+												Replace C6_QTDLIB2 With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 												Replace C6_VALOR   With C6_QTDVEN * C6_PRCVEN
-												Replace C6_QTDEMP  With (cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido
-												Replace C6_QTDEMP2 With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+												Replace C6_QTDEMP  With (cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido
+												Replace C6_QTDEMP2 With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 												Msunlock() 										
 											Else // Fim: fernando Sigoli 16/02/2017 									
 												Reclock("SC6",.F.)
 												Replace C6_QTDORI  With C6_QTDVEN
 												Replace C6_QTDORI2 With C6_UNSVEN
-												Replace C6_QTDVEN  With (cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND // peso padrao expedido
-												Replace C6_UNSVEN  With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-												Replace C6_QTDLIB  With (cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND // peso padrao expedido
-												Replace C6_QTDLIB2 With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+												Replace C6_QTDVEN  With (cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND // peso padrao expedido
+												Replace C6_UNSVEN  With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+												Replace C6_QTDLIB  With (cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND // peso padrao expedido
+												Replace C6_QTDLIB2 With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 												Replace C6_VALOR   With C6_QTDVEN * C6_PRCVEN
-												Replace C6_QTDEMP  With (cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND // peso padrao expedido
-												Replace C6_QTDEMP2 With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+												Replace C6_QTDEMP  With (cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND // peso padrao expedido
+												Replace C6_QTDEMP2 With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 												Msunlock() 									
 											Endif									
 										Elseif Alltrim(C6_SEGUM) == "BS"    //alterado por Adriana, se bolsa nao grava peso, e sim unidade									
 											Reclock("SC6",.F.)
 											Replace C6_QTDORI  With C6_QTDVEN
 											Replace C6_QTDORI2 With C6_UNSVEN
-											Replace C6_QTDVEN  With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-											Replace C6_UNSVEN  With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-											Replace C6_QTDLIB  With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-											Replace C6_QTDLIB2 With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+											Replace C6_QTDVEN  With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+											Replace C6_UNSVEN  With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+											Replace C6_QTDLIB  With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+											Replace C6_QTDLIB2 With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 											Replace C6_VALOR   With C6_QTDVEN * C6_PRCVEN
-											Replace C6_QTDEMP  With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
-											Replace C6_QTDEMP2 With (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+											Replace C6_QTDEMP  With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
+											Replace C6_QTDEMP2 With (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 											Msunlock() 									
 										Endif									
 									EndIf												
 									//grava o lacre
 									RecLock("SC5",.F.)								
-									SC5->C5_VOLUME1:= SC5->C5_VOLUME1 + (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND								
+									SC5->C5_VOLUME1:= SC5->C5_VOLUME1 + (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND								
 									// Inicio: fernando Sigoli 16/02/2017 
 									If Alltrim(SC6->C6_PRODUTO) $ GETMV("MV_PRDREAL") 								
-										SC5->C5_PESOL  := SC5->C5_PESOL + iif(SC6->C6_SEGUM="BS",0,(cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND) // peso real expedido								
+										SC5->C5_PESOL  := SC5->C5_PESOL + iif(SC6->C6_SEGUM="BS",0,(cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND) // peso real expedido								
 									Else // Fim: fernando Sigoli 16/02/2017 								
-										SC5->C5_PESOL  := SC5->C5_PESOL + iif(SC6->C6_SEGUM="BS",0,(cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND) //alterado por Adriana, se bolsa nao soma 1a unidade como peso								
+										SC5->C5_PESOL  := SC5->C5_PESOL + iif(SC6->C6_SEGUM="BS",0,(cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND) //alterado por Adriana, se bolsa nao soma 1a unidade como peso								
 									EndIf							
 									dbSelectArea("SZC")
 									dbSetOrder(1)
@@ -687,16 +713,16 @@ Static Function CCS_002PN()
 									If dbSeek(xFilial("SZC")+SC6->C6_SEGUM)
 										// Inicio: fernando Sigoli 16/02/2017 
 										If Alltrim(SC6->C6_PRODUTO) $ GETMV("MV_PRDREAL") 									
-											SC5->C5_PBRUTO := SC5->C5_PBRUTO + ((cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND * SZC->ZC_TARA) + iif(SC6->C6_SEGUM="BS",0,(cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND) // peso real expedido									
+											SC5->C5_PBRUTO := SC5->C5_PBRUTO + ((cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND * SZC->ZC_TARA) + iif(SC6->C6_SEGUM="BS",0,(cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND) // peso real expedido									
 										Else // Fim: fernando Sigoli 16/02/2017 									
-											SC5->C5_PBRUTO := SC5->C5_PBRUTO + ((cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND * SZC->ZC_TARA) + iif(SC6->C6_SEGUM="BS",0,(cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND) //alterado por Adriana, se bolsa nao soma 1a unidade como peso									
+											SC5->C5_PBRUTO := SC5->C5_PBRUTO + ((cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND * SZC->ZC_TARA) + iif(SC6->C6_SEGUM="BS",0,(cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND) //alterado por Adriana, se bolsa nao soma 1a unidade como peso									
 										EndIf
 									Else 
 										// Inicio: fernando Sigoli 16/02/2017 
 										If Alltrim(SC6->C6_PRODUTO) $ GETMV("MV_PRDREAL") 								
-											SC5->C5_PBRUTO := SC5->C5_PBRUTO + (cAliasSC9)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido																
+											SC5->C5_PBRUTO := SC5->C5_PBRUTO + (cAliasEXP)->QN_PESOREALEXPEITEMPEDIVEND // peso real expedido																
 										Else // Fim: fernando Sigoli 16/02/2017 								
-											SC5->C5_PBRUTO := SC5->C5_PBRUTO + (cAliasSC9)->QN_PESOPADREXPEITEMPEDIVEND	 // peso padrao expedido									
+											SC5->C5_PBRUTO := SC5->C5_PBRUTO + (cAliasEXP)->QN_PESOPADREXPEITEMPEDIVEND	 // peso padrao expedido									
 										EndIf								
 									Endif	
 									MsUnLock()    											
@@ -712,12 +738,12 @@ Static Function CCS_002PN()
 										Msunlock()
 										//grava o lacre
 										RecLock("SC5",.F.)
-										SC5->C5_VOLUME1:= SC5->C5_VOLUME1 + (cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND
+										SC5->C5_VOLUME1:= SC5->C5_VOLUME1 + (cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND
 										dbSelectArea("SZC")
 										dbSetOrder(1)
 										dbGoTop()
 										If dbSeek(xFilial("SZC")+SC6->C6_SEGUM)
-											SC5->C5_PBRUTO := SC5->C5_PBRUTO + ((cAliasSC9)->QN_EMBAEXPEITEMPEDIVEND * SZC->ZC_TARA)
+											SC5->C5_PBRUTO := SC5->C5_PBRUTO + ((cAliasEXP)->QN_EMBAEXPEITEMPEDIVEND * SZC->ZC_TARA)
 										Endif	
 										MsUnLock()    				
 									Endif
@@ -748,16 +774,22 @@ Static Function CCS_002PN()
 							Endif
 						Endif					
 						nReg := nReg - 1	
-						DbSelectArea(cAliasSC9)		
-						(cAliasSC9)->(DbSkip())					
+
+						DbSelectArea(cAliasSC9)
+						(cAliasSC9)->(dbCloseArea())
+
+						DbSelectArea(cAliasEXP)		
+						(cAliasEXP)->(DbSkip())						
 					EndDo		
+
+					//FECHAR WHILE cAliasEXP
 					If lContinua							
 						// envia wf
 						For ni2:=1 to Len(aPedidos)				
 							If aPedidos[ni2][2]
 								U_CCSKFWF(aPedidos[ni2][1])	
 							EndIf
-						Next ni					
+						Next ni2					
 						// Rotina para ajustar os pedidos de venda ordem
 						// Sigoli 10/03/2017 Chamado: 034029 
 						For nIX:=1 to Len(aPedidos)				
@@ -769,7 +801,7 @@ Static Function CCS_002PN()
 									EndIF
 								EndIf							
 							EndIf					
-						Next ni
+						Next nIX
 						//Sigoli 10/03/2017 Chamado: 034029 					
 						// salva variáveis globais
 						__Rot:=cRoteiro
@@ -782,7 +814,7 @@ Static Function CCS_002PN()
 					// Ricardo Lima - 10/01/18
 					//EndTran() 
 				END TRANSACTION					
-				DbSelectArea(cAliasSC9)
+				DbSelectArea(cAliasEXP)
 				dbCloseArea()
 			EndIf
 
@@ -858,16 +890,16 @@ Return
 Static Function CCS_002PF()
 
 	Local ni				:= 0
-	Local ni2				:= 0
-	Local cChave			:= ""
-	Local cMens				:= ""
-	Local cMensok			:= ""
-	Local cRest01			:= ""
-	Local cQuery 			:= ""
-	Local cAliasSC9	    	:= CriaTrab(NIL,.F.)	
-	Local lContinua			:= .T.
-	Local aPedidos			:= {}
-	Local nReg				:= 0
+	// Local ni2				:= 0
+	// Local cChave			:= ""
+	// Local cMens				:= ""
+	// Local cMensok			:= ""
+	// Local cRest01			:= ""
+	// Local cQuery 			:= ""
+	// Local cAliasSC9	    	:= CriaTrab(NIL,.F.)	
+	// Local lContinua			:= .T.
+	// Local aPedidos			:= {}
+	// Local nReg				:= 0
 	Local lRetFat			:= .F. //Everson - 30/05/2019. Chamado 044314.
 	Private __Rot 			:= ""
 	Private __dDtEnt		
@@ -915,7 +947,6 @@ Static Function CCS_002PF()
 		// *** FINAL WILLIAM COSTA 22/10/2018 CHAMADO 044537 || OS 045675 || ADM.LOG || MARCEL || 8492 || REL.FRETE ANALITICO  *** //
 
 	Next ni   
-
 	// executa a função de faturamento
 	Aviso("CCSP_002","Ajuste dos pedidos finalizado com sucesso! Será iniciado o Faturamento!",{"OK"},3)	
 	lRetFat := MATA460() //Everson - 30/05/2019. Chamado 044314.		          		   
@@ -954,8 +985,8 @@ Static Function CCS_002PD()
 	Local ni2				:= 0
 	Local cChave			:= ""
 	Local cMens				:= ""
-	Local cMensok			:= ""
-	Local cRest01			:= ""
+	// Local cMensok			:= ""
+	// Local cRest01			:= ""
 	Local cQuery 			:= ""
 	Local cAliasSC5	    	:= CriaTrab(NIL,.F.)	
 	Local lContinua			:= .T.
@@ -1125,22 +1156,22 @@ Static Function CCS_002PD()
 									Msunlock()
 
 									RecLock("SC5",.F.)
-									SC5->C5_VOLUME1:= SC5->C5_VOLUME1 + nPeso
-									SC5->C5_PESOL  := SC5->C5_PESOL  + nPeso
-									SC5->C5_PBRUTO := SC5->C5_PBRUTO + nPeso						
+										SC5->C5_VOLUME1:= SC5->C5_VOLUME1 + nPeso
+										SC5->C5_PESOL  := SC5->C5_PESOL  + nPeso
+										SC5->C5_PBRUTO := SC5->C5_PBRUTO + nPeso						
 									MsUnLock()								
 								Else							
 									RecLock("SC5",.F.)
-									SC5->C5_VOLUME1:= _AntVolume1
-									SC5->C5_PESOL  := _AntPesol
-									SC5->C5_PBRUTO := _AntPbruto
+										SC5->C5_VOLUME1:= _AntVolume1
+										SC5->C5_PESOL  := _AntPesol
+										SC5->C5_PBRUTO := _AntPbruto
 									MsUnLock()														
 								Endif								
 							Else
 								RecLock("SC5",.F.)
-								SC5->C5_VOLUME1:= _AntVolume1
-								SC5->C5_PESOL  := _AntPesol
-								SC5->C5_PBRUTO := _AntPbruto
+									SC5->C5_VOLUME1:= _AntVolume1
+									SC5->C5_PESOL  := _AntPesol
+									SC5->C5_PBRUTO := _AntPbruto
 								MsUnLock()														
 							EndIf	                        
 						Else
@@ -1405,7 +1436,7 @@ Static Function FQRY002()
 
 	Local cSql := ""
 	Local cWh  := ""
-	Local cFIEFiltro := "" 
+	// Local cFIEFiltro := "" 
 
 	If  ValType(MV_PAR04) == "N"
 
@@ -1843,7 +1874,7 @@ Static Function AtuaPedVend(cPedRemessa,cPedOrdem)
 		QRYC9->( DbSkip())
 	Enddo
 
-	dbclosearea( "QRYC9" )
+	QRYC9->(dbclosearea())
 
 	//atualizar SC5 no final 
 	cQysc5 := " SELECT "
@@ -1860,7 +1891,7 @@ Static Function AtuaPedVend(cPedRemessa,cPedOrdem)
 	nLacre1  := QRYC5->C5_NLACRE1
 	nPbruto  := QRYC5->C5_PBRUTO
 
-	dbclosearea("C5QRY")
+	C5QRY->(dbclosearea())
 
 	DbSelectArea("SC5")
 	dbSetOrder(1) 
@@ -1937,3 +1968,37 @@ Static Function logZBE(cLog,cParam)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} chkEdtLk
+	Função checa comunicação com bd do Edata.
+	@type  Static Function
+	@author Everson
+	@since 14/10/2021
+	@version 01
+/*/
+Static Function chkEdtLk()
+
+	//Variáveis.
+	Local aArea  := GetArea()
+	Local cQuery := " SELECT TOP 1 '1' FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = '000000' "
+	Local lRet   := .T.
+  	Local oError := ErrorBlock({|e| lRet:= .F.,;
+	  							MsgAlert("Não foi possível conectar no banco de dados do Edata: " + Chr(10) + e:Description, "chkEdtLk(CCSP_002)");
+							   })
+
+	//
+    Begin Sequence
+		If Select("CHECK_EDATA") > 0
+			CHECK_EDATA->(DbCloseArea())
+		EndIf
+		TcQuery cQuery New Alias "CHECK_EDATA"
+		CHECK_EDATA->(DbCloseArea())
+    End Sequence
+	
+	//
+  	ErrorBlock(oError)
+
+	//
+	RestArea(aArea)
+	
+Return lRet

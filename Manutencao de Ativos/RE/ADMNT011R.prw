@@ -3,6 +3,7 @@
 #INCLUDE "TBICONN.CH"
 #Include 'TOTVS.ch'
 #INCLUDE "topconn.ch"
+
 /*/{Protheus.doc} ADMNT011R - Relatorio de Custo por OS / Eqto Exporta Excel
 )
     @type  Function
@@ -14,8 +15,10 @@
     @example
     (examples)
     @see (links_or_references)
-	@history Chamado: T.I - 05/08/2020, Tiago Stocco - Adicionado informaçoes no relatorio de custo de manutenção de ativos
-    /*/
+	@history Chamado: T.I   - 05/08/2020, Tiago Stocco - Adicionado informaçoes no relatorio de custo de manutenção de ativos
+    @history Ticket : 62637 - 18/10/2021, Tiago Stocco - Adicionado informaçoes no relatorio de custo de manutenção de ativos - Data Final
+/*/
+
 User Function ADMNT011R()
 Local bProcess 		:= {|oSelf| Executa(oSelf) }
 Local cPerg 		:= "ADMNT011R"
@@ -196,6 +199,7 @@ If (cAlias)->(!EOF())
     oExcel:AddColumn("OS","Relacao de OS","Tp.Servico"   ,1,1)
     oExcel:AddColumn("OS","Relacao de OS","Finalizada"   ,1,1)
     oExcel:AddColumn("OS","Relacao de OS","Dt.Manut.Ini"  ,1,4)
+    oExcel:AddColumn("OS","Relacao de OS","Dt.Manut.Fim"  ,1,4) //Ticket : 62637 - 18/10/2021, Tiago Stocco
     cAlias2    := GetNextAlias()
     cQry    := " SELECT "
     cQry    += " TJ_FILIAL,"
@@ -205,6 +209,7 @@ If (cAlias)->(!EOF())
     cQry    += " TJ_SERVICO,"
     cQry    += " TJ_TERMINO,"
     cQry    += " TJ_DTORIGI,"
+    cQry    += " TJ_DTMRFIM," //Ticket : 62637 - 18/10/2021, Tiago Stocco
     cQry    += " TE_NOME"
     cQry    += " FROM "+RetSqlName("STJ")+" TJ " 
     cQry    += " LEFT JOIN "+RetSqlName("ST4")+" T4 ON "
@@ -240,7 +245,8 @@ If (cAlias)->(!EOF())
                                             cServico                ,;
                                             (cAlias2)->TE_NOME  	,;
                                             (cAlias2)->TJ_TERMINO   ,;
-                                            STOD((cAlias2)->TJ_DTORIGI)})	// Linha
+                                            STOD((cAlias2)->TJ_DTORIGI),;	
+                                            STOD((cAlias2)->TJ_DTMRFIM)})	// Linha
             (cAlias2)->(DbSkip())
         End
     (cAlias2)->(DbCloseArea())

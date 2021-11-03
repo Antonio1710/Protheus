@@ -11,7 +11,8 @@
     @type  Function
     @author Leonardo P. Monteiro
     @since 26/08/2021
-    @version 01
+    @version 02
+    @history Ticket: 62189 - 19/10/2021 - ADRIANO SAVOINE - Gerada a calculadora de digito GS1 apartir dos requisitos disponiveis no site da GS1 e gerado o sequencial do Palete na SX5 para não repetir mais os dados.
     
 /*/
 #Define IMP_SPOOL  2
@@ -25,9 +26,15 @@ User Function ADEEC013R() // U_ADEEC013R()
     Local cNomRel				:= "ADEEC013R"
     Local nA                    := 0
     Local nValor                := 0
+    Local cCodx5                := ALLTRIM(Posicione("SX5",1,xFilial("SX5")+ 'EX',"X5_CHAVE"))
+    LOCAL aAreaAnt              := GETAREA()
 
     Local lAdjustToLegacy 		:= .F. 
     Local lDisableSetup  		:= .T.
+    Local nPalete               := CValToChar(val('9000' + cCodx5)+1)
+    Local cCodigo               := '07897560' + nPalete
+    Local nDig                  := u_Diggs1(cCodigo)
+
 
     Private cEOL				:= chr(13)+Chr(10)
     
@@ -89,9 +96,9 @@ User Function ADEEC013R() // U_ADEEC013R()
     Aadd( aParamBox ,{1,"FEED MATERIAL"         ,LEFT("CATEGORY 3 UNFIT FOR HUMAN CONSUMPTION"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*06*/
     Aadd( aParamBox ,{1,"FEED ADDITIVES"        ,LEFT("Only for Manufacture of petfood"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*07*/
     Aadd( aParamBox ,{1,"PRODUCT DESCRIPTION"   ,left("Chicken liver frozen"+Space(60),60)  ,"" ,'.T.',"",'.T.',80,.F.}) /*08*/
-    Aadd( aParamBox ,{1,"SSCC (00) (01)"        ,left("7897560"+Space(10),10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*09*/
-    Aadd( aParamBox ,{1,"SSCC (00) (02)"        ,left("9000000000"+Space(10),10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*10*/
-    Aadd( aParamBox ,{1,"SSCC (00) (03)"        ,"9"  ,"" ,'.T.',"",'.T.',80,.F.}) /*11*/
+    Aadd( aParamBox ,{1,"SSCC (00) (01)"        ,07897560 ,"" ,'.F.',"",'.F.',80,.F.}) /*09*/
+    Aadd( aParamBox ,{1,"SSCC (00) (02)"        ,val(nPalete) ,"" ,'.F.',"",'.F.',80,.F.}) /*10*/
+    Aadd( aParamBox ,{1,"SSCC (00) (03)"        ,nDig ,"" ,'.F.',"",'.F.',80,.F.}) /*11*/
     Aadd( aParamBox ,{1,"BATCH/ LOT (10)"       ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*12*/
     Aadd( aParamBox ,{1,"PROD DATE (11)"        ,Space(08)  ,"99/99/99" ,'.T.',"",'.T.',80,.F.}) /*13*/
     Aadd( aParamBox ,{1,"BEST BEFORE (15)"      ,Space(08)  ,"99/99/99" ,'.T.',"",'.T.',80,.F.}) /*14*/
@@ -145,12 +152,45 @@ User Function ADEEC013R() // U_ADEEC013R()
         //TRB->(dbgotop()) 
 
         nQuantReg   := MV_PAR01
+
+        DbSelectArea('SX5')
+        SX5->(DbSetOrder(1)) 
         
         for nA := 1 TO nQuantReg
-                
+
+            IF nA = 1
                 fImpCabec()
 
+                cNovo := substr(cValToChar(MV_PAR11),5,5)
+               
+                dbSeek(xFilial("SX5")+"EX")
+                SX5->( RecLock( "SX5" , .F. ) )		
+                SX5->X5_CHAVE  := cNovo
+                SX5->(MsUnlock())
+
+
+            ELSE
+                MV_PAR11 := ((MV_PAR11) + 1)
+                cNovo := substr(cValToChar(MV_PAR11),5,5)
+                
+                dbSeek(xFilial("SX5")+"EX")
+                SX5->( RecLock( "SX5" , .F. ) )		
+                SX5->X5_CHAVE  := cNovo
+                SX5->(MsUnlock())
+
+
+                cCodigo  := '07897560' + cValToChar(MV_PAR11)
+                MV_PAR12 := u_Diggs1(cCodigo)                
+
+                fImpCabec()
+
+            ENDIF
+           
+
+
         next nA
+
+        RESTAREA(aAreaAnt)
         
         // INCLUÍDA TRATATIVA PARA GERAR VIA JOB
         if lGeraPdfServidor
@@ -257,13 +297,13 @@ Static Function fImpCabec()
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[04])
     oPrinter:Say(nLinha+13, aPerc[01]+010 , "SSCC (00)"         , oFOARNE17)
     
-    cVarImp := Alltrim(MV_PAR10)
+    cVarImp := PadL(MV_PAR10,8,'0')
     oPrinter:Say(nLinha+45, aPerc[01]+010 , cVarImp, oFOARNE20)
     
-    cVarImp := Alltrim(MV_PAR11)
+    cVarImp := Alltrim(CVALTOCHAR(MV_PAR11))
     oPrinter:Say(nLinha+45, aPerc[02]+010 , cVarImp, oFOARNE80)
     
-    cVarImp := Alltrim(MV_PAR12)
+    cVarImp := Alltrim(CVALTOCHAR(MV_PAR12))
     oPrinter:Say(nLinha+45, aPerc[03]+010 , cVarImp, oFOARNE20)
     
     nLinha += nAltura
@@ -299,7 +339,7 @@ Static Function fImpCabec()
     cVarImp := Alltrim(MV_PAR13)
     oPrinter:Say(nLinha+36, aPerc[01]+050 , cVarImp, oFOARNE30)
     
-    oPrinter:Say(nLinha+13, aPerc[02]+010 , "ORDER NUMBBER"           , oFOARNE17)
+    oPrinter:Say(nLinha+13, aPerc[02]+010 , "ORDER NUMBER"           , oFOARNE17)
     cVarImp := Alltrim(MV_PAR16)
     oPrinter:Say(nLinha+36, aPerc[02]+010 , cVarImp, oFOARNE30)
 
@@ -321,7 +361,7 @@ Static Function fImpCabec()
     aTamFont    := GetStringPixSize( cVarImp, "Arial", 15, .F., .F., .F. )
     oPrinter:Say(nLinha+240+aTamFont[1], (nRight*0.5)-aTamFont[2]/4 , cVarImp, oFOARNO15)
     
-    cVarImp := "(00)"+Alltrim(MV_PAR10)+Alltrim(MV_PAR11)+Alltrim(MV_PAR12)
+    cVarImp := "(00)"+cValtoChar(PadL(MV_PAR10,8,'0'))+cValtoChar(MV_PAR11)+cValtoChar(MV_PAR12)
     oPrinter:Code128(nLinha+290 , aPerc[01]+(nRight-nCol)*0.06,cVarImp/*cCode*/,(nRight-nCol)*0.88 /*nWidth*/,100 /*nHeigth*/,.F./*lSay*/,oFOARNO08,(nRight-nCol)*0.88)
     
     aTamFont    := GetStringPixSize( cVarImp, "Arial", 15, .F., .F., .F. )
@@ -368,3 +408,54 @@ Static Function fMakeDir(cDirServer)
     EndIf
 
 Return cDirServer
+
+/*/{Protheus.doc} User Function Diggs1
+    (Função para gerar calculo do digito igual ao site da GS1)
+    @type  Function
+    @author ADRIANO SAVOINE
+    @since 19/10/2021
+    @version 01
+    /*/
+
+User Function Diggs1(cCodigo)
+    Local  aArea       := GetArea()
+    Local  nTotal      := 0
+    Local  nAtual      := 0
+    Local  nt1         := 0
+    Local  nPar        := 0
+    Local  nt2         := 0
+    Local  nImp        := 0
+    Local  nSoma       := 0
+    Local  nDif        := 0
+    Local  nMax        := 0
+    Public nDig        := 0 
+     
+     
+    //Percorre todos os Numeros
+    For nAtual := 1 To Len(cCodigo)
+
+        If mod(nAtual,2) == 0
+            nPar := Val(SubStr(cCodigo, nAtual, 1)) * 1
+            nt1 := nt1 + nPar
+            nTotal++
+        Else 
+            nImp := Val(SubStr(cCodigo, nAtual, 1)) * 3
+            nt2 := nt2 + nImp
+            nTotal++
+
+        EndIf
+
+    Next
+
+    nSoma := nt1 + nt2
+    nDif  := 10 - Val(SubStr(cValToChar(nSoma), Len(cValToChar(nSoma)), 1)) 
+    nMax  := nSoma + nDif
+
+    IF (nMax - nSoma) == 10
+        nDig  := 0
+        ELSE
+        nDig  := nMax - nSoma
+    ENDIF
+
+    RestArea(aArea)
+Return nDig

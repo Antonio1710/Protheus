@@ -17,6 +17,7 @@
 	@history chamado 056607 - Fernando Macieira - 10/06/2020 - || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE
 	@history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio
 	@history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
+	@history ticket      TI - Fernando Macieira - 15/09/2021 - MV_PAR05 no logzbe sem tratativa de conversão data/caracter
 /*/
 User Function EPCP006()
 
@@ -339,7 +340,7 @@ Static Function PCP006Proc()
 
 	//gera log - @history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
 	u_GrLogZBE( msDate(), TIME(), cUserName," ESTORNO INVENTARIO","CONTROLADORIA","EPCP006",;
-	"ESTORNO INVENTARIO PARAMETROS: " + cMV_PAR01 + " " + cMV_PAR02 + " " + cMV_PAR05 + " " + cEmpAnt + "/" + cFilAnt, ComputerName(), LogUserName() )
+	"ESTORNO INVENTARIO PARAMETROS: " + cMV_PAR01 + " " + cMV_PAR02 + " " + DtoC(cMV_PAR05) + " " + cEmpAnt + "/" + cFilAnt, ComputerName(), LogUserName() ) // @history ticket      TI - Fernando Macieira - 15/09/2021 - MV_PAR05 no logzbe sem tratativa de conversão data/caracter
 
 	StartJob("u_ChkEnd", GetEnvServer(), .F., aParamJob)
 	//

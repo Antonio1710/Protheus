@@ -17,7 +17,8 @@
     @history Everson - 17/10/2019. Chamado 052531. Adicionado cálculo de PDD do ano vigente na aba Provisão Perdas e Perdas Efetivas.
     @history Everson - 29/07/2020. Chamado 058854. Adicionadas as empresas 02, 07 e 09. 
     @history Everson - 29/07/2020. Chamado 059641. Tratamento para desconsiderar títulos NDC.
-    @history Everson - 17/08/2020. Chamado 060504|| OS 061975 || FINANCAS || WAGNER || 11940283101 || AGINGLIST.
+    @history Everson - 17/08/2020. Chamado 060504. 060504 || OS 061975 || FINANCAS || WAGNER || 11940283101 || AGINGLIST.
+    @history Everson - 14/09/2021. Chamado 25605. Retirado o tratamento que valida o ambiente pelo IP do servidor.
     /*/
 User Function ADCOM020P()
 
@@ -27,8 +28,8 @@ User Function ADCOM020P()
     //
     Private cDestWFgas := ""
     Private cCopDeswf  := ""
-    Private sNAmbiente := ""
-    Private nServerPRD := ""
+    //Private sNAmbiente := ""
+    //Private nServerPRD := ""
     Private sWFCentral := ""
 
     //
@@ -42,7 +43,7 @@ User Function ADCOM020P()
         RpcSetType(3)
         RpcSetEnv( "01" , "01" )
         ConOut( "Inicio - Workflow Gerencial - " + time() )
-        sNAmbiente := getServerIP()
+        //sNAmbiente := getServerIP()
 
     EndIf
 
@@ -757,10 +758,11 @@ Return
 Static Function ADCO020B(cCnpjRZ)
 
     //Variáveis.
-    Local cMsg   := ""
-    Local cQuery := ""
+    Local cMsg      := ""
+    Local cQuery    := ""
     Local cAssunto  := "Alerta de Títulos à Pagar"
     Local aRzCpnj   := CTBSplit( cCnpjRZ , ",")
+    Local a         := 1 //Everson - 13/09/2021. Chamado 25605.
 
     for a:=1 to len(aRzCpnj)
 
@@ -1154,7 +1156,6 @@ Static Function ADCO020C()
     Local cNomCli   := "" 
     Local nQtdCA    := 0
     Local cTransp   := ""
-    Local dDataIni  := DtoS(date()- SuperGetMv( "MV_#ADC20I" , .F. , 365 , ) )  //26/07/18 | Ricardo Lima
     Local dDataFim  := DtoS(date()- SuperGetMv( "MV_#ADC20F" , .F. , 1 , ) )    //26/07/18 | Ricardo Lima
     Local dDtParin  := SuperGetMv( "MV_#ADC20D" , .F. , "20170101" , )
      
@@ -1530,7 +1531,7 @@ Static Function ADCO020D()
     Local dDataIni  := DtoS(date()- SuperGetMv( "MV_#ADC20I" , .F. , 365 , ) )  //26/07/18 | Ricardo Lima
     Local dDtParin  := SuperGetMv( "MV_#ADC20D" , .F. , "20170101" , )
 
-    nServerPRD := SuperGetMv( "MV_#ADC20S" , .F. , '' , )
+    //nServerPRD := SuperGetMv( "MV_#ADC20S" , .F. , '' , )
 
     cQuery := " SELECT DISTINCT C5_TRANSP "
     cQuery += " FROM "+ RetSqlName("SF2") +" F2 "
@@ -1914,7 +1915,7 @@ Static Function ADCO020D()
         EndIf
 
         IF !EMPTY(cDestWFgas) 
-            IF !Empty(sEmailTrp) .and. Alltrim(sNAmbiente) == Alltrim(nServerPRD)
+            IF !Empty(sEmailTrp) //.and. Alltrim(sNAmbiente) == Alltrim(nServerPRD) //Everson - 14/09/2021. Chamado 25605.
                 //sEmailCpl := Alltrim(cDestWFgas) + ';' + Alltrim(cCopDeswf) + ';' + Alltrim(sEmailTrp)
                 sEmailCpl := Alltrim(cDestWFgas) + ';' + Alltrim(sEmailTrp)  //Chamado de TI: 24/04/2019 - Fernando Sigoli
             
@@ -2807,10 +2808,6 @@ Static Function ADCO020F(aEmp) //Everson - 29/07/2020. Chamado 058854.
     //Variáveis.
 	Local cMsg     := ""
 	Local cQuery   := ""
-	Local cAssunto := "Aging List - Geral"
-	Local nQtdAtu  := 0
-	Local nQtdAnt  := 0
-	Local cTransp  := ""
 	
 	// Maior 90
 	Local nVlrM90ES := 0
@@ -3307,7 +3304,6 @@ Static Function ADCO020G(aEmp) //Everson - 29/07/2020. Chamado 058854.
     //Variáveis.
 	Local cMsg     := ""
 	Local cQuery   := ""
-	Local cAssunto := "Aging List - Inadimplencia Interna"
 	
 	Local nTTped     := 0
 	Local nTTinc     := 0
@@ -3530,7 +3526,6 @@ Static Function ADCO020H(aEmp) //Everson - 29/07/2020. Chamado 058854.
     //Variáveis.
 	Local cMsg   := ""
 	Local cQuery := ""
-	Local cAssunto := "Aging List - Inadimplencia Corrente"
 	Local nTTVlrGer := 0
 	Local nItinco   := 0
 	Local nTTgTop20 := 0
@@ -4010,7 +4005,6 @@ Static Function ADCO020I(aEmp) //Everson - 29/07/2020. Chamado 058854.
     //Variáveis.
 	Local cMsg      := ""
 	Local cQuery    := ""
-	Local cAssunto  := "Aging List - Provisão Perdas e Perdas Efetivas"
 	
 	Local nItinco   := 0
 	Local nTTgTop20 := 0

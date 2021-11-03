@@ -17,6 +17,9 @@
 	@history 30/10/2019, Everson, Chamado 052760. Validação Sintegra.
 	@history 01/11/2019, Everson, Chamado 052760. Alterada função de validação Sintegra.
 	@history 27/01/2020, Everson, Chamado T.I. Validação do número sequencial do pedido de venda.
+	@history 08/09/2021, Macieir, Chamado T.I. Reforça na Validação do número sequencial do pedido de venda após golive cloud
+	@history 15/09/2021, Everson, Chamado T.I. Removido log quando o pedido já existe. É necessária esta alteração para incluir constraint no BD.
+	@history 07/10/2021, Everson, Chamado T.I. Corrigido nome do campo.
 	/*/
 
 User Function ADVEN086P()
@@ -57,7 +60,7 @@ WsMethod Post WsService pedidosdevenda
 	Local i				:= 1
 	Local cNumChkPedsal	:= ""
 	Local cCodUsuario	:= Self:GetHeader("UsrVend")
-	Local cJobAux		:= ""
+	//Local cJobAux		:= ""
 	Local cUrlServ		:= Self:GetPath()
 	Local cIdSFBkp		:= ""
 	Local cNumSF		:= ""
@@ -202,8 +205,8 @@ WsMethod Post WsService pedidosdevenda
 
 			cJsonResp := '{"msg":"Sequencial ' + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)) + ' já utilizado.","C5_NUM":"'+ Alltrim(cValToChar(cNumChkPedsal)) + '"}'
 
-			//
-			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,cJsonResp,cUrlServ,"POST",,cNumSF)
+			//Everson - 15/09/2021. Chamado T.I.
+			//StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,cJsonResp,cUrlServ,"POST",,cNumSF)
 
 			Self:SetHeader("location",cValToChar(cPath) + "/" + cNumChkPedsal)
 
@@ -250,9 +253,17 @@ WsMethod Post WsService pedidosdevenda
 
 			Next i
 
-			//
-			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"POST",,cNumSF)
+			//Everson - 15/09/2021. Chamado T.I.
+				Conout("ADVEN086P " + "Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE))
+				DbSelectArea("ZCI")
+				DbGoTo( Val(cValToChar(nRecno)) )
+				RecLock("ZCI",.F.)
+					ZCI->ZCI_ERRO := "Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) //Everson - 07/10/2021.
+				ZCI->(MsUnlock())
 
+				//StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"POST",,cNumSF)
+			//
+			
 			SetRestFault(400,EncodeUtf8("Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ))
 
 			FreeObj(oParseJSON)
@@ -315,15 +326,15 @@ WsMethod Put WsService pedidosdevenda
 	Local cBody 		:= Self:GetContent()
 	Local cErro			:= ""
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local aProp			:= {}
+	//Local aProp			:= {}
 	Local cContentType	:= Self:GetHeader("Content-Type")
-	Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
+	//Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
 	Local cNumPed		:= ""
 	Local oParseJSON
 	Local aParametros	:= Self:aURLParms
 	Local cErroPE		:= ""
 	Local cCodUsuario	:= Self:GetHeader("UsrVend")
-	Local cJsonResp		:= ""
+	//Local cJsonResp		:= ""
 	Local i				:= 1
 	Local cFlagApr		:= ""
 	Local cUrlServ		:= Self:GetPath()
@@ -762,7 +773,7 @@ WsMethod Delete WsService pedidosdevenda
 	Local cFormatAceito := "application/json"
 	Local cErro			:= ""
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local aProp			:= {}
+	//Local aProp			:= {}
 	Local cNumPed		:= ""
 	Local aParametros	:= Self:aURLParms
 	Local cErroPE		:= ""
@@ -770,6 +781,7 @@ WsMethod Delete WsService pedidosdevenda
 	Local cPedBkp		:= ""
 	Local cUrlServ		:= Self:GetPath()
 	Local nRecno		:= 0
+	Local i				:= 1
 
 	Private aPedidos	:= {}
 
@@ -904,20 +916,20 @@ Static Function geraRegistro(oParseJSON,cErro,cNumPed,cJobAux,nRecno,nOPc,cSinte
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea			:= GetArea()
 	Local lRet			:= .F.	
-	Local cQuery		:= ""
-	Local cDoc			:= ""
-	Local aCabec		:= {}
-	Local aItens		:= {}
-	Local aItem			:= {}
-	Local aErroLog		:= {}
-	Local k				:= 1
+	//Local cQuery		:= ""
+	//Local cDoc			:= ""
+	//Local aCabec		:= {}
+	//Local aItens		:= {}
+	//Local aItem			:= {}
+	//Local aErroLog		:= {}
+	//Local k				:= 1
 	Local i				:= 1
-	Local cPulaLinha	:= Chr(13) + Chr(10)
-	Local nAuxInvalido	:= 0
+	//Local cPulaLinha	:= Chr(13) + Chr(10)
+	//Local nAuxInvalido	:= 0
 	Local cProduto		:= ""
 
-	Local cErroPE		:= ""
-	Local cNumChkPedsal	:= ""
+	//Local cErroPE		:= ""
+	//Local cNumChkPedsal	:= ""
 	Local cVendCdCli	:= ""
 
 	Local cObrPdCp		:= ""
@@ -1215,39 +1227,55 @@ Return lRet
 	@author Everson
 	@since 05/06/2018
 	@version 01
-	/*/
+/*/
 Static Function getSC5()
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea 	:= GetArea()
-	Local cPedido 	:= GetSxeNum("SC5","C5_NUM") 
-	Local cQuery	:= ""  
+	Local cPedido 	:= ""
+	//Local cQuery	:= ""  
+
+	// @history 08/09/2021, Macieir, Chamado T.I. Reforça na Validação do número sequencial do pedido de venda após golive cloud
+	Do While .t.
+
+		cPedido 	:= GetSxeNum("SC5","C5_NUM") 
 	
+		// SC5
+		DbSelectArea("SC5")
+		SC5->( DbSetOrder( 01 ) )
+		While SC5->( dbSeek( xFilial( "SC5" ) + cPedido ) )
+			ConfirmSX8()
+			cPedido := GetSxeNum( "SC5", "C5_NUM" )
+		EndDo
+		ConfirmSX8() 
+
+		// ZCI
+		DbSelectArea("ZCI")
+		ZCI->( DbSetOrder( 2 ) )
+		While ZCI->( dbSeek( xFilial( "ZCI" ) + cPedido ) )
+			ConfirmSX8()
+			cPedido := GetSxeNum( "SC5", "C5_NUM" )
+		EndDo
+		ConfirmSX8() 
+
+		// Checo após ZCI
+		SC5->( dbSetOrder(1) )
+		If SC5->( !dbSeek(FWxFilial("SC5")+cPedido) )
+			Exit
+		EndIf
+
+	EndDo
+
 	DbSelectArea("SC5")
-	SC5->( DbSetOrder( 01 ) )
-	
-	While SC5->( dbSeek( xFilial( "SC5" ) + cPedido ) )
-		ConfirmSX8()
-		cPedido := GetSxeNum( "SC5", "C5_NUM" )
-		
-	EndDo
-	
-	//
-	DbSelectArea("ZCI")
-	ZCI->( DbSetOrder( 2 ) )
-	
-	While ZCI->( dbSeek( xFilial( "ZCI" ) + cPedido ) )
-		ConfirmSX8()
-		cPedido := GetSxeNum( "SC5", "C5_NUM" )
-		
-	EndDo
-	
+	ConfirmSX8()
+
 	//
 	RestArea(aArea)
                          
 Return cPedido
+
 /*/{Protheus.doc} exclPedVend
 	MsExecauto pedido de venda (exclusão). Chamado 037261.
 	@type  Static Function
@@ -1262,16 +1290,16 @@ Static Function exclPedVend(cErro,cNumPed,nRecno,cCodUsuario,cUrlServ)
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea			:= GetArea()
 	Local lRet			:= .F.	
-	Local cDoc			:= ""
-	Local aCabec		:= {}
-	Local aItens		:= {}
-	Local aItem			:= {}
-	Local aErroLog		:= {}
-	Local k				:= 1
-	Local i				:= 1
-	Local cPulaLinha	:= Chr(13) + Chr(10)
-	Local nAuxInvalido	:= 0
-	Local cProduto		:= ""
+	//Local cDoc			:= ""
+	//Local aCabec		:= {}
+	//Local aItens		:= {}
+	//Local aItem			:= {}
+	//Local aErroLog		:= {}
+	//Local k				:= 1
+	//Local i				:= 1
+	//Local cPulaLinha	:= Chr(13) + Chr(10)
+	//Local nAuxInvalido	:= 0
+	//Local cProduto		:= ""
 
 	Default cErro		:= ""
 	Default nRecno		:= 0

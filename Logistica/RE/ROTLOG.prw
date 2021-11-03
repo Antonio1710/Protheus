@@ -20,16 +20,24 @@
 	@history Alteração - William Costa   - 05/12/2019 - Chamado: 053889 - Alterado a descrição do relatório do campo do protheus para o campo do Edata 
 	@history Alteração - William Costa   - 26/02/2020 - Chamado: 056129 - Foi ajustado a programação que se não encontrar a descrição no Edata irá trazer a que está no pedido de venda do Protheus.  Essa pergunta só foi feita na Adoro e não na Ceres onde estava gerando o erro. Foi ajustado as perguntas não ocasionando mais os Erros.
 	@history Alteração - Everson         - 03/07/2020 - Chaamdo: 059401 - Adicionado impressão de vale palete.
+	@history Alteração - Everson         - 19/10/2021 - Chaamdo: 055129 - Tratamento para melhorar o desempenho do relatório.
 /*/
 
 User Function ROTLOG() // U_ROTLOG()
 
-	Private _ROTEIRO := ''
-	Private _PLACA   := ''
-	Private _DTENTR  := CTOD('  /  /  ')
+	//Everson - 19/10/2021. Chamado 55129.
+	Private aDados		:= {}
+	Private oPrdEdt	   	:= Nil
+	//
+
+	Private _ROTEIRO 	:= ''
+	Private _PLACA   	:= ''
+	Private _DTENTR  	:= CTOD('  /  /  ')
 	Private limite
-	Private _Prodedata := SPACE(06)
-	Private _DESCRI    := SPACE(60)
+	Private _Prodedata 	:= SPACE(06)
+	Private _DESCRI    	:= SPACE(60)
+
+	MsAguarde({|| oPrdEdt := getPrdEdt() }, "ROTLOG", "Carregando produtos do Edata...", .F.) //Everson - 19/10/2021. Chamado 55129.
 
 	aOrd             := {}
 	tamanho          := "M"
@@ -402,24 +410,38 @@ User Function ROTLOG() // U_ROTLOG()
 						_Produto := left(SC6->C6_PRODUTO,10) //C6_PRODUTO
 
 						// *** INICIO CHAMADO 053889 WILLIAM COSTA 05/12/2019
-						SqlProdEdata(_Produto)
-						DBSELECTAREA("TRC")   
-						TRC->(DBGOTOP())    
+						// SqlProdEdata(_Produto)
+						// DBSELECTAREA("TRC")   
+						// TRC->(DBGOTOP())    
 						
-						WHILE TRC->(!EOF())    
+						// WHILE TRC->(!EOF())    
 						
-							_Prodedata := TRC->PRODEDATA
-							_Descri    := TRC->DESCEDATA 
-							TRC->(DBSKIP())     	
-						ENDDO
+						// 	_Prodedata := TRC->PRODEDATA
+						// 	_Descri    := TRC->DESCEDATA 
+						// 	TRC->(DBSKIP())     	
+						// ENDDO
 
-						IF TRC->(EOF())
+						// IF TRC->(EOF())
 
-							_Descri    := SC6->C6_DESCRI
+						// 	_Descri    := SC6->C6_DESCRI
 
-						ENDIF
-						TRC->(DBCLOSEAREA())
+						// ENDIF
+						// TRC->(DBCLOSEAREA())
 						// *** FINAL CHAMADO 053889 WILLIAM COSTA 05/12/2019
+
+						//Everson - 19/10/2021. Chamado 55129.
+							aDados := {}
+							oPrdEdt:Get(Alltrim(cValToChar(SC6->C6_PRODUTO)), aDados)
+
+							If Len(aDados) > 0
+								_Prodedata := aDados[1]
+								_Descri    := aDados[2]
+							
+							Else
+								_Descri    := SC6->C6_DESCRI
+								
+							EndIf
+						//
 
 						_tes     := SC6->C6_TES
 						//_Descri  := SC6->C6_DESCRI //CHAMADO 053889 WILLIAM COSTA 05/12/2019
@@ -600,24 +622,38 @@ User Function ROTLOG() // U_ROTLOG()
 						_Produto := left(SC6->C6_PRODUTO,10) //C6_PRODUTO
 
 						// *** INICIO CHAMADO 053889 WILLIAM COSTA 05/12/2019
-						SqlProdEdata(_Produto)
-						DBSELECTAREA("TRC")   
-						TRC->(DBGOTOP())    
-						WHILE TRC->(!EOF())    
+						// SqlProdEdata(_Produto)
+						// DBSELECTAREA("TRC")   
+						// TRC->(DBGOTOP())    
+						// WHILE TRC->(!EOF())    
 						
-							_Prodedata := TRC->PRODEDATA
-							_Descri    := TRC->DESCEDATA 
-							TRC->(DBSKIP())     	
-						ENDDO
+						// 	_Prodedata := TRC->PRODEDATA
+						// 	_Descri    := TRC->DESCEDATA 
+						// 	TRC->(DBSKIP())     	
+						// ENDDO
 
-						IF TRC->(EOF())
+						// IF TRC->(EOF())
 
-							_Descri    := SC6->C6_DESCRI
+						// 	_Descri    := SC6->C6_DESCRI
 
-						ENDIF
+						// ENDIF
 
-						TRC->(DBCLOSEAREA())
+						// TRC->(DBCLOSEAREA())
 						// *** FINAL CHAMADO 053889 WILLIAM COSTA 05/12/2019
+
+						//Everson - 19/10/2021. Chamado 55129.
+							aDados := {}
+							oPrdEdt:Get(Alltrim(cValToChar(SC6->C6_PRODUTO)), aDados)
+
+							If Len(aDados) > 0
+								_Prodedata := aDados[1]
+								_Descri    := aDados[2]
+							
+							Else
+								_Descri    := SC6->C6_DESCRI
+								
+							EndIf
+						//
 
 						_tes     := SC6->C6_TES
 						//_Descri  := SC6->C6_DESCRI //CHAMADO 053889 WILLIAM COSTA 05/12/2019
@@ -791,10 +827,10 @@ User Function ROTLOG() // U_ROTLOG()
 	MS_FLUSH()
 	
 	dbSelectArea("TEMP")
-	dbclosearea("TEMP") 
+	TEMP->(dbclosearea()) 
 	fErase(_cNomTRB+'.*')
 	DBSELECTAREA("XC5")
-	dbclosearea("XC5")
+	XC5->(dbclosearea())
 
 Return
 
@@ -864,6 +900,7 @@ Static Function FResumoC(_cRoteiro)
 	Local cRecCli     := ''  //Chamado: 047975 - Fernando Sigoli 01/04/2019 
 	Local nTotCx 	  := 0   //Chamado: 047975 - Fernando Sigoli 01/04/2019 
 	Local nTotKG      := 0   //Chamado: 047975 - Fernando Sigoli 01/04/2019 
+	Local i			  := 1
     
     _lEntrou := .F.         
     DBSELECTAREA("TEMP")                
@@ -1177,15 +1214,55 @@ Static Function FResumoC(_cRoteiro)
 	QEXT->(DBCLOSEAREA())
 					
 Return
+/*/{Protheus.doc} getPrdEdt
+	Função retorna produtos Edata.
+	@type  Static Function
+	@author Everson
+	@since 19/10/2021
+	@version 01
+/*/
+Static Function getPrdEdt()
+
+	//Variáveis.
+	Local oHash := THashMap():New()
+
+	//
+	If Select("TRC") > 0
+		TRC->(DbCloseArea())
+
+	EndIf
+
+	//
+	SqlProdEdata()
+
+	//
+	DbSelectArea("TRC")
+	TRC->(DbGoTop())
+	While ! TRC->(Eof())
+
+		oHash:Set(Alltrim(cValToChar(TRC->COD_PROT)), { TRC->PRODEDATA, TRC->DESCEDATA})
+
+		TRC->(DbSkip())
+	End
+	TRC->(DbCloseArea())
+
+Return oHash
 
 STATIC FUNCTION SqlProdEdata(cProduto)
 
 	Local cQueryEdata := ''
-	Local cProd       := ''
+	//Local cProd       := ''
 		
-	cQueryEdata := "SELECT PROD_EDATA.ID_PRODDEFIMATEEMBA AS PRODEDATA,NM_PRODDEFIMATEEMBA AS DESCEDATA "
-    cQueryEdata += "  FROM [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] PROD_EDATA "
-    cQueryEdata += " WHERE (PROD_EDATA.IE_DEFIMATEEMBA COLLATE Latin1_General_CI_AS)  = '" + cProduto + "'"
+	cQueryEdata := " SELECT RTRIM(LTRIM(CAST(PROD_EDATA.IE_DEFIMATEEMBA AS VARCHAR))) AS COD_PROT, "
+	cQueryEdata += " PROD_EDATA.ID_PRODDEFIMATEEMBA AS PRODEDATA,NM_PRODDEFIMATEEMBA AS DESCEDATA "
+    cQueryEdata += " FROM [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] PROD_EDATA "
+
+	//Everson - 19/10/2021. Chamado 55129.
+	If ! Empty(Alltrim(cValToChar(cProduto)))
+    	cQueryEdata += " WHERE (PROD_EDATA.IE_DEFIMATEEMBA COLLATE Latin1_General_CI_AS)  = '" + cProduto + "'"
+
+	EndIf
+	//
     
 	TCQUERY cQueryEdata new alias "TRC"
 	

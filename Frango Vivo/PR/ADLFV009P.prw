@@ -22,6 +22,8 @@
 	@history Chamado 029058 -Everson 11/12/2019 Tratamento na validação de nota fiscal já utilizada e adicionada rotina de lançamento de frete ao menu.
 	@history Chamado 050729 - FWNM - 07/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Somente esta rotina não estava sendo compilada no R27
 	@history Chamado 050729 - FWNM - 15/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Tratativa na função U_TAKECHAR que é utilizada também no X3_VLDUSER mas retorna string, dando error log
+	@history Chamado 326334 - Everson - 15/09/2021 - Correção de erro variable does not exist _I on U_VALVEICB
+	@history TICKET: 62797  - ADRIANO SAVOINE - 26/10/2021 - Alteração no campo para novo modelo de checagem.
 /*/
 User Function ADLFV009P()  //u_ADLFV009P()
 	
@@ -30,6 +32,9 @@ User Function ADLFV009P()  //u_ADLFV009P()
 							{'TRIM( ZFB_STATUS )== "3"','BR_VERMELHO'},;
 							{'TRIM( ZFB_STATUS )== "4"','BR_BRANCO'}}  
 
+	Local _I            := 0
+	Local aCols         := ''
+	Local COPC          := ""
 		
 	Private cPerg	  	:= "ADLFV9A"
 
@@ -1397,8 +1402,10 @@ User Function VALVEICB()
     	//verifico se ja foi utilizado para entrada de veiculos e nao deixamos alterar 
     	DbselectArea("ZV1")
      	DbSetOrder(3)
-		DbGoTop()			
-		If dbseek(xFilial("ZV1")+Alltrim(cValToChar(aCols[_I,nPosNume])))//numero da ordem de carregamento
+		DbGoTop()
+		//Everson - 15/09/2021. Chamado 32634.			
+		//If dbseek(xFilial("ZV1")+Alltrim(cValToChar(aCols[_I,nPosNume])))//numero da ordem de carregamento //Everson - 15/09/2021. Chamado 32634. 
+		If dbseek(xFilial("ZV1")+Alltrim(cValToChar(aCols[n,nPosNume])))//numero da ordem de carregamento 
 			If !Empty(ZV1->ZV1_GUIAPE)
 				MsgStop("Alteração nao permitida,devido a ordem ja utilizada para pesagens de entrada de aves vivas. Ticket: "+ZV1->ZV1_GUIAPE) 
 				Return(.F.)
@@ -1994,25 +2001,24 @@ Static Function RumOrdemCar()
 	//========= bloco 6 =========
 	nLin	:=	1330
 
-	oPrn:Say(nLin+0080,0080,"Chegada na Balança:",oFontA10B,0100)
+	// TICKET: 62797 - ADRIANO SAVOINE - 26/10/2021 - INICIO
+
+	oPrn:Say(nLin+0080,0080,"ITENS PARA VERIFICAÇÃO:",oFontA12B,0100)
 																oPrn:Say(nLin+0200,1460,"__________________________",oFontA10B,0100)
 																oPrn:Say(nLin+0245,1460," ASS. RESPOSÁVEL PORTARIA ",oFontA10B,0100)
-
-	oPrn:Say(nLin+0170,0080,"Ápos Carregamento:",oFontA10N,0100)
-	oPrn:Say(nLin+0170,0500,"Chegada ___:___ Saída ___:___",oFontA10N,0100)
 																oPrn:Say(nLin+0370,1260,"INFORMAÇÕES VIAGEM ",oFontA12B,0100)
 
-	oPrn:Say(nLin+0280,0080,"Tipo Pesagem",oFontA10N,0100)
-	oPrn:Say(nLin+0280,0500,"[   ] Mecanica",oFontA10N,0100)
-	oPrn:Say(nLin+0280,0750,"[   ] Eletrônica",oFontA10N,0100)
+	oPrn:Say(nLin+0180,0080,"Todas as gaiolas estão com as tampas fechadas?",oFontA10N,0100)
+	oPrn:Say(nLin+0225,0080,"[   ] SIM",oFontA10N,0100)
+	oPrn:Say(nLin+0225,0250,"[   ] NÃO",oFontA10N,0100)
 
-	oPrn:Say(nLin+0390,0080,"Carregou Com",oFontA10N,0100)
-	oPrn:Say(nLin+0390,0500,"[   ] Sem Chuva",oFontA10N,0100)
-	oPrn:Say(nLin+0390,0750,"[   ] Com Chuva",oFontA10N,0100)    
-	oPrn:Say(nLin+0490,0080,"Pesou Tara",oFontA10N,0100)      
+	oPrn:Say(nLin+0280,0080,"Existe Gaiolas Quebradas no Veiculo?",oFontA10N,0100)
+	oPrn:Say(nLin+0320,0080,"[   ] SIM se sim qty: [    ]",oFontA10N,0100)
+	oPrn:Say(nLin+0320,0555,"[   ] NÃO",oFontA10N,0100)    
+	oPrn:Say(nLin+0380,0080,"Existe Aves com Partes do Corpo (asas ou cabeça) para fora da gaiola?",oFontA10N,0100)      
 																oPrn:Say(nLin+0490,1260,"Tempo Percurso:_____:_____Horas",oFontA10N,0100)      
 
-	oPrn:Say(nLin+0490,0500,"[   ] Sem Chuva",oFontA10N,0100)  	
+	oPrn:Say(nLin+0450,0080,"[   ] SIM",oFontA10N,0100)  	
 																oPrn:Say(nLin+0590,1260,"Na Ida:",oFontA10N,0100)
 																oPrn:Say(nLin+0690,1260,"Na volta:",oFontA10N,0100)
 																oPrn:Say(nLin+0790,1260,"Utilização Chuverão:",oFontA10B,0100)
@@ -2024,10 +2030,13 @@ Static Function RumOrdemCar()
 																oPrn:Say(nLin+0990,1540,"[  ] Sim 		   [  ] Não",oFontA10N,0100)
 																															
 
-	oPrn:Say(nLin+0490,0750,"[   ] Com Chuva",oFontA10N,0100) 
-	oPrn:Say(nLin+0590,0080,"Pesou Bruto",oFontA10N,0100)
-	oPrn:Say(nLin+0590,0500,"[   ] Sem Chuva",oFontA10N,0100)
-	oPrn:Say(nLin+0590,0750,"[   ] Com Chuva",oFontA10N,0100)
+	oPrn:Say(nLin+0450,0250,"[   ] NÃO",oFontA10N,0100) 
+	oPrn:Say(nLin+0530,0080,"Checar toda a carga envolta do Veiculo para Garantir que nenhuma ave,",oFontA10N,0100)
+	oPrn:Say(nLin+0590,0080,"esteja presa entre as gaiolas.",oFontA10N,0100)
+	oPrn:Say(nLin+0590,0580,"[   ] SIM",oFontA10N,0100)
+	oPrn:Say(nLin+0590,0750,"[   ] NÃO",oFontA10N,0100)
+
+	// TICKET: 62797 - ADRIANO SAVOINE - 26/10/2021 - FIM
 
 	oPrn:Say(nLin+0690,0080,"INFORMAÇÕES APANHA",oFontA12B,0100)
 	oPrn:Say(nLin+0790,0080,"Apanha",oFontA10N,0100)

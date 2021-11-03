@@ -47,15 +47,15 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
 
   BeginSql Alias cQuery1
     SELECT
-      SC5.C5_CLIENTE  AS CODCLI,
-      SC5.C5_LOJACLI  AS LOJACLI,
-      SA1.A1_NOME     AS CLIENTE,
-      SA1.A1_SATIV1   AS CODSEGMENTO,
-      SX5.X5_DESCRI   AS SEGMENTO,
-      SC5.C5_NUM      AS NUMPEDIDO,
-      ''              AS PERFILPAGTO,
-      SA1.A1_XRISCO   AS RCISP,
-      (SELECT TOP 1 ZBH.ZBH_MOTIVO
+      SC5.C5_CLIENTE              AS CODCLI,
+      SC5.C5_LOJACLI              AS LOJACLI,
+      SA1.A1_NOME                 AS CLIENTE,
+      SA1.A1_SATIV1               AS CODSEGMENTO,
+      SX5.X5_DESCRI               AS SEGMENTO,
+      SC5.C5_NUM                  AS NUMPEDIDO,
+      ISNULL(ZEJ.ZEJ_PERFPG,'')   AS PERFILPAGTO,
+      ISNULL(ZEJ.ZEJ_RATCIS,'')   AS RCISP,
+      ISNULL((SELECT TOP 1 ZBH.ZBH_MOTIVO
         FROM %TABLE:ZBH% ZBH  (NOLOCK)
         WHERE 
           ZBH.ZBH_FILIAL = SC5.C5_FILIAL
@@ -63,47 +63,15 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
         AND ZBH.ZBH_CLIENT = SC5.C5_CLIENTE
         AND ZBH.ZBH_LOJA = SC5.C5_LOJACLI
         AND ZBH.%notDel%
-      )               AS MOT_RETENCAO,
-      ''              AS MED_ATRASO,
-      (SELECT SUM(SC6.C6_VALOR)
-        FROM %TABLE:SC6% SC6 (NOLOCK)
-        WHERE 
-          SC6.C6_FILIAL = SC5.C5_FILIAL
-        AND SC6.C6_NUM = SC5.C5_NUM
-        AND SC6.C6_CLI = SC5.C5_CLIENTE
-        AND SC6.C6_LOJA = SC5.C5_LOJACLI
-        AND SC6.%notDel%
-      )               AS TOT_PEDIDO,
-      (SELECT SUM(E1_VLCRUZ) 
-        FROM %TABLE:SE1% SE1 (NOLOCK)
-        WHERE
-          SE1.E1_FILIAL = SC5.C5_FILIAL
-        AND SE1.E1_CLIENTE = SC5.C5_CLIENTE
-        AND SE1.E1_LOJA = SC5.C5_LOJACLI
-        AND SE1.E1_SALDO > 0
-        AND SE1.E1_VENCREA >= %Exp:ddatabase%
-        AND SE1.%notDel%
-      )               AS TIT_AVENCER,
-      (SELECT SUM(E1_VLCRUZ) 
-        FROM %TABLE:SE1% SE1 (NOLOCK)
-        WHERE
-          SE1.E1_FILIAL = SC5.C5_FILIAL
-        AND SE1.E1_CLIENTE = SC5.C5_CLIENTE
-        AND SE1.E1_LOJA = SC5.C5_LOJACLI
-        AND SE1.E1_SALDO > 0
-        AND SE1.E1_VENCREA < %Exp:ddatabase%
-        AND SE1.%notDel%
-      )               AS TIT_VENCIDO,
-      SA1.A1_LC       AS LIMITE,
-      (SELECT TOP 1 ZBE.ZBE_USUARI 
-        FROM %TABLE:ZBE% ZBE (NOLOCK)
-        WHERE ZBE_FILIAL = SC5.C5_FILIAL
-        AND ZBE_MODULO = 'SC5'
-        AND ZBE_ROTINA  IN ('ADFIN024P','ADFIN023P')
-        AND SUBSTRING(ZBE_LOG,8,6) = SC5.C5_NUM
-        AND ZBE.%notDel%
-      )               AS LIBERADOR,
-      ''              AS TXT_LIBERACAO
+      ),'')                       AS MOT_RETENCAO,
+      C5_XTOTPED                  AS TOT_PEDIDO,
+      ISNULL(ZEJ.ZEJ_VLPED,'')    AS TOT_LIBERADO,
+      ISNULL(ZEJ.ZEJ_MEDATR,'')   AS MED_ATRASO,
+      ISNULL(ZEJ.ZEJ_VLAVEN,'')   AS TIT_AVENCER,
+      ISNULL(ZEJ.ZEJ_VLVENC,'')   AS TIT_VENCIDO,
+      ISNULL(ZEJ.ZEJ_LIMCRD,'')   AS LIMITE,
+      ISNULL(ZEJ.ZEJ_USRLIB,'')   AS LIBERADOR,
+      ISNULL(ZEJ.ZEJ_PARECE,'')   AS TXT_LIBERACAO
     FROM %TABLE:SC5% SC5 (NOLOCK)
     LEFT JOIN %TABLE:SA1% SA1 ON
 	    SA1.A1_COD = SC5.C5_CLIENTE
@@ -114,6 +82,10 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
     AND SX5.X5_TABELA = '_S'
     AND SX5.X5_CHAVE = SA1.A1_SATIV1
     AND SX5.%notDel%
+    LEFT JOIN %TABLE:ZEJ% ZEJ ON
+      ZEJ.ZEJ_FILIAL = SC5.C5_FILIAL
+    AND ZEJ.	ZEJ_NUM = SC5.C5_NUM
+    AND ZEJ.%notDel%
     WHERE 
       SC5.C5_FILIAL = %xFilial:SC5%
     AND SC5.C5_DTENTR BETWEEN %EXP:DTOS(MVPAR01)% AND %EXP:DTOS(MVPAR02)%
@@ -239,3 +211,16 @@ Static Function CriaExcel()
 	oMsExcel:SetVisible( .T. )
 	oMsExcel:Destroy()
 Return() 
+
+/*
+LIMITE EXCEDIDO     
+Limite de crédito do
+Pedido de Venda com 
+TITULO EM ATRASO. Ti
+VLR PEDIDO INF MINIM
+VLR PARC INF MINIMO 
+LIMITE EXCEDIDO - RE
+Prazo medio da condi
+TITULO EM ATRASO. RE
+TITULO ATRASO - PERC
+*/

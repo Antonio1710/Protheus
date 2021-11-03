@@ -60,6 +60,7 @@ Static cMsgFim	:= "Termina Processamento do item: "
 	@history ticket 10248 - Fernando Macieira - 05/03/2021 - Revisão das rotinas de apontamento de OP´s
 	@history ticket 12048 - Fernando Macieira - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
     @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+	@history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
 /*/
 User Function ADEDA007R()
 
@@ -1257,6 +1258,10 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 			cOPERACAO := "E"
 	ENDCASE
 
+	// @history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
+	// Ajustado o campo na query pois estava fazendo where com a coluna PRODUCAO e foi mudada para LOCAL
+	//
+
 	// @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	If cPerg08Prd == 1 // produção PRÓPRIA
 		cPrdPTA := "P"
@@ -1281,7 +1286,7 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
 					AND STATUS = %Exp:cSTATUS%
 					AND OPERACAO = %Exp:cOPERACAO%  
-					AND PRODUCAO = %Exp:cPrdPTA%
+					AND LOCAL = %Exp:cPrdPTA%
 					AND QUANT>0
 					AND D_E_L_E_T_=' '
 			EndSQL
@@ -1299,7 +1304,7 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
 					AND STATUS = %Exp:cSTATUS%
 					AND OPERACAO = %Exp:cOPERACAO%  
-					AND PRODUCAO = %Exp:cPrdPTA%
+					AND LOCAL = %Exp:cPrdPTA%
 					AND QUANT>0
 					AND D_E_L_E_T_=' '
 			EndSQL

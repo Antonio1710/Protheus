@@ -98,6 +98,7 @@ Static nTipoFrt	:= 0
 	@history 05/05/2021, Everson, Ch:13434  - Tratamento para não emitir CT-e globalizado quando a UF da transportadora não estiver no parâmetro MV_#UFTCAT.
     @history ticket 14223 - Fernando Macieira - 09/06/2021 - E-mail automático adiantamento de frete
 	@history TICKET 18451 - ADRIANO SAVOINE   - 17/08/2021 - Retirada a limpeza da variavel "cEmailC" a mesma é carregada via parametro para enviar email´s de copia e não pode ser Limpa ficando vazia.
+	@history 21/09/2021, Everson, Ch:40420  - Tratamento para quando houver deadlock no fechamento de registros.
 /*/
 User Function ADLOG040P()
 
@@ -281,7 +282,7 @@ Static Function vldPos(oModel)
 	Local lRet			:= .T.
 	Local nOperation	:= oModel:GetOperation()
 	Local cCod	     	:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    )))
-	Local cOrigem		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_ORIGEM" ))) //Everson - 05/11/2019. Chamado 029058.	
+	//Local cOrigem		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_ORIGEM" ))) //Everson - 05/11/2019. Chamado 029058.	
 	Local cTpBloq		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TPBLQF" ))) //Everson - 05/11/2019. Chamado 029058.
 	Local cFechado		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_FECHA"  ))) //Everson - 05/11/2019. Chamado 029058.
 	Local cCodOcorr		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_OCORRE" )))
@@ -485,65 +486,65 @@ Return lRet
 	@since 05/11/2019
 	@version 1.0
 	/*/
-Static function vldCommit(oModel)
+// Static function vldCommit(oModel)
 
-	//Variáveis.
-	Local aArea			:= GetArea()	
-	Local nOperation	:= oModel:GetOperation()
-	Local cRegAprv		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_APRMOV" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cCod	     	:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    )))
-	Local cOcorr 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_OCORRE" ))) 
-	Local nDesco 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DESCOC" )))
-	Local nTrans 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TRANPA" )))
-	Local nLojtr 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_LJPPAG" )))	
-	Local nVlrFr 		:= oModel:GetValue( "ZFAMASTER" , "ZFA_VALOR" )
-	Local cOrigem		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_ORIGEM" )))
-	Local cTpBloq		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TPBLQF" )))
+// 	//Variáveis.
+// 	Local aArea			:= GetArea()	
+// 	Local nOperation	:= oModel:GetOperation()
+// 	Local cRegAprv		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_APRMOV" ))) //Everson - 05/11/2019. Chamado 029058.
+// 	Local cCod	     	:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    )))
+// 	Local cOcorr 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_OCORRE" ))) 
+// 	Local nDesco 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DESCOC" )))
+// 	Local nTrans 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TRANPA" )))
+// 	Local nLojtr 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_LJPPAG" )))	
+// 	Local nVlrFr 		:= oModel:GetValue( "ZFAMASTER" , "ZFA_VALOR" )
+// 	//Local cOrigem		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_ORIGEM" )))
+// 	Local cTpBloq		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TPBLQF" )))
 
-	//Everson-Ch:044314-20/03/2019
-	If ! (nOperation == MODEL_OPERATION_DELETE )
+// 	//Everson-Ch:044314-20/03/2019
+// 	If ! (nOperation == MODEL_OPERATION_DELETE )
 
-		//
-		oModel:SetValue( "ZFAMASTER", "ZFA_USUARI", cUserName )
-		oModel:SetValue( "ZFAMASTER", "ZFA_DATAIN", Date() )
-		oModel:SetValue( "ZFAMASTER", "ZFA_HORA"  , Time() )
+// 		//
+// 		oModel:SetValue( "ZFAMASTER", "ZFA_USUARI", cUserName )
+// 		oModel:SetValue( "ZFAMASTER", "ZFA_DATAIN", Date() )
+// 		oModel:SetValue( "ZFAMASTER", "ZFA_HORA"  , Time() )
 
-		//
-		If Empty(cRegAprv) .Or. cRegAprv = "N"  //Everson - 05/11/2019. Chamado 029058.
-			oModel:SetValue( "ZFAMASTER", "ZFA_APRMOV", "N" )
-			oModel:SetValue( "ZFAMASTER", "ZFA_USRAPR", "" )
-			oModel:SetValue( "ZFAMASTER", "ZFA_NOMAPR", "" )
-			oModel:SetValue( "ZFAMASTER", "ZFA_DTAPRO", SToD("") )
-			oModel:SetValue( "ZFAMASTER", "ZFA_HRAPRO", "" )
+// 		//
+// 		If Empty(cRegAprv) .Or. cRegAprv = "N"  //Everson - 05/11/2019. Chamado 029058.
+// 			oModel:SetValue( "ZFAMASTER", "ZFA_APRMOV", "N" )
+// 			oModel:SetValue( "ZFAMASTER", "ZFA_USRAPR", "" )
+// 			oModel:SetValue( "ZFAMASTER", "ZFA_NOMAPR", "" )
+// 			oModel:SetValue( "ZFAMASTER", "ZFA_DTAPRO", SToD("") )
+// 			oModel:SetValue( "ZFAMASTER", "ZFA_HRAPRO", "" )
 
-		EndIf
+// 		EndIf
 
-	EndIf
+// 	EndIf
 
-	//
-	If ! FWFormCommit(oModel)
-		Final("Não foi possível salvar o formulário(vldCommit - ADLOG040P)")
+// 	//
+// 	If ! FWFormCommit(oModel)
+// 		Final("Não foi possível salvar o formulário(vldCommit - ADLOG040P)")
 
-	EndIf 
+// 	EndIf 
 
-	//
-	Conout( DToC(Date()) + " " + Time() + " ADLOG040P - vldCommit - cCarga " + Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_CARGA"    ))) )
+// 	//
+// 	Conout( DToC(Date()) + " " + Time() + " ADLOG040P - vldCommit - cCarga " + Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_CARGA"    ))) )
 
-	//
-	If cRegAprv = "N"
+// 	//
+// 	If cRegAprv = "N"
 
-		//
-		Conout( DToC(Date()) + " " + Time() + " ADLOG040P - vldCommit - Entrou envio aprovação " + cValToChar(nOperation) )
+// 		//
+// 		Conout( DToC(Date()) + " " + Time() + " ADLOG040P - vldCommit - Entrou envio aprovação " + cValToChar(nOperation) )
 
-		//Everson-Ch:044314-19/03/2019
-		U_ADLOG050P( cCod , cOcorr , nLojtr , nTrans , nVlrFr , nDesco , nOperation, "ADLOG040P", cTpBloq ) //Everson - 05/11/2019. Chamado 029058.
+// 		//Everson-Ch:044314-19/03/2019
+// 		U_ADLOG050P( cCod , cOcorr , nLojtr , nTrans , nVlrFr , nDesco , nOperation, "ADLOG040P", cTpBloq ) //Everson - 05/11/2019. Chamado 029058.
 
-	EndIf
+// 	EndIf
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return .T.
+// Return .T.
 /*/{Protheus.doc} ViewDef
 	View do padrão MVC. Chamado 044314.
 	@type  Static Function
@@ -1274,7 +1275,7 @@ Static Function prFrtOvo(dDtEmiss,cFornec,cLoja,cNumDoc,cSerDoc,dDtEnt,cRoteiro,
 	//Variáveis.	
 	Local aArea			:= GetArea()
 	Local nTpFrtS		:= U_ADLG40H()
-	Local aDiaFim		:= getDiasF(nTpFrtS)
+	//Local aDiaFim		:= getDiasF(nTpFrtS)
 	Local aPrdCC		:= {}
 	Local cCond 		:= ""
 	Local aRet			:= {}
@@ -1283,9 +1284,9 @@ Static Function prFrtOvo(dDtEmiss,cFornec,cLoja,cNumDoc,cSerDoc,dDtEnt,cRoteiro,
 	Local cCcFch		:= ""
 
 	//Everson - 28/08/2020. Chamado 060994.
-	Local cLote 		:= ""
-	Local cDesLote		:= ""
-	Local cCC 			:= ""
+	//Local cLote 		:= ""
+	//Local cDesLote		:= ""
+	//Local cCC 			:= ""
 	//
 
 	Default lEmFech		:= .F. 
@@ -2226,7 +2227,7 @@ User Function ADLG40C()
 	TButton():New(150,505,"Relatório Movimentação"  ,oPnlBtn1,{|| MsAguarde({|| U_ADLOG045R() },"Aguarde","Gerando relatório...")   , Pergunte("ADLG146P",.F.) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )	//Everson-Ch:044314-14/08/2019.
 	TButton():New(170,505,"Enviar Fechamento"       ,oPnlBtn1,{|| MsAguarde({|| U_ADLOG060R() },"Aguarde","Gerando relatório...")   , Pergunte("ADLG146P",.F.) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )	//Everson-Ch:044314-14/08/2019.
     TButton():New(185,505,"Enviar Adiantamento"     ,oPnlBtn1,{|| MsAguarde({|| SendADI() },"Aguarde","Enviando adiantamento...")   , Pergunte("ADLG146P",.F.) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )	// @history ticket 14223 - Fernando Macieira - 09/06/2021 - E-mail automático adiantamento de frete
-	TButton():New(205,505,"Fechar Período"          ,oPnlBtn1,{|| Processa({|| fechFrt(oDadosP,aHToP), Eval(bCrgDados) },"Aguarde","Processando fechamento...",.F.) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+	TButton():New(205,505,"Fechar Período"          ,oPnlBtn1,{|| Processa({||  Eval(bCrgDados), fechFrt(oDadosP,aHToP), Eval(bCrgDados), Pergunte("ADLG146P",.F.), MsgInfo("Processo finalizado.","Função fechFrt (ADLOG040P)")},"Aguarde","Processando fechamento...",.F.) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 
 	//Everson - 31/10/2019 - Chamado 029058.
 	oBtnAbast:SetDisable(!lImpAbast)
@@ -2258,23 +2259,23 @@ Return Nil
 	@since 05/11/2019
 	@version 01
 	/*/
-Static Function obtVlrCmp(oObj,aCabec,cCampo)
+// Static Function obtVlrCmp(oObj,aCabec,cCampo)
 
-	//Variáveis.
-	Local aArea		:= GetArea()
-	Local cPlacas	:= ""
-	Local nAux		:= 1
+// 	//Variáveis.
+// 	Local aArea		:= GetArea()
+// 	Local cPlacas	:= ""
+// 	Local nAux		:= 1
 
-	//
-	For nAux := 1 To Len(oObj:aCols)
-		cPlacas += "'" + Alltrim(oObj:aCols[nAux,Ascan(aCabec,{|x| AllTrim(x[2]) == cCampo})]) + "'" + Iif(nAux < Len(oObj:aCols),",","")
+// 	//
+// 	For nAux := 1 To Len(oObj:aCols)
+// 		cPlacas += "'" + Alltrim(oObj:aCols[nAux,Ascan(aCabec,{|x| AllTrim(x[2]) == cCampo})]) + "'" + Iif(nAux < Len(oObj:aCols),",","")
 
-	Next nAux
+// 	Next nAux
 	
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cPlacas
+// Return cPlacas
 /*/{Protheus.doc} ADLG146J
 	Executa funções para exibição dos dados de fechamento de período de frete.
 	@type  Static Function
@@ -2765,7 +2766,7 @@ Static Function aprovConf(oDadosP,aHToP,dDtaIni,dDtFim)
 	Local aArea			:= GetArea()
 	Local cTransp		:= Alltrim(cValToChar( oDadosP:aCols[oDadosP:nAt][ aScan(aHToP,{|x| Alltrim(cValToChar(x[2])) == "TFA_TRANPA" })]))
 	Local cLoja			:= Alltrim(cValToChar( oDadosP:aCols[oDadosP:nAt][ aScan(aHToP,{|x| Alltrim(cValToChar(x[2])) == "TFA_LJPPAG" })]))
-	Local cPlaca		:= Alltrim(cValToChar( oDadosP:aCols[oDadosP:nAt][ aScan(aHToP,{|x| Alltrim(cValToChar(x[2])) == "TFA_LJPPAG" })]))
+	//Local cPlaca		:= Alltrim(cValToChar( oDadosP:aCols[oDadosP:nAt][ aScan(aHToP,{|x| Alltrim(cValToChar(x[2])) == "TFA_LJPPAG" })]))
 	Local oSay			:= Nil
 	Local aPastas		:= {}
 	Local oPastas		:= Nil
@@ -3622,13 +3623,13 @@ Static Function estAdianta(lAut)
 	//Variáveis.	
 	Local aArea	 	:= GetArea()
 	Local lRet		:= .T.
-	Local xPula		:= Chr(13) + Chr(10)
+	//Local xPula		:= Chr(13) + Chr(10)
 	Local cOcorre	:= Alltrim(GetMv("MV_#ADIFRT",,"017"))
 	Local cQuery	:= ""
-	Local cUpdate	:= ""
+	//Local cUpdate	:= ""
 	Local nTpFrtS	:= U_ADLG40H() //Everson - 05/11/2019. Chamado 029058.
-	Local aDiaFim	:= getDiasF(nTpFrtS) //Everson - 05/11/2019 - Chamado 029058.
-	Local cDtFimAd	:= cValToChar(Year(MV_PAR02)) + Padl(cValToChar(Month(MV_PAR02)),2,"0") + Padl(cValToChar(Alltrim(aDiaFim[2])),2,"0")
+	//Local aDiaFim	:= getDiasF(nTpFrtS) //Everson - 05/11/2019 - Chamado 029058.
+	//Local cDtFimAd	:= cValToChar(Year(MV_PAR02)) + Padl(cValToChar(Month(MV_PAR02)),2,"0") + Padl(cValToChar(Alltrim(aDiaFim[2])),2,"0")
 
 	//Everson - 05/11/2019 - Chamado 029058.
 	Private oModel 		:= Nil
@@ -3796,7 +3797,7 @@ Static Function scpAbast(nOPc,oObj,aCabec)
 
 	//Variáveis.	
 	Local cQuery	:= ""
-	Local cPlacas	:= obtVlrCmp(oObj,aCabec,"TFA_PLACA")
+	//Local cPlacas	:= obtVlrCmp(oObj,aCabec,"TFA_PLACA")
 	Default nOPc	:= 1
 
 	//
@@ -3911,7 +3912,7 @@ Static Function procAbast(oDadosP,aHToP)
 	Local nTotReg	:= 0
 	Local cZFACod	:= ""
 	Local lInclui	:= .T.
-	Local xPula		:= Chr(13) + Chr(10)
+	//Local xPula		:= Chr(13) + Chr(10)
 	Local nTpFrtS	:= U_ADLG40H() //Everson - 05/11/2019. Chamado 029058.
 
 	//Everson - 05/11/2019 - Chamado 029058.
@@ -4085,12 +4086,12 @@ Static Function estAbast(nOpc,oDadosP,aHToP)
 	//Variáveis.
 	Local aArea		:= GetArea()
 	Local lRet 		:= .T.
-	Local cUpdate	:= ""
-	Local xPula		:= Chr(13) + Chr(10)
+	//Local cUpdate	:= ""
+	//Local xPula		:= Chr(13) + Chr(10)
 	Local cQuery	:= ""
 	Local nTotReg	:= 0
 	Local nTpFrtS	:= U_ADLG40H() //Everson - 05/11/2019. Chamado 029058.
-	Local cPlacas	:= obtVlrCmp(oDadosP,aHToP,"TFA_PLACA") //Everson - 05/11/2019. Chamado 029058.
+	//Local cPlacas	:= obtVlrCmp(oDadosP,aHToP,"TFA_PLACA") //Everson - 05/11/2019. Chamado 029058.
 
 	Default nOpc	:= 1
 
@@ -4378,12 +4379,12 @@ Static Function fechFrt(oDadosP,aHToP)
 	//Variáveis.	
 	Local aArea		:= GetArea()
 	Local nAux		:= 1
-	Local aValores	:= {}
+	//Local aValores	:= {}
 	Local cCodTran	:= ""
 	Local cLojTran	:= ""
 	Local nTotLiq	:= 0
-	Local nValor	:= 0
-	Local nNumPedC	:= ""
+	//Local nValor	:= 0
+	//Local nNumPedC	:= ""
 	Local nRegAbast	:= 0
 	Local cCond		:= ""
 	Local cNmTra	:= ""
@@ -4404,22 +4405,28 @@ Static Function fechFrt(oDadosP,aHToP)
 	Local cDscOcosD	:= ""
 	Local cTpOcorrD	:= ""
 	Local nVlrOcorr	:= 0
-	Local aRet		:= {}
-	Local dEmissao 	:= Nil
-	Local cObs		:= ""
-	Local cProduto	:= ""
-	Local cCC		:= ""
+	//Local aRet		:= {}
+	//Local dEmissao 	:= Nil
+	//Local cObs		:= ""
+	//Local cProduto	:= ""
+	//Local cCC		:= ""
 	Local cTitulo	:= ""
 	Local lRetFina	:= .F.
-	Local cTes		:= ""
-	Local nPosPrd	:= 0
-	Local aParam	:= StaticCall(ADFIS032P,paramFis)
+	//Local cTes		:= ""
+	//Local nPosPrd	:= 0
+	//Local aParam	:= StaticCall(ADFIS032P,paramFis)
 	Local cTpComp	:= Alltrim( GetMv("MV_#TPEMCO") ) //Everson-Ch:044314-31/07/2019.
 	Local nTpFrtS	:= U_ADLG40H() //Everson - 05/11/2019. Chamado 029058.
 	Local cCodZFA2	:= ""
-	Local cStatus	:= ""
-	Local cNumDoc	:= ""
+	//Local cStatus	:= ""
+	//Local cNumDoc	:= ""
 	Local cNmTran	:= "" //Everson - 03/02/2020. Chamado T.I.
+
+	//Everson - 21/09/2021. Chamado 40420.
+	Local nAuxFR	:= 0
+	Local lAuxFR 	:= .F.
+	Local nTmSlp 	:= 3000
+	//
 
 	Private aRetCFch:= {}
 	
@@ -4646,25 +4653,69 @@ Static Function fechFrt(oDadosP,aHToP)
 			//
 			Conout( DToC(Date()) + " " + Time() + " ADLOG040P - fechFrt - cUpdt - " + cValToChar(cUpdt) )
 
-			If TcSqlExec(cUpdt) < 0
-				//Everson - 06/12/2019 - Chamado 029058.
-				logZBE("Não foi possivel atualizar a tabela ZFK com o código ZFA para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) +" Função fechFrt(ADLOG040P)")
-				If ! MsgYesNo("Não foi possivel atualizar a tabela ZFK com o código ZFA para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) +; 
-				". Será necessário executar novamente o fechamento para o veículo " + cPlaca + ". Deseja prosseguir com os demais fechamentos?","Função fechFrt(ADLOG040P)")
-					logZBE("Não foi possivel atualizar a tabela ZFK com o código ZFA para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) +" (ABORTADO) Função fechFrt(ADLOG040P)")
-					RestArea(aArea)
-					Return Nil
+			//Everson - 21/09/2021. Chamado 40420.
+			//Vincula ZFA x ZFK.
+			nAuxFR := 0
+			lAuxFR := .F.
+			While nAuxFR < 10
+				logZBE("Início vínculo ZFA x ZFK - " + cValToChar(cCodZFA) + " " + cValToChar(cHashGrp))
+				If TcSqlExec(cUpdt) < 0
+					logZBE("Não foi possível realizar o vínculo ZFA x ZFK. cCodZFA: " + cValToChar(cCodZFA))
+					MsgAlert("Não foi possível realizar o vínculo ZFA x ZFK. cCodZFA: " + cValToChar(cCodZFA),"fechFrt(ADLOG0440P)")
+
+				Else
+					lAuxFR := .T.
+					logZBE("Fim vínculo ZFA x ZFK - " + cValToChar(cCodZFA) + " " + cValToChar(cHashGrp))
+					Exit
 
 				EndIf
-				Loop
+
+				//
+				nAuxFR++
+				Sleep(nTmSlp)
+
+			EndDo
+			//
+
+			//Everson - 21/09/2021. Chamado 40420
+			If ! lAuxFR
+				apgFcht(cHashGrp,"")
+				MsgAlert("Não foi possível realizar o vínculo ZFA x ZFK. cCodZFA: " + cValToChar(cCodZFA),"fechFrt(ADLOG0440P)")
+				RestArea(aArea)
+				Return Nil
 
 			EndIf
 
 			//Fecha registros do período.
-			If ! fchPer(cCodZFA,cCodTran,cLojTran,cPlaca,nTpFrtS)
+			nAuxFR := 0
+			lAuxFR := .F.
+			While nAuxFR < 10 //Everson - 21/09/2021. Chamado 40420.
+				logZBE("Início do fechamento dos registros ZFA cCodZFA - " + cValToChar(cCodZFA))
+				If ! fchPer(cCodZFA,cCodTran,cLojTran,cPlaca,nTpFrtS)
+					logZBE("Não foi possível realizar o fechamento dos registros ZFA SLD+. cCodZFA: " + cValToChar(cCodZFA))
+					MsgAlert("Não foi possível realizar o fechamento dos registros ZFA. cCodZFA: " + cValToChar(cCodZFA),"fechFrt(ADLOG0440P)")
+
+				Else
+					lAuxFR := .T.
+					logZBE("Fim do fechamento dos registros ZFA SLD+ cCodZFA - " + cValToChar(cCodZFA))
+					Exit
+				
+				EndIf
+
+				//
+				nAuxFR++
+				Sleep(nTmSlp)
+
+			EndDo
+			//
+
+			//Everson - 21/09/2021. Chamado 40420
+			If ! lAuxFR
+				apgFcht(cHashGrp,"")
+				MsgAlert("Não foi possível realizar o fechamento dos registros ZFA. cCodZFA: " + cValToChar(cCodZFA),"fechFrt(ADLOG0440P)")
 				RestArea(aArea)
 				Return Nil
-			
+
 			EndIf
 			
 		//Fechamento de frete com valor final zerado.
@@ -4739,29 +4790,31 @@ Static Function fechFrt(oDadosP,aHToP)
 							
 			EndIf
 
-			//
-			If ! fchPer(cCodZFA,cCodTran,cLojTran,cPlaca,nTpFrtS)
-				RestArea(aArea)
-				Return Nil
-		
-			EndIf
+			//Everson - 21/09/2021. Chamado 40420
+			While .T.
+				If ! fchPer(cCodZFA,cCodTran,cLojTran,cPlaca,nTpFrtS)
+					logZBE("Não foi possível realizar o fechamento dos registros ZFA SLD-. cCodZFA: " + cValToChar(cCodZFA))
+					MsgAlert("Não foi possível realizar o fechamento dos registros ZFA. cCodZFA: " + cValToChar(cCodZFA),"fechFrt(ADLOG0440P)")
+
+				Else
+					logZBE("Fim do fechamento dos registros ZFA SLD- cCodZFA - " + cValToChar(cCodZFA))
+					Exit
+			
+				EndIf
+				
+				Sleep(nTmSlp)
+			EndDo
 			
 		EndIf
 
 	Next nAux
 
 	//
-	Pergunte("ADLG146P",.F.)
-
-	//
-	MsgInfo("Processo finalizado.","Função fechFrt (ADLOG040P)")
-
-	//
 	RestArea(aArea)
 
 Return Nil
 /*/{Protheus.doc} chkRet057
-	Fecha registros do período de fechamento de frete.
+	Valida a geração co CT-e complementar.
 	@type  Static Function
 	@author Everson
 	@since 05/05/2021
@@ -4781,8 +4834,8 @@ Static Function chkRet057(cRoteiro, cDtEntr, aRetCFch, cCodZFA, cHashGrp)
 	//Valida geração do CT-e complementar.
 	VarInfo("aRetCFch",aRetCFch)
 	If Len(aRetCFch) <= 0
-		logZBE("Não foi possivel gerar o CT-e complementar para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " Função fechFrt(ADLOG040P)")
-		MsgStop("Não foi possivel gerar o CT-e complementar para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função fechFrt(ADLOG040P)")
+		logZBE("Não foi possivel gerar o CT-e complementar para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " Função chkRet057(ADLOG040P)")
+		MsgStop("Não foi possivel gerar o CT-e complementar para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função chkRet057(ADLOG040P)")
 		RestArea(aArea)
 		Return .F.
 
@@ -4806,10 +4859,10 @@ Static Function chkRet057(cRoteiro, cDtEntr, aRetCFch, cCodZFA, cHashGrp)
 			apgFcht(cHash,"") //Everson - 24/01/2020. Chamado 054941.
 
 			//
-			logZBE("O Status do CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " está diferente de liberado (retorno " + cStatus + ")  Função fechFrt(ADLOG040P)")
+			logZBE("O Status do CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " está diferente de liberado (retorno " + cStatus + ")  Função chkRet057(ADLOG040P)")
 			If ! MsgYesNo("O Status do CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " está diferente de liberado (retorno " + cStatus + ") " +; 
-			". Será necessário executar novamente o fechamento para o veículo " + cPlaca + ". Deseja prosseguir com os demais fechamentos?","Função fechFrt(ADLOG040P)")
-				logZBE("O Status do CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " está diferente de liberado (retorno " + cStatus + ")  (ABORTADO) Função fechFrt(ADLOG040P)")
+			". Será necessário executar novamente o fechamento para o veículo " + cPlaca + ". Deseja prosseguir com os demais fechamentos?","Função chkRet057(ADLOG040P)")
+				logZBE("O Status do CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + " está diferente de liberado (retorno " + cStatus + ")  (ABORTADO) Função chkRet057(ADLOG040P)")
 				RestArea(aArea)
 				Return .T.
 
@@ -4867,6 +4920,9 @@ Static Function fchPer(cCodZFA,cCodTran,cLojTran,cPlaca,nTpFrtS)
 
 	EndIf
 
+	//
+	RestArea(aArea)
+
 Return lRet
 /*/{Protheus.doc} FIN050INC
 	Gera NDF no contas a pagar. Chamado 044314;
@@ -4883,7 +4939,7 @@ Static Function FIN050INC(cTitulo,nTotLiq,cCodTran,cLojTran,cHist)
 	Local aArray 	:= {}
 	Local dData		:= Nil
 	Local nTpFrtS	:= U_ADLG40H() //Everson - 05/11/2019. Chamado 029058.
-	Local aDiaFim	:= getDiasF(nTpFrtS) //Everson - 05/11/2019 - Chamado 029058.
+	//Local aDiaFim	:= getDiasF(nTpFrtS) //Everson - 05/11/2019 - Chamado 029058.
 	Local aCond		:= getConPg(nTpFrtS) //Everson - 05/11/2019. Chamado 029058.
 	Local cCond		:= ""
 	Local aRet		:= {}
@@ -5143,15 +5199,40 @@ Static Function apgFcht(cHashGrp,cCodZFA)
 	If ! Empty(cHashGrp)
 		cUpdt :=  " UPDATE " + RetSqlName("ZFK") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE ZFK_FILIAL = '" + FWxFilial("ZFK") + "' AND ZFK_HASH IN (" + cHashGrp + ") AND D_E_L_E_T_ = '' "
 		Conout( DToC(Date()) + " " + Time() + " ADLOG040P - apgFcht 1 - cUpdt " + cValToChar(cUpdt) )
-		TcSqlExec(cUpdt)
+
+		//Everson - 21/09/2021. Chamado 40420.
+		While .T.
+
+			If TcSqlExec(cUpdt) < 0
+				logZBE("Erro ao apagar ZFK cHashGrp " + cValToChar(cHashGrp))
+
+			Else
+				Exit
+
+			EndIf
+
+		EndDo
 
 	EndIf
 
 	//
 	If ! Empty(cCodZFA)
+
 		cUpdt :=  " UPDATE " + RetSqlName("ZFA") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE ZFA_FILIAL = '" + FWxFilial("ZFA") + "' AND ZFA_COD = '" + cCodZFA + "' AND ZFA_VA = '" + Alltrim(cValToChar(nTpFrtS)) + "' AND D_E_L_E_T_ = '' "
 		Conout( DToC(Date()) + " " + Time() + " ADLOG040P - apgFcht 2 - cUpdt " + cValToChar(cUpdt) )
-		TcSqlExec(cUpdt)
+
+		//Everson - 21/09/2021. Chamado 40420.
+		While .T.
+
+			If TcSqlExec(cUpdt) < 0
+				logZBE("Erro ao apagar ZFA cCodZFA " + cValToChar(cCodZFA))
+
+			Else
+				Exit
+
+			EndIf
+
+		EndDo
 
 	EndIf
 
@@ -6495,18 +6576,18 @@ Return Nil
 	@since 15/03/2019
 	@version 01
 	/*/
-Static Function mrkBrw(oBrwTrb,cMark)
+// Static Function mrkBrw(oBrwTrb,cMark)
 
-	RecLock("ADLG0403",.F.) 
-	If ! Marked("OK")      
-		ADLG0403->OK := cMark
-	Else      
-		ADLG0403->OK := ""
-	Endif                             
-	ADLG0403->(MsUnlock()) 
-	oBrwTrb:oBrowse:Refresh() 
+// 	RecLock("ADLG0403",.F.) 
+// 	If ! Marked("OK")      
+// 		ADLG0403->OK := cMark
+// 	Else      
+// 		ADLG0403->OK := ""
+// 	Endif                             
+// 	ADLG0403->(MsUnlock()) 
+// 	oBrwTrb:oBrowse:Refresh() 
 
-Return Nil
+// Return Nil
 /*/{Protheus.doc} ADLG0402
 	Carrega objeto MsNewGetDados com as informações de notas fiscais
 	vinculadas ao roteiro. Chamado 044314.
@@ -6678,8 +6759,8 @@ User Function ADLG40E()
 	Local oAtual	:= Nil
 	Local oFechar	:= Nil	
 	Local cDescTran	:= ""
-	Local dDtaIni	:= Date()
-	Local dDtFim	:= Date()
+	//Local dDtaIni	:= Date()
+	//Local dDtFim	:= Date()
 	Local aHDoD		:= {}
 	Local aHDoD2	:= {}
 	Local aColsD2	:= {}
@@ -7414,7 +7495,7 @@ Static Function SendADI()
 	Local cEmail	:= ""
 	Local cAssunto	:= ""
 	Local cHtml  	:= ""
-	Local cPlaca	:= ""
+	//Local cPlaca	:= ""
 	Local cArq		:= ""
 	Local cMensagem	:= ""
     Local nTotal    := 0

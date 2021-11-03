@@ -54,6 +54,7 @@
 	@history Ticket  13155  - Everson  - 04/05/2021 - Tratamento para liberação de pedido de venda por integração SAG (movimento de saída).
 	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histórico de liberação
 	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
+	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
 /*/
 User Function M410STTS()
 
@@ -3351,7 +3352,7 @@ Return
 	@author Abel Babini
 	@since 09/02/2021
 /*/
-Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
+Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPVIn)
 	
 	Local aArea   := GetArea()
 	Local cAls001 := GetNextAlias()
@@ -3391,10 +3392,14 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	Local cFilPVEx	 := '%'+''+'%'
 
 	Local lBlqAtr	:= .F.
-	Local aTpBlqAt := {}
+	Local aTpBlqAt 	:= {}
+	Local cQryNPV	:= ''
 
-	Default lExcPedV := .F.
-	Default cNumPVEx := ''
+	Local cParam	:= "" //Everson - 14/10/2021. Chamado 62453.
+
+	Default lExcPedV 	:= .F.
+	Default cNumPVEx 	:= ''
+	Default cNumPVIn 		:= ''
 
 	//Utiliza sempre a menor data entre a data de entrega e a data do servidor para avaliação de crédito.
 	If dDtEntr > MsDate()
@@ -3403,7 +3408,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	
 	//Ticket  8      - Abel B.  - 01/03/2021 - Alteração na regra de pré liberação de crédito para desconsiderar o pedido que será excluído durante a avaliação na exclusão do mesmo
 	If lExcPedV .AND. !Empty(Alltrim(cNumPVEx))
-		cFilPVEx :=  '%'+" SC5.C5_FILIAL+SC5.C5_NUM <> '"+cNumPVEx+"' AND "+'%'
+		cFilPVEx :=  '%'+" AND SC5.C5_FILIAL+SC5.C5_NUM <> '"+cNumPVEx+"' "+'%'
 	Endif
 
 	//CARREGA DEFINIÇÕES DE REGRAS DE TABELAS E VALORES DE PEDIDOS
@@ -3544,6 +3549,17 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	ENDIF
 
 	//PEDIDOS QUE PRECISAM DE ANÁLISE DE CRÉDITO
+
+	if !Empty(Alltrim(cNumPVIn))
+		cParam := StrTran(cNumPVIn,"%","")
+		cQryNPV:= '%'+" AND SC5.C5_NUM = '" + cParam + "' "+'%' //Everson - 14/10/2021. Chamado 62453. 
+
+	else
+		cParam := StrTran(_cCdClIn,"%","")
+		cQryNPV:= '%'+" AND SC5.C5_CLIENTE+SC5.C5_LOJACLI IN " + cParam + " " +'%' //Everson - 14/10/2021. Chamado 62453.
+
+	endif
+
 	BeginSQL alias cAls002
 		column C5_EMISSAO as Date
 		SELECT
@@ -3566,11 +3582,14 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 			AND SC6.C6_LOJA = SC5.C5_LOJACLI
 			AND SC6.%notDel%
 		INNER JOIN %TABLE:SF4% SF4 (NOLOCK) ON
-			SF4.F4_CODIGO = SC6.C6_TES
+			SF4.F4_FILIAL = %xFilial:SF4%
+			AND SF4.F4_CODIGO = SC6.C6_TES
 			AND SF4.%notDel%
 		WHERE 
-			SC5.C5_DTENTR >= %Exp:DTOS(dDtEntr)%
-			AND %Exp:cFilPVEx% SC5.C5_CLIENTE+SC5.C5_LOJACLI IN %Exp:_cCdClIn% 
+			SC5.C5_FILIAL = %xFilial:SC5%
+			%Exp:cQryNPV% 
+			AND SC5.C5_NOTA = '' %Exp:cFilPVEx% 
+			AND SC5.C5_DTENTR >= %Exp:DTOS(dDtEntr)%
 			AND SC5.%notDel%
 		GROUP BY 
 			SC5.C5_FILIAL, 
@@ -3588,7 +3607,6 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 		ORDER BY SC5.C5_FILIAL ASC, SC5.C5_DTENTR ASC, SC5.C5_NUM ASC
 	EndSQL
 	(cAls002)->(dbgotop())
-
 	WHILE ! (cAls002)->(eof())
 	
 		_nValLim -= (cAls002)->C6_PRCTOT

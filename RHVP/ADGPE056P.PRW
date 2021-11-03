@@ -14,6 +14,7 @@
     @history ticket   39  - Fernando Macieira - 10/02/2021 - Padronização do parâmetro Linked Server RM, de/para no campo CODSITUACAO
     @history ticket   TI  - Fernando Macieira - 05/03/2021 - Tratativa nome banco CORPORERM
     @history Ticket 18425 - ADRIANO SAVOINE   - 23/08/2021 - Ajuste na query enviada pelo Marcos Cavalcante Consultor RM, para integrar no JOB os dados do RM.
+    @history Ticket 62169 - Everson           - 13/10/2021 - Tratamento para retorno de erro employees_uddi_unique.
 /*/
 User Function ADGPE056P() // U_ADGPE056P()
 
@@ -121,7 +122,8 @@ Static Function processa(lAut)
         If ! lRetEnv
 
             //
-            If At("employees_key_unique",cMsg) > 0 .And. cMetodo == "POST" //Registro já existe na base.
+            If (At("employees_key_unique",cMsg) > 0 .Or. At("employees_uddi_unique",cMsg) > 0) .And.; //Everson - 13/10/2021. Chamado 62169.or.
+               cMetodo == "POST" //Registro já existe na base.
 
                 Conout( DToC(Date()) + " " + Time() + " ADGPE056P - processa - Erro - employees_key_unique")
 
@@ -172,12 +174,15 @@ Static Function processa(lAut)
         //
         If lRetEnv .And. cMetodo == "POST"
             tratSucess( cMsg, Alltrim(cValToChar((cAlias)->company)), Alltrim(cValToChar((cAlias)->subsidiary)), Alltrim(cValToChar((cAlias)->code)) )
+        
         EndIf
 
         //
         (cAlias)->(DbSkip())
 
     End
+
+    //
     (cAlias)->(DbCloseArea())
 
     //

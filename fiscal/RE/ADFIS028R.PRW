@@ -157,6 +157,7 @@ DEFINIÇÃO DE TABELAS
 	@history Ticket 12090										- Abel Babini - 09/04/2021 - Acrescentar CFOPs 6905 e 2906 como Outros Débitos e Outros Créditos respectivamente nas abas Demonstrativo e Abertura da Gia
 	@history Ticket 12473                   - Abel Babini - 19/04/2021 - Alteração de alíquotas nos relatórios de crédito outorgado para o mês de abril/2021
 	@history Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+	@history Ticket 62140										- Abel Babini - 07/10/2021 - Ajustado relatório Porder 3 e adicionado Valores de Dev Serv Industr na Abertura da Gia para Safegg
 	/*/
 
 User Function ADFIS028R()
@@ -1560,6 +1561,7 @@ Static Function PNCON001()
 		//Chamado Interno TI - OS        - Abel Babini - 29/05/2020 - Painel Fiscal ICMS - Ajuste de Error.log no Modelo2 - O relatório precisa ser executado no Modelo 2
 		MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw33) } ) //ENTRADAS E SAIDAS
 		MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw34) } ) //COMPRA MP
+		MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || StaticCall(ADFIS038R,xABrw37) } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
 		MsgRun( "Carregando dados - IVA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw27) } ) //IVA
 		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
 	ELSEIF nOpMdl	== 3
@@ -1615,11 +1617,11 @@ Static Function PNCON001()
 
 	IF nOpMdl	== 1
 		IF _mvpr01 >= STOD('20210101') .AND. _mvpr01 < STOD('20210201')
-			aFolder  := {cFld01,cFld02,cFld03,cFld04,cFld05,cFld06,cFld07,cFld09,cFld10,cFld11,cFld12,cFld13,cFld14,cFld15,cFld16,cFld17,cFld18,cFld19,cFld20,cFld21,cFld22,cFld23,cFld24,cFld25,cFld26,cFld08,cFld37,cFld35} //,cFld36
+			aFolder  := {cFld01,cFld02,cFld03,cFld04,cFld05,cFld06,cFld07,cFld09,cFld10,cFld11,cFld12,cFld13,cFld14,cFld15,cFld16,cFld17,cFld18,cFld19,cFld20,cFld21,cFld22,cFld23,cFld24,cFld25,cFld26,cFld08,cFld35,cFld37} //,cFld36
 		ELSEIF _mvpr01 < STOD('20210101')
 			aFolder  := {cFld01,cFld02,cFld03,cFld04,cFld05,cFld06,cFld07,cFld09,cFld10,cFld11,cFld12,cFld13,cFld14,cFld15,cFld16,cFld17,cFld18,cFld19,cFld20,cFld21,cFld22,cFld23,cFld24,cFld25,cFld26,cFld08,cFld37} //,cFld36
 		ELSE
-			aFolder  := {cFld01,cFld02,cFld03,cFld04,cFld05,cFld06,cFld07,cFld09,cFld10,cFld11,cFld12,cFld13,cFld14,cFld15,cFld16,cFld17,cFld18,cFld19,cFld20,cFld21,cFld22,cFld23,cFld24,cFld25,cFld26,cFld37,cFld35} //,cFld36
+			aFolder  := {cFld01,cFld02,cFld03,cFld04,cFld05,cFld06,cFld07,cFld09,cFld10,cFld11,cFld12,cFld13,cFld14,cFld15,cFld16,cFld17,cFld18,cFld19,cFld20,cFld21,cFld22,cFld23,cFld24,cFld25,cFld26,cFld35,cFld37} //,cFld36
 		ENDIF
 	ELSEIF nOpMdl	== 2
 		aFolder  := {cFld01,cFld02,cFld03,cFld07,cFld09,cFld10,cFld14,cFld15,cFld20,cFld21,cFld22,cFld23,cFld24,cFld26,cFld27,cFld28,cFld29,cFld30,cFld33,cFld34,cFld37}
@@ -1657,9 +1659,12 @@ Static Function PNCON001()
 		oFolder030:aDialogs[24]:oFont :=oDlg:oFont //Celulares
 		oFolder030:aDialogs[25]:oFont :=oDlg:oFont //Outras Entradas
 		oFolder030:aDialogs[26]:oFont :=oDlg:oFont //Credito Outorgado
-		oFolder030:aDialogs[27]:oFont :=oDlg:oFont //Débito Serv Industrialização
+		
 		IF _mvpr01 >= STOD('20210101') .AND. _mvpr01 < STOD('20210201')
-			oFolder030:aDialogs[28]:oFont :=oDlg:oFont //Crédito Outorgado 2021
+			oFolder030:aDialogs[27]:oFont :=oDlg:oFont //Crédito Outorgado 2021
+			oFolder030:aDialogs[28]:oFont :=oDlg:oFont //Débito Serv Industrialização
+		ELSE
+			oFolder030:aDialogs[27]:oFont :=oDlg:oFont //Débito Serv Industrialização
 		ENDIF
 		// oFolder030:aDialogs[28]:oFont :=oDlg:oFont //Conferência do Faturamento
 	ELSEIF nOpMdl	== 2
@@ -1682,7 +1687,8 @@ Static Function PNCON001()
 		oFolder030:aDialogs[17]:oFont :=oDlg:oFont //Compra MP
 		oFolder030:aDialogs[18]:oFont :=oDlg:oFont //Vendas
 		oFolder030:aDialogs[19]:oFont :=oDlg:oFont //Entradas e Saidas
-		oFolder030:aDialogs[20]:oFont :=oDlg:oFont //Débito Serv Industrialização
+		oFolder030:aDialogs[20]:oFont :=oDlg:oFont //Dev. Vendas
+		oFolder030:aDialogs[21]:oFont :=oDlg:oFont //Débito Serv Industrialização
 	ELSEIF nOpMdl	== 3
 		oFolder030:aDialogs[1]:oFont :=oDlg:oFont //Informações Gerais
 		oFolder030:aDialogs[2]:oFont :=oDlg:oFont //Parâmetros
@@ -6866,7 +6872,7 @@ Static Function PNCON001()
 		//--------------------------------------------------------------------------
 		IF _mvpr01 >= STOD('20210101')
 			IF _mvpr01 < STOD('20210201')
-				oFld35	:=TFolder():New(1,1,aFld35,{},oFolder030:aDialogs[28],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-61,)
+				oFld35	:=TFolder():New(1,1,aFld35,{},oFolder030:aDialogs[27],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-61,)
 			ELSE
 				oFld35	:=TFolder():New(1,1,aFld35,{},oFolder030:aDialogs[26],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-61,)
 			ENDIF
@@ -7333,9 +7339,13 @@ Static Function PNCON001()
 	//--------------------------------------------------------------------------
 	IF nOpMdl	== 1 .or. nOpMdl	== 2
 		IF nOpMdl	== 1
-			oFld37	:=TFolder():New(1,1,aFld37,{},oFolder030:aDialogs[27],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-46,)
+			IF _mvpr01 >= STOD('20210101') .AND. _mvpr01 < STOD('20210201')
+				oFld37	:=TFolder():New(1,1,aFld37,{},oFolder030:aDialogs[28],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-46,)
+			ELSE
+				oFld37	:=TFolder():New(1,1,aFld37,{},oFolder030:aDialogs[27],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-46,)
+			ENDIF
 		ELSEIF nOpMdl	== 2
-			oFld37	:=TFolder():New(1,1,aFld37,{},oFolder030:aDialogs[20],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-46,)
+			oFld37	:=TFolder():New(1,1,aFld37,{},oFolder030:aDialogs[21],,,, .T., .F.,aPosObj[2,4]-5,aPosObj[2,3]-46,)
 		ENDIF
 		oFld37:aDialogs[1]:oFont :=oDlg:oFont //Resumo
 		oFld37:aDialogs[2]:oFont :=oDlg:oFont //Detalhe
@@ -17487,6 +17497,8 @@ Static Function xABrw23()
 	//Ticket 10417										- Abel Babini - 05/03/2021 - Retirar filtro B1_TIPO NOT IN ('MO') para Relatório de Industrialização de PA, e acrescentado filtro no relatório de Poder de Terceiros
 	//Regra acrescentada => "AND SB1.B1_TIPO NOT IN ('MO')"
 
+	//Ticket 62140										- Abel Babini - 07/10/2021 - Ajustado relatório Porder 3 e adicionado Valores de Dev Serv Industr na Abertura da Gia para Safegg
+	//Retido filtro de conferência
 	/*
 			LEFT JOIN %TABLE:SF4% SF4 ON
 			SF4.%notDel%
@@ -25628,7 +25640,7 @@ Static Function xABrw05()
 	nVDCEst	:= round(nDC5101+nDC5102+nDC5105+nDC5116+nDC5118+nDC5201+nDC5151+nDC5401+nDC5551+nDC5252+nDC5901+nDC5556+nDC5557+nDC5553+nDC5918+nDC5910+nDC5911+nDC5913+nA09T032+nA09T022+nA09T042+nA09T052+nA09T072+nA09T102+nA09T112+nA09T122+nA09T132+nA09T142+nA09T152,2)
 	nVDCFor	:= round(nDC6101+nDC6102+nDC6105+nDC6107+nDC6108+nDC6116+nDC6118+nDC6201+nDC6551+nDC6553+nDC6556+nDC6901+nDC6910+nDC6911+nDC6918+nDC6913+nA09T082+nDC6401+nDC6557+nA09T062+nDC6909+nDC7556+nDC6905,2)//Ticket 3035                    - Abel Babini - 16/09/2020 - Painel Fiscal VP - Acerto na declaração de variáveis e somatória do CFOP 6108
 	nVCmp51 := nVDCEst+nVDCFor
-	nVCmp52	:= nA24T02+nA06T04+nA07T91+nVMan02+nVMan04+(nA15T06 - nA15T03)//Chamado n.060037 - OS n.061528 - Abel Babini - 27/07/2020 - Excluir filtro de Formulário próprio do relatório de Lenha e incluir informação no Demonstrativo e Abertura da Gia
+	nVCmp52	:= nA24T02+nA06T04+nA07T91+nVMan02+nVMan04+(nA15T06 - nA15T03)+(nA37T06 - nA37T03)//Chamado n.060037 - OS n.061528 - Abel Babini - 27/07/2020 - Excluir filtro de Formulário próprio do relatório de Lenha e incluir informação no Demonstrativo e Abertura da Gia
 
 	nVDvCEst	:= (nCC1201+nCC1410+nCC1202)
 	nVDvCFor	:= (nCC2201+nCC2410+nCC2202)
@@ -25676,6 +25688,7 @@ Static Function xABrw05()
 	GrvTmp05('TOT', '008400', 'AQUISIÇÃO DE TRANSPORTE - ICMS SOBRE FRETE/SUBSTITUIÇÃO TRIBUTARIA','','','','',0,nA24T02,0,0,0)
 	//Chamado n.060037 - OS n.061528 - Abel Babini - 27/07/2020 - Excluir filtro de Formulário próprio do relatório de Lenha e incluir informação no Demonstrativo e Abertura da Gia
 	GrvTmp05('TOT', '008405', 'OUTROS DÉBITOS - LENHA','','','','',0,nA15T06 - nA15T03,0,0,0)
+	GrvTmp05('TOT', '008407', 'OUTROS DÉBITOS - DÉB SERV. INDUSTR.','','','','',0,nA37T06 - nA37T03,0,0,0)
 	
 	GrvTmp05('MAN', '008410', 'OUTROS DÉBITOS - ***MANUAL*** - '+Alltrim(cA05T04),'','','','',0,nVMan04,0,0,0)
 	GrvTmp05('MAN', '008415', 'Estorno de Crédito - ***MANUAL*** - '+Alltrim(cA05T03),'','','','',0,nVMan02,0,0,0)
@@ -25881,7 +25894,7 @@ Static Function xABrw05()
 	AADD(aBrw03Rs,{"","","",""}  )
 
 	
-	nVSub002	:= nVAprAcu+nA24T02+nVMan04+(nA15T06 - nA15T03) //Chamado n.060037 - OS n.061528 - Abel Babini - 27/07/2020 - Excluir filtro de Formulário próprio do relatório de Lenha e incluir informação no Demonstrativo e Abertura da Gia
+	nVSub002	:= nVAprAcu+nA24T02+nVMan04+(nA15T06 - nA15T03)+(nA37T06 - nA37T03) //Chamado n.060037 - OS n.061528 - Abel Babini - 27/07/2020 - Excluir filtro de Formulário próprio do relatório de Lenha e incluir informação no Demonstrativo e Abertura da Gia
 	AADD(aBrw03Rs,{'TIT',"002","OUTROS DÉBITOS",""}  )
 	AADD(aBrw03Rs,{''		,"002.21","APROPRIAÇÃO DE CRÉDITO ACUMULADO",nVAprAcu} )
 	AADD(aBrw03Rs,{'MAN',"002.99","OUTROS DEBITOS ",nVMan04}  )
@@ -25889,6 +25902,8 @@ Static Function xABrw05()
 	
 	//Chamado n.060037 - OS n.061528 - Abel Babini - 27/07/2020 - Excluir filtro de Formulário próprio do relatório de Lenha e incluir informação no Demonstrativo e Abertura da Gia
 	AADD(aBrw03Rs,{''		,"002.99","LENHA",nA15T06 - nA15T03} )
+	//Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+	AADD(aBrw03Rs,{''		,"002.99","DÉBITO SERV. INDUSTR.",nA37T06 - nA37T03} )
 
 	AADD(aBrw03Rs,{''		,"","",""}  )
 	AADD(aBrw03Rs,{'SUB',"002.A","SUB-TOTAL",nVSub002} )

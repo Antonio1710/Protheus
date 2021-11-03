@@ -1,6 +1,7 @@
 #include "protheus.ch"
 #include "topconn.ch"
 #Include "Tbiconn.ch"
+
 /*/{Protheus.doc} User Function ADLFV010P
 	Gera PV de complemento de frango vivo.
 	Chamado 037729
@@ -10,8 +11,14 @@
 	@version 01
 	@history Adriana, 24/05/2019, TI-Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
 	@history Everson, 06/08/2020, Chamado TI. Alterado relatório excel para utilizar a função FWMSEXCEL.
-	/*/
-User Function ADLFV010P()
+	@history Sigoli , 05/10/2021, Ticket 52836. Removido LockByName das rotinas de scheduleds
+	@history Sigoli , 14/10/2021, Ticket T.I  . Alterado a forma, de receber o lAuto para tomada de decisção (JoB ou Tela)
+	@history Ticket: 62540 - 18/10/2021 - Adriano Savoine - Ajustado a entrada da Variavel e alterada a mesma apos entrar no IF devido que por padrão estava dando erro pois o TIPO é C e está entrando String.
+	@history Ticket: 62540 - 20/10/2021 - Fernando Sigoli - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
+	@history Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
+/*/
+
+User Function ADLFV010P(lAuto)
 
 	Local lOk		:= .F.
 	Local alSay		:= {}
@@ -27,15 +34,15 @@ User Function ADLFV010P()
 
 	Private cRootPath
 
-	// Define lAuto
-	nArea := Select()
-	If nArea > 0
-		lAuto := .f.
-	Else
-		lAuto := .t.
+	
+	Default lAuto	:= .F.
+
+	//Ticket: 62540 - 20/10/2021 - Fernando Sigoli  - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
+	If Select("SX6") == 0
+		lAuto := .T.
 	EndIf
-												
-	If lAuto
+	
+	If lAuto 
 
 		// Inicializa ambiente
 		RpcClearEnv()
@@ -50,12 +57,12 @@ User Function ADLFV010P()
 		EndIf
 
 		// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-		If !LockByName("ADLFV010P", .T., .F.)
+		/*If !LockByName("ADLFV010P", .T., .F.)
 			ConOut("[ADLFV010P] - Existe outro processamento sendo executado! Verifique...")
 			RPCClearEnv()
 			Return
 		EndIf
-
+		*/
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Complemento Frango Vivo')
 		
 		PtInternal(1,ALLTRIM(PROCNAME()))
@@ -105,7 +112,7 @@ User Function ADLFV010P()
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 		//³Destrava a rotina para o usuário	    ?
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-		UnLockByName("ADLFV010P")
+		//UnLockByName("ADLFV010P")
 
 		//Fecha o ambiente.
 		RpcClearEnv()
@@ -126,17 +133,9 @@ Static Function GeraPV(lAuto)
 	Local cFunBkp  := FunName()
 
 	Local aCabec  := {}
-	Local aItensPV := {}
-
-	Local _cItem  := "01"
-
-	//Local nTtPLP  := GetMV("MV_#LFVPLP",,11600) // -- inibido pois devera buscar da NF de origem
-
-	// Dados do PV
 	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
 	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
 	Local cProdPV := GetMV("MV_#LFVPRD",,"300042")   // --------- VOLTAR ESTA LINHA ANTES DE PUBLICAR EM PRD
-	//Local cProdPV := GetMV("MV_#LFVPRD",,"100253")  // APENAS DEBUG !!!!!
 	Local nPrcPV  := GetMV("MV_#LFVPRC",,2)
 	Local cTESPV  := GetMV("MV_#LFVTES",,"701")
 
@@ -146,52 +145,27 @@ Static Function GeraPV(lAuto)
 
 
 	// Emails
-	//Private cMails  := "fwnmacieira@gmail.com"   // APENAS DEBUG !!!
 	Private cMails  := GetMV("MV_#LFVMAI",,"faturamento@adoro.com.br;cleber.santos@adoro.com.br;danielle.meira@adoro.com.br;glean.rocha@adoro.com.br;reinaldo.francischinelli@adoro.com.br") // -------- VOLTAR ESTA LINHA ANTES DE PUBLICAR EM PRD
 	Private cDescri := "PEDIDO VENDA COMPLEMENTO FRANGO VIVO"
 
-	/*
-	seg 16/04/2018 17:04
-	Danielle Pinheiro Meira <danielle.meira@adoro.com.br>
-	Re: Email - PV Complemento Frango Vivo
-
-	Para
-	faturamento@adoro.com.br
-
-	Com cópia para
-	cleber.santos@adoro.com.br
-	danielle.meira@adoro.com.br
-	glean.rocha@adoro.com.br
-	reinaldo.francischinelli@adoro.com.br
-	*/
-
 	// Variaveis trocadas com a funcao u_AD0143
-	//Private nQtdRec := 0
 	Private cNFNot := ""
 	Private nTtPLO := 0
 	Private cSql   := ""                        
 	Private nTtPLP := 0
-	//
-
-
-
 	Private lMsErroAuto := .F.
 	Private cArquivo
-
+	Private oFuDimep
 
 	//Cria arq tmp
 	CriaTMP()
 
-
 	// Chama relatório de relação diária ordem de carregamento do frango vivo
-	//u_AD0143(@nQtdRec, @nTtPLO, @cSql)
 	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto)
-
 
 	// Efetua cálculo da DIFERENCA para gerar o PV
 	nQtdPV := (nTtPLO - nTtPLP)
-	//nQtdPV := (nTtPLO - (nTtPLP * nQtdRec))
-
+	
 
 	// Aborta processamento pois o PV já foi gerado com os registros selecionados
 	If nQtdPV <= 0
@@ -354,11 +328,17 @@ Static Function GeraPV(lAuto)
 	EndIf
 
 
+	If ValType(oFuDimep) <> "U"
+		oFuDimep:delete()
+	EndIf 
+
+
 	SetFunName(cFunBkp)
 	RestArea(aAreaAtu)
 
 
 Return
+
 /*/{Protheus.doc} EmailFVL 
 	Envia email com dados do PV Complemento Frango Vivo 
 	@type  Static Function
@@ -366,6 +346,7 @@ Return
 	@since 04/18/2018
 	@version 01
 	/*/
+
 Static Function EmailFVL(lAuto)
 
 	LogZBN("1")
@@ -375,18 +356,17 @@ Static Function EmailFVL(lAuto)
 	LogZBN("2")
 
 Return
+
 /*/{Protheus.doc} EmailFVL 
 	Gera log na ZBN.
 	@type  Static Function
 	@author Fernando Sigoli 
 	@since 04/18/2018
 	@version 01
-	/*/
+/*/
+
 Static Function logZBN(cStatus)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variávies.
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea	:= GetArea()
 	Local cNomeRotina := "ADLFV010P"
 
@@ -433,7 +413,7 @@ Return Nil
 	@author Fernando Sigoli 
 	@since 29/03/2018
 	@version 01
-	/*/
+/*/
 Static Function procRel(lAuto)
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -586,7 +566,6 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email,lAuto)
 	Local lOk           := .T.
 	Local cBody         := cMensagem
 	Local cErrorMsg     := ""
-	Local aFiles        := {}
 	Local cServer       := Alltrim(GetMv("MV_RELSERV"))
 	Local cAccount      := AllTrim(GetMv("MV_RELACNT"))
 	Local cPassword     := AllTrim(GetMv("MV_RELPSW"))
@@ -673,26 +652,13 @@ Return Nil
 	/*/
 Static Function CriaTMP()
 
-	Local cDirDocs  := MsDocPath()
 	Local aAreaAtu  := GetArea()
 	Local aStru		:= {}
+	
+	cArquivo := "TMPTRC"
 
-	cArquivo  := CriaTrab(,.F.)
-
-	// Cria arq tmp
-	//ZV1_FLAGPV, ZV1_NUMOC, ZV1_DTABAT, ZV1_RPESOT, ZV1_NUMNFS, ZV1_SERIE, D2_QUANT, NF_NAO_ENCONTRADA 
-				
-	/*
-	(cArquivo)->PEDIDO      := cZV1_FLAGPV
-	(cArquivo)->ORDEMCARGA  := cZV1_NUMOC
-	(cArquivo)->DATA_ABATE  := cZV1_DTABAT
-	(cArquivo)->PL_ORIGEM   := nZV1_RPESOT
-	(cArquivo)->NF          := cZV1_NUMNFS
-	(cArquivo)->SERIE       := cZV1_SERIE
-	(cArquivo)->QTD_NF      := nD2_QUANT
-	(cArquivo)->NF_NAOENCO  := cNF_NOT
-
-	*/
+	//Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
+	oFuDimep := FWTemporaryTable():New(cArquivo)
 
 	aStru := {	{"PEDIDO"	   , "C", TamSX3("C6_NUM")[1],      0},;
 				{"ORDEMCARGA"  , "C", TamSX3("ZV1_NUMOC")[1],   0},;
@@ -703,9 +669,12 @@ Static Function CriaTMP()
 				{"QTD_NF"      , "N", TamSX3("D2_QUANT")[1],    TamSX3("D2_QUANT")[2]},;
 				{"NF_NAOENCO"  , "C", TamSX3("D2_DOC")[1],      0 } }
 
+	oFuDimep:SetFields(aStru)
+	oFuDimep:AddIndex("01", {"PEDIDO"})
 
-	dbCreate(cArquivo,aStru)
-	dbUseArea(.T.,,cArquivo,cArquivo,.F.,.F.)
+	//
+	oFuDimep:Create()
+	DbSelectArea(cArquivo) 
 
 	RestArea( aAreaAtu )
 
@@ -718,9 +687,6 @@ Return
 	@version 01
 	/*/
 Static Function GeraXLS()
-
-	Local cDirDocs  := MsDocPath()
-	Local aAreaAtu  := GetArea()
 
 	Local oExcel 	:= FWMSEXCEL():New() //Everson - 06/08/2020. Chamado 060221.
 
@@ -801,12 +767,6 @@ Static Function GeraXLS()
 
 	dbSelectArea(cArquivo)
 	(cArquivo)->( dbCloseArea() )
-
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Deleta arquivo de Trabalho                                   ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	fErase( cArquivo+GetDBExtension() )
-	fErase( cArquivo+OrdBagExt() )
 
 Return
 /*/{Protheus.doc} GrvPV 

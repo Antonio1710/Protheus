@@ -30,6 +30,8 @@
 	@return [L] - Retorna o valor estatico e default True(.T.)
 	@history CHAMADO T.I  - WILLIAM COSTA     - 14/11/2019 - ALTERADO O CAMPO DE C2_FILIAL ERRADO PARA D3_FILIAL CORRETO
 	@history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+	@history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
+
 	https://tdn.totvs.com/pages/viewpage.action?pageId=271843449#:~:text=A%20abertura%20de%20uma%20transa%C3%A7%C3%A3o,para%20depois%20do%20END%20TRANSACTION%20.
 	https://tdn.totvs.com/pages/viewpage.action?pageId=271843449
 	https://tdn.totvs.com/display/public/PROT/BEGIN+TRANSACTION
@@ -66,16 +68,6 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	Private _dData		:= DDATABASE
 	Private _xJob		:= .T.
 
-	/* Variáveis para conexão entre os banco do Protheus e o banco intermediário */
-	// Private _cNomBco1   := ""
-	// Private _cSrvBco1   := ""
-	// Private _cPortBco1  := ""
-	// Private _nTcConn1	:= AdvConnection()
-	// Private _cNomBco2   := ""
-	// Private _cSrvBco2   := ""
-	// Private _cPortBco2  := ""
-	// Private _nTcConn2	:= 0
-
 	Default cIniFil		:= ""  /*Descrição do parâmetro conforme cabeçalho*/
 	Default cFimFil		:= ""  /*Descrição do parâmetro conforme cabeçalho*/
 	Default lJob 		:= .T. /*Descrição do parâmetro conforme cabeçalho*/
@@ -84,7 +76,6 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	Default lEstorno	:= .F. /*Descrição do parâmetro conforme cabeçalho*/
 	Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADFIS005P como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADFIS005P*/
 
-
 	_cFilIni	:= cIniFil
 	_cFilFim	:= cFimFil
 	_aDatas 	:= aParamDat
@@ -92,32 +83,17 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 
 	_xJob := lJob
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função principal para integração de OP/Consumo/Produção para Ração e Pinto de 1 dia')
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função principal para integração de OP/Consumo/Produção para Ração e Pinto de 1 dia') // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
 
 	// @history Fernando Macieira, 05/03/2021, Ticket 10248. Revisão das rotinas de apontamento de OP´s
 	// Garanto uma única thread sendo executada
+	/*
 	If !LockByName("ADFIS015P", .T., .F.)
 		Aviso("Atenção", "Existe outro processamento sendo executado! Verifique com seu colega de trabalho...", {"OK"}, 3)
 		Return .F.
 	EndIf
+	*/
 	//
-	
-	/*Dados e variáveis para controle de conexão entre o banco de dados do Protheus e o banco intermediário*/
-	// _cNomBco1  := GetPvProfString("INTSAGBD","BCO1","ERROR",GetADV97())
-	// _cSrvBco1  := GetPvProfString("INTSAGBD","SRV1","ERROR",GetADV97())
-	// _cPortBco1 := Val(GetPvProfString("INTSAGBD","PRT1","ERROR",GetADV97()) )
-	// _cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
-	// _cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
-	// _cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-	
-	// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2)) < 0
-	// 	lRet     := .F.
-	// 	cMsgError := "Não foi possível  conectar ao banco integração"
-	// 	MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")
-		
-	// EndIf
-	
-	// TcSetConn(_nTcConn2)
 	
 	/*Esses updates sao para que a inclusao ocorra antes da exclusao porque a ordem de inclusao das OPs não vem certa do SAG*/	
 	If !_xJob
@@ -159,20 +135,24 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	TcSetField( cAliasOP, "C2_DTUPROG", "D", 8, 0 )
 	TcSetField( cAliasOP, "C2_QTUPROG", "D", 8, 0 )
 	
-	
 	/* Vai apagar de uma vez as OPs que foram incluidas e canceladas, deixando só os registros de inclusao*/
-	dbGotop()
 	cCodiGene := ""
 	nRecno 	 := 0
+
+	dbGotop()
 	While !(cAliasOP)->(Eof())
+
 		If (cAliasOP)->OPERACAO_INT == "I"
 			
 			cCodiGene := (cAliasOP)->CODIGENE
 			nRecno    := (cAliasOP)->R_E_C_N_O_
 			
 			dbSkip()
+
 			If (cAliasOP)->OPERACAO_INT == "E"
+
 				If cCodiGene == (cAliasOP)->CODIGENE
+
 					/*Se a OP foi incluida e Excluida cancelo os dois movimentos para nao processar no protheus*/
 					nRecno2 := (cAliasOP)->R_E_C_N_O_
 					
@@ -183,13 +163,19 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 						TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecno) ) + " AND OPERACAO_INT='I' ")
 						TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecno2) ) + " AND OPERACAO_INT='E' ")
 					EndIf
+				
 				EndIf
+
 			Else
 				go nRecno
 			EndIf
+
 		EndIf
+		
 		dbSkip()
+
 	End
+
 	(cAliasOP)->(DbCloseArea())
 	
 	cQry := "SELECT * FROM SGOPR010 (NOLOCK) WHERE (TABEGENE IN ('INGETRAM','INGEOVOS','POCAMVES','MPCALOTE') AND D_E_L_E_T_=' ' AND "
@@ -202,8 +188,6 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	
 	cQry += " OR ( TABEGENE IN ('INGETRAM','INGEOVOS','POCAMVES','MPCALOTE') AND C2_MSEXP<> '' AND STATUS_INT='E' )) 
 	
-
-	
 	If !_xJob
 		cQry += " AND C2_FILIAL BETWEEN '" + _cFilIni + "' AND '" + _cFilFim + "' AND C2_EMISSAO BETWEEN '" + _aDatas[1] + "' AND '" + _aDatas[2] + "' "
 		
@@ -214,13 +198,12 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	
 	cQry += " ORDER BY C2_FILIAL,CODIGENE,C2_ORDSEP "
 	
-//	cQry:="SELECT * FROM SGOPR010 WHERE C2_PRODUTO <> '300042' AND C2_MSEXP='' ORDER BY C2_FILIAL,CODIGENE,C2_ORDSEP "
+	//	cQry:="SELECT * FROM SGOPR010 WHERE C2_PRODUTO <> '300042' AND C2_MSEXP='' ORDER BY C2_FILIAL,CODIGENE,C2_ORDSEP "
 	cAliasOPR := GetNextAlias()
 	DbUseArea(.t., "TOPCONN", TcGenQry(,, cQry), cAliasOPR, .F., .T.)
 	
 	TcSetField( cAliasOPR, "C2_DATPRI", "D", 8, 0 )
 	TcSetField( cAliasOPR, "C2_DATPRF", "D", 8, 0 )
-	
 	
 	dbGotop()
 	While !(cAliasOPR)->(Eof())
@@ -250,17 +233,10 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 							
 							U_CCSGrvLog("ok", "OPR", 0, 3, (cAliasOPR)->C2_FILIAL)
 							
-							//TcSetConn(_nTcConn2)
-							
-							If lEstorno
-	//							TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP=' ', STATUS_INT=' ', OPERACAO_INT='A' WHERE R_E_C_N_O_= " + ALLTRIM(STR(nRecOPR)) + " AND C2_FILIAL = '" + (cAliasOPR)->C2_FILIAL + "' ")
-	//							TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP=' ', STATUS_INT=' ', OPERACAO_INT='A' WHERE D3_FILIAL = '" + (cAliasOPR)->C2_FILIAL + "' AND SGREQ010.D3_OP = '" + cNumOP + "' ")
+							If !_xJob
+								TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='E' AND C2_FILIAL = '" + (cAliasOPR)->C2_FILIAL + "' AND D_E_L_E_T_=' ' ")
 							Else
-								If !_xJob
-									TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='E' AND C2_FILIAL = '" + (cAliasOPR)->C2_FILIAL + "' AND D_E_L_E_T_=' ' ")
-								Else
-									TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='E' AND D_E_L_E_T_=' ' ")
-								EndIf
+								TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='E' AND D_E_L_E_T_=' ' ")
 							EndIf
 						
 						Else
@@ -268,7 +244,7 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 							_MsgMotivo += "(Problema no estorno da Ordem de Produção) "
 
 							// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-							DisarmTransaction() 
+							//DisarmTransaction() 
 							//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 							//
 
@@ -279,7 +255,7 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 						_MsgMotivo += "(Problema no estorno das Movimentações de Produção)"
 
 						// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-						DisarmTransaction() 
+						//DisarmTransaction() 
 						//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 						//
 
@@ -311,7 +287,6 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 
 								DDATABASE := _dData
 								U_CCSGrvLog(cErro, "OPR", 0, 3, (cAliasOPR)->C2_FILIAL)
-								//TcSetConn(_nTcConn2)
 								_MsgMotivo += cErro
 								
 								If !_xJob
@@ -321,7 +296,7 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 								EndIf
 
 								// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-								DisarmTransaction() 
+								//DisarmTransaction() 
 								//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 								//
 
@@ -336,11 +311,10 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 							
 							U_CCSGrvLog(cErro, "OPR", 0, 3, (cAliasOPR)->C2_FILIAL)
 							
-							//TcSetConn(_nTcConn2)
 							TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='I' AND D_E_L_E_T_=' ' ")
 
 							// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s							
-							DisarmTransaction() 
+							//DisarmTransaction() 
 							//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 							//
 
@@ -351,7 +325,7 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 						_MsgMotivo += "(Problema na Criação da Ordem de Produção)"
 						
 						// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s							
-						DisarmTransaction() 
+						//DisarmTransaction() 
 						//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 						//
 					
@@ -365,8 +339,6 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 		
 		EndIf
 	
-		//TcSetConn(_nTcConn2)
-		
 		go nRecXOpr
 		
 		(cAliasOPR)->(DbSkip())
@@ -375,13 +347,9 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	
 	(cAliasOPR)->(DbCloseArea())
 	
-	// TcUnLink(_nTcConn2) 
-	
-	// ////TcSetConn(_nTcConn1) //ajuste fabricio 06/03/18
-	
-	MsUnlockAll() //ajuste fabricio 06/03/18
+	MsUnlockAll()
 		
-	cFilAnt := cFilBack//cFilBkp
+	cFilAnt := cFilBack
 	
 	DDATABASE := _dData
 	
@@ -390,7 +358,7 @@ User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 	//³Destrava a rotina para o usuário	    ?
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-	UnLockByName("ADFIS015P") // @history Fernando Macieira, 05/03/2021, Ticket 10248. Revisão das rotinas de apontamento de OP´s
+	//UnLockByName("ADFIS015P") // @history Fernando Macieira, 05/03/2021, Ticket 10248. Revisão das rotinas de apontamento de OP´s
 
 Return lRet
 
@@ -439,29 +407,24 @@ Static Function IncOPRa(cAliasOPR, cNumOP, cItem, nQtdeTot, nRecOPR, cFili)
 	cFilAnt		:= (cAliasOPR)->C2_FILIAL
 	nRecB1		:= (cAliasOPR)->R_E_C_N_O_
 
-	////TcSetConn(_nTcConn1)
-
 	dbSelectArea("SB1")
 	dbSetOrder(1)  // B1_FILIAL+B1_COD
 	dbSeek(xFilial("SB1") + cCod)
 	If Eof()
 
-		////TcSetConn(_nTcConn2)
-
 		cErro := "OPR - Produto nao cadastrado no Protheus "+cCod
 		_MsgMotivo += cErro
+
 		TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecB1)) + " AND OPERACAO_INT='I' AND C2_FILIAL = '" + cFili + "' AND D_E_L_E_T_=' ' ")
 
 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-		DisarmTransaction() 
+		//DisarmTransaction() 
 		//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 		//
 
 		Return .f.
 
 	EndIf
-
-	////TcSetConn(_nTcConn2)
 
 	cFilAnt	:= (cAliasOPR)->C2_FILIAL
 		
@@ -490,8 +453,6 @@ Static Function IncOPRa(cAliasOPR, cNumOP, cItem, nQtdeTot, nRecOPR, cFili)
 
 	cFilOPR	  := (cAliasOPR)->C2_Filial
 		
-	////TcSetConn(_nTcConn1)
-
 	SB1->(dbSetOrder(1))  // B1_FILIAL+B1_COD
 	SB1->(dbSeek(xFilial("SB1") + cCod))
 
@@ -506,7 +467,7 @@ Static Function IncOPRa(cAliasOPR, cNumOP, cItem, nQtdeTot, nRecOPR, cFili)
 		_MsgMotivo += "(OP já existe no Protheus). "
 
 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-		DisarmTransaction() 
+		//DisarmTransaction() 
 		//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 		//
 
@@ -545,15 +506,12 @@ Static Function IncOPRa(cAliasOPR, cNumOP, cItem, nQtdeTot, nRecOPR, cFili)
 			
 			_MsgMotivo += cErro
 		
-			////TcSetConn(_nTcConn2)
-		
 			TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='I' AND C2_FILIAL= '" + cFili + "' AND D_E_L_E_T_=' ' ")
-	//			TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+ "' WHERE C2_NUM = '"+cNumOp+"' AND C2_ITEM = '"+cItem+"' AND OPERACAO_INT='I' ")
-		
+
 			lRet := .F.
 
 			// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-			DisarmTransaction() 
+			//DisarmTransaction() 
 			//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 			//
 
@@ -561,7 +519,6 @@ Static Function IncOPRa(cAliasOPR, cNumOP, cItem, nQtdeTot, nRecOPR, cFili)
 
 			DDATABASE := dData
 			
-			////TcSetConn(_nTcConn2)
 			TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecOPR)) + " AND OPERACAO_INT='I' AND C2_FILIAL = '" + cFili + "' AND D_E_L_E_T_=' ' ")
 
 			lRet := .T.
@@ -618,18 +575,15 @@ Static Function InReqRa(cOP, cFil)
 	Local nRecREQ		:= ""
 
 	Private lMsErroAuto 	:= .F.          
-	//Private lMsHelpAuto	:= .F.
 	Private lAutoErrNoFile	:= .T.
 
 	Default cOP 	:= "" /*Descrição do parâmetro conforme cabeçalho*/
 	Default cFil	:= "" /*Descrição do parâmetro conforme cabeçalho*/
 
-
 	cFilBkp := cFilAnt
 	cOp := lTrim(cOP)
 
 	/*Selectiona os movimentos de requisição e devolução para a OP*/
-	////TcSetConn(_nTcConn2)
 	cQry:="SELECT * FROM SGREQ010 (NOLOCK) WHERE (D3_MSEXP='' AND D3_OP = '" + cOP + "' OR ( D3_MSEXP<>'' AND D3_OP = '" + cOP + "' AND  STATUS_INT='E' )) "
 	
 	If !_xJob
@@ -644,27 +598,20 @@ Static Function InReqRa(cOP, cFil)
 			
 	While !(cAliasREQ)->(Eof())
 		
-		////TcSetConn(_nTcConn1)
-	
 		cProd := (cAliasREQ)->D3_COD
 	
 		aItens	 := {}
 		aCabec   := {}  
 		aTotitem := {}
 		
-		
-		
 		/*vai determinar o local pelo centro de custos 21 22 23 24 ou 05 se nao tiver CC informado 
 		se a filial for 04 passa para 03 caso contrario mantem a filial*/		
-//		cLocal  := iIf((AllTrim((cAliasREQ)->D3_FILIAL)) == "04",SubStr(AllTrim((cAliasREQ)->D3_CC),3,2),cLocPad)
 		cLocal  := (cAliasREQ)->D3_LOCAL
-
 		
 		/*muda de filial 04 para 03 pq o matarial esta na 03*/
 		cFilAnt := (cAliasREQ)->D3_FILIAL
 		cFilREQ := (cAliasREQ)->D3_FILIAL
 		
-//		nRecREQ := (cAliasREQ)->R_E_C_N_O_
 		cMov	:= (cAliasREQ)->OPERACAO_INT
 		cCod	:= (cAliasREQ)->D3_COD
 		If (cAliasREQ)->OPERACAO_INT == "I"
@@ -677,8 +624,6 @@ Static Function InReqRa(cOP, cFil)
 			If !SB2->(DbSeek( xFilial("SB2") + cCod + cLocal ))
 				CriaSB2(cCod, cLocal)
 			EndIf
-			
-			
 
 			nQuant := (cAliasREQ)->D3_QUANT			
 			
@@ -703,7 +648,6 @@ Static Function InReqRa(cOP, cFil)
 		Else
 			
 			cCodiGene := StrZero((cAliasREQ)->CODIGENE,9)
-//			cOPReq	  := (cAliasREQ)->D3_OP
 			cOPReq	  := cOp
 			cCod	  := (cAliasREQ)->D3_COD
 			nRecREQ   := (cAliasREQ)->R_E_C_N_O_
@@ -715,7 +659,6 @@ Static Function InReqRa(cOP, cFil)
 			dbSetNickname("CODIGENE")
 			dbSetOrder(1)
 			dbSeek(cFilAnt + cCodiGene + cOPReq)
-//			dbSeek(cFilAnt + cOPReq)
 			If !Eof() .And. SD3->D3_ESTORNO <> "S"
 			
 				aCabec := { {"D3_TM" ,(cAliasREQ)->D3_TM , NIL},;
@@ -729,18 +672,19 @@ Static Function InReqRa(cOP, cFil)
 				AADD(aItens, {"D3_OP"		,D3_OP	  		, Nil})
 				AADD(aItens, {"D3_DOC"		,D3_DOC			, Nil})
 				AADD(aItens, {"D3_NUMSEQ"	,D3_NUMSEQ		, Nil})				
+
 			Else
 
 				U_CCSGrvLog("Registro nao encontrado para estornar ", "REQ", nRecREQ, 3, cFilREQ)
 			
-				////TcSetConn(_nTcConn2)
 				TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='Registro nao encontrado para estornar' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " AND D3_FILIAL = '" + cFilAnt + "' ")
-//				TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='Registro nao encontrado para estornar' WHERE SUBSTRING(D3_OP,1,6) = '" +cOP+"' AND D3_MSEXP='' AND OPERACAO_INT = 'E' AND D3_COD = '"+cCod+"'")
 				
 				DbSelectArea(cAliasREQ)
 				(cAliasREQ)->(DbSkip())
 				Loop
+
 			EndIf
+
 		EndIf
 		
 		SF5->(dbSetOrder(1))  // B1_FILIAL+B1_COD
@@ -751,13 +695,12 @@ Static Function InReqRa(cOP, cFil)
 
 			U_CCSGrvLog("Data do movimento menor que a data de fechamento ", "REQ", nRecREQ, 3, cFilREQ)
 			
-			////TcSetConn(_nTcConn2)
 			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+"Data do movimento menor que a data de fechamento " + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " AND D3_FILIAL = '" + cFilAnt + "' ")
-//			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='Data do movimento menor que a data de fechamento' WHERE SUBSTRING(D3_OP,1,6) = '" +cOP+"' AND D3_MSEXP='' AND OPERACAO_INT = 'E' AND D3_COD = '"+cCod+"'")
 			
 			DbSelectArea(cAliasREQ)
 			(cAliasREQ)->(DbSkip())
 			Loop
+
 		EndIf
 		
 		/*se a quantidade for igual a zero nao faz a requisição, flega log*/
@@ -767,13 +710,12 @@ Static Function InReqRa(cOP, cFil)
 
 			U_CCSGrvLog("Requisicao com quantidade zero", "REQ", nRecREQ, 3, cFilREQ)
 			
-			////TcSetConn(_nTcConn2)
 			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='Requisicao com quantidade zero' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " AND D3_FILIAL = '" + cFilAnt + "' ")
-//			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='Requisicao com quantidade zero ' WHERE SUBSTRING(D3_OP,1,6) = '" +cOP+"' AND D3_MSEXP='' AND OPERACAO_INT = 'E' AND D3_COD = '"+cCod+"'")
 			
 			DbSelectArea(cAliasREQ)
 			(cAliasREQ)->(DbSkip())
 			Loop
+
 		EndIf
 		
 		lMsErroAuto := .F.
@@ -783,13 +725,11 @@ Static Function InReqRa(cOP, cFil)
 		aadd(aTotitem,aItens) 
 
 		If cMov == "E"
-			MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) },"Execauto MATA241","Estornando requisição... " + cOp + " " + ALLTRIM(STR(nRecREQ)) )
-			//MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6)
-			//MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) // Estorna a Requisição
+			//MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) },"Execauto MATA241","Estornando requisição... " + cOp + " " + ALLTRIM(STR(nRecREQ)) ) // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
+			MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6)
 		Else
-			MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,3) },"Execauto MATA241","Incluindo requisição... " + cOp + " " + ALLTRIM(STR(nRecREQ)) )
-			//MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,3)
-			//MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 3) // Inclui a Requisição
+			//MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,3) },"Execauto MATA241","Incluindo requisição... " + cOp + " " + ALLTRIM(STR(nRecREQ)) ) // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
+			MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,3) 
 		EndIf
 		
 		If lMsErroAuto
@@ -797,7 +737,6 @@ Static Function InReqRa(cOP, cFil)
 			lRet := .F.
 			
 			aErroLog := GetAutoGrLog()
-//			cErro := ""
 			For k := 1 to Len(aErroLog)
 				If "INVALIDO" $ UPPER (aErroLog[k]) .AND. !(aErroLog[k] $ cErro)
 					cErro+= Alltrim(aErroLog[k])
@@ -814,25 +753,24 @@ Static Function InReqRa(cOP, cFil)
 				_MsgMotivo += cErro
 			EndIf
 						
-			////TcSetConn(_nTcConn2)
 			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " AND D3_FILIAL = '" + cFilAnt + "' ")
-//			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+ "'  WHERE SUBSTRING(D3_OP,1,6) = '" +cOP+"' AND D3_MSEXP='' AND OPERACAO_INT = 'E' AND D3_COD = '"+cCod+"'")
 
 			// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-			DisarmTransaction() 
+			//DisarmTransaction() 
 			//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 			//
 			
 		Else
-			////TcSetConn(_nTcConn2)
+			
 			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " AND D3_FILIAL = '" + cFilAnt + "' ")
-//			TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE SUBSTRING(D3_OP,1,6) = '" +cOP+"' AND D3_MSEXP='' AND OPERACAO_INT = 'E' AND D3_COD = '"+cCod+"'")
+
 		EndIf
 		
 //		End Transaction // inibido pois já está dentro de um begin - @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 		
 		DbSelectArea(cAliasREQ)
 		(cAliasREQ)->(DbSkip())
+
 	EndDo
 	
 	(cAliasREQ)->(DbCloseArea())
@@ -841,7 +779,7 @@ Static Function InReqRa(cOP, cFil)
 	
 	cFilAnt := cFilBkp
 	
-	MsUnlockAll() //ajuste fabricio 06/03/18
+	MsUnlockAll() 
 
 Return lRet
 
@@ -894,9 +832,6 @@ Static Function InPrdRA(cErro, cFil, nRecOPR, cFilOPR, cAliasOPR)
 	Default cFilOPR 	:= "" /*Descrição do parâmetro conforme cabeçalho*/
 	Default cAliasOPR 	:= "" /*Descrição do parâmetro conforme cabeçalho*/
 
-	
-	////TcSetConn(_nTcConn1)
-
 	cFilBkp := cFilAnt             
 	
 	cFilAnt := cFil
@@ -922,12 +857,14 @@ Static Function InPrdRA(cErro, cFil, nRecOPR, cFilOPR, cAliasOPR)
 	
 	lMsErroAuto := .F.
 
-	MsAguarde({|| MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 3) },"Execauto MATA250","Incluindo apontamento de produção... " + SC2->(C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD) )
-	//MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 3)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
+	//MsAguarde({|| MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 3) },"Execauto MATA250","Incluindo apontamento de produção... " + SC2->(C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD) ) // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
+	MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 3)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
 					
 	If lMsErroAuto
+
 		aErroLog := GetAutoGrLog()
 		cErro := ""
+
 		For k := 1 to Len(aErroLog)
 			If "INVALIDO" $ UPPER (aErroLog[k])
 				cErro+= Alltrim(aErroLog[k])
@@ -945,7 +882,7 @@ Static Function InPrdRA(cErro, cFil, nRecOPR, cFilOPR, cAliasOPR)
 		_MsgMotivo += cErro
 
 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-		DisarmTransaction() 
+		//DisarmTransaction() 
 		//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 		//
 			
@@ -953,14 +890,11 @@ Static Function InPrdRA(cErro, cFil, nRecOPR, cFilOPR, cAliasOPR)
 
 		lRet := .T.
 	
-		////TcSetConn(_nTcConn2)
 		TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecOPR) ) + " AND OPERACAO_INT='I' AND C2_FILIAL = '" + cFil + "'")
 
 	Endif
 
-	////TcSetConn(_nTcConn1)
-
-	MsUnlockAll() //ajuste fabricio 06/03/18
+	MsUnlockAll()
 
 	cFilAnt := cFilBkp
 	
@@ -1007,12 +941,9 @@ Static Function CancOPRa(cAliasOPR)
 
 	Default cAliasOPR 	:= "" /*Descrição do parâmetro conforme cabeçalho*/
 
-
 	cFilBkp := cFilAnt
 	
 	lMsErroAuto	:= .F.
-	
-	////TcSetConn(_nTcConn2)
 	
 	cCod 	  := (cAliasOPR)->C2_Produto
 	DDATABASE := (cAliasOPR)->C2_DatPri
@@ -1022,13 +953,10 @@ Static Function CancOPRa(cAliasOPR)
 	cProdC2	  := (cAliasOPR)->C2_Produto
 	nRecOPR	  := (cAliasOPR)->R_E_C_N_O_
 	
-	
 	If ALLTRIM((cAliasOPR)->C2_LOCAL) == "04"
 		cLocal := SubStr(AllTrim((cAliasOPR)->D3_CC),3,2)
 	Else
-		////TcSetConn(_nTcConn1)
 		cLocal := RetFldProd((cAliasOPR)->C2_PRODUTO,"B1_LOCPAD")
-		////TcSetConn(_nTcConn2)
 	EndIf
 	cLocal    := IIf(Empty(cLocal), "05", cLocal)
 	
@@ -1051,13 +979,12 @@ Static Function CancOPRa(cAliasOPR)
 	
 	cFilOPR := cFilAnt
 	
-	////TcSetConn(_nTcConn1)
-	
 	/*vai apagar o movimento de produção da OP*/
 	dbSelectArea("SD3")
 	dbSetOrder(1)
 	dbSeek(cFilOPR + cOp) /*deve ser sempre a OP Pai*/
 	If Eof()
+
 		lRet := .F.
 		cErro := "Movimento de Produção nao encontrada para cancelar"
 		
@@ -1065,13 +992,8 @@ Static Function CancOPRa(cAliasOPR)
 		
 		_MsgMotivo += cErro
 		
-		////TcSetConn(_nTcConn2)
-		
-//		TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+ "' WHERE R_E_C_N_O_="+AllTrim(Str(nRecOPR))+" AND OPERACAO_INT='E' ")
-//		TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE C2_NUM = '" + cOP + "' AND OPERACAO_INT='E' AND C2_FILIAL = '" + cFilAnt + "' ")
-
 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-		DisarmTransaction() 
+		//DisarmTransaction() 
 		//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 		//
 
@@ -1080,6 +1002,7 @@ Static Function CancOPRa(cAliasOPR)
 		/*Roda o SD3 procurando o movimento de Produção para cancelar*/
 		dbSeek(cFilOPR + cOp)
 		While !Eof() .And. rTrim(SD3->D3_OP) == rTrim(cOp) /*um While para estar certo de que todos os PIs que a OP tenham tido estarao apagados*/
+
 			If SubStr(SD3->D3_CF,1,2) <> "PR"
 				dbSkip()
 				Loop
@@ -1100,7 +1023,7 @@ Static Function CancOPRa(cAliasOPR)
 					RecLock("SC2",.F.)
 						SC2->C2_FLCANC := "S"
 					MsUnLock()
-					fkCommit() // 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+					//fkCommit() // 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 				EndIf
 							
 			Else /*nao cancelou*/
@@ -1111,17 +1034,16 @@ Static Function CancOPRa(cAliasOPR)
 				U_CCSGrvLog(cErro, "OPR", nRecOPR, 5, cFilOPR)
 				_MsgMotivo += cErro
 				
-				////TcSetConn(_nTcConn2)
-//				TcSqlExec("UPDATE SGOPR010 SET C2_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE C2_NUM = '" + cOP + "' AND OPERACAO_INT='E'  AND C2_FILIAL = '" + cFilAnt + "' ")
 				lRet := .F.
 			EndIf
+
 			dbSelectArea("SD3")
 			go nRecSD3
 			dbSkip()
+
 		End
 		
 		/*Roda o SD3 cancelando todos os movimentos de requisição*/
-		////TcSetConn(_nTcConn1)
 		dbgotop()      
 		dbSelectArea("SD3")
 		dbSetOrder(1)
@@ -1180,8 +1102,6 @@ Static Function InPrdeRA(cErro, cFilAnt)
 
 	cFilBkp := cFilAnt
 	
-	////TcSetConn(_nTcConn1)
-	
 	aAuto := {	{"D3_FILIAL"       , SD3->D3_FILIAL         , Nil}, ;
 				{"D3_TM"           , SD3->D3_TM		        , Nil}, ;
 				{"D3_COD"          , SD3->D3_COD            , Nil}, ;
@@ -1195,13 +1115,15 @@ Static Function InPrdeRA(cErro, cFilAnt)
 	
 	lMsErroAuto := .F.
 	
-	MsAguarde({|| MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 5) },"Execauto MATA250","Excluindo apontamento produção... " + SD3->D3_OP )
-	//MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 5)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
+	//MsAguarde({|| MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 5) },"Execauto MATA250","Excluindo apontamento produção... " + SD3->D3_OP ) // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
+	MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 5)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
 	
 	If lMsErroAuto
+
 		_MsgMotivo += "(Erro na movimentação para o TM=" + ALLTRIM(cTMLog) + "; OP=" + ALLTRIM(cOPLog) + "; COD=" + ALLTRIM(cCodLog) + "). "
 		aErroLog:=GetAutoGrLog()
 		cErro:=""
+
 		For k:=1 to Len(aErroLog)
 			If "INVALIDO" $ UPPER (aErroLog[k])
 				cErro+= Alltrim(aErroLog[k])
@@ -1215,7 +1137,7 @@ Static Function InPrdeRA(cErro, cFilAnt)
 		_MsgMotivo += cErro
 
 		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-		DisarmTransaction() 
+		//DisarmTransaction() 
 		//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 		//
 
@@ -1241,9 +1163,9 @@ Return(lRet)
 
 Static Function CancReq()
 
-	Local aArea     := GetArea()
-	Local aCampos	:= {}
-	Local aItens	 := {}
+	Local aArea    := GetArea()
+	Local aCampos  := {}
+	Local aItens   := {}
 	Local aCabec   := {}  
 	Local aTotitem := {}
 
@@ -1265,8 +1187,8 @@ Static Function CancReq()
 		
 	lMsErroAuto := .f.
 	
-	//MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6)
-	MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) },"Execauto MATA241","Efetuando movimentações múltiplas... " + SD3->D3_OP + " " + SD3->D3_COD )
+	MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6)
+	//MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) },"Execauto MATA241","Efetuando movimentações múltiplas... " + SD3->D3_OP + " " + SD3->D3_COD ) // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
 	
 	If lMsErroAuto
 
@@ -1288,6 +1210,7 @@ Static Function CancReq()
 		_MsgMotivo += cErro
 
 		MostraErro()
+
 	Endif
 	
 	RestArea(aArea)
@@ -1315,41 +1238,8 @@ Static Function A250VerReq(cOP, dData)
 		Local cAlias := "SD3"
 	#ENDIF
 
-	If !Empty(dData)
-		/*
-		#IFDEF TOP
-		cAlias := GetNextAlias()         ¦
-		cQuery := "SELECT MAX(D3_EMISSAO) AS D3_EMISSAO FROM " +RetSQLName("SD3") +" WHERE D3_OP = '" +cOP +"' AND "
-		cQuery += "SUBSTRING(D3_CF,1,2) = 'RE' AND D3_ESTORNO <> 'S' AND D3_FILIAL = '" +xFilial("SD3") +"' AND "
-		cQuery += "D3_EMISSAO > '" +DToS(dData) +"' AND D_E_L_E_T_ = ''"
-		cQuery := ChangeQuery(cQuery)
-		dbUseArea(.T.,"TOPCONN",TCGenQry(,,cQuery),cAlias,.F.,.T.)
-		dbSelectArea(cAlias)
-		dbGoTop()
-		TcSetField( cAlias, "D3_EMISSAO", "D", 8, 0 )
-		If !Empty((cAlias)->D3_EMISSAO)
-		dMaxData := (cAlias)->D3_EMISSAO
-		EndIf
-		(cAlias)->(dbCloseArea())
-		#ELSE
-		*/
-		/*
-		dbSelectArea("SD3")
-		dbSetOrder(1)
-		dbSeek(xFilial("SD3")+cOP)
-		While !EOF() .And. D3_FILIAL+D3_OP == xFilial("SD3")+cOP
-		If Substr(D3_CF,1,2) # "RE" .Or. DToS(D3_EMISSAO) <= DToS(dData) .Or. D3_ESTORNO == "S"
-		dbSkip()
-		Loop
-		Else
-		dMaxData := SD3->D3_EMISSAO
-		EndIf
-		End
-		//	#ENDIF
-		*/
-	EndIf
-	
 	dMaxData := DDATABASE
+
 	RestArea(aArea)
 	
 Return dMaxData
@@ -1388,56 +1278,42 @@ Static Function IncluiOP (cAliasOPR, nQuant, nOpc)
 	SB1->(dbSetOrder(1))  // B1_FILIAL+B1_COD
 	SB1->(dbSeek(xFilial("SB1") + cCod))
 	
-	
 	aAuto := {  {"C2_FILIAL"       , cFilOP		                        , Nil}, ;
 				{"C2_PRODUTO"      , cCod		                        , Nil}, ;
 				{"C2_NUM"          , cNum			                    , Nil}, ;
 				{"C2_ITEM"         , cItem                              , Nil}, ;
 				{"C2_SEQUEN"       , cSequen							, Nil}}
-
-//				{"C2_LOCAL"        , RetFldProd(SB1->B1_COD,"B1_LOCPAD"), Nil}, ; 
-//				{"C2_CC"           , SB1->B1_CC                         , Nil}, ;
-//				{"C2_QUANT"        , nQuant		                        , Nil}, ; // ou trocar para ZZ_PBRUTO
-//				{"C2_UM"           , SB1->B1_UM					        , Nil}, ;
-//				{"C2_DATPRI"       , (cAliasOPR)->C2_DATPRI             , Nil}, ;
-//				{"C2_DATPRF"       , (cAliasOPR)->C2_DATPRF             , Nil}, ;
-//				{"C2_EMISSAO"      , (cAliasOPR)->C2_EMISSAO            , Nil}, ;
-//				{"C2_TPOP"         , "F"                                , Nil}, ;
-//				{"C2_REVISAO"      , ""				                    , Nil},;
 //				{"AUTEXPLODE"      , "S"                                , Nil}}
-	
-	
-	
-	
-		lMsErroAuto := .F.
-		MsAguarde({|| MSExecAuto({|x,y| MATA650(x,y)}, aAuto, nOpc) },"Execauto MATA650","Efetuando OP... " + cNum + " " + cCod)
-		//MSExecAuto({|x,y| MATA650(x,y)}, aAuto, nOpc)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
 
-		If lMsErroAuto
-//			MostraErro()
-			aErroLog:=GetAutoGrLog()
-			cErro:=""
-			For k:=1 to Len(aErroLog)
-				If "INVALIDO" $ UPPER (aErroLog[k])
-					cErro+= Alltrim(aErroLog[k])
-				EndIf
-			Next
-			
-			If EMPTY( ALLTRIM( cErro ) )
-				cErro += ADFIS015PA() + ".   "
+	lMsErroAuto := .F.
+	//MsAguarde({|| MSExecAuto({|x,y| MATA650(x,y)}, aAuto, nOpc) },"Execauto MATA650","Efetuando OP... " + cNum + " " + cCod) // @history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
+	MSExecAuto({|x,y| MATA650(x,y)}, aAuto, nOpc)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
+
+	If lMsErroAuto
+
+		aErroLog:=GetAutoGrLog()
+		cErro:=""
+		For k:=1 to Len(aErroLog)
+			If "INVALIDO" $ UPPER (aErroLog[k])
+				cErro+= Alltrim(aErroLog[k])
 			EndIf
-			
-			_MsgMotivo += cErro
-			lMsErroAuto := .F.
+		Next
+		
+		If EMPTY( ALLTRIM( cErro ) )
+			cErro += ADFIS015PA() + ".   "
+		EndIf
+		
+		_MsgMotivo += cErro
+		lMsErroAuto := .F.
 
-			// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-			DisarmTransaction() 
-			//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-			//
+		// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+		//DisarmTransaction() 
+		//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
+		//
 
-		Else
-			lRet := .T. 		
-		Endif
+	Else
+		lRet := .T. 		
+	Endif
 	
 	cFilAnt := cFilBkp
 	
@@ -1466,7 +1342,7 @@ Static Function ADFIS015PA()
 	Local nLinhas := 0
 
 	cErroTemp 	:= Mostraerro("C:\","ERRORLOGPROTHEUSEDATA.log") 
-	nLinhas		:=MLCount(cErroTemp) 
+	nLinhas		:= MLCount(cErroTemp) 
 
 	cBuffer	:="" 
 	cCampo	:="" 
@@ -1475,17 +1351,13 @@ Static Function ADFIS015PA()
 	
 	//Carrega o nome do campo 
 	While (nErrLin <= nLinhas) 
+
 	     nErrLin++ 
 	     
 	     cBuffer := RTrim(MemoLine(cErroTemp,,nErrLin)) 
 
 	     If ( Upper( SubStr( cBuffer, Len(cBuffer)-7, Len(cBuffer))) == "INVALIDO") 
 	          cMsg := cBuffer 
-	     
-//	          xTemp	:= AT("-", cBuffer) 
-	     
-//	          cCampo:= AllTrim( SubStr( cBuffer, xTemp + 1, AT(":",cBuffer) - xTemp -2 )) 
-	     
 	          Exit 
 	     EndIf 
 	     

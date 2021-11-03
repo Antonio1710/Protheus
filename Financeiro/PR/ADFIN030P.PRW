@@ -20,6 +20,7 @@
 	@history Chamado 059415 - FWNM            - 03/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
 	@history Chamado 425    - WILLIAM COSTA   - 30/09/2020 - Adicionado botão do relatório de perdas
 	@history Ticket  14417  - ADRIANO SAVOINE - 31/05/2021 - Criado o campo para o usuario digitar a porcentagem no momento da consulta.
+	@history Ticket  62143  - Everson         - 19/10/2021 - Tratamento para melhorar a performace da rotina cobDia.
 /*/
 User Function ADFIN030P() // U_ADFIN030P()
 
@@ -234,7 +235,7 @@ Static Function cobDia()
 	Local oTxtFaixAtr
 	Local oGroup3
 	Local oGroup4
-	Local oCSVFaxAt
+	//Local oCSVFaxAt
 	Local oCaFaxAt
 	Local oOkFaxAt
 	Local oFaixas
@@ -247,7 +248,7 @@ Static Function cobDia()
 	Local oTxtFiltro
 	Local bIFiltro		:= {|| oFaxAt:Enable() , aplGridFilt(),oTFFiltro:SetOption(2),filtro1(@oPnlFilt1,@oMkFxAtr,@oMkFxPort,@oMkSitu,@oMkRede,@oMkTitulo),Iif(ValType(oTitulos) == "O",oTitulos:Hide(),Nil), oAtul:Disable(), oFaxAt:Disable(), oFaxAt:Enable(), oFitro:Disable(), oPnlFiltro:Show(), oPnlTool:Hide()}
 	Local bFFiltro		:= {|| oFaxAt:Disable(),Iif(ValType(oTitulos) == "O",Eval({||oPnlFiltro:Hide(),oAtul:Enable(),oFaxAt:Enable() ,oFitro:Enable(),oFaxAt:Disable(),oTitulos:Show(),oPnlTool:Show()}),MsgStop("Filtro não aplicado.","Função cobDia"))}
-	Local oCaFiltro
+	//Local oCaFiltro
 	Local oOkFiltro
 
 	Local aTFFiltro  	:= {}
@@ -256,7 +257,7 @@ Static Function cobDia()
 	Local oAplUser
 
 	Local oGrpTab	 
-	Local oGrpCmp	 
+	//Local oGrpCmp	 
 	Local oGrpFilt
 	Local oTxtFCmp
 	Local aFTabelas		:= {}
@@ -872,7 +873,7 @@ Static Function exibTotFaixa(oTitulos,aHTitulos)
 	Local aAltTotFx	:= {}
 	Local aColsTotFx:= {}
 	Local oGdToFx
-	Local oFechar
+	//Local oFechar
 	Local i			:= 1
 	Local w			:= 1
 	Local nTotFx	:= 0
@@ -945,7 +946,7 @@ Static Function exibTotFaixa(oTitulos,aHTitulos)
 				DbSelectArea("FX_SX5")
 				nFaixaDe := Val(cValToChar(FX_SX5->X5_DESCRI))
 				nFaixaAte:= Val(cValToChar(FX_SX5->X5_DESCSPA))
-				DbCloseArea("FX_SX5")
+				FX_SX5->(DbCloseArea())
 
 				Aadd(oGdToFx:aCols , Array(Len(aHToFx) + 1) )
 				oGdToFx:aCols[Len(oGdToFx:aCols), Len(oGdToFx:aCols[1]) ] := .F.
@@ -1177,7 +1178,7 @@ Static Function grCSVA(oTitulos,aHTitulos)
 
 	EndDo
 
-	DbCloseArea("CSV_DET")
+	CSV_DET->(DbCloseArea())
 
 	//Fecha o arquivo.
 	FClose(nHdl)
@@ -1822,7 +1823,10 @@ Static Function cChaveWY()
 
 	EndIf
 
-	DbCloseArea("CHV_WY")
+	CHV_WY->(DbCloseArea())
+
+	//
+	RestArea(aArea)
 
 Return cChave
 
@@ -1872,8 +1876,8 @@ Static Function filtFaixa(oPnlFilt1,oMkFxAtr)
 	Local cQuery	:= ""
 	Local aFaixas	:= {}
 	Local i			:= 1
-	Local nLinha	:= 5
-	Local nColuna	:= 5
+	//Local nLinha	:= 5
+	//Local nColuna	:= 5
 	Local aCpoBro	:= {}
 	Local cMark     := GetMark() 
 	Local aStru
@@ -1920,7 +1924,7 @@ Static Function filtFaixa(oPnlFilt1,oMkFxAtr)
 
 	EndDo
 
-	DbCloseArea("D_FILTFAIXA")
+	D_FILTFAIXA->(DbCloseArea())
 
 	Asort(aFaixas)
 
@@ -2088,8 +2092,8 @@ Static Function filtPortad(oPnlFilt1,oMkFxPort)
 	Local cQuery	:= ""
 	Local aPortadores	:= {}
 	Local i			:= 1
-	Local nLinha	:= 5
-	Local nColuna	:= 5
+	//Local nLinha	:= 5
+	//Local nColuna	:= 5
 	Local aCpoBro	:= {}
 	Local cMark   	:= GetMark() 
 	Local aStru
@@ -2137,7 +2141,7 @@ Static Function filtPortad(oPnlFilt1,oMkFxPort)
 
 	EndDo
 
-	DbCloseArea("D_FILTPORTA")
+	D_FILTPORTA->(DbCloseArea())
 
 	Asort(aPortadores)
 
@@ -2312,8 +2316,8 @@ Static Function filtSitu(oPnlFilt1,oMkSitu)
 	Local cQuery	:= ""
 	Local aSituacoes	:= {}
 	Local i			:= 1
-	Local nLinha	:= 5
-	Local nColuna	:= 5
+	//Local nLinha	:= 5
+	//Local nColuna	:= 5
 	Local aCpoBro	:= {}
 	Local cMark   	:= GetMark() 
 	Local aStru
@@ -2354,7 +2358,7 @@ Static Function filtSitu(oPnlFilt1,oMkSitu)
 
 	EndDo
 
-	DbCloseArea("D_FILTSITUA")
+	D_FILTSITUA->(DbCloseArea())
 
 	Asort(aSituacoes)
 
@@ -2526,13 +2530,13 @@ Static Function filtRede(oPnlFilt1,oMkRede)
 	Local cQuery	:= ""
 	Local aRedes	:= {}
 	Local i			:= 1
-	Local nLinha	:= 5
-	Local nColuna	:= 5
+	//Local nLinha	:= 5
+	//Local nColuna	:= 5
 	Local aCpoBro	:= {}
 	Local cMark   	:= GetMark() 
 	Local aStru
 	Local nPosRede
-	Local cIndex
+	//Local cIndex
 
 	//Valida o objeto.
 	If Valtype(oMkRede) == "O"
@@ -2596,7 +2600,7 @@ Static Function filtRede(oPnlFilt1,oMkRede)
 
 	EndDo
 
-	DbCloseArea("D_FILTREDE")
+	D_FILTREDE->(DbCloseArea())
 
 	//
 	For i := 1 To Len(aRedes)
@@ -2733,15 +2737,15 @@ Static Function filtTitulo(oPnlFilt1,oMkTitulo)
 
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
-	Local aTpTit	:= {}
-	Local i			:= 1
-	Local nLinha	:= 5
-	Local nColuna	:= 5
+	//Local aTpTit	:= {}
+	//Local i			:= 1
+	//Local nLinha	:= 5
+	//Local nColuna	:= 5
 	Local aCpoBro	:= {}
 	Local cMark   	:= GetMark() 
 	Local aStru
 	Local nPosTit
-	Local cIndex
+	//Local cIndex
 	Local cDescTit	:= ""
 
 	//Valida o objeto.
@@ -2937,20 +2941,22 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
-	Local lCont		:= .T.
+	//Local lCont		:= .T.
 	Local aFaixas	:= {}
 	Local nPosFaixa	:= 0
 	Local i			:= 1
 	Local w			:= 1
 	Local aFaixas2	:= {}
 	Local nTotal	:= 0
-	Local cRede		:= ""
+	//Local cRede		:= ""
 	Local aStru		:= {}
-	Local cNomTr1	:= ""
-	Local cIndex	:= ""
-	Local lAchou	:= .F.
+	//Local cNomTr1	:= ""
+	//Local cIndex	:= ""
+	//Local lAchou	:= .F.
 	Local aTotais	:= {}
-	Local cTpFx	:= ""
+	Local cTpFx		:= ""
+
+	Local oTempFat	:= Nil
 
 	//Obtém o script sql.
 	cQuery := sqlCobDia(1)
@@ -3024,7 +3030,6 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 	Aadd(aStru,{"TM_TOTALF" 	, "N",15,2})
 
 	//Ordena array.
-
 	For i := 1 To Len(aFaixas)
 		Aadd(aFaixas2,Val(cValToChar(aFaixas[i][1])))
 
@@ -3039,65 +3044,47 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 
 	Next i
 
-	Aadd(aHTitulos,{"Total","TOTAL","@E 999,999,999.99" ,15,2,"","" ,"N","",""})
+	Aadd(aHTitulos,{"Total","TOTAL","@E 999,999,999.99" ,15,2,"","" ,"N","",""})	
 
-	//Cria arquivo temporário.
-	cNomTr1 := CriaTrab(aStru)
+	//Everson - 19/10/2021. Chamado 62143.
+	oTempFat := FWTemporaryTable():New("TEMP")
+	oTempFat:SetFields(aStru)
+	oTempFat:AddIndex("01", {"TM_TOTALF"} )
+	oTempFat:AddIndex("02", {"TM_REDE"} )
+	oTempFat:Create()
 
-	//Define arquivo de dados com área de trabalho disponível.
-	DbUseArea(.T.,,cNomTr1,"TEMP",.F.,.F.)
-
-	//Define o índice do arquivo temporário.
-	cIndex   := "TM_TOTALF"
-
-	//Cria índice no arquivo temporário.
-	IndRegua("TEMP", cNomTr1, cIndex,,,"Criando índice..." )
+	DbSelectArea("TEMP")
+	TEMP->(DbSetOrder(2))
 
 	DbSelectArea("D_COBDIA")
 	D_COBDIA->(DbGoTop())
 	While ! D_COBDIA->(Eof())
 
-		DbSelectArea("TEMP")
-		TEMP->(DbGoTop())
-
-		//
-		lAchou := .F.
-		DbSelectArea("TEMP")
-		TEMP->(DbGoTop())
-		While ! TEMP->(Eof())
-
-			If Alltrim(cValToChar(D_COBDIA->REDE)) == Alltrim(cValToChar(TEMP->TM_REDE))
-				lAchou := .T.
-				Exit
-
-			EndIf
-
-			TEMP->(DbSkip())
-		EndDo
-
-		If lAchou
+		//Everson - 19/10/2021. Chamado 62143.
+		If TEMP->(DbSeek(D_COBDIA->REDE))
 
 			RecLock("TEMP",.F.)
-			TEMP->&("TM_F"  + Alltrim(cValToChar(D_COBDIA->FAIXA))) += D_COBDIA->E1_SALDO
-			TEMP->TM_TOTAL  += D_COBDIA->E1_SALDO
-			TEMP->TM_TOTALF += (D_COBDIA->E1_SALDO * (-1))
+				TEMP->&("TM_F"  + Alltrim(cValToChar(D_COBDIA->FAIXA))) += D_COBDIA->E1_SALDO
+				TEMP->TM_TOTAL  += D_COBDIA->E1_SALDO
+				TEMP->TM_TOTALF += (D_COBDIA->E1_SALDO * (-1))
 			MsUnlock()
 
 		Else
 
 			RecLock("TEMP",.T.)
-			TEMP->TM_REDE  := D_COBDIA->REDE
-			TEMP->TM_NOME  := D_COBDIA->NOME_REDE
-			TEMP->&("TM_F" + Alltrim(cValToChar(D_COBDIA->FAIXA))) := D_COBDIA->E1_SALDO
-			TEMP->TM_TOTAL  := D_COBDIA->E1_SALDO
-			TEMP->TM_TOTALF := (D_COBDIA->E1_SALDO * (-1))			
+				TEMP->TM_REDE  := D_COBDIA->REDE
+				TEMP->TM_NOME  := D_COBDIA->NOME_REDE
+				TEMP->&("TM_F" + Alltrim(cValToChar(D_COBDIA->FAIXA))) := D_COBDIA->E1_SALDO
+				TEMP->TM_TOTAL  := D_COBDIA->E1_SALDO
+				TEMP->TM_TOTALF := (D_COBDIA->E1_SALDO * (-1))			
 			MsUnlock()
 
 		EndIf
 
+		//
 		D_COBDIA->(DbSkip())
 
-	EndDo
+	End
 
 	oTitulos := MsNewGetDados():New(001,005,234,540,,"Allwaystrue()","Allwaystrue()","",aAltTitulos,1,999,Nil,Nil,Nil,oSplitter,aHTitulos,@aColsTitulos)
 	oTitulos:oBrowse:bLDblClick := {|| Eval(bDisableBtn), obterDetalhe(oTitulos,oSplitter) }
@@ -3105,6 +3092,7 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 
 	//Popula aCols.
 	DbSelectArea("TEMP")
+	TEMP->(DbSetOrder(1))
 	TEMP->(DbGoTop())	
 	While ! TEMP->(Eof())
 
@@ -3127,7 +3115,7 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 
 		TEMP->(DbSkip())
 
-	EndDo
+	End
 
 	//
 	oTotTT:Refresh()
@@ -3157,7 +3145,6 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 
 		EndIf
 
-
 	Next i
 
 	//Cria os totais na grid.
@@ -3178,17 +3165,12 @@ Static Function carrCobDia(oCobranca,oSplitter,oTitulos,aAltTitulos,aColsTitulos
 	EndIf
 
 	//Fecha arquivo temporário.
-	DbSelectArea("TEMP")
 	TEMP->(DbCloseArea())
 
 	//Apaga o arquivo temporário.
+	oTempFat:Delete()
 
-	If ! Empty(Alltrim(cValToChar(cNomTr1)))
-		FErase( Alltrim(cValToChar(cNomTr1)) + GetDBExtension() )
-		FErase( Alltrim(cValToChar(cNomTr1)) + OrdBagExt() )
-
-	EndIf
-
+	//
 	RestArea(aArea)
 
 Return .T.
@@ -3239,7 +3221,7 @@ Static Function obterDetalhe(oTitulos,oSplitter)
 
 	If D_DETALHE->(Eof())
 		RestArea(aArea)
-		DbCloseArea("D_DETALHE")
+		D_DETALHE->(DbCloseArea())
 		Return Nil
 
 	EndIf
@@ -3343,7 +3325,7 @@ Static Function obterDetalhe(oTitulos,oSplitter)
 	oTotDetS:Refresh()
 	oTotDetV:Refresh()
 
-	DbCloseArea("D_DETALHE")
+	D_DETALHE->(DbCloseArea())
 
 	oDetalhes:Refresh()
 
@@ -3381,7 +3363,7 @@ Static Function carrFaixaAtr(oFaixas,aHFaixas)
 	D_FAIXAATR->(DbGoTop())
 
 	If D_FAIXAATR->(Eof())
-		DbCloseArea("D_FAIXAATR")
+		D_FAIXAATR->(DbCloseArea())
 		RestArea(aArea)
 		Return Nil
 
@@ -3449,7 +3431,7 @@ Static Function filtFixo(oFilExpress,aHFilExpress)
 	D_FILTFIXO->(DbGoTop())
 
 	If D_FILTFIXO->(Eof())
-		DbCloseArea("D_FILTFIXO")
+		D_FILTFIXO->(DbCloseArea())
 		RestArea(aArea)
 		Return Nil
 
@@ -3499,7 +3481,7 @@ Static Function slvFaixaAtr(oFaixas,aHFaixas)
 	Local i			:= 1
 	Local cUpdate	:= "UPDATE " + RetSqlName("SX5") + " SET D_E_L_E_T_ = '*' WHERE X5_TABELA = 'WX' AND D_E_L_E_T_ = '' "	
 	Local cFaixa	:= ""
-	Local cDeAtr	:= ""
+	//Local cDeAtr	:= ""
 	Local cAteAtr	:= ""
 
 	If TCSqlExec(cUpdate) < 0
@@ -3782,7 +3764,7 @@ Static Function sqlCobDia(nOpc,cRede,cFaixa)
 		cQuery += " ORDER BY  FONTE.E1_FILIAL, FONTE.E1_CLIENTE, FONTE.E1_LOJA, FONTE.E1_NUM, FONTE.E1_PARCELA "
 
 	EndIf
-	
+	//U_ExTelaMen("cQuery", cQuery, "Arial", 10, , .F., .T.)
 
 	//
 	Iif(Len(cQuery) > 15980,Eval({|| cQuery := "", MsgStop("Não será possível executar a consulta pois o script sql excede o tamanho máximo (15.980).","Função sqlCobDia")}),Nil)
@@ -3824,7 +3806,7 @@ Static Function lancCoRFin()
 	Local oPeriodo
 	Local cPeriodo
 
-	Local cEmail	:= GetMv("MV_#LCRF")
+	//Local cEmail	:= GetMv("MV_#LCRF")
 	Local oCSV
 	Local oCSVB
 
@@ -3951,7 +3933,7 @@ Static Function DetLCRF(oAnalise,aHAnalise)
 	Local aColsDet	:= {}
 	Local cVCCDeb	:= Val(cValToChar( oAnalise:aCols[oAnalise:nAt][ aScan(aHAnalise,{|x| Alltrim(cValToChar(x[2])) == "DEB" })]))
 	Local cVCCCred	:= Val(cValToChar( oAnalise:aCols[oAnalise:nAt][ aScan(aHAnalise,{|x| Alltrim(cValToChar(x[2])) == "CRED" })]))
-	Local cVlrLiq	:= Val(cValToChar( oAnalise:aCols[oAnalise:nAt][ aScan(aHAnalise,{|x| Alltrim(cValToChar(x[2])) == "VLRL" })])) 
+	//Local cVlrLiq	:= Val(cValToChar( oAnalise:aCols[oAnalise:nAt][ aScan(aHAnalise,{|x| Alltrim(cValToChar(x[2])) == "VLRL" })])) 
 	Local cConta	:= Alltrim(cValToChar( oAnalise:aCols[oAnalise:nAt][ aScan(aHAnalise,{|x| Alltrim(cValToChar(x[2])) == "CONTA" })]))
 	Local nColuna	:= oAnalise:oBrowse:ColPos
 	Local cNomeColu	:= Alltrim(cValToChar(aHAnalise[nColuna][2]))
@@ -4307,7 +4289,7 @@ Static Function atlLCRF(oBase,aHBase,oAnalise,aHAnalise)
 
 	Endif
 
-	DbCloseArea("TLCRF")
+	TLCRF->(DbCloseArea())
 
 	//
 	//Iif(! Empty(Alltrim(cValToChar(cArLCRF)))  .And. File(cArLCRF  + GetDBExtension()),FErase(cArLCRF  + GetDBExtension()) ,Nil)
@@ -5360,7 +5342,7 @@ Static Function enviarEmail(cAssunto,cMensagem,cEmail,cAtach)
 	Local lOk           := .T.
 	Local cBody         := cMensagem
 	Local cErrorMsg     := ""
-	Local aFiles        := {}
+	//Local aFiles        := {}
 	Local cServer       := Alltrim(GetMv("MV_RELSERV"))
 	Local cAccount      := AllTrim(GetMv("MV_RELACNT"))
 	Local cPassword     := AllTrim(GetMv("MV_RELPSW"))

@@ -11,7 +11,7 @@
 	@history Chamado 8465 - Leonardo P. Monteiro - 07/07/2021 - Desenvolvimento inicial.
 	
     /*/
-Static cTitulo := "Cadastro de Exigências de Mercado"
+Static cTitulo := "Cadastro de Exigências de Países"
  
  
 User Function ADEST072P()  //U_ADEST072P()
@@ -65,7 +65,7 @@ Static Function ModelDef()
  Local oModel		:= MPFormModel():New("mdlADEST072P",, {|| .T.})
  Local oStrutZEK	:= FWFormStruct(1,"ZEK")
  
- oModel:SetDescription("..:: Cadastro Exigências de Mercado ::..")
+ oModel:SetDescription("..:: Cadastro Exigências por Países ::..")
  
  // CabeÃ§alho ZT3 (Pedidos)
  oModel:addFields("CABEC_ZEK",nil,oStrutZEK)

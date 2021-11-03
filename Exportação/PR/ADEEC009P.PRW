@@ -23,10 +23,11 @@
 	Alteracao das devolucoes
 	@author user
 	@since 03/04/2006
-	@history Chamado 8465 - Leonardo P. Monteiro    - 19/05/2021 - Permissão para a gravação e alteração da data de entrega nos processos de exportação.
-	@history Chamado 8465 - Leonardo P. Monteiro    - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção.
-	@history Chamado 8465 - Leonardo P. Monteiro    - 02/07/2021 - Ajustes no relacionamento do processo de exportação com os registros de inspeção da qualidade.
-	@history Chamado 8465 - Leonardo P. Monteiro    - 02/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
+	@history Chamado 8465  - Leonardo P. Monteiro    - 19/05/2021 - Permissão para a gravação e alteração da data de entrega nos processos de exportação.
+	@history Chamado 8465  - Leonardo P. Monteiro    - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção.
+	@history Chamado 8465  - Leonardo P. Monteiro    - 02/07/2021 - Ajustes no relacionamento do processo de exportação com os registros de inspeção da qualidade.
+	@history Chamado 8465  - Leonardo P. Monteiro    - 02/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
+	@history Chamado 19284 - Leonardo P. Monteiro    - 12/09/2021 - Ajustado o campo DL/Draft para edição, mesmo após roterização do pedido de exportação.
 /*/
 // --------------------------------------------------------------------------------------------------------------
 Static Function Modeldef()
@@ -86,13 +87,16 @@ Static Function Modeldef()
 	oStruCab:SetProperty( "EE7_XTARA"    , MODEL_FIELD_WHEN, {|| .T. } )
 	oStruCab:SetProperty( "EE7_XMODCS"   , MODEL_FIELD_WHEN, {|| .T. } )
 	
+	//@history Chamado 19284 - Leonardo P. Monteiro    - 12/09/2021 - Ajustado o campo DL/Draft para edição, mesmo após roterização.
+	oStruCab:SetProperty( "EE7_XDLDRA"   , MODEL_FIELD_WHEN, {|| .T. } )
+
 	if Empty(SC5->C5_NOTA) .AND. Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
 		oStruCab:SetProperty( "EE7_XETQUE"   , MODEL_FIELD_WHEN, {|| .T. } )
 		oStruCab:SetProperty( "EE7_XESPEM"   , MODEL_FIELD_WHEN, {|| .T. } )
 		oStruCab:SetProperty( "EE7_CONSIG"   , MODEL_FIELD_WHEN, {|| .T. } )
 		oStruCab:SetProperty( "EE7_COLOJA"   , MODEL_FIELD_WHEN, {|| .T. } )
 		oStruCab:SetProperty( "EE7_XTPFRE"   , MODEL_FIELD_WHEN, {|| .T. } )
-		oStruCab:SetProperty( "EE7_XDLDRA"   , MODEL_FIELD_WHEN, {|| .T. } )
+		
 		
 		oStruEE8:SetProperty( "EE8_DTENTR"   , MODEL_FIELD_WHEN, {|| .T. } )
 		oStruEE8:SetProperty( "EE8_DTENTR"   , MODEL_FIELD_VALID, {|| oModel:GetModel("EE8DETAIL"):getValue("EE8_DTENTR") >= Date() } )

@@ -39,6 +39,9 @@
 	@history Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
 	@history Ticket     TI	- Abel Babini			- 31/05/2021 - Paramêtros do IP do Servidor de Produção
 	@history Ticket 16982   - Abel Babini     - 27/07/2021 - Específico Adoro - Caso não exista pagamento como nas NFs de Transferência, gera como 90 - Sem pagamento
+	@history Ticket 56470   - Abel Babini     - 07/10/2021 - Validação de ambiente Produção x Homologação - validar se trata-se de ambiente de Produção ou Homologação através do nome do ambiente e não mais pelo IP do servidor.
+	@history Ticket     TI  - Fer Macieira    - 13/10/2021 - Consiste modalidade devido mudança sozinho contigência EPEC/DEPEC
+	@history Ticket     TI  - Abel Babini     - 19/10/2021 - Ajuste no Return da validação de ambiente de produção
 /*/
 User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 
@@ -471,16 +474,54 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 	Private _cUltNFe			:= "000000000"	//Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
 	Private _cNFNum				//Ticket     TI	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
 	Private _cNFSer				//Ticket  10292	- Abel Babini			- 04/12/2020 - Validação de posicionamento nas empresas e filiais corretas para geração do XML.
-	Private _IPSvPrd 			:= ALLTRIM(GETMV("MV_#IPSPRD",,"10.5.1.1")) 	//Ticket     TI	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
 
+	//Ticket 56470   - Abel Babini     - 07/10/2021 - O conteúdo do parâmetro abaixo MV_#IPSPRD foi trocado de IP para Environment.
+	Private _IPSvPrd 			:= ALLTRIM(GETMV("MV_#IPSPRD",,"CCZERN_PROD")) 	//Ticket     TI	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
+
+	lStsNFAd := .T.
 	//Incluido em 29/01/2019 - Abel - Validar Ambiente de Envio SEFAZ e Servidor utilizado, não permitindo transmitir NF em HOMOLOGAÇÃO do servidor de PRODUÇÃO
-	If (Alltrim(GetServerIP(.F.)) == _IPSvPrd) .AND. (PARAMIXB[3] == '2') //Ticket  10292	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
-		MsgAlert("Servidor de PRODUÇÃO está apontando para ambiente de HOMOLOGAÇÃO da SEFAZ. Contate o administrador do sistema!","Erro na Transmissão")
-		Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
-	Elseif (!Alltrim(GetServerIP(.F.)) == _IPSvPrd) .AND. (PARAMIXB[3] == '1') //Ticket  10292	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
-		MsgAlert("Servidor de TESTE está apontando para ambiente de PRODUÇÃO da SEFAZ. Contate o administrador do sistema!","Erro na Transmissão")
-		Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
+	//Ticket 56470   - Abel Babini     - 07/10/2021 - Validação de ambiente Produção x Homologação - validar se trata-se de ambiente de Produção ou Homologação através do nome do ambiente e não mais pelo IP do servidor.
+	//Ticket     TI  - Abel Babini     - 19/10/2021 - Ajuste no Return da validação de ambiente de produção
+	If (Alltrim(GetEnvServer()) $ _IPSvPrd) .AND. (PARAMIXB[3] == '2') //Ticket  10292	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
+		lStsNFAd := .F.
+		MsgAlert("Ambiente de PRODUÇÃO está apontando para ambiente de HOMOLOGAÇÃO da SEFAZ. Contate o administrador do sistema!","Erro na Transmissão")
+		Return()
+	Elseif (!Alltrim(GetEnvServer()) $ _IPSvPrd) .AND. (PARAMIXB[3] == '1') //Ticket  10292	- Abel Babini			- 31/05/2021 - Criação de Paramêtros do IP do Servidor de Produção
+		lStsNFAd := .F.
+		MsgAlert("O Ambiente "+ Alltrim(GetEnvServer()) + " não é reconhecido como PRODUÇÃO e está apontando para ambiente de PRODUÇÃO da SEFAZ. Contate o administrador do sistema (MV_#IPSPRD)!","Erro na Transmissão")
+		Return()
 	Endif
+	
+	If !lStsNFAd
+		Return()
+	Else
+		cIdent := RetIdEnti()
+    oWs := WsSpedCfgNFe():New()
+    cURL := Alltrim(GetMv("MV_SPEDURL"))
+    oWS:cUSERTOKEN := "TOTVS"
+    oWS:cID_ENT := cIdent
+    oWS:nAmbiente := 0
+    oWS:_URL := AllTrim(cURL)+"/SPEDCFGNFe.apw"
+    
+    If oWS:CFGAMBIENTE()
+        cAmbiTrans := oWS:cCfgAmbienteResult
+        cAmbiTrans := Substr(cAmbiTrans,1,1)
+
+				If Alltrim(cAmbiTrans) <> '1' .and. (Alltrim(GetEnvServer()) $ _IPSvPrd)
+					oWS:nAmbiente := 1
+					oWS:CFGAMBIENTE()
+
+					MsgAlert("Ambiente configurado para Sefaz Homologação. Reinicie o sistema e tente novamente!","Erro na Transmissão")
+					Return()
+				endif
+
+		else
+			MsgAlert("Não foi possível validar o ambiente da NFe. Reinicie o sistema e tente novamente!","Erro na Transmissão")
+			Return()
+    EndIf
+
+	Endif
+
 	//FIM Incluido em 29/01/2019 - Abel - Validar Ambiente de Envio SEFAZ e Servidor utilizado, não permitindo transmitir NF em HOMOLOGAÇÃO do servidor de PRODUÇÃO
 
 	If FunName() == "SPEDNFSE"
@@ -519,6 +560,34 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 		MsgAlert("(01) Erro no posicionamento de tabelas e a NF não será transmitida. Reinicie o Protheus e tente novamente, e se o problema persistir fale com a TI.","Erro na Transmissão")
 		Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
 	ENDIF
+
+	// @history Ticket     TI  - Fer Macieira    - 13/10/2021 - Consiste modalidade devido mudança sozinho contigência EPEC/DEPEC
+	lOnOffMod := GetMV("MV_#TSSPEC",,.t.) // Liga/Desliga consistência modalidade 5
+
+	// obtem a Modalidade
+	If lOnOffMod
+
+		cError    := ""
+		cModel    := GetMV("MV_#TSSMOD",,"55")
+		cBlqModal := GetMV("MV_#TSSBLQ",,"5")
+
+		cIdEnt      := getCfgEntidade(@cError)
+
+		cModalidade := getCfgModalidade(@cError, cIdEnt, cModel)
+	
+		If Left(AllTrim(cModalidade),1) == cBlqModal
+
+			u_GrLogZBE(msDate(),TIME(),cUserName,"TI-ERRO NO FATURAMENTO. Modalidade 5 - Contingência DPEC/EPEC não permitida!","FATURAMENTO","NFESEFAZ",;
+				"NF: "+cNota+" Serie: "+cSerie+" Ultima NF: "+_cUltNFe+" M0_CODIGO: "+SM0->M0_CODIGO+" M0_CODFIL: "+SM0->M0_CODFIL+" cEmpAnt/cFilAnt: "+cEmpAnt+cFilAnt,ComputerName(),LogUserName())
+			Alert("(TI) Modalidade 5 - Contingência DPEC/EPEC não permitida! A NF não será transmitida! Contate TI...","Transmissão em contingência não autorizada!")
+
+			Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
+
+		EndIf
+		
+	EndIf
+	// 
+
 	_cNFNum	:= cNota
 	_cNFSer	:= cSerie
 

@@ -10,6 +10,7 @@
 	@history Chamado 053423 - William Costa         - 19/11/2019 - Identificado falha que não existia centro de custo para o produto com erro e existia movimentos com quantidade zero isso não pode ocasionando error log.  
 	@history Chamado 054188 - FWNM                  - 16/12/2019 - OS 055594 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || ADFIS005P
 	@history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+	@history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 /*/
 User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 
@@ -60,14 +61,13 @@ User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 		PutGlbValue("ADFIS006P", "1" )
 		GlbUnLock()
 		
-		
 		/*Seta job para nao consumir licensas*/
 		RpcSetType(3)
 		
 		/*Seta job para empresa filial desejada*/		
 		RpcSetEnv( cEmp, cFil,,,"PCP","MATA650",aTables, , , ,   )
 
-		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para integração do estoque')
+		//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para integração do estoque') // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 		
 		/*Dados e variáveis para controle de conexão entre o banco de dados do Protheus e o banco intermediário*/
 		_cNomBco1  := GetPvProfString("INTSAGBD","BCO1","ERROR",GetADV97())
@@ -90,7 +90,7 @@ User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 		
 		ConOut( DTOC(Date()) + " " + Time() + "Inicio Job Integrações Estoque " + cJobFile)
 		
-		cEmail		:= GetMV("MV_XEMAIL",.F.,"fabricio.kfranca@gmail.com")
+		cEmail		:= GetMV("MV_XEMAIL",.F.,"sistemas@adoro.com.br")
 		cExt		:= GetMv("MV_XEXT",.F.,"*.CSV")		
 		
 		
@@ -116,12 +116,6 @@ User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 		/* Integra Movimentos de Inventário */
 		U_ADFIS009P() //COLOCAR UM GROUP BY PARA AGLUTINAR PRODUTO + LOCAL
 		
-		/* exclusao da produção da OP */
-//		U_InterOPE(cEmp,cFil,cJobFile)   //FUNÇÃO FORA DE USO 
-		
-		/* exclusao de requisições de MP para OPs */
-//		U_ADFIS010P(cEmp,cFil,cJobFile)	//FUNÇÃO FORA DE USO  
-		
 		/* Cancelamento da OP toda a interface ja foi executada apenas vai rodar o SC2 pelo C2_FLCANC */
 //		U_ICancOP(cEmp,cFil,cJobFile) // FUNÇÃO FORA DE USO
 		
@@ -138,7 +132,6 @@ User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 		/*Mostra a tela de perguntas*/
 		Pergunte(cPerg,.T.)
 		
-		
 		DEFINE MSDIALOG oDlg FROM  96,9 TO 320,612 TITLE OemToAnsi("Integrações Estoque") PIXEL		
 			@ 11,6 TO 90,287 LABEL "" OF oDlg  PIXEL
 			@ 16, 15 SAY OemToAnsi("Este programa efetua as integrações do estoque") SIZE 268, 8 OF oDlg PIXEL
@@ -149,7 +142,6 @@ User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 		ACTIVATE MSDIALOG oDlg CENTERED
 
 	EndIf
-
 	
 Return
 
@@ -160,7 +152,6 @@ Return
 	@since 14/12/16
 	@version 01
 */
-
 Static Function ADFIS006PA()
 
 	Local cPergFilIni := mv_par01 /* Filial De */
@@ -168,17 +159,9 @@ Static Function ADFIS006PA()
 
 	Private _aDatas := { DTOS(mv_par03), DTOS(mv_par04) } /* mv_par03 = Período De; 	mv_par04 = Período Até */
 	
-	
 	/* STATUS 1 - Iniciando execucao do Job */
 	PutGlbValue("ADFIS006P", "1" )
 	GlbUnLock()
-	
-	
-	/* Seta job para nao consumir licensas */
-	//	RpcSetType(3)
-	
-	/* Seta job para empresa filial desejada */	
-	//	RpcSetEnv( cEmp, cFil,,,"PCP","MATA650",aTables, , , ,   )
 	
 	/*Dados e variáveis para controle de conexão entre o banco de dados do Protheus e o banco intermediário*/
 	_cNomBco1  := GetPvProfString("INTSAGBD","BCO1","ERROR",GetADV97())
@@ -201,7 +184,7 @@ Static Function ADFIS006PA()
 	
 	ConOut( DTOC(Date()) + " " + Time() + "Inicio Job Integrações Estoque ADFIS006P" )
 	
-	cEmail		:= GetMV("MV_XEMAIL",.F.,"fabricio.kfranca@gmail.com")
+	cEmail		:= GetMV("MV_XEMAIL",.F.,"sistemas@adoro.com.br")
 	cExt		:= GetMv("MV_XEXT",.F.,"*.CSV")
 		
 	/* 
@@ -216,26 +199,9 @@ Static Function ADFIS006PA()
 	
 	/* exclusao de movimento de requisição */
 	U_ADFIS008P(cPergFilIni, cPergFilFim)
-	//	U_ADFIS008P(cEmp,cFil,cJobFile, mv_par01, mv_par02)
  
-	/* movimentos de produção de frango - PROGRAMA A PARTE DESTE */
-	//	U_InOPFrango() //FUNÇÃO FORA DE USO
-	
-	/* integra OP's - PROGRAMA A PARTE DESTE */
-	//	InterOPr() //FUNÇÃO FORA DE USO
-	
 	/* Integra Movimentos de Inventário */
 	U_ADFIS009P(cPergFilIni, cPergFilFim)  //COLOCAR UM GROUP BY PARA AGLUTINAR PRODUTO + LOCAL
-	
-	//FORA DE USO 
-	/* exclusao da produção da OP */
-	//	U_InterOPE(cEmp,cFil,cJobFile) //FUNÇÃO FORA DE USO 
-	
-	/* exclusao de requisições de MP para OPs */
-	//	U_ADFIS010P(cEmp,cFil,cJobFile)	//FUNÇÃO FORA DE USO   
-	
-	/* Cancelamento da OP toda a interface ja foi executada apenas vai rodar o SC2 pelo C2_FLCANC */
-	//	U_ICancOP(cEmp,cFil,cJobFile) // FUNÇÃO FORA DE USO
 	
 	ConOut( DTOC(Date()) + " " + Time() + "Final do Job Integrações Estoque ADFIS006P" )
 	                                   
@@ -269,9 +235,7 @@ Return .T.
 	@param aParam[3,9]	:[C] aParams[9] - Código da OP do movimento
 	@version 01
 */
-
 User Function ADFIS007P(cIniFil, cFimFil, aParams)
-
 
 	Local aArea     := GetArea()	/* Pega a Area corrente das posiçoes nas tabelas do Protheus */
 	Local aCampos	:= {}			/* Variável para guardar os valores corrente da tabela MOV para serem processados no ExecAuto */
@@ -308,30 +272,17 @@ User Function ADFIS007P(cIniFil, cFimFil, aParams)
 		_aDatas := {DTOS(CTOD(aParams[7])), DTOS(CTOD(aParams[7]))}
 		_xJob	:= .F.
 	EndIf
-	
 
-	// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	// 	lRet     := .F.
-	// 	cMsgError := "Não foi possível  conectar ao banco integração"
-	// 	MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")
-		
-	// EndIf
-	
-	/* Conecta no banco intermediário SGMOV010 e gera a query para ser executada e pegar os valores */
-	//TcSetConn(_nTcConn2)
-	
 	// Chamado n. 054188 || OS 055594 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || ADFIS005P - FWNM - 16/12/2019
 	If MV_PAR06 == 3 // STATUS = ERRO
 	  	cQry := "SELECT * FROM SGMOV010 (NOLOCK) WHERE STATUS_INT = 'E' " 
-	//
 	Else
-		cQry := "SELECT * FROM SGMOV010 (NOLOCK) WHERE OPERACAO_INT <> 'E' AND D3_MSEXP = '' " 	//STATUS_INT <> 'S' " 
+		cQry := "SELECT * FROM SGMOV010 (NOLOCK) WHERE OPERACAO_INT <> 'E' AND D3_MSEXP = '' " 
 	EndIf
 
   	If Len(aParams) > 0
 		cQry += " AND D3_TM='" + aParams[2] + "' AND D3_COD='" + aParams[3] + "' AND D3_CC='" + aParams[6] + "' " // AND D3_RECORI'" + aParams[8] + "' "
 	EndIf
-	
 	
 	If !_xJob
 		cQry += " AND D3_FILIAL BETWEEN '" + cIniFil + "' AND '" + cFimFil + "' AND D3_EMISSAO BETWEEN '" + _aDatas[1] + "' AND '" + _aDatas[2] + "' "
@@ -363,9 +314,6 @@ User Function ADFIS007P(cIniFil, cFimFil, aParams)
 			DDATABASE := MOV->D3_EMISSAO
 			
 			/*vai determinar o local pelo centro de custos 21 22 23 24 ou 05 se nao tiver CC informado*/
-	//		cLocal  := iIf((AllTrim(MOV->D3_FILIAL)) == "04",SubStr(AllTrim(MOV->D3_CC),3,2),RetFldProd(MOV->D3_COD,"B1_LOCPAD"))
-	//		cLocal  := iIf(Empty(cLocal),"05",cLocal)
-			
 			_aCab1	:= {}
 			_aItem	:= {}
 			_atotitem := {}
@@ -383,8 +331,6 @@ User Function ADFIS007P(cIniFil, cFimFil, aParams)
 			
 			cFilMOV := MOV->D3_FILIAL
 			nRecMOV := MOV->R_E_C_N_O_
-			
-			//TcSetConn(_nTcConn1)
 			
 			/* O Mata240 nao executa um criasb2 e se isso nao for feito a interface vai gerar um log */
 			DbSelectArea("SB1")
@@ -405,8 +351,8 @@ User Function ADFIS007P(cIniFil, cFimFil, aParams)
 
 				//Begin Transaction // analiseFWNM
 					
-					//MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,_atotitem,3)
-					MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,_atotitem,3) },"Execauto MATA241","Incluindo movimentações... " + cCod )
+					MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,_atotitem,3)
+					//MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,_atotitem,3) },"Execauto MATA241","Incluindo movimentações... " + cCod ) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 								
 					If lMsErroAuto
 			
@@ -423,16 +369,14 @@ User Function ADFIS007P(cIniFil, cFimFil, aParams)
 						
 						_MsgMotivo += cErro
 						
-						//TcSetConn(_nTcConn2)
 						TcSqlExec("UPDATE SGMOV010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(Str(nRecMOV)) + " ")
 
 						// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-						DisarmTransaction() 
+						//DisarmTransaction() 
 						//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 						//
 
 					Else
-						//TcSetConn(_nTcConn2)
 						TcSqlExec("UPDATE SGMOV010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecMOV)) + " ")
 					EndIf
 				
@@ -444,18 +388,12 @@ User Function ADFIS007P(cIniFil, cFimFil, aParams)
 
 		ENDIF
 
-		//TcSetConn(_nTcConn2)
-		
 		MOV->(DbSkip())
 		
 	EndDo
 	
 	MOV->(DbCloseArea())
 
-	//TcUnLinknk(_nTcConn2)
-
-	//TcSetConn(_nTcConn1) //ajuste fabricio 06/03/18
-	
 	MsUnlockAll() //ajuste fabricio 06/03/18
 		
 	/*restaura filial corrente*/
@@ -525,19 +463,6 @@ User Function ADFIS008P(cIniFil, cFimFil, aParams, lEstorno)
 		_xJob	:= .F.
 	EndIf
 
-	
-	// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	// 	lRet      := .F.
-	// 	cMsgError := "Não foi possível  conectar ao banco integração"
-	// 	MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")
-		
-	// EndIf
-	
-	/* Conecta no banco intermediário SGMOV010 e gera a query para ser executada e pegar os valores */
-	//TcSetConn(_nTcConn2)
-	
-	//TODO: VERIFICAR O MOTIVO DE ESTAR FIXO A DATA
-//	cQry := "SELECT * FROM SGMOV010 WHERE SUBSTRING(D3_EMISSAO,1,6) = '201507' AND D3_MSEXP='' AND OPERACAO_INT = 'E' "
   	cQry := "SELECT * FROM SGMOV010 (NOLOCK) WHERE "
   	
   	If lEstorno
@@ -575,8 +500,6 @@ User Function ADFIS008P(cIniFil, cFimFil, aParams, lEstorno)
 		
 		cFilAnt := MOV->D3_FILIAL
 		
-		//TcSetConn(_nTcConn1)
-		
 		dbSelectArea("SD3")
 		dbOrderNickname("RECORI")
 		dbSeek(cFilMov+cRecMov)
@@ -606,9 +529,8 @@ User Function ADFIS008P(cIniFil, cFimFil, aParams, lEstorno)
 			
 				//Begin Transaction // analiseFWNM
 				
-					MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) },"Execauto MATA241","Estornado movimentações... " + SD3->D3_OP + " " + SD3->D3_COD)
-					//MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) //estorno 
-					//MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5)
+					//MsAguarde({|| MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) },"Execauto MATA241","Estornado movimentações... " + SD3->D3_OP + " " + SD3->D3_COD) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
+					MSExecAuto({|x,y,z| MATA241(x,y,z)},aCabec,aTotitem,6) //estorno 
 			
 					If lMsErroAuto
 			
@@ -627,17 +549,12 @@ User Function ADFIS008P(cIniFil, cFimFil, aParams, lEstorno)
 						
 						_MsgMotivo := cErro
 						
-						////TcSetConn(_nTcConn2)
-						//TcSqlExec("UPDATE SGMOV010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecMOV) ) + " ")
-
 						// @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-						DisarmTransaction()
+						//DisarmTransaction()
 						//Break // Reabilitar apenas se o Begin Transaction estiver habilitado!
 						//
 
 					Else
-						
-						//TcSetConn(_nTcConn2)
 						
 						If lEstorno
 							TcSqlExec("UPDATE SGMOV010 SET D3_MSEXP=' ' ,STATUS_INT='I' , D_E_L_E_T_='*' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecMOV) ) + " ")
@@ -661,12 +578,7 @@ User Function ADFIS008P(cIniFil, cFimFil, aParams, lEstorno)
 			
 			_MsgMotivo += cErro
 			
-		    ////TcSetConn(_nTcConn2)
-			//TcSqlExec("UPDATE SGMOV010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecMOV) ) + " ")
-
 		EndIf
-		
-		//TcSetConn(_nTcConn2)
 		
 		MOV->(DbSkip())
 		
@@ -676,11 +588,7 @@ User Function ADFIS008P(cIniFil, cFimFil, aParams, lEstorno)
 	
 	RestArea(aArea)
 	
-	//TcUnLinknk(_nTcConn2)
-	
-	//TcSetConn(_nTcConn1) //ajuste fabricio 06/03/18
-	
-	MsUnlockAll() //ajuste fabricio 06/03/18
+	MsUnlockAll() 
 	
 	cFilAnt := cFilBkp
 
@@ -693,7 +601,6 @@ Return lRet
 	@since 15/12/16
 	@version 01
 */
-
 User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 
 	Local aArea 	:= GetArea()	/* Pega a Area corrente das posiçoes nas tabelas do Protheus */
@@ -732,24 +639,11 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 	Default lEstorno:= .F.
 	Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADFIS005P como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADFIS005P*/
 
-
-	
 	If Len(aParams) > 0
 		_aDatas := { DTOS(CTOD(aParams[5])), DTOS(CTOD(aParams[5]))}
 		_xJob 	:= .F.
 	EndIf
 
-
-	// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	// 	lRet     := .F.
-	// 	cMsgError := "Não foi possível  conectar ao banco integração"
-	// 	MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")
-		
-	// EndIf
-	
-	/* Conecta no banco intermediário SGINV010 e gera a query para ser executada e pegar os valores */
-	//TcSetConn(_nTcConn2)
-	
 	If Len(aParams) < 1
 		cQry := "SELECT * FROM SGINV010 (NOLOCK) WHERE B7_MSEXP='' OR (B7_MSEXP<>'' AND STATUS_INT='E') " 
 	Else
@@ -780,6 +674,7 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 	TcSetField( "INV", "B7_DTVALID", "D", 8, 0 )
 	
 	While !INV->(Eof())
+
 		aInvent := {}
 		Aadd(aInvent,{"B7_FILIAL"  ,INV->B7_FILIAL	,Nil})
 		Aadd(aInvent,{"B7_COD"     ,INV->B7_COD		,Nil})
@@ -798,7 +693,6 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 		cLocAux 	:= INV->B7_LOCAL
 		cDocAux		:= INV->B7_DOC
 		cOperacao	:= INV->OPERACAO_INT
-		//TcSetConn(_nTcConn1)
 		
 		lMsErroAuto := .f.
 		
@@ -816,7 +710,7 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 					// @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 					//MsUnlockAll() 
 					SB2->( MsUnlock() ) 
-					SB2->( fkCommit() )
+					//SB2->( fkCommit() )
 					//
 				EndIf
 				
@@ -857,25 +751,13 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 							
 							lMsErroAuto := .F.
 							
-							/*
-								SD3 - Index 07
-								D3_FILIAL, D3_COD, D3_LOCAL, D3_EMISSAO, D3_NUMSEQ, R_E_C_N_O_, D_E_L_E_T_
-							*/
-							/*Posiciona no item do SD3 para que no execauto não se perca*/
-		//					SD3->(DbSetOrder(7))
-		//					SD3->(DbSeek( Padr(cFilINV, TamSX3("D3_FILIAL")[1]) + Padr(cCodAux, TamSX3("D3_COD")[1]) + Padr(cLocAux, TamSX3("D3_LOCAL")[1]) + Padr(DTOS(dDtaAux), TamSX3("D3_EMISSAO")[1]) + Padr(cNumSeqAux, TamSX3("D3_NUMSEQ")[1]) ))
-							
-							
-							/*Efetua o estorno dos movimentos relacionados ao inventário que foi estornado*/
-		//					MSExecAuto({|x,y,z| MATA241(x,y,z)}, aCabSD3, aItemSD3, 6)
-							
 							If SD3->D3_TM == "499" .OR. SD3->D3_TM == "999"
 								SB2->(DbSetOrder(1))
 								If SB2->(DbSeek( Padr(cFilINV, TamSX3("D3_FILIAL")[1]) + Padr(cCodAux, TamSX3("D3_COD")[1]) + Padr(cLocAux, TamSX3("D3_LOCAL")[1]) ))
 									RecLock("SB2", .F.)
 										SB2->B2_DINVENT := STOD("//")
 									SB2->( MsUnlock() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-									SB2->( fkCommit() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+									//SB2->( fkCommit() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 								EndIf
 							EndIf 
 							
@@ -885,8 +767,8 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 							EndDo
 							
 							/*Efetua o estorno das requisições relacionados ao inventário que foi estornado*/
-							//MSExecAuto({|x,y| MATA240(x,y)}, aCabSD3, 5)
-							MsAguarde({|| MSExecAuto({|x,y| MATA240(x,y)}, aCabSD3, 5) },"Execauto MATA240","Incluindo movimentações... " + SD3->D3_OP + " " + SD3->D3_COD )
+							MSExecAuto({|x,y| MATA240(x,y)}, aCabSD3, 5)
+							//MsAguarde({|| MSExecAuto({|x,y| MATA240(x,y)}, aCabSD3, 5) },"Execauto MATA240","Incluindo movimentações... " + SD3->D3_OP + " " + SD3->D3_COD ) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 		
 							If lMsErroAuto
 
@@ -903,44 +785,35 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 								
 								_MsgMotivo += cErro
 		
-								//TcSetConn(_nTcConn2)
 								TcSqlExec("UPDATE SGINV010 SET B7_MSEXP='" + DTOS(dData) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + AllTrim(Str(nRecINV)) + " ")
 
 								// @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-								DisarmTransaction()
+								//DisarmTransaction()
 								//Break // Reabilitar apenas se o Begin Transaction estiver habilitado!
 								//
 							
 							Else
 		
-								//TcSetConn(_nTcConn2)
-
 								If cOperacao == "E"	
 									TcSqlExec("UPDATE SGINV010 SET B7_MSEXP='" + DTOS(dData) + "' ,STATUS_INT='S',  MENSAGEM_INT='' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecINV)) + " ")
 								Else
 									TcSqlExec("UPDATE SGINV010 SET B7_MSEXP=' ' ,STATUS_INT='I',  MENSAGEM_INT='' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecINV)) + " ")
 								EndIf
 								
-								//TcSetConn(_nTcConn1)
-								
 								SB2->(DbSetOrder(1))
 								If SB2->(DbSeek( Padr(cFilINV, TamSX3("D3_FILIAL")[1]) + Padr(cCodAux, TamSX3("D3_COD")[1]) + Padr(cLocAux, TamSX3("D3_LOCAL")[1]) ))
 									RecLock("SB2", .F.)
 										SB2->B2_DINVENT := dDtaAux - 1
 									SB2->( MsUnlock() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-									SB2->( fkCommit() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+									//SB2->( fkCommit() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 								EndIf
 		
 							EndIf
 						
 						EndIf
 
-						//TcSetConn(_nTcConn1)
-
 					EndIf
 
-					/*Fecha o Alias da query após já utilizá-la*/
-					
 				EndIf
 				
 				/*
@@ -951,15 +824,14 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 				SB7->(dbSetOrder(1))
 				SB7->(dbSeek( Padr(cFilINV, TamSX3("B7_FILIAL")[1]) + Padr(DTOS(dDtaAux), TamSX3("B7_DATA")[1]) + Padr(cCodAux, TamSX3("B7_COD")[1]) + Padr(cLocAux, TamSX3("B7_LOCAL")[1]) ))
 				
-				//MSExecAuto({|x,y,z| mata270(x,y,z)}, aInvent, .T., nOpc)
-				MsAguarde({|| MSExecAuto({|x,y,z| mata270(x,y,z)}, aInvent, .T., nOpc) },"Execauto MATA270","Efetuando inventário... " + cCodAux )
+				MSExecAuto({|x,y,z| mata270(x,y,z)}, aInvent, .T., nOpc)
+				//MsAguarde({|| MSExecAuto({|x,y,z| mata270(x,y,z)}, aInvent, .T., nOpc) },"Execauto MATA270","Efetuando inventário... " + cCodAux ) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 
 				If lMsErroAuto
 	
 					lRet := .F.
 
 					aErroLog:=GetAutoGrLog()
-	//				cErro:=Alltrim(aErrolog[1])
 					For k:=1 to Len(aErroLog)
 						If "INVALIDO" $ UPPER (aErroLog[k])
 							cErro+= Alltrim(aErroLog[k])
@@ -970,7 +842,6 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 					
 					_MsgMotivo += cErro
 					
-					//TcSetConn(_nTcConn2)
 					If lEstorno
 						TcSqlExec("UPDATE SGINV010 SET B7_MSEXP='" + DTOS(dData) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecINV)) + " ")
 					Else
@@ -978,7 +849,7 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 					EndIf
 
 					// @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-					DisarmTransaction()
+					//DisarmTransaction()
 					//Break // Reabilitar apenas se o Begin Transaction estiver habilitado!
 					//
 					
@@ -1000,8 +871,8 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 												posicionado na tabela SB7, correspondente ao código de inventário desejado (.T.) ou se deverá ser processada 
 												para todos os itens que compreedem o código de inventário informado (.F.)
 						*/
-						//MSExecAuto({|x,y,z| mata340(x,y,z)}, .T., cDocAux, .T.)
-						MsAguarde({|| MSExecAuto({|x,y,z| mata340(x,y,z)}, .T., cDocAux, .T.) },"Execauto MATA340","Processando inventário... " + cDocAux )
+						MSExecAuto({|x,y,z| mata340(x,y,z)}, .T., cDocAux, .T.)
+						//MsAguarde({|| MSExecAuto({|x,y,z| mata340(x,y,z)}, .T., cDocAux, .T.) },"Execauto MATA340","Processando inventário... " + cDocAux ) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 						
 						If lMsErroAuto
 				
@@ -1019,11 +890,10 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 							
 							_MsgMotivo += cErro
 							
-							//TcSetConn(_nTcConn2)
 							TcSqlExec("UPDATE SGINV010 SET B7_MSEXP='" + DTOS(dData) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + AllTrim(Str(nRecINV)) + " ")			
 
 							// @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-							DisarmTransaction()
+							//DisarmTransaction()
 							//Break // Reabilitar apenas se o Begin Transaction estiver habilitado!
 							//
 
@@ -1036,12 +906,10 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 								RecLock("SD3", .F.)
 									SD3->D3_RECORI := ALLTRIM( StrZero(nRecINV, 10) )
 								SD3->( MsUnlock() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-								SD3->( fkCommit() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
+								//SD3->( fkCommit() ) // @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 
 							EndIf
-	//						TcSqlExec("UPDATE " + RetSqlName("SD3") + " SET D3_RECORI='" + ALLTRIM( StrZero(nRecINV, 10) ) + "'  WHERE D3_EMISSAO='" + DTOS(dDtaAux) + "' AND D3_DOC='INVENT' AND D3_COD='" + cCodAux + "' AND D3_LOCAL ='" + cLocAux + "' AND D3_FILIAL='" + cFilINV + "' ")
 
-							//TcSetConn(_nTcConn2)
 							TcSqlExec("UPDATE SGINV010 SET B7_MSEXP='" + DTOS(dData) + "' ,STATUS_INT='S',  MENSAGEM_INT='' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecINV)) + " ")
 
 						EndIf
@@ -1056,18 +924,13 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 
 		MsUnlockAll() // @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 
-		//TcSetConn(_nTcConn2)
 		INV->(DbSkip())
 
 	EndDo
 	
 	INV->(DbCloseArea())
 	
-	////TcUnLinknknk(_nTcConn2)
-	
-	//TcSetConn(_nTcConn1) //ajuste fabricio 06/03/18
-	
-	MsUnlockAll() //ajuste fabricio 06/03/18
+	MsUnlockAll() 
 
 	cFilAnt := cFilBkp
 
@@ -1083,7 +946,6 @@ Return lRet
 	@since 14/12/16
 	@version 01
 */
-
 User Function ADFIS010P(cEmp, cFil, cJobFile)
 
 	Local aArea 	:= GetArea()	/* Pega a Area corrente das posiçoes nas tabelas do Protheus */
@@ -1114,31 +976,12 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 	Default cFil 	:= ""	/*Descrição do parâmetro conforme cabeçalho*/
 	Default cJobFile:= ""	/*Descrição do parâmetro conforme cabeçalho*/
 
-	/*Cria a conexão no banco intermediário e Protheus para ser usada posteriormente*/
-	// TcConType("TCPIP")
-	// If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1))<0
-	// 	lRet     := .F.
-	// 	cMsgError := "Não foi possível  conectar ao banco Protheus"
-	// 	MsgInfo("Não foi possível  conectar ao banco produção, verifique com administrador","ERROR")
-		
-	// EndIf
-	
-	// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	// 	lRet     := .F.
-	// 	cMsgError := "Não foi possível  conectar ao banco integração"
-	// 	MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")
-		
-	// EndIf
-	
-	//TcSetConn(_nTcConn2)
-	
 	/* Conecta no banco intermediário SGMOV010 e gera a query para ser executada e pegar os valores */
 	cQry:="SELECT * FROM SGREQ010 (NOLOCK) WHERE D3_MSEXP='' AND OPERACAO_INT = 'E' "
 //	cQry:="SELECT * FROM SGREQ010 WHERE D3_MSEXP='' AND OPERACAO_INT = 'E' AND D3_FILIAL= '" + cFil + "' ORDER BY D3_FILIAL, D3_OP"
 	
 	If !_xJob
 		cQry += " AND D3_FILIAL BETWEEN '" + cFil + "' AND '" + cFil + "' AND D3_EMISSAO BETWEEN '" + _aDatas[1] + "' AND '" + _aDatas[2] + "' "
-//		cQry += " AND D3_FILIAL BETWEEN '" + cIniFil + "' AND '" + cFimFil + "' AND D3_EMISSAO BETWEEN '" + _aDatas[1] + "' AND '" + _aDatas[2] + "' "
 	EndIf
 	
 	cQry += " ORDER BY D3_FILIAL, D3_OP"
@@ -1172,8 +1015,6 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 			
 			cFilReq := cFilAnt
 			
-			//TcSetConn(_nTcConn1)
-			
 			DbSelectArea("SD3")
 			DbSetOrder(1) //D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 			DbSeek(cFilREQ + cOp + cCod + cLocal)
@@ -1182,7 +1023,6 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 				
 				U_CCSGrvLog(cErro, "REQ", nRecREQ, 5, cFilREQ)
 				
-				//TcSetConn(_nTcConn2)
 				TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " ")
 			
 			Else
@@ -1205,7 +1045,6 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 				
 					U_CCSGrvLog(cErro, "REQ", nRecREQ, 5, cFilREQ)
 				
-					//TcSetConn(_nTcConn2)
 					TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM(STR(nRecREQ)) + " ")
 		
 				Else
@@ -1227,8 +1066,8 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 					
 						//Begin Transaction // analiseFWNM
 						
-							//MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) // Cancelamento
-							MsAguarde({|| MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) },"Execauto MATA240","Estornando movimentos... " + SD3->D3_OP + " " + SD3->D3_COD )
+							MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) // Cancelamento
+							//MsAguarde({|| MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) },"Execauto MATA240","Estornando movimentos... " + SD3->D3_OP + " " + SD3->D3_COD ) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 							
 							If lMsErroAuto
 						
@@ -1243,17 +1082,15 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 								Next
 								U_CCSGrvLog(cErro, "REQ", nRecREQ, 5, cFilREQ)
 								
-								//TcSetConn(_nTcConn2)
 								TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+ "' WHERE R_E_C_N_O_="+AllTrim(Str(nRecREQ))+" ")
 							
 								// @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-								DisarmTransaction() 
+								//DisarmTransaction() 
 								//Break // Reabilitar apenas se o Begin Transaction estiver habilitado!
 								//
 
 							Else
 							
-								//TcSetConn(_nTcConn2)
 								TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_="+AllTrim(Str(nRecREQ))+" ")
 							
 							EndIf
@@ -1268,7 +1105,6 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 
 			EndIf
 
-			//TcSetConn(_nTcConn2)
 			DbSelectArea("REQSD3")
 			DbSkip()
 
@@ -1277,12 +1113,6 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 		/* Varre os movimentos de Requisição de MOD para a OP e os Cancela */
 		lLogCanc := InterMODe(cOp, cEmp, cFilAnt, cJobFile)
 		
-		If lLogCanc
-//			 Ver se vai fazer mais alguma coisa "poderia varre o D3 para ver se sobrou algum movimento de requisição" 
-		EndIf
-		
-		/* ja esta posicionado no Skip do cAliasReq */
-		//TcSetConn(_nTcConn2)
 		DbSelectArea("REQSD3")
 
 	EndDo
@@ -1292,9 +1122,6 @@ User Function ADFIS010P(cEmp, cFil, cJobFile)
 	
 	RestArea(aArea)
 	
-	////TcUnLinknknk(_nTcConn1)
-	////TcUnLinknknk(_nTcConn2)
-
 Return lRet
 
 //					 F	U	N	Ç	Ã	O			F	O	R	A		D	E		U	S	O
@@ -1305,7 +1132,6 @@ Return lRet
 	@since 14/12/16
 	@version 01
 */
-
 Static Function ADFIS006PB(cOp, cEmp, cFil, cJobFile)
 
 	Local aCampos	:= {} 	/* Variável para guardar os valores corrente da tabela REQ para serem processados no ExecAuto */
@@ -1325,17 +1151,13 @@ Static Function ADFIS006PB(cOp, cEmp, cFil, cJobFile)
 	Default cFil 	:= ""	/*Descrição do parâmetro conforme cabeçalho*/
 	Default cJobFile:= ""	/*Descrição do parâmetro conforme cabeçalho*/
 
-	//TcSetConn(_nTcConn1)
-	
 	cFilBkp := cFilAnt
 	cFilAnt := cFil
 	
 	dbSelectArea("SD3")
 	dbSetOrder(1) //D3_FILIAL+D3_OP+D3_COD+D3_LOCAL
 	dbSeek(cFil + cOp )
-	If Eof()
-	//		Não vai fazer nada pois pode nao ter requisições de MOD	e todas as requisições para a OP podem ja ter sido canceladas
-	Else
+	If !Eof()
 	
 		While !Eof() .And. cFil == SD3->D3_FILIAL .And. SD3->D3_OP == cOp
 			
@@ -1362,8 +1184,8 @@ Static Function ADFIS006PB(cOp, cEmp, cFil, cJobFile)
 			
 				//Begin Transaction // analiseFWNM
 				
-					//MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) // Cancelamento
-					MsAguarde({|| MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) },"Execauto MATA240","Estornando movimentos... " + SD3->D3_OP + " " + SD3->D3_COD )
+					MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) // Cancelamento
+					//MsAguarde({|| MSExecAuto({|x,y| MATA240(x,y)}, aCampos, 5) },"Execauto MATA240","Estornando movimentos... " + SD3->D3_OP + " " + SD3->D3_COD ) // @history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
 
 					If lMsErroAuto
 
@@ -1379,17 +1201,15 @@ Static Function ADFIS006PB(cOp, cEmp, cFil, cJobFile)
 						Next
 						U_CCSGrvLog(cErro, "REQ", nRecREQ, 5, cFilREQ) //TODO: VERIFICAR PORQUE EXISTEM VARIÁVEIS QUE NÃO EXISTEM NA FUNÇÃO 
 						
-						//TcSetConn(_nTcConn2)
 						TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='" + cErro + "' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecREQ) ) + " ") //TODO: VERIFICAR PORQUE EXISTEM VARIÁVEIS QUE NÃO EXISTEM NA FUNÇÃO 
 
 						// @history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
-						DisarmTransaction() 
+						//DisarmTransaction() 
 						//Break // Reabilitar apenas se o Begin Transaction estiver habilitado!
 						//
 
 					Else
 				
-						//TcSetConn(_nTcConn2)
 						TcSqlExec("UPDATE SGREQ010 SET D3_MSEXP='" + DTOS(DDATABASE) + "' ,STATUS_INT='S' WHERE R_E_C_N_O_=" + ALLTRIM( STR(nRecREQ) ) + " ") //TODO: VERIFICAR PORQUE EXISTEM VARIÁVEIS QUE NÃO EXISTEM NA FUNÇÃO 
 				
 					EndIf
@@ -1419,7 +1239,6 @@ Return(lLogCanc)
 	@since 14/12/16
 	@version 01
 */
-
 Static Function AjustaSX1(cPerg)
 
 	/* < cGrupo>, < cOrdem> , < cPergunt>     	, < cPergSpa>	, < cPergEng>	, < cVar> , < cTipo>, < nTamanho>, [ nDecimal], [ nPreSel]	, < cGSC>, [ cValid], [ cF3], [ cGrpSXG], [ cPyme]	, < cVar01> , [ cDef01]  , [ cDefSpa1], [ cDefEng1] , [ cCnt01] , [ cDef02] , [ cDefSpa2], [cDefEng2], [cDef03] , [cDefSpa3], [cDefEng3], [cDef04]	, [cDefSpa4], [cDefEng4], [cDef05]  , [cDefSpa5], [cDefEng5]  , [aHelpPor], [aHelpEng], [aHelpSpa], [cHelp] ) */

@@ -1,27 +1,21 @@
 #Include "Protheus.ch"
 #Include "Rwmake.ch"
 #Include 'Topconn.ch'
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออออออออออออออออออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณ IMPRDNET บ Autor ณ Ricardo Lima                                         บ Data ณ  10/01/2019 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Ricardo Lima-10/01/2019-Ch:044314|Gera carga de entrega para gera็ใo de frete no faturamento บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Everson-28/02/2019-Ch:044314|Adicionado o Km percorrido no log.                              บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Everson-23/05/2019-Ch:044314|Removida a fun็ใo StartJob e adiciona c๓pia do arquivo roadnet  บฑฑ
-ฑฑบ          ณ para o servidor.                                                                             บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Everson-28/05/2019-Ch:044314|Removida valida็ใo de placa.                                    บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Everson-10/07/2019-Ch:044314|Tratamento para informar a placa do cavalo mecโnico para gera็ใoบฑฑ
-ฑฑบ          ณ do MDF-e                                                                                     บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
+
+/*/{Protheus.doc} User Function IMPRDNET
+	@Rotina para importa็ใo dos pedidos roteirizados do RoadNet
+    @type  Function
+    @author Ricardo Lima 
+    @since 10/01/2019
+    @version 01
+    @history Chamado 044314 - Ricardo Lima - 10/01/2019 - Gera carga de entrega para gera็ใo de frete no faturamento.
+	@history Chamado 044314 - Everson      - 28/02/2019 - Adicionado o Km percorrido no log.
+	@history Chamado 044314 - Everson      - 23/05/2019 - Removida a fun็ใo StartJob e adiciona c๓pia do arquivo roadnet  para o servidor
+	@history Chamado 044314 - Everson      - 28/05/2019 - Removida valida็ใo de placa. 
+	@history Chamado 044314 - Everson      - 10/07/2019 - Tratamento para informar a placa do cavalo mecโnico para gera็ใo do MDF-e
+	@history Tkt     63034  - Sigoli       - 01/11/2021 - Adicionado fClose(nHdl)no final do fun็ใo  - "fechar o arquivo"
+/*/
+
 User Function IMPRDNET() // U_IMPRDNET()
 
 	Local oChk1
@@ -363,9 +357,6 @@ Return Nil
 
 Static Function importarPV(lChk1) //ษverson - 13/09/2016, chamado 029242.
 	
-	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
-	//ณ Declara็ใo de variแvies.
-	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู		
 	Local nTamLin  := SuperGetMv( "MV_#ROAD01" , .F. , 162 , ) // 162 // Tamanho da linha no arquivo texto //Ricardo Lima-10/01/2019-Ch:044314|Gera carga de entrega para gera็ใo de frete no faturamento
 	Local cTipo    := "Todos(*.*) |*.* | "  
 	Local _cArq    := ""			// Arquivo texto a importar com codigo+loja
@@ -377,12 +368,10 @@ Static Function importarPV(lChk1) //ษverson - 13/09/2016, chamado 029242.
 	Local cDesc1       	:= "Este programa tem como objetivo imprimir relatorio "
 	Local cDesc2       	:= "de acordo com os parametros informados pelo usuario."
 	Local cDesc3       	:= "Relat๓rio de Erros de Importa็ใo"
-	Local cPict        	:= ""
 	Local titulo       	:= "Relat๓rio de Erros de Importa็ใo"
 	Local nLin         	:= 80
 	Local Cabec1       	:= " ATENDIMENTO TELEVENDAS "
 	Local Cabec2       	:= ""
-	Local imprime      	:= .T.
 	Local aOrd 			:= {} 
 	
 	//ษverson - 13/09/2016, chamado 029242.
@@ -418,7 +407,6 @@ Static Function importarPV(lChk1) //ษverson - 13/09/2016, chamado 029242.
 	Private nTipo       := 18
 	Private aReturn     := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
 	Private nLastKey    := 0
-	Private cbtxt      	:= Space(10)
 	Private cbcont     	:= 00
 	Private CONTFL     	:= 01
 	Private m_pag      	:= 01
@@ -767,14 +755,12 @@ Static Function importarPV(lChk1) //ษverson - 13/09/2016, chamado 029242.
 		
 	EndIf
 	//
-	
+	fClose(nHdl)//fechar o arquivo
 				
 Return Nil      
 
 Static Function RunReport(Cabec1,Cabec2,Titulo,nLin,aLinhaErro)
 
-	Local Cabec1 := "Codigo             Descri็ใo do Campo                                Erro Encontrado na Exporta็ใo"
-	Local Cabec2 := ""
 	Local _nCaminha := 1
 	
 	Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)

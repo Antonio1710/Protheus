@@ -6,10 +6,8 @@
   @author Abel Babini
   @since 05/07/2021
   @version 1
-  @history Ticket 8       - Abel Babini - 05/07/2021 - Após a baixa, revalida crédito dos pedidos em aberto do cliente. 
-  Entrada em produção dia 09/07/2021.
+  @history Ticket 8       - Abel Babini - 05/07/2021 - Após a baixa, revalida crédito dos pedidos em aberto do cliente.
   /*/
-  
 User Function F200IMP()
   StaticCall(M410STTS,fLibCred, SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate())
 Return 

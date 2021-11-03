@@ -36,6 +36,7 @@
     @history Chamado 14613 - Leonardo P. Monteiro - 04/06/2021 - Correção da consulta para inibir registros de granjas em duplicidade.
     @history Chamado 14613 - Leonardo P. Monteiro - 08/06/2021 - Correção de error.log na linha 514.
     @history Chamado 14613 - Leonardo P. Monteiro - 23/06/2021 - Busca o cadastro da granja em casos em que não o fornecedor não estiver cadastrado corretamente.
+    @history Chamado 00000 - Leonardo P. Monteiro - 12/09/2021 - Ajuste na query do browser para eliminar a duplicidade de fornecedores.
 /*/
 
 User Function ADEST064P()
@@ -107,7 +108,9 @@ Static Function fGetDados()
     endif
 
     cQuery  := " SELECT ZV1_DTABAT,ZV1_RHABAT,ZV1_TURNO,ZV1_RGRANJ,ISNULL(A2_NOME, ZF3_GRADES)  A2_NOME, ZV1_RPLACA,ZV1_NUMGTA,ZV1_CAVES,ZV1_STATCO,ZV1_NUMOC,ZV1_RATEIO,ZV1_QTDRT1,ZV1_QTDRT2 "
-    cQuery  += " FROM "+ RetSqlName("ZV1") +" ZV1 LEFT JOIN "+ RetSqlName("SA2") +" SA2 ON ZV1.D_E_L_E_T_='' AND SA2.D_E_L_E_T_='' AND ZV1.ZV1_FILIAL='"+ xFilial("ZV1") +"' AND SA2.D_E_L_E_T_='' AND ZV1.ZV1_RGRANJ=SA2.A2_INTCOD "
+    //@history Chamado TI    - Leonardo P. Monteiro - 12/09/2021 - Ajuste na query do browser para eliminar a duplicidade de fornecedores.
+    //cQuery  += " FROM "+ RetSqlName("ZV1") +" ZV1 LEFT JOIN "+ RetSqlName("SA2") +" SA2 ON ZV1.D_E_L_E_T_='' AND SA2.D_E_L_E_T_='' AND ZV1.ZV1_FILIAL='"+ xFilial("ZV1") +"' AND SA2.D_E_L_E_T_='' AND ZV1.ZV1_RGRANJ=SA2.A2_INTCOD "
+    cQuery  += " FROM "+ RetSqlName("ZV1") +" ZV1 LEFT JOIN "+ RetSqlName("SA2") +" SA2 ON ZV1.D_E_L_E_T_='' AND SA2.D_E_L_E_T_='' AND ZV1.ZV1_FILIAL='"+ xFilial("ZV1") +"' AND SA2.D_E_L_E_T_='' AND ZV1.ZV1_CODFOR =SA2.A2_COD AND ZV1.ZV1_LOJFOR=SA2.A2_LOJA "
     cQuery  += "                                  LEFT JOIN "+ RetSqlName("ZF3") +" ZF3 ON ZV1.D_E_L_E_T_='' AND ZF3.D_E_L_E_T_='' AND ZV1.ZV1_FILIAL='  ' AND ZF3.D_E_L_E_T_='' AND ZV1.ZV1_RGRANJ=ZF3.ZF3_GRACOD   "
     cQuery  += " WHERE ZV1.D_E_L_E_T_='' "
     cQuery  += "    AND ZV1.ZV1_DTABAT BETWEEN '"+ Dtos(MV_PAR01) +"' AND '"+ Dtos(MV_PAR02) +"' "
