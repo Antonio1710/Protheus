@@ -1,42 +1,27 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "RWMAKE.CH"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Fun‡…o    ³ EPCP002  ³ Autor ³ Erike Yuri da Silva   ³ Data ³31/01/2006³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡…o ³ Gera requisicoes e devolucoes para acertar estoque de acor-³±±
-±±³          ³ do com a digitacao do inventario                           ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Uso      ³ Generico                                                   ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ PROGRAMADOR  ³ DATA   ³         MOTIVO DA ALTERACAO                   ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³              ³        ³                                               ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-// ---------+-------------------+-----------------------------------------------------------+---------------
-// Data     | Autor             | Descricao                                                 | Chamado
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  19/09/18| Ricardo Lima      | ajuste nas casas decimanis e acerto da diferenca para op  | 
-//          |                   | de maior valor                                            |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  27/03/19| FWNM              | Mudanca de mensagem p/ usuario identificar a ocorrencia   | 048140
-//          |                   | de maior valor                                            |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  13/08/19| FWNM              | 051064 || OS 052377 || CONTROLADORIA ||                   | 051064
-//          |                   | || REINALDO_FRANCISCHINELLI || 8947 || RATEIO             |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-//  13/08/19| FWNM              | 051089 || OS 052389 || CONTROLADORIA ||                   | 051089
-//          |                   | || REINALDO_FRANCISCHINELLI || 8947 || MV_DBLQMOV         |
-// ---------+-------------------+-----------------------------------------------------------+---------------
-// #########################################################################################################
-*/
+/*/{Protheus.doc} User Function EPCP002
+	Gera requisicoes e devolucoes para acertar estoque de acordo com a digitacao do inventario
+	@type  Function
+	@author Erike Yuri da Silva
+	@since 31/01/2006
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket SN     - Ricardo Lima      - 19/09/2018 - ajuste nas casas decimanis e acerto da diferenca para op de maior valor
+	@history ticket 048140 - Fernando Macieira - 27/03/2019 - Mudanca de mensagem p/ usuario identificar a ocorrencia de maior valor
+	@history ticket 051064 - Fernando Macieira - 13/08/2019 - 051064 || OS 052377 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || RATEIO
+	@history ticket 051089 - Fernando Macieira - 13/08/2019 - 051089 || OS 052389 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || MV_DBLQMOV
+	@history ticket 15796  - Fernando Macieira - 10/08/2021 - ERRO ROTINA GERA AJUSTE - Objeto: EPCP002
+	@history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+	@history ticket 18558  - Fernando Macieira - 19/08/2021 - Erro Processamento Inventário
+	@history ticket 31898  - Fernando Macieira - 14/10/2021 - Processamento - Gera Ajuste Inventário - Força recalculo para evitar diferença após processamento
+	@history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
+/*/
 User Function EPCP002(lBatch,cCodInv)
 
 	LOCAL oDlg
@@ -95,7 +80,7 @@ User Function EPCP002(lBatch,cCodInv)
 			If lBatch
 				EPCP002Proc(lBatch,cCodInv)
 			Else		
-				Processa({|lend| EPCP002Proc(lBatch,NIL)},"Pre-Processamento do Inventario","Efetuando Calculo dos Ajustes...",.F.)	
+				Processa({|lend| EPCP002Proc(lBatch,NIL)},"Pre-Processamento do Inventario","Efetuando Calculo dos Ajustes...",.F.)
 			Endif
 		Endif	
 	EndIf
@@ -301,7 +286,7 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 			cQuery		:= " SELECT DISTINCT ZAM_FILIAL,ZAM_COD,ZAM_LOCAL,ZAM_QUANT,ZAM_QTSEGU,ZAM_LOCALI,ZAM_NUMSER, "
 			cQuery 		+= " ZAM_LOTECT,ZAM_NUMLOT,ZAM_DTVALI,ZAM_DATA,ZAM_NUM  "
 			cQuery 		+= " FROM "
-			cQuery 		+= RetSqlName("ZAM")+" ZAM "
+			cQuery 		+= RetSqlName("ZAM")+" ZAM (NOLOCK) "
 			cQuery 		+= " WHERE ZAM.ZAM_FILIAL='"+xFilial("ZAM")+"' AND"
 			cQuery 		+= " ZAM.ZAM_DATA>='"+DTOS(mv_par01)+"' AND ZAM.ZAM_DTATE='"+DTOS(mv_par02)+"' AND"
 			cQuery 		+= " ZAM.ZAM_COD>='"+mv_par03+"' AND ZAM.ZAM_COD<='"+mv_par04+"' AND"
@@ -309,23 +294,28 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 			cQuery 		+= " ZAM.ZAM_STATUS<>'2' AND"
 			cQuery 		+= " ZAM.D_E_L_E_T_<>'*'"
 			cQuery 		+= " ORDER BY ZAM_FILIAL,ZAM_COD,ZAM_LOCAL,ZAM_LOCALI,ZAM_NUMSER,ZAM_LOTECT,ZAM_NUMLOT"
-			cQuery 		:= ChangeQuery(cQuery)
+			//cQuery 		:= ChangeQuery(cQuery) // @history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
 			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSQL,.F.,.T.)
 			For nX := 1 To Len(aStruZAM)
 				If aStruZAM[nX][2]<>"C" .And. FieldPos(aStruZAM[nX][1])<>0
 					TcSetField(cAliasSQL,aStruZAM[nX][1],aStruZAM[nX][2],aStruZAM[nX][3],aStruZAM[nX][4])
 				EndIf
 			Next nX
+			
+			/*
 			If !lBatch
 				ProcRegua(LastRec(),21,6)
 			EndIf
+			*/
+			
 			nQuant 		:= 0
 			nQtSegum	:= 0
+			
 			DbGotop()
 			While !EOF()
-				If !lBatch
+				/*(If !lBatch
 					IncProc()
-				EndIf
+				EndIf*/
 	
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³ Filtra itens com digitacao incorreta rastreabilidade         ³
@@ -346,6 +336,7 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Trava arquivo para somente este usuario utilizar rotina³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				/*
 				nTentativas := 0                           
 				While !LockByName("ZAM"+ZAM_COD+ZAM_LOCAL,.T.,!Empty(xFilial("ZAM")),.T.) .And. nTentativas <= 50
 					nTentativas++
@@ -370,6 +361,7 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 					Aadd(aLocks,"ZAM"+ZAM_COD+ZAM_LOCAL)
 				EndIf		 
+				*/
 	
 				cNumInv  := ZAM_NUM
 				cCod     := ZAM_COD
@@ -384,9 +376,9 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 				cLog     := ""
 				nQuant   := ZAM_QUANT
 				nQtSegum := ZAM_QTSEGU
-				//aInvCount:= QtdInvZAM(cCod,cLocal,cLocaliza,cNumSerie,cLoteCtl,cLote) 	
-				//nQuant   := aInvCount[1]
-				//nQtSegum := aInvCount[2]
+				 	
+				
+				
 				
 				SB1->(dbSeek(xFilial("SB1")+cCod))
 				(cAliasSQL)->(dbSkip())
@@ -400,6 +392,7 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 				If Localiza(cCod)
 					nTotEnd := SaldoSBF(cLocal,"",cCod)
 					If QtdComp(SB2->B2_QATU)-QtdComp(SB2->B2_QACLASS)-QtdComp(SB2->B2_QEMP) # QtdComp(nTotEnd)-QtdComp(SB2->B2_QEMP)
+					
 						cLog     := 'B2BF'												
 					EndIf   						
 				EndIf
@@ -441,48 +434,55 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 				EndIf
 	
 				If SB2->B2_DINVENT <= mv_par01
+
 					If SB2->B2_STATUS # "2"					
+
 						RecLock("INV",.T.)
-						FILIAL	:= xFilial()
-						COD		:= cCod
-						GRUPO	:= SB1->B1_GRUPO
-						ARMAZEM	:= cLocal
-						UM		:= SB1->B1_UM
-						SEGUM   := SB1->B1_SEGUM
-						CONTA	:= SB1->B1_CONTA
-						QUANT	:= nQuant
-						QTSEGUM	:= nQtSegUm
-						nSaldo  := IIF(Localiza(cCod),aSaldoSBF[1],aSaldo[1])
-						SLDMP8	:= nSaldo
-						SLDMP8SG:= IIF(Localiza(cCod),aSaldoSBF[7],aSaldo[7])
-						DIF		:= ABS(nQuant - nSaldo)
-						TIPO	:= SB1->B1_TIPO
-						LOCALIZ	:= cLocaliza
-						NUMSERI	:= cNumSerie
-						LOTECTL	:= cLoteCtl
-						NUMLOTE	:= cLote
-						USUARIO	:= SubStr(cUsuario,7,15)
-						DTVALID	:= dDtValid
-	                    NUMINV  := cNumInv
-	
-						If nSaldo > nQuant
-							TM	:= "999"
-							CF	:= "RE"+cApropri
-						Else
-							TM	:= "499"
-							CF	:= "DE"+cApropri
-						EndIf
-						CHAVE	:= SubStr(CF,2,1)+IIF(CF=="DE4","9","0")
-						LOG      := IIF(cLog $ "SB2-/SBF0" .and. TM="499","",cLog)
+						
+							FILIAL	:= xFilial()
+							COD		:= cCod
+							GRUPO	:= SB1->B1_GRUPO
+							ARMAZEM	:= cLocal
+							UM		:= SB1->B1_UM
+							SEGUM   := SB1->B1_SEGUM
+							CONTA	:= SB1->B1_CONTA
+							QUANT	:= nQuant
+							QTSEGUM	:= nQtSegUm
+							nSaldo  := IIF(Localiza(cCod),aSaldoSBF[1],aSaldo[1])
+							SLDMP8	:= nSaldo
+							SLDMP8SG:= IIF(Localiza(cCod),aSaldoSBF[7],aSaldo[7])
+							DIF		:= ABS(nQuant - nSaldo)
+							TIPO	:= SB1->B1_TIPO
+							LOCALIZ	:= cLocaliza
+							NUMSERI	:= cNumSerie
+							LOTECTL	:= cLoteCtl
+							NUMLOTE	:= cLote
+							USUARIO	:= SubStr(cUsuario,7,15)
+							DTVALID	:= dDtValid
+							NUMINV  := cNumInv
+		
+							If nSaldo > nQuant
+								TM	:= "999"
+								CF	:= "RE"+cApropri
+							Else
+								TM	:= "499"
+								CF	:= "DE"+cApropri
+							EndIf
+							
+							CHAVE	:= SubStr(CF,2,1)+IIF(CF=="DE4","9","0")
+							LOG      := IIF(cLog $ "SB2-/SBF0" .and. TM="499","",cLog)
+						
 						INV->(MsUnLock())  					
 	
 					Else
+
 						For i:=1 to Len(aLogs)
 							nAchou:=ASCAN(aLogs[i],{|x| x[1] == cLog .And. x[2]+x[3]+x[4]+x[5]+x[6]+x[7] == cCod+cLocal+cLoteCtl+cLote+cLocaliza+cNumSerie})
 							If nAchou > 0
 								Exit
 							EndIf
 						Next i
+
 						If nAchou == 0
 							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 							//³ Adiciona registro em array p/ baixar empenho.  ³
@@ -492,15 +492,22 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 							EndIf
 							AADD(aLogs[Len(aLogs)],{cLog,cCod,cLocal,cLoteCtl,cLote,cLocaliza,cNumSerie})
 						EndIf
+
 					EndIf
+
 				EndIf
+
 				dbSelectArea(cAliasSql)
+
 			EndDo
+
 			Exit
+
 		EndIf
+
 	EndDo
 	
-	If lContinua 
+	If lContinua
 		If INV->(RecCount()> 0)
 			If ViewPreProc() == 1
 				If MsgYesNo ("Confirma processamento?","Ajuste de Inventário") 
@@ -523,9 +530,11 @@ Static Function EPCP002Proc(lBatch,cCodInv)
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³Faz UnLock dos produtos locados para o inventario³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	/*
 	For nX :=1 To Len(aLocks)
 		UnLockByName(aLocks[nX],.T.,!Empty(xFilial("ZAM")),.T.)
 	Next
+	*/
 	
 	If Select("INV")> 0
 		INV->(DbCloseArea())
@@ -803,7 +812,7 @@ Static Function SldSD3OPDia(cProduto,cLocal,dData,cLoteCtl,cLote,cEnd,cNumSeri,c
 	dbSelectArea("SD3")
 	cQuery := "SELECT D3_COD,D3_LOCAL,D3_NUMSEQ,D3_LOCALIZ,D3_NUMSERI,D3_LOTECTL,D3_NUMLOTE,D3_QUANT"
 	cQuery += " FROM "
-	cQuery += RetSqlName("SD3")+" SD3 "
+	cQuery += RetSqlName("SD3")+" SD3  (NOLOCK) "
 	cQuery += " WHERE SD3.D3_FILIAL='"+xFilial("SD3")+"' AND"
 	cQuery += " SD3.D3_COD ='"+cProduto+"' AND "
 	cQuery += " SD3.D3_LOCAL ='"+cLocal+"' AND "
@@ -814,7 +823,7 @@ Static Function SldSD3OPDia(cProduto,cLocal,dData,cLoteCtl,cLote,cEnd,cNumSeri,c
 	cQuery += " SD3.D3_FLAGINV ='' AND "
 	cQuery += " NOT(SD3.D3_CF LIKE 'PR%') AND"
 	cQuery += " SD3.D_E_L_E_T_<>'*' "
-	cQuery := ChangeQuery(cQuery)
+	//cQuery := ChangeQuery(cQuery) // @history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasTmp,.F.,.T.)
 	For nX := 1 To Len(aStruSD3)
 		If aStruSD3[nX][2]<>"C" .And. FieldPos(aStruSD3[nX][1])<>0
@@ -907,6 +916,7 @@ Static Function ViewPreProc()
 	Local nQtdInv   := 0
 	Local nQtdSB2   := 0
 	Local cSB1Descri:= ""
+	Local nLin       
 	
 	Private lMark     := .T.
 	Private lFirst    := .T.
@@ -1087,10 +1097,17 @@ Static Function ViewPreProc()
 	
 	//Gets com os totais
 	@ 201,295 SAY "Total Vlr. Rateio: " SIZE 65,8 OF oFolder:aDialogs[2] PIXEL 
-	@ 200,340 MSGET oTotRat Var nTotRat  PICTURE "@E 999999999999.999" SIZE 50,03 PIXEL OF oFolder:aDialogs[2] When .F.
+	@ 200,340 MSGET oTotRat Var nTotRat  PICTURE "@E 999999999999.9999" SIZE 50,03 PIXEL OF oFolder:aDialogs[2] When .F. // @history ticket 15796  - FWNM         - 10/08/2021 -  ERRO ROTINA GERA AJUSTE - Objeto: EPCP002
+	//@ 200,340 MSGET oTotRat Var nTotRat  PICTURE "@E 999999999999.999" SIZE 50,03 PIXEL OF oFolder:aDialogs[2] When .F.
 	@ 201,435 SAY "Total %: " SIZE 65,8 OF oFolder:aDialogs[2] PIXEL 
 	@ 200,460 MSGET oTotPerc Var nTotPerc PICTURE "@E 999.99" SIZE 25,03 PIXEL OF oFolder:aDialogs[2] When .F.
 	
+	// @history ticket 31898  - Fernando Macieira - 14/10/2021 - Processamento - Gera Ajuste Inventário - Força recalculo para evitar diferença após processamento
+	For nLin:=1 to Len(aCampos1)
+		MudaLin(nLin)
+	Next nLin
+	//
+
 	oLbx1:Refresh()
 	oLbx2:Refresh()
 	
@@ -1129,7 +1146,7 @@ Static Function CriaApur()
 	Local lCLocal	:= .F.   
 	Local cLog      := ""
 	
-	Local cEnd,cNumSeri,cLoteCtl,cNumLote
+	Local cEnd,cNumSeri,cLoteCtl,cNumLote,i,ii
 	Local aAreaZAM	:= ZAM->(GetArea("ZAM"))
 	Local aAreaSDB	:= SDB->(GetArea("SDB"))
 	Local aAreaSD5	:= SD5->(GetArea("SD5"))
@@ -1170,9 +1187,9 @@ Static Function CriaApur()
 	
 	cQuery	:= "SELECT ZAM.ZAM_DOC,ZAM.ZAM_NUM,SD3.D3_FILIAL,SD3.D3_COD,SD3.D3_TIPO,SD3.D3_LOCAL,SD3.D3_LOCALIZ,SD3.D3_CC,SD3.D3_NUMSERI,SD3.D3_LOTECTL,SD3.D3_NUMLOTE,SD3.D3_NUMSEQ,SD3.D3_OP,SD3.D3_EMISSAO,ZAM.ZAM_DATA,ZAM.ZAM_DTATE"
 	cQuery	+= " FROM "
-	cQuery	+= RetSqlName("SD3")+" SD3,"
-	cQuery	+= RetSqlName("ZAM")+" ZAM, "                       
-	cQuery	+= RetSqlName("SC2")+" SC2 "
+	cQuery	+= RetSqlName("SD3")+" SD3 (NOLOCK),"
+	cQuery	+= RetSqlName("ZAM")+" ZAM (NOLOCK), "                       
+	cQuery	+= RetSqlName("SC2")+" SC2 (NOLOCK) "
 	cQuery	+= " WHERE SD3.D3_FILIAL='"+xFilial("SD3")+"' AND" 
 	cQuery 	+= " SD3.D3_OP>='"+mv_par07+"' AND SD3.D3_OP<='"+mv_par08+"' AND"
 	cQuery 	+= " SD3.D3_OP<>'' AND" 
@@ -1203,7 +1220,7 @@ Static Function CriaApur()
 	
 	cQuery 	+= " ORDER BY SD3.D3_EMISSAO "
 	
-	cQuery	:= ChangeQuery(cQuery)
+	//cQuery	:= ChangeQuery(cQuery) // @history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasTmp,.F.,.T.)
 	dbGotop()
 	While (cAliasTmp)->(!Eof())
@@ -1266,7 +1283,7 @@ Static Function CriaApur()
 	AADD(aStru ,{"ARMAZEM"	,"C", TamSx3("D3_LOCAL")[1]		,0})
 	AADD(aStru ,{"LOCALIZ"	,"C", TamSx3("D3_LOCALIZ")[1]	,0})
 	AADD(aStru ,{"CC"	 	,"C", TamSx3("D3_CC")[1]    	,0})
-	AADD(aStru ,{"QTDRAT"	,"N", TamSx3("D3_QUANT")[1],TamSx3("D3_QUANT")[2]})
+	AADD(aStru ,{"QTDRAT"	,"N", TamSx3("D3_QUANT")[1] ,TamSx3("D3_QUANT")[2]})
 	AADD(aStru ,{"TOTAL"	,"N", TamSx3("D3_QUANT")[1] ,TamSx3("D3_QUANT")[2]})
 	AADD(aStru ,{"DIF"	  	,"N", TamSx3("D3_QUANT")[1]	,TamSx3("D3_QUANT")[2]}) 
 	AADD(aStru ,{"QTDSD3"	,"N", TamSx3("D3_QUANT")[1] ,TamSx3("D3_QUANT")[2]})
@@ -1285,20 +1302,17 @@ Static Function CriaApur()
 	While INV->(!Eof())
 	    
 	    cLog := ""
+
 	    //Verifica se existe divergencia entre SB2 e SBF
 		If INV->LOG=="B2BF"
-			// Chamado n. 051064 || OS 052377 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || RATEIO - FWNM - 13/08/2019
 			msgAlert("As ordens de produção não serão listadas pois existe divergência entre SB2 e SBF! Verifique... " + INV->LOG + ", " + INV->COD  + ", " + INV->ARMAZEM + ", " + INV->LOCALIZ)
-			//
 			INV->(DbSkip())
 			Loop
 		EndIf
 		
 		//Verifica se o saldo inventariado eh maior que o saldo em estoque
 		If Empty(INV->DIF)
-			// Chamado n. 051064 || OS 052377 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || RATEIO - FWNM - 13/08/2019
 			msgAlert("As ordens de produção não serão listadas pois o saldo inventariado é maior que o saldo em estoque! Verifique... " + INV->LOG + ", " + INV->COD  + ", " + INV->ARMAZEM + ", " + INV->LOCALIZ)
-			//
 			INV->(DbSkip())
 			Loop		
 		EndIf
@@ -1306,13 +1320,11 @@ Static Function CriaApur()
 	    nTotal		:= 0        
 		aOpAux		:= {}
 		
-		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-		//³Faz ajuste das quantidades fracionadas nao permitindo ³ 
-		//³a existencia de percentuais zerados                   ³
-		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-		For nCount:=1 To Len(aOp)	
-			Aadd(aOpAux,SldSD3OPDia(INV->COD,INV->ARMAZEM,MV_PAR01,INV->LOTECTL,INV->NUMLOTE,INV->LOCALIZ,INV->NUMSERI,aOp[nCount,2],aOp[nCount,5]))
-			nTotal += aOpAux[nCount]	
+		//³Faz ajuste das quantidades fracionadas nao permitindo a existencia de percentuais zerados                   ³
+		i := 1
+		For i:=1 To Len(aOp)	
+			Aadd(aOpAux,SldSD3OPDia(INV->COD,INV->ARMAZEM,MV_PAR01,INV->LOTECTL,INV->NUMLOTE,INV->LOCALIZ,INV->NUMSERI,aOp[i,2],aOp[i,5]))
+			nTotal += aOpAux[i]
 		Next
 		
 		//Valdir 29-06 acrescentei INV->TM == '499' porque o nTotal é absoluto e quando o saldo do estoque é maior que a OP dava erro dizendo que não tinha saldo na OP.
@@ -1322,44 +1334,61 @@ Static Function CriaApur()
 			MsUnlocK()
 		EndIf
 		
-		For nCount:=1 To Len(aOp)
+		ii := 1
+		For ii:=1 To Len(aOp)
 			
 			// Nao carrega valores saldo SD3 = 0
-			If aOpAux[nCount] <> 0 
+			If aOpAux[ii] <> 0 
+		
 				RecLock("APU",.T.)
+					
 					APU->FILIAL  := INV->FILIAL 
 					APU->COD	 := INV->COD
 					APU->ARMAZEM := INV->ARMAZEM
 					APU->LOCALIZ := INV->LOCALIZ
-					APU->OP		 := aOp[nCount,2]
-					APU->CC		 := aOp[nCount,5]			      			
+					APU->OP		 := aOp[ii,2]
+					APU->CC		 := aOp[ii,5]			      			
 					APU->DIF	 := INV->DIF
 					APU->TOTAL   := nTotal 
-					APU->EMISSAO := STOD(aOp[nCount,6])			      			
+					APU->EMISSAO := STOD(aOp[ii,6])
 	
 			   		// Calcula o percentual a ser distribuidos nas Ops				                                   
-					APU->QTDSD3		:= aOpAux[nCount]
-				   	APU->PERC		:= NoRound((APU->QTDSD3*100)/nTotal,4)  // Ricardo Lima - 19/09/18 
-			   		APU->QTDRAT	    := NoRound((APU->DIF*APU->PERC)/100,4)  
-			   		
+					APU->QTDSD3	 := aOpAux[ii]
+				   	APU->PERC	 := NoRound((APU->QTDSD3*100)/nTotal,4)  // Ricardo Lima - 19/09/18 
+
+					// @history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+			   		APU->QTDRAT	 := NoRound((APU->DIF*APU->PERC)/100,4) 
+					/*
+					If Len(AllTrim(Str(NoRound((APU->DIF*APU->PERC)/100,4)))) < 6
+						APU->QTDRAT	 := Round((APU->DIF*APU->PERC)/100,4) 
+					Else
+						APU->QTDRAT	 := NoRound((APU->DIF*APU->PERC)/100,4)
+					EndIf
+					*/
+					//
+
 			   		//Faz o Arredondamento conforme regra do campo B1_TIPODEC
-					APU->QTDRAT   := A250AvalQt(APU->QTDRAT,APU->COD)
-				MsUnlock()
+					APU->QTDRAT  := A250AvalQt(APU->QTDRAT,APU->COD)
+					
+				APU->( MsUnlock() )
 	
 				// Caso existe alguma OP com D3_QUANT < 0.001, o ajuste e irrelevante
-				If NoRound(((aOpAux[nCount]*100)/nTotal),2) < 0.00001
+				If NoRound(((aOpAux[ii]*100)/nTotal),2) < 0.00001
 					cLog := "IRRV"
 				Endif
 					
 				If cLog == "IRRV" .And. (INV->LOG <> "B2BF" .And. INV->LOG <> "SB2 " .And. INV->LOG <> "SBF0" .And. INV->LOG <> "SB2-")
 					RecLock("INV",.F.)
 						INV->LOG := cLog
-					MsUnlock("INV")
+					INV->( MsUnlock() )
 				Endif 	
 					
 			Endif
+
 		Next 
+
 		INV->(DbSkip())
+
 	EndDo	
 
 Return .T.
@@ -1387,7 +1416,7 @@ Static Function QtdInvZAM(cCod,cLocal,cLocaliz,cNumSeri,cLoteCtl,cNumLote)
 
 	cQuery := "SELECT SUM(ZAM_QUANT) As TotQTD, SUM(ZAM_QTSEGU) As TotQTDSEG"
 	cQuery += " FROM "
-	cQuery += RetSqlName("ZAM")+" ZAM "
+	cQuery += RetSqlName("ZAM")+" ZAM (NOLOCK)  "
 	cQuery += " WHERE ZAM.ZAM_FILIAL='"+xFilial("ZAM")+"' AND"
 	cQuery += " ZAM.ZAM_DATA>='"+DTOS(mv_par01)+"' AND ZAM.ZAM_DTATE='"+DTOS(mv_par02)+"' AND"
 	cQuery += " ZAM.ZAM_COD='"+cCod+"' AND ZAM.ZAM_LOCAL='"+cLocal+"' AND"
@@ -1396,7 +1425,7 @@ Static Function QtdInvZAM(cCod,cLocal,cLocaliz,cNumSeri,cLoteCtl,cNumLote)
 	cQuery += " ZAM.ZAM_DOC>='"+mv_par05+"' AND ZAM.ZAM_DOC<='"+mv_par06+"' AND"
 	cQuery += " ZAM.ZAM_STATUS<>'2' AND"
 	cQuery += " ZAM.D_E_L_E_T_<>'*'"
-	cQuery := ChangeQuery(cQuery)
+	//cQuery := ChangeQuery(cQuery) // @history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSldZAM,.F.,.T.)
 	If (cAliasSldZAM)->(!Eof())
 		aRetSld[1] := (cAliasSldZAM)->TotQTD
@@ -1472,7 +1501,7 @@ Static Function RetMaxDateZAM(cAliasAtu,cCod,cLocal,cLocaliz,cNumSeri,cLotectl,c
 	
 	cQuery		:= "SELECT  MAX(ZAM_DTATE) DATAATE "
 	cQuery 		+= " FROM "
-	cQuery 		+= RetSqlName("ZAM")+" ZAM "
+	cQuery 		+= RetSqlName("ZAM")+" ZAM (NOLOCK) "
 	cQuery 		+= " WHERE ZAM.ZAM_FILIAL='"+xFilial("ZAM")+"' AND"
 	cQuery 		+= " ZAM.ZAM_DATA='"+DTOS(dData)+"' AND"
 	cQuery 		+= " ZAM.ZAM_COD='"+cCod+"' AND"
@@ -1483,7 +1512,7 @@ Static Function RetMaxDateZAM(cAliasAtu,cCod,cLocal,cLocaliz,cNumSeri,cLotectl,c
 	cQuery 		+= " ZAM.ZAM_NUMLOT='"+cNumLote+"' AND"
 	cQuery 		+= " ZAM.ZAM_STATUS<>'2' AND"
 	cQuery 		+= " ZAM.D_E_L_E_T_<>'*'"
-	cQuery 		:= ChangeQuery(cQuery)
+	//cQuery 		:= ChangeQuery(cQuery) // @history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasTmp,.F.,.T.)
 	If !Eof() .And. !Empty((cAliasTmp)->DATAATE)
 		dDataRet := STOD((cAliasTmp)->DATAATE )
@@ -1536,18 +1565,24 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 	Local lRet      := .T.
 	Local cTpSaldo  := SuperGetMv("MV_TPSALDO") // S - CalcEst ; Q - B2_QATU-B2_QACLASS-B2_RESERVA      //--Valdir 29-08-2007
 	Local dDataSC2           
+
+	// FWNM - ANALISE - DEBUG
+	Local nChkTot    := 0
+	Local nChkTtOk   := 0
+	Local nChkTtErro := 0 
+	//
 	
 	Private	lMSHelpAuto	   := .T.
 	Private lAutoErrNoFile := .T.
 	
 	SC2->(dbSetOrder(1))
-	
+
 	// -- Quantidade de passos do processo -- //
-	ProcRegua(Len(aCampos1))				
+	//ProcRegua(Len(aCampos1))				
 	
 	For i:= 1 To Len(aCampos1)
 		
-		IncProc("Incluindo movimentacao do produto:"+cProd+'...')
+		//IncProc("Incluindo movimentacao do produto:"+cProd+'...')
 		cLog    := aCampos1[i][25]
 		cProd   := aCampos1[i][2]
 		cLoc    := aCampos1[i][5]
@@ -1582,13 +1617,15 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 			Endif                               //--Valdir 29-08-2007
 	
 			If lRet
-				For j:= 1 To Len(aCampos1[i][23])	
+
+				For j:= 1 To Len(aCampos1[i][23]) // array contendo o rateio do produto principal contido na primeira aba
 				
-					If aCampos1[i][23][j][1]
+					If aCampos1[i][23][j][1] // se estiver marcado o markbrowse do rateio então faça
+
 						cOp     := aCampos1[i][23][j][2]
 						dData   := aCampos1[i][23][j][11]
 						nQtdRat := aCampos1[i][23][j][9] 
-						nPerc   :=aCampos1[i][23][j][10] 
+						nPerc   := aCampos1[i][23][j][10] 
 						cDoc    := "RATEIO" //Upper(NextNumero("SD3",2,"D3_DOC",.T.))
 			                                 
 						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -1600,10 +1637,8 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 					   		dDataSC2 := SC2->C2_DATRF
 					   		Reclock("SC2",.F.)
 					   			SC2->C2_DATRF := Ctod("  /  /  ")
-					   		MsUnlock()			
+					   		SC2->( MsUnlock() )
 						Endif  
-	
-		    
 	
 		    			aMata	:= {} 
 		    			Aadd(aMata,{"D3_TM"     ,cTm					 ,".T."})
@@ -1627,12 +1662,21 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 						Endif
 											
 						//Inicio da Transacao
-						Begin Transaction
-	   	   			lMSErroAuto := .F.
-	       				MsExecAuto({|x|Mata240(x)},aMata)
+						//Begin Transaction
+	   	   				lMSErroAuto := .F.
+	       				MsExecAuto({|x|Mata240(x)},aMata) // Movimentos Internos Simples
+
+						// FWNM - ANALISE - DEBUG
+						nChkTot += nQtdRat
+						// 
 	   
 	       				If lMSErroAuto  // Se der erro
-		  						cLog := "ERRO"
+
+								// FWNM - ANALISE - DEBUG
+								nChkTtErro += nQtdRat
+								//
+		  						
+								cLog := "ERRO"
 		  						If IsBlind()
 									Conout("Erro na gravacao da movimentacao")
 								Else	
@@ -1644,15 +1688,21 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 		  									Aadd(aErro,{cNumInv,7,.T.,cOp,cErro,cProd,nQtdRat,nPerc})
 		  								Endif	
 									Next
-									DisarmTransaction()
+									
+									logZBE("ERRO MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", ERRO: " + AllTrim(cErro))
+									//DisarmTransaction()
 								Endif	
-		   				Else // naum deu erro 
-		    					EvalTrigger()
+		   				
+						Else // naum deu erro 
+		    			
+								// FWNM - ANALISE - DEBUG
+								nChkTtOk += nQtdRat
+								//
+
+								EvalTrigger()
 								Commit
 			  			        
-					      	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 								//³ Atualiza Totais do Inventario processado                  ³
-								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 								nSaldRat += nQtdRat
 								
 								If cTm == "999"
@@ -1661,7 +1711,9 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 									nSaldFim := nQtdSB2 + nSaldRat
 								Endif
 								
-								U_TotalZAM(cNumInv,,nDif,nQtdSB2,nSaldFim)	 		        
+								U_TotalZAM(cNumInv,,nDif,nQtdSB2,nSaldFim)	 
+
+								logZBE( "OK MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", DIF: " + TRANSFORM(nDif, "@E 999,999.99") + "INI: " + TRANSFORM(nQtdSB2, "@E 999,999,999.99") + "FIM: " + TRANSFORM(nSaldFim, "@E 999,999,999.99") )
 			  			        
 	      						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 								//³ Alteracao realizada conforme orientacao da Inteligencia Protheus - 		³
@@ -1674,7 +1726,7 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 						   			MsUnlock()			
 								Endif 			
 	
-					      	// Ajusta Flag da Op Original 
+					    	  	// Ajusta Flag da Op Original 
 								DbSelectArea("SD3")
 								DbSetOrder(1)
 								DbSeek(xFilial("SD3")+cOp+cProd+cLoc)
@@ -1686,38 +1738,57 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 									MsUnLock()
 									DbSkip()
 								EndDo  	
-							Endif
-	   				End Transaction           
+
+						Endif
+	   				
+					//End Transaction           
+					
 					Endif
+				
 				Next j
+		   
 		   Else
+		
 		   		// Grava log de saldo insuficiente ao redistribuir saldo dia a dia
 		   		cLog := 'SB2-'
+		   
 		   Endif
+		
 		Endif                     
 			
 		//Carrega Vetor com Historicos
 		Do Case
 			Case cLog == "SBF " .Or. cLog == "SB8 " .Or. cLog == "SB2E" .Or. cLog == "IRRV"
-				Aadd(aErro,{cNumInv,0})// Processamento OK
+				Aadd(aErro,{cNumInv,0}) // Processamento OK
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Processamento OK" )
 			Case cLog == "B2D3"
-				Aadd(aErro,{cNumInv,1})// Sem OP no periodo
+				Aadd(aErro,{cNumInv,1}) // Sem OP no periodo
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Sem OP no periodo" )
 			Case cLog == "SLD"
-				Aadd(aErro,{cNumInv,2})// Saldo SB2 Bloqueado
+				Aadd(aErro,{cNumInv,2}) // Saldo SB2 Bloqueado
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Saldo SB2 Bloqueado" )
 			Case cLog == "SB2 "
-				Aadd(aErro,{cNumInv,3})// Saldo Insuficiente	
+				Aadd(aErro,{cNumInv,3}) // Saldo Insuficiente	
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Saldo Insuficiente" )
 			Case cLog == "B2BF"
-				Aadd(aErro,{cNumInv,4})// Divergencia SB2 X SBF 
+				Aadd(aErro,{cNumInv,4}) // Divergencia SB2 X SBF 
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Divergencia SB2 X SBF" )
 			Case cLog == "S/OP"
-				Aadd(aErro,{cNumInv,6})// Qtd OPs Insuficiente	
+				Aadd(aErro,{cNumInv,6}) // Qtd OPs Insuficiente	
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Qtd OPs Insuficiente" )
 			Case cLog == "NULO"
-				Aadd(aErro,{cNumInv,8})// Inventario Nulo	
+				Aadd(aErro,{cNumInv,8}) // Inventario Nulo	
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Inventario Nulo" )
 			Case cLog == "SBF0"
-				Aadd(aErro,{cNumInv,9})// Sem Saldo no Endereco
+				Aadd(aErro,{cNumInv,9}) // Sem Saldo no Endereco
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Sem Saldo no Endereco" )
 			Case cLog == "SB2-"
 				Aadd(aErro,{cNumInv,10})// Saldo Atual Negativo			
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: Saldo Atual Negativo" )
+			OTHERWISE
+				logZBE( "LOG MATA240 INV: " + AllTrim(cNumInv) + ", OP: " + cOP + ", PROD: " + cProd + ", CLOG: STATUS DESCONHECIDO" )
 		End Case
-			
+
 		// Grava o historico do processamento
 		For K:= 1 to Len(aErro)
 			If aErro[k][2] <> 7
@@ -1736,6 +1807,13 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 		U_StatusZAM(cLog,cNumInv) 
 		nSaldRat := 0	 		
+
+		// FWNM - ANALISE - DEBUG
+		nChkTot    := 0
+		nChkTtOk   := 0
+		nChkTtErro := 0 
+		//
+
 	Next i
 	
 	If Len(aErroTot)> 0	
@@ -1823,12 +1901,13 @@ Return Nil
 
 Static Function MudaLin(nPos)
 
-	Local nX,cTm
+	Local nX,cTm,iii
 	Local lOk      := .F.
 	Local cProd    := aCampos1[nPos][2]
 	Local cDescr   := Posicione("SB1",1,xFilial("SB1")+cProd,"B1_DESC")
 	Local cNum     := aCampos1[nPos][24]
 	Local nVlrMMp  := 0 // Ricardo Lima - 19/09/18
+	Local nNewDif  := 0
 	
 	nDif      := 0
 	nTot      := 0
@@ -1882,11 +1961,24 @@ Static Function MudaLin(nPos)
 			aCampos1[nPos][25]:= "SBF "		
 		Endif	
 		
+		// AQUI - FWNM
 		For nX := 1 To Len(aCampos1[nPos][23])
+			
 			If aCampos1[nPos][23][nX][1]
 				// Calcula o percentual a ser distribuidos nas Ops
 				aCampos1[nPos][23][nX][10]	:= NoRound((aCampos1[nPos][23][nX][8]*100)/nTot,4)   // Ricardo Lima - 19/09/18
-				aCampos1[nPos][23][nX][9]	:= NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)   
+				
+				// @history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+				
+				aCampos1[nPos][23][nX][9]	:= NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)
+				/*
+				If Len(AllTrim(Str(NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)))) < 6
+					aCampos1[nPos][23][nX][9]	:= Round((nDif*aCampos1[nPos][23][nX][10])/100,4)
+				Else
+					aCampos1[nPos][23][nX][9]	:= NoRound((nDif*aCampos1[nPos][23][nX][10])/100,4)  
+				EndIf
+				*/
+				//
 				
 				//Faz o Arredondamento conforme regra do campo B1_TIPODEC
 				aCampos1[nPos][23][nX][9]  := A250AvalQt(aCampos1[nPos][23][nX][9],cProd)
@@ -1896,17 +1988,59 @@ Static Function MudaLin(nPos)
 					aCampos1[nPos][23][nX][9]	:= 0
 					aCampos1[nPos][23][nX][10]	:= 0 				
 				Endif
+		
 			Else
 				aCampos1[nPos][23][nX][9]	:= 0
 				aCampos1[nPos][23][nX][10]	:= 0
 			Endif
+		
 			nTotRat  := nTotRat + aCampos1[nPos][23][nX][9]
 			nTotPerc := nTotPerc + aCampos1[nPos][23][nX][10]		
+		
 		Next nX
 		
+		// @history ticket 18340  - Fernando Macieira - 18/08/2021 - Processamento Inventario - Gera Ajuste e Estorno
+		/*
+		nTotRat <> nDif
+
+		Thais.Fumagalli, 17/08/2021 - 15:29
+		Macieira encontrei um item que o total do acerto com o total do rateio não batem
+
+		Produtos:
+		- 313358
+		- 320185
+		*/
+
+		If nTotRat <> nDif
+
+			nNewDif := Abs(nDif - nTotRat)
+
+			For iii := 1 To Len(aCampos1[nPos][23])
+			
+				If aCampos1[nPos][23][iii][1]
+
+					////
+					aCampos1[nPos][23][iii][9] := aCampos1[nPos][23][iii][9] + nNewDif
+					//Faz o Arredondamento conforme regra do campo B1_TIPODEC
+					aCampos1[nPos][23][iii][9]  := A250AvalQt(aCampos1[nPos][23][iii][9],cProd)
+
+					nTotRat  := nTotRat + nNewDif
+					//nTotPerc := nTotPerc + aCampos1[nPos][23][nX][10]
+					////
+
+					Exit
+
+				EndIf
+
+			Next iii
+			//
+			
+		EndIf
+		// 
+
 		//Se a somatoria do percentual distribuidos nas Ops for menor que 100,
 		//adiciona a diferenca na primeira OP encontrada com % maior que 0.001.
-		If (100.00 - nTotPerc) > 0  
+		If (100.00 - nTotPerc) > 0
 			// Ricardo Lima - 19/09/18
 			For nX:=1 to Len(aCampos1[nPos][23])
 				if aCampos1[nPos][23][nX][8] > nVlrMMp 
@@ -1926,6 +2060,7 @@ Static Function MudaLin(nPos)
 				Endif	
 			Next
 		EndIf
+
 	Endif
 	
 	If !IsInCallStack("RefazVetOP")
@@ -2224,3 +2359,24 @@ Static Function MenuDef()
    Local aRotina := { {"Processar","EPCP002" ,0 ,1 ,19}} 
 
 Return(aRotina)
+
+/*/{Protheus.doc} Static Function LOGZBE
+	Gera log ZBE
+	@type  Static Function
+	@author Everson
+	@since 24/05/2019
+	@version 01
+/*/
+Static Function logZBE(cMensagem)
+
+	RecLock("ZBE", .T.)
+		Replace ZBE_FILIAL 	   	With FWxFilial("ZBE")
+		Replace ZBE_DATA 	   	With msDate()
+		Replace ZBE_HORA 	   	With Time()
+		Replace ZBE_USUARI	    With Upper(Alltrim(cUserName))
+		Replace ZBE_LOG	        With cMensagem
+		Replace ZBE_MODULO	    With "SIGAEST"
+		Replace ZBE_ROTINA	    With "EPCP002" 
+	ZBE->( msUnlock() )
+
+Return

@@ -59,6 +59,8 @@ Static cMsgFim	:= "Termina Processamento do item: "
 	@see (links_or_references)
 	@history ticket 10248 - Fernando Macieira - 05/03/2021 - Revis„o das rotinas de apontamento de OP¥s
 	@history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
+    @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+	@history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
 /*/
 User Function ADEDA007R()
 
@@ -100,7 +102,7 @@ User Function ADEDA007R()
 	*/
 
 	/*Cria as perguntas no SX1*/
-	//AjustaSX1(cPerg)         
+	AjustaSX1(cPerg)         
 
 	/*Mostra a tela de perguntas*/
 	Pergunte(cPerg,.F.)    	
@@ -192,6 +194,7 @@ Static Function ADEDA007A
 	Private cPerg05Pdt := mv_par05 // Produto Ate
 	Private cPerg06Sta := mv_par06 // Status
 	Private cPerg07Ope := mv_par07 // Tipo de OperaÁ„o
+	Private cPerg08Prd := mv_par08 // ProduÁ„o (PrÛpria/Terceiro) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 	Private oBot01
 	Private oBot02
 	Private oBot03
@@ -230,8 +233,10 @@ Static Function ADEDA007A
 		Next y
 	Next x
 	
-	aOutros := {'MSEXP', 'STATUS', 'OPERACAO', 'TIPO'}
-	SX3->( dbSeek( "C2_OBS" ) )
+	//aOutros := {'MSEXP', 'STATUS', 'OPERACAO', 'TIPO'}
+    aOutros := {'MSEXP', 'STATUS', 'OPERACAO', 'TIPO', 'LOCAL', 'PRODUCAO'} // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+	
+    SX3->( dbSeek( "C2_OBS" ) )
 	For x:=1 To Len(aOutros)
 		AADD( aHeader, { 	AllTrim( aOutros[x] ),; // 01 - Titulo
 							SX3->X3_CAMPO		 ,;			// 02 - Campo
@@ -323,6 +328,11 @@ Static Function ADEDA007A
 					AADD( aCols[Len(aCols)], "" )
 			ENDCASE
 
+            // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+            aAdd( aCols[Len(aCols)], (cAliasT)->LOCAL )
+            aAdd( aCols[Len(aCols)], (cAliasT)->PRODUCAO )
+            //
+
 			AADD( aCols[Len(aCols)], .F. )
 			
 			AADD( aAux,	{ (cAliasT)->REC 	  } )
@@ -407,7 +417,12 @@ Static Function ADEDA007A
 					OTHERWISE
 						AADD( aCols[Len(aCols)], "" )
 				ENDCASE
-			  		   
+
+                // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+                aAdd( aCols[Len(aCols)], (cAliasT)->LOCAL )
+                aAdd( aCols[Len(aCols)], (cAliasT)->PRODUCAO )
+                //
+
 				AADD( aCols[Len(aCols)], .F. )
 				
 				AADD( aAux,	{ (cAliasT)->REC 	  } )
@@ -437,6 +452,12 @@ Static Function ADEDA007A
 		AADD( aCols[Len(aCols)], "" )
 		AADD( aCols[Len(aCols)], "" )
 		AADD( aCols[Len(aCols)], "" )
+
+        // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+		AADD( aCols[Len(aCols)], "" )
+		AADD( aCols[Len(aCols)], "" )
+        //
+
 		AADD( aCols[Len(aCols)], .T. )
 
 	EndIf
@@ -447,8 +468,8 @@ Static Function ADEDA007A
 	cLine01 := "{|| Iif( Len(aCols) < 1, {}, "
 	cLine01 += " { aCols[oGD01:nAt,1], "
 	cLine01 += "IIf(aCols[oGD01:nAt,2],oOk,oNo),"
-	For ni := 3 to 11
-		cLine01 += "aCols[oGD01:nAt," + cValToChar(ni) + "]" + IIf(ni < 11,",","")
+	For ni := 3 to 13
+		cLine01 += "aCols[oGD01:nAt," + cValToChar(ni) + "]" + IIf(ni < 13,",","")
 	Next ni
 	cLine01 += "} ) }"
 
@@ -522,7 +543,8 @@ Static Function ADEDA007A
 			Painel 02 - Lista de dados
 		*/
 		/*Cria tela com os dados*/
-		oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,{' ', ' ', 'FILIAL', 'PRODUTO', 'DESCRICAO', 'QUANTIDADE', 'DATA', 'MSEXP', 'STATUS', 'OPERACAO', 'TIPO'},,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
+		//oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,{' ', ' ', 'FILIAL', 'PRODUTO', 'DESCRICAO', 'QUANTIDADE', 'DATA', 'MSEXP', 'STATUS', 'OPERACAO', 'TIPO'},,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
+        oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,{' ', ' ', 'FILIAL', 'PRODUTO', 'DESCRICAO', 'QUANTIDADE', 'DATA', 'MSEXP', 'STATUS', 'OPERACAO', 'TIPO', 'LOCAL', 'PRODUCAO'},,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 		oGD01:bHeaderClick	:= {|oObj,nCol| ADEDA007G(2,@aCols,@oGD01,nCol,aClone(aHeader)),oGD01:Refresh()}
 		oGD01:blDblClick	:= {|| ADEDA007B(1,@aCols,@oGD01,,aClone(aHeader)),oGD01:Refresh()}
 		oGD01:Align 		:= CONTROL_ALIGN_ALLCLIENT
@@ -585,11 +607,6 @@ Static Function ADEDA007A
 	oTela:Activate(,,,.T.,/*valid*/,,{|| .T.})
 
 Return
-                                                                  
-      
-
-
-
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
@@ -605,56 +622,57 @@ Return
 */
 Static Function ADEDA007A1(aCols, aAux)
 
-Local aOPR 		:= {}
-Local aMOV		:= {}
-Local aINV 		:= {}
-Local cMsg		:= ""
-Local cMsgLog	:= ""
-Local lRet		:= .F.
-Local x,y
+    Local aOPR 		:= {}
+    Local aMOV		:= {}
+    Local aINV 		:= {}
+    Local cMsg		:= ""
+    Local cMsgLog	:= ""
+    Local lRet		:= .F.
+    Local x,y
 
-Private _MsgMotivo := ""
+    Private _MsgMotivo := ""
 
-/*
-TcConType("TCPIP")
-If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1))<0
-	_lRet     := .F.
-	cMsgError := "N„o foi possÌvel  conectar ao banco Protheus"
-	MsgInfo("N„o foi possÌvel  conectar ao banco produÁ„o, verifique com administrador","ERROR")	
-EndIf
+    /*
+    TcConType("TCPIP")
+    If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1))<0
+        _lRet     := .F.
+        cMsgError := "N„o foi possÌvel  conectar ao banco Protheus"
+        MsgInfo("N„o foi possÌvel  conectar ao banco produÁ„o, verifique com administrador","ERROR")	
+    EndIf
 
-If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	_lRet     := .F.
-	cMsgError := "N„o foi possÌvel  conectar ao banco integraÁ„o"
-	MsgInfo("N„o foi possÌvel  conectar ao banco integraÁ„o, verifique com administrador","ERROR")	
-EndIf
-*/
+    If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
+        _lRet     := .F.
+        cMsgError := "N„o foi possÌvel  conectar ao banco integraÁ„o"
+        MsgInfo("N„o foi possÌvel  conectar ao banco integraÁ„o, verifique com administrador","ERROR")	
+    EndIf
+    */
 
-/*BEGINDOC
-//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-//≥Exemplo da estrutura dos arrays aOPR, aMOV e aINV ≥
-//≥aOPR[a]          								 ≥
-//≥   aCols[a,1]    								 ≥
-//≥       cor 		[a,1, 1]						 ≥
-//≥       checkbox 	[a,1, 2]						 ≥
-//≥       filial 	[a,1, 3]						 ≥
-//≥       produto   [a,1, 4]						 ≥
-//≥       produto   [a,1, 5]						 ≥
-//≥       quantidade[a,1, 6]						 ≥
-//≥       dt emissao[a,1, 7]						 ≥
-//≥       msexp     [a,1, 8]						 ≥
-//≥       status    [a,1, 9]						 ≥
-//≥       operacao  [a,1,10]						 ≥
-//≥       tipo      [a,1,11]						 ≥
-//≥   aAux[a,2]     								 ≥
-//≥       rec 		[a,2, 1]						 ≥
-//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-ENDDOC*/
+    /*BEGINDOC
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥Exemplo da estrutura dos arrays aOPR, aMOV e aINV ≥
+    //≥aOPR[a]          								 ≥
+    //≥   aCols[a,1]    								 ≥
+    //≥       cor 		[a,1, 1]						 ≥
+    //≥       checkbox 	[a,1, 2]						 ≥
+    //≥       filial 	[a,1, 3]						 ≥
+    //≥       produto   [a,1, 4]						 ≥
+    //≥       produto   [a,1, 5]						 ≥
+    //≥       quantidade[a,1, 6]						 ≥
+    //≥       dt emissao[a,1, 7]						 ≥
+    //≥       msexp     [a,1, 8]						 ≥
+    //≥       status    [a,1, 9]						 ≥
+    //≥       operacao  [a,1,10]						 ≥
+    //≥       tipo      [a,1,11]						 ≥
+    //≥   aAux[a,2]     								 ≥
+    //≥       rec 		[a,2, 1]						 ≥
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+    ENDDOC*/
 
-//Begin Transaction
+    //Begin Transaction
 	
    	For x:=1 To Len(aCols)
-		If aCols[x,2] .AND. !aCols[x,12]
+		//If aCols[x,2] .AND. !aCols[x,12]
+        If aCols[x,2] .AND. !aCols[x,14]
 			If aCols[x,11] == "OPR"
 				AADD(aOPR, { aCols[x], aAux[x] } )
 			ElseIf aCols[x,11] == "MOV"
@@ -673,7 +691,7 @@ ENDDOC*/
 	aArrays := {aOPR, aMOV, aINV}
 	cMsgLog := ""
 	
-	For x:=1 To Len(aArrays) 
+	For x:=1 To Len(aArrays)
 		
 		For y:=1 To Len(aArrays[x])
 		
@@ -741,7 +759,7 @@ ENDDOC*/
 
 	MsUnlockAll()
 	
-//End Transaction
+    //End Transaction
 	
 Return .T.
 
@@ -775,7 +793,7 @@ Static Function ADEDA007B(nOpc,aDados,oGDSel,nColSel,aHead)
 	DEFAULT aHead	:= Array(0)
 
 	If nOpc == 1
-		If !aDados[oGDSel:nAt][12]
+		If !aDados[oGDSel:nAt][14]
 			aDados[oGDSel:nAt][2] := !aDados[oGDSel:nAt][2]
 		EndIf
 	Endif
@@ -890,7 +908,12 @@ Static Function ADEDA007C(aHeader,aCols, aAux)
 				OTHERWISE
 					AADD( aCols[Len(aCols)], "" )
 			ENDCASE
-		  		   
+
+            // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+            aAdd( aCols[Len(aCols)], (cAliasT)->LOCAL )
+            aAdd( aCols[Len(aCols)], (cAliasT)->PRODUCAO )
+            //
+
 			AADD( aCols[Len(aCols)], .F. )
 
 			AADD( aAux,	{ (cAliasT)->REC 	  } )
@@ -972,7 +995,12 @@ Static Function ADEDA007C(aHeader,aCols, aAux)
 					OTHERWISE
 						AADD( aCols[Len(aCols)], "" )
 				ENDCASE
-			  		   
+
+                // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+                aAdd( aCols[Len(aCols)], (cAliasT)->LOCAL )
+                aAdd( aCols[Len(aCols)], (cAliasT)->PRODUCAO )
+                //
+
 				AADD( aCols[Len(aCols)], .F. )
 				
 				AADD( aAux,	{ (cAliasT)->REC 	  } )
@@ -1001,6 +1029,8 @@ Static Function ADEDA007C(aHeader,aCols, aAux)
 		AADD( aCols[Len(aCols)], "" )
 		AADD( aCols[Len(aCols)], "" )
 		AADD( aCols[Len(aCols)], "" )
+		AADD( aCols[Len(aCols)], "" )
+		AADD( aCols[Len(aCols)], "" )
 		AADD( aCols[Len(aCols)], .T. )
 
 	EndIf
@@ -1012,6 +1042,8 @@ Static Function ADEDA007C(aHeader,aCols, aAux)
 	mv_par05 := cPerg05Pdt // Produto Ate
 	mv_par06 := cPerg06Sta // Status
 	mv_par07 := cPerg07Ope // Tipo de OperaÁ„o
+	mv_par08 := cPerg08Prd // ProduÁ„o (PrÛpria/Terceiro) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+
 
 Return Nil
 
@@ -1158,6 +1190,7 @@ Local ni				:= 0
 	cPerg05Pdt := mv_par05 // Produto Ate
 	cPerg06Sta := mv_par06 // Status
 	cPerg07Ope := mv_par07 // Tipo de OperaÁ„o
+	cPerg08Prd := mv_par08 // ProduÁ„o (PrÛpria/Terceiro) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 
 	oBot01:Show()
 	oBot02:Show()
@@ -1189,6 +1222,7 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 	Local cCampos 	:= "*"
 	Local cSTATUS 	:= ""
 	Local cOPERACAO	:= ""
+	Local cPrdPTA   := "A" // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 
 	/*
 	TcConType("TCPIP")
@@ -1224,27 +1258,78 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 			cOPERACAO := "E"
 	ENDCASE
 
+	// @history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
+	// Ajustado o campo na query pois estava fazendo where com a coluna PRODUCAO e foi mudada para LOCAL
+	//
+
+	// @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+	If cPerg08Prd == 1 // produÁ„o PR”PRIA
+		cPrdPTA := "P"
+	ElseIf cPerg08Prd == 2 // produÁ„o TERCEIROS
+		cPrdPTA := "T"
+	EndIf
+	//
+
 	If nOpc == 1
 
-		BeginSQL Alias cAliasT
+		// @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+		If cPerg08Prd == 1 // produÁ„o = PROPRIO
+		
+			BeginSQL Alias cAliasT
 
-			SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC
-					
-			FROM OPR010 (NOLOCK)
-			
-			WHERE DATA BETWEEN %Exp:dPerg02Dta% AND %Exp:dPerg03Dta%
-				AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
-				AND STATUS = %Exp:cSTATUS%
-				AND OPERACAO = %Exp:cOPERACAO%  
-				AND QUANT>0
-				AND D_E_L_E_T_=' '
-		EndSQL
+				//SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC
+				SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC, LOCAL, PRODUCAO // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+						
+				FROM OPR010 (NOLOCK)
+				
+				WHERE DATA BETWEEN %Exp:dPerg02Dta% AND %Exp:dPerg03Dta%
+					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
+					AND STATUS = %Exp:cSTATUS%
+					AND OPERACAO = %Exp:cOPERACAO%  
+					AND LOCAL = %Exp:cPrdPTA%
+					AND QUANT>0
+					AND D_E_L_E_T_=' '
+			EndSQL
+
+		ElseIf cPerg08Prd == 2 // produÁ„o = TERCEIROS
+		
+			BeginSQL Alias cAliasT
+
+				//SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC
+				SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC, LOCAL, PRODUCAO // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+						
+				FROM OPR010 (NOLOCK)
+				
+				WHERE DATA BETWEEN %Exp:dPerg02Dta% AND %Exp:dPerg03Dta%
+					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
+					AND STATUS = %Exp:cSTATUS%
+					AND OPERACAO = %Exp:cOPERACAO%  
+					AND LOCAL = %Exp:cPrdPTA%
+					AND QUANT>0
+					AND D_E_L_E_T_=' '
+			EndSQL
+
+		Else
+
+			BeginSQL Alias cAliasT
+
+				SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC, LOCAL, PRODUCAO
+				FROM OPR010 (NOLOCK)
+				WHERE DATA BETWEEN %Exp:dPerg02Dta% AND %Exp:dPerg03Dta%
+					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
+					AND STATUS = %Exp:cSTATUS%
+					AND OPERACAO = %Exp:cOPERACAO%  
+					AND QUANT>0
+					AND D_E_L_E_T_=' '
+			EndSQL
+
+		EndIf
 		
 	ElseIf nOpc == 2
 
 		BeginSQL Alias cAliasT
 
-			SELECT FILIAL, TM, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, LOTEEDATA, MSEXP, STATUS, OPERACAO, REC
+			SELECT FILIAL, TM, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, LOTEEDATA, MSEXP, STATUS, OPERACAO, REC, '' LOCAL, '' PRODUCAO
 					
 			FROM MOV010 (NOLOCK)
 
@@ -1260,7 +1345,7 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 
 		BeginSQL Alias cAliasT
 
-			SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC
+			SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC, '' LOCAL, '' PRODUCAO
 					
 			FROM INV010 (NOLOCK)
 			
@@ -1294,19 +1379,21 @@ Return cAliasT
 ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
 */
 Static Function ADEDA007G(nOpc,aDados,oGDSel,nColSel,aHead)
-Local ni		:= 0
-Local cRoteiro	:= ""
 
-If nColSel == 2
-	For ni := 1 to Len(aDados)
-		If !Empty(aDados[ni][5]) .AND. !aDados[ni][12]
-			aDados[ni][2] := !aDados[ni][2]
-		EndIf
-	Next ni
-EndIf
+    Local ni		:= 0
+    Local cRoteiro	:= ""
 
-//Forcar a atualizacao do browse
-oGDSel:DrawSelect()
+    If nColSel == 2
+        For ni := 1 to Len(aDados)
+            //If !Empty(aDados[ni][5]) .AND. !aDados[ni][12]
+            If !Empty(aDados[ni][5]) .AND. !aDados[ni][14]
+                aDados[ni][2] := !aDados[ni][2]
+            EndIf
+        Next ni
+    EndIf
+
+    //Forcar a atualizacao do browse
+    oGDSel:DrawSelect()
 
 Return Nil
 
@@ -1367,7 +1454,8 @@ Static Function ADEDA007RH(aCols, aAux)
 		//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
 		ENDDOC*/
 		For x:=1 To Len(aCols)
-			If aCols[x,2] .AND. !aCols[x,12]
+			//If aCols[x,2] .AND. !aCols[x,12]
+            If aCols[x,2] .AND. !aCols[x,14]
 				If aCols[x,11] == "OPR"
 					AADD(aOPR, { aCols[x], aAux[x] } )
 				ElseIf aCols[x,11] == "MOV"
@@ -1481,6 +1569,7 @@ Return .T.
 ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
 */
 Static Function Legenda()
+
     Local aLegenda := {}
     
     AADD(aLegenda,{"BR_VERDE"   	,"Integrado" 		}) 
@@ -1489,13 +1578,8 @@ Static Function Legenda()
     AADD(aLegenda,{"BR_CINZA"   	,"Status Indefinido"})
     
     BrwLegenda("Legenda", "Legenda", aLegenda)
+
 Return Nil
-
-
-
-
-
-
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
@@ -1511,27 +1595,7 @@ Return Nil
 */
 Static Function AjustaSX1(cPerg)
 
-//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-//≥ Variaveis utilizadas para parametros ≥
-//≥ mv_par01	  // Placa  		  	 ≥
-//≥ mv_par02	  // Entrada 		  	 ≥
-//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-Local aMensSX1 := {}
-
-
-// //			 	PERGUNTA			 TIPO	TAM						   	DEC					OBJETO	PS	COMBO							  				SXG		F3		VALID	HELP
-// aMensHlp[01] := {"Tipo"				,"N"	,1							,00					,"C"	,0	,{"OPR","MOV","INV","Todos",""}	   				,""		,""	 	,""		,"Tipo de Consulta"}
-// aMensHlp[02] := {"PerÌodo De"		,"D"	,8	 						,00					,"G"	,0	,{"","","","",""}				   				,""		,""	 	,""		,"PerÌodo Inicial"}
-// aMensHlp[03] := {"PerÌodo Ate"		,"D"	,8	 						,00					,"G"	,0	,{"","","","",""}				   				,""		,""	 	,""		,"PerÌodo final"}
-// aMensHlp[04] := {"Produto De"		,"C"	,TamSX3("B2_COD")[1]		,00					,"G"	,0	,{"","","","",""}				   				,""		,""		,""		,"Produto inicial"}
-// aMensHlp[05] := {"Produto Ate"		,"C"	,TamSX3("B2_COD")[1]		,00					,"G"	,0	,{"","","","",""}								,""		,""		,""		,"Produto final"}
-// aMensHlp[06] := {"Status"			,"C"	,1							,00					,"C"	,0	,{"Integrado","Processado","Erro","",""}		,""		,""		,""		,"Status de IntegraÁ„o"}
-// aMensHlp[07] := {"OperaÁ„o"	   		,"C"	,1							,00					,"C"	,0	,{"Inclus„o","AlteraÁ„o","Exclus„o","",""}		,""		,""		,""		,"Tipo de OperaÁ„o"}
-// U_GravaSX1(cPerg,aMensHlp)
-
-
-//					1					2				3					4				5						6					7				8					9					10					11						12					13				14						15					16					17					18				19						20					21					22					23				24						25					26					27					28				29						30					31					32					33				34					35					36						37						38				39
-    // AADD(/* 'X1_ORDEM' */, /* 'X1_PERGUNT'*/, /* 'X1_PERSPA' */, /* 'X1_PERENG' */, /* 'X1_TIPO' 	*/, /* 'X1_TAMANHO'*/, /* 'X1_DECIMAL'*/, /* 'X1_PRESEL' */, /* 'X1_GSC' 	*/, /* 'X1_VALID' 	*/	, /* 'X1_DEF01' 	*/, /* 'X1_DEFSPA1'*/, /* 'X1_DEFENG1'*/, /* 'X1_CNT01' 	*/, /* 'X1_VAR02' 	*/, /* 'X1_DEF02' 	*/, /* 'X1_DEFSPA2'*/, /* 'X1_DEFENG2'*/, /* 'X1_CNT02' 	*/, /* 'X1_VAR03' 	*/, /* 'X1_DEF03' 	*/, /* 'X1_DEFSPA3'*/, /* 'X1_DEFENG3'*/, /* 'X1_CNT03' 	*/, /* 'X1_VAR04' 	*/, /* 'X1_DEF04' 	*/, /* 'X1_DEFSPA4'*/, /* 'X1_DEFENG4'*/, /* 'X1_CNT04' 	*/, /* 'X1_VAR05' 	*/, /* 'X1_DEF05' 	*/, /* 'X1_DEFSPA5'*/, /* 'X1_DEFENG5'*/, /* 'X1_CNT05' 	*/, /* 'X1_F3'		*/, /* 'X1_PYME' 	*/, /* 'X1_GRPSXG' */	, /* 'X1_PICTURE'*/, /* 'X1_IDFIL' 	*/)
+    Local aMensSX1 := {}
 
 //					  1				2						3						4				  5			6						  7	 8		  9   10	 11	   		12  		13	  	  	  14  	  15  	 16  	 		17   	  		18   	  	  19  	  20  21  	  	  22  	  	 23  	  	  24  25  26  		27  	28  	  29  30  31  32  33  34  35      36   37  38  39	
     AADD( aMensSX1, {"01", "Tipo?"				, "Tipo?"				, "Tipo?"					,"N"	,001						,00, 0		,"C", ""	,"OPR"		,"OPR" 		,"OPR"		, ""	, ""	, "MOV"			, "MOV" 	 , "MOV"		, ""	, "", "INV"		, "INV"		, "INV" 	, "", "", "Todos", "Todos", "Todos"	, "", "", "", "", "", "", ""    , "S", "", "", "" })
@@ -1541,9 +1605,8 @@ Local aMensSX1 := {}
 	AADD( aMensSX1, {"05", "Produto Ate?"		, "Produto Ate?"		, "Produto Ate?"			,"C"	,TamSX3("B1_COD")[1]		,00, 0		,"G", ""	,""			,""			,"" 		, ""	, ""	, ""			, "" 	 	 , "" 			, ""	, "", ""		, ""		, ""		, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", "SB1" , "S", "", "", "" })
 	AADD( aMensSX1, {"06", "Status?"			, "Status?"				, "Status?"	    			,"C"	,001						,00, 0		,"C", ""	,"Integrado","Integrado","Integrado", ""	, ""	, "Processado" 	,"Processado", "Processado"	, ""	, "", "Erro"	, "Erro"	, "Erro"	, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
 	AADD( aMensSX1, {"07", "OperaÁ„o?"			, "OperaÁ„o?"			, "Lista C·lculo ?"	    	,"C"	,001						,00, 0		,"C", ""	,"Inclus„o"	,"Inclus„o"	,"Inclus„o"	, ""	, ""	, "AlteraÁ„o" 	,"AlteraÁ„o" , "AlteraÁ„o"	, ""	, "", "Exclus„o", "Exclus„o", "Exclus„o", "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
-	
+	AADD( aMensSX1, {"08", "ProduÁ„o?"			, "ProduÁ„o?"			, "ProduÁ„o?"	    	    ,"C"	,001						,00, 0		,"C", ""	,"PrÛpria"	,"PrÛpria"	,"PrÛpria"	, ""	, ""	, "Terceiro" 	,"Terceiro"  , "Terceiro"	, ""	, "", "Ambos"   , "Ambos"   , "Ambos"   , "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" }) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 
     U_newGrSX1(cPerg, aMensSX1)
-
 
 Return

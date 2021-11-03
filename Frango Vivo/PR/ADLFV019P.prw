@@ -10,10 +10,11 @@
   @type tkt -  13294
   @author Rodrigo Romão
   @since 18/05/2021
+  @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
 /*/
 
 User Function ADLFV019P()
-
+	
 	Local oBrowse := FwLoadBrw("ADLFV019P")
 	oBrowse:Activate()
 
@@ -36,31 +37,25 @@ Return (aRotina)
 
 // REGRAS DE NEGÓCIO
 Static Function ModelDef()
-	Local oModel := MPFormModel():New("ADLFV19M")
-	Local oStruZEI := FwFormStruct(1, "ZEI")
-
+	Local nGatilhos	:= 0
+	Local oModel 	:= MPFormModel():New("ADLFV19M",, {|| fVldForm()}, {|oMld| fAfterTTS(oMld)})
+	Local oStruZEI 	:= FwFormStruct(1, "ZEI")
+	
 	// nOpc := oModel:GetOperation()
 	// if nOpc <> MODEL_OPERATION_INSERT
 	oStruZEI:SetProperty( 'ZEI_NUMOC'   , MODEL_FIELD_VALID,FwBuildFeature( STRUCT_FEATURE_VALID,"StaticCall(ADLFV019P, validaOdCarregamento)" ))
 
 	oStruZEI:SetProperty( 'ZEI_DESCRI'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZEE','ZEE_DESCRI')" ))
-	oStruZEI:SetProperty( 'ZEI_DEPTO'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZEE','ZEE_DEPTO')"  ))
-	oStruZEI:SetProperty( 'ZEI_DEPDES'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZEE','ZEE_DESDEP')" ))
+	//oStruZEI:SetProperty( 'ZEI_DEPTO'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZEE','ZEE_DEPTO')"  ))
+	oStruZEI:SetProperty( 'ZEI_DEPDES'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZGC','ZGC_NOME')" ))
 
 	oStruZEI:SetProperty( 'ZEI_GRANJA'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZV1','ZV1_PGRANJ')" ))
 	oStruZEI:SetProperty( 'ZEI_DTABAT'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZV1','ZV1_DTABAT')" ))
 	oStruZEI:SetProperty( 'ZEI_PLACA'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZV1','ZV1_RPLACA')" ))
+	
 	// endif
+	oStruZEI:SetProperty( "ZEI_ITEM"    , MODEL_FIELD_WHEN, {|| .F. } )
 
-	aGatilhos := getGatilhos()
-
-	//Percorrendo os gatilhos e adicionando na Struct
-	For nAtual := 1 To Len(aGatilhos)
-		oStruZEI:AddTrigger(  aGatilhos[nAtual][01],; //Campo Origem
-		aGatilhos[nAtual][02],; //Campo Destino
-		aGatilhos[nAtual][03],; //Bloco de cï¿½digo na validaï¿½ï¿½o da execuï¿½ï¿½o do gatilho
-		aGatilhos[nAtual][04])  //Bloco de cï¿½digo de execuï¿½ï¿½o do gatilho
-	Next
 
 	oModel:AddFields("ZEIMASTER", NIL, oStruZEI)
 	oModel:SetDescription(STR0001)
@@ -98,9 +93,9 @@ User Function fillCampo(cTabela,cNomeCampo)
 
 	if nOpc <> 3
 		if Alltrim(cTabela) == "ZEE"
-			cRet := POSICIONE(cTabela,1,xFilial(cTabela)+ZEI->ZEI_NUMMP,cNomeCampo)
-		Elseif Alltrim(cTabela) == "ZEG"
-			cRet := POSICIONE(cTabela,1,xFilial(cTabela)+ZEH->ZEH_NUMMM,cNomeCampo)
+			cRet := POSICIONE(cTabela,1,xFilial("ZEE")+ZEI->ZEI_DEPTO+ZEI->ZEI_NUMMP,cNomeCampo)
+		Elseif Alltrim(cTabela) == "ZGC"
+			cRet := POSICIONE(cTabela,1,xFilial("ZGC")+ZEI->ZEI_DEPTO,cNomeCampo)
 		Elseif Alltrim(cTabela) == "ZV1"
 			cRet := POSICIONE(cTabela,3,xFilial(cTabela)+ZEI->ZEI_NUMOC,cNomeCampo)
 		endif
@@ -108,37 +103,6 @@ User Function fillCampo(cTabela,cNomeCampo)
 
 	restArea(xArea)
 Return cRet
-
-/*/{Protheus.doc} getGatilhos
-	(long_description)
-	@type  Static Function
-	@author user
-	@since 13/05/2021
-	@version version
-	@param param_name, param_type, param_descr
-	@return return_var, return_type, return_description
-	@example
-	(examples)
-	@see (links_or_references)
-    /*/
-Static Function getGatilhos()
-	local aRet    := {}
-
-	//GATILHOS
-	//Adicionando um gatilho, do ZZ1_CODIGO para o ZZ1_DESCR
-	aAdd(aRet, FWStruTriggger("ZEI_NUMOC",;   //Campo Origem
-	"ZEI_ITEM",;                      			  //Campo Destino
-	"StaticCall(ADLFV019P, fillitem)",;	      //Regra de Preenchimento
-	.F.,;                              			  //Irï¿½ Posicionar?
-	"",;                               			  //Alias de Posicionamento
-	0,;                                			  //indice de Posicionamento
-	'',;                               			  //Chave de Posicionamento
-	NIL,;                              			  //Condicao para execucao do gatilho
-	"01");                             			  //Sequencia do gatilho
-	)
-
-Return aRet
-
 
 
 Static Function fillItem()
@@ -227,3 +191,47 @@ User Function ADLFV19M()
 	endif
 
 Return (lRet)
+
+
+static function fVldForm()
+	Local lRet 		:= .T.
+
+	Local oView     := FWViewActive()
+	Local oModel	:= FWModelActive()
+
+	If oView:GetOperation() ==  1 
+		lRet	:= .T.
+	// Insert
+	ElseIf oView:GetOperation() == 3
+		lRet	:= .T.
+	//Update or Only Update.
+	ElseIf oView:GetOperation() == 4 .OR. oView:GetOperation() == 6
+		lRet := .T.
+		
+	// Delete
+	ElseIf oView:GetOperation() == 5
+		lRet := .T.
+	EndIf
+
+return lRet
+
+Static Function fAfterTTS(oModel)
+	Local lRet 		:= .T.
+	Local cQuery	:= ""
+	
+	lRet := fwformcommit(oModel)
+	
+	cQuery := " SELECT ISNULL(MAX(ZEI_ITEM),'0000') ITEM_MAX "
+	cQuery += " FROM "+ RetSqlName("ZEI") +" (NOLOCK) "
+	cQuery += " WHERE D_E_L_E_T_='' AND ZEI_FILIAL='"+ xFilial("ZEI") +"' AND ZEI_NUMOC='"+ FwFldGet("ZEI_NUMOC") +"'; "
+
+	Tcquery cQuery ALIAS "QZEI" NEW
+
+	if QZEI->(!EOF())
+		Reclock("ZEI",.F.)
+			ZEI->ZEI_ITEM	:= Soma1(QZEI->ITEM_MAX)
+		ZEI->(MsUnlock())
+	endif
+
+	QZEI->(DbCloseArea())
+return lRet

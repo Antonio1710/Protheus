@@ -1,6 +1,6 @@
 #INCLUDE "Protheus.ch"
 #INCLUDE "ParmType.ch"
-#INCLUDE "topconn.ch"
+#INCLUDE "topconn.ch" 
 
 /*/{Protheus.doc} User Function AXFV4
 	Cadastro de veiculos.
@@ -17,6 +17,8 @@
 	@history Ticket T.I.   - Leonardo P. Monteiro - 16/04/2021 - Integração do passaporte para o eData.
 	@history Ticket T.I.   - Leonardo P. Monteiro - 14/06/2021 - Criação de melhoria na rotina para integração em lote de todos os veículos e transportadoras.
 	@history Ticket T.I.   - Leonardo P. Monteiro - 22/07/2021 - Inclusão de validações para não deixar que manobristas sejam vinculados a veículos e a transportadoras.
+	@history ticket 18125  - 10/08/2021 - ADRIANO SAVOINE - Bloqueio de Exclusão e Bloqueio do campo em modo de edição.
+	@history ticket 61154  - 05/10/2021 - SIGOLI - Feito tratamento para mostrar o erro na tela de usuario, para quando ocorrer erro do lado do edata, apreentar na tela. 
 /*/
 
 User Function AXFV4() 
@@ -48,7 +50,8 @@ User Function AXFV4()
 	DbSetOrder(1)
 	Dbgotop()
 
-	AXCADASTRO("ZV4","Cadastro de Veiculos ",,"U_COKVEIC()",aRotAdic,,,,bNoTTs,,,aButtons) //Everson - 26/02/2020. Chamado 
+
+	AXCADASTRO("ZV4","Cadastro de Veiculos ","U_EXCLUI()","U_COKVEIC()",aRotAdic,,,,bNoTTs,,,aButtons) //Everson - 26/02/2020. Chamado 
 
 Return Nil
 
@@ -172,6 +175,28 @@ Static function FCEDATA()
 return lRet
 
 
+/*/{Protheus.doc} User Function EXCLUI
+	(VALIDAÇÃO ANTES DA EXCLUSÃO)
+	@type  Function
+	@author ADRIANO SAVOINE
+	@since 10/08/2021
+	@history ticket 18125 - 10/08/2021 - ADRIANO SAVOINE - Bloqueio de Exclusão e Bloqueio do campo em modo de edição.
+	/*/
+User Function EXCLUI()
+
+Local eXcluir := .F.
+
+IF RetCodUsr() $ GetMV("MV_#ALTPLC") 
+	eXcluir := .T.
+	
+	Else
+	
+	MsgInfo('<h1>Atenção:</h1><br>Você não pode excluir cadastros de placa para isso você tem que estar cadastrado no parametro,</b><font color="#FF0000"> MV_#ALTPLC </font>', "Abrir Ticket para aprovação do Gerente ou Supervisor.")
+
+EndIf
+
+Return eXcluir
+
 
 /*/{Protheus.doc} User Function COKVEIC
 	(long_description)
@@ -184,11 +209,10 @@ return lRet
 User Function COKVEIC()    
 
 	Local _aNomCpo 	:= {}
-	Local dDataLog 	:= ""
 	Local lOk		:= .T.
 	Local cCmpAlt	:= "" //Everson - 25/04/2019. Chamado 044314.
+	Local _nx       := 0
 
-	U_ADINF009P('AXFV4' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de veiculos')
 	// Valida se os CPFs cadastrados pertencem a algum manobrista.
 	lOk := fVldMan()
 
@@ -371,23 +395,15 @@ User Function FV4LOG()
 	Local aArea		:= GetArea()
 	Local oDlg
 	Local Query     := ""
-	Local nx 		:= 0
+
 	Local aSize    	:= MsAdvSize()
 	Local aPosObj  	:= {}
 	Local aObjects 	:= {}
 	Local aInfo		:= {}
-	Local aCpos		:= {}
 	Local nOpcao	:= 0
 	Local aListBox	:= {}
-	Local oTik		:= LoadBitMap(GetResources(), 'LBTIK')
-	Local oNo		:= LoadBitMap(GetResources(), 'LBNO' )
-	Local oMarca	:= LoadBitMap(GetResources(), 's4wb018n.png')
-	Local cCampos 	:= ''
-
 	Private aTela	[0][0]
 	Private aGets	[0]
-
-	U_ADINF009P('AXFV4' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de veiculos')
 
 	//Tamanho da tela
 	aObjects := {}
@@ -406,7 +422,7 @@ User Function FV4LOG()
 		DbSkip()
 	End  
 
-	DbCloseArea("LOG1")
+	LOG1->(DbCloseArea)
 
 	If Empty( aListBox )
 
@@ -444,11 +460,8 @@ Return Nil
 User Function FV4EDATA()
 
 	Local aArea		:= GetArea()
-	Local nStatus   := 0
 	Local lIntegrou := .T.
 	Local cErro     := ""
-
-	U_ADINF009P('AXFV4' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de veiculos')
 
 	BEGIN TRANSACTION
 
@@ -575,17 +588,32 @@ Return Nil
 Static Function fEnveData(cCPFPass, cFornece, cPlaca, cEmpresa)
 	Local lRet 		:= .F.
 	Local nStatus 	:= 0
+	Local cError     := ''
+	Local cRotDesc	:= "Integracao Protheus x Edata - U_AXFV4"
 
 	if SqlMotorista(cCPFPass)
 		
+
 		nStatus :=  TcSQLExec('EXEC '+cLinkSe+'.[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+     "'"+cPlaca+"'"   +",'"+  cCPFPass +"',"+  "'"+cEmpresa+"'" )
-		//nStatus :=  TcSQLExec('EXEC '+cLinkSe+'.[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+"'"+cPlaca+"'"   +",'1',"+  "'"+cEmpresa+"'" )
 		
-		IF (nStatus < 0)
+		// Inicio Ticket 61154  - 05/10/2021 - SIGOLI 
+		cError := U_RetErroED() 
+		
+		
+		IF !Empty(cError) .or. (nStatus < 0)
+			If nStatus < 0 
+			
+				cError := cError +" -  Erro na procedure e/ou comunicação com Edata"
+
+			ENDIF
+
+			U_ExTelaMen(cRotDesc,cError,"Arial",10,,.F.,.T.)
 			lRet := .F.
+		
 		ELSE
-			lret := .T.
+			lret := .T. 
 		ENDIF
+		// Fim Ticket 61154  - 05/10/2021 - SIGOLI 
 		
 	else
 		MSGSTOP( 'Não foi encontrado o cadastro do Motorista com o CPF/Passaporte '+ cCPFPass + CHR(13) + CHR(10) + '. O registro não foi enviado ao E-data - AXFV4-03' )
@@ -874,8 +902,8 @@ User Function FV4TGSG() // U_FV4TGSG()
 Return cBuffer
 
 STATIC FUNCTION SqlMotorista(cDoc)
-	Local cFilOrig 	:= FWFILIAL("ZVC")
-    Local lRet		:= .T.
+	
+	Local lRet		:= .T.
 
     BeginSQL Alias "TRC"
 			%NoPARSER% 

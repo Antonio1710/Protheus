@@ -1,6 +1,7 @@
 #include "rwmake.ch"
 #Include "Protheus.ch"
 #Include "Topconn.ch"
+
 /*/{Protheus.doc} User Function ADEST034P
     Gera lote de producao por integração do SAG.
     @type  Function
@@ -14,11 +15,18 @@
     @history Everson - Chamado 058675 - 23/06/2020. Adicionado tratamento para importação de lotes para mais de uma empresa/filial no Protheus.
     @history Everson - Chamado 059658 - 30/07/2020. Tratamento para não importar lote sem data.
     @history Everson - Chamado 7989   - 13/01/2021. Incluído tratamento por filial.
-    /*/
-User Function ADEST034P()  // U_ADEST034P()
+	@history Sigoli	 - Tkt: 17876     - 04/08/2021. Feito tratamento na rotina para atender todas as empresa configuradas no scheduled 
+    @hostory Sigoli  - TKT: T.I       - Removido log , pois esta gerando muito log nos scheduledsRemovido log , pois esta gerando muito log nos scheduleds
+/*/
+
+User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 
     //Variáveis.
     Local lAutoJob := .F.
+
+    Default aParam    := Array(2)
+	Default aParam[1] := "07"
+	Default aParam[2] := "01"
 
     //
     If Select("SX6") == 0
@@ -30,7 +38,8 @@ User Function ADEST034P()  // U_ADEST034P()
 
         RpcClearEnv()
         RpcSetType(3)
-        RpcSetEnv("07","01",,,,GetEnvServer(),{})
+        //RpcSetEnv("01","04",,,,GetEnvServer(),{})
+        RpcSetEnv(aParam[1],aParam[2],,,,GetEnvServer(),{ }) 
 
         // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
         If !LockByName("ADEST034P", .T., .F.)
@@ -146,6 +155,7 @@ Static Function incluiLt()
 
             EndIf
         Else
+            
             ConOut( DToC(Date()) + " " + Time() + " ADEST034P - incluiLt - Lote: " + cValToChar(ADEST34I->CODILOTE) + " incompleto (código ou descrição).")
 
         EndIf
@@ -204,7 +214,7 @@ Static Function alteraLt()
                 ZCN->ZCN_LOGUPD := Alltrim(Str(ADEST34A->CODILOG_))
                 ZCN->ZCN_STATUS := IIF(Empty(ADEST34A->ENCELOTE),'A','E')
             Msunlock()
-            ConOut( DToC(Date()) + " " + Time() + " ADEST034P - alteraLt - Lote: " + cValToChar(ADEST34A->CODILOTE) + " atualizado com sucesso.")
+            //ConOut( DToC(Date()) + " " + Time() + " ADEST034P - alteraLt - Lote: " + cValToChar(ADEST34A->CODILOTE) + " atualizado com sucesso.") //Tkt: T.I  - Fernando Sigoli - Removido log , pois esta gerando muito log nos scheduleds
         EndIf
 
         //

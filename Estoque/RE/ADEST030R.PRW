@@ -1,16 +1,7 @@
-#include "protheus.ch"
-#include "topconn.ch"
-#INCLUDE "tbiconn.ch"
-#INCLUDE 'Protheus.ch'
-#INCLUDE "FWEVENTVIEWCONSTS.CH"                            
-#INCLUDE "FWADAPTEREAI.CH"
-#INCLUDE "FWMVCDEF.CH" 
-#INCLUDE 'Parmtype.ch'
-#INCLUDE "rwmake.ch"
-#INCLUDE "MSMGADD.CH"  
-#INCLUDE "FWBROWSE.CH"   
-#INCLUDE "DBINFO.CH"
-#INCLUDE 'FILEIO.CH'
+#Include "Protheus.ch"
+#Include "Topconn.ch"
+#Include "Fileio.ch"
+#Include "Tbiconn.ch"
   
 Static cTitulo      := "Custos de OP por Produto"
 
@@ -27,6 +18,7 @@ Static cTitulo      := "Custos de OP por Produto"
     @see (links_or_references)
     @history chamado 050729 - FWNM - 24/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
     @history chamado 059683 - FWNM - 14/07/2020 - || OS 061157 || CONTROLADORIA || ANDRESSA || 998875717 || ADEST030R
+    @hisotry chamado 44600  - Everson - 14/10/2021 - Removidos os includes nЦo utilizados.
 /*/
 User Function ADEST030R()
 
@@ -318,8 +310,8 @@ Static Function GeraXLS()
 		aLinhas[nLinha][05] := (cArquivo)->QUANTIDADE  //E
 		aLinhas[nLinha][06] := (cArquivo)->UM          //F
 		aLinhas[nLinha][07] := (cArquivo)->CUSTO_UNIT  //G
-		aLinhas[nLinha][08] := (cArquivo)->CUSTO_TOT   //J
-		aLinhas[nLinha][09] := (cArquivo)->OPS         //K
+		aLinhas[nLinha][08] := (cArquivo)->CUSTO_TOT   //H
+		aLinhas[nLinha][09] := (cArquivo)->OPS         //I
 
         (cArquivo)->( dbSkip() )
 
@@ -368,6 +360,12 @@ Static Function GeraXLS()
     EndIf
     */
 
+    //здддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд©
+    //Ё Deleta arquivo de Trabalho                                   Ё
+    //юдддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
+    fErase( cArquivo+GetDBExtension() )
+    fErase( cArquivo+OrdBagExt() )
+
     If lExcel
 
         msgInfo("Arquivo " + cArqXLS + " gerado com sucesso no path: " + MV_PAR05)
@@ -387,12 +385,6 @@ Static Function GeraXLS()
         EndIf
         
     EndIf
-
-    //здддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд©
-    //Ё Deleta arquivo de Trabalho                                   Ё
-    //юдддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
-    fErase( cArquivo+GetDBExtension() )
-    fErase( cArquivo+OrdBagExt() )
 
 Return
 

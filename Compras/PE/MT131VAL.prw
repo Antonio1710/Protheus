@@ -12,10 +12,14 @@
     @example
     (examples)
     @see (links_or_references)
-    @chamado 056479 - FWNM              - 20/03/2020 - || OS 057949 || CONTROLADORIA || DAIANE || 3549 || PEDIDO COMPRA
+    @chamado 056479 - FWNM                  - 20/03/2020 - || OS 057949 || CONTROLADORIA || DAIANE || 3549 || PEDIDO COMPRA
+    @chamado T.I. - Leonardo P. Monteiro    - 01/09/2021 - Inclusão do comando RestArea.
 /*/
 User Function MT131VAL()
 
+    Local aArea     := GetArea()
+	Local aAreaSC1  := SC1->( GetArea() )
+	Local aAreaSC8  := SC8->( GetArea() )
     Local cMarca    := PARAMIXB[1]
     Local cQuerySC1 := PARAMIXB[2]
     Local cQuery    := ''
@@ -95,6 +99,9 @@ User Function MT131VAL()
 		
         (cMy1Alias)->(DbSkip())
 
-   EndDo    
-    
+    EndDo    
+
+    RestArea( aArea )
+    RestArea( aAreaSC1 )
+	RestArea( aAreaSC8 ) 
 Return lRet

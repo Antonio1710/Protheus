@@ -14,8 +14,9 @@
 	@history Chamado 057846 - William Costa - 06/05/2020 - Retirado toda a referencia ao campo B1_ATIVO ou B1_ATIVO1
 	@history Chamado 050729 - FWNM          - 14/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Migração Release 27
 	@history Chamado 17381	- Leonardo P. Monteiro - 23/07/2021 - Aumento do limitador do grid de 200 para 100000 registros na aCols.
+	@history Chamado 17420	- Everson 		- 07/10/2021 - Tratamento para não duplicar registro de produto.
 /*/
-User Function TELAMTZ()
+User Function TELAMTZ() // U_TELAMTZ()
 
 	Private cPerg	:= "TELAMTZ"
 
@@ -31,6 +32,11 @@ Return
 
 //Static Function selec()
 Static Function xGeraInter()
+
+	//Everson - 07/10/2021. Chamado 17420.
+	Local _xx 		   := 1  
+	Local _ni		   := 1	
+	//
 
 	Private aArray     := {}
 	Private aOrdProd   := {}
@@ -262,6 +268,12 @@ Static Function excTab(cTab)
 Return Nil
 
 Static Function processar()
+
+	//Everson - 07/10/2021. Chamado 17420.
+	Local _nn		:= 1
+	Local _yy		:= 1
+	Local nX   		:= 1	
+	//
 	
 	Local cUpSB1 	:= ""
 	Local cProdutos	:= ""
@@ -499,7 +511,9 @@ Return Nil
 
 User Function MTZVLDL()
 
+	Local aArea	:= GetArea()
 	Local _lRet := .T.
+	Local nAux  := 1
 
 	U_ADINF009P('TELAMTZ' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela Matriz para Tabela de preço')
 
@@ -512,14 +526,31 @@ User Function MTZVLDL()
 		_cAtivo := Posicione('SB1',1,xFilial("SB1")+_cProd,"B1_MSBLQL")
 		If _cAtivo == "1"
 			_lRet := .F.
-			MsgInfo("O produto "+_cProd+" esta inativo no cadastro!","Atenção")
+			MsgInfo("O produto "+_cProd+" está inativo no cadastro!","Atenção")
 		EndIf
-	Endif       
+	Endif  
+
+	//Everson - 07/10/2021. Chamado 17420.
+	For nAux := 1 To Len(aCols)
+
+		If ! aCols[nAux][Len(aHeader)+1] .And. aCols[n,_nPosPrd] == aCols[nAux,_nPosPrd] .And. n <> nAux
+			_lRet := .F.
+			MsgInfo("O produto "+_cProd+" já está na lista.","Atenção")
+
+		EndIf
+
+	Next nAux
+	//
+
+	//
+	RestArea(aArea)
+	
 Return(_lRet) 
 
 User Function MTZVLDT()
 
 	Local _lRet := .T.
+	Local _nX	:= 1//Everson - 07/10/2021. Chamado 17420.
 
 	U_ADINF009P('TELAMTZ' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela Matriz para Tabela de preço')
 

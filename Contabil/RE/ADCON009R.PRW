@@ -1,26 +1,22 @@
 #Include "Protheus.ch"
 #Include "Topconn.ch"
 #Include "Tbiconn.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณADCON009R  บ Autor ณ Everson           บ Data ณ  13/11/17   บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDescricao ณRelat๓rio de tarifas bancแrias.                             บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ Chamado 037973.                                            บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑบAdriana     ณ24/05/2019ณTI-Devido a substituicao email para shared     บฑฑ
-ฑฑบ            ณ          ณrelay, substituido MV_RELACNT p/ MV_RELFROM    บฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
+
+
+/*/{Protheus.doc} User Function ณADCON009R
+	Relatorio Diverg๊ncias de local padrใo..
+	Chamado 037729
+	@type  Function
+	@author Everson Silva 
+	@since 13/11/17
+	@version 01
+	@history Ticket: T.I   - 24/05/2019 - Adriana Oliveira - Devido a substituicao email para shared-relay, substituido MV_RELACNT p/ MV_RELFROM
+	@history Ticket: 63022 - 28/10/2021 - Fernando Sigoli  - parametrizar o email anexo para listar em ordem decrescente pela data de digita็ใo? (o mais recente primeiro)
+
+/*/
+
 User Function ADCON009R()
 
-	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
-	//ณ Declara็ใo de variแvies.
-	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู	
 	Local cEmp 		:= "01"
 	Local cFil 		:= "02"
 
@@ -173,14 +169,12 @@ Return Nil
 */
 Static Function scriptSql()
 
-	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
-	//ณ Declara็ใo de variแvies.
-	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู	
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 	Local cData		:= DToS(Date() - 45)
 
 	//
+	/*
 	cQuery := ""
 	cQuery += " SELECT     " 
 	cQuery += " FONTE.TIPO,     " 
@@ -243,54 +237,73 @@ Static Function scriptSql()
 	cQuery += " WHERE     " 
 	cQuery += " ENTRADA.D1_LOCAL <> ENTRADA.LOCPAD    " 
 	cQuery += "     " 
-	/*cQuery += " UNION ALL   " 
-	cQuery += "    " 
-	cQuery += " SELECT      " 
-	cQuery += " 'SAอDA' AS TIPO,*     " 
-	cQuery += " FROM     " 
-	cQuery += " (     " 
-	cQuery += " SELECT     " 
-	cQuery += " D2_FILIAL, D2_DOC, D2_SERIE,      " 
-	cQuery += " D2_CLIENTE, D2_LOJA, A1_NOME,     " 
-	cQuery += " D2_CONTA, B1_CONTA, D2_COD, D2_LOCAL,   " 
-	cQuery += " CASE WHEN    " 
-	cQuery += " (SELECT BZ_LOCPAD FROM  " + RetSqlName("SBZ") + "  AS SBZ (NOLOCK) WHERE SBZ.D_E_L_E_T_ = '' AND SBZ.BZ_FILIAL = D2_FILIAL AND SBZ.BZ_COD = D2_COD) IS NULL   " 
-	cQuery += " THEN   " 
-	cQuery += " B1_LOCPAD   " 
-	cQuery += " ELSE   " 
-	cQuery += " (SELECT BZ_LOCPAD FROM  " + RetSqlName("SBZ") + "  AS SBZ (NOLOCK) WHERE SBZ.D_E_L_E_T_ = '' AND SBZ.BZ_FILIAL = D2_FILIAL AND SBZ.BZ_COD = D2_COD)   " 
-	cQuery += " END AS LOCPAD,   " 
-	cQuery += " D2_TIPO AS TIPODOC,   " 
-	cQuery += " CONVERT(VARCHAR(10),CAST(D2_EMISSAO AS DATE),103) AS DT_EMISSAO,   " 
-	cQuery += " '' AS DT_DIGIT, " 
-	cQuery += " B1_DESC " 
-	cQuery += " FROM     " 
-	cQuery += " " + RetSqlName("SD2") + "   AS SD2 (NOLOCK)     " 
-	cQuery += " INNER JOIN     " 
-	cQuery += " " + RetSqlName("SB1") + "   AS SB1 (NOLOCK)     " 
-	cQuery += " ON D2_COD = B1_COD      " 
-	cQuery += " INNER JOIN     " 
-	cQuery += " " + RetSqlName("SA1") + "   AS SA1 (NOLOCK)     " 
-	cQuery += " ON D2_CLIENTE = A1_COD     " 
-	cQuery += " AND D2_LOJA = A1_LOJA  " 
-	cQuery += " INNER JOIN " 
-	cQuery += " " + RetSqlName("SF4") + " AS SF4 (NOLOCK) " 
-	cQuery += " ON D2_TES = F4_CODIGO  " 
-	cQuery += " WHERE     " 
-	cQuery += " SD2.D_E_L_E_T_ = ''     " 
-	cQuery += " AND SB1.D_E_L_E_T_ = ''      " 
-	cQuery += " AND SA1.D_E_L_E_T_ = ''    " 
-	cQuery += " AND SF4.D_E_L_E_T_ = '' " 
-	cQuery += " AND F4_ESTOQUE = 'S' " 
-	cQuery += " AND SD2.D2_EMISSAO >= '" + cData + "'   " 
-	cQuery += " ) AS SAIDA    " 
-	cQuery += "    " 
-	cQuery += " WHERE     " 
-	cQuery += " SAIDA.D2_LOCAL <> SAIDA.LOCPAD     " */
 	cQuery += " ) AS FONTE     " 
-	cQuery += " ORDER BY FONTE.TIPO, FONTE.DT_EMISSAO, FONTE.DT_DIGIT, FONTE.D1_FORNECE "  
+	cQuery += " ORDER BY FONTE.TIPO, FONTE.DT_DIGIT DESC " //FONTE.DT_EMISSAO 
+	*/
 
-	//
+	cQuery := ""
+	cQuery += " SELECT     "    
+	cQuery += " FONTE.TIPO,      "    
+	cQuery += " FONTE.D1_FILIAL AS FILIAL,     "     
+	cQuery += " FONTE.TIPODOC,      "
+	cQuery += " CONVERT(VARCHAR(10),CAST(FONTE.D1_EMISSAO AS DATE),103) AS DT_EMISSAO,     "  
+	cQuery += " CONVERT(VARCHAR(10),CAST(FONTE.D1_DTDIGIT AS DATE),103) AS DT_DIGIT,       "
+	cQuery += " FONTE.D1_DOC AS DOC,      "
+	cQuery += " FONTE.D1_SERIE AS SERIE,  " 
+	cQuery += " FONTE.D1_FORNECE AS CODFORCLI,  "   
+	cQuery += " FONTE.D1_LOJA AS LOJA,  "     
+	cQuery += " FONTE.A2_NOME AS NOME,  "      
+	cQuery += " FONTE.D1_CONTA AS CONTA_DOC,  "      
+	cQuery += " FONTE.B1_CONTA AS CONTA_CAD,  "      
+	cQuery += " FONTE.D1_COD AS PRODUTO,  "  
+	cQuery += " FONTE.B1_DESC AS DESCPRD,  "     
+	cQuery += " FONTE.D1_LOCAL AS LOCAL_DOC,  "     
+	cQuery += " FONTE.LOCPAD AS LOCAL_PRD, FONTE.D1_TIPO AS TIPO_DOC  "
+	cQuery += " FROM     " 
+	cQuery += " (   " 
+	cQuery += " SELECT  "    
+	cQuery += " 'ENTRADA' AS TIPO,*  "     
+	cQuery += " FROM     " 
+	cQuery += " (   " 
+	cQuery += " SELECT  "     
+	cQuery += " D1_FILIAL, D1_DOC, D1_SERIE, "     
+	cQuery += " D1_FORNECE, D1_LOJA, A2_NOME,  "   
+	cQuery += " D1_CONTA, B1_CONTA, D1_COD, D1_LOCAL , "   
+	cQuery += " CASE WHEN  "  
+	cQuery += " (SELECT BZ_LOCPAD FROM   " + RetSqlName("SBZ") + "   AS SBZ (NOLOCK) WHERE SBZ.D_E_L_E_T_ = '' AND SBZ.BZ_FILIAL = D1_FILIAL AND SBZ.BZ_COD = D1_COD) IS NULL " 
+	cQuery += " THEN "  
+	cQuery += " B1_LOCPAD "  
+	cQuery += " ELSE   "
+	cQuery += " (SELECT BZ_LOCPAD FROM   " + RetSqlName("SBZ") + "   AS SBZ (NOLOCK) WHERE SBZ.D_E_L_E_T_ = '' AND SBZ.BZ_FILIAL = D1_FILIAL AND SBZ.BZ_COD = D1_COD) "  
+	cQuery += " END AS LOCPAD, "  
+	cQuery += " D1_TIPO AS TIPODOC,  "
+	cQuery += " D1_EMISSAO, "
+	cQuery += " D1_DTDIGIT, "
+	cQuery += " B1_DESC, D1_TIPO "
+	cQuery += " FROM   "  
+	cQuery += " " + RetSqlName("SD1") + "   AS SD1 (NOLOCK)     "   
+	cQuery += " INNER JOIN  "    
+	cQuery += " " + RetSqlName("SB1") + "  AS SB1 (NOLOCK)     " 
+	cQuery += " ON D1_COD = B1_COD  "    
+	cQuery += " INNER JOIN  "   
+	cQuery += " " + RetSqlName("SA2") + "   AS SA2 (NOLOCK)     "  
+	cQuery += " ON D1_FORNECE = A2_COD  "    
+	cQuery += " AND D1_LOJA = A2_LOJA "  
+	cQuery += " INNER JOIN "
+	cQuery += " " + RetSqlName("SF4") + " AS SF4 (NOLOCK) " 
+	cQuery += " ON D1_TES = F4_CODIGO   "
+	cQuery += " WHERE "    
+	cQuery += " SD1.D_E_L_E_T_ = '' "   
+	cQuery += " AND SB1.D_E_L_E_T_ = '' "     
+	cQuery += " AND SA2.D_E_L_E_T_ = '' "    
+	cQuery += " AND SD1.D1_DTDIGIT >= '" + cData + "'  " 
+	cQuery += " AND SF4.D_E_L_E_T_ = '' " 
+	cQuery += " AND F4_ESTOQUE = 'S' "
+	cQuery += " ) AS ENTRADA WHERE  "  
+	cQuery += " ENTRADA.D1_LOCAL <> ENTRADA.LOCPAD "
+	cQuery += " ) AS FONTE "
+	cQuery += " ORDER BY FONTE.TIPO,FONTE.D1_DTDIGIT DESC "
+
 	RestArea(aArea)
 
 Return cQuery
@@ -316,7 +329,6 @@ Static Function processarEmail(cAssunto,cMensagem,email)
 	Local lOk           := .T.
 	Local cBody         := cMensagem
 	Local cErrorMsg     := ""
-	Local aFiles        := {}
 	Local cServer       := Alltrim(GetMv("MV_RELSERV"))
 	Local cAccount      := AllTrim(GetMv("MV_RELACNT"))
 	Local cPassword     := AllTrim(GetMv("MV_RELPSW"))
@@ -388,9 +400,6 @@ Return Nil
 */
 Static Function logZBN(cStatus)
 
-	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
-	//ณ Declara็ใo de variแvies.
-	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
 	Local aArea	:= GetArea()
 
 	DbSelectArea("ZBN") 

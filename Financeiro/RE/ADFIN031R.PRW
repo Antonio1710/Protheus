@@ -12,6 +12,7 @@
 	@history Adriana 27/05/2019 TI-Voltamos a versao de 14/11/2018 antes da inclusao da funcao Sleep 
 	@history Adriana 30/05/2019 TI-Ajuste para execucao via ADFIN030P
 	@history Everson 10/03/2020 Chamado 054162. Envio de relatório Faturamento x Kg.
+	@history Leonardo P. Monteiro 20/08/2021 Chamado 18632. Adequação das queries trocando os nomes da tabela por Retsqlname.
 	/*/
 User Function ADFIN031R() // U_ADFIN031R()
 
@@ -26,11 +27,11 @@ User Function ADFIN031R() // U_ADFIN031R()
 	Local cEmailSp	:= ""
 	Local cUser		:= ""
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório Posição de Carteira.')
-	
 	//Inicia o ambiente. //	Desabilitado por Adriana em 30/05/2019
-  	//RPCSetType(3)
-  	//RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
+  	RPCSetType(3)
+  	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório Posição de Carteira.')
 		
 	//	logZBN("1") //Log início. //	Desabilitado por Adriana em 30/05/2019
 		
@@ -90,7 +91,7 @@ User Function ADFIN031R() // U_ADFIN031R()
 	//	logZBN("2") //Log fim. //	Desabilitado por Adriana em 30/05/2019
 	
 	//Fecha o ambiente.
-	//RpcClearEnv() //	Desabilitado por Adriana em 30/05/2019
+	RpcClearEnv() //	Desabilitado por Adriana em 30/05/2019
 
 Return Nil
 /*/{Protheus.doc} gerarRelatorio
@@ -634,7 +635,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT " 
 	cQuery += " A1_FILIAL, A1_COD, A1_LOJA, A1_NOME, A1_NREDUZ, A1_VEND, A1_CGC, LEFT(A1_CGC,8) AS RAIZ_CGC, A1_LC, A1_MSBLQL, A1_DTCAD, A1_DTREAT, A1_COND, A1_REDE, A1_SATIV1 " 
 	cQuery += " FROM " 
-	cQuery += " SA1010 (NOLOCK) SA1 " 
+	cQuery += " "+ RetSqlName("SA1") +" (NOLOCK) SA1 " 
 	cQuery += " WHERE  " 
 	cQuery += " SA1.D_E_L_E_T_='' " 
 	cQuery += " AND A1_VEND = '" + Alltrim(cValToChar(cVendedor)) + "' " 
@@ -644,7 +645,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT    " 
 	cQuery += " E1_CLIENTE, E1_LOJA, SUM(E1_SALDO) AS E1_SALDO   " 
 	cQuery += " FROM    " 
-	cQuery += " SE1010 (NOLOCK) AS SE1   " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) AS SE1   " 
 	cQuery += " WHERE    " 
 	cQuery += " SE1.D_E_L_E_T_ = ''   " 
 	cQuery += " AND E1_SALDO > 0 " 
@@ -660,7 +661,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT      " 
 	cQuery += " ZF_CGCMAT, ZF_REDE, SUM(ZF_LCREDE) AS ZF_LCREDE     " 
 	cQuery += " FROM      " 
-	cQuery += " DADOSADV.dbo.SZF010 (NOLOCK) SZF     " 
+	cQuery += " "+ RetSqlName("SZF") +" (NOLOCK) SZF     " 
 	cQuery += " WHERE      " 
 	cQuery += " SZF.D_E_L_E_T_=''     " 
 	cQuery += " GROUP BY     " 
@@ -672,7 +673,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT    " 
 	cQuery += " E1_CLIENTE, E1_LOJA, MAX(E1_EMISSAO) AS E1_EMISSAO   " 
 	cQuery += " FROM    " 
-	cQuery += " SE1010 (NOLOCK) AS SE1   " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) AS SE1   " 
 	cQuery += " WHERE    " 
 	cQuery += " SE1.D_E_L_E_T_ = ''   " 
 	cQuery += " GROUP BY    " 
@@ -685,7 +686,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT  " 
 	cQuery += " E1_CLIENTE,E1_LOJA,SUM(E1_VALOR) AS E1_SALDO " 
 	cQuery += " FROM  " 
-	cQuery += " SE1010 (NOLOCK) AS SE1 " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) AS SE1 " 
 	cQuery += " WHERE  " 
 	cQuery += " SE1.D_E_L_E_T_ = '' " 
 	cQuery += " AND E1_TIPO IN ('NF ','NCI','NDC') " 
@@ -701,7 +702,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT  " 
 	cQuery += " E1_CLIENTE,E1_LOJA,SUM(E1_SALDO) AS E1_SALDO " 
 	cQuery += " FROM  " 
-	cQuery += " SE1010 (NOLOCK) AS SE1 " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) AS SE1 " 
 	cQuery += " WHERE  " 
 	cQuery += " SE1.D_E_L_E_T_ = '' " 
 	cQuery += " AND E1_TIPO IN ('NCC') " 
@@ -748,9 +749,9 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " A1_VEND, " 
 	cQuery += " A3_SUPER " 
 	cQuery += " FROM      " 
-	cQuery += " SA1010 (NOLOCK) AS SA1   " 
+	cQuery += " "+ RetSqlName("SA1") +" (NOLOCK) AS SA1   " 
 	cQuery += " INNER JOIN " 
-	cQuery += " SA3010 (NOLOCK) AS SA3 " 
+	cQuery += " "+ RetSqlName("SA3") +" (NOLOCK) AS SA3 " 
 	cQuery += " ON A1_VEND = A3_COD   " 
 	cQuery += " WHERE      " 
 	cQuery += " SA1.D_E_L_E_T_='' " 
@@ -764,7 +765,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT      " 
 	cQuery += " E1_CLIENTE, E1_LOJA, MAX(E1_EMISSAO) AS E1_EMISSAO " 
 	cQuery += " FROM      " 
-	cQuery += " SE1010 (NOLOCK) AS SE1     " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) AS SE1     " 
 	cQuery += " WHERE      " 
 	cQuery += " SE1.D_E_L_E_T_= ''      " 
 	cQuery += " AND E1_EMISSAO > '20130508'      " 
@@ -779,7 +780,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " SELECT      " 
 	cQuery += " ZF_CGCMAT, ZF_REDE, SUM(ZF_LCREDE) AS ZF_LCREDE     " 
 	cQuery += " FROM      " 
-	cQuery += " DADOSADV.dbo.SZF010 (NOLOCK) SZF     " 
+	cQuery += " "+ RetSqlName("SZF") +" (NOLOCK) SZF     " 
 	cQuery += " WHERE      " 
 	cQuery += " SZF.D_E_L_E_T_=''     " 
 	cQuery += " GROUP BY     " 
@@ -797,7 +798,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " E1_CLIENTE,E1_LOJA, SUM(E1_SALDO) AS E1_SALDO, " 
 	cQuery += " SUM(CASE WHEN CAST(E1_VENCREA AS DATE) < CAST(GETDATE() AS DATE) THEN E1_SALDO ELSE 0 END) AS ATRASO " 
 	cQuery += " FROM  " 
-	cQuery += " SE1010 (NOLOCK) SE1 " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) SE1 " 
 	cQuery += " WHERE  " 
 	cQuery += " (SE1.D_E_L_E_T_=' ')  " 
 	cQuery += " AND E1_SALDO>0 " 
@@ -813,7 +814,7 @@ Static Function scriptResumo(cVendedor)
 	cQuery += " E1_CLIENTE,E1_LOJA,SUM(E1_VALOR) AS E1_VALOR, " 
 	cQuery += " SUM(CASE WHEN E1_PORTADO <> 'P13' AND CAST(E1_VENCREA AS DATE) < CAST(GETDATE() AS DATE)THEN E1_SALDO ELSE 0 END) AS VENCIDO " 
 	cQuery += " FROM  " 
-	cQuery += " SE1010 (NOLOCK) SE1 " 
+	cQuery += " "+ RetSqlName("SE1") +" (NOLOCK) SE1 " 
 	cQuery += " WHERE  " 
 	cQuery += " SE1.D_E_L_E_T_ = ''  " 
 	cQuery += " AND E1_TIPO IN ('NF ','NCI','NDC') " 
@@ -2259,7 +2260,9 @@ Static Function enviarEmail(cAssunto,cMensagem,cEmailVd,cAtach)
 	 If lOk .And. lAutOk   
 	    
 	    //Envia o e-mail.     
-	    Send Mail From cFrom To cTo Subject cSubject Body cBody ATTACHMENT cAtach Result lOk  
+	    //Send Mail From cFrom To "leonardo.monteiro@adoro.com.br" Subject cSubject Body cBody ATTACHMENT cAtach Result lOk
+		Send Mail From cFrom To cTo Subject cSubject Body cBody ATTACHMENT cAtach Result lOk
+		
 	     
 	    //Tratamento de erro no envio do e-mail.          
 	    If !lOk

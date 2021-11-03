@@ -12,7 +12,9 @@
 	@history Chamado 060417 - Everson  - 13/08/2020 - melhoria de performance.
 	@history Ticket  8      - Abel B.  - 29/01/2021 - Execução de forma automática na Inclusão e Alteração do Pedido de Venda
 	@history Ticket  8      - Abel B.  - 02/02/2021 - Acrescentada informação dos pedidos ainda não processados
-	/*/
+	@history Ticket  63149  - Sigoli   - 01/11/2021 - InterFunctionCall: cannot find function TCSQLERRO in AppMap on PROCATU -- Corrigido o nome da função PARA: TCSQLERROR
+/*/
+
 User Function ADFIN019P() // U_ADFIN019P()
 
 	//Variáveis.
@@ -73,10 +75,9 @@ Static Function ProcAtu()
 
 	//Everson - 13/08/2020. Chamado 060417.
 	If TcSqlExec(cQuery) < 0 
-		MsgStop("Ocorreu erro ao efetuar update." + Chr(13) + Chr(10) + TcSqlErro(),"Função ProcAtu(ADFIN019P)")
+		MsgStop("Ocorreu erro ao efetuar update." + Chr(13) + Chr(10) + TCSQLERROR(),"Função ProcAtu(ADFIN019P)") // Tkt - 63149 - Fernando Sigoli - Corrigido o nome da função DE :TCSQLERRO  PARA: TCSQLERROR
 		RestArea(aArea)
 		Return Nil
-
 	EndIf
 
 	//

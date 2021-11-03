@@ -6,124 +6,127 @@
 	@author William Costa
 	@since 30/11/2020
 	@version 01	
-    @history Ticket 4928 - William Costa - 01/12/2020 - Identificado que o campo Tipo da Solicitação de OP, não é utilizado, o que é utilizado mesmo é o numero da Ordem de Solicitação + Fixo 'OS001', então foi alterado o ponto de entrada e o erro solucionado.
+    @history Ticket  4928 - William Costa - 01/12/2020 - Identificado que o campo Tipo da Solicitação de OP, não é utilizado, o que é utilizado mesmo é o numero da Ordem de Solicitação + Fixo 'OS001', então foi alterado o ponto de entrada e o erro solucionado.
+	@history Ticket 15804 - Rodrigo Romão - 27/08/2021 - tratamento neste fonte para atender a demana do p.e - NGTERMOT
 /*/
- 
-USER FUNCTION MNT40011()
- 
-    Local lRet     := .T.
-    Local aArea    := GetArea()
-    Local aAreaSTJ := STJ->(GetArea())
-    
-    // *** INICIO VERIFICA SE A SOLICITACAO DE ARMAZEM FOI BAIXADA OU ENCERRADA
-    SqlSCP(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
 
-    TRC->(DbGoTop())
-    While !TRC->(EOF()) 
-        
-        IF lRet == .T.
+USER FUNCTION MNT40011(cNomeJanela)
 
-            MsgStop("OLÁ " + Alltrim(cUserName) + ", S.A da Ordem de Serviço, ainda não foi baixada ou Encerrada, Numero da S.A: " + TRC->CP_NUM + "/" + TRC->CP_ITEM + " por favor, verifique.", "MNT40011-02  - Finalizar Ordem de Serviço ")
-            lRet := .F.
+	Local lRet     			:= .T.
+	Local aArea    			:= GetArea()
+	Local aAreaSTJ 			:= STJ->(GetArea())
+	local cOpcRotina 		:= Alltrim(iif(cNomeJanela <> nil, 'Cancelar', 'Finalizar'))
+	default cNomeJanela := "MNT40011"
 
-        ELSE  
+	// *** INICIO VERIFICA SE A SOLICITACAO DE ARMAZEM FOI BAIXADA OU ENCERRADA
+	SqlSCP(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
 
-            EXIT  
+	TRC->(DbGoTop())
+	While !TRC->(EOF())
 
-        ENDIF    
+		IF lRet == .T.
 
-        TRC->(DBSKIP())    
+			MsgStop("OLÁ " + Alltrim(cUserName) + ", S.A da Ordem de Serviço, ainda não foi baixada ou Encerrada, Numero da S.A: " + TRC->CP_NUM + "/" + TRC->CP_ITEM + " por favor, verifique.", Alltrim(cNomeJanela) + "-02 - " + cOpcRotina + " Ordem de Serviço ")
+			lRet := .F.
 
-    ENDDO
-    TRC->(DbCloseArea())	
-    
-    // *** FINAL VERIFICA SE A SOLICITACAO DE ARMAZEM FOI BAIXADA OU ENCERRADA
-    
-    // *** INICIO VERIFICA SE A NOTA FISCAL DE ENTRADA FOI DADA ENTRADA CORRETAMENTE
-    IF lRet == .T.
+		ELSE
 
-        SqlSD1(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
+			EXIT
 
-        TRD->(DbGoTop())
-        While !TRD->(EOF()) 
+		ENDIF
 
-            IF lRet == .T.
+		TRC->(DBSKIP())
 
-                MsgStop("OLÁ " + Alltrim(cUserName) + ", Nota Fiscal de Compra da Ordem de Serviço, ainda não dada Entrada, Numero do P.C: " + TRD->D1_DOC + " por favor, verifique.", "MNT40011-09  - Finalizar Ordem de Serviço ")
-                lRet := .F.
+	ENDDO
+	TRC->(DbCloseArea())
 
-            ELSE  
+	// *** FINAL VERIFICA SE A SOLICITACAO DE ARMAZEM FOI BAIXADA OU ENCERRADA
 
-                EXIT  
+	// *** INICIO VERIFICA SE A NOTA FISCAL DE ENTRADA FOI DADA ENTRADA CORRETAMENTE
+	IF lRet == .T.
 
-            ENDIF    
-            
-            TRD->(DBSKIP())    
+		SqlSD1(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
 
-        ENDDO
-        TRD->(DbCloseArea())
+		TRD->(DbGoTop())
+		While !TRD->(EOF())
 
-    ENDIF
-    // *** FINAL VERIFICA SE A NOTA FISCAL DE ENTRADA FOI DADA ENTRADA CORRETAMENTE
-    
-    // *** INICIO VERIFICA SE A SOLICITACAO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
-    IF lRet == .T.
+			IF lRet == .T.
 
-        SqlSC1(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
+				MsgStop("OLÁ " + Alltrim(cUserName) + ", Nota Fiscal de Compra da Ordem de Serviço, ainda não dada Entrada, Numero do P.C: " + TRD->D1_DOC + " por favor, verifique.", Alltrim(cNomeJanela) + "-09 - " + cOpcRotina + " Ordem de Serviço ")
+				lRet := .F.
 
-        TRE->(DbGoTop())
-        While !TRE->(EOF()) 
+			ELSE
 
-            IF lRet == .T.
+				EXIT
 
-                MsgStop("OLÁ " + Alltrim(cUserName) + ", S.C da Ordem de Serviço, ainda não foi baixada ou Eliminada Residuo, Numero da S.C: " + TRE->C1_NUM + "/" + TRE->C1_ITEM + " por favor, verifique.", "MNT40011-05  - Finalizar Ordem de Serviço ")
-                lRet := .F.
+			ENDIF
 
-            ELSE  
+			TRD->(DBSKIP())
 
-                EXIT  
+		ENDDO
+		TRD->(DbCloseArea())
 
-            ENDIF   
+	ENDIF
+	// *** FINAL VERIFICA SE A NOTA FISCAL DE ENTRADA FOI DADA ENTRADA CORRETAMENTE
 
-            TRE->(DBSKIP())    
+	// *** INICIO VERIFICA SE A SOLICITACAO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
+	IF lRet == .T.
 
-        ENDDO
-        TRE->(DbCloseArea())
-    ENDIF
-    // *** FINAL VERIFICA SE A SOLICITACAO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
-    
-    // *** INICIO VERIFICA SE O PEDIDO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
-    IF lRet == .T.
+		SqlSC1(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
 
-        SqlSC7(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
+		TRE->(DbGoTop())
+		While !TRE->(EOF())
 
-        TRF->(DbGoTop())
-        While !TRF->(EOF()) 
+			IF lRet == .T.
 
-            IF lRet == .T.
+				MsgStop("OLÁ " + Alltrim(cUserName) + ", S.C da Ordem de Serviço, ainda não foi baixada ou Eliminada Residuo, Numero da S.C: " + TRE->C1_NUM + "/" + TRE->C1_ITEM + " por favor, verifique.", Alltrim(cNomeJanela) + "-05  - " + cOpcRotina + " Ordem de Serviço ")
+				lRet := .F.
 
-                MsgStop("OLÁ " + Alltrim(cUserName) + ", Pedido de Compra da Ordem de Serviço, ainda não foi baixada ou Eliminada Residuo, Numero do P.C: " + TRF->C7_NUM + "/" + TRF->C7_ITEM + " por favor, verifique.", "MNT40011-07  - Finalizar Ordem de Serviço ")
-                lRet := .F.
+			ELSE
 
-            ELSE  
+				EXIT
 
-                EXIT  
+			ENDIF
 
-            ENDIF   
-            
-            TRF->(DBSKIP())    
+			TRE->(DBSKIP())
 
-        ENDDO
-        TRF->(DbCloseArea())
-    ENDIF
-    // *** FINAL VERIFICA SE O PEDIDO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO	
+		ENDDO
+		TRE->(DbCloseArea())
+	ENDIF
+	// *** FINAL VERIFICA SE A SOLICITACAO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
 
-    RestArea(aArea)
-    RestArea(aAreaSTJ)
-         
+	// *** INICIO VERIFICA SE O PEDIDO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
+	IF lRet == .T.
+
+		SqlSC7(STJ->TJ_FILIAL,STJ->TJ_ORDEM + 'OS' + "001")
+
+		TRF->(DbGoTop())
+		While !TRF->(EOF())
+
+			IF lRet == .T.
+
+				MsgStop("OLÁ " + Alltrim(cUserName) + ", Pedido de Compra da Ordem de Serviço, ainda não foi baixada ou Eliminada Residuo, Numero do P.C: " + TRF->C7_NUM + "/" + TRF->C7_ITEM + " por favor, verifique.", Alltrim(cNomeJanela) + "-07  - " + cOpcRotina + " Ordem de Serviço ")
+				lRet := .F.
+
+			ELSE
+
+				EXIT
+
+			ENDIF
+
+			TRF->(DBSKIP())
+
+		ENDDO
+		TRF->(DbCloseArea())
+	ENDIF
+	// *** FINAL VERIFICA SE O PEDIDO DE COMPRA FOI ENCERRADA OU ELIMINADA RESIDUO
+
+	RestArea(aArea)
+	RestArea(aAreaSTJ)
+
 RETURN(lRet)
 
-Static Function SqlSCP(cFilAtu,cOp)  
+Static Function SqlSCP(cFilAtu,cOp)
 
 	BeginSQL Alias "TRC"
 		     %NoPARSER%
@@ -153,8 +156,8 @@ Static Function SqlSD1(cFilAtu,cOp)
                     D1_FORNECE,
                     D1_LOJA,
                     F1_STATUS 
-               FROM SD1010 SD1 WITH(NOLOCK)
-         INNER JOIN SF1010 SF1 WITH(NOLOCK)
+               FROM %TABLE:SD1% SD1 WITH(NOLOCK)
+         INNER JOIN %TABLE:SF1% SF1 WITH(NOLOCK)
                  ON F1_FILIAL       = D1_FILIAL
                 AND F1_DOC          = D1_DOC
                 AND F1_SERIE        = D1_SERIE

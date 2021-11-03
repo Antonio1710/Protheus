@@ -7,6 +7,7 @@
 	@since 18/05/2021
 	@version 1
 	@history Ticket TI      - Abel Babini - Ajuste na query causava error.log
+	@history Ticket 18552   - Abel babini - 27/08/2021 - Ajuste para geração do DIPAM no SPED Fiscal filtrando notas de formulário próprio
 	/*/
 User Function SPED1400()
 
@@ -98,12 +99,13 @@ Else
 Endif
 
 cAliasQry:=GetNextAlias()
-		
+
+//Ticket 18552   - Abel babini - 27/08/2021 - Ajuste para geração do DIPAM no SPED Fiscal filtrando notas de formulário próprio
 BeginSql Alias cAliasQry
  	SELECT	
 			A2_EST		AS ESTADO,
 			A2_COD_MUN  AS CODMUN,
-			SUM(D1_TOTAL)	AS TOTAL,
+			SUM(D1_TOTAL-D1_VALDESC)	AS TOTAL,
 			F09_CODIPM	AS CDIPAM
 	FROM %table:SD1% SD1
 	LEFT JOIN %table:SA2% SA2 ON
@@ -118,7 +120,9 @@ BeginSql Alias cAliasQry
 	WHERE %Exp:cWhere%  
 		AND D1_FILIAL BETWEEN %Exp:cFilDe% AND %Exp:cFilAte%
 		AND SD1.%notDel%
-		AND D1_EMISSAO BETWEEN %Exp:dDataDe% AND %Exp:dDataAte%
+		AND D1_DTDIGIT BETWEEN %Exp:dDataDe% AND %Exp:dDataAte%
+		AND D1_CF IN ('1101','1456')
+		AND D1_FORMUL = 'S'
 		AND F09_CODIPM <> ''
 	GROUP BY A2_EST, A2_COD_MUN, F09_CODIPM
 	ORDER BY A2_EST, A2_COD_MUN, F09_CODIPM

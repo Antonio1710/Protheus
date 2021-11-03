@@ -16,6 +16,7 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Chamado 18022 - Leonardo P. Monteiro - 06/08/2021 - Correção do error.log da variável não declarada nAcrec.
 /*/
 User Function ADLFV005P()
 
@@ -112,8 +113,11 @@ User Function ZF4_Alte()
 	Local nTotPed   := ZF4->ZF4_TOTPED
 	Local cAcrec    := ZF4->ZF4_ACRESC
 	Local cTrevo    := ZF4->ZF4_TREVO
-	
+	//@history Chamado 18022 - Leonardo P. Monteiro - 06/08/2021 - Correção do error.log da variável não declarada nAcrec.
+	Local nAcrec	:= ZF4->ZF4_ACRESC
+
 	Private aButtons  := {}
+
 
 	U_ADINF009P('ADLFV005P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Manutenção/Cadastro de Distancias de Granjas')
 	

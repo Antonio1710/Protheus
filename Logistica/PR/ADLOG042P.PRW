@@ -68,6 +68,7 @@
 	@history Everson-21/02/2020-Ch:054941- Adicionada a função GetArea e filtros pela opção de execução.
 	@history Everson-12/08/2020-Ch:059326- Tratamento para geração de frete na empresa Ceres 02. 
 	@history Everson-20/07/2020-Ch:15478- Tratamento para geração de frete de subproduto na empresa Adoro 02 Filial 03.
+	@history Everson-20/07/2020-Ch:19127- Tratamento para geração de frete de subproduto na empresa Adoro 02 Filial 03 para subproduto.
 	/*/    
 User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr )
 	
@@ -131,18 +132,78 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 	ElseIf cTpCrg == "5" .And. cOpc == "1" //Frete Ração. //Everson-21/02/2020-Ch:054941.
 		U_ADLOG052P("2",cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 07/02/2020. Chamado 054941.
 
-	ElseIf Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0102" .Or. Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0201" .Or. ( Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0103" .And. !Empty(cRote) )//Frete combinado empresa 01, filial 02. //Everson - 07/02/2020. Chamado 0541941. //Everson - 12/08/2020. Chamado 059326. //Everson - 20/07/2021. Chamado 15478.
-		U_ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 21/01/2020. Chamado 054941.
+	ElseIf 	Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0102" .Or.;
+			Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0201"
+			
+			//Everson-10/09/2021-Ch:19127.
+			logZBE(" 3 - Geração de Frete " + cValToChar(cTpCrg) + " Emp/Filial " + cValToChar(cEmpAnt) + "/" + cValToChar(cFilAnt),"Pedido " + cValToChar(C5NUM) + " Nf " + F2DOC + " Serie " + F2SERIE)
+			//
+
+			U_ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 21/01/2020. Chamado 054941.
+
+	//Everson-10/09/2021-Ch:19127.
+	ElseIf Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0103" .And.;
+			!Empty(cRote) //Everson - 12/08/2020. Chamado 059326. //Everson - 20/07/2021. Chamado 15478.
+			
+		//
+		logZBE(" 4 - Geração de Frete " + cValToChar(cTpCrg) + " Emp/Filial " + cValToChar(cEmpAnt) + "/" + cValToChar(cFilAnt),"Pedido " + cValToChar(C5NUM) + " Nf " + F2DOC + " Serie " + F2SERIE)
+		
+		//
+		If U_ADLOG421(cFilAnt, C5NUM) //Frete de subproduto.
+			U_ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 21/01/2020. Chamado 054941.
+
+		EndIf
 
 	EndIf
 
 	//Everson-21/02/2020-Ch:054941.
-	logZBE(" 3 - Geração de Frete " + cValToChar(cTpCrg) + " Emp/Filial " + cValToChar(cEmpAnt) + "/" + cValToChar(cFilAnt),"Pedido " + cValToChar(C5NUM) + " Nf " + F2DOC + " Serie " + F2SERIE)
+	logZBE(" 5 - Geração de Frete " + cValToChar(cTpCrg) + " Emp/Filial " + cValToChar(cEmpAnt) + "/" + cValToChar(cFilAnt),"Pedido " + cValToChar(C5NUM) + " Nf " + F2DOC + " Serie " + F2SERIE)
 
 	//
 	RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ADLOG421
+	Função checa se há subproduto no pedido. 
+	@type  Function
+	@author Everson
+	@since 10/09/21
+	@version 01
+	/*/
+User Function ADLOG421(cFil, cPedido)
+
+	//Declaração de variáveis. 
+	Local aArea 	:= GetArea()
+	Local cAliasSC6 := GetNextAlias()
+	Local cQuery 	:= ""
+	Local cSubPrd	:= GetMv("MV_SUBPROD")
+	Local lRet 		:= .F.
+
+	//
+	cQuery += "SELECT  " 
+	cQuery += "COUNT(C6_PRODUTO) AS QTD_PROD  " 
+	cQuery += "FROM  " 
+	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 " 
+	cQuery += "WHERE  " 
+	cQuery += "C6_FILIAL = '" + cFil + "'  " 
+	cQuery += "AND C6_NUM = '" + cPedido + "' " 
+	cQuery += "AND C6_PRODUTO IN (" + cSubPrd + ") " 
+	cQuery += "AND SC6.D_E_L_E_T_ = '' " 
+
+	//
+	DbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), cAliasSC6, .T., .T.)
+	DbSelectArea(cAliasSC6)
+	(cAliasSC6)->(DbGoTop())
+	If Val(cValToChar((cAliasSC6)->QTD_PROD)) > 0
+		lRet := .T. 
+
+	EndIf
+	(cAliasSC6)->(DbCloseArea())
+
+	//
+	RestArea(aArea)
+
+Return lRet
 /*/{Protheus.doc} logZBE
 	Rotina para gerar log na tabela ZBE. Chamado 044314. 
 	@type  Static Function

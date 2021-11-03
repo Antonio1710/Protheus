@@ -36,6 +36,7 @@
     @history Ticket     39  - Fernando Macieira - 12/11/2020 - Projeto RM
     @history Ticket     TI  - William Costa     - 27/11/2020 - Ajuste na Função que gera o Codigo do Fornecedor quando o campo RM está marcado pois na RNX2 não tinha nenhum fornecedor ainda cadastrado com F, a variavel de retorno trazia branco, ajustado o IF e adicionado um Else
     @history Ticket    6648 - Adriano Savoine   - 15/12/2020 - Eliminado da Static Function o Metodo FreeChildren pois ele elimina todos os objetos da classe e causava error log ao mudar o combo produtor rural.
+    @history Ticket     TI  - Abel Babini       - 28/09/2021 - Para não calcular exclusão do ICMS da base de Pis e Cofins nas entradas. Conteúdo Padrão do campo deve ser 5
 /*/
 
 User Function ADCOM015P() 
@@ -729,7 +730,10 @@ Static Function salva_con( cNomeFor , cNomeFan , cEnd , cBairro, cCodCid , cCida
         SA2->A2_INDRUR := IIf( oCombo2:aItems[oCombo2:NAT] = 'Sim' , '1' , '0' ) //Ticket     35  -  Adriana Oliveira- 28/09/2020
         SA2->A2_XPR := IIf( oCombo2:aItems[oCombo2:NAT] = 'Sim' , '1' , '2' )
         SA2->A2_XDI := Iif( oCombo3:aItems[oCombo3:NAT] = 'Sim'.AND.oCombo2:aItems[oCombo2:NAT] = 'Sim' , '1' , '2' )
-        SA2->A2_XBLQZCL := '2'                          
+        SA2->A2_XBLQZCL := '2'  
+
+        //Ticket     TI  - Abel Babini       - 28/09/2021 - Para não calcular exclusão do ICMS da base de Pis e Cofins nas entradas. Conteúdo Padrão do campo deve ser 5
+        SA2->A2_DEDBSPC := '5'
         
         /* Desabilitado pois nao utilizamos mais a GETSX8NUM - por Adriana em 10/08/2020
         // Chamado n. 049218 || OS 050526 || FINANCAS || ANDREA || 8319 || CAD. FORNECEDOR - fwnm - 28/08/2019

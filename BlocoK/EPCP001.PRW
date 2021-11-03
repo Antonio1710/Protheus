@@ -1,88 +1,67 @@
 #INCLUDE "EPCP001.CH"
 #INCLUDE "PROTHEUS.CH"     
 #INCLUDE "topconn.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Fun‡…o    ³ EPCP001  ³ Autor ³ Erike Yuri da Silva   ³ Data ³26/01/2006³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡…o ³ Programa de digitacao do inventario dia CMP             ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Uso      ³ CMP                                                     ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³         ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL.             ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Programador ³ Data   ³  Motivo da Alteracao                            ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Eduardo Fer ³03.08.06³Adaptacao conforme solicitacao Pacote C0012      ³±±
-±±³            ³        ³                                                 ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/            
+
+/*/{Protheus.doc} User Function EPCP001
+	Programa de digitacao do inventario dia CMP
+	@type  Function
+	@author Erike Yuri da Silva
+	@since 02/08/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 15798 - Fernando Macieira - 02/08/2021 - OTIMIZAÇÃO ROTINA EPCP001
+	@history ticket 18340 - Fernando Macieira - 17/08/2021 - Tratamento de vírgula e pontuação 
+	@history ticket 62623 - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
+/*/
 User Function EPCP001(aRotAuto)
-Local lRet := .T.
-Local aCores	:= {	{'ZAM->ZAM_STATUS=="1"'	, 'ENABLE'    },; // Nao Processado
-						{'ZAM->ZAM_STATUS=="2"'	, 'DISABLE'     },; // Processado
-						{'ZAM->ZAM_STATUS=="3"'	, 'BR_AMARELO' },; // Estornado						 
-						{'ZAM->ZAM_STATUS=="4"'	, 'BR_CINZA' }}  // Erro ao Processar
 
-Private aRotina := Menudef()
-						
+	Local lRet := .T.
+	Local aCores	:= {	{'ZAM->ZAM_STATUS=="1"'	, 'ENABLE'    },; // Nao Processado
+							{'ZAM->ZAM_STATUS=="2"'	, 'DISABLE'     },; // Processado
+							{'ZAM->ZAM_STATUS=="3"'	, 'BR_AMARELO' },; // Estornado						 
+							{'ZAM->ZAM_STATUS=="4"'	, 'BR_CINZA' }}  // Erro ao Processar
 
-						
+	Private aRotina := Menudef()
+	Private lInvAuto := ( aRotAuto <> NIL )
+	Private cCadastro := OemToAnsi(STR0006)   //"Digita‡„o do Invent rio"
 
-Private lInvAuto := ( aRotAuto <> NIL )
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa de digitacao do inventario dia CMP')
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Define o cabecalho da tela de atualizacoes                   ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-Private cCadastro := OemToAnsi(STR0006)   //"Digita‡„o do Invent rio"
+	PutSx1("PCP001","01","Sugere informacoes inventario?","¿Sugiere informaciones inventario?","Suggest inventory information?","mv_ch1","N",1,0,1,"C","","","","",	"mv_par01","Sim","Si","Yes","","Nao","No","No","","","","","","","","","")
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa de digitacao do inventario dia CMP')
+	Pergunte("PCP001",.F.)
 
-
-//If !(  Substring(Alltrim(SM0->M0_CGC),1,8) $ "10216923|62355789|61161139")
-//	Alert ("Empresa não autorizada a utilizar o template de rateio de inventário")
-//	Return nil
-//EndIf      
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Verifica as perguntas selecionadas                           ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Variaveis utilizadas para parametros                         ³
-//³ mv_par01	     	// Sugere informacoes                    ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-PutSx1("PCP001","01","Sugere informacoes inventario?","¿Sugiere informaciones inventario?","Suggest inventory information?","mv_ch1","N",1,0,1,"C","","","","",	"mv_par01","Sim","Si","Yes","","Nao","No","No","","","","","","","","","")
-
-Pergunte("PCP001",.F.)
-
-If lInvAuto .AND. MsRotAuto(3,aRotAuto,"ZAM")
-	lRet := .F.
-EndIf
-
-If lRet
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Ativa tecla F12 para acionar perguntas                         ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	If ! lInvAuto
-	   Set Key VK_F12 To E001PERG()
+	If lInvAuto .AND. MsRotAuto(3,aRotAuto,"ZAM")
+		lRet := .F.
 	EndIf
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Endereca a funcao de BROWSE                                  ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	mBrowse( 6, 1,22,75,"ZAM",,,,,,aCores)
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Desativa tecla que aciona perguntas                            ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	If ! lInvAuto
-	   Set Key VK_F12 To
-	EndIf	
-EndIf	
-Return Nil
 
+	If lRet
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Ativa tecla F12 para acionar perguntas                         ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If ! lInvAuto
+			Set Key VK_F12 To E001PERG()
+		EndIf
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Endereca a funcao de BROWSE                                  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		mBrowse( 6, 1,22,75,"ZAM",,,,,,aCores)
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Desativa tecla que aciona perguntas                            ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If ! lInvAuto
+			Set Key VK_F12 To
+		EndIf	
+	
+	EndIf	
+
+Return Nil
 
 /*
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -1479,73 +1458,597 @@ Return .T.
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
-
 Static Function ValData(dData,dDataAte,cProd,cLocal,cEnderec,cLoteCtl,cNumLote,cNum)
-Local cQuery   := "" 
-Local lRet     := .T.
-Local dUltFech := SuperGetMv("MV_ULMES")
 
-cQuery := " SELECT ZAM_DATA AS DTAIN, ZAM_DTATE AS DTATE, ZAM_COD AS PROD, "
-cQuery += " ZAM_LOCAL AS LOC, ZAM_LOCALI AS ENDER, ZAM_NUM AS NUM "
-cQuery += " FROM "+ RetSQLName( "ZAM" ) 
-cQuery += " WHERE ZAM_DATA >= '" +Dtos(dUltFech)+ "' AND "
-cQuery += " ZAM_COD = '" +cProd+ "' AND ZAM_LOCAL = '" +cLocal+ "' AND "
+	Local cQuery   := "" 
+	Local lRet     := .T.
+	Local dUltFech := SuperGetMv("MV_ULMES")
 
-// Filtra por Endereco
-If Localiza(cProd)
-	cQuery += " ZAM_LOCALI = '" +cEnderec+ "' AND " 
-Endif
+	cQuery := " SELECT ZAM_DATA AS DTAIN, ZAM_DTATE AS DTATE, ZAM_COD AS PROD, "
+	cQuery += " ZAM_LOCAL AS LOC, ZAM_LOCALI AS ENDER, ZAM_NUM AS NUM "
+	cQuery += " FROM "+ RetSQLName( "ZAM" ) 
+	cQuery += " WHERE ZAM_DATA >= '" +Dtos(dUltFech)+ "' AND "
+	cQuery += " ZAM_COD = '" +cProd+ "' AND ZAM_LOCAL = '" +cLocal+ "' AND "
 
-// Filtra por Lote
-If Rastro(cProd) 
-	cQuery += " ZAM_LOTECT = '" +cLoteCtl+ "' AND "
-Endif
+	// Filtra por Endereco
+	If Localiza(cProd)
+		cQuery += " ZAM_LOCALI = '" +cEnderec+ "' AND " 
+	Endif
 
-// Filtra por Sub-Lote
-If Rastro(cProd,"S") 
-	cQuery += " ZAM_LOTECT = '" +cLoteCtl+ "' AND "
-	cQuery += " ZAM_NUMLOT = '" +cNumLote+ "' AND "
-Endif
+	// Filtra por Lote
+	If Rastro(cProd) 
+		cQuery += " ZAM_LOTECT = '" +cLoteCtl+ "' AND "
+	Endif
 
-cQuery += RetSQLName("ZAM")+ ".D_E_L_E_T_ = ' ' " 
-cQuery += " ORDER BY ZAM_COD,ZAM_LOCAL"
-cQuery := ChangeQuery( cQuery ) 
+	// Filtra por Sub-Lote
+	If Rastro(cProd,"S") 
+		cQuery += " ZAM_LOTECT = '" +cLoteCtl+ "' AND "
+		cQuery += " ZAM_NUMLOT = '" +cNumLote+ "' AND "
+	Endif
 
-If Select("TRBZAM") > 0
-	dbSelectArea("TRBZAM")
-	dbCloseArea()
-EndIf
-	
-TCQUERY cQuery NEW ALIAS "TRBZAM"      
-TcSetField("TRBZAM","DTAIN","D",8,0)
-TcSetField("TRBZAM","DTATE","D",8,0)
+	cQuery += RetSQLName("ZAM")+ ".D_E_L_E_T_ = ' ' " 
+	cQuery += " ORDER BY ZAM_COD,ZAM_LOCAL"
+	cQuery := ChangeQuery( cQuery ) 
 
-DbSelectArea("TRBZAM")
-TRBZAM->(DBGoTop()) 
-	
-If !EOF()
-	While !EOF()
-		If  (dData >= TRBZAM->DTAIN .And. dData <= TRBZAM->DTATE) .Or.;
-		    (dDataAte >= TRBZAM->DTAIN .And. dData <= TRBZAM->DTATE)
-			If TRBZAM->NUM <> cNum
-				lRet:= .F.
-				Exit
-			Endif	
-		Endif
-		TRBZAM->(DbSkip())
-	End	
-Endif
-TRBZAM->(DbCloseArea())
+	If Select("TRBZAM") > 0
+		dbSelectArea("TRBZAM")
+		dbCloseArea()
+	EndIf
+		
+	TCQUERY cQuery NEW ALIAS "TRBZAM"      
+	TcSetField("TRBZAM","DTAIN","D",8,0)
+	TcSetField("TRBZAM","DTATE","D",8,0)
+
+	DbSelectArea("TRBZAM")
+	TRBZAM->(DBGoTop()) 
+		
+	If !EOF()
+		While !EOF()
+			If  (dData >= TRBZAM->DTAIN .And. dData <= TRBZAM->DTATE) .Or.;
+				(dDataAte >= TRBZAM->DTAIN .And. dData <= TRBZAM->DTATE)
+				If TRBZAM->NUM <> cNum
+					lRet:= .F.
+					Exit
+				Endif	
+			Endif
+			TRBZAM->(DbSkip())
+		End	
+	Endif
+	TRBZAM->(DbCloseArea())
 
 Return(lRet)            
 
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 02/08/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function MenuDef()
 
-	Local aRotina :=  {	{"Pesquisar"	,"AxPesqui"   , 0 , 1   },;  
-						{"Visualizar"	,"u_EPCP001M" , 0 , 2   },; 
-						{"Incluir"	,"u_EPCP001M" , 0 , 3,17},;  
-						{"Alterar"	,"u_EPCP001M" , 0 , 4,17},;  
-						{"Excluir"	,"u_EPCP001M" , 0 , 5,17},;   
-						{"Historico"	,"u_EPCP005"  , 0 , 6,17},; 											
-						{"Legenda"	,"u_EPCP001M" , 0 , 7		} } 
+	Local aRotina :=  {	{"Pesquisar"	,"AxPesqui"   , 0 , 1   },;
+						{"Visualizar"	,"u_EPCP001M" , 0 , 2   },;
+						{"Incluir"	    ,"u_EPCP001M" , 0 , 3,17},;
+						{"Alterar"	    ,"u_EPCP001M" , 0 , 4,17},;
+						{"Excluir"	    ,"u_EPCP001M" , 0 , 5,17},;
+						{"Historico"	,"u_EPCP005"  , 0 , 6,17},;
+						{"Importa XLS"	,"u_ImpXLS1M" , 0 , 7,17},;
+						{"Legenda"	    ,"u_EPCP001M" , 0 , 8	} }
+
 RETURN(aRotina)
+
+/*/{Protheus.doc} User Function ImpXLS1M
+    Importa Inventário ZAM
+    @type  Function
+    @author Fernando Macieira
+    @since 02/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+	@ticket 15798 - Fernando Macieira - 02/08/2021 - OTIMIZAÇÃO ROTINA EPCP001
+/*/
+User Function ImpXLS1M()
+
+    Local lOk		:= .F.
+    Local alSay		:= {}
+    Local alButton	:= {}
+    Local clTitulo	:= 'IMPORTAÇÃO INVENTÁRIO'
+    Local clDesc1   := 'O objetivo desta rotina é gerar o inventário'
+    Local clDesc2   := 'na tabela ZAM a partir de um XLS'
+    Local clDesc3   := ''
+    Local clDesc4   := '( Necessário converter, previamente, esta planilha em arquivo CSV = Separado por ";" )'
+    Local clDesc5   := ''
+
+	Private cAliasTRB := ""
+
+    // Garanto uma única thread sendo executada
+    If !LockByName("IMPXSL1M", .T., .F.)
+        Alert("[IMPXSL1M] - Existe outro processamento sendo executado! Verifique...")
+        Return
+    EndIf
+
+    // Mensagens de Tela Inicial
+    aAdd(alSay, clDesc1)
+    aAdd(alSay, clDesc2)
+    aAdd(alSay, clDesc3)
+    aAdd(alSay, clDesc4)
+    aAdd(alSay, clDesc5)
+
+    // Botoes do Formatch
+    aAdd(alButton, {1, .T., {|| lOk := .T., FechaBatch()}})
+    aAdd(alButton, {2, .T., {|| lOk := .F., FechaBatch()}})
+
+    FormBatch(clTitulo, alSay, alButton)
+
+    If lOk
+        Processa( { || RunIMPZAM() }, "Importando inventário..." )
+    EndIf
+
+    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
+    //³Destrava a rotina para o usuário	    ?
+    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
+    UnLockByName("IMPXSL1M")
+
+Return
+
+/*/{Protheus.doc} Static Function RunIMPZAM
+    (long_description)
+    @type  Static Function
+    @author FWNM
+    @since 02/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function RunIMPZAM()
+
+    Local lFile     := .f.
+    Local nCount    := 0
+    Local aDadZAM   := {}
+    Local aCampos   := {}
+
+    Private cTxt        := ""
+    Private cRC1_NUMTIT := ""
+    Private nLinhaTXT   := 1 // Começo com 1 devido cabeçalho
+
+    cFile := cGetFile("Arquivos CSV (Separados por Vírgula) | *.CSV",;
+    ("Selecione o diretorio onde encontra-se o arquivo a ser processado"), 0, "Servidor\", .t., GETF_LOCALFLOPPY + GETF_LOCALHARD + GETF_NETWORKDRIVE)// + GETF_RETDIRECTORY)
+
+    If At(".CSV", upper(cFile)) > 0
+        lFile := .t.
+        ft_fUse(cFile)
+    Else
+        Aviso("EPCP001-01", "Não foi possível abrir o arquivo...", {"&Ok"},, "Arquivo não identificado!")
+    EndIf
+
+    // Arquivo TXT
+    If lFile
+        
+        ft_fGoTop()
+        
+        cVerTab := "DATA INICIAL;DATA FINAL;PRODUTO;ARMAZÉM;DOCUMENTO;QUANTIDADE;ENDEREÇO"
+        
+        cTxt := AllTrim( ft_fReadLn() )
+        
+        If cVerTab <> cTXT
+            
+            Aviso("EPCP001-02", "A importação não será realizada! As colunas do excel precisam ser " + cVerTab, {"&Ok"},, "Versão/Leiaute da planilha incorreta!")
+            
+        Else
+                    
+            If Select("TRB") > 0
+                TRB->( dbCloseArea() )
+            EndIf
+                
+            // Crio TRB para impressão
+            // https://tdn.totvs.com.br/display/framework/FWTemporaryTable
+            oTempTable := FWTemporaryTable():New("TRB")
+            
+            // Arquivo TRB - CONSISTÊNCIAS
+            aAdd( aCampos, {'NUMLINHA'   ,"C"    ,10 , 0} )
+            aAdd( aCampos, {'STATUS'     ,"C"    ,120, 0} )
+            aAdd( aCampos, {'LINHA'      ,"C"    ,254, 0} )
+            aAdd( aCampos, {'QUANT'      ,"N"    ,14 , 4} )
+            aAdd( aCampos, {'DOC'        ,"C"    ,6  , 0} )
+			aAdd( aCampos, {'NUM'        ,"C"    ,6  , 0} )
+
+            oTempTable:SetFields(aCampos)
+            oTempTable:AddIndex("01", {"DOC","NUM"} )
+            oTempTable:Create()
+
+            ProcRegua(0)
+
+            ft_fSkip() // Pula linha do cabeçalho
+            
+            // Consistência
+            Do While !ft_fEOF()
+                
+                IncProc( "Consistindo CSV... " + StrZero(nCount++, 9) )
+                
+                nLinhaTXT++
+                cTxt    := ft_fReadLn()
+                aDadZAM := Separa(cTxt, ";")
+
+                dZAM_DATA   := CtoD(aDadZAM[1])
+                dZAM_DTATE  := CtoD(aDadZAM[2])
+				cZAM_COD    := AllTrim(aDadZAM[3])
+                cZAMLOCAL   := AllTrim(aDadZAM[4])
+                cZAM_DOC    := Left(AllTrim(aDadZAM[5]),6)
+                nZAM_QUANT  := Val(StrTran(StrTran(aDadZAM[6],".",""),",",".")) // @history ticket 18340 - Fernando Macieira - 17/08/2021 - Tratamento de vírgula e pontuação 
+                cZAMLOCALI  := AllTrim(aDadZAM[7])
+
+                // Efetua consistências
+                lZAMOK := ChkDadZAM(aDadZAM)
+
+                aDadZAM := {}
+                
+                ft_fSkip()
+                
+            EndDo
+
+            TRB->( dbGoTop() )
+            If TRB->( !EOF() )
+
+                If msgYesNo("Consistência finalizada! Existem problemas nos dados que impediram a importação do inventário. Deseja listá-las agora?")
+                    ReportZAM()
+                EndIf
+            
+            Else
+
+                // Insere inventário
+                ProcRegua(0)
+
+                nCount  := 0
+                nLinhaTXT  := 0
+                aDadZAM := {}
+
+                ft_fGoTop()
+                ft_fSkip() // Pula linha do cabeçalho
+
+                // Importação
+                Do While !ft_fEOF()
+                    
+                    IncProc( "Incluindo inventário, CSV... " + StrZero(nCount++, 9) )
+                    
+                    nLinhaTXT++
+                    cTxt    := ft_fReadLn()
+                    aDadZAM := Separa(cTxt, ";")
+                    
+					dZAM_DATA   := CtoD(aDadZAM[1])
+					dZAM_DTATE  := CtoD(aDadZAM[2])
+					cZAM_COD    := AllTrim(aDadZAM[3])
+					cZAMLOCAL   := AllTrim(aDadZAM[4])
+					cZAM_DOC    := Left(AllTrim(aDadZAM[5]),6)
+					nZAM_QUANT  := Val(StrTran(aDadZAM[6],",","."))
+					cZAMLOCALI  := AllTrim(aDadZAM[7])
+
+					cTipoB1 := Posicione("SB1",1,FWxFilial("SB1")+PadR(cZAM_COD,TamSX3("B1_COD")[1]),"B1_TIPO")
+
+					cZAM_NUM    := u_SXESXF("ZAM")
+
+					RecLock("ZAM", .T.)
+						
+						ZAM->ZAM_FILIAL   := FWxFilial("ZAM")
+						ZAM->ZAM_DATA     := dZAM_DATA
+						ZAM->ZAM_DTATE    := dZAM_DTATE
+						ZAM->ZAM_COD      := cZAM_COD
+						ZAM->ZAM_LOCAL    := cZAMLOCAL
+						ZAM->ZAM_DOC      := cZAM_DOC
+						ZAM->ZAM_QUANT    := nZAM_QUANT
+						ZAM->ZAM_LOCALI   := cZAMLOCALI
+
+						ZAM->ZAM_TIPO     := cTipoB1
+						ZAM->ZAM_STATUS   := "1" // Nao Processado
+						ZAM->ZAM_USUARI   := cUserName
+						ZAM->ZAM_NUM      := cZAM_NUM
+						
+					ZAM->( msUnLock() )
+					
+					GrvTRB("Inventário incluído com sucesso no DOC " + cZAM_DOC, AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, cZAM_DOC, cZAM_NUM)
+
+                    aDadZAM := {}
+                    
+                    ft_fSkip()
+                    
+                EndDo
+            
+                Aviso("EPCP001-03", "Importação finalizada com sucesso! Será gerado um excel com os dados incluídos para sua conferência..." , {"OK"},, "DOC n. " + cZAM_DOC )
+
+                ReportZAM()
+
+            EndIf
+            
+        EndIf
+        
+    EndIf
+    
+Return
+
+/*/{Protheus.doc} Static Function GrvTRB(1, RC1_NUMTIT, cTXT)
+    Popula TRB para listagem
+    @type  Static Function
+    @author FWNM
+    @since 23/04/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function GrvTRB(cDetalhe, cNumLinha, cTXT, nQtd, cDoc, cNumZAM)
+
+    Default nQtd := 0
+    Default cDOC := ""
+	Default cNumZAM := ""
+
+    RecLock("TRB", .T.)
+	    TRB->NUMLINHA := cNumLinha
+		TRB->STATUS   := cDetalhe
+		TRB->LINHA    := cTXT
+        TRB->QUANT    := nQtd
+        TRB->DOC      := cDoc
+		TRB->NUM      := cNumZAM
+	TRB->( msUnLock() )
+	
+Return
+
+/*/{Protheus.doc} Static Function ReportZAM
+    Gera listagem de inconsistência
+    @type  Static Function
+    @author user
+    @since 23/04/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function ReportZAM()
+
+	oReport := ReportDef(@cAliasTRB)
+	oReport:PrintDialog()
+
+Return
+
+/*/{Protheus.doc} Static Function ReportDef
+	ReportDef
+	@type  Function
+	@author Fernando Macieira
+	@version 01
+/*/
+Static Function ReportDef(cAliasTRB)
+                                   
+	Local oReport
+	Local oTitulos
+	Local aOrdem := {}
+	  
+	Local cTitulo := "Inclusão Inventário - Resultado"
+
+	cAliasTRB := "TRB"
+	
+	oReport := TReport():New("IMPZAM",OemToAnsi(cTitulo), /*cPerg*/, ;
+	{|oReport| ReportPrint(cAliasTRB)},;
+	OemToAnsi(" ")+CRLF+;
+	OemToAnsi("")+CRLF+;
+	OemToAnsi("") )
+
+	oReport:nDevice     := 4 // XLS
+
+	oReport:SetLandscape()
+	//oReport:SetTotalInLine(.F.)
+	
+	oTitulos := TRSection():New(oReport, OemToAnsi(cTitulo),{"TRB"}, aOrdem /*{}*/, .F., .F.)
+	//oReport:SetTotalInLine(.F.)
+	
+    TRCell():New(oTitulos,	"NUMLINHA"   ,"","Número Linha"                /*Titulo*/,  /*Picture*/ ,10 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"STATUS"     ,"","Detalhamento da Ocorrência"  /*Titulo*/,  /*Picture*/ ,70 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"LINHA"      ,"","Conteúdo Linha"              /*Titulo*/,  /*Picture*/ ,150 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"QUANT"      ,"","Quantidade Inventário"       /*Titulo*/,  "@E 999,999,999.9999" ,40 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"DOC"        ,"","Documento Inventário"        /*Titulo*/,   ,10 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+	TRCell():New(oTitulos,	"NUM"        ,"","Número Inventário"           /*Titulo*/,   ,10 /*Tamanho*/,/*lPixel*/,/*{|| bloco-de-impressao }*/)
+
+Return oReport
+
+/*/{Protheus.doc} Static Function ReportPrint
+	ReportPrint
+	@type  Function
+	@version 01
+/*/
+Static Function ReportPrint(cAliasTRB)
+
+	Local oTitulos := oReport:Section(1)
+	
+	dbSelectArea("TRB")
+	TRB->( dbSetOrder(1) )
+	
+	oTitulos:SetMeter( LastRec() )
+	
+	TRB->( dbGoTop() )
+	Do While TRB->( !EOF() )
+		
+		oTitulos:IncMeter()
+		
+		oTitulos:Init()
+		
+		If oReport:Cancel()
+			oReport:PrintText(OemToAnsi("Cancelado"))
+			Exit
+		EndIf
+		
+		//Impressao propriamente dita....
+		oTitulos:Cell("NUMLINHA")  :SetBlock( {|| TRB->NUMLINHA} )
+		oTitulos:Cell("STATUS")    :SetBlock( {|| TRB->STATUS} )
+		oTitulos:Cell("LINHA")     :SetBlock( {|| TRB->LINHA} )
+		oTitulos:Cell("QUANT")     :SetBlock( {|| TRB->QUANT} )
+    	oTitulos:Cell("DOC")       :SetBlock( {|| TRB->DOC} )
+    	oTitulos:Cell("NUM")       :SetBlock( {|| TRB->NUM} )
+
+		oTitulos:PrintLine()
+		oReport:IncMeter()
+	
+		TRB->( dbSkip() )
+		
+	EndDo
+	
+	oTitulos:Finish()
+
+	If Select("TRB") > 0
+		TRB->( dbCloseArea() )
+	EndIf
+	
+	If Select("QRY") > 0
+		QRY->( dbCloseArea() )
+	EndIf
+	
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+	
+	oTempTable:Delete()
+
+Return
+
+/*/{Protheus.doc} Static Function ChkDadZAM(aDadZAM)
+    Checa dados da planilha em busca de inconsistências
+    @type  Static Function
+    @author FWNM
+    @since 02/08/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function ChkDadZAM(aDadZAM)
+
+    Local lOk  := .F.
+	Local lRet := .t.
+	Local lLocaliz := .f.
+
+	// DEBUG
+	If nLinhaTXT == 36
+		lDebug := .t.
+	EndIf
+
+    // Codigo Produto
+    If Empty(AllTrim(aDadZAM[3]))
+        lRet := .f.
+        GrvTRB("Código produto obrigatório", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+    Else
+		SB1->( dbSetOrder(1) ) // B1_FILIAL, B1_COD, R_E_C_N_O_, D_E_L_E_T_
+		If SB1->( !dbSeek(FWxFilial("SB1")+PadR(aDadZAM[3],TamSX3("B1_COD")[1])) )
+			lRet := .f.
+			GrvTRB("Código produto não cadastrado", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		Else
+			lLocaliz := AllTrim(SB1->B1_LOCALIZ) == "S"
+			If SB1->B1_MSBLQL == "1"
+				lRet := .f.
+				GrvTRB("Código produto bloqueado", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+			EndIf
+		EndIf
+	EndIf
+
+    // Codigo Armazém
+	If lLocaliz
+
+		If Empty(AllTrim(aDadZAM[4]))
+			lRet := .f.
+			GrvTRB("Código armazém obrigatório", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		Else
+			NNR->( dbSetOrder(1) ) // NNR_FILIAL, NNR_CODIGO, R_E_C_N_O_, D_E_L_E_T_
+			If NNR->( !dbSeek(FWxFilial("NNR")+PadR(aDadZAM[4],TamSX3("NNR_CODIGO")[1])) )
+				lRet := .f.
+				GrvTRB("Código armazém não cadastrado", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+			EndIf
+		EndIf
+
+		// Codigo localizacao
+		SBE->( dbSetOrder(1) ) // BE_FILIAL, BE_LOCAL, BE_LOCALIZ, BE_ESTFIS, R_E_C_N_O_, D_E_L_E_T_
+		If SBE->( !dbSeek(FWxFilial("SBE")+PadR(aDadZAM[4],TamSX3("NNR_CODIGO")[1])+PadR(aDadZAM[7],TamSX3("BE_LOCALIZ")[1])) )
+			lRet := .f.
+			GrvTRB("Código endereço não cadastrado neste armazém", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		EndIf
+
+	Else
+
+		// @history ticket 62623 - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
+		If !Empty(AllTrim(aDadZAM[7]))
+			lRet := .f.
+			GrvTRB("Produto não controla enderaçamento e possui endereço informado", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		EndIf
+
+	EndIf
+
+    // Documento
+    If Empty(AllTrim(aDadZAM[5]))
+        lRet := .f.
+        GrvTRB("Documento obrigatório", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+    EndIf
+
+    // Valor
+    If Val(StrTran(aDadZAM[6],",",".")) < 0
+        lRet := .f.
+        GrvTRB("Valor negativo", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+    EndIf
+
+    // Dt Inicial
+    If CtoD(aDadZAM[1]) < GetMV("MV_ULMES")
+        lRet := .f.
+        GrvTRB("Dt Inicial inferior MV_ULMES", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+    EndIf
+
+    // Dt Final
+    If CtoD(aDadZAM[2]) < GetMV("MV_ULMES")
+        lRet := .f.
+        GrvTRB("Dt Final inferior MV_ULMES", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+    Else
+		If CtoD(aDadZAM[2]) < CtoD(aDadZAM[1])
+			lRet := .f.
+			GrvTRB("Dt Final inferior inicial", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		EndIf
+	EndIf
+
+	// Invetário Encerrado
+	/*
+	ZAM->( dbSetOrder(4) ) // ZAM_FILIAL, ZAM_NUM, R_E_C_N_O_, D_E_L_E_T_
+	If ZAM->( dbSeek(FWxFilial("ZAM")+cZAM_NUM) )
+		If ZAM->ZAM_STATUS=="2" // 1=Nao processado;2=Processado;3=Estornado;4=Erro Processamento
+			lRet := .f.
+			GrvTRB("Inventário status encerrado", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		EndIf
+	EndIf
+	*/
+
+	// Consistência contida na função AInvArm (Verifica se existe producao para este produto)
+	SD3->( dbSetOrder(7) )
+	If SD3->( dbSeek(FWxFilial("SD3")+PadR(aDadZAM[3],TamSX3("B1_COD")[1])+PadR(aDadZAM[4],TamSX3("NNR_CODIGO")[1])+DtoS(CtoD(aDadZAM[1])),.T.) )
+		Do While SD3->( !EOF() .and. SD3->D3_FILIAL+AllTrim(SD3->D3_COD)+AllTrim(SD3->D3_LOCAL) == FWxFilial("SD3")+AllTrim(aDadZAM[3])+AllTrim(aDadZAM[4]) .and. SD3->D3_EMISSAO >= CtoD(aDadZAM[1]) .and. SD3->D3_EMISSAO <= CtoD(aDadZAM[2]) )
+			If !Empty(SD3->D3_OP) .and. Empty(SD3->D3_FLAGINV)
+				lOk := .T.
+				Exit
+			EndIf
+			SD3->( dbSkip() )
+		EndDo
+
+		If !lOk
+			lRet := .f.
+			GrvTRB("Prod/Local sem consumo em OP no período", AllTrim(Str(nLinhaTXT)), cTXT, nZAM_QUANT, aDadZAM[5])
+		EndIf
+	EndIf
+
+Return lRet

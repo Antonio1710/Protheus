@@ -37,7 +37,11 @@
   @history Ticket  1794   - Adriana Oliveira- 23/09/2020 - Correção aliquota quando produtor rural, e geração por item
   @history Ticket 11265   - Abel Babini     - 19/03/2021 - Ajuste na rotina que gera os registros C197 para gravar o campo D1_ITEM. A não gravação do campo causava a delação do registro no reprocessamento dos livros. Correção na formula da aliquota interestadual
   @history Ticket 15063   - Abel Babini     - 08/06/2021 - Criação de regra para garantir a baixa dos pedidos de Frete relacionados aos CTE´s de complemento de preço
-  @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+  @history Chamado 15804  - Leonardo P. Mo  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
+  @history Ticket 18347   - Abel Babini     - 16/08/2021 - Não era gravado o valor do ICMS 18% para notas de complemento
+  @history Ticket 62250   - Everson         - 11/10/2021 - Tratamento para salvar a data no pedido de compra.
+  @history Ticket 62250   - Everson         - 15/10/2021 - Tratamento para salvar a data no pedido de compra.
+  @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -56,8 +60,8 @@ User Function MT103FIM()
   Local lGrBlqIcm    := .T.
   Local lBlqICM      := SuperGetMv( "MV_#MT13F1" , .F. , .F. ,  )
   Local lBlqNvS      := SuperGetMv( "MV_#MT13F2" , .F. , .F. ,  )
-  Local nCdPed       := Ascan(aHeader, { |x| Alltrim(x[2]) == "D1_PEDIDO" } )
-  Local nAc          := 0
+  //Local nCdPed       := Ascan(aHeader, { |x| Alltrim(x[2]) == "D1_PEDIDO" } )
+  //Local nAc          := 0
   Private cToBoletim := ''
   Private lEnviaMail := .F.
   
@@ -361,6 +365,23 @@ User Function MT103FIM()
       While SD1->(!Eof())	.AND. SD1->D1_DOC == SF1->F1_DOC .AND. SD1->D1_SERIE == SF1->F1_SERIE .AND. ;
             SD1->D1_FORNECE == SF1->F1_FORNECE .AND. SD1->D1_LOJA == SF1->F1_LOJA
 
+        // //Everson - 11/10/2021. Chamado 62250.
+        // If !Empty(SD1->D1_PEDIDO) .And. !Empty(SD1->D1_ITEMPC)
+        
+        //   Dbselectarea("SC7")
+        //   SC7->(Dbsetorder(1))
+
+        //   If SC7->(DbSeek(SD1->D1_FILIAL+SD1->D1_PEDIDO+SD1->D1_ITEMPC))
+            
+        //     Reclock("SC7",.F.)
+        //       SC7->C7_XDTENTR := SF1->F1_DTDIGIT
+        //     MsUnlock("SC7")
+
+        //   EndIf
+
+        // EndIf
+        // //
+
         IF ALLTRIM(SD1->D1_CC) $ "8001" //estoque
 
           cToBoletim := AllTrim( SuperGetMv("MV_#USUBEA", .F., 0 )) 
@@ -390,18 +411,7 @@ User Function MT103FIM()
           ENDIF
         //FIM Ticket 15063   - Abel Babini     - 08/06/2021 - Criação de regra para garantir a baixa dos pedidos de Frete relacionados aos CTE´s de complemento de preço
         //Início @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
-        ELSEIF !Empty(SD1->D1_PEDIDO) .and. !Empty(SD1->D1_ITEMPC)
-          
-          dbselectarea("SC7")
-          SC7->(dbsetorder(1))
-
-          IF SC7->(dbSeek(SD1->D1_FILIAL+SD1->D1_PEDIDO+SD1->D1_ITEMPC))
-            
-            Reclock("SC7",.F.)
-              SC7->C7_XDTENTR := SF1->F1_DTDIGIT
-            MsUnlock("SC7")
-          ENDIF
-
+        
         ENDIF
         //Final @history Chamado 15804  - Leonardo P. Monteiro  - 08/07/2021 - Grava informações adicionais do Pedido de Compra.
 
@@ -417,12 +427,25 @@ User Function MT103FIM()
 
     ENDIF
 
+    //Everson - 15/10/2021. Chamado 62250.
+    If nConfirma == 1 .and. (nOpcao == 3 .or. nOpcao == 4)
+          atlSC7Dt(SF1->F1_FORNECE, SF1->F1_LOJA, SF1->F1_DOC, SF1->F1_SERIE)
+
+    EndIf
+    // 
+
     RestArea(aEnvFT)
     RestArea(aEnvF3)
   EndIf
   //FIM Ch. 049454 - Abel Babini - Fiscal - Gravar D1_VALFUN no campo F3_OBSERV - Valéria
 
-	RestArea(aAreaSE1)
+	// @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
+  If nConfirma == 1 .and. (nOpcao == 3 .or. nOpcao == 4) .and. AllTrim(SF1->F1_TIPO) == "N"
+    UpSDASDB()
+  EndIf
+  // 
+    
+  RestArea(aAreaSE1)
 	RestArea(aAreaSF1)
 	
 	// Chamado n. 051254 || OS 052617 || FISCAL || DEJAIME || 8921 || PED. COMPRA - FWNM - 23/08/2019
@@ -484,7 +507,7 @@ Static Function CM130F1()
 	Local aAreaSA2  := SA2->(GetARea())
 	Local aAreaSA1  := SA1->(GetARea())
 	Local cTesRem	:= GetMv("MV_#TESENT")
-	Local cAlDes	:= cAlOri := ""
+	//Local cAlDes	:= cAlOri := ""
 	Local lContinua :=.F.
 	Local cNumseq   := ""
 	Local cDoc		:= GetSXENum("SD3","D3_DOC")
@@ -906,7 +929,7 @@ Static Function GeraEstTran()
 
   Local cLocTran  := GetMV("MV_LOCTRAN",,"95")
   Local cFilOrig  := GetMV("MV_#TRAFIL",,"08")
-  Local cTMEntrad := GetMV("MV_#TRATME",,"201")
+  //Local cTMEntrad := GetMV("MV_#TRATME",,"201")
   Local cTMSaida  := GetMV("MV_#TRATMS",,"701")
 
   // Movimento Interno - Entrada Almoxarifado em Transito
@@ -1254,6 +1277,7 @@ Static Function SendWF(aDadWF)
   Local cAssunto	 := "[ MT103FIM ] - NF superior PC - " + DtoC(msDate()) + " - " + time()
   Local cMensagem	 := ""
   Local cMails     := GetMV("MV_#WFNFPC",,"fwnmacieira@gmail.com")
+  Local i          := 1
 
   // Cabecalho corpo email
   cMensagem += '<html>'
@@ -1353,7 +1377,7 @@ Static Function ProcEmail(cAssunto,cMensagem,email)
   Local cErrorMsg     := ""
   Local cAtach        := ""
   Local cSubject      := ""
-  Local aFiles        := {}
+  //Local aFiles        := {}
   Local cServer       := Alltrim(GetMv("MV_RELSERV"))
   Local cAccount      := AllTrim(GetMv("MV_RELACNT"))
   Local cPassword     := AllTrim(GetMv("MV_RELPSW"))
@@ -1400,7 +1424,7 @@ STATIC Function SendMlBE(cChaveEml)
   Local lOk       := .T.
 	Local cBody			:= RetHTML(cChaveEml)
 	Local cErrorMsg	:=	""
-	Local aFiles 		:= {}
+	//Local aFiles 		:= {}
 	Local cServer   := Alltrim(GetMv("MV_RELSERV"))
 	Local cAccount  := AllTrim(GetMv("MV_RELACNT"))
 	Local cPassword := AllTrim(GetMv("MV_RELPSW"))
@@ -1564,13 +1588,13 @@ Return(cRet)
 Static Function fAjustaCDA()
 
 	Local aArea		  := GetArea()
-	Local cEspecie 	:= SF1->F1_ESPECIE
+	//Local cEspecie 	:= SF1->F1_ESPECIE
 	Local cFilSD1  	:= SF1->F1_FILIAL
 	Local cNf	      := SF1->F1_DOC
 	Local cSerie   	:= SF1->F1_SERIE
 	Local cForn    	:= SF1->F1_FORNECE
 	Local cLoja    	:= SF1->F1_LOJA
-	Local cTESAtlz 	:= ""
+	//Local cTESAtlz 	:= ""
 
 	DbSelectArea("SD1")
 	SD1->(DbSetOrder(1))
@@ -1630,7 +1654,13 @@ Static Function atlzCDA()
 		RecLock("CDA", .T.)
 		cCodLan		:= "SP40090207"
 		nAliqICMS	:= 18
-		nValICMS	:= nBaseICMS * nAliqICMS / 100
+    //INICIO Ticket 18347   - Abel Babini     - 16/08/2021 - Não era gravado o valor do ICMS 18% para notas de complemento quando
+    IF Alltrim(SF1->F1_TIPO) $ 'I/C/P' .AND. nBaseICMS == 0
+      nValICMS	:= ( SD1->D1_VALICM / (SD1->D1_PICM / 100) ) * ( nAliqICMS / 100 )
+    ELSE
+		  nValICMS	:= nBaseICMS * nAliqICMS / 100
+    ENDIF
+    //FIM Ticket 18347   - Abel Babini     - 16/08/2021 - Não era gravado o valor do ICMS 18% para notas de complemento quando
 		CDA->CDA_FILIAL		:= xFilial("CDA")
 		CDA->CDA_TPMOVI		:= cTpMov
 		CDA->CDA_ESPECI		:= cEspecie
@@ -1715,7 +1745,7 @@ Static Function fAjustaCDD()
   Local aAreaCDT 	:= CDT->(GetArea())
 	Local cFilSD1   := SF1->F1_FILIAL
 	Local cNf	      := SF1->F1_DOC
-	Local dEmissao	:= SF1->F1_EMISSAO
+	//Local dEmissao	:= SF1->F1_EMISSAO
 	Local cSerie   	:= SF1->F1_SERIE
 	Local cForn    	:= SF1->F1_FORNECE
 	Local cLoja    	:= SF1->F1_LOJA
@@ -1728,7 +1758,7 @@ Static Function fAjustaCDD()
 	Local cIfComp 	:= Space(TamSX3("CDD_IFCOMP")[1])
 	Local nOpca		  := 0
 	Local aDados	  := {}
-	Local dEmissOri	:= fEmissOri(SD1->D1_NFORI, SD1->D1_SERIORI, cForn, cLoja)
+	//Local dEmissOri	:= fEmissOri(SD1->D1_NFORI, SD1->D1_SERIORI, cForn, cLoja)
 	Local cDescComp := "" //chamado 058730 por Adriana em 23/06/2020 
 
   // Inicio chamado 058730 por Adriana em 09/06/2020
@@ -1970,36 +2000,36 @@ Return cChaveNfe
 	@history Adoro - chamado 052610 
   /*/
 
-Static Function fEmissOri(cNFOri, cSerOri, cForn, cLoja)
+// Static Function fEmissOri(cNFOri, cSerOri, cForn, cLoja)
 
-	Local dEmissOri		:= dDataBase
-	Local cAliasQry		:= GetNextAlias()
-	Local cQuery		:= ""
+// 	Local dEmissOri		:= dDataBase
+// 	Local cAliasQry		:= GetNextAlias()
+// 	Local cQuery		:= ""
 
-	BeginSQL Alias cAliasQry
-		SELECT 
-			SF2.F2_EMISSAO EMISSAO_ORI
-		FROM 
-			%Table:SF2% SF2
-		WHERE 
-			SF2.F2_FILIAL	= %xFilial:SF2% AND 
-			SF2.F2_DOC		= %Exp:cNFOri% AND
-			SF2.F2_SERIE	= %Exp:cSerOri% AND
-			SF2.F2_CLIENTE	= %Exp:cForn% AND 
-			SF2.F2_LOJA		= %Exp:cLoja% AND
-			SF2.%notDel%
-	EndSQL
+// 	BeginSQL Alias cAliasQry
+// 		SELECT 
+// 			SF2.F2_EMISSAO EMISSAO_ORI
+// 		FROM 
+// 			%Table:SF2% SF2
+// 		WHERE 
+// 			SF2.F2_FILIAL	= %xFilial:SF2% AND 
+// 			SF2.F2_DOC		= %Exp:cNFOri% AND
+// 			SF2.F2_SERIE	= %Exp:cSerOri% AND
+// 			SF2.F2_CLIENTE	= %Exp:cForn% AND 
+// 			SF2.F2_LOJA		= %Exp:cLoja% AND
+// 			SF2.%notDel%
+// 	EndSQL
 
-	cQuery	:= GetLastQuery()[2]
-	ConOut(cQuery)
+// 	cQuery	:= GetLastQuery()[2]
+// 	ConOut(cQuery)
 
-	dbSelectArea(cAliasQry)
-	(cAliasQry)->(DbGoTop())
-	If (cAliasQry)->(!Eof())
-		dEmissOri	:= SToD((cAliasQry)->EMISSAO_ORI)
-	EndIf
+// 	dbSelectArea(cAliasQry)
+// 	(cAliasQry)->(DbGoTop())
+// 	If (cAliasQry)->(!Eof())
+// 		dEmissOri	:= SToD((cAliasQry)->EMISSAO_ORI)
+// 	EndIf
 
-Return dEmissOri
+// Return dEmissOri
 
 /*/{Protheus.doc} fChgIfComp
   Change do campo Inf. Compl.
@@ -2057,3 +2087,165 @@ Static Function fAbTelaCpl(nOpcao, nConfirma)
 	EndDo
 
 Return lRet
+
+/*/{Protheus.doc} Static Function UpSDASDB()
+  Endereça automaticamente os insumos retornados de industrialização
+  @type  Static Function
+  @author FWNM
+  @since 18/10/2021
+  @version version
+  @param param_name, param_type, param_descr
+  @return return_var, return_type, return_description
+  @example
+  (examples)
+  @see (links_or_references)
+  @Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização  
+/*/
+Static Function UpSDASDB()
+
+  Local aCabSDA    := {}
+  Local aItSDB     := {}
+  Local _aItensSDB := {} 
+  Local cLocZAM    := GetMV("MV_#LOCZAM",,"PROD")
+  Local aAreaSD1   := SD1->( GetArea() )
+  Local aAreaSA2   := SA2->( GetArea() )
+
+  /////////////////////////////////
+  // PROJETO INDUSTRIALIZAÇÃO 
+  /////////////////////////////////
+
+  // @history ticket  11639 	- Fernando Maciei - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+  If cEmpAnt $ GetMV("MV_#BENEMP",,"01") .and. cFilAnt $ GetMV("MV_#BENFIL",,"02")
+
+    SA2->(dbSetOrder(1))
+    If SA2->(dbSeek(FWxFilial("SA2")+SF1->F1_FORNECE+SF1->F1_LOJA))
+
+      If AllTrim(SA2->A2_XTIPO) == '4' // Terceiro
+
+        SD1->( dbsetorder(1) )
+        If SD1->( dbSeek(FWxFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA) )
+
+          Do While SD1->(!EOF()) .and. SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA) == SD1->(D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA)
+
+            If Localiza(SD1->D1_COD)
+
+              SBE->( dbSetOrder(1) ) // BE_FILIAL, BE_LOCAL, BE_LOCALIZ, BE_ESTFIS, R_E_C_N_O_, D_E_L_E_T_
+              If SBE->( !dbSeek(FWxFilial("SBE")+SD1->D1_LOCAL+PadR(cLocZAM,TamSX3("BE_LOCALIZ")[1])) )
+                RecLock("SBE",.T.)
+                  SBE->BE_FILIAL  := FWxFilial("SBE")
+                  SBE->BE_LOCAL   := SD1->D1_LOCAL
+                  SBE->BE_LOCALIZ := cLocZAM
+                  SBE->BE_DESCRIC := "PROJETO INDUSTRIALIZACAO"
+                  SBE->BE_STATUS  := "2"
+                  SBE->BE_PRIOR   := "001"
+                  SBE->BE_DATGER  := msDate()
+                SBE->( msUnLock() )
+              EndIf
+              
+              //Cabeçalho com a informação do item e NumSeq que sera endereçado.
+              aCabSDA := {{"DA_PRODUTO" , SD1->D1_COD    , Nil},;	  
+                          {"DA_NUMSEQ"  , SD1->D1_NUMSEQ , Nil}}
+
+              //Dados do item que será endereçado
+              aItSDB := {{"DB_ITEM"	   , "0001"	        , Nil},;                   
+                        {"DB_ESTORNO"  , ""	            , Nil},;                   
+                        {"DB_LOCALIZ"  , cLocZAM        , Nil},;                   
+                        {"DB_DATA"	   , msDate()       , Nil},;                   
+                        {"DB_QUANT"    , SD1->D1_QUANT  , Nil}}       
+
+              aAdd(_aItensSDB, aitSDB)
+
+              //Executa o endereçamento do item
+              lMSErroAuto := .F.
+              MATA265(aCabSDA, _aItensSDB, 3)
+
+              If lMSErroAuto
+
+                u_GrLogZBE( msDate(), TIME(), cUserName," RETORNO INDUSTRIALIZACAO - ENDERECAMENTO AUTOMATICO","CONTROLADORIA","MT103FIM",;
+                "ENDERECAMENTO AUTOMATICO NO RETORNO DA INDUSTRIALIZACAO NAO REALIZADO - MATA265", ComputerName(), LogUserName() )
+
+                Alert("Endereçamento automático não realizado! Informe a controladoria...")
+
+                MostraErro()
+
+              Else
+
+                u_GrLogZBE( msDate(), TIME(), cUserName," RETORNO INDUSTRIALIZACAO - ENDERECAMENTO AUTOMATICO","CONTROLADORIA","MT103FIM",;
+                "ENDERECAMENTO AUTOMATICO DO RETORNO DA INDUSTRIALIZACAO REALIZADO COM SUCESSO " + SD1->D1_LOCAL + " " + AllTrim(SD1->D1_COD) + " " + SD1->D1_DOC, ComputerName(), LogUserName() )
+
+              Endif
+        
+              aCabSDA    := {}
+              aItSDB     := {}
+              _aItensSDB := {} 
+
+            EndIf
+
+            SD1->( dbSkip() )
+
+          EndDo
+
+        EndIf
+
+      EndIf
+
+    EndIf
+
+  EndIf
+
+	//
+
+  RestArea( aAreaSD1 )
+  RestArea( aAreaSA2 )
+  
+Return
+
+/*/{Protheus.doc} atlSC7Dt
+  Atualiza data de de baixa do no pedido de compra.
+  Chamado 62250.
+  @type  Static Function
+  @author user
+  @since 15/10/2021
+  @version 01
+/*/
+Static Function atlSC7Dt(cForn, cLj, cDoc, cSerie)
+  //StaticCall(MT103FIM,atlSC7Dt,'014769','01','000042477','1  ')
+  //Variáveis.
+  Local aArea := GetArea()
+  Local cUpdt := ""
+
+  //
+  cUpdt := ""
+  cUpdt += " UPDATE " + RetSqlName("SC7") + " " 
+  cUpdt += " SET C7_XDTENTR = D1_DTDIGIT " 
+  cUpdt += " FROM  " 
+  cUpdt += " " + RetSqlName("SC7") + " AS SC7 " 
+  cUpdt += " INNER JOIN " 
+  cUpdt += " " + RetSqlName("SD1") + " AS SD1 ON " 
+  cUpdt += " C7_FILIAL = D1_FILIAL " 
+  cUpdt += " AND C7_NUM = D1_PEDIDO " 
+  cUpdt += " AND C7_ITEM = D1_ITEMPC " 
+  cUpdt += " WHERE  " 
+  cUpdt += " C7_FILIAL = '" + FWxFilial("SC7") + "'  " 
+  cUpdt += " AND D1_FORNECE = '" + cForn + "' " 
+  cUpdt += " AND D1_LOJA = '" + cLj + "' " 
+  cUpdt += " AND D1_DOC = '" + cDoc + "' " 
+  cUpdt += " AND D1_SERIE = '" + cSerie + "' "
+  cUpdt += " AND SC7.D_E_L_E_T_ = '' " 
+  cUpdt += " AND SD1.D_E_L_E_T_ = '' " 
+
+  //
+  If TcSQLExec(cUpdt) < 0
+    u_GrLogZBE (Date(), Time(), cUserName, " DOCUMENTO ENTRADA ","FISCAL","MT103FIM",;
+                "Erro atualiza data de baixa pc " + cForn + cLj + cDoc + cSerie + " " + TCSQLError(),ComputerName(),LogUserName())
+
+  Else
+    u_GrLogZBE (Date(), Time(), cUserName, " DOCUMENTO ENTRADA ","FISCAL","MT103FIM",;
+                "Atualiza data de baixa pc " + cForn + cLj + cDoc + cSerie,ComputerName(),LogUserName())
+    
+  EndIf
+
+  //
+  RestArea(aArea)
+
+Return Nil

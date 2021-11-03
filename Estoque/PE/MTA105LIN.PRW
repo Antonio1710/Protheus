@@ -22,13 +22,14 @@
 	@history ticket  6467   - Fernando Maci - 14/12/2020 - Erro Rotina Solicitação ao Armazem - MATA105
 	@history ticket  T.I.   - Tiago Stoco	- 26/02/2021 - Correção de fontes.
     @history ticket   15402 - Fernando Maci	- 10/06/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5131 FILIAL 03
+	@history ticket   19122 - Sigoli	    - 21/09/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5318 - item contabil 111 - FILIAL 03
+
 /*/
 User Function MTA105LIN()
 
 	Local _aArea 	  := GetArea()
 	Local _AreaSCP	  := SCP->(GetArea())
 	Local lRet   	  := .T.
-	Local nPos 		  := 0
 	Local _nPositem	  := ASCAN(aHeader, {|x| Alltrim(x[2]) == "CP_ITEMCTA" })
 	Local _nPosGrp	  := ASCAN(aHeader, {|x| Alltrim(x[2]) == "CP_GRUPO"   }) //Everaldo Casaroli 11/11/2008
 	Local nPosCC	  := ASCAN(aHeader, {|x| Alltrim(x[2]) == "CP_CC"      }) //Everaldo Casaroli 11/11/2008
@@ -46,10 +47,10 @@ User Function MTA105LIN()
 	
 	// FWNM - 02/03/2018 - Projetos Investimentos
 	Local lSldAtv  := GetMV("MV_#PRJSLD",,".T.")
-	Local cFasePrj := GetMV("MV_PRJINIC",,"05")
+	//Local cFasePrj := GetMV("MV_PRJINIC",,"05")
 	
 	// Chamado n. 046284
-	Local cFaseRej := GetMV("MV_#FASREJ",,"01")
+	//Local cFaseRej := GetMV("MV_#FASREJ",,"01")
 	Local cFaseApr := GetMV("MV_#FASEOK",,"03")
 	// 
 	Local lValidUser := .F.
@@ -60,7 +61,8 @@ User Function MTA105LIN()
 	Local cLocMan   := GetMV("MV_#MANLO2",,"02")
 	Local cUsrManut := GetMV("MV_#MANUSU",,"001428") 
     Local cLocalMan := GetMV("MV_#MANLOC",,"48")
-
+	Local i         := 0 
+	Local y			:= 0
 	//@history ticket 6467   - Fernando Maci - 14/12/2020 - Erro Rotina Solicitação ao Armazem - MATA105
 	If lCopia
 		gdFieldPut("CP_EMISSAO", dDatabase, n)		
@@ -85,7 +87,7 @@ User Function MTA105LIN()
 	dbSetOrder(1)
 	If !SZ0->(dbSeek( xFilial("SZ0") + aCols[n,nPosCC] + aCols[n,_nPosGrp]))
 		Alert("Centro de Custo "+alltrim(aCols[n,nPosCC])+" x Grupo "+alltrim(aCols[n,_nPosGrp])+" Nao autorizado")
-		lRet:= .F.
+		lRet:= .F. 
 	endif
 	//Everaldo Casaroli 11/11/2008 - fim
 	
@@ -501,9 +503,19 @@ User Function MTA105LIN()
 					cPrj    := gdFieldGet("CP_CONPRJ", i)
 
                     // @history ticket   15402 - Fernando Maci	- 10/06/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5131 FILIAL 03
-                    If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "03" .and. AllTrim(gdFieldGet("CP_CC", i)) $ GetMV("MV_#SCPCC",,"5131")
-                        gdFieldPut("CP_ITEMCTA", GetMV("MV_#CPITCT",,"113"), i)
-                    EndIf
+                    If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "03" 
+					
+						If AllTrim(gdFieldGet("CP_CC", i)) $ GetMV("MV_#SCPCC",,"5131")
+						
+							gdFieldPut("CP_ITEMCTA", GetMV("MV_#CPITCT",,"113"), i)
+						
+						ElseIf AllTrim(gdFieldGet("CP_CC", i)) $ GetMV("MV_#SCPC2",,"5318") //ticket   19122 - Sigoli -  21/09/2021	
+						
+							gdFieldPut("CP_ITEMCTA", GetMV("MV_#CPITCT",,"111"), i)
+						
+						EndIf
+					
+					EndIf
                     //
 					
 					If !Empty(cPrj)

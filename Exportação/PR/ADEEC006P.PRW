@@ -27,7 +27,7 @@
 #DEFINE PANEL02_VIEW            12
 
 // Defines dos campos.
-#DEFINE CONSULTA_VENDIDOS_CAMPOS    "EE7_PEDIDO,EE7_REFIMP,EE7_PEDFAT,EE7_DTPROC,EE8_DTENTR,EE7_IMPORT,EE7_IMPODE,EE7_CONSIG,A1_NOME,EE7_INCOTE,EE8_SEQUEN,B1_DESC,EE8_COD_I,EE8_SLDINI,EE8_PRECOI,EE8_PRCINC,EE8_PRCTOT,PAY,EE8FRUNIT,EE8_VLFRET,EE7_DEST,Y9_DESCR,Y9_CIDADE,EE7_ESTUFA,EEC_EMBARC,EEC_DTEMBA,EEC_DTESTU,EE7_XINDOC,EE7_XBOOKI,EE7_XDLDRA,EE7_XDLCAR,EE7_XPAGAM,C5_ROTEIRO,C5_PLACA,C9_NFISCAL,BLOQ_CRED,BLOQ_COM,C5_DTBLOQ,C5_HRBLOQ,C5_DTLIB3,C5_HRLIB3,EE7_STATUS,EE7_STTDES"
+#DEFINE CONSULTA_VENDIDOS_CAMPOS    "EE7_PEDIDO,EE7_REFIMP,EE7_PEDFAT,EE7_DTPROC,EE8_DTENTR,EE7_IMPORT,EE7_IMPODE,EE7_CONSIG,A1_NOME,EE7_INCOTE,EE8_SEQUEN,B1_DESC,EE8_COD_I,EE8_SLDINI,EE8_PRECOI,EE8_PRCINC,EE8_PRCTOT,PAY,EE8FRUNIT,EE8_VLFRET,EE7_DEST,Y9_DESCR,Y9_CIDADE,EE7_ESTUFA,EEC_EMBARC,EEC_DTEMBA,EEC_DTESTU,EE7_XINDOC,EE7_XBOOKI,EE7_XDLDRA,EE7_XDLCAR,EE7_XPAGAM,C5_ROTEIRO,C5_PLACA,C9_NFISCAL,BLOQ_CRED,ZEX_EMBARQ,BLOQ_COM,C5_DTBLOQ,C5_HRBLOQ,C5_DTLIB3,C5_HRLIB3,EE7_STATUS,EE7_STTDES"
 
 #DEFINE CONSULTA_ITENS_EXPORTACAO   "EE8_SEQUEN,B1_DESC,EE8_COD_I,EE8_SLDINI,EE8_PRECOI,EE8_PRCINC"
 #DEFINE CONSULTA_PAISES_HOMOL       "YA_CODGI,YA_DESCR"
@@ -98,7 +98,7 @@ user function ADEEC006P()
 
 
     Private cEE7PED     :=Space(15)
-    Private dDTDE       := Stod(cValtoChar(YEAR(Date()))+"0101" )
+    Private dDTDE       := Date()-31
     Private dDTATE      := Stod(cValtochar(YEAR(Date()))+"1231" )
     Private cIMPORT     := Space(06)
     Private cCONSIG     := Space(06)
@@ -227,7 +227,7 @@ Static Function fsetPanel1()
                              {"EE8_COD_I"   ,getSx3Cache("EE8_COD_I", "X3_TITULO")  ,getSx3Cache("EE8_COD_I", "X3_TIPO")  ,getSx3Cache("EE8_COD_I", "X3_TAMANHO")  ,getSx3Cache("EE8_COD_I", "X3_DECIMAL")  ,getSx3Cache("EE8_COD_I", "X3_PICTURE")  };
 						    })
     
-    oBExpo:SetBlkBackColor({|| IIF(!Empty(aExpoDad[oBExpo:At(), aScan(aExpoCam, "EE7_XBOOKI")]) , CLR_HGREEN,; 
+    oBExpo:SetBlkBackColor({|| IIF(!Empty(aExpoDad[oBExpo:At(), aScan(aExpoCam, "EE7_XBOOKI")]) , Rgb(198,239,206),; 
                                     IIF(!Empty(aExpoDad[oBExpo:At(), aScan(aExpoCam, "EEC_EMBARC")]) , CLR_YELLOW , Nil ) ) })
     
     oBExpo:bGotFocus := {|| nBrwFocused := 1}
@@ -441,6 +441,7 @@ static function LegStatVolume(nTpLeg)
     Elseif nTpLeg == 2
         aAdd(aLegLib,{"BR_AZUL"           , "Bloqueio Comercial"})
         aAdd(aLegLib,{"BR_VERMELHO"       , "Bloqueio Financeiro/Estoque"})
+        aAdd(aLegLib,{"BR_LARANJA"        , "Aguardando embarque e inspeção da qualidade"})
         aAdd(aLegLib,{"BR_VERDE"          , "Pedido liberado p/ faturamento"})
         aAdd(aLegLib,{"BR_PRETO"          , "Pedido faturados"})
         aAdd(aLegLib,{"BR_WHITE"          , "Status outros"})
@@ -461,6 +462,7 @@ static function fLibera()
 	local cLegenda	:= ""
 	local cBlqCred  := Left(aExpoDad[oBExpo:At(), aScan(aExpoCam, "BLOQ_CRED")],1)
 	local cBlqCome  := left(aExpoDad[oBExpo:At(), aScan(aExpoCam, "BLOQ_COM")],1)
+    local cBlqEmba  := left(aExpoDad[oBExpo:At(), aScan(aExpoCam, "ZEX_EMBARQ")],1)
 
     if cBlqCome == "N"
         cLegenda := "BR_AZUL"
@@ -469,7 +471,9 @@ static function fLibera()
             cLegenda := "BR_VERMELHO"
         elseif cBlqCred == "F"
             cLegenda := "BR_PRETO"
-        Elseif cBlqCred == "L"
+        Elseif cBlqCred == "L" .AND. cBlqEmba == "N"
+            cLegenda := "BR_LARANJA"
+        Elseif cBlqCred == "L" .AND. cBlqEmba == "S"
             cLegenda := "BR_VERDE"
         Elseif cBlqCred == "N"
             cLegenda := "BR_WHITE"
@@ -828,6 +832,8 @@ static function getCampos(nTypeBrowse)
             cTitulo := "Pagamento"
         Elseif Alltrim(cCampo) == "SALDO"
             cTitulo := "Saldo (KG)"
+        Elseif Alltrim(cCampo) == "ZEX_EMBARQ"
+            cTitulo := "Insp Qualidade"
         Elseif Alltrim(cCampo) == "BLOQ_CRED"
             cTitulo := "Bloq. Crédito"
         Elseif Alltrim(cCampo) == "BLOQ_COM"
@@ -850,6 +856,10 @@ static function getCampos(nTypeBrowse)
 		    oColumn:SetTitle("Saldo (KG)")
 		    oColumn:SetSize(20)
             oColumn:SetType("N")
+        Elseif Alltrim(cCampo) == "ZEX_EMBARQ"
+            oColumn:SetTitle("Insp Qualidade")
+		    oColumn:SetSize(10)
+            oColumn:SetType("C")
         Elseif Alltrim(cCampo) == "BLOQ_CRED"
 		    oColumn:SetTitle("Bloq. Crédito")
 		    oColumn:SetSize(10)
@@ -920,10 +930,11 @@ static function getDadosBrw(nTypeBrowse)
         cQuery += "              WHEN ISNULL(C9.C9_BLCRED,'') != '' OR ISNULL(C9.C9_BLEST,'') !='' THEN 'B-Bloqueado' " +cQebra
         cQuery += "              WHEN ISNULL(C9.C9_BLCRED,'')  = '' OR ISNULL(C9.C9_BLEST,'')  =''  THEN 'L-Liberado' " +cQebra
         cQuery += "              ELSE 'N-Na' END BLOQ_CRED, " +cQebra
-        cQuery += "         CASE WHEN C9.C9_NFISCAL !='' THEN C9.C9_NFISCAL+'/'+C9.C9_SERIENF ELSE '' END C9_NFISCAL " +cQebra
+        cQuery += "         CASE WHEN C9.C9_NFISCAL !='' THEN C9.C9_NFISCAL+'/'+C9.C9_SERIENF ELSE '' END C9_NFISCAL, " +cQebra
+        cQuery += "         CASE WHEN ISNULL(ZEX.ZEX_COUNT,0) > 0 THEN 'Sim' ELSE 'Não' END ZEX_EMBARQ " +cQebra
         cQuery += "    FROM "+ RetSqlName("EE7") +" (NOLOCK) EE7 INNER JOIN "+ RetSqlName("EE8") +" (NOLOCK) EE8 ON EE8.EE8_FILIAL=EE7.EE7_FILIAL AND EE8.EE8_PEDIDO=EE7.EE7_PEDIDO " +cQebra
         cQuery += "                    INNER JOIN "+ RetSqlName("SB1") +" (NOLOCK)  B1 ON B1.D_E_L_E_T_='' AND B1.B1_COD=EE8.EE8_COD_I " +cQebra
-        cQuery += "                    LEFT  JOIN "+ RetSqlName("SC5") +" (NOLOCK)  C5 ON C5.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND EE7.EE7_FILIAL='"+ xFilial("EE7") +"' AND C5.C5_PEDEXP=EE7.EE7_PEDIDO " +cQebra
+        cQuery += "                    INNER JOIN "+ RetSqlName("SC5") +" (NOLOCK)  C5 ON C5.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND EE7.EE7_FILIAL='"+ xFilial("EE7") +"' AND C5.C5_PEDEXP=EE7.EE7_PEDIDO " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SC9") +" (NOLOCK)  C9 ON C9.D_E_L_E_T_='' AND C9.C9_FILIAL=C5.C5_FILIAL AND C9.C9_PEDIDO=EE7.EE7_PEDFAT AND C9.C9_ITEM=EE8.EE8_FATIT " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("EEC") +" (NOLOCK) EEC ON EEC.D_E_L_E_T_='' AND EEC.EEC_FILIAL='"+ xFilial("EEC") +"' AND  EE7.EE7_FILIAL='"+ xFilial("EE7") +"' AND EE7.EE7_PEDIDO=EEC.EEC_PEDREF " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("EE6") +" (NOLOCK) EE6 ON EE6.D_E_L_E_T_='' AND EE6.EE6_FILIAL='"+ xFilial("EE6") +"' AND  EE6.EE6_COD = EEC.EEC_EMBARC " +cQebra
@@ -932,7 +943,11 @@ static function getDadosBrw(nTypeBrowse)
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SY6") +" (NOLOCK)  Y6 ON Y6.D_E_L_E_T_=''  AND Y6.Y6_FILIAL='"+ xFilial("SYA") +"' AND Y6.Y6_COD =EE7.EE7_CONDPA " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SYP") +" (NOLOCK) YPA ON Y6.D_E_L_E_T_=''  AND YPA.D_E_L_E_T_='' AND YPA.YP_CAMPO='Y6_DESC_P' AND Y6.Y6_DESC_P= YPA.YP_CHAVE AND YPA.YP_SEQ='001' " +cQebra
         cQuery += "                    LEFT  JOIN "+ RetSqlName("SYP") +" (NOLOCK) YPB ON Y6.D_E_L_E_T_=''  AND YPB.D_E_L_E_T_='' AND YPB.YP_CAMPO='Y6_DESC_P' AND Y6.Y6_DESC_P= YPB.YP_CHAVE AND YPB.YP_SEQ='002' " +cQebra
-        cQuery += "    WHERE EE7.D_E_L_E_T_='' " +cQebra
+        cQuery += "                    LEFT  JOIN (SELECT ZEX_FILIAL, ZEX_NUMERO, COUNT(ZEX_NUMERO) ZEX_COUNT 
+        cQuery += "                                FROM "+ RetSqlName("ZEX") +" (NOLOCK) 
+        cQuery += "                                WHERE D_E_L_E_T_='' AND ZEX_DTTCAR >= '"+Dtos(dDtDe)+"'
+        cQuery += "                                GROUP BY ZEX_FILIAL, ZEX_NUMERO) ZEX ON ZEX.ZEX_FILIAL=C5.C5_FILIAL AND ZEX.ZEX_NUMERO=C5.C5_NUM " +cQebra
+        cQuery += "    WHERE EE7.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' " +cQebra
         
         if !Empty(dDtDe) .or. !Empty(dDtAte)
             cQuery += " AND EE8.EE8_DTENTR BETWEEN '"+ Dtos(dDtDe) +"' AND '"+ Dtos(dDtAte) +"' "

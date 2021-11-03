@@ -32,14 +32,16 @@
 	@history Ticket 1715    - William Costa - 16/11/2020 - Novo boleto para a Empresa SAFEGG
 	@history Ticket 4220    - William Costa	- 16/11/2020 - Gravar o campo E2_LOGDTHR
 	@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção. 
+	@history Ticket 8465 	- Leonardo P. Monteiro - 09/08/2021 - Implementação da carga automática das informações referente a inspeção da qualidade. 
+	@history Ticket 8465 	- Leonardo P. Monteiro - 13/08/2021 - Inclusão do comando DbselectArea para a tabela ZEX. 
 /*/
 User Function SF2460I()
 
 	Local _cRet := ""
 
-	Local aDadVol := {} // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
-	Local aAreaAtu := GetArea() // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
-
+	Local aDadVol 		:= {} // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
+	Local aAreaAtu 		:= GetArea() // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
+	Local aDadImp		:= {}
 	Private SF2AREA     := SF2->(GETAREA())
 	Private SD2AREA     := SD2->(GETAREA())
 	Private SF3AREA     := SF3->(GETAREA())
@@ -56,6 +58,11 @@ User Function SF2460I()
 	Private lAchouIdC   := .F.
 	Private cCgc        := ''
 	Private cQuery      := ""
+	Private cRePlac		:= ""
+	Private cReCont		:= ""
+	Private cReDtFa		:= ""
+	Private cReLac1		:= ""
+	Private cReLac2		:= ""
 
 	//Chamado: 057085 - Abel Babini      - 01/04/20 - Criação de Parâmetro para controlar a geração de GNRE de ICMS ST dos clientes
 	Private lMVCLGST		:= GETMV("MV_#CLGNRE",,.F.) //Gera Título e Guia de Recolhimento do ICMS ST dos clientes
@@ -70,6 +77,11 @@ User Function SF2460I()
 	If AllTrim(cEmpAnt) == "01"
 		aDadVol := u_VerVolume(SF2->F2_FILIAL,SF2->F2_SERIE,SF2->F2_DOC) //Incluido por Adriana em 11/08/2017 - chamado 036402
 	EndIf
+
+	// Retorna dados do processo de exportação coletados pela qualidade.
+	if AllTrim(SF2->F2_EST) == "EX"
+		fGetInfo(SC5->C5_FILIAL, SC5->C5_NUM, @cRePlac, @cReCont, @cReDtFa, @cReLac1, @cReLac2)
+	Endif
 
 	RecLock("SF2",.F.)
 
@@ -90,16 +102,24 @@ User Function SF2460I()
 			SF2->F2_ESPECI1 := aDadVol[1]
 			SF2->F2_VOLUME1 := aDadVol[2]
 		EndIf
-		//@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção. 
-		REPLACE F2_CONTAIN WITH SC5->C5_CONTAIN
-		REPLACE F2_DTPROD  WITH SC5->C5_DTPROD
-		REPLACE F2_TEMPERA WITH SC5->C5_TEMPERA
-		REPLACE F2_NLACRE1 WITH SC5->C5_NLACRE1
-		REPLACE F2_NLACRE2 WITH SC5->C5_NLACRE2
 		
-
-
-
+		//@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção. 
+		//@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Finalizando a integração automática das informações coletadas no processo de inspeção da qualidade. 
+		if AllTrim(SF2->F2_EST) == "EX"
+			//REPLACE F2_PLACA   WITH iif(!Empty(cRePlac), cRePlac, SC5->C5_PLACA)
+			REPLACE F2_CONTAIN WITH iif(!Empty(cReCont), cReCont, SC5->C5_CONTAIN)
+			REPLACE F2_DTPROD  WITH iif(!Empty(cReDtFa), cReDtFa, SC5->C5_DTPROD)
+			REPLACE F2_TEMPERA WITH SC5->C5_TEMPERA
+			REPLACE F2_NLACRE1 WITH iif(!Empty(cReLac1), cReLac1, SC5->C5_NLACRE1)
+			REPLACE F2_NLACRE2 WITH iif(!Empty(cReLac2), cReLac2, SC5->C5_NLACRE2)
+		else
+			//REPLACE F2_PLACA   WITH SC5->C5_PLACA
+			REPLACE F2_CONTAIN WITH SC5->C5_CONTAIN
+			REPLACE F2_DTPROD  WITH SC5->C5_DTPROD
+			REPLACE F2_TEMPERA WITH SC5->C5_TEMPERA
+			REPLACE F2_NLACRE1 WITH SC5->C5_NLACRE1
+			REPLACE F2_NLACRE2 WITH SC5->C5_NLACRE2
+		endif
 		If AllTrim(cEmpAnt) != "06"
 			REPLACE F2_EMISSAO WITH msDate()
 		EndIf
@@ -482,6 +502,59 @@ User Function SF2460I()
 	RestArea( aAreaAtu ) // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
 
 Return
+
+/* Retorna as informações do processo de exportação */
+Static Function fGetInfo(cSC5Fil, cSC5Num, cRePlac, cReCont, cReDtFa, cReLac1, cReLac2)
+
+	Local cQuery	:= ""
+	Local cEOL      := Chr(13)+chr(10)
+	Local dDtIni	:= Stod("")
+	Local dDtFim	:= Stod("")
+	
+	DbSelectArea("ZEX")
+
+    cQuery := " SELECT ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, MIN(ZEX_DTFABR) DT_MIN, MAX(ZEX_DTFABR) DT_MAX  "+ cEOL
+    cQuery += " FROM "+ RetSqlName("ZEX") +" (NOLOCK) ZEX "+ cEOL
+    cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xFilial("ZEX") +"' AND ZEX.ZEX_FILIAL='"+ cSC5Fil +"' AND ZEX.ZEX_NUMERO='"+ cSC5Num +"' "+ cEOL
+	cQuery += " GROUP BY ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2 "
+	cQuery += " ORDER BY ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2; "
+
+    Tcquery cQuery ALIAS "QINF" NEW
+
+    TCSETFIELD("QINF","DT_MIN"		,"D",08,00)
+	TCSETFIELD("QINF","DT_MAX"		,"D",08,00)
+    
+    IF QINF->(!EOF())
+		if !Empty(QINF->ZEX_PLACA)
+			cRePlac := Alltrim(QINF->ZEX_PLACA)
+		endif
+
+		if !Empty(QINF->ZEX_CONTAI)
+			cReCont := Alltrim(QINF->ZEX_CONTAI)
+		endif
+
+		if !Empty(QINF->ZEX_LACRE1)
+			cReLac1 := Alltrim(QINF->ZEX_LACRE1)
+		endif
+
+		if !Empty(QINF->ZEX_LACRE2)
+			cReLac2 := Alltrim(QINF->ZEX_LACRE2)
+		endif
+
+		if !Empty(QINF->DT_MIN) .AND. !Empty(QINF->DT_MAX)
+			if QINF->DT_MIN == QINF->DT_MAX
+				cReDtFa := Dtoc(QINF->DT_MIN)
+			else
+				cReDtFa := Dtoc(QINF->DT_MIN) +" A "+ Dtoc(QINF->DT_MAX)
+			endif
+		endif
+
+		//QINF->(DbSkip())
+	ENDIF
+
+	QINF->(DBCLOSEAREA())
+return 
+
 
 /*/{Protheus.doc} Static Function ATUEXP
 	Utilizado na geracao da NF de saida de Exportacao: Checando se a UF do cliente = "EX" e se o primeiro digito do CFOP = 7

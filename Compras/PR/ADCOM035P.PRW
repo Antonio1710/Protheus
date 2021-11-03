@@ -15,6 +15,7 @@
 	@history Everson, 18/05/2020. Chamado 058244. Quando houver timeout, informar o comprador via e-mail.
 	@history Everson, 31/08/2020. Chamado 060873. Tratamento para informar a moeda da cotação.
 	@history Everson, 16/09/2020. Chamado 1633. Conversão da variável moeda para tipo numérico.
+	@history Everson, 21/09/2021. Chamado 41870 . Configurar Workflow de Cotação no ambiente TCLOUD .
 	/*/
 User Function ADCOM035P(cCod,cLoja,cNumCT,cEmail,cArq,lEnd) //Everson - 12/05/2020. Chamado 054714.
 
@@ -105,7 +106,7 @@ User Function ADCOM035P(cCod,cLoja,cNumCT,cEmail,cArq,lEnd) //Everson - 12/05/20
 		oProcess := TWFProcess():New("COTCAO", "Cotação de Preços")
 
 		// Criamos a tafefa principal que será respondida pelo usuário.
-		oProcess:NewTask("COTFOR", "/workflow/workflowcompras/cotacao/html/cotacaov2.html") //Everson - 31/08/2020. Chamado 060873.
+		oProcess:NewTask("COTFOR", "/workflow/workflowcompras/cotacao/template/cotacaov2.html") //Everson - 31/08/2020. Chamado 060873. //Everson - 21/09/2021. Chamado 41870.
 		
 		//Cabeçalho fornecedor.
 		oProcess:oHtml:ValByName( "A2_NOME"		, Alltrim(TRSC8->A2_NOME) )
@@ -203,18 +204,18 @@ User Function ADCOM035P(cCod,cLoja,cNumCT,cEmail,cArq,lEnd) //Everson - 12/05/20
 		oProcess:bReturn := "U_ADC035A()"
 		
 		// Iniciamos a tarefa e recuperamos o nome do arquivo gerado.
-		cMailId := oProcess:Start("\workflow\workflowcompras\cotacao\messenger\") 
+		cMailId := oProcess:Start("\workflow\workflowcompras\cotacao\html\") //Everson - 21/09/2021. Chamado 41870.
 
 		// Verificamos se o arquivo foi gerado.
-		If ! file("\workflow\workflowcompras\cotacao\messenger\" + Alltrim(cMailId) + ".htm" )
+		If ! file("\workflow\workflowcompras\cotacao\html\" + Alltrim(cMailId) + ".htm" ) //Everson - 21/09/2021. Chamado 41870.
 			MsgStop("Não foi possível gerar o solicitação de contação para o fornecedor " +;
 			        cFornece,"Função ADCOM035P")
 			Loop
 
 		EndIf
 
-		//
-		WaitRunSrv('xcopy "D:\TOTVS\Protheus12\protheus_data\workflow\workflowcompras\cotacao\messenger\' + Alltrim(cMailId) + '.htm"  "D:\nginx\html\workflowcompras\processos\cotacao\" /c /q /y ',.T.,"C:\WINDOWS\system32\")
+		//Everson - 21/09/2021. Chamado 41870.
+		//WaitRunSrv('xcopy "D:\TOTVS\Protheus12\protheus_data\workflow\workflowcompras\cotacao\messenger\' + Alltrim(cMailId) + '.htm"  "D:\nginx\html\workflowcompras\processos\cotacao\" /c /q /y ',.T.,"C:\WINDOWS\system32\")
 
 		// Montamos HTML com o link do arquivo gerado.
         cBody := MemoRead("\workflow\workflowcompras\cotacao\corpo_email\temp_email.html")
@@ -223,7 +224,7 @@ User Function ADCOM035P(cCod,cLoja,cNumCT,cEmail,cArq,lEnd) //Everson - 12/05/20
 		cBody := StrTran(cBody,"'.$version.'"     ,"1.0")
 		cBody := StrTran(cBody,"'.$title.'"       ,"Solicitação de cotação para compra")
 		cBody := StrTran(cBody,"'.$msg_1.'"       ,"Olá, " + cFornece + ")")
-		cBody := StrTran(cBody,"'.$msg_2.'"       ,"Por favor, clique <a href='" + cHostWF + cMailId + "'>aqui</a> para responder a solicitação de cotação de compra.")
+		cBody := StrTran(cBody,"'.$msg_2.'"       ,"Por favor, clique <a href='" + cHostWF + cMailId + ".htm'>aqui</a> para responder a solicitação de cotação de compra.") //Everson - 21/09/2021. Chamado 41870.
 		cBody := StrTran(cBody,"'.$year.'"    	  ,cValToChar(Year(Date())))
 		cBody := StrTran(cBody,"'.$address.'"     ,cNmEnd)
 
@@ -660,21 +661,21 @@ User Function ADC035B(oWF)
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea 		:= GetArea()
-	Local cHtml 		:= MemoRead("\workflow\workflowcompras\cotacao\final\timeout.html")
+	//Local cHtml 		:= MemoRead("\workflow\workflowcompras\cotacao\final\timeout.html") //Everson - 21/09/2021. Chamado 41870.
 	Local pcProcessID	:= Substr(Alltrim(oWF:oHtml:ALISTVALUES[1][28][2]),3,Len(Alltrim(oWF:oHtml:ALISTVALUES[1][28][2])))
 
 	//
 	Conout( DToC(Date()) + " " + Time() + " ADCOM035P - ADC035B - Processo " + pcProcessID + " finalizado " )
 	oWF:Finish()
 
-    //
-    MemoWrite("\workflow\workflowcompras\cotacao\final\" + pcProcessID +".htm",cHtml)
+    //Everson - 21/09/2021. Chamado 41870.
+    //MemoWrite("\workflow\workflowcompras\cotacao\final\" + pcProcessID +".htm",cHtml)
+
+    //Everson - 21/09/2021. Chamado 41870.
+    //WaitRunSrv('xcopy "D:\TOTVS\Protheus12\protheus_data\workflow\workflowcompras\cotacao\final\' + pcProcessID + '.htm"  "D:\nginx\html\workflowcompras\processos\cotacao\" /c /q /y ',.T.,"C:\WINDOWS\system32\")
 
     //
-    WaitRunSrv('xcopy "D:\TOTVS\Protheus12\protheus_data\workflow\workflowcompras\cotacao\final\' + pcProcessID + '.htm"  "D:\nginx\html\workflowcompras\processos\cotacao\" /c /q /y ',.T.,"C:\WINDOWS\system32\")
-
-    //
-    Ferase("\workflow\workflowcompras\cotacao\final\" + pcProcessID +".htm")
+    Ferase("\workflow\workflowcompras\cotacao\html\" + pcProcessID +".htm") //Everson - 21/09/2021. Chamado 41870.
 
 	//
     StartJob("U_WFPEAD01",getenvserver(),.F.,FwCodEmp(),FWxFilial(),pcProcessID,.F.) //Everson, 18/05/2020. Chamado 058244.

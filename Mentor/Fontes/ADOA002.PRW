@@ -17,7 +17,8 @@
 	@history chamado 059553 - Everson 			    - 30/07/2020 - Tratamento para inclusão de preço mínimo de pedido de venda no cadastro do cliente.
 	@history Ticket 692 	- Adriana Oliveira 	  - 03/09/2020 - Grava dados do Regime Especial 57608/11
 	@history Ticket 423 	- Adriana Oliveira 	  - 01/10/2020 - Habilita rotina para demais empresas
-	@history Ticket 8118  - Abel Babini         - 19/01/2021 - Alteração do campo A1_SIMPLES para A1_SIMPNAC
+	@history Ticket 8118    - Abel Babini         - 19/01/2021 - Alteração do campo A1_SIMPLES para A1_SIMPNAC
+	@history Ticket 13526   - Everson             - 11/10/2021 - Adicionada relação A1_XTPDESC x PB3_XTPDES.
 /*/
 
 /*
@@ -1836,6 +1837,9 @@ User Function ArrayCli(cCodSa1, cLoja, cAcx, nVlrDes)
 
 				ENDIF
 			// *** FINAL WILLIAM COSTA - 23/03/2020 - CHAMADO 049120 || OS 050388 || FINANCAS || ANDREA || 8319 || CREDITO
+
+			ElseIf  "A1_XTPDESC" == Alltrim(aCampSa1[nCntFor, 1]) //Everson - 11/10/2021. Chamado 13526.
+				Aadd(aVetor, {"A1_XTPDESC",PB3->PB3_XTPDES,NIL})
 
 			Else 
 

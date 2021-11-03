@@ -1,19 +1,19 @@
 #INCLUDE 'PROTHEUS.CH'
 #INCLUDE 'PARMTYPE.ch'
 
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-//ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-//ฑฑบPrograma  ณMA265TDOK บAutor  ณWILLIAM COSTA       บ Data ณ  08/05/2018 บฑฑ
-//ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-//ฑฑบDesc.     ณ Ponto de entrada para tratar a validacao dos campos de     บฑฑ
-//ฑฑบ          ณ enderecar produtos MATA265                                 บฑฑ
-//ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-//ฑฑบUso       ณ SIGAEST                                                    บฑฑ
-//ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-//฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-
-
+/*/{Protheus.doc} User Function MA265TDOK
+	Ponto de entrada para tratar a validacao dos campos de enderecar produtos MATA265
+	@type  Function
+	@author William Costa
+	@since 08/05/2018
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 62276 - Fernando Macieira - 13/10/2021 - Endere็amento automแtico - Armaz้ns de terceiros 70 a 74
+/*/
 USER FUNCTION MA265TDOK()
 	
 	Local lRet        := .T.
@@ -30,7 +30,9 @@ USER FUNCTION MA265TDOK()
 	
 		IF aCols[nCont][nEstorno] <> 'S' //Regra para validar somente a linha que nใo tem estorno
 		
+			// @history ticket 62276 - Fernando Macieira - 13/10/2021 - Endere็amento automแtico - Armaz้ns de terceiros 70 a 74
 			//Regra para a filial 02 local 02
+			/*
 			IF FWFILIAL("SDA")       == '02' .AND. ;
 			   !(ALLTRIM(M->DA_LOCAL) $ GETMV("MV_#ARMEXC",,'03')) // Locais para nใo entrar nessa valida็ใo
 			
@@ -41,6 +43,8 @@ USER FUNCTION MA265TDOK()
 					
 				ENDIF
 			ENDIF
+			*/
+			//
 			
 			IF aCols[nCont][nPosData] <> M->DA_DATA   
 			
@@ -48,6 +52,7 @@ USER FUNCTION MA265TDOK()
 				lRet        := .F.
 				
 			ENDIF
+			
 		ENDIF
 	NEXT
 

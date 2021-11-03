@@ -1,24 +1,19 @@
 #include "protheus.ch"
 #include "topconn.ch"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³DPCTB102GRºAutor  ³Fernando Macieira   º Data ³  02/24/10   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Ponto de entrada utilizado após a gravação dos dados da    º±±
-±±º          ³ tabela de lançamento.                                      º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Adoro                                                      º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºChamado   ³ 048269 || OS 049552 || CONTROLADORIA || DANIELLE_MEIRA ||  º±±
-±±º          ³ || 8459 || EXCLUIR LANC REPLICA - FWNM - 03/04/2019        º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function DPCTB102GR
+	Ponto de entrada utilizado após a gravação dos dados da tabela de lançamento. 
+	@type  Function
+	@author FWNM
+	@since 24/02/2010
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@ticket ti - Fernando Macieira - 04/10/2021 - Cloud Desativação SIG ANTIGO
+/*/
 User Function DPCTB102GR()
 
 	Local cSql      := ""
@@ -218,6 +213,7 @@ User Function DPCTB102GR()
 
 	EndIf
 
+	/*
 	// Chamado n. 048269 || OS 049552 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || EXCLUIR LANC REPLICA - FWNM - 03/04/2019
 	aAreaCT2 := CT2->( GetArea() )
 		
@@ -334,6 +330,7 @@ User Function DPCTB102GR()
 	
 	RestArea( aAreaCT2 )
 	//
+	*/
 	
 	RestArea(aArea)
 

@@ -53,12 +53,11 @@
 	@history 03/06/2020, Everson, Ch:TI - Tratamento para obter a apólice de seguro de acordo com o tipo de carga.
 	@history 14/04/2021, Everson, Ch:12355  - Tratamento para não emitir CT-e globalizado quando a UF da transportadora não estiver no parâmetro MV_#UFTCAT.
 	@history 05/05/2021, Everson, Ch:13434  - Limpeza de objeto instanciados.
+	@history 20/09/2021, Everson, Ch:15138  - Tratamento para emissão de CT-e adicional.
 	/*/
 User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.		
 	Local aArea	  	:= GetArea()
 	Local oInterface 	:= Nil
 	Local oPnl1			:= Nil
@@ -74,6 +73,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 	Local oConfig		:= Nil
 	Local oAtua			:= Nil
 	Local oFechar		:= Nil
+
 	Local bMudaAba	 	:= {||	oPnl1:lVisibleControl := (oTTabs:nOption == 1),;
 	 					    	oPnl2:lVisibleControl := (oTTabs:nOption == 2),;
 	 					    	oPnl3:lVisibleControl := (oTTabs:nOption == 4),;
@@ -87,7 +87,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 								oCSV:lVisibleControl  := (oTTabs:nOption == 1),; //Everson - 06/02/2020. Chamado 055434. 
 	 					    	oAtua:lVisibleControl := (oTTabs:nOption == 1),;
 	 					    	oConfig:lVisibleControl := (oTTabs:nOption == 1),;
-	 					    	Iif(oTTabs:nOption == 1,Eval({|| carInter1(), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), oCargas:Refresh() }),Nil),;
+	 					    	Iif(oTTabs:nOption == 1,Eval({|| carInter1("1"), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), oCargas:Refresh() }),Nil),;
 	 					    	Iif(;
 								 	oTTabs:nOption == 2,carDocs(oTTabs:nOption == 2,"1"),;
 									 	Iif(oTTabs:nOption == 4,carDocs(oTTabs:nOption == 4,"2"),;
@@ -107,6 +107,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 										 	);
 								 	);
 	 					    }
+
 	Local oLeg			:= Nil
 
 	Local oCSV			:= Nil //Everson - 06/02/2020. Chamado 055434.
@@ -157,22 +158,19 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Emissão de CT-e/MDF-e')
 
 	//Everson - 06/11/2019. Chamado 029058.
-	If Empty(cTpVa) .Or. cTpVa = "0"
+	If Empty(cTpVa) .Or. cTpVa == "0"
 		MsgStop("Não foi possível obter o tipo de carga.","Função ADLOG057P")
 		RestArea(aArea)
 		Return Nil 
 
 	EndIf
 
-	//
+	//Seleciona o tipo de frete Abatido, Ração, etc...
 	If ! Pergunte("OPHOS1",.T.)
 		RestArea(aArea)
 		Return Nil
 		
 	EndIf
-
-	//
-	Conout( DToC(Date()) + " " + Time() + " ADLOG057P - cTpVa - " + cValToChar(cTpVa) )
 			
 	//
 	oInterface			 := MsDialog():Create()
@@ -186,10 +184,10 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 	oInterface:lCentered := .T.
 	
 		//
-		aTab   := {"Cargas","CT-e","Averbação","MDF-e","Pendência Gerar MDF-e","Pendência CT-e Complementar","Pendência Encerrar MDF-e","CIOT","Pendência Encerrar CIOT"}
+		aTab   := {"Cargas","CT-e","Averbação","MDF-e","Pendência Gerar MDF-e","CT-e Adicional","Pendência Encerrar MDF-e","CIOT","Pendência Encerrar CIOT"}
 		oTTabs := TTabs():New(001,001,aTab,Nil,oInterface,Nil,CLR_HRED,Nil,.T.,Nil,595,235,Nil)
 		oTTabs:SetOption(1)
-			oPnl1 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)
+			oPnl1 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.) //Cargas.
 				
 				//
 				Aadd(aHCr,{" ","LEG"    	,"@BMP"     ,001, 0,.T.,"","","","R","","",.F.,"V","","","",""})		
@@ -214,24 +212,28 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				aFilDocs:= {'1=Todos','2=Pendente CT-e','3=Pendente MDF-e','4=Pendente CIOT'}
 				cFilDocs:= aFilDocs[1]
 		        oFilDocs := TComboBox():New(010,508,{|u|if(PCount()>0,cFilDocs:=u,cFilDocs)},;
-		        aFilDocs,80,15,oPnl1,,{|| MsAguarde({ || carInter1() },"Aguarde","Carregando dados...") };
+		        aFilDocs,80,15,oPnl1,,{|| MsAguarde({ || carInter1("1") },"Aguarde","Carregando dados...") };
 		        ,,,,.T.,,,,,,,,,'cFilDocs')
         
 				//
-				TButton():New(030,508,"Gerar CT-e"         ,oPnl1,{|| nPosCarga := oCargas:nAt, carInter1(), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), grFrt(aHCr,oCargas) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-				TButton():New(050,508,"Gerar CT-e em Lote" ,oPnl1,{|| gerCteL() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson   ³01/08/19³044314.
+				TButton():New(030,508,"Gerar CT-e"         ,oPnl1,{|| nPosCarga := oCargas:nAt, Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), gerCte(aHCr,oCargas), carInter1("1") },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+				TButton():New(050,508,"Gerar CT-e em Lote" ,oPnl1,{||;
+																	gerCteLT(aHCr, oCargas),; //Gera CT-e em lote.
+																	carInter1("1"),; //Atualiza grid.
+																	oCargas:Refresh(); //Atualiza o objeto grid.
+																   },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson   ³01/08/19³044314.
 				
-				TButton():New(070,508,"Gerar MDF-e"        ,oPnl1,{|| nPosCarga := oCargas:nAt, carInter1(), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), grMDF(aHCr,oCargas) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 27/01/2020. Chamado 054941.
+				TButton():New(070,508,"Gerar MDF-e"        ,oPnl1,{|| nPosCarga := oCargas:nAt, Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), gerMDFE(aHCr,oCargas), carInter1("1") },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 27/01/2020. Chamado 054941.
 				
-				//TButton():New(090,508,"Gerar CIOT"         ,oPnl1,{|| nPosCarga := oCargas:nAt, carInter1(), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), grCIOT(aHCr,oCargas) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 27/01/2020. Chamado 054941.
+				//TButton():New(090,508,"Gerar CIOT"         ,oPnl1,{|| nPosCarga := oCargas:nAt, carInter1("1"), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), gerCIOT(aHCr,oCargas), carInter1("1") },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 27/01/2020. Chamado 054941.
 				//TButton():New(110,508,"Gerar CIOT em Lote" ,oPnl1,{|| gerCioL() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 27/01/2020. Chamado 054941.
 
-				TButton():New(130,508,"Consultar Empresa",oPnl1,{|| conEmpresa(oCargas,aHCr) }       ,80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) 
+				TButton():New(130,508,"Consultar Empresa",oPnl1,{|| conEmpresa(oCargas,aHCr) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) 
 				
-				TButton():New(150,508,"Reenv. Rot (CT-e)",oPnl1,{|| nPosCarga := oCargas:nAt, carInter1(), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil) , reenvRot(aHCr,oCargas,"1") }       ,80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 25/09/2019. Chamado 044314.
-				TButton():New(170,508,"Reenv. Rot (MDF-e)",oPnl1,{|| nPosCarga := oCargas:nAt, carInter1(), Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), reenvRot(aHCr,oCargas,"2") }       ,80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson - 25/09/2019. Chamado 044314.
+				TButton():New(150,508,"Reenv. Rot (CT-e)" ,oPnl1, {|| nPosCarga := oCargas:nAt, Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), reenvRot(aHCr,oCargas,"1"), carInter1("1") } ,80, 15,,,.F.,.T.,.F.,,.F.,,,.F.) //Everson - 25/09/2019. Chamado 044314.
+				TButton():New(170,508,"Reenv. Rot (MDF-e)",oPnl1, {|| nPosCarga := oCargas:nAt, Iif(nPosCarga > 0,oCargas:GoTo(nPosCarga),Nil), reenvRot(aHCr,oCargas,"2"), carInter1("1") } ,80, 15,,,.F.,.T.,.F.,,.F.,,,.F.) //Everson - 25/09/2019. Chamado 044314.
 
-			oPnl2 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)
+			oPnl2 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.) //CT-e.
 				
 				//
 				oTxtCTe := TSay():New(001,002,{||'Funções do CT-e'},oPnl2,,,,,,.T.,CLR_RED,CLR_WHITE,200,20)
@@ -240,6 +242,13 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				Aadd(aHDc,{" ","LEG"    	,"@BMP"     ,001, 0,.T.,"","","","R","","",.F.,"V","","","",""})
 				Aadd(aHDc,{"DT Entrega" 	,"CRDTE"    ,"" ,008, 0,"","" ,"D","",""})
 				Aadd(aHDc,{"Roteiro"   		,"CRROT"    ,"" ,TamSX3("ZFK_ROTEIR")[1], 0,"","" ,"C","",""})
+
+				//Everson - 20/09/2021. Chamado 15138.
+				Aadd(aHDc,{"Cód Transp"   	,"CRTRA" 	,"" ,006, 0,"","" ,"C","",""})
+				Aadd(aHDc,{"Lj Transp"   	,"CRLOJ" 	,"" ,002, 0,"","" ,"C","",""})
+				Aadd(aHDc,{"Nm Transp" 		,"CRNMT","" ,025, 0,"","" ,"C","",""})
+				//
+
 				Aadd(aHDc,{"Tipo Doc"   	,"CRTPDOC" 	,"" ,006, 0,"","" ,"C","",""})
 				Aadd(aHDc,{"Num Doc" 		,"CRNUMDOC"	,"" ,009, 0,"","" ,"C","",""})
 				Aadd(aHDc,{"Série" 			,"CRSRDOC" 	,"" ,003, 0,"","" ,"C","",""})
@@ -264,7 +273,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				TButton():New(070,508,"Cancelar CT-e"    			,oPnl2,{|| funcHash(4,"1") },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 				TButton():New(090,508,"Reenviar averbação" 			,oPnl2,{|| reenAvb( ) },80,15,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson   ³25/07/19³044314.
 				
-			oPnl4 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)
+			oPnl4 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.) //Averbação.
 
 				//
 				oTxtAveb := TSay():New(001,002,{||'Averbação'},oPnl4,,,,,,.T.,CLR_RED,CLR_WHITE,200,20)
@@ -272,6 +281,13 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				//
 				Aadd(aHAv,{"DT Entrega" 	,"CRDTE"	,"" ,008, 0,"","" ,"D","",""})
 				Aadd(aHAv,{"Roteiro"   		,"CRROT"	,"" ,TamSX3("ZFK_ROTEIR")[1], 0,"","" ,"C","",""})
+
+				//Everson - 20/09/2021. Chamado 15138.
+				Aadd(aHAv,{"Cód Transp"   	,"CRTRA" 	,"" ,006, 0,"","" ,"C","",""})
+				Aadd(aHAv,{"Lj Transp"   	,"CRLOJ" 	,"" ,002, 0,"","" ,"C","",""})
+				Aadd(aHAv,{"Nm Transp" 		,"CRNMT"    ,"" ,025, 0,"","" ,"C","",""})
+				//
+
 				Aadd(aHAv,{"Tipo Doc"   	,"CRTPDOC" 	,"" ,006, 0,"","" ,"C","",""})
 				Aadd(aHAv,{"Nota Fiscal" 	,"CRNUMDOC"	,"" ,009, 0,"","" ,"C","",""})
 				Aadd(aHAv,{"Série" 			,"CRSRDOC" 	,"" ,003, 0,"","" ,"C","",""})
@@ -283,7 +299,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				
 				oVerb := MsNewGetDados():New(010,002,205,590,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oPnl4,aHAv,@aColsAv)
 											
-			oPnl3 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)	
+			oPnl3 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)	//MDF-e.
 
 				//
 				oTxTMDF := TSay():New(001,002,{||'Funções do MDF-e'},oPnl3,,,,,,.T.,CLR_RED,CLR_WHITE,200,20)
@@ -292,6 +308,13 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				Aadd(aHDcM,{" ","LEG"    	,"@BMP"     ,001,  0,.T.,"","","","R","","",.F.,"V","","","",""})
 				Aadd(aHDcM,{"DT Entrega" 	,"CRDTE"    ,"" ,008, 0,"","" ,"D","",""})
 				Aadd(aHDcM,{"Roteiro"   	,"CRROT"    ,"" ,TamSX3("ZFK_ROTEIR")[1], 0,"","" ,"C","",""})
+
+				//Everson - 20/09/2021. Chamado 15138.
+				Aadd(aHDcM,{"Cód Transp"   	,"CRTRA" 	,"" ,006, 0,"","" ,"C","",""})
+				Aadd(aHDcM,{"Lj Transp"   	,"CRLOJ" 	,"" ,002, 0,"","" ,"C","",""})
+				Aadd(aHDcM,{"Nm Transp" 		,"CRNMT"    ,"" ,025, 0,"","" ,"C","",""})
+				//
+
 				Aadd(aHDcM,{"Tipo Doc"   	,"CRTPDOC" 	,"" ,006, 0,"","" ,"C","",""})
 				Aadd(aHDcM,{"Num Doc" 		,"CRNUMDOC"	,"" ,009, 0,"","" ,"C","",""})
 				Aadd(aHDcM,{"Série" 		,"CRSRDOC" 	,"" ,003, 0,"","" ,"C","",""})
@@ -336,12 +359,12 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				oEmitMP := MsNewGetDados():New(010,002,205,505,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oPnl7,aHDcPEM,@aColsDcME)				
 				
 				//
-				TButton():New(010,508,"Gerar MDF-e Lote"  ,oPnl7,{|| carDocs( .T.,"2"), emiMDFL() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+				TButton():New(010,508,"Gerar MDF-e Lote"  ,oPnl7,{|| carDocs( .T.,"2"), emiMDFL(), carInter1("2") },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 				
 			oPnl5 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)
 
 				//
-				TSay():New(001,002,{||'Pendências de geração de CT-e Complementar'},oPnl5,,,,,,.T.,CLR_RED,CLR_WHITE,200,20)
+				TSay():New(001,002,{||'Pendências de geração de CT-e adicional'},oPnl5,,,,,,.T.,CLR_RED,CLR_WHITE,200,20)
 							
 				//	
 				Aadd(aHCrCC,{" ","LEG"    	,"@BMP"     ,001, 0,.T.,"","","","R","","",.F.,"V","","","",""})
@@ -351,7 +374,6 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				Aadd(aHCrCC,{"Lj Transp" 	,"CRLOJ","" ,008, 0,"","" ,"C","",""})
 				Aadd(aHCrCC,{"Nm Transp" 	,"CRNMT","" ,025, 0,"","" ,"C","",""})
 				Aadd(aHCrCC,{"Veículo" 		,"CRVEI","" ,008, 0,"","" ,"C","",""})
-				Aadd(aHCrCC,{"Agrup" 		,"CRAGP","" ,001, 0,"","" ,"C","",""})
 				Aadd(aHCrCC,{"DT Entrega" 	,"CRDTE","" ,008, 0,"","" ,"D","",""})
 				Aadd(aHCrCC,{"Roteiro"   	,"CRROT","" ,TamSX3("ZFK_ROTEIR")[1], 0,"","" ,"C","",""})
 				Aadd(aHCrCC,{"Ocorrência" 	,"CROCO","" ,003, 0,"","" ,"C","",""})
@@ -359,17 +381,19 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				Aadd(aHCrCC,{"Valor"    	,"CRVALOR"	,"@E 999,999,999.99" ,15, 2,"","" ,"N","",""})
 				Aadd(aHCrCC,{"Qtd CT-e"    	,"CRQTDC"	,"@E 999,999,999"    ,03, 0,"","" ,"N","",""})	
 				Aadd(aHCrCC,{"Cod ZFA" 		,"CRZFA","" ,010, 0,"","" ,"C","",""})
-				Aadd(aHCrCC,{"CT-e" 		,"CRCTE","" ,009, 0,"","" ,"C","",""})
-				Aadd(aHCrCC,{"Série CT-e" 	,"CRSCTE","",003, 0,"","" ,"C","",""})
-				Aadd(aHCrCC,{"Agrupa" 		,"CRAGRP","",002, 0,"","" ,"C","",""})
-				Aadd(aHCrCC,{"Chv CT-e" 	,"CRACHV","",050, 0,"","" ,"C","",""})
+				Aadd(aHCrCC,{"Emitido?"     ,"CRCTE","" ,002, 0,"","" ,"C","",""})
 				
 				//				
 				oEmitCC := MsNewGetDados():New(010,002,205,505,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oPnl5,aHCrCC,@aColsEmCC)
 								
+				//Everson - 20/09/2021. Chamado 15138.
+				TButton():New(010,508,"Gerar CT-e"         , oPnl5,{|| nPosCarga := oEmitCC:nAt, Iif(nPosCarga > 0,oEmitCC:GoTo(nPosCarga),Nil), gerCte(aHCrCC,oEmitCC), carPedCC() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+				TButton():New(030,508,"Gerar CT-e em Lote" , oPnl5,{||;
+																	gerCteLT(aHCrCC, oEmitCC),;
+																	carPedCC(),;
+																	oEmitCC:Refresh();
+																   },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 				//
-				TButton():New(010,508,"Gerar CT-e Compl.",oPnl5,{|| gerCTECC() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-				TButton():New(030,508,"Selecionar CT-e"  ,oPnl5,{|| selCTECC() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 			
 			oPnl6 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)
 				
@@ -390,8 +414,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				oPendMDF := MsNewGetDados():New(010,002,205,505,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oPnl6,aHDcMP,@aColsDcMP)
 								
 				//
-				TButton():New(010,508,"Encerrar MDF-e em Lote" ,oPnl6,{|| encMDFL() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-
+				TButton():New(010,508,"Encerrar MDF-e em Lote" ,oPnl6,{|| encMDFL(), carDocs(.T.,"4") },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 
 			oPnl8 := TPanel():New(001,001,,oTTabs,,.T.,,CLR_BLACK,CLR_WHITE,593,210,,.T.)	
 
@@ -402,6 +425,13 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				Aadd(aHDcC,{" ","LEG"    	,"@BMP"     ,001,  0,.T.,"","","","R","","",.F.,"V","","","",""})
 				Aadd(aHDcC,{"DT Entrega" 	,"CRDTE"    ,"" ,008, 0,"","" ,"D","",""})
 				Aadd(aHDcC,{"Roteiro"   	,"CRROT"    ,"" ,TamSX3("ZFK_ROTEIR")[1], 0,"","" ,"C","",""})
+
+				//Everson - 20/09/2021. Chamado 15138.
+				Aadd(aHDcC,{"Cód Transp"    ,"CRTRA" 	,"" ,006, 0,"","" ,"C","",""})
+				Aadd(aHDcC,{"Lj Transp"   	,"CRLOJ" 	,"" ,002, 0,"","" ,"C","",""})
+				Aadd(aHDcC,{"Nm Transp" 	,"CRNMT"    ,"" ,025, 0,"","" ,"C","",""})
+				//
+
 				Aadd(aHDcC,{"Tipo Doc"   	,"CRTPDOC" 	,"" ,006, 0,"","" ,"C","",""})
 				Aadd(aHDcC,{"Num Doc" 		,"CRNUMDOC"	,"" ,020, 0,"","" ,"C","",""})
 				Aadd(aHDcC,{"Status" 		,"CRSTATUS"	,"" ,020, 0,"","" ,"C","",""})
@@ -430,6 +460,13 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				Aadd(aHDcCI,{" ","LEG"    	,"@BMP"     ,001,  0,.T.,"","","","R","","",.F.,"V","","","",""})
 				Aadd(aHDcCI,{"DT Entrega" 	,"CRDTE"    ,"" ,008, 0,"","" ,"D","",""})
 				Aadd(aHDcCI,{"Roteiro"   	,"CRROT"    ,"" ,TamSX3("ZFK_ROTEIR")[1], 0,"","" ,"C","",""})
+
+				//Everson - 20/09/2021. Chamado 15138.
+				Aadd(aHDcCI,{"Cód Transp"   ,"CRTRA" 	,"" ,006, 0,"","" ,"C","",""})
+				Aadd(aHDcCI,{"Lj Transp"   	,"CRLOJ" 	,"" ,002, 0,"","" ,"C","",""})
+				Aadd(aHDcCI,{"Nm Transp" 	,"CRNMT"    ,"" ,025, 0,"","" ,"C","",""})
+				//
+
 				Aadd(aHDcCI,{"Tipo Doc"   	,"CRTPDOC" 	,"" ,006, 0,"","" ,"C","",""})
 				Aadd(aHDcCI,{"Num Doc" 		,"CRNUMDOC"	,"" ,020, 0,"","" ,"C","",""})
 				Aadd(aHDcCI,{"Status" 		,"CRSTATUS"	,"" ,020, 0,"","" ,"C","",""})
@@ -443,7 +480,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 				oPendCIO := MsNewGetDados():New(010,002,205,505,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oPnl9,aHDcCI,@aColsDCI)
 								
 				//
-				TButton():New(010,508,"Encerrar CIOT em Lote" ,oPnl9,{|| encCIOL() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+				//TButton():New(010,508,"Encerrar CIOT em Lote" ,oPnl9,{|| encCIOL() },80,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 								
 		//
 		oGroup1	 := TGroup():Create(oInterface,239,005,260,595,"",,,.T.)
@@ -457,7 +494,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 			oCSV:lVisibleControl := (oTTabs:nOption == 1)
 							
 			//
-			oAtua    := TButton():New(245,460,"Atualizar" ,oInterface,{|| Iif( Pergunte("OPHOS1",.T.), carInter1(), Nil) },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
+			oAtua    := TButton():New(245,460,"Atualizar" ,oInterface,{|| Iif( Pergunte("OPHOS1",.T.), carInter1("1"), Nil) },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
 			oAtua:lVisibleControl := (oTTabs:nOption == 1)
 			oConfig	 := TButton():New(245,505,"Config"    ,oInterface,{|| cfgMV() },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
 			If ! FWIsAdmin()
@@ -472,7 +509,7 @@ User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 		oTTabs:bAction := bMudaAba
 		Eval(bMudaAba)
 		
-	oInterface:Activate(,,,.T.,{||.T.},,{|| carInter1() })
+	oInterface:Activate(,,,.T.,{||.T.},,{|| carInter1("1") })
 
 	//
 	RestArea(aArea)
@@ -487,9 +524,7 @@ Return Nil
 	/*/
 Static Function carInter1(cOPc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 	Local nPorc		:= getPorEm(cTpVa)/100//Val(cValToChar(GetMv("MV_#CTEPOR")))/100 //Everson - 12/12/2019 - Chamado 029058.
@@ -521,8 +556,6 @@ Static Function carInter1(cOPc)
 	Local lNRegCio	:= .T.//Everson - 06/03/2020. Chamado 054941.
 	Local cGerCCT	:= Separa(Alltrim(GetMv("MV_#ESGRCT",,"S/S/S/S/S")),"/",.T.)[Val(cTpVa)] //Everson - 06/03/2020. Chamado 054941.
 	Local lNRegCCT	:= .T.//Everson - 06/03/2020. Chamado 054941.
-
-	Default cOPc	:= "1"
 	
 	//
 	If cOPc == "1" //Dados de CT-e.
@@ -836,83 +869,64 @@ Static Function carInter1(cOPc)
 	RestArea(aArea)
 
 Return Nil
-/*/{Protheus.doc} gerCteL 
+/*/{Protheus.doc} gerCteLT 
 	Gera CT-e em lote. Chamado 044314.
 	@type  Static Function
 	@author Everson
 	@since  01/08/2019
 	@version 01
 	/*/
-Static Function gerCteL()
+Static Function gerCteLT(aHReg, oRegs)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	 := GetArea()
 	Local i		 := 1
 	
 	//
-	If ! MsgYesNo("Deseja emitir CT-e em lote?","Função gerCteL(ADLOG057P)")
+	If ! MsgYesNo("Deseja emitir CT-e em lote?","Função gerCteLT(ADLOG057P)")
 		RestArea(aArea)
 		Return Nil
 		
 	EndIf
 	
 	//
-	carInter1()
-	
-	//
-	For i := 1 To Len(oCargas:aCols)
+	For i := 1 To Len(oRegs:aCols)
 	
 		//
-		If Empty( Alltrim(oCargas:aCols[i,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRCTE" })]) )
+		If Empty( Alltrim(oRegs:aCols[i,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRCTE" })]) )
 			
 			//
-			oCargas:GoTo(i) 
+			oRegs:GoTo(i) 
 			
-			Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCteL - gerando CT-e para roteiro " + Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })])) )
-			grFrt(aHCr,oCargas,.T.)
+			Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCteLT - gerando CT-e para roteiro " + Alltrim(cValToChar(oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRROT" })])) )
+			gerCte(aHReg, oRegs, .T.)
 		
 		EndIf
 	
 	Next i
-	
-	//
-	carInter1()
-	
-	//
-	If nPosCarga > 0
-		oCargas:GoTo(nPosCarga)
-		
-	EndIf
-	
-	//
-	oCargas:Refresh()
 
 	//
 	RestArea(aArea)
 	
 Return Nil
-/*/{Protheus.doc} grFrt  
+/*/{Protheus.doc} gerCte  
 	Gera CT-e. Chamado 044314.
 	@type  Static Function
 	@author Everson
 	@since   18/06/2019
 	@version 01
 	/*/
-Static Function grFrt(aHCr,oCargas,lLote)
+Static Function gerCte(aHReg, oRegs, lLote)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cDtEntr	:= ""
-	Local cRoteiro	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })]))
-	Local cCTE		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRCTE" })]))
-	Local nVlrFrt	:= oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRVALOR" })]
+	Local cRoteiro	:= Alltrim(cValToChar(oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRROT" })]))
+	Local cCTE		:= Alltrim(cValToChar(oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRCTE" })]))
+	Local nVlrFrt	:= oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRVALOR" })]
 	
-	Private cCodZFA		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRZFA" })]))
-	Private cCodOcorr	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CROCO" })]))
+	Private cCodZFA		:= Alltrim(cValToChar(oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRZFA" })]))
+	Private cCodOcorr	:= Alltrim(cValToChar(oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CROCO" })]))
 	
 	Default lLote		:= .F.
 	
@@ -931,11 +945,11 @@ Static Function grFrt(aHCr,oCargas,lLote)
 	EndIf
 	
 	//
-	cDtEntr	:= DToS(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRDTE" })])
+	cDtEntr	:= DToS(oRegs:aCols[oRegs:nAt,Ascan(aHReg,{|x| AllTrim(x[2]) == "CRDTE" })])
 	
 	//
 	If ! Empty(cCTE)
-		MsgStop("Já há CT-e emitido para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função grFrt(ADLOG057P)")
+		MsgStop("Já há CT-e emitido para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função gerCte(ADLOG057P)")
 		RestArea(aArea)
 		Return Nil
 			
@@ -943,7 +957,7 @@ Static Function grFrt(aHCr,oCargas,lLote)
 	
 	//
 	If ! lLote
-		If ! MsgYesNo("Deseja emitir CT-e para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + "?","Função grFrt(ADLOG057P)")
+		If ! MsgYesNo("Deseja emitir CT-e para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + "?","Função gerCte(ADLOG057P)")
 			RestArea(aArea)
 			Return Nil
 			
@@ -951,11 +965,8 @@ Static Function grFrt(aHCr,oCargas,lLote)
 	
 	EndIf
 	
-	//
-	MsAguarde({|| geraCTERot(cRoteiro,cDtEntr,,,nVlrFrt)} ,"Aguarde...","Gerando CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
-	
-	//
-	carInter1()
+	//Gera CT-e por roteiro.
+	MsAguarde({|| gerCteRot(cRoteiro,cDtEntr,,,nVlrFrt)} ,"Aguarde...","Gerando CT-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
 
 	//
 	RestArea(aArea)
@@ -970,11 +981,9 @@ Return Nil
 	/*/
 Static Function chkBloqueio(cCodZFA)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea 	:= GetArea()
-	Local lRet 		:= .T.
+	//Local lRet 		:= .T.
 	Local nMinutos	:= GetMv("MV_#TMPBLQ")//5
 	Local nDif		:= 0
 	Local cCmp		:= ""
@@ -1050,9 +1059,7 @@ Return .T.
 	/*/
 Static Function blqReg(cCodZFA)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea := GetArea()
 
 	DbSelectArea("ZFA")
@@ -1073,18 +1080,16 @@ Static Function blqReg(cCodZFA)
 	RestArea(aArea)
 
 Return .T.
-/*/{Protheus.doc} geraCTERot  
+/*/{Protheus.doc} gerCteRot  
 	Emissão de CT-e por roteiro. Chamado 044314.
 	@type  Static Function
 	@author Everson
 	@since 24/05/2019
 	@version 01
 	/*/
-Static Function geraCTERot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
+Static Function gerCteRot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 	Local aNotas	:= {}
@@ -1092,13 +1097,13 @@ Static Function geraCTERot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
 	Local i			:= 1
 	Local cSerie	:= ""
 	Local cNF		:= ""
-	Local cHash		:= ""
-	Local cVlParc	:= ""
+	//Local cHash		:= ""
+	//Local cVlParc	:= ""
 	Local nTotalNF	:= Val(cValToChar(GetMv("MV_#QTDNFE")))
 	Local nParc		:= 0
 	Local nTotEnv	:= 0
 	Local lCliDif	:= .F.
-	Local lRetEnv	:= .T.
+	Local lRetEnv	:= .F.
 	Local lEstDif	:= .F. //Everson - 11/12/2019 - Chamado 029058.
 	
 	//Everson - 15/04/2021 - Chamado 12355.
@@ -1110,7 +1115,7 @@ Static Function geraCTERot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
 	Default cSeq	:= ""
 	Default nVlrFrt	:= 0	
 	Default	lUpdate	:= .F.
-	
+
 	//
 	If IsInCallStack("U_ADLOG058P")
 
@@ -1156,7 +1161,7 @@ Static Function geraCTERot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
 
 	//Obtém as notas fiscais que estão vinculadas ao roteiro.
 	aNotas 	:= obtNF(cRoteiro,cDtEntr,,@lCliDif,@lEstDif) //Everson - 11/12/2019 - Chamado 029058.
-	Conout( DToC(Date()) + " " + Time() + " ADLOG057P - geraCTERot - lCliDif " + cValToChar(lCliDif) )
+	Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCteRot - lCliDif " + cValToChar(lCliDif) )
 
 	//Verifica se há notas fiscais vinculadas ao roteiro.
 	If Len(aNotas) = 0
@@ -1196,11 +1201,11 @@ Static Function geraCTERot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
 
 			//
 			nTotEnv += nParc
-			lRetEnv := gerLotCTE(aNotaInd,"00","00",cRoteiro,cDtEntr,,cSeq,lUpdate,,,,,,nParc) //Emissão por nota fiscal.
+			lRetEnv := procGerCTE(aNotaInd,"00","00",cRoteiro,cDtEntr,,cSeq,lUpdate,,,,,,nParc) //Emissão por nota fiscal.
 
 			//
 			If ! lRetEnv
-				MsgStop("Ocorreu erro na emissão do CT-e.","Função geraCTERot(ADLOG057P)")
+				MsgStop("Ocorreu erro na emissão do CT-e.","Função gerCteRot(ADLOG057P)")
 				RestArea(aArea)
 				Return lRetEnv
 
@@ -1210,7 +1215,7 @@ Static Function geraCTERot(cRoteiro,cDtEntr,cSeq,lUpdate,nVlrFrt)
 
 	Else
 		//Everson - 26/09/2019 - 044314.
-		lRetEnv := gerLotCTE(aNotas,"00",Iif(lCliDif,"01","00"),cRoteiro,cDtEntr,,cSeq,lUpdate,,,,,,nVlrFrt) //Emissão agrupada.
+		lRetEnv := procGerCTE(aNotas,"00",Iif(lCliDif,"01","00"),cRoteiro,cDtEntr,,cSeq,lUpdate,,,,,,nVlrFrt) //Emissão agrupada.
 
 	EndIf
 	
@@ -1227,13 +1232,11 @@ Return lRetEnv
 	/*/
 Static Function obtNF(cRoteiro,cDtEntr,cDocFilt,lCliDif,lEstDif,cCTE) //Everson 26/09/2019 044314. //Everson - 11/12/2019 - Chamado 029058.
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cQuery       	:= ""
 	Local aSeriaNota   	:= {}
-	Local cDoc			:= ""
+	//Local cDoc			:= ""
 	Local cCliAnt		:= ""
 	Local cUFLibCat		:= Alltrim(GetMv("MV_#UFLCAT"))
 	
@@ -1543,7 +1546,7 @@ Static Function obtNF(cRoteiro,cDtEntr,cDocFilt,lCliDif,lEstDif,cCTE) //Everson 
 	RestArea(aArea)
 	
 Return aSeriaNota
-/*/{Protheus.doc} gerLotCTE  
+/*/{Protheus.doc} procGerCTE  
 	Função para envio do XML da NF-e para geração do CT-e em
 	lote. Chamado 044314.
 	@type  Static Function
@@ -1551,14 +1554,12 @@ Return aSeriaNota
 	@since 29/05/2019
 	@version 01
 	/*/
-Static Function gerLotCTE(aNotas,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,cSeqCarAtu,;
+Static Function procGerCTE(aNotas,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,cSeqCarAtu,;
 	                      lUpdate,cCTECompl,cSCTECompl,cChvCTECom,lCmpDia,aPorcOco,nVlrFrt)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
-	Local nNumNF		:= Val(cValToChar(GetMv("MV_#QTDNFE")))
+	//Local nNumNF		:= Val(cValToChar(GetMv("MV_#QTDNFE")))
 	Local aDadosTrp		:= {}
 	Local aItinerario	:= {}
 	Local cTrpCNPJ		:= ""
@@ -1576,14 +1577,14 @@ Static Function gerLotCTE(aNotas,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,c
 	Local cCabec		:= obtCabec()
 	Local cSerie		:= ""
 	Local cNF			:= ""
-	Local cVlParc		:= ""
+	//Local cVlParc		:= ""
 	Local aDados		:= {}
-	Local cStringXML	:= ""
+	//Local cStringXML	:= ""
 	Local cXml64		:= ""
-	Local cHash			:= ""
+	//Local cHash			:= ""
 	Local nPorc			:= getPorEm(cTpVa) //Val(cValToChar(GetMv("MV_#CTEPOR"))) //Everson - 12/12/2019 - Chamado 029058.
 	Local cEmissTp		:= ""
-	Local cTpcarga		:= ""
+	//Local cTpcarga		:= ""
 	Local cNumRef		:= ""
 	Local cUrl			:= ""
 	Local aCabec		:= {}
@@ -1597,7 +1598,7 @@ Static Function gerLotCTE(aNotas,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,c
 	Private cLoja 		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_LJPPAG")))
 	Private cVeiculo 	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_VEICPG")))
 	Private cTransp 	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_TRANPA")))
-	Private cNmT		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_NMTRAN")))
+	Private cNmT		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_NMTPAG")))
 	Private cPlcCv		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_PLCCAV")))
 	Private cMotorista 	:= ""
 
@@ -1610,8 +1611,8 @@ Static Function gerLotCTE(aNotas,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,c
 
 	//Valida o percentual do valor de frete.
 	If nPorc <= 0
-		MsgStop("Não foi possível carregar o percentual do valor de frete que será considerado na geração do CT-e (MV MV_#CTEPOR)","Função gerLotCTE(ADLOG057P)")
-		logZBE("Função gerLotCTE: NAO OBTEVE O PERCENTUAL DO VALOR DE FRETE QUE SERA CONSIDERADO NA GERACAO DO CT-E MV MV_#CTEPOR")
+		MsgStop("Não foi possível carregar o percentual do valor de frete que será considerado na geração do CT-e (MV MV_#CTEPOR)","Função procGerCTE(ADLOG057P)")
+		logZBE("Função procGerCTE: NAO OBTEVE O PERCENTUAL DO VALOR DE FRETE QUE SERA CONSIDERADO NA GERACAO DO CT-E MV MV_#CTEPOR")
 		RestArea(aArea)
 		Return .F.
 
@@ -1826,12 +1827,10 @@ Return .T.
 	/*/
 Static Function ddTransp(cCodTrp,cLojaTrp)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetARea()
 	Local aDados		:= {}
-	Local cQuery		:= ""
+	//Local cQuery		:= ""
 	Local cAdoroCNPJ	:= Alltrim(cValToChar(GetMv("MV_#CTECNP")))
 	Local cAdoroIE		:= Alltrim(cValToChar(GetMv("MV_#CTEIES")))
 	Local cCNPJTrans	:= ""
@@ -1899,17 +1898,15 @@ Return aDados
 	/*/
 Static Function itinerario(cRoteiro,cDtEntr,lFinLocSai)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aDados		:= {}
 	Local cQuery		:= ""
 	Local aRetorno		:= {}
-	Local cCidadeIni	:= ""
+	//Local cCidadeIni	:= ""
 	Local cCidadeFim	:= ""
 	Local cEstFim		:= ""
-	Local cEstIni		:= "" //Everson - 04/09/2019. Chamado 044314.
+	//Local cEstIni		:= "" //Everson - 04/09/2019. Chamado 044314.
 	Local cPadrLoc		:= Alltrim(cValToChar(GetMv("MV_#CTELOC")))
 	Local aPadrLoc		:= {}
 	Local cEstado 		:= ""
@@ -2181,12 +2178,10 @@ Return aRetorno
 	/*/
 Static Function getTpPed(cZFA)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cTpPed	:= "N"
-	Local cCarga	:= ""
+	//Local cCarga	:= ""
 	Local cQuery	:= ""
 
 	//
@@ -2244,9 +2239,7 @@ Return cTpPed
 	/*/
 Static Function seqZFK(cRoteiro,cDtEntr,nTipo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cRet		:= ""
 	Local cTipo		:= cValtoChar(nTipo)
@@ -2321,9 +2314,7 @@ Static Function obtRet(nTipo,oXml,cNF,cSerie,cHash,cRoteiro,cCodTransp,aNotas,cS
 					   lVecPrTrans,cTipoEmiss,lUpdate,nVlrCompl,cDtEntr,cNumRef,cCTECompl,;
 					   cSCTECompl,lCmpDia,aPorcOco,lExibMsg,cAgrupa)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local xRet			:= .F.
 	Local cXml			:= ""
@@ -2457,12 +2448,10 @@ Return xRet
 	/*/
 Static Function chkDocEmit(cTipos,cRoteiro,cDtEntr,lPerg,cCTE,cMDF,cCiot,cTpVa)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
-	Local cString	:= ""
+	//Local cString	:= ""
 	Local lRet		:= .T.
 	Local cTipoDoc	:= ""
 
@@ -2568,9 +2557,7 @@ Return lRet
 	/*/
 Static Function reenvRot(aHCr,oCargas,nTpDoc)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cDtEntr	:= ""
 	Local cRoteiro	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })]))
@@ -2583,6 +2570,8 @@ Static Function reenvRot(aHCr,oCargas,nTpDoc)
 	Local nAux		:= 0
 	Local cStatus   := Alltrim(GetMv("MV_#STSEMI",,"0/1/4/7"))
 	Local lRetEnv	:= .T.
+
+
 	
 	Private cCodZFA		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRZFA" })]))
 
@@ -2679,7 +2668,7 @@ Static Function reenvRot(aHCr,oCargas,nTpDoc)
 		//
 		If lReenv
 			If nTpDoc = "1"
-				MsAguarde({|| lRetEnv := geraCTERot(cRoteiro,cDtEntr,"",.F.,nVlrFrt) } ,"Aguarde...","Reenviando roteiro (CT-e) " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)		
+				MsAguarde({|| lRetEnv := gerCteRot(cRoteiro,cDtEntr,"",.F.,nVlrFrt) } ,"Aguarde...","Reenviando roteiro (CT-e) " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)		
 			
 			ElseIf nTpDoc = "2"
 				MsAguarde({|| lRetEnv := geraMDFE(cRoteiro,cDtEntr,,,.F.)}             ,"Aguarde...","Reenviando roteiro (MDF-e) " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
@@ -2710,9 +2699,6 @@ Static Function reenvRot(aHCr,oCargas,nTpDoc)
 	EndIf 
 
 	//
-	carInter1()
-
-	//
 	RestArea(aArea)
 
 Return Nil
@@ -2725,14 +2711,12 @@ Return Nil
 	/*/
 Static Function reenAvb()
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	 		:= GetArea()
 	Local cApolic		:= Alltrim(StaticCall(NfeSefaz,getApolic,cTpVa)) //Everson - 03/06/2020. Chamado TI.
 	Local cXml	 		:= ""
-	Local aDados		:= {}
-	Local nAux			:= 1
+	//Local aDados		:= {}
+	//Local nAux			:= 1
 	Local aCabec		:= {}
 	Local oRestClient	:= Nil
 	Local cUrl			:= GetMv("MV_#REEAVB")
@@ -2840,203 +2824,139 @@ Return .T.
 	@since   19/07/2019
 	@version 01
 	/*/
-Static Function selCTECC()
+// Static Function selCTECC()
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	Local aArea	  	:= GetArea()
-	Local cRoteiro	:= Alltrim(cValToChar(oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRROT" }) ]))
-	Local dDtEntr	:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRDTE" }) ]
-	Local cTransp	:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRTRA" }) ]
-	Local cLoja		:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRLOJ" }) ]
-	Local cPlaca	:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRVEI" }) ]
-	Local aDados	:= 0
-	Local cPerg 	:= "OPHOS1"
+//	//Variáveis.	
+// 	Local aArea	  	:= GetArea()
+// 	Local cRoteiro	:= Alltrim(cValToChar(oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRROT" }) ]))
+// 	Local dDtEntr	:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRDTE" }) ]
+// 	Local cTransp	:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRTRA" }) ]
+// 	Local cLoja		:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRLOJ" }) ]
+// 	Local cPlaca	:= oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRVEI" }) ]
+// 	Local aDados	:= 0
+// 	Local cPerg 	:= "OPHOS1"
 	
-	//
-	If Empty(cRoteiro)
-		MsgStop("Roteiro não definido.","Função selCTECC(ADLOG057P)")
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If Empty(cRoteiro)
+// 		MsgStop("Roteiro não definido.","Função selCTECC(ADLOG057P)")
+// 		RestArea(aArea)
+// 		Return Nil
 		
-	EndIf
+// 	EndIf
 	
-	//
-	MV_PAR01 := dDtEntr
-	MV_PAR02 := dDtEntr
-	MV_PAR03 := cTransp
-	MV_PAR04 := cLoja
-	MV_PAR05 := cTransp
-	MV_PAR06 := cLoja
-	MV_PAR07 := cPlaca
-	MV_PAR08 := cPlaca
-	MV_PAR09 := cRoteiro
-	MV_PAR10 := cRoteiro
+// 	//
+// 	MV_PAR01 := dDtEntr
+// 	MV_PAR02 := dDtEntr
+// 	MV_PAR03 := cTransp
+// 	MV_PAR04 := cLoja
+// 	MV_PAR05 := cTransp
+// 	MV_PAR06 := cLoja
+// 	MV_PAR07 := cPlaca
+// 	MV_PAR08 := cPlaca
+// 	//MV_PAR09 := cRoteiro
+// 	//MV_PAR10 := cRoteiro
 	
-	//
-	MsAguarde({|| aDados := MkBrwWF(3,,"Selec. CT-e Compl.",.T.,,.F.,.F.) },"Aguarde","Obtendo registros...")
-	If Len(aDados) > 0
+// 	//
+// 	MsAguarde({|| aDados := MkBrwWF(3,,"Selec. CT-e Compl.",.T.,,.F.,.F.) },"Aguarde","Obtendo registros...")
+// 	If Len(aDados) > 0
 		
-		//
-		If Len(aDados) > 1
-			MsgStop("É necessário selecionar apenas 1 CT-e para ser complementado.","Função selCTECC(ADLOG057P)")
+// 		//
+// 		If Len(aDados) > 1
+// 			MsgStop("É necessário selecionar apenas 1 CT-e para ser complementado.","Função selCTECC(ADLOG057P)")
 			
-		Else
+// 		Else
 		
-			//
-			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "LEG" })   ] := LoadBitmap( GetResources(), "BR_VERDE")
-			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" }) ] := aDados[1][5]
-			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRSCTE" })] := aDados[1][6]
-			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV" })] := aDados[1][13]
-			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGRP" })] := aDados[1][14]
+// 			//
+// 			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "LEG" })   ] := LoadBitmap( GetResources(), "BR_VERDE")
+// 			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" }) ] := aDados[1][5]
+// 			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRSCTE" })] := aDados[1][6]
+// 			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV" })] := aDados[1][13]
+// 			oEmitCC:aCols[oEmitCC:nAt][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGRP" })] := aDados[1][14]
 			
-		EndIf
+// 		EndIf
 	
-	EndIf
+// 	EndIf
 	
-	//
-	oEmitCC:Refresh()
+// 	//
+// 	oEmitCC:Refresh()
 	
-	//
-	Pergunte(cPerg,.F.)
+// 	//
+// 	Pergunte(cPerg,.F.)
 	
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 	
-Return Nil
-/*/{Protheus.doc} gerCTECC 
+// Return Nil
+/*/{Protheus.doc} gerCTEALT 
 	Gera CT-e complementar. Chamado 044314.
 	@type  Static Function
 	@author Everson
 	@since   04/07/2019
 	@version 01
 	/*/
-Static Function gerCTECC()
+// Static Function gerCTEALT(aHCrCC, oEmitCC)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	Local aArea			:= GetArea()
-	Local nAux			:= 1
-	Local nAux2			:= 1
-	Local aDados		:= {}
-	Local cRoteiro		:= ""
-	Local cDtEntr		:= ""
-	Local nValorCompl	:= 0
-	Local nVlrOcorr		:= 0
-	Local cSeqCarAtu	:= ""
-	Local cAgrupa		:= ""
-	Local cCTECompl 	:= ""
-	Local cSCTECompl	:= ""
-	Local cChvCTECom	:= ""
-	Local cTransp		:= ""
-	Local cLoja			:= ""
-	Local aPorcOco		:= {}
-	Local cTpComp		:= Alltrim( GetMv("MV_#TPEMCO") )
+// 	//Variáveis.	
+// 	Local aArea			:= GetArea()
+// 	Local nAux			:= 1
+// 	Local aDados		:= {}
 
-	//
-	Private cCodZFA		:= ""
-	Private cCodOcorr	:= ""
+// 	//
+// 	Private cCodZFA		:= ""
+// 	Private cCodOcorr	:= ""
 			
-	//Everson   ³25/07/19³044314
-	If Len(oEmitCC:aCols) <= 0 .Or. (  Len(oEmitCC:aCols) > 0 .And. Empty(Alltrim(cValToChar(oEmitCC:aCols[oEmitCC:nAt,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRROT" })]))) )
-		MsgStop("Não há CT-e a ser emitido.","Função gerCTECC(ADLOG057P)")
-		carPedCC()
-		RestArea(aArea)
-		Return Nil
+// 	//Everson   ³25/07/19³044314
+// 	If Len(oEmitCC:aCols) <= 0 .Or. (  Len(oEmitCC:aCols) > 0 .And. Empty(Alltrim(cValToChar(oEmitCC:aCols[oEmitCC:nAt,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRROT" })]))) )
+// 		MsgStop("Não há CT-e a ser emitido.","Função gerCTEALT(ADLOG057P)")
+// 		carPedCC()
+// 		RestArea(aArea)
+// 		Return Nil
 		
-	EndIf
+// 	EndIf
 	
-	//
-	carPedCC()
-	
-	//
-	For nAux := 1 To Len(oEmitCC:aCols)
+// 	//
+// 	For nAux := 1 To Len(oEmitCC:aCols)
 
-		//
-		If 	! Empty( Alltrim(cValToChar( oEmitCC:aCols[nAux,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })] )) )  .And.;
-			! Empty( Alltrim(cValToChar( oEmitCC:aCols[nAux,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGRP" })] )) ) .And.;
-			! Empty( Alltrim(cValToChar( oEmitCC:aCols[nAux,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV" })] )) ) 
+// 		//
+// 		If Empty( Alltrim(cValToChar( oEmitCC:aCols[nAux,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })] )) )  .And.;
+// 			oEmitCC:aCols[nAux,Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRVALOR" })] > 0
+// 			Aadd(aDados,oEmitCC:aCols[nAux])
 			
-			Aadd(aDados,oEmitCC:aCols[nAux])
-			
-		EndIf
+// 		EndIf
 	
-	Next nAux
+// 	Next nAux
 
-	//
-	If Len(aDados) <= 0
-		MsgStop("Não há registros a serem processados.","Função gerCTECC(ADLOG057P)")
-		carPedCC()
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If Len(aDados) <= 0
+// 		MsgStop("Não há registros a serem processados.","Função gerCTEALT(ADLOG057P)")
+// 		carPedCC()
+// 		RestArea(aArea)
+// 		Return Nil
 	
-	EndIf
+// 	EndIf
 		
-	//
-	If ! MsgYesNo("Será(ão) processado(s) " + cValToChar(Len(aDados)) + " registro(s). Deseja prosseguir?","Função gerCTECC(ADLOG057P)")
-		carPedCC()
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If ! MsgYesNo("Será(ão) processado(s) " + cValToChar(Len(aDados)) + " registro(s). Deseja prosseguir?","Função gerCTEALT(ADLOG057P)")
+// 		RestArea(aArea)
+// 		Return Nil
 	
-	EndIf
+// 	EndIf
 	
-	//
-	For nAux := 1 To Len(aDados)
+// 	//
+// 	For nAux := 1 To Len(aDados)
 	
-		//
-		If Val(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2])		== "CRVALOR"}) ])) <= 0
-			Loop
-			
-		EndIf
-	
-		//
-		cCodZFA		:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRZFA" }) ]))
-		cTransp     := Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRTRA" }) ]))
-		cLoja       := Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRLOJ" }) ]))
-		cRoteiro  	:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRROT" }) ]))
-		cDtEntr	  	:= DToS(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRDTE" }) ])
-		cSeqCarAtu	:= ""
-		cAgrupa	  	:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGRP" }) ]))
-		cCTECompl 	:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE"  }) ]))
-		cSCTECompl	:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRSCTE" }) ]))
-		cChvCTECom	:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV" }) ]))
-		cCodOcorr	:= Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CROCO"  }) ]))
-		nVlrOcorr	:= Val(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2])		== "CRVALOR"}) ]))
-		nValorCompl += nVlrOcorr
-		
-		//
-		Aadd(aPorcOco,{cCodOcorr,nVlrOcorr, 0,cCodZFA} )
-		
-		//
-		If nAux == Len(aDados) .Or.;
-			cChvCTECom <> Alltrim(cValToChar(aDados[nAux+1][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV" }) ])) .Or.;
-			Alltrim(cValToChar(aDados[nAux][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGP"  }) ])) = "1" .Or.;
-			Alltrim(cValToChar(aDados[nAux+1][ Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGP"  }) ])) = "1"
-			
-			//
-			For nAux2 := 1 To Len(aPorcOco)
-				aPorcOco[nAux2][3] := aPorcOco[nAux2][2]/nValorCompl
-				
-			Next nAux2
-			
-			//Everson - 31/07/19. Chamado 044314.
-			MsAguarde({|| grCTECompl(cRoteiro,cDtEntr,nValorCompl,cSeqCarAtu,cTpComp,cAgrupa,cCTECompl,cSCTECompl,cChvCTECom,.T., aPorcOco ) } ,"Aguarde...","CT-e complementar do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
-			nValorCompl := 0
-			aPorcOco    := {}
- 
-		EndIf
-		
-	Next nAux
-	
-	//
-	carPedCC()
+// 		//
+// 		oEmitCC:GoTo(nAux) 
 
-	//
-	RestArea(aArea)
+// 		//
+// 		MsAguarde({|| gerCte(aHCrCC, oEmitCC, .T.) } ,"Aguarde...","Gerando CT-e..." ,.F.)
+
+// 	Next nAux
+
+// 	//
+// 	RestArea(aArea)
 	
-Return Nil
+// Return Nil
 /*/{Protheus.doc} carPedCC 
 	Carrega registros pendentes de CT-e complementar. Chamado 044314.
 	@type  Static Function
@@ -3046,9 +2966,7 @@ Return Nil
 	/*/
 Static Function carPedCC()
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	 	:= GetArea()
 	Local cQuery	:= ""
 	Local oCor		:= Nil
@@ -3065,7 +2983,7 @@ Static Function carPedCC()
 	
 	//
 	cQuery := ""
-	cQuery += " SELECT * "
+	cQuery += " SELECT DISTINCT * "
 	cQuery += " FROM ( "
 	cQuery += " SELECT   " 
 	cQuery += " '1' AS TAB, ZFA_DATA, ZFA_CARGA, ZFA_DTENTR, ZFA_ROTEIR, ZFA_TRANPA, ZFA_LJPPAG,  " 
@@ -3123,7 +3041,7 @@ Static Function carPedCC()
 	cQuery += " AND ZFA_ROTEIR <= '" + cRotFim   + "' " 
 	
 	cQuery += " AND ZF7_GERCTE = '2' " 
-	cQuery += " AND ZF7_DBCD   = 'C'   " 
+	cQuery += " AND ZFA_DC     = 'C'   " 
 	cQuery += " AND ZF7_TOTCOD = 'N' " 
 	cQuery += " AND ZFA_APRMOV = 'S' "
 	cQuery += " AND ZFA_FECHA  = 'N' "
@@ -3131,7 +3049,7 @@ Static Function carPedCC()
 	cQuery += " AND ZFA_VA = '" + cTpVa + "' " //Everson - 03/12/2019. Chamado 029058.
 	cQuery += " AND ZFA.D_E_L_E_T_ = ''   " 
 	cQuery += " AND ZF7.D_E_L_E_T_ = '' " 
-	cQuery += " AND ZFKCHK.ZFK_CODZFA IS NULL   "
+	//cQuery += " AND ZFKCHK.ZFK_CODZFA IS NULL   "
 	
 	cQuery += " ) AS FONTE "
 	
@@ -3156,18 +3074,12 @@ Static Function carPedCC()
 		While ! D_GERCC->(Eof())
 			
 			//
-			If ! Empty(Alltrim(cValToChar(D_GERCC->NUM_CTE)))
+			If D_GERCC->QTD_CTE > 0
 				oCor := LoadBitmap( GetResources(), "BR_VERDE")
 			
 			Else
 				oCor := LoadBitmap( GetResources(), "BR_AMARELO")
 			
-			EndIf
-			
-			//
-			If D_GERCC->QTD_CTE > 1
-				oCor := LoadBitmap( GetResources(), "BR_AZUL")
-				
 			EndIf
 			
 			//
@@ -3186,12 +3098,14 @@ Static Function carPedCC()
 			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRVALOR" })]	:= D_GERCC->ZFA_VALOR
 			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRZFA" })]		:= D_GERCC->ZFA_COD
 			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCAR" })]		:= D_GERCC->ZFA_CARGA
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGP" })]		:= D_GERCC->ZF7_AGRCTE
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })]		:= Iif(D_GERCC->QTD_CTE > 1,"",D_GERCC->NUM_CTE)
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRSCTE"})]		:= Iif(D_GERCC->QTD_CTE > 1,"",D_GERCC->SER_CTE)
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGRP"})]		:= D_GERCC->AGR_CTE
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV"})]		:= D_GERCC->CHV_CTE
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRQTDC"})]		:= D_GERCC->QTD_CTE
+			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })]	    := Iif(D_GERCC->QTD_CTE > 0,"Ok","")
+			
+			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })]		:= Iif(D_GERCC->QTD_CTE > 1,"+1",D_GERCC->NUM_CTE)
+			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRSCTE"})]		:= Iif(D_GERCC->QTD_CTE > 1,"+1",D_GERCC->SER_CTE)
+			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGP" })]		:= D_GERCC->ZF7_AGRCTE
+			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRAGRP"})]		:= D_GERCC->AGR_CTE
+			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRACHV"})]		:= D_GERCC->CHV_CTE
+			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRQTDC"})]		:= D_GERCC->QTD_CTE
 					
 			D_GERCC->(DbSkip())
 			
@@ -3221,18 +3135,16 @@ Return Nil
 	/*/
 Static Function emiMDFL()
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	 	:= GetArea()
 	Local i		 	:= 1
-	Local cHash	 	:= ""
-	Local cDoc	 	:= ""
-	Local cDocSr	:= ""
-	Local cDateTime	:= ""
+	//Local cHash	 	:= ""
+	//Local cDoc	 	:= ""
+	//Local cDocSr	:= ""
+	//Local cDateTime	:= ""
 	Local cRoteiro	:= ""
 	Local cDtEntr	:= ""
-	Local cIBGE		:= ""
+	//Local cIBGE		:= ""
 	
 	Private cCodZFA:= ""
 	
@@ -3265,9 +3177,6 @@ Static Function emiMDFL()
 		MsAguarde({|| geraMDFE(cRoteiro,cDtEntr,,,.F.)},"Aguarde...","Emitindo MDF-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
 	
 	Next i
-	
-	//
-	carInter1("2")
 
 	//
 	RestArea(aArea)
@@ -3282,9 +3191,7 @@ Return Nil
 	/*/
 Static Function encMDFL()
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	 	:= GetArea()
 	Local i		 	:= 1
 	Local cHash	 	:= ""
@@ -3348,9 +3255,6 @@ Static Function encMDFL()
 		EndIf
 	
 	Next i
-	
-	//
-	carDocs(.T.,"4")
 
 	//
 	RestArea(aArea)
@@ -3365,9 +3269,7 @@ Return Nil
 	/*/
 Static Function conEmpresa(oCargas,aHCr)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	 	:= GetArea()
 	Local cTransp	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRTRA" })]))
 	Local cLoja		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRLOJ" })]))
@@ -3400,15 +3302,13 @@ Return Nil
 	/*/
 Static Function funcHash(nOpc,cTpDoc)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea			:= GetArea()
 	Local cDtEntr		:= ""
 	Local cHash			:= Alltrim(cValToChar(oDocs:aCols[oDocs:nAt,Ascan(aHDc,{|x| AllTrim(x[2]) == "CRHASH" })]))
 	Local cDoc			:= Alltrim(cValToChar(oDocs:aCols[oDocs:nAt,Ascan(aHDc,{|x| AllTrim(x[2]) == "CRNUMDOC" })]))
 	Local cDocSr		:= Alltrim(cValToChar(oDocs:aCols[oDocs:nAt,Ascan(aHDc,{|x| AllTrim(x[2]) == "CRSRDOC" })]))
-	Local cRoteiro		:= Alltrim(cValToChar(oDocs:aCols[oDocs:nAt,Ascan(aHDc,{|x| AllTrim(x[2]) == "CRROT" })]))
+	//Local cRoteiro		:= Alltrim(cValToChar(oDocs:aCols[oDocs:nAt,Ascan(aHDc,{|x| AllTrim(x[2]) == "CRROT" })]))
 	
 	Local cHashM		:= Alltrim(cValToChar(oDocsM:aCols[oDocsM:nAt,Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRHASH" })]))
 	Local cDocM			:= Alltrim(cValToChar(oDocsM:aCols[oDocsM:nAt,Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRNUMDOC" })]))
@@ -3550,9 +3450,7 @@ Return Nil
 	/*/
 Static Function carDocs(lCarrega,cTipo)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea			:= GetArea()
 	Local cRoteiro		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })]))
 	Local cDtEntr		:= ""
@@ -3853,12 +3751,19 @@ Static Function carDocs(lCarrega,cTipo)
 		EndIf
 		
 		//
-		If cTipo == "1"
+		If cTipo == "1" //CT-e.
 			Aadd(oDocs:aCols , Array(Len(aHDc) + 1) )
 			oDocs:aCols[Len(oDocs:aCols), Len(oDocs:aCols[1]) ] := .F.
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "LEG" })]			:= oCor
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRDTE" })]		:= SToD(cDtEntr)
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRROT" })]		:= cRoteiro
+
+			//Everson - 20/09/2021. Chamado 15138.
+			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRTRA" })]		:= D_DOCS->ZFK_TRANSP
+			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRLOJ" })]		:= D_DOCS->ZFK_LOJA
+			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRNMT" })]		:= D_DOCS->ZFK_NMTRAN
+			//
+
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRSTATUS" })]	:= cMsgStatus
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRTPDOC" })] 	:= cTipoDoc
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRNUMDOC" })] 	:= D_DOCS->ZFK_NUMDOC
@@ -3874,12 +3779,19 @@ Static Function carDocs(lCarrega,cTipo)
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRPENC" })] 		:= D_DOCS->ZFK_PROENC
 			oDocs:aCols[Len(oDocs:aCols),Ascan(aHDc,{|x| AllTrim(x[2]) == "CRPEDC" })] 		:= D_DOCS->ZFK_PEDCOM
 		
-		ElseIf cTipo == "2"
+		ElseIf cTipo == "2" //MDF-e.
 			Aadd(oDocsM:aCols , Array(Len(aHDcM) + 1) )
 			oDocsM:aCols[Len(oDocsM:aCols), Len(oDocsM:aCols[1]) ] := .F.
 			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "LEG" })]		:= oCor
 			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRDTE" })]	:= SToD(cDtEntr)
 			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRROT" })]	:= cRoteiro
+
+			//Everson - 20/09/2021. Chamado 15138
+			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRTRA" })]	:= D_DOCS->ZFK_TRANSP
+			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRLOJ" })]	:= D_DOCS->ZFK_LOJA
+			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRNMT" })]	:= D_DOCS->ZFK_NMTRAN
+			//
+
 			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRSTATUS" })]	:= cMsgStatus
 			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRTPDOC" })] 	:= cTipoDoc
 			oDocsM:aCols[Len(oDocsM:aCols),Ascan(aHDcM,{|x| AllTrim(x[2]) == "CRNUMDOC" })]	:= D_DOCS->ZFK_NUMDOC
@@ -3897,6 +3809,13 @@ Static Function carDocs(lCarrega,cTipo)
 			oVerb:aCols[Len(oVerb:aCols), Len(oVerb:aCols[1]) ] := .F.
 			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRDTE" })]		:= SToD(cDtEntr)
 			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRROT" })]		:= cRoteiro
+
+			//Everson - 20/09/2021. Chamado 15138
+			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRTRA" })]		:= D_DOCS->ZFK_TRANSP
+			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRLOJ" })]		:= D_DOCS->ZFK_LOJA
+			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRNMT" })]		:= D_DOCS->ZFK_NMTRAN
+			//
+
 			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRSTATUS" })]	:= D_DOCS->ZFK_STAAVE
 			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRTPDOC" })] 	:= D_DOCS->ZFK_TPDAVE
 			oVerb:aCols[Len(oVerb:aCols),Ascan(aHAv,{|x| AllTrim(x[2]) == "CRNUMDOC" })]	:= D_DOCS->ZFK_NOTA
@@ -3983,18 +3902,16 @@ Static Function carDocs(lCarrega,cTipo)
 	RestArea(aArea)
 	
 Return Nil
-/*/{Protheus.doc} grMDF  
+/*/{Protheus.doc} gerMDFE  
 	Gera MDF-e. Chamado 044314.
 	@type  Static Function
 	@author Everson
 	@since   18/06/2019
 	@version 01
 	/*/
-Static Function grMDF(aHCr,oCargas)
+Static Function gerMDFE(aHCr,oCargas)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cDtEntr	:= ""
 	Local cRoteiro	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })]))
@@ -4022,14 +3939,14 @@ Static Function grMDF(aHCr,oCargas)
 	
 	//
 	If ! Empty(cMDF)
-		MsgStop("Já há MDF-e emitido para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ", ou não é necessária a emissão.","Função grMDF(ADLOG057P)")
+		MsgStop("Já há MDF-e emitido para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ", ou não é necessária a emissão.","Função gerMDFE(ADLOG057P)")
 		RestArea(aArea)
 		Return Nil
 			
 	EndIf
 	
 	//
-	If ! MsgYesNo("Deseja emitir MDF-e para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + "?","Função grMDF(ADLOG057P)")
+	If ! MsgYesNo("Deseja emitir MDF-e para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + "?","Função gerMDFE(ADLOG057P)")
 		RestArea(aArea)
 		Return Nil
 		
@@ -4037,9 +3954,6 @@ Static Function grMDF(aHCr,oCargas)
 	
 	//
 	MsAguarde({|| geraMDFE(cRoteiro,cDtEntr)},"Aguarde...","Emitindo MDF-e do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
-	
-	//
-	carInter1()
 
 	//
 	RestArea(aArea)
@@ -4054,11 +3968,9 @@ Return Nil
 	/*/
 Static Function cfgMV()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
-	Local oSay1			:= Nil
+	//Local oSay1			:= Nil
 	Local oSBtn01		:= Nil
 	Local oSBtn02		:= Nil
 
@@ -4137,9 +4049,7 @@ Return Nil
 	/*/
 Static Function prConfigMV()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cCNPJ 	:= GetMv("MV_#CTECNP")  //CNPJ Ad'oro.
 	Local cIE		:= GetMv("MV_#CTEIES")  //I.E. Ad'oro.
@@ -4280,9 +4190,7 @@ Return Nil
 	/*/
 Static Function GravarMV()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	:= GetArea()
 	Local i		:= 0
 	Local cMv	:= ""
@@ -4316,9 +4224,7 @@ Return Nil
 	/*/
 Static Function gerRefCTe(cRoteiro,cDtEntr,cSeq,cEmissTp,cTpVa)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea := GetArea()
 	Local cRef  := ""
 	Local dData := GetMv("MV_#DTGDOC",,Date())
@@ -4346,9 +4252,7 @@ Return cRef
 	/*/
 Static Function obtInfCTE(aNF,cRoteiro,cDtEntr,cTipo,cSeq,lSelectCTE,cVeiculo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local aRetorno	:= {}
 	Local cQuery	:= ""
@@ -4357,7 +4261,7 @@ Static Function obtInfCTE(aNF,cRoteiro,cDtEntr,cTipo,cSeq,lSelectCTE,cVeiculo)
 	Local cSerie	:= ""
 	Local cValor	:= ""
 	Local cChaveAce	:= ""
-	Local oXml		:= Nil
+	//Local oXml		:= Nil
 	Local cVeic		:= ""
 	Local cMsgOphos	:= ""
 	Local cTpDoc	:= ""
@@ -4496,9 +4400,7 @@ Return aRetorno
 	/*/
 Static Function slvXML(aRet)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea 	:= GetArea()
 	Local cPFis		:= GetMv("MV_#SLVCTE")	
 	Local cArqXml	:= ""
@@ -4554,9 +4456,7 @@ Return Nil
 	/*/
 Static Function uptICMS(cHash,cArqXml)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local aXml		:= {}
 	Local oXml		:= Nil
@@ -4703,9 +4603,7 @@ Return .T.
 	/*/
 Static Function dowArq(aRet,nTipo,cDtEntr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cHash		:= ""
 	Local lAbrArq	:= GetMv("MV_#DOWARQ")
@@ -4763,9 +4661,7 @@ Return Nil
 	/*/
 Static Function pdfCTEdow(cHash,cPFis,cArqPdf,lAbreArq,cChave,cRetCamin) //Everson   ³30/07/19³044314.
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUrl		:= GetMv("MV_#PDFCTE")
 	Local cCaminho	:= ""
@@ -4842,13 +4738,11 @@ Return lRet
 	/*/
 Static Function obtArquivo(cUrl,cArq,cExt,cPFis,cArqXml)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cHtml			:= ""
 	Local cErroWS		:= ""
-	Local cStatus		:= ""
+	//Local cStatus		:= ""
 	Local cArquivo		:= ""
 	Local cCaminho		:= ""
 	Local oRestClient	:= ""
@@ -4943,9 +4837,7 @@ Return cCaminho
 	/*/
 Static Function fVisualiza(cArquivo,lAbreArq)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	:= GetArea()
 	
 	Default lAbreArq := .T.
@@ -4976,9 +4868,7 @@ Return .T.
 	/*/
 Static Function obtHash(cRoteiro,cSeq,cTpDoc,cNF,cSerie,cDtEntr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 	Local cHash		:= ""
@@ -5065,9 +4955,7 @@ Return cHash
 	/*/
 Static Function obtStrXML(cSerie,cNF)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aString   	:= {}
 	Local cSerieNota	:= ""
@@ -5148,9 +5036,7 @@ Return aString
 	/*/
 Static Function SpedPExp(cIdEnt,cSerie,cNota,cCnpj)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cURL     	:= Alltrim(PadR(GetNewPar("MV_SPEDURL","http://"),250)) + "/NFeSBRA.apw"
 	Local nX		:= 0
@@ -5222,9 +5108,7 @@ Return cXml
 	/*/
 Static Function obtCbNFE()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	:= GetArea()
 	Local cRet	:= GetMv("MV_#CABNF")
 
@@ -5253,9 +5137,7 @@ Return cRet
 	/*/
 Static Function obtRodNFE()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	:= GetArea()
 	Local cRet	:= GetMv("MV_#RODNF")
 
@@ -5284,9 +5166,7 @@ Return cRet
 	/*/
 Static Function retReeAvb(oXml,cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	 	:= GetArea()
 	Local cRetorno	:= ""
 	Local cMensagem	:= ""
@@ -5324,9 +5204,7 @@ Return lRet
 	/*/
 Static Function statusCTE(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aRetorno		:= {}
 	Local oXml			:= Nil
@@ -5409,9 +5287,7 @@ Return aRetorno
 	/*/
 Static Function consulCTE(cHash,nTipo,lExibMsg)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUrl  		:= ""
 	Local oRestClient	:= Nil
@@ -5547,9 +5423,7 @@ Return lRet
 	/*/
 Static Function cancCTE(cHash,cJust)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet 			:= .T.
 	Local cUrl			:= GetMv("MV_#CANCTE")
@@ -5687,9 +5561,7 @@ Return lRet
 	/*/
 Static Function canXmlTemp()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cString	:= ""
 
@@ -5712,9 +5584,7 @@ Return cString
 	/*/
 Static Function retCancCTE(oXml,cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cRetorno	:= ""
 	Local cMensagem	:= ""
@@ -5787,16 +5657,14 @@ Return lRet
 	/*/
 Static Function cancDoc(cHash,cTpDoc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUpdate 	:= ""
 	Local cErroUp 	:= ""
-	Local oXml	  	:= ""
+	//Local oXml	  	:= ""
 	Local cStatus 	:= ""
-	Local cRetorno	:= ""
-	Local cMensagem	:= ""
+	//Local cRetorno	:= ""
+	//Local cMensagem	:= ""
 	Local cMsgOphos	:= ""
 	Local aStatus	:= {}
 	Local cProtCanc	:= ""
@@ -5928,9 +5796,7 @@ Return .T.
 	/*/
 Static Function retConsEmp(oXml)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cCodTransp	:= ""
 	Local cLoja			:= ""
@@ -5941,7 +5807,7 @@ Static Function retConsEmp(oXml)
 	Local cTrpAmbien	:= ""
 	Local cTrpProt		:= ""
 	Local cTrpSitua		:= ""
-	Local i				:= 1
+	//Local i				:= 1
 	Local cDadosRes		:= ""
 	Local chaveConsulta	:= ""
 	Local lRet			:= .F.
@@ -6078,9 +5944,7 @@ Return lRet
 	/*/
 Static Function grvStatTrp(cTrpCNPJ,cRetorno,cMensagem,cTrpSitua)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	:= GetArea()
 
 	//Remove espaços em branco.
@@ -6139,9 +6003,7 @@ Return Nil
 	/*/
 Static Function retEnvMDFE(oXml,cRoteiro,lTransbordo,cSeq,lUpdate,cDtEntr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cRetorno		:= ""
 	Local cMensagem		:= ""
@@ -6228,9 +6090,7 @@ Return aRet
 	/*/
 Static Function grvMDFHash(cRetorno,oXml,cRoteiro,lTransbordo,cSeq,lUpdate,cDtEntr,cDtEmiss)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lGrv			:= .T.
 	Local cTpDoc		:= "2"
@@ -6241,14 +6101,14 @@ Static Function grvMDFHash(cRetorno,oXml,cRoteiro,lTransbordo,cSeq,lUpdate,cDtEn
 	Local aNotas		:= {}
 	Local nValor		:= 0
 	Local i				:= 1
-	Local cQuery		:= ""
+	//Local cQuery		:= ""
 	Local cStatus		:= ""
 	Local cProtEmis		:= ""
 	Local cChaveAces	:= ""
-	Local aXmlCons		:= {}
-	Local oXmlCons		:= Nil
-	Local cRetoConst	:= ""	
-	Local aDadReb		:= {}	
+	//Local aXmlCons		:= {}
+	//Local oXmlCons		:= Nil
+	//Local cRetoConst	:= ""	
+	//Local aDadReb		:= {}	
 	Local cDtEnt		:= ""
 	Local nVezesP		:= GetMv("MV_#NVPROC")//Criar variável.
 	Local nAux			:= 0
@@ -6384,9 +6244,7 @@ Return aRet
 	/*/
 Static Function statusMDFE(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aRetorno		:= {}
 	Local oXml			:= Nil
@@ -6468,9 +6326,7 @@ Return aRetorno
 	/*/
 Static Function consulMDF(cHash,nTipo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUrl  		:= GetMv("MV_#CONMDF")
 	Local oRestClient	:= Nil
@@ -6607,9 +6463,7 @@ Return lRet
 	/*/
 Static Function retConsMDF(oXml,cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet			:= .T.
 	Local cRetorno		:= ""
@@ -6620,9 +6474,9 @@ Static Function retConsMDF(oXml,cHash)
 	Local cDataAut		:= ""
 	Local cProtocolo	:= ""
 	Local cStatus		:= ""
-	Local Update		:= ""
+	//Local Update		:= ""
 	Local cMsgOphos		:= ""
-	Local aStatus		:= {}
+	//Local aStatus		:= {}
 	Local cProtEmis		:= ""
 	Local cChaveAces	:= ""
 	Local cProtCance	:= ""
@@ -6783,9 +6637,7 @@ Return lRet
 	/*/
 Static Function updateMDF(cNumDoc,cSerDoc,cStatus,cMsgOphos,cProtEmis,cProtCance,cChaveAces,cProtEnce,cHash,cDataAut)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local Update	:= ""
 	Local lRet 		:= .T.
@@ -6815,9 +6667,7 @@ Return lRet
 	/*/
 Static Function impMDF(cHash,oXml,cRoteiro,cSeq,cStringXML,lTransbordo,cDtEntr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cQuery		:= ""
 	Local cDadosZFK		:= ""
@@ -6825,7 +6675,7 @@ Static Function impMDF(cHash,oXml,cRoteiro,cSeq,cStringXML,lTransbordo,cDtEntr)
 	Local i				:= 0
 	Local lGrv			:= .T.
 	Local cTpDoc		:= "2"
-	Local aDadReb		:= {}
+	//Local aDadReb		:= {}
 	Local cNota			:= ""
 	Local cSerie		:= ""
 	Local aStatus		:= {}
@@ -6835,10 +6685,10 @@ Static Function impMDF(cHash,oXml,cRoteiro,cSeq,cStringXML,lTransbordo,cDtEntr)
 	Local cChaveAces	:= ""
 	Local cNumDoc		:= ""
 	Local cSerDoc		:= ""
-	Local cValor		:= ""
+	//Local cValor		:= ""
 	Local nValor		:= 0
 	Local cEmissTp		:= "N"
-	Local cRetorno		:= ""
+	//Local cRetorno		:= ""
 	Local cProtCan		:= ""
 	Local cDtEmiss		:= ""
 	Local aRet			:= {}
@@ -6947,9 +6797,7 @@ Return aRet
 	/*/
 Static Function retCancMDF(oXml,cHash,cDtEntr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cRetorno	:= ""
 	Local cMensagem	:= ""
@@ -6997,9 +6845,7 @@ Return lRet
 	/*/
 Static Function xmlCTEdow(cHash,cPFis,cArqXml,lAbreArq,cChave)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUrl		:= GetMv("MV_#XMLCTE")
 	Local cCaminho	:= ""
@@ -7072,9 +6918,7 @@ Return lRet
 Static Function retEnvGrp(oXml,aNotas,cSeq,lVecPrTrans,cTipoEmiss,cRoteiro,lUpdate,nVlrCompl,cDtEntr,;
 	                      cNumRef,cCTECompl,cSCTECompl,lCmpDia,aPorcOco,cAgrupa) //Everson - 04/09/2019. Chamado 044314.
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cRetorno		:= ""
 	Local cMensagem		:= ""
@@ -7086,11 +6930,11 @@ Static Function retEnvGrp(oXml,aNotas,cSeq,lVecPrTrans,cTipoEmiss,cRoteiro,lUpda
 	Local cSerie		:= ""
 	Local cNumCTE		:= ""
 	Local cSerCTE		:= ""
-	Local cQuery		:= ""
+	//Local cQuery		:= ""
 	Local nPontEnt		:= 0
 	Local cProtEmis		:= ""
 	Local cChaveAces	:= ""
-	Local cTpDoc		:= "1"
+	//Local cTpDoc		:= "1"
 	Local lChkStatus	:= .F.
 	Local cMsgOphos		:= ""
 	Local cProtCan		:= ""
@@ -7263,15 +7107,13 @@ Static Function grvCTEHash(cRetorno,oXml,cNota,cSerie,cNumDoc,cSerDoc,cSeq,lVecP
 		cProtEmis,cChaveAces,cDtEntr,lUpdate,nVlrCompl,cCodCrg,lChkStatus,;
 		cMsgOphos,cProtCan,cRetHash,cCTECompl,cSCTECompl,cTpEnvCTE,nVlrCC,cDtEmiss)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aRet			:= {}
 	Local lGrv			:= .T.
 	Local cTpDoc		:= "1"
 	Local cHash			:= ""
-	Local cMensagem		:= ""
+	//Local cMensagem		:= ""
 	Local cStatus		:= ""
 	Local aStatus		:= {}
 	Local cEmissTp		:= ""
@@ -7439,9 +7281,7 @@ Return aRet
 	/*/
 Static Function ajusteVlNF(nValor,cRoteiro,cDtEntr,cSeq,nPontEnt,cNumDoc,cSerDoc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local nVlParc	:= 0
 	Local cQuery	:= ""
@@ -7538,9 +7378,7 @@ Static Function impAgrCTE(oXml,cRetorno,cMensagem,cRoteiro,cDtEntr,cCodCrg,cNumR
 						  cLoja,cMotorista,cVeiculo,cRetHash,cCTECompl,cSCTECompl,lCmpDia,;
 						  aPorcOco,cAgrupa,aNotas,cSeq,cTipoEmiss) //Everson - 04/09/2019. Chamado 044314.
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cHash			:= ""
 	Local cRotReg		:= ""
@@ -7561,7 +7399,7 @@ Static Function impAgrCTE(oXml,cRetorno,cMensagem,cRoteiro,cDtEntr,cCodCrg,cNumR
 	Local cChaveAces	:= ""
 	Local i				:= 0
 	Local x				:= 0
-	Local aDadReb		:= {}
+	//Local aDadReb		:= {}
 	Local cValor		:= "0"
 	Local cEmissTp		:= ""
 	Local aRet			:= {}
@@ -7572,7 +7410,7 @@ Static Function impAgrCTE(oXml,cRetorno,cMensagem,cRoteiro,cDtEntr,cCodCrg,cNumR
 	Local nVlrPrc		:= 0
 	Local cDtEmiss		:= ""
 	Local nPorc			:= getPorEm(cTpVa) //GetMv("MV_#CTEPOR") //Everson - 12/12/2019 - Chamado 029058.
-	Local dData 		:= GetMv("MV_#DTGDOC",,Date())
+	//Local dData 		:= GetMv("MV_#DTGDOC",,Date())
 
 	//
 	Default cRetHash	:= ""
@@ -7780,9 +7618,7 @@ Return aRet
 	/*/
 Static Function retConsCTE(oXml,cHash,lExibMsg)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet			:= .F.
 	Local cRetorno		:= ""
@@ -7799,7 +7635,7 @@ Static Function retConsCTE(oXml,cHash,lExibMsg)
 	Local cDataAut		:= ""
 	Local cProtocol		:= ""
 	Local cChaveAces	:= ""
-	Local aStatus		:= ""
+	//Local aStatus		:= ""
 	Local cStatus		:= ""
 	Local cMsgOphos		:= ""
 	Local cProtEmis		:= ""
@@ -8015,7 +7851,7 @@ Return lRet
 	/*/
 Static Function ddAverb(xDdAverb,cHash)
 
-	//Declaração de variáveis.
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local nAux		:= 1
 	Local cMsg		:= ""
@@ -8108,7 +7944,7 @@ Return Nil
 	/*/
 Static Function updAverb(cNum,cProt,cMsg,cStat,cTpD,cDoc,cHash,cNumCte)
 
-	//Declaração de variáveis.
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUpdate	:= ""
 
@@ -8139,7 +7975,7 @@ Return Nil
 	/*/
 Static Function tabelaDoc(cTpDoc)
 
-	//Declaração de variáveis.
+	//Variáveis.
 	Local aArea	:= GetArea()
 	Local cDoc	:= ""
 
@@ -8171,9 +8007,7 @@ Return cDoc
 	/*/
 Static Function updateCTE(cHash,cStatus,cMsgOphos,cProtEmis,cChaveAces,cProtCance)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUpdate	:= ""
 
@@ -8209,9 +8043,7 @@ Static Function grvZFK(lGrv,cTpDoc,cRoteiro,cSeq,cTransp,cLoja,cVeiculo,cMotoris
 					   cStatus,cMsgOphos,cProtEmis,cChaveAces,cDtEnt,cEmissTp,cCodCrg,cProtCan,cCTECompl,cSCTECompl,;
 					   cTpEnvCTE,cDtEmiss,nPorc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cPedido	:= Alltrim(cValToChar(Posicione("SC5",15 ,FWxFilial("SC5") + cNota  , "C5_NUM"    )))
 	Local cSeqEntr	:= Alltrim(cValToChar(Posicione("SC5",1  ,FWxFilial("SC5") + cPedido, "C5_SEQUENC")))
@@ -8319,9 +8151,7 @@ Return Nil
 	/*/
 Static Function encerraMDF(cHash,cDateTime,cIBGE)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUrl			:= GetMv("MV_#ENCMDF")
 	Local cCabec    	:= obtCabec()
@@ -8441,9 +8271,7 @@ Return .T.
 	/*/
 Static Function xmlMDFEnce(cHash,cDateTime,cIBGE)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cTemplate	:= ""
 
@@ -8472,16 +8300,14 @@ Return cTemplate
 	/*/
 Static Function geraMDFE(cRoteiro,cDtEntr,cSeq,lUpdate,lSelectCTE)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUrl      	:= Lower(Alltrim(GetMv("MV_#ENVMDF")))
-	Local cQuery		:= ""
+	//Local cQuery		:= ""
 	Local aTransp		:= {}
 	Local aVeiculo		:= {}
 	Local aPropVec		:= {}
-	Local aDadReb		:= {}
+	//Local aDadReb		:= {}
 	Local aReboque		:= {}
 	Local aPropReb		:= {}
 	Local aMotorista	:= {}
@@ -8493,8 +8319,8 @@ Static Function geraMDFE(cRoteiro,cDtEntr,cSeq,lUpdate,lSelectCTE)
 	Local oRestClient	:= Nil
 	Local cRetPost		:= ""
 	Local cErroWS		:= ""
-	Local i				:= 0
-	Local cHash			:= ""
+	//Local i				:= 0
+	//Local cHash			:= ""
 	Local aRet			:= {}
 	Local cTpcarga		:= ""
 	Local nTipo			:= 1
@@ -8685,9 +8511,7 @@ Return .T.
 Static Function MDFxmlTemp(aTransp,aVeiculo,aPropVec,aReboque,aPropReb,;
 						   aMotorista,aCTE,cSeq,cCodCarga,cTpcarga,cDtEntr,cNumRef)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cString   	:= ""
 	Local i				:= 1
@@ -8850,9 +8674,7 @@ Return cString
 	/*/
 Static Function gerRefMDF(cRoteiro,cDtEntr,cSeq,cEmissTp,cTpcarga)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea := GetArea()
 	Local cRef  := ""
 	Local dData := GetMv("MV_#DTGDOC",,Date())
@@ -8880,9 +8702,7 @@ Return cRef
 	/*/
 Static Function ddVeiculo(cVeic,nOpc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local aRetorno	:= {}
 	Local cQuery	:= ""
@@ -9002,9 +8822,7 @@ Return aRetorno
 	/*/
 Static Function tipoRodado(cTipo,nOpc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea	:= GetArea()
 	Local cRet	:= ""
 
@@ -9072,9 +8890,7 @@ Return cRet
 	/*/
 Static Function dadosProp(cCodTrp,cLojaTrp)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local aRetorno	:= {}
 	Local cQuery	:= ""
@@ -9179,9 +8995,7 @@ Return aRetorno
 	/*/
 Static Function dadosMot(cCodMot)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 	Local cNome		:= ""
@@ -9299,9 +9113,7 @@ Return aRetorno
 	/*/
 Static Function cancMDF(cHash,cJust)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet          := .T.
 	Local cUrl   		:= GetMv("MV_#CANMDF")
@@ -9417,9 +9229,7 @@ Return lRet
 	/*/
 Static Function xmlMDFCanc(cHash,cJustif)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cTemplate	:= ""
 
@@ -9446,9 +9256,7 @@ Return cTemplate
 	/*/
 Static Function retEncMDFE(oXml,cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local lRet 		:= .T.
 	Local cRetorno	:= ""
@@ -9515,21 +9323,19 @@ Return lRet
 	/*/
 Static Function encerraDoc(cHash,cTpDoc,oXml)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUpdate 		:= ""
 	Local cErroUp 		:= ""
-	Local cMensagem		:= ""
+	//Local cMensagem		:= ""
 	Local cMsgOphos		:= ""
 	Local aStatus		:= {}
 	Local cStatus		:= ""
 	Local cProtEmis		:= ""
 	Local cChaveAces	:= ""
-	Local aXmlCons		:= {}
-	Local oXmlCons		:= Nil
-	Local cRetoConst	:= ""	
+	//Local aXmlCons		:= {}
+	//Local oXmlCons		:= Nil
+	//Local cRetoConst	:= ""	
 	Local cProtEnce		:= ""
 
 	//Remove espaços em branco.
@@ -9611,13 +9417,11 @@ Return .T.
 	/*/
 User Function ADLOG576()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aDados		:= {}
 	Local cHash			:= ""
-	Local aItinierario	:= {}
+	//Local aItinierario	:= {}
 	Local cDateTime		:= ""
 	Local cIBGE			:= ""
 
@@ -9654,14 +9458,12 @@ Return Nil
 	/*/
 Static Function selectCTE(aDados,lSelectCTE)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aStruct		:={}
 	Local aFields		:={}
-	Local _carq			:= ""
-	Local oMarkPrivate	:= Nil
+	//Local _carq			:= ""
+	//Local oMarkPrivate	:= Nil
 	Local aRetorno		:={}
 	Local i				:= 1
 	Local cDoc			:= ""
@@ -9802,9 +9604,7 @@ Return aRetorno
 	/*/
 Static Function xmlMDFDow(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUrl		:= GetMv("MV_#XMLMDF")
 	Local cCaminho	:= ""
@@ -9861,9 +9661,7 @@ Return Nil
 	/*/
 Static Function pdfMDFdow(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cUrl		:= GetMv("MV_#PDFMDF")
 	Local cCaminho 	:= ""
@@ -9920,9 +9718,7 @@ Return Nil
 	/*/
 Static Function geraObjXML(cStringXML)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local aRet  	:= {}
 	Local oXml		:= Nil
@@ -9981,13 +9777,11 @@ Return aRet
 	/*/
 Static Function consEmpres(lPerg)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cAdoroCNPJ	:= Alltrim(cValToChar(GetMv("MV_#CTECNP")))
 	Local cQuery		:= ""
-	Local cCodTransp	:= ""
+	//Local cCodTransp	:= ""
 	Local aTransport	:= {}
 	Local i				:= 0
 	
@@ -10073,9 +9867,7 @@ Return Nil
 	/*/
 Static Function procConEmp(aDadosTr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUrl      	:= GetMv("MV_#CONEMP")
 	Local cTransp		:= ""
@@ -10083,7 +9875,7 @@ Static Function procConEmp(aDadosTr)
 	Local aXml			:= {}
 	Local oXml			:= Nil
 	Local cXml      	:= ""
-	Local cTemplate 	:= ""
+	//Local cTemplate 	:= ""
 	Local cPrazo		:= GetMv("MV_#TEMPOP")
 	Local cTrpCNPJ		:= ""
 	Local cTrpInsEst	:= ""
@@ -10193,9 +9985,7 @@ Return .T.
 	/*/
 Static Function obtCabec()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local cRet	:= '<?xml version="1.0" encoding="UTF-8"?>'
 
 Return cRet
@@ -10208,9 +9998,7 @@ Return cRet
 	/*/
 Static Function gravarTXT(cTexto,cNome,cExt,cPasta,lParam)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cData		:= StrTran(Alltrim(cValToChar(Date())),"/","_")
 	Local cHora		:= StrTran(Alltrim(cValToChar(Time())),":","")
@@ -10251,9 +10039,7 @@ Return cCamArq
 	/*/
 Static Function codIBGEEst(cUF,cRoteiro,cDtEntr)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cCodIBGE	:= ""
 
@@ -10372,259 +10158,257 @@ Return cCodIBGE
 	@since 05/06/2019
 	@version 01
 	/*/
-Static Function MkBrwWF(nTipo,lRenvMDF,cTxtBnt,lFilCanc,lFilEnce,lPerg,lIniMark)
+// Static Function MkBrwWF(nTipo,lRenvMDF,cTxtBnt,lFilCanc,lFilEnce,lPerg,lIniMark)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aStruct		:={}
-	Local oTab1			:= Nil
-	Local _afields		:={}
-	Local _carq			:= ""			
-	Local oMarkPrivate	:= Nil
-	Local aRetorno		:={}
-	Local i				:= 1
-	Local cStatus		:= ""
-	Local cMsgStatus	:= ""
-	Local aDados		:= {}
-	Local cTipoDoc		:= ""
-	Local aCores		:= {}
+//	//Variáveis.
+// 	Local aStruct		:={}
+// 	Local oTab1			:= Nil
+// 	Local _afields		:={}
+// 	//Local _carq			:= ""			
+// 	//Local oMarkPrivate	:= Nil
+// 	Local aRetorno		:={}
+// 	Local i				:= 1
+// 	Local cStatus		:= ""
+// 	Local cMsgStatus	:= ""
+// 	Local aDados		:= {}
+// 	Local cTipoDoc		:= ""
+// 	Local aCores		:= {}
 
-	Private lProcess	:= .F.
-	Private aRotina		:= {}
-	Private cCadastro	:= ""
-	Private cMark		:= GetMark()
+// 	Private lProcess	:= .F.
+// 	Private aRotina		:= {}
+// 	Private cCadastro	:= ""
+// 	Private cMark		:= GetMark()
 	
-	Private cAlTab1		:= GetNextAlias()
+// 	Private cAlTab1		:= GetNextAlias()
 	
-	Default cTxtBnt		:= "Processar"
-	Default lRenvMDF	:= .F.
-	Default lFilCanc	:= .F.
-	Default lFilEnce	:= .F.
-	Default lPerg		:= .T.
-	Default lIniMark	:= .T.
+// 	Default cTxtBnt		:= "Processar"
+// 	Default lRenvMDF	:= .F.
+// 	Default lFilCanc	:= .F.
+// 	Default lFilEnce	:= .F.
+// 	Default lPerg		:= .T.
+// 	Default lIniMark	:= .T.
 
-	//Obtém dados.
-	aDados := obtDDGrid(nTipo,lFilCanc,lFilEnce,lPerg)
+// 	//Obtém dados.
+// 	aDados := obtDDGrid(nTipo,lFilCanc,lFilEnce,lPerg)
 	
-	//
-	If nTipo == 3
-		nTipo := 1
+// 	//
+// 	If nTipo == 3
+// 		nTipo := 1
 		
-	EndIf
+// 	EndIf
 	
-	//Valida retorno da função obtDDGrid.
-	If Len(aDados) == 0
-		Return aRetorno
+// 	//Valida retorno da função obtDDGrid.
+// 	If Len(aDados) == 0
+// 		Return aRetorno
 		
-	EndIf
+// 	EndIf
 	
-	//Título
-	If nTipo == 1
-		cCadastro := "Conhecimento de Transporte Eletrônico"
+// 	//Título
+// 	If nTipo == 1
+// 		cCadastro := "Conhecimento de Transporte Eletrônico"
 		
-	ElseIf nTipo == 2
-		cCadastro := "Manifesto Eletrônico de Documentos"
+// 	ElseIf nTipo == 2
+// 		cCadastro := "Manifesto Eletrônico de Documentos"
 		
-	EndIf
+// 	EndIf
 	
-	//Cria tabela temporária.
-	oTab1 := FWTemporaryTable():New(cAlTab1)
+// 	//Cria tabela temporária.
+// 	oTab1 := FWTemporaryTable():New(cAlTab1)
 	
-	//
-	Aadd(aStruct,{"TP_OK"       ,"C"    ,   2,0})
-	Aadd(aStruct,{"TP_DATA"     ,"C"    ,  10,0})
-	Aadd(aStruct,{"TP_DTENTRE"  ,"C"    ,  10,0})
-	Aadd(aStruct,{"TP_ROTEIR"   ,"C"    ,   4,0})
-	Aadd(aStruct,{"TP_STATUS"   ,"C"    ,  20,0})
-	Aadd(aStruct,{"TP_TRANSPO"  ,"C"    ,   6,0})
-	Aadd(aStruct,{"TP_LOJA"     ,"C"    ,   2,0})
-	Aadd(aStruct,{"TP_NMTRA"    ,"C"    ,  50,0})
-	Aadd(aStruct,{"TP_VEICULO"  ,"C"    ,   8,0})
-	Aadd(aStruct,{"TP_REBOQUE"  ,"C"    ,   8,0})
-	Aadd(aStruct,{"TP_CARGA"    ,"C"    ,   6,0})
-	Aadd(aStruct,{"TP_SEQENV"   ,"C"    ,   3,0})
-	Aadd(aStruct,{"TP_TPDOC"    ,"C"    ,   6,0})
-	Aadd(aStruct,{"TP_NUMDOC"   ,"C"    ,   9,0})
-	Aadd(aStruct,{"TP_SERDOC"   ,"C"    ,   3,0})
+// 	//
+// 	Aadd(aStruct,{"TP_OK"       ,"C"    ,   2,0})
+// 	Aadd(aStruct,{"TP_DATA"     ,"C"    ,  10,0})
+// 	Aadd(aStruct,{"TP_DTENTRE"  ,"C"    ,  10,0})
+// 	Aadd(aStruct,{"TP_ROTEIR"   ,"C"    ,   4,0})
+// 	Aadd(aStruct,{"TP_STATUS"   ,"C"    ,  20,0})
+// 	Aadd(aStruct,{"TP_TRANSPO"  ,"C"    ,   6,0})
+// 	Aadd(aStruct,{"TP_LOJA"     ,"C"    ,   2,0})
+// 	Aadd(aStruct,{"TP_NMTRA"    ,"C"    ,  50,0})
+// 	Aadd(aStruct,{"TP_VEICULO"  ,"C"    ,   8,0})
+// 	Aadd(aStruct,{"TP_REBOQUE"  ,"C"    ,   8,0})
+// 	Aadd(aStruct,{"TP_CARGA"    ,"C"    ,   6,0})
+// 	Aadd(aStruct,{"TP_SEQENV"   ,"C"    ,   3,0})
+// 	Aadd(aStruct,{"TP_TPDOC"    ,"C"    ,   6,0})
+// 	Aadd(aStruct,{"TP_NUMDOC"   ,"C"    ,   9,0})
+// 	Aadd(aStruct,{"TP_SERDOC"   ,"C"    ,   3,0})
 
-	//Valor do CT-e.
-	If nTipo == 1
-		Aadd(aStruct,{"TP_VALOR"    ,"N"    ,   15,2})
+// 	//Valor do CT-e.
+// 	If nTipo == 1
+// 		Aadd(aStruct,{"TP_VALOR"    ,"N"    ,   15,2})
 		
-	EndIf
+// 	EndIf
 
-	Aadd(aStruct,{"TP_OPHOS"    ,"C"    , 100,0})
-	Aadd(aStruct,{"TP_HASH"     ,"C"    , 100,0})
+// 	Aadd(aStruct,{"TP_OPHOS"    ,"C"    , 100,0})
+// 	Aadd(aStruct,{"TP_HASH"     ,"C"    , 100,0})
 
-	Aadd(aStruct,{"TP_CHAVE"    ,"C"    , 100,0})
-	Aadd(aStruct,{"TP_PROTEMI"  ,"C"    , 100,0})
-	Aadd(aStruct,{"TP_PROTCAN"  ,"C"    , 100,0})
-	Aadd(aStruct,{"TP_ENVIO"    ,"C"    , 2,0})
+// 	Aadd(aStruct,{"TP_CHAVE"    ,"C"    , 100,0})
+// 	Aadd(aStruct,{"TP_PROTEMI"  ,"C"    , 100,0})
+// 	Aadd(aStruct,{"TP_PROTCAN"  ,"C"    , 100,0})
+// 	Aadd(aStruct,{"TP_ENVIO"    ,"C"    , 2,0})
 
-	//Encerramento do MDF-e.
-	If nTipo == 2
-		Aadd(aStruct,{"TP_PROTENC"  ,"C"    , 100,0})
+// 	//Encerramento do MDF-e.
+// 	If nTipo == 2
+// 		Aadd(aStruct,{"TP_PROTENC"  ,"C"    , 100,0})
 		
-	EndIf
+// 	EndIf
 
-	//Configura campos e índices.
-	oTab1:SetFields(aStruct)
-	oTab1:AddIndex("indice1", {"TP_CARGA"} )
-	oTab1:AddIndex("indice2", {"TP_DTENTRE","TP_ROTEIR"} )
+// 	//Configura campos e índices.
+// 	oTab1:SetFields(aStruct)
+// 	oTab1:AddIndex("indice1", {"TP_CARGA"} )
+// 	oTab1:AddIndex("indice2", {"TP_DTENTRE","TP_ROTEIR"} )
 	
-	//
-	oTab1:Create()
+// 	//
+// 	oTab1:Create()
 
-	//Atribui valores ao arquivo temporário.
-	For i := 1 To Len(aDados)
+// 	//Atribui valores ao arquivo temporário.
+// 	For i := 1 To Len(aDados)
 
-		cStatus := Alltrim(cValToChar(aDados[i][10]))
+// 		cStatus := Alltrim(cValToChar(aDados[i][10]))
 
-		cMsgStatus := tlbStatus(cStatus,1)
+// 		cMsgStatus := tlbStatus(cStatus,1)
 
-		//Verifica o tipo de documento.
-		cTipoDoc := tabelaDoc(Alltrim(cValtoChar(aDados[i][7])))
+// 		//Verifica o tipo de documento.
+// 		cTipoDoc := tabelaDoc(Alltrim(cValtoChar(aDados[i][7])))
 
-		RecLock(cAlTab1,.T.)
-			(cAlTab1)->TP_OK		:= Iif(lIniMark,cMark,"")
-			(cAlTab1)->TP_DATA		:= DToC(SToD(Alltrim(cValtoChar(aDados[i][12]))))
-			(cAlTab1)->TP_DTENTRE	:= DToC(SToD(Alltrim(cValtoChar(aDados[i][4]))))
-			(cAlTab1)->TP_ROTEIR	:= Alltrim(cValtoChar(aDados[i][5]))	
-			(cAlTab1)->TP_STATUS 	:= cMsgStatus
-			(cAlTab1)->TP_TRANSPO	:= Alltrim(cValtoChar(aDados[i][1]))
-			(cAlTab1)->TP_LOJA		:= Alltrim(cValtoChar(aDados[i][2]))
-			(cAlTab1)->TP_NMTRA		:= Alltrim(cValtoChar(aDados[i][21]))		
-			(cAlTab1)->TP_VEICULO	:= Alltrim(cValtoChar(aDados[i][13]))
-			(cAlTab1)->TP_REBOQUE	:= Alltrim(cValtoChar(aDados[i][20]))
-			(cAlTab1)->TP_CARGA   	:= Alltrim(cValToChar(aDados[i][3]))
-			(cAlTab1)->TP_SEQENV  	:= Alltrim(cValtoChar(aDados[i][6]))
-			(cAlTab1)->TP_TPDOC  	:= cTipoDoc
-			(cAlTab1)->TP_NUMDOC  	:= Alltrim(cValToChar(aDados[i][8]))	
-			(cAlTab1)->TP_SERDOC 	:= Alltrim(cValToChar(aDados[i][9]))
+// 		RecLock(cAlTab1,.T.)
+// 			(cAlTab1)->TP_OK		:= Iif(lIniMark,cMark,"")
+// 			(cAlTab1)->TP_DATA		:= DToC(SToD(Alltrim(cValtoChar(aDados[i][12]))))
+// 			(cAlTab1)->TP_DTENTRE	:= DToC(SToD(Alltrim(cValtoChar(aDados[i][4]))))
+// 			(cAlTab1)->TP_ROTEIR	:= Alltrim(cValtoChar(aDados[i][5]))	
+// 			(cAlTab1)->TP_STATUS 	:= cMsgStatus
+// 			(cAlTab1)->TP_TRANSPO	:= Alltrim(cValtoChar(aDados[i][1]))
+// 			(cAlTab1)->TP_LOJA		:= Alltrim(cValtoChar(aDados[i][2]))
+// 			(cAlTab1)->TP_NMTRA		:= Alltrim(cValtoChar(aDados[i][21]))		
+// 			(cAlTab1)->TP_VEICULO	:= Alltrim(cValtoChar(aDados[i][13]))
+// 			(cAlTab1)->TP_REBOQUE	:= Alltrim(cValtoChar(aDados[i][20]))
+// 			(cAlTab1)->TP_CARGA   	:= Alltrim(cValToChar(aDados[i][3]))
+// 			(cAlTab1)->TP_SEQENV  	:= Alltrim(cValtoChar(aDados[i][6]))
+// 			(cAlTab1)->TP_TPDOC  	:= cTipoDoc
+// 			(cAlTab1)->TP_NUMDOC  	:= Alltrim(cValToChar(aDados[i][8]))	
+// 			(cAlTab1)->TP_SERDOC 	:= Alltrim(cValToChar(aDados[i][9]))
 	
-			If nTipo == 1 //Valor do CT-e.
-				(cAlTab1)->TP_VALOR 	:= Val(Alltrim(cValToChar(aDados[i][15])))
+// 			If nTipo == 1 //Valor do CT-e.
+// 				(cAlTab1)->TP_VALOR 	:= Val(Alltrim(cValToChar(aDados[i][15])))
 				
-			EndIf
+// 			EndIf
 	
-			//
-			(cAlTab1)->TP_OPHOS		:= Alltrim(cValToChar(aDados[i][14]))
-			(cAlTab1)->TP_HASH 		:= Alltrim(cValToChar(aDados[i][11]))
+// 			//
+// 			(cAlTab1)->TP_OPHOS		:= Alltrim(cValToChar(aDados[i][14]))
+// 			(cAlTab1)->TP_HASH 		:= Alltrim(cValToChar(aDados[i][11]))
 	
-			(cAlTab1)->TP_CHAVE		:= Alltrim(cValToChar(aDados[i][16]))
-			(cAlTab1)->TP_PROTEMI	:= Alltrim(cValToChar(aDados[i][17]))
-			(cAlTab1)->TP_PROTCAN	:= Alltrim(cValToChar(aDados[i][18]))
+// 			(cAlTab1)->TP_CHAVE		:= Alltrim(cValToChar(aDados[i][16]))
+// 			(cAlTab1)->TP_PROTEMI	:= Alltrim(cValToChar(aDados[i][17]))
+// 			(cAlTab1)->TP_PROTCAN	:= Alltrim(cValToChar(aDados[i][18]))
 	
-			If nTipo == 2 //Encerramento do MDF-e.
-				(cAlTab1)->TP_PROTENC	:= Alltrim(cValToChar(aDados[i][19]))
+// 			If nTipo == 2 //Encerramento do MDF-e.
+// 				(cAlTab1)->TP_PROTENC	:= Alltrim(cValToChar(aDados[i][19]))
 				
-			EndIf
+// 			EndIf
 			
-			(cAlTab1)->TP_ENVIO := Alltrim(cValToChar(aDados[i][22]))
+// 			(cAlTab1)->TP_ENVIO := Alltrim(cValToChar(aDados[i][22]))
 
-		MsUnlock()
+// 		MsUnlock()
 
-	Next i
+// 	Next i
 
-	//Campos que serão exibidos na MarkBrowse.
-	Aadd(_afields,{"TP_OK"		,"",""})
-	Aadd(_afields,{"TP_DATA"	,"","Dt Emissão"})
-	Aadd(_afields,{"TP_DTENTRE"	,"","Dt Entrega"})
-	Aadd(_afields,{"TP_ROTEIR"	,"","Roteiro"})
-	Aadd(_afields,{"TP_STATUS"	,"","Status"})
-	Aadd(_afields,{"TP_TRANSPO"	,"","Tranportadora"})
-	Aadd(_afields,{"TP_LOJA"	,"","Loja"})
-	Aadd(_afields,{"TP_NMTRA"	,"","Nome"})
-	Aadd(_afields,{"TP_VEICULO"	,"","Placa"})
-	Aadd(_afields,{"TP_REBOQUE"	,"","Reboque"})
-	Aadd(_afields,{"TP_CARGA"	,"","Carga"})
-	Aadd(_afields,{"TP_SEQENV"	,"","Seq. Envio"})
-	Aadd(_afields,{"TP_TPDOC"	,"","Tipo Doc"})
-	Aadd(_afields,{"TP_NUMDOC"	,"","Num. Doc."})
-	Aadd(_afields,{"TP_SERDOC"	,"","Série Doc."})
+// 	//Campos que serão exibidos na MarkBrowse.
+// 	Aadd(_afields,{"TP_OK"		,"",""})
+// 	Aadd(_afields,{"TP_DATA"	,"","Dt Emissão"})
+// 	Aadd(_afields,{"TP_DTENTRE"	,"","Dt Entrega"})
+// 	Aadd(_afields,{"TP_ROTEIR"	,"","Roteiro"})
+// 	Aadd(_afields,{"TP_STATUS"	,"","Status"})
+// 	Aadd(_afields,{"TP_TRANSPO"	,"","Tranportadora"})
+// 	Aadd(_afields,{"TP_LOJA"	,"","Loja"})
+// 	Aadd(_afields,{"TP_NMTRA"	,"","Nome"})
+// 	Aadd(_afields,{"TP_VEICULO"	,"","Placa"})
+// 	Aadd(_afields,{"TP_REBOQUE"	,"","Reboque"})
+// 	Aadd(_afields,{"TP_CARGA"	,"","Carga"})
+// 	Aadd(_afields,{"TP_SEQENV"	,"","Seq. Envio"})
+// 	Aadd(_afields,{"TP_TPDOC"	,"","Tipo Doc"})
+// 	Aadd(_afields,{"TP_NUMDOC"	,"","Num. Doc."})
+// 	Aadd(_afields,{"TP_SERDOC"	,"","Série Doc."})
 
-	If nTipo == 1
-		Aadd(_afields,{"TP_VALOR"	,"","Valor","@E 999,999.99"})
+// 	If nTipo == 1
+// 		Aadd(_afields,{"TP_VALOR"	,"","Valor","@E 999,999.99"})
 		
-	EndIf
+// 	EndIf
 
-	Aadd(_afields,{"TP_OPHOS"	,"","Msg. Ophos"})
-	Aadd(_afields,{"TP_HASH"	,"","Hash"})
+// 	Aadd(_afields,{"TP_OPHOS"	,"","Msg. Ophos"})
+// 	Aadd(_afields,{"TP_HASH"	,"","Hash"})
 
-	Aadd(_afields,{"TP_CHAVE"	,"","Chave de Acesso"})
-	Aadd(_afields,{"TP_PROTEMI"	,"","Protocolo de Emissão"})
-	Aadd(_afields,{"TP_PROTCAN"	,"","Protocolo de Cancelamento"})
+// 	Aadd(_afields,{"TP_CHAVE"	,"","Chave de Acesso"})
+// 	Aadd(_afields,{"TP_PROTEMI"	,"","Protocolo de Emissão"})
+// 	Aadd(_afields,{"TP_PROTCAN"	,"","Protocolo de Cancelamento"})
 
-	If nTipo == 2
-		Aadd(_afields,{"TP_PROTENC"	,"","Protocolo Encerramento"})
+// 	If nTipo == 2
+// 		Aadd(_afields,{"TP_PROTENC"	,"","Protocolo Encerramento"})
 		
-	EndIf
+// 	EndIf
 	
-	Aadd(_afields,{"TP_ENVIO"	,"","Tipo de envio"})
+// 	Aadd(_afields,{"TP_ENVIO"	,"","Tipo de envio"})
 
-	DbSelectArea(cAlTab1)
-	(cAlTab1)->(DbGotop())
+// 	DbSelectArea(cAlTab1)
+// 	(cAlTab1)->(DbGotop())
 
-	//Opções no menu da tela.
-	Aadd(aRotina,{cTxtBnt             ,"U_adlog575()"	,0,5})
-	Aadd(aRotina,{"Legenda"           ,"U_adlog574()"	,0,6})   
-	Aadd(aRotina,{"Inverter Seleção"  ,"U_adlog571()"	,0,7})
+// 	//Opções no menu da tela.
+// 	Aadd(aRotina,{cTxtBnt             ,"U_adlog575()"	,0,5})
+// 	Aadd(aRotina,{"Legenda"           ,"U_adlog574()"	,0,6})   
+// 	Aadd(aRotina,{"Inverter Seleção"  ,"U_adlog571()"	,0,7})
 
-	//Legenda.
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Processando'"			,"BR_AMARELO" }) 
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Emitido'"				,"BR_VERDE" })     
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Cancelado'" 			,"BR_CANCEL" })  
+// 	//Legenda.
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Processando'"			,"BR_AMARELO" }) 
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Emitido'"				,"BR_VERDE" })     
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Cancelado'" 			,"BR_CANCEL" })  
 	
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Rejeitado'" 			,"BR_PINK" }) 
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Contingência'" 		,"BR_MARROM" })
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Hash não localizado'"	,"BR_VIOLETA" })
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Denegado'" 			,"BR_PRETO" })
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Rejeitado'" 			,"BR_PINK" }) 
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Contingência'" 		,"BR_MARROM" })
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Hash não localizado'"	,"BR_VIOLETA" })
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Denegado'" 			,"BR_PRETO" })
 	
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Encerrado'" 			,"BR_AZUL" })  
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Não emitido'" 		,"BR_VERMELHO" })  
-	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Não definido!!!'" 	,"BR_LARANJA" })   
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Encerrado'" 			,"BR_AZUL" })  
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Não emitido'" 		,"BR_VERMELHO" })  
+// 	Aadd(aCores,{"Alltrim((cAlTab1)->TP_STATUS)=='Não definido!!!'" 	,"BR_LARANJA" })   
 
-	//Função MarkBrowse.
-	MarkBrow( cAlTab1, 'TP_OK',,_afields,,cMark,'U_adlog571()',,,,'U_adlog572()',,,,aCores)
+// 	//Função MarkBrowse.
+// 	MarkBrow( cAlTab1, 'TP_OK',,_afields,,cMark,'U_adlog571()',,,,'U_adlog572()',,,,aCores)
 
-	//Verifica se há registros marcados.
-	DbSelectArea(cAlTab1)
-	If lProcess
+// 	//Verifica se há registros marcados.
+// 	DbSelectArea(cAlTab1)
+// 	If lProcess
 
-		(cAlTab1)->(DbGoTop())
-		While !(cAlTab1)->(Eof())
-			If ! Empty(Alltrim((cAlTab1)->TP_OK))
-				Aadd(aRetorno, {;
-					(cAlTab1)->TP_TRANSPO	,; //1
-					(cAlTab1)->TP_CARGA		,; //2
-					(cAlTab1)->TP_SEQENV	,; //3
-					(cAlTab1)->TP_TPDOC		,; //4
-					(cAlTab1)->TP_NUMDOC	,; //5
-					(cAlTab1)->TP_SERDOC	,; //6
-					(cAlTab1)->TP_STATUS	,; //7
-					(cAlTab1)->TP_HASH		,; //8
-					(cAlTab1)->TP_VEICULO	,; //9
-					(cAlTab1)->TP_REBOQUE 	,; //10
-					(cAlTab1)->TP_ROTEIR  	,; //11
-					(cAlTab1)->TP_DTENTRE   ,; //12
-					(cAlTab1)->TP_CHAVE		,; //13
-					(cAlTab1)->TP_ENVIO})	   //14
-			EndIf
+// 		(cAlTab1)->(DbGoTop())
+// 		While !(cAlTab1)->(Eof())
+// 			If ! Empty(Alltrim((cAlTab1)->TP_OK))
+// 				Aadd(aRetorno, {;
+// 					(cAlTab1)->TP_TRANSPO	,; //1
+// 					(cAlTab1)->TP_CARGA		,; //2
+// 					(cAlTab1)->TP_SEQENV	,; //3
+// 					(cAlTab1)->TP_TPDOC		,; //4
+// 					(cAlTab1)->TP_NUMDOC	,; //5
+// 					(cAlTab1)->TP_SERDOC	,; //6
+// 					(cAlTab1)->TP_STATUS	,; //7
+// 					(cAlTab1)->TP_HASH		,; //8
+// 					(cAlTab1)->TP_VEICULO	,; //9
+// 					(cAlTab1)->TP_REBOQUE 	,; //10
+// 					(cAlTab1)->TP_ROTEIR  	,; //11
+// 					(cAlTab1)->TP_DTENTRE   ,; //12
+// 					(cAlTab1)->TP_CHAVE		,; //13
+// 					(cAlTab1)->TP_ENVIO})	   //14
+// 			EndIf
 			
-			(cAlTab1)->(DbSkip())
+// 			(cAlTab1)->(DbSkip())
 			
-		EndDo
+// 		EndDo
 
-	EndIf
+// 	EndIf
 	
-	//
-	(cAlTab1)->(DbCloseArea())
+// 	//
+// 	(cAlTab1)->(DbCloseArea())
 
-	//Apaga a tabela temporária.
-	oTab1:Delete()
+// 	//Apaga a tabela temporária.
+// 	oTab1:Delete()
 
-Return aRetorno
+// Return aRetorno
 /*/{Protheus.doc} tlbStatus  
 	Retorna o status do documento. Chamado 044314.
 	@type  Static Function
@@ -10634,9 +10418,7 @@ Return aRetorno
 	/*/
 Static Function tlbStatus(cRetorno,nTipo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cStatus	:= ""
 
@@ -10725,9 +10507,7 @@ Return cStatus
 	/*/
 User Function adlog574(nOpc)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local cTitulo := "Legenda"
 	Local aLegenda:= {}
 
@@ -10740,9 +10520,8 @@ User Function adlog574(nOpc)
 		Aadd(aLegenda,{"BR_VERDE"    ,"Documentos emitidos"}) 
 		
 	ElseIf nOpc == 6 
-		Aadd(aLegenda,{"BR_VERDE"   ,"Possui CT-e emitido para ser complementado"})
-		Aadd(aLegenda,{"BR_AZUL"    ,"Necessário definir o CT-e complementado"})
-		Aadd(aLegenda,{"BR_AMARELO" ,"Não possui CT-e emitido a ser complementado"})
+		Aadd(aLegenda,{"BR_AMARELO" ,"CT-e não emitido"})
+		Aadd(aLegenda,{"BR_VERDE"   ,"CT-e emitido"})
 		 	
 	Else 
 		Aadd(aLegenda,{"BR_AMARELO"  ,"Processando"		}) 
@@ -10772,9 +10551,7 @@ Return Nil
 	/*/
 User function adlog575()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 
 	U_ADINF009P('ADLOG057P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Emissão de CT-e/MDF-e')
 	
@@ -10794,9 +10571,7 @@ Return Nil
 	/*/
 User Function adlog571()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.
 	Local oMark	 := GetMarkBrow()
 
 	U_ADINF009P('ADLOG057P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Emissão de CT-e/MDF-e')
@@ -10825,9 +10600,7 @@ Return Nil
 	/*/
 User Function adlog572()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 
 	U_ADINF009P('ADLOG057P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Emissão de CT-e/MDF-e')
 	
@@ -10859,9 +10632,7 @@ Return Nil
 	/*/
 User Function adlog573()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local oMark := GetMarkBrow()
 
 	U_ADINF009P('ADLOG057P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Emissão de CT-e/MDF-e')
@@ -10919,194 +10690,192 @@ Return Nil
 	@since 05/06/2019
 	@version 01
 	/*/
-Static Function obtDDGrid(nTipo,lFilCanc,lFilEnce,lPerg)
+// Static Function obtDDGrid(nTipo,lFilCanc,lFilEnce,lPerg)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea		:= GetArea()
-	Local aRetorno	:= {}
-	Local cTipo		:= Alltrim(cValToChar(nTipo))
-	Local cQuery	:= ""
-	Local cTransIni	:= ""
-	Local cTransFim	:= ""
-	Local cLojaDe	:= ""
-	Local cLojaAte	:= ""
-	Local cVecIni	:= ""
-	Local cVecFim	:= ""
-	Local cDataIni	:= ""
-	Local cDataFim	:= ""
-	Local cRotIni	:= ""
-	Local cRotFim	:= ""
-	Local cPerg 	:= "OPHOS1"
+//	//Variáveis.
+// 	Local aArea		:= GetArea()
+// 	Local aRetorno	:= {}
+// 	Local cTipo		:= Alltrim(cValToChar(nTipo))
+// 	Local cQuery	:= ""
+// 	Local cTransIni	:= ""
+// 	Local cTransFim	:= ""
+// 	Local cLojaDe	:= ""
+// 	Local cLojaAte	:= ""
+// 	Local cVecIni	:= ""
+// 	Local cVecFim	:= ""
+// 	Local cDataIni	:= ""
+// 	Local cDataFim	:= ""
+// 	Local cRotIni	:= ""
+// 	Local cRotFim	:= ""
+// 	Local cPerg 	:= "OPHOS1"
 	
-	Default lFilCanc := .F.
-	Default lFilEnce := .F.
-	Default lPerg	  := .T.
+// 	Default lFilCanc := .F.
+// 	Default lFilEnce := .F.
+// 	Default lPerg	  := .T.
 
-	//Valida escolha do usuário em prosseguir ou não.
-	If lPerg
-		If ! Pergunte(cPerg,.T.)
-			Return aRetorno
+// 	//Valida escolha do usuário em prosseguir ou não.
+// 	If lPerg
+// 		If ! Pergunte(cPerg,.T.)
+// 			Return aRetorno
 			
-		EndIf
+// 		EndIf
 	
-	EndIf
+// 	EndIf
 	
-	//
-	cDataIni	:= DToS(MV_PAR01)
-	cDataFim	:= DToS(MV_PAR02)
-	cTransIni 	:= Alltrim(cValToChar(MV_PAR03))
-	cLojaDe		:= Alltrim(cValToChar(MV_PAR04))
-	cTransFim	:= Alltrim(cValToChar(MV_PAR05))
-	cLojaAte	:= Alltrim(cValToChar(MV_PAR06))
-	cVecIni		:= Alltrim(cValToChar(MV_PAR07))
-	cVecFim		:= Alltrim(cValToChar(MV_PAR08))
-	cRotIni		:= Alltrim(cValToChar(MV_PAR09))
-	cRotFim		:= Alltrim(cValToChar(MV_PAR10))	
+// 	//
+// 	cDataIni	:= DToS(MV_PAR01)
+// 	cDataFim	:= DToS(MV_PAR02)
+// 	cTransIni 	:= Alltrim(cValToChar(MV_PAR03))
+// 	cLojaDe		:= Alltrim(cValToChar(MV_PAR04))
+// 	cTransFim	:= Alltrim(cValToChar(MV_PAR05))
+// 	cLojaAte	:= Alltrim(cValToChar(MV_PAR06))
+// 	cVecIni		:= Alltrim(cValToChar(MV_PAR07))
+// 	cVecFim		:= Alltrim(cValToChar(MV_PAR08))
+// 	cRotIni		:= Alltrim(cValToChar(MV_PAR09))
+// 	cRotFim		:= Alltrim(cValToChar(MV_PAR10))	
 
-	//Monta script sql.
-	cQuery := ""
-	cQuery += " SELECT " 
-	cQuery += " ZFK_TRANSP, " 
-	cQuery += " ZFK_LOJA, " 
-	cQuery += " ZFK_NMTRAN, " 
-	cQuery += " ZFK_CARGA, " 
-	cQuery += " ZFK_DTENTR, " 
-	cQuery += " ZFK_ROTEIR, " 
-	cQuery += " ZFK_SEQENV, " 
-	cQuery += " ZFK_TPDOC, " 
-	cQuery += " ZFK_NUMDOC, " 
-	cQuery += " ZFK_SERDOC, " 
-	cQuery += " ZFK_STATUS, " 
-	cQuery += " ZFK_HASH, " 
-	cQuery += " ZFK_DATA, " 
-	cQuery += " ZFK_PLACA, " 
-	cQuery += " ZFK_OPHOS, "  
-	cQuery += " ZFK_CHAVE, " 
-	cQuery += " ZFK_PROTEM, " 
-	cQuery += " ZFK_PROTCA, " 
-	cQuery += " ZFK_REBOQU, " 
-	cQuery += " ZFK_PROENC, "
-	cQuery += " ZFK_TPENVC, "
-	cQuery += " SUM(ZFK_VALOR) AS ZFK_VALOR "
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("ZFK") + " (NOLOCK) AS ZFK " 
-	cQuery += " WHERE " 
-	cQuery += " ZFK_FILIAL = '" + FWxFilial("ZFK") + "' " 
-	cQuery += " AND ZFK_DTENTR >= '" + cDataIni  + "' " 
-	cQuery += " AND ZFK_DTENTR <= '" + cDataFim  + "' " 
-	cQuery += " AND ZFK_TRANSP >= '" + cTransIni + "' " 
-	cQuery += " AND ZFK_TRANSP <= '" + cTransFim + "' " 
-	cQuery += " AND ZFK_LOJA   >= '" + cLojaDe   + "' " 
-	cQuery += " AND ZFK_LOJA   <= '" + cLojaAte  + "' " 
-	cQuery += " AND ZFK_PLACA  >= '" + cVecIni   + "' " 
-	cQuery += " AND ZFK_PLACA  <= '" + cVecFim   + "'  " 
+// 	//Monta script sql.
+// 	cQuery := ""
+// 	cQuery += " SELECT " 
+// 	cQuery += " ZFK_TRANSP, " 
+// 	cQuery += " ZFK_LOJA, " 
+// 	cQuery += " ZFK_NMTRAN, " 
+// 	cQuery += " ZFK_CARGA, " 
+// 	cQuery += " ZFK_DTENTR, " 
+// 	cQuery += " ZFK_ROTEIR, " 
+// 	cQuery += " ZFK_SEQENV, " 
+// 	cQuery += " ZFK_TPDOC, " 
+// 	cQuery += " ZFK_NUMDOC, " 
+// 	cQuery += " ZFK_SERDOC, " 
+// 	cQuery += " ZFK_STATUS, " 
+// 	cQuery += " ZFK_HASH, " 
+// 	cQuery += " ZFK_DATA, " 
+// 	cQuery += " ZFK_PLACA, " 
+// 	cQuery += " ZFK_OPHOS, "  
+// 	cQuery += " ZFK_CHAVE, " 
+// 	cQuery += " ZFK_PROTEM, " 
+// 	cQuery += " ZFK_PROTCA, " 
+// 	cQuery += " ZFK_REBOQU, " 
+// 	cQuery += " ZFK_PROENC, "
+// 	cQuery += " ZFK_TPENVC, "
+// 	cQuery += " SUM(ZFK_VALOR) AS ZFK_VALOR "
+// 	cQuery += " FROM " 
+// 	cQuery += " " + RetSqlName("ZFK") + " (NOLOCK) AS ZFK " 
+// 	cQuery += " WHERE " 
+// 	cQuery += " ZFK_FILIAL = '" + FWxFilial("ZFK") + "' " 
+// 	cQuery += " AND ZFK_DTENTR >= '" + cDataIni  + "' " 
+// 	cQuery += " AND ZFK_DTENTR <= '" + cDataFim  + "' " 
+// 	cQuery += " AND ZFK_TRANSP >= '" + cTransIni + "' " 
+// 	cQuery += " AND ZFK_TRANSP <= '" + cTransFim + "' " 
+// 	cQuery += " AND ZFK_LOJA   >= '" + cLojaDe   + "' " 
+// 	cQuery += " AND ZFK_LOJA   <= '" + cLojaAte  + "' " 
+// 	cQuery += " AND ZFK_PLACA  >= '" + cVecIni   + "' " 
+// 	cQuery += " AND ZFK_PLACA  <= '" + cVecFim   + "'  " 
 
-	cQuery += " AND ZFK_ROTEIR  >= '" + cRotIni   + "' " 
-	cQuery += " AND ZFK_ROTEIR  <= '" + cRotFim   + "'  " 
+// 	cQuery += " AND ZFK_ROTEIR  >= '" + cRotIni   + "' " 
+// 	cQuery += " AND ZFK_ROTEIR  <= '" + cRotFim   + "'  " 
 	
-	//
-	If cTipo == "3"
-		cQuery += " AND ZFK_TMEMIS = 'N' "
-		cTipo := "1"
+// 	//
+// 	If cTipo == "3"
+// 		cQuery += " AND ZFK_TMEMIS = 'N' "
+// 		cTipo := "1"
 		
-	EndIf
+// 	EndIf
 	
-	cQuery += " AND ZFK_TPDOC = '" + cTipo + "' "
-	cQuery += " AND ZFK_TPCARG = '" + cTpVa + "' " //Everson - 03/12/2019. Chamado 029058.
+// 	cQuery += " AND ZFK_TPDOC = '" + cTipo + "' "
+// 	cQuery += " AND ZFK_TPCARG = '" + cTpVa + "' " //Everson - 03/12/2019. Chamado 029058.
 	
-	//
-	If lFilCanc //Filtra documentos cancelados.
-		cQuery += " AND ZFK_STATUS <> '2'  " 
+// 	//
+// 	If lFilCanc //Filtra documentos cancelados.
+// 		cQuery += " AND ZFK_STATUS <> '2'  " 
 		
-	EndIf
+// 	EndIf
 	
-	//
-	If lFilEnce
-		cQuery += " AND ZFK_PROENC = ''  " 
+// 	//
+// 	If lFilEnce
+// 		cQuery += " AND ZFK_PROENC = ''  " 
 	
-	EndIf
+// 	EndIf
 	
-	//
-	cQuery += " AND ZFK.D_E_L_E_T_ = '' " 
+// 	//
+// 	cQuery += " AND ZFK.D_E_L_E_T_ = '' " 
 	
-	cQuery += " GROUP BY "
-	cQuery += " ZFK_TRANSP, " 
-	cQuery += " ZFK_LOJA, " 
-	cQuery += " ZFK_NMTRAN, " 
-	cQuery += " ZFK_CARGA, " 
-	cQuery += " ZFK_DTENTR, " 
-	cQuery += " ZFK_ROTEIR, " 
-	cQuery += " ZFK_SEQENV, " 
-	cQuery += " ZFK_TPDOC, " 
-	cQuery += " ZFK_NUMDOC, " 
-	cQuery += " ZFK_SERDOC, " 
-	cQuery += " ZFK_STATUS, " 
-	cQuery += " ZFK_HASH, " 
-	cQuery += " ZFK_DATA, " 
-	cQuery += " ZFK_PLACA, " 
-	cQuery += " ZFK_OPHOS, "  
-	cQuery += " ZFK_CHAVE, " 
-	cQuery += " ZFK_PROTEM, " 
-	cQuery += " ZFK_PROTCA, " 
-	cQuery += " ZFK_REBOQU, " 
-	cQuery += " ZFK_PROENC, ZFK_TPENVC "	
-	cQuery += " ORDER BY ZFK_DTENTR, ZFK_TRANSP, ZFK_LOJA, ZFK_PLACA, CAST(ZFK_SEQENV AS INTEGER) " 
+// 	cQuery += " GROUP BY "
+// 	cQuery += " ZFK_TRANSP, " 
+// 	cQuery += " ZFK_LOJA, " 
+// 	cQuery += " ZFK_NMTRAN, " 
+// 	cQuery += " ZFK_CARGA, " 
+// 	cQuery += " ZFK_DTENTR, " 
+// 	cQuery += " ZFK_ROTEIR, " 
+// 	cQuery += " ZFK_SEQENV, " 
+// 	cQuery += " ZFK_TPDOC, " 
+// 	cQuery += " ZFK_NUMDOC, " 
+// 	cQuery += " ZFK_SERDOC, " 
+// 	cQuery += " ZFK_STATUS, " 
+// 	cQuery += " ZFK_HASH, " 
+// 	cQuery += " ZFK_DATA, " 
+// 	cQuery += " ZFK_PLACA, " 
+// 	cQuery += " ZFK_OPHOS, "  
+// 	cQuery += " ZFK_CHAVE, " 
+// 	cQuery += " ZFK_PROTEM, " 
+// 	cQuery += " ZFK_PROTCA, " 
+// 	cQuery += " ZFK_REBOQU, " 
+// 	cQuery += " ZFK_PROENC, ZFK_TPENVC "	
+// 	cQuery += " ORDER BY ZFK_DTENTR, ZFK_TRANSP, ZFK_LOJA, ZFK_PLACA, CAST(ZFK_SEQENV AS INTEGER) " 
 	
-	//Verifica se alias existe.
-	If Select("DADOSZFK") > 0
-		DADOSZFK->(DbCloseArea())
+// 	//Verifica se alias existe.
+// 	If Select("DADOSZFK") > 0
+// 		DADOSZFK->(DbCloseArea())
 		
-	Endif
+// 	Endif
 
-	TcQuery cQuery New Alias "DADOSZFK"
-	DbSelectArea("DADOSZFK")
-	DADOSZFK->(DbGoTop())
-	While ! DADOSZFK->(Eof())
+// 	TcQuery cQuery New Alias "DADOSZFK"
+// 	DbSelectArea("DADOSZFK")
+// 	DADOSZFK->(DbGoTop())
+// 	While ! DADOSZFK->(Eof())
 
-		Aadd(aRetorno,{;
-		DADOSZFK->ZFK_TRANSP ,; //1
-		DADOSZFK->ZFK_LOJA   ,; //2
-		DADOSZFK->ZFK_CARGA  ,; //3
-		DADOSZFK->ZFK_DTENTR ,; //4
-		DADOSZFK->ZFK_ROTEIR ,; //5
-		DADOSZFK->ZFK_SEQENV ,; //6
-		DADOSZFK->ZFK_TPDOC  ,; //7
-		DADOSZFK->ZFK_NUMDOC ,; //8
-		DADOSZFK->ZFK_SERDOC ,; //9
-		DADOSZFK->ZFK_STATUS ,; //10
-		DADOSZFK->ZFK_HASH   ,; //11
-		DADOSZFK->ZFK_DATA	 ,; //12
-		DADOSZFK->ZFK_PLACA  ,; //13
-		DADOSZFK->ZFK_OPHOS	 ,; //14
-		DADOSZFK->ZFK_VALOR	 ,; //15
-		DADOSZFK->ZFK_CHAVE	 ,; //16
-		DADOSZFK->ZFK_PROTEM ,; //17
-		DADOSZFK->ZFK_PROTCA ,; //18
-		DADOSZFK->ZFK_PROENC ,; //19
-		DADOSZFK->ZFK_REBOQU ,; //20  
-		DADOSZFK->ZFK_NMTRAN ,; //21
-		DADOSZFK->ZFK_TPENVC})  //22
+// 		Aadd(aRetorno,{;
+// 		DADOSZFK->ZFK_TRANSP ,; //1
+// 		DADOSZFK->ZFK_LOJA   ,; //2
+// 		DADOSZFK->ZFK_CARGA  ,; //3
+// 		DADOSZFK->ZFK_DTENTR ,; //4
+// 		DADOSZFK->ZFK_ROTEIR ,; //5
+// 		DADOSZFK->ZFK_SEQENV ,; //6
+// 		DADOSZFK->ZFK_TPDOC  ,; //7
+// 		DADOSZFK->ZFK_NUMDOC ,; //8
+// 		DADOSZFK->ZFK_SERDOC ,; //9
+// 		DADOSZFK->ZFK_STATUS ,; //10
+// 		DADOSZFK->ZFK_HASH   ,; //11
+// 		DADOSZFK->ZFK_DATA	 ,; //12
+// 		DADOSZFK->ZFK_PLACA  ,; //13
+// 		DADOSZFK->ZFK_OPHOS	 ,; //14
+// 		DADOSZFK->ZFK_VALOR	 ,; //15
+// 		DADOSZFK->ZFK_CHAVE	 ,; //16
+// 		DADOSZFK->ZFK_PROTEM ,; //17
+// 		DADOSZFK->ZFK_PROTCA ,; //18
+// 		DADOSZFK->ZFK_PROENC ,; //19
+// 		DADOSZFK->ZFK_REBOQU ,; //20  
+// 		DADOSZFK->ZFK_NMTRAN ,; //21
+// 		DADOSZFK->ZFK_TPENVC})  //22
 
-		DADOSZFK->(DbSkip())
+// 		DADOSZFK->(DbSkip())
 		
-	EndDo
+// 	EndDo
 	
-	//
-	DADOSZFK->(DbCloseArea())
+// 	//
+// 	DADOSZFK->(DbCloseArea())
 
-	//Valida consulta ao BD.
-	If Len(aRetorno) == 0
-		MsgStop("A consulta ao banco de dados não retornou resultados.","Função obtDDGrid(ADLOG057P)")
-		logZBE("FUNCAO obtDDGrid: CONSULTA AO BANDO DE DADOS NÃO RETORNOU RESULTADOS")
+// 	//Valida consulta ao BD.
+// 	If Len(aRetorno) == 0
+// 		MsgStop("A consulta ao banco de dados não retornou resultados.","Função obtDDGrid(ADLOG057P)")
+// 		logZBE("FUNCAO obtDDGrid: CONSULTA AO BANDO DE DADOS NÃO RETORNOU RESULTADOS")
 		
-	EndIf
+// 	EndIf
 	
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return aRetorno
+// Return aRetorno
 /*/{Protheus.doc} telGen2  
 	Tela genérica 2. Chamado 044314.
 	@type  Static Function
@@ -11116,9 +10885,7 @@ Return aRetorno
 	/*/
 Static Function telGen2(nTipo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local oButton1	:= Nil
 	Local oButton2	:= Nil
@@ -11165,16 +10932,15 @@ Return cGet1
 	@author Everson
 	@since 07/06/2019
 	@version 01
+	*****Função chamada no Fonte ADLOG040P*****
 	/*/
 Static Function grCTECompl(cRoteiro,cDtEntr,nVlrCompl,cSeqCarAtu,cTipoEmiss,cAgrupa,cCTECompl,cSCTECompl,cChvCTECom,lCmpDia,aPorcOco)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aNotas		:= {}
 	Local aNotasComple	:= {}
-	Local nNumNF		:= GetMv("MV_#QTDNFE")
+	//Local nNumNF		:= GetMv("MV_#QTDNFE")
 	Local cNota			:= ""
 	Local cSerie		:= ""
 
@@ -11221,7 +10987,7 @@ Static Function grCTECompl(cRoteiro,cDtEntr,nVlrCompl,cSeqCarAtu,cTipoEmiss,cAgr
 	aNotasComple := aNotas
 
 	//Executa função para gerar o CT-e complementar.
-	gerLotCTE(aNotasComple,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,cSeqCarAtu,,cCTECompl,cSCTECompl,cChvCTECom,lCmpDia,aPorcOco)
+	procGerCTE(aNotasComple,cTipoEmiss,cAgrupa,cRoteiro,cDtEntr,nVlrCompl,cSeqCarAtu,,cCTECompl,cSCTECompl,cChvCTECom,lCmpDia,aPorcOco)
 	
 	//
 	RestArea(aArea)
@@ -11236,9 +11002,7 @@ Return Nil
 	/*/
 Static Function telaGen4(nTipo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local oButton1	:= Nil
 	Local oButton2	:= Nil
@@ -11379,9 +11143,7 @@ Return aRetorno
 	/*/
 Static Function locPad()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cLocais	:= GetMv("MV_#CTELOC")
 	Local aLocais	:= {}
@@ -11412,9 +11174,7 @@ Return aLocais
 	/*/
 Static Function logZBE(cMensagem,cMemo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.	
 	Local aArea	:= GetArea()
 
 	Default cMensagem	:= ""
@@ -11446,9 +11206,7 @@ Return Nil
 	/*/
 Static Function getPorEm(cTpVa)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.
 	Local aArea	:= GetArea()
 	Local nTpVa := Val(cValToChar(cTpVa))
 	Local aPorc := Separa(cValToChar(GetMv("MV_#CTEPOR")),"/",.T.)
@@ -11474,202 +11232,197 @@ Return nPorc
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function gerCioL()
-	
-	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	Local aArea	 := GetArea()
-	Local i		 := 1
-	
-	//
-	If ! MsgYesNo("Deseja emitir CIOT em lote?","Função gerCioL(ADLOG057P)")
-		RestArea(aArea)
-		Return Nil
+// Static Function gerCioL()
 		
-	EndIf
+//	//Variáveis.	
+// 	Local aArea	 := GetArea()
+// 	Local i		 := 1
 	
-	//
-	carInter1()
+// 	//
+// 	If ! MsgYesNo("Deseja emitir CIOT em lote?","Função gerCioL(ADLOG057P)")
+// 		RestArea(aArea)
+// 		Return Nil
+		
+// 	EndIf
 	
-	//
-	For i := 1 To Len(oCargas:aCols)
+// 	//
+// 	carInter1()
 	
-		//
-		If Empty( Alltrim(oCargas:aCols[i,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRCIO" })]) )
+// 	//
+// 	For i := 1 To Len(oCargas:aCols)
+	
+// 		//
+// 		If Empty( Alltrim(oCargas:aCols[i,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRCIO" })]) )
 			
-			//
-			oCargas:GoTo(i) 
+// 			//
+// 			oCargas:GoTo(i) 
 			
-			Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCioL - gerando CIOT para roteiro " + Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })])) )
-			grCIOT(aHCr,oCargas,.T.)
+// 			Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCioL - gerando CIOT para roteiro " + Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT" })])) )
+// 			gerCIOT(aHCr,oCargas,.T.)
 		
-		EndIf
+// 		EndIf
 	
-	Next i
+// 	Next i
 	
-	//
-	carInter1()
+// 	//
+// 	carInter1()
 	
-	//
-	If nPosCarga > 0
-		oCargas:GoTo(nPosCarga)
+// 	//
+// 	If nPosCarga > 0
+// 		oCargas:GoTo(nPosCarga)
 		
-	EndIf
+// 	EndIf
 	
-	//
-	oCargas:Refresh()
+// 	//
+// 	oCargas:Refresh()
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return Nil
-/*/{Protheus.doc} grCIOT
+// Return Nil
+/*/{Protheus.doc} gerCIOT
 	Gera CIOT.
 	@type  Static Function
 	@author Everson
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function grCIOT(aHCr,oCargas,lLote)
+// Static Function gerCIOT(aHCr,oCargas,lLote)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea		:= GetArea()
-	Local cDtEntr	:= ""
-	Local cRoteiro	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT"  })]))
-	Local cCiot		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRCIO"  })]))
-	Local cVlrFrt	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRVALOR"})]))
-	Local cCTE		:= ""
-	Local aTransp	:= {}
-	Local aMotorista:= {}
-	Local aVeiculo	:= {}
-	Local aReboque	:= {}
-	Local aPropVec	:= {}
-	Local lSelectCTE:= .F.
-	Local cTranCv	:= ""
-	Local cLjCv		:= ""
-	Local nAux		:= 1
-	Local aNotas	:= {}
-	Local aPropReb	:= {}
-	Local aCTE		:= {}
-	Local cCTECompl	:= ""
-	Local cSCTECompl:= ""
+//	//Variáveis.
+// 	Local aArea		:= GetArea()
+// 	Local cDtEntr	:= ""
+// 	Local cRoteiro	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRROT"  })]))
+// 	Local cCiot		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRCIO"  })]))
+// 	Local cVlrFrt	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRVALOR"})]))
+// 	Local cCTE		:= ""
+// 	Local aTransp	:= {}
+// 	Local aMotorista:= {}
+// 	Local aVeiculo	:= {}
+// 	Local aReboque	:= {}
+// 	Local aPropVec	:= {}
+// 	//Local lSelectCTE:= .F.
+// 	Local cTranCv	:= ""
+// 	Local cLjCv		:= ""
+// 	//Local nAux		:= 1
+// 	Local aNotas	:= {}
+// 	Local aPropReb	:= {}
+// 	//Local aCTE		:= {}
+// 	Local cCTECompl	:= ""
+// 	Local cSCTECompl:= ""
 	
-	//
-	Private cCodZFA		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRZFA" })]))
-	Private cCodOcorr	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CROCO" })]))
-	Private cCodCrg  	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_CARGA")))
-	Private cLoja 		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_LJPPAG")))
-	Private cVeiculo 	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_VEICPG")))
-	Private cTransp 	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_TRANPA")))
-	Private cNmT		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_NMTRAN")))
-	Private cPlcCv		:= ""//Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_PLCCAV")))
-	Private cMotorista 	:= ""
+// 	//
+// 	Private cCodZFA		:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRZFA" })]))
+// 	Private cCodOcorr	:= Alltrim(cValToChar(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CROCO" })]))
+// 	Private cCodCrg  	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_CARGA")))
+// 	Private cLoja 		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_LJPPAG")))
+// 	Private cVeiculo 	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_VEICPG")))
+// 	Private cTransp 	:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_TRANPA")))
+// 	Private cNmT		:= Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_NMTRAN")))
+// 	Private cPlcCv		:= ""//Alltrim(cValToChar(Posicione("ZFA",13,FWxFilial("ZFA") + cCodZFA, "ZFA_PLCCAV")))
+// 	Private cMotorista 	:= ""
 	
-	Default lLote		:= .F.
+// 	Default lLote		:= .F.
 	
-	//
-	If Empty(cRoteiro)
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If Empty(cRoteiro)
+// 		RestArea(aArea)
+// 		Return Nil
 			
-	EndIf
+// 	EndIf
 	
-	//
-	cDtEntr	:= DToS(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRDTE" })])
+// 	//
+// 	cDtEntr	:= DToS(oCargas:aCols[oCargas:nAt,Ascan(aHCr,{|x| AllTrim(x[2]) == "CRDTE" })])
 	
-	//
-	If ! Empty(cCiot)
-		MsgStop("Já há CIOT emitido para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função grCIOT(ADLOG057P)")
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If ! Empty(cCiot)
+// 		MsgStop("Já há CIOT emitido para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função gerCIOT(ADLOG057P)")
+// 		RestArea(aArea)
+// 		Return Nil
 			
-	EndIf
+// 	EndIf
 	
-	//
-	If ! lLote
-		If ! MsgYesNo("Deseja emitir CIOT para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + "?","Função grCIOT(ADLOG057P)")
-			RestArea(aArea)
-			Return Nil
+// 	//
+// 	If ! lLote
+// 		If ! MsgYesNo("Deseja emitir CIOT para o roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + "?","Função gerCIOT(ADLOG057P)")
+// 			RestArea(aArea)
+// 			Return Nil
 			
-		EndIf
+// 		EndIf
 
-	EndIf
+// 	EndIf
 
-	//Recupera dados da transportadora.
-	aTransp := ddTransp(cTransp,cLoja)
-	If Len(aTransp) <= 0
-		RestArea(aArea)
-		Return .F.
+// 	//Recupera dados da transportadora.
+// 	aTransp := ddTransp(cTransp,cLoja)
+// 	If Len(aTransp) <= 0
+// 		RestArea(aArea)
+// 		Return .F.
 
-	EndIf
+// 	EndIf
 	
-	//Everson - 01/07/2019. Chamado 044314.
-	//Recupera dados do veículo e reboque.
-	If ! Empty(cPlcCv)
+// 	//Everson - 01/07/2019. Chamado 044314.
+// 	//Recupera dados do veículo e reboque.
+// 	If ! Empty(cPlcCv)
 		
-		//
-		aVeiculo := ddVeiculo(cPlcCv,2)
-		aReboque := ddVeiculo(cVeiculo)
+// 		//
+// 		aVeiculo := ddVeiculo(cPlcCv,2)
+// 		aReboque := ddVeiculo(cVeiculo)
 
-		//
-		cTranCv	 := Alltrim(aVeiculo[1][9])
-		cLjCv	 := Alltrim(aVeiculo[1][10])
+// 		//
+// 		cTranCv	 := Alltrim(aVeiculo[1][9])
+// 		cLjCv	 := Alltrim(aVeiculo[1][10])
 
-		//
-		aPropVec := dadosProp(cTranCv,cLjCv)
-		aPropReb := dadosProp(cTransp,cLoja)
+// 		//
+// 		aPropVec := dadosProp(cTranCv,cLjCv)
+// 		aPropReb := dadosProp(cTransp,cLoja)
 		
-	Else
+// 	Else
 
-		//
-		aVeiculo := ddVeiculo(cVeiculo,2)
-		aPropVec := dadosProp(cTransp,cLoja)
+// 		//
+// 		aVeiculo := ddVeiculo(cVeiculo,2)
+// 		aPropVec := dadosProp(cTransp,cLoja)
 	
-	EndIf
+// 	EndIf
 
-	//
-	cMotorista := Alltrim(aVeiculo[1][11])
-	If Empty(cMotorista)
-		MsgStop("Não foi possível recuperar o código do motorista vinculado ao veículo " + cVeiculo + ".","Função geraCIOT(ADLOG057P)")
-		logZBE("FUNCAO geraCIOT: NAO FOI POSSIVEL RECUPERAR O CODIGO DO MOTORISTA VINCULADO A CARGA " + cVeiculo)
-		RestArea(aArea)
-		Return .F.
+// 	//
+// 	cMotorista := Alltrim(aVeiculo[1][11])
+// 	If Empty(cMotorista)
+// 		MsgStop("Não foi possível recuperar o código do motorista vinculado ao veículo " + cVeiculo + ".","Função geraCIOT(ADLOG057P)")
+// 		logZBE("FUNCAO geraCIOT: NAO FOI POSSIVEL RECUPERAR O CODIGO DO MOTORISTA VINCULADO A CARGA " + cVeiculo)
+// 		RestArea(aArea)
+// 		Return .F.
 
-	EndIf
+// 	EndIf
 
-	//
-	aMotorista := dadosMot(cMotorista)
-	If Len(aMotorista) <= 0
-		RestArea(aArea)
-		Return .F.
+// 	//
+// 	aMotorista := dadosMot(cMotorista)
+// 	If Len(aMotorista) <= 0
+// 		RestArea(aArea)
+// 		Return .F.
 
-	EndIf
+// 	EndIf
 		
-	//
-	aNotas := obtNF(cRoteiro,cDtEntr,,,,cCTE)
-	If Len(aNotas) <= 0
-		MsgStop("Não foi possível recuperar as notas fiscais referentes ao CT-e " + cCTECompl + "/" + cSCTECompl + ".","Função grCIOT(ADLOG057P)")
-		logZBE("FUNCAO grCIOT: NAO FOI POSSIVEL RECUPERAR AS NOTAS FISCAIS REFERENTES AO CT-E " + cCTECompl + "/" + cSCTECompl)			
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	aNotas := obtNF(cRoteiro,cDtEntr,,,,cCTE)
+// 	If Len(aNotas) <= 0
+// 		MsgStop("Não foi possível recuperar as notas fiscais referentes ao CT-e " + cCTECompl + "/" + cSCTECompl + ".","Função gerCIOT(ADLOG057P)")
+// 		logZBE("FUNCAO gerCIOT: NAO FOI POSSIVEL RECUPERAR AS NOTAS FISCAIS REFERENTES AO CT-E " + cCTECompl + "/" + cSCTECompl)			
+// 		RestArea(aArea)
+// 		Return Nil
 
-	EndIf
+// 	EndIf
 
-	//
-	MsAguarde({|| geraCIOT(cCTE,aTransp,aMotorista,aVeiculo,aPropVec,aReboque,aPropReb,aNotas,;
-							cRoteiro,cDtEntr,cCTECompl,cSCTECompl,cVlrFrt) },"Aguarde...","Emitindo CIOT do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
+// 	//
+// 	MsAguarde({|| geraCIOT(cCTE,aTransp,aMotorista,aVeiculo,aPropVec,aReboque,aPropReb,aNotas,;
+// 							cRoteiro,cDtEntr,cCTECompl,cSCTECompl,cVlrFrt) },"Aguarde...","Emitindo CIOT do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) ,.F.)
 
-	//
-	carInter1()
+// 	//
+// 	carInter1("1")
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 	
-Return Nil
+// Return Nil
 /*/{Protheus.doc} gerCIOT
 	Gerar CIOT.
 	@type  Static Function
@@ -11677,368 +11430,366 @@ Return Nil
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function geraCIOT(cCTE,aTransp,aMotorista,aVeiculo,aPropVec,aReboque,aPropReb,aNotas,;
-                         cRoteiro,cDtEntr,cCTECompl,cSCTECompl,cVlrFrt)
+// Static Function geraCIOT(cCTE,aTransp,aMotorista,aVeiculo,aPropVec,aReboque,aPropReb,aNotas,;
+//                          cRoteiro,cDtEntr,cCTECompl,cSCTECompl,cVlrFrt)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea			:= GetArea()
-	Local cXml			:= ""
-	Local cCabec		:= obtCabec()
-	Local aCabec		:= {}
-	Local oRestClient	:= Nil
-	Local cSeq			:= ""
-	Local cNumRef		:= ""
-	//Local cCodNCM		:= ""
-	Local cTpCrg		:= ""
-	Local cDist			:= ""
-	Local cEmissTp		:= "N"
-	Local cSerie		:= ""
-	Local cNF			:= ""
-	Local aDados		:= {}
-	Local cXmlNF		:= ""
-	Local cXml64		:= ""
-	Local oXML 			:= Nil
-	Local xRet			:= Nil
-	Local aDiaFim		:= {} //Everson - 02/03/2020. Chamado 053926.
-	Local cCond			:= "" //Everson - 02/03/2020. Chamado 053926.
-	Local aCond			:= {} //Everson - 02/03/2020. Chamado 053926.
-	Local aVec 			:= {} //Everson - 02/03/2020. Chamado 053926.
-	Local cDtPag		:= "" //Everson - 02/03/2020. Chamado 053926.
-	Local cDesemp		:= "" //Everson - 02/03/2020. Chamado 053926.
-	Local aRet 			:= {} //Everson - 02/03/2020. Chamado 053926.
+//	//Variáveis.
+// 	Local aArea			:= GetArea()
+// 	Local cXml			:= ""
+// 	Local cCabec		:= obtCabec()
+// 	Local aCabec		:= {}
+// 	Local oRestClient	:= Nil
+// 	Local cSeq			:= ""
+// 	//Local cNumRef		:= ""
+// 	//Local cCodNCM		:= ""
+// 	Local cTpCrg		:= ""
+// 	Local cDist			:= ""
+// 	//Local cEmissTp		:= "N"
+// 	Local cSerie		:= ""
+// 	Local cNF			:= ""
+// 	Local aDados		:= {}
+// 	Local cXmlNF		:= ""
+// 	Local cXml64		:= ""
+// 	Local oXML 			:= Nil
+// 	Local xRet			:= Nil
+// 	Local aDiaFim		:= {} //Everson - 02/03/2020. Chamado 053926.
+// 	Local cCond			:= "" //Everson - 02/03/2020. Chamado 053926.
+// 	Local aCond			:= {} //Everson - 02/03/2020. Chamado 053926.
+// 	Local aVec 			:= {} //Everson - 02/03/2020. Chamado 053926.
+// 	Local cDtPag		:= "" //Everson - 02/03/2020. Chamado 053926.
+// 	Local cDesemp		:= "" //Everson - 02/03/2020. Chamado 053926.
+// 	Local aRet 			:= {} //Everson - 02/03/2020. Chamado 053926.
 
-	//Everson - 24/01/2020. Chamado 054941.
-	If ! chkBloqueio(cCodZFA)
-		RestArea(aArea)
-		Return .F.
+// 	//Everson - 24/01/2020. Chamado 054941.
+// 	If ! chkBloqueio(cCodZFA)
+// 		RestArea(aArea)
+// 		Return .F.
 
-	EndIf
+// 	EndIf
 
-	//
-	aDiaFim := StaticCall(ADLOG040P,getDiasF,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
-	aCond	:= StaticCall(ADLOG040P,getConPg,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
+// 	//
+// 	aDiaFim := StaticCall(ADLOG040P,getDiasF,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
+// 	aCond	:= StaticCall(ADLOG040P,getConPg,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
 
-	//
-	//cCodNCM := obtCodNCM(cCTE)
+// 	//
+// 	//cCodNCM := obtCodNCM(cCTE)
 
-	//
-	cTpCrg	:= obtCodCrg(cRoteiro,cDtEntr,cTpVa)
+// 	//
+// 	cTpCrg	:= obtCodCrg(cRoteiro,cDtEntr,cTpVa)
 
-	//
-	cSeq 	:= seqZFK(cRoteiro,cDtEntr,"3")
+// 	//
+// 	cSeq 	:= seqZFK(cRoteiro,cDtEntr,"3")
 
-	//
-	cDist	:= getDist(cRoteiro,cDtEntr,cTpVa,cCodZFA)
+// 	//
+// 	cDist	:= getDist(cRoteiro,cDtEntr,cTpVa,cCodZFA)
 
-	//
-	//cNumRef	:= gerRefCIO(cRoteiro,cDtEntr,cSeq,cEmissTp,cTpVa)
+// 	//
+// 	//cNumRef	:= gerRefCIO(cRoteiro,cDtEntr,cSeq,cEmissTp,cTpVa)
 
-	//Everson - 02/03/2020. Chamado 053926.
-	If Day(SToD(cDtEntr)) >= Val(aDiaFim[1]) .And. Day(SToD(cDtEntr)) <= Val(aDiaFim[2])
-		cCond := aCond[1]
+// 	//Everson - 02/03/2020. Chamado 053926.
+// 	If Day(SToD(cDtEntr)) >= Val(aDiaFim[1]) .And. Day(SToD(cDtEntr)) <= Val(aDiaFim[2])
+// 		cCond := aCond[1]
 
-	Else
-		cCond := aCond[2]
+// 	Else
+// 		cCond := aCond[2]
 
-	EndIf
-	//
+// 	EndIf
+// 	//
 
-	//Everson - 02/03/2020. Chamado 053926.
-	aVec   := Condicao(Val(cVlrFrt),cCond,0,SToD(cDtEntr),0)
-	cDtPag := DToS(aVec[1][1])
+// 	//Everson - 02/03/2020. Chamado 053926.
+// 	aVec   := Condicao(Val(cVlrFrt),cCond,0,SToD(cDtEntr),0)
+// 	cDtPag := DToS(aVec[1][1])
 
-	//Everson - 02/03/2020. Chamado 053926.
-	cDesemp := getDesemp(Val(cTpVa))
+// 	//Everson - 02/03/2020. Chamado 053926.
+// 	cDesemp := getDesemp(Val(cTpVa))
 
-	//
-	cXml := ""
-	cXMl += "<envCiot>" + CRLF
+// 	//
+// 	cXml := ""
+// 	cXMl += "<envCiot>" + CRLF
 
-		//
-		cXMl += "<cnpjContratante>" + Alltrim(cValToChar(aTransp[1][3])) + "</cnpjContratante>" + CRLF
-		cXMl += "<nrIeContratante>"	+ Alltrim(cValToChar(aTransp[1][4])) + "</nrIeContratante>" + CRLF
-		cXMl += "<codTipoCarga>" 	+ cTpCrg + "</codTipoCarga>" + CRLF
-		cXMl += "<altoDesempenho>"   + cDesemp + "</altoDesempenho>" + CRLF
-		cXMl += "<destinacaoComercial>1</destinacaoComercial>" + CRLF
-		cXMl += "<freteRetorno>0</freteRetorno>" + CRLF
+// 		//
+// 		cXMl += "<cnpjContratante>" + Alltrim(cValToChar(aTransp[1][3])) + "</cnpjContratante>" + CRLF
+// 		cXMl += "<nrIeContratante>"	+ Alltrim(cValToChar(aTransp[1][4])) + "</nrIeContratante>" + CRLF
+// 		cXMl += "<codTipoCarga>" 	+ cTpCrg + "</codTipoCarga>" + CRLF
+// 		cXMl += "<altoDesempenho>"   + cDesemp + "</altoDesempenho>" + CRLF
+// 		cXMl += "<destinacaoComercial>1</destinacaoComercial>" + CRLF
+// 		cXMl += "<freteRetorno>0</freteRetorno>" + CRLF
 
-		//
-		cXMl += "<contratado>"
-			cXMl += "<cnpjContratado>"  + Alltrim(cValToChar(aPropVec[1][1]))  + "</cnpjContratado>" + CRLF
-			cXMl += "<ieContratado>"    + Alltrim(cValToChar(aPropVec[1][2]))  + "</ieContratado>" + CRLF
-			cXMl += "<nrAgencia>"       + Alltrim(cValToChar(aPropVec[1][16])) + "</nrAgencia>" + CRLF
-			cXMl += "<nrContaCorrente>" + Alltrim(cValToChar(aPropVec[1][17])) + "</nrContaCorrente>" + CRLF
-			cXMl += "<codigoBanco>"     + Alltrim(cValToChar(aPropVec[1][15])) + "</codigoBanco>" + CRLF
-			cXMl += "<tipoConta>0</tipoConta>" + CRLF
-		cXMl += "</contratado>" + CRLF
+// 		//
+// 		cXMl += "<contratado>"
+// 			cXMl += "<cnpjContratado>"  + Alltrim(cValToChar(aPropVec[1][1]))  + "</cnpjContratado>" + CRLF
+// 			cXMl += "<ieContratado>"    + Alltrim(cValToChar(aPropVec[1][2]))  + "</ieContratado>" + CRLF
+// 			cXMl += "<nrAgencia>"       + Alltrim(cValToChar(aPropVec[1][16])) + "</nrAgencia>" + CRLF
+// 			cXMl += "<nrContaCorrente>" + Alltrim(cValToChar(aPropVec[1][17])) + "</nrContaCorrente>" + CRLF
+// 			cXMl += "<codigoBanco>"     + Alltrim(cValToChar(aPropVec[1][15])) + "</codigoBanco>" + CRLF
+// 			cXMl += "<tipoConta>0</tipoConta>" + CRLF
+// 		cXMl += "</contratado>" + CRLF
 
-		//Carrega variáveis (série e nota fiscal).
-		cSerie	:= Alltrim(cValToChar(aNotas[Len(aNotas)][1]))
-		cNF		:= Alltrim(cValToChar(aNotas[Len(aNotas)][2]))
+// 		//Carrega variáveis (série e nota fiscal).
+// 		cSerie	:= Alltrim(cValToChar(aNotas[Len(aNotas)][1]))
+// 		cNF		:= Alltrim(cValToChar(aNotas[Len(aNotas)][2]))
 
-		//
-		aNotas := {}
-		Aadd(aNotas,{cSerie,cNF})
+// 		//
+// 		aNotas := {}
+// 		Aadd(aNotas,{cSerie,cNF})
 
-		//Realiza pesquisa no banco de dados para recuperar o xml.
-		aDados	:= obtStrXML(cSerie,cNF)
+// 		//Realiza pesquisa no banco de dados para recuperar o xml.
+// 		aDados	:= obtStrXML(cSerie,cNF)
 
-		//Verifica se a função obtStrXML retornou dados.
-		If Len(aDados) == 0
-			MsgStop("Não foi possível obter o XML da nota fiscal " + cNF + "/" + cSerie + ".","Função geraCIOT(ADLOG057P)")
-			RestArea(aArea)
-			Return .F.
+// 		//Verifica se a função obtStrXML retornou dados.
+// 		If Len(aDados) == 0
+// 			MsgStop("Não foi possível obter o XML da nota fiscal " + cNF + "/" + cSerie + ".","Função geraCIOT(ADLOG057P)")
+// 			RestArea(aArea)
+// 			Return .F.
 
-		EndIf
+// 		EndIf
 
-		//Extrai a string xml.
-		cXmlNF := Alltrim(cValToChar(aDados[1][2]))
+// 		//Extrai a string xml.
+// 		cXmlNF := Alltrim(cValToChar(aDados[1][2]))
 
-		//XML da NF-e em array de bytes codificados em base64.
-		cXml64 := Encode64(cXmlNF)
+// 		//XML da NF-e em array de bytes codificados em base64.
+// 		cXml64 := Encode64(cXmlNF)
 
-		//Salva encode64.
-		//gravarTXT(cTexto,cNome,cExt,cPasta,lParam)
-		gravarTXT(cXml64,"Encode64_NF_CIOT","txt",,.T.)
+// 		//Salva encode64.
+// 		//gravarTXT(cTexto,cNome,cExt,cPasta,lParam)
+// 		gravarTXT(cXml64,"Encode64_NF_CIOT","txt",,.T.)
 
-		//
-		cXMl += "<nfe>" + CRLF
-			cXMl += "<arquivoXML>" + cXml64 + "</arquivoXML>" + CRLF
-		cXMl += "</nfe>" + CRLF
+// 		//
+// 		cXMl += "<nfe>" + CRLF
+// 			cXMl += "<arquivoXML>" + cXml64 + "</arquivoXML>" + CRLF
+// 		cXMl += "</nfe>" + CRLF
 
-		//
-		cXMl += "<viagem>" + CRLF
-			cXMl += "<distancia>" + cDist   + "</distancia>" + CRLF
-			cXMl += "<dataPrevista>" + Substr(cDtEntr,7,2) + "/" + Substr(cDtEntr,5,2) + "/" + Substr(cDtEntr,1,4) + "</dataPrevista>" + CRLF
-			cXMl += "<tipoPagamento>0</tipoPagamento>" + CRLF
-			cXMl += "<valores>" + CRLF
-				cXMl += "<adiantamento>0</adiantamento>" + CRLF
-				cXMl += "<quitacao>" + cVlrFrt + "</quitacao>" + CRLF
-				cXMl += "<combustivel>0</combustivel>" + CRLF
-				cXMl += "<pedagio>0</pedagio>" + CRLF
-				cXMl += "<seguro>0</seguro>" + CRLF
-			cXMl += "</valores>" + CRLF
-		cXMl += "</viagem>" + CRLF
+// 		//
+// 		cXMl += "<viagem>" + CRLF
+// 			cXMl += "<distancia>" + cDist   + "</distancia>" + CRLF
+// 			cXMl += "<dataPrevista>" + Substr(cDtEntr,7,2) + "/" + Substr(cDtEntr,5,2) + "/" + Substr(cDtEntr,1,4) + "</dataPrevista>" + CRLF
+// 			cXMl += "<tipoPagamento>0</tipoPagamento>" + CRLF
+// 			cXMl += "<valores>" + CRLF
+// 				cXMl += "<adiantamento>0</adiantamento>" + CRLF
+// 				cXMl += "<quitacao>" + cVlrFrt + "</quitacao>" + CRLF
+// 				cXMl += "<combustivel>0</combustivel>" + CRLF
+// 				cXMl += "<pedagio>0</pedagio>" + CRLF
+// 				cXMl += "<seguro>0</seguro>" + CRLF
+// 			cXMl += "</valores>" + CRLF
+// 		cXMl += "</viagem>" + CRLF
 
-		//
-		cXMl += "<pagamento>" + CRLF
-			cXMl += "<data>" + Substr(cDtPag,7,2) + "/" + Substr(cDtPag,5,2) + "/" + Substr(cDtPag,1,4) + "</data>" + CRLF
-			cXMl += "<valor>" + cVlrFrt + "</valor>" + CRLF
-			cXMl += "<tipoCategoria>0</tipoCategoria>" + CRLF
-		cXMl += "</pagamento>" + CRLF
+// 		//
+// 		cXMl += "<pagamento>" + CRLF
+// 			cXMl += "<data>" + Substr(cDtPag,7,2) + "/" + Substr(cDtPag,5,2) + "/" + Substr(cDtPag,1,4) + "</data>" + CRLF
+// 			cXMl += "<valor>" + cVlrFrt + "</valor>" + CRLF
+// 			cXMl += "<tipoCategoria>0</tipoCategoria>" + CRLF
+// 		cXMl += "</pagamento>" + CRLF
 
-		//Dados do veículo.
-		cXMl += "<veiculo>" + CRLF
-			cXMl += "<placa>" + Alltrim(cValToChar(aVeiculo[1][1])) + "</placa>" + CRLF
-			cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
+// 		//Dados do veículo.
+// 		cXMl += "<veiculo>" + CRLF
+// 			cXMl += "<placa>" + Alltrim(cValToChar(aVeiculo[1][1])) + "</placa>" + CRLF
+// 			cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
 
-			//
-			If .T. //Alltrim(cValToChar(aVeiculo[1][1])) == "S"
-				cXMl += "<anoFabricacao>"  + Alltrim(cValToChar(aVeiculo[1][12])) + "</anoFabricacao>" + CRLF
-				cXMl += "<anoModelo>" 	   + Alltrim(cValToChar(aVeiculo[1][13])) + "</anoModelo>" + CRLF
-				cXMl += "<capcidadeKg>"    + Alltrim(cValToChar(aVeiculo[1][7]))  + "</capcidadeKg>" + CRLF
-				cXMl += "<capacidadeM3>"   + Alltrim(cValToChar(aVeiculo[1][6]))  + "</capacidadeM3>" + CRLF //"    + Alltrim(cValToChar(aVeiculo[1][6]))  + "
-				cXMl += "<chassi>" 		   + Alltrim(cValToChar(aVeiculo[1][14])) + "</chassi>" + CRLF
-				cXMl += "<nrIbge>" 	       + Alltrim(cValToChar(aVeiculo[1][15])) + "</nrIbge>" + CRLF
-				cXMl += "<cor>" 		   + Alltrim(cValToChar(aVeiculo[1][16])) + "</cor>" + CRLF
-				cXMl += "<marca>" 		   + trtCEsp(Alltrim(cValToChar(aVeiculo[1][17]))) + "</marca>" + CRLF
-				cXMl += "<modelo>" 		   + trtCEsp(Alltrim(cValToChar(aVeiculo[1][18]))) + "</modelo>" + CRLF
-				cXMl += "<nrEixos>" 	   + Alltrim(cValToChar(aVeiculo[1][19])) + "</nrEixos>" + CRLF
-				cXMl += "<nrRntrc>" 	   + Alltrim(cValToChar(aPropVec[1][4]))  + "</nrRntrc>" + CRLF
-				cXMl += "<nrRenavam>" 	   + Alltrim(cValToChar(aVeiculo[1][20])) + "</nrRenavam>" + CRLF
-				cXMl += "<tara>" 		   + Alltrim(cValToChar(aVeiculo[1][5]))  + "</tara>" + CRLF
-				cXMl += "<tipoCarroceria>" + Alltrim(cValToChar(aVeiculo[1][3]))  + "</tipoCarroceria>" + CRLF
-				cXMl += "<tipoRodado>"     + Alltrim(cValToChar(aVeiculo[1][2]))  + "</tipoRodado>" + CRLF
+// 			//
+// 			If .T. //Alltrim(cValToChar(aVeiculo[1][1])) == "S"
+// 				cXMl += "<anoFabricacao>"  + Alltrim(cValToChar(aVeiculo[1][12])) + "</anoFabricacao>" + CRLF
+// 				cXMl += "<anoModelo>" 	   + Alltrim(cValToChar(aVeiculo[1][13])) + "</anoModelo>" + CRLF
+// 				cXMl += "<capcidadeKg>"    + Alltrim(cValToChar(aVeiculo[1][7]))  + "</capcidadeKg>" + CRLF
+// 				cXMl += "<capacidadeM3>"   + Alltrim(cValToChar(aVeiculo[1][6]))  + "</capacidadeM3>" + CRLF //"    + Alltrim(cValToChar(aVeiculo[1][6]))  + "
+// 				cXMl += "<chassi>" 		   + Alltrim(cValToChar(aVeiculo[1][14])) + "</chassi>" + CRLF
+// 				cXMl += "<nrIbge>" 	       + Alltrim(cValToChar(aVeiculo[1][15])) + "</nrIbge>" + CRLF
+// 				cXMl += "<cor>" 		   + Alltrim(cValToChar(aVeiculo[1][16])) + "</cor>" + CRLF
+// 				cXMl += "<marca>" 		   + trtCEsp(Alltrim(cValToChar(aVeiculo[1][17]))) + "</marca>" + CRLF
+// 				cXMl += "<modelo>" 		   + trtCEsp(Alltrim(cValToChar(aVeiculo[1][18]))) + "</modelo>" + CRLF
+// 				cXMl += "<nrEixos>" 	   + Alltrim(cValToChar(aVeiculo[1][19])) + "</nrEixos>" + CRLF
+// 				cXMl += "<nrRntrc>" 	   + Alltrim(cValToChar(aPropVec[1][4]))  + "</nrRntrc>" + CRLF
+// 				cXMl += "<nrRenavam>" 	   + Alltrim(cValToChar(aVeiculo[1][20])) + "</nrRenavam>" + CRLF
+// 				cXMl += "<tara>" 		   + Alltrim(cValToChar(aVeiculo[1][5]))  + "</tara>" + CRLF
+// 				cXMl += "<tipoCarroceria>" + Alltrim(cValToChar(aVeiculo[1][3]))  + "</tipoCarroceria>" + CRLF
+// 				cXMl += "<tipoRodado>"     + Alltrim(cValToChar(aVeiculo[1][2]))  + "</tipoRodado>" + CRLF
 
-			EndIf 
+// 			EndIf 
 
-			//Dados do proprietário do veículo.
-			cXMl += "<proprietario>" + CRLF
-			cXMl += "<cnpjCpf>" + Alltrim(cValToChar(aPropVec[1][1])) + "</cnpjCpf>" + CRLF
-			cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
+// 			//Dados do proprietário do veículo.
+// 			cXMl += "<proprietario>" + CRLF
+// 			cXMl += "<cnpjCpf>" + Alltrim(cValToChar(aPropVec[1][1])) + "</cnpjCpf>" + CRLF
+// 			cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
 
-			//
-			If .T. //Alltrim(cValToChar(aPropVec[1][1])) == "S"
-				cXMl += "<bairro>" 	    + trtCEsp(Alltrim(cValToChar(aPropVec[1][11]))) + "</bairro>" + CRLF
-				cXMl += "<cep>"    	    + Alltrim(cValToChar(aPropVec[1][7]))  + "</cep>" + CRLF
-				cXMl += "<nrIbge>" 	    + Alltrim(cValToChar(aPropVec[1][8]))  + "</nrIbge>" + CRLF
-				cXMl += "<rua>"         + trtCEsp(Alltrim(cValToChar(aPropVec[1][9])))  + "</rua>" + CRLF
-				cXMl += "<numero>" 	    + Alltrim(cValToChar(aPropVec[1][10])) + "</numero>" + CRLF
-				cXMl += "<complemento>" + trtCEsp(Alltrim(cValToChar(aPropVec[1][12]))) + "</complemento>" + CRLF
-				cXMl += "<nrRntrc>" 	+ Alltrim(cValToChar(aPropVec[1][4]))  + "</nrRntrc>" + CRLF
-				cXMl += "<razaoSocial>" + trtCEsp(Alltrim(cValToChar(aPropVec[1][3])))  + "</razaoSocial>" + CRLF
-				cXMl += "<telefone>" 	+ Alltrim(cValToChar(aPropVec[1][13])) + "</telefone>" + CRLF
-				cXMl += "<celular>" 	+ Alltrim(cValToChar(aPropVec[1][14])) + "</celular>" + CRLF
+// 			//
+// 			If .T. //Alltrim(cValToChar(aPropVec[1][1])) == "S"
+// 				cXMl += "<bairro>" 	    + trtCEsp(Alltrim(cValToChar(aPropVec[1][11]))) + "</bairro>" + CRLF
+// 				cXMl += "<cep>"    	    + Alltrim(cValToChar(aPropVec[1][7]))  + "</cep>" + CRLF
+// 				cXMl += "<nrIbge>" 	    + Alltrim(cValToChar(aPropVec[1][8]))  + "</nrIbge>" + CRLF
+// 				cXMl += "<rua>"         + trtCEsp(Alltrim(cValToChar(aPropVec[1][9])))  + "</rua>" + CRLF
+// 				cXMl += "<numero>" 	    + Alltrim(cValToChar(aPropVec[1][10])) + "</numero>" + CRLF
+// 				cXMl += "<complemento>" + trtCEsp(Alltrim(cValToChar(aPropVec[1][12]))) + "</complemento>" + CRLF
+// 				cXMl += "<nrRntrc>" 	+ Alltrim(cValToChar(aPropVec[1][4]))  + "</nrRntrc>" + CRLF
+// 				cXMl += "<razaoSocial>" + trtCEsp(Alltrim(cValToChar(aPropVec[1][3])))  + "</razaoSocial>" + CRLF
+// 				cXMl += "<telefone>" 	+ Alltrim(cValToChar(aPropVec[1][13])) + "</telefone>" + CRLF
+// 				cXMl += "<celular>" 	+ Alltrim(cValToChar(aPropVec[1][14])) + "</celular>" + CRLF
 
-			EndIf 
+// 			EndIf 
 
-			cXMl += "</proprietario>" + CRLF
+// 			cXMl += "</proprietario>" + CRLF
 
-		cXMl += "</veiculo>" + CRLF
+// 		cXMl += "</veiculo>" + CRLF
 
 
-		//Dados do reboque.
-		If Len(aReboque) > 0 .And. Len(aPropReb) > 0
+// 		//Dados do reboque.
+// 		If Len(aReboque) > 0 .And. Len(aPropReb) > 0
 
-			//
-			cXMl += "<veiculo>" + CRLF
-				cXMl += "<placa>" + Alltrim(cValToChar(aReboque[1][1])) + "</placa>" + CRLF
-				cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
+// 			//
+// 			cXMl += "<veiculo>" + CRLF
+// 				cXMl += "<placa>" + Alltrim(cValToChar(aReboque[1][1])) + "</placa>" + CRLF
+// 				cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
 
-				//
-				If Alltrim(cValToChar(aReboque[1][1])) == "S"
-					cXMl += "<tipoRodado>"     + Alltrim(cValToChar(aReboque[1][2]))  + "</tipoRodado>" + CRLF
-					cXMl += "<tipoCarroceria>" + Alltrim(cValToChar(aReboque[1][3]))  + "</tipoCarroceria>" + CRLF
-					cXMl += "<tara>" 		   + Alltrim(cValToChar(aReboque[1][5]))  + "</tara>" + CRLF
-					cXMl += "<capacidadeM3>"   + Alltrim(cValToChar(aReboque[1][6]))  + "</capacidadeM3>" + CRLF
-					cXMl += "<capcidadeKg>"    + Alltrim(cValToChar(aReboque[1][7]))  + "</capcidadeKg>" + CRLF
-					cXMl += "<anoFabricacao>"  + Alltrim(cValToChar(aReboque[1][12])) + "</anoFabricacao>" + CRLF
-					cXMl += "<anoModelo>" 	   + Alltrim(cValToChar(aReboque[1][13])) + "</anoModelo>" + CRLF
-					cXMl += "<chassi>" 		   + Alltrim(cValToChar(aReboque[1][14])) + "</chassi>" + CRLF
-					cXMl += "<nrIbge>" 	       + Alltrim(cValToChar(aPropVec[1][15])) + "</nrIbge>" + CRLF
-					cXMl += "<cor>" 		   + trtCEsp(Alltrim(cValToChar(aReboque[1][16]))) + "</cor>" + CRLF
-					cXMl += "<marca>" 		   + trtCEsp(Alltrim(cValToChar(aReboque[1][17]))) + "</marca>" + CRLF
-					cXMl += "<modelo>" 		   + trtCEsp(Alltrim(cValToChar(aReboque[1][18]))) + "</modelo>" + CRLF
-					cXMl += "<nrEixos>" 	   + Alltrim(cValToChar(aReboque[1][19])) + "</nrEixos>" + CRLF
-					cXMl += "<nrRntrc>" 	   + Alltrim(cValToChar(aPropVec[1][4]))  + "</nrRntrc>" + CRLF
-					cXMl += "<nrRenavam>" 	   + Alltrim(cValToChar(aReboque[1][20])) + "</nrRenavam>" + CRLF
+// 				//
+// 				If Alltrim(cValToChar(aReboque[1][1])) == "S"
+// 					cXMl += "<tipoRodado>"     + Alltrim(cValToChar(aReboque[1][2]))  + "</tipoRodado>" + CRLF
+// 					cXMl += "<tipoCarroceria>" + Alltrim(cValToChar(aReboque[1][3]))  + "</tipoCarroceria>" + CRLF
+// 					cXMl += "<tara>" 		   + Alltrim(cValToChar(aReboque[1][5]))  + "</tara>" + CRLF
+// 					cXMl += "<capacidadeM3>"   + Alltrim(cValToChar(aReboque[1][6]))  + "</capacidadeM3>" + CRLF
+// 					cXMl += "<capcidadeKg>"    + Alltrim(cValToChar(aReboque[1][7]))  + "</capcidadeKg>" + CRLF
+// 					cXMl += "<anoFabricacao>"  + Alltrim(cValToChar(aReboque[1][12])) + "</anoFabricacao>" + CRLF
+// 					cXMl += "<anoModelo>" 	   + Alltrim(cValToChar(aReboque[1][13])) + "</anoModelo>" + CRLF
+// 					cXMl += "<chassi>" 		   + Alltrim(cValToChar(aReboque[1][14])) + "</chassi>" + CRLF
+// 					cXMl += "<nrIbge>" 	       + Alltrim(cValToChar(aPropVec[1][15])) + "</nrIbge>" + CRLF
+// 					cXMl += "<cor>" 		   + trtCEsp(Alltrim(cValToChar(aReboque[1][16]))) + "</cor>" + CRLF
+// 					cXMl += "<marca>" 		   + trtCEsp(Alltrim(cValToChar(aReboque[1][17]))) + "</marca>" + CRLF
+// 					cXMl += "<modelo>" 		   + trtCEsp(Alltrim(cValToChar(aReboque[1][18]))) + "</modelo>" + CRLF
+// 					cXMl += "<nrEixos>" 	   + Alltrim(cValToChar(aReboque[1][19])) + "</nrEixos>" + CRLF
+// 					cXMl += "<nrRntrc>" 	   + Alltrim(cValToChar(aPropVec[1][4]))  + "</nrRntrc>" + CRLF
+// 					cXMl += "<nrRenavam>" 	   + Alltrim(cValToChar(aReboque[1][20])) + "</nrRenavam>" + CRLF
 
-				EndIf 
+// 				EndIf 
 
-				//Dados do proprietário do veículo.
-				cXMl += "<proprietario>" + CRLF
-				cXMl += "<cnpjCpf>" + Alltrim(cValToChar(aPropReb[1][1])) + "</cnpjCpf>" + CRLF
-				cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
+// 				//Dados do proprietário do veículo.
+// 				cXMl += "<proprietario>" + CRLF
+// 				cXMl += "<cnpjCpf>" + Alltrim(cValToChar(aPropReb[1][1])) + "</cnpjCpf>" + CRLF
+// 				cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
 
-				//
-				If Alltrim(cValToChar(aPropReb[1][1])) == "S"
-					cXMl += "<razaoSocial>" + trtCEsp(Alltrim(cValToChar(aPropReb[1][3])))  + "</razaoSocial>" + CRLF
-					cXMl += "<nrRntrc>" 	+ Alltrim(cValToChar(aPropReb[1][4]))  + "</nrRntrc>" + CRLF
-					cXMl += "<cep>"    	    + Alltrim(cValToChar(aPropReb[1][7]))  + "</cep>" + CRLF
-					cXMl += "<nrIbge>" 	    + Alltrim(cValToChar(aPropReb[1][8]))  + "</nrIbge>" + CRLF
-					cXMl += "<rua>"         + trtCEsp(Alltrim(cValToChar(aPropReb[1][9])))  + "</rua>" + CRLF
-					cXMl += "<numero>" 	    + Alltrim(cValToChar(aPropReb[1][10])) + "</numero>" + CRLF
-					cXMl += "<bairro>" 	    + trtCEsp(Alltrim(cValToChar(aPropReb[1][11]))) + "</bairro>" + CRLF
-					cXMl += "<complemento>" + trtCEsp(Alltrim(cValToChar(aPropReb[1][12]))) + "</complemento>" + CRLF
-					cXMl += "<telefone>" 	+ Alltrim(cValToChar(aPropReb[1][13])) + "</telefone>" + CRLF
-					cXMl += "<celular>" 	+ Alltrim(cValToChar(aPropReb[1][14])) + "</celular>" + CRLF
+// 				//
+// 				If Alltrim(cValToChar(aPropReb[1][1])) == "S"
+// 					cXMl += "<razaoSocial>" + trtCEsp(Alltrim(cValToChar(aPropReb[1][3])))  + "</razaoSocial>" + CRLF
+// 					cXMl += "<nrRntrc>" 	+ Alltrim(cValToChar(aPropReb[1][4]))  + "</nrRntrc>" + CRLF
+// 					cXMl += "<cep>"    	    + Alltrim(cValToChar(aPropReb[1][7]))  + "</cep>" + CRLF
+// 					cXMl += "<nrIbge>" 	    + Alltrim(cValToChar(aPropReb[1][8]))  + "</nrIbge>" + CRLF
+// 					cXMl += "<rua>"         + trtCEsp(Alltrim(cValToChar(aPropReb[1][9])))  + "</rua>" + CRLF
+// 					cXMl += "<numero>" 	    + Alltrim(cValToChar(aPropReb[1][10])) + "</numero>" + CRLF
+// 					cXMl += "<bairro>" 	    + trtCEsp(Alltrim(cValToChar(aPropReb[1][11]))) + "</bairro>" + CRLF
+// 					cXMl += "<complemento>" + trtCEsp(Alltrim(cValToChar(aPropReb[1][12]))) + "</complemento>" + CRLF
+// 					cXMl += "<telefone>" 	+ Alltrim(cValToChar(aPropReb[1][13])) + "</telefone>" + CRLF
+// 					cXMl += "<celular>" 	+ Alltrim(cValToChar(aPropReb[1][14])) + "</celular>" + CRLF
 
-				EndIf 
+// 				EndIf 
 
-				cXMl += "</proprietario>" + CRLF
+// 				cXMl += "</proprietario>" + CRLF
 
-			cXMl += "</veiculo>" + CRLF
+// 			cXMl += "</veiculo>" + CRLF
 
-		EndIf
+// 		EndIf
 
-		//Dados do motorista.
-		cXMl += "<motorista>" + CRLF
-			cXMl += "<cpf>" + Alltrim(cValToChar(aMotorista[1][2])) + "</cpf>" + CRLF
-			cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
+// 		//Dados do motorista.
+// 		cXMl += "<motorista>" + CRLF
+// 			cXMl += "<cpf>" + Alltrim(cValToChar(aMotorista[1][2])) + "</cpf>" + CRLF
+// 			cXMl += "<incluirAlterar>S</incluirAlterar>" + CRLF
 
-			//
-			If .T. //Alltrim(cValToChar(aMotorista[1][2])) == "S"
-				cXMl += "<cnh>"				+ Alltrim(cValToChar(aMotorista[1][3]))  + "</cnh>" + CRLF
-				cXMl += "<dataNascimento>"	+ Alltrim(cValToChar(aMotorista[1][4]))  + "</dataNascimento>" + CRLF
-				cXMl += "<cep>" 			+ Alltrim(cValToChar(aMotorista[1][10])) + "</cep>" + CRLF
-				cXMl += "<nrIbgeMunicipio >"+ Alltrim(cValToChar(aMotorista[1][5]))  + "</nrIbgeMunicipio>" + CRLF
-				cXMl += "<rua>" 			+ trtCEsp(Alltrim(cValToChar(aMotorista[1][6])))  + "</rua>" + CRLF
-				cXMl += "<numero>" 			+ Alltrim(cValToChar(aMotorista[1][7]))  + "</numero>" + CRLF
-				cXMl += "<bairro>" 			+ Alltrim(cValToChar(aMotorista[1][8]))  + "</bairro>" + CRLF
-				cXMl += "<complemento>" 	+ trtCEsp(Alltrim(cValToChar(aMotorista[1][9])))	 + "</complemento>" + CRLF
-				cXMl += "<nome>"			+ trtCEsp(Alltrim(cValToChar(aMotorista[1][1])))  + "</nome>" + CRLF
-				cXMl += "<celular>" 		+ Alltrim(cValToChar(aMotorista[1][11])) + "</celular>" + CRLF
-				cXMl += "<telefone>" 		+ Alltrim(cValToChar(aMotorista[1][12])) + "</telefone>" + CRLF
+// 			//
+// 			If .T. //Alltrim(cValToChar(aMotorista[1][2])) == "S"
+// 				cXMl += "<cnh>"				+ Alltrim(cValToChar(aMotorista[1][3]))  + "</cnh>" + CRLF
+// 				cXMl += "<dataNascimento>"	+ Alltrim(cValToChar(aMotorista[1][4]))  + "</dataNascimento>" + CRLF
+// 				cXMl += "<cep>" 			+ Alltrim(cValToChar(aMotorista[1][10])) + "</cep>" + CRLF
+// 				cXMl += "<nrIbgeMunicipio >"+ Alltrim(cValToChar(aMotorista[1][5]))  + "</nrIbgeMunicipio>" + CRLF
+// 				cXMl += "<rua>" 			+ trtCEsp(Alltrim(cValToChar(aMotorista[1][6])))  + "</rua>" + CRLF
+// 				cXMl += "<numero>" 			+ Alltrim(cValToChar(aMotorista[1][7]))  + "</numero>" + CRLF
+// 				cXMl += "<bairro>" 			+ Alltrim(cValToChar(aMotorista[1][8]))  + "</bairro>" + CRLF
+// 				cXMl += "<complemento>" 	+ trtCEsp(Alltrim(cValToChar(aMotorista[1][9])))	 + "</complemento>" + CRLF
+// 				cXMl += "<nome>"			+ trtCEsp(Alltrim(cValToChar(aMotorista[1][1])))  + "</nome>" + CRLF
+// 				cXMl += "<celular>" 		+ Alltrim(cValToChar(aMotorista[1][11])) + "</celular>" + CRLF
+// 				cXMl += "<telefone>" 		+ Alltrim(cValToChar(aMotorista[1][12])) + "</telefone>" + CRLF
 
-			EndIf 
+// 			EndIf 
 
-		cXMl += "</motorista>" + CRLF
+// 		cXMl += "</motorista>" + CRLF
 
-	cXMl += "</envCiot>" + CRLF
+// 	cXMl += "</envCiot>" + CRLF
 	
-	//Adiciona cabeçalho ao xml.
-	cXml := cCabec + CRLF + cXml
+// 	//Adiciona cabeçalho ao xml.
+// 	cXml := cCabec + CRLF + cXml
 
-	//Everson - 17/02/2020. Chamado 054941.
-	oXML := TXmlManager():New()
-	xRet := oXML:Parse( cXml )
-  	If  xRet == .F.
-		MsgStop("Ocorreu erro ao fazer o parser do XML." + oXML:Error() ,"Função geraCIOT(ADLOG057P)")
-		RestArea(aArea)
-    	Return Nil 
+// 	//Everson - 17/02/2020. Chamado 054941.
+// 	oXML := TXmlManager():New()
+// 	xRet := oXML:Parse( cXml )
+//   	If  xRet == .F.
+// 		MsgStop("Ocorreu erro ao fazer o parser do XML." + oXML:Error() ,"Função geraCIOT(ADLOG057P)")
+// 		RestArea(aArea)
+//     	Return Nil 
 
-  	EndIf
+//   	EndIf
 
-	//Salva arquivo que está sendo enviado.
-	gravarTXT(cXml,"Env_CIOT","xml",,.T.)
+// 	//Salva arquivo que está sendo enviado.
+// 	gravarTXT(cXml,"Env_CIOT","xml",,.T.)
 
-	//
-	cUrl := Lower(Alltrim(GetMv("MV_#ENVCIO")))
+// 	//
+// 	cUrl := Lower(Alltrim(GetMv("MV_#ENVCIO")))
 
-	//Gera o cabeçalho para função HttpPost.
-	Aadd(aCabec,'Content-Type: Text/plain')
+// 	//Gera o cabeçalho para função HttpPost.
+// 	Aadd(aCabec,'Content-Type: Text/plain')
 
-	//Cria objeto FWRest.
-	oRestClient := FWRest():New(cUrl)
-	oRestClient:nTimeOut := 120
+// 	//Cria objeto FWRest.
+// 	oRestClient := FWRest():New(cUrl)
+// 	oRestClient:nTimeOut := 120
 
-	//Atribui parâmetro post.
-	oRestClient:SetPostParams(cXml)
+// 	//Atribui parâmetro post.
+// 	oRestClient:SetPostParams(cXml)
 
-	//Atribui path.
-	oRestClient:setPath("")
-	varinfo("cXml",cXml)
+// 	//Atribui path.
+// 	oRestClient:setPath("")
+// 	varinfo("cXml",cXml)
 
-	//
-	logZBE("Geração de CIOT " + cValToChar(cRoteiro) + " " + cValToChar(cDtEntr) ,cXml )
+// 	//
+// 	logZBE("Geração de CIOT " + cValToChar(cRoteiro) + " " + cValToChar(cDtEntr) ,cXml )
 
-	//Executa consulta web service.
-	If oRestClient:Post(aCabec)
-		cRetPost := oRestClient:GetResult() //Retorno 200 ou 201.
-		Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCIOT - cRetPost " + cValToChar(cRetPost) )
+// 	//Executa consulta web service.
+// 	If oRestClient:Post(aCabec)
+// 		cRetPost := oRestClient:GetResult() //Retorno 200 ou 201.
+// 		Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCIOT - cRetPost " + cValToChar(cRetPost) )
 		
-	Else
-		blqReg(cCodZFA) //Everson - 24/01/2020. Chamado 054941.
-		cErroWS := oRestClient:GetLastError()//Retorno com erro.
-		Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCIOT - cErroWS " + cValToChar(cErroWS) )
-		MsgStop("Web Service Ophos retornou o seguinte erro: " + Chr(13) + Chr(10) + cErroWS + Iif(Empty(cErroWS),"Possível erro de certificado SSL/TLS","") ,"Função gerCIOT(ADLOG057P)")
-		logZBE("FUNCAO enviarXML: gerCIOT WEB SERVICE OPHOS RETORNOU ERRO " + cErroWS + Iif(Empty(cErroWS)," Possível erro de certificado SSL/TLS",""),cXml)
-		Final()
+// 	Else
+// 		blqReg(cCodZFA) //Everson - 24/01/2020. Chamado 054941.
+// 		cErroWS := oRestClient:GetLastError()//Retorno com erro.
+// 		Conout( DToC(Date()) + " " + Time() + " ADLOG057P - gerCIOT - cErroWS " + cValToChar(cErroWS) )
+// 		MsgStop("Web Service Ophos retornou o seguinte erro: " + Chr(13) + Chr(10) + cErroWS + Iif(Empty(cErroWS),"Possível erro de certificado SSL/TLS","") ,"Função gerCIOT(ADLOG057P)")
+// 		logZBE("FUNCAO enviarXML: gerCIOT WEB SERVICE OPHOS RETORNOU ERRO " + cErroWS + Iif(Empty(cErroWS)," Possível erro de certificado SSL/TLS",""),cXml)
+// 		Final()
 
-	Endif
+// 	Endif
 
-	//Salva retorno do web service.
-	gravarTXT(cRetPost,"Ret_CIOT","xml",,.T.)
+// 	//Salva retorno do web service.
+// 	gravarTXT(cRetPost,"Ret_CIOT","xml",,.T.)
 
-	//Valida o retorno.
-	aXml := geraObjXML(cRetPost)
-	If Alltrim(cValToChar(aXml[1][1])) == ".F." //Se for falso, não gerou o objeto xml.
-		Return .F.
+// 	//Valida o retorno.
+// 	aXml := geraObjXML(cRetPost)
+// 	If Alltrim(cValToChar(aXml[1][1])) == ".F." //Se for falso, não gerou o objeto xml.
+// 		Return .F.
 
-	EndIf
+// 	EndIf
 
-	//Atribui o objeto à variável oXml.
-	oXml := aXml[1][2]
+// 	//Atribui o objeto à variável oXml.
+// 	oXml := aXml[1][2]
 	
-	//      
-	aRet := obtRet(11,oXml,,,,cRoteiro,,aNotas,cSeq,,,,,cDtEntr,,cCTECompl,cSCTECompl,,,,)
+// 	//      
+// 	aRet := obtRet(11,oXml,,,,cRoteiro,,aNotas,cSeq,,,,,cDtEntr,,cCTECompl,cSCTECompl,,,,)
 
-	//
-	If ValType(aRet) <> "A" .Or. Len(aRet) <= 0
-		RestArea(aArea)
-		Return .F.
+// 	//
+// 	If ValType(aRet) <> "A" .Or. Len(aRet) <= 0
+// 		RestArea(aArea)
+// 		Return .F.
 
-	EndIf
+// 	EndIf
 
-	//
-	FreeObj(oRestClient) //Everson - 05/05/2021.
+// 	//
+// 	FreeObj(oRestClient) //Everson - 05/05/2021.
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return .T.
+// Return .T.
 /*/{Protheus.doc} trtCEsp
 	(long_description)
 	@type  Static Function
@@ -12046,24 +11797,22 @@ Return .T.
 	@since 17/02/2020
 	@version 01
 	/*/
-Static Function trtCEsp(cTexto)
+// Static Function trtCEsp(cTexto)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea := GetArea()
+//	//Variáveis.
+// 	Local aArea := GetArea()
 
-	//
-	cTexto := StrTran(cTexto,"&","&amp;")
-	cTexto := StrTran(cTexto,'"',"&quot;")
-	cTexto := StrTran(cTexto,"'","&apos;")
-	cTexto := StrTran(cTexto,"<","&lt;")
-	cTexto := StrTran(cTexto,">","&gt;")
+// 	//
+// 	cTexto := StrTran(cTexto,"&","&amp;")
+// 	cTexto := StrTran(cTexto,'"',"&quot;")
+// 	cTexto := StrTran(cTexto,"'","&apos;")
+// 	cTexto := StrTran(cTexto,"<","&lt;")
+// 	cTexto := StrTran(cTexto,">","&gt;")
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cTexto
+// Return cTexto
 /*/{Protheus.doc} retEnvCI
 	Trata retorno da emissão de CIOT.
 	@type  Static Function
@@ -12073,9 +11822,7 @@ Return cTexto
 	/*/
 Static Function retEnvCI(oXml,cRoteiro,cDtEntr,cSeq,cCTECompl,cSCTECompl,aNotas)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cRetorno		:= ""
 	Local cMensagem		:= ""
@@ -12167,9 +11914,7 @@ Return aRet
 	/*/
 Static Function grvCIOHash(cRetorno,oXml,cRoteiro,cDtEntr,cDtEmiss,cSeq,cCTECompl,cSCTECompl,aNotas)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lGrv			:= .T.
 	Local cTpDoc		:= "3"
@@ -12179,14 +11924,14 @@ Static Function grvCIOHash(cRetorno,oXml,cRoteiro,cDtEntr,cDtEmiss,cSeq,cCTEComp
 	Local aRet			:= {}
 	Local nValor		:= 0
 	Local i				:= 1
-	Local cQuery		:= ""
+	//Local cQuery		:= ""
 	Local cStatus		:= ""
 	Local cProtEmis		:= ""
 	Local cChaveAces	:= ""
-	Local aXmlCons		:= {}
-	Local oXmlCons		:= Nil
-	Local cRetoConst	:= ""	
-	Local aDadReb		:= {}	
+	//Local aXmlCons		:= {}
+	//Local oXmlCons		:= Nil
+	//Local cRetoConst	:= ""	
+	//Local aDadReb		:= {}	
 	Local nVezesP		:= GetMv("MV_#NVPROC")
 	Local nAux			:= 0
 	Local cMsgOphos		:= ""
@@ -12305,16 +12050,14 @@ Return aRet
 	/*/
 Static Function impCIO(cHash,oXml,cRoteiro,cStringXML,cDtEntr,cSeq,cCTECompl,cSCTECompl,aNotas)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cQuery		:= ""
 	Local cDadosZFK		:= ""
 	Local i				:= 0
 	Local lGrv			:= .T.
 	Local cTpDoc		:= "3"
-	Local aDadReb		:= {}
+	//Local aDadReb		:= {}
 	Local cNota			:= ""
 	Local cSerie		:= ""
 	Local aStatus		:= {}
@@ -12324,10 +12067,10 @@ Static Function impCIO(cHash,oXml,cRoteiro,cStringXML,cDtEntr,cSeq,cCTECompl,cSC
 	Local cChaveAces	:= ""
 	Local cNumDoc		:= ""
 	Local cSerDoc		:= ""
-	Local cValor		:= ""
+	//Local cValor		:= ""
 	Local nValor		:= 0
 	Local cEmissTp		:= "N"
-	Local cRetorno		:= ""
+	//Local cRetorno		:= ""
 	Local cProtCan		:= ""
 	Local cDtEmiss		:= ""
 	Local aRet			:= {}
@@ -12443,9 +12186,7 @@ Return aRet
 	/*/
 Static Function consCIOT(cHash,nTipo)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local cUrl  		:= GetMv("MV_#CONCIO")
 	Local oRestClient	:= Nil
@@ -12590,9 +12331,7 @@ Return lRet
 	/*/
 Static Function retCoCIO(oXml,cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet			:= .T.
 	Local cRetorno		:= ""
@@ -12603,9 +12342,9 @@ Static Function retCoCIO(oXml,cHash)
 	Local cDataAut		:= ""
 	Local cProtocolo	:= ""
 	Local cStatus		:= ""
-	Local Update		:= ""
+	//Local Update		:= ""
 	Local cMsgOphos		:= ""
-	Local aStatus		:= {}
+	//Local aStatus		:= {}
 	Local cProtEmis		:= ""
 	Local cChaveAces	:= ""
 	Local cProtCance	:= ""
@@ -12759,9 +12498,7 @@ Return lRet
 	/*/
 Static Function updateCIOT(cNumDoc,cSerDoc,cStatus,cMsgOphos,cProtEmis,cProtCance,cChaveAces,cProtEnce,cHash,cDataAut)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local Update	:= ""
 	Local lRet 		:= .T.
@@ -12791,9 +12528,7 @@ Return lRet
 	/*/
 Static Function pdfCIOdow(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local lRet 		:= .T.
 	Local cUrl		:= GetMv("MV_#PDFCIO")
@@ -12851,9 +12586,7 @@ Return lRet
 	/*/
 Static Function xmlCIOdow(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local lRet		:= .T.
 	Local cUrl		:= GetMv("MV_#XMLCIO")
@@ -12911,9 +12644,7 @@ Return lRet
 	/*/
 Static Function cancCIOT(cHash,cJust)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet 			:= .T.
 	Local cUrl   		:= GetMv("MV_#CANCIO")
@@ -13022,9 +12753,7 @@ Return lRet
 	/*/
 Static Function retCCIO(oXml,cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local cRetorno	:= ""
 	Local cMensagem	:= ""
@@ -13072,9 +12801,7 @@ Return lRet
 	/*/
 Static Function encCIOT(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet 			:= .T.
 	Local cUrl			:= GetMv("MV_#ENCCIO")
@@ -13180,9 +12907,7 @@ Return lRet
 	/*/
 Static Function retEcCIO(oXml,cHash)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local lRet 		:= .T.
 	Local cRetorno	:= ""
@@ -13249,9 +12974,7 @@ Return lRet
 	/*/
 Static Function statusCIOT(cHash)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea			:= GetArea()
 	Local aRetorno		:= {}
 	Local oXml			:= Nil
@@ -13331,21 +13054,19 @@ Return aRetorno
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function gerRefCIO(cRoteiro,cDtEntr,cSeq,cEmissTp,cTpVa)
+// Static Function gerRefCIO(cRoteiro,cDtEntr,cSeq,cEmissTp,cTpVa)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea := GetArea()
-	Local cRef  := ""
+//	//Variáveis.
+// 	Local aArea := GetArea()
+// 	Local cRef  := ""
 
-	//
-	cRef := Alltrim(cEmpAnt) + Alltrim(cFilAnt) + Alltrim(cCodZFA)  + Alltrim(cEmissTp) + "-3-" + Alltrim(cSeq) + "-" + Alltrim(cTpVa)
+// 	//
+// 	cRef := Alltrim(cEmpAnt) + Alltrim(cFilAnt) + Alltrim(cCodZFA)  + Alltrim(cEmissTp) + "-3-" + Alltrim(cSeq) + "-" + Alltrim(cTpVa)
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cRef
+// Return cRef
 /*/{Protheus.doc} obtCodNCM
 	Obtém código NCM.
 	@type  Static Function
@@ -13353,58 +13074,56 @@ Return cRef
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function obtCodNCM(cCTE)
+// Static Function obtCodNCM(cCTE)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea := GetArea()
-	Local cQuery:= ""
-	Local cCod	:= ""
+//	//Variáveis.
+// 	Local aArea := GetArea()
+// 	Local cQuery:= ""
+// 	Local cCod	:= ""
 
-	//
-	cQuery := ""
-	cQuery += " SELECT " 
-	cQuery += " TOP 1 D2_COD, B1_POSIPI, SUM(D2_QUANT) AS D2_QUANT " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("ZFK") + " (NOLOCK) AS ZFK " 
-	cQuery += " INNER JOIN " 
-	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 ON " 
-	cQuery += " ZFK_FILIAL = C5_FILIAL " 
-	cQuery += " AND ZFK_PEDVEN = C5_NUM " 
-	cQuery += " INNER JOIN " 
-	cQuery += " " + RetSqlName("SD2") + " (NOLOCK) AS SD2 ON " 
-	cQuery += " C5_FILIAL = D2_FILIAL " 
-	cQuery += " AND C5_NUM = D2_PEDIDO " 
-	cQuery += " INNER JOIN " 
-	cQuery += " SB1010 (NOLOCK) AS SB1 ON " 
-	cQuery += " D2_COD = B1_COD " 
-	cQuery += " WHERE " 
-	cQuery += " ZFK_FILIAL = '" + FWxFilial("ZFK") + "' " 
-	cQuery += " AND ZFK_CHAVE = '" + cCTE + "' " 
-	cQuery += " AND ZFK_TPDOC = '1' " 
-	cQuery += " AND ZFK_STATUS = '1' " 
-	cQuery += " AND ZFK.D_E_L_E_T_ = '' " 
-	cQuery += " GROUP BY D2_COD, B1_POSIPI " 
-	cQuery += " ORDER BY D2_QUANT DESC " 
+// 	//
+// 	cQuery := ""
+// 	cQuery += " SELECT " 
+// 	cQuery += " TOP 1 D2_COD, B1_POSIPI, SUM(D2_QUANT) AS D2_QUANT " 
+// 	cQuery += " FROM " 
+// 	cQuery += " " + RetSqlName("ZFK") + " (NOLOCK) AS ZFK " 
+// 	cQuery += " INNER JOIN " 
+// 	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 ON " 
+// 	cQuery += " ZFK_FILIAL = C5_FILIAL " 
+// 	cQuery += " AND ZFK_PEDVEN = C5_NUM " 
+// 	cQuery += " INNER JOIN " 
+// 	cQuery += " " + RetSqlName("SD2") + " (NOLOCK) AS SD2 ON " 
+// 	cQuery += " C5_FILIAL = D2_FILIAL " 
+// 	cQuery += " AND C5_NUM = D2_PEDIDO " 
+// 	cQuery += " INNER JOIN " 
+// 	cQuery += " SB1010 (NOLOCK) AS SB1 ON " 
+// 	cQuery += " D2_COD = B1_COD " 
+// 	cQuery += " WHERE " 
+// 	cQuery += " ZFK_FILIAL = '" + FWxFilial("ZFK") + "' " 
+// 	cQuery += " AND ZFK_CHAVE = '" + cCTE + "' " 
+// 	cQuery += " AND ZFK_TPDOC = '1' " 
+// 	cQuery += " AND ZFK_STATUS = '1' " 
+// 	cQuery += " AND ZFK.D_E_L_E_T_ = '' " 
+// 	cQuery += " GROUP BY D2_COD, B1_POSIPI " 
+// 	cQuery += " ORDER BY D2_QUANT DESC " 
 
-	//
-	If Select("D_NCM") > 0
-		D_NCM->(DbCloseArea())
+// 	//
+// 	If Select("D_NCM") > 0
+// 		D_NCM->(DbCloseArea())
 
-	EndIf
+// 	EndIf
 
-	//
-	TcQuery cQuery New Alias "D_NCM"
-	DbSelectArea("D_NCM")
-	D_NCM->(DbGoTop())
-		cCod := Alltrim(cValToChar(D_NCM->B1_POSIPI))
-	D_NCM->(DbCloseArea())
+// 	//
+// 	TcQuery cQuery New Alias "D_NCM"
+// 	DbSelectArea("D_NCM")
+// 	D_NCM->(DbGoTop())
+// 		cCod := Alltrim(cValToChar(D_NCM->B1_POSIPI))
+// 	D_NCM->(DbCloseArea())
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cCod
+// Return cCod
 /*/{Protheus.doc} obtCodCrg
 	Obtém código da carga.
 	@type  Static Function
@@ -13412,22 +13131,20 @@ Return cCod
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function obtCodCrg(cRoteiro,cDtEntr,cTpVa)
+// Static Function obtCodCrg(cRoteiro,cDtEntr,cTpVa)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea := GetArea()
-	Local aCod 	:= Separa(GetMv("MV_#TPCRGC",,"3////"),"/",.T.)
-	Local cCod	:= aCod[Val(cTpVa)]
+//	//Variáveis.
+// 	Local aArea := GetArea()
+// 	Local aCod 	:= Separa(GetMv("MV_#TPCRGC",,"3////"),"/",.T.)
+// 	Local cCod	:= aCod[Val(cTpVa)]
 
-	//
-	Conout( DToC(Date()) + " " + Time() + " ADLOG057P - obtCodCrg - cCod " + cValToChar(cCod) )
+// 	//
+// 	Conout( DToC(Date()) + " " + Time() + " ADLOG057P - obtCodCrg - cCod " + cValToChar(cCod) )
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cCod
+// Return cCod
 /*/{Protheus.doc} getDist
 	Obtém distância do roteiro.
 	@type  Static Function
@@ -13435,27 +13152,25 @@ Return cCod
 	@since 27/01/2020
 	@version 01
 	/*/
-Static Function getDist(cRoteiro,cDtEntr,cTpVa,cZFA)
+// Static Function getDist(cRoteiro,cDtEntr,cTpVa,cZFA)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea := GetArea()
-	Local cDist	:= "0"
+//	//Variáveis.
+// 	Local aArea := GetArea()
+// 	Local cDist	:= "0"
 
-	//
-	DbSelectArea("ZFA")
-	ZFA->(DbSetOrder(13))
-	ZFA->(DbGoTop())
+// 	//
+// 	DbSelectArea("ZFA")
+// 	ZFA->(DbSetOrder(13))
+// 	ZFA->(DbGoTop())
 
-	//
-	ZFA->(DbSeek( FWxFilial("ZFA") + cZFA ))
-	cDist := Alltrim(cValToChar(ZFA->ZFA_KMTOT))
+// 	//
+// 	ZFA->(DbSeek( FWxFilial("ZFA") + cZFA ))
+// 	cDist := Alltrim(cValToChar(ZFA->ZFA_KMTOT))
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cDist
+// Return cDist
 /*/{Protheus.doc} nomeStaticFunction
 	(long_description)
 	@type  Static Function
@@ -13465,9 +13180,7 @@ Return cDist
 	/*/
 Static Function grCSV(oObj,aCabec)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Local i			:= 1
 	Local w			:= 1
@@ -13555,19 +13268,17 @@ Return Nil
 	@since 02/03/2020
 	@version 01
 	/*/
-Static Function getDesemp(nTpCrg)
+// Static Function getDesemp(nTpCrg)
 	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea		:= GetArea()
-	Local aDesemp	:= StrToKarr(Alltrim(GetMV("MV_#DSPCIO")),"/")
-	Local cDesemp	:= aDesemp[nTpCrg]
+//	//Variáveis.
+// 	Local aArea		:= GetArea()
+// 	Local aDesemp	:= StrToKarr(Alltrim(GetMV("MV_#DSPCIO")),"/")
+// 	Local cDesemp	:= aDesemp[nTpCrg]
 
-	//
-	RestArea(aArea)
+// 	//
+// 	RestArea(aArea)
 
-Return cDesemp
+// Return cDesemp
 /*/{Protheus.doc} encCIOL
 	Encerrar CIOT em lote.
 	@type  Static Function
@@ -13575,74 +13286,72 @@ Return cDesemp
 	@since 06/03/2020
 	@version 01
 	/*/
-Static Function encCIOL()
+// Static Function encCIOL()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	Local aArea	 	:= GetArea()
-	Local i		 	:= 1
-	Local cHash	 	:= ""
-	Local cDoc	 	:= ""
-	Local cDateTime	:= ""
-	Local cRoteiro	:= ""
-	Local cDtEntr	:= ""
-	Local cIBGE		:= ""
+// 	//Variáveis.
+// 	Local aArea	 	:= GetArea()
+// 	Local i		 	:= 1
+// 	Local cHash	 	:= ""
+// 	Local cDoc	 	:= ""
+// 	Local cDateTime	:= ""
+// 	Local cRoteiro	:= ""
+// 	Local cDtEntr	:= ""
+// 	Local cIBGE		:= ""
 	
-	//
-	If Len(oPendCIO:aCols) <= 0 .Or. (  Len(oPendCIO:aCols) > 0 .And. Empty(Alltrim(cValToChar(oPendCIO:aCols[oPendCIO:nAt,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRHASH" })]))) )
-		MsgStop("Não há CIOT a ser encerrado.","Função encCIOL(ADLOG057P)")
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If Len(oPendCIO:aCols) <= 0 .Or. (  Len(oPendCIO:aCols) > 0 .And. Empty(Alltrim(cValToChar(oPendCIO:aCols[oPendCIO:nAt,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRHASH" })]))) )
+// 		MsgStop("Não há CIOT a ser encerrado.","Função encCIOL(ADLOG057P)")
+// 		RestArea(aArea)
+// 		Return Nil
 		
-	EndIf
+// 	EndIf
 	
-	//
-	If ! MsgYesNo("Será(ão) encerrado(s) " + cValToChar(Len(oPendCIO:aCols)) + " documento(s). Deseja prosseguir?","Função encCIOL(ADLOG057P)")
-		RestArea(aArea)
-		Return Nil
+// 	//
+// 	If ! MsgYesNo("Será(ão) encerrado(s) " + cValToChar(Len(oPendCIO:aCols)) + " documento(s). Deseja prosseguir?","Função encCIOL(ADLOG057P)")
+// 		RestArea(aArea)
+// 		Return Nil
 	
-	EndIf
+// 	EndIf
 	
-	//
-	aRetEnc := telaGen4()
+// 	//
+// 	aRetEnc := telaGen4()
 			
-	//
-	If Len(aRetEnc) > 0
-		cDateTime 	:= Alltrim(cValToChar(aRetEnc[1][1])) + Alltrim(cValToChar(aRetEnc[1][2]))
+// 	//
+// 	If Len(aRetEnc) > 0
+// 		cDateTime 	:= Alltrim(cValToChar(aRetEnc[1][1])) + Alltrim(cValToChar(aRetEnc[1][2]))
 	
-	Else
-		RestArea(aArea)
-		Return Nil		
+// 	Else
+// 		RestArea(aArea)
+// 		Return Nil		
 	
-	EndIf
+// 	EndIf
 	
-	//
-	For i := 1 To Len(oPendCIO:aCols)
+// 	//
+// 	For i := 1 To Len(oPendCIO:aCols)
 		
-		//
-		cDoc  	:= Alltrim(cValToChar(oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRNUMDOC" })]))
-		cHash 	:= Alltrim(cValToChar(oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRHASH" })]))
-		cRoteiro:= Alltrim(cValToChar(oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRROT" })]))
-		cDtEntr	:= DToS( oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRDTE" })] )
+// 		//
+// 		cDoc  	:= Alltrim(cValToChar(oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRNUMDOC" })]))
+// 		cHash 	:= Alltrim(cValToChar(oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRHASH" })]))
+// 		cRoteiro:= Alltrim(cValToChar(oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRROT" })]))
+// 		cDtEntr	:= DToS( oPendCIO:aCols[i,Ascan(aHDcCI,{|x| AllTrim(x[2]) == "CRDTE" })] )
 		
-		//
-		aItinierario:= itinerario(cRoteiro,cDtEntr)//Recupera o itinerário do veículo.
+// 		//
+// 		aItinierario:= itinerario(cRoteiro,cDtEntr)//Recupera o itinerário do veículo.
 		
-		//
-		If Len(aItinierario) > 0
-			cIBGE := Alltrim(cValToChar(aItinierario[1][2]))
-			MsAguarde({|| encCIOT(cHash) } ,"Aguarde...","Processando MDF-e " + cDoc  ,.F.)
+// 		//
+// 		If Len(aItinierario) > 0
+// 			cIBGE := Alltrim(cValToChar(aItinierario[1][2]))
+// 			MsAguarde({|| encCIOT(cHash) } ,"Aguarde...","Processando MDF-e " + cDoc  ,.F.)
 
-		Else
-			MsgStop("Não foi possível carregar o itinerário do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função encCIOL(ADLOG057P)")
-			logZBE("FUNCAO encCIOL: NAO FOI POSSÍVEL CARREGAR O ITINERARIO DO ROTEIRO " + cRoteiro + "-" + DToC(SToD(cDtEntr)) )
+// 		Else
+// 			MsgStop("Não foi possível carregar o itinerário do roteiro " + cRoteiro + "-" + DToC(SToD(cDtEntr)) + ".","Função encCIOL(ADLOG057P)")
+// 			logZBE("FUNCAO encCIOL: NAO FOI POSSÍVEL CARREGAR O ITINERARIO DO ROTEIRO " + cRoteiro + "-" + DToC(SToD(cDtEntr)) )
 
-		EndIf
+// 		EndIf
 	
-	Next i
+// 	Next i
 	
-	//
-	carDocs(.T.,"6")
+// 	//
+// 	carDocs(.T.,"6")
 
-Return Nil
+// Return Nil

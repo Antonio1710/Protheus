@@ -7,6 +7,7 @@
 	@version 01
     @history Chamado 8566 	- André Mendes 	- 29/04/2021 - Transferência entre Filiais 
     @history Ticket  16982  - Abel Babini   - 27/07/2021 - Ajuste no armazém padrão de destino
+    @history Ticket  16982  - Abel Babini   - 03/08/2021 - Acrescentar aviso para o usuário sobre o armazém de destino padrão.
 /*/
 User Function M310ITENS
     Local cPrograma:=PARAMIXB[1]
@@ -46,7 +47,13 @@ User Function M310ITENS
         if cLocPad <> ''
             for i:=1 to Len(aItens)
                 for j:=1 to Len(aItens[i])
-                    if Alltrim(aItens[i][j][1]) == 'D1_LOCAL'
+                    //Ticket  16982  - Abel Babini   - 03/08/2021 - Acrescentar aviso para o usuário sobre o armazém de destino padrão.
+                    if Alltrim(aItens[i][j][1]) == 'D1_LOCAL' .AND. Alltrim(aItens[i][j][2]) <> Alltrim(cLocPad)
+                        Aviso(	"M310ITENS-01",;
+						"Armazém de destino alterado conf. Indicador de Produtos (SBZ) para : " + Alltrim(cLocPad) + "." + Chr(13) + Chr(10) +;
+						"Armazém substituído: " + Alltrim(aItens[i][j][2]) + ".",;
+						{ "&Retorna" },,;
+						"Aviso Controladoria" )
                         aItens[i][j][2]:=cLocPad
                         exit
                     endif

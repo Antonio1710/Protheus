@@ -19,8 +19,11 @@
 	@history chamado 059415 - FWNM            - 28/07/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
 	@history ticket  9765   - Abel Babini 		- 19/02/2021 - Ajustado o ponto de entrada de cópia de pedidos de venda para que o Tipo do cliente seja atualizado com a informação do cadastro do cliente no momento da cópia.
 	@history ticket  8465   - Leonardo P. Monteiro - 13/04/2021 - Limpeza do campo Grupo de Inspeção no eData.
+	@history Ticket 22639   - Everson - 14/09/2021 - Limpeza do flag de pré-aprovado financeiro e erro de retorno do Edata.
 /*/
 User Function MT410CPY()
+
+	Local _ny	:= 1 //Everson - 14/09/2021. Chamado 22639.
 
 	Private _aAreaNow	:= GetArea() 				//AREA
 	Private _aAreaSA1	:= SA1->(GetArea())		//AREA DO SA1
@@ -29,7 +32,7 @@ User Function MT410CPY()
 	DbSelectArea("SA1")
 	DbSetOrder(1)                
 
-	Private _nCfop	:= 0	           				//POSICAO CFOP
+	//Private _nCfop	:= 0	           				//POSICAO CFOP
 	Private _nCfop	:= ''	           				//CFOP
 	Private _cCli	:= M->C5_CLIENTE				//CLIENTE
 	Private _cLoj	:= M->C5_LOJACLI				//LOJA DO CLIENTE
@@ -77,6 +80,11 @@ User Function MT410CPY()
 	M->C5_XOBS	  	:= ""
 	M->C5_XINT	  	:= "1"
 	M->C5_XFLAGE  	:= "1"
+
+	//Ticket 22639 - Everson - 14/09/2021 - Limpeza do flag de pré-aprovado financeiro e erro de retorno do Edata.
+	M->C5_XPREAPR	:= " "
+	M->C5_XERRO		:= " "
+	//
 
 	//Ticket  8465   - Leonardo P. Monteiro - 13/04/2021 - Limpeza do campo Grupo de Inspeção no eData.
 	M->C5_XGRPINS	:= "01"
@@ -270,6 +278,7 @@ RETURN
 Static Function fchkped(_cNrPd,_cCli,_cLoj)
 
 	Local l_Ret := .F.
+	Local _ny	:= 1 //Everson - 14/09/2021. Chamado 22639.
 		
 		_nPosTES := GDFIELDPOS("C6_TES")   // incluido por Adriana em 31/03/17
 		

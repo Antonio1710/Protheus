@@ -12,6 +12,7 @@
 	@history chamato TI    -              - 24/05/2019 - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
 	@history ticket 8      - Abel Babini  - 01/03/2021 - Não limpar flag dos registros e chamar a rotina de liberação de crédtio.
 	@history ticket 8      - Abel Babini  - 03/03/2021 - Nova versao - Não limpar flag dos registros e chamar a rotina de liberação de crédtio.
+	@history 17537         - Everson      - 14/09/2021 - Tratamento para exclusão de pedido pela rotina de importação Protheus x SAG.
 	/*/
 User Function MA410DEL()
 	
@@ -27,15 +28,19 @@ User Function MA410DEL()
 	Local _cMens3	:= " "   
 	Local cAliasSD1	:= GetNextAlias()
 	Local cQuery    := ""
-	Local _cFilial  := SC5->C5_FILIAL
+	//Local _cFilial  := SC5->C5_FILIAL
 	Local cPedido	:= SC5->C5_NUM
-	Local _cCliente := SC5->C5_CLIENTE
-	Local _cLoja    := SC5->C5_LOJACLI
+	//Local _cCliente := SC5->C5_CLIENTE
+	//Local _cLoja    := SC5->C5_LOJACLI
 	Local _cPedAnt  := SC5->C5_XREFATD
+	Local n1    	:= 1 //Everson - 14/09/2021. Chamado 17537. 	
+	Local I			:= 1 //Everson - 14/09/2021. Chamado 17537. 	
 
-	if cEmpAnt <> "01" //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
+	If cEmpAnt <> "01" .Or. IsInCallStack("U_PED001B") //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804 //Everson - 14/09/2021. Chamado 17537.
+		RestArea(aArea) //Everson - 14/09/2021. Chamado 17537.
 		Return(.t.)
-	endif     
+
+	EndIf     
 
 	//ticket 8      - Abel Babini  - 01/03/2021 - Não limpar flag dos registros e chamar a rotina de liberação de crédtio.
 	//fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)  //&&funcao pra limpeza de flag de pre aprovacao de pedidos de venda.
@@ -361,7 +366,7 @@ User Function MA410DEL()
 		cPath := GetSrvProfString("StartPath","")+"PED_EXC\"
 		COPY to &cPath+_cNom+".html" SDF	
 
-		DbCloseArea("TRB")
+		TRB->(DbCloseArea())
 
 		//ShellExecute('open',"c:\"+_cNom+".html",'','',1)
 		ShellExecute('open',cPath+_cNom+".html",'','',1)
@@ -409,76 +414,76 @@ User Function MA410DEL()
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄA¿
 	//³FIM TRATAMENTO PEDIDO TRANSPORTADOR - CCSKF³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄAÙ
-
+	RestArea(aArea) //Everson - 14/09/2021. Chamado 17537. 
 
 Return(.t.)
 
 //&&21/10/16 - funcao para pre aprovacao.
-Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja) 
-	DbSelectArea("SC5")
-	_cASC5 := Alias()
-	_cOSC5 := IndexOrd()
-	_cRSC5 := Recno()
+// Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja) 
+// 	DbSelectArea("SC5")
+// 	_cASC5 := Alias()
+// 	_cOSC5 := IndexOrd()
+// 	_cRSC5 := Recno()
 
-	//&&Verifico se eh rede ou varejo...
-	dbSelectArea("SA1")
-	dbSetOrder(1)
-	dbGoTop()
-	If dbSeek(xFilial("SA1")+_cCliente+_cLoja)
-		dbSelectArea("SZF")
-		dbSetOrder(1)
-		dbGoTop()
-		If dbSeek(xFilial("SZF")+SUBSTR(SA1->A1_CGC,1,8))  //&&REDE
-			//Limpo flag de pedidos relativos a Rede....aonde no caso não ha como filtrar data de entrega, cliente e pedidos utilizados...limpo todos.
+// 	//&&Verifico se eh rede ou varejo...
+// 	dbSelectArea("SA1")
+// 	dbSetOrder(1)
+// 	dbGoTop()
+// 	If dbSeek(xFilial("SA1")+_cCliente+_cLoja)
+// 		dbSelectArea("SZF")
+// 		dbSetOrder(1)
+// 		dbGoTop()
+// 		If dbSeek(xFilial("SZF")+SUBSTR(SA1->A1_CGC,1,8))  //&&REDE
+// 			//Limpo flag de pedidos relativos a Rede....aonde no caso não ha como filtrar data de entrega, cliente e pedidos utilizados...limpo todos.
 
-			If Select("LSC5") > 0
-				DbSelectArea("LSC5")
-				DbCloseArea("LSC5")
-			Endif
+// 			If Select("LSC5") > 0
+// 				DbSelectArea("LSC5")
+// 				LSC5->(DbCloseArea())
+// 			Endif
 
-			/*_cQuery := "SELECT C5.C5_FILIAL, C5.C5_NUM FROM "+RetSqlName("SC5")+" C5, "+RetSqlName("SZF")+" ZF, "+RetSqlName("SA1")+" A1 "
-			_cQuery += " WHERE  C5_NOTA = ''  AND C5_CLIENTE NOT IN ('031017','030545') "
-			_cQuery += " AND C5.C5_CLIENTE = A1.A1_COD AND C5.C5_LOJACLI = A1.A1_LOJA"
-			_cQuery += " AND ZF_CGCMAT = '"+SZF->ZF_CGCMAT+"' AND LEFT(A1_CGC,8) = ZF_CGCMAT "      
-			_cQuery += " AND C5.D_E_L_E_T_='' AND ZF.D_E_L_E_T_='' AND A1.D_E_L_E_T_='' " */
+// 			/*_cQuery := "SELECT C5.C5_FILIAL, C5.C5_NUM FROM "+RetSqlName("SC5")+" C5, "+RetSqlName("SZF")+" ZF, "+RetSqlName("SA1")+" A1 "
+// 			_cQuery += " WHERE  C5_NOTA = ''  AND C5_CLIENTE NOT IN ('031017','030545') "
+// 			_cQuery += " AND C5.C5_CLIENTE = A1.A1_COD AND C5.C5_LOJACLI = A1.A1_LOJA"
+// 			_cQuery += " AND ZF_CGCMAT = '"+SZF->ZF_CGCMAT+"' AND LEFT(A1_CGC,8) = ZF_CGCMAT "      
+// 			_cQuery += " AND C5.D_E_L_E_T_='' AND ZF.D_E_L_E_T_='' AND A1.D_E_L_E_T_='' " */
 
-			_cQuery := "SELECT C5.C5_FILIAL, C5.C5_NUM " 
-			_cQuery += "FROM "+RetSqlName("SC5")+" C5 "
-			_cQuery += "INNER JOIN "+RetSqlName("SA1")+" A1 ON A1.A1_COD=C5.C5_CLIENTE AND A1.A1_LOJA=C5.C5_LOJACLI AND A1.D_E_L_E_T_= ' ' "
-			_cQuery += "INNER JOIN "+RetSqlName("SZF")+" ZF ON LEFT(A1_CGC,8) = ZF_CGCMAT AND ZF.D_E_L_E_T_ = ' ' "
-			_cQuery += "WHERE C5_CLIENTE NOT IN ('031017','030545') AND C5_NOTA = ' ' AND C5.D_E_L_E_T_ = ' ' "  
-			_cQuery += "AND ZF_CGCMAT = '"+SZF->ZF_CGCMAT+"' "
+// 			_cQuery := "SELECT C5.C5_FILIAL, C5.C5_NUM " 
+// 			_cQuery += "FROM "+RetSqlName("SC5")+" C5 "
+// 			_cQuery += "INNER JOIN "+RetSqlName("SA1")+" A1 ON A1.A1_COD=C5.C5_CLIENTE AND A1.A1_LOJA=C5.C5_LOJACLI AND A1.D_E_L_E_T_= ' ' "
+// 			_cQuery += "INNER JOIN "+RetSqlName("SZF")+" ZF ON LEFT(A1_CGC,8) = ZF_CGCMAT AND ZF.D_E_L_E_T_ = ' ' "
+// 			_cQuery += "WHERE C5_CLIENTE NOT IN ('031017','030545') AND C5_NOTA = ' ' AND C5.D_E_L_E_T_ = ' ' "  
+// 			_cQuery += "AND ZF_CGCMAT = '"+SZF->ZF_CGCMAT+"' "
 
-			TCQUERY _cQuery new alias "LSC5"	
+// 			TCQUERY _cQuery new alias "LSC5"	
 
-			DbSelectArea ("LSC5")
-			LSC5->(dbgotop())
-			Do While LSC5->(!EOF())
-				DbSelectArea("SC5")
-				DbSetOrder(1)
-				If dbseek(LSC5->C5_FILIAL+LSC5->C5_NUM)
-					if Reclock("SC5",.F.)
-						SC5->C5_XPREAPR := " "
-						SC5->(Msunlock())
-					endif
-				Endif	         
-				LSC5->(DbSkip())
-			Enddo
+// 			DbSelectArea ("LSC5")
+// 			LSC5->(dbgotop())
+// 			Do While LSC5->(!EOF())
+// 				DbSelectArea("SC5")
+// 				DbSetOrder(1)
+// 				If dbseek(LSC5->C5_FILIAL+LSC5->C5_NUM)
+// 					if Reclock("SC5",.F.)
+// 						SC5->C5_XPREAPR := " "
+// 						SC5->(Msunlock())
+// 					endif
+// 				Endif	         
+// 				LSC5->(DbSkip())
+// 			Enddo
 
-			DbcloseArea("LSC5")
+// 			LSC5->(DbcloseArea())
 
-		Else  //&&eh varejo
-			if Reclock("SC5",.F.)
-				SC5->C5_XPREAPR := " "
-				SC5->(Msunlock())
-			endif   
-		Endif
-	Endif
+// 		Else  //&&eh varejo
+// 			if Reclock("SC5",.F.)
+// 				SC5->C5_XPREAPR := " "
+// 				SC5->(Msunlock())
+// 			endif   
+// 		Endif
+// 	Endif
 
-	dbSelectArea(_cASC5)
-	dbSetOrder(_cOSC5)
-	dbGoto(_cRSC5)
-Return()
+// 	dbSelectArea(_cASC5)
+// 	dbSetOrder(_cOSC5)
+// 	dbGoto(_cRSC5)
+// Return()
 
 Static function AltPedOr(_cPedAnt,_cNumPed)
 	DbSelectArea("SC5")

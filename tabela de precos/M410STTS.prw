@@ -53,6 +53,8 @@
 	@history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 	@history Ticket  13155  - Everson  - 04/05/2021 - Tratamento para liberação de pedido de venda por integração SAG (movimento de saída).
 	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histórico de liberação
+	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
+	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
 /*/
 User Function M410STTS()
 
@@ -1891,11 +1893,15 @@ User Function M410STTS()
 		
         If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 
-						aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
-						IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
-							//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-							fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-						ENDIF
+			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
+
+				aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
+				IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
+					//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+					fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+				ENDIF
+
+			EndIf
 
         Else
 
@@ -1913,7 +1919,6 @@ User Function M410STTS()
 	//Everson - 04/05/2021. Chamado 
 	If (INCLUI .Or. ALTERA) .And. !IsInCallStack('U_RESTEXECUTE')
 		libPedSAG()
-
 	EndIf
 	//
 
@@ -3300,13 +3305,13 @@ Static Function fPreLibF()
 	// DbSelectArea("SA3")
 	// SA3->(DbSetOrder(1))
 	// SA3->(DbSeek(FWxFilial("SA3")+SC5->C5_VEND1))
-	_eMailVend := SA3->A3_EMAIL
+	// _eMailVend := SA3->A3_EMAIL
 	
 	//
-	DbSelectArea("SZR")
-	SZR->(DbSetOrder(1))
-	SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
-	_eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
+	// DbSelectArea("SZR")
+	// SZR->(DbSetOrder(1))
+	// SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
+	// _eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
 
 	IF lBlqPed
 		IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da função uptSC5
@@ -3346,9 +3351,10 @@ Return
 	@type  Function
 	@author Abel Babini
 	@since 09/02/2021
-	/*/
-Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
-	Local aArea := GetArea()
+/*/
+Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPVIn)
+	
+	Local aArea   := GetArea()
 	Local cAls001 := GetNextAlias()
 	Local cAls002 := GetNextAlias()
 	Local cAls003 := GetNextAlias()
@@ -3386,10 +3392,14 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	Local cFilPVEx	 := '%'+''+'%'
 
 	Local lBlqAtr	:= .F.
-	Local aTpBlqAt := {}
+	Local aTpBlqAt 	:= {}
+	Local cQryNPV	:= ''
 
-	Default lExcPedV := .F.
-	Default cNumPVEx := ''
+	Local cParam	:= "" //Everson - 14/10/2021. Chamado 62453.
+
+	Default lExcPedV 	:= .F.
+	Default cNumPVEx 	:= ''
+	Default cNumPVIn 		:= ''
 
 	//Utiliza sempre a menor data entre a data de entrega e a data do servidor para avaliação de crédito.
 	If dDtEntr > MsDate()
@@ -3398,7 +3408,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	
 	//Ticket  8      - Abel B.  - 01/03/2021 - Alteração na regra de pré liberação de crédito para desconsiderar o pedido que será excluído durante a avaliação na exclusão do mesmo
 	If lExcPedV .AND. !Empty(Alltrim(cNumPVEx))
-		cFilPVEx :=  '%'+" SC5.C5_FILIAL+SC5.C5_NUM <> '"+cNumPVEx+"' AND "+'%'
+		cFilPVEx :=  '%'+" AND SC5.C5_FILIAL+SC5.C5_NUM <> '"+cNumPVEx+"' "+'%'
 	Endif
 
 	//CARREGA DEFINIÇÕES DE REGRAS DE TABELAS E VALORES DE PEDIDOS
@@ -3539,6 +3549,17 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 	ENDIF
 
 	//PEDIDOS QUE PRECISAM DE ANÁLISE DE CRÉDITO
+
+	if !Empty(Alltrim(cNumPVIn))
+		cParam := StrTran(cNumPVIn,"%","")
+		cQryNPV:= '%'+" AND SC5.C5_NUM = '" + cParam + "' "+'%' //Everson - 14/10/2021. Chamado 62453. 
+
+	else
+		cParam := StrTran(_cCdClIn,"%","")
+		cQryNPV:= '%'+" AND SC5.C5_CLIENTE+SC5.C5_LOJACLI IN " + cParam + " " +'%' //Everson - 14/10/2021. Chamado 62453.
+
+	endif
+
 	BeginSQL alias cAls002
 		column C5_EMISSAO as Date
 		SELECT
@@ -3551,7 +3572,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 			SC5.C5_CONDPAG, 
 			SC5.C5_VEND1,
 			SC5.C5_EMISSAO,
-			C5_XTOTPED,
+			SC5.C5_XTOTPED,
 			CASE WHEN (SF4.F4_DUPLIC = 'S' AND SC5.C5_TIPO IN ('N','C') AND SC5.C5_EST <> 'EX') THEN SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) ELSE 0 END AS C6_PRCTOT
 		FROM %TABLE:SC5% SC5 (NOLOCK)
 		INNER JOIN %TABLE:SC6% SC6 (NOLOCK) ON
@@ -3561,11 +3582,14 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 			AND SC6.C6_LOJA = SC5.C5_LOJACLI
 			AND SC6.%notDel%
 		INNER JOIN %TABLE:SF4% SF4 (NOLOCK) ON
-			SF4.F4_CODIGO = SC6.C6_TES
+			SF4.F4_FILIAL = %xFilial:SF4%
+			AND SF4.F4_CODIGO = SC6.C6_TES
 			AND SF4.%notDel%
 		WHERE 
-			SC5.C5_DTENTR >= %Exp:DTOS(dDtEntr)%
-			AND %Exp:cFilPVEx% SC5.C5_CLIENTE+SC5.C5_LOJACLI IN %Exp:_cCdClIn% 
+			SC5.C5_FILIAL = %xFilial:SC5%
+			%Exp:cQryNPV% 
+			AND SC5.C5_NOTA = '' %Exp:cFilPVEx% 
+			AND SC5.C5_DTENTR >= %Exp:DTOS(dDtEntr)%
 			AND SC5.%notDel%
 		GROUP BY 
 			SC5.C5_FILIAL, 
@@ -3583,8 +3607,8 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 		ORDER BY SC5.C5_FILIAL ASC, SC5.C5_DTENTR ASC, SC5.C5_NUM ASC
 	EndSQL
 	(cAls002)->(dbgotop())
-
 	WHILE ! (cAls002)->(eof())
+	
 		_nValLim -= (cAls002)->C6_PRCTOT
 		_nVlPed  += (cAls002)->C6_PRCTOT
 
@@ -3598,7 +3622,9 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx)
 		ENDIF
 
 		(cAls002)->(dbSkip())
+	
 	ENDDO
+	
 	(cAls002)->(DbCloseArea())
 
 	SA1->(DBGOTO(_nRecSA1))
@@ -3617,6 +3643,7 @@ Return
 	@since 09/02/2021
 	/*/
 Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumPedV, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, nValPed, cSC5CPag, dSC5Emis, _lDiasAtras, _nValLim, cSC5Vend, lBlqAtr, aTpBlqAt)
+
 	Local lBlqPed := .F.
 	Local aTpBloq := {}
 	Local lAvDtLm  		:= GetMv("MV_#AVDTLM",,.F.) //Habilita a avaliação de data de limite de crédito do cliente
@@ -3709,16 +3736,16 @@ Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumP
 		EndIf
 	EndIf
 
-	DbSelectArea("SA3")
-	SA3->(DbSetOrder(1))
-	SA3->(DbSeek(FWxFilial("SA3")+cSC5Vend))
-	_eMailVend := SA3->A3_EMAIL
+	// DbSelectArea("SA3")
+	// SA3->(DbSetOrder(1))
+	// SA3->(DbSeek(FWxFilial("SA3")+cSC5Vend))
+	// _eMailVend := SA3->A3_EMAIL
 	
 	//
-	DbSelectArea("SZR")
-	SZR->(DbSetOrder(1))
-	SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
-	_eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
+	// DbSelectArea("SZR")
+	// SZR->(DbSetOrder(1))
+	// SZR->(DbSeek(FWxFilial("SZR")+SA3->A3_CODSUP))
+	// _eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
 
 	dbSelectArea("SC5")
 	SC5->(dbSetOrder(1))
@@ -3920,6 +3947,7 @@ Return Nil
 	@since 15/06/2021
 	/*/
 Static Function fVrLbAnt(cSC5Fil, cSC5Num)
+
 	Local aRet := {.F.,0}
 	Local cQryZEJ := GetNextAlias()
 
@@ -3939,4 +3967,5 @@ Static Function fVrLbAnt(cSC5Fil, cSC5Num)
 		aRet[2] := (cQryZEJ)->VALOR
 	ENDIF
 	(cQryZEJ)->(dbCloseArea())
+
 Return aRet

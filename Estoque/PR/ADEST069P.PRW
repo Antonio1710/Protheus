@@ -16,7 +16,7 @@
 User Function ADEST069P(cZEDCod)
 
 	//Define quais colunas (campos da TTRB) serao exibidas na MsSelect
-	Local cCampos			:= "ZEL_COD, ZEL_DESCRI,ZEL_PRODUT,ZEL_OBSERV"
+	Local cCampos			:= "ZEL_COD, ZEL_DESCRI,ZEL_OBSERV"
 	
 	Private oGetPesq
 	Private oGroup1
@@ -73,8 +73,8 @@ Static Function fOk(cZEDCod)
 	Local nPosCod		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "ZEL_COD" })
 	local nA			:= 0
 	
-	DbSelectArea("ZFZ")
-	ZFZ->(DbsetOrder(1))
+	DbSelectArea("ZEA")
+	ZEA->(DbsetOrder(1))
 
 	DbSelectArea("ZEL")
 	ZEL->(DbsetOrder(1))
@@ -83,15 +83,14 @@ Static Function fOk(cZEDCod)
 		If oGet:aCols[nA][nPosOk] == oOk
 			
 			if (ZEL->(Dbseek(xFilial("ZEL")+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
-				if !(ZFZ->(Dbseek(xFilial("ZFZ")+cZEDCod+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
-					if Reclock("ZFZ",.T.)
-						ZFZ->ZFZ_FILIAL 	:= xFilial("ZFZ")
-						ZFZ->ZFZ_CODZCO		:= cZEDCod
-						ZFZ->ZFZ_COD		:= ZEL->ZEL_COD
-						ZFZ->ZFZ_DESCRI		:= ZEL->ZEL_DESCRI
-						ZFZ->ZFZ_PRODUT		:= ZEL->ZEL_PRODUT
-						ZFZ->ZFZ_OBSERV		:= ZEL->ZEL_OBSERV
-						ZFZ->(MsUnlock())
+				if !(ZEA->(Dbseek(xFilial("ZEA")+cZEDCod+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
+					if Reclock("ZEA",.T.)
+						ZEA->ZEA_FILIAL := xFilial("ZEA")
+						ZEA->ZEA_CODZCO	:= cZEDCod
+						ZEA->ZEA_COD	:= ZEL->ZEL_COD
+						ZEA->ZEA_DESCRI	:= ZEL->ZEL_DESCRI
+						ZEA->ZEA_OBSERV	:= ZEL->ZEL_OBSERV
+						ZEA->(MsUnlock())
 					endif
 				endif
 			Endif
@@ -292,10 +291,10 @@ STATIC FUNCTION MontDados(cZEDCod)
 		QRY->(DBCLOSEAREA())
 	EndIF
 
-	cQry := " SELECT ZEL.ZEL_COD, ZEL.ZEL_DESCRI, ZEL.ZEL_PRODUT, ZEL.ZEL_OBSERV " + cEOL
-	cQry += " FROM "+ RetSqlName("ZEL") +" (NOLOCK) ZEL LEFT JOIN "+ RetSqlName("ZFZ") +" (NOLOCK) ZFZ ON ZEL.D_E_L_E_T_='' AND ZFZ.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL='"+ xFilial("ZEL") +"' AND ZFZ.ZFZ_FILIAL='"+ xFilial("ZFZ") +"' AND ZEL.ZEL_COD=ZFZ.ZFZ_COD AND ZFZ.ZFZ_CODZCO='"+ cZEDCod +"' " + cEOL
+	cQry := " SELECT ZEL.ZEL_COD, ZEL.ZEL_DESCRI, ZEL.ZEL_OBSERV " + cEOL
+	cQry += " FROM "+ RetSqlName("ZEL") +" (NOLOCK) ZEL LEFT JOIN "+ RetSqlName("ZEA") +" (NOLOCK) ZEA ON ZEL.D_E_L_E_T_='' AND ZEA.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL='"+ xFilial("ZEL") +"' AND ZEA.ZEA_FILIAL='"+ xFilial("ZEA") +"' AND ZEL.ZEL_COD=ZEA.ZEA_COD AND ZEA.ZEA_CODZCO='"+ cZEDCod +"' " + cEOL
 	cQry += " WHERE ZEL.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL = '"+ xFilial("ZEL") +"' AND ZEL.ZEL_COD !='' " + cEOL
-	cQry += " 		AND ISNULL(ZFZ.ZFZ_CODZCO,'') ='' " + cEOL
+	cQry += " 		AND ISNULL(ZEA.ZEA_CODZCO,'') ='' " + cEOL
 	cQry += " ORDER BY ZEL.ZEL_COD; " + cEOL
 
 	TcQuery cQry alias "QRY" new
@@ -351,14 +350,14 @@ RETURN aColsA
 // --------------------------------------------------------------------------------------------------------
 Static Function ModelDef()
  Local oModel		:= MPFormModel():New("mdlADEST069P",, {|| .T.})
- Local oStrutZFZ	:= FWFormStruct(1,"ZFZ")
+ Local oStrutZEA	:= FWFormStruct(1,"ZEA")
  
  oModel:SetDescription("..:: Modelos CSI ::..")
  
  // Cabeçalho ZT3 (Pedidos)
- oModel:addFields("CABEC_ZFZ",nil,oStrutZFZ)
+ oModel:addFields("CABEC_ZEA",nil,oStrutZEA)
 
- oModel:setPrimaryKey({"ZFZ_FILIAL","ZFZ_CODZCO","ZFZ_COD"})
+ oModel:setPrimaryKey({"ZEA_FILIAL","ZEA_CODZCO","ZEA_COD"})
 
 return oModel
 
@@ -366,22 +365,22 @@ return oModel
 Static Function viewDef()
  Local oView		:= Nil
  Local oModel		:= FWLoadModel("ADEST069P")
- Local oStrutZFZ	:= FWFormStruct(2,"ZFZ")
+ Local oStrutZEA	:= FWFormStruct(2,"ZEA")
   
- DbSelectArea("ZFZ")
+ DbSelectArea("ZEA")
  
- ZFZ->(DbSetOrder(1))
+ ZEA->(DbSetOrder(1))
   
  oView	:= FWFormView():New()
  oView:setModel(oModel)
  
  oView:GetProgressBar(.T.)
  
- oView:addField("V_CABEC_ZFZ",oStrutZFZ,"CABEC_ZFZ")
+ oView:addField("V_CABEC_ZEA",oStrutZEA,"CABEC_ZEA")
    
  oView:createHorizontalBox("H_CABEC",100)
  oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
  
- oView:setOwnerView("V_CABEC_ZFZ","V_CABEC")
+ oView:setOwnerView("V_CABEC_ZEA","V_CABEC")
   
 Return oView

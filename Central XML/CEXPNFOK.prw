@@ -11,13 +11,12 @@
 	@author Fernando
 	@since 09/08/2018
 	@version 01
-	@history Chamado - 048464 09/04/2019 - Fernando Sigoli   - validação da placa XML x Ocorrencia Devolução
-	@history Chamado - 048464 15/04/2019 - Fernando Sigoli   - Nao enviar worflow,quando F1_PLACA estiver vazio 
-	@history Chamado - T.I    24/05/2019 - Adriana.          - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
-	@history Chamado - 050334 12/07/2019 - Abel Babini.      - Padronizar Série da NF de Entrada 
+	@history Chamado - 048464 09/04/2019 - Fernando Sigoli. validação da placa XML x Ocorrencia Devolução
+	@history Chamado - 048464 15/04/2019 - Fernando Sigoli. Nao enviar worflow,quando F1_PLACA estiver vazio 
+	@history Chamado - T.I    24/05/2019 - Adriana.         Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
+	@history Chamado - 050334 12/07/2019 - Abel Babini.     Padronizar Série da NF de Entrada 
 	@history TicKet  - 28 	  04/08/2020 - Richard Fabrietch - Correção do posicionamento de alteração de Serie NFE
-	@history Ticket 10781     17/03/2021 - Abel Babini       - Padronização de Séries nas empresas. Adição dos CNPJ´s da Safegg e Simplify
-	@history Ticket 16758     14/07/2021 - Abel Babini       - Padronização de Séries nas empresas Adoro para notas do tipo complemento.
+	@history Ticket 10781     17/03/2021 - Abel Babini      Padronização de Séries nas empresasa. Adição dos CNPJ´s da Safegg e Simplify
 /*/
 
 
@@ -69,10 +68,9 @@ If SF1->F1_TIPO == "D" .AND. Alltrim(cFilAnt) $ '02' //devolução com integração 
 	//Fim.Chamado: 048464 09/04/2019 - Fernando Sigoli 
 	
 Endif
-
-//Ticket 16758     14/07/2021 - Abel Babini       - Padronização de Séries nas empresas Adoro para notas do tipo complemento.
+	
 //tranferencia 
-If SF1->F1_TIPO == "N" .OR. SF1->F1_TIPO == "C"  .OR. SF1->F1_TIPO == "I"  .OR. SF1->F1_TIPO == "P"   //Entrada normal Cadastro de Fornecedor
+If SF1->F1_TIPO == "N"   //Entrada normal Cadastro de Fornecedor
 		
 	lAlterSD1 := 'N'
 		

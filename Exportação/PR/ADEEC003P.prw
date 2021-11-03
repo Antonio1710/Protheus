@@ -25,7 +25,9 @@ User Function ADEEC003P()  //U_ADEEC003P()
     Local cFunBkp := FunName()
      
     SetFunName("ADEEC003P")
-
+    
+    PtSetAcento(.T.)
+    
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de Grupo de inspeção Relacionado na tabela de clientes SA1 e SC5')
      
     //Instânciando FWMBrowse - Somente com dicionário de dados
@@ -47,6 +49,8 @@ User Function ADEEC003P()  //U_ADEEC003P()
      
     SetFunName(cFunBkp)
     RestArea(aArea)
+
+    PtSetAcento(.F.)
 Return Nil
  
 
@@ -72,7 +76,7 @@ Static Function ModelDef()
      
     //Criação da estrutura de dados utilizada na interface
     Local oStZCO := FWFormStruct(1, "ZCO")
-     
+    
     //Editando características do dicionário
     oStZCO:SetProperty('ZCO_CODIGO',  MODEL_FIELD_WHEN,    FwBuildFeature(STRUCT_FEATURE_WHEN,    '.F.'))                                 //Modo de Edição
     oStZCO:SetProperty('ZCO_CODIGO',  MODEL_FIELD_INIT,    FwBuildFeature(STRUCT_FEATURE_INIPAD,  'GetSXENum("ZCO", "ZCO_CODIGO")'))      //Ini Padrão

@@ -18,7 +18,6 @@
     @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Compatibilizado o relatório para ser envia por email através de Schedule
     @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Incluído a coluna ST1.T1_NOME no relatório
     @Ticket 13242, Data 02/06/2021, DENIS GUEDES, Incluído funcionalidade para copiar a planilha gerada para a pasta "Relatorio"
-    @Ticket 13242, Data 19/07/2021, Leonardo P. Monteiro, Melhoria no envio de e-mail zipando os arquivos em anexo 
 /*/
 
 User Function ADMNT012R(aParam)
@@ -231,7 +230,7 @@ If (cAlias)->(!EOF())
 	Else
         oExcel:GetXMLFile(cDIRARQ+cNomArq)
 
-        fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq},cDIRARQ)
+        fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq})
      	//@Ticket 13242 ini
         cDIRREDE :="\RELATORIO\"
         nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 		

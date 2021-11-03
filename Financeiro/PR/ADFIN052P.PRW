@@ -4,25 +4,23 @@
 #INCLUDE "rwmake.ch"    
 #INCLUDE "TBICONN.CH"
 
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-//±±ºPrograma  ³ADFIN052P ºAutor  ³WILLIAM COSTA       º Data ³  02/02/2018 º±±
-//±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-//±±ºDesc.     ³Funcao para gerar a data de acumulo e o valor do maior acumuº±±
-//±±º          ³lo do envio para a Tabela SZF para o fincanceiro liberar    º±±
-//±±º          ³corretamente pedidos de venda. Fonte chamado de ADLCRED2.PRWº±±
-//±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-//±±ºUso       ³ SIGAFIN                                                    º±±
-//±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-              
+/*/{Protheus.doc} nomeFunction
+	Funcao para gerar a data de acumulo e o valor do maior acumulo do envio para a Tabela SZF para o fincanceiro 
+	liberar	corretamente pedidos de venda. Fonte chamado de ADLCRED2.PRW
+	SIGAFIN
+	@type  Function
+	@author WILLIAM COSTA 
+	@since 02/02/2018
+	@version 01
+	@history Everson, 23/09/2021, Chamado 18572. Alterado dbsetnickname para dbsetorder.
+	@history F.Macie, 05/10/2021, ticket 52317 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+/*/            
 USER FUNCTION ADFIN052P(cRedePrincipal)
-    
+
+	Local aArea			:= GetArea()
+
     Private cCliente    := ''
     Private cLoja       := ''
-	Private cData       := ''
 	Private aAcumulo    := {}
 	Private aReceber    := {}
 	Private aRecAux     := {}
@@ -33,8 +31,6 @@ USER FUNCTION ADFIN052P(cRedePrincipal)
 	Private cNum        := ''
 	Private cParcela    := ''
 	Private cTipo       := ''
-	Private cCliente    := ''
-	Private cLoja       := ''
 	Private nCont       := 0
 	Private nSaldo      := 0                   
 	Private nSaldoAux   := 0                   
@@ -57,13 +53,12 @@ USER FUNCTION ADFIN052P(cRedePrincipal)
 	Private nId         := 0 
 	Private cMensagem   := ''
 	
+	// @history F.Macie, 05/10/2021, ticket 52317 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+	Alert("Função desativada! Foi substituída pela ADFIN114P...")
+	Return
+	//
+
 	ConOut("INICIO DO SCHEDULE ADFIN052P" + '||' + DTOC(DATE()) + '||' + TIME()) 
-	
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funcao para gerar a data de acumulo e o valor do maior acumulo do envio para a Tabela SZF para o fincanceiro liberar corretamente pedidos de venda. Fonte chamado de ADLCRED2.PRW')
-	
-	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
-	logZBN("1") //Log início.
-	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 	
 	cMetodo   := 'INICIANDO MAIOR ACUMULO SZF...'
 	nId       := 1
@@ -90,15 +85,16 @@ USER FUNCTION ADFIN052P(cRedePrincipal)
 	nId       := 0
 	cmensagem := ''
 		
-	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
-	logZBN("2") //Log fim.
-	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
-	
 	ConOut("FINAL DO SCHEDULE ADFIN052P" + '||' + DTOC(DATE()) + '||' + TIME())
+
+	//
+	RestArea(aArea)
 	
 RETURN(NIL) 	  
 	
 STATIC FUNCTION GeraAcumPrimeiraVez(cRedePrincipal)	
+
+	Local aArea := GetArea()
 		
 	//informacoes will
 	// posicoes a aAcumulo
@@ -114,7 +110,9 @@ STATIC FUNCTION GeraAcumPrimeiraVez(cRedePrincipal)
 	
 	cCodRedOld := TRB->A1_CODRED
 	
-	While TRB->(!EOF())     
+	While TRB->(!EOF())
+
+		Conout("ADFIN052P GeraAcumPrimeiraVez cliente cRede " + cValToChar(TRB->A1_COD) + " " + cValToChar(TRB->A1_CODRED))
 	
 		CalculaMaiorAcumulo(TRB->A1_COD,TRB->A1_LOJA,TRB->A1_CODRED)
 
@@ -124,6 +122,9 @@ STATIC FUNCTION GeraAcumPrimeiraVez(cRedePrincipal)
 	TRB->(dbCloseArea()) 
 	// **************************** final carrega vetor aAcumulo **************************** //
 	
+	//
+	RestArea(aArea)
+
 RETURN(NIL) 
 
 Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)  
@@ -131,7 +132,8 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)
 	cCliente    := cCli
     cLoja       := cLoj
     cCodRed     := cRede
-    cData       := '00010101' 
+    //cData       := '00010101' 
+	cData       := DtoS(msDate()-360) // @history F.Macie, 21/10/2021, ticket 52317 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
   	aReceber    := {}
   	aTitBaixado := {}
   	
@@ -177,8 +179,6 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)
 	    cLoja       := ''
 	    
 	    While TRD->(!EOF()) 
-	        
-			
 			AADD(aTitBaixado, TRD->E5_DATA)
 			AADD(aTitBaixado, TRD->E5_VLMOED2) 
 			AADD(aTitBaixado, 'SE5') 
@@ -186,7 +186,6 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)
 			AADD(aTitBaixado, TRD->E5_TIPODOC) 
             AADD(aAcumulo, aTitBaixado)
 		    aTitBaixado := {}
-		    
 		    TRD->(dbSkip())
 		ENDDO
 		TRD->(dbCloseArea())
@@ -210,7 +209,6 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)
 	    cLoja       := ''
 	    
 	    While TRF->(!EOF()) 
-	        
 			AADD(aTitBaixado, TRF->E5_DATA)
 			AADD(aTitBaixado, TRF->E5_VLMOED2) 
 			AADD(aTitBaixado, 'SE5') 
@@ -218,7 +216,6 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)
 			AADD(aTitBaixado, TRF->E5_TIPODOC) 
             AADD(aAcumulo, aTitBaixado)
 		    aTitBaixado := {}
-		    
 		    TRF->(dbSkip())
 		ENDDO
 		TRF->(dbCloseArea())
@@ -232,12 +229,16 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cRede)
 RETURN(NIL)
 
 Static Function GravarAcumulo()
+
+	Local aArea := GetArea()
+	Local nCont := 1
+
+	Conout("ADFIN052P GravarAcumulo cliente")
     
 	IF LEN(aAcumulo) > 0
+
 		// **************************** inicio organiza vetor aAcumulo por data ************** //
-		
 		aSort(aAcumulo,,,{ |X, Y| X[1] + cvaltochar(X[2]) + X[5] < Y[1] + cvaltochar(Y[2]) + Y[5]})
-		
 		// **************************** final organiza vetor aAcumulo por data *************** // 
 			
 		// **************************** inicio calcula os saldo acumulado ******************** //
@@ -336,11 +337,11 @@ Static Function GravarAcumulo()
 		// **************************** final verifica datas de maior acumulo ***************** //
 		
 		// **************************** inicio gravar informacao do maior acumulo ************ //
+		DBSELECTAREA("SZF")
+		SZF->(DBSETORDER(3)) //Everson, 23/09/2021, Chamado 18572.
 		SqlRedeSZF()
 	    While TRG->(!EOF())
 	    
-	    	DBSELECTAREA("SZF")
-	    	SZF->(DBORDERNICKNAME("SZF_3"))   
 			
 			IF SZF->(DbSeek(xFilial("SZF")+TRG->ZF_REDE, .T.))
 			
@@ -401,7 +402,7 @@ Static Function GravarAcumulo()
 				            	
 				            ENDIF	
 				            			
-						TRJ->(DBSKIP())
+							TRJ->(DBSKIP())
 						ENDDO
 						TRJ->(dbCloseArea())
 						
@@ -421,12 +422,12 @@ Static Function GravarAcumulo()
 				           !EMPTY(cDtAcum)        .AND. ;
 				           nVlAcum > 0
 				         
-				        RecLock("SZF",.F.)              
+				        RecLock("SZF",.F.)
 						
 						    SZF->ZF_DTACUMU	:= STOD(cDtAcum)
 							SZF->ZF_VLACUMU	:= nVlAcum
 			
-						MsUnlock()  
+						MsUnlock()
 				               
 				    ELSE   		
 				   
@@ -438,8 +439,21 @@ Static Function GravarAcumulo()
 						MsUnlock()
 						
 				    ENDIF
-			    	SZF->(dbSkip())
+
+					// @history F.Macie, 05/10/2021, ticket 52317 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+					/*
+					IF ROUND(nTotSld,0) >= ROUND(SZF->ZF_VLACUMU,0)
+						RecLock("SZF",.F.)              
+							SZF->ZF_VLACUMU	:= nTotSld
+						SZF->( MsUnlock() )
+					ENDIF
+					*/
+					//
+
+					SZF->(dbSkip())
+				
 				ENDDO
+				
 				SZF->(dbCloseArea())
 				 
 	        ENDIF
@@ -448,6 +462,9 @@ Static Function GravarAcumulo()
 		ENDDO
 		TRG->(dbCloseArea())
     ENDIF
+
+	//
+	RestArea(aArea)
     
 RETURN(NIL) 
 
@@ -568,7 +585,7 @@ Static Function SqlPagar()
 			   AND SE5.E5_TIPO     = %EXP:cTipo%
 			   AND SE5.E5_CLIFOR   = %EXP:cCliente%
 			   AND SE5.E5_LOJA     = %EXP:cLoja%
-			   AND SE5.E5_TIPODOC <> 'JR'  
+			   //AND SE5.E5_TIPODOC <> 'JR'  
 			   AND SE5.D_E_L_E_T_ <> '*'
 			   AND SE5.E5_RECPAG   = 'R'
 			   AND SE5.E5_FILIAL   = SE1.E1_FILIAL

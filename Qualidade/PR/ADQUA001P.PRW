@@ -14,6 +14,9 @@ Static cFormatRet := "application/json"
     @history Everson, 20/07/2021, Chamado 4257 Tratamento para formatação da data do roteiro.
     @history Everson, 26/07/2021, Chamado 4257 Tratamento para inserir informações por lote, data de vencimento, data de produção e produto.
     @history Everson, 29/07/2021, Chamado 4257 Tratamento para quebra de informações.
+    @history Leonardo, 01/08/2021, Chamado 8465 Gravação na tabela ZGA os dados detalhados dos pallets pelo identificador das caixas.
+    @history Everson, 05/08/2021, Chamado 4257 Tratamento para alteração de tags do webservice do Edata.
+
 /*/
 User Function ADQUA001P
 return Nil
@@ -38,7 +41,7 @@ WsMethod Get WsService inspecaoqualidade
     Local cJsonResp   := ""
     Local cErro       := ""
     Local cId         := ""
-
+    Local aResult     := {}
     //
     Self:SetContentType(cFormatRet)
 
@@ -70,9 +73,13 @@ WsMethod Get WsService inspecaoqualidade
         cJsonResp := getCarga(@cErro, cId)
 
     ElseIf cRecurso == "paletes"
+<<<<<<< HEAD
         cPallete := rmvAcento(Substr(cValToChar(cId),1,18))
         Conout('cPallete ' + cId)
         cJsonResp := getPalete(@cErro, cId)
+=======
+        cJsonResp := getPalete(@cErro, @aResult, cId)
+>>>>>>> origin/master
 
     Else 
         SetRestFault(404,EncodeUTF8("Recurso não encontrado."),.T.,404)
@@ -92,7 +99,93 @@ WsMethod Get WsService inspecaoqualidade
     logZBE("Resposta", "",cJsonResp)
     Self:SetResponse(cJsonResp)
 
+    //@history Leonardo, 01/08/2021, Chamado 8465 Gravação na tabela ZGA os dados detalhados dos pallets pelo identificador das caixas.
+    If cRecurso == "paletes" .and. Len(aResult) > 0
+        fGrvResult(cId, aResult)
+    endif
+
+
 Return .T.
+
+
+/*
+fGrvResult - Grava os resultados na tabela ZGA para posteriormente ser transferido para a tabela ZGB e incluso no relatório de respaldo ADEEC012R.
+@history Leonardo, 01/08/2021, Chamado 8465 Gravação na tabela ZGA os dados detalhados dos pallets pelo identificador das caixas.
+*/
+Static Function fGrvResult(cPallete, aResult)
+    Local cQuery    := ""
+    Local nA        := 0
+    Local nResult   := 0
+    Local cEOL      := Chr(13)+chr(10)
+
+    DbSelectArea("ZGA")
+    ZGA->(DbSetOrder(1))
+    //DbSelectArea("ZGB")
+    //ZGB->(DbSetOrder(1))
+
+    cQuery := " SELECT R_E_C_N_O_ REGISTRO "+cEOL
+    cQuery += " FROM "+ RetSqlName("ZGA") +" ZGA "
+    cQuery += " WHERE D_E_L_E_T_='' AND ZGA_FILIAL='"+ xFilial("ZGA") +"' AND ZGA_PALLET = '"+ cPallete +"' "
+
+    TcQuery cQuery ALIAS "QZGA" NEW
+
+    while QZGA->(!eof())
+        
+        ZGA->(Dbgoto(QZGA->REGISTRO))
+
+        IF ZGA->(RECNO()) == QZGA->REGISTRO
+            if Reclock("ZGA",.F.)
+                ZGA->(DbDelete())
+                ZGA->(MsUnlock())
+            endif
+        endif
+
+        QZGA->(DbSkip())
+    end
+
+    QZGA->(Dbclosearea())
+
+    nResult := Len(aResult)
+
+    For nA := 1 TO nResult
+        if Reclock("ZGA", .T.)
+                //Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)) + StrTran(Substr(Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),1,10),"-","") + cTurno,; //Chave. 1. Everson - 26/07/2021. Chamado 4257.
+            ZGA->ZGA_FILIAL := xFilial("ZGA")
+            ZGA->ZGA_PRODUT := aResult[nA][02]  //Código do produto no Protheus. 2
+            ZGA->ZGA_EDTPRD := aResult[nA][03]  //Código do produto no Edata. 3
+            if !Empty(aResult[nA][04])
+                ZGA->ZGA_DTFABR := stod(replace(left(aResult[nA][04],10),"-","") ) //Data padrão. 4
+            endif
+            if !Empty(aResult[nA][05])
+                ZGA->ZGA_DTVALD := stod(replace(left(aResult[nA][05],10),"-","") ) //Data de validade. 5
+            endif
+            ZGA->ZGA_TURNO  := aResult[nA][06] //Turno. 6
+            ZGA->ZGA_QUANTI := Val(aResult[nA][07]) //Peso padrão. 7
+            ZGA->ZGA_QTDREA := Val(aResult[nA][08]) //Peso real. 8
+            ZGA->ZGA_TARAEM := Val(aResult[nA][09]) //Tara da embalagem. 9
+            ZGA->ZGA_LOTE   := aResult[nA][10] // Descrição do lote. 10
+            ZGA->ZGA_IDENTI := aResult[nA][11] // Identificação Caixa. 11
+            ZGA->ZGA_TOTSEG := Val(aResult[nA][12]) // Total de Caixas. 12
+            if !Empty(aResult[nA][10])
+                ZGA->ZGA_DTPALL := stod(replace(left(aResult[nA][13],10),"-","") ) // Data do Pallet. 13
+            endif
+            ZGA->ZGA_TOTQTD := Val(aResult[nA][14]) // Quantidade total padrão. 14
+            ZGA->ZGA_TOTREA := Val(aResult[nA][15]) // Quantidade total real. 15
+            ZGA->ZGA_TOTTAR := val(aResult[nA][16]) // Total tara. 16
+            ZGA->ZGA_STATUS := aResult[nA][17] // Status Pallet. 17
+            ZGA->ZGA_PALLET := Alltrim(cPallete)
+            ZGA->ZGA_QTDSUM := 1
+            ZGA->ZGA_LOGDAT := DATE()
+            ZGA->ZGA_LOGHOR := time()
+
+            ZGA->(MsUnlock())
+        endif
+    Next nA
+   
+    
+return
+
+
 /*/{Protheus.doc} getCarga
     Retorna json com informações da carga.
     @type  Static Function
@@ -199,7 +292,7 @@ Return EncodeUTF8(cJsonResp)
     @since 31/05/2021
     @version 01
     /*/
-Static Function getPalete(cErro, cPallete)
+Static Function getPalete(cErro, aDados, cPallete)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -216,7 +309,6 @@ Static Function getPalete(cErro, cPallete)
     Local nAux      := 1
     Local cDescProd := ""
     Local cChave    := ""
-    Local aDados    := {}
     Local cTotalCxP := ""
     Local cDataP    := ""
     Local cKgP      := ""
@@ -230,6 +322,12 @@ Static Function getPalete(cErro, cPallete)
     Local xChecTag  := "" //Everson - 05/08/2021. Chamado 4257.
     Local nOpcTag   := 1  //Everson - 05/08/2021. Chamado 4257.
 
+    //Everson - 05/08/2021. Chamado 4257.   
+    Local xChecTag  := nil
+    Local nOpcTag   := 1
+    //
+
+    Default aDados    := {}
     //
     If ! Empty(cErro)
         Return .F.
@@ -323,7 +421,15 @@ Static Function getPalete(cErro, cPallete)
                         cTurno,; //Turno. 6
                         Alltrim(cValToChar(oItem:_StandardWeight:TEXT)),; //Peso padrão. 7
                         Alltrim(cValToChar(oItem:_NetWeight:TEXT)),; //Peso real. 8
-                        Alltrim(cValToChar(oItem:_Tare:TEXT)); //Tara da embalagem. 9
+                        Alltrim(cValToChar(oItem:_Tare:TEXT)),; //Tara da embalagem. 9
+                        Alltrim(oItem:_LOTNO:TEXT),; // Descrição do lote. 10
+                        Alltrim(oItem:_CartonIdentification:TEXT),; // Identificação Caixa. 11
+                        cTotalCxP,; // Total de Caixas. 12
+                        cDataP,; // Data do Pallet. 13
+                        cKgP,; // Quantidade total padrão. 14
+                        cKgRP,; // Quantidade total real. 15
+                        cTaraP,; // Total tara. 16
+                        cStatusP; // Status Pallet. 17
                     })
                 Next nAux
 

@@ -17,6 +17,7 @@
 	@history Chamado: 055513 - William Costa   - 12/02/2020 - Adicionado um novo relatório somente Somando o Pedido.
 	@history Chamado: 909    - William Costa   - 11/09/2020 - Adicionado dois campos no relatório de item, data da aprovação e hora da aprovação.
 	@history Ticket : 11495  - ADRIANO SAVOINE - 30/03/2021 - Adicionado no Relatorio a pergunta Projeto de até parametro MV_PAR21 e MV_PAR22.
+	@history Ticket : 62091  - Everson         - 08/10/2021 - Adiconado campo C7_OP ao relatório.
 	/*/
 
 User Function ADCOM022R()
@@ -135,6 +136,7 @@ Static Function Cabec()
 		oExcel:AddColumn(cPlanilha,cTitulo,"Status Pedido  "	,1,1) // 37 AK // chamado 049563 || OS 050846 || ALMOXARIFADO || FABIO || 8410 || REL. ESTOQUE
 		oExcel:AddColumn(cPlanilha,cTitulo,"Data Aprovação  "	,1,1) // 38 AL 
 		oExcel:AddColumn(cPlanilha,cTitulo,"Hora Aprovação  "	,1,1) // 39 AM 
+		oExcel:AddColumn(cPlanilha,cTitulo,"OP  "	            ,1,1) // 40 AN //Everson - 08/10/2021. Chamado 62091. 
 
 	ENDIF
 
@@ -233,7 +235,8 @@ Static Function GeraExcel()
 						"", ; // 36 AJ 
 						"", ; // 37 AK 
 						"", ; // 38 AL 
-						""  ; // 39 AM 
+						"", ; // 39 AM 
+						""  ; // 40 AN //Everson - 08/10/2021. Chamado 62091.  
 							})
 			//===================== FINAL CRIA VETOR COM POSICAO VAZIA
 			
@@ -323,6 +326,7 @@ Static Function GeraExcel()
 			aLinhas[nLinha][37] := cStatusPed                                                                                                                     // 37 AK
 			aLinhas[nLinha][38] := BUSCADTAPROV(TRB->C7_FILIAL,TRB->C7_NUM)                                                                                       // 38 AL
 			aLinhas[nLinha][39] := BUSCAHRAPROV(TRB->C7_FILIAL,TRB->C7_NUM)                                                                                       // 39 AM
+			aLinhas[nLinha][40] := TRB->C7_OP//Everson - 08/10/2021. Chamado 62091.                                                                                        // 39 AM
 			
 			TRB->(DBSKIP())    
 			
@@ -373,7 +377,8 @@ Static Function GeraExcel()
 											aLinhas[nExcel][36],;  // 36 AJ
 											aLinhas[nExcel][37],;  // 37 AK
 											aLinhas[nExcel][38],;  // 38 AL
-											aLinhas[nExcel][39] ;  // 39 AM
+											aLinhas[nExcel][39],;  // 39 AM
+											aLinhas[nExcel][40] ;  // 40 AN //Everson - 08/10/2021. Chamado 62091.
 																}) 	
 																			
 		Next nExcel 
@@ -628,7 +633,7 @@ RETURN(NIL)
                      
 Static Function SqlPed()   
 
-	Local cFil   := xFilial("SC7")
+	//Local cFil   := xFilial("SC7")
 	Local cDtIni := DTOS(MV_PAR05) 
 	Local cDtFin := DTOS(MV_PAR06)
 	Local cWhere := ''
@@ -688,7 +693,8 @@ Static Function SqlPed()
 					   BM_DESC,
 					   C7_ITEM,
 					   C7_RESIDUO,
-					   C7_ACCPROC					   
+					   C7_ACCPROC,
+					   C7_OP //Everson - 08/10/2021. Chamado 62091. 				   
 				  FROM %Table:SC7% WITH(NOLOCK)
 
 				  LEFT JOIN %Table:SB1% WITH(NOLOCK)
@@ -740,7 +746,7 @@ Return (NIL)
 
 Static Function SqlPed2()   
 
-	Local cFil   := xFilial("SC7")
+	//Local cFil   := xFilial("SC7")
 	Local cDtIni := DTOS(MV_PAR05) 
 	Local cDtFin := DTOS(MV_PAR06)
 	Local cWhere := ''

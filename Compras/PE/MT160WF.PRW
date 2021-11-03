@@ -10,6 +10,7 @@
 	@version 01
 	@history Chamado 055177 - William Costa   - 22/01/2020 - Adicionado campo Observação Interna para gravar no campo de pedido de compra C7_XOBSINT era usado o outro ponto de entrada mas quando o pedido é gerado através de uma cotaçaõ não passava no ponto que foi desenvolvido no começo.
 	@history Chamado 2562   - Everson         - 04/11/2020 - Tratamento para gravar número do estudo do projeto.
+	@history Chamado 15804  - Leonardo P. Monteiro - 02/09/2021 - Gravação de informações referente ao PC e clientes.
 /*/
 
 USER function MT160WF()
@@ -124,6 +125,9 @@ USER function MT160WF()
 						
 						_cChave := xFilial("SC7") + SC1->C1_PEDIDO + SC1->C1_ITEMPED
 					Endif
+					
+					//-- Gera notificacao - Encerramento de cotacao
+    				fGrvInf()
 				Endif		
 		      dbSelectArea("SC1")
 		      dbSkip()   
@@ -188,3 +192,50 @@ STATIC FUNCTION CAMPOMEMO()
 	Endif
 
 RETURN(NIL)
+
+Static Function fGrvInf()
+    Local cQuery    := ""
+    Local cSolic    := ""
+    Local cRazao    := ""
+    Local cEst      := ""
+    Local cMun      := ""
+    //Local cNumPC    := SC7->C7_NUM
+
+	cQuery  := " SELECT A2_NOME, A2_EST, A2_MUN "
+	cQuery  += " FROM "+ RetSqlName("SA2") +" SA2 "
+	cQuery  += " WHERE D_E_L_E_T_='' AND A2_FILIAL='"+ xFilial("SA2") +"' AND A2_COD='"+ SC7->C7_FORNECE +"' AND A2_LOJA='"+ SC7->C7_LOJA +"'; "
+
+	tcQuery cQuery ALIAS "QSA2" NEW
+
+	if QSA2->(!eof())
+		cRazao  := QSA2->A2_NOME
+		cEst    := QSA2->A2_EST
+		cMun    := QSA2->A2_MUN
+	endif
+
+	QSA2->(dbCloseArea())
+
+	cSolic := SC1->C1_USER
+	cSolic := Alltrim(cSolic)+"-"+AllTrim(UsrFullName(cSolic))
+
+	RecLock("SC7", .f.)
+
+	if !EMPTY(cSolic)
+		SC7->C7_XSOLIC := cSolic
+	Endif
+
+	if !EMPTY(cRazao)
+		SC7->C7_XRAZAO := cRazao
+	Endif
+
+	if !EMPTY(cEst)
+		SC7->C7_XEST := cEst
+	Endif
+
+	if !EMPTY(cMun)
+		SC7->C7_XMUN := cMun
+	Endif
+
+	SC7->( msUnLock() )
+
+return

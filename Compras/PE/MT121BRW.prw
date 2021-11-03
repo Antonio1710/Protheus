@@ -53,7 +53,6 @@ Static nLargBot			:= 040
 Static cHK				:= "&"
 Static lRet             := .F. 
 
-
 /*/{Protheus.doc} User Function MT121BRW
 	(Adição de opções no Ações Relacionadas do Pedidos de Compra)
 	@type  Function
@@ -61,15 +60,17 @@ Static lRet             := .F.
 	@since 25/09/2017
 	@version 01
 	@history Chamado 034249 
-	@history Chamado 050978 - FWNM              - 08/08/19 - Altera observacao após aprovado e s/ NF.
-	@history Chamado 054127 - ADRIANO SAVOINE   - 20/12/2019 - Alteração da Data de Entrega sem passar pela Alçada de aprovação.
-	@history Chamado 055246 - ADRIANO SAVOINE   - 28/01/2020 - VALIDADOR DO PEDIDOS DE COMPRAS QUE CHEGAM NA PORTARIA PARA ELES VERIFICAREM SE EXISTE PEDIDO E LIBERAREM A ENTRADA.
-	@history Chamado 055246 - WILLIAM COSTA     - 29/01/2020 - Alterado a chamada do relatório de impressão de MATR110() direto para a função A120Impri.
-	@history ticket    3873 - Fernando Macieira - 23/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
-	@history Chamado 6716   - ANDRE MENDES (OBIFY)   - 20/01/2021 - Criando a opção de alterar a condição de pagamento no pedido de vendas
-	@history Ticket TI      - Adriano Savoine   - 04/03/2021 - Alteração da Data de entrega verifica se vai alterar todos itens ou somente o posicionado.
-	/*/
-
+	@history Chamado 050978 - FWNM                 - 08/08/19 - Altera observacao após aprovado e s/ NF.
+	@history Chamado 054127 - ADRIANO SAVOINE      - 20/12/2019 - Alteração da Data de Entrega sem passar pela Alçada de aprovação.
+	@history Chamado 055246 - ADRIANO SAVOINE      - 28/01/2020 - VALIDADOR DO PEDIDOS DE COMPRAS QUE CHEGAM NA PORTARIA PARA ELES VERIFICAREM SE EXISTE PEDIDO E LIBERAREM A ENTRADA.
+	@history Chamado 055246 - WILLIAM COSTA        - 29/01/2020 - Alterado a chamada do relatório de impressão de MATR110() direto para a função A120Impri.
+	@history ticket    3873 - Fernando Macieira    - 23/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
+	@history Chamado 6716   - ANDRE MENDES (OBIFY) - 20/01/2021 - Criando a opção de alterar a condição de pagamento no pedido de vendas
+	@history Ticket TI      - Adriano Savoine      - 04/03/2021 - Alteração da Data de entrega verifica se vai alterar todos itens ou somente o posicionado.
+	@history Ticket 43012   - Everson              - 04/10/2021 - Tratamento para que o usuário que incluiu o pedido e o grupo de compras do qual faz parte possa alterar a data de entrega do pedido de compra.
+	@history Ticket 43012   - Everson              - 13/10/2021 - Tratamento para que o usuário que incluiu o pedido e o grupo de compras do qual faz parte possa alterar a data de entrega do pedido de compra.
+	@history Ticket T.I     - Sigoli               - 21/10/2021 - Tratamento error Log - variable does not exist NOPCA on U_ALTCONPC(MT121BRW.PRW) 13/10/2021 17:25:00 line : 1542
+/*/
 
 User Function MT121BRW()
 
@@ -575,6 +576,7 @@ Static Function PCGERAR(oTela)
 
 	Local lVolt 	:= .T.           
 	Local lContinua := .T.
+	Local i 		:= 1
 	
 	Private nGet1	:= 0
 	Private cGet2	:= Space(6)
@@ -672,6 +674,7 @@ Static Function GERADADO()
 	Local lGeraSc   := .T.
 	Local lDelete   := .F.
 	Local cItem     := ""
+	Local i   		:= 1	
 	
 	Private nQtdIten:= 0
 	
@@ -994,6 +997,7 @@ Static Function TRATAPED(cParam)
 	Local cPedido  := ""
 	Local cPedidos := ""
 	Local cParam   := alltrim(cParam) + ";"
+	Local i		   := 1
 	    
 		For i:= 1 to Len(alltrim(cParam))
 	    
@@ -1207,7 +1211,8 @@ User Function AltDTPC()
 
 	// Consisto comprador com login
 	If lRet
-		If AllTrim(SC7->C7_USER) <> AllTrim(RetCodUsr())
+		If AllTrim(SC7->C7_USER) <> AllTrim(RetCodUsr()) .And.;
+		   ! checkGrp(AllTrim(SC7->C7_USER), AllTrim(RetCodUsr()), "Alteração data de entrega " + cPedido) //Everson. 04/10/2021. Chamado 43012.
 			lRet := .f.
 			Aviso(	"MT121BRW-05",;
 					"Somente comprador que incluiu este PC pode alterar a Data de Entrega... Alteração da Data de Entrega não permitida!",;
@@ -1492,13 +1497,14 @@ Return(NIL)
 
 User Function AltConPC()
 	
-	Local aAreaSC7 := SC7->(GetArea())
-	Local aArea := GetArea()
-	Local cMsgInfo := ""
-	Private cChaveSC7 := SC7->(C7_FILIAL+C7_NUM)
+	Local aAreaSC7 		:= SC7->(GetArea())
+	Local aArea 		:= GetArea()
+	Local cMsgInfo 		:= ""
+	Local nOpca    		:= 0
+	Private cChaveSC7 	:= SC7->(C7_FILIAL+C7_NUM)
 	Private cCondAtual	:= SC7->C7_COND
-	Private cDescri 		:= Posicione("SE4", 1, xFilial("SE4")+ C7_COND, "E4_DESCRI") 
-	Private cCondNova		:= CriaVar("E4_CODIGO",.f.)
+	Private cDescri 	:= Posicione("SE4", 1, xFilial("SE4")+ C7_COND, "E4_DESCRI") 
+	Private cCondNova	:= CriaVar("E4_CODIGO",.f.)
 	Private cDesNov		:= CriaVar("E4_DESCRI",.f.)
 
 	nEspLarg := 0
@@ -1707,4 +1713,70 @@ Static Function fMedPgto(cCond)
 	SC7->(RestArea(aAreaSC7))
 Return nRet
 
+/*/{Protheus.doc} checkGrp
+	Função checa se o usuário pode alterar o pedido
+	de compra.
+	@type  Function
+	@author Everson
+	@since 04/10/2021
+	@version 01
+	/*/
+Static Function checkGrp(cDono, cUsuario, cMsg)
 
+	//Variáveis.
+	Local aArea := GetArea()
+	Local cQuery:= "" //Everson. 04/10/2021. Chamado 43012.
+	Local lRet  := .T.
+	Local cGrup := ""
+
+	//
+	If cDono == cUsuario
+		RestArea(aArea)
+		Return lRet
+
+	EndIf
+
+	//
+	cGrup := Alltrim(cValToChar(Posicione("SY1", 3, FWxFilial("SY1") + cDono, "Y1_GRUPCOM")))
+
+	//
+	If Empty(cGrup)
+		lRet := .F.
+		
+		U_GrLogZBE(Date(), Time(), cUserName, cMsg + " sem grupo " + " " + cValToChar(lRet),; 
+	          "MT121BRW", "", ComputerName(), LogUserName()) 
+		RestArea(aArea)
+		
+		Return lRet
+
+	EndIf
+
+	//
+	cQuery += " SELECT  " 
+	cQuery += " AJ_GRCOM  " 
+	cQuery += " FROM  " 
+	cQuery += " " + RetSqlName("SAJ") + " AS SAJ " 
+	cQuery += " WHERE " 
+	cQuery += " AJ_FILIAL = '" + FWxFilial("SAJ") + "' " 
+	cQuery += " AND AJ_GRCOM = '" + cGrup + "' " 
+	cQuery += " AND AJ_USER = '" + cUsuario + "' " 
+	cQuery += " AND SAJ.D_E_L_E_T_ = '' " 
+
+	//
+	TcQuery cQuery New Alias "D_CHECK"
+	DbSelectArea("D_CHECK")
+	D_CHECK->(DbGoTop())
+		If D_CHECK->(Eof())
+			lRet := .F.
+			
+		EndIf
+	D_CHECK->(DbCloseArea())
+
+	//
+	U_GrLogZBE(Date(), Time(), cUserName, cMsg + " cGrup " + cGrup + " " + cValToChar(lRet),; 
+	          "MT121BRW", "", ComputerName(), LogUserName()) 
+
+	//
+	RestArea(aArea)
+
+Return lRet

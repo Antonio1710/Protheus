@@ -1,14 +1,22 @@
 #INCLUDE "rwmake.ch"   
 #INCLUDE "Topconn.ch"
 
+/*/{Protheus.doc} User Function RELNFHR
+	Exporta para excel notas de saida de acordo com parametro de data / hora
+	@type  Function
+	@author Ana Helena
+	@since 10/05/13
+	@history Ticket  31644 - Abel Babini - 14/09/2021 - Ajuste error.log referente a função DBFCDXADS que foi descontinuada
+	/*/
+
 /*/
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³ RELNFHR  º Autor ³ Ana Helena         º Data ³  10/05/13   º±±
+±±ºPrograma  ³   º Autor ³          º Data ³     º±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³ Exporta para excel notas de saida de acordo com parametro  º±±
-±±º de data / hora                                                        º±±
+±±ºDescricao ³   º±±
+±±º                                                         º±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
 ±±ºUso       ³ Adoro                                                      º±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -111,23 +119,85 @@ Return()
 //GERACAO DOS DADOS EM EXCEL
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function expExcel(cArqTRC)
- 
-dbSelectArea("TMPQRY")
-cDirDocs := MsDocPath()
-cPath    := AllTrim(GetTempPath())
-cArq:="\RELNFHR"+substr(time(),1,2)+substr(time(),4,2)+substr(time(),7,2)+".DBF"
-_cCamin:=cDirDocs+cArq
-COPY TO &_cCamin VIA "DBFCDXADS"
-CpyS2T(_cCamin, cPath, .T. )
-//------------------------------
-// Abre MS-EXCEL
-//------------------------------
-If ! ApOleClient( 'MsExcel' )
-	MsgStop( "Ocorreram problemas que impossibilitaram abrir o MS-Excel ou mesmo não está instalado. Por favor, tente novamente." )  //'MsExcel nao instalado'
-	Return
-EndIf
-oExcelApp:= MsExcel():New()  && Objeto para abrir Excel.
-oExcelApp:WorkBooks:Open( cPath + cArq ) // Abre uma planilha
-oExcelApp:SetVisible(.T.)
+	//Ticket  31644 - Abel Babini - 14/09/2021 - Ajuste error.log referente a função DBFCDXADS que foi descontinuada
+	Local oExcel     := FWMSEXCELEX():New()
+	Local oMsExcel   := NIL
+	Local cWrkFld		:= 'RelNFHR'
+	Local cWrkSht		:= 'RelNFHR'
 
+	cArquivo := AllTrim(GetTempPath()) +  'RELNFHR' + DTOS(DATE()) + STRTRAN(TIME(),':','') + '.XML'
+
+	oExcel:AddworkSheet(cWrkFld)
+	oExcel:AddTable(cWrkFld,cWrkSht)
+	oExcel:AddColumn(cWrkFld,cWrkSht,'F2_HORA'		,1,1) // 01 A
+	oExcel:AddColumn(cWrkFld,cWrkSht,'F2_EMISSAO'	,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'D2_DOC'			,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'D2_SERIE'		,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'D2_COD'			,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'D2_CLIENTE'	,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'D2_LOJA'		,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_UNSVEN'	,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_SEGUM'		,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_QTDVEN'	,2,2) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_UM'			,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_PRCVEN'	,2,3) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_VALOR'		,2,3) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_TES'		,1,1) // 02 B
+	oExcel:AddColumn(cWrkFld,cWrkSht,'C6_CF'		,1,1) // 02 B
+
+	("TMPQRY")->(dbGoTOP())
+	While !("TMPQRY")->(eof())
+		oExcel:AddRow(cWrkFld,cWrkSht,{	("TMPQRY")->F2_HORA,;
+																		("TMPQRY")->F2_EMISSAO,;
+																		("TMPQRY")->D2_DOC,;
+																		("TMPQRY")->D2_SERIE,;
+																		("TMPQRY")->D2_COD,;
+																		("TMPQRY")->D2_CLIENTE,;
+																		("TMPQRY")->D2_LOJA,;
+																		("TMPQRY")->C6_UNSVEN,;
+																		("TMPQRY")->C6_SEGUM,;
+																		("TMPQRY")->C6_QTDVEN,;
+																		("TMPQRY")->C6_UM,;
+																		("TMPQRY")->C6_PRCVEN,;
+																		("TMPQRY")->C6_VALOR,;
+																		("TMPQRY")->C6_TES,;
+																		("TMPQRY")->C6_CF})
+		("TMPQRY")->(dbSkip())
+	EndDo
+	oExcel:AddRow(cWrkFld,cWrkSht,{"","","","","","","","","","","","","","",""})
+	
+	("TMPQRY")->(dbGoTOP())
+	
+	oExcel:Activate()
+	oExcel:GetXMLFile(cArquivo)
+
+	IF ( ApOleClient("MsExcel") )   // se nao existir o excel sai fora..
+		oMsExcel := MsExcel():New()
+		oMsExcel:WorkBooks:Open(cArquivo)
+		oMsExcel:SetVisible( .T. )
+		oMsExcel:Destroy()
+	ELSE
+		Alert("Nao Existe Excel Instalado ou não foi possível localizá-lo. Tente novamente!")
+	ENDIF
+
+/*
+	dbSelectArea("TMPQRY")
+	cDirDocs := MsDocPath()
+	cPath    := AllTrim(GetTempPath())
+	cArq:="\RELNFHR"+substr(time(),1,2)+substr(time(),4,2)+substr(time(),7,2)+".DBF"
+	_cCamin:=cDirDocs+cArq
+	//COPY TO &_cCamin VIA "DBFCDXADS"
+	CpyS2T(_cCamin, cPath, .T. )
+
+		//------------------------------
+	// Abre MS-EXCEL
+	//------------------------------
+	If ! ApOleClient( 'MsExcel' )
+		MsgStop( "Ocorreram problemas que impossibilitaram abrir o MS-Excel ou mesmo não está instalado. Por favor, tente novamente." )  //'MsExcel nao instalado'
+		Return
+	EndIf
+	oExcelApp:= MsExcel():New()  && Objeto para abrir Excel.
+	oExcelApp:WorkBooks:Open( cPath + cArq ) // Abre uma planilha
+	oExcelApp:SetVisible(.T.)
+*/
 Return   

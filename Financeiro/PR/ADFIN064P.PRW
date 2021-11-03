@@ -51,6 +51,7 @@
 	@history Chamado 4734   - Everson           - 09/11/2020 - Incluído novo campo de observação nas aprovações de projeto/título.
 	@history Ticket  5241   - William Costa     - 18/11/2020 - Adicionada a aprovação de projetos na empresa 07. 
 	@history Ticket 10986   - Fernando Macieira - 15/03/2021 - App de aprovação - melhorias
+	@history Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
 /*/
 
 User Function ADFIN064P
@@ -585,6 +586,50 @@ WsMethod Post WsService CentralAprovacao
 				
 			ENDIF
 		//
+		//*************************************************************************************
+		//INICIO Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
+		//*************************************************************************************
+		cQuery += " UNION ALL "
+		cQuery += " SELECT '' AS ZC7_ORIGEM, ZC7_DATA, ZC7_TPBLQ,'10' ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, A2.A2_NOME AS NOME, ZC7_DSCBLQ, ZC7_VLRBLQ, ZC7_VLRJUR, ZC7_ACRESC, ZC7_DECRES, ZC7_CNABDE, ZC7_NDTVEN, ZC7_NDTVCR, ZC7_ODTVEN, ZC7_ODTVCR, 'CONTAS_PAGAR' AS TIPO, ZC7_CUSFIN, ZC7_PERCUS, ZC7_NUMCAL, ZC7_OBS, ZC7_NIVEL, ZC7_PROJET, ZC7_REVPRJ, ZC7_TIPO, ZC7.R_E_C_N_O_ RECNO, " 
+		cQuery += " CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),1,1) = 'S' THEN '1 - Bloqueio por estar fora da Média de Valor | ' ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),2,1) = 'S' THEN '2 - Bloqueio por Lançamento de Nf-e sem XML | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),3,1) = 'S' THEN '3 - Bloqueio por Entrada de Nf-e sem Pedido de Compras | '  ELSE '' END  +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),4,1) = 'S' THEN '4 - Bloqueio por Não receber Vistoria Fisica no Recebimento | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),5,1) = 'S' THEN '5 - Bloqueio Aprovação Tecnica do Serviço | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),6,1) = 'S' THEN '6 - Bloqueio Integração por Modulo ou subsistema | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),7,1) = 'S' THEN '7 - Bloqueio Validação de Chave Primaria | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),8,1) = 'S' THEN '8 - Bloqueio por Duplicidade(Fornecedor+Valor+Emissão) | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),9,1) = 'S' THEN '9 - Bloqueio Pagamento Posterior a Entrega | '  ELSE '' END AS DESC_NSEG "
+		cQuery += " FROM ZC7100 ZC7 "
+		cQuery += " INNER JOIN SA2100 A2 ON A2_COD=ZC7_CLIFOR AND A2_LOJA=ZC7_LOJA AND A2.D_E_L_E_T_ = ' ' "
+		cQuery += " LEFT JOIN SE2100 E2 ON E2_FILIAL = ZC7_FILIAL AND E2_PREFIXO = ZC7_PREFIX AND E2_NUM = ZC7_NUM AND E2_PARCELA = ZC7_PARCEL AND E2_FORNECE = ZC7_CLIFOR AND E2_LOJA = ZC7_LOJA AND E2_TIPO = ZC7_TIPO " //Ch. 052008 | 27/09/2019 - Abel Babini Filho | Descricao do Bloqueio por Nivel de Seguranca
+		cQuery += " WHERE ZC7_USRAPR = ' ' AND ZC7_TPBLQ IN ( "
+		cQuery += " SELECT ZCF_CODIGO FROM ZCF100 ZCF WHERE ZCF_APROVA = '"+__cUserID+"' AND ZCF.D_E_L_E_T_ = ' ') "
+		cQuery += " AND ZC7_RECPAG = 'P' "
+		If nAprAus == 0 .and. !Empty(sNivApr) 
+			cQuery += " AND ZC7_NIVEL >= '"+cNivMen2+"' AND ZC7_NIVEL <= '"+sNivApr+"' " 
+		ELSE
+			cQuery += " AND ZC7_NIVEL = '"+sNivApr+"' " 
+		ENDIF
+		cQuery += " AND ZC7.D_E_L_E_T_ = ' ' "
+		cQuery += " AND E2.D_E_L_E_T_ = ' ' " 
+		
+		cQuery += " UNION ALL "
+		cQuery += " SELECT '' AS ZC7_ORIGEM, ZC7_DATA, ZC7_TPBLQ,'10' ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, A1.A1_NOME AS NOME, ZC7_DSCBLQ, ZC7_VLRBLQ, ZC7_VLRJUR, ZC7_ACRESC, ZC7_DECRES, ZC7_CNABDE, ZC7_NDTVEN, ZC7_NDTVCR, ZC7_ODTVEN, ZC7_ODTVCR, 'CONTAS_RECEBER' AS TIPO, ZC7_CUSFIN, ZC7_PERCUS, ZC7_NUMCAL, ZC7_OBS, ZC7_NIVEL, ZC7_PROJET, ZC7_REVPRJ, ZC7_TIPO, ZC7.R_E_C_N_O_ RECNO, " //15/04/19 | Everson - Chamado 044314.
+		cQuery += " '' AS DESC_NSEG " 
+		cQuery += " FROM ZC7100 ZC7 "
+		cQuery += " INNER JOIN SA1100 A1 ON A1_COD=ZC7_CLIFOR AND A1_LOJA=ZC7_LOJA AND A1.D_E_L_E_T_ = ' ' "
+		cQuery += " WHERE ZC7_USRAPR = ' ' AND ZC7_TPBLQ IN ( "
+		cQuery += " SELECT ZCF_CODIGO FROM ZCF100 ZCF WHERE ZCF_APROVA = '"+__cUserID+"' AND ZCF.D_E_L_E_T_ = ' ') "
+		cQuery += " AND ZC7_RECPAG = 'R' "
+		If nAprAus == 0 .and. !Empty(sNivApr)
+			cQuery += " AND ZC7_NIVEL >= '"+cNivMen2+"' AND ZC7_NIVEL <= '"+sNivApr+"' "
+		ELSE
+			cQuery += " AND ZC7_NIVEL = '"+sNivApr+"' " 
+		ENDIF
+		cQuery += " AND ZC7.D_E_L_E_T_ = ' ' "
+
+		IF lAprProj  
+			cQuery += " UNION ALL "
+			cQuery += " SELECT ZC7_ORIGEM, ZC7_DATA, ZC7_TPBLQ,'10' ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, AF8_DESCRI AS NOME, ZC7_DSCBLQ, ZC7_VLRBLQ, ZC7_VLRJUR, ZC7_ACRESC, ZC7_DECRES, ZC7_CNABDE, ZC7_NDTVEN, ZC7_NDTVCR, ZC7_ODTVEN, ZC7_ODTVCR, 'PROJETO' AS TIPO, ZC7_CUSFIN, ZC7_PERCUS, ZC7_NUMCAL, ZC7_OBS, ZC7_NIVEL, ZC7_PROJET, ZC7_REVPRJ, ZC7_TIPO, ZC7.R_E_C_N_O_ RECNO, "
+			cQuery += " '' AS DESC_NSEG " 
+			cQuery += " FROM ZC7100 ZC7 (NOLOCK) "
+			cQuery += " INNER JOIN AF8100 AF8 ON AF8_PROJET=ZC7_PROJET AND AF8_REVISA=ZC7_REVPRJ AND AF8.D_E_L_E_T_ = ' ' "
+			cQuery += " WHERE ZC7_TPBLQ = '000003' AND ZC7_DTAPR = ' ' AND ZC7_REPROV = ' ' AND ZC7_USRAPR = '"+ __cUserID +"' AND ZC7.D_E_L_E_T_ = ' ' "
+		ENDIF
+		//FIM Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
 
 		cQuery += " ORDER BY ZC7EMP, ZC7_FILIAL "
 		Conout("Query Central de Aprovação " + cValToChar(cQuery) )

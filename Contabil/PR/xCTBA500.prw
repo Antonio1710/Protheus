@@ -14,7 +14,7 @@
 	@example
 	(examples)
 	@see (links_or_references)
-	@history chamado 055592 - FWNM              - OS 057029 || CONTROLADORIA || JOYCE || 8386 || TXT - SIG NOVO
+	@history chamado 055592 - FWNM - OS 057029 || CONTROLADORIA || JOYCE || 8386 || TXT - SIG NOVO
 	@history ticket  8674   - Fernando Macieira - 03/02/2021 - Erro arquivo csv
 /*/
 User Function xCTBA500()
@@ -43,7 +43,7 @@ User Function xCTBA500()
 	//³ mv_par06 // Tamanho da linha	 							 ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Pergunte(cPerg,.f.)
-
+	
 	AADD(aSays,OemToAnsi( "O objetivo deste programa é gerar lançamentos contábeis" ) )
 	AADD(aSays,OemToAnsi( "a partir de um arquivo texto convertido em CSV e com leiaute específico" ) )
 	AADD(aSays,OemToAnsi( "Debito;Credito;CC Debito;CC Credito;Item Debito;Item Credito;Classe Debito;Classe Credito;Valor;Historico;Lote Recria" ) )
@@ -235,7 +235,7 @@ Static Function Ctb500Proc()
 			*/
 
 			// Lote Recria RNX2
-			If cEmpAnt $ cEmpZCN .or. cFilAnt $ cFilZCN
+			If cEmpAnt $ cEmpZCN .or. cFilAnt $ cFilZCN 
 				If !Empty(LOTERECRIA)
 					ZCN->( dbSetOrder(3) ) // ZCN_FILIAL+ZCN_DESCLT
 					If ZCN->( dbSeek( FWxFilial("ZCN") + ALLTRIM(LOTERECRIA) ) )

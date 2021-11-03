@@ -40,7 +40,10 @@
 	@history Ch: 10055 - Andre Mendes    - 24/02/2021 - Diferença entre SD2 e SD3 na data de emissao
 	@history Ch: 10055 - Denis Guedes    - 24/02/2021 - Diferença entre SD2 (utiliza Date()) e SD3 (utiliza ddatabase) na data de emissao
     @history tic 15299 - Fer Macieira    - 09/06/2021 - Compensação Errada PR
+	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
+	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 /*/
+
 User Function M460FIM()
 
 	Local Area		:= GetArea()
@@ -208,17 +211,6 @@ User Function M460FIM()
 		ENDIF
 		
 
-		// Ricardo Lima-CH:037647-17/10/18
-
-		// Chamado:047935 Fernando Sigoli - Comentado, para nao gerar mais a pre nota, apos faturamento.
-		// devido a implantação da central, a pre nota deverá ser gerado pelo recebimento do xml	
-		/*
-		If cFilAnt = sFilEmit
-		If sCliEmit = SF2->F2_CLIENTE+SF2->F2_LOJA
-		Processa({|| INTNFENT(SF2->F2_DOC,SF2->F2_SERIE,SF2->F2_CLIENTE,SF2->F2_LOJA) },,"Integração de Pré-Nota de entrada - Inclusão")
-		Endif
-		Endif	
-		*/
 
 	Endif	
 
@@ -407,6 +399,12 @@ STATIC FUNCTION TituloAb()
 	Local cComp		  := ""
 	//
 
+	//Everson - 18/10/2021. Chamado 13526.
+	Local cGrNCC	  := ""
+	Local nVlrNCC	  := 0
+	Local aDdProd	  := {}
+	//
+
 	Private lMsErroAuto := .F.
 
 	If AllTrim(GETMV("MV_ABMENOS")) == 'S'
@@ -419,7 +417,7 @@ STATIC FUNCTION TituloAb()
 		cBanco      := Posicione("SA1", 1, xFilial("SA1") + cCliente+cLOja, "A1_BCO1")
 
 		//Everson - 03/11/2020. Chamado 422.
-		If getDesc(cPrefixo, cDoc, cCliente, cLoja, @nPercP,@cComp) //Everson - 03/11/2020. Chamado 422.
+		If getDesc(cPrefixo, cDoc, cCliente, cLoja, @nPercP, @cComp, @aDdProd) //Everson - 03/11/2020. Chamado 422.
 			nPerc := nPercP
 
 		Else 
@@ -430,9 +428,15 @@ STATIC FUNCTION TituloAb()
 
 		//If !Empty(cBanco) .and. SF2->F2_TIPO = "N" .and.((POSICIONE("SA1", 1, xFilial("SA1") + cCliente+cLOja, "A1_ZZDESCB")) > 0) 
 		If SF2->F2_TIPO = "N" .And. nPerc > 0   // chamado 032950 - Fernando Sigoli //Everson - 03/11/2020. Chamado 422.
-
+			
+			//Everson - 18/10/2021. Chamado 13526.
+			cGrNCC := Posicione("SA1", 1, FWxFilial("SA1") + SF2->F2_CLIENTE + SF2->F2_SERIE, "A1_XTPDESC")
+			nVlrNCC:= 0
+			
+			//
 			If Select("QRY") <> 0
 				QRY->(dbCloseArea())
+
 			Endif
 
 			cQuery := "SELECT * FROM "+RetSqlName('SE1')+" "
@@ -452,37 +456,73 @@ STATIC FUNCTION TituloAb()
 			TcSetField( "QRY","E1_VENCREA"  ,"D")
 
 			dbSelectArea("QRY")
-			dbGotop()
-			If !Eof()
-				//nPerc   :=  (SA1->A1_ZZDESCB)
-				While !QRY->(Eof())
-					nValor := Round(QRY->E1_VALOR * nPerc / 100,2)
-					aSE1 := {;
-					{"E1_PREFIXO" 	, QRY->E1_PREFIXO      	                             ,Nil},;
-					{"E1_NUM"   	, QRY->E1_NUM         	                             ,Nil},;
-					{"E1_PARCELA" 	, QRY->E1_PARCELA      	                             ,Nil},;
-					{"E1_TIPO"   	, "AB-"               	                             ,Nil},;
-					{"E1_NATUREZ"	, "10196"  		                                     ,Nil},;
-					{"E1_CLIENTE" 	, QRY->E1_CLIENTE     	                             ,Nil},;
-					{"E1_LOJA"   	, QRY->E1_LOJA        	                             ,Nil},;
-					{"E1_EMISSAO" 	, QRY->E1_EMISSAO      	                             ,Nil},;
-					{"E1_VENCTO"  	, QRY->E1_VENCTO     	                             ,Nil},;
-					{"E1_VENCREA" 	, QRY->E1_VENCREA      	                             ,Nil},;
-					{"E1_CCD" 	    , cCusto      	                                     ,Nil},;
-					{"E1_HIST" 	    , "Desconto Contratual " + CVALTOCHAR(nPerc) + " %"  ,Nil},;
-					{"E1_VALOR"   	, nValor		                                     ,Nil},;
-					{"E1_XCPDESC"   , cComp		                                     	 ,Nil}} //Everson - 03/11/2020. Chamado 422.
-					QRY->(dbSkip())
+			QRY->(dbGotop())
 
-					MSExecAuto({|x,y| FINA040(x,y)},aSE1,3)
-					If lMsErroAuto
-						MostraErro()
-						cMostraErro := MostraErro("\SYSTEM\M460FIM.log")
-						EnviaWF(cMostraErro,cPrefixo,cDoc,cCliente,cLoja)
-					Endif
+			If ! QRY->(Eof())
+				//nPerc   :=  (SA1->A1_ZZDESCB)
+				While ! QRY->(Eof())
+
+					//
+					nValor  := Round(QRY->E1_VALOR * nPerc / 100,2)
+					
+					//Everson - 18/10/2021. Chamado 13526.
+					If Upper(cValToChar(cGrNCC)) == "S" //NCC
+						nVlrNCC += nValor //Everson - 18/10/2021. Chamado 13526.
+
+					Else //AB-
+
+						aSE1 := {;
+						{"E1_PREFIXO" 	, QRY->E1_PREFIXO      	                             ,Nil},;
+						{"E1_NUM"   	, QRY->E1_NUM         	                             ,Nil},;
+						{"E1_PARCELA" 	, QRY->E1_PARCELA      	                             ,Nil},;
+						{"E1_TIPO"   	, "AB-"               	                             ,Nil},;
+						{"E1_NATUREZ"	, "10196"  		                                     ,Nil},;
+						{"E1_CLIENTE" 	, QRY->E1_CLIENTE     	                             ,Nil},;
+						{"E1_LOJA"   	, QRY->E1_LOJA        	                             ,Nil},;
+						{"E1_EMISSAO" 	, QRY->E1_EMISSAO      	                             ,Nil},;
+						{"E1_VENCTO"  	, QRY->E1_VENCTO     	                             ,Nil},;
+						{"E1_VENCREA" 	, QRY->E1_VENCREA      	                             ,Nil},;
+						{"E1_CCD" 	    , cCusto      	                                     ,Nil},;
+						{"E1_HIST" 	    , "Desconto Contratual " + CVALTOCHAR(nPerc) + " %"  ,Nil},;
+						{"E1_VALOR"   	, nValor		                                     ,Nil},;
+						{"E1_XCPDESC"   , cComp		                                     	 ,Nil}} //Everson - 03/11/2020. Chamado 422.
+						QRY->(dbSkip())
+
+						MSExecAuto({|x,y| FINA040(x,y)},aSE1,3)
+						If lMsErroAuto
+							MostraErro()
+							cMostraErro := MostraErro("\SYSTEM\M460FIM.log")
+							EnviaWF(cMostraErro,cPrefixo,cDoc,cCliente,cLoja)
+							
+						Endif
+
+					EndIf
+
 				Enddo
+				
+				//Everson - 18/10/2021. Chamado 13526.
+				If Upper(cValToChar(cGrNCC)) == "S"
+
+					//
+					RecLock("SF2",.F.)
+						SF2->F2_XVLRNCC := nVlrNCC 
+						SF2->F2_XPERNCC	:= nPerc
+					SF2->(MsUnlock())
+
+					//Salva os percentuais e valores nos itens da nota fiscal.
+					// If Len(aDdProd) > 0
+					// 	slvDesSD2(SF2->F2_CLIENTE, SF2->F2_LOJA, SF2->F2_DOC , SF2->F2_SERIE , aDdProd) 
+
+					// EndIf
+
+				EndIf
+				//
+
 			Endif
-			dbCloseArea("QRY")
+			
+			//
+			QRY->(dbCloseArea())
+
 		Endif
 
 	EndIF
@@ -669,41 +709,9 @@ Return(.T.)
 	/*/
 Static Function ValPED010()
 
-	/* Váriáveis para conexão entre a base de produção e a base intermediária */
-	//Local _cNomBco1 := GetPvProfString("INTSAGBD","BCO1","ERROR",GetADV97())
-	//Local _cSrvBco1 := GetPvProfString("INTSAGBD","SRV1","ERROR",GetADV97())
-	//Local _cPortBco1:= Val(GetPvProfString("INTSAGBD","PRT1","ERROR",GetADV97()) )
-	// Local _cNomBco2 := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
-	// Local _cSrvBco2 := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
-	// Local _cPortBco2:= Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-	// Local _nTcConn1 := advConnection()
-	// Local _nTcConn2 := 0
-
 	If SC5->C5_CODIGEN > 0
 
-		/*If _nTcConnn1 > 0
-		TcUnLink(_nTcConn1)
-		EndIf
-		If _nTcConnn2 > 0
-		TcUnLink(_nTcConn2)
-		EndIf
-		If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1)) < 0
-		_lRet     := .F.
-		cMsgError := "Não foi possível  conectar ao banco Protheus"
-		MsgInfo("Não foi possível  conectar ao banco produção, verifique com administrador","ERROR")
-		EndIf*/
-		// TcConType("TCPIP")
-		// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2)) < 0
-		// 	_lRet     := .F.
-		// 	cMsgError := "Não foi possível  conectar ao banco integração"
-		// 	MsgInfo("Não foi possível  conectar ao banco integração para ajustar a tabela SGNFE010, verifique com administrador","ERROR")
-
-		// EndIf
-
-		//TcSetConn(_nTcConn2)		
 		TcSqlExec("UPDATE SGPED010 SET STATUS_PRC = 'P', C5_MSEXP ='" +DTOS(DDATABASE)+ "'  WHERE CODIGENE= '" + ALLTRIM(STR(SC5->C5_CODIGEN)) + "' " )		
-		//TcUnLink(_nTcConn2)
-		//TcSetConn(_nTcConn1)
 
 	EndIf
 
@@ -792,16 +800,12 @@ Return Nil
 Static Function updSAG(cDoc,cSerie) //Everson - 26/02/2020. Chamado 057529.
 
 	Local aArea	    := GetArea()
-	// Local nTcConn1	:= advConnection()
 	Local nTcConn2  := 0
 	Local cPedido	:= Posicione("SD2",3,FWxFilial("SD2") + cDoc + cSerie,"D2_PEDIDO") //Everson - 26/02/2020. Chamado 057529.
 	Local cPedSAG   := Posicione("SC5",1,FWxFilial("SC5") + cPedido,"C5_PEDSAG") //Everson - 26/02/2020. Chamado 057529.
 	Local cTabegene	:= Posicione("SC5",1,FWxFilial("SC5") + cPedido,"C5_TABEGEN") //Everson - 26/02/2020. Chamado 057529.
-	// Local cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
-	// Local cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
-	// Local cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-
-	//
+	Local dDtEmiss  := Posicione("SF2",1,xFilial("SF2") + cDoc + cSerie, "F2_EMISSAO") // Jonathan  -  02/09/21 - Tkt 17937 
+	
 	cPedSAG	 := Alltrim(cValToChar(cPedSAG))
 	cTabegene:= Alltrim(cValToChar(cTabegene))
 
@@ -825,24 +829,11 @@ Static Function updSAG(cDoc,cSerie) //Everson - 26/02/2020. Chamado 057529.
 
 	EndIf
 
-	// //
-	// TcConType("TCPIP")
-	// If (nTcConn2 := TcLink(cNomBco2,cSrvBco2,cPortBco2)) < 0
-	// 	MsgInfo("Não foi possível  conectar ao banco integração para ajustar a tabela SGPED010, verifique com o administrador.","updSAG (M460FIM)")
-	// 	RestArea(aArea)
-	// 	Return Nil
-
-	// EndIf
-
-	//
-	//TcSetConn(nTcConn2)
-	If 0 > TcSqlExec("UPDATE SGPED010 SET C5_NOTA='" + cDoc + "' , C5_SERIE = '" + cSerie + "', STATUS_INT = '', OPERACAO_INT = 'A' WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM='" + cPedSAG + "' AND TABEGENE = '" + cTabegene + "' ") //Everson-CH:053926-26/02/2020.
+	If 0 > TcSqlExec("UPDATE SGPED010 SET C5_NOTA='" + cDoc + "' , C5_SERIE = '" + cSerie + "', STATUS_INT = '', OPERACAO_INT = 'A', C6_EMISSAO ='"+DToS(dDtEmiss)+"'  WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM='" + cPedSAG + "' AND TABEGENE = '" + cTabegene + "' ") //Everson-CH:053926-26/02/2020.
 		MsgInfo("Não foi possível atualizar o registro no banco interface: " + Chr(13) + Chr(10) + TCSQLError(),"updSAG (M460FIM)")
 
 	EndIf
 
-	//
-	//TcSetConn(nTcConn1)
 	RestArea(aArea)
 
 Return Nil
@@ -875,7 +866,6 @@ Static Function GeraPreNFE()
 	Local cItemCtb  := GetMV("MV_#LFVITC",,"121")
 	Local cLocal    := GetMV("MV_#LFVALM",,"16")
 	Local cEspLFV   := GetMV("MV_#LFVESP",,"SPED")
-	//Local cProduto  := GetMV("MV_#LFVPRD",,"100253")  //  APENAS DEBUG
 	Local cProduto  := GetMV("MV_#LFVPRD",,"300042")  //  publicar este em producao
 	Local cTESPre   := ''//GetMV("MV_#LFVTEE",,"031") //Ch:055979 - Abel Babini			- 28/02/20 - COMPLEMENTO FRANGO VIVO - Retirada da TES para não gerar erro nos filtros das outras rotinas do processo (INTNFEB)
 
@@ -887,10 +877,6 @@ Static Function GeraPreNFE()
 
 		// Posiciono CLIENTE
 		SA1->(dbSeek(xFilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA))
-
-		// Posiciono FORNECEDOR
-		//SA2->( dbSetOrder(3) ) // A2_FILIAL+A2_CGC
-		//If SA2->( dbSeek(xFilial("SA2")+SA1->A1_CGC) ) // // Inibido e tratado via parametros devido CNPJs em duplicidade ou incorretos
 
 		SA2->( dbSetOrder(1) ) // A2_FILIAL+A2_COD+A2_LOJA
 		If SA2->( dbSeek(xFilial("SA2")+cFornCod+cLojaCod) )
@@ -1406,7 +1392,7 @@ Return nVlr
 	@since 03/11/2020
 	@version 01
 	/*/
-Static Function getDesc(cPrefixo, cDoc, cCliente, cLoja, nPercP, cComp)
+Static Function getDesc(cPrefixo, cDoc, cCliente, cLoja, nPercP, cComp, aDdProd)
 
 	//Variáveis.
 	Local aArea := GetArea()
@@ -1419,48 +1405,52 @@ Static Function getDesc(cPrefixo, cDoc, cCliente, cLoja, nPercP, cComp)
 	cQuery := ""
 	cQuery += " SELECT "
 
-	cQuery += " ZC5_PRODUT, "
-	cQuery += " D2_TOTAL, "
-	cQuery += " CASE WHEN FONTE.ZC5_PRODUT IS NULL OR FONTE.ZC5_PRODUT = '' THEN ISNULL(FONTE.A1_ZZDESCB,0) ELSE FONTE.TOT_DESC/100 END PER_DESC, "
-	cQuery += " D2_TOTAL * CASE WHEN FONTE.ZC5_PRODUT IS NULL OR FONTE.ZC5_PRODUT = '' THEN ISNULL(FONTE.A1_ZZDESCB,0)/100 ELSE FONTE.TOT_DESC/100/100 END AS VLR_DESC "
+		cQuery += " ZC5_PRODUT, "
+		cQuery += " D2_TOTAL, "
+		cQuery += " D2_ITEM, " //Everson - 18/10/2021. Chamado 13526.
+		cQuery += " CASE WHEN FONTE.ZC5_PRODUT IS NULL OR FONTE.ZC5_PRODUT = '' THEN ISNULL(FONTE.A1_ZZDESCB,0) ELSE FONTE.TOT_DESC/100 END PER_DESC, "
+		cQuery += " D2_TOTAL * CASE WHEN FONTE.ZC5_PRODUT IS NULL OR FONTE.ZC5_PRODUT = '' THEN ISNULL(FONTE.A1_ZZDESCB,0)/100 ELSE FONTE.TOT_DESC/100/100 END AS VLR_DESC "
 
 	cQuery += " FROM  "
 	cQuery += " ( " 
-	cQuery += " SELECT  " 
-	cQuery += " D2_CLIENTE,D2_LOJA, " 
-	cQuery += " D2_TOTAL, " 
-	cQuery += " ZC5_PRODUT, " 
-	cQuery += " SA1.A1_ZZDESCB, " 
-	cQuery += " ZC5_ANIVER + ZC5_INAUGU + ZC5_FORNEC + ZC5_LOGIST + ZC5_REINAU + ZC5_QBRTRC + ZC5_ASSOCI + ZC5_CRESCI + ZC5_INVCOO + ZC5_WEB TOT_DESC " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("SD2") + " (NOLOCK) AS SD2 " 
-	cQuery += " INNER JOIN " 
-	cQuery += " ( " 
-	cQuery += " SELECT  " 
-	cQuery += " A1_COD, A1_LOJA, A1_ZZDESCB  " 
-	cQuery += " FROM   " 
-	cQuery += " " + RetSqlName("SA1") + " (NOLOCK) AS SA1  " 
-	cQuery += " WHERE  " 
-	cQuery += " A1_COD = '" + cCliente + "' " 
-	cQuery += " AND A1_LOJA = '" + cLoja + "' " 
-	cQuery += " AND SA1.D_E_L_E_T_ = '' " 
-	cQuery += " ) AS SA1 ON " 
-	cQuery += " D2_CLIENTE = A1_COD " 
-	cQuery += " AND D2_LOJA = A1_LOJA " 
-	cQuery += " LEFT OUTER JOIN " 
-	cQuery += " " + RetSqlName("ZC5") + " (NOLOCK) AS ZC5 ON " 
-	cQuery += " D2_FILIAL = ZC5_FILIAL " 
-	cQuery += " AND D2_CLIENTE = ZC5_CODCLI " 
-	cQuery += " AND D2_LOJA = ZC5_LOJA " 
-	cQuery += " AND D2_COD = ZC5_PRODUT " 
-	cQuery += " WHERE " 
-	cQuery += " D2_FILIAL = '" + FWxFilial("SD2") + "' " 
-	cQuery += " AND D2_DOC = '" + cDoc + "' " 
-	cQuery += " AND D2_SERIE = '" + cPrefixo + "' " 
-	cQuery += " AND D2_CLIENTE = '" + cCliente + "' " 
-	cQuery += " AND D2_LOJA = '" + cLoja + "' " 
-	cQuery += " AND SD2.D_E_L_E_T_ = '' " 
-	cQuery += " AND ZC5.D_E_L_E_T_ = '' "
+
+		cQuery += " SELECT  " 
+		cQuery += " D2_CLIENTE,D2_LOJA, " 
+		cQuery += " D2_TOTAL, " 
+		cQuery += " D2_ITEM, " //Everson - 18/10/2021. Chamado 13526.
+		cQuery += " ZC5_PRODUT, " 
+		cQuery += " SA1.A1_ZZDESCB, " 
+		cQuery += " ZC5_ANIVER + ZC5_INAUGU + ZC5_FORNEC + ZC5_LOGIST + ZC5_REINAU + ZC5_QBRTRC + ZC5_ASSOCI + ZC5_CRESCI + ZC5_INVCOO + ZC5_WEB TOT_DESC " 
+		cQuery += " FROM " 
+		cQuery += " " + RetSqlName("SD2") + " (NOLOCK) AS SD2 " 
+		cQuery += " INNER JOIN " 
+		cQuery += " ( " 
+		cQuery += " SELECT  " 
+		cQuery += " A1_COD, A1_LOJA, A1_ZZDESCB  " 
+		cQuery += " FROM   " 
+		cQuery += " " + RetSqlName("SA1") + " (NOLOCK) AS SA1  " 
+		cQuery += " WHERE  " 
+		cQuery += " A1_COD = '" + cCliente + "' " 
+		cQuery += " AND A1_LOJA = '" + cLoja + "' " 
+		cQuery += " AND SA1.D_E_L_E_T_ = '' " 
+		cQuery += " ) AS SA1 ON " 
+		cQuery += " D2_CLIENTE = A1_COD " 
+		cQuery += " AND D2_LOJA = A1_LOJA " 
+		cQuery += " LEFT OUTER JOIN " 
+		cQuery += " " + RetSqlName("ZC5") + " (NOLOCK) AS ZC5 ON " 
+		cQuery += " D2_FILIAL = ZC5_FILIAL " 
+		cQuery += " AND D2_CLIENTE = ZC5_CODCLI " 
+		cQuery += " AND D2_LOJA = ZC5_LOJA " 
+		cQuery += " AND D2_COD = ZC5_PRODUT " 
+		cQuery += " WHERE " 
+		cQuery += " D2_FILIAL = '" + FWxFilial("SD2") + "' " 
+		cQuery += " AND D2_DOC = '" + cDoc + "' " 
+		cQuery += " AND D2_SERIE = '" + cPrefixo + "' " 
+		cQuery += " AND D2_CLIENTE = '" + cCliente + "' " 
+		cQuery += " AND D2_LOJA = '" + cLoja + "' " 
+		cQuery += " AND SD2.D_E_L_E_T_ = '' " 
+		cQuery += " AND ZC5.D_E_L_E_T_ = '' "
+	
 	cQuery += " ) AS FONTE " 
 
 	//
@@ -1481,6 +1471,8 @@ Static Function getDesc(cPrefixo, cDoc, cCliente, cLoja, nPercP, cComp)
 			cComp+= "Prod.: "  + Alltrim(D_PORC->ZC5_PRODUT) + Chr(13) + Chr(10) 
 			cComp+= "%Desc.: " + Alltrim(cValToChar(D_PORC->PER_DESC)) + "%" + Chr(13) + Chr(10) 
 			cComp+= "--------------------------" + Chr(13) + Chr(10)
+
+			Aadd(aDdProd,{D_PORC->ZC5_PRODUT, D_PORC->D2_ITEM, D_PORC->PER_DESC, D_PORC->VLR_DESC}) //Everson - 18/10/2021. Chamado 13526.
 
 			//
 			nTotF+= Val(cValToChar(D_PORC->D2_TOTAL))
@@ -1504,3 +1496,40 @@ Static Function getDesc(cPrefixo, cDoc, cCliente, cLoja, nPercP, cComp)
 	RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} slvDesSD2
+	Função grava percetual e valor do desconto financeiro no item da
+	nota fiscal.
+	Chamado 13526.
+	@type  Static Function
+	@author Everson
+	@since 18/10/2021
+	@version 01
+/*/
+Static Function slvDesSD2(cCliente, cLoja, cDoc, cSerie, aDdProd)
+
+	//Variáveis.
+	Local aArea := GetArea()
+	Local nAux  := 1
+
+	//
+	DbSelectArea("SD2")
+	SD2->(DbSetOrder(3))
+
+	//
+	For nAux := 1 To Len(aDdProd)
+
+		If SD2->(DbSeek( FWxFilial("SD2") + cCliente + cLoja + cDoc + cSerie + aDdProd[nAux][1] + aDdProd[nAux][2] ))
+
+			RecLock("SD2", .F.)
+				SD2->D2_XPERNCC := aDdProd[nAux][3]
+				SD2->D2_XVLRNCC := aDdProd[nAux][4]
+			SD2->(MsUnlock())
+
+		EndIf
+
+	Next nAux
+
+	//
+	RestArea(aArea)
+
+Return Nil

@@ -44,6 +44,7 @@ Static lAuto    := .t.
 	@history ticket 1429 - FWNM - 11/09/2020 - Bloquear registro de boleto para pedido de exportação
 	@history ticket 745 - FWNM - 17/09/2020 - Implementação título PR
 	@history ticket TI  - FWNM - 24/02/2021 - Gerar boleto apenas para PV tipo N
+	@history ticket TI  - FWNM - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
 /*/
 User Function ADFIN087P()
 
@@ -132,7 +133,7 @@ User Function ADFIN087P()
         cQuery := " SELECT C5_FILIAL, C5_NUM, C5_XWSPAGO
         cQuery += " FROM " + RetSqlName("SC5") + " SC5 (NOLOCK)
         cQuery += " WHERE C5_FILIAL='"+FWxFilial("SC5")+"' 
-		cQuery += " AND SC5.C5_NUM IN ('9AJKUJ')
+		cQuery += " AND SC5.C5_NUM IN ('9AXKV3')
 		cQuery += " AND SC5.D_E_L_E_T_=''
 		*/
 		// DEBUG - FIM
@@ -1509,66 +1510,85 @@ Static Function UpE1IDCNAB()
     Local cNextCod := ""
 	Local nOrdCNAB := 19
 	Local cIdCnab  := SE1->E1_IDCNAB
+	Local aArea    := GetArea() 
 	
 	If Empty(SE1->E1_IDCNAB)
 
-		cIdCnab  := GetSxENum("SE1", "E1_IDCNAB","E1_IDCNAB"+cEmpAnt, nOrdCNAB)
+		Do While .t. // @history ticket TI  - FWNM - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
+		
+			cIdCnab  := GetSxENum("SE1", "E1_IDCNAB","E1_IDCNAB"+cEmpAnt, nOrdCNAB)
+			ConfirmSX8()
 
-		// Checo duplicidade de E1_IDCNAB
-		If Select("WorkIDCNAB") > 0
-			WorkIDCNAB->( dbCloseArea() )
-		EndIf
-
-		cQuery := " SELECT E1_IDCNAB, COUNT(1) TT_IDCNAB
-		cQuery += " FROM " + RetSqlName("SE1") + " (NOLOCK)
-		cQuery += " WHERE D_E_L_E_T_=''
-		cQuery += " AND E1_IDCNAB='"+cIdCnab+"'
-		cQuery += " AND E1_IDCNAB<>''
-		cQuery += " GROUP BY E1_IDCNAB
-		cQuery += " HAVING COUNT(1) >= 2
-
-		tcQuery cQuery New Alias "WorkIDCNAB"
-
-		WorkIDCNAB->( dbGoTop() )
-		If WorkIDCNAB->( !EOF() )
-
-			// Encontrou título com o IDCNAB que será gravado no título atual
-			logZBE("E1_IDCNAB n. " + cIdCnab + " já existe na base! Será alterado por este PE antes de gravar no E1_NUM = " + SE1->E1_NUM)
-
-			If Select("WorkLAST") > 0
-				WorkLAST->( dbCloseArea() )
+			// Checo duplicidade de E1_IDCNAB
+			If Select("WorkIDCNAB") > 0
+				WorkIDCNAB->( dbCloseArea() )
 			EndIf
 
-			cQuery := " SELECT MAX(E1_IDCNAB) LAST_IDCNAB
+			cQuery := " SELECT E1_IDCNAB, COUNT(1) TT_IDCNAB
 			cQuery += " FROM " + RetSqlName("SE1") + " (NOLOCK)
-			cQuery += " WHERE E1_IDCNAB<>''
-			cQuery += " AND D_E_L_E_T_=''
+			cQuery += " WHERE D_E_L_E_T_=''
+			cQuery += " AND E1_IDCNAB='"+cIdCnab+"'
+			cQuery += " AND E1_IDCNAB<>''
+			cQuery += " GROUP BY E1_IDCNAB
+			cQuery += " HAVING COUNT(1) >= 2
 
-			tcQuery cQuery New Alias "WorkLAST"
+			tcQuery cQuery New Alias "WorkIDCNAB"
 
-			cNextCod := Soma1(AllTrim(WorkLAST->LAST_IDCNAB))
+			WorkIDCNAB->( dbGoTop() )
+			If WorkIDCNAB->( !EOF() )
 
-			cIdCnab := cNextCod // Recebe o próximo caso tenha encontrado algum idcnab em outro título
+				// Encontrou título com o IDCNAB que será gravado no título atual
+				logZBE("E1_IDCNAB n. " + cIdCnab + " já existe na base! Será alterado por este PE antes de gravar no E1_NUM = " + SE1->E1_NUM)
 
-			logZBE("Novo E1_IDCNAB n. " + cNextCod + " foi gravado no título n. " + SE1->E1_NUM + " para evitar duplicidade")
+				If Select("WorkLAST") > 0
+					WorkLAST->( dbCloseArea() )
+				EndIf
 
-			If Select("WorkLAST") > 0
-				WorkLAST->( dbCloseArea() )
+				cQuery := " SELECT MAX(E1_IDCNAB) LAST_IDCNAB
+				cQuery += " FROM " + RetSqlName("SE1") + " (NOLOCK)
+				cQuery += " WHERE E1_IDCNAB<>''
+				cQuery += " AND D_E_L_E_T_=''
+
+				tcQuery cQuery New Alias "WorkLAST"
+
+				cNextCod := Soma1(AllTrim(WorkLAST->LAST_IDCNAB))
+
+				cIdCnab := cNextCod // Recebe o próximo caso tenha encontrado algum idcnab em outro título
+
+				logZBE("Novo E1_IDCNAB n. " + cNextCod + " foi gravado no título n. " + SE1->E1_NUM + " para evitar duplicidade")
+
+				If Select("WorkLAST") > 0
+					WorkLAST->( dbCloseArea() )
+				EndIf
+
 			EndIf
 
-		EndIf
+			If Select("WorkIDCNAB") > 0
+				WorkIDCNAB->( dbCloseArea() )
+			EndIf
 
-		If Select("WorkIDCNAB") > 0
-			WorkIDCNAB->( dbCloseArea() )
-		EndIf
+			// @history ticket TI  - FWNM - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
+			aAreaSE1 := SE1->( GetArea() )
+			SE1->( dbSetOrder(19) ) // E1_IDCNAB, R_E_C_N_O_, D_E_L_E_T_
+			If SE1->( dbSeek(cIdCnab) )
+				RestArea(aAreaSE1)
+				Loop
+			Else
+				// Grava E1_IDCNAB
+				RestArea(aAreaSE1)
+				dbSelectArea("SE1")
+				RecLock("SE1", .f.)
+					SE1->E1_IDCNAB := cIdCnab
+				SE1->( MsUnlock() )
+				ConfirmSx8()
+				Exit
+			EndIf
 
-		// Grava E1_IDCNAB
-		RecLock("SE1")
-			SE1->E1_IDCNAB := cIdCnab
-		SE1->( MsUnlock() )
-		ConfirmSx8()
+		EndDo
 
 	EndIf
+
+	RestArea(aArea)
 
 Return cIdCnab
 

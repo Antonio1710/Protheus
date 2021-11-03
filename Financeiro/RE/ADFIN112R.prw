@@ -2,7 +2,7 @@
 #INCLUDE "TOPCONN.CH"
 #Include "Colors.ch"
 
-/*/{Protheus.doc} User Function ADFIN112R
+/*/{Protheus.doc} User Function ADLFV020R
   (long_description)
   @type  Function
   @author user
@@ -13,7 +13,6 @@
   @example
   (examples)
   @see (links_or_references)
-  @Ticket 12116, 17/06/2021, André Mendes, Desenvolvimento e validação do relatório.
   /*/
 User Function ADFIN112R()
   

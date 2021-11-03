@@ -36,8 +36,10 @@ Static cHK		:= "&"
 	@author Leonardo Rios
 	@since 12/12/2016
 	@version 01
-	@history Everson,           24/06/2020, Chamado 058675. Adicionada condição por empresa.
-	@history Fernando Macieira, 05/03/2021, Ticket 10248. Revisão das rotinas de apontamento de OP´s
+	@history Everson,           24/06/2020, Chamado 058675 - Adicionada condição por empresa.
+	@history Fernando Macieira, 05/03/2021, Ticket 10248   - Revisão das rotinas de apontamento de OP´s
+	@history Fernando Macieira, 27/09/2021, Ticket 29741   - Divergencia ao limpar dados de ordens integradas do SAG
+	@history Fernando Macieira, 29/09/2021, Ticket 30160   - Lentidão ao processar ordem
 /*/
 User Function ADFIS005P() // U_ADFIS005P()
 
@@ -128,7 +130,7 @@ User Function ADFIS005P() // U_ADFIS005P()
 	Private _cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
 	Private _nTcConn2  := 0
 
-		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função principal para criar a tela com as informações	das tabelas SGOPR010, SGREQ010, SGMOV010, SGINV010 para serem seleciona  das e processadas chamando as funções em outros fontes')
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função principal para criar a tela com as informações	das tabelas SGOPR010, SGREQ010, SGMOV010, SGINV010 para serem seleciona  das e processadas chamando as funções em outros fontes')
 
 	// @history Fernando Macieira, 05/03/2021, Ticket 10248. Revisão das rotinas de apontamento de OP´s
 	// Garanto uma única thread sendo executada
@@ -136,408 +138,336 @@ User Function ADFIS005P() // U_ADFIS005P()
 		Aviso("Atenção", "Existe outro processamento sendo executado! Verifique com seu colega de trabalho...", {"OK"}, 3)
 		Return
 	EndIf
-	//
 
-		// TcConType("TCPIP")
+	/*Cria as perguntas no SX1*/
+	AjustaSX1(cPerg)         
+	
+	If !Pergunte(cPerg,.T.)
+		Return Nil
+	EndIf
+		
+	/*Seta Variáveis das perguntas*/
+	_nPerg1Tip := mv_par01 /* Tabela */
+	_dPerg2Dta := mv_par02 /* Período De */
+	_dPerg3Dta := mv_par03 /* Período Ate */
+	_cPerg4Pdt := mv_par04 /* Produto De */
+	_cPerg5Pdt := mv_par05 /* Produto Ate */
+	_cPerg6Sta := mv_par06 /* Status */
+	_cPerg7Ope := mv_par07 /* Tipo de Operação */
+	
+	/* Executa a função para buscar as informações e carregar os arrays para serem usados nos grids */
+	ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs)	
+		
+	/*
+		Montar o codeblock para montar as listas de dados da GD  
+	*/
+	cLine01 := "{|| Iif( Len(aCols) < 1, {}, "
+	cLine01 += " { aCols[oGD01:nAt,1], "
+	cLine01 += "IIf(aCols[oGD01:nAt,2],oOk,oNo),"
+	For ni := 3 to 15
+		cLine01 += "aCols[oGD01:nAt," + cValToChar(ni) + "]" + IIf(ni < 15,",","")
+	Next ni
+	cLine01 += "} ) }"
+	
+	cLine02 := "{|| Iif( Len(aCols2) < 1, {}, "
+	cLine02 += " { aCols2[oGD02:nAt,1], "
+	cLine02 += "IIf(aCols2[oGD02:nAt,2],oOk,oNo),"
+	For ni := 3 to 16
+		cLine02 += "aCols2[oGD02:nAt," + cValToChar(ni) + "]" + IIf(ni < 16,",","")
+	Next ni
+	cLine02 += "} ) }"
+	
+	cLine03 := "{|| Iif( Len(aCols3) < 1, {}, "
+	cLine03 += " { aCols3[oGD03:nAt,1], "
+	cLine03 += "IIf(aCols3[oGD03:nAt,2],oOk,oNo),"
+	For ni := 3 to 11
+		cLine03 += "aCols3[oGD03:nAt," + cValToChar(ni) + "]" + IIf(ni < 11,",","")
+	Next n3
+	cLine03 += "} ) }"
+	
+	DEFINE MSDIALOG oTela TITLE "Tela de Pré-Processamento" FROM aCoord[1],aCoord[2] TO aCoord[3],aCoord[4] OF oMainWnd COLOR "W+/W" PIXEL
 
-		// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-		// 	_lRet     := .F.
-		// 	cMsgError := "Não foi possível  conectar ao banco integração"
-		// 	MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")	
-		// EndIf
+		oFolder:= TFolder():New(00, 01, aTitulo, aPages, oDlg,,,, .F., .F., 640, 260)
+		oFolder:Refresh()
 		
-		//TcSetConn(_nTcConn1) //fernando sigoli 01/05/2018
-
-		/*Cria as perguntas no SX1*/
-		AjustaSX1(cPerg)         
-		
-		/*Mostra a tela de perguntas*/
-		//Pergunte(cPerg,.T.) 
-		
-		If !Pergunte(cPerg,.T.)
-			Return Nil
-		EndIf
+		oArea:Init(oFolder:aDialogs[1] ,.F.)
+		oArea2:Init(oFolder:aDialogs[2] ,.F.)
+		oArea3:Init(oFolder:aDialogs[3] ,.F.)
 		
 		/*
-			Seta como DEFAULT o primeiro carregamento para criar todos os cabeçalhos devido ao problema 
-			de não conseguir dar o REFRESH na tela se não tiver um cabeçalho
+			Colunas
 		*/
-	//	mv_par01 := 4 /* Tabela */
-	//	mv_par02 := STOD("20161101") /* Período De */
-	//	mv_par03 := ddatabase /* Período Ate */
-	//	mv_par04 := " " /* Produto De */
-	//	mv_par05 := "ZZ" /* Produto Ate */
-	//	mv_par06 := 1 /* Status */
-	//	mv_par07 := 1 /* Tipo de Operação */
+		/*Painel 1*/
+		oArea:AddLine("L01",100 * nCoefDif,.T.)
+		oArea:AddCollumn("L01C01", LRG_COL01, .F., "L01")
+		oArea:AddCollumn("L01C02", LRG_COL02, .F., "L01")
+		oArea:AddCollumn("L01C03", LRG_COL03, .F., "L01")
+		
+		/*Painel 2*/
+		oArea2:AddLine("L02",100 * nCoefDif,.T.)
+		oArea2:AddCollumn("L02C01", LRG_COL01, .F., "L02")
+		oArea2:AddCollumn("L02C02", LRG_COL02, .F., "L02")
+		oArea2:AddCollumn("L02C03", LRG_COL03, .F., "L02")
+		
+		/*Painel 3*/
+		oArea3:AddLine("L03",100 * nCoefDif,.T.)
+		oArea3:AddCollumn("L03C01", LRG_COL01, .F., "L03")
+		oArea3:AddCollumn("L03C02", LRG_COL02, .F., "L03")
+		oArea3:AddCollumn("L03C03", LRG_COL03, .F., "L03")
+		
+		/*/////////////////////////////
+		Paineis
+		*//////////////////////////////
+		
+		/*Painel 1*/
+		oArea:AddWindow("L01C01", "L01C01P01", "Parâmetros", 100, .F., .F.,/*bAction*/, "L01",/*bGotFocus*/)
+		oPainel01 := oArea:GetWinPanel("L01C01","L01C01P01","L01")
+			
+		oArea:AddWindow("L01C02", "L01C02P01", "Dados adicionais", 100, .F., .F.,/*bAction*/, "L01",/*bGotFocus*/)
+		oPainel02 := oArea:GetWinPanel("L01C02","L01C02P01","L01")
+			
+		oArea:AddWindow("L01C03", "L01C03P01","Funções", 100, .F., .F.,/*bAction*/, "L01",/*bGotFocus*/)
+		oPainel03 := oArea:GetWinPanel("L01C03", "L01C03P01", "L01")
+		
+		/*Painel 2*/
+		oArea2:AddWindow("L02C01", "L02C01P01", "Parâmetros", 100, .F., .F.,/*bAction*/, "L02",/*bGotFocus*/)
+		oPainel201 := oArea2:GetWinPanel("L02C01","L02C01P01","L02")
+		
+		oArea2:AddWindow("L02C02", "L02C02P01", "Dados adicionais", 100, .F., .F.,/*bAction*/, "L02",/*bGotFocus*/)
+		oPainel202 := oArea2:GetWinPanel("L02C02","L02C02P01","L02")
+			
+		oArea2:AddWindow("L02C03", "L02C03P01","Funções", 100, .F., .F.,/*bAction*/, "L02",/*bGotFocus*/)
+		oPainel203 := oArea2:GetWinPanel("L02C03", "L02C03P01", "L02")
+		
+		/*Painel 3*/
+		oArea3:AddWindow("L03C01", "L03C01P01", "Parâmetros", 100, .F., .F.,/*bAction*/, "L03",/*bGotFocus*/)
+		oPainel301 := oArea3:GetWinPanel("L03C01","L03C01P01","L03")
+			
+		oArea3:AddWindow("L03C02", "L03C02P01", "Dados adicionais", 100, .F., .F.,/*bAction*/, "L03",/*bGotFocus*/)
+		oPainel302 := oArea3:GetWinPanel("L03C02","L03C02P01","L03")
+			
+		oArea3:AddWindow("L03C03", "L03C03P01","Funções", 100, .F., .F.,/*bAction*/, "L03",/*bGotFocus*/)
+		oPainel303 := oArea3:GetWinPanel("L03C03", "L03C03P01", "L03")
+	
+		/*/////////////////////////////////
+			Painel 01 - Filtros
+		*/////////////////////////////////
 
-		/*Seta Variáveis das perguntas*/
-		_nPerg1Tip := mv_par01 /* Tabela */
-		_dPerg2Dta := mv_par02 /* Período De */
-		_dPerg3Dta := mv_par03 /* Período Ate */
-		_cPerg4Pdt := mv_par04 /* Produto De */
-		_cPerg5Pdt := mv_par05 /* Produto Ate */
-		_cPerg6Sta := mv_par06 /* Status */
-		_cPerg7Ope := mv_par07 /* Tipo de Operação */
+		/*PERGUNTAS*/
+		U_DefTamObj(@aTamObj, 000, 000,(oPainel01:nClientHeight / 2) * 0.9, oPainel01:nClientWidth / 2)
+		oPainelS01 := tPanel():New(aTamObj[1], aTamObj[2], "", oPainel01,, .F., .F.,, CLR_WHITE, aTamObj[4], aTamObj[3], .T., .F.)			
+		Pergunte(cPerg, .T.,, .F., oPainel01,, @aPergunte, .T., .F.)
+			
+		/*BOTAO PESQUISA*/
+		U_DefTamObj(@aTamObj, (oPainel01:nClientHeight / 2) - nAltBot, 000, (oPainel01:nClientWidth / 2), nAltBot, .T.)
+		tButton():New(aTamObj[1], aTamObj[2], cHK + "Pesquisar", oPainel01,; 
+						{|| IIf(ADFIS005PB(cPerg, @aPergunte),;
+							MsAguarde({|| CursorWait(), ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303), ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+							Eval(bAtGD3,.T.,.T.), CursorArrow()}, "Pre-Processamento","Pesquisando",.F.),.F.)},;
+						aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.},/*When*/)
+		
+		/*////////////////////////////////////
+			Painel2 01 - Filtros
+		*////////////////////////////////////
 
+		/*PERGUNTAS*/
+		U_DefTamObj(@aTamObj, 000, 000,(oPainel201:nClientHeight / 2) * 0.9, oPainel201:nClientWidth / 2)
+		oPainelS02 := tPanel():New(aTamObj[1], aTamObj[2], "", oPainel201,, .F., .F.,, CLR_WHITE, aTamObj[4], aTamObj[3], .T., .F.)			
+		Pergunte(cPerg, .T.,, .F., oPainel201,, @aPergunte, .T., .F.)
+			
+		/*BOTAO PESQUISA*/
+		U_DefTamObj(@aTamObj, (oPainel201:nClientHeight / 2) - nAltBot, 000, (oPainel201:nClientWidth / 2), nAltBot, .T.)
+		tButton():New(aTamObj[1], aTamObj[2], cHK + "Pesquisar", oPainel201,; 
+						{|| IIf(ADFIS005PB(cPerg, @aPergunte),;
+							MsAguarde({|| CursorWait(), ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+							Eval(bAtGD3,.T.,.T.), ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303), CursorArrow()}, "Pre-Processamento","Pesquisando",.F.),.F.)},;
+						aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.},/*When*/)
+		
+		/*////////////////////////////////////
+			Painel3 01 - Filtros
+		*//////////////////////////////////////
 
-		/* Conecta no banco intermediário DBINTERFACE */
-		//TcSetConn(_nTcConn2)
+		/*PERGUNTAS*/
+		U_DefTamObj(@aTamObj, 000, 000,(oPainel301:nClientHeight / 2) * 0.9, oPainel301:nClientWidth / 2)
+		oPainelS03 := tPanel():New(aTamObj[1], aTamObj[2], "", oPainel301,, .F., .F.,, CLR_WHITE, aTamObj[4], aTamObj[3], .T., .F.)			
+		Pergunte(cPerg, .T.,, .F., oPainel301,, @aPergunte, .T., .F.)
+			
+		/*BOTAO PESQUISA*/
+		U_DefTamObj(@aTamObj, (oPainel301:nClientHeight / 2) - nAltBot, 000, (oPainel301:nClientWidth / 2), nAltBot, .T.)
+		tButton():New(aTamObj[1], aTamObj[2], cHK + "Pesquisar", oPainel301,;
+						{|| IIf(ADFIS005PB(cPerg, @aPergunte),;
+							MsAguarde({|| CursorWait(), ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+							Eval(bAtGD3,.T.,.T.), ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303), CursorArrow()}, "Pre-Processamento","Pesquisando",.F.),.F.)},;
+						aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.},/*When*/)	
+			
+		/*/////////////////////////////////////
+			Painel 02 - Lista de dados
+		*/////////////////////////////////////
+		oGD01:= TCBrowse():New(000, 000, 000, 000,/*bLine*/, {' ', ' ', 'C2_FILIAL', 'C2_PRODUTO', 'C2_QUANT', 'C2_LOCAL', 'C2_CC', 'C2_EMISSAO', 'C2_NUM', 'C2_ITEM', 'C2_SEQUEN', 'C2_REVISAO', 'STATUS_INT', 'OPERACAO_INT', 'R_E_C_N_O_'},, oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
+		oGD01:bHeaderClick	:= { |oObj,nCol| ADFIS005PD(16, @aCols, @oGD01, 1, Len(aCols), 1), oGD01:Refresh() }
+		oGD01:blDblClick	:= { || ADFIS005PD(16, @aCols, @oGD01, oGD01:nAt, oGD01:nAt, 1), oGD01:Refresh() }
+		oGD01:Align 		:= CONTROL_ALIGN_ALLCLIENT
+		Eval(bAtGD,.T.,.F.)
 		
+		/*///////////////////////////////////////
+			Painel2 02 - Lista de dados
+		*///////////////////////////////////////
+		oGD02:= TCBrowse():New(000, 000, 000, 000,/*bLine*/, {' ', ' ', 'D3_FILIAL', 'D3_TM', 'D3_COD', 'D3_QUANT', 'D3_LOCAL', 'D3_CC', 'D3_EMISSAO', 'D3_OP', 'D3_NUMSEQ', 'D3_CUSTO1', 'D3_PARCTOT', 'STATUS_INT', 'OPERACAO_INT', 'R_E_C_N_O_'},, oPainel202,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
+		oGD02:bHeaderClick	:= { |oObj,nCol| ADFIS005PD(17, @aCols2, @oGD02, 1, Len(aCols2), 2), oGD02:Refresh() }
+		oGD02:blDblClick	:= { || ADFIS005PD(17, @aCols2, @oGD02, oGD02:nAt, oGD02:nAt, 2), oGD02:Refresh() }
+		oGD02:Align 		:= CONTROL_ALIGN_ALLCLIENT
+		Eval(bAtGD2,.T.,.F.)
+					
+		/*////////////////////////////////////////
+			Painel3 02 - Lista de dados
+		*///////////////////////////////////////
+		oGD03:= TCBrowse():New(000, 000, 000, 000,/*bLine*/, {' ', ' ', 'B7_FILIAL', 'B7_COD', 'B7_QUANT', 'B7_LOCAL', 'B7_DATA', 'B7_DOC', 'STATUS_INT', 'OPERACAO_INT', 'R_E_C_N_O_'},, oPainel302,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
+		oGD03:bHeaderClick	:= { |oObj,nCol| ADFIS005PD(12, @aCols3, @oGD03, 1, Len(aCols3), 3), oGD03:Refresh() }
+		oGD03:blDblClick	:= { || ADFIS005PD(12, @aCols3, @oGD03, oGD03:nAt, oGD03:nAt, 3), oGD01:Refresh() }
+		oGD03:Align 		:= CONTROL_ALIGN_ALLCLIENT
+		Eval(bAtGD3,.T.,.F.)
+			
+		/*//////////////////////////////////
+			Painel1 03 - Funcoes
+		*///////////////////////////////////
+		U_DefTamObj(@aTamObj, 000, 000, (oPainel03:nClientWidth / 2), nAltBot, .T.)
 		
-		/* Executa a função para buscar as informações e carregar os arrays para serem usados nos grids */
-		ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs)	
+		/*Guarda as posições iniciais do painel 3 para ser usado quando for ter que criar os botões novamente após uma pesquisa ter sido efetuada no painel 1*/
+		_aPosicoes := aTamObj 
+		
+		/*Processamento*/			
+		U_DefTamObj(@aTamObj, 000, 000, (oPainel03:nClientWidth / 2), nAltBot, .T.)
+		_oBtn1Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel03,;
+									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 1, .F.),;
+										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
+									aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
+		
+		/*Soma no array de posicionamento o espacamento do botão Estorno*/
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Estorno*/
+		_oBtn2Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel03,;
+										{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 1, .T.),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
+											aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
+		
+		/*Soma no array de posicionamento o espacamento do botão Visualizar*/
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Visualizar*/
+		_oBtn3Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Visualização", oPainel03,{|| ADFIS005PE(aReqs, oGD01:nAt) }, aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
+		
+		/*Soma no array de posicionamento o espacamento do botão LimparDados*/
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Limpa Dados*/
+		_oBtn4Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Limpar Dados", oPainel03, ;
+										{|| IIf(ADFIS005PH(1, @aCols, @aCols2, @aCols3),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Excluindo dados","Limpando",.F.),.F.)},;
+											aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
+		
+		/*///////////////////////////////////////
+			Painel2 03 - Funcoes
+		*///////////////////////////////////////
+		
+		/*Soma no array de posicionamento o espacamento do botão Processamento*/
+		U_DefTamObj(@aTamObj, 000, 000, (oPainel203:nClientWidth / 2), nAltBot, .T.)
 
-		
-		/*
-			Montar o codeblock para montar as listas de dados da GD  
-		*/
-		cLine01 := "{|| Iif( Len(aCols) < 1, {}, "
-		cLine01 += " { aCols[oGD01:nAt,1], "
-		cLine01 += "IIf(aCols[oGD01:nAt,2],oOk,oNo),"
-		For ni := 3 to 15
-			cLine01 += "aCols[oGD01:nAt," + cValToChar(ni) + "]" + IIf(ni < 15,",","")
-		Next ni
-		cLine01 += "} ) }"
-		
-		cLine02 := "{|| Iif( Len(aCols2) < 1, {}, "
-		cLine02 += " { aCols2[oGD02:nAt,1], "
-		cLine02 += "IIf(aCols2[oGD02:nAt,2],oOk,oNo),"
-		For ni := 3 to 16
-			cLine02 += "aCols2[oGD02:nAt," + cValToChar(ni) + "]" + IIf(ni < 16,",","")
-		Next ni
-		cLine02 += "} ) }"
-		
-		cLine03 := "{|| Iif( Len(aCols3) < 1, {}, "
-		cLine03 += " { aCols3[oGD03:nAt,1], "
-		cLine03 += "IIf(aCols3[oGD03:nAt,2],oOk,oNo),"
-		For ni := 3 to 11
-			cLine03 += "aCols3[oGD03:nAt," + cValToChar(ni) + "]" + IIf(ni < 11,",","")
-		Next n3
-		cLine03 += "} ) }"
-		
-		
-		DEFINE MSDIALOG oTela TITLE "Tela de Pré-Processamento" FROM aCoord[1],aCoord[2] TO aCoord[3],aCoord[4] OF oMainWnd COLOR "W+/W" PIXEL
-
-			oFolder:= TFolder():New(00, 01, aTitulo, aPages, oDlg,,,, .F., .F., 640, 260)
-			oFolder:Refresh()
-			
-			oArea:Init(oFolder:aDialogs[1] ,.F.)
-			oArea2:Init(oFolder:aDialogs[2] ,.F.)
-			oArea3:Init(oFolder:aDialogs[3] ,.F.)
-			
-			
-			/*
-				Colunas
-			*/
-			/*Painel 1*/
-			oArea:AddLine("L01",100 * nCoefDif,.T.)
-			oArea:AddCollumn("L01C01", LRG_COL01, .F., "L01")
-			oArea:AddCollumn("L01C02", LRG_COL02, .F., "L01")
-			oArea:AddCollumn("L01C03", LRG_COL03, .F., "L01")
-			
-			/*Painel 2*/
-			oArea2:AddLine("L02",100 * nCoefDif,.T.)
-			oArea2:AddCollumn("L02C01", LRG_COL01, .F., "L02")
-			oArea2:AddCollumn("L02C02", LRG_COL02, .F., "L02")
-			oArea2:AddCollumn("L02C03", LRG_COL03, .F., "L02")
-			
-			/*Painel 3*/
-			oArea3:AddLine("L03",100 * nCoefDif,.T.)
-			oArea3:AddCollumn("L03C01", LRG_COL01, .F., "L03")
-			oArea3:AddCollumn("L03C02", LRG_COL02, .F., "L03")
-			oArea3:AddCollumn("L03C03", LRG_COL03, .F., "L03")
-			
-			
-			
-			/*
-				Paineis
-			*/
-			/*Painel 1*/
-			oArea:AddWindow("L01C01", "L01C01P01", "Parâmetros", 100, .F., .F.,/*bAction*/, "L01",/*bGotFocus*/)
-			oPainel01 := oArea:GetWinPanel("L01C01","L01C01P01","L01")
-				
-			oArea:AddWindow("L01C02", "L01C02P01", "Dados adicionais", 100, .F., .F.,/*bAction*/, "L01",/*bGotFocus*/)
-			oPainel02 := oArea:GetWinPanel("L01C02","L01C02P01","L01")
-				
-			oArea:AddWindow("L01C03", "L01C03P01","Funções", 100, .F., .F.,/*bAction*/, "L01",/*bGotFocus*/)
-			oPainel03 := oArea:GetWinPanel("L01C03", "L01C03P01", "L01")
-			
-			/*Painel 2*/
-			oArea2:AddWindow("L02C01", "L02C01P01", "Parâmetros", 100, .F., .F.,/*bAction*/, "L02",/*bGotFocus*/)
-			oPainel201 := oArea2:GetWinPanel("L02C01","L02C01P01","L02")
-			
-			oArea2:AddWindow("L02C02", "L02C02P01", "Dados adicionais", 100, .F., .F.,/*bAction*/, "L02",/*bGotFocus*/)
-			oPainel202 := oArea2:GetWinPanel("L02C02","L02C02P01","L02")
-				
-			oArea2:AddWindow("L02C03", "L02C03P01","Funções", 100, .F., .F.,/*bAction*/, "L02",/*bGotFocus*/)
-			oPainel203 := oArea2:GetWinPanel("L02C03", "L02C03P01", "L02")
-			
-			/*Painel 3*/
-			oArea3:AddWindow("L03C01", "L03C01P01", "Parâmetros", 100, .F., .F.,/*bAction*/, "L03",/*bGotFocus*/)
-			oPainel301 := oArea3:GetWinPanel("L03C01","L03C01P01","L03")
-				
-			oArea3:AddWindow("L03C02", "L03C02P01", "Dados adicionais", 100, .F., .F.,/*bAction*/, "L03",/*bGotFocus*/)
-			oPainel302 := oArea3:GetWinPanel("L03C02","L03C02P01","L03")
-				
-			oArea3:AddWindow("L03C03", "L03C03P01","Funções", 100, .F., .F.,/*bAction*/, "L03",/*bGotFocus*/)
-			oPainel303 := oArea3:GetWinPanel("L03C03", "L03C03P01", "L03")
-			
-			
-		
-			/*
-				Painel 01 - Filtros
-			*/
-			/*PERGUNTAS*/
-			U_DefTamObj(@aTamObj, 000, 000,(oPainel01:nClientHeight / 2) * 0.9, oPainel01:nClientWidth / 2)
-			oPainelS01 := tPanel():New(aTamObj[1], aTamObj[2], "", oPainel01,, .F., .F.,, CLR_WHITE, aTamObj[4], aTamObj[3], .T., .F.)			
-			Pergunte(cPerg, .T.,, .F., oPainel01,, @aPergunte, .T., .F.)
-				
-			/*BOTAO PESQUISA*/
-			U_DefTamObj(@aTamObj, (oPainel01:nClientHeight / 2) - nAltBot, 000, (oPainel01:nClientWidth / 2), nAltBot, .T.)
-			tButton():New(aTamObj[1], aTamObj[2], cHK + "Pesquisar", oPainel01,; 
-							{|| IIf(ADFIS005PB(cPerg, @aPergunte),;
-								MsAguarde({|| CursorWait(), ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303), ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-								Eval(bAtGD3,.T.,.T.), CursorArrow()}, "Pre-Processamento","Pesquisando",.F.),.F.)},;
-							aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.},/*When*/)
-				
-				
-			
-			/*
-				Painel2 01 - Filtros
-			*/
-			/*PERGUNTAS*/
-			U_DefTamObj(@aTamObj, 000, 000,(oPainel201:nClientHeight / 2) * 0.9, oPainel201:nClientWidth / 2)
-			oPainelS02 := tPanel():New(aTamObj[1], aTamObj[2], "", oPainel201,, .F., .F.,, CLR_WHITE, aTamObj[4], aTamObj[3], .T., .F.)			
-			Pergunte(cPerg, .T.,, .F., oPainel201,, @aPergunte, .T., .F.)
-				
-			/*BOTAO PESQUISA*/
-			U_DefTamObj(@aTamObj, (oPainel201:nClientHeight / 2) - nAltBot, 000, (oPainel201:nClientWidth / 2), nAltBot, .T.)
-			tButton():New(aTamObj[1], aTamObj[2], cHK + "Pesquisar", oPainel201,; 
-							{|| IIf(ADFIS005PB(cPerg, @aPergunte),;
-								MsAguarde({|| CursorWait(), ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-								Eval(bAtGD3,.T.,.T.), ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303), CursorArrow()}, "Pre-Processamento","Pesquisando",.F.),.F.)},;
-							aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.},/*When*/)
-		
-			
-			
-			/*
-				Painel3 01 - Filtros
-			*/
-			/*PERGUNTAS*/
-			U_DefTamObj(@aTamObj, 000, 000,(oPainel301:nClientHeight / 2) * 0.9, oPainel301:nClientWidth / 2)
-			oPainelS03 := tPanel():New(aTamObj[1], aTamObj[2], "", oPainel301,, .F., .F.,, CLR_WHITE, aTamObj[4], aTamObj[3], .T., .F.)			
-			Pergunte(cPerg, .T.,, .F., oPainel301,, @aPergunte, .T., .F.)
-				
-			/*BOTAO PESQUISA*/
-			U_DefTamObj(@aTamObj, (oPainel301:nClientHeight / 2) - nAltBot, 000, (oPainel301:nClientWidth / 2), nAltBot, .T.)
-			tButton():New(aTamObj[1], aTamObj[2], cHK + "Pesquisar", oPainel301,;
-							{|| IIf(ADFIS005PB(cPerg, @aPergunte),;
-								MsAguarde({|| CursorWait(), ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-								Eval(bAtGD3,.T.,.T.), ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303), CursorArrow()}, "Pre-Processamento","Pesquisando",.F.),.F.)},;
-							aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.},/*When*/)	
-			
-				
-			/*
-				Painel 02 - Lista de dados
-			*/		
-			oGD01:= TCBrowse():New(000, 000, 000, 000,/*bLine*/, {' ', ' ', 'C2_FILIAL', 'C2_PRODUTO', 'C2_QUANT', 'C2_LOCAL', 'C2_CC', 'C2_EMISSAO', 'C2_NUM', 'C2_ITEM', 'C2_SEQUEN', 'C2_REVISAO', 'STATUS_INT', 'OPERACAO_INT', 'R_E_C_N_O_'},, oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
-			oGD01:bHeaderClick	:= { |oObj,nCol| ADFIS005PD(16, @aCols, @oGD01, 1, Len(aCols), 1), oGD01:Refresh() }
-			oGD01:blDblClick	:= { || ADFIS005PD(16, @aCols, @oGD01, oGD01:nAt, oGD01:nAt, 1), oGD01:Refresh() }
-			oGD01:Align 		:= CONTROL_ALIGN_ALLCLIENT
-			Eval(bAtGD,.T.,.F.)
-			
-			
-			/*
-				Painel2 02 - Lista de dados
-			*/
-			oGD02:= TCBrowse():New(000, 000, 000, 000,/*bLine*/, {' ', ' ', 'D3_FILIAL', 'D3_TM', 'D3_COD', 'D3_QUANT', 'D3_LOCAL', 'D3_CC', 'D3_EMISSAO', 'D3_OP', 'D3_NUMSEQ', 'D3_CUSTO1', 'D3_PARCTOT', 'STATUS_INT', 'OPERACAO_INT', 'R_E_C_N_O_'},, oPainel202,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
-			oGD02:bHeaderClick	:= { |oObj,nCol| ADFIS005PD(17, @aCols2, @oGD02, 1, Len(aCols2), 2), oGD02:Refresh() }
-			oGD02:blDblClick	:= { || ADFIS005PD(17, @aCols2, @oGD02, oGD02:nAt, oGD02:nAt, 2), oGD02:Refresh() }
-			oGD02:Align 		:= CONTROL_ALIGN_ALLCLIENT
-			Eval(bAtGD2,.T.,.F.)
-				
-			
-			/*
-				Painel3 02 - Lista de dados
-			*/
-			oGD03:= TCBrowse():New(000, 000, 000, 000,/*bLine*/, {' ', ' ', 'B7_FILIAL', 'B7_COD', 'B7_QUANT', 'B7_LOCAL', 'B7_DATA', 'B7_DOC', 'STATUS_INT', 'OPERACAO_INT', 'R_E_C_N_O_'},, oPainel302,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
-			oGD03:bHeaderClick	:= { |oObj,nCol| ADFIS005PD(12, @aCols3, @oGD03, 1, Len(aCols3), 3), oGD03:Refresh() }
-			oGD03:blDblClick	:= { || ADFIS005PD(12, @aCols3, @oGD03, oGD03:nAt, oGD03:nAt, 3), oGD01:Refresh() }
-			oGD03:Align 		:= CONTROL_ALIGN_ALLCLIENT
-			Eval(bAtGD3,.T.,.F.)
-				
-				
-			/*
-				Painel1 03 - Funcoes
-			*/
-			/* 
-				_nPerg1Tip: 1=OPR; 2=MOV; 3=INV; 4=TODOS
-				_cPerg6Sta: 1=Integrado; 2=Processado; 3=Erro
-				_cPerg7Ope: 1=Inclusão; 2=Alteração; 3=Exclusão	
-			*/
-			
-			U_DefTamObj(@aTamObj, 000, 000, (oPainel03:nClientWidth / 2), nAltBot, .T.)
-			
-			/*Guarda as posições iniciais do painel 3 para ser usado quando for ter que criar os botões novamente após uma pesquisa ter sido efetuada no painel 1*/
-			_aPosicoes := aTamObj 
-			
-			
-			/*Processamento*/			
-			U_DefTamObj(@aTamObj, 000, 000, (oPainel03:nClientWidth / 2), nAltBot, .T.)
-			_oBtn1Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel03,;
-										{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 1, .F.),;
+		/*Processamento*/			
+		_oBtn1Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel203,;
+										{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 2, .F.),;
 											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
 											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
 										aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-			
-			
-			/*Soma no array de posicionamento o espacamento do botão Estorno*/
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Estorno*/
-			_oBtn2Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel03,;
-											{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 1, .T.),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-			
-			/*Soma no array de posicionamento o espacamento do botão Visualizar*/
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Visualizar*/
-			_oBtn3Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Visualização", oPainel03,{|| ADFIS005PE(aReqs, oGD01:nAt) }, aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
+		
+		/*Soma no array de posicionamento o espacamento do botão Estorno*/
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Estorno*/
+		_oBtn2Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel203,;
+										{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 2, .T.),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
+										aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
 
-			
-			/*Soma no array de posicionamento o espacamento do botão LimparDados*/
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Limpa Dados*/
-			_oBtn4Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Limpar Dados", oPainel03, ;
-											{|| IIf(ADFIS005PH(1, @aCols, @aCols2, @aCols3),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Excluindo dados","Limpando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
-			
-			
-			
-			/*
-				Painel2 03 - Funcoes
-			*/
-			/*Soma no array de posicionamento o espacamento do botão Processamento*/
-			U_DefTamObj(@aTamObj, 000, 000, (oPainel203:nClientWidth / 2), nAltBot, .T.)
+		/*Soma no array de posicionamento o espacamento do botão LimparDados*/
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Limpa Dados*/
+		_oBtn3Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Limpar Dados", oPainel203, ;
+										{|| IIf(ADFIS005PH(2, @aCols, @aCols2, @aCols3),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Excluindo dados","Limpando",.F.),.F.)},;
+										aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
 
-			/*Processamento*/			
-			_oBtn1Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel203,;
-											{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 2, .F.),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-											
-			
-			/*Soma no array de posicionamento o espacamento do botão Estorno*/
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Estorno*/
-			_oBtn2Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel203,;
-											{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 2, .T.),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
+		/*/////////////////////////////////
+			Painel3 03 - Funcoes
+		*/////////////////////////////////
 
-			/*Soma no array de posicionamento o espacamento do botão LimparDados*/
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Limpa Dados*/
-			_oBtn3Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Limpar Dados", oPainel203, ;
-											{|| IIf(ADFIS005PH(2, @aCols, @aCols2, @aCols3),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Excluindo dados","Limpando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
+		/*Soma no array de posicionamento o espacamento do botão Processamento*/
+		U_DefTamObj(@aTamObj, 000, 000, (oPainel303:nClientWidth / 2), nAltBot, .T.)
+		
+		/*Processamento*/			
+		_oBtn1Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel303,;
+										{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 3, .F.),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
+										aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
 
+		/*Soma no array de posicionamento o espacamento do botão Estorno*/	
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Estorno*/
+		_oBtn2Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel303,;
+										{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 3, .T.),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
+										aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
 
-			/*
-				Painel3 03 - Funcoes
-			*/
-			/*Soma no array de posicionamento o espacamento do botão Processamento*/
-			U_DefTamObj(@aTamObj, 000, 000, (oPainel303:nClientWidth / 2), nAltBot, .T.)
-			
-			/*Processamento*/			
-			_oBtn1Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel303,;
-											{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 3, .F.),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
+		/*Soma no array de posicionamento o espacamento do botão LimparDados*/
+		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
+		
+		/*Limpa Dados*/
+		_oBtn3Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Limpar Dados", oPainel303, ;
+										{|| IIf(ADFIS005PH(3, @aCols, @aCols2, @aCols3),;
+											MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
+											Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Excluindo dados","Limpando",.F.),.F.)},;
+										aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
+		
+		/*Ajusta a visibilidade dos botões de processamento/estorno/visualização do painel 3 para todas as opções(OPR, MOV, INV)*/
+		/*
+			Parâmetros
+					³ aParam[1]  	:[A] aCols   	- Array com as informações da tabela SGOPR010 no do grid 1 (Produção)						
+					³ aParam[2]  	:[A] aCols2  	- Array com as informações da tabela SGMOV010 no do grid 2 (Movimentos)					
+					³ aParam[3]  	:[A] aCols3  	- Array com as informações da tabela SGINV010 no do grid 3 (Inventário)					
+					³ aParam[4]  	:[A] aReqs   	- Array com as informações da tabela SGREQ010 no do grid 3 (Requisições)					
+					³ aParam[5]  	:[B] bAtGD   	- Bloco de código executado para atualizar o grid das OPRs no painel 2					
+					³ aParam[6]  	:[B] bAtGD2  	- Bloco de código executado para atualizar o grid das MOVs no painel 2					
+					³ aParam[7]  	:[B] bAtGD3  	- Bloco de código executado para atualizar o grid das INVs no painel 2					
+					³ aParam[8]  	:[O] oArea  	- Objeto utilizado para a Area 1 do painel 3 dos botões de processamento das OPRs		
+					³ aParam[9]  	:[O] oArea2 	- Objeto utilizado para a Area 2 do painel 3 dos botões de processamento das MOVs		
+					³ aParam[10]  	:[O] oArea3 	- Objeto utilizado para a Area 3 do painel 3 dos botões de processamento das INVs		
+					³ aParam[11]  	:[O] oPainel03 	- Objeto utilizado para o painel 3 dos itens OPRs e REQs da tela de Processamento		
+					³ aParam[12]  	:[O] oPainel203	- Objeto utilizado para o painel 3 dos itens MOVs da tela de Processamento				
+					³ aParam[13]  	:[O] oPainel303	- Objeto utilizado para o painel 3 dos itens INVs da tela de Processamento
+		*/				
+		ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303)
 
+		/*///////////////////////////////
+			Botões Gerais
+		*////////////////////////////////
+		@ 261,510 TO 280,650 LABEL "Botões Gerais" OF oDlg PIXEL
 
-			/*Soma no array de posicionamento o espacamento do botão Estorno*/	
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Estorno*/
-			_oBtn2Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel303,;
-											{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 3, .T.),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
+		/*Sair*/
+		tButton():New(268, 550, cHK + "Sair", oTela, {|| oTela:End() }, 40, 10,,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
+		
+		/*Legenda*/			
+		tButton():New(268, 600, cHK + "Legenda", oTela,{|| Legenda()}, 40, 10,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
 
-
-			/*Soma no array de posicionamento o espacamento do botão LimparDados*/
-			U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-			
-			/*Limpa Dados*/
-			_oBtn3Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Limpar Dados", oPainel303, ;
-											{|| IIf(ADFIS005PH(3, @aCols, @aCols2, @aCols3),;
-												MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-												Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Excluindo dados","Limpando",.F.),.F.)},;
-											aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
-			
-			
-			/*Ajusta a visibilidade dos botões de processamento/estorno/visualização do painel 3 para todas as opções(OPR, MOV, INV)*/
-			/*
-				Parâmetros
-						³ aParam[1]  	:[A] aCols   	- Array com as informações da tabela SGOPR010 no do grid 1 (Produção)						
-						³ aParam[2]  	:[A] aCols2  	- Array com as informações da tabela SGMOV010 no do grid 2 (Movimentos)					
-						³ aParam[3]  	:[A] aCols3  	- Array com as informações da tabela SGINV010 no do grid 3 (Inventário)					
-						³ aParam[4]  	:[A] aReqs   	- Array com as informações da tabela SGREQ010 no do grid 3 (Requisições)					
-						³ aParam[5]  	:[B] bAtGD   	- Bloco de código executado para atualizar o grid das OPRs no painel 2					
-						³ aParam[6]  	:[B] bAtGD2  	- Bloco de código executado para atualizar o grid das MOVs no painel 2					
-						³ aParam[7]  	:[B] bAtGD3  	- Bloco de código executado para atualizar o grid das INVs no painel 2					
-						³ aParam[8]  	:[O] oArea  	- Objeto utilizado para a Area 1 do painel 3 dos botões de processamento das OPRs		
-						³ aParam[9]  	:[O] oArea2 	- Objeto utilizado para a Area 2 do painel 3 dos botões de processamento das MOVs		
-						³ aParam[10]  	:[O] oArea3 	- Objeto utilizado para a Area 3 do painel 3 dos botões de processamento das INVs		
-						³ aParam[11]  	:[O] oPainel03 	- Objeto utilizado para o painel 3 dos itens OPRs e REQs da tela de Processamento		
-						³ aParam[12]  	:[O] oPainel203	- Objeto utilizado para o painel 3 dos itens MOVs da tela de Processamento				
-						³ aParam[13]  	:[O] oPainel303	- Objeto utilizado para o painel 3 dos itens INVs da tela de Processamento
-			*/				
-			ADFIS005PG(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, oPainel03, oPainel203, oPainel303)
-
-
-			/*
-				Botões Gerais
-			*/
-			@ 261,510 TO 280,650 LABEL "Botões Gerais" OF oDlg PIXEL
-				/*Processamento*/
-				// tButton():New(268, 440, cHK + "Processamento", oTela,;
-				// 							{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 4, .F.),;
-				// 								MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-				// 								Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando todos os itens selecionados",.F.),.F.)},;
-				// 							50, 10,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-				
-				// /*Estorno*/
-				// tButton():New(268, 500, cHK + "Estorno", oTela,;
-				// 							{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 4, .T.),;
-				// 								MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-				// 								Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando todos os itens selecionados",.F.),.F.)},;
-				// 							40, 10 ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-				
-				/*Sair*/
-				tButton():New(268, 550, cHK + "Sair", oTela, {|| oTela:End() }, 40, 10,,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
-				
-				/*Legenda*/			
-				tButton():New(268, 600, cHK + "Legenda", oTela,{|| Legenda()}, 40, 10,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-
-		oTela:Activate(,,,.T.,/*valid*/,,{|| .T.})
-
-	//TcSetConn(_nTcConn1)
+	oTela:Activate(,,,.T.,/*valid*/,,{|| .T.})
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 	//³Destrava a rotina para o usuário	    ?
@@ -569,14 +499,6 @@ Static Function ADFIS005PA(cAliasT, nOpc)
 	Default cAliasT := ""	/*Descrição do parâmetro conforme cabeçalho*/
 	Default nOpc 	:= 0	/*Descrição do parâmetro conforme cabeçalho*/
 
-
-	/* Conecta no banco intermediário DBINTERFACE */
-	// If !TcSetConn(_nTcConn2)
-	// 	If ( _nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2) ) < 0
-	// 		MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")	
-	// 	EndIf
-	// Endif
-	
 	DO CASE
 		CASE _cPerg7Ope == 1
 			cOPERACAO := "I"
@@ -689,8 +611,8 @@ Static Function ADFIS005PA(cAliasT, nOpc)
 		AADD(aCampos, {"B7_FILIAL", "B7_COD", "B7_QUANT", "B7_LOCAL", "DATA", "B7_DOC", "STATUS_INT", "OPERACAO_INT", "R_E_C_N_O_"})
 	EndIf
 
-
 Return aCampos
+
 /*/{Protheus.doc} ADFIS005PB 
 	Funcao para ajustar/atualizar as perguntas no SX1	e as variáveis privates que controlam os valores das perguntas
 	 aParam[1]  	:[C] cPerg      - Nome da pergunta relacionada ao fonte no SX1									
@@ -704,7 +626,7 @@ Return aCampos
 	@author Leonardo Rios
 	@since 13/12/2016
 	@version 01
-	/*/
+/*/
 Static Function ADFIS005PB(cPerg,aPergunte)
 
 	Local lRet 	:= .T.
@@ -720,6 +642,7 @@ Static Function ADFIS005PB(cPerg,aPergunte)
 	ResetMVRange()
 	
 	For ni := 1 to Len(aPergunte)
+
 		/*Inicializar as perguntas c/ array caso existam diferencas, para as validacoes*/
 		Do Case
 			Case AllTrim(aPergunte[ni][POS_X1OBJ]) == "C"
@@ -736,6 +659,7 @@ Static Function ADFIS005PB(cPerg,aPergunte)
 			MsgAlert(cNomeUs + ", inconsistência na pergunta " + StrZero(ni,2) + " (" + StrTran(AllTrim(Capital(aPergunte[ni][POS_X1DES])),"?","") + ")")
 			Return !lRet
 		Endif
+
 	Next ni
 	
 	_nPerg1Tip := mv_par01 /* Tabela */
@@ -746,8 +670,8 @@ Static Function ADFIS005PB(cPerg,aPergunte)
 	_cPerg6Sta := mv_par06 /* Status */
 	_cPerg7Ope := mv_par07 /* Tipo de Operação */
 
-
 Return lRet
+
 /*/{Protheus.doc} ADFIS005PC 
 	Funcao para ajustar/atualizar as perguntas no SX1	e as variáveis privates que controlam os valores das perguntas
 	aParam[1]  	:[A] aCols   - Array com as informações da tabela SGOPR010 no do grid 1 (Produção)				
@@ -762,7 +686,7 @@ Return lRet
 	@author Leonardo Rios
 	@since 13/12/2016
 	@version 01
-	/*/
+/*/
 Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta função devem ser passados por referência */
 
 	Local oWhite	:= LoadBitmap( GetResources(), "BR_BRANCO")	/*Cor para ser usada em valores default dos arrays quando estiverem vazios*/
@@ -796,8 +720,6 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 	Local oGreen   	:= LoadBitmap( GetResources(), "BR_VERDE")
 	Local oRed    	:= LoadBitmap( GetResources(), "BR_VERMELHO")
 
-
-	
 	/*Verifica a condição das perguntas para efetuar a busca na base de dados e preencher na tela*/
 	If(_nPerg1Tip == 4)
 		nFORIni := 1 
@@ -813,10 +735,10 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 	
 		aRet := ADFIS005PA(@cAliasT, nPos) /*Função retornará as colunas que foram pegas na query*/
 		
-		(cAliasT)->(dbGoTop())
+		(cAliasT)->( dbGoTop() )
 		
 		aValores := {}
-		Do While !(cAliasT)->(Eof())
+		Do While !(cAliasT)->( EOF() )
 			
 			DO CASE
 				CASE EMPTY(ALLTRIM((cAliasT)->MSEXP))
@@ -829,11 +751,14 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 					xCor := oGray
 			ENDCASE
 			
-			AADD(aValores,	{ xCor, .F. })
+			AADD( aValores, { xCor, .F. } )
 			
 			For x:=1 To Len(aRet[1])
+
 				If aRet[1,x] == "STATUS_INT"
+
 					DO CASE
+
 						CASE EMPTY(ALLTRIM((cAliasT)->MSEXP))
 							AADD( aValores[Len(aValores)], "Integrado" )                 
 							
@@ -845,10 +770,13 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 							
 						OTHERWISE
 							AADD( aValores[Len(aValores)], "" )
+
 					ENDCASE
 					
 				ElseIf aRet[1,x] == "OPERACAO_INT"
+
 					DO CASE
+
 						CASE (cAliasT)->OPERACAO_INT == "I"
 							AADD( aValores[Len(aValores)], "Inclusão" )
 							
@@ -860,13 +788,17 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 							
 						OTHERWISE
 							AADD( aValores[Len(aValores)], "" )
+
 					ENDCASE
+
 				Else
 					AADD( aValores[Len(aValores)], (cAliasT)->&(aRet[1,x]) )
 				EndIf
+
 			Next x
 			
 			DO CASE
+
 				CASE nPos == 1		/* nPos é será igual ao _nPerg1Tip escolhido na pergunta 1 */
 					AADD( aValores[Len(aValores)], .F. )
 					
@@ -912,19 +844,15 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 		EndDo
 		
 		U_FecArTMP(cAliasT)
+
 	Next nPos
-	
-	
+		
 	/*Caso não retorne nenhum item da query, será preenchido com valores vazios, senão receberá os arrays com os valores*/	
 	aCols 	:= IIF(Len(aOPRs) < 1, aDefOPR, aOPRs)
-
 	aCols2	:= IIF(Len(aMOVs) < 1, aDefMOV, aMOVs)
-
 	aCols3	:= IIF(Len(aINVs) < 1, aDefINV, aINVs)
-
 	aReqs	:= IIF(Len(aSGREQ010) < 1, {}, aSGREQ010)
 	
-
 	mv_par01 := _nPerg1Tip /* Tabela */
 	mv_par02 := _dPerg2Dta /* Período De */ 
 	mv_par03 := _dPerg3Dta /* Período Ate */
@@ -936,6 +864,7 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 	_ItensSlec := {{}, {}, {}}
 
 Return Nil
+
 /*/{Protheus.doc} ADFIS005PD 
 	Funcao para selecionar todos os itens do grid passado como parâmetro							
 	aParam[1]  	:[N] nDelete 	- Posição da coluna para verificar se o item do grid está deletado	
@@ -952,15 +881,11 @@ Return Nil
 	@author Leonardo Rios
 	@since 14/12/2016
 	@version 01
-	/*/
+/*/
 Static Function ADFIS005PD(nDelete, aDados, oGrid, nPosIni, nPosFim, nTipo) /* Os parâmetros 2 e 3 devem ser passados po referência */
 
 	Local cFirstCond:= ""
 	Local cSeconCond:= ""
-	//Local bProcess	:= {|lInc, nTipo, nLin| IIF(lInc, 	( AADD(_ItensSlec[nTipo], nLin)),;  
-	//													( ADel(_ItensSlec, _ItensSlec[nTipo][x]), ASize(_ItensSlec, Len(_ItensSlec)-1)	) 	)}
-	//Local bProcess2	:= {|lInc, nTipo, nLin| IIF(lInc, 	( AADD(_ItensSlec[nTipo], 0)			 , AIns(_ItensSlec[nTipo], x)			),;  
-	//									 				( ADel(_ItensSlec, _ItensSlec[nTipo][x]), ASize(_ItensSlec, Len(_ItensSlec)-1)	) 	)}
 	Local nLocal	:= 1	/* Variável para controle de inserção na variável _ItensSlec */
 
 	Local oWhite	:= LoadBitmap( GetResources(), "BR_BRANCO")	/*Cor para ser usada em valores default dos arrays quando estiverem vazios*/
@@ -972,6 +897,7 @@ Static Function ADFIS005PD(nDelete, aDados, oGrid, nPosIni, nPosFim, nTipo) /* O
 
 
 	For nLin := nPosIni To nPosFim
+
 		If !aDados[nLin][nDelete] .AND. aDados[nLin][1] <> oWhite
 			aDados[nLin][2] := !aDados[nLin][2]
 		EndIf
@@ -980,29 +906,6 @@ Static Function ADFIS005PD(nDelete, aDados, oGrid, nPosIni, nPosFim, nTipo) /* O
 			Variável _ItensSlec para controle dos itens selecionados pegando suas linhas para facilitar no processamento
 		*/
 		If Len(_ItensSlec[nTipo]) > 0	/*Se a variável _ItensSlec já tiver sido preenchida eu verifico onde eu devo inserir o novo item selecionado*/
-		
-	//											   /*Se foi um item selecionado*/  						/*Se foi um item deselecionado*/
-	//			cFirstCond := IIF(aDados[nLin][2], "_ItensSlec[nTipo][Len(_ItensSlec[nTipo])] < nLin", "_ItensSlec[nTipo][Len(_ItensSlec[nTipo])] == nLin")	
-	//			
-	//											   /*Se foi um item selecionado*/  	/*Se foi um item deselecionado*/
-	//			cSeconCond := IIF(aDados[nLin][2], "_ItensSlec[nTipo][x] < nLin", 	"_ItensSlec[nTipo][x] == nLin")
-	//			
-	//				
-	//			If &(cFirstCond)  
-	//				
-	//				/* SELECIONADO = Se o último item item já for menor do que o selecionado já insiro na última posição */
-	//				/* DESELECIONADO = Se o último item item já for o que procuro já deleto o item */
-	//				Eval(bProcess, aDados[nLin][2], nTipo, nLin)
-	//				
-	//			Else		
-	//				For x:=1 To Len(_ItensSlec[nTipo])
-	//					If &(cSeconCond) 
-	//						Eval(bProcess2, aDados[nLin][2], nTipo, nLin)
-	//							
-	//						Exit
-	//					EndIf			
-	//				Next x
-	//			EndIf
 			
 			If aDados[nLin][2]	/*Se foi um item selecionado*/
 				/*
@@ -1023,7 +926,6 @@ Static Function ADFIS005PD(nDelete, aDados, oGrid, nPosIni, nPosFim, nTipo) /* O
 					AADD(_ItensSlec[nTipo], 0)
 					AIns(_ItensSlec[nTipo], nLocal)
 					_ItensSlec[nTipo][nLocal] := nLin
-					
 				EndIf
 				
 			Else 	/*Se foi um item deselecionado*/
@@ -1039,20 +941,19 @@ Static Function ADFIS005PD(nDelete, aDados, oGrid, nPosIni, nPosFim, nTipo) /* O
 							Exit
 						EndIf			
 					Next x
-				
 				EndIf				
-				
 			EndIf
-			
 		Else
 			AADD(_ItensSlec[nTipo], nLin)
 		EndIf
+	
 	Next x
 
 	/* Forcar a atualizacao do browse */
 	oGrid:DrawSelect()
 
 Return Nil
+
 /*/{Protheus.doc} ADFIS005PE 
 	Funcao criada para gerar a tela e apresentar as informações da tabela SGREQ010 referente ao item selecionado da tabela 
 	SGOPR010(Produções)																				       				 
@@ -1065,7 +966,7 @@ Return Nil
 	@author Leonardo Rios
 	@since 14/12/2016
 	@version 01
-	/*/
+/*/
 Static Function ADFIS005PE(aDados, nPos)
 
 	Local aValues 	:= {}
@@ -1129,9 +1030,11 @@ Static Function ADFIS005PF(aCols, aCols2, aCols3, nTipo, lEstorno) /* Os parâmet
 	Private _MsgMotivo := ""
 	
 		For y:=nIni To nFim
+
 			For x:=1 To Len(_ItensSlec[y])
 			
 				DO CASE				
+
 					CASE nTipo == 1
 					
 					 	cMsg := "FILIAL=" + ALLTRIM(aCols[_ItensSlec[y][x]][03]) + "; PRODUTO=" + ALLTRIM(aCols[_ItensSlec[y][x]][04]) +; 
@@ -1183,6 +1086,7 @@ Static Function ADFIS005PF(aCols, aCols2, aCols3, nTipo, lEstorno) /* Os parâmet
 							aCols = "D3_FILIAL", "D3_TM", "D3_COD", "D3_QUANT", "D3_LOCAL", "D3_CC", "EMISSAO", "D3_OP", "D3_NUMSEQ", "D3_CUSTO1", "D3_PARCTOT", "STATUS_INT", "OPERACAO_INT", "R_E_C_N_O_"  
 						*/
 						If lEstorno .OR. aCols2[_ItensSlec[y][x]][15] == "E"
+
 							lRet := U_ADFIS008P(	aCols2[_ItensSlec[y][x]][03] 	,; 
 													aCols2[_ItensSlec[y][x]][03]	,;										
 													{aCols2[_ItensSlec[y][x]][03]	,;
@@ -1201,6 +1105,7 @@ Static Function ADFIS005PF(aCols, aCols2, aCols3, nTipo, lEstorno) /* Os parâmet
 													 aCols2[_ItensSlec[y][x]][16]}	,;
 													 lEstorno							)
 						Else
+
 							lRet := U_ADFIS007P( 	aCols2[_ItensSlec[y][x]][03] 	,; 
 													aCols2[_ItensSlec[y][x]][03]	,;										
 													{aCols2[_ItensSlec[y][x]][03],;
@@ -1232,6 +1137,7 @@ Static Function ADFIS005PF(aCols, aCols2, aCols3, nTipo, lEstorno) /* Os parâmet
 							aCols = "B7_FILIAL", "B7_COD", "B7_QUANT", "B7_LOCAL", "DATA", "B7_DOC", "STATUS_INT", "OPERACAO_INT", "R_E_C_N_O_"  
 						*/
 						If lEstorno .OR. aCols3[_ItensSlec[y][x]][10] == "E"
+						
 							lRet := U_ADFIS009P( 	aCols3[_ItensSlec[y][x]][03]	,; 
 													aCols3[_ItensSlec[y][x]][03]	,;
 													{aCols3[_ItensSlec[y][x]][03],;
@@ -1243,6 +1149,7 @@ Static Function ADFIS005PF(aCols, aCols2, aCols3, nTipo, lEstorno) /* Os parâmet
 													 5								,;
 													 lEstorno							)
 						Else
+
 							lRet := U_ADFIS009P( 	aCols3[_ItensSlec[y][x]][03]	,; 
 													aCols3[_ItensSlec[y][x]][03]	,;
 													{aCols3[_ItensSlec[y][x]][03],;
@@ -1259,21 +1166,16 @@ Static Function ADFIS005PF(aCols, aCols2, aCols3, nTipo, lEstorno) /* Os parâmet
 					cMsgLog += " - Problema no " + IIF(lEstorno, "estorno", "processamento") + " do item: " + cMsg + _MsgMotivo + CHR(13) + CHR(10)
 				Else
 					If lEstorno
-						/* Conecta no banco intermediário DBINTERFACE */
-						//TcSetConn(_nTcConn2)
-						
 						TcSqlExec("UPDATE " + cTabela + " SET STATUS_INT=' ', OPERACAO_INT='A', D_E_L_E_T_='*' WHERE EMPRESA = '" + cValToChar(cEmpAnt) + "' AND R_E_C_N_O_ = " + ALLTRIM( STR(nRecDelet) ) ) //Everson - 24/06/2020. Chamado 058765.
 
 						If ALLTRIM(cTabela) == "SGOPR010"
 							TcSqlExec("UPDATE SGREQ010 SET STATUS_INT=' ', OPERACAO_INT='A', D_E_L_E_T_='*' WHERE EMPRESA = '" + cValToChar(cEmpAnt) + "' AND D3_OP = '" + aCols[_ItensSlec[y][x]][09] + aCols[_ItensSlec[y][x]][10] + aCols[_ItensSlec[y][x]][11] + "' AND D_E_L_E_T_=' ' " ) //Everson - 24/06/2020. Chamado 058765.
 						EndIf
-						
-						/* Desconecta no banco intermediário DBINTERFACE */
-						//TcUnLink(_nTcConn2)
 					EndIf
 				EndIf
 				
-			Next x			
+			Next x
+
 		Next y
 		
 		If !EMPTY( ALLTRIM(cMsgLog) )			
@@ -1305,124 +1207,22 @@ Return .T.
 	@author Leonardo Rios
 	@since 04/04/2017
 	@version 01
-	/*/
+/*/
 Static Function ADFIS005PG(aCols, aCols2, aCols3, aReqs, bAtGd, bAtGd2, bAtGd3, oArea, oArea2, oArea3, oPainel03, oPainel203, oPainel303)
 
-	//Local aTamObj := {0, 0, 53, 13} //_aPosicoes /*Variável para controlar a posição dos botões*/
-
-	//Local oPainel03	:= Nil	/*Painel 3 dos botões de processamento das OPRs*/
-	//Local oPainel203	:= Nil	/*Painel 3 dos botões de processamento das MOVs*/
-	//Local oPainel303	:= Nil	/*Painel 3 dos botões de processamento das INVs*/
-
-	//Local oBtn1Pnl1	:= Nil	/*Botão de processamento das OPRs da tela de processamentos*/
-	//Local oBtn2Pnl1	:= Nil	/*Botão de processamento das OPRs da tela de processamentos*/
-	//Local oBtn3Pnl1	:= Nil	/*Botão de processamento das OPRs da tela de processamentos*/
-	//Local oBtn1Pnl2	:= Nil	/*Botão de processamento das MOVs da tela de processamentos*/
-	//Local oBtn2Pnl2	:= Nil	/*Botão de processamento das MOVs da tela de processamentos*/
-	//Local oBtn1Pnl3	:= Nil	/*Botão de processamento das INVs da tela de processamentos*/
-	//Local oBtn2Pnl3	:= Nil	/*Botão de processamento das INVs da tela de processamentos*/
-
-	//Default aCols		:= {}	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default aCols2		:= {}	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default aCols3		:= {}	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default aReqs		:= {}	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default bAtGd		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default bAtGd2		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default bAtGd3		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default oArea		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default oArea2		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
-	//Default oArea3		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
 	Default oPainel03		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
 	Default oPainel203		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
 	Default oPainel303		:= Nil	/*Descrição do parâmetro conforme cabeçalho*/
-
 		
 	//	/*Pega a área para criar o panel dos botões de processamento*/
-	//	oPainel03	:= oArea:GetWinPanel("L01C03", "L01C03P01", "L01")
-	//	oPainel203 	:= oArea2:GetWinPanel("L02C03", "L02C03P01", "L02")
-	//	oPainel303 	:= oArea3:GetWinPanel("L03C03", "L03C03P01", "L03")
-
 	oPainel03:Refresh()
 	oPainel203:Refresh()
 	oPainel303:Refresh()
 	
-
-	//	/*
-	//		Painel1 03 - Funcoes
-	//	*/
-		
-	//	/*Processamento*/			
-	//	U_DefTamObj(@aTamObj, 000, 000, (oPainel03:nClientWidth / 2), nAltBot, .T.)
-	//	oBtn1Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel03,;
-	//									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 1, .F.),;
-	//										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-	//										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
-	//									aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-										
-	//	/*Estorno*/
-	//	U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-	//	oBtn2Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel03,;
-	//									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 1, .T.),;
-	//										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-	//										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
-	//									aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-		
-	//	/*Soma no array de posicionamento o espacamento do botão Visualizar*/
-	//	U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-	//	oBtn3Pnl1 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Visualização", oPainel03,{|| ADFIS005PE(aReqs, oGD01:nAt) }, aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
-		
-			
-
-		
-	//	/*
-	//		Painel2 03 - Funcoes
-	//	*/
-	//	U_DefTamObj(@aTamObj, 000, 000, (oPainel203:nClientWidth / 2), nAltBot, .T.)
-
-	//	/*Processamento*/			
-	//	oBtn1Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel203,;
-	//									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 2, .F.),;
-	//										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-	//										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
-	//									aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-										
-	//	/*Estorno*/
-	//	U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-	//	oBtn2Pnl2 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel203,;
-	//									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 2, .T.),;
-	//										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-	//										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
-	//									aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-										
-	//	/*
-	//		Painel2 03 - Funcoes
-	//	*/
-
-	//	U_DefTamObj(@aTamObj, 000, 000, (oPainel303:nClientWidth / 2), nAltBot, .T.)
-	//	/*Processamento*/			
-	//	oBtn1Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Processamento", oPainel303,;
-	//									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 3, .F.),;
-	//										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-	//										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Processando",.F.),.F.)},;
-	//									aTamObj[3], aTamObj[4],,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-		
-	//	/*Estorno*/	
-	//	U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3))
-	//	oBtn2Pnl3 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Estorno", oPainel303,;
-	//									{|| IIf(ADFIS005PF(@aCols, @aCols2, @aCols3, 3, .T.),;
-	//										MsAguarde({|| CursorWait(),ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs), Eval(bAtGD,.T.,.T.), Eval(bAtGD2,.T.,.T.),;
-	//										Eval(bAtGD3,.T.,.T.),CursorArrow()}, "Pre-Processamento","Estornando",.F.),.F.)},;
-	//									aTamObj[3], aTamObj[4] ,,/*Font*/,, .T.,,,,{|| .T.}/*When*/)
-
-	/* 
-		_nPerg1Tip: 1=OPR; 2=MOV; 3=INV; 4=TODOS
-		_cPerg6Sta: 1=Integrado; 2=Processado; 3=Erro
-		_cPerg7Ope: 1=Inclusão; 2=Alteração; 3=Exclusão	
-	*/
-	
 	_oBtn3Pnl1:Show()
 	
 	If _cPerg6Sta == 1
+
 		_oBtn1Pnl1:Show()
 		_oBtn1Pnl2:Show()
 		_oBtn1Pnl3:Show()
@@ -1467,14 +1267,6 @@ Static Function ADFIS005PG(aCols, aCols2, aCols3, aReqs, bAtGd, bAtGd2, bAtGd3, 
 			_oBtn1Pnl2:Show()
 			_oBtn1Pnl3:Show()
 			
-	//			_oBtn2Pnl1:Hide()
-	//			_oBtn2Pnl2:Hide()
-	//			_oBtn2Pnl3:Hide()
-	//		Else
-	//			_oBtn1Pnl1:Show()
-	//			_oBtn1Pnl2:Show()
-	//			_oBtn1Pnl3:Show()
-			
 			_oBtn2Pnl1:Show()
 			_oBtn2Pnl2:Show()
 			_oBtn2Pnl3:Show()
@@ -1482,12 +1274,12 @@ Static Function ADFIS005PG(aCols, aCols2, aCols3, aReqs, bAtGd, bAtGd2, bAtGd3, 
 		
 	EndIf
 	
-	
 	oPainel03:Refresh()
 	oPainel203:Refresh()
 	oPainel303:Refresh()
 
 Return Nil
+
 /*/{Protheus.doc} ADFIS005PH 
 	Função criada para limpar a base de dados excluindo todos os campos que estejam com status igual 
 	ADFIS005P - Tela para processamento das OP's, Movimentações e Inventários										
@@ -1498,7 +1290,7 @@ Return Nil
 	@author Leonardo Rios
 	@since 04/04/2017
 	@version 01
-	/*/
+/*/
 Static Function ADFIS005PH(nTipo, aCols, aCols2, aCols3)
 
 	Local nIni		:= IIF(nTipo == 4, 1, nTipo)
@@ -1506,30 +1298,34 @@ Static Function ADFIS005PH(nTipo, aCols, aCols2, aCols3)
 
 	Default nTipo 	:= 4	/*Descrição do parâmetro conforme cabeçalho*/
 
-	/* Conecta no banco intermediário DBINTERFACE */
-	//TcSetConn(_nTcConn2)
-
 	For y:=nIni To nFim
+
 		For x:=1 To Len(_ItensSlec[y])
 
 			If nTipo == 1
-				TcSqlExec("UPDATE SGOPR010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND C2_MSEXP = ' ' OR STATUS_INT = 'E' AND R_E_C_N_O_= '" + ALLTRIM( STR(aCols[_ItensSlec[y][x]][15])) + "' ") //Everson - 24/06/2020. Chamado 058765.
-				TcSqlExec("UPDATE SGREQ010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND D3_OP = '" + aCols[_ItensSlec[y][x]][09] + aCols[_ItensSlec[y][x]][10] + aCols[_ItensSlec[y][x]][11] + "' AND D_E_L_E_T_=' ' " ) //Everson - 24/06/2020. Chamado 058765.
+				
+				//tcSqlExec("UPDATE SGOPR010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND C2_MSEXP = ' ' OR STATUS_INT = 'E' AND R_E_C_N_O_= '" + ALLTRIM( STR(aCols[_ItensSlec[y][x]][15])) + "' ") //Everson - 24/06/2020. Chamado 058765.
+				tcSqlExec("UPDATE SGOPR010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  R_E_C_N_O_= '" + ALLTRIM( STR(aCols[_ItensSlec[y][x]][15])) + "' ") // @history Fernando Macieira, 27/09/2021, Ticket 29741   - Divergencia ao limpar dados de ordens integradas do SAG
+				tcSqlExec("UPDATE SGREQ010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND D3_OP = '" + aCols[_ItensSlec[y][x]][09] + aCols[_ItensSlec[y][x]][10] + aCols[_ItensSlec[y][x]][11] + "' AND D_E_L_E_T_=' ' " )
 							
 			ElseIf nTipo == 2				
-				TcSqlExec("UPDATE SGMOV010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND D3_MSEXP = ' ' OR STATUS_INT = 'E' AND R_E_C_N_O_= '" + ALLTRIM( STR(aCols2[_ItensSlec[y][x]][16])) + "' ") //Everson - 24/06/2020. Chamado 058765.
+
+				//tcSqlExec("UPDATE SGMOV010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND D3_MSEXP = ' ' OR STATUS_INT = 'E' AND R_E_C_N_O_= '" + ALLTRIM( STR(aCols2[_ItensSlec[y][x]][16])) + "' ") //Everson - 24/06/2020. Chamado 058765.
+				tcSqlExec("UPDATE SGMOV010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE R_E_C_N_O_= '" + ALLTRIM( STR(aCols2[_ItensSlec[y][x]][16])) + "' ") // @history Fernando Macieira, 27/09/2021, Ticket 29741   - Divergencia ao limpar dados de ordens integradas do SAG
 			
 			ElseIf nTipo == 3				
-				TcSqlExec("UPDATE SGINV010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND B7_MSEXP = ' ' OR STATUS_INT = 'E' AND R_E_C_N_O_= '" + ALLTRIM( STR(aCols3[_ItensSlec[y][x]][11])) + "' ") //Everson - 24/06/2020. Chamado 058765.
+
+				//tcSqlExec("UPDATE SGINV010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  EMPRESA = '" + cValToChar(cEmpAnt) + "' AND B7_MSEXP = ' ' OR STATUS_INT = 'E' AND R_E_C_N_O_= '" + ALLTRIM( STR(aCols3[_ItensSlec[y][x]][11])) + "' ") //Everson - 24/06/2020. Chamado 058765.
+				tcSqlExec("UPDATE SGINV010 SET D_E_L_E_T_='*', OPERACAO_INT='A', STATUS_INT=' ' WHERE  R_E_C_N_O_= '" + ALLTRIM( STR(aCols3[_ItensSlec[y][x]][11])) + "' ") // @history Fernando Macieira, 27/09/2021, Ticket 29741   - Divergencia ao limpar dados de ordens integradas do SAG
 			
 			EndIf
+
 		Next x
+
 	Next y
 	
-	/* Desconecta no banco intermediário DBINTERFACE */
-	//TcUnLink(_nTcConn2)
-
 Return .T.
+
 /*/{Protheus.doc} Legenda 
 	Legenda das cores															
 	ADFIS005P - Tela para processamento das OP's, Movimentações e Inventários
@@ -1553,6 +1349,7 @@ Static Function Legenda()
     BrwLegenda("Legenda", "Legenda", aLegenda)
 
 Return Nil
+
 /*/{Protheus.doc} Legenda 
 	Funcao genérica criada para gerar as perguntas no Protheus que serão apresentadas na tela	
 	aParam[1]  	:[C] cPerg     - String contendo o título chave da pergunta que será criada	
@@ -1567,27 +1364,9 @@ Return Nil
 	/*/
 Static Function AjustaSX1(cPerg)
 
-
 	Local aMensSX1 := {}
 
-
 	Default cPerg := ""	/*Descrição do parâmetro conforme cabeçalho*/
-
-	// /*			 	PERGUNTA			 TIPO	TAM						   	DEC					OBJETO	PS	COMBO							  				SXG		F3		VALID	HELP				*/
-	// aMensHlp[01] := {"Tipo"				,"N"	,1							,00					,"C"	,0	,{"OPR","MOV","INV","Todos",""}	   				,""		,""	 	,""		,"Tipo de Consulta"}
-	// aMensHlp[02] := {"Período De"		,"D"	,8	 						,00					,"G"	,0	,{"","","","",""}				   				,""		,""	 	,""		,"Período Inicial"}
-	// aMensHlp[03] := {"Período Ate"		,"D"	,8	 						,00					,"G"	,0	,{"","","","",""}				   				,""		,""	 	,""		,"Período final"}
-	// aMensHlp[04] := {"Produto De"		,"C"	,TamSX3("B2_COD")[1]		,00					,"G"	,0	,{"","","","",""}				   				,""		,""		,""		,"Produto inicial"}
-	// aMensHlp[05] := {"Produto Ate"		,"C"	,TamSX3("B2_COD")[1]		,00					,"G"	,0	,{"","","","",""}								,""		,""		,""		,"Produto final"}
-	// aMensHlp[06] := {"Status"			,"C"	,1							,00					,"C"	,0	,{"Integrado","Processado","Erro","",""}		,""		,""		,""		,"Status de Integração"}
-	// aMensHlp[07] := {"Operação"	   		,"C"	,1							,00					,"C"	,0	,{"Inclusão","Alteração","Exclusão","",""}		,""		,""		,""		,"Tipo de Operação"}
-	
-	// /*Função genérica para gravar no Protheus as perguntas*/
-	// U_GravaSX1(cPerg, aMensHlp)
-	
-
-	//					1					2				3					4				5						6					7				8					9					10					11						12					13				14						15					16					17					18				19						20					21					22					23				24						25					26					27					28				29						30					31					32					33				34					35					36						37						38				39
-		// AADD(/* 'X1_ORDEM' */, /* 'X1_PERGUNT'*/, /* 'X1_PERSPA' */, /* 'X1_PERENG' */, /* 'X1_TIPO' 	*/, /* 'X1_TAMANHO'*/, /* 'X1_DECIMAL'*/, /* 'X1_PRESEL' */, /* 'X1_GSC' 	*/, /* 'X1_VALID' 	*/	, /* 'X1_DEF01' 	*/, /* 'X1_DEFSPA1'*/, /* 'X1_DEFENG1'*/, /* 'X1_CNT01' 	*/, /* 'X1_VAR02' 	*/, /* 'X1_DEF02' 	*/, /* 'X1_DEFSPA2'*/, /* 'X1_DEFENG2'*/, /* 'X1_CNT02' 	*/, /* 'X1_VAR03' 	*/, /* 'X1_DEF03' 	*/, /* 'X1_DEFSPA3'*/, /* 'X1_DEFENG3'*/, /* 'X1_CNT03' 	*/, /* 'X1_VAR04' 	*/, /* 'X1_DEF04' 	*/, /* 'X1_DEFSPA4'*/, /* 'X1_DEFENG4'*/, /* 'X1_CNT04' 	*/, /* 'X1_VAR05' 	*/, /* 'X1_DEF05' 	*/, /* 'X1_DEFSPA5'*/, /* 'X1_DEFENG5'*/, /* 'X1_CNT05' 	*/, /* 'X1_F3'		*/, /* 'X1_PYME' 	*/, /* 'X1_GRPSXG' */	, /* 'X1_PICTURE'*/, /* 'X1_IDFIL' 	*/)
 
 	//					  1				2						3						4				  5			6						  7	 8		  9   10	 11	   		12  		13	  	  	  14  	  15  	 16  	 		17   	  		18   	  	  19  	  20  21  	  	  22  	  	 23  	  	  24  25  26  		27  	28  	  29  30  31  32  33  34  35      36   37  38  39	
     AADD( aMensSX1, {"01", "Tipo?"				, "Tipo?"				, "Tipo?"					,"N"	,001						,00, 0		,"C", ""	,"OPR"		,"OPR" 		,"OPR"		, ""	, ""	, "MOV"			, "MOV" 	 , "MOV"		, ""	, "", "INV"		, "INV"		, "INV" 	, "", "", "Todos", "Todos", "Todos"	, "", "", "", "", "", "", ""    , "S", "", "", "" })
@@ -1598,8 +1377,6 @@ Static Function AjustaSX1(cPerg)
 	AADD( aMensSX1, {"06", "Status?"			, "Status?"				, "Status?"	    			,"C"	,001						,00, 0		,"C", ""	,"Integrado","Integrado","Integrado", ""	, ""	, "Processado" 	,"Processado", "Processado"	, ""	, "", "Erro"	, "Erro"	, "Erro"	, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
 	AADD( aMensSX1, {"07", "Operação?"			, "Operação?"			, "Lista Cálculo ?"	    	,"C"	,001						,00, 0		,"C", ""	,"Inclusão"	,"Inclusão"	,"Inclusão"	, ""	, ""	, "Alteração" 	,"Alteração" , "Alteração"	, ""	, "", "Exclusão", "Exclusão", "Exclusão", "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
 	
-
     U_newGrSX1(cPerg, aMensSX1)	
-
 
 Return Nil

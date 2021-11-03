@@ -1,19 +1,15 @@
 #Include "Totvs.ch"
 #Include "Topconn.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³ADVEN074P      ºAutor  ³Everson      º Data ³  12/01/2018   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³Função para envio de notas fiscais ao SalesForce.           º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Chamado 037261.                                            º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-User Function ADVEN074P(cEmp,cFili,cParamBsc,lAut,cExpSql,lCancelada) // U_ADVEN074P("01","02","",.F.," AND F2_DOC = '000487015' ") // U_ADVEN074P("01","02","001200752SF1",.F.,"",.T.)
+/*/{Protheus.doc} ADVEN074P
+	Função para envio de notas fiscais ao SalesForce.
+	Chamado 037261.
+	@type  Function
+	@author Everson
+	@since 12/01/2018
+	@version 01
+	@history Everson, 23/09/2021, Chamado 44817. Tratamento para marcar as notas fiscais já enviadas.
+	/*/
+User Function ADVEN074P(cEmp,cFili,cParamBsc,lAut,cExpSql,lCancelada) // U_ADVEN074P("01","02","",.F.," AND F2_DOC = '001295801' ") // U_ADVEN074P("01","02","001200752SF1",.F.,"",.T.)
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
@@ -32,7 +28,7 @@ User Function ADVEN074P(cEmp,cFili,cParamBsc,lAut,cExpSql,lCancelada) // U_ADVEN
 	Private lCanc	  := lCancelada
 	Private lMrkCanc  := .F.
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para envio de notas fiscais ao SalesForce')
+	Conout("INÍCIO ADVEN074P >>>>>>>>>>>>>>>>>>>>>>>>>")
 	
 	//
 	If ! lAut
@@ -46,6 +42,8 @@ User Function ADVEN074P(cEmp,cFili,cParamBsc,lAut,cExpSql,lCancelada) // U_ADVEN
 		Conout("ADVEN074P - Fim envio de notas de saída canceladas.")
 		              
 	EndIf
+
+	Conout("FIM ADVEN074P >>>>>>>>>>>>>>>>>>>>>>>>>")
 	
 	//
 	RestArea(aArea)
@@ -227,6 +225,8 @@ Static Function scriptSql(nOpc,cParamBsc,cExpSql,cEmp,cFili,lCancelada)
 	
 	Default nOpc := 1
 
+	Conout("ADVEN074P scriptSql script SF2")
+
 	//
 	cParamBsc := Alltrim(cValToChar(cParamBsc))
 
@@ -285,6 +285,8 @@ Static Function scriptSql(nOpc,cParamBsc,cExpSql,cEmp,cFili,lCancelada)
 	
 	cQuery += " WHERE " 
 	cQuery += " F2_FILIAL = '" + cFili + "' "
+
+	//cQuery += " AND F2_DOC = '002341625' "
 	
 	//
 	If nOpc == 2
@@ -372,7 +374,7 @@ Static Function envItens(cParamBsc,lAut,cChvTab,aResponse)
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aParametros := {}
-	Local lLogin	:= .F.
+	//Local lLogin	:= .F.
 	Local cQuery	:= ""
 	Local cServTab	:= "/services/data/v41.0/sobjects/Item_do_Faturamento__c/"
 	Local cCmpChv	:= "CHVSF"
@@ -517,7 +519,9 @@ Static Function iscriptSql(cParamBsc)
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local cQuery := ""	
+	Local cQuery := ""
+
+	Conout("ADVEN074P scriptSql script SD2")	
 
 	//
 	cParamBsc := Alltrim(cValToChar(cParamBsc))
@@ -525,7 +529,7 @@ Static Function iscriptSql(cParamBsc)
 	//
 	If ! Empty(cParamBsc)
 		cQuery := ""
-		cQuery += " SELECT  " 
+		cQuery += " SELECT " 
 		cQuery += " 'SD2' AS TAB,'S' + '" + cEmpC + "' + RTRIM(LTRIM(D2_FILIAL)) + RTRIM(LTRIM(D2_DOC)) +  RTRIM(LTRIM(D2_SERIE)) + RTRIM(LTRIM(D2_CLIENTE)) + RTRIM(LTRIM(D2_LOJA)) + RTRIM(LTRIM(D2_COD)) + RTRIM(LTRIM(D2_ITEM)) AS CHVSF, "
 		cQuery += " 'S' + '" + cEmpC + "' + RTRIM(LTRIM(D2_FILIAL)) + RTRIM(LTRIM(D2_CLIENTE)) + RTRIM(LTRIM(D2_LOJA)) + RTRIM(LTRIM(D2_DOC)) +  RTRIM(LTRIM(D2_SERIE)) AS CHFAT, "
 		cQuery += " D2_FILIAL, D2_PEDIDO, D2_CLIENTE, D2_LOJA, D2_COD, D2_QUANT, D2_PRCVEN, D2_TOTAL, D2_DOC, D2_SERIE, D2_ITEM, D2_VALICM, D2_BASEICM, D2_PICM, D2_XIDSF AS IDSALES " 
@@ -579,8 +583,10 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local cUpdate := ""
+	//Local cUpdate := ""
+	Local lErro   := .T.
 	Local cMsg	  := ""
+	Local cChaveB := ""
 	
 	//Remove Marca de nota de saída e código da empresa.
 	cChave := Alltrim(cValToChar(cChave))
@@ -592,36 +598,77 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 	
 	EndIf
 	
-	//
+	//Everson, 23/09/2021, Chamado 44817
 	If lMrkCanc
-		cUpdate := "UPDATE SF2" + cEmpC + "0 SET F2_XSFENVC = '2' WHERE ( 'S' + '" + cEmpC + "' + '" + cFiliC + "' + RTRIM(LTRIM(F2_CLIENTE)) + RTRIM(LTRIM(F2_LOJA)) + RTRIM(LTRIM(F2_DOC)) +  RTRIM(LTRIM(F2_SERIE)) ) = '" + cChave + "' "
-		Conout("Envio de cancelamento NF saída " + cChave )
+		cChaveB:= (cAliasS)->F2_FILIAL + (cAliasS)->F2_CLIENTE + (cAliasS)->F2_LOJA + (cAliasS)->F2_DOC +  (cAliasS)->F2_SERIE
+		Conout('ADVEN074P mrkReg lMrkCanc')
+		DbSelectArea("SF2")
+		SF2->(DbSetOrder(2))
+		If SF2->(DbSeek(cChaveB))
+			If RecLock("SF2",.F.)
+				SF2->F2_XSFENVC := '2'
+				MsUnlock("SF2")
+				
+				lErro := .F.
+				Conout('ADVEN074P mrkReg lMrkCanc OK')
+				
+			EndIf
+
+		EndIf
+		//cUpdate := "UPDATE SF2" + cEmpC + "0 SET F2_XSFENVC = '2' WHERE ( 'S' + '" + cEmpC + "' + '" + cFiliC + "' + RTRIM(LTRIM(F2_CLIENTE)) + RTRIM(LTRIM(F2_LOJA)) + RTRIM(LTRIM(F2_DOC)) +  RTRIM(LTRIM(F2_SERIE)) ) = '" + cChave + "' "
+		//Conout("Envio de cancelamento NF saída " + cChave )
 		
 	ElseIf Alltrim(cValToChar((cAliasS)->TAB)) == "SF2"
-		cUpdate := "UPDATE SF2" + cEmpC + "0 SET F2_XSALES = '" + cId + "' WHERE D_E_L_E_T_ = '' AND ( 'S' + '" + cEmpC + "' + '" + cFiliC + "' + RTRIM(LTRIM(F2_CLIENTE)) + RTRIM(LTRIM(F2_LOJA)) + RTRIM(LTRIM(F2_DOC)) +  RTRIM(LTRIM(F2_SERIE)) ) = '" + cChave + "' "
+		cChaveB:= (cAliasS)->F2_FILIAL + (cAliasS)->F2_CLIENTE + (cAliasS)->F2_LOJA + (cAliasS)->F2_DOC +  (cAliasS)->F2_SERIE
+		Conout('ADVEN074P mrkReg Alltrim(cValToChar((cAliasS)->TAB)) == "SF2"')
+		DbSelectArea("SF2")
+		SF2->(DbSetOrder(2))
+		If SF2->(DbSeek(cChaveB))
+			If RecLock("SF2",.F.)
+				SF2->F2_XSALES := cId
+				MsUnlock("SF2")
+				
+				lErro := .F.
+				Conout('ADVEN074P mrkReg Alltrim(cValToChar((cAliasS)->TAB)) == "SF2" >>> OK')
+
+			EndIf
+
+		EndIf
+		//cUpdate := "UPDATE SF2" + cEmpC + "0 SET F2_XSALES = '" + cId + "' WHERE D_E_L_E_T_ = '' AND ( 'S' + '" + cEmpC + "' + '" + cFiliC + "' + RTRIM(LTRIM(F2_CLIENTE)) + RTRIM(LTRIM(F2_LOJA)) + RTRIM(LTRIM(F2_DOC)) +  RTRIM(LTRIM(F2_SERIE)) ) = '" + cChave + "' "
 	
 	ElseIf Alltrim(cValToChar((cAliasS)->TAB)) == "SD2"
-		cUpdate := "UPDATE SD2" + cEmpC + "0 SET D2_XIDSF = '" + cId + "' WHERE D_E_L_E_T_ = '' AND  ( 'S' + '" + cEmpC + "' + '" + cFiliC + "' + RTRIM(LTRIM(D2_DOC)) +  RTRIM(LTRIM(D2_SERIE)) + RTRIM(LTRIM(D2_CLIENTE)) + RTRIM(LTRIM(D2_LOJA)) + RTRIM(LTRIM(D2_COD)) + RTRIM(LTRIM(D2_ITEM))) = '" + cChave + "' "
+		cChaveB := (cAliasS)->D2_FILIAL + (cAliasS)->D2_DOC + (cAliasS)->D2_SERIE + (cAliasS)->D2_CLIENTE + (cAliasS)->D2_LOJA + (cAliasS)->D2_COD + (cAliasS)->D2_ITEM
+		Conout('Alltrim(cValToChar((cAliasS)->TAB)) == "SD2"')
+		DbSelectArea("SD2")
+		SD2->(DbSetOrder(3))
+		If SD2->(DbSeek(cChaveB))
+			If RecLock("SD2",.F.)
+				SD2->D2_XIDSF := cId
+				MsUnlock("SF2")
+				
+				lErro := .F.
+				Conout('ADVEN074P mrkReg Alltrim(cValToChar((cAliasS)->TAB)) == "SD2" >>> OK')
+
+			EndIf
+
+		EndIf
+
+		//cUpdate := "UPDATE SD2" + cEmpC + "0 SET D2_XIDSF = '" + cId + "' WHERE D_E_L_E_T_ = '' AND  ( 'S' + '" + cEmpC + "' + '" + cFiliC + "' + RTRIM(LTRIM(D2_DOC)) +  RTRIM(LTRIM(D2_SERIE)) + RTRIM(LTRIM(D2_CLIENTE)) + RTRIM(LTRIM(D2_LOJA)) + RTRIM(LTRIM(D2_COD)) + RTRIM(LTRIM(D2_ITEM))) = '" + cChave + "' "
 		
 	EndIf
 	
 	//Atualiza o registro na SF2.
-	If ! Empty(cUpdate)
-		If TCSqlExec(cUpdate) < 0
-			
-			cMsg := "Não foi possível atualizar o registro SF2 " + cChave + Chr(13) + Chr(10) + "TCSQLError() " + TCSQLError()
-			If !lAut
-				MsgAlert(cMsg,"Função mrkReg (ADVEN074P)")
-				
-			Else
-				StaticCall(ADVEN075P,envErros,cMsg + "Função mrkReg (ADVEN074P)")
-				
-			EndIf
+	If lErro
 		
-		EndIf
-	
-	Else
-		Conout("String de update em branco mrkReg ADVEN074P.")		
+		cMsg := "Não foi possível atualizar o registro " + cChave
+		Conout('ADVEN074P mrkReg ' + cMsg)
+		If !lAut
+			MsgAlert(cMsg,"Função mrkReg (ADVEN074P)")
+			
+		Else
+			StaticCall(ADVEN075P,envErros,cMsg + "Função mrkReg (ADVEN074P)")
+			
+		EndIf	
 		
 	EndIF
 	

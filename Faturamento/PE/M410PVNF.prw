@@ -10,6 +10,7 @@
 	@history Chamado 056380 - William Costa - 09/03/2020 - Ajustado regra para não faturar pedido que data de entrega seja menor que a data de hoje
 	@history Chamado T.I    - William Costa - 11/03/2020 - Retirado codigo do chamado anterior para trocar a data de entrega conforme solicitação do fernando.
 	@history Chamado 056247 - FWNM          - 09/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+	@history Tkt -   T.I    - SIGOLI        - 24/09/2021 - Alterado para validar se o pedido antecipadp foi liberado manualmente C5_XWSPAGO  "S|M" 
 /*/	
 User Function M410PVNF()
                                   
@@ -25,7 +26,7 @@ User Function M410PVNF()
 	// Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 09/04/2020
 	FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
     If FIE->( dbSeek(SC5->C5_FILIAL+"R"+SC5->C5_NUM) )
-		If AllTrim(SC5->C5_XWSPAGO) <> "S"
+		If !AllTrim(SC5->C5_XWSPAGO) $ "S|M" 
 			lRet := .f.
 			msgAlert("Pedido de Adiantamento " + SC5->C5_NUM + " não foi pago! Faturamento não permitido...","[M410PVNF-01] - Bradesco WS")
 			Return lRet

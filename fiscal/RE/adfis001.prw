@@ -39,8 +39,8 @@ USER FUNCTION ADFIS001()
 	Private wnrel		:= "ADFIS001" // Coloque aqui o nome do arquivo usado para impressao em disco
 	Private cPerg		:= "ADFIS001"
 	Private cString		:= "SF2"
-	Private BaseSped	:= "[SPED]"      	//PRODUCAO [VPSRV02].[SPED]       //HOMOLOGACAO [SPED]
-	Private BaseDado	:= "DADOSADV"    	//PRODUCAO DADOSADV
+	Private BaseSped	:= "[SPED].[CCZERN_120413_TS_PD]"      	//PRODUCAO [VPSRV02].[SPED]       //HOMOLOGACAO [SPED]
+	Private BaseDado	:= "CCZERN_120215_PR_PD"    	//PRODUCAO DADOSADV
 	Private lSped		:= .t.
 	Private lSf3		:= .t.
 	//

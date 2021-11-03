@@ -11,8 +11,8 @@
 	@history Chamado 045773 - Everson     - 12/12/2018 - Alterado o order by da consulta de totalizador geral
 	@history Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	@history Ticket   15733 - Everson     - 16/06/2021 - Tratamento para errorlog.
-	/*/
-
+	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+/*/
 User Function ADVEN042R() // U_ADVEN042R()
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -132,10 +132,11 @@ Static function filtroVend()
 		cQuery += " SA3.D_E_L_E_T_ = '' " 
 		cQuery += " AND A3_CODSUP >= '" + Alltrim(cValToChar(MV_PAR03)) + "' " 
 		cQuery += " AND A3_CODSUP <= '" + Alltrim(cValToChar(MV_PAR04)) + "' " 
+
+		////cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 		
 		If Select("CODVND") > 0
 			CODVND->(DbCloseArea())
-			
 		EndIf
 
 		MsAguarde({||execConsult(cQuery,"CODVND")},"Aguarde","Consulta códigos vendedores.")
@@ -172,10 +173,11 @@ Static function filtroVend()
 		cQuery += " AND A3_NIVETAB = '2' " 
 		cQuery += " AND A3_CODUSR = '" + Alltrim(cValToChar(__cUserID)) + "' " 
 		cQuery += " ) " 
+
+		//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 		
 		If Select("CODVND") > 0
 			CODVND->(DbCloseArea())
-			
 		EndIf
 		
 		MsAguarde({||execConsult(cQuery,"CODVND")},"Aguarde","Consulta códigos vendedores.")
@@ -203,10 +205,11 @@ Static function filtroVend()
 		cQuery += " AND A3_GEREN = '" + Alltrim(cValToChar(_cCodigo)) + "' " 
 		cQuery += " AND A3_CODSUP >= '" + Alltrim(cValToChar(MV_PAR03)) + "' " 
 		cQuery += " AND A3_CODSUP <= '" + Alltrim(cValToChar(MV_PAR04)) + "' " 
+
+		//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 		
 		If Select("CODVND") > 0
 			CODVND->(DbCloseArea())
-			
 		EndIf
 		
 		MsAguarde({||execConsult(cQuery,"CODVND")},"Aguarde","Consulta códigos vendedores.")
@@ -228,6 +231,7 @@ Static function filtroVend()
 	Endif   
    
 Return cCodVend
+
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -742,6 +746,8 @@ Static Function scriptTotal()
 	//Everson - 12/12/2018. Chamado 045773.
 	//cQuery += " ORDER BY  TOTAL.BM_QBRNVL, TOTAL.X5_DESCRI, TOTAL.BM_GRUPO "
 	cQuery += " ORDER BY TOTAL.X5_DESCRI, TOTAL.BM_QBRNVL, TOTAL.BM_GRUPO " 
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 Return cQuery
 /*
@@ -1188,10 +1194,11 @@ Static Function cobVend()
 	cQuery += " ) AS VENDAS "
 	cQuery += " WHERE VENDAS.F2_VEND1 IN (" + Alltrim(cValToChar(cVendedores)) + ")
 	cQuery += " GROUP BY VENDAS.F2_VEND1 ORDER BY VENDAS.F2_VEND1 "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBSUP") > 0
 		COBSUP->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBSUP"
@@ -1245,9 +1252,10 @@ Static Function cobNvTot()
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY VENDAS.F2_VEND1, X5_DESCRI, BM_QBRNVL ORDER BY VENDAS.F2_VEND1, X5_DESCRI, BM_QBRNVL "
 	
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+	
 	If Select("COBNVBQL") > 0
 		COBNVBQL->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBNVBQL"
@@ -1300,10 +1308,11 @@ Static Function carteira()
 	EndIf
 	   
 	cQuery += " GROUP BY A3.A3_COD ORDER BY A3.A3_COD "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("CARTEIRA") > 0
 		CARTEIRA->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "CARTEIRA"
@@ -1355,10 +1364,11 @@ Static Function cobConsolidado()
 	
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY X5_DESCRI, BM_QBRNVL, BM_GRUPO ORDER BY X5_DESCRI, BM_QBRNVL, BM_GRUPO "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBCONS") > 0
 		COBCONS->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBCONS"
@@ -1408,10 +1418,11 @@ Static Function cobTConsolidado()
 	
 	cQuery += " ) AS VENDAS "
 	cQuery += " GROUP BY X5_DESCRI, BM_QBRNVL ORDER BY X5_DESCRI, BM_QBRNVL "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("COBTCONS") > 0
 		COBTCONS->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBTCONS"
@@ -1477,10 +1488,11 @@ Static Function ativosVend()
 	cQuery += " GROUP BY "
 	cQuery += " ATIVOS.F2_VEND1 "
 	cQuery += " ORDER BY ATIVOS.F2_VEND1 "
+
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	
 	If Select("ATIVOS") > 0
 		ATIVOS->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "ATIVOS"
@@ -1523,7 +1535,6 @@ Static Function cobGrp(cVend,cGrupos)
 	
 	If Empty(Alltrim(cValToChar(cVend))) .And. Empty(Alltrim(cValToChar(cGrupos)))
 		Return nCob
-		
 	EndIf	
 
 	cQuery := ""
@@ -1545,9 +1556,10 @@ Static Function cobGrp(cVend,cGrupos)
 		
 	EndIf
 
+	//cQuery += " OPTION(QUERYTRACEON 9481) " // @history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+
 	If Select("COBGRP") > 0
 		COBGRP->(DbCloseArea())
-		
 	EndIf
 	
 	TcQuery cQuery New Alias "COBGRP"

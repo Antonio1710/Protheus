@@ -1045,7 +1045,7 @@ Static Function fPgAcao(nGrp,nAcao)
                         
                         if nAcao == 3
                             while msgYesNo("Deseja incluir um novo registro de produto?")
-                                
+                                PtSetAcento(.T.)
                                 nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
                                 
                                 if nConfirma == 0
@@ -1056,9 +1056,13 @@ Static Function fPgAcao(nGrp,nAcao)
                                     U_ADEST060P(ZE1->ZE1_REGIST)
                                     
                                 endif
+
+                                PtSetAcento(.F.)
                             enddo
                         else
+                            PtSetAcento(.T.)
                             nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
+                            PtSetAcento(.F.)
                         endif
                     else
                         MsgAlert("Ação não permitida!")
@@ -1075,8 +1079,11 @@ Static Function fPgAcao(nGrp,nAcao)
                 cTitulo := "Requisitos de Mercado ("+ cAcao +")"
                 cModel  := "ADEST057P"
                 lValid  := .T.
+                
+                PtSetAcento(.T.)
                 nConfirma := FWExecView(cTitulo,cModel, nAcao, , { || .T. }, , 0, )
-
+                PtSetAcento(.F.)
+                
                 if nConfirma == 0 .AND. nAcao == 5
                     fDelNode("ZE1", NIL, ZE1->ZE1_REGIST, nil, nil )
                 endif

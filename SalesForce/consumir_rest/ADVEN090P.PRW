@@ -1,9 +1,9 @@
 #Include "Rwmake.ch"
 #Include 'AP5mail.ch'
 #Include "Protheus.ch"
-#include 'Fileio.ch'
-#Include 'Totvs.ch'
-#Include 'Topconn.ch'
+#include "Fileio.ch"
+#Include "Totvs.ch"
+#Include "Topconn.ch"
 
 /*/{Protheus.doc} User Function ADVEN090P 
 	Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.
@@ -19,8 +19,13 @@
 	@history chamado 056247 - FWNM     - 22/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history chamado 050729 - FWNM     - 30/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@Ticket 11762, Data 05/04/2021, Leonardo P. Monteiro, Adição do tipo do cliente na inclusão ou alteração;
+	@Ticket 63090, Data 29/10/2021, Everson, Tratamento para processamento com mais de uma thread.
+	@Ticket 63090, Data 01/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
+
 	//Declaração de variávies
 	Local cEmp 		:= "01"
 	Local cFil 		:= "02"
@@ -31,44 +36,35 @@ User Function ADVEN090P() // U_ADVEN090P()
 	//Inicia o ambiente.
 	RPCClearEnv()
 	RPCSetType(3)
-	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
+	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{})
 
-	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-	// If !LockByName("ADVEN090P", .T., .F.)
-	// 	ConOut("[ADVEN090P] - Existe outro processamento sendo executado! Verifique...")
-	// 	RPCClearEnv()
-	// 	Return
-	// EndIf
+		//
+		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
-
-	DbSelectArea("ZBN")
-	ZBN->(DbSetOrder(1))
-	ZBN->(DbGoTop()) 
-	If ZBN->(DbSeek(xFilial("ZBN") + 'ADVEN090P'))
-		conout(DToC(Date()) + " " + Time() + " ADVEN090P - Início inclusão/atualização/exclusão de pedido de venda SalesForce")
+		//
+		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Início inclusão/atualização/exclusão de pedido de venda SalesForce")
+		
 		//
 		cDiaS := Alltrim(cValToChar(GetMv("MV_#SFDSEM")))
 		cHDe  := Alltrim(cValToChar(GetMv("MV_#SFHDE")))
 		cHAt  := Alltrim(cValToChar(GetMv("MV_#SFHATE")))
 		
+		//
 		If (cValToChar(DOW(Date()))) $cDiaS .And. Time() >= cHDe .And. Time() <= cHAt
+
 			logZBN("1") //Log início.
-			obterReg()
+				obterReg()
 			logZBN("2") //Log início.
+
 		EndIf
 		
 		//
-		conout(DToC(Date()) + " " + Time() + " ADVEN090P - Fim inclusão/atualização/exclusão de pedido de venda SalesForce")
-	EndIf
-
-	//Destrava a rotina para o usuário
-	// UnLockByName("ADVEN090P")
+		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Fim inclusão/atualização/exclusão de pedido de venda SalesForce")
 
 	//Fecha o ambiente.
 	RpcClearEnv()
-Return Nil
 
+Return Nil
 /*/{Protheus.doc} obterReg
 	Obtém registros de pedidos de venda pendentes de alteração. Chamado 037261.
 	@type  Static Function
@@ -77,32 +73,164 @@ Return Nil
 	@version 01
 /*/
 Static Function obterReg()
+
 	//Declaracao de Variaveis
 	Local cQuery 	:= ""
-	Local nTotThe	:= Val(cValToChar(GetMv("MV_#SFQTHR",,1)))
-	Local nRePThe	:= Val(cValToChar(GetMv("MV_#SFRTHR",,1000)))
 	Local cRecnos	:= ""
-	
-	Local nAux	 	:= 0
-	Local nTotG	 	:= 0
 	Local cJobAux	:= ""
-	//Local aJobs	:={}
-	Local i		 	:= 1
-	Local lCont	 	:= .T.
-	Local nRecErro 	:= 0
-	Local cGrvErro	:= ""
+	Local aJobs	    := {}
+	Local i		 	:= 0
+	Local nRePThe	:= Val(cValToChar(GetMv("MV_#SFRTHR",,1000))) //Total de registros buscados no select (TOP nRePThe)
+	Local nTotThe	:= Val(cValToChar(GetMv("MV_#SFQTHR",,1))) //Total de threads.
+	Local nTotal 	:= 0 //Total de registros a serem processados.
+	Local nTotG	 	:= 0 //Total de registros distribuídos.
+	Local nAux	 	:= 0 //Contagem de registros por Thread.
+	Local nTotPT	:= 0 //Total de registros por Thread.
+	Local lCont		:= .T.
+	Local nTmpMed	:= 9
 
-	Private nTotal 	:= 0
+	//
+	If Select("A_REG") > 0
+		A_REG->(DbCloseArea())
+
+	EndIf
+
+	//
+	cQuery := sqlTScript(nRePThe)
+
+	//
+	TcQuery cQuery New Alias "A_REG"
+	DbSelectArea("A_REG")
+	A_REG->(DbGoTop())
+	nTotal := Contar("A_REG","!Eof()")
+	Conout( DToC(Date()) + " " + Time() + " ADVEN090P - obterReg - TOTAL DE REGISTROS " + cValToChar(nTotal) )
+	A_REG->(DbGoTop())
+
+	//
+	If nTotal <= 0
+		A_REG->(DbCloseArea())
+		Return Nil
+
+	EndIf
+
+	//
+	If nTotThe > 1 .And. nTotal > nTotThe
+		nTotPT := Round(nTotal/nTotThe,0)
+
+	Else
+		nTotPT  := nTotal
+		nTotThe := 1
+
+	EndIf
+
+	//
+	Conout("ADVEN090P - obterReg - nTotal/nTotPT >>>>>>>>>> " + cValToChar(nTotal) + " / " + cValToChar(nTotPT)) 
+
+	//
+	While ! A_REG->(Eof()) .And. lCont
+
+		//
+		nAux++
+		nTotG++
+		cRecnos += Alltrim(cValToChar( A_REG->REC )) + ","
+
+		//
+		If nAux == nTotPT .Or. nTotG == nTotal
+
+			//Remove a última vírgula da string.
+			cRecnos := Substr(cRecnos, 1, Len(cRecnos) -1)
+			i++
+			
+			//
+			Conout("ADVEN090P - obterReg - JOB >>>>>>>>>>>> " + cValToChar(i) + " Qtd " + cValToChar(nAux) + " nTotPT " + cValToChar(nTotPT))
+
+			//
+			If nTotThe < 2 //Uma Thread.
+
+				//Gera log na tabela ZBE.
+				logZBE("Início Processamento JOB " + cValToChar(cJobAux), "Total Reg " + cValToChar(nTotPT) + " - 1 Thread")
+				
+				//Everson - 25/09/20219. Chamado T.I.
+
+				nRecErro := 0
+				cGrvErro := ""
+				execProc(cRecnos,@nRecErro,@cGrvErro)
+
+				//Gera log na tabela ZBE.
+				logZBE("Fim processamento JOB " + cValToChar(cJobAux), "Total Reg " + cValToChar(nTotPT) + " - 1 Thread")
+
+			Else // Multiplas Threads.
+				
+				//SF + Número do Job + Qtd de registros + Qtd total do job principal.
+				cJobAux	:= "SF_" + cValToChar(i) + "_" + cValToChar(nAux) + "_" + cValToChar(nTotal)
+				Aadd(aJobs,cJobAux)
+
+				StartJob("U_ProcAltSF", GetEnvServer(), .F., cRecnos, cJobAux, nAux, nTmpMed)
+				
+				//Cria variável global.
+				PutGlbValue(cJobAux,"0")
+				GlbUnlock()
+
+			EndIf
+
+			//
+			cRecnos := ""
+			nAux := 0
+			cJobAux := ""
+
+		EndIf
+
+		//
+		A_REG->(DbSkip())
+
+	End
+
+	//Checa se o job foi inicializado.
+	For i := 1 To Len(aJobs)
+
+		//Valida status do processamento.
+		While .T.
+
+			//
+			If cValToChar(GetGlbValue(aJobs[i])) <> "0"
+				Exit
+
+			EndIf
+
+		EndDo
+
+		//Limpara variável global.
+		ClearGlbValue(aJobs[i])
+
+	Next i
+
+	//Checa duplicidade na SC9
+	//checkSC9()
+
+	//
+	A_REG->(DbCloseArea())
+
+Return Nil
+/*/{Protheus.doc} sqlTScript
+	Script sql para processamento de registros.
+	@type  Static Function
+	@author user
+	@since 28/10/2021
+	@version 01
+/*/
+Static Function sqlTScript(nRePThe)
+
+	//Variáveis.
+	Local cQuery := ""
 
 	//Inclusão de pedido de venda.
 	cQuery += " SELECT " 
-	cQuery += " TOP " + cValToChar(nTotThe * nRePThe) + " ZCI_NUMP, MAX(R_E_C_N_O_) AS REC " 
+	cQuery += " TOP " + cValToChar(nRePThe) + " ZCI_NUMP, MAX(R_E_C_N_O_) AS REC " 
 	cQuery += " FROM " 
 	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) " 
 	cQuery += " WHERE " 
 	cQuery += " ZCI_TMPR = 'PENDPROC' " 
 	cQuery += " AND ZCI_METD = 'POST' " 
-	//cQuery += " AND ZCI_NUMP = '9C0939' " 
 	cQuery += " AND D_E_L_E_T_ = '' "
 	cQuery += " GROUP BY ZCI_NUMP " 
 
@@ -119,7 +247,6 @@ Static Function obterReg()
 	cQuery += " WHERE   " 
 	cQuery += " ZCI.ZCI_TMPR = 'PENDPROC'   " 
 	cQuery += " AND ZCI.ZCI_METD = 'DELETE'   " 
-	//cQuery += " AND ZCI.ZCI_NUMP = '9C0939' " 
 	cQuery += " AND ZCI.D_E_L_E_T_ = ''  " 
 	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
 
@@ -136,109 +263,15 @@ Static Function obterReg()
 	cQuery += " WHERE   " 
 	cQuery += " ZCI.ZCI_TMPR = 'PENDPROC'   " 
 	cQuery += " AND ZCI.ZCI_METD = 'PUT'   " 
-	//cQuery += " AND ZCI.ZCI_NUMP = '9C0939' " 
 	cQuery += " AND ZCI.D_E_L_E_T_ = ''  " 
 	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
 
+	//
 	cQuery += " ORDER BY ZCI_NUMP, REC " 
 
-	//
-	If Select("A_REG") > 0
-		A_REG->(DbCloseArea())
-	EndIf
-
-	//
-	TcQuery cQuery New Alias "A_REG"
-	DbSelectArea("A_REG")
-	A_REG->(DbGoTop())
-	nTotal := Contar("A_REG","!Eof()")
-	Conout(DToC(Date()) + " " + Time() + " ADVEN090P - obterReg - TOTAL DE REGISTROS " + cValToChar(nTotal) )
-	A_REG->(DbGoTop())
-
-	//
-	i := 0
-	While ! A_REG->(Eof())	.And. lCont
-		nAux++
-		nTotG++
-		cRecnos += Alltrim(cValToChar( A_REG->REC )) + ","
-
-		If nAux == nRePThe .Or. nAux == nTotal .Or. nTotG == nTotal
-			//Remove a última vírgula da string.
-			cRecnos := Substr(cRecnos,1,Len(cRecnos) -1)
-			i++
-			//SF + Número do Job + Qtd de registros + Qtd total do job principal.
-			//cJobAux	:= "SF_" + cValToChar(i) + "_" + cValToChar(nAux) + "_" + cValToChar(nTotal)
-			//Aadd(aJobs,cJobAux)
-
-			/*//Cria variável global.
-			PutGlbValue(cJobAux,"0")
-			GlbUnlock()*/
-
-			//Inicia um Job.
-			//StartJob("U_ProcAltSF",GetEnvServer(),.F.,cRecnos,cJobAux)
-			
-			//Gera log na tabela ZBE.
-			DbSelectArea("ZBE")
-			RecLock("ZBE",.T.)
-			Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-			Replace ZBE_DATA 	   	WITH dDataBase
-			Replace ZBE_HORA 	   	WITH Time()
-			Replace ZBE_USUARI	    WITH "JOB PROC"
-			Replace ZBE_LOG	        WITH "Início Processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux))
-			Replace ZBE_MODULO	    WITH "COMERCIAL"
-			Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-			Replace ZBE_PARAME      WITH "RECNOS " + cValToChar(cRecnos)
-			ZBE->( MsUnLock())
-			
-			//Everson - 25/09/20219. Chamado T.I.
-			nRecErro := 0
-			cGrvErro := ""
-			lCont := execProc(cRecnos,@nRecErro,@cGrvErro)
-			If nRecErro > 0
-				StartJob("U_ADVEN901",getenvserver(),.F.,nRecErro,cGrvErro)
-				Sleep(5000)
-				nRecErro := 0
-			EndIf
-			//
-
-			//Gera log na tabela ZBE.
-			DbSelectArea("ZBE")
-			RecLock("ZBE",.T.)
-			Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-			Replace ZBE_DATA 	   	WITH dDataBase
-			Replace ZBE_HORA 	   	WITH Time()
-			Replace ZBE_USUARI	    WITH "JOB PROC"
-			Replace ZBE_LOG	        WITH "Fim processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux))
-			Replace ZBE_MODULO	    WITH "COMERCIAL"
-			Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-			Replace ZBE_PARAME      WITH "RECNOS " + cValToChar(cRecnos)
-			ZBE->( MsUnLock())
-	
-			cRecnos := ""
-			nAux := 0
-			cJobAux := ""
-		EndIf
-
-		A_REG->(DbSkip())
-	EndDo
-	
-	//Checa duplicidade na SC9
-	//checkSC9()
-
-	//Checa se o job foi inicializado.
-	/*For i := 1 To Len(aJobs)
-		//Valida status do processamento.
-		While cValToChar(GetGlbValue(aJobs[i])) == "0"
-
-		EndDo
-
-		//Limpara variável global.
-		ClearGlbValue(aJobs[i])
-	Next i*/
-Return Nil
-
+Return cQuery
 /*/{Protheus.doc} User Function ADVEN901
-	Job para processar os registros. Chamado T.I.
+	Job para processar os registros de erro. Chamado T.I.
 	@type  Function
 	@author Everson
 	@since 25/05/2018
@@ -246,19 +279,13 @@ Return Nil
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 /*/
 User Function ADVEN901(nRecErro,cGrvErro)
+	
 	//Declaração de variávies
 	Default cGrvErro := ""
 
 	RPCClearEnv()
 	RPCSetType(3)
 	RpcSetEnv("01","02",,,,GetEnvServer(),{ })
-
-	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-	// If !LockByName("ADVEN901", .T., .F.)
-	// 	ConOut("[ADVEN901] - Existe outro processamento sendo executado! Verifique...")
-	// 	RPCClearEnv()
-	// 	Return
-	// EndIf
 
 	U_ADINF009P('ADVEN090P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
 		Conout( DToC(Date()) + " " + Time() +  " ADVEN090P - ADVEN901 - nRecErro/cGrvErro " + cValToChar(nRecErro) + cValToChar(cGrvErro) )
@@ -269,13 +296,10 @@ User Function ADVEN901(nRecErro,cGrvErro)
 			ZCI->ZCI_ERRO := cGrvErro
 			ZCI->ZCI_TMPR := "00:00:00"
 		ZCI->(MsUnlock())
-	
-	//Destrava a rotina para o usuário
-	// UnLockByName("ADVEN901")
 
 	RpcClearEnv()
-Return Nil
 
+Return Nil
 /*/{Protheus.doc} User Function ProcAltSF
 	Job para processar os registros. Chamado 037261.
 	@type  Function
@@ -284,10 +308,13 @@ Return Nil
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 /*/
-User Function ProcAltSF(cRecnos,cJobAux)
+User Function ProcAltSF(cRecnos,cJobAux, nAux, nTmpMed)
+
 	//Declaração de variávies
 	Local cEmp 		:= "01"
 	Local cFil 		:= "02"
+	Local nRecErro 	:= 0
+	Local cGrvErro	:= ""
 
 	Default cRecnos	:= ""
 	Default cJobAux := ""
@@ -297,59 +324,39 @@ User Function ProcAltSF(cRecnos,cJobAux)
 	RPCSetType(3)
 	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })	
 
-	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-	// If !LockByName("PROCALTSF", .T., .F.)
-	// 	ConOut("[PROCALTSF] - Existe outro processamento sendo executado! Verifique...")
-	// 	RPCClearEnv()
-	// 	Return
-	// EndIf
+		//
+		Conout("ADVEN090P - Início ProcAltSF - Job " +  cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()) )
 
-	U_ADINF009P('ADVEN090P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
+		//
+		U_ADINF009P('ADVEN090P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
 
-	//Gera log na tabela ZBE.
-	DbSelectArea("ZBE")
-	RecLock("ZBE",.T.)
-	Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-	Replace ZBE_DATA 	   	WITH dDataBase
-	Replace ZBE_HORA 	   	WITH Time()
-	Replace ZBE_USUARI	    WITH "JOB PROC"
-	Replace ZBE_LOG	        WITH "Início Processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux))
-	Replace ZBE_MODULO	    WITH "COMERCIAL"
-	Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-	Replace ZBE_PARAME      WITH "RECNOS " + cValToChar(cRecnos)
-	ZBE->( MsUnLock())
+		//Gera log na tabela ZBE
+		logZBE("Início Processamento JOB " + cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()), "Total Reg " + cValToChar(nAux))
 
-	//Executa a alteração dos pedidos.
-	If ! Empty(cRecnos) .And. ! Empty(cJobAux)
-		execProc(cRecnos)
-	EndIf
+		//Executa a alteração dos pedidos.
+		If ! Empty(cRecnos) .And. ! Empty(cJobAux)
+			
+			//
+			nRecErro := 0
+			cGrvErro := ""
+			execProc(cRecnos,@nRecErro,@cGrvErro)
 
-	//Gera log na tabela ZBE.
-	DbSelectArea("ZBE")
-	RecLock("ZBE",.T.)
-	Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-	Replace ZBE_DATA 	   	WITH dDataBase
-	Replace ZBE_HORA 	   	WITH Time()
-	Replace ZBE_USUARI	    WITH "JOB PROC"
-	Replace ZBE_LOG	        WITH "Fim processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux))
-	Replace ZBE_MODULO	    WITH "COMERCIAL"
-	Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-	Replace ZBE_PARAME      WITH "RECNOS " + cValToChar(cRecnos)
-	ZBE->( MsUnLock())
+		EndIf
 
-	//Se a rotina foi executa em multithread, a variável pública é alterada.
-	If !Empty(cJobAux)
+		//Gera log na tabela ZBE.
+		logZBE("Fim processamento JOB " + cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()), "Total Reg " + cValToChar(nAux))
+
+		//Se a rotina foi executa em multithread, a variável pública é alterada.
 		PutGlbValue(cJobAux,"1")
-		GlbUnlock()	
-	EndIf
+		GlbUnlock()
 
-	//Destrava a rotina para o usuário
-	//UnLockByName("PROCALTSF")
+		//
+		Conout("ADVEN090P - Fim ProcAltSF - Job " +  cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()) )
 
 	//Fecha o ambiente.
 	RpcClearEnv()
-Return Nil
 
+Return Nil
 /*/{Protheus.doc} execProc
 	Executa processamento de alteração de pedidos. Chamado 037261.
 	@type  Static Function
@@ -357,15 +364,14 @@ Return Nil
 	@since 09/05/2018
 	@version 01
 /*/
-Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. Chamado T.I.
+Static Function execProc(cRecnos, nRecGetErr, cGrvErro) //Everson - 25/09/20219. Chamado T.I.
+	
 	//Declaracao de Variaveis
 	Local aArea	 	 := GetArea()
 	Local cQuery 	 := ""
 	Local oParseJSON := Nil
 	Local cErro		 := ""
-	Local cNumPed	 := ""
 	Local cFlagApr	 := ""
-	Local nRecno	 := 0
 	Local cErroPE	 := ""
 	Local cHoraExec	 := Time()
 	Local cPed		 := ""
@@ -376,12 +382,13 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 	Local cHoraAnt	 := ""
 	Local lErro		 := .T.
 	Local nAux		 := 0
-	
+	Local i 		 := 1	
 	Local cCliente   := ""
 	Local cLoja	     := ""
-	Local cError	 := ""
+	//Local cError	 := ""
 	Local lContinua	 := .T. //Everson - 25/09/20219. Chamado T.I.
-	Local nRecErro	 := "" //Everson - 25/09/20219. Chamado T.I.
+	Local nRecErro	 := ""  //Everson - 25/09/20219. Chamado T.I.
+	Local nTotal     := 0
 
 	Default cRecnos	 := ""
 
@@ -391,29 +398,38 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 	If Empty(cRecnos)
 		RestArea(aArea)
 		Return Nil
+
 	EndIf
 
 	//Everson - 25/09/20219. Chamado T.I.
-	bError := ErrorBlock( {|e| cError := e:Description ,cGrvErro := cError, nRecGetErr := nRecErro, lContinua := .F., Conout( DToC(Date()) + " " + Time() + " ADVEN090P - RESTEXECUTE - lContinua/nRecErro/ERRO - " +; 
+	bError := ErrorBlock( {|e| MsUnlockAll(), cError := e:Description ,cGrvErro := cError, nRecGetErr := nRecErro, lContinua := .F., Conout( DToC(Date()) + " " + Time() + " ADVEN090P - RESTEXECUTE - lContinua/nRecErro/ERRO - " +; 
 	cValToChar(lContinua) + " " + cValToChar(nRecErro) + " " + cError) } )
+	
+	//	
 	Begin Sequence
-		cQuery := cSqlScript(cRecnos)
+
+		cQuery := csqlTScript(cRecnos)
 
 		If Select("A_PROC") > 0
 			A_PROC->(DbCloseArea())
+
 		EndIf
 
 		TcQuery cQuery New Alias "A_PROC"
 		DbSelectArea("A_PROC")
 		A_PROC->(DbGoTop())
+		nTotal := Contar("A_PROC","!Eof()")
+		A_PROC->(DbGoTop())
 
 		While ! A_PROC->(Eof()) .And. lContinua
+
+			//
 			cHoraAnt := Time()
 			aPedidos := {}
 			cErro    := ""
 			nAux++
 			
-			Conout(DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PROCESSANDO ZCI " + cValToChar(A_PROC->REC) + " METODO " + Alltrim(cValToChar(A_PROC->ZCI_METD)) + " - " + cValToChar(nAux) + " de " + cValToChar(nTotal)  )
+			Conout(DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PROCESSANDO ZCI " + cValToChar(A_PROC->REC) + " METODO " + Alltrim(cValToChar(A_PROC->ZCI_METD)) + " - " + cValToChar(nAux) + " de " + cValToChar(nTotal) + " ThreadId " + cValToChar(ThreadId()) )
 			nRecErro := Val(cValToChar(A_PROC->REC) )
 
 			DbSelectArea("ZCI")
@@ -422,18 +438,19 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 			If ! FWJsonDeserialize(ZCI->ZCI_JSON, @oParseJSON) .And. Alltrim(cValToChar(A_PROC->ZCI_METD)) <> "DELETE"
 				cHoraExec := ELAPTIME(cHoraAnt, Time())
 				RecLock("ZCI",.F.)
-				ZCI->ZCI_TMPR := cHoraExec
-				ZCI->ZCI_ERRO := "Json não pode ser desserializado."
-				ZCI->(MsUnlock())
+					ZCI->ZCI_TMPR := cHoraExec
+					ZCI->ZCI_ERRO := "Json não pode ser desserializado."
+					ZCI->(MsUnlock())
 				RestArea(aArea)
 
 				Return Nil
+
 			EndIf
 
 			If Alltrim(cValToChar(A_PROC->ZCI_METD)) <> "DELETE"
 				cFlagApr := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))
-		
 				cPed     := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_NUM))
+
 			EndIf
 
 			//Executa a inclusão do pedido de venda.
@@ -443,22 +460,24 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 
 				DbSelectArea("SC5")
 				SC5->(DbSetOrder(1))
-				If SC5->( DbSeek( xFilial("SC5") + cPed ) )
+				If SC5->( DbSeek( FWxFilial("SC5") + cPed ) )
 					cHoraExec := ELAPTIME(cHoraAnt, Time())
 					DbSelectArea("ZCI")
 					//CI->(DbGoTo(Val(cValToChar(A_PROC->REC)))) //chamado: TI - Fernado Sigoli 06/02/2019
 					ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 					RecLock("ZCI",.F.)
-					ZCI->ZCI_TMPR := cHoraExec
-					ZCI->ZCI_ERRO := "Pedido já processado." 
-					ZCI->ZCI_TPALT := "5"
+						ZCI->ZCI_TMPR := cHoraExec
+						ZCI->ZCI_ERRO := "Pedido já processado." 
+						ZCI->ZCI_TPALT := "5"
 					ZCI->(MsUnlock())
 
 					A_PROC->(DbSkip())
 					Loop
+
 				EndIf
 
 				lErro    := .T.
+
 				//
 				Begin transaction
 					lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
@@ -482,9 +501,9 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						DbSelectArea("ZCI")
 						ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 						RecLock("ZCI",.F.)
-						ZCI->ZCI_TMPR  := ELAPTIME(cHoraAnt, Time())
-						ZCI->ZCI_TPALT := "5"
-						ZCI->ZCI_ERRO   := ""
+							ZCI->ZCI_TMPR  := ELAPTIME(cHoraAnt, Time())
+							ZCI->ZCI_TPALT := "5"
+							ZCI->ZCI_ERRO   := ""
 						ZCI->(MsUnlock())
 					Else
 						cErroPE := ""
@@ -495,7 +514,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						DbSelectArea("ZCI")
 						ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 						RecLock("ZCI",.F.)
-						ZCI->ZCI_ERRO := Iif(Empty(cErroPE),cErro,cErroPE)
+							ZCI->ZCI_ERRO := Iif(Empty(cErroPE),cErro,cErroPE)
 						ZCI->(MsUnlock())
 						//
 						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - POST - ERRO " + Alltrim(cValToChar(ZCI->ZCI_NUMP)) + " " + Iif(Empty(cErroPE),cErro,cErroPE) )
@@ -504,6 +523,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 					//Valida transação.
 					lErro := .F.
 				End Transaction
+				
 				//
 				If lErro
 					RecLock("ZCI",.F.)
@@ -519,7 +539,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 				//
 				DbSelectArea("SC5")
 				SC5->(DbSetOrder(1))
-				If ! SC5->( DbSeek( xFilial("SC5") + cPed ) )
+				If ! SC5->( DbSeek( FWxFilial("SC5") + cPed ) )
 					DbSelectArea("ZCI")
 					ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 					RecLock("ZCI",.F.)
@@ -545,6 +565,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 							ZCI->ZCI_TPALT := "6"
 							ZCI->ZCI_ERRO   := ""
 						ZCI->(MsUnlock())
+
 					Else
 						cErroPE := ""
 						For i := 1 To Len(aPedidos)
@@ -556,6 +577,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						RecLock("ZCI",.F.)
 							ZCI->ZCI_ERRO := Iif(Empty(cErroPE),cErro,cErroPE)
 						ZCI->(MsUnlock())
+
 					EndIf
 		
 					//Valida transação.
@@ -567,7 +589,8 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 					ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 					RecLock("ZCI",.F.)
 						ZCI->ZCI_ERRO := "Erro transação exclusão de pedido de venda Tipo 6"
-					ZCI->(MsUnlock())				
+					ZCI->(MsUnlock())	
+
 				EndIf
 
 			//Alteração pedido de venda.
@@ -576,7 +599,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 				
 				DbSelectArea("SC5")
 				SC5->(DbSetOrder(1))
-				If ! SC5->( DbSeek( xFilial("SC5") + cPed ) )
+				If ! SC5->( DbSeek( FWxFilial("SC5") + cPed ) )
 					DbSelectArea("ZCI")
 					ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 					RecLock("ZCI",.F.)
@@ -589,16 +612,23 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 
 					A_PROC->(DbSkip())
 					Loop
+
 				EndIf
+
 				//
 				If Alltrim(cValToChar(A_PROC->ZCI_TPALT)) == "R"
 					nTpOp := 1
+
 				Else
 					nTpOp := checkProc(oParseJSON,cPed)
+
 				EndIf
+
 				//
 				If nTpOp == 1 //Executa MsExecauto.
+
 					lErro    := .T.
+
 					//
 					Begin transaction
 						lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
@@ -652,11 +682,24 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 							ZCI->ZCI_ERRO := "Erro transação possível SC6 x SC9 Tipo 1"
 						ZCI->(MsUnlock())				
 					EndIf
+
 				ElseIf nTpOp == 2 //Executa liberação do pedido.
+					
 					//
 					lErro    := .T.
 
+					//Everson - 01/11/2021. Chamado 63090.
+					cErro := ""
+					If ! chkBloTb(.T., @cErro, SC5->C5_NUM)
+						MsUnlockAll()
+						RestArea(aArea)
+						Return .F.
+
+					EndIf
+
+					//
 					Begin transaction
+
 						//
 						lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
 
@@ -701,6 +744,8 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						lErro := .F.
 					End Transaction
 					//
+					
+					//
 					If lErro
 						DbSelectArea("ZCI")
 						ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
@@ -708,6 +753,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						ZCI->ZCI_ERRO := "Erro transação possível SC6 x SC9 Tipo 2"
 						ZCI->(MsUnlock())				
 					EndIf
+
 				ElseIf nTpOp == 3 //Altera quantidades do pedido de venda.
 					//
 					lErro    := .T.
@@ -756,6 +802,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						ZCI->(MsUnlock())				
 					EndIf
 				EndIf
+			
 			EndIf
 			
 			//
@@ -773,12 +820,18 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 					StaticCall(LIBPED1,chkBlCred, cCliente, cLoja, Alltrim(cValToChar(ZCI->ZCI_NUMP)) )
 				EndIf
 			EndIf
+
+			//
+			MsUnlockAll()
 			
 			//
 			A_PROC->(DbSkip())
+
 		EndDo
+
 	Recover //Everson - 25/09/20219. Chamado T.I.
 		ErrorBlock( bError )
+
 	End Sequence
 
 	//
@@ -786,8 +839,8 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 
 	//
 	RestArea(aArea)
-Return .T.
 
+Return .T.
 /*/{Protheus.doc} RESTEXECUTE
 	Altera pedido de venda. Chamado 037261.
 	@type  Static Function
@@ -796,6 +849,7 @@ Return .T.
 	@version 01
 /*/
 Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSintegra) //Everson - 30/10/2019. Chamado 052760.
+	
 	//Declaracao de Variaveis
 	Local aArea			:= GetArea()
 	Local lRet			:= .F.	
@@ -814,18 +868,22 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	Local nItemPed 		:= obtSeqSC6(cNumPed)
 	Local cVendCdCli	:= ""
 	Local nVlrCred		:= 0
-
 	Local cContaC		:= ""
 	Local cItemContaC	:= ""
 	Local cUsrVend		:= ""
 	Local cBckUsr	    := __CUSERID
-
 	Local cObrPdCp		:= ""
 	Local cPedidoPC		:= ""
 	Local cRedeOP		:= GetMV("MV_#REDEOP")
 	Local lRedeOp		:= .F.
 	Local cPedVendOrd	:= ""
 	Local cTesCod		:= ""
+	Local cTipCli		:= ""
+
+	//Everson - 29/10/2021. Chamado 63090.
+	Local aSB2			:= {}
+	Local cNmBlq		:= ""
+	//
 
 	Private lMsErroAuto	:= .F.
 
@@ -847,20 +905,24 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	//Verifica se o pedido está bloqueado.
 	lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
 
-	cVendCdCli := Posicione("SA1",1,xFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_VEND")
+	cVendCdCli 	:= Posicione("SA1",1,FWxFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_VEND")
 
-	cUsrVend   := Posicione("SA3",1, xFilial("SA3") + cVendCdCli , "A3_CODUSR" )
+	cUsrVend   	:= Posicione("SA3",1, FWxFilial("SA3") + cVendCdCli , "A3_CODUSR" )
 
-	cObrPdCp   := Posicione("SA1",1,xFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_XOBRPC")
+	cObrPdCp   	:= Posicione("SA1",1,FWxFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_XOBRPC")
 
-	lRedeOp    := Iif( Posicione("SA1",1, xFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_REDE") $cRedeOp,.T.,.F.)
+	lRedeOp    	:= Iif( Posicione("SA1",1, FWxFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_REDE") $cRedeOp,.T.,.F.)
+	//Tkt 11762 - Adição do tipo do cliente na inclusão ou alteração.
+	cTipCli		:= Posicione("SA1",1,FWxFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_TIPO")
 
-	Aadd(aCabec,{"C5_FILIAL" , xFilial("SC5")                           ,Nil}) 
+	Aadd(aCabec,{"C5_FILIAL" , FWxFilial("SC5")                           ,Nil}) 
 
 	If nOpc == 4
-		Aadd(aCabec,{"C5_NUM"    ,oParseJSON:CABECALHO:C5_NUM           ,Nil})
+		Aadd(aCabec,{"C5_NUM"    ,oParseJSON:CABECALHO:C5_NUM          ,Nil})
+		cNmBlq := oParseJSON:CABECALHO:C5_NUM
 	Else
 		Aadd(aCabec,{"C5_NUM"    ,cNumPed                               ,Nil})
+		cNmBlq := cNumPed
 	EndIf
 
 	Aadd(aCabec,{"C5_TIPO"   ,oParseJSON:CABECALHO:C5_TIPO          ,Nil}) 
@@ -868,7 +930,6 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	Aadd(aCabec,{"C5_LOJACLI",oParseJSON:CABECALHO:C5_LOJACLI       ,Nil})
 	Aadd(aCabec,{"C5_XPEDSAL",oParseJSON:CABECALHO:C5_XPEDSAL       ,Nil})
 	Aadd(aCabec,{"C5_XPEDSAL",oParseJSON:CABECALHO:C5_XPEDSAL       ,Nil})
-	
 	Aadd(aCabec,{"C5_CONDPAG",oParseJSON:CABECALHO:C5_CONDPAG       ,Nil})
 	
 	//Everson - 27/12/2019 - Chamado T.I.
@@ -881,13 +942,15 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	Aadd(aCabec,{"C5_VEND1"  ,cVendCdCli                            ,Nil}) 
 	Aadd(aCabec,{"C5_DTENTR" ,SToD( cData )  						,Nil})
 	Aadd(aCabec,{"C5_MOEDA"  ,oParseJSON:CABECALHO:C5_MOEDA         ,Nil})
+	//Tkt 11762 - Adição do tipo do cliente na inclusão ou alteração.
+	Aadd(aCabec,{"C5_TIPOCLI",cTipCli						        ,Nil})
 	
 	//Valida a remessa de venda a ordem na ZCI.
 	If ! Empty(Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDORD)))
 		If Len(Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDORD))) == 18
-			cPedVendOrd := Alltrim(cValToChar(Posicione("ZCI",1,xFilial("ZCI") + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDORD)), "ZCI_NUMP")))
+			cPedVendOrd := Alltrim(cValToChar(Posicione("ZCI",1,FWxFilial("ZCI") + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDORD)), "ZCI_NUMP")))
 		Else
-			cPedVendOrd := Alltrim(cValToChar(Posicione("ZCI",2,xFilial("ZCI") + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDORD)), "ZCI_NUMP")))
+			cPedVendOrd := Alltrim(cValToChar(Posicione("ZCI",2,FWxFilial("ZCI") + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDORD)), "ZCI_NUMP")))
 		EndIf
 	Else
 		cPedVendOrd := ""
@@ -933,14 +996,18 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	//Everson - 30/10/2019. Chamado 052760.
 	If nOpc == 3
 		Aadd(aCabec,{"C5_XCONSIN "  ,cSintegra  ,Nil})
+
 	EndIf 
 
 	//
 	For i := 1 To Len(oParseJSON:ITENS)
+		
 		//
 		aItem    := {}         
 		cProduto := Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_PRODUTO ))             	      
 		nVlTot	 := (oParseJSON:ITENS[i]:C6_QTDVEN * oParseJSON:ITENS[i]:C6_PRCVEN)
+
+		Aadd(aSB2, FWxFilial("SB2") + cProduto) //Everson - 29/10/2021. Chamado 63090.
 
 		//Exclusão de item do pedido.
 		If Upper(Alltrim(cValToChar(oParseJSON:ITENS[i]:excluir))) == "S" .Or. Val(cValToChar(oParseJSON:ITENS[i]:C6_UNSVEN)) <= 0 .Or. Val(cValToChar(oParseJSON:ITENS[i]:C6_QTDVEN)) <= 0 .And.!Empty(cValToChar(oParseJSON:ITENS[i]:C6_ITEM))			
@@ -964,7 +1031,7 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 				Aadd(aItem,{"AUTDELETA","N", Nil}) 
 			EndIf
 
-			Aadd(aItem,{"C6_FILIAL" , xFilial("SC6")                           , Nil}) 
+			Aadd(aItem,{"C6_FILIAL" , FWxFilial("SC6")                           , Nil}) 
 			//
 			If nOpc == 4
 				Aadd(aItem,{"C6_NUM"    , oParseJSON:CABECALHO:C5_NUM          , Nil }) 
@@ -979,7 +1046,7 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 			Aadd(aItem,{"C6_VALOR"  , nVlTot                         ,0       , Nil }) 
 			
 			//
-			cTesCod := Alltrim(cValToChar(Posicione("SB1",1,xFilial("SB1") +  Padr(cProduto,TamSX3("C6_PRODUTO")[1]," "), "B1_TS" )))
+			cTesCod := Alltrim(cValToChar(Posicione("SB1",1,FWxFilial("SB1") +  Padr(cProduto,TamSX3("C6_PRODUTO")[1]," "), "B1_TS" )))
 			Conout( DToC(Date()) + " " + Time() + " ADVEN090P - RESTEXECUTE - cTesCod >>>>>>>>>>>> " + cTesCod)
 			If ! Empty(cTesCod)
 				Aadd(aItem,{"C6_TES",  cTesCod , Nil })
@@ -1028,8 +1095,8 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 			Aadd(aItem,{"C6_PLTSP"  , Val( Substr(cValToChar(oParseJSON:ITENS[i]:C6_PLTSP) ,1,5 ))  ,0 , Nil }) 
 			Aadd(aItem,{"C6_PLTAB"  , Val( Substr(cValToChar(oParseJSON:ITENS[i]:C6_PLTAB) ,1,5 ))  ,0 , Nil })
 
-			cContaC     := Posicione("SB1",1,xFilial("SB1") + Alltrim(cValToChar(cProduto)),"B1_CONTA" )		
-			cItemContaC := Posicione("SB1",1,xFilial("SB1") + Alltrim(cValToChar(cProduto)),"B1_ITEMCC" )
+			cContaC     := Posicione("SB1",1,FWxFilial("SB1") + Alltrim(cValToChar(cProduto)),"B1_CONTA" )		
+			cItemContaC := Posicione("SB1",1,FWxFilial("SB1") + Alltrim(cValToChar(cProduto)),"B1_ITEMCC" )
 
 			Aadd(aItem,{"C6_CONTA"   , cContaC     ,0 , Nil })
 			Aadd(aItem,{"C6_ITEMCTA" , cItemContaC ,0 , Nil })
@@ -1042,13 +1109,22 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 		aAdd(aItens,aItem)
 	Next i
 
+	//Everson - 29/10/2021. Chamado 63090.
+	If ! chkBloTb(.F., @cErro, cNmBlq, aSB2) //Tenta bloquear os registros para alteração.
+		MsUnlockAll()
+		RestArea(aArea)
+		Return .F.
+
+	EndIf
+	//
+
 	//
 	If nOpc == 4
 		//Localiza o pedido na tabela SC9 e faz o estorno dos itens.
 		DbSelectArea("SC9")
 		SC9->(DbSetOrder(1))
 		SC9->(DbGoTop())
-		If SC9->(DbSeek(xFilial("SC9") + cNumPed))
+		If SC9->(DbSeek(FWxFilial("SC9") + cNumPed))
 
 			//Faz o estorno dos itens liberados.
 			While Alltrim(cValToChar(SC9->C9_FILIAL)) == Alltrim(cValToChar(SC5->C5_FILIAL)) .And.;
@@ -1067,15 +1143,15 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 		DbSelectArea("SC6")
 		SC6->(DbSetOrder(1))
 		SC6->(DbGoTop())
-		If SC6->(DbSeek( xFilial("SC6") + cNumPed ))
+		If SC6->(DbSeek( FWxFilial("SC6") + cNumPed ))
 
 			//
-			While ! SC6->(Eof()) .And. SC6->C6_FILIAL == xFilial("SC6") .And. SC6->C6_NUM == cNumPed
+			While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_NUM == cNumPed
 
 				aItem := {} 
 				Aadd(aItem,{"LINPOS","C6_ITEM",SC6->C6_ITEM})
 				Aadd(aItem,{"AUTDELETA","S", Nil})        
-				Aadd(aItem,{"C6_FILIAL" , xFilial("SC6") , Nil})  
+				Aadd(aItem,{"C6_FILIAL" , FWxFilial("SC6") , Nil})  
 				Aadd(aItem,{"C6_NUM"    , cNumPed        , Nil})          	      
 				Aadd(aItem,{"C6_ITEM"   , SC6->C6_ITEM   , Nil})
 				Aadd(aItem,{"C6_PRODUTO", SC6->C6_PRODUTO, Nil})
@@ -1130,11 +1206,11 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 				DbSelectArea("SC6")
 				SC6->(DbSetOrder(1))
 				SC6->(DbGoTop())
-				If SC6->(DbSeek( xFilial("SC6") + cNumPed ))
+				If SC6->(DbSeek( FWxFilial("SC6") + cNumPed ))
 
 					//
 					i := 1
-					While ! SC6->(Eof()) .And. SC6->C6_FILIAL == xFilial("SC6") .And. SC6->C6_NUM == cNumPed
+					While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_NUM == cNumPed
 
 						RecLock("SC6",.F.)
 						SC6->C6_ITEM := StrZero(i,2)
@@ -1210,7 +1286,6 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	RestArea(aArea)
 
 Return lRet
-
 /*/{Protheus.doc} obtSeqSC6
 	(long_description)
 	@type  Static Function
@@ -1231,7 +1306,7 @@ Static Function obtSeqSC6(cPedido)
 	cQuery += " FROM"
 	cQuery += " " + RetSqlName("SC6") + " AS SC6 (NOLOCK)"
 	cQuery += " WHERE"
-	cQuery += " C6_FILIAL = '" + xFilial("SC6") + "'"
+	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "'"
 	cQuery += " AND C6_NUM = '" + cPedido + "'"
 
 	If Select("SEQ_SC6") > 0
@@ -1245,7 +1320,6 @@ Static Function obtSeqSC6(cPedido)
 	SEQ_SC6->(DbCloseArea())
 
 Return nSeq
-
 /*/{Protheus.doc} ³chkLiber
 	Efetua a liberação/bloqueio do pedido de venda. Chamado 037261.
 	@type  Static Function
@@ -1281,7 +1355,7 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 	DbSelectArea("SC5")
 	SC5->(DbSetOrder(1))
 	SC5->(DbGoTop())
-	If ! SC5->(DbSeek(xFilial("SC5") + cNumPed))
+	If ! SC5->(DbSeek(FWxFilial("SC5") + cNumPed))
 		cErro := "Liberação Não localizou o pedido " + cNumPed
 		lProcessa := .F.
 		lRet := .F.
@@ -1303,14 +1377,14 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			DbSelectArea("SC6")
 			SC6->(DbSetOrder(1))
 			SC6->(DbGoTop())
-			SC6->(DbSeek(xFilial("SC6") + cNumPed))
+			SC6->(DbSeek(FWxFilial("SC6") + cNumPed))
 
 			//Localiza o pedido na tabela SC9 e faz o estorno dos itens.
 			DbSelectArea("SC9")
 			SC9->(DbSetOrder(1))
 			SC9->(DbGoTop())
 
-			If SC9->(DbSeek(xFilial("SC9") + cNumPed))
+			If SC9->(DbSeek(FWxFilial("SC9") + cNumPed))
 
 				//Faz o estorno dos itens liberados.
 				While Alltrim(cValToChar(SC9->C9_FILIAL)) == Alltrim(cValToChar(SC5->C5_FILIAL)) .And.;
@@ -1320,17 +1394,7 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 					SC9->(A460Estorna(/*lMata410*/,/*lAtuEmp*/,@nVlrCred))
 
 					//Gera log na tabela ZBE.
-					DbSelectArea("ZBE")
-					RecLock("ZBE",.T.)
-					Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-					Replace ZBE_DATA 	   	WITH dDataBase
-					Replace ZBE_HORA 	   	WITH Time()
-					Replace ZBE_USUARI	    WITH "JOB PROC"
-					Replace ZBE_LOG	        WITH "Estorno SC9 " + cValToChar(SC9->C9_PEDIDO) 
-					Replace ZBE_MODULO	    WITH "COMERCIAL"
-					Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-					Replace ZBE_PARAME      WITH "Pedido " + cValToChar(SC9->C9_PEDIDO) + " Recno " + cValToChar(SC6->( Recno())) 
-					ZBE->( MsUnLock())	
+					logZBE("Estorno SC9 " + cValToChar(SC9->C9_PEDIDO), "Pedido " + cValToChar(SC9->C9_PEDIDO) + " Recno " + cValToChar(SC6->( Recno())))
 
 					SC9->(DbSkip())
 
@@ -1339,12 +1403,12 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			EndIf
 
 			//
-			TCSqlExec(" UPDATE " + RetSqlName("SC9") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE C9_FILIAL = '" + xFilial("SC9") + "' AND C9_PEDIDO = '" + cNumPed + "' AND D_E_L_E_T_ = '' ")
+			TCSqlExec(" UPDATE " + RetSqlName("SC9") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE C9_FILIAL = '" + FWxFilial("SC9") + "' AND C9_PEDIDO = '" + cNumPed + "' AND D_E_L_E_T_ = '' ")
 
 			//Força bloqueio do pedido.
 			RecLock("SC5",.F.)
-			SC5->C5_BLQ     := "1"
-			SC5->C5_LIBEROK := " "
+				SC5->C5_BLQ     := "1"
+				SC5->C5_LIBEROK := " "
 			SC5->(MsUnlock())
 
 			//Conta os itens na tabela SC9.
@@ -1354,7 +1418,7 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			SC9->(DbGoTop())
 
 			//
-			If SC9->(DbSeek(xFilial("SC9") + cNumPed))
+			If SC9->(DbSeek(FWxFilial("SC9") + cNumPed))
 
 				//Faz o estorno dos itens liberados.
 				While Alltrim(cValToChar(SC9->C9_FILIAL)) == Alltrim(cValToChar(SC5->C5_FILIAL)) .And.;
@@ -1392,8 +1456,8 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 
 			//Força liberação do pedido.
 			RecLock("SC5",.F.)
-			SC5->C5_BLQ     := " "
-			SC5->C5_LIBEROK := "S"
+				SC5->C5_BLQ     := " "
+				SC5->C5_LIBEROK := "S"
 			SC5->(MsUnlock())
 
 			// Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 22/04/2020
@@ -1416,7 +1480,7 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			DbSelectArea("SC9")
 			SC9->(DbSetOrder(1))
 			If SC9->( DbSeek( xfilial("SC9") + cNumPed) )
-				While ! SC9->(Eof()) .And. SC9->C9_FILIAL == xFilial("SC9") .And. Alltrim(cValToChar(SC9->C9_PEDIDO)) == cNumPed
+				While ! SC9->(Eof()) .And. SC9->C9_FILIAL == FWxFilial("SC9") .And. Alltrim(cValToChar(SC9->C9_PEDIDO)) == cNumPed
 
 					Reclock("SC9",.F.)
 					DbDelete()
@@ -1427,7 +1491,7 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			EndIf
 
 			//
-			TCSqlExec(" UPDATE " + RetSqlName("SC9") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE C9_FILIAL = '" + xFilial("SC9") + "' AND C9_PEDIDO = '" + cNumPed + "' AND D_E_L_E_T_ = '' ")
+			TCSqlExec(" UPDATE " + RetSqlName("SC9") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE C9_FILIAL = '" + FWxFilial("SC9") + "' AND C9_PEDIDO = '" + cNumPed + "' AND D_E_L_E_T_ = '' ")
 
 			//
 			nQtdSC6 := 0
@@ -1435,9 +1499,9 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			SC6->(DbSetOrder(1))
 			SC6->(DbGoTop())
 
-			If  SC6->( DbSeek(xFilial("SC6") + cNumPed) )
+			If  SC6->( DbSeek(FWxFilial("SC6") + cNumPed) )
 
-				While ! SC6->(Eof()) .And. SC6->C6_FILIAL ==  xFilial("SC6") .And. SC6->C6_NUM == cNumPed
+				While ! SC6->(Eof()) .And. SC6->C6_FILIAL ==  FWxFilial("SC6") .And. SC6->C6_NUM == cNumPed
 
 					nQtdLiber := SC6->C6_QTDVEN
 					RecLock("SC6")
@@ -1459,20 +1523,10 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 					//End Transaction
 
 					//Gera log na tabela ZBE.
-					DbSelectArea("ZBE")
-					RecLock("ZBE",.T.)
-					Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-					Replace ZBE_DATA 	   	WITH dDataBase
-					Replace ZBE_HORA 	   	WITH Time()
-					Replace ZBE_USUARI	    WITH "JOB PROC"
-					Replace ZBE_LOG	        WITH "Liberação SC6 pedido " + cValToChar(SC6->C6_NUM) 
-					Replace ZBE_MODULO	    WITH "COMERCIAL"
-					Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-					Replace ZBE_PARAME      WITH "Pedido " + cValToChar(SC6->C6_NUM) + " Recno " + cValToChar(SC6->( Recno())) 
-					ZBE->( MsUnLock())
+					logZBE("Liberação SC6 pedido " + cValToChar(SC6->C6_NUM), "Pedido " + cValToChar(SC6->C6_NUM) + " Recno " + cValToChar(SC6->( Recno())))
 
 					nQtdSC6++
-					SC6->(dbSkip())
+					SC6->(DbSkip())
 
 				EndDo
 
@@ -1483,7 +1537,7 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 			DbSelectArea("SC9")
 			SC9->(DbSetOrder(1))
 			If SC9->( DbSeek( xfilial("SC9") + cNumPed) )
-				While ! SC9->(Eof()) .And. SC9->C9_FILIAL == xFilial("SC9") .And. Alltrim(cValToChar(SC9->C9_PEDIDO)) == cNumPed
+				While ! SC9->(Eof()) .And. SC9->C9_FILIAL == FWxFilial("SC9") .And. Alltrim(cValToChar(SC9->C9_PEDIDO)) == cNumPed
 
 					Reclock("SC9",.F.)
 					SC9->C9_ROTEIRO := SC5->C5_ROTEIRO
@@ -1492,35 +1546,16 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 					SC9->(Msunlock())
 
 					//Gera log na tabela ZBE.
-					DbSelectArea("ZBE")
-					RecLock("ZBE",.T.)
-					Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-					Replace ZBE_DATA 	   	WITH dDataBase
-					Replace ZBE_HORA 	   	WITH Time()
-					Replace ZBE_USUARI	    WITH "JOB PROC"
-					Replace ZBE_LOG	        WITH "Roteiro SC9 pedido " + cValToChar(SC9->C9_PEDIDO) 
-					Replace ZBE_MODULO	    WITH "COMERCIAL"
-					Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-					Replace ZBE_PARAME      WITH "Pedido " + cValToChar(SC9->C9_PEDIDO) + " Recno " + cValToChar(SC9->(Recno())) 
-					ZBE->( MsUnLock())
+					logZBE("Roteiro SC9 pedido " + cValToChar(SC9->C9_PEDIDO) , "Pedido " + cValToChar(SC9->C9_PEDIDO) + " Recno " + cValToChar(SC9->(Recno())))
 
 					nQtdSC9++
 					SC9->(Dbskip())
+
 				Enddo
 			EndIf
 
 			//Gera log na tabela ZBE.
-			DbSelectArea("ZBE")
-			RecLock("ZBE",.T.)
-			Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-			Replace ZBE_DATA 	   	WITH dDataBase
-			Replace ZBE_HORA 	   	WITH Time()
-			Replace ZBE_USUARI	    WITH "JOB PROC"
-			Replace ZBE_LOG	        WITH "Quantidade SC6 ("+ cValToChar(nQtdSC6) +") x SC9 (" + cValToChar(nQtdSC9) + ") - SC5 pedido " + cNumPed
-			Replace ZBE_MODULO	    WITH "COMERCIAL"
-			Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-			Replace ZBE_PARAME      WITH "Pedido " + cNumPed
-			ZBE->( MsUnLock())
+			logZBE("Quantidade SC6 ("+ cValToChar(nQtdSC6) +") x SC9 (" + cValToChar(nQtdSC9) + ") - SC5 pedido " + cNumPed, "Pedido " + cNumPed)
 
 			//Valida quantidade SC6 e SC9.
 			If nQtdSC9 <> nQtdSC6 
@@ -1546,7 +1581,6 @@ Static Function chkLiber(cNumPed,lPedBloq,lBlq,lProcessa,cErro)
 	RestArea(aArea)
 
 Return lRet
-
 /*/{Protheus.doc} ³logZBN
 	Gera log na ZBN. Chamado 037261;
 	@type  Static Function
@@ -1564,11 +1598,11 @@ Static Function logZBN(cStatus)
 	DbSelectArea("ZBN") 
 	ZBN->(DbSetOrder(1))
 	ZBN->(DbGoTop()) 
-	If ZBN->(DbSeek(xFilial("ZBN") + 'ADVEN090P'))
+	If ZBN->(DbSeek(FWxFilial("ZBN") + 'ADVEN090P'))
 
 		RecLock("ZBN",.F.)
 
-		ZBN_FILIAL  := xFilial("ZBN")
+		ZBN_FILIAL  := FWxFilial("ZBN")
 		ZBN_DATA    := Date()
 		ZBN_HORA    := cValToChar(Time())
 		ZBN_ROTINA	:= 'ADVEN090P'
@@ -1580,7 +1614,7 @@ Static Function logZBN(cStatus)
 
 		RecLock("ZBN",.T.)
 
-		ZBN_FILIAL  := xFilial("ZBN")
+		ZBN_FILIAL  := FWxFilial("ZBN")
 		ZBN_DATA    := Date()
 		ZBN_HORA    := cValToChar(Time())
 		ZBN_ROTINA	:= 'ADVEN090P'
@@ -1595,7 +1629,6 @@ Static Function logZBN(cStatus)
 	RestArea(aArea)
 
 Return Nil
-
 /*/{Protheus.doc} ³procCorte
 	Efetua corte no pedido de venda. Chamado 037261.
 	@type  Static Function
@@ -1610,6 +1643,7 @@ Static Function procCorte(oParseJSON,cPedido,lPedBloq)
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea	:= GetArea()
 	Local lRet	:= .T.
+	Local i 	:= 1
 
 	//
 	Begin transaction
@@ -1622,7 +1656,7 @@ Static Function procCorte(oParseJSON,cPedido,lPedBloq)
 
 			Else
 
-				If ! SC6->( DbSeek( xFilial("SC6") + Alltrim(cValToChar( oParseJSON:ITENS[i]:C6_ITEM )) ) )
+				If ! SC6->( DbSeek( FWxFilial("SC6") + Alltrim(cValToChar( oParseJSON:ITENS[i]:C6_ITEM )) ) )
 					lRet := .F.
 					DisarmTransaction()
 					Break
@@ -1670,7 +1704,6 @@ Static Function procCorte(oParseJSON,cPedido,lPedBloq)
 	RestArea(aArea)
 
 Return lRet
-
 /*/{Protheus.doc} checkProc
 	Checa qual processamento deve ser executado para o pedido.
 	1- Execauto de alteração, 2-Liberação comercial 3-Corte
@@ -1723,7 +1756,6 @@ Static Function checkProc(oParseJSON,cPedido)
 	RestArea(aArea)
 
 Return nRet
-
 /*/{Protheus.doc} comparaCab
 	Compara json do cabeçalho do pedido de venda. Chamado 037261.
 	@type  Static Function
@@ -1807,7 +1839,7 @@ Static Function comparaCab(oParseJSON,cPedido)
 
 	DbSelectArea("SC5")
 	SC5->(DbSetOrder(1))
-	If SC5->(DbSeek( xFilial("SC5") + cPedido))
+	If SC5->(DbSeek( FWxFilial("SC5") + cPedido))
 		cJsonPr += Alltrim(cValToChar(SC5->C5_TIPO)) +"_"
 
 		cJsonPr += Alltrim(cValToChar(SC5->C5_CLIENTE)) +"_"
@@ -1876,29 +1908,8 @@ Static Function comparaCab(oParseJSON,cPedido)
 
 	Else
 
-		DbSelectArea("ZBE")
-		RecLock("ZBE",.T.)
-		Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-		Replace ZBE_DATA 	   	WITH dDataBase
-		Replace ZBE_HORA 	   	WITH Time()
-		Replace ZBE_USUARI	    WITH "JOB PROC"
-		Replace ZBE_LOG	        WITH "CABECALHO DIVERGE " + cPedido
-		Replace ZBE_MODULO	    WITH "COMERCIAL"
-		Replace ZBE_ROTINA	    WITH "checkProc" 
-		Replace ZBE_PARAME      WITH  'PRO: ' + cJsonPr
-		ZBE->( MsUnLock())
-
-		DbSelectArea("ZBE")
-		RecLock("ZBE",.T.)
-		Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-		Replace ZBE_DATA 	   	WITH dDataBase
-		Replace ZBE_HORA 	   	WITH Time()
-		Replace ZBE_USUARI	    WITH "JOB PROC"
-		Replace ZBE_LOG	        WITH "CABECALHO DIVERGE " + cPedido
-		Replace ZBE_MODULO	    WITH "COMERCIAL"
-		Replace ZBE_ROTINA	    WITH "checkProc" 
-		Replace ZBE_PARAME      WITH 'SFC: ' + cJsonSF + ''
-		ZBE->( MsUnLock())
+		logZBE("CABECALHO DIVERGE " + cPedido, "PRO: " + cJsonPr)
+		logZBE("CABECALHO DIVERGE " + cPedido, "SFC: " + cJsonSF)
 
 	EndIf
 
@@ -1910,7 +1921,6 @@ Static Function comparaCab(oParseJSON,cPedido)
 	RestArea(aArea)
 
 Return lRet
-
 /*/{Protheus.doc} comparaItens
 	Compara json dos itens do pedido de venda. Chamado 037261.
 	@type  Static Function
@@ -1926,7 +1936,6 @@ Static Function comparaItens(oParseJSON,cPedido)
 	Local aArea		:= GetArea()
 	Local nRet		:= 0
 	Local i			:= 1
-	Local cProduto	:= ""
 	Local cJsonSF	:= ""
 	Local cJsonPr	:= ""
 
@@ -1944,20 +1953,9 @@ Static Function comparaItens(oParseJSON,cPedido)
 
 		Else
 
-			If ! SC6->( DbSeek( xFilial("SC6") + Alltrim(cValToChar( oParseJSON:ITENS[i]:C6_ITEM )) ) )
+			If ! SC6->( DbSeek( FWxFilial("SC6") + Alltrim(cValToChar( oParseJSON:ITENS[i]:C6_ITEM )) ) )
 
-				DbSelectArea("ZBE")
-				RecLock("ZBE",.T.)
-				Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-				Replace ZBE_DATA 	   	WITH dDataBase
-				Replace ZBE_HORA 	   	WITH Time()
-				Replace ZBE_USUARI	    WITH "JOB PROC"
-				Replace ZBE_LOG	        WITH "ITEM NAO ENCONTRADO " + cPedido
-				Replace ZBE_MODULO	    WITH "COMERCIAL"
-				Replace ZBE_ROTINA	    WITH "checkProc" 
-				Replace ZBE_PARAME      WITH "ITEM SF: " + Alltrim(cValToChar( oParseJSON:ITENS[i]:C6_ITEM ))
-				ZBE->( MsUnLock())
-
+				logZBE("ITEM NAO ENCONTRADO " + cPedido, "ITEM SF: " + Alltrim(cValToChar( oParseJSON:ITENS[i]:C6_ITEM )))
 				RestArea(aArea)
 				nRet := 0
 				Return nRet
@@ -1992,17 +1990,7 @@ Static Function comparaItens(oParseJSON,cPedido)
 			//
 			If cJsonSF <> cJsonPr
 
-				DbSelectArea("ZBE")
-				RecLock("ZBE",.T.)
-				Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-				Replace ZBE_DATA 	   	WITH dDataBase
-				Replace ZBE_HORA 	   	WITH Time()
-				Replace ZBE_USUARI	    WITH "JOB PROC"
-				Replace ZBE_LOG	        WITH "ITEM DIFERENTE " + cPedido
-				Replace ZBE_MODULO	    WITH "COMERCIAL"
-				Replace ZBE_ROTINA	    WITH "checkProc" 
-				Replace ZBE_PARAME      WITH "PR: " + cJsonPr + " SF: " + cJsonSF
-				ZBE->( MsUnLock())
+				logZBE("ITEM DIFERENTE " + cPedido, "PR: " + cJsonPr + " SF: " + cJsonSF)
 
 				RestArea(aArea)
 				nRet := 0
@@ -2023,7 +2011,6 @@ Static Function comparaItens(oParseJSON,cPedido)
 	RestArea(aArea)
 
 Return nRet
-
 /*/{Protheus.doc} ³updStPut
 	Executa update nos registros PUT pendentes. Chamado 037261.
 	@type  Static Function
@@ -2036,15 +2023,14 @@ Static Function updStPut(cPedido,cRecno)
 	TCSqlExec("UPDATE " + RetSqlName("ZCI") + " SET ZCI_TMPR = 'DESCARTA' WHERE ZCI_FILIAL = '" + cFilAnt + "' AND ZCI_TMPR = 'PENDPROC' AND ZCI_NUMP = '" + cPedido + "' AND ZCI_TMPR = 'PENDPROC' AND ZCI_METD = 'PUT' AND D_E_L_E_T_ = '' AND R_E_C_N_O_ < '" + cRecno + "'")			
 
 Return Nil
-
-/*/{Protheus.doc} cSqlScript
+/*/{Protheus.doc} csqlTScript
 	Script sql processamento ZCI. Chamado 037261.
 	@type  Static Function
 	@author Everson
 	@since 13/05/2018
 	@version 01
 /*/
-Static Function cSqlScript(cRecnos)
+Static Function csqlTScript(cRecnos)
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.
@@ -2059,7 +2045,6 @@ Static Function cSqlScript(cRecnos)
 	cQuery += " R_E_C_N_O_ IN (" + cRecnos + ") "
 
 Return cQuery
-
 /*/{Protheus.doc} exclPedVend
 	MsExecauto pedido de venda (exclusão). Chamado 037261.
 	@type  Static Function
@@ -2080,11 +2065,7 @@ Static Function exclPedVend(cErro,cNumPed)
 	Local aItem			:= {}
 	Local aErroLog		:= {}
 	Local k				:= 1
-	Local i				:= 1
-	Local cPulaLinha	:= Chr(13) + Chr(10)
 	Local nAuxInvalido	:= 0
-	Local cProduto		:= ""
-	Local nVlTot		:= 0
 
 	Private lMsErroAuto		:= .F.
 	Private lAutoErrNoFile 	:= .T.
@@ -2099,7 +2080,7 @@ Static Function exclPedVend(cErro,cNumPed)
 	DbSelectArea("SC5")
 	SC5->(DbSetOrder(1))
 	SC5->(DbGoTop())
-	If ! SC5->(DbSeek(xFilial("SC5") + cNumPed))
+	If ! SC5->(DbSeek(FWxFilial("SC5") + cNumPed))
 		SC5->(DbCloseArea())
 		RestArea(aArea)
 		lRet := .T.
@@ -2109,7 +2090,7 @@ Static Function exclPedVend(cErro,cNumPed)
 
 	// Monta cabeçalho do pedido de venda.
 	aCabec := {}
-	Aadd(aCabec,{"C5_FILIAL" , xFilial("SC5")      ,Nil})           
+	Aadd(aCabec,{"C5_FILIAL" , FWxFilial("SC5")      ,Nil})           
 	Aadd(aCabec,{"C5_NUM"    , SC5->C5_NUM         ,Nil})
 	Aadd(aCabec,{"C5_TIPO"   , SC5->C5_TIPO        ,Nil}) 
 	Aadd(aCabec,{"C5_CLIENTE", SC5->C5_CLIENTE     ,Nil})
@@ -2121,7 +2102,7 @@ Static Function exclPedVend(cErro,cNumPed)
 	DbSelectArea("SC6")
 	SC6->(DbSetOrder(1))
 	SC6->(DbGoTop())
-	If ! SC6->(DbSeek(xFilial("SC6") + cNumPed))
+	If ! SC6->(DbSeek(FWxFilial("SC6") + cNumPed))
 		cErro := "Pedido de venda número " + cNumPed + " não encontrado(montagem dos itens)."
 		SC6->(DbCloseArea())
 		RestArea(aArea)
@@ -2130,12 +2111,12 @@ Static Function exclPedVend(cErro,cNumPed)
 	EndIf
 
 	//
-	While ! SC6->(Eof()) .And. SC6->C6_FILIAL == xFilial("SC6") .And. SC6->C6_NUM == cNumPed
+	While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_NUM == cNumPed
 
 		aItem := {} 
 		Aadd(aItem,{"LINPOS","C6_ITEM",SC6->C6_ITEM})
 		Aadd(aItem,{"AUTDELETA","S", Nil})        
-		Aadd(aItem,{"C6_FILIAL" , xFilial("SC6") , Nil})  
+		Aadd(aItem,{"C6_FILIAL" , FWxFilial("SC6") , Nil})  
 		Aadd(aItem,{"C6_NUM"    , cNumPed        , Nil})          	      
 		Aadd(aItem,{"C6_ITEM"   , SC6->C6_ITEM   , Nil})
 		Aadd(aItem,{"C6_PRODUTO", SC6->C6_PRODUTO, Nil})
@@ -2159,10 +2140,10 @@ Static Function exclPedVend(cErro,cNumPed)
 	DbSelectArea("SC9")
 	SC9->(DbSetOrder(1))
 	SC9->(DbGoTop())
-	If SC9->(DbSeek(xFilial("SC9") + cNumPed))
+	If SC9->(DbSeek(FWxFilial("SC9") + cNumPed))
 
 		//Faz o estorno dos itens liberados.
-		While Alltrim(cValToChar(SC9->C9_FILIAL)) == xFilial("SC9") .And.;
+		While Alltrim(cValToChar(SC9->C9_FILIAL)) == FWxFilial("SC9") .And.;
 		Alltrim(cValToChar(SC9->C9_PEDIDO)) == cNumPed
 
 			nVlrCred := 0
@@ -2178,10 +2159,10 @@ Static Function exclPedVend(cErro,cNumPed)
 	DbSelectArea("SC6")
 	SC6->(DbSetOrder(1))
 	SC6->(DbGoTop())
-	If SC6->(DbSeek(xFilial("SC6") + cNumPed ))
+	If SC6->(DbSeek(FWxFilial("SC6") + cNumPed ))
 
 		//Zera quantidade liberada.
-		While Alltrim(cValToChar(SC6->C6_FILIAL)) == xFilial("SC6") .And.;
+		While Alltrim(cValToChar(SC6->C6_FILIAL)) == FWxFilial("SC6") .And.;
 		Alltrim(cValToChar(SC6->C6_NUM)) == cNumPed
 
 			RecLock("SC6",.F.)
@@ -2254,7 +2235,6 @@ Static Function exclPedVend(cErro,cNumPed)
 	RestArea(aArea)
 
 Return lRet
-
 /*/{Protheus.doc} checkSC9
 	Checa duplicidade na SC9. Chamado 037261.
 	@type  Static Function
@@ -2305,7 +2285,7 @@ Static Function checkSC9()
 	cQuery += " ON SC6.C6_FILIAL = SC9.C9_FILIAL " 
 	cQuery += " AND SC6.C6_NUM = SC9.C9_PEDIDO " 
 	cQuery += " WHERE " 
-	cQuery += " C5_FILIAL = '" + xFilial("SC5") + "' " 
+	cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
 	cQuery += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()+1 AS DATE) " 
 	cQuery += " AND CAST(C5_DTENTR AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
 	cQuery += " AND C5_XGERSF = '2' " 
@@ -2346,7 +2326,7 @@ Static Function checkSC9()
 	
 	//
 	cUpdt := ""
-	cUpdt += " UPDATE " + RetSqlName("ZCI") + " SET ZCI_TMPR = 'PENDPROC', ZCI_TPALT = 'R'  WHERE ZCI_FILIAL = '" + xFilial("ZCI") + "' AND R_E_C_N_O_ > 0 AND R_E_C_N_O_ IN " 
+	cUpdt += " UPDATE " + RetSqlName("ZCI") + " SET ZCI_TMPR = 'PENDPROC', ZCI_TPALT = 'R'  WHERE ZCI_FILIAL = '" + FWxFilial("ZCI") + "' AND R_E_C_N_O_ > 0 AND R_E_C_N_O_ IN " 
 	cUpdt += " ( " 
 	cUpdt += " SELECT FONTE.REC FROM  " 
 	cUpdt += " ( " 
@@ -2377,7 +2357,7 @@ Static Function checkSC9()
 	cUpdt += " ON SC6.C6_FILIAL = SC9.C9_FILIAL " 
 	cUpdt += " AND SC6.C6_NUM = SC9.C9_PEDIDO " 
 	cUpdt += " WHERE " 
-	cUpdt += " C5_FILIAL = '" + xFilial("SC5") + "' " 
+	cUpdt += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
 	cUpdt += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()+1 AS DATE) " 
 	cUpdt += " AND CAST(C5_DTENTR AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
 	cUpdt += " AND C5_XGERSF = '2' " 
@@ -2402,4 +2382,102 @@ Static Function checkSC9()
 	//
 	RestArea(aArea)
 	
+Return Nil
+/*/{Protheus.doc} chkBloTb
+	Checa se é possível bloquear os registros. 
+	Chamado 63090.
+	@type  Static Function
+	@author Everson
+	@since 01/11/2021
+	@version 01
+/*/
+Static Function chkBloTb(lLodData, cErro, cPed, aSB2)
+
+	//Variáveis.
+	Local aArea		:= GetArea()
+	Local lRet     	:= .F.
+
+	Default cErro	 := ""
+	Default aSB2	 := {}
+
+	//
+	logZBE("Início MultLock " + cValToChar(cPed), "")
+
+	//
+	If lLodData
+
+		//
+		DbSelectArea("SC5")
+		SC5->(DbSetOrder(1))
+		If ! SC5->(DbSeek(FWxFilial("SC5") + cPed))
+			RestArea(aArea)
+			Return lRet
+
+		EndIf
+
+		//
+		DbSelectArea("SC6")
+		SC6->(DbSetOrder(1))
+		SC6->(DbGoTop())
+		If ! SC6->(DbSeek(FWxFilial("SC6") + cPed))
+			RestArea(aArea)
+			Return lRet
+
+		EndIf
+
+		//
+		While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_NUM == cPed
+			Aadd(aSB2, FWxFilial("SB2") + SC6->C6_PRODUTO)
+
+			SC6->(DbSkip())
+
+		EndDo
+
+	EndIf
+
+	//
+	lRet := MultLock("SB2", aSB2, 1)
+	
+	//
+	If ! lRet
+		
+		cErro := "MultLock Falhou"
+
+		logZBE(cErro, "Pedido " + cValToChar(cPed))
+
+		Conout("ADVEN090P - RESTEXECUTE - " + cErro)
+		
+	EndIf
+
+	//
+	RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} logZBE
+	Gera log na ZBE. 
+	Chamado 63090.
+	@type  Static Function
+	@author Everson
+	@since 01/11/2021
+	@version 01
+/*/
+Static Function logZBE(cLog, cParam)
+
+	//
+	Default cLog	:= ""
+	Default cParam	:= ""
+
+	//
+	DbSelectArea("ZBE")
+	RecLock("ZBE",.T.)
+		Replace ZBE_FILIAL 	   	With FWxFilial("ZBE")
+		Replace ZBE_DATA 	   	With dDataBase
+		Replace ZBE_HORA 	   	With Time()
+		Replace ZBE_USUARI	    With "JOBPROC " + cValToChar(ThreadId())
+		Replace ZBE_LOG	        With cLog
+		Replace ZBE_MODULO	    With "COMERCIAL"
+		Replace ZBE_ROTINA	    With "ADVEN090P" 
+		Replace ZBE_PARAME      With cParam
+	ZBE->( MsUnLock())
+
 Return Nil

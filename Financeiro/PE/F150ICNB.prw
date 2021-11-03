@@ -13,12 +13,15 @@
     (examples)
     @see (links_or_references)
     @chamado 059415 || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
+    @history ticket TI  - FWNM - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
 /*/
 User Function F150ICNB()
     
     Local cIdCnab  := ParamIXB[1]
     Local cQuery   := ""
     Local cNextCod := ""
+    Local aArea    := SE1->( GetArea() )
+    Local nOrdCNAB := 19
 
     If Select("WorkIDCNAB") > 0
         WorkIDCNAB->( dbCloseArea() )
@@ -55,6 +58,9 @@ User Function F150ICNB()
 
         cIdCnab := cNextCod // Recebe o próximo caso tenha encontrado algum idcnab em outro título
 
+        DbSelectArea("SE1")
+        ConfirmSX8()
+
         logZBE("Novo E1_IDCNAB n. " + cNextCod + " foi gravado no título n. " + SE1->E1_NUM + " para evitar duplicidade")
 
         If Select("WorkLAST") > 0
@@ -66,6 +72,26 @@ User Function F150ICNB()
     If Select("WorkIDCNAB") > 0
         WorkIDCNAB->( dbCloseArea() )
     EndIf
+
+    // @history ticket TI  - FWNM - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
+    Do While .t.
+
+	    SE1->( dbSetOrder(19) ) // E1_IDCNAB, R_E_C_N_O_, D_E_L_E_T_
+		If SE1->( dbSeek(cIdCnab) )
+            cIdCnab := GetSxENum("SE1", "E1_IDCNAB","E1_IDCNAB"+cEmpAnt,nOrdCNAB)
+            ConfirmSX8()
+            Loop
+        Else
+            Exit
+        EndIf
+
+    EndDo
+    
+    dbSelectArea("SE1")
+    ConfirmSX8()
+    //
+
+    RestArea( aArea )
 
 Return cIdCnab
 

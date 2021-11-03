@@ -27,6 +27,8 @@
 	@history Abel B    10/05/2021, Ticket 13852 - Retirada a chamada da Função LIMPAEST() e direcionada para função padrão
 	@history Abel B    11/05/2021, Ticket 13852 - Criado loop para liberação de estoque automática de todos os pedidos
 	@history Everson,  17/05/2021, Ticket 13987 - Validação de tabela de preço e condição de pagamento.
+	@history Everson,  17/09/2021, Ticket 31690 - Tratamento para controle de acesso de usuários da balança SC.
+	@history Everson,  22/09/2021, Ticket TI    - Removido lockbyname.
 /*/
 User Function PED001B()
 
@@ -149,9 +151,12 @@ User Function PED001B()
 		EndIf
 		//
 
-		oBtnBusca:bAction := {|| nBusca := Ascan(oRegistros:aCols,{|x| AllTrim(Upper(cBusca))$Upper(x[Val(cValToChar(cSelBusca))])}),;
+		//nQtdReg
+		oBtnBusca:bAction := {||;
+		 						nBusca := Iif(nQtdReg <= 0, 0, Ascan(oRegistros:aCols,{|x| AllTrim(Upper(cBusca))$Upper(x[Val(cValToChar(cSelBusca))])})),;
 								Iif(nBusca > 0,Eval({||oRegistros:ForceRefresh(),oRegistros:GoTo(nBusca),oRegistros:Refresh()}),;
-								MsgAlert("Não foi possível localizar o registro","Função PED001B"))} 
+								MsgAlert("Não foi possível localizar o registro","Função PED001B"));
+							} 
 
 	
 		  
@@ -360,7 +365,7 @@ Static Function pendenciaNF()
 
 	//Variáveis.
 	Local aArea		:= GetArea()
-	Local i			:= 1
+	//Local i			:= 1
 	Local cQuery	:= ""
 	Local nTotReg	:= 0
 	Local cNome		:= ""
@@ -368,11 +373,11 @@ Static Function pendenciaNF()
 	Local oVerde 	:= LoadBitmap( GetResources(), "BR_VERDE")
 	Local oAmarelo  := LoadBitmap( GetResources(), "BR_AMARELO")
 	Local oAzul		:= LoadBitmap( GetResources(), "BR_AZUL")
-	Local oBranco 	:= LoadBitmap( GetResources(), "BR_BRANCO")
-	Local oPreto	:= LoadBitmap( GetResources(), "BR_PRETO")
-	Local oPink		:= LoadBitmap( GetResources(), "BR_PINK")
+	//Local oBranco 	:= LoadBitmap( GetResources(), "BR_BRANCO")
+	//Local oPreto	:= LoadBitmap( GetResources(), "BR_PRETO")
+	//Local oPink		:= LoadBitmap( GetResources(), "BR_PINK")
 	Local oLaranja 	:= LoadBitmap( GetResources(), "BR_LARANJA")
-	Local oVioleta  := LoadBitmap( GetResources(), "BR_VIOLETA")
+	//Local oVioleta  := LoadBitmap( GetResources(), "BR_VIOLETA")
 	
 	//
 	nQtdReg := 0
@@ -422,6 +427,9 @@ Static Function pendenciaNF()
 		
 	ElseIf cCombo2 == "8"
 		cQuery += " AND C5_TABEGEN = 'RACAORSA' "
+
+	ElseIf cCombo2 == "9"
+		cQuery += " AND C5_TABEGEN = 'XXXXXXXX' " //Everson - 17/09/2021. Chamado 31690.
 		
 	ElseIf cCombo2 == "10"
 		cQuery += " AND C5_TABEGEN = 'PO14MVES' "
@@ -592,6 +600,16 @@ Static Function telProcess(nOpc,lAut)
 		Return aNFTrans
 
 	EndIf 
+
+	//Everson - 17/09/2021. Chamado 31690. Validação de usuário de balança.
+	If __CUSERID $(GetMv("MV_#USPORT",,"")) .And. ! (cValToChar(nOpc) $(GetMv("MV_#BALLB",,"")))
+		Conout( DToC(Date()) + " " + Time() + " INTEPEDB - telProcess - Opção inválida." )
+		MsgStop("Opção inválida.","Função telProcess(INTEPEDB)")
+		RestArea(aArea)
+		Return aNFTrans
+
+	EndIf
+	//
 
 	// Gera PV
 	MsAguarde({|| IntPedB(nOpc,@aPedInc,lAut) },"Função telProcess(INTEPEDB)","Importando pedido(s)...")
@@ -2038,7 +2056,7 @@ Static Function sCrgDado(nOpc)
 	Local oVerdeEsc := LoadBitmap(  GetResources(), "BR_VERDE_ESCURO")
 	Local cNome		:= ""
 	Local cOper		:= ""
-	Local lChkPed	:= .F.
+	//Local lChkPed	:= .F.
 	Local nErroCad	:= 0
 	
 	//
@@ -2054,7 +2072,7 @@ Static Function sCrgDado(nOpc)
 	
 	//Apaga registros do aCols.
 	oRegistros:aCols := {}
-	
+
 	//Opção para exibição de dados na grid.
 	If nOpc > 0
 		cQuery := ""
@@ -3099,7 +3117,7 @@ Static Function apagRelSPed(lAut)
 				
 			EndIF
 		
-		DbCloseArea("PED_B")
+		PED_B->(DbCloseArea())
 		
 		
 	Next i
@@ -3191,7 +3209,7 @@ Static Function ajustPed(lVisualizar,cPedSelec)
 	Local cQuery1 	:= ""
 	Local cQuery2 	:= ""
 	Local aPedProtheus	:= {}
-	Local aRetAjust	:= {}
+	//Local aRetAjust	:= {}
 	Local i			:= 1
 	Local aNvQuant	:= {}
 	
@@ -3204,11 +3222,11 @@ Static Function ajustPed(lVisualizar,cPedSelec)
 	Local cProduto	:= ""
 	Local cNomeCli	:= ""
 	
-	Local cEof		:= Chr(13) + Chr(10)
+	//Local cEof		:= Chr(13) + Chr(10)
 	
 	Local aPedErro	:= {}
 	Local aPedSucess:= {}
-	Local cMsgFinal	:= ""
+	//Local cMsgFinal	:= ""
 	Local cTabGene	:= ""
 	
 	//Remove espaços em branco.
@@ -3340,6 +3358,9 @@ Static Function ajustPed(lVisualizar,cPedSelec)
 		MsAguarde({||ok_Pedidos(aNvQuant,aPedErro,aPedSucess)},"Aguarde","Efetuando ajustes na quantidade do(s) pedido(s).")
 	
 	EndIf
+
+	//
+	RestArea(aArea)
 	
 Return Nil
 /*/{Protheus.doc} scriptImport
@@ -3454,7 +3475,7 @@ Static Function telPedCort(aNvQuant,aPedErro,aPedSucess)
 	Local aAltParam	:= {}
 	Local aHPedidos		:= {}
 	Local aColsPedidos	:= {}
-	Local oSBtn01
+	//Local oSBtn01
 	Local oSBtn02
 	Local oPedidos
 	Local oGroup1
@@ -3773,7 +3794,7 @@ Static Function cortaPed(cFil,cNum,cItem,cProduto,nNvQtd1,nNvQtd2,cNvPedSag,cCli
 	
 	//Variáveis.
 	Local aArea	:= GetArea()
-	Local i 	:= 1
+	//Local i 	:= 1
 	Local cEof	:= Chr(13) + Chr(10)
 	
 	//Remove espaços em branco.
@@ -4020,9 +4041,9 @@ Static Function pesoPedido(cFil,cPedProth,cPedSag,cPedXml,cPlaca,cTabGen,oNvCodG
 	Local nTotalVol		:= 0
 	Local nTotalPeso	:= 0
 	Local nTotalBruto	:= 0
-	Local cNvCodigene	:= ""
-	Local cChave		:= ""
-	Local cParame		:= ""
+	//Local cNvCodigene	:= ""
+	//Local cChave		:= ""
+	//Local cParame		:= ""
 	Local lLibSC6		:= .T.
 	
 	//Apaga variável de erro.
@@ -4334,8 +4355,8 @@ Static Function emitNfGrp(nOpc, cPedProth, cSeqPed, lAut)
 	Local aNFTrans	:= {}
 	Local cNFErro	:= ""
 	Local cAliasF2	:= ""
-	Local nAux 		:= 1
-	Local cIdent    := RetIdEnti()
+	//Local nAux 		:= 1
+	//Local cIdent    := RetIdEnti()
 	
 	//
 	Private aNfGerada 	:= {}
@@ -4824,14 +4845,15 @@ Static Function NfLot(cNumPed,cNota,lRetNf,cSerie)
 	Local aPvlNfs 	:= {}
 	Local lRet		:= .F.
 	Local lNF912Ok  := .f.
-	Local lNF710734 := .f.
-
+	//Local lNF710734 := .f.
+	
+	//Everson - 22/09/2021. Chamado TI.
 	//Everson - 26/11/2020. Chamado TI.
-	If !LockByName("NfLot", .T., .F.)
-		Aviso("NfLot (INTEPEDB)", "Processo (NfLot) já está sendo executado.", {"OK"}, 3)
-		RestArea(aArea)
-		Return Nil 
-	EndIf
+	// If !LockByName("NfLot", .T., .F.)
+	// 	Aviso("NfLot (INTEPEDB)", "Processo (NfLot) já está sendo executado.", {"OK"}, 3)
+	// 	RestArea(aArea)
+	// 	Return Nil 
+	// EndIf
 	//
 
 	//Localiza pedido de venda - cabeçalho.
@@ -5021,8 +5043,9 @@ Static Function NfLot(cNumPed,cNota,lRetNf,cSerie)
 		
 	EndIf
 
+	//Everson - 22/09/2021. Chamado TI.
 	//Everson - 26/11/2020. Chamado TI.
-	UnLockByName("NfLot")
+	//UnLockByName("NfLot")
 	
 	//
 	RestArea(aArea)

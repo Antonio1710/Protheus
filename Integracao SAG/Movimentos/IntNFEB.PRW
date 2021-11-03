@@ -5,7 +5,7 @@
 #Include "TbiCode.ch"
 #Include "FWMVCDef.ch"
 
-/*/{Protheus.doc} User Function INTNFEb
+/*/{Protheus.doc} User Function INTNFEb 
     Vai garar Pre-Notas por uma opção no menu do usuario   
     @type  Function
     @author Microsiga
@@ -46,7 +46,9 @@
 	@history ticket    6376 - Fernando Macieira - 09/12/2020 - ERRO DE LOG IMPORTAÇÃO
 	@history ticket    7257 - Fernando Sigoli   - 28/12/2020 - IMPORTAÇÃO DE CTE
 	@history ticket    8201 - Fernando Macieira - 18/01/2021 - IMPORTAÇÃO NFS 13820 E 13821
-	@history ticket   14360 - Everson - 24/05/2021 - Tratamento para validação de importação de nota fiscal de produtor rural, movimento 6.
+	@history ticket   14360 - Everson 			- 24/05/2021 - Tratamento para validação de importação de nota fiscal de produtor rural, movimento 6.
+	@history ticket   33037 - Fernando Sigoli   - 01/10/2021 - Correção notas de Transferencia 
+	@history ticket   62952 - Fernando Sigoli   - 27/10/2021 - Na inclusa do PC carregar na condição de pagamento que vem do SAG e nao mais do parametro.
 /*/
 User Function INTNFEB()
 
@@ -66,7 +68,7 @@ User Function INTNFEB()
 	Local aSelBusca         := {}
 	Local oBusca
 	Local oBtnBusca
-	Local oCSV
+	Local oCSV 
 
 	Private cBusca          := ""
 	Private _sDtLim         := DToS(dDatabase)
@@ -116,15 +118,6 @@ User Function INTNFEB()
 	_cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
 	_cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
 	_cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-
-	// // Testa conexao com banco de interface
-	// TcConType("TCPIP")
-	// If (_conSAG := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	// 	MsgAlert("Não foi possível  conectar ao banco integração. A Integração sera cancelada!")
-	// 	RestArea(aArea)
-	// 	Return Nil
-
-	// EndIf
 
 	//Everson - 10/08/2017.
 	//Ajuste da data do CT-e.
@@ -722,6 +715,7 @@ User Function InteNfeB()
 	Local cCHVNFE    := ''
 	Local lMata116	 := .F.  // determina se a execauto vai ser pelo mata116 conhecimento de frete
 	Local xDoc		 := CriaVar("F1_DOC",.F.)
+	Local cNumero    := CriaVar("F1_DOC",.F.) //Tkt 33037 - Fernando Sigoli 01/10/2021
 	Local xPrc		 := ""
 	Local aAreaNFE
 	Local cFornec	 := ""
@@ -1517,10 +1511,14 @@ While ! (cAliasNFE)->(Eof())
 			// Obtem numero do documento dentro da transacao
 
 			cTpNrNfs  := SuperGetMV("MV_TPNRNFS") //Everson - 09/11/2018.
+
+
+			DbSelectArea("SX5") //Tkt 33037 - Fernando Sigoli 01/10/2021
+    		SX5->(DbSetOrder(1)) //Tkt 33037 - Fernando Sigoli 01/10/2021
+			SX5->(DbGoTop()) //Tkt 33037 - Fernando Sigoli 01/10/2021
 			If SX5->(DbSeek(xFilial("SX5")+'01'+cSerie))
 
-				// funcao do padrao do protheus que retorna o proximo numero da nota
-				cNumero := CriaVar("F1_DOC",.F.)
+				// funcao do padrao do protheus que retorna o proximo numero da nota				
 				SX3->(dbSetOrder(1))
 
 				If (SX3->(dbSeek("SD9"))) .And. cTpNrNfs == "3"
@@ -2119,7 +2117,7 @@ While ! (cAliasNFE)->(Eof())
 					aCabec := FWVetByDic(aCabec,"SF1")
 					aItens := FWVetByDic(aItens,"SD1",.T.)
 
-					Conout("INTNFEB - MsExecAuto 140")
+					Conout("INTNFEB - MsExecAuto 140") 
 					MsExecAuto({|x,y| MATA140(x,y)},aCabec,aItens,3)
 
 				EndIf
@@ -2146,8 +2144,8 @@ While ! (cAliasNFE)->(Eof())
 			////TCSetConn(_conProthe)
 			DbSelectArea("SF1")
 			SF1->(DbSetOrder(1))
-			If ! SF1->(DbSeek( xFilial("SF1") + cNumero + cSerie + Space(TamSX3("F1_SERIE")[1] - Len(cSerie)) +  cFornec +  cLoja ))
-				MsgStop("Não foi possível gerar a nota fiscal número " + cNumero + "/" + cSerie + " para o fornecedor " + cFornec + "/" + cLoja)
+			If ! SF1->(DbSeek( xFilial("SF1") + cDoc + cSerie + Space(TamSX3("F1_SERIE")[1] - Len(cSerie)) +  cFornec +  cLoja ))
+				MsgStop("Não foi possível gerar a nota fiscal número " + cDoc + "/" + cSerie + " para o fornecedor " + cFornec + "/" + cLoja)
 				lMsErroAuto := .T.
 
 			Else
@@ -2212,7 +2210,7 @@ While ! (cAliasNFE)->(Eof())
 			aErroLog := GetAutoGrLog()
 			If Len(aErrolog) > 0
 				cErro := Alltrim(aErrolog[1])
-				For k:=1 to Len(aErroLog)
+				For k:=1 to Len(aErroLog) 
 					If "INVALIDO" $ UPPER (aErroLog[k])
 						cErro+= Alltrim(aErroLog[k]) + Chr(13)+Chr(10)
 
@@ -5527,7 +5525,7 @@ Static Function UpCompSAG(cF1_Filial, cDoc, cSerie, cTipo, cF1_FORNECE, cF1_LOJA
 	EndIf
 
 	cQuery := " SELECT * FROM OPENQUERY (SCSRV03, '
-	cQuery += " SELECT F1_PED, D1_QUANT, D1_VUNIT
+	cQuery += " SELECT F1_PED, D1_QUANT, D1_VUNIT,F1_COND 
 	cQuery += " FROM ADORO.dbo.POCANFE (NOLOCK)
 	cQuery += " WHERE F1_FILIAL=''"+cF1_Filial+"''
 	cQuery += " AND F1_DOC=''"+cDoc+"''
@@ -5539,18 +5537,23 @@ Static Function UpCompSAG(cF1_Filial, cDoc, cSerie, cTipo, cF1_FORNECE, cF1_LOJA
 	cQuery += " AND F1_PED IS NOT NULL
 	cQuery += " ')
 
-	tcQuery cQuery New Alias "WorkPC"
+	tcQuery cQuery New Alias "WorkPC"  
 
 	WorkPC->( dbGoTop() )
 	If WorkPC->( !EOF() )
 		cPCSAG := "S" + AllTrim(Str(WorkPC->F1_PED))
+
+		If !Empty(WorkPC->F1_COND)  //ticket   62952   - Fernando Sigoli   - 27/10/2021
+			cCondPC := WorkPC->F1_COND	
+		EndIf	
+
 	EndIf
 
 	// debug
-		/*If AllTrim(cPCSAG) == "S20594"
-			cDebug := ""
-EndIf*/
-		// debug
+	/*If AllTrim(cPCSAG) == "S20594"
+		cDebug := ""
+	EndIf */
+	// debug
 
 
 		// Checo se o PC existe
@@ -5606,40 +5609,12 @@ Else
 				cItemPC  := Soma1(WorkPCItem->C7_ITEM,Len(SC7->C7_ITEM))
 
 		If Select("WorkPCItem") > 0
-					WorkPCItem->( dbCloseArea() )
+			WorkPCItem->( dbCloseArea() )
 		EndIf
 				
 	EndIf
 
-			// ExecAuto PC (SC7)
-			/*
-			dbSelectArea("SC7")
-
-			aCabec := {}
-			aAdd(aCabec,{"C7_NUM"     ,cPCSAG})
-			aAdd(aCabec,{"C7_EMISSAO" ,dDataBase})
-			aAdd(aCabec,{"C7_FORNECE" ,cD1_FORNECE})
-			aAdd(aCabec,{"C7_LOJA"    ,cD1_LOJA})
-			aAdd(aCabec,{"C7_COND"    ,cCondPC})
-			aAdd(aCabec,{"C7_CONTATO" ,""})
-			aAdd(aCabec,{"C7_FILENT"  ,cF1_Filial})
-
-			aLinha := {}
-			aadd(aLinha,{"C7_PRODUTO" ,cCod     ,Nil})
-			aadd(aLinha,{"C7_QUANT"   ,nQuant   ,Nil})
-			aadd(aLinha,{"C7_PRECO"   ,nVlrUnit ,Nil})
-			aadd(aLinha,{"C7_TOTAL"   ,nTotal   ,Nil})
-			aadd(aLinha,{"C7_VLDESC"  ,nValDesc ,Nil})
-			aadd(aLinha,{"C7_CC"      ,"5301"  ,Nil})
-			aadd(aLinha,{"C7_LOCAL"   ,"05"  ,Nil})
-			aadd(aLinha,{"C7_CONTA"   ,"111530003"  ,Nil})
-			aadd(aLinha,{"C7_ITEMCTA" ,"114"  ,Nil})
-			aadd(aLinha,{"C7_XRESPON" ,AllTrim(cUserName) ,Nil})
-			aadd(aLinha,{"C7_OBS" 	  ,"SAG" ,Nil})
-			aadd(aItens,aLinha)
-
-			//MATA120(1,aCabec,aItens,nOpcPC)
-			*/
+	// ExecAuto PC (SC7)
 
 	ConOut("INTNFEB - SAG - Incluido PC: " + cPCSAG)
 
@@ -5755,6 +5730,7 @@ EndIf
 RestArea( aAreaAtu )
 
 Return { cPCSAG, cItemPC }
+
 
 /*/{Protheus.doc} Static Function GrvSCY
 	Armazena dados do PC antes de alterações
