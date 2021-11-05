@@ -202,10 +202,6 @@ Static Function PrintReport(oReport)
 	Local dDatFCVP	:= ""
 	Local nVlrFCVP	:= 0
 	Local dDtEmiss  := ""
-	Local nDadFCVP	:= 0
-	Local A			:= 0
-	Local i			:= 0
-	Local p			:= 0
 	
 	Local aDadFCSC	:= {}
 	Local cNatFCSC	:= ""
@@ -216,6 +212,11 @@ Static Function PrintReport(oReport)
 	Local oSection2	:= oReport:Section(2)
 	Local aTotalPr	:= {}
 	Local lAtuArr	:= .T.
+
+	Local nDadFCVP	:= 0
+	Local A			:= 0
+	Local p			:= 0
+	Local i			:= 0
 	
 	//Everson - 29/04/2019. Chamado 048577.
 	Local cGrpPrd	:= ""
@@ -446,12 +447,12 @@ Static Function PrintReport(oReport)
 		EndDO
 		
 		IF LEN(aDadFCVP) > 0
-
+			
 			nDadFCVP := Len(aDadFCVP)
 
 			//FOR A:=1 TO LEN(aDadFCVP)
-			FOR A := 1 TO nDadFCVP
-
+			FOR A:=1 TO nDadFCVP
+			
 				If oReport:Cancel()
 					Exit
 				EndIf
@@ -1271,7 +1272,7 @@ Static Function PrintReport(oReport)
 			// Chamado n. 051865 || OS 053202 || FINANCAS || DRIELE || 8376 || RELATORIO DE FLUXO - fwnm - 17/09/2019
 			If AllTrim(cTipDes) <> "OPERACIONAL"
 				aTipDes := RetSX3Box( Posicione('SX3', 2, 'ZFH_TIPO', 'X3CBox()' ),,, Len(ZFH->ZFH_TIPO) )
-				For i := 1 to Len(aTipDes)
+				For i:=1 to Len(aTipDes)
 					If AllTrim(aTipDes[i,2]) == AllTrim(ZFH->ZFH_TIPO)
 						cTipDes := Upper(aTipDes[i,3])
 						cTipDes := AllTrim(StrTran(cTipDes,"CAIXA",""))
