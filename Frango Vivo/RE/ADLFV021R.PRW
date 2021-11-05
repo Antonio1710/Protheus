@@ -60,26 +60,35 @@ Static Function ReportDef(oReport)
 	oSection1   := TRSection():New(oReport,"Dados Sintéticos")
     
 
-	TRCell():New(oSection1,"GRANJA"  	            ,"","Granja"        ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
-	TRCell():New(oSection1,"GRANOM"  	            ,"","Nome Granja"   ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
-    TRCell():New(oSection1,"QTD_AVES"  	            ,"","Qtd. Aves"     ,"@E 9,999,999"        	    ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //02
-	TRCell():New(oSection1,"MORT_AVES"     	        ,"","Mort. Aves"    ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //03
-	TRCell():New(oSection1,"MEDIA_MORT" 	        ,"","Méd % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
-	TRCell():New(oSection1,"PESO_MED_REAL"          ,"","Peso Med Real" ,"@E 9,999,999.999"         ,030,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //05
-	TRCell():New(oSection1,"PESO_MED_PROG"          ,"","Peso Med Prog" ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //06
-	
+	TRCell():New(oSection1,"GRANJA"  	            ,"","Granja"        ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"    ,,,,,,,) //01
+	TRCell():New(oSection1,"GRANOM"  	            ,"","Nome Granja"   ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"    ,,,,,,,) //02
+    TRCell():New(oSection1,"QTD_AVES"  	            ,"","Qtd. Aves"     ,"@E 9,999,999"        	    ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //03
+	TRCell():New(oSection1,"MORT_AVES"     	        ,"","Mort. Aves"    ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
+	TRCell():New(oSection1,"MEDIA_MORT" 	        ,"","Méd % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //05
+	TRCell():New(oSection1,"PESO_MED_REAL"          ,"","Peso Med Real" ,"@E 9,999,999.999"         ,030,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //06
+	TRCell():New(oSection1,"PESO_MED_PROG"          ,"","Peso Med Prog" ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //07
+	TRCell():New(oSection1,"PERC_REA_PROG"          ,"","Divergência %" ,"@E 999.99"                ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //08
 
     oSection2   := TRSection():New(oSection1,"Dados Analíticos")
 
-
-	TRCell():New(oSection2,"PLACA"  	            ,"","Placa Veículo" ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
+	TRCell():New(oSection2,"PLACA"  	            ,"","Placa Veículo" ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"    ,,,,,,,) //01
     TRCell():New(oSection2,"QTD_AVES"  	            ,"","Qtd. Aves"     ,"@E 9,999,999"        	    ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //02
 	TRCell():New(oSection2,"MORT_AVES"     	        ,"","Mort. Aves"    ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //03
 	TRCell():New(oSection2,"MEDIA_MORT" 	        ,"","Méd % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
 	TRCell():New(oSection2,"PESO_MED_REAL"          ,"","Peso Med Real" ,"@E 9,999,999.999"         ,030,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //05
 	TRCell():New(oSection2,"PESO_MED_PROG"          ,"","Peso Med Prog" ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //06
-	
+	TRCell():New(oSection2,"PERC_REA_PROG"          ,"","Divergência %" ,"@E 999.99"                ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //07
     //oSection2:Cell("DESCPROD"):SetLineBreak()
+
+    oSection3   := TRSection():New(oReport,"Resumo Geral")
+
+	TRCell():New(oSection3,"TOTAL"                  ,"","Resumo total"  ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"    ,,,,,,,) //01
+    TRCell():New(oSection3,"QTD_AVES"  	            ,"","Qtd. Aves"     ,"@E 9,999,999"        	    ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //02
+	TRCell():New(oSection3,"MORT_AVES"     	        ,"","Mort. Aves"    ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //03
+	TRCell():New(oSection3,"MEDIA_MORT" 	        ,"","Méd % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
+	TRCell():New(oSection3,"PESO_MED_REAL"          ,"","Peso Med Real" ,"@E 9,999,999.999"         ,030,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //05
+	TRCell():New(oSection3,"PESO_MED_PROG"          ,"","Peso Med Prog" ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //06
+	TRCell():New(oSection3,"PERC_REA_PROG"          ,"","Divergência %" ,"@E 999.99"                ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //07
 
 Return
 
@@ -97,11 +106,19 @@ Return
   @see (links_or_references)
   /*/
 Static Function PrintReport(oReport)
-	local oSection1 := oReport:Section(1)
-    local oSection2 := oReport:Section(1):Section(1)
+	local oSection1         := oReport:Section(1)
+    local oSection2         := oReport:Section(1):Section(1)
+    local oSection3         := oReport:Section(2)
+    local nTOTAL_AVES       := 0
+    local nMORTALIDADE      := 0
+    local nMORTAL_MED       := 0
+    local nPESO_REAL        := 0
+    local nPESO_INF         := 0
+    local nRegistro         := 0
 
-	Private cAlias    := getNextAlias()
-    Private cAlias2   := getNextAlias()
+
+	Private cAlias          := getNextAlias()
+    Private cAlias2         := getNextAlias()
 
     fSQLSint()
 
@@ -125,9 +142,8 @@ Static Function PrintReport(oReport)
 
 		oReport:IncMeter()
 
-        
-		oSection1:Cell("GRANJA"   	    ):SetValue((cAlias)->ZV1_PGRANJ)
-        oSection1:Cell("GRANJA"   	    ):SetSize(10)
+		oSection1:Cell("GRANJA"   	    ):SetValue(Alltrim((cAlias)->A2_NREDUZ))
+        oSection1:Cell("GRANJA"   	    ):SetSize(15)
         oSection1:Cell("GRANOM"   	    ):SetValue((cAlias)->A2_NOME)
         oSection1:Cell("GRANOM"   	    ):SetSize(40)
 		oSection1:Cell("QTD_AVES"  	    ):SetValue((cAlias)->TOTAL_AVES)
@@ -140,6 +156,15 @@ Static Function PrintReport(oReport)
         oSection1:Cell("PESO_MED_REAL"  ):SetSize(15)
 		oSection1:Cell("PESO_MED_PROG"  ):SetValue((cAlias)->PESO_MED_INF)
         oSection1:Cell("PESO_MED_PROG"  ):SetSize(15)
+        oSection1:Cell("PERC_REA_PROG"  ):SetValue( round((((cAlias)->PESO_MED_REAL-(cAlias)->PESO_MED_INF)/(cAlias)->PESO_MED_REAL)*100,2) )
+        oSection1:Cell("PERC_REA_PROG"  ):SetSize(15)
+        
+        nTOTAL_AVES     += (cAlias)->TOTAL_AVES
+        nMORTALIDADE    += (cAlias)->MORTALIDADE
+        nMORTAL_MED     += (cAlias)->MORTAL_MED
+        nPESO_REAL      += (cAlias)->PESO_MED_REAL
+        nPESO_INF       += (cAlias)->PESO_MED_INF
+
         //oSection1:Cell("GRANJA"):Disable()
         oSection1:PrintLine()
         //oReport:SkipLine()
@@ -169,6 +194,8 @@ Static Function PrintReport(oReport)
                 oSection2:Cell("PESO_MED_REAL"  ):SetSize(15)
                 oSection2:Cell("PESO_MED_PROG"  ):SetValue((cAlias2)->PESO_MED_INF)
                 oSection2:Cell("PESO_MED_PROG"  ):SetSize(15)
+                oSection2:Cell("PERC_REA_PROG"  ):SetValue( round((((cAlias2)->PESO_MED_REAL-(cAlias2)->PESO_MED_INF)/(cAlias2)->PESO_MED_REAL)*100,2) )
+                oSection2:Cell("PERC_REA_PROG"  ):SetSize(15)
 
                 oSection2:PrintLine()
                 
@@ -187,6 +214,8 @@ Static Function PrintReport(oReport)
             oSection1:Finish()
         endif
 
+        nRegistro += 1
+
 		(cAlias)->(DbSkip())
 	enddo
 
@@ -194,6 +223,24 @@ Static Function PrintReport(oReport)
         oSection1:Finish()
     endif
 
+    oSection3:Init()
+    
+    oSection3:Cell("TOTAL"          ):SetSize(15)
+    oSection3:Cell("QTD_AVES"  	    ):SetValue(nTOTAL_AVES)
+    oSection3:Cell("QTD_AVES"       ):SetSize(15)
+    oSection3:Cell("MORT_AVES"     	):SetValue(nMORTALIDADE)
+    oSection3:Cell("MORT_AVES"      ):SetSize(15)
+    oSection3:Cell("MEDIA_MORT" 	):SetValue(nMORTAL_MED )
+    oSection3:Cell("MEDIA_MORT"     ):SetSize(15)
+    oSection3:Cell("PESO_MED_REAL"  ):SetValue(nPESO_REAL/nRegistro)
+    oSection3:Cell("PESO_MED_REAL"  ):SetSize(15)
+    oSection3:Cell("PESO_MED_PROG"  ):SetValue(nPESO_INF/nRegistro)
+    oSection3:Cell("PESO_MED_PROG"  ):SetSize(15)
+    oSection3:Cell("PERC_REA_PROG"  ):SetValue( round((((nPESO_REAL/nRegistro)-(nPESO_INF/nRegistro))/(nPESO_REAL/nRegistro))*100,2) )
+    oSection3:Cell("PERC_REA_PROG"  ):SetSize(15) 
+    oSection3:PrintLine()
+    
+    oSection3:Finish()
   
 
 	(cAlias)->(DbCloseArea())
@@ -204,7 +251,7 @@ Return
 Static function fSQLSint()
     Local cQuery := ""
 
-    cQuery := " SELECT ZV1.ZV1_PGRANJ, " + CRLF
+    cQuery := " SELECT ISNULL(A2.A2_NREDUZ,ZV1.ZV1_PGRANJ) A2_NREDUZ, ZV1.ZV1_PGRANJ, " + CRLF
     cQuery += "    ISNULL(A2.A2_NOME,'') A2_NOME,  "
     cQuery += "    SUM(ZV1.ZV1_PAVES) TOTAL_AVES, " + CRLF
     cQuery += "    SUM(ZV1_MORTAL) MORTALIDADE, " + CRLF
@@ -223,8 +270,8 @@ Static function fSQLSint()
         cQuery += " AND ZV1.ZV1_STATUS ='"+ cStatus +"' "
     endif
 
-  	cQuery += " GROUP BY ZV1.ZV1_PGRANJ, A2.A2_NOME" + CRLF
-    cQuery += " ORDER BY ZV1.ZV1_PGRANJ, A2.A2_NOME;"
+  	cQuery += " GROUP BY ZV1.ZV1_PGRANJ, A2.A2_NREDUZ, A2.A2_NOME" + CRLF
+    cQuery += " ORDER BY ZV1.ZV1_PGRANJ, A2.A2_NREDUZ, A2.A2_NOME;"
 
 	TCQUERY cQuery NEW ALIAS (cAlias)
 	DbSelectArea(cAlias)

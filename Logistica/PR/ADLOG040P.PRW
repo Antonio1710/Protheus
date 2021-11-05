@@ -100,6 +100,7 @@ Static nTipoFrt	:= 0
 	@history TICKET 18451 - ADRIANO SAVOINE   - 17/08/2021 - Retirada a limpeza da variavel "cEmailC" a mesma é carregada via parametro para enviar email´s de copia e não pode ser Limpa ficando vazia.
 	@history 21/09/2021, Everson, Ch:40420  - Tratamento para quando houver deadlock no fechamento de registros.
 	@history 04/11/2021, Everson, Ch:63137  - Tratamento para não permitir alteração e exclusão de registro por usuário diferente que inseriu o registro.
+	@history 05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
 /*/
 User Function ADLOG040P()
 
@@ -377,6 +378,7 @@ Static Function vldPos(oModel)
 	Local cDtFchmt		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DATAPG" )))
 	Local cDtFchIni		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCIN" )))
 	Local cDtFchFim		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCFM" )))
+	Local cFechado		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_FECHA"  ))) //05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
 	Local cOcFech		:= Alltrim(GetMv("MV_#OCFHFT",,"106/107"))
 
 	//Valida origem do lançamento.

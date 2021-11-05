@@ -23,6 +23,7 @@ STATIC oComboTipoSa := Nil
 	@see (links_or_references)
 	@history chamado 055188 - FWNM    - 17/02/2020 - OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA
 	@history ticket  35699  - SIGOLI  - 01/10/2021 - Rotina estava desposicionada na exclusao da solciitação por item
+	@history ticket  63372  - Leonardo P. Monteiro  - 05/11/2021 - Posicionamento do campo 'Tipo' fora de posição no cabeçalho quando selecionada a opção de visualização. 
 /*/
 User Function MT105SCR() 
     
@@ -78,16 +79,16 @@ User Function MT105SCR()
 		EndIf
 		//
 		
-		IF nPosicao == 3
+		IF nPosicao == 3 //.OR. nPosicao == 2
 		     
 			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 91 SAY OemToAnsi("Tipo") SIZE 268, 8 OF oDlg PIXEL
-			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 111 COMBOBOX oComboTipoSa VAR cComboTipoSa ITEMS aComboTipoSA SIZE 50,10 PIXEL OF oDlg on change nComboTipoSa := oComboTipoSa:nAt
+			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 111 COMBOBOX oComboTipoSa VAR cComboTipoSa ITEMS aComboTipoSA SIZE 60,10 PIXEL OF oDlg on change nComboTipoSa := oComboTipoSa:nAt
 		
 		ELSE
 				
 			IF DBSEEK(xFilial("SCP")+cA105Num, .T.) 
 				                                        
-				IF SCP->CP_XTIPO == 'N'     
+				IF SCP->CP_XTIPO == 'N'
 					
 					cComboTipoSa := 'Normal'
 					
@@ -98,14 +99,13 @@ User Function MT105SCR()
 				ElseIf AllTrim(SCP->CP_XTIPO) == 'M' // Chamado n. 055188 || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA - FWNM - 17/02/2020
 					     
 					cComboTipoSa := cComboTxt
-
 				ENDIF
 				
 			ENDIF
-				
-			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 200 SAY OemToAnsi("Tipo") SIZE 268, 8 OF oDlg PIXEL
-			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 225 COMBOBOX oComboTipoSa VAR cComboTipoSa ITEMS aComboTipoSA SIZE 50,10 PIXEL OF oDlg on change nComboTipoSa := oComboTipoSa:nAt
-		
+			
+			// @history ticket  63372  - Leonardo P. Monteiro  - 05/11/2021 - Posicionamento do campo 'Tipo' fora de posição no cabeçalho quando selecionada a opção de visualização. 	
+			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 91 SAY OemToAnsi("Tipo") SIZE 268, 8 OF oDlg PIXEL
+			@ oSize2:GetDimension("DATA","LININI") + 2, oSize2:GetDimension("DATA","COLINI") + 111 COMBOBOX oComboTipoSa VAR cComboTipoSa ITEMS aComboTipoSA SIZE 60,10 PIXEL OF oDlg on change nComboTipoSa := oComboTipoSa:nAt
 		ENDIF 
 		
 
