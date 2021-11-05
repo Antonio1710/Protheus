@@ -99,6 +99,7 @@ Static nTipoFrt	:= 0
     @history ticket 14223 - Fernando Macieira - 09/06/2021 - E-mail automático adiantamento de frete
 	@history TICKET 18451 - ADRIANO SAVOINE   - 17/08/2021 - Retirada a limpeza da variavel "cEmailC" a mesma é carregada via parametro para enviar email´s de copia e não pode ser Limpa ficando vazia.
 	@history 21/09/2021, Everson, Ch:40420  - Tratamento para quando houver deadlock no fechamento de registros.
+	@history 04/11/2021, Everson, Ch:63137  - Tratamento para não permitir alteração e exclusão de registro por usuário diferente que inseriu o registro.
 /*/
 User Function ADLOG040P()
 
@@ -253,7 +254,7 @@ Static Function ModelDef()
 	//Variáveis.
 	Local oModel		:= Nil
 	Local oStruZFA 		:= FWFormStruct( 1, "ZFA" )
-	Local bPre			:= {|oModel| .T.}
+	Local bPre			:= {|oModel| vldPre(oModel)} //Everson - 04/11/2021. Chamado 63137.
 	Local bPost			:= {|oModel| vldPos(oModel)}
 	//Local bCommit		:= {|oModel| vldCommit(oModel)}
 	Local bCancel		:= {||.T.}
@@ -268,6 +269,88 @@ Static Function ModelDef()
 	oModel:SetPrimaryKey( {"ZFA_FILIAL","ZFA_COD" } ) //Everson - 05/11/2019. Chamado 029058.
 
 Return oModel
+/*/{Protheus.doc} vldPre
+	Pré validação do modelo de dados.
+	Chamado 63137.
+	@type  Static Function
+	@author Everson
+	@since 04/11/2021
+	@version 01
+/*/
+Static Function vldPre(oModel)
+
+	//Variáveis.
+	Local aArea			:= GetArea()
+	Local lRet 			:= .T.
+	Local nOperation	:= oModel:GetOperation()
+	Local cCod	     	:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    )))
+	Local cStatus   	:= Alltrim(GetMv("MV_#STSEMI",,"0/1/4/7"))
+	Local cFechado		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_FECHA"  )))
+	Local cCodOcorr		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_OCORRE" )))
+	Local cFlgFrt		:= Alltrim(Posicione("ZF7",1,FWxFilial("ZF7") + cCodOcorr,"ZF7_TOTCOD"))
+	Local cPedDia		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_PEDADT" )))
+	Local cPedFch		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_PEDCOM" )))
+	Local cOcorrImp		:= Alltrim(cValToChar(GetMv("MV_#ALTOCO",,"")))
+	Local lVlAbast		:= (! IsInCallStack("estAbast")) //Não é estorno de abastecimento.
+	Local lVlAdia		:= (! IsInCallStack("estAdianta")) //Não é estorno de adiantamento.
+	Local lFuncLib		:= (! IsInCallStack("U_ADLOG047P") .And. ! IsInCallStack("U_ADLOG067P")) //Não é aprovação de registro.
+	Local cPerExl		:= Alltrim(GetMv("MV_#FRTEXL",,""))
+	Local cTpLcReg		:= oModel:GetValue("ZFAMASTER","ZFA_TPMOV" )
+	Local cUsuario		:= oModel:GetValue("ZFAMASTER","ZFA_USUARI" )
+	Local cTpFrg		:= oModel:GetValue("ZFAMASTER","ZFA_VA" ) //Tipo de frete.
+	Local cFilVlUsr		:= Alltrim(cValToChar(GetMv("MV_#FTVLUS",,""))) //Tipo de frete com validação por filial de usuário para alteração e exclusão.
+
+	//Validações para alteração e exclusão.
+	If lRet .And. ( nOperation == MODEL_OPERATION_UPDATE .Or. nOperation == MODEL_OPERATION_DELETE )
+
+		//Verifica se o registro fechado.
+		If lRet .And. ( cFechado = "S" .Or. !Empty(cPedDia) .Or. !Empty(cPedFch) )
+			lRet := .F.
+			Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Movimento " + cCod + " encerrado ou com pedido de compra vinculado não pode ser alterado ou excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+		EndIf
+	
+		//Verifica se é movimento automático.
+		If lRet .And. cTpLcReg = "A" .And.;
+		   !(cCodOcorr $cOcorrImp)   .And. lVlAbast .And. lVlAdia .And. lFuncLib //Everson-Ch:044314-20/03/2019
+
+			//
+			If lRet .And. nOperation == MODEL_OPERATION_UPDATE 
+				lRet := .F.
+				Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Movimento automático não pode ser alterado.", 1, 0)
+
+			EndIf
+
+			//Everson - 06/01/2020 - Chamado 054680.
+			If lRet .And. nOperation == MODEL_OPERATION_DELETE .And. ( !(__cUserId $ cPerExl) .Or. cFlgFrt <> "S" )
+				lRet := .F.
+				Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Movimento automático não pode ser excluído.", 1, 0)
+
+			EndIf
+
+
+		EndIf
+		
+		//Valida usuário. Everson - 04/11/2021. Chamado 63137.
+		If lRet .And. cTpLcReg = "M"  .And. Alltrim(cValToChar(cUsuario)) <> Alltrim(cValToChar(cUserName)) .And.;
+		   lVlAbast .And. lVlAdia .And. lFuncLib .And. Alltrim(cValToChar(cTpFrg)) $cFilVlUsr
+			lRet := .F.
+			Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Ação permitida apenas para o usuário que inseriu o registro.", 1, 0)
+		
+		EndIf 
+
+		//Verifica vinculo com documento fiscal de transporte.
+		If lRet //Everson - 20/07/2020. Chamado T.I.
+			lRet := chkZFK(cCod, cStatus,.T.)
+
+		EndIf
+
+	EndIf
+
+	//
+	RestArea(aArea)
+
+Return lRet
 /*/{Protheus.doc} vldPos
 	Validação dos dados equivalente ao TudoOk. Chamado 029058.
 	@type  Static Function
@@ -284,81 +367,32 @@ Static Function vldPos(oModel)
 	Local cCod	     	:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    )))
 	//Local cOrigem		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_ORIGEM" ))) //Everson - 05/11/2019. Chamado 029058.	
 	Local cTpBloq		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TPBLQF" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cFechado		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_FECHA"  ))) //Everson - 05/11/2019. Chamado 029058.
 	Local cCodOcorr		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_OCORRE" )))
-	Local cNumRegF		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_REGFCH" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cDtFchmt		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DATAPG" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cDtFchIni		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCIN" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cDtFchFim		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCFM" ))) //Everson - 05/11/2019. Chamado 029058.
 	Local cRegAprv		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_APRMOV" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cPedDia		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_PEDADT" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cPedFch		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_PEDCOM" ))) //Everson - 05/11/2019. Chamado 029058.
-	Local cOcorrImp		:= Alltrim(cValToChar(GetMv("MV_#ALTOCO",,""))) //Everson-Ch:044314-20/03/2019
-	Local nTpFrtS		:= U_ADLG40H()
-	Local cOcFech		:= Alltrim(GetMv("MV_#OCFHFT",,"106/107")) //Everson-Ch:044314-10/10/2019
-	Local lVlAbast		:= ( ! IsInCallStack("estAbast") )  //Everson - 05/11/2019. Chamado 029058.
-	Local lVlAdia		:= ( ! IsInCallStack("estAdianta")) //Everson - 05/11/2019. Chamado 029058.
-	Local lFuncLib		:= ( ! IsInCallStack("U_ADLOG047P") .And. ! IsInCallStack("U_ADLOG067P") ) //Everson - 05/11/2019. Chamado 029058. //Everson - 17/01/2020. Chamado 054941.
 	Local nDesco 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DESCOC" ))) //Everson - 04/12/2019. Chamado 029058.
 	Local nTrans 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_TRANPA" ))) //Everson - 04/12/2019. Chamado 029058.
 	Local nLojtr 		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_LJPPAG" ))) //Everson - 04/12/2019. Chamado 029058.
 	Local nVlrFr 		:= oModel:GetValue( "ZFAMASTER" , "ZFA_VALOR" ) //Everson - 04/12/2019. Chamado 029058.
-	Local cStatus   	:= Alltrim(GetMv("MV_#STSEMI",,"0/1/4/7")) //Everson - 09/12/2019. Chamado 029058.
-	Local cPerExl		:= Alltrim(GetMv("MV_#FRTEXL",,"")) //Everson - 06/01/2020. Chamado 054680.
-	Local cFlgFrt		:= Alltrim(Posicione("ZF7",1,FWxFilial("ZF7")+cCodOcorr,"ZF7_TOTCOD")) //Everson - 06/01/2020. Chamado 054680.
- 
+	Local cNumRegF		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_REGFCH" )))
+	Local cDtFchmt		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DATAPG" )))
+	Local cDtFchIni		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCIN" )))
+	Local cDtFchFim		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCFM" )))
+	Local cOcFech		:= Alltrim(GetMv("MV_#OCFHFT",,"106/107"))
+
 	//Valida origem do lançamento.
 	If lRet .And. ! ( nOperation == MODEL_OPERATION_DELETE )
 
 		//Valida se há tipo de bloqueio para o tipo de frete selecionado.
 		If lRet .And. Empty(cTpBloq)
 			lRet := .F.
-			Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Operação não pode ser realizada pois não há tipo de bloqueio de frete cadastrado para o tipo - " + retDescFrt(nTpFrtS) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+			Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Operação não pode ser realizada pois não há tipo de bloqueio de frete cadastrado para o tipo - " + retDescFrt(nTpFrtS) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
 		EndIf
 
 		//Valida parâmetros de fechamento de período.
 		If lRet .And. cFechado = "S" .And. ( ( Empty(cNumRegF) .And. !(cCodOcorr $cOcFech) ) .Or. Empty(cDtFchmt) .Or. Empty(cDtFchIni) .Or. Empty(cDtFchFim) .Or. cRegAprv = "N" )
 			lRet := .F.
-			Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Dados incompletos para fechamento de período.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-		EndIf
-
-	EndIf 
-
-	//Validações para alteração e exclusão.
-	If lRet .And. ( nOperation == MODEL_OPERATION_UPDATE .Or. nOperation == MODEL_OPERATION_DELETE )
-
-		//Verifica se o registro fechado.
-		If lRet .And. ( cFechado = "S" .Or. !Empty(cPedDia) .Or. !Empty(cPedFch) )
-			lRet := .F.
-			Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Movimento " + cCod + " encerrado ou com pedido de compra vinculado não pode ser alterado ou excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-		EndIf
-	
-		//Verifica se é movimento automático.
-		If lRet .And. oModel:GetValue( 'ZFAMASTER' , 'ZFA_TPMOV' ) = "A" .And.;
-			!(cCodOcorr $cOcorrImp) .And. lVlAbast .And. lVlAdia .And. lFuncLib //Everson-Ch:044314-20/03/2019
-
-			//
-			If nOperation == MODEL_OPERATION_UPDATE 
-				lRet := .F.
-				Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Movimento automático não pode ser alterado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-			EndIf
-
-			//Everson - 06/01/2020 - Chamado 054680.
-			If nOperation == MODEL_OPERATION_DELETE .And. ( !(__cUserId $ cPerExl) .Or. cFlgFrt <> "S" )
-				lRet := .F.
-				Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Movimento automático não pode ser excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-			EndIf
-
-		EndIf
-
-		//Verifica vinculo com documento fiscal de transporte.
-		If lRet //Everson - 20/07/2020. Chamado T.I.
-			lRet := chkZFK(cCod,cStatus,.T.)
+			Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Dados incompletos para fechamento de período.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
 		EndIf
 
@@ -376,7 +410,7 @@ Static Function vldPos(oModel)
 	EndIf
 
 	//Everson - 05/08/2020. Chamado TI.
-	cCod := Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    ))) 
+	cCod := Alltrim(cValToChar(oModel:GetValue("ZFAMASTER" , "ZFA_COD"))) 
 	If ! Empty(cCod) .And. nOperation == MODEL_OPERATION_INSERT
 
 		If ! ExistChav("ZFA", cCod, 13)
