@@ -14,6 +14,7 @@
 	@history Chamado 1751   - William Costa   - 18/09/2020 - Identificado que uma ocorrencia de quebra que é lançado duas vezes não vai para a tela de aprovaçaõ de cliente o novo valor de desconto lançado, ajustado isso.
 	@history ticket  TI     - Adriano Savoine - 29/01/2021 - Quando pedido de pagamento antecipado é reprogramado, o mesmo nasce liberado estoque, credito e pagamento realizado C5_XWSPAGO = 'M'
 	@history ticket  9579   - Fernando Macieir- 17/02/2021 - type mismatch on *  on U_AD0019(AD0019.PRW) 29/01/2021 11:47:55 line : 821
+	@history ticket  T.I	- Sigoli	      - 03/11/2021 -  removido o email monitor.sistemas@adoro.com.br de receber este workflow 
 /*/
 USER FUNCTION AD0019(nOpc)     
 
@@ -1563,7 +1564,7 @@ Static Function MandaEmail(_cDev,_cC,_cL,_cN,_cM,_cO,_cRsp,_nT)
 		DbSetOrder(1)
 		DbSeek(Xfilial("SZR")+SA3->A3_CODSUP)
 		_eMailSup := alltrim(UsrRetMail(SZR->ZR_USER))
-		cEmail := _eMailVend+';'+_eMailSup+';'+'monitor.sistemas.vp@adoro.com.br'+';'+"cal@adoro.com.br"	// Em 23/02/2016 incluido o parâmetro MV_EMAILS2 - CHAMADO 026668
+		cEmail := _eMailVend+';'+_eMailSup+';'+"cal@adoro.com.br"	// Em 23/02/2016 incluido o parâmetro MV_EMAILS2 - CHAMADO 026668
 
 		_cMens := _cMens1+_cMens3
 		_cData := transform(MsDate(),"@!")

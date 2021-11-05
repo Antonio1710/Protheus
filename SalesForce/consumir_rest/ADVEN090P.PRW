@@ -23,6 +23,7 @@
 	@Ticket 11762, Data 05/04/2021, Leonardo P. Monteiro, Adição do tipo do cliente na inclusão ou alteração;
 	@Ticket 63090, Data 29/10/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 01/11/2021, Everson, Tratamento para processamento com mais de uma thread.
+	@Ticket 63090, Data 03/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
@@ -402,8 +403,8 @@ Static Function execProc(cRecnos, nRecGetErr, cGrvErro) //Everson - 25/09/20219.
 	EndIf
 
 	//Everson - 25/09/20219. Chamado T.I.
-	bError := ErrorBlock( {|e| MsUnlockAll(), cError := e:Description ,cGrvErro := cError, nRecGetErr := nRecErro, lContinua := .F., Conout( DToC(Date()) + " " + Time() + " ADVEN090P - RESTEXECUTE - lContinua/nRecErro/ERRO - " +; 
-	cValToChar(lContinua) + " " + cValToChar(nRecErro) + " " + cError) } )
+	bError := ErrorBlock( {|e| cError := e:Description ,cGrvErro := cError, nRecGetErr := nRecErro, lContinua := .F., Conout( DToC(Date()) + " " + Time() + " ADVEN090P - RESTEXECUTE - lContinua/nRecErro/ERRO - " +; 
+	cValToChar(lContinua) + " " + cValToChar(nRecErro) + " " + cError), MsUnlockAll() } )
 	
 	//	
 	Begin Sequence
@@ -690,7 +691,7 @@ Static Function execProc(cRecnos, nRecGetErr, cGrvErro) //Everson - 25/09/20219.
 
 					//Everson - 01/11/2021. Chamado 63090.
 					cErro := ""
-					If ! chkBloTb(.T., @cErro, SC5->C5_NUM)
+					If ! chkBloTb(4, .T., @cErro, SC5->C5_NUM)
 						MsUnlockAll()
 						RestArea(aArea)
 						Return .F.
@@ -1110,7 +1111,7 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 	Next i
 
 	//Everson - 29/10/2021. Chamado 63090.
-	If ! chkBloTb(.F., @cErro, cNmBlq, aSB2) //Tenta bloquear os registros para alteração.
+	If ! chkBloTb(nOpc, .F., @cErro, cNmBlq, aSB2) //Tenta bloquear os registros para alteração.
 		MsUnlockAll()
 		RestArea(aArea)
 		Return .F.
@@ -2391,17 +2392,17 @@ Return Nil
 	@since 01/11/2021
 	@version 01
 /*/
-Static Function chkBloTb(lLodData, cErro, cPed, aSB2)
+Static Function chkBloTb(nOpc, lLodData, cErro, cPed, aSB2)
 
 	//Variáveis.
 	Local aArea		:= GetArea()
-	Local lRet     	:= .F.
+	Local lRet     	:= .T.
+	// Local aSC5		:= {}
+	// Local cCliLoj	:= ""
+	// Local aSA1		:= {}
 
-	Default cErro	 := ""
-	Default aSB2	 := {}
-
-	//
-	logZBE("Início MultLock " + cValToChar(cPed), "")
+	Default cErro	:= ""
+	Default aSB2	:= {}
 
 	//
 	If lLodData
@@ -2435,19 +2436,50 @@ Static Function chkBloTb(lLodData, cErro, cPed, aSB2)
 
 	EndIf
 
-	//
-	lRet := MultLock("SB2", aSB2, 1)
-	
-	//
-	If ! lRet
-		
-		cErro := "MultLock Falhou"
+	//Everson - 03/11/2021. Chamado 63090.
+	If lRet //Bloqueia SB2.
+		//Conout("ADVEN090P - chkBloTb - bloqueio SB2 " + cValToChar(cPed))
+		//logZBE("Início MultLock SB2 " + cValToChar(cPed), "")
+		lRet := MultLock("SB2", aSB2, 1)
+		If ! lRet
+			cErro := "MultLock Falhou SB2"
+			logZBE(cErro, "Pedido " + cValToChar(cPed))
+			Conout("ADVEN090P - RESTEXECUTE - " + cErro + " " + cValToChar(cPed))
 
-		logZBE(cErro, "Pedido " + cValToChar(cPed))
+		EndIf
 
-		Conout("ADVEN090P - RESTEXECUTE - " + cErro)
-		
 	EndIf
+
+	//Everson - 03/11/2021. Chamado 63090.
+	// If lRet .And. nOpc == 4 //Bloqueia SC5.
+	// 	//Conout("ADVEN090P - chkBloTb - bloqueio SC5 " + cValToChar(cPed))
+	// 	//logZBE("Início MultLock SC5 " + cValToChar(cPed), "")
+	// 	Aadd(aSC5, FWxFilial("SC5") + cPed)
+	// 	lRet := MultLock("SC5", aSC5, 1)
+	// 	If ! lRet
+	// 		cErro := "MultLock Falhou SC5"
+	// 		logZBE(cErro, "Pedido " + cValToChar(cPed))
+	// 		Conout("ADVEN090P - RESTEXECUTE - " + cErro + " " + cValToChar(cPed))
+
+	// 	EndIf
+
+	// EndIf
+
+	// //Everson - 03/11/2021. Chamado 63090.
+	// If lRet //Bloqueia SA1.
+	// 	//Conout("ADVEN090P - chkBloTb - bloqueio SA1 " + cValToChar(cPed))
+	// 	//logZBE("Início MultLock SA1 " + cValToChar(cPed), "")
+	// 	cCliLoj := Posicione("SC5", 1, FWxFilial("SC5") + cPed, "C5_CLIENTE") + Posicione("SC5", 1, FWxFilial("SC5") + cPed, "C5_LOJACLI")
+	// 	Aadd(aSA1, FWxFilial("SA1") + cCliLoj)
+	// 	lRet := MultLock("SA1", aSA1, 1)
+	// 	If ! lRet
+	// 		cErro := "MultLock Falhou SA1"
+	// 		logZBE(cErro, "Pedido " + cValToChar(cPed))
+	// 		Conout("ADVEN090P - RESTEXECUTE - " + cErro + " " + cValToChar(cPed))
+
+	// 	EndIf
+
+	// EndIf
 
 	//
 	RestArea(aArea)

@@ -17,8 +17,9 @@
 	@history Chamado 056399 - William Costa      - 10/03/2020 - Identificado falha no momento de carregar a variavel de codigo do Edata nos resumos de Supervisores, pois a tabela etá desposicionada no momento da impressão. Ajustado a variavel na posição correta e assim foi tudo impresso corretamente
 	@history Chamado 057415	- Everson            - 17/04/2020 - Adicionada exportação do relatório para excel.
 	@history ticket   10654	- Fernando Macieira  - 11/03/2021 - type mismatch on $  on U_META01(META01.PRW) 17/04/2020 13:07:57 line : 53
+	@history ticket   63207	- Everson            - 03/11/2021 - Tratamento para melhorar a performance do relatório.
 /*/
-User Function META01() 
+User Function META01() // U_META01()
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
@@ -28,9 +29,13 @@ User Function META01()
 	Local oExcel	:= Nil  //Chamado 057415	- Everson - 17/04/2020.
 	Local cDir		:= ""   //Chamado 057415	- Everson - 17/04/2020.
 	Local cArq 		:= "META01_" + DToS(Date()) + "_" + StrTran(Time(),":","") //Chamado 057415	- Everson - 17/04/2020.
+	Local oEdtPrd	:= Nil
 
 	Private _Produto   := ''
 	Private _Supervis  := ''
+
+	//
+	MsAguarde({|| oEdtPrd := carEdtPrd() }, "Aguarde","Carregando Produtos Edata...", .F.) //Everson - 03/11/2021. Chamado 63207.
 
 	//
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Consolidade pedidos de Venda')
@@ -175,7 +180,7 @@ User Function META01()
 	SZR->(DbSetOrder(1))
 
 	//Carrega arquivo temporário
-	Processa({|| carArqTemp(), consVend(nOpc,@oExcel), consSuper(nOpc,@oExcel), consGeren(nOpc,@oExcel), consProduto(nOpc,@oExcel) },"CONSOLIDADO DE VENDAS" ) //Chamado 057415	- Everson - 17/04/2020.
+	Processa({|| carArqTemp(oEdtPrd), consVend(nOpc,@oExcel), consSuper(nOpc,@oExcel), consGeren(nOpc,@oExcel), consProduto(nOpc,@oExcel) },"CONSOLIDADO DE VENDAS" ) //Chamado 057415	- Everson - 17/04/2020. //Everson - 03/11/2021. Chamado 63207.
 
 	//
 	If nOpc == 1 //Chamado 057415	- Everson - 17/04/2020.
@@ -198,6 +203,14 @@ User Function META01()
 	TEMP->(DbCloseArea())
 	oTemp:Delete()
 
+	//Everson - 03/11/2021. Chamado 63207.
+	If ValType(oEdtPrd) <> "U"
+		FreeObj(oEdtPrd)
+		oEdtPrd := Nil
+		
+	EndIf
+	//
+
 	//Chamado 057415	- Everson - 17/04/2020.
 	RestArea(aArea)
 
@@ -209,7 +222,7 @@ Return Nil
 	@since  17/04/2020
 	@version 01
 	/*/
-Static Function carArqTemp()
+Static Function carArqTemp(oEdtPrd) //Everson - 03/11/2021. Chamado 63207.
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
@@ -222,105 +235,122 @@ Static Function carArqTemp()
 	Local nQtd_Cxs	:= 0
 	Local nVal_Tot	:= 0
 	Local nQtd_Qui	:= 0
+	Local cQuery    := "" //Everson - 03/11/2021. Chamado 63207.
+
+	//Everson - 03/11/2021. Chamado 63207.
+	cQuery := ""
+	cQuery += " SELECT  " 
+	cQuery += " C6_FILIAL, C6_PRODUTO, C6_VEND, C6_UNSVEN, C6_VALOR, C6_QTDVEN, A3_CODSUP, ZR_SEGMERC, A3_NREDUZ " 
+
+	cQuery += " FROM  " 
+	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 "
+
+	cQuery += " LEFT OUTER JOIN "
+	cQuery += " " + RetSqlName("SA3") + " (NOLOCK) AS SA3 ON "
+	cQuery += " C6_VEND = A3_COD "
+
+	cQuery += " LEFT OUTER JOIN "
+	cQuery += " " + RetSqlName("SZR") + " (NOLOCK) AS SZR ON "
+	cQuery += " A3_CODSUP = ZR_CODIGO "
+
+	cQuery += " WHERE  " 
+	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "'  " 
+	cQuery += " AND C6_ENTREG >= '" + DToS(MV_PAR01) + "'  " 
+	cQuery += " AND C6_ENTREG <= '" + DToS(MV_PAR02) + "'  " 
+
+	cQuery += " AND A3_CODSUP >= '" + Alltrim(cValToChar(MV_PAR03)) + "' "
+	cQuery += " AND A3_CODSUP <= '" + Alltrim(cValToChar(MV_PAR04)) + "' "
+
+	cQuery += " AND ZR_SEGMERC >= '" + Alltrim(cValToChar(MV_PAR05)) + "' "
+	cQuery += " AND ZR_SEGMERC <= '" + Alltrim(cValToChar(MV_PAR06)) + "' "
+
+	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+	cQuery += " AND SA3.D_E_L_E_T_ = '' "
+	cQuery += " AND SZR.D_E_L_E_T_ = '' "
+
+	If _lVended
+		cQuery += " AND C6_VEND = '" + Alltrim(cValToChar(_cVended)) + "' " 
+
+	EndIf 
+
+	cQuery += " ORDER BY  " 
+	cQuery += " C6_FILIAL, C6_NUM, C6_ITEM, C6_PRODUTO " 
+
+	If Select("TMPSC6") > 0
+		TMPSC6->(DbCloseArea())
+
+	EndIf
+
+	TcQuery cQuery New Alias "TMPSC6"
+	DbSelectArea("TMPSC6")
+	TMPSC6->(DbGotop())
 
 	//
-	DbSelectArea("SC6")
-	SC6->(DbSetOrder(1))
+	ProcRegua(Contar("TMPSC6","!Eof()"))
 
 	//
-	Set Filter To SC6->C6_ENTREG >= MV_PAR01 .And. SC6->C6_ENTREG <= MV_PAR02 .And. SC6->C6_FILIAL = cFilAnt //ALTERADO LEONARDO (HC) PARA CONTEMPLAR A FILIAL CORRENTE
+	TMPSC6->(DbGotop())
 
-	//
-	ProcRegua(Contar("SC6","!Eof()"))
-
-	//
-	SC6->(DbGotop())
-
-	While SC6->(!EOF())
+	While ! TMPSC6->(Eof())
 
 		//
 		IncProc()
 		
 		//
-		cProduto   := SC6->C6_PRODUTO                                    
-		cVendedor  := SC6->C6_VEND
-		nQtd_Cxs   := SC6->C6_UNSVEN
-		nVal_Tot   := SC6->C6_VALOR
-		nQtd_Qui   := SC6->C6_QTDVEN
+		cProduto   := TMPSC6->C6_PRODUTO                                    
+		cVendedor  := TMPSC6->C6_VEND
+		nQtd_Cxs   := TMPSC6->C6_UNSVEN
+		nVal_Tot   := TMPSC6->C6_VALOR
+		nQtd_Qui   := TMPSC6->C6_QTDVEN
+		cSupervis :=  TMPSC6->A3_CODSUP
+		
+		//Cadastro de supervisor.
+		SZR->(DbGotop())
+		SZR->(DbSeek(xfilial() + SA3->A3_CODSUP))
 
 		//	
-		If _lVended  
-			If !(cVendedor == _cVended)
-				SC6->(DbSkip())
-				Loop
-
-			EndIf
-
-		EndIf    
-		
-		//
-		SB1->(DbGotop())
-		SB1->(DbSeek(FWxFilial("SB1") + cProduto))
-		
-		//
-		SA3->(DbGotop())
-		SA3->(DbSeek(FWxFilial("SA3") + cVendedor))
-		cSupervis := SA3->A3_CODSUP
-		
-		//
-		If cSupervis >= mv_par03 .And. cSupervis <= mv_par04
-
-			//Cadastro de supervisor.
-			SZR->(DbGotop())
-			SZR->(DbSeek(xfilial() + SA3->A3_CODSUP))
+		If ! TEMP->(DbSeek(cSupervis + cVendedor + cProduto))
+			
+			//
+			cProdedata := ""
+			oEdtPrd:Get(Alltrim(cValtoChar(cProduto)), cProdedata) //Everson - 03/11/2021. Chamado 63207.
 
 			//
-			If SZR->ZR_SEGMERC >= mv_par05 .And. SZR->ZR_SEGMERC <= mv_par06
+			RecLock("TEMP",.T.)
 			
-				//	
-				If ! TEMP->(DbSeek(cSupervis + cVendedor + cProduto))
-					
-					//
-					cProdedata := ''
-					cProdedata := SqlProdEdata(cProduto)
+				Repl TEMP->TR_FILIAL  with TMPSC6->C6_FILIAL
+				Repl TEMP->TR_CODSUP  with cSupervis
+				Repl TEMP->TR_VENDEDO with cVendedor
+				Repl TEMP->TR_NOMVEND with TMPSC6->A3_NREDUZ
+				Repl TEMP->TR_PRODUTO with cProduto
+				Repl TEMP->TR_CAIXAS  with nQtd_Cxs
+				Repl TEMP->TR_KILOS   with nQtd_Qui
+				Repl TEMP->TR_VALTOT  with nVal_Tot
+				Repl TEMP->TR_PREMED  with TR_VALTOT/TR_KILOS
+				Repl TEMP->TR_EDATA   with cProdedata
+			
+			MsUnLock()
 
-					//
-					RecLock("TEMP",.T.)
-					
-						Repl TEMP->TR_FILIAL  with FWxFilial("SC6")
-						Repl TEMP->TR_CODSUP  with cSupervis
-						Repl TEMP->TR_VENDEDO with cVendedor
-						Repl TEMP->TR_NOMVEND with SA3->A3_NREDUZ
-						Repl TEMP->TR_PRODUTO with cProduto
-						Repl TEMP->TR_CAIXAS  with nQtd_Cxs
-						Repl TEMP->TR_KILOS   with nQtd_Qui
-						Repl TEMP->TR_VALTOT  with nVal_Tot
-						Repl TEMP->TR_PREMED  with TR_VALTOT/TR_KILOS
-						Repl TEMP->TR_EDATA   with cProdedata
-					
-					MsUnLock()
+		Else
 
-				Else
-
-					// SOMA AS QTD VENDIDAS NAS RESPECTIVOS GRUPOS
-					RecLock("TEMP",.F.)
-					
-						Repl TR_CAIXAS   with TR_CAIXAS + nQtd_Cxs
-						Repl TR_KILOS    with TR_KILOS  + nQtd_Qui
-						Repl TR_VALTOT   with TR_VALTOT + nVal_Tot
-						Repl TR_PREMED   with TR_VALTOT/TR_KILOS
-					
-					MsUnLock()
-
-				EndIf
-
-			EndIf
+			// SOMA AS QTD VENDIDAS NAS RESPECTIVOS GRUPOS
+			RecLock("TEMP",.F.)
+			
+				Repl TR_CAIXAS   with TR_CAIXAS + nQtd_Cxs
+				Repl TR_KILOS    with TR_KILOS  + nQtd_Qui
+				Repl TR_VALTOT   with TR_VALTOT + nVal_Tot
+				Repl TR_PREMED   with TR_VALTOT/TR_KILOS
+			
+			MsUnLock()
 
 		EndIf
 
-		SC6->(Dbskip())
+		TMPSC6->(Dbskip())
 
 	End
+
+	//
+	TMPSC6->(DbCloseArea())
 
 	//
 	RestArea(aArea)
@@ -1161,7 +1191,7 @@ Static Function ImpCabec()
 	@nLin,00 PSAY Cabec5
 	//nLin := nLin + 1
 
-Return()
+Return Nil
 /*/{Protheus.doc} ImpACabec
 	Gera cabeçalho.
 	@type  Static Function
@@ -1209,36 +1239,46 @@ Static Function ImpACabec()
 	@nLin,00 PSAY Cabec70
 	nLin := nLin + 1
 
-Return()
-/*/{Protheus.doc} SqlProdEdata
-	Obtém dados do Edata.
+Return Nil
+/*/{Protheus.doc} carEdtPrd
+	(long_description)
 	@type  Static Function
-	@author 
-	@since 
+	@author Everson
+	@since 03/11/2021
 	@version 01
-	/*/
-Static Function SqlProdEdata(cProduto)
+/*/
+Static Function carEdtPrd()
 
-	Local cQueryEdata := ''
-	Local cProd       := ''
-		
-	cQueryEdata := "SELECT PROD_EDATA.ID_PRODDEFIMATEEMBA AS PRODEDATA "
-    cQueryEdata += "  FROM [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] PROD_EDATA "
-    cQueryEdata += " WHERE (PROD_EDATA.IE_DEFIMATEEMBA COLLATE Latin1_General_CI_AS)  = '" + cProduto + "'"
+	Local aArea		  := GetArea()
+	Local cQuery	  := ""
+	Local oHash 	  := THashMap():New()
+
+	//
+	cQuery := " SELECT PROD_EDATA.IE_DEFIMATEEMBA AS PRODPROT, PROD_EDATA.ID_PRODDEFIMATEEMBA AS PRODEDATA "
+    cQuery += " FROM [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] AS PROD_EDATA WHERE PROD_EDATA.IE_DEFIMATEEMBA IS NOT NULL AND PROD_EDATA.IE_DEFIMATEEMBA <> '' ORDER BY PRODPROT "
     
-	TCQUERY cQueryEdata new alias "TRC"
+	//
+	TcQuery cQuery New alias "DDS_PROD"
 	
-	dbSelectArea("TRC")   
-	TRC->(DBGOTOP())    
-	WHILE TRC->(!EOF())    
+	//
+	DbSelectArea("DDS_PROD")   
+	DDS_PROD->(DbGoTop())    
+	While ! DDS_PROD->(Eof()) 
+
+		oHash:Set( Alltrim(cValtoChar(DDS_PROD->PRODPROT)), Alltrim(cValtoChar(DDS_PROD->PRODEDATA)) )
 	
-		cProd := TRC->PRODEDATA
-	
-		TRC->(dbSkip())     	
-	EndDo
-	TRC->(dbCloseArea())
-	
-RETURN(cProd)
+		//
+		DDS_PROD->(DbSkip()) 
+
+	End
+
+	//
+	DDS_PROD->(DbCloseArea())
+
+	//
+	RestArea(aArea)
+
+Return oHash
 /*/{Protheus.doc} gerObjExc
 	Gera objeto excel.
 	@type  Static Function
