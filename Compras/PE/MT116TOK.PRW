@@ -2,39 +2,28 @@
 #INCLUDE "APWEBSRV.CH"
 #INCLUDE "TBICONN.CH"
 #INCLUDE "TBICODE.CH"
-
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณMT116TOK  บAutor  ณAbel Babini         บ Data ณ  18/06/2019 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณEste ponto de entrada pertence a rotina de digita็ใo de     บฑฑ
-ฑฑบ          ณconhecimento de frete, MATA116(). ษ executado na rotina de  บฑฑ
-ฑฑบ          ณinclusใo do conhecimento de frete, A116INCLUI(), quando a   บฑฑ
-ฑฑบ          ณtela com o conhecimento e os itens sใo montados.            บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ                                                            บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Ch.049508 - Abel Babini - Valida Ped Compra CTE - 17/06/19 บฑฑ
-ฑฑบAltera็ใo ณ Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019 บฑฑ
-ฑฑบAltera็ใo ณ Ch.049468 - Abel Babini - Valida Recusa Adoro - 22/07/2019 บฑฑ
-ฑฑบAltera็ใo ณ Ch.050434 - Abel Babini - Valida CTE x Produto -30/07/2019 บฑฑ
-ฑฑบAltera็ใo ณ Ch.051082 - Abel Babini - CTE X PED. COMP  - 13/08/2019    บฑฑ
-ฑฑบAltera็ใo ณ Ch.051294 - Abel Babini - Incluido condi็ใo OR para excluirบฑฑ 
-ฑฑบ          ณ CTE sem precisar validar Pedido de Compra - 27/08/2019     บฑฑ
-ฑฑบAltera็ใo ณ Ch. 052387 - Abel Babini - Valida CTE x Pedido (Noemi)     บฑฑ
-ฑฑ           ณ - 08/10/2019                                               บฑฑ 
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+ 
+/*/
+{Protheus.doc} User Function MT116TOK
+	Este ponto de entrada pertence a rotina de digita็ใo de conhecimento de frete, MATA116(). ษ executado na rotina de
+    inclusใo do conhecimento de frete, A116INCLUI(), quando a tela com o conhecimento e os itens sใo montados. 
+	@type  Function
+	@author Abel Babini  
+	@since 18/06/2019
+	@version 01
+	@history  Ch.049508 - Abel Babini - 17/06/2019 - Valida Ped Compra CTE
+	@history  Ch. 050177 - Abel Babini - 01/07/2019 - Ajuste na valida็ใo
+	@history  Ch. 049468 - Abel Babini - 22/07/2019 - Valida Recusa Adoro
+	@history  Ch. 050434 - Abel Babini - 30/07/2019 - Valida CTE x Produto 
+	@history  Ch. 051082 - Abel Babini - 13/08/2019 - CTE X PED. COMP
+	@history  Ch. 051294 - Abel Babini - 27/08/2019 - Incluido condi็ใo OR para excluir CTE sem precisar validar Pedido de Compra 
+	@history  Ch. 052387 - Abel Babini - 08/10/2019 - Valida CTE x Pedido (Noemi)
+	@history  tkt T.I    - Sigoli      - 05/11/2021 - Tratamento errolog  - type mismatch on +=  on U_VLDPCCTE(RECNFECTE.PRW) 16/07/2021 12:02:18 line : 3632
 */
 
 USER FUNCTION MT116TOK()
 
 	Local lRet          := .T.
-	
-	//INICIO Chamado 049508 - Abel Babini - 18/06/2019 - Valida็ใo do Pedido de Compra antes do Lan็amento do CT-e
 	Local cGetPV 	:= Space( TamSx3("C7_NUM")[01] )
 	Local cGetIT 	:= Space( TamSx3("C7_ITEM")[01] )
 	Local oBtnCan	:= Nil
@@ -51,22 +40,20 @@ USER FUNCTION MT116TOK()
 	Local nValNF	:= 0
 	Local nValPC	:= 0
 	Local aXItPC	:= {}
-	//FIM Chamado 049508 - Abel Babini - 18/06/2019 - Valida็ใo do Pedido de Compra antes do Lan็amento do CT-e
-	
+	Local i         := 0
+
 	Private cMensagem  := ''
 	Private nCont      := 0
 	Private nPosProd   := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_COD" })
-	Private nPosTotal  := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_TOTAL" })
+	Private nPosTot    := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_TOTAL" })
 	Private nPosPedido := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_PEDIDO" }) //Chamado: 034249 Fernando Sigoli 29/09/2017
 	Private nPosItPed	:= ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_ITEMPC" }) //Chamado: 034249 Fernando Sigoli 29/09/2017
 	Private cNfOrig    := ''
 	Private cSerieOrig := ''
 	Private cForOrig   := ''
 	Private cLojaOrig  := '' 
-	
-	Private i      		:= 0 //Chamado: 034249 Fernando Sigoli 29/09/2017
+	Private i      	   := 0 //Chamado: 034249 Fernando Sigoli 29/09/2017
 
-	// INICIO ABEL BABINI 22/07/2019 CHAMADO 049468 | FISCAL | VERUSKA | Impede a classifica็ใo de documentos com Recusa Adoro.
 	If IsInCallStack("U_CENTNFEXM") .AND. INCLUI //Ch.051294 - 27/08/2019 - Abel Babini Filho - Incluido condi็ใo AND para excluir CTE sem precisar validar Pedido de Compra
 		dbSelectArea('ZCW')
 		dbSetOrder(2)
@@ -75,10 +62,6 @@ USER FUNCTION MT116TOK()
 			Return .F.
 		Endif
 	Endif
-	// FIM ABEL BABINI 22/07/2019 CHAMADO 049468 | FISCAL | VERUSKA | Impede a classifica็ใo de documentos com Recusa Adoro.
-
-	 
-	//INICIO Chamado 049508 - Abel Babini - 18/06/2019 - Valida็ใo do Pedido de Compra antes do Lan็amento do CT-e
 	
 	If IsInCallStack("U_CENTNFEXM") .AND. INCLUI //Ch.051294 - 27/08/2019 - Abel Babini Filho - Incluido condi็ใo OR para excluir CTE sem precisar validar Pedido de Compra
 		cCodFor	:= Posicione("SA2",3,xFilial("SA2")+RECNFCTE->XML_EMIT,"A2_COD")
@@ -110,30 +93,25 @@ USER FUNCTION MT116TOK()
 
 				nRecOri := SC7->(RecNo())
 				aXItPC := {}
-				//nCont := 1 //Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
 				While ! SC7->(eof()) .AND. ;
 						SC7->C7_FILIAL = xFilial("SC7") .AND. ;
 						SC7->C7_NUM == cGetPV .AND. ;
 						Alltrim(SC7->C7_FORNECE) == Alltrim(cCodFor) .AND. ;
 						Alltrim(SC7->C7_LOJA) == Alltrim(cLojFor)
 					
-					//aCols[nCont][nPosPedido]	:= cGetPV //Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
-					//aCols[nCont][nPosItPed]	:= SC7->C7_ITEM //Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
 					aAdd(aXItPC,SC7->C7_ITEM) //Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
 					RecLock( "SC7", .F. )
 					SC7->C7_QUJE := 1
 					MsunLock()
 					
-					//nCont += 1 //Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
 					SC7->(dbSkip())
 				EndDo
 				SC7->(dbGoTo(nRecOri))
-				//INICIO Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
+
 				For i:=1 to Len(aCols)
 					aCols[i][nPosPedido]	:= cGetPV
 					aCols[i][nPosItPed]		:= IIF(i>Len(aXItPC),cGetIT,aXItPC[i])
 				Next i		
-				//FIM Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
 			Else
 				uMsgErr("Pedido nใo localizado ou invแlido!")
 				Return .F.
@@ -144,9 +122,7 @@ USER FUNCTION MT116TOK()
 			Return .F.
 		EndIf	
 	Endif
-		//FIM Chamado 049508 - Abel Babini - 18/06/2019 - Valida็ใo do Pedido de Compra antes do Lan็amento do CT-e	 
-		 
-	//Chamado: 041174 - Fernando Sigoli 24/04/2018
+
 	//Quando passar pela central, nao validar o pedido de compra, uma vez que a informa็ao do pedido na central ้ obrigatorio
 	If IsInCallStack( "U_CEXMCONTR" ) .or. (IsInCallStack( "U_RECNFECTE" ) .AND. !INCLUI) //Ch.051294 - 27/08/2019 - Abel Babini Filho - Incluido condi็ใo OR para excluir CTE sem precisar validar Pedido de Compra
 		Return lRet
@@ -158,38 +134,6 @@ USER FUNCTION MT116TOK()
 		cSerieOrig  := IIF(ALLTRIM(cPseriOri)           == '',cSerieOri,cPseriOri) 
 		cForOrig    := IIF(ALLTRIM(cPforneceOri)        == '',cFornecOri,cPforneceOri)
 		cLojaOrig   := IIF(ALLTRIM(cPLojaOri)           == '',cLojaForOri,cPLojaOri)
-		
-		/*IF LEN(aCols) >= 2         
-		
-			lRet := .F.  
-			
-			cMensagem := "MT116TOK-01"                                           + "<br>" + ;
-			             "<b>Nota Fiscal de Frete nใo importada com dois itens,"          + ;
-			             " favor verificar </b>"                                 + "<br>" + ;
-			             "Nota: "            + cDocFrete                         + "<br>" + ; 
-			             "Serie: "           + cSerieFrete                       + "<br>" + ; 
-			             "Fornecedor: "      + cForneceFrete                     + "<br>" + ; 
-			             "Loja: "            + cLojaFrete                        + "<br>" + ; 
-			             "Nota Orig: "       + cNfOrig                           + "<br>" + ; 
-			             "Serie Orig: "      + cSerieOrig                        + "<br>" + ; 
-			             "Fornecedor Orig: " + cFornecOrig                       + "<br>" + ; 
-			             "Loja Orig: "       + cLojaOrig                         + "<br>" + ;
-			             "<b>Nota nใo Importada !!! </b>"
-			             
-			IF ALLTRIM(cMensFinal) == ''
-			
-				cMensFinal += 'Nota(s) Fiscal(is) Nใo Importadas: ' + cDocFrete
-				
-			ELSE
-			
-				cMensFinal += ', ' + cDocFrete
-			
-			ENDIF
-			             
-			             
-		 	EmailNota(cMensagem)		             
-			             
-		ENDIF*/
 		
 		FOR nCont := 1 TO LEN(aCols)
 		    
@@ -230,7 +174,7 @@ USER FUNCTION MT116TOK()
 		                  
 		            ENDIF
 		            
-		            IF aCols[nCont,nPosTotal] < 1
+		            IF aCols[nCont,nPosTot] < 1
 					
 						lRet := .F.  
 			
@@ -246,7 +190,7 @@ USER FUNCTION MT116TOK()
 						             "Fornecedor Orig: " + cFornecOrig                        + "<br>" + ; 
 						             "Loja Orig: "       + cLojaOrig                          + "<br>" + ;
 						             "Prod Frete: "      + ALLTRIM(aCols[nCont,nPosProd])     + "<br>" + ;
-						             "Vl Total: "        + cValtoChar(aCols[nCont,nPosTotal]) + "<br>" + ;
+						             "Vl Total: "        + cValtoChar(aCols[nCont,nPosTot]) + "<br>" + ;
 						             "<b>Nota nใo Importada !!! </b>"
 			             
 			             
@@ -400,19 +344,6 @@ Return(cRet)
 
 
 //INICIO Chamado 049508 - Abel Babini - 18/06/2019 - Valida็ใo do Pedido de Compra antes do Lan็amento do CT-e
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณValidPC   บAutor  ณFernando Sigoli     บData  ณ  30/09/2017 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณValida o Pedido de Compras digitado                         บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณCompras . Chamado: 049508                                   บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿     
-*/
 Static Function ValidPC( cPedido, cItemPC, cCodFor, cLojFor )
 	Local lRetorno	:= .T.
 	Local nValNF	:= 0
@@ -443,14 +374,9 @@ Static Function ValidPC( cPedido, cItemPC, cCodFor, cLojFor )
 					SC7->C7_NUM == cPedido .AND. ;
 					Alltrim(SC7->C7_FORNECE) == Alltrim(cCodFor) .AND. ;
 					Alltrim(SC7->C7_LOJA) == Alltrim(cLojFor) 
-				//INICIO Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
-				//IF !aCols[nCont][nPosTotal] == SC7->C7_TOTAL
-				//	lPCxNF := .F.
-				//	nDifPCNF := aCols[nCont][nPosTotal] - SC7->C7_TOTAL
-				//ENDIF
-				//nValNF += aCols[nCont][nPosTotal]
-				//FIM Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
-				nValPC += SC7->C7_TOTAL
+				
+					nValPC += SC7->C7_TOTAL
+				
 				IF !(ASCAN(aPrdPed,SC7->C7_PRODUTO) > 0) //051082 || OS 052395 || FISCAL || ELIZABETE || 8424 || CTE X PED. COMP  ||ABEL BABINI || 13/08/2019
 					AADD(aPrdPed,SC7->C7_PRODUTO)//INICIO Ch. 050434 - Abel Babini - Valida CTE x Produto (Noemi) - 30/07/2019
 				ENDIF
@@ -461,7 +387,7 @@ Static Function ValidPC( cPedido, cItemPC, cCodFor, cLojFor )
 
 			//INICIO Ch.050177 - Abel Babini - Ajuste na valida็ใo - 01/07/2019
 			For i:= 1 to Len(aCols)
-				nValNF += aCols[i][nPosTotal]
+				nValNF += aCols[i][nPosTot]
 				IF !(ASCAN(aPrdCte,aCols[i][nPosProd]) > 0) //051082 || OS 052395 || FISCAL || ELIZABETE || 8424 || CTE X PED. COMP  ||ABEL BABINI || 13/08/2019
 					AADD(aPrdCte,aCols[i][nPosProd])//INICIO Ch. 050434 - Abel Babini - Valida CTE x Produto (Noemi) - 30/07/2019
 				ENDIF
@@ -502,19 +428,8 @@ Static Function ValidPC( cPedido, cItemPC, cCodFor, cLojFor )
 	EndIf
 Return lRetorno
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณuMsgErr   บAutor  ณFernando Sigoli     บData  ณ  30/09/2017 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณValida o Pedido de Compras digitado                         บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณCompras . Chamado: 049508                                   บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿     
-*/
+
+//Valida o Pedido de Compras digitado 
 Static Function uMsgErr( cTxtErr )
 	Local oDlgErr	:= Nil
 	Local oBtnCan	:= Nil
@@ -529,4 +444,3 @@ Static Function uMsgErr( cTxtErr )
 	ACTIVATE MSDIALOG oDlgErr CENTERED
 
 Return
-//FIM Chamado 049508 - Abel Babini - 18/06/2019 - Valida็ใo do Pedido de Compra antes do Lan็amento do CT-e

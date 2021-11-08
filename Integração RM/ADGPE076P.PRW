@@ -174,38 +174,37 @@ Static Function fConfirm()
     Local nRegist   := 0
     Local cProdut   := ""
 
-    if MsgYesNo("Confirma a entrega do Kit?", "Confirma")
+   
 
-        DbSelectArea("ZI0")
-        
-        for nA := 1 To nItKiDad
-            if aItKiDad[nA, nItKiCam]
-                nRegist := aItKiDad[nA, nPosReg]
-                cProdut := aItKiDad[nA, nPosPrd]
+    DbSelectArea("ZI0")
+    
+    for nA := 1 To nItKiDad
+        if aItKiDad[nA, nItKiCam]
+            nRegist := aItKiDad[nA, nPosReg]
+            cProdut := aItKiDad[nA, nPosPrd]
 
-                ZI0->(Dbgoto(nRegist))
+            ZI0->(Dbgoto(nRegist))
 
-                if ZI0->(Recno()) == nRegist
-                    RecLock("ZI0", .F.)
-                    
-                    if nOpcao == 1
-                        ZI0->ZI0_STATUS := "2"
-                        ZI0->ZI0_EXPDAT := Dtoc(Date())+" "+Time()
-                        ZI0->ZI0_EXPUSU := __cUserID
-                    ELSEIF nOpcao == 2
-                        ZI0->ZI0_STATUS := "3"
-                        ZI0->ZI0_PORDAT := Dtoc(Date())+" "+Time()
-                        ZI0->ZI0_PORUSU := __cUserID
-                    endif
-
-                    ZI0->(MsUnlock())
+            if ZI0->(Recno()) == nRegist
+                RecLock("ZI0", .F.)
+                
+                if nOpcao == 1
+                    ZI0->ZI0_STATUS := "2"
+                    ZI0->ZI0_EXPDAT := Dtoc(Date())+" "+Time()
+                    ZI0->ZI0_EXPUSU := __cUserID
+                ELSEIF nOpcao == 2
+                    ZI0->ZI0_STATUS := "3"
+                    ZI0->ZI0_PORDAT := Dtoc(Date())+" "+Time()
+                    ZI0->ZI0_PORUSU := __cUserID
                 endif
 
+                ZI0->(MsUnlock())
             endif
-        next nA
 
-    endif
+        endif
+    next nA
 
+    
     cPesq := Space(100)
     
 return
@@ -292,7 +291,7 @@ Static Function fGetDado(nAlerta)
     if !lRet .and. nAlerta == 1 .AND. len(Alltrim(cPesq)) > 0 //Ticket: 16835 - 28/10/2021 - ADRIANO SAVOINE
         MsgAlert("Credencial inválido ou colaborador não encontrado ou inativo!", "..:: Não encontrado ::..")
     elseif Len(aItKiDad) == 0 .AND. len(Alltrim(cPesq)) > 0  //Ticket: 16835 - 28/10/2021 - ADRIANO SAVOINE
-        MsgAlert("Não há itens a serem entregues. Procure o Recursos Humanos!", "..:: Não encontrado ::..")
+        MsgAlert('<h1><font color="#FF0000">Não há itens a serem entregues. Procure o Recursos Humanos!</font></h1>', "..:: Não encontrado ::..")
     endif
 
     cPesq := Space(100)
