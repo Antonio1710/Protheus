@@ -35,6 +35,7 @@
 	@history Ticket  55228  - Adriano Savoine - 04/10/2021 - Filtrado para vir do RM somente novos colaboradores ou Alterações efetuadas em colaboradores já cadastrados no DIMEP.
 	@history Ticket  TI     - Adriano Savoine - 13/10/2021 - Tratado o Campo PIS para ficar sem nenhum espaço tanto na atualização quanto na Insersão de novos dados.
 	@history Ticket  62721  - Everson         - 27/10/2021 - Melhorar o desempenho do relatório.Everson.
+	@history Ticket  TI     - Everson         - 08/11/2021 - Correção de apontamento de campo da consulta sql.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -3790,7 +3791,7 @@ Static Function carCredXPes()
 	While ! D_CREDP->(Eof())
 
 		//Chave CD_CREDENCIAL + CD_PESSOA.
-		oCrXPes1:Set(Alltrim(cValToChar(CD_CREDENCIAL)) + Alltrim(cValToChar(CD_PESSOA)),; 
+		oCrXPes1:Set(Alltrim(cValToChar(D_CREDP->CD_CREDENCIAL)) + Alltrim(cValToChar(D_CREDP->CD_PESSOA)),; //TI  - Everson - 08/11/2021 
 		         {D_CREDP->CD_CREDENCIAL, D_CREDP->CD_PESSOA, D_CREDP->DT_INICIO,;
 				  D_CREDP->DT_FIM, D_CREDP->FL_PERMANENTE, D_CREDP->TP_TECNOLOGIA})
 
@@ -3951,7 +3952,7 @@ Static Function carPesXEst(cEmp)
 	While ! D_CCFDI->(Eof())
 
 		//
-		oHash:Set(Alltrim(cValtoChar(D_CCFDI->NU_MATRICULA)),NU_ESTRUTURA)
+		oHash:Set(Alltrim(cValtoChar(D_CCFDI->NU_MATRICULA)), D_CCFDI->NU_ESTRUTURA) //TI  - Everson - 08/11/2021 
 
 		//
 		D_CCFDI->(DbSkip())
@@ -4068,7 +4069,7 @@ Static Function carChkDpCr()
 	While ! DADOS_CKD->(Eof())
 
 		//Chave CD_PESSOA + nCHAPA.
-		oHash:Set( Alltrim(cValToChar(DADOS_CKD->CD_PESSOA)) + Alltrim(cValToChar(DADOS_CKD->NU_CREDENCIAL)), Val(cValToChar(TT_CREDENCIAL)))
+		oHash:Set( Alltrim(cValToChar(DADOS_CKD->CD_PESSOA)) + Alltrim(cValToChar(DADOS_CKD->NU_CREDENCIAL)), Val(cValToChar(DADOS_CKD->TT_CREDENCIAL))) //TI  - Everson - 08/11/2021 
 
 		DADOS_CKD->(DbSkip())
 
@@ -4107,7 +4108,7 @@ Static Function carChk2DpCr()
 
 		//Chave CD_PESSOA + NU_CREDENCIAL + TP_TECNOLOGIA.
 		oHash:Set( Alltrim(cValToChar(DADOS_CK2->CD_PESSOA)) + Alltrim(cValToChar(DADOS_CK2->NU_CREDENCIAL)) + Alltrim(cValToChar(DADOS_CK2->TP_TECNOLOGIA)),;
-		           Alltrim(cValToChar(CD_PESSOA)))
+		           Alltrim(cValToChar(DADOS_CK2->CD_PESSOA))) //TI  - Everson - 08/11/2021 
 
 		DADOS_CK2->(DbSkip())
 
