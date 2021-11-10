@@ -17,6 +17,7 @@
 	@history Chamado 052243 - ABEL - 01/10/2019 - RETIRADO RELACIONAMENTO COM A SN3
 	@history Chamado 051633 - ABEL - 22/11/2019 - Ajustado o relatório de Benfeitoria para acrescentar planilhas de resumo
 	@history Ticket  13124 - Abel Babini - 14/05/2021 - Criar rotina de fechamento do período, gravando valores e parâmetros utilizados no calculo
+	@history Ticket  63556 - Abel Babini - 09/11/2021 - Acrescentar condição para filtrar bens totalmente devolvidos no relatório de crédito de pis/cofins - benfeitorias
 
 	/*/
 User Function ADFIS030R()
@@ -3298,8 +3299,10 @@ Static Function xABrw26()
 			AND SN1.N1_CALCPIS IN ('3')
 			AND SN1.N1_AQUISIC <= %Exp:DToS(_mvpr02)%
 			AND DATEDIFF( month, N1_AQUISIC,%Exp:DToS(_mvpr02)%)+1 <= N1_MESCPIS				
+			AND SN1.N1_QUANTD > 0
 		ORDER BY N1_FILIAL, N1_DESCRIC, N1_CBASE
 	EndSQL
+	//Ticket  63556 - Abel Babini - 09/11/2021 - Acrescentar condição para filtrar bens totalmente devolvidos no relatório de crédito de pis/cofins - benfeitorias
 /*
 		//RETIRADO O RELACIONAMENTO ABAIXO PARA NÃO DUPLICAR AS LINHAS NO RELATÓRIO PARA BENS QUE POSSUEM 2 LINHAS NA SN3.
 		//CHAMADO 052243 || OS 053581 || FISCAL || SIMONE || 8463 || ALTERAR NOTA || ABEL BABINI FILHO 01/10/2019

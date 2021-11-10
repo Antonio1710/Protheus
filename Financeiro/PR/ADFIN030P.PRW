@@ -21,6 +21,7 @@
 	@history Chamado 425    - WILLIAM COSTA   - 30/09/2020 - Adicionado botão do relatório de perdas
 	@history Ticket  14417  - ADRIANO SAVOINE - 31/05/2021 - Criado o campo para o usuario digitar a porcentagem no momento da consulta.
 	@history Ticket  62143  - Everson         - 19/10/2021 - Tratamento para melhorar a performace da rotina cobDia.
+	@history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
 /*/
 User Function ADFIN030P() // U_ADFIN030P()
 
@@ -67,8 +68,10 @@ User Function ADFIN030P() // U_ADFIN030P()
 	
 	oWorkFat  := TButton():New(200,005,"Eficiencia de cobranca",oTelMenu,{|| U_ADFIN069R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //Fernando Sigoli - 09/10/2018 Chamado:043988
 	
-	oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| U_ADFIN071R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
-	
+	//@history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
+	//oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| U_ADFIN071R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
+	oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| iif(MSGYESNO(" Deseja executar a rotina nova (Sim) ou atual(Não)?"), U_ADFIN115R(), U_ADFIN071R() ) },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
+
 	oWorkVend := TButton():New(246,005,"Workflow Vencidos ",oTelMenu,{|| workFina() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //Fernando Sigoli- 04/10/2019. Chamado T.I.
 	
 	oWorkFat := TButton():New(016,125,"Rel Co-Participação",oTelMenu,{|| U_ADFIN085R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. )

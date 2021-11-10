@@ -15,6 +15,7 @@
 	@history Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
 	@history Tkt.63068 - JONATHAN CARVALHO - 28/10/2021 - Alterado a referencia das tabelas SD1010 E SC7010 no Alias cAl103C7 incluido a funÃ§Ã£o %TABLE:%
 	@history Tkt.62460 - ABEL BABINI - 01/11/2021 - Valor da despesa causando erro. O Valor da despesa é rateado por item e deve ser totalizado para a comparação.
+	@history Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
 /*/
 
 User Function MT103PN     
@@ -155,11 +156,20 @@ If l103Class
 
 	If nRgSC7 > 0 //Ch. 053416 OS 056667 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 27/01/2020 | Verificado se existe pedido de compra
 		//Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
-		IF (cAl103C7)->FRETEPC2 == 0 .AND. (cAl103C7)->FRETEPC <> 0
-			nValFrPC := (cAl103C7)->FRETEPC
-		ELSE
-			nValFrPC := (cAl103C7)->FRETEPC2
-		ENDIF
+
+		//Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
+		nValFrPC := 0
+		while !(cAl103C7)->(eof())
+
+			IF (cAl103C7)->FRETEPC2 == 0 .AND. (cAl103C7)->FRETEPC <> 0
+				nValFrPC += (cAl103C7)->FRETEPC
+			ELSE
+				nValFrPC += (cAl103C7)->FRETEPC2
+			ENDIF
+			(cAl103C7)->(dbSkip())
+		EndDo
+		(cAl103C7)->(dbGoTop())
+
 		//Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
 
 		nVlDesp	:=	((cAl103C7)->SEGUROPC + (cAl103C7)->DESPPC + nValFrPC) - ;

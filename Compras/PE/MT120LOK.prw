@@ -22,6 +22,7 @@
 	@history Chamado   2562 - Everson      - 04/11/2020 - Tratamento para gravar o número do estudo do projeto.
 	@history ticket    8582 - Fernando Mac - 08/02/2021 - Replicar OP na próxima linha
 	@history ticket   10573 - Fernando Mac - 08/03/2021 - Ponto de Correção - Manutenção de Ativos
+	@history ticket   63516 - Fer Macieira - 09/11/2021 - Reforço para gravar campo C7_XTXMOEDA utilizado para montar o consumo/saldo do projeto de investimento
 /*/
 User Function MT120LOK()
 
@@ -615,9 +616,27 @@ User Function MT120LOK()
 			// Chamado n. 054834 || OS 056235 || TECNOLOGIA || LUIZ || 8451 || PEDIDO DE COMPRA - FWNM - 09/01/2020
 			nTotal := 0
 			For i := 1 To Len(aCols)
+
 				If !gdDeleted(i)
+
 					nTotal += gdFieldGet("C7_TOTAL",i)
+
+					// @history ticket   63516 - Fer Macieira - 09/11/2021 - Reforço para gravar campo C7_XTXMOEDA utilizado para montar o consumo/saldo do projeto de investimento
+					If nMoedaPed <> 1 .and. !Empty(gdFieldGet("C7_PROJETO", i))
+
+						If nxTxMoed <= 0
+							lRetorno := .f.
+							msgInfo("[MT120LOK-MOEDA] - PC em moeda estrangeira! Necessário informar a taxa no cadastro de moedas para poder finalizar o PC...")
+							Return lRetorno
+						Else
+							gdFieldPut("C7_XTXMOED", nxTxMoed, i)
+						EndIf
+						
+					EndIf
+					//
+
 				EndIf
+
 			Next i
 			//
 			
