@@ -18,7 +18,7 @@
 	@history Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
 /*/
 
-User Function MT103PN     
+User Function MT103PN()     
 Local lRet := .T. // ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
 //INICIO Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
 Local aAreaDC
