@@ -9,17 +9,18 @@
 	@since 21/05/09
 	@version 01
 	@history Chamado TI 	  - MauricioHC		   -   		      - Alterado para tratar TES de Subst. Trib. para MG e RS 
-	@history Ticket 047354 	- Ricardo Lima 		 - 19/02/2019 - NAO PERMITE MAIS DE 1 PEDIDO COM MESMO ROTEIRO E DATA DE ENTREGA
-	@history Ticket 047506 	- Ricardo Lima 		 - 27/02/2019 - Informa novo Roteiro
-	@history Ticket 048015 	- Fernando Sigoli  - 21/03/2019 - Informa novo Roteiro nao validar,pedidos integrador pelo sag 
-	@history Ticket 047506 	- William Costa 	 - 21/06/2019 - Validação Adicionado regra para não deixar salvar o pedido se não tiver a segunda unidade de medida preenchida se for P.A e o Local igual 10     	@history Ticket 051864 	- Abel Babini 	- 20/09/2019 - Cria parametros de produtos CMS e validação de quantidade 
-	@history Ticket 692 	  - Adriana Oliveira - 03/09/2020 - gravar TES especifico quando cliente estiver enquadrado no regime especial 57608/11 (ZG4_NUMERO<>””)
-	@history Ticket 8190 	  - Abel Babini      - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
-	@history Ticket 8190 	  - Abel Babini      - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laço FOR
-	@history Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
-	@history Ticket 9231 	  - Abel Babini      - 08/02/2021 - Alterado o tratamento de Bonificação para clientes Simples Nacional, considerando os parâmetros MV_XTESBON, MV_XTESBOQ, MV_XTESDOA
-	@history Ticket 9765 	  - Abel Babini      - 19/02/2021 - Adicionada regra para que a alteração de TES não seja executada quando o tipo do cliente for consumidor final
-	@history Ticket 11223   - Abel Babini      - 23/03/2021 - Não mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
+	@history Ticket 047354 	- Ricardo Lima 		   - 19/02/2019 - NAO PERMITE MAIS DE 1 PEDIDO COM MESMO ROTEIRO E DATA DE ENTREGA
+	@history Ticket 047506 	- Ricardo Lima 		   - 27/02/2019 - Informa novo Roteiro
+	@history Ticket 048015 	- Fernando Sigoli  	   - 21/03/2019 - Informa novo Roteiro nao validar,pedidos integrador pelo sag 
+	@history Ticket 047506 	- William Costa 	   - 21/06/2019 - Validação Adicionado regra para não deixar salvar o pedido se não tiver a segunda unidade de medida preenchida se for P.A e o Local igual 10     	@history Ticket 051864 	- Abel Babini 	- 20/09/2019 - Cria parametros de produtos CMS e validação de quantidade 
+	@history Ticket 692 	  - Adriana Oliveira   - 03/09/2020 - gravar TES especifico quando cliente estiver enquadrado no regime especial 57608/11 (ZG4_NUMERO<>””)
+	@history Ticket 8190 	  - Abel Babini        - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
+	@history Ticket 8190 	  - Abel Babini        - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laço FOR
+	@history Ticket 8569 	  - Abel Babini        - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
+	@history Ticket 9231 	  - Abel Babini        - 08/02/2021 - Alterado o tratamento de Bonificação para clientes Simples Nacional, considerando os parâmetros MV_XTESBON, MV_XTESBOQ, MV_XTESDOA
+	@history Ticket 9765 	  - Abel Babini        - 19/02/2021 - Adicionada regra para que a alteração de TES não seja executada quando o tipo do cliente for consumidor final
+	@history Ticket 11223   - Abel Babini      	   - 23/03/2021 - Não mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
+	@history Ticket  63537  - Leonardo P. Monteiro - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
 /*/
 
 User Function MT410TOK()
@@ -50,7 +51,8 @@ User Function MT410TOK()
 	//Local _nDiasDtE     := IF(IsInCallStack('U_ADVEN002P') == .T.,5,GetMV("MV_XDIASEN")) //Chamado se vier do Edi vira 5 - William Costa //GetMV("MV_XDIASEN") //Mauricio 14/06/11 - Solicitado por vagner email de 13/06/11 - Nova Tabela de Preço.
 
 	Local _nDiasDtE     := IF(IsInCallStack('U_ADVEN002P') == .T.,5, diasEntrega() ) //Everson - 19/12/2017. Chamado 037426.
-
+	
+	Local _T1			:= 0
 	Local _nPosItem     := ASCAN( AHEADER, { |X| ALLTRIM(X[2]) == "C6_ITEM" } )
 	Local _PRECO		:= ""
 	Local _CUM          := ""
@@ -59,7 +61,8 @@ User Function MT410TOK()
 	Local _nPCLAS       := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_CLASFIS" } )
 	Local _nPCF         := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_CF" } )
 	Local nQTDVEN       := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
-	Local _nPosVend  	:= ASCAN(aHeader,{|x| ALLTRIM(x[2])=="C6_VEND"  })   	//incluido por Adriana
+	Local _nPosVend  	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_VEND"  })   	//incluido por Adriana
+	Local _nPosRote  	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_ROTEIRO"  })   	//incluido por Adriana
 	Local nX, nLido
 	Local nPDel 		:= Len(aCols[1])
 	Local lRet  		:= .T.
@@ -101,11 +104,17 @@ User Function MT410TOK()
 	Local _cDPr65255	:= 'N'
 
 	//Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
-	Local _cMT410A	:= GETMV("MV_#MT410A",,"01,") //Quais operacoes devem trocar a TES quando o cliente for de SP e Optante pelo Simples nacional. Ver MV_#T65255
-	//
+	Local _cMT410A		:= GETMV("MV_#MT410A",,"01,") //Quais operacoes devem trocar a TES quando o cliente for de SP e Optante pelo Simples nacional. Ver MV_#T65255
+	
+	Local nT			:= 0
+	Local nTotIt2		:= 0
+
+	Local _nz			:= 0
+	Local _nCompRF		:= 0
 
 	Private _cPedAnt    := ""
 	Private _cPedold    := ""
+	Private nTotItem	:= 0
 
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
@@ -139,7 +148,9 @@ User Function MT410TOK()
 	//****************FINAL PARA CARREGAR VALOR NO CAMPO C5_XTOTPED DE ACORDO O CHAMADO N. 021608**************/
 
 	//Soma Valor Total dos Itens - incluido por Adriana em 12/04/2017 - chamado 034578
-	For nT := 1 to Len(aCols)
+	nTotIt2	:= Len(aCols)
+
+	For nT := 1 to nTotIt2
 
 		If aCols[nT,Len(aHeader)+1] == .F.
 			_nTotValor += aCols[nT,_nTotIt]
@@ -266,7 +277,10 @@ User Function MT410TOK()
 					//20/10/2017 - incluindo validação de produto e quantidade
 					If _lTresPed   //Ja foram colocados os 3 pedidos do comercial, validacao completa
 						//valido produtos e quantidades
-						For _nz := 1 to len(_aCompRF)  //refaturados
+
+						_nCompRF := Len(_aCompRF)
+
+						For _nz := 1 to _nCompRF  //refaturados
 							_nAscan := Ascan( _aCompOR, { |x|x[ 01 ] == _aCompRF[_nz][1] } )
 							If _nAscan <= 00    //produto não existe no pedido original
 								IF IsInCallStack('U_ADVEN002P')  == .T.
@@ -684,13 +698,16 @@ User Function MT410TOK()
 		Endif
 	Endif
 	//Fim 037330
+	
+	nTotItem	:= Len(aCols)
 
 	//Inicio - Sigoli 10/03/2017 Chamado: 034029
 	If IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02"
-		If Len(aCols) > 0
-			For _T1 := 1 to Len(aCols)
+		If nTotItem > 0
+			For _T1 := 1 to nTotItem
 
 				If aCols[_T1,Len(aHeader)+1] == .F. .and. lRet == .T.
+				
 					cCodTes  := ACOLS[_T1,nTES]
 					cCodProd := ACOLS[_T1,nProd]
 
@@ -1172,6 +1189,12 @@ User Function MT410TOK()
 				If aCols[_x1,Len(aHeader)+1] == .F.
 					_CPRODUTO := ACOLS[_x1,nProd]
 					_NPRCVEN  := ACOLS[_x1,_NPOSPRCVEN]
+
+
+					if ACOLS[_x1,_nPosRote] <> M->C5_ROTEIRO
+						ACOLS[_x1,_nPosRote] := M->C5_ROTEIRO
+					endif
+
 					//ALTERADO POR ADRIANA PARA PERMITIR A ALTERACAO DO VALOR PARA NOTAS DE COMPLEMENTO DE ICMS E IPI, DEVOLUCAO E BENEFICIAMENTO
 					If !M->C5_TIPO $ 'IPBD' .AND. cfilant $ "02/06/07"     //Incluido filial 07 em 13/08/14
 						dbSelectArea("DA1")
@@ -2057,7 +2080,11 @@ Static function fbscPed(cPedido,_lrfat)
 	Local _nPVal := Ascan( aHeader,{ |x| AllTrim(x[2]) == "C6_VALOR"})
 	Local _nPQtd := Ascan( aHeader,{ |x| AllTrim(x[2]) == "C6_QTDVEN"})
 	Local _nProd := Ascan( aHeader,{ |x| AllTrim(x[2]) == "C6_PRODUTO"})             
-	Local cQry   := "" 
+	Local cQry   := ""
+	Local _nx	 := 0
+	Local _nT	 := 0
+	Local _nz	 := 0
+
 	// Ricrado Lima - 15/01/18
 	cQry := "SELECT C5_XPEDGER FROM "+retSqlName("SC5")+" WITH (NOLOCK) WHERE C5_FILIAL = '" + xFilial("SC5") + "' AND C5_NUM = '"+cPedido+"' AND D_E_L_E_T_ = ' ' "
 	TcQuery cQry new alias "TSC5" 
@@ -2162,7 +2189,7 @@ Static function fbscPed(cPedido,_lrfat)
 	//Busco o valor total e quantidade total do pedido atual posicionado
 	_nTVLPDATU := 0
 	_nTQTPDATU := 0
-	For _nT := 1 to Len(aCols) 		
+	For _nT := 1 to Len(aCols)
 		If aCols[_nT,Len(aHeader)+1] == .F.                            
 			_nTVLPDATU += aCols[_nT,_nPVal]
 			_nTQTPDATU += aCols[_nT,_nPQtd]

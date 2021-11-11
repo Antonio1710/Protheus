@@ -128,6 +128,10 @@ user function ADFIN115R()
     Private cRedeNome   := ""
     Private cClieNome   := ""
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Titulos Faturados de Rede e Clientes')
+
+	//Log de acesso.
+	logAcesso("ADFIN115R")
 
     cLayCSS := "QFrame{ margin-top: 10px; } TButton{ margin-bottom: 7px; } TSay{ margin-bottom: 7px; margin-top: 7px; }"
     
@@ -3019,3 +3023,23 @@ STATIC FUNCTION sqlTitFin(cDataIniFin,cDataFinFin,cCnpjs)
 	
 Return cQuery
 
+Static Function logAcesso(cRotina)
+
+	Local aArea		:= GetArea()
+
+	cRotina := Alltrim(cValToChar(cRotina))
+
+	//Log.
+	RecLock("ZBE",.T.)
+	ZBE->ZBE_FILIAL := xFilial("SE1")
+	ZBE->ZBE_DATA	:= Date()
+	ZBE->ZBE_HORA	:= cValToChar(Time())
+	ZBE->ZBE_USUARI	:= cUserName
+	ZBE->ZBE_LOG	:= "ACESSO A ROTINA " + cRotina
+	ZBE->ZBE_MODULO	:= "FINANCEIRO"
+	ZBE->ZBE_ROTINA	:= "ADFIN030P"
+	MsUnlock()
+
+	RestArea(aArea)
+
+Return Nil

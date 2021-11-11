@@ -52,6 +52,7 @@
 	@history Ticket  5241   - William Costa     - 18/11/2020 - Adicionada a aprovação de projetos na empresa 07. 
 	@history Ticket 10986   - Fernando Macieira - 15/03/2021 - App de aprovação - melhorias
 	@history Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
+	@history Ticket T.I     - Fernando Sigoli   - 10/11/2021 - Alterado função para remover caracteres especiais - C7_DESCRI
 /*/
 
 User Function ADFIN064P
@@ -1848,7 +1849,9 @@ Static Function DestPedC( CRFILIAL , CRNUM , CREMP )
 		sMsgRet += '"Nome_Fornec": "'+Alltrim(DETC7->A2_NOME )+'", '
 		sMsgRet += '"Produto": "'+Alltrim(DETC7->C7_PRODUTO )+'", '
 		
-		sDescriPrd := STRTRAN(DETC7->C7_DESCRI , '"', '' )
+		//sDescriPrd := STRTRAN(DETC7->C7_DESCRI , '"', '' ) 
+		sDescriPrd := rmvAcento(DETC7->C7_DESCRI) // Tkt:TI - Sigoli 10/11/2021 - alterado função para remover caracteres especiais
+
 		sMsgRet += '"Descricao_Prod": "'+Alltrim( sDescriPrd )+'", '
 		
 		sMsgRet += '"Quantidade": "'+Alltrim(TRANSFORM(DETC7->C7_QUANT , "@E 999,999,999.99" ))+'", '

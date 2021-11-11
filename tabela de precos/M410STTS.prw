@@ -55,6 +55,7 @@
 	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histórico de liberação
 	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
 	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
+	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
 /*/
 User Function M410STTS()
 
@@ -331,14 +332,21 @@ User Function M410STTS()
 				// *** INICIO CHAMADO WILLIAM 11/06/2018 036887 || TECNOLOGIA || MARCEL_BIANCHI || 8451 || VALID.ROT.REPROGR. ***  //
 		
 		If SC5->C5_DTENTR == DATE()
-		
+			
+			IF SC5->C5_XTIPO <> '2'
+				fAtuRot("197")
+			endif
+
+			/* LPM - Trecho descontinuado.
 			RecLock("SC5",.F.)	      
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
 				SC5->C5_ROTEIRO := "197"      
 			ENDIF
 			SC5->(MsUnlock())
+			*/
 			//Atualizo tabela SC6 com novo roteiro
+			/* LPM - Trecho descontinuado.
 			dbSelectArea("SC6")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -349,7 +357,9 @@ User Function M410STTS()
 					SC6->(dbSkip())
 				Enddo
 			Endif
+			*/
 			//Atualizo tabela SC9 com novo roteiro
+			/* LPM - Trecho descontinuado.
 			dbSelectArea("SC9")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -360,20 +370,31 @@ User Function M410STTS()
 					SC9->(dbSkip())
 				Enddo
 			Endif
-		
+			*/
+			
 		// *** FINAL CHAMADO WILLIAM 11/06/2018 036887 || TECNOLOGIA || MARCEL_BIANCHI || 8451 || VALID.ROT.REPROGR. ***  //
 		//Inclusao	
 		//Mauricio 06/01/16 alterar roteiro para "099" para frete FOB...conforme definicao MARCEL em reuniao.	
 		//Inicio
 		ElseIF SC5->C5_TPFRETE == "F"    //fob
-			//IF !EMPTY(SC5->C5_ROTEIRO)
+
+			// Ricardo Lima-28/02/2019
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("099")
+			endif
+			
+			/*
 			RecLock("SC5",.F.)	      
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
 				SC5->C5_ROTEIRO := "099"      
 			ENDIF
 			SC5->(MsUnlock())
+			*/
 			//Atualizo tabela SC6 com novo roteiro
+			/*
 			dbSelectArea("SC6")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -384,7 +405,9 @@ User Function M410STTS()
 					SC6->(dbSkip())
 				Enddo
 			Endif
+			*/
 			//Atualizo tabela SC9 com novo roteiro
+			/*
 			dbSelectArea("SC9")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -394,27 +417,35 @@ User Function M410STTS()
 					SC9->(MsUnlock())
 					SC9->(dbSkip())
 				Enddo
-			Endif	 
-			//ENDIF
-		
+			Endif
+			*/
+					
 		Elseif SC5->C5_TPFRETE == "C"  //CIF precisa estar roteirizado....
 			//IF !EMPTY(SC5->C5_ROTEIRO)
 			dbSelectArea("SA1")         //Seguindo linha dos gatilhos atuais que preenchem os campos no pedido de venda.
-			dbSetOrder(1)		
+			SA1->(dbSetOrder(1))		
 			If SA1->(dbSeek(xFilial("SA1")+_cCliente+_cLoja))   
 				IF !EMPTY(SA1->A1_ROTEIRO)
 
 					//Everson, 26/06/2020. Chamado 059127.
 					cRotSA1 := getRot(Alltrim(cValToChar(SA1->A1_ROTEIRO)))
-					//
 
+					IF SC5->C5_XTIPO <> '2'
+						// LPM - Reformulação na regravação/Alteração dos roteiros.
+						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						fAtuRot(cRotSA1)
+					endif
+
+					/* LPM - Trecho descontinuado.
 					RecLock("SC5",.F.)	      
 					// Ricardo Lima-28/02/2019
 					IF SC5->C5_XTIPO <> '2'
 						SC5->C5_ROTEIRO := cRotSA1 //Everson, 26/06/2020. Chamado 059127.
 					ENDIF
 					SC5->(MsUnlock())
+					*/
 					//Atualizo tabela SC6 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC6")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -425,7 +456,9 @@ User Function M410STTS()
 							SC6->(dbSkip())
 						Enddo
 					Endif
+					*/
 					//Atualizo tabela SC9 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC9")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -436,14 +469,25 @@ User Function M410STTS()
 							SC9->(dbSkip())
 						Enddo
 					Endif
+					*/
 				Else
+
+					IF SC5->C5_XTIPO <> '2'
+						// LPM - Reformulação na regravação/Alteração dos roteiros.
+						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						fAtuRot("200")
+					endif
+
+					/* LPM - Trecho descontinuado.
 					RecLock("SC5",.F.)	   
 					// Ricardo Lima-28/02/2019
 					IF SC5->C5_XTIPO <> '2'   
 						SC5->C5_ROTEIRO := "200"
 					ENDIF
 					SC5->(MsUnlock())
+					*/
 					//Atualizo tabela SC6 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC6")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -454,7 +498,9 @@ User Function M410STTS()
 							SC6->(dbSkip())
 						Enddo
 					Endif
+					*/
 					//Atualizo tabela SC9 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC9")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -465,6 +511,7 @@ User Function M410STTS()
 							SC9->(dbSkip())
 						Enddo
 					Endif
+					*/
 				Endif
 			Endif   
 			//ENDIF
@@ -472,31 +519,47 @@ User Function M410STTS()
 		//Fim
 
 		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lBon .and. __cuserid$_cUsuBon  // Incluido por Adriana para tratar bonificacao qualidade em 20/05/2015
-
-			RecLock("SC5",.F.)
-			SC5->C5_APRVDOA := _cAprBon   // Aprovador bonificacao qualidade
-			// Ricardo Lima-28/02/2019
-			IF SC5->C5_XTIPO <> '2'
-				SC5->C5_ROTEIRO := "099"      // Roteiro não utilizado pela logistica - incluido por Adriana em 08/12/2015
-			ENDIF
-			SC5->(MsUnlock())	   
+			
+			if RecLock("SC5",.F.)
+				SC5->C5_APRVDOA := _cAprBon   // Aprovador bonificacao qualidade
+				/* LPM - Trecho descontinuado.
+				// Ricardo Lima-28/02/2019
+				IF SC5->C5_XTIPO <> '2'
+					SC5->C5_ROTEIRO := "099"      // Roteiro não utilizado pela logistica - incluido por Adriana em 08/12/2015
+				ENDIF
+				*/
+				SC5->(MsUnlock())
+			endif	   
 			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio	
+			
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("099")
+			endif
 
 		ElseIf 	(IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE')) .And. _lBon
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("099")
+			endif
+			
+			/* LPM - Trecho descontinuado.
 			RecLock("SC5",.F.)
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
 				SC5->C5_ROTEIRO := "099"
 			ENDIF
-			SC5->(MsUnlock())			
-
+			SC5->(MsUnlock())
+			*/
 		Endif
 
 		dbSelectArea("SA3")
-		dbSetOrder(7)
+		SA3->(dbSetOrder(7))
 
 		//Everson - 29/10/2019. Chamado 052898.
-		lLocUsr := dbSeek(xFilial("SA3")+__cUserID)
+		lLocUsr := SA3->(dbSeek(xFilial("SA3")+__cUserID))
 
 		//Everson - 29/10/2019. Chamado 052898.
 		u_GrLogZBE (Date(), Time(), cUserName, "PEDIDO DE VENDA", "COMERCIAL", "M410STTS",;
@@ -1066,15 +1129,24 @@ User Function M410STTS()
 		//Inicio
 		//Inicio: fernando Sigoli 18/06/2018
 		IF SC5->C5_DTENTR == DATE()
-		
+
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("197")
+			endif
+
+			/* LPM - Trecho descontinuado.
 			RecLock("SC5",.F.)	      
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
 				SC5->C5_ROTEIRO := "197"      
 			ENDIF
 			SC5->(MsUnlock())
-			
+			*/
+
 			//Atualizo tabela SC6 com novo roteiro
+			/* LPM - Trecho descontinuado.
 			dbSelectArea("SC6")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -1085,8 +1157,9 @@ User Function M410STTS()
 					SC6->(dbSkip())
 				Enddo
 			Endif
-			
+			*/
 			//Atualizo tabela SC9 com novo roteiro
+			/* LPM - Trecho descontinuado.
 			dbSelectArea("SC9")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -1097,16 +1170,27 @@ User Function M410STTS()
 					SC9->(dbSkip())
 				Enddo
 			Endif
+			*/
 		//Fim : fernando Sigoli 18/06/2018
 		ElseIf SC5->C5_TPFRETE == "F"    //fob
+
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("099")
+			endif
+
 			//IF !EMPTY(SC5->C5_ROTEIRO)
+			/* LPM - Trecho descontinuado.
 			RecLock("SC5",.F.)	    
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'  
 				SC5->C5_ROTEIRO := "099"      
 			ENDIF
-			SC5->(MsUnlock())	  
+			SC5->(MsUnlock())
+			*/
 			//Atualizo tabela SC6 com roteiro
+			/* LPM - Trecho descontinuado.
 			dbSelectArea("SC6")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -1117,7 +1201,9 @@ User Function M410STTS()
 					SC6->(dbSkip())
 				Enddo
 			Endif
+			*/
 			//Atualizo tabela SC9 com roteiro
+			/* LPM - Trecho descontinuado.
 			dbSelectArea("SC9")
 			dbSetOrder(1)			
 			If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -1128,26 +1214,36 @@ User Function M410STTS()
 					SC9->(dbSkip())
 				Enddo
 			Endif
+			*/
 			//Endif	  	 	   
 		
 		Elseif SC5->C5_TPFRETE == "C"  //CIF precisa estar roteirizado....
 			//IF !EMPTY(SC5->C5_ROTEIRO)
 			dbSelectArea("SA1")         //Seguindo linha dos gatilhos atuais que preenchem os campos no pedido de venda.
-			dbSetOrder(1)		
+			SA1->(dbSetOrder(1))
+
 			If SA1->(dbSeek(xFilial("SA1")+_cCliente+_cLoja))   
 				IF !EMPTY(SA1->A1_ROTEIRO)
 
 					//Everson, 26/06/2020. Chamado 059127.
 					cRotSA1 := getRot(Alltrim(cValToChar(SA1->A1_ROTEIRO)))
-					//
-
+					
+					IF SC5->C5_XTIPO <> '2'
+						// LPM - Reformulação na regravação/Alteração dos roteiros.
+						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						fAtuRot(cRotSA1)
+					endif
+					
+					/* LPM - Trecho descontinuado.
 					RecLock("SC5",.F.)	      
 					// Ricardo Lima-28/02/2019
 					IF SC5->C5_XTIPO <> '2'
 						SC5->C5_ROTEIRO := cRotSA1 //Everson, 26/06/2020. Chamado 059127.
 					ENDIF
-					SC5->(MsUnlock())	   	        
+					SC5->(MsUnlock())
+					*/   	        
 					//Atualizo tabela SC6 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC6")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -1158,7 +1254,9 @@ User Function M410STTS()
 							SC6->(dbSkip())
 						Enddo
 					Endif
+					*/
 					//Atualizo tabela SC9 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC9")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -1169,14 +1267,25 @@ User Function M410STTS()
 							SC9->(dbSkip())
 						Enddo
 					Endif
+					*/
 				Else
+
+					IF SC5->C5_XTIPO <> '2'
+						// LPM - Reformulação na regravação/Alteração dos roteiros.
+						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						fAtuRot("200")
+					endif
+
+					/* LPM - Trecho descontinuado.
 					RecLock("SC5",.F.)	      
 					// Ricardo Lima-28/02/2019
 					IF SC5->C5_XTIPO <> '2'
 						SC5->C5_ROTEIRO := "200"
 					ENDIF
 					SC5->(MsUnlock())
+					*/
 					//Atualizo tabela SC6 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC6")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC6")+_cNumPed)								
@@ -1187,7 +1296,9 @@ User Function M410STTS()
 							SC6->(dbSkip())
 						Enddo
 					Endif
+					*/
 					//Atualizo tabela SC9 com novo roteiro
+					/* LPM - Trecho descontinuado.
 					dbSelectArea("SC9")
 					dbSetOrder(1)			
 					If dbSeek(xFilial("SC9")+_cNumPed)								
@@ -1198,6 +1309,7 @@ User Function M410STTS()
 							SC9->(dbSkip())
 						Enddo
 					Endif
+					*/
 				Endif
 			Endif   
 			//ENDIF
@@ -1205,24 +1317,41 @@ User Function M410STTS()
 		//Fim
 
 		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lBon .and. __cuserid$_cUsuBon  // Incluido por Adriana para tratar bonificacao qualidade
-
+			
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("099")
+			endif
+			
+			/* LPM - Trecho descontinuado.
 			RecLock("SC5",.F.)
 			SC5->C5_APRVDOA := _cAprBon   // Aprovador bonificacao qualidade
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
 				SC5->C5_ROTEIRO := "099"      // Roteiro não utilizado pela logistica - incluido por Adriana em 20/07/2016
 			ENDIF
-			SC5->(MsUnlock())	   
+			SC5->(MsUnlock())
+			*/	   
 			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio	   		
 		Endif
 
 		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lBon 
+			
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("099")
+			endif
+			
+			/* LPM - Trecho descontinuado.
 			RecLock("SC5",.F.)
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
 				SC5->C5_ROTEIRO := "099"
 			ENDIF
-			SC5->(MsUnlock())	   	   		
+			SC5->(MsUnlock())
+			*/	   	   		
 		Endif
 
 		if !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. !(__cUserID $ _cUsuExcPV) .And. !(_lDoa) .And. !(__cuserid $ _cUsuBon)      //Adriana em 05/11/2015 - incluido parametro para validar exclusao de pedido de venda liberado
@@ -1231,7 +1360,7 @@ User Function M410STTS()
 			////Mauricio Doacao 25/09/13 - adicionado somente para pedido diferente de doacao.	 
 			// Incluido por Adriana para tratar bonificacao qualidade  !(__cuserid$_cUsuBon)                                                             		
 			dbSelectArea("SA3")
-			dbSetOrder(7)
+			SA3->(dbSetOrder(7))
 
 			//Everson - 29/10/2019. Chamado 052898.
 			lLocUsr := dbSeek(xFilial("SA3")+__cUserID)
@@ -1784,7 +1913,15 @@ User Function M410STTS()
 
 	//Incio - fernando chamado 036388 - fernando 20/07/2017 
 	If lCfop
+		If SC5->(dbseek(xFilial("SC5")+Alltrim(_cNumPed)))
+			IF SC5->C5_XTIPO <> '2'
+				// LPM - Reformulação na regravação/Alteração dos roteiros.
+				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				fAtuRot("189")
+			endif
+		endif
 
+		/* LPM - Trecho descontinuado.
 		DbSelectArea("SC5")
 		DbSetOrder(1) 
 		If dbseek(xFilial("SC5")+Alltrim(_cNumPed))
@@ -1795,6 +1932,7 @@ User Function M410STTS()
 			ENDIF
 			MsUnlock()
 		EndIf
+		*/
 
 	EndIf
 	//Fim - fernando chamado 036388 - fernando 20/07/2017
@@ -3969,3 +4107,59 @@ Static Function fVrLbAnt(cSC5Fil, cSC5Num)
 	(cQryZEJ)->(dbCloseArea())
 
 Return aRet
+
+/*/{Protheus.doc} fAtuRot
+Função responsável pela atualização dos roteiro no Pedido de Venda.
+@type  Function
+@author Leonardo P. Monteiro
+@since 10/11/2021
+@version version
+@param param_name, param_type, param_descr
+@return return_var, return_type, return_description
+@example
+(examples)
+@see (links_or_references)
+/*/
+Static Function fAtuRot(cRotPar)
+	Local cPedVend	:= SC5->C5_NUM
+	Local lRet		:= .T.
+
+	if RecLock("SC5",.F.)	      
+		SC5->C5_ROTEIRO := cRotPar
+		SC5->(MsUnlock())
+
+		//Atualizo tabela SC6 com novo roteiro.
+		dbSelectArea("SC6")
+		SC6->(dbSetOrder(1))
+		If SC6->(dbSeek(xFilial("SC6")+cPedVend))
+			While SC6->(!Eof()) .And. SC6->C6_NUM == cPedVend
+				if RecLock("SC6",.F.)	      
+					SC6->C6_ROTEIRO := cRotPar      
+					SC6->(MsUnlock())
+					SC6->(dbSkip())
+				else
+					lRet := .F.
+				endif
+			Enddo
+		Endif
+
+		//Atualizo tabela SC9 com novo roteiro.
+		dbSelectArea("SC9")
+		SC9->(dbSetOrder(1))
+		If SC9->(dbSeek(xFilial("SC9")+cPedVend))
+			While SC9->(!Eof()) .And. SC9->C9_PEDIDO == cPedVend
+				if RecLock("SC9",.F.)	      
+					SC9->C9_ROTEIRO := cRotPar      
+					SC9->(MsUnlock())
+					SC9->(dbSkip())
+				else
+					lRet := .F.
+				endif
+			Enddo
+		Endif
+
+	else
+		lRet := .F.
+	endif
+		
+Return lRet

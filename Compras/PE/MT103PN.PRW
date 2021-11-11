@@ -16,9 +16,10 @@
 	@history Tkt.63068 - JONATHAN CARVALHO - 28/10/2021 - Alterado a referencia das tabelas SD1010 E SC7010 no Alias cAl103C7 incluido a funÃ§Ã£o %TABLE:%
 	@history Tkt.62460 - ABEL BABINI - 01/11/2021 - Valor da despesa causando erro. O Valor da despesa é rateado por item e deve ser totalizado para a comparação.
 	@history Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
+	@history Tkt.63294 - JONATHAN CARVALHO - 10/11/2021 - Criado if para não somar o valor duplicado do mesmo pedido
 /*/
 
-User Function MT103PN()     
+User Function MT103PN     
 Local lRet := .T. // ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
 //INICIO Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
 Local aAreaDC
@@ -36,6 +37,7 @@ Local nVlDesp		:= 0
 Local nRgSC7		:= 0
 Local nValFrPC	:= 0 //Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
 //FIM Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
+Local cnumPedi      := ' '
 
 If l103Class
 	if MAFISRET(,"NF_FRETE") = 0 .and. SF1->F1_FRETE > 0
@@ -153,18 +155,20 @@ If l103Class
 	(cAl103C7)->(dbGoTop()) 
 
 	//nRgSC7	:= (cAl103C7)->(RecCount()) //Ch. 053416 OS 056667 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 27/01/2020 | Verificado se existe pedido de compra
-
 	If nRgSC7 > 0 //Ch. 053416 OS 056667 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 27/01/2020 | Verificado se existe pedido de compra
 		//Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
-
 		//Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
 		nValFrPC := 0
+		cnumPedi := ' '
 		while !(cAl103C7)->(eof())
-
-			IF (cAl103C7)->FRETEPC2 == 0 .AND. (cAl103C7)->FRETEPC <> 0
-				nValFrPC += (cAl103C7)->FRETEPC
-			ELSE
-				nValFrPC += (cAl103C7)->FRETEPC2
+			//Tkt.63294 - JONATHAN CARVALHO - 10/11/2021 - Criado if para não somar o valor duplicado do mesmo pedido
+			IF cnumPedi != (cAl103C7)->D1_PEDIDO
+				IF (cAl103C7)->FRETEPC2 == 0 .AND. (cAl103C7)->FRETEPC <> 0
+					nValFrPC += (cAl103C7)->FRETEPC
+				ELSE
+					nValFrPC += (cAl103C7)->FRETEPC2
+				ENDIF			
+				cnumPedi := (cAl103C7)->D1_PEDIDO				
 			ENDIF
 			(cAl103C7)->(dbSkip())
 		EndDo
