@@ -95,6 +95,7 @@ Static Function obterReg()
 	Local nSecInit  := Seconds()
 	Local nSecLmt	:= 0
 	Local cThread   := ""
+	Local lChkTmp   := GetMv("MV_#SFKILL",,.T.)
 
 	//
 	If Select("A_REG") > 0
@@ -130,7 +131,7 @@ Static Function obterReg()
 
 	EndIf
 
-	nSecLmt := ((nTotal * nTmpMed) + nSecInit)
+	nSecLmt := ((nTotal * (nTmpMed * 1.5)) + (nTotThe * 10)) + nSecInit
 
 	//
 	Conout("ADVEN090P - obterReg - nTotal/nTotPT >>>>>>>>>> " + cValToChar(nTotal) + " / " + cValToChar(nTotPT)) 
@@ -175,6 +176,8 @@ Static Function obterReg()
 		A_REG->(DbSkip())
 
 	End
+
+	logZBE("Início Processamento de validação de tempo")
 	
 	//Valida status do processamento.
 	While Len(aJobs) > nCheck
@@ -198,7 +201,7 @@ Static Function obterReg()
 		Next i
 
 		//Valida o limite de tempo.
-		If Seconds() > nSecLmt
+		If Seconds() > nSecLmt .And. lChkTmp
 			For i := 1 To Len(aJobs)
 
 				cThread := Alltrim(cValToChar(aJobs[i][2]))
