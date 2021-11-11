@@ -5,6 +5,9 @@
 #Include "Totvs.ch"
 #Include "Topconn.ch"
 
+Static cEmp := "01"
+Static cFil := "02"
+
 /*/{Protheus.doc} User Function ADVEN090P 
 	Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.
 	@type  Function
@@ -24,12 +27,11 @@
 	@Ticket 63090, Data 29/10/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 01/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 03/11/2021, Everson, Tratamento para processamento com mais de uma thread.
+	@Ticket 63090, Data 11/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
 	//Declaração de variávies
-	Local cEmp 		:= "01"
-	Local cFil 		:= "02"
 	Local cDiaS		:= ""
 	Local cHDe		:= ""
 	Local cHAt		:= ""
@@ -88,7 +90,11 @@ Static Function obterReg()
 	Local nAux	 	:= 0 //Contagem de registros por Thread.
 	Local nTotPT	:= 0 //Total de registros por Thread.
 	Local lCont		:= .T.
-	Local nTmpMed	:= 9
+	Local nCheck 	:= 0
+	Local nTmpMed	:= tmpMed()
+	Local nSecInit  := Seconds()
+	Local nSecLmt	:= 0
+	Local cThread   := ""
 
 	//
 	If Select("A_REG") > 0
@@ -97,7 +103,7 @@ Static Function obterReg()
 	EndIf
 
 	//
-	cQuery := sqlTScript(nRePThe)
+	cQuery := sqlTScript(nRePThe, nTotThe)
 
 	//
 	TcQuery cQuery New Alias "A_REG"
@@ -124,6 +130,8 @@ Static Function obterReg()
 
 	EndIf
 
+	nSecLmt := ((nTotal * nTmpMed) + nSecInit)
+
 	//
 	Conout("ADVEN090P - obterReg - nTotal/nTotPT >>>>>>>>>> " + cValToChar(nTotal) + " / " + cValToChar(nTotPT)) 
 
@@ -138,41 +146,23 @@ Static Function obterReg()
 		//
 		If nAux == nTotPT .Or. nTotG == nTotal
 
-			//Remove a última vírgula da string.
+			//Remove última vírgula da string.
 			cRecnos := Substr(cRecnos, 1, Len(cRecnos) -1)
 			i++
 			
 			//
 			Conout("ADVEN090P - obterReg - JOB >>>>>>>>>>>> " + cValToChar(i) + " Qtd " + cValToChar(nAux) + " nTotPT " + cValToChar(nTotPT))
 
-			//
-			If nTotThe < 2 //Uma Thread.
+			//SF + Número do Job + Qtd de registros + Qtd total do job principal.
+			cJobAux	:= "SF_" + cValToChar(i) + "_" + cValToChar(nAux) + "_" + cValToChar(nTotal)
+			Aadd(aJobs,{cJobAux,""})
 
-				//Gera log na tabela ZBE.
-				logZBE("Início Processamento JOB " + cValToChar(cJobAux), "Total Reg " + cValToChar(nTotPT) + " - 1 Thread")
-				
-				//Everson - 25/09/20219. Chamado T.I.
-
-				nRecErro := 0
-				cGrvErro := ""
-				execProc(cRecnos,@nRecErro,@cGrvErro)
-
-				//Gera log na tabela ZBE.
-				logZBE("Fim processamento JOB " + cValToChar(cJobAux), "Total Reg " + cValToChar(nTotPT) + " - 1 Thread")
-
-			Else // Multiplas Threads.
-				
-				//SF + Número do Job + Qtd de registros + Qtd total do job principal.
-				cJobAux	:= "SF_" + cValToChar(i) + "_" + cValToChar(nAux) + "_" + cValToChar(nTotal)
-				Aadd(aJobs,cJobAux)
-
-				StartJob("U_ProcAltSF", GetEnvServer(), .F., cRecnos, cJobAux, nAux, nTmpMed)
-				
-				//Cria variável global.
-				PutGlbValue(cJobAux,"0")
-				GlbUnlock()
-
-			EndIf
+			//Inicia thread.
+			StartJob("U_ADVEN900", GetEnvServer(), .F., cRecnos, cJobAux, nAux)
+			
+			//Cria variável global.
+			PutGlbValue(cJobAux,"S")
+			GlbUnlock()
 
 			//
 			cRecnos := ""
@@ -185,25 +175,46 @@ Static Function obterReg()
 		A_REG->(DbSkip())
 
 	End
+	
+	//Valida status do processamento.
+	While Len(aJobs) > nCheck
 
-	//Checa se o job foi inicializado.
-	For i := 1 To Len(aJobs)
-
-		//Valida status do processamento.
-		While .T.
+		For i := 1 To Len(aJobs)
 
 			//
-			If cValToChar(GetGlbValue(aJobs[i])) <> "0"
-				Exit
+			If cValToChar(GetGlbValue(aJobs[i][1])) == "F"
+				nCheck++
+				ClearGlbValue(aJobs[i][1])
+
+			ElseIf Left(cValToChar(GetGlbValue(aJobs[i][1])),2) == "T-"
+
+				If Empty(Alltrim(cValToChar(aJobs[i][2])))
+					aJobs[i][2] := Substr(cValToChar(GetGlbValue(aJobs[i][1])),3,Len(cValToChar(GetGlbValue(aJobs[i][1]))))
+
+				EndIf
 
 			EndIf
 
-		EndDo
+		Next i
 
-		//Limpara variável global.
-		ClearGlbValue(aJobs[i])
+		//Valida o limite de tempo.
+		If Seconds() > nSecLmt
+			For i := 1 To Len(aJobs)
 
-	Next i
+				cThread := Alltrim(cValToChar(aJobs[i][2]))
+				If ! Empty(cThread)
+					U_ADVEN902(cThread)
+					PutGlbValue(aJobs[i][1],"F")
+					GlbUnlock()
+					nCheck++
+
+				EndIf
+
+			Next i
+
+		EndIf
+
+	End
 
 	//Checa duplicidade na SC9
 	//checkSC9()
@@ -212,6 +223,51 @@ Static Function obterReg()
 	A_REG->(DbCloseArea())
 
 Return Nil
+/*/{Protheus.doc} tmpMed
+	Função retorna tempo médio de inclusão de pedido de venda.
+	@type  Static Function
+	@author Everson
+	@since 11/11/2021
+	@version 01
+/*/
+Static Function tmpMed()
+
+	//Variáveis.
+	Local nTmp   := 0
+	Local cQuery := ""
+
+	//
+	cQuery := ""
+	cQuery += " SELECT " 
+		cQuery += " ISNULL(DATEDIFF(SECOND, '1/1/1900',  " 
+		cQuery += " CAST(CAST(CAST(AVG(CAST(CAST(ZCI_TMPR AS DATETIME) AS FLOAT)) AS DATETIME) AS TIME) AS TIME) " 
+		cQuery += " ),8)AS MEDIA_POST " 
+	cQuery += " FROM  " 
+		cQuery += " " + RetSqlName("ZCI") + " AS ZCI (NOLOCK)  " 
+	cQuery += " WHERE  " 
+		cQuery += " ZCI_FILIAL = '" + FWxFilial("ZCI") + "'  " 
+		cQuery += " AND ZCI_DATA = '" + DToS(Date()) + "' " 
+		cQuery += " AND ZCI_METD IN ('POST') " 
+		cQuery += " AND ZCI_URL = '/pedidosdevenda' " 
+		cQuery += " AND ZCI_TMPR NOT IN('','PENDPROC') " 
+		cQuery += " AND ZCI_TMPR > '00:00:00' " 
+		cQuery += " AND ZCI_ERRO IS NULL " 
+		cQuery += " AND ZCI.D_E_L_E_T_ = '' " 
+
+	//
+	If Select("D_TMPM") > 0
+		D_TMPM->(DbCloseArea())
+
+	EndIf
+
+	TcQuery cQuery New Alias "D_TMPM"
+	DbSelectArea("D_TMPM")
+
+		nTmp := Val(cValToChar(D_TMPM->MEDIA_POST))
+
+	D_TMPM->(DbCloseArea())
+
+Return nTmp
 /*/{Protheus.doc} sqlTScript
 	Script sql para processamento de registros.
 	@type  Static Function
@@ -219,14 +275,17 @@ Return Nil
 	@since 28/10/2021
 	@version 01
 /*/
-Static Function sqlTScript(nRePThe)
+Static Function sqlTScript(nRePThe, nTotThe)
 
 	//Variáveis.
 	Local cQuery := ""
+	Local nTotReg:= nRePThe * nTotThe
 
 	//Inclusão de pedido de venda.
+	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( "
+
 	cQuery += " SELECT " 
-	cQuery += " TOP " + cValToChar(nRePThe) + " ZCI_NUMP, MAX(R_E_C_N_O_) AS REC " 
+	cQuery += " ZCI_NUMP, MAX(R_E_C_N_O_) AS REC " 
 	cQuery += " FROM " 
 	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) " 
 	cQuery += " WHERE " 
@@ -268,40 +327,11 @@ Static Function sqlTScript(nRePThe)
 	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
 
 	//
-	cQuery += " ORDER BY ZCI_NUMP, REC " 
+	cQuery += " ) AS FONTE "
+	cQuery += " ORDER BY FONTE.ZCI_NUMP, FONTE.REC " 
 
 Return cQuery
-/*/{Protheus.doc} User Function ADVEN901
-	Job para processar os registros de erro. Chamado T.I.
-	@type  Function
-	@author Everson
-	@since 25/05/2018
-	@version 01
-	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
-/*/
-User Function ADVEN901(nRecErro,cGrvErro)
-	
-	//Declaração de variávies
-	Default cGrvErro := ""
-
-	RPCClearEnv()
-	RPCSetType(3)
-	RpcSetEnv("01","02",,,,GetEnvServer(),{ })
-
-	U_ADINF009P('ADVEN090P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
-		Conout( DToC(Date()) + " " + Time() +  " ADVEN090P - ADVEN901 - nRecErro/cGrvErro " + cValToChar(nRecErro) + cValToChar(cGrvErro) )
-		DbSelectArea("ZCI")
-		ZCI->(DbGoTop())
-		ZCI->(DbGoTo(nRecErro))
-		RecLock("ZCI",.F.)
-			ZCI->ZCI_ERRO := cGrvErro
-			ZCI->ZCI_TMPR := "00:00:00"
-		ZCI->(MsUnlock())
-
-	RpcClearEnv()
-
-Return Nil
-/*/{Protheus.doc} User Function ProcAltSF
+/*/{Protheus.doc} User Function ADVEN900
 	Job para processar os registros. Chamado 037261.
 	@type  Function
 	@author Everson
@@ -309,11 +339,9 @@ Return Nil
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 /*/
-User Function ProcAltSF(cRecnos,cJobAux, nAux, nTmpMed)
+User Function ADVEN900(cRecnos,cJobAux, nAux)
 
 	//Declaração de variávies
-	Local cEmp 		:= "01"
-	Local cFil 		:= "02"
 	Local nRecErro 	:= 0
 	Local cGrvErro	:= ""
 
@@ -326,10 +354,11 @@ User Function ProcAltSF(cRecnos,cJobAux, nAux, nTmpMed)
 	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })	
 
 		//
-		Conout("ADVEN090P - Início ProcAltSF - Job " +  cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()) )
+		Conout("ADVEN090P - Início ADVEN900 - Job " +  cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()) )
 
 		//
-		U_ADINF009P('ADVEN090P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
+		PutGlbValue(cJobAux,"T-" + Alltrim(cValToChar(ThreadId())))
+		GlbUnlock()
 
 		//Gera log na tabela ZBE
 		logZBE("Início Processamento JOB " + cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()), "Total Reg " + cValToChar(nAux))
@@ -340,22 +369,54 @@ User Function ProcAltSF(cRecnos,cJobAux, nAux, nTmpMed)
 			//
 			nRecErro := 0
 			cGrvErro := ""
-			execProc(cRecnos,@nRecErro,@cGrvErro)
+			execProc(cRecnos, @nRecErro, @cGrvErro)
+			If nRecErro > 0 .And. ! Empty(cGrvErro)
+				U_ADVEN901(nRecErro, cGrvErro)
+
+			EndIf
 
 		EndIf
 
 		//Gera log na tabela ZBE.
 		logZBE("Fim processamento JOB " + cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()), "Total Reg " + cValToChar(nAux))
 
-		//Se a rotina foi executa em multithread, a variável pública é alterada.
-		PutGlbValue(cJobAux,"1")
+		//
+		PutGlbValue(cJobAux,"F")
 		GlbUnlock()
 
 		//
-		Conout("ADVEN090P - Fim ProcAltSF - Job " +  cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()) )
+		Conout("ADVEN090P - Fim ADVEN900 - Job " +  cValToChar(cJobAux) + " ThreadId " + cValToChar(ThreadId()) )
 
 	//Fecha o ambiente.
 	RpcClearEnv()
+
+Return Nil
+/*/{Protheus.doc} User Function ADVEN901
+	Job para processar os registros de erro. Chamado T.I.
+	@type  Function
+	@author Everson
+	@since 25/05/2018
+	@version 01
+	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+/*/
+User Function ADVEN901(nRecErro, cGrvErro)
+
+	//Variáveis.
+	Local aArea := GetArea()
+
+	Conout( DToC(Date()) + " " + Time() +  " ADVEN090P - ADVEN901 - nRecErro/cGrvErro " + cValToChar(nRecErro) + cValToChar(cGrvErro) )
+	
+	//
+	DbSelectArea("ZCI")
+	ZCI->(DbGoTop())
+	ZCI->(DbGoTo(nRecErro))
+	RecLock("ZCI",.F.)
+		ZCI->ZCI_ERRO := cGrvErro
+		ZCI->ZCI_TMPR := "00:00:00"
+	ZCI->(MsUnlock())
+
+	//
+	RestArea(aArea)
 
 Return Nil
 /*/{Protheus.doc} execProc
@@ -2493,11 +2554,12 @@ Return lRet
 	@since 01/11/2021
 	@version 01
 /*/
-Static Function logZBE(cLog, cParam)
+Static Function logZBE(cLog, cParam, cMemo)
 
 	//
 	Default cLog	:= ""
 	Default cParam	:= ""
+	Default cMemo	:= ""
 
 	//
 	DbSelectArea("ZBE")
@@ -2510,6 +2572,59 @@ Static Function logZBE(cLog, cParam)
 		Replace ZBE_MODULO	    With "COMERCIAL"
 		Replace ZBE_ROTINA	    With "ADVEN090P" 
 		Replace ZBE_PARAME      With cParam
+		Replace ZBE_LOGMEM      With cMemo
 	ZBE->( MsUnLock())
 
 Return Nil
+/*/{Protheus.doc} killConn
+	Função termina conexões.
+	@type  Static Function
+	@author Everson
+	@since 10/11/2021
+	@version 01
+/*/
+User Function ADVEN902(cThreads)
+
+	//Variáveis.
+	Local lRet 		 := .F.
+    Local nConexAtu  := 1
+	Local aThreads   := GetUserInfoArray()
+	Local lProcess   := .F.
+
+	//
+	While ! lProcess
+
+		//
+		For nConexAtu := 1 To Len(aThreads)
+				
+			//
+			If Alltrim(cValToChar(aThreads[nConexAtu][3])) $cThreads
+				
+				logZBE("KillUser " + Alltrim(cValToChar(aThreads[nConexAtu][3])), "", "")
+
+				KillUser( aThreads[nConexAtu][1],; //UserName
+							aThreads[nConexAtu][2],; //ComputerName
+							aThreads[nConexAtu][3],; //ThreadId
+							aThreads[nConexAtu][4])  //ServerName
+
+				lRet := .T.
+					
+			EndIf
+		
+		Next nConexAtu
+
+		lProcess := .T.
+
+		aThreads := GetUserInfoArray()
+		For nConexAtu := 1 To Len(aThreads)
+			If Alltrim(cValToChar(aThreads[nConexAtu][3])) $cThreads
+				lProcess := .F.
+				Exit
+
+			EndIf
+
+		Next nConexAtu
+
+	End
+
+Return lRet
