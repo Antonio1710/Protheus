@@ -2022,7 +2022,7 @@ User Function M410STTS()
 			EndIf
 
 			//U_ADFIN021P(SC5->C5_FILIAL+SC5->C5_NUM) // Gera ZBH // @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
-
+			
 		EndIf
 
 		//Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
