@@ -59,6 +59,7 @@ Return
     @example
     (examples)
     @see (links_or_references)
+    @history ticket  11639  - Fernando Macieira - 11/11/2021 - Permitir incluir componente quando o produto do nó estiver bloqueado.
 /*/
 Static Function RunImpSG1()
 
