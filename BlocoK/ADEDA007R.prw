@@ -61,6 +61,7 @@ Static cMsgFim	:= "Termina Processamento do item: "
 	@history ticket 12048 - Fernando Macieira - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
     @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	@history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
+	@history ticket 31248 - Fernando Macieira - 12/11/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs - Alteradas linhs 1290 E 1308
 /*/
 User Function ADEDA007R()
 
@@ -1286,7 +1287,7 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
 					AND STATUS = %Exp:cSTATUS%
 					AND OPERACAO = %Exp:cOPERACAO%  
-					AND LOCAL = %Exp:cPrdPTA%
+					AND PRODUCAO = %Exp:cPrdPTA%
 					AND QUANT>0
 					AND D_E_L_E_T_=' '
 			EndSQL
@@ -1304,7 +1305,7 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
 					AND STATUS = %Exp:cSTATUS%
 					AND OPERACAO = %Exp:cOPERACAO%  
-					AND LOCAL = %Exp:cPrdPTA%
+					AND PRODUCAO = %Exp:cPrdPTA%
 					AND QUANT>0
 					AND D_E_L_E_T_=' '
 			EndSQL

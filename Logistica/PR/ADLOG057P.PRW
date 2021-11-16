@@ -54,6 +54,7 @@
 	@history 14/04/2021, Everson, Ch:12355  - Tratamento para não emitir CT-e globalizado quando a UF da transportadora não estiver no parâmetro MV_#UFTCAT.
 	@history 05/05/2021, Everson, Ch:13434  - Limpeza de objeto instanciados.
 	@history 20/09/2021, Everson, Ch:15138  - Tratamento para emissão de CT-e adicional.
+	@history 12/11/2021, Everson, Ch:63590  - Tratamento para emissão de CT-e adicional.
 	/*/
 User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 
@@ -3049,7 +3050,8 @@ Static Function carPedCC()
 	cQuery += " AND ZFA_VA = '" + cTpVa + "' " //Everson - 03/12/2019. Chamado 029058.
 	cQuery += " AND ZFA.D_E_L_E_T_ = ''   " 
 	cQuery += " AND ZF7.D_E_L_E_T_ = '' " 
-	//cQuery += " AND ZFKCHK.ZFK_CODZFA IS NULL   "
+	
+	cQuery += " AND ZFKCHK.ZFK_CODZFA IS NULL " //Everson - 12/11/2021. Chamado 63590.
 	
 	cQuery += " ) AS FONTE "
 	
@@ -3074,13 +3076,13 @@ Static Function carPedCC()
 		While ! D_GERCC->(Eof())
 			
 			//
-			If D_GERCC->QTD_CTE > 0
-				oCor := LoadBitmap( GetResources(), "BR_VERDE")
+			//If D_GERCC->QTD_CTE > 0
+				//oCor := LoadBitmap( GetResources(), "BR_VERDE")
 			
-			Else
+			//Else
 				oCor := LoadBitmap( GetResources(), "BR_AMARELO")
 			
-			EndIf
+			//EndIf
 			
 			//
 			Aadd(oEmitCC:aCols , Array(Len(aHCrCC) + 1) )
@@ -3098,7 +3100,7 @@ Static Function carPedCC()
 			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRVALOR" })]	:= D_GERCC->ZFA_VALOR
 			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRZFA" })]		:= D_GERCC->ZFA_COD
 			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCAR" })]		:= D_GERCC->ZFA_CARGA
-			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })]	    := Iif(D_GERCC->QTD_CTE > 0,"Ok","")
+			oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })]	    := ""//Iif(D_GERCC->QTD_CTE > 0,"Ok","") //Everson - 12/11/2021. Chamado 63590.
 			
 			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRCTE" })]		:= Iif(D_GERCC->QTD_CTE > 1,"+1",D_GERCC->NUM_CTE)
 			// oEmitCC:aCols[Len(oEmitCC:aCols),Ascan(aHCrCC,{|x| AllTrim(x[2]) == "CRSCTE"})]		:= Iif(D_GERCC->QTD_CTE > 1,"+1",D_GERCC->SER_CTE)
@@ -10521,7 +10523,7 @@ User Function adlog574(nOpc)
 		
 	ElseIf nOpc == 6 
 		Aadd(aLegenda,{"BR_AMARELO" ,"CT-e não emitido"})
-		Aadd(aLegenda,{"BR_VERDE"   ,"CT-e emitido"})
+		//Aadd(aLegenda,{"BR_VERDE"   ,"CT-e emitido"})
 		 	
 	Else 
 		Aadd(aLegenda,{"BR_AMARELO"  ,"Processando"		}) 

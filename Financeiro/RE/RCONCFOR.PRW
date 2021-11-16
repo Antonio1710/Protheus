@@ -10,6 +10,8 @@
 	@version 01
 	@history chamado TI - Abel Babino - 02/07/2019 - Ch.atorio de conciliação de fornecedores. Entre SE5 e CT2. Ch.Interno TI - Abel Babini - Considerar Var.Cambial no Contas à Pagar.
 	@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
+	@history chamado 63633 - Leonardo P. Monteiro - 012/11/2021 - Correção dos valores em segunda moeda.
+
 /*/
 
 User Function RCONCFOR()
@@ -209,8 +211,8 @@ Return
 //³ Relatorio Analitico                               ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
-                   
-	Local _aStr4   := {} 
+	Local nValor	:= 0
+	Local _aStr4   	:= {} 
 	
 	//Tabela Temporaria para relatorio Analitico
 	AADD(_aStr4,{'FORNECE'  ,"C",06})
@@ -280,23 +282,25 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 	       loop
 	    Endif  
 	    */
-	                          
+	    //@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
+		nValor := IIF( SE5TMP->E5_MOEDA=="01",SE5TMP->E5_VALOR, ROUND(SE5TMP->E5_VALOR*SE5TMP->E5_TXMOEDA,2))
+
 		RecLock("TMPANL",.T.)	
 		TMPANL->FORNECE   := SE5TMP->E5_CLIFOR
 		TMPANL->LOJA      := SE5TMP->E5_LOJA	
 		If Alltrim(SE5TMP->E5_TIPODOC) == "ES" .And. Alltrim(SE5TMP->E5_RECPAG) == "R"
 		    IF SE5TMP->E5_VLACRES <> 0
 		       IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
- 		          TMPANL->VALORSE2 += SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES
+ 		          TMPANL->VALORSE2 += nValor-SE5TMP->E5_VLACRES
 		       Else
-		          TMPANL->VALORSE2 += SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		          TMPANL->VALORSE2 += nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 		       Endif
 		    Else   
-			   TMPANL->VALORSE2 += SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+			   TMPANL->VALORSE2 += nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 			Endif   
 			
 			// ********* INICIO  WILL chamado 028902  ************ //
-			IF SE5TMP->E5_VALOR <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
+			IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
 		       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
 		          TMPANL->VALORSE2 += SE5TMP->E5_VLDECRE
 		       Else 
@@ -319,7 +323,7 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		          ENDIF	
 		       Endif
 		    
-		    ELSEIF SE5TMP->E5_VALOR == 0 .AND. SE5TMP->E5_VLDESCO > 0
+		    ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
 		    
 		    	TMPANL->VALORSE2 += SE5TMP->E5_VLDESCO
 		       
@@ -327,24 +331,26 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 			// ********* FINAL  WILL chamado 028902  ************ //
 			
 		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "MT" .And. Alltrim(SE5TMP->E5_RECPAG) == "P"
-			TMPANL->VALORSE2 += SE5TMP->E5_VALOR
+			TMPANL->VALORSE2 += nValor
 		//INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "CM" .And. Alltrim(SE5TMP->E5_RECPAG) == "P"
-			TMPANL->VALORSE2 -= ABS(SE5TMP->E5_VALOR)
+			TMPANL->VALORSE2 -= ABS(nValor)
+		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "CM" .And. Alltrim(SE5TMP->E5_RECPAG) == "R"
+			TMPANL->VALORSE2 += ABS(nValor)
 		//FIM Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 		Else
 	    	IF SE5TMP->E5_VLACRES <> 0
 		       IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
-		          TMPANL->VALORSE2 -= SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES
+		          TMPANL->VALORSE2 -= nValor-SE5TMP->E5_VLACRES
 		       Else
-		          TMPANL->VALORSE2 -= SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		          TMPANL->VALORSE2 -= nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 		       Endif
 		    Else   
-			   TMPANL->VALORSE2 -= SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+			   TMPANL->VALORSE2 -= nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 			Endif  
 			
 			// ********* INICIO  WILL chamado 028902  ************ //
-			IF SE5TMP->E5_VALOR <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
+			IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
 		       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
 		          TMPANL->VALORSE2 -= SE5TMP->E5_VLDECRE
 		       Else
@@ -367,7 +373,7 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		          	ENDIF			
 		       Endif
 		       
-			ELSEIF SE5TMP->E5_VALOR == 0 .AND. SE5TMP->E5_VLDESCO > 0
+			ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
 		    
 		    	TMPANL->VALORSE2 -= SE5TMP->E5_VLDESCO
 		    			       
@@ -548,6 +554,7 @@ Return
 //³ Relatorio Sintetico                               ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function fDadosSin(Cabec1,Cabec2,Titulo,nLin)
+	Local nValor := 0
 
 	dbselectArea("SE2TMP")
 	DbgoTop()             
@@ -565,26 +572,28 @@ Static Function fDadosSin(Cabec1,Cabec2,Titulo,nLin)
 	dbselectArea("SE5TMP")
 	DbgoTop()             
 	While SE5TMP->(!EOF())
-	        
+	    //@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
+		nValor := IIF( SE5TMP->E5_MOEDA=="01",SE5TMP->E5_VALOR, ROUND(SE5TMP->E5_VALOR*SE5TMP->E5_TXMOEDA,2))
+
 		RecLock("TMPSE5",.T.)	
 		TMPSE5->E5_CLIFOR  := SE5TMP->E5_CLIFOR
 		TMPSE5->E5_LOJA    := SE5TMP->E5_LOJA
 		IF SE5TMP->E5_VLACRES <> 0
 		   IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
-		      TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES
+		      TMPSE5->E5_VALOR  := nValor-SE5TMP->E5_VLACRES
 		   Else
 		      If SE5TMP->E5_VLACRES > SE5TMP->E5_VLJUROS
-		         TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-(SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS)
+		         TMPSE5->E5_VALOR  := nValor-(SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS)
 		      Else
-		         TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-(SE5TMP->E5_VLJUROS - SE5TMP->E5_VLACRES)
+		         TMPSE5->E5_VALOR  := nValor-(SE5TMP->E5_VLJUROS - SE5TMP->E5_VLACRES)
 		      Endif   
 		   Endif
 		Else            
-		   TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		   TMPSE5->E5_VALOR  := nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 		Endif  
 		
 		// ********* INICIO  WILL chamado 028902  ************ //
-		IF SE5TMP->E5_VALOR <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
+		IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
 	       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
 	          TMPANL->VALORSE2 -= SE5TMP->E5_VLDECRE
 	       Else
@@ -607,7 +616,7 @@ Static Function fDadosSin(Cabec1,Cabec2,Titulo,nLin)
 	          	ENDIF
 	       Endif  
 	    
-	    ELSEIF SE5TMP->E5_VALOR == 0 .AND. SE5TMP->E5_VLDESCO > 0
+	    ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
 		    
 		    	TMPANL->VALORSE2 -= SE5TMP->E5_VLDESCO   
 	       
@@ -796,7 +805,8 @@ Static Function fDados()
 	Endif
 	     
 	//If mv_par08 == 1 //Analitico
-		cQuery:=" SELECT E5_FILIAL,E5_PREFIXO,E5_NUMERO,E5_PARCELA,E5_TIPO,E5_CLIFOR,E5_LOJA,E5_DATA,E5_VALOR,E5_TIPODOC,E5_RECPAG,E5_MOTBX,E5_VLACRES, E5_VLDECRE,	E5_VLDESCO, E5_VLJUROS "
+		cQuery:=" SELECT E5_FILIAL,E5_PREFIXO,E5_NUMERO,E5_PARCELA,E5_MOEDA,E5_TXMOEDA,E5_TIPO,E5_CLIFOR,E5_LOJA,E5_DATA,E5_VALOR,E5_TIPODOC,E5_RECPAG, "
+		cQuery+=" 		  E5_MOTBX,E5_VLACRES, E5_VLDECRE,	E5_VLDESCO, E5_VLJUROS "
 		cQuery+=" FROM " + RetSqlName("SE5") + " WITH(NOLOCK) "
 		cQuery+=" WHERE D_E_L_E_T_ <> '*' "
 		cQuery+=" AND E5_CLIFOR BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"

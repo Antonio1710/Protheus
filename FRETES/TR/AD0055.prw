@@ -15,6 +15,7 @@
 	@history Everson - 19/06/2019. Chamado 044314. Correção do tratamento para recálculo de frete na tabela ZFD.
 	@history Everson - 10/07/2019. Chamado 044314. Tratamento para informar a placa do cavalo mecânico para geração do MDF-e.
 	@history Everson - 01/07/2020. Chamado 059245. Tratamento para informar o centro de custo para baixa de abastecimento no estoque.
+	@history Everson - 12/11/2021. Chamado 63536.  Tratamento para zera km na tabela ZFD.
 /*/
 User Function AD0055()
 
@@ -26,10 +27,10 @@ User Function AD0055()
 	
 	Local _aArea     := GetArea()
 	Local _cRote     := SC5->C5_ROTEIRO
-	Local _cPlac     := SC5->C5_PLACA
+	//Local _cPlac     := SC5->C5_PLACA
 	Local _cPlacPe   := space(7)
 	Local _cTipoFrt  := space(2)
-	Local _cCodCid   := space(4)
+	//Local _cCodCid   := space(4)
 	Local _cDescFrt  := space(30)
 	Local _cGuia     := space(6)
 	Local _cCod      := space(4)
@@ -40,6 +41,11 @@ User Function AD0055()
 	
 	Local cPlcCvMec	  := Space(7) //Everson - 10/07/2019.
 	Local oPlcCvMec	  := Nil      //Everson - 10/07/2019.
+
+	//Everson - 12/11/2021. Chamado 63536.
+	Local lRegGrv     := .F.
+	Local bBlock 	  := Nil
+	//
 
 	SetPrvt("_CALIAS,_NINDEX,_NRECNO")
 
@@ -65,7 +71,7 @@ User Function AD0055()
 		@ (055),(095) MsGet oPlcCvMec 	Var cPlcCvMec Valid U_UfPlaca(cPlcCvMec) F3 "ZV4"	Size (030),(009) COLOR CLR_BLACK PIXEL OF _oDlg
 		//
 		
-		@ (070),(005) Say "Tipo de Frete:" 																					Size (035),(008) COLOR CLR_BLACK PIXEL OF _oDlg
+		@ (070),(005) Say "Tipo de Frete:"																					Size (035),(008) COLOR CLR_BLACK PIXEL OF _oDlg
 		@ (070),(095) MsGet o_cTipoFrt Var _cTipoFrt Valid ExistCpo("SZH" ,_cTipoFrt) F3 "SZH"  							Size (030),(009) COLOR CLR_BLACK PIXEL OF _oDlg
 		@ (070),(130) MsGet o_cDescFrt Var _cDescFrt Valid _cDescFrt <> ' '													Size (082),(009) COLOR CLR_BLACK PIXEL OF _oDlg
 		
@@ -74,15 +80,16 @@ User Function AD0055()
 		@ (085),(095) MsGet o_cCCDiesel Var cCCDiesel Valid (Empty(Alltrim(cCCDiesel)) .Or. ExistCpo("CTT" ,cCCDiesel)) F3 "CTT"  							Size (050),(009) COLOR CLR_BLACK PIXEL OF _oDlg	
 		//
 		
-		DEFINE SBUTTON FROM (100),(150) TYPE 1 ENABLE OF _oDlg ACTION (GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel)) //Everson - 10/07/2019. //Everson - 01/07/2020. Chamado 059245.
+		bBlock := {|| lRegGrv := GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel), Iif(lRegGrv, zeraKm(SC5->C5_NUM), Nil) } ////Everson - 12/11/2021. Chamado 63536.
+		DEFINE SBUTTON FROM (100),(150) TYPE 1 ENABLE OF _oDlg ACTION (Eval(bBlock)) //Everson - 10/07/2019. //Everson - 01/07/2020. Chamado 059245. //Everson - 12/11/2021. Chamado 63536.
 		DEFINE SBUTTON FROM (100),(185) TYPE 2 ENABLE OF _oDlg ACTION ( _oDlg:END())
 		ACTIVATE MSDIALOG _oDlg CENTERED
 
-	Endif	
+	EndIf	
 
 	RestArea(_aArea)
 
-Return
+Return Nil
 /*/{Protheus.doc} GravaPLACA
 	Alteracao Roteiro/caminhao.
 	Everson - 12/09/2016, chamado 029242.
@@ -137,7 +144,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	If ! ZV4->(MsSeek(xfilial("ZV4")+ _cPlac))
 		MsgStop("Não há cadastro para o veículo " + Alltrim(cValToChar(_cPlac)) + " (ZV4).","Função GravaPLACA(AD0055)")
 		RestArea(aArea)
-		Return Nil
+		Return .F.
 
 	Else
 
@@ -145,7 +152,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			MsgStop("O veículo " + Alltrim(cValToChar(_cPlac)) + " está com o cadastro incompleto. Preencha o estado (UF) da Placa deste Veículo!",;
 			"Função GravaPLACA(AD0055)")
 			RestArea(aArea)
-			Return Nil
+			Return .F.
 
 		EndIf
 
@@ -168,7 +175,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 					MsgStop("Para o veículo " + cValToChar(_cPlac) + " (" + cValToChar(_cTipVei) + ") é necessário informar a placa do cavalo mecânico.",;
 					"Função GravaPLACA(AD0055)")
 					RestArea(aArea)
-					Return Nil		
+					Return .F.		
 						
 				EndIf
 			
@@ -184,7 +191,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 				MsgStop("Para o veículo " + cValToChar(_cPlac) + " (" + cValToChar(_cTipVei) + ") não é necessário informar a placa do cavalo mecânico.",;
 				"Função GravaPLACA(AD0055)")
 				RestArea(aArea)
-				Return Nil	
+				Return .F.	
 				
 			ElseIf IsInCallStack("U_IMPRDNET")
 				cPlcCvMec := ""
@@ -199,7 +206,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	DbSelectArea("ZV8")
 	ZV8->(DbSetOrder(2)) // Indice Destino
 	ZV8->(DbGoTop())
-	if ZV8->(MsSeek(xfilial("ZV8")+ _cDesti))
+	If ZV8->(MsSeek(xfilial("ZV8")+ _cDesti))
 		_cCodCid := ZV8->ZV8_COD
 		_cCidade := ZV8->ZV8_CIDADE
 
@@ -207,9 +214,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		MsgStop("Não foi possível obter dados da tabela de frete referente ao destino " + cValToChar(_cDesti) + ".",;
 		"Função GravaPLACA(AD0055)")
 		RestArea(aArea)
-		Return Nil
+		Return .F.
 
-	Endif
+	EndIf
 
 	DbSelectArea("ZV9")
 	ZV9->(DbSetOrder(2)) // Indice Codigo EX: SP01
@@ -221,13 +228,13 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 				_nVlTK := ZV9->ZV9_VLTK
 				_nVlTC := ZV9->ZV9_VLTC
 
-			Endif
+			EndIf
 
 			ZV9->(DbSkip())
 
 		Enddo
 
-	Endif
+	EndIf
 
 	//Seleciona o código de fornecedor da transportadora.
 	DbSelectArea("SA2")
@@ -246,7 +253,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		_cTraLoja := "ER"
 		_cNomeTra := "ERRO"
 
-	Endif
+	EndIf
 
 	//Daniel - faco a busca fora do seek anterior
 	//19/01/07
@@ -267,8 +274,8 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 
 			EndIf
 
-		Endif
-	Endif
+		EndIf
+	EndIf
 
 	_PBruTot := 0
 	_PLiqTot := 0
@@ -284,7 +291,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			MsgStop("Não encontrado roteiro (" + Alltrim(cValToChar(_cRote)) + ") x data de entrega nos pedidos de venda (SC5).Contate a Informática sobre o problema.",;
 			"Função GravaPLACA(AD0055)")
 			RestArea(aArea)
-			Return Nil
+			Return .F.
 
 		EndIf
 
@@ -296,11 +303,11 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			MsgStop("Não encontrado roteiro (" + Alltrim(cValToChar(_cRote)) + ") x data de entrega nos pedidos de venda (SC5).Contate a Informática sobre o problema.",;
 			"Função GravaPLACA(AD0055)")
 			RestArea(aArea)
-			Return Nil
+			Return .F.
 
 		EndIf
 
-	Endif
+	EndIf
 	
 	//Everson - 31/05/2019. Chamado 044314.
 	If ! IsInCallStack("U_IMPRDNET") .And. IsInCallStack("U_ALTEROTE") .And. ! Empty(_cRote) .And. cEmpAnt == "01" .And. cFilAnt $ cFilGFrt //Everson - 19/06/2019. Chamado 044314.
@@ -346,7 +353,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 				"Já existe Roteiro " + SC5->C5_ROTEIRO + " Faturado")
 				TRB->(dbCloseArea())      
 				RestArea(aArea)
-				Return(Nil)
+				Return .F.
 
 				TRB->(dbSkip())
 			ENDDO
@@ -379,8 +386,8 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 					Replace C5_PBRUTO	With _nTotalKg
 				Else
 					Replace C5_PBRUTO	With _nTotalBr + _nTotalKg				  
-				Endif	
-			Endif
+				EndIf	
+			EndIf
 			// Ricardo Lima - 23/10/18
 			If SC5->C5_EST <> 'EX'  
 				Replace C5_PESOL   With _nTotalKg
@@ -392,7 +399,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 				Replace C5_TRANSP  With _cTraCod
 			Else
 				Replace C5_TRANSP  With space(6)
-			Endif
+			EndIf
 		MsUnlock()
 
 		// SOMA PESO BRUTO
@@ -405,7 +412,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		//
 		dbSelectArea("SA1")
 		// GRAVA NO CLIENTE PARA PROXIMA REFERENCIA
-		//if !SC5->C5_TIPO $ "B/D"  //comentei e adicionei a regra abaixo
+		//If !SC5->C5_TIPO $ "B/D"  //comentei e adicionei a regra abaixo
 		If !SC5->C5_TIPO $ "B/D" .and. SC5->C5_TPFRETE = "C" // Chamado 030747- Sigoli  [adicionei SC5->C5_TPFRETE para NAO atualizar Roteiro do Cliente qunado o pedido for fob
 			If SA1->(MsSeek( xFilial("SA1")+ SC5->C5_CLIENTE+SC5->C5_LOJACLI,.T.))
 
@@ -418,9 +425,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 					MsUnlock()
 					
 				ENDIF
-			Endif
+			EndIf
 
-		Endif
+		EndIf
 		//
 		//grava log/alteracao de bairro	
 		u_GrLogZBE (Date(),TIME(),cUserName," INFORMA PLACA DO VEICULO PARA O ROTEIRO","LOGISTICA","AD0055",;
@@ -487,10 +494,10 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 						Else
 							If _cTipVei = 'TC' // Se for TOCO
 								Replace	ZK_VALFRET With (_nVlTC/1000)*_PBruTot
-							Endif
-						Endif
-					Endif
-				Endif
+							EndIf
+						EndIf
+					EndIf
+				EndIf
 				
 			MsUnlock()
 			
@@ -537,10 +544,10 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 						Else
 							If _cTipVei = 'TC' // Se for TOCO
 								Replace	ZK_VALFRET With (_nVlTC/1000)*_PBruTot
-							Endif
-						Endif
-					Endif
-				Endif
+							EndIf
+						EndIf
+					EndIf
+				EndIf
 				
 			MsUnlock()
 			
@@ -548,7 +555,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			u_GrLogZBE (Date(),TIME(),cUserName,"2 RecLock(SZK,.T.)","LOGISTICA","AD0055",;
 			"Filial: "+xFilial("SZK")+" Guia: "+_cGuia+" Data: "+DTOS(_DtEntr)+" Placa: "+_cPlac+" ZK_ENTREGA: "+ cvaltochar(_NumEntr),ComputerName(),LogUserName())
 			
-		Endif
+		EndIf
 
 	Else
 	
@@ -595,10 +602,10 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 						Else
 							If _cTipVei = 'TC' // Se for TOCO
 								Replace	ZK_VALFRET With (_nVlTC/1000)*_PBruTot
-							Endif
-						Endif
-					Endif
-				Endif
+							EndIf
+						EndIf
+					EndIf
+				EndIf
 				
 			MsUnlock()
 
@@ -645,10 +652,10 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 						Else
 							If _cTipVei = 'TC' // Se for TOCO
 								Replace	ZK_VALFRET With (_nVlTC/1000)*_PBruTot
-							Endif
-						Endif
-					Endif
-				Endif
+							EndIf
+						EndIf
+					EndIf
+				EndIf
 				
 			MsUnlock()
 			
@@ -656,9 +663,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			u_GrLogZBE (Date(),TIME(),cUserName,"4 RecLock(SZK,.T.)","LOGISTICA","AD0055",;
 			"Filial: "+xFilial("SZK")+" Data: "+DTOS(_DtEntr)+" Placa: "+_cPlac+" Roteiro: "+_cRote+" ZK_ENTREGA: "+ cvaltochar(_NumEntr),ComputerName(),LogUserName())
 
-		Endif
+		EndIf
 
-	Endif //Fecha da guia.
+	EndIf //Fecha da guia.
 
 	
 	// Zerando as variaveis
@@ -679,7 +686,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 
 		MsUnlock()
 
-	Endif
+	EndIf
 
 
 	If Type("_oDlg") == "O" // Everson - 12/09/2016, chamado 029242.
@@ -699,7 +706,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 
 	RestArea(aArea) // Everson - 12/09/2016, chamado 029242.
 
-Return
+Return .T.
 /*/{Protheus.doc} Soma_Itens
 	(long_description)
 	@type  Static Function
@@ -749,7 +756,7 @@ Static Function Soma_Itens(_cPlac,_crote,_DtEntr)
 				Else
 					_nTotalBr   := _nTotalBr                                // PESO BRUTO	
 
-				Endif	
+				EndIf	
 
 			EndIf
 
@@ -770,7 +777,7 @@ Static Function Soma_Itens(_cPlac,_crote,_DtEntr)
 
 			MsUnlock()
 
-			//	Endif
+			//	EndIf
 
 			//		dbSelectArea("SC9")
 			//		dbSetOrder(1)
@@ -838,7 +845,7 @@ Static Function PesqProd(cPedido)
 	Dbgotop()
 	If dbseek(xFilial("SC6")+cPedido)	
 		cDesc := substR(SC6->C6_DESCRI,1,55)
-	Endif
+	EndIf
 
 	Restarea(aArea)
 
@@ -850,7 +857,7 @@ Return cDesc
 	@since 
 	@version 01
 	/*/
-STATIC FUNCTION SQLVerifPedFaturado(cRoteiro,cDtEntr) 
+Static Function SQLVerifPedFaturado(cRoteiro,cDtEntr) 
 
 	BeginSQL Alias "TRB"
 		%NoPARSER%  
@@ -865,6 +872,55 @@ STATIC FUNCTION SQLVerifPedFaturado(cRoteiro,cDtEntr)
 		AND D_E_L_E_T_ <> '*'
 	EndSQl             
 
+Return Nil
+/*/{Protheus.doc} zeraKm
+	Função zera o km da tabela ZFD.
+	Chamado 63536.
+	@type  Static Function
+	@author Everson
+	@since 12/11/2021
+	@version 01
+/*/
+Static Function zeraKm(cPedido)
 
+	//Variáveis.
+	Local aArea    := GetArea()
+	Local cSqlScprt:= ""
 
-RETURN(NIL)
+	Default cPedido:= ""
+
+	//
+	If Empty(cPedido)
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	//
+	cSqlScprt := ""
+	cSqlScprt += " UPDATE " + RetSqlName("ZFD") + "  SET ZFD_KMGER = 0  " 
+	cSqlScprt += " WHERE  " 
+	cSqlScprt += " ZFD_FILIAL = '" + FWxFilial("ZFD") + "' " 
+	cSqlScprt += " AND ZFD_COD IN( " 
+	cSqlScprt += " SELECT  " 
+	cSqlScprt += " ZFD_COD " 
+	cSqlScprt += " FROM " 
+	cSqlScprt += " " + RetSqlName("ZFD") + " (NOLOCK) AS ZFD " 
+	cSqlScprt += " WHERE " 
+	cSqlScprt += " ZFD_FILIAL = '" + FWxFilial("ZFD") + "' " 
+	cSqlScprt += " AND ZFD_PEDIDO = '" + cPedido + "' " 
+	cSqlScprt += " AND ZFD.D_E_L_E_T_ = '' " 
+	cSqlScprt += " ) AND D_E_L_E_T_ = '' " 
+
+	//
+	Conout("AD0055 - zeraKm - cSqlScprt " + cSqlScprt)
+	If TCSqlExec(cSqlScprt) < 0
+		Conout("AD0055 - zeraKm - TCSQLError " + TCSQLError())
+		MsgAlert("Ocorreu erro na atualização da tabela ZFD " + TCSQLError())
+
+	EndIf
+
+	//
+	RestArea(aArea)
+
+Return Nil
