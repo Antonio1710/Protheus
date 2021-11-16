@@ -16,6 +16,7 @@
 	@history Chamado 060113 - Abel Babini, 04/08/2020, Redefinição da situação do pedido e acrescentar nOpc = 4 (pedidos Bloqueador por Regra)
 	@history ticket    9930 - Macieira   , 23/02/2021, array out of bounds ( 10 of 9 )  on { || {_aDet[oDet:nAt,1],_aDet[oDet:nAt][2],_aDet[oDet:nAt][3],_aDet[oDet:nAt][4],_aDet[oDet:nAt][5],_aDet[oDet:nAt][6],_aDet[oDet:nAt][7],_aDet[oDet:nAt][8],_aDet[oDet:nAt][9],_aDet[oDet:nAt][10]}}(ADLOG031P.PRW) 14/09/2020 08:37:18 line : 367
 	@history TICKET   10851 - ADRIANO SAVOINE - 19/03/2021 - Ajustado o campo de Pedidos Liberados para abrir a Janela ao clicar sobre e imprimir o excel.
+	@history TICKET   63590 - Everson - 12/11/2021 - Adicionado openquery para melhorar o desempenho do relatório.
 /*/
 User Function ADLOG031P() //U_ADLOG031P()
 
@@ -89,7 +90,7 @@ Return Nil
 Static Function LoadArq(nTp) 
 
 	//Variáveis.
-	Local cQuery := ""
+	//Local cQuery := ""
 
 	aVetor := {} 
 
@@ -105,8 +106,7 @@ Static Function LoadArq(nTp)
 	If nTp==2 
 
 		If SELECT("TMP1") > 0
-			DBSELECTAREA("TMP1")
-			DBCLOSEAREA("TMP1")
+			TMP1->(DBCLOSEAREA())
 		Endif 
 		//
 
@@ -242,22 +242,37 @@ Static Function LoadArq(nTp)
 		End 
 
 		If Select("QRYEDT") > 0
-			DbSelectArea("QRYEDT")
-			DbCloseArea("QRYEDT")
+			QRYEDT->(DbCloseArea())
 		Endif
+		
 		//
-		cQry := " SELECT "
-		cQry += " COUNT(DISTINCT(IE_PEDIVEND)) AS PEDI, "  
-		cQry += " ISNULL(SUM(PVI.QN_EMBAITEMPEDIVEND)- SUM(QN_EMBAEXPEITEMPEDIVEND) ,0) AS CXCORTE, "
-		cQry += " ISNULL(SUM(QN_ITEMPEDIVEND) - SUM(QN_EXPEITEMPEDIVEND),0) AS KGCORTE "
-		cQry += " FROM "
-		cQry += " [LNKMIMS].SMART.dbo.PEDIDO_VENDA PVV WITH (NOLOCK) INNER JOIN [LNKMIMS].SMART.dbo.PEDIDO_VENDA_ITEM PVI WITH (NOLOCK) "
-		cQry += " ON PVV.FILIAL = PVI.FILIAL AND PVV.ID_PEDIVEND = PVI.ID_PEDIVEND "
-		cQry += " WHERE PVV.FL_STATPEDIVEND IN ('FE', 'EX', 'ZR') "
-		cQry += " AND (COALESCE(PVI.QN_CAIXCORTITEMPEDIVEND, 0) > 0 "
-		cQry += " OR  (PVI.QN_EMBAITEMPEDIVEND - COALESCE(QN_EMBAEXPEITEMPEDIVEND, 0)) >0) "
-		cQry += " AND DT_ENTRPEDIVEND >= '"+Dtos(Mv_Par01)+"' AND DT_ENTRPEDIVEND <= '"+Dtos(Mv_Par02)+"'"
+		// cQry := " SELECT "
+		// cQry += " COUNT(DISTINCT(IE_PEDIVEND)) AS PEDI, "  
+		// cQry += " ISNULL(SUM(PVI.QN_EMBAITEMPEDIVEND)- SUM(QN_EMBAEXPEITEMPEDIVEND) ,0) AS CXCORTE, "
+		// cQry += " ISNULL(SUM(QN_ITEMPEDIVEND) - SUM(QN_EXPEITEMPEDIVEND),0) AS KGCORTE "
+		// cQry += " FROM "
+		// cQry += " [LNKMIMS].SMART.dbo.PEDIDO_VENDA PVV WITH (NOLOCK) INNER JOIN [LNKMIMS].SMART.dbo.PEDIDO_VENDA_ITEM PVI WITH (NOLOCK) "
+		// cQry += " ON PVV.FILIAL = PVI.FILIAL AND PVV.ID_PEDIVEND = PVI.ID_PEDIVEND "
+		// cQry += " WHERE PVV.FL_STATPEDIVEND IN ('FE', 'EX', 'ZR') "
+		// cQry += " AND (COALESCE(PVI.QN_CAIXCORTITEMPEDIVEND, 0) > 0 "
+		// cQry += " OR  (PVI.QN_EMBAITEMPEDIVEND - COALESCE(QN_EMBAEXPEITEMPEDIVEND, 0)) >0) "
+		// cQry += " AND DT_ENTRPEDIVEND >= '"+Dtos(Mv_Par01)+"' AND DT_ENTRPEDIVEND <= '"+Dtos(Mv_Par02)+"'"
 		//
+
+		//Everson - 12/11/2021. Chamado 63590.
+		cQry := " SELECT * FROM OPENQUERY(LNKMIMS,' " 
+		cQry += " SELECT  " 
+		cQry += " COUNT(DISTINCT(IE_PEDIVEND)) AS PEDI,    " 
+		cQry += " ISNULL(SUM(PVI.QN_EMBAITEMPEDIVEND)- SUM(QN_EMBAEXPEITEMPEDIVEND) ,0) AS CXCORTE,  " 
+		cQry += " ISNULL(SUM(QN_ITEMPEDIVEND) - SUM(QN_EXPEITEMPEDIVEND),0) AS KGCORTE  " 
+		cQry += " FROM  " 
+		cQry += " SMART.dbo.PEDIDO_VENDA PVV WITH (NOLOCK) INNER JOIN SMART.dbo.PEDIDO_VENDA_ITEM PVI WITH (NOLOCK)  " 
+		cQry += " ON PVV.FILIAL = PVI.FILIAL AND PVV.ID_PEDIVEND = PVI.ID_PEDIVEND  " 
+		cQry += " WHERE PVV.FL_STATPEDIVEND IN (''FE'', ''EX'', ''ZR'')  " 
+		cQry += " AND (COALESCE(PVI.QN_CAIXCORTITEMPEDIVEND, 0) > 0  " 
+		cQry += " OR  (PVI.QN_EMBAITEMPEDIVEND - COALESCE(QN_EMBAEXPEITEMPEDIVEND, 0)) >0)  " 
+		cQry += " AND DT_ENTRPEDIVEND >= ''"+Dtos(Mv_Par01)+"'' AND DT_ENTRPEDIVEND <= ''"+Dtos(Mv_Par02)+"'' " 
+		cQry += " ') " 
 
 		TCQUERY cQry NEW ALIAS "QRYEDT"
 
@@ -310,6 +325,7 @@ Static function fTela()
 	Local oButton1
 	Local oButton2
 	Local nOpc := 1
+	Local j	   := 1
 
 	//
 	If ValType(oDet) == "O"
@@ -1246,37 +1262,41 @@ Static Function AD031EXC(nOpc)
 
 	Private aLinhas     := {}
 
+	Private cArquivo    := ""
+	Private cPlanilha   := ""
+	Private cTitulo     := ""
+
 	If nOpc == 1
-		Private cArquivo    := 'REL_CORTE_EXPED.XML'
-		Private cPlanilha   := "Pedidos Cortados"
-		Private cTitulo     := "Rel.Pedidos Cortados"
+		cArquivo    := 'REL_CORTE_EXPED.XML'
+		cPlanilha   := "Pedidos Cortados"
+		cTitulo     := "Rel.Pedidos Cortados"
 
 	ElseIf nOpc == 2
-		Private cArquivo    := 'REL_EM_ANALISE.XML'
-		Private cPlanilha   := "Pedidos Em Análise"
-		Private cTitulo     := "Rel.Pedidos Em Análise"
+		cArquivo    := 'REL_EM_ANALISE.XML'
+		cPlanilha   := "Pedidos Em Análise"
+		cTitulo     := "Rel.Pedidos Em Análise"
 
 	ElseIf nOpc == 3 //Everson - 17/07/2020. Chamado 059728.
-		Private cArquivo    := 'REL_BLOQ_CREDITO.XML'
-		Private cPlanilha   := "Pedidos Bloqueados Crédito"
-		Private cTitulo     := "Rel.Pedidos Bloqueados Crédito"
+		cArquivo    := 'REL_BLOQ_CREDITO.XML'
+		cPlanilha   := "Pedidos Bloqueados Crédito"
+		cTitulo     := "Rel.Pedidos Bloqueados Crédito"
 
 	//Chamado 060113 - Abel Babini, 04/08/2020, Redefinição da situação do pedido e acrescentar nOpc = 4 (pedidos Bloqueador por Regra)
 	ElseIf nOpc == 4 
-		Private cArquivo    := 'REL_BLOQ_COMERCIAL.XML'
-		Private cPlanilha   := "Pedidos Bloqueados Comercial"
-		Private cTitulo     := "Rel.Pedidos Bloqueados Comercial"
+		cArquivo    := 'REL_BLOQ_COMERCIAL.XML'
+		cPlanilha   := "Pedidos Bloqueados Comercial"
+		cTitulo     := "Rel.Pedidos Bloqueados Comercial"
 
 	ElseIf nOpc == 5
-		Private cArquivo    := 'REL_BLOQ_ESTOQUE.XML'
-		Private cPlanilha   := "Pedidos Bloqueados Estoque"
-		Private cTitulo     := "Rel.Pedidos Bloqueados Estoque"
+		cArquivo    := 'REL_BLOQ_ESTOQUE.XML'
+		cPlanilha   := "Pedidos Bloqueados Estoque"
+		cTitulo     := "Rel.Pedidos Bloqueados Estoque"
 
 	//Ticket 10851 - ADRIANO SAVOINE - 19/03/2021
 	ElseIf nOpc == 6
-		Private cArquivo    := 'REL_PEDIDOS_LIBERADOS.XML'
-		Private cPlanilha   := "Pedidos Liberados"
-		Private cTitulo     := "Rel.Pedidos Liberados"	
+		cArquivo    := 'REL_PEDIDOS_LIBERADOS.XML'
+		cPlanilha   := "Pedidos Liberados"
+		cTitulo     := "Rel.Pedidos Liberados"	
 
 	EndIf
 
@@ -1309,7 +1329,7 @@ Static Function GeraExcel(nOpc)
 
 	//Variáveis.
 	Local aArea		  := GetArea()
-	Local cNomeRegiao := ''
+	//Local cNomeRegiao := ''
 	Local nLinha      := 0
 	Local nExcel      := 0 
 	Local nTotReg	  := 0
