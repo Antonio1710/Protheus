@@ -427,17 +427,27 @@ User Function MT103FIM()
 
     ENDIF
 
-    //Everson - 15/10/2021. Chamado 62250.
-    If nConfirma == 1 .and. (nOpcao == 3 .or. nOpcao == 4)
-          atlSC7Dt(SF1->F1_FORNECE, SF1->F1_LOJA, SF1->F1_DOC, SF1->F1_SERIE)
-
-    EndIf
-    // 
-
     RestArea(aEnvFT)
     RestArea(aEnvF3)
   EndIf
   //FIM Ch. 049454 - Abel Babini - Fiscal - Gravar D1_VALFUN no campo F3_OBSERV - Valéria
+
+  //Everson - 15/10/2021. Chamado 62250.
+  //Leonardo P. Monteiro - 16/11/2021. Chamado 62250.
+  If nConfirma == 1 .and. (nOpcao == 3 .or. nOpcao == 4)
+        atlSC7Dt(SF1->F1_FORNECE, SF1->F1_LOJA, SF1->F1_DOC, SF1->F1_SERIE)
+  else
+      //GrLogZBE(dDate,cTime,cUser,cLog,cModulo,cRotina,cParamer,cEquipam,cUserRed)
+      u_GrLogZBE (Date(),; 
+                  Time(),; 
+                  cUserName,; 
+                  "Não passou na gravação do pc " + SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_DOC+SF1->F1_SERIE + "-nConfirma: "+ CValToChar(nConfirma)+"-nOpcao: "+ CValToChar(nOpcao),;
+                  " DOCUMENTO ENTRADA ",;
+                  "FISCAL",;
+                  "MT103FIM",;
+                  ComputerName(),;
+                  LogUserName())
+  EndIf
 
 	// @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
   If nConfirma == 1 .and. (nOpcao == 3 .or. nOpcao == 4) .and. AllTrim(SF1->F1_TIPO) == "N"

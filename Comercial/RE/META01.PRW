@@ -18,6 +18,7 @@
 	@history Chamado 057415	- Everson            - 17/04/2020 - Adicionada exportação do relatório para excel.
 	@history ticket   10654	- Fernando Macieira  - 11/03/2021 - type mismatch on $  on U_META01(META01.PRW) 17/04/2020 13:07:57 line : 53
 	@history ticket   63207	- Everson            - 03/11/2021 - Tratamento para melhorar a performance do relatório.
+	@history ticket   63802	- Leonardo P. Monteiro            - 16/11/2021 - Correção no posicionamento e recuperação do código do produto eData.
 /*/
 User Function META01() // U_META01()
 	
@@ -1007,6 +1008,10 @@ Static Function consProduto(nOpc,oExcel)
 		
 		//
 		cProduto   := TEMP->TR_PRODUTO
+		//@history ticket   63802	- Leonardo P. Monteiro            - 16/11/2021 - Correção no posicionamento e recuperação do código do produto eData.
+		cProdedata := ''
+		cProdedata := TEMP->TR_EDATA
+
 		nQtdCx     := 0
 		nQtdKl     := 0
 		nEstCxs    := 0
@@ -1017,7 +1022,7 @@ Static Function consProduto(nOpc,oExcel)
 			//
 			nQtdCx := nQtdCx + TEMP->TR_CAIXAS
 			nQtdKl := nQtdKl + TEMP->TR_KILOS
-
+			
 			//
 			TEMP->(Dbskip())
 
@@ -1040,10 +1045,10 @@ Static Function consProduto(nOpc,oExcel)
 		//
 		nEstKil    := SB2->B2_QATU
 		nEstCxs    := SB2->B2_QATU / SB1->B1_CONV
-		cProdedata := ''
-		cProdedata := TEMP->TR_EDATA	
+		//@history ticket   63802	- Leonardo P. Monteiro            - 16/11/2021 - Correção no posicionamento e recuperação do código do produto eData.
+		//cProdedata := ''
+		//cProdedata := TEMP->TR_EDATA	
 		
-		//
 		If nOpc == 1
 			@nLin,000 PSAY "|"
 			@nLin,002 PSAY  cProduto   
