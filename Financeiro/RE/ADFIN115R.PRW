@@ -69,9 +69,9 @@ user function ADFIN115R()
     Private oDTFATATE
     Private oDtFINDE
     Private oDTFINATE
-    Private onPLANFAT
-    Private onPLANFIN
-    Private onTPRELAT
+    Private oPLANFAT
+    Private oPLANFIN
+    Private oTPRELAT
     Private oRETZERO
     Private oRETNCC
 
@@ -924,6 +924,9 @@ Static Function geraRelatorio()
     Private lRetirarNCC := iif(nRETNCC ==2,.T., .F.)
     Private nTipoRel    := nTPRELAT
 	// *** INICIO VALIDACAO *** //
+
+	nplanfat := aScan(aPLANFAT, cPLANFAT)
+	nplanfin := aScan(aPLANFIN, cPLANFIN)
 
 	IF nTipoRel == 1 .AND. ALLTRIM(cFiltRedeR) == "''"
 
@@ -2452,7 +2455,7 @@ STATIC FUNCTION CALCULAKG(cDataIni,cDataFin,cCnpjs)
 	ENDDO
 	D_KG->(DBCLOSEAREA())
 
-RETURN(nValor)	
+RETURN(nValor)
 
 STATIC FUNCTION sqlKgFat(cDataIniFat,cDataFinFat,cCnpjs)
 	
@@ -2461,7 +2464,7 @@ STATIC FUNCTION sqlKgFat(cDataIniFat,cDataFinFat,cCnpjs)
 	cQuery += " SELECT  ISNULL(SUM(B_FATURAMENTO.F2_PLIQUI),0) - ISNULL(SUM(B_DEVOLUCAO.D1_QUANT),0) AS TOT_KG "
 	cQuery += "   FROM (SELECT A1_FILIAL, A1_COD, A1_LOJA, A1_NOME, A1_VEND, LEFT(A1_CGC,8) AS RAIZ_CGC,A1_MSBLQL "
 	cQuery += "           FROM " + RETSQLNAME("SA1") + " SA1 WITH (NOLOCK) "
-	cQuery += "			 WHERE SA1.D_E_L_E_T_='' "
+	cQuery += "			 WHERE SA1.D_E_L_E_T_='' AND A1_FILIAL='"+ xFilial("SA1") +"' "
 	cQuery += "			   AND A1_CGC       IN (" + cCnpjs + ") ""
 	cQuery += "		   ) AS B_CLIENTE "
 	cQuery += "	  LEFT OUTER JOIN (SELECT BSE1F.E1_FILIAL,BSE1F.E1_CLIENTE,BSE1F.E1_LOJA,BSE1F.PER,SUM(BSE1F.E1_SALDO) AS E1_SALDO,SUM(BSF2.F2_PLIQUI) AS F2_PLIQUI  "
@@ -2472,15 +2475,17 @@ STATIC FUNCTION sqlKgFat(cDataIniFat,cDataFinFat,cCnpjs)
 	cQuery += "								  AND E1_EMISSAO     >= '" + cDataIniFat + "' " 
 	cQuery += "								  AND E1_EMISSAO     <= '" + cDataFinFat + "' "
 	cQuery += "							  ) AS BSE1F "  
-	cQuery += "							  LEFT OUTER JOIN (SELECT F2_FILIAL,F2_DUPL, F2_SERIE, SUM(F2_PLIQUI) AS F2_PLIQUI "
+	cQuery += "							  LEFT OUTER JOIN (SELECT F2_FILIAL,F2_DOC, F2_SERIE, F2_CLIENTE, F2_LOJA, SUM(F2_PLIQUI) AS F2_PLIQUI "
     cQuery += "                                              FROM " + RETSQLNAME("SF2") + " SF2 WITH (NOLOCK) "
 	cQuery += "												WHERE F2_DUPL        <> '' "
 	cQuery += "												  AND SF2.D_E_L_E_T_  = '' "
-	cQuery += "										  	 GROUP BY F2_FILIAL,F2_DUPL, F2_SERIE "
+	cQuery += "										  	 GROUP BY F2_FILIAL,F2_DOC, F2_SERIE, F2_CLIENTE, F2_LOJA "
 	cQuery += "											  ) BSF2 "
 	cQuery += "											ON BSE1F.E1_FILIAL  = BSF2.F2_FILIAL " 
-	cQuery += "										   AND BSE1F.E1_NUM     = BSF2.F2_DUPL "
+	cQuery += "										   AND BSE1F.E1_NUM     = BSF2.F2_DOC "
 	cQuery += "										   AND BSE1F.E1_PREFIXO = BSF2.F2_SERIE "
+	cQuery += "										   AND BSE1F.E1_CLIENTE = BSF2.F2_CLIENTE "
+	cQuery += "										   AND BSE1F.E1_LOJA 	= BSF2.F2_LOJA "
 	cQuery += "									  GROUP BY BSE1F.E1_FILIAL, BSE1F.E1_CLIENTE, BSE1F.E1_LOJA, BSE1F.PER "
 	cQuery += "         ) AS B_FATURAMENTO "
 	cQuery += "		   ON B_CLIENTE.A1_COD  = B_FATURAMENTO.E1_CLIENTE "   

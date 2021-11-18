@@ -28,6 +28,7 @@ Static cFil := "02"
 	@Ticket 63090, Data 01/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 03/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 11/11/2021, Everson, Tratamento para processamento com mais de uma thread.
+	@Ticket 63090, Data 18/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
@@ -214,6 +215,9 @@ Static Function obterReg()
 				EndIf
 
 			Next i
+
+			A_REG->(DbCloseArea()) //Everson - 18/11/2021. Chamado 63090.
+			Return Nil
 
 		EndIf
 

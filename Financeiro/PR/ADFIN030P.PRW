@@ -70,8 +70,9 @@ User Function ADFIN030P() // U_ADFIN030P()
 	
 	//@history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
 	//oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| U_ADFIN071R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
-	oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| iif(MSGYESNO(" Deseja executar a rotina nova (Sim) ou atual(Não)?"), U_ADFIN115R(), U_ADFIN071R() ) },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
-
+	//oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| iif(MSGYESNO(" Deseja executar a rotina nova (Sim) ou atual(Não)?"), U_ADFIN115R(), U_ADFIN071R() ) },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
+	oWorkFat  := TButton():New(223,005,"Rel Faturamento Rede Segmento",oTelMenu,{|| U_ADFIN115R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //William Costa - 08/01/2019 Chamado:045047
+	
 	oWorkVend := TButton():New(246,005,"Workflow Vencidos ",oTelMenu,{|| workFina() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. ) //Fernando Sigoli- 04/10/2019. Chamado T.I.
 	
 	oWorkFat := TButton():New(016,125,"Rel Co-Participação",oTelMenu,{|| U_ADFIN085R() },111,018,,,.F.,.T.,.F.,,.F.,,,.F. )
