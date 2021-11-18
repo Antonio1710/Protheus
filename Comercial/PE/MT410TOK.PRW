@@ -21,11 +21,12 @@
 	@history Ticket 9765 	  - Abel Babini        - 19/02/2021 - Adicionada regra para que a alteraÁ„o de TES n„o seja executada quando o tipo do cliente for consumidor final
 	@history Ticket 11223   - Abel Babini      	   - 23/03/2021 - N„o mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
 	@history Ticket  63537  - Leonardo P. Monteiro - 10/11/2021 - CorreÁ„o na gravaÁ„o dos roteiros na SC5, SC6 e SC9.
+	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - InÌcio da estruturaÁ„o das validaÁıes em funÁıes.
+	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - ValidaÁ„o do item que controla endereÁo para tornar obrigatÛrio o preenchimento do campo 'LocalizaÁ„o'.
 /*/
 
 User Function MT410TOK()
 
-	Local lRet		    := .T.
 	Local nLimite       := GetMV("ZZ_LIMITPV")
 	Local cUsuVal	    := GetMV("ZZ_AUTORPV")
 	Local nTotPV	    := fTotPV()
@@ -53,24 +54,23 @@ User Function MT410TOK()
 	Local _nDiasDtE     := IF(IsInCallStack('U_ADVEN002P') == .T.,5, diasEntrega() ) //Everson - 19/12/2017. Chamado 037426.
 	
 	Local _T1			:= 0
-	Local _nPosItem     := ASCAN( AHEADER, { |X| ALLTRIM(X[2]) == "C6_ITEM" } )
+	//Local _nPosItem     := ASCAN( AHEADER, { |X| ALLTRIM(X[2]) == "C6_ITEM" } )
 	Local _PRECO		:= ""
-	Local _CUM          := ""
-	Local nUM	        := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_UM" })
+	
 	Local nUNSVEN       := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_UNSVEN" })
 	Local _nPCLAS       := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_CLASFIS" } )
 	Local _nPCF         := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_CF" } )
 	Local nQTDVEN       := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
 	Local _nPosVend  	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_VEND"  })   	//incluido por Adriana
 	Local _nPosRote  	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_ROTEIRO"  })   	//incluido por Adriana
-	Local nX, nLido
+	
+	Local nX
 	Local nPDel 		:= Len(aCols[1])
-	Local lRet  		:= .T.
-	Local cLido 		:= ""
+	//Local lRet  		:= .T.
 	Local cLendo		:= ""
 	Local cTipo 		:= ""
-	Local nCount 		:= 0
-	Local n2,_x1,_x2
+	
+	Local n2,_x2
 	Local _lConsFinal	:= .F.
 	Local _nOpc 		:= paramixb[1]
 	Local cRedeOP		:= GetMV("MV_#REDEOP") //Redes as quais È obrigatorio preencher Operador Logistico, ou Filial, e numero do pedido do cliente, em nosso Pedido de Venda (SAPORE / MASSIMA)- por Adriana chamado 031238 em novembro/2016
@@ -99,12 +99,12 @@ User Function MT410TOK()
 	//
 
 	//Ticket 8190 	  - Abel Babini      - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
-	Local _cT65255	:= GETMV("MV_#T65255",,"985") //Qual TES deve ser utilizada para clientes Optantes pelo Simples nacional de SP
-	Local _cCliTrb := ''
-	Local _cDPr65255	:= 'N'
+	//Local _cT65255	:= GETMV("MV_#T65255",,"985") //Qual TES deve ser utilizada para clientes Optantes pelo Simples nacional de SP
+	//Local _cCliTrb := ''
+	//Local _cDPr65255	:= 'N'
 
 	//Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente OperÁıes 01 e 02 Venda tratarem a mudanÁa de TES para Clientes Simples Nacional
-	Local _cMT410A		:= GETMV("MV_#MT410A",,"01,") //Quais operacoes devem trocar a TES quando o cliente for de SP e Optante pelo Simples nacional. Ver MV_#T65255
+	//Local _cMT410A		:= GETMV("MV_#MT410A",,"01,") //Quais operacoes devem trocar a TES quando o cliente for de SP e Optante pelo Simples nacional. Ver MV_#T65255
 	
 	Local nT			:= 0
 	Local nTotIt2		:= 0
@@ -112,9 +112,22 @@ User Function MT410TOK()
 	Local _nz			:= 0
 	Local _nCompRF		:= 0
 
+	Private cLido 		:= ""
+	Private nCount 		:= 0
+	Private lRet		:= .T.
 	Private _cPedAnt    := ""
 	Private _cPedold    := ""
 	Private nTotItem	:= 0
+	Private _x1			:= 0
+	Private nCols		:= 0
+	Private _cProduto	:= ""
+	Private _cLocPad	:= ""
+	Private _cLocaliz	:= ""
+	Private _cTes		:= ""
+	Private _cUM		:= ""
+	Private _cSEGUM		:= ""
+	Private nUM	        := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_UM" })
+	Private _nLocaliz	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCALIZ"  })   	//incluido por Adriana
 
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
@@ -133,7 +146,7 @@ User Function MT410TOK()
 		_cTipoCli 			:= REGI->A1_TIPO
 		cTpCliSF			:= REGI->A1_TIPO
 
-		_cCliTrb	:= REGI->A1_SIMPNAC //Ticket 8190 	  - Abel Babini      - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
+		//_cCliTrb	:= REGI->A1_SIMPNAC //Ticket 8190 	  - Abel Babini      - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
 
 		dbCloseArea("REGI")
 	Endif
@@ -1183,7 +1196,7 @@ User Function MT410TOK()
 	If Len(aCols) > 0
 	
 		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
-		
+
 			For _x1 := 1 to Len(aCols)
 	
 				If aCols[_x1,Len(aHeader)+1] == .F.
@@ -1496,42 +1509,6 @@ User Function MT410TOK()
 		EndIf
 	Endif
 
-	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. Len(aCols) > 0
-		For _x1 := 1 to Len(aCols)
-
-			If aCols[_x1,Len(aHeader)+1] == .F.
-				_nQuantCX := ACOLS[_x1,nUM]
-				_CPRODUTO := ACOLS[_x1,nProd]
-				dbselectArea("SAH")
-				dbSetOrder(1)
-				dbGoTop()
-				If !dbSeek(xFilial("SAH")+_CUM)
-					IF IsInCallStack('U_ADVEN002P')  == .T.
-						Aadd(aPedidos,{cchave, ;
-						''    , ;
-						''    , ;
-						''    , ;
-						"Unidade de medida do produto "+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar" ,;
-						cVendedor})
-
-					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{"Unidade de medida do produto "+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar"})
-
-					ELSE
-
-						ApMsgInfo(OemToAnsi("Unidade de medida do produto ")+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar")
-
-					ENDIF
-
-
-					lRet := .F.
-				Endif
-
-			Endif
-
-		Next _x1
-
-	EndIf
 
 	//Mauricio - MDS Tecnologia - 05/02/14 - tratamento para n„o permitir alterar data de entrega para PV com C5_XINT == "3"
 	//Solicitado por Ana TI.
@@ -1570,7 +1547,70 @@ User Function MT410TOK()
 	Endif
 	//Fim
 
+
+	// ---------------------------------------------------
+	// ExecuÁ„o das validaÁıes da aCols unificadas.
+	// ---------------------------------------------------
+
+	nCols	:= Len(aCols)
+	If nCols > 0
+
+		nCount 		:= 0
+		
+		For _nX := 1 to nCols
+
+			If aCols[_nX,Len(aHeader)+1] == .F.
+				_cUM 			:= Alltrim(ACOLS[_nX,nUM])
+				_cSEGUM			:= ALLTRIM(ACOLS[_nX,nSegUM])
+				_cProduto 		:= ACOLS[_nX,nProd]
+				_cTes 			:= ACOLS[_nX,nTES]
+				
+				dbselectArea("SBZ")
+				SBZ->(dbSetOrder(1))
+				SBZ->(dbGoTop())
+				SBZ->(dbSeek(xFilial("SBZ")+_cProduto))
+
+				dbselectArea("SB1")
+				SB1->(dbSetOrder(1))
+				SB1->(dbGoTop())
+				SB1->(dbSeek(xFilial("SB1")+_cProduto))
+
+				IF !RetArqProd(_cProduto)
+					_cLocPad	:= SBZ->BZ_LOCPAD
+					_cLocaliz	:= SBZ->BZ_LOCALIZ
+				ELSE
+					_cLocPad	:= SB1->B1_LOCPAD
+					_cLocaliz	:= SB1->B1_LOCALIZ
+				ENDIF
+
+				dbselectArea("SF4")
+				SF4->(dbSetOrder(1))
+				SF4->(dbGoTop())
+				SF4->(dbSeek(xFilial("SF4")+ aCols[_nX,nTES]))
+
+				// N„o executa as validaÁıes nos casos em que a rotina for executada atravÈs de execauto, rest.
+				
+					// 1. Valida o cadastro de produtos.
+					fVldProd()
+					
+					// 2. Valida unidade de medida dos itens.
+					fVldUM()
+
+					// 3. Valida se o item controla localizaÁ„o.
+					fVldLocaliz()
+
+					// 4. Tratamento integraÁ„o eData
+					fVldDat()
+
+			Endif
+
+		Next _nX
+
+	EndIf
+	
+	// Trecho do cÛdigo descontinuado.
 	//Mauricio - Chamado 0035716 - 04/08/17 - Nao permitir produto sem local com tes que atualiza estoque
+	/*
 	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"
 		For nX:=1 To Len(aCols)
 			_cProd  := ACOLS[nX,nProd]
@@ -1660,10 +1700,12 @@ User Function MT410TOK()
 			Endif
 		Next nX
 	Endif
+	*/
 
 	//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
 	//≥TRATAMENTO INTEGRA«√O EDATA - INICIO≥
 	//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+	/*
 	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // IntegraÁ„o CERES
 		If lRet
 			For nX:=1 To Len(aCols)
@@ -1711,6 +1753,7 @@ User Function MT410TOK()
 			EndIf
 		Endif
 	EndIf
+	*/
 
 	//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
 	//≥TRATAMENTO INTEGRA«√O EDATA - FIM   ≥
@@ -1955,6 +1998,199 @@ User Function MT410TOK()
 	RestArea(aArea)
 
 Return(lRet)
+
+//--------------------------------------------------
+// 1. Valida o cadastro de produtos.
+//--------------------------------------------------
+Static Function fVldProd()
+
+	// ValidaÁıes feitas somente para a empresa 01 e 02.
+	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"
+		
+		If SF4->F4_ESTOQUE == "S"
+			If Empty(SB1->B1_LOCPAD) .And. Empty(SBZ->BZ_LOCPAD)
+				IF IsInCallStack('U_ADVEN002P')  == .T.
+					Aadd(aPedidos,{cchave, ;
+					''    , ;
+					''    , ;
+					''    , ;
+					'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto n„o pode ser utilizado!' ,;
+					cVendedor})
+
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto n„o pode ser utilizado!'})
+
+				ELSE
+					MsgInfo("Produto "+Alltrim(_cProduto)+" sem LOCAL no cadastro de produtos."+chr(13)+chr(13)+" Produto n„o pode ser utilizado!")
+				Endif
+
+				lRet := .F.
+			Endif
+		Endif
+	
+
+		// INICIO WILLIAM COSTA 21/06/2019 CHAMADO 049973 || OS 051277 || FISCAL || VALERIA || 8389 || PEDIDO X FATURAMENTO
+		IF  SB1->B1_CONV > 1 .AND. (ALLTRIM(SB1->B1_SEGUM) == '' .OR. ALLTRIM(_cSEGUM) == '')
+			
+			IF IsInCallStack('U_ADVEN002P')  == .T.
+			
+				Aadd(aPedidos,{cchave, ;
+				''    , ;
+				''    , ;
+				''    , ;
+				'"Produto '+Alltrim(_cProduto)+' ObrigatÛrio informar [Segunda Unidade de Medida] ' ,;
+				cVendedor})
+
+			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			
+				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' ObrigatÛrio informar [Segunda Unidade de Medida] '})
+
+			ELSE
+			
+				MsgInfo("Produto "+Alltrim(_cProduto)+" ObrigatÛrio informar [Segunda Unidade de Medida] "+chr(13)+chr(13)+" Produto n„o pode ser utilizado!")
+				
+			Endif                      
+			
+			lRet := .F.
+			
+		ENDIF
+		
+		IF SB1->B1_CONV = 0 .AND. (ALLTRIM(SB1->B1_SEGUM) <> '' .OR. !Empty(_cSEGUM))
+			
+			IF IsInCallStack('U_ADVEN002P')  == .T.
+			
+				Aadd(aPedidos,{cchave, ;
+				''    , ;
+				''    , ;
+				''    , ;
+				'"Produto '+Alltrim(_cProduto)+' ObrigatÛrio informar [Fator de Conversao] ' ,;
+				cVendedor})
+
+			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			
+				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' ObrigatÛrio informar [Fator de Conversao] '})
+
+			ELSE
+			
+				MsgInfo("Produto "+Alltrim(_cProduto)+" ObrigatÛrio informar [Fator de Conversao] "+chr(13)+chr(13)+" Produto n„o pode ser utilizado!")
+				
+			Endif                      
+			
+			lRet := .F.
+			
+		ENDIF
+	
+	Endif
+
+return
+
+//--------------------------------------------------
+// 2. Valida o cadastro da UM.
+//--------------------------------------------------
+Static function fVldUM()
+
+	dbselectArea("SAH")
+	SAH->(dbSetOrder(1))
+	SAH->(dbGoTop())
+	
+	If !SAH->(dbSeek(xFilial("SAH")+_cUM))
+		IF IsInCallStack('U_ADVEN002P')  == .T.
+			Aadd(aPedidos,{cchave, ;
+			''    , ;
+			''    , ;
+			''    , ;
+			"Unidade de medida do produto "+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar" ,;
+			cVendedor})
+
+		ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			Aadd(aPedidos,{"Unidade de medida do produto "+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar"})
+
+		ELSE
+
+			ApMsgInfo(OemToAnsi("Unidade de medida do produto ")+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar")
+
+		ENDIF
+
+		lRet := .F.
+	Endif
+return
+
+//--------------------------------------------------
+// 3. Valida se o item controla localizaÁ„o.
+// @history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - ValidaÁ„o do item que controla endereÁo para tornar obrigatÛrio o preenchimento do campo 'LocalizaÁ„o'.
+//--------------------------------------------------
+Static Function fVldLocaliz()
+	IF SF4->F4_ESTOQUE == "S" .AND. _cLocaliz == "S"
+		if Empty(ACOLS[_nX, _nLocaliz])
+			IF IsInCallStack('U_ADVEN002P')  == .T.
+					Aadd(aPedidos,{cchave, ;
+					''    , ;
+					''    , ;
+					''    , ;
+					'Produto '+Alltrim(_cProduto)+' n„o tem a localizaÁ„o informada na linha do item. Produto n„o pode ser utilizado!' ,;
+					cVendedor})
+
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					Aadd(aPedidos,{'Produto '+Alltrim(_cProduto)+' n„o tem a localizaÁ„o informada na linha do item. Produto n„o pode ser utilizado!'})
+				else
+					ApMsgInfo('Produto '+Alltrim(_cProduto)+' n„o tem a localizaÁ„o informada na linha do item. Produto n„o pode ser utilizado!')
+				endif
+
+			lRet := .F.
+		endif
+	endif
+
+return
+
+//--------------------------------------------------
+// 4. Tratamento integraÁ„o eData
+//--------------------------------------------------
+Static Function fVldDat()
+
+	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // IntegraÁ„o CERES
+		
+		If lRet
+			
+			//cTipo := SF4->F4_XTIPO
+
+			If(!Empty(SF4->F4_XTIPO))
+				//cLendo := cTipo // cLendo = vari·vel que recebera o valor do campo F4_XTIPO atual que esta lendo
+
+				// Caso o tipo anterior lido seja diferente da que estiver lendo
+				If ((nCount > 0) .AND. (SF4->F4_XTIPO <> cLido))// verifica se a vari·vel cLido que contem o valor do item anterior È igual ao atual cLendo
+					IF IsInCallStack('U_ADVEN002P')  == .T.
+						Aadd(aPedidos,{cchave, ;
+						''    , ;
+						''    , ;
+						''    , ;
+						'Erro no processo de cadastro do Item, Existem valores no campo F4_XTIPO diferentes entre os itens.' ,;
+						cVendedor})
+
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+						Aadd(aPedidos,{'Erro no processo de cadastro do Item, Existem valores no campo F4_XTIPO diferentes entre os itens.'})
+
+					ELSE
+
+						Aviso("Erro no processo de cadastro do Item","Existem valores no campo F4_XTIPO diferentes entre os itens.",{"OK"})
+
+					ENDIF
+
+					lRet := .F.
+					
+				Endif
+				cLido  	:= SF4->F4_XTIPO
+				nCount 	:= nCount + 1
+			EndIf
+
+
+			If(lRet)
+				M->C5_XTIPO := cLido
+			EndIf
+		Endif
+	EndIf
+	
+
+return
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
