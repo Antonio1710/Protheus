@@ -23,6 +23,9 @@
 	@history Ticket  63537  - Leonardo P. Monteiro - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
 	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Início da estruturação das validações em funções.
 	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validação do item que controla endereço para tornar obrigatório o preenchimento do campo 'Localização'.
+	
+	--------------- Observação ---------------
+	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
 /*/
 
 User Function MT410TOK()
