@@ -12,6 +12,7 @@
 	@history Chamado 050332 - Fernando Sigoli  - 09/07/2019 - Libera refaturamento do pedido, somente se o mesmo nao estiver enviado para o Edata. Necessario Estorno Colocamos validação de estado, por motivo de cargas interestudual que fatura antes do carregamento, devido a recolhimento de guias
 	@history Chamado 054471 - Adriano Savoine  - 26/12/2019 - Liberar o Refaturamento para pedidos diferentes do Tipo N na C5_TIPO.
 	@history Chamado T.I    - William Costa    - 20/01/2020 - Retirado trava de quando o caminhão não tiver sido enviado para o Edata de acordo a Rosangela.
+	@history Ticket  T.I    - Fernando Sigoli  - 22/11/2021 -  Correção do ErrorLog variable does not exist LRET on OOKREFT(ALTPEDREF.PRW) 31/01/2020 15:58:03 line : 359
 	
 /*/
 
@@ -99,6 +100,7 @@ Static Function oOKREFT()
 	Local lAltera := .F. 
 	Local cNfDevo := ""
 	Local lCont   := .F.
+	Local lRet    := .F. // Ticket  T.I    - Fernando Sigoli  - 22/11/2021 - Declaração da variavel
 
 	If nRadio = 1
 		cLocPad := GetMv("MV_#LCPCLI")  //Cliente 46

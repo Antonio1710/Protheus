@@ -16,6 +16,7 @@
 	@history Everson - 10/07/2019. Chamado 044314. Tratamento para informar a placa do cavalo mecânico para geração do MDF-e.
 	@history Everson - 01/07/2020. Chamado 059245. Tratamento para informar o centro de custo para baixa de abastecimento no estoque.
 	@history Everson - 12/11/2021. Chamado 63536.  Tratamento para zera km na tabela ZFD.
+	@history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 /*/
 User Function AD0055()
 
@@ -99,9 +100,11 @@ Return Nil
 	@author  Advanced Protheus
 	@since 22/05/2002
 	@version 01
-	/*/
+	StaticCall(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
+/*/
 Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,lShowTransp,lAut,cPlcCvMec,cCCDiesel) //Everson - 10/07/2019. //Everson - 01/07/2020. Chamado 059245.
 
+	Local aAreaSC5      := {} // @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 	Local   aArea		:= GetArea() // Everson - 12/09/2016, chamado 029242.
 	Local   cDescProd   := "" 
 	Local cPedSF		:= "" //Everson - 02/04/2018, chamado 037261.  
@@ -282,43 +285,38 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	_NumEntr := 0
 
 	DbSelectArea("SC5")
+	SC5->(DbGoTop())
 
 	If lAut //Utilizado o índice 9 para rotina automática. Everson - 27/09/2016. Chamado 030681.
-		//SC5->(DbSetOrder(9)) //Everson - 22/09/2016. Chamado 029242. Alterado o índice, para melhorar a performance da rotina.
-		DBORDERNICKNAME("SC5_9") //atualização protheus 12
-		SC5->(DbGoTop())
-		If ! SC5->(MsSeek( xFilial("SC5")+ DToS(_dtEntr) + _cRote )) //Everson - 22/09/2016. Chamado 029242. Alterado o índice, para melhorar a performance da rotina.
+
+		DBORDERNICKNAME("SC5_9") //C5_FILIAL+DTOS(C5_DTENTR)+C5_ROTEIRO+C5_PLACA
+		If SC5->( !dbSeek( FWxFilial("SC5")+ DToS(_dtEntr) + _cRote ) )
 			MsgStop("Não encontrado roteiro (" + Alltrim(cValToChar(_cRote)) + ") x data de entrega nos pedidos de venda (SC5).Contate a Informática sobre o problema.",;
 			"Função GravaPLACA(AD0055)")
 			RestArea(aArea)
 			Return .F.
-
 		EndIf
 
 	Else	
-		//SC5->(DbSetOrder(6)) //Utilizado o índice 6 para emplacamento manual. Everson - 22/09/2016. Chamado 030681.
-		DBORDERNICKNAME("SC5_6") //atualização protheus 12
-		SC5->(DbGoTop())
-		If ! SC5->(MsSeek( xFilial("SC5")+ _cRote )) //Everson - 22/09/2016. Chamado 029242. Alterado o índice, para melhorar a performance da rotina.
+		
+		DBORDERNICKNAME("SC5_6") // C5_FILIAL+C5_ROTEIRO+C5_SEQUENC
+		If SC5->( !dbSeek( FWxFilial("SC5")+ _cRote ) ) 
 			MsgStop("Não encontrado roteiro (" + Alltrim(cValToChar(_cRote)) + ") x data de entrega nos pedidos de venda (SC5).Contate a Informática sobre o problema.",;
 			"Função GravaPLACA(AD0055)")
 			RestArea(aArea)
 			Return .F.
-
 		EndIf
 
 	EndIf
 	
-	//Everson - 31/05/2019. Chamado 044314.
-	If ! IsInCallStack("U_IMPRDNET") .And. IsInCallStack("U_ALTEROTE") .And. ! Empty(_cRote) .And. cEmpAnt == "01" .And. cFilAnt $ cFilGFrt //Everson - 19/06/2019. Chamado 044314.
-		MsAguarde({|| StaticCall(ADLOG049P,recalFrt,_cPlac,_dtEntr,_cRote,cPlcCvMec) },"Aguarde","Verificando frete...") //Everson - 10/07/2019.
-		
+	aAreaSC5 := SC5->( GetArea() ) // @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
+	If !IsInCallStack("U_IMPRDNET") .And. IsInCallStack("U_ALTEROTE") .And. !Empty(_cRote) .And. cEmpAnt == "01" .And. cFilAnt $ cFilGFrt
+		MsAguarde({|| StaticCall(ADLOG049P,recalFrt,_cPlac,_dtEntr,_cRote,cPlcCvMec) },"Aguarde","Verificando frete...")
 	EndIf
-	//
+	RestArea( aAreaSC5 ) // @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 	
-	//
-	Do While ! SC5->(Eof()) .and. SC5->C5_ROTEIRO == _cRote .And. SC5->C5_FILIAL == cFilAnt
-		//Do While SC5->C5_FILIAL == cFilAnt .and. SC5->C5_ROTEIRO == _cRote .and. SC5->C5_DTENTR == _dtEntr .And. !EOF() && Incluido data de entrega e filial Mauricio HC Consys - 22/02/10.
+	// Laco para comitar a troca das placas
+	Do While !SC5->(Eof()) .and. SC5->C5_ROTEIRO == _cRote .And. SC5->C5_FILIAL == cFilAnt
 
 		IF SC5->C5_DTENTR <> _dtEntr
 			SC5->(DbSkip())
@@ -336,7 +334,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		_nTotalKg := 0
 		_nTotalCx := 0
 
-		&& inicio - Fernando Sigoli 13/02/2017
+		//&& inicio - Fernando Sigoli 13/02/2017
 		If SC5->C5_XTIPO = '2'
 
 			cDescProd := PesqProd(SC5->C5_NUM) 
@@ -364,9 +362,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 
 
 		EndIF
-		&& Final - Fernando Sigoli                                         D
+		//&& Final - Fernando Sigoli                                         D
 
-		Soma_Itens(_cPlac,_crote,_DtEntr) &&Grava dados no SC9. // Everson - 12/09/2016, chamado 029242. Adicionado argumentos na função.
+		Soma_Itens(_cPlac,_crote,_DtEntr) //&&Grava dados no SC9. // Everson - 12/09/2016, chamado 029242. Adicionado argumentos na função.
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ Grava Informacoes em SC5                                            ³
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -377,7 +375,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			Replace C5_PLACA		With _cPlac
 			Replace C5_UFPLACA	With _cUFPlaca
 		  
-			If !Empty(cDescProd)    && Fernando Sigoli 13/02/2017
+			If !Empty(cDescProd)    //&& Fernando Sigoli 13/02/2017
 				Replace C5_OBS        With _cPlac+' - '+cDescProd 
 			EndIf
 			// Ricardo Lima - 23/10/18	  
@@ -400,7 +398,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 			Else
 				Replace C5_TRANSP  With space(6)
 			EndIf
-		MsUnlock()
+		SC5->( MsUnlock() )
 
 		// SOMA PESO BRUTO
 		// Tipo de Frete
