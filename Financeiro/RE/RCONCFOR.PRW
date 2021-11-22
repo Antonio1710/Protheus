@@ -10,8 +10,6 @@
 	@version 01
 	@history chamado TI - Abel Babino - 02/07/2019 - Ch.atorio de conciliação de fornecedores. Entre SE5 e CT2. Ch.Interno TI - Abel Babini - Considerar Var.Cambial no Contas à Pagar.
 	@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
-	@history chamado 63633 - Leonardo P. Monteiro - 012/11/2021 - Correção dos valores em segunda moeda.
-
 /*/
 
 User Function RCONCFOR()
@@ -63,10 +61,6 @@ User Function RCONCFOR()
 	Private cTpExc		 := Formatin(SupergetMv("MV_XTIEXCC",,"NDF"),";")
 	Private cFoExc		 := Formatin(SupergetMv("MV_XFOEXCC",,"014000"),";")
 	Private cString := "SE5"
-	Private oTMPSE5
-	Private oTMPCT2
-	Private oTMPANL
-	Private oTMPSE2
 	
 	wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
 	
@@ -84,11 +78,6 @@ User Function RCONCFOR()
 	
 	
 	RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
-
-	oTMPSE5:DELETE()
-	oTMPCT2:DELETE()
-	oTMPANL:DELETE()
-	oTMPSE2:DELETE()
 Return
 
 
@@ -122,32 +111,26 @@ Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ 
 	
 	//Tabela Temporaria SE2
-	AADD(_aStr1,{'E2_FORNECE'  ,"C",06,0})
-	AADD(_aStr1,{'E2_LOJA'    ,"C",02,0})
+	AADD(_aStr1,{'E2_FORNECE'  ,"C",06})
+	AADD(_aStr1,{'E2_LOJA'    ,"C",02})
 	AADD(_aStr1,{'E2_VALOR'   ,"N",15,04}) //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 	//AADD(_aStr1,{'E2_VLCRUZ'   ,"N",15,04}) //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 	If mv_par08 == 1 //Analitico
 		AADD(_aStr1,{'E2_EMIS1'   ,"D",08,0})
 	Endif
-	/*
+	
 	_cArqTmp :=CriaTrab(_aStr1,.T.)
 	DbUseArea(.T.,,_cArqTmp,"TMPSE2",.F.,.F.)
 	_cIndex:="E2_FORNECE+E2_LOJA"
 	IndRegua("TMPSE2",_cArqTmp,_cIndex,,,"Criando Indices...")          
-	*/
-	oTMPSE2 := FWTemporaryTable():New("TMPSE2")
-	oTMPSE2:SetFields(_aStr1)
-	oTMPSE2:AddIndex("01", {"E2_FORNECE","E2_LOJA"} )
-	oTMPSE2:Create()
-	
-
+	                   
 	//Tabela Temporaria SE5
-	AADD(_aStr2,{'E5_CLIFOR'  ,"C",06,0})
-	AADD(_aStr2,{'E5_LOJA'    ,"C",02,0})
+	AADD(_aStr2,{'E5_CLIFOR'  ,"C",06})
+	AADD(_aStr2,{'E5_LOJA'    ,"C",02})
 	AADD(_aStr2,{'E5_VALOR'   ,"N",15,04})
-	AADD(_aStr2,{'E5_RECPAG'  ,"C",01,0})
-	AADD(_aStr2,{'E5_MOTBX'   ,"C",03,0})
-	AADD(_aStr2,{'E5_TIPODOC' ,"C",02,0})
+	AADD(_aStr2,{'E5_RECPAG'  ,"C",01})
+	AADD(_aStr2,{'E5_MOTBX'   ,"C",03})
+	AADD(_aStr2,{'E5_TIPODOC' ,"C",02})
 	AADD(_aStr2,{'E5_VLACRES' ,"N",15,04})
 	If mv_par08 == 1 //Analitico
 		AADD(_aStr2,{'E5_DATA'   ,"D",08,0})
@@ -156,37 +139,26 @@ Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 	AADD(_aStr2,{'E5_VLDECRE' ,"N",15,04}) // WILL chamado 028902
 	AADD(_aStr2,{'E5_VLDESCO' ,"N",15,04}) // WILL chamado 028902
 	
-	//_cArqTmp :=CriaTrab(_aStr2,.T.)
-	//DbUseArea(.T.,,_cArqTmp,"TMPSE5",.F.,.F.)
-	//_cIndex:="E5_CLIFOR+E5_LOJA"
-	//IndRegua("TMPSE5",_cArqTmp,_cIndex,,,"Criando Indices...")
-	oTMPSE5 := FWTemporaryTable():New("TMPSE5")
-	oTMPSE5:SetFields(_aStr2)
-	oTMPSE5:AddIndex("01", {"E5_CLIFOR","E5_LOJA"} )
-	oTMPSE5:Create()
-	
-
+	_cArqTmp :=CriaTrab(_aStr2,.T.)
+	DbUseArea(.T.,,_cArqTmp,"TMPSE5",.F.,.F.)
+	_cIndex:="E5_CLIFOR+E5_LOJA"
+	IndRegua("TMPSE5",_cArqTmp,_cIndex,,,"Criando Indices...")
+	         
 	//Tabela Temporaria CT2                              
-	AADD(_aStr3,{'CT2_CLIFOR'  ,"C",06,0})
-	AADD(_aStr3,{'CT2_LOJACF'  ,"C",02,0})
+	AADD(_aStr3,{'CT2_CLIFOR'  ,"C",06})
+	AADD(_aStr3,{'CT2_LOJACF'  ,"C",02})
 	AADD(_aStr3,{'CT2_VALOR'   ,"N",15,04})    
-	AADD(_aStr3,{'CT2_DEBITO'  ,"C",20,0})
-	AADD(_aStr3,{'CT2_CREDIT'  ,"C",20,0})
+	AADD(_aStr3,{'CT2_DEBITO'  ,"C",20})
+	AADD(_aStr3,{'CT2_CREDIT'  ,"C",20})
 	If mv_par08 == 1 //Analitico
 		AADD(_aStr2,{'CT2_DATA'   ,"D",08,0})
 	Endif
-	/*
+	
 	_cArqTmp :=CriaTrab(_aStr3,.T.)
 	DbUseArea(.T.,,_cArqTmp,"TMPCT2",.F.,.F.)
 	_cIndex:="CT2_CLIFOR+CT2_LOJACF"
 	IndRegua("TMPCT2",_cArqTmp,_cIndex,,,"Criando Indices...")
-	*/
-	oTMPCT2 := FWTemporaryTable():New("TMPCT2")
-	oTMPCT2:SetFields(_aStr3)
-	oTMPCT2:AddIndex("01", {"CT2_CLIFOR","CT2_LOJACF"} )
-	oTMPCT2:Create()
 	
-
 	nSldFin  := 0          
 	nSldCon  := 0
 	nTotFSE2 := 0 //Para o relatorio analitico - total por fornecedor
@@ -237,42 +209,34 @@ Return
 //³ Relatorio Analitico                               ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
-	Local nValor	:= 0
-	Local _aStr4   	:= {} 
+                   
+	Local _aStr4   := {} 
 	
 	//Tabela Temporaria para relatorio Analitico
-	AADD(_aStr4,{'FORNECE'  ,"C",06,0})
-	AADD(_aStr4,{'LOJA'     ,"C",02,0})
+	AADD(_aStr4,{'FORNECE'  ,"C",06})
+	AADD(_aStr4,{'LOJA'     ,"C",02})
 	AADD(_aStr4,{'VALORCT2' ,"N",15,04})
 	AADD(_aStr4,{'VALORSE2' ,"N",15,04})	
-	AADD(_aStr4,{'FILIAL'   ,"C",02,0})
-	AADD(_aStr4,{'PREFIXO'  ,"C",03,0})
-	AADD(_aStr4,{'NUMERO'   ,"C",09,0})
-	AADD(_aStr4,{'PARCELA'  ,"C",03,0})
-	AADD(_aStr4,{'TIPO'     ,"C",03,0})	
+	AADD(_aStr4,{'FILIAL'   ,"C",02})
+	AADD(_aStr4,{'PREFIXO'  ,"C",03})
+	AADD(_aStr4,{'NUMERO'   ,"C",09})
+	AADD(_aStr4,{'PARCELA'  ,"C",03})
+	AADD(_aStr4,{'TIPO'     ,"C",03})	
 	AADD(_aStr4,{'DATASE2'  ,"D",08,0})	
 	AADD(_aStr4,{'DATASE5'  ,"D",08,0})
 	AADD(_aStr4,{'DATACT2'  ,"D",08,0})
-	AADD(_aStr4,{'DEBITO'   ,"C",20,0})
-	AADD(_aStr4,{'CREDIT'   ,"C",20,0})
-	AADD(_aStr4,{'TIPODOC'  ,"C",02,0})			
-	AADD(_aStr4,{'RECPAG'   ,"C",01,0})
-	AADD(_aStr4,{'VLACRES'  ,"C",01,0})			
-	/*
+	AADD(_aStr4,{'DEBITO'   ,"C",20})
+	AADD(_aStr4,{'CREDIT'   ,"C",20})
+	AADD(_aStr4,{'TIPODOC'  ,"C",02})			
+	AADD(_aStr4,{'RECPAG'   ,"C",01})
+	AADD(_aStr4,{'VLACRES'  ,"C",01})			
+	
 	_cArqTmp :=CriaTrab(_aStr4,.T.)
 	DbUseArea(.T.,,_cArqTmp,"TMPANL",.F.,.F.)
-	*/
 	//_cIndex:="FORNECE+LOJA+FILIAL+PREFIXO+NUMERO+PARCELA+TIPO"
-	/*
 	_cIndex:="FORNECE+LOJA+FILIAL+NUMERO+PREFIXO+PARCELA+TIPO"
 	IndRegua("TMPANL",_cArqTmp,_cIndex,,,"Criando Indices...")	
-	*/
-	oTMPANL := FWTemporaryTable():New("TMPANL")
-	oTMPANL:SetFields(_aStr4)
-	oTMPANL:AddIndex("01", {"FORNECE","LOJA","FILIAL","NUMERO","PREFIXO","PARCELA","TIPO"} )
-	oTMPANL:Create()
 	
-
 	dbselectArea("SE2TMP")
 	DbgoTop()             
 	While SE2TMP->(!EOF())
@@ -316,25 +280,23 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 	       loop
 	    Endif  
 	    */
-	    //@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
-		nValor := IIF( SE5TMP->E5_TXMOEDA > 1, SE5TMP->E5_VLMOED2 , SE5TMP->E5_VALOR)
-
+	                          
 		RecLock("TMPANL",.T.)	
 		TMPANL->FORNECE   := SE5TMP->E5_CLIFOR
 		TMPANL->LOJA      := SE5TMP->E5_LOJA	
 		If Alltrim(SE5TMP->E5_TIPODOC) == "ES" .And. Alltrim(SE5TMP->E5_RECPAG) == "R"
 		    IF SE5TMP->E5_VLACRES <> 0
 		       IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
- 		          TMPANL->VALORSE2 += nValor-SE5TMP->E5_VLACRES
+ 		          TMPANL->VALORSE2 += SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES
 		       Else
-		          TMPANL->VALORSE2 += nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		          TMPANL->VALORSE2 += SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 		       Endif
 		    Else   
-			   TMPANL->VALORSE2 += nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+			   TMPANL->VALORSE2 += SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 			Endif   
 			
 			// ********* INICIO  WILL chamado 028902  ************ //
-			IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
+			IF SE5TMP->E5_VALOR <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
 		       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
 		          TMPANL->VALORSE2 += SE5TMP->E5_VLDECRE
 		       Else 
@@ -357,7 +319,7 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		          ENDIF	
 		       Endif
 		    
-		    ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
+		    ELSEIF SE5TMP->E5_VALOR == 0 .AND. SE5TMP->E5_VLDESCO > 0
 		    
 		    	TMPANL->VALORSE2 += SE5TMP->E5_VLDESCO
 		       
@@ -365,26 +327,24 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 			// ********* FINAL  WILL chamado 028902  ************ //
 			
 		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "MT" .And. Alltrim(SE5TMP->E5_RECPAG) == "P"
-			TMPANL->VALORSE2 += nValor
+			TMPANL->VALORSE2 += SE5TMP->E5_VALOR
 		//INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "CM" .And. Alltrim(SE5TMP->E5_RECPAG) == "P"
-			TMPANL->VALORSE2 -= ABS(nValor)
-		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "CM" .And. Alltrim(SE5TMP->E5_RECPAG) == "R"
-			TMPANL->VALORSE2 += ABS(nValor)
+			TMPANL->VALORSE2 -= ABS(SE5TMP->E5_VALOR)
 		//FIM Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 		Else
 	    	IF SE5TMP->E5_VLACRES <> 0
 		       IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
-		          TMPANL->VALORSE2 -= nValor-SE5TMP->E5_VLACRES
+		          TMPANL->VALORSE2 -= SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES
 		       Else
-		          TMPANL->VALORSE2 -= nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		          TMPANL->VALORSE2 -= SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 		       Endif
 		    Else   
-			   TMPANL->VALORSE2 -= nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+			   TMPANL->VALORSE2 -= SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 			Endif  
 			
 			// ********* INICIO  WILL chamado 028902  ************ //
-			IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
+			IF SE5TMP->E5_VALOR <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
 		       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
 		          TMPANL->VALORSE2 -= SE5TMP->E5_VLDECRE
 		       Else
@@ -407,7 +367,7 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		          	ENDIF			
 		       Endif
 		       
-			ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
+			ELSEIF SE5TMP->E5_VALOR == 0 .AND. SE5TMP->E5_VLDESCO > 0
 		    
 		    	TMPANL->VALORSE2 -= SE5TMP->E5_VLDESCO
 		    			       
@@ -588,7 +548,6 @@ Return
 //³ Relatorio Sintetico                               ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function fDadosSin(Cabec1,Cabec2,Titulo,nLin)
-	Local nValor := 0
 
 	dbselectArea("SE2TMP")
 	DbgoTop()             
@@ -606,28 +565,26 @@ Static Function fDadosSin(Cabec1,Cabec2,Titulo,nLin)
 	dbselectArea("SE5TMP")
 	DbgoTop()             
 	While SE5TMP->(!EOF())
-	    //@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
-		nValor := IIF( SE5TMP->E5_TXMOEDA > 1, SE5TMP->E5_VLMOED2 , SE5TMP->E5_VALOR)
-
+	        
 		RecLock("TMPSE5",.T.)	
 		TMPSE5->E5_CLIFOR  := SE5TMP->E5_CLIFOR
 		TMPSE5->E5_LOJA    := SE5TMP->E5_LOJA
 		IF SE5TMP->E5_VLACRES <> 0
 		   IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
-		      TMPSE5->E5_VALOR  := nValor-SE5TMP->E5_VLACRES
+		      TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES
 		   Else
 		      If SE5TMP->E5_VLACRES > SE5TMP->E5_VLJUROS
-		         TMPSE5->E5_VALOR  := nValor-(SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS)
+		         TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-(SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS)
 		      Else
-		         TMPSE5->E5_VALOR  := nValor-(SE5TMP->E5_VLJUROS - SE5TMP->E5_VLACRES)
+		         TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-(SE5TMP->E5_VLJUROS - SE5TMP->E5_VLACRES)
 		      Endif   
 		   Endif
 		Else            
-		   TMPSE5->E5_VALOR  := nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		   TMPSE5->E5_VALOR  := SE5TMP->E5_VALOR-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
 		Endif  
 		
 		// ********* INICIO  WILL chamado 028902  ************ //
-		IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
+		IF SE5TMP->E5_VALOR <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
 	       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
 	          TMPANL->VALORSE2 -= SE5TMP->E5_VLDECRE
 	       Else
@@ -650,7 +607,7 @@ Static Function fDadosSin(Cabec1,Cabec2,Titulo,nLin)
 	          	ENDIF
 	       Endif  
 	    
-	    ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
+	    ELSEIF SE5TMP->E5_VALOR == 0 .AND. SE5TMP->E5_VLDESCO > 0
 		    
 		    	TMPANL->VALORSE2 -= SE5TMP->E5_VLDESCO   
 	       
@@ -810,7 +767,7 @@ Static Function fDados()
 	
 	//If mv_par08 == 1 //Analitico
 		//cQuery:=" SELECT E2_FILIAL,E2_PREFIXO,E2_NUM,E2_PARCELA,E2_TIPO,E2_FORNECE,E2_LOJA,E2_VALOR AS E2_VALOR, E2_EMIS1 " //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
-		cQuery:=" SELECT E2_FILIAL,E2_PREFIXO,E2_NUM,E2_PARCELA,E2_TIPO,E2_FORNECE,E2_LOJA,IIF(E2_MOEDA<>'1',E2_VLCRUZ,E2_VALOR) AS E2_VALOR, E2_EMIS1 " //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
+		cQuery:=" SELECT E2_FILIAL,E2_PREFIXO,E2_NUM,E2_PARCELA,E2_TIPO,E2_FORNECE,E2_LOJA,IIF(E2_MOEDA<>'01',E2_VLCRUZ,E2_VALOR) AS E2_VALOR, E2_EMIS1 " //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 		cQuery+=" FROM " + RetSqlName("SE2") + " WITH(NOLOCK) "
 		cQuery+=" WHERE E2_EMIS1 BETWEEN '" + DTOS(mv_par05) + "' AND '" + DTOS(mv_par06) + "'"
 		cQuery+=" AND D_E_L_E_T_ <> '*' "  
@@ -839,8 +796,7 @@ Static Function fDados()
 	Endif
 	     
 	//If mv_par08 == 1 //Analitico
-		cQuery:=" SELECT E5_FILIAL,E5_PREFIXO,E5_NUMERO,E5_PARCELA,E5_MOEDA,E5_TXMOEDA,E5_VLMOED2,E5_TIPO,E5_CLIFOR,E5_LOJA,E5_DATA,E5_VALOR,E5_TIPODOC,E5_RECPAG, "
-		cQuery+=" 		  E5_MOTBX,E5_VLACRES, E5_VLDECRE,	E5_VLDESCO, E5_VLJUROS "
+		cQuery:=" SELECT E5_FILIAL,E5_PREFIXO,E5_NUMERO,E5_PARCELA,E5_TIPO,E5_CLIFOR,E5_LOJA,E5_DATA,E5_VALOR,E5_TIPODOC,E5_RECPAG,E5_MOTBX,E5_VLACRES, E5_VLDECRE,	E5_VLDESCO, E5_VLJUROS "
 		cQuery+=" FROM " + RetSqlName("SE5") + " WITH(NOLOCK) "
 		cQuery+=" WHERE D_E_L_E_T_ <> '*' "
 		cQuery+=" AND E5_CLIFOR BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"

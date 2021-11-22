@@ -17,6 +17,7 @@
 	@history Tkt.62460 - ABEL BABINI - 01/11/2021 - Valor da despesa causando erro. O Valor da despesa é rateado por item e deve ser totalizado para a comparação.
 	@history Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
 	@history Tkt.63294 - JONATHAN CARVALHO - 10/11/2021 - Criado if para não somar o valor duplicado do mesmo pedido
+	@history Tkt.62460 - ABEL BABINI - 22/11/2021 - Conforme conversa com a Rosangela em 22/11/2021, alterar a regra para apenas se o valor das despesas do XML for maior que o valor das despesas do Pedido.
 /*/
 
 User Function MT103PN     
@@ -216,7 +217,9 @@ If l103Class
 
 		//valida valores
 		//IF nXMLVDsp <> nSC7VDsp
-		If ABS(Round( ABS(nXMLVDsp) - ABS(nSC7VDsp) ,2)) > Round( GETMV("MV_#VLTOTN") ,2)
+		//Conforme conversa com a Rosangela em 22/11/2021, alterar a regra para apenas se o valor das despesas do XML for maior que o valor das despesas do Pedido.
+		// If ABS(Round( ABS(nXMLVDsp) - ABS(nSC7VDsp) ,2)) > Round( GETMV("MV_#VLTOTN") ,2)
+		If (Round( ABS(nXMLVDsp),2)  > Round(ABS(nSC7VDsp) + GETMV("MV_#VLTOTN") ,2))
 			AVISO(	'Pedido de Compra Divergente com XML',;
 						'O valor das despesas informada no XML não confere com o valor das despesas informada no Pedido de Compra. Consulte o Depto. Fiscal!'+;
 						CRLF+'Pedido de Compra R$'+Alltrim(Str(nSC7VDsp))+' <-> '+'XML R$'+Alltrim(Str(nXMLVDsp))+' || '+'Valores considerados: Frete, Despesas, Seguro, IPI', {"Fechar"}, 2 )   
