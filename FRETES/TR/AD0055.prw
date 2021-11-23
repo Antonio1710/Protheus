@@ -1,5 +1,7 @@
 #include "protheus.ch"
 #include "FIVEWIN.CH"
+#include "topconn.ch"
+
 /*/{Protheus.doc} User Function AD0055
 	Informar placa do caminhao para o roteiro do dia
 	APlaca Sub-Funcao de AltRote  
@@ -326,7 +328,7 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		If !Empty(SC5->C5_NOTA) //chamado 036462 - Fernando 03/08/2017
 			SC5->(DbSkip())
 			Loop
-		EndIf  
+		EndIf
 
 		// Forço somar a peso bruto e unidades
 		_cNumPed  := SC5->C5_NUM
@@ -441,6 +443,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		SC5->(dbSkip())
 
 	EndDo
+
+	// @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
+	PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
 
 	//Set Softseek off
 	//
@@ -922,3 +927,64 @@ Static Function zeraKm(cPedido)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author FWNM
+	@since 23/11/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history Fernando Macieira - 23/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE	
+/*/
+Static Function PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
+
+	Local aArea     := GetArea()
+	Local aAreaSC5  := SC5->( GetArea() )
+	Local cQuery := ""
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT C5_FILIAL, C5_NUM
+	cQuery += " FROM " + RetSqlName("SC5") + " (NOLOCK)
+	cQuery += " WHERE C5_FILIAL='"+FWxFilial("SC5")+"' 
+	cQuery += " AND C5_ROTEIRO='"+_cRote+"' 
+	cQuery += " AND C5_DTENTR='"+DtoS(_dtEntr)+"' 
+	cQuery += " AND C5_NOTA=''
+	cQuery += " AND D_E_L_E_T_=''
+
+	tcQuery cQuery New Alias "Work"
+
+	Work->( dbGoTop() )
+	Do While Work->( !EOF() )
+
+		SC5->( dbSetOrder(1) ) // C5_FILIAL+C5_NUM
+		If SC5->( dbSeek(Work->(C5_FILIAL+C5_NUM)) )
+			RecLock("SC5", .F.)
+				SC5->C5_PLACA   := _cPlac
+				SC5->C5_UFPLACA := _cUFPlaca
+			SC5->( msUnLock() )
+		EndIf
+
+		//grava log
+		u_GrLogZBE( msDate(), TIME(), cUserName," ALTEROU PLACA DO VEICULO", "PUTPLACA", "AD0055",;
+		"PEDIDO: "+SC5->C5_NUM+" PLACA: "+_cPlac+" ROTEIRO: "+_cRote, ComputerName(), LogUserName() ) 
+
+		Work->( dbSkip() )
+
+	EndDo
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	RestArea( aArea )
+	RestArea( aAreaSC5 )
+
+Return
