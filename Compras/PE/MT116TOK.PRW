@@ -19,6 +19,7 @@
 	@history  Ch. 051294 - Abel Babini - 27/08/2019 - Incluido condição OR para excluir CTE sem precisar validar Pedido de Compra 
 	@history  Ch. 052387 - Abel Babini - 08/10/2019 - Valida CTE x Pedido (Noemi)
 	@history  tkt T.I    - Sigoli      - 05/11/2021 - Tratamento errolog  - type mismatch on +=  on U_VLDPCCTE(RECNFECTE.PRW) 16/07/2021 12:02:18 line : 3632
+	@history Chamado 62250  - Leonardo P. Monteiro  - 23/11/2020 - Gravação da data de entrega da Nfe.
 */
 
 USER FUNCTION MT116TOK()
@@ -47,7 +48,7 @@ USER FUNCTION MT116TOK()
 	Private nPosProd   := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_COD" })
 	Private nPosTot    := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_TOTAL" })
 	Private nPosPedido := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_PEDIDO" }) //Chamado: 034249 Fernando Sigoli 29/09/2017
-	Private nPosItPed	:= ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_ITEMPC" }) //Chamado: 034249 Fernando Sigoli 29/09/2017
+	Private nPosItPed  := ASCAN(AHEADER, { |X| ALLTRIM(X[2]) == "D1_ITEMPC" }) //Chamado: 034249 Fernando Sigoli 29/09/2017
 	Private cNfOrig    := ''
 	Private cSerieOrig := ''
 	Private cForOrig   := ''
@@ -101,7 +102,9 @@ USER FUNCTION MT116TOK()
 					
 					aAdd(aXItPC,SC7->C7_ITEM) //Ch.050177 - Abel Babini - Ajuste na validação - 01/07/2019
 					RecLock( "SC7", .F. )
-					SC7->C7_QUJE := 1
+					SC7->C7_QUJE 	:= 1
+					//@history Chamado 62250  - Leonardo P. Monteiro  - 23/11/2020 - Gravação da data de entrega da Nfe.
+					SC7->C7_XDTENTR := dDatabase
 					MsunLock()
 					
 					SC7->(dbSkip())
@@ -235,7 +238,8 @@ USER FUNCTION MT116TOK()
 			If DbSeek(xFilial("SC7") + Alltrim(aCols[1,nPosPedido]))
 				While SC7->(!EOF()) .and. SC7->C7_FILIAL == xFilial("SC7") .and. SC7->C7_NUM == Alltrim(aCols[1,nPosPedido])
    					RecLock("SC7",.F.)
-					SC7->C7_QUJE := 1
+					SC7->C7_QUJE 	:= 1
+					SC7->C7_XDTENTR := dDatabase
 					MsunLock()  
    			 	SC7->(DbSkip())	
 				EndDo

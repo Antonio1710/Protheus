@@ -19,7 +19,8 @@
 	@history Ticket  TI     - FWNM         - 23/05/2019 - RECLAMACAO USUARIO VJCP15 DE QUE O RELATORIO NAO SAI DO LUGAR
 	@history Ticket  14094  - Everson      - 20/05/2021 - Adiconados mais 8 grupos de produtos
 	@history Ticket  14631  - Everson      - 27/05/2021 - Adiconado totalizador do grupo 6 no txt
-	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas
+	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas.
+	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
 	/*/
 User Function AD0012_DIA // U_AD0012_DIA()
 
@@ -42,6 +43,10 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	Private _Eof  		:= CHR(13)+CHR(10)
 	PRIVATE _cFilial 	:= ""
 	PRIVATE _lVnd		:= .F.
+
+	MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
+
+	return .f.
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de geracao de realizado de vendas das regioes')
 	

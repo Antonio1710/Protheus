@@ -9,6 +9,8 @@
 	@history Chamado 034249 - Fernando Sigoli - 30/09/2017 - Confirma a Exclusão da Nota de Conhecimento de Frete - CTE
 	@history Chamado 059025 - Abel Babini     - 30/06/2020 - Valida se a Emissão da NF está  dentro do parâmetro MV_#DTEMIS
 	@history Chamado 3886   - Everson  - 23/10/2020 - Declaração de variável devido a error log.
+	@history Chamado 62250  - Leonardo P. Monteiro  - 23/11/2020 - Gravação da data de entrega da Nfe.
+
 	/*/
 User Function MT116OK()
 	Local aArea	:= GetArea()
@@ -49,7 +51,9 @@ User Function MT116OK()
 				If DbSeek(xFilial("SC7") + cPedC )
 					While SC7->(!EOF()) .and. SC7->C7_FILIAL == xFilial("SC7") .and. SC7->C7_NUM == cPedC
 						RecLock("SC7",.F.)
-							SC7->C7_QUJE := 0
+							SC7->C7_QUJE 	:= 0
+							//@history Chamado 62250  - Leonardo P. Monteiro  - 23/11/2020 - Gravação da data de entrega da Nfe.
+							SC7->C7_XDTENTR := Stod("")
 						MsunLock()  
 						SC7->(DbSkip())	
 					EndDo
