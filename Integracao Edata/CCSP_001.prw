@@ -1,4 +1,3 @@
-#INCLUDE "Protheus.ch"
 #INCLUDE "ParmType.ch"
 #INCLUDE "topconn.ch"
 #INCLUDE "PROTHEUS.CH"
@@ -63,6 +62,7 @@ Static cHK				:= "&"
 	@history TICKET 4276    - William Costa   - 29/10/2020 - Retorno das funçoes de alterado todos os begintran() endTran para begin Transaction END Transaction, não utiliza mais a função
 	@history TICKET 4276    - William Costa   - 30/10/2020 - Adicionado mensagem de cErro quando a variavel que validade se o pedido está liberado por credito ou estoque é preenchida com falso
 	@history ticket 9122    - Fernando Maciei - 09/02/2021 - melhoria no envio Carga EDATA
+	@history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
 /*/
 User Function CCSP_001()
 
@@ -166,6 +166,7 @@ Static Function E001Proces()
 	Private aLstPED		:= {}																		//Lista de notas fiscais selecionadas
 	Private aHeader01	:= {}
 	Private _aDados01	:= {}
+	Private cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 	#IFDEF TOP
 	lTop := .T.
@@ -554,6 +555,9 @@ Return Nil
 Static Function CCS_001P(oTela)
 
 	Local lRet				:= .T.
+	Local _nx				:= 0
+	Local _xx				:= 0
+	Local _nPedDiv			:= 0
 	Local aArea				:= {}
 	Local ni				:= 0
 	Local cChave			:= ""
@@ -566,273 +570,296 @@ Static Function CCS_001P(oTela)
 	Local ncontPedTot       := 0
 	Local ncontPedNor       := 0
 	Local ncontPedDiv       := 0
+	Local lVldEnv			:= SuperGetMV("MV_ZSP001A",,.T.)
 
-	Private cFilia         := ""
+	Private cFilia         	:= ""
 
-	PARAMTYPE 0	VAR oTela	AS Object	OPTIONAL	DEFAULT Nil
+	// @history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
+	If !LockByName("CCS_001P", .T., .F.) .AND. lVldEnv
+	    u_GrLogZBE(Date(),TIME(),cUserName,"Lockbyname executado para a rotina CCS_001P.","SIGAFAT","CCS_001P",;
+			    "Rotina já iniciada por outro usuário através da rotina CCS_001P. ",ComputerName(),LogUserName())
+        
+        MsgInfo("Rotina sendo executada por outro usuário! Aguarde o término da execução.", "..:: Em execução ::.. ")
+    else
 
-	If Empty(aLstPED) .OR. ValType(aLstPED) # "A"
-		Return !lRet
-	Endif
+		PARAMTYPE 0	VAR oTela	AS Object	OPTIONAL	DEFAULT Nil
 
-	//Montar a lista de contabilizacao  
-	
-	cData	 := ""
-	cRoteiro := ""
-	cPlaca	 := ""
-
-	//Mauricio - 26/06/2017 - chamado 35017 - INICIO - Não processar se existir mais de um pedido DIVERSOS com roteiros iguais. Roteiros devem ser diferentes.
-	_aPedDiv := {}
-	For _nx := 1 to len(aLstPED)
-
-		fchkped(aLstPED[_nx][4],aLstPED[_nx][5],aLstPED[_nx][10]) 
-		cFilia := aLstPED[_nx][10]
-
-	Next _nx
-
-	If Len(_aPedDiv) > 0  // tem pedido diversos. Cada linha eh uma data de entrega + roteiro + pedido diferente.
-		_aRotDiv := {}
-		l_Ret := .F.
-		For _xx := 1 to len(_aPedDiv)
-			_nAscan := Ascan( _aRotDiv, { |x|x[ 01 ] == _aPedDiv[_xx][1]+_aPedDiv[_xx][2] } )
-			If _nAscan <= 00
-				Aadd( _aRotDiv, { _aPedDiv[_xx][1]+_aPedDiv[_xx][2] } )
-			Else             //achou data de entrega + roteiro repetido
-				l_Ret := .T.
-			Endif
-		Next _xx
-
-		If l_Ret
-			MsgInfo("Existem pedidos DIVERSOS com roteiros IGUAIS! Corrija isso antes do envio ao Edata.","Atenção")
-			Return !lRet   
+		If Empty(aLstPED) .OR. ValType(aLstPED) # "A"
+			Return !lRet
 		Endif
-	Endif   
 
-	For ni := 1 to Len(aLstPED)                   
+		//Montar a lista de contabilizacao  
+		
+		cData	 := ""
+		cRoteiro := ""
+		cPlaca	 := ""
 
-		If !(aLstPED[ni][8] $ "1|2|4| " )
-			cMens += "- Roteiro não processado, enviado anteriormente Roteiro: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF
-		Else
+		//Mauricio - 26/06/2017 - chamado 35017 - INICIO - Não processar se existir mais de um pedido DIVERSOS com roteiros iguais. Roteiros devem ser diferentes.
+		_aPedDiv := {}
+		For _nx := 1 to len(aLstPED)
 
-			If cData+cRoteiro+cPlaca <> AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2])+AllTrim(aLstPED[ni][3])
+			fchkped(aLstPED[_nx][4],aLstPED[_nx][5],aLstPED[_nx][10]) 
+			cFilia := aLstPED[_nx][10]
 
-				//Salva Roteiro em processamento
-				cData	    := AllTrim(Dtos(aLstPED[ni][1]))
-				cRoteiro    := AllTrim(aLstPED[ni][2])
-				cPlaca	    := AllTrim(aLstPED[ni][3])
-				cErro       := ""      
-				lCargaOk    := .F.
-				cPed        := ''
-				cProduto    := ''
-				ncontPedTot := 0
-				ncontPedNor := 0
-				ncontPedDiv := 0
+		Next _nx
 
-				// * INICIO VERIFICACAO SE A CARGA JA FOI ENVIADA PARA O  EDATA - WILLIAM COSTA *//
+		If Len(_aPedDiv) > 0  // tem pedido diversos. Cada linha eh uma data de entrega + roteiro + pedido diferente.
+			_aRotDiv := {}
+			l_Ret := .F.
+			_nPedDiv	:= _aPedDiv
+			For _xx := 1 to _nPedDiv
+				_nAscan := Ascan( _aRotDiv, { |x|x[ 01 ] == _aPedDiv[_xx][1]+_aPedDiv[_xx][2] } )
+				If _nAscan <= 00
+					Aadd( _aRotDiv, { _aPedDiv[_xx][1]+_aPedDiv[_xx][2] } )
+				Else             //achou data de entrega + roteiro repetido
+					l_Ret := .T.
+				Endif
+			Next _xx
 
-				// ** INICIO VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
+			If l_Ret
+				MsgInfo("Existem pedidos DIVERSOS com roteiros IGUAIS! Corrija isso antes do envio ao Edata.","Atenção")
+				Return !lRet   
+			Endif
+		Endif   
 
-				cQuery := " SELECT IE_PEDIVEND, "
-				cQuery += "        ID_CARGEXPE, "
-				cQuery += "        GN_PLACVEICTRAN, "
-				cQuery += "        ROTEIRO, " 
-				cQuery += "        DT_ENTRPEDIVEND "
-				cQuery += "   FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_02] "
-				cQuery += "  WHERE ROTEIRO         = " + "'" + ALLTRIM(cRoteiro) + "'"
-				cQuery += "    AND DT_ENTRPEDIVEND = " + "'" + ALLTRIM(cData)    + "'"
+		For ni := 1 to Len(aLstPED)                   
 
-				dbUseArea( .T., "TOPCONN", TCGenQry( ,, cQuery ), "TRB", .F., .T. )             
+			If !(aLstPED[ni][8] $ "1|2|4| " )
+				cMens += "- Roteiro não processado, enviado anteriormente Roteiro: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF
+			Else
 
-				While TRB->(!EOF())
+				If cData+cRoteiro+cPlaca <> AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2])+AllTrim(aLstPED[ni][3])
 
-					IF TRB->ID_CARGEXPE > 0 //so retorna erro se tiver informacao da carga na tabela do edata
+					//Salva Roteiro em processamento
+					cData	    := AllTrim(Dtos(aLstPED[ni][1]))
+					cRoteiro    := AllTrim(aLstPED[ni][2])
+					cPlaca	    := AllTrim(aLstPED[ni][3])
+					cErro       := ""      
+					lCargaOk    := .F.
+					cPed        := ''
+					cProduto    := ''
+					ncontPedTot := 0
+					ncontPedNor := 0
+					ncontPedDiv := 0
 
-						cErro += "Carga não enviada para o EDATA, j?existe a carga no Edata, favor estornar antes de enviar novamente, favor verificar!!! " + CRLF
+					// Valida se a carga já existe no eData.
+					fExistCarg(@lCargaOk)
+					
+					// Valida se a carga já existe no eData e não foi encerrada.
+					fEnceCarg(@lCargaOk)
 
-						IF VAL(AllTrim(aLstPED[ni][7])) == TRB->ID_CARGEXPE .OR. ;
-						AllTrim(aLstPED[ni][7])      == ''
+					// *** INICIO CHAMADO 038577 WILLIAM COSTA *** //
+					// *** INICIO VERIFICA SE EXISTE CARGA DIVERSA EM CARGA NORMAL *** //
+					SqlVerifRoteiro(cData,cRoteiro) //ve quantos pedidos tem no roteiro
+					
+					While TDIX->(!EOF())
 
-							lCargaOk := .T.  
+						IF TDIX->CONT_PED > 0
 
-						ENDIF	    
-					ENDIF
-					TRB->(dbSkip())
-				ENDDO
-				TRB->(dbCloseArea())	
-				// ** FINAL VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
+							ncontPedTot := ncontPedTot + TDIX->CONT_PED   //Quantidade de Pedidos Normais
 
-			    
-				//Inicio. Chamado: 049906  Fernando Sigoli 24/06/2019
-				cQry := " SELECT IE_PEDIVEND, "
-				cQry += "        ID_CARGEXPE, "
-				cQry += "        GN_PLACVEICTRAN, "
-				cQry += "        ROTEIRO, " 
-				cQry += "        DT_ENTRPEDIVEND "
-				cQry += "   FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_03] "
-				cQry += "   WHERE FL_STATCARGEXPE   <> 'FE' "
-				cQry += "   AND GN_PLACVEICTRAN = " + "'" + ALLTRIM(cPlaca) + "'"
+						ENDIF     
 
-				dbUseArea( .T., "TOPCONN", TCGenQry( ,, cQry ), "TRF", .F., .T. )             
+						IF TDIX->CONT_NORMAL > 0
 
-				While TRF->(!EOF())
+							ncontPedNor := ncontPedNor + TDIX->CONT_NORMAL   //Quantidade de Pedidos Normais
 
-					IF TRF->ID_CARGEXPE > 0 //so retorna erro se tiver informacao da carga na tabela do edata
+						ENDIF
 
-						cErro += "Carga não enviada, carga: " + cvaltochar(TRF->ID_CARGEXPE) + " nao encerrada no EDATA para este veiculo " +ALLTRIM(cPlaca)+ ", favor verificar!!! " + CRLF  //Chamado: 049906  Fernando Sigoli 27/06/2019	
+						IF TDIX->CONT_DIVERSOS > 0
 
-						IF VAL(AllTrim(aLstPED[ni][7])) == TRF->ID_CARGEXPE .OR. ;
-						AllTrim(aLstPED[ni][7])      == ''
+							ncontPedDiv := ncontPedDiv + TDIX->CONT_DIVERSOS //Quantidade de Pedidos Diversos
 
-							lCargaOk := .T.  
-
-						ENDIF	    
-					ENDIF
-				TRF->(dbSkip())
-				ENDDO
-				TRF->(dbCloseArea())	
-				
-				//Fim. Chamado: 049906  Fernando Sigoli 24/06/2019
-				
-				
-				// *** INICIO CHAMADO 038577 WILLIAM COSTA *** //
-				// *** INICIO VERIFICA SE EXISTE CARGA DIVERSA EM CARGA NORMAL *** //
-				SqlVerifRoteiro(cData,cRoteiro) //ve quantos pedidos tem no roteiro
-				
-				While TDIX->(!EOF())
-
-					IF TDIX->CONT_PED > 0
-
-						ncontPedTot := ncontPedTot + TDIX->CONT_PED   //Quantidade de Pedidos Normais
-
-					ENDIF     
-
-					IF TDIX->CONT_NORMAL > 0
-
-						ncontPedNor := ncontPedNor + TDIX->CONT_NORMAL   //Quantidade de Pedidos Normais
-
-					ENDIF
-
-					IF TDIX->CONT_DIVERSOS > 0
-
-						ncontPedDiv := ncontPedDiv + TDIX->CONT_DIVERSOS //Quantidade de Pedidos Diversos
-
-					ENDIF     
-					TDIX->(dbSkip())
-
-				ENDDO
-				TDIX->(dbCloseArea())
-
-				IF ncontPedNor > 0 .AND. ncontPedDiv > 0 //significa que tem mais de um pedido no roteiro
-
-					SqlVerifDiversos(cData,cRoteiro)
-					While TDIZ->(!EOF())
-
-						cPed := cPed + TDIZ->C5_NUM + ', '
-
-						TDIZ->(dbSkip())
+						ENDIF     
+						TDIX->(dbSkip())
 
 					ENDDO
-					TDIZ->(dbCloseArea())
+					TDIX->(dbCloseArea())
 
-					cErro += "Ol?" + cNomeUs + ", Existem pedidos DIVERSOS e pedidos normais dentro do mesmo Roteiro! Corrija isso antes do envio ao Edata." + " Pedidos: " + cPed + "não pode ficar junto com os outros. Pedidos Diversos C5_XTIPO == 2" + CRLF
+					IF ncontPedNor > 0 .AND. ncontPedDiv > 0 //significa que tem mais de um pedido no roteiro
 
-				ENDIF
+						SqlVerifDiversos(cData,cRoteiro)
+						While TDIZ->(!EOF())
 
-				// *** FINAL VERIFICA SE EXISTE CARGA DIVERSA EM CARGA NORMAL *** //
+							cPed := cPed + TDIZ->C5_NUM + ', '
 
-				// *** INICIO VERIFICA SE TODOS OS PRODUTOS QUE SERAO ENVIADOS ESTAO NO EDATA *** //
+							TDIZ->(dbSkip())
 
-				IF ncontPedTot <> ncontPedDiv //significa que o pedidos sao normais
+						ENDDO
+						TDIZ->(dbCloseArea())
 
-					SqlVerifProdutos(cData,cRoteiro)
-					While TDJA->(!EOF())
+						cErro += "Olá" + cNomeUs + ", Existem pedidos DIVERSOS e pedidos normais dentro do mesmo Roteiro! Corrija isso antes do envio ao Edata." + " Pedidos: " + cPed + "não pode ficar junto com os outros. Pedidos Diversos C5_XTIPO == 2" + CRLF
 
-						IF ALLTRIM(TDJA->IE_MATEEMBA) == '' //significa que o produto não esta cadastrado no Edata
+					ENDIF
 
-							cProduto := cProduto + ALLTRIM(TDJA->C6_PRODUTO) + ', '
+					// *** FINAL VERIFICA SE EXISTE CARGA DIVERSA EM CARGA NORMAL *** //
 
-						ENDIF    
-						TDJA->(dbSkip())
+					// *** INICIO VERIFICA SE TODOS OS PRODUTOS QUE SERAO ENVIADOS ESTAO NO EDATA *** //
 
-					ENDDO
-					TDJA->(dbCloseArea())
+					IF ncontPedTot <> ncontPedDiv //significa que o pedidos sao normais
 
-				ENDIF	
+						SqlVerifProdutos(cData,cRoteiro)
+						While TDJA->(!EOF())
 
-				IF !EMPTY(cProduto)
+							IF ALLTRIM(TDJA->IE_MATEEMBA) == '' //significa que o produto não esta cadastrado no Edata
 
-					cErro += "Ol?" + cNomeUs + ", Existe Produto nesse Roteiro que não est?cadastrado no Edata! Corrija isso antes do envio ao Edata." + " Produto: " + cProduto + "Verifique com o PCP" + CRLF
+								cProduto := cProduto + ALLTRIM(TDJA->C6_PRODUTO) + ', '
 
-				ENDIF	
+							ENDIF    
+							TDJA->(dbSkip())
 
-				// *** FINAL VERIFICA SE TODOS OS PRODUTOS QUE SERAO ENVIADOS ESTAO NO EDATA *** //
-
-				// *** FINAL CHAMADO 038577 WILLIAM COSTA *** //				
-
-				IF Empty(cErro)
-
-					//Cria sequencia edata
-					aRet := CCSP_001S (cData,cRoteiro,cPlaca)
-					If 	aRet[1]
-						cSeq := aRet[2]
-					Else
-						cMens += "- Roteiro não processado, erro no sequenciamento do edata: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF			
-						loop
-					EndIf                 
-
-				ENDIF
-
-			    BEGIN TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020                     
-
-				IF Empty(cErro) 
-
-					//Executa a Stored Procedure
-					//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq)) )  // sigoli 13/02/2017
-					TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'")
-					cErro := ""
-					cErro := U_RetErroED() 
-
-				ENDIF
-
-				If Empty(cErro)
-					// Flag pedido	   
-					CCSP_001F (cData,cRoteiro,cPlaca,"3","OK")
-					lCargaOk := .T.
-				Else
-					DisarmTransaction() //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020
-					// Flag pedido	   
-					cMens += "- Roteiro não processado: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
-
-					IF lCargaOk == .F.
-
-						CCSP_001F (cData,cRoteiro,cPlaca,"4",cErro)							
+						ENDDO
+						TDJA->(dbCloseArea())
 
 					ENDIF	
 
-				Endif								
-				
-				END TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  					  
+					IF !EMPTY(cProduto)
 
-			EndIf	        
+						cErro += "Olá" + cNomeUs + ", Existe Produto nesse Roteiro que não est?cadastrado no Edata! Corrija isso antes do envio ao Edata." + " Produto: " + cProduto + "Verifique com o PCP" + CRLF
+
+					ENDIF	
+
+					// *** FINAL VERIFICA SE TODOS OS PRODUTOS QUE SERAO ENVIADOS ESTAO NO EDATA *** //
+
+					// *** FINAL CHAMADO 038577 WILLIAM COSTA *** //				
+
+					IF Empty(cErro)
+
+						//Cria sequencia edata
+						aRet := CCSP_001S (cData,cRoteiro,cPlaca)
+						If 	aRet[1]
+							cSeq := aRet[2]
+						Else
+							cMens += "- Roteiro não processado, erro no sequenciamento do edata: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF			
+							loop
+						EndIf                 
+
+					ENDIF
+
+					BEGIN TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020                     
+
+					IF Empty(cErro) 
+
+						//Executa a Stored Procedure
+						//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq)) )  // sigoli 13/02/2017
+						TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'")
+						cErro := ""
+						cErro := U_RetErroED() 
+
+					ENDIF
+
+					If Empty(cErro)
+						// Flag pedido	   
+						CCSP_001F (cData,cRoteiro,cPlaca,"3","OK")
+						lCargaOk := .T.
+					Else
+						DisarmTransaction() //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020
+						// Flag pedido	   
+						cMens += "- Roteiro não processado: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
+
+						IF lCargaOk == .F.
+
+							CCSP_001F (cData,cRoteiro,cPlaca,"4",cErro)							
+
+						ENDIF	
+
+					Endif								
+					
+					END TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  					  
+
+				EndIf	        
+			Endif
+
+			//envio carga edata
+			u_GrLogZBE(Date(),TIME(),cUserName,"INTEGRACAO CARGA EDATA","LOGISTICA","CCS_001P",;
+			" CHAVE "+AllTrim(Dtos(aLstPED[ni][1]))+" "+AllTrim(aLstPED[ni][2])+" "+AllTrim(aLstPED[ni][3])+" "+AllTrim(aLstPED[ni][4]),ComputerName(),LogUserName()) 
+
+
+		Next ni
+
+		If !Empty(cMens)
+			cMens := "Lista de itens que não foram processados : " + CRLF + cMens
+			U_ExTelaMen(cRotDesc,cMens,"Arial",10,,.F.,.T.)
 		Endif
 
-		//envio carga edata
-		u_GrLogZBE(Date(),TIME(),cUserName,"INTEGRACAO CARGA EDATA","LOGISTICA","CCS_001P",;
-		" CHAVE "+AllTrim(Dtos(aLstPED[ni][1]))+" "+AllTrim(aLstPED[ni][2])+" "+AllTrim(aLstPED[ni][3])+" "+AllTrim(aLstPED[ni][4]),ComputerName(),LogUserName()) 
-
-
-	Next ni
-
-	If !Empty(cMens)
-		cMens := "Lista de itens que não foram processados : " + CRLF + cMens
-		U_ExTelaMen(cRotDesc,cMens,"Arial",10,,.F.,.T.)
-	Endif
+		UnLockByName("CCS_001P")
+	endif
 
 	If oTela # Nil
 		oTela:SetFocus()
 	Endif
 
 Return lRet
+
+Static Function fEnceCarg(lCargaOk)
+
+	//Inicio. Chamado: 049906  Fernando Sigoli 24/06/2019
+	cQry := " SELECT IE_PEDIVEND, "
+	cQry += "        ID_CARGEXPE, "
+	cQry += "        GN_PLACVEICTRAN, "
+	cQry += "        ROTEIRO, " 
+	cQry += "        DT_ENTRPEDIVEND "
+	cQry += "   FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_ERRO_03] "
+	cQry += "   WHERE FL_STATCARGEXPE   <> 'FE' "
+	cQry += "   AND GN_PLACVEICTRAN = " + "'" + ALLTRIM(cPlaca) + "'"
+
+	dbUseArea( .T., "TOPCONN", TCGenQry( ,, cQry ), "TRF", .F., .T. )             
+
+	While TRF->(!EOF())
+
+		IF TRF->ID_CARGEXPE > 0 //so retorna erro se tiver informacao da carga na tabela do edata
+
+			cErro += "Carga não enviada, carga: " + cvaltochar(TRF->ID_CARGEXPE) + " nao encerrada no EDATA para este veiculo " +ALLTRIM(cPlaca)+ ", favor verificar!!! " + CRLF  //Chamado: 049906  Fernando Sigoli 27/06/2019	
+
+			IF VAL(AllTrim(aLstPED[ni][7])) == TRF->ID_CARGEXPE .OR. ;
+			AllTrim(aLstPED[ni][7])      == ''
+
+				lCargaOk := .T.  
+
+			ENDIF	    
+		ENDIF
+	TRF->(dbSkip())
+	ENDDO
+	TRF->(dbCloseArea())	
+	
+	//Fim. Chamado: 049906  Fernando Sigoli 24/06/2019
+return
+
+
+Static Function fExistCarg(lCargaOk)
+	// * INICIO VERIFICACAO SE A CARGA JA FOI ENVIADA PARA O  EDATA - WILLIAM COSTA *//
+	// ** INICIO VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
+
+	cQuery := " SELECT IE_PEDIVEND, "
+	cQuery += "        ID_CARGEXPE, "
+	cQuery += "        GN_PLACVEICTRAN, "
+	cQuery += "        ROTEIRO, " 
+	cQuery += "        DT_ENTRPEDIVEND "
+	cQuery += "   FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_ERRO_02] "
+	cQuery += "  WHERE ROTEIRO         = " + "'" + ALLTRIM(cRoteiro) + "'"
+	cQuery += "    AND DT_ENTRPEDIVEND = " + "'" + ALLTRIM(cData)    + "'"
+
+	dbUseArea( .T., "TOPCONN", TCGenQry( ,, cQuery ), "TRB", .F., .T. )             
+
+	While TRB->(!EOF())
+
+		IF TRB->ID_CARGEXPE > 0 //so retorna erro se tiver informacao da carga na tabela do edata
+
+			cErro += "Carga não enviada para o EDATA, j?existe a carga no Edata, favor estornar antes de enviar novamente, favor verificar!!! " + CRLF
+
+			IF VAL(AllTrim(aLstPED[ni][7])) == TRB->ID_CARGEXPE .OR. ;
+			AllTrim(aLstPED[ni][7])      == ''
+
+				lCargaOk := .T.  
+
+			ENDIF	    
+		ENDIF
+		TRB->(dbSkip())
+	ENDDO
+	TRB->(dbCloseArea())	
+	// ** FINAL VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
+
+return
 
 /*/{Protheus.doc} User Function CCS_001E
 	Rotina de estorno processamento de registros selecionados
@@ -852,91 +879,173 @@ Static Function CCS_001E(oTela)
 	Local cRest01			:= ""
 	Local cQuery            := "" 
 
-	PARAMTYPE 0	VAR oTela	AS Object	OPTIONAL	DEFAULT Nil
+	// @history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
+	If !LockByName("CCS_001E", .T., .F.) .AND. lVldEnv
+	    u_GrLogZBE(Date(),TIME(),cUserName,"Lockbyname executado para a rotina CCS_001E.","SIGAFAT","CCS_001E",;
+			    "Rotina já iniciada por outro usuário através da função CCS_001E. ",ComputerName(),LogUserName())
+        
+        MsgInfo("Rotina sendo executada por outro usuário! Aguarde o término da execução.", "..:: Em execução ::.. ")
+    else
 
-	If Empty(aLstPED) .OR. ValType(aLstPED) # "A"
-		Return !lRet
-	Endif
+		PARAMTYPE 0	VAR oTela	AS Object	OPTIONAL	DEFAULT Nil
 
-	//Montar a lista de contabilizacao  
-	
-	cSeq	 := ""
-
-	For ni := 1 to Len(aLstPED)                   
-
-		If !(aLstPED[ni][8] $ "3" )
-			cMens += "- Roteiro não pode ser estornado pois ainda não foi processado: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF
-		Else
-
-			If cSeq <> AllTrim(aLstPED[ni][7])
-
-				//Salva Roteiro em processamento
-				cData	 := AllTrim(Dtos(aLstPED[ni][1]))
-				cRoteiro := AllTrim(aLstPED[ni][2])
-				cPlaca	 := AllTrim(aLstPED[ni][3])
-				cSeq	 := AllTrim(aLstPED[ni][7])
-
-				BEGIN TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  
-				//Executa a Stored Procedure
-				//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq)) )  // Chamado : 034776 sigoli 19/04/2017
-				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'") 
-				cErro := ""
-				cErro := U_RetErroED() 
-
-				END TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  	
-
-				// ** INICIO VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
-
-				cQuery := " SELECT COUNT(*) AS TOTAL"
-				cQuery +=   " FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_02] "
-				cQuery +=  " WHERE ROTEIRO         = " + "'" + ALLTRIM(cRoteiro) + "'"
-				cQuery +=    " AND DT_ENTRPEDIVEND = " + "'" + ALLTRIM(cData)    + "'"
-
-				dbUseArea( .T., "TOPCONN", TCGenQry( ,, cQuery ), "TRB", .F., .T. )             
-
-				While TRB->(!EOF())
-
-					IF TRB->TOTAL > 0 //so retorna erro se tiver informacao da carga na tabela do edata
-
-						cErro += "Carga não estorna do EDATA, favor verificar!!! (LIGUE PARA O SUPORTE EDATA) "
-
-					Endif
-					TRB->(dbSkip())
-				ENDDO
-				TRB->(dbCloseArea())	
-
-				// ** FINAL VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //				
-
-				If Empty(cErro)
-
-					// Flag pedido	   
-					CCSP_001F (cData,cRoteiro,cPlaca,"2","OK")
-
-				Else
-
-					// Flag pedido	   
-					cMens += "- Roteiro não estornado: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
-					//CCSP_001F (cData,cRoteiro,cPlaca,"4",cErro)							
-
-				Endif
-			EndIf	        
+		If Empty(aLstPED) .OR. ValType(aLstPED) # "A"
+			Return !lRet
 		Endif
 
-		u_GrLogZBE(Date(),TIME(),cUserName,"ESTORNO CARGA EDATA","LOGISTICA","CCS_001E",;
-		" CHAVE "+AllTrim(Dtos(aLstPED[ni][1]))+" "+AllTrim(aLstPED[ni][2])+" "+AllTrim(aLstPED[ni][3])+" "+AllTrim(aLstPED[ni][4]),ComputerName(),LogUserName()) 
+		//Montar a lista de contabilizacao  
+		
+		cSeq	 := ""
 
-	Next ni
+		For ni := 1 to Len(aLstPED)                   
 
-	If !Empty(cMens)
-		cMens := "Lista de itens que não foram processados : " + CRLF + cMens
-		U_ExTelaMen(cRotDesc,cMens,"Arial",10,,.F.,.T.)
-	Endif
+			If !(aLstPED[ni][8] $ "3" )
+				cMens += "- Roteiro não pode ser estornado pois ainda não foi processado: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF
+			
+			// @history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
+			elseif fVldEst(aLstPED[ni][7])
+				cMens += "- Roteiro não pode ser estornado pois existe paletes vinculados a carga: [" + AllTrim(aLstPED[ni][7]) + "]."+Chr(13)+Chr(10)+" Solicite ao setor de Expedição que estorne as cargas vinculadas." + CRLF
+			elseif fVldLei(aLstPED[ni][7])
+				cMens += "- Desmarcar no eData a leitura da observação da carga número [" + AllTrim(aLstPED[ni][7]) + "]."+Chr(13)+Chr(10)+" Solicite ao setor de Expedição que retire o registro de leitura." + CRLF
+			elseif fVldlPe(aLstPED[ni][7])
+				cMens += "- Desmarcar no eData a leitura da observação do pedido contido na carga número [" + AllTrim(aLstPED[ni][7]) + "]."+Chr(13)+Chr(10)+" Solicite ao setor de Expedição que retire o registro de leitura do pedido de venda." + CRLF
+			Else
 
-	If oTela # Nil
-		oTela:SetFocus()
-	Endif
+				If cSeq <> AllTrim(aLstPED[ni][7])
+
+					//Salva Roteiro em processamento
+					cData	 := AllTrim(Dtos(aLstPED[ni][1]))
+					cRoteiro := AllTrim(aLstPED[ni][2])
+					cPlaca	 := AllTrim(aLstPED[ni][3])
+					cSeq	 := AllTrim(aLstPED[ni][7])
+
+					BEGIN TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  
+					//Executa a Stored Procedure
+					//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq)) )  // Chamado : 034776 sigoli 19/04/2017
+					TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'") 
+					cErro := ""
+					cErro := U_RetErroED() 
+
+					END TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  	
+
+					// ** INICIO VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
+
+					cQuery := " SELECT COUNT(*) AS TOTAL"
+					cQuery +=   " FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_ERRO_02] "
+					cQuery +=  " WHERE ROTEIRO         = " + "'" + ALLTRIM(cRoteiro) + "'"
+					cQuery +=    " AND DT_ENTRPEDIVEND = " + "'" + ALLTRIM(cData)    + "'"
+
+					dbUseArea( .T., "TOPCONN", TCGenQry( ,, cQuery ), "TRB", .F., .T. )             
+
+					While TRB->(!EOF())
+
+						IF TRB->TOTAL > 0 //so retorna erro se tiver informacao da carga na tabela do edata
+
+							cErro += "Carga não estorna do EDATA, favor verificar!!! (LIGUE PARA O SUPORTE EDATA) "
+
+						Endif
+						TRB->(dbSkip())
+					ENDDO
+					TRB->(dbCloseArea())	
+
+					// ** FINAL VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //				
+
+					If Empty(cErro)
+
+						// Flag pedido	   
+						CCSP_001F (cData,cRoteiro,cPlaca,"2","OK")
+
+					Else
+
+						// Flag pedido	   
+						cMens += "- Roteiro não estornado: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
+						//CCSP_001F (cData,cRoteiro,cPlaca,"4",cErro)							
+
+					Endif
+				EndIf	        
+			Endif
+
+			u_GrLogZBE(Date(),TIME(),cUserName,"ESTORNO CARGA EDATA","LOGISTICA","CCS_001E",;
+			" CHAVE "+AllTrim(Dtos(aLstPED[ni][1]))+" "+AllTrim(aLstPED[ni][2])+" "+AllTrim(aLstPED[ni][3])+" "+AllTrim(aLstPED[ni][4]),ComputerName(),LogUserName()) 
+
+		Next ni
+
+		If !Empty(cMens)
+			cMens := "Lista de itens que não foram processados : " + CRLF + cMens
+			U_ExTelaMen(cRotDesc,cMens,"Arial",10,,.F.,.T.)
+		Endif
+
+		If oTela # Nil
+			oTela:SetFocus()
+		Endif
+		
+		UnLockByName("CCS_001E")	
+	endif
 
 Return lRet
+
+Static Function fVldEst(cSeqCarg)
+	Local lRet := .F.
+
+	cQuery := " SELECT COUNT(*) CONTADOR "
+  	cQuery += " FROM ["+ cLnkSrv +"].[SMART].[dbo].[EXPEDICAO_CARGA_PALETE] "
+	cQuery += " WHERE [ID_CARGEXPE] = '"+ Alltrim(cSeqCarg) +"'; "
+
+	TCQUERY cQuery ALIAS "TRB" NEW
+
+	While TRB->(!EOF())
+
+		IF TRB->CONTADOR > 0
+			lRet := .T.
+		ENDIF
+		TRB->(dbSkip())
+	ENDDO
+
+	TRB->(dbCloseArea())	
+	
+return lRet
+
+Static Function fVldLei(cSeqCarg)
+	Local lRet := .F.
+
+	cQuery := " SELECT COUNT(*) CONTADOR "
+  	cQuery += " FROM ["+ cLnkSrv +"].[SMART].[dbo].[EXPEDICAO_CARGA_LEIT_OBSE] "
+	cQuery += " WHERE [ID_CARGEXPE] = '"+ Alltrim(cSeqCarg) +"'; "
+
+	TCQUERY cQuery ALIAS "TRB" NEW
+
+	While TRB->(!EOF())
+
+		IF TRB->CONTADOR > 0
+			lRet := .T.
+		ENDIF
+		TRB->(dbSkip())
+	ENDDO
+
+	TRB->(dbCloseArea())	
+	
+return lRet
+
+Static Function fVldlPe(cSeqCarg)
+	Local lRet := .F.
+
+	cQuery := " SELECT COUNT(*) CONTADOR "
+  	cQuery += " FROM ["+ cLnkSrv +"].[SMART].[dbo].[PEDIDO_VENDA_LEIT_OBSE_EXPE] "
+	cQuery += " WHERE [ID_CARGEXPE] = '"+ Alltrim(cSeqCarg) +"'; "
+
+	TCQUERY cQuery ALIAS "TRB" NEW
+
+	While TRB->(!EOF())
+
+		IF TRB->CONTADOR > 0
+			lRet := .T.
+		ENDIF
+		TRB->(dbSkip())
+	ENDDO
+
+	TRB->(dbCloseArea())	
+	
+return lRet
 
 /*/{Protheus.doc} User Function CCS_001T 
 	Troca de Placa
@@ -990,7 +1099,7 @@ Static Function CCS_001T(oTela)
 
 				//Executa a Stored Procedure de estorno
 				//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq)) ) // Chamado : 034776 sigoli 19/04/2017
-				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'") 
+				TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'") 
 				cErro := ""
 				cErro := U_RetErroED()
 
@@ -999,7 +1108,7 @@ Static Function CCS_001T(oTela)
 				// ** INICIO VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
 
 				cQuery := " SELECT COUNT(*) AS TOTAL"
-				cQuery +=   " FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_02] "
+				cQuery +=   " FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_ERRO_02] "
 				cQuery +=  " WHERE ROTEIRO         = " + "'" + ALLTRIM(cRoteiro) + "'"
 				cQuery +=    " AND DT_ENTRPEDIVEND = " + "'" + ALLTRIM(cData)    + "'"
 
@@ -1035,7 +1144,7 @@ Static Function CCS_001T(oTela)
 
 					//Executa a Stored Procedure de envio
 					//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq)) )  // sigoli 13/02/2017
-					TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'")
+					TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'")
 					cErro := ""
 					cErro := U_RetErroED()
 
@@ -1044,7 +1153,7 @@ Static Function CCS_001T(oTela)
 					// ** INICIO VERIFICACAO SE A CARGA FOI DELETADA NO EDATA - WILLIAM COSTA ** //
 
 					cQuery := " SELECT COUNT(*) AS TOTAL"
-					cQuery +=   " FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_02] "
+					cQuery +=   " FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_ERRO_02] "
 					cQuery +=  " WHERE ROTEIRO         = " + "'" + ALLTRIM(cRoteiro) + "'"
 					cQuery +=    " AND DT_ENTRPEDIVEND = " + "'" + ALLTRIM(cData)    + "'"
 

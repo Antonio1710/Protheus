@@ -18,6 +18,8 @@
 	@history Tkt.62460 - ABEL BABINI - 09/11/2021 - Somar o valor do frete de todos os pedidos retornados.
 	@history Tkt.63294 - JONATHAN CARVALHO - 10/11/2021 - Criado if para não somar o valor duplicado do mesmo pedido
 	@history Tkt.62460 - ABEL BABINI - 22/11/2021 - Conforme conversa com a Rosangela em 22/11/2021, alterar a regra para apenas se o valor das despesas do XML for maior que o valor das despesas do Pedido.
+	@history Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
+	@history Tkt.64073 - ABEL BABINI - 23/11/2021 - Alteração na regra do IPI para não utilizar o campo de valor do IPI, mas calcular o valor baseado na aliquota.
 /*/
 
 User Function MT103PN     
@@ -39,6 +41,13 @@ Local nRgSC7		:= 0
 Local nValFrPC	:= 0 //Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
 //FIM Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
 Local cnumPedi      := ' '
+
+//INICIO Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
+Local _cNFOri := ""
+Local _cSrOri := ""
+Local _cItOri := ""
+Local cQrySD1 := ""
+//FIM Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
 
 If l103Class
 	if MAFISRET(,"NF_FRETE") = 0 .and. SF1->F1_FRETE > 0
@@ -79,7 +88,7 @@ If l103Class
 	Endif
 	
 	cAl103C7:=GetNextAlias()
-	
+	//Tkt.64073 - ABEL BABINI - 23/11/2021 - Alteração na regra do IPI para não utilizar o campo de valor do IPI, mas calcular o valor baseado na aliquota.
 	BeginSQL  Alias cAl103C7
 		SELECT 
 			SC7.C7_MOEDA,
@@ -100,7 +109,7 @@ If l103Class
 				AND SC7B.D_E_L_E_T_ = ''), 0) AS FRETEPC2,
 			//Atendendo o ticket 63068 JONATHAN.CARVALHO 28/10/2021	
 			//CASE WHEN C7_FRETE > 0 THEN ROUND(((SC7.C7_TOTAL+SC7.C7_FRETE) * C7_IPI)/100,2) ELSE ROUND(((SC7.C7_TOTAL+SC7.C7_VALFRE) * C7_IPI)/100,2) END AS IPIPC,
-			(SC7.C7_VALIPI/SC7.C7_QUANT) AS IPIPC,
+			((SC7.C7_TOTAL*(SC7.C7_IPI/100))/SC7.C7_QUANT) AS IPIPC,
 			(SC7.C7_FRETE) AS FRETEPC,
 			//Tkt.62460 - ABEL BABINI - 01/11/2021 - Valor da despesa causando erro. O Valor da despesa é rateado por item e deve ser totalizado para a comparação.
 			ISNULL((SELECT 
@@ -247,4 +256,76 @@ Else
 Endif
 // FIM ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
 
+//INICIO Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
+IF lRet .AND. SF1->F1_FORMUL = 'S' .AND. SF1->F1_TIPO = 'N' .AND. INCLUI
+
+	cQrySD1 := GetNextAlias()
+	BEGINSQL Alias cQrySD1
+		SELECT 
+			D1_ITEM,
+			D1_QUANT,
+			D1_NFRURAL,
+			D1_NFORI,
+			D1_SERIORI,
+			D1_ITEMORI
+		FROM %TABLE:SD1% SD1
+		WHERE
+			SD1.D1_FILIAL = %Exp:SF1->F1_FILIAL% AND
+			SD1.D1_DOC = %Exp:SF1->F1_DOC% AND
+			SD1.D1_SERIE = %Exp:SF1->F1_SERIE% AND
+			SD1.D1_FORNECE = %Exp:SF1->F1_FORNECE% AND
+			SD1.D1_LOJA = %Exp:SF1->F1_LOJA% AND
+			SD1.%notDel%
+	ENDSQL
+	DbSelectArea(cQrySD1)
+	(cQrySD1)->(dbGoTop())
+
+	WHILE !(cQrySD1)->(EOF())
+		_cNFOri := (cQrySD1)->D1_NFORI
+		_cSrOri := (cQrySD1)->D1_SERIORI
+		_cItOri := (cQrySD1)->D1_ITEMORI
+
+		cQryNFO := GetNextAlias()
+		BEGINSQL Alias cQryNFO
+			SELECT 
+				D2_QUANT,
+				ISNULL((SELECT SUM(D1_QUANT)
+				FROM %TABLE:SD1% SD1
+				WHERE
+					SD1.D1_FILIAL = SD2.D2_FILIAL AND
+					SD1.D1_NFORI = SD2.D2_DOC AND
+					SD1.D1_SERIORI = SD2.D2_SERIE AND
+					SD1.D1_ITEMORI = SD2.D2_ITEM AND
+					SD1.D1_FORNECE = SD2.D2_CLIENTE AND
+					SD1.D1_LOJA = SD2.D2_LOJA AND
+					SD1.%notDel%),0) AS QTD_RETORNO
+			FROM %TABLE:SD2% SD2
+			WHERE SD2.D2_DOC = %Exp:_cNFOri%
+			AND SD2.D2_SERIE = %Exp:_cSrOri%
+			AND SD2.D2_ITEM = %Exp:_cItOri%
+			AND SD2.D2_CLIENTE = %Exp:SF1->F1_FORNECE%
+			AND SD2.D2_LOJA = %Exp:SF1->F1_LOJA%
+			AND SD2.%notDel%
+		ENDSQL
+		DbSelectArea(cQryNFO)
+		(cQryNFO)->(dbGoTop())
+		IF !(cQryNFO)->(EOF())
+			IF (cQryNFO)->QTD_RETORNO >= (cQryNFO)->D2_QUANT
+				AVISO('MT103PN-001 => NF de Origem já retornada',;
+						'A NF de Origem relacionada a esse documento já foi retornada anteriormente! A mesma não poderá ser relacionada novamente.', {"Fechar"}, 2 )   
+				lRet:= .F.					
+			ELSEIF (cQryNFO)->QTD_RETORNO + (cQrySD1)->QUANT > (cQryNFO)->D2_QUANT
+				AVISO('MT103PN-002 => Quantidade a ser retornada é maior que a NF de Origem',;
+						'A quantidade a ser retornado ultrapassa o saldo da NF de Origem! Saldo em Qtd: '+Alltrim(Str((cQryNFO)->D2_QUANT-(cQryNFO)->QTD_RETORNO))+ '.', {"Fechar"}, 2 )   
+				lRet:= .F.
+			ENDIF
+		ENDIF
+		(cQryNFO)->(dbCloseArea())
+
+		(cQrySD1)->(DbSkip())
+	ENDDO
+	(cQrySD1)->(dbCloseArea())
+	
+ENDIF
+//FIM Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
 Return lRet

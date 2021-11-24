@@ -12,7 +12,7 @@
     @version 01
     @history Ticket: TI    - 11/06/2021 - ADRIANO SAVOINE - Corrigida a query da consulta para agrupar os dados.
     @history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
-    
+    @history Ticket: 63902 - 23/11/2021 - TIAGO STOCCO - Correção da QUERY para desprezar os estornados da SD3
 /*/
 
 User Function ADMNT014R(aParam)
@@ -112,6 +112,7 @@ cQry    += " AND D3_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "
 cQry    += " AND D3_TM = '501'
 cQry    += " AND D3_CC IN ('5213','5217','5304')
 cQry    += " AND D3.D_E_L_E_T_ = ' ' "
+cQry    += " AND D3_ESTORNO <> 'S' " //Ticket: 63902 - 23/11/2021 - TIAGO STOCCO
 cQry    += " GROUP BY D3_FILIAL,D3_GRUPO,BM_DESC "  // Ticket: TI - 11/06/2021 - ADRIANO SAVOINE
 cQry    += " ORDER BY D3_FILIAL,D3_GRUPO "
 
