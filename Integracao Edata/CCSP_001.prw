@@ -63,6 +63,7 @@ Static cHK				:= "&"
 	@history TICKET 4276    - William Costa   - 30/10/2020 - Adicionado mensagem de cErro quando a variavel que validade se o pedido está liberado por credito ou estoque é preenchida com falso
 	@history ticket 9122    - Fernando Maciei - 09/02/2021 - melhoria no envio Carga EDATA
 	@history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
+	@history ticket 63303   - Leonardo P. Monteiro - 24/11/2021 - Correção na declaração da variável In utilizada na função FENCECARG.
 /*/
 User Function CCSP_001()
 
@@ -555,11 +556,11 @@ Return Nil
 Static Function CCS_001P(oTela)
 
 	Local lRet				:= .T.
-	Local _nx				:= 0
+	
 	Local _xx				:= 0
 	Local _nPedDiv			:= 0
 	Local aArea				:= {}
-	Local ni				:= 0
+	
 	Local cChave			:= ""
 	Local cMens				:= ""
 	Local cRest01			:= ""
@@ -573,6 +574,8 @@ Static Function CCS_001P(oTela)
 	Local lVldEnv			:= SuperGetMV("MV_ZSP001A",,.T.)
 
 	Private cFilia         	:= ""
+	Private ni				:= 0
+	Private _nx				:= 0
 
 	// @history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
 	If !LockByName("CCS_001P", .T., .F.) .AND. lVldEnv
