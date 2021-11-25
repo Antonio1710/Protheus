@@ -33,11 +33,12 @@ User Function ADEEC013R() // U_ADEEC013R()
 
     Local lAdjustToLegacy 		:= .F. 
     Local lDisableSetup  		:= .T.
-    Local nPalete               := CValToChar(val('9000' + cCodx5)+1)
-    Local cCodigo               := '07897560' + nPalete
-    Local nDig                  := u_Diggs1(cCodigo)
-   
-
+    
+    
+    Private nPalete             := CValToChar(val('9000' + cCodx5)+1)
+    Private cPrefixo            := '07897560'
+    Private cCodigo             := cPrefixo + nPalete
+    Private nDig                := u_Diggs1(cCodigo)
 
     Private cEOL				:= chr(13)+Chr(10)
     
@@ -91,9 +92,9 @@ User Function ADEEC013R() // U_ADEEC013R()
     Aadd( aParamBox ,{1,"Material Description"    ,LEFT("MARS GmbH"+SPACE(17),17)  ,"" ,'.T.',"",'.T.',80,.F.}) /*02*/
     Aadd( aParamBox ,{1,"GRD8 (240)"              ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*03*/
     Aadd( aParamBox ,{1,"VENDOR CODE (91)"        ,LEFT("15140808"+Space(10),10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*04*/
-    Aadd( aParamBox ,{1,"SSCC (00) (01)"          ,'07897560' ,"" ,'.F.',"",'.F.',80,.F.}) /*05*/
-    Aadd( aParamBox ,{1,"SSCC (00) (02)"          ,VAL(nPalete) ,"" ,'.F.',"",'.F.',80,.F.}) /*06*/
-    Aadd( aParamBox ,{1,"SSCC (00) (03)"          ,CVALTOCHAR(nDig) ,"" ,'.F.',"",'.F.',80,.F.}) /*07*/
+    //Aadd( aParamBox ,{1,"SSCC (00) (01)"          ,'07897560' ,"" ,'.T.',"",'.T.',80,.F.}) /*05*/
+    //Aadd( aParamBox ,{1,"SSCC (00) (02)"          ,VAL(nPalete) ,"" ,'.T.',"",'.T.',80,.F.}) /*06*/
+    //Aadd( aParamBox ,{1,"SSCC (00) (03)"          ,CVALTOCHAR(nDig) ,"" ,'.T.',"",'.T.',80,.F.}) /*07*/
     Aadd( aParamBox ,{1,"Mars Batch (90)"         ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*08*/
     Aadd( aParamBox ,{1,"Manuf. Date (11)"        ,Space(08)  ,"99.99.99" ,'.T.',"",'.T.',80,.F.}) /*09*/
     Aadd( aParamBox ,{1,"Expiry Date (15)"        ,Space(08)  ,"99.99.99" ,'.T.',"",'.T.',80,.F.}) /*10*/
@@ -154,7 +155,7 @@ User Function ADEEC013R() // U_ADEEC013R()
             IF nA = 1
                 fImpCabec()
 
-                cNovo := substr(cValToChar(MV_PAR06),5,5)
+                cNovo := substr(cValToChar(nPalete),5,5)
                
                 dbSeek(xFilial("SX5")+"EX")
                 SX5->( RecLock( "SX5" , .F. ) )		
@@ -163,8 +164,8 @@ User Function ADEEC013R() // U_ADEEC013R()
 
 
             ELSE
-                MV_PAR06 := cValToChar((MV_PAR06) + 1)
-                cNovo := substr(cValToChar(MV_PAR06),5,5)
+                nPalete := nPalete + 1
+                cNovo := substr(cValToChar(nPalete),5,5)
                 
                 dbSeek(xFilial("SX5")+"EX")
                 SX5->( RecLock( "SX5" , .F. ) )		
@@ -173,7 +174,7 @@ User Function ADEEC013R() // U_ADEEC013R()
 
 
                 cCodigo  := '07897560' + cValToChar(MV_PAR06)
-                MV_PAR07 := u_Diggs1(cCodigo)                
+                nDig := u_Diggs1(cCodigo)                
 
                 fImpCabec()
 
@@ -267,17 +268,17 @@ Static Function fImpCabec()
 
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
     oPrinter:Say(nLinha+13, aPerc[01]+010 , "Mars batch (90)"          , oFOARNE17)
-    cVarImp := Alltrim(MV_PAR08)
+    cVarImp := Alltrim(MV_PAR05)
     oPrinter:Say(nLinha+40, aPerc[01]+010 , cVarImp, oFOARNE30)
     
     oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
     oPrinter:Say(nLinha+13, aPerc[02]+005 , "Quantity (37)"            , oFOARNE17)
-    cVarImp := Alltrim(CVALTOCHAR(MV_PAR12))
+    cVarImp := Alltrim(CVALTOCHAR(MV_PAR09))
     oPrinter:Say(nLinha+48, aPerc[02] , cVarImp, oFOARNE55)
     
     oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
     oPrinter:Say(nLinha+13, aPerc[03]+010 , "Manuf. date (11) DD.MM.YY"    , oFOARNE17)
-    cVarImp := Alltrim(MV_PAR09)
+    cVarImp := Alltrim(MV_PAR06)
     oPrinter:Say(nLinha+40, aPerc[03]+020 , cVarImp, oFOARNE30)
     
     nLinha += nAltura
@@ -289,7 +290,7 @@ Static Function fImpCabec()
     oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
 
     oPrinter:Say(nLinha+13, aPerc[01]+010 , "Vendor Batch / Lot (10)"          , oFOARNE17)
-    cVarImp := Alltrim(MV_PAR11)
+    cVarImp := Alltrim(MV_PAR08)
     oPrinter:Say(nLinha+40, aPerc[01]+020 , cVarImp, oFOARNE30)
     
     oPrinter:Say(nLinha+13, aPerc[02]+010 , "UOM"            , oFOARNE17)
@@ -298,7 +299,7 @@ Static Function fImpCabec()
     
     oPrinter:Box(nLinha, aPerc[03], nLinha+nAltura, aPerc[04])
     oPrinter:Say(nLinha+13, aPerc[03]+010 , "Expiry date (15) DD.MM.YY"    , oFOARNE17)
-    cVarImp := Alltrim(MV_PAR10)
+    cVarImp := Alltrim(MV_PAR07)
     oPrinter:Say(nLinha+40, aPerc[03]+020 , cVarImp, oFOARNE30)
     
     nLinha += nAltura
@@ -308,7 +309,7 @@ Static Function fImpCabec()
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[04])
     oPrinter:Say(nLinha+13, aPerc[01]+010 , "SSCC (00)"         , oFOARNE17)
    
-    cVarImp := cValtoChar(PadL(MV_PAR05,8,'0'))+cValtoChar(MV_PAR06)+cValtoChar(MV_PAR07)
+    cVarImp := cValtoChar(PadL(cPrefixo,8,'0'))+cValtoChar(nPalete)+cValtoChar(nDig)
     oPrinter:Say(nLinha+48, aPerc[01] , cVarImp, oFOARNE58)
     
     nLinha += nAltura
@@ -317,7 +318,7 @@ Static Function fImpCabec()
 
     oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, nRight)
     
-    cVarImp  := "(11)"+Alltrim(MV_PAR09)+"(15)"+Alltrim(MV_PAR10)+"(37)"+Alltrim(CVALTOCHAR(MV_PAR12))
+    cVarImp  := "(11)"+Alltrim(MV_PAR06)+"(15)"+Alltrim(MV_PAR07)+"(37)"+Alltrim(CVALTOCHAR(MV_PAR09))
     cVarImp1 := SUBSTR(cVarImp,2,2)+SUBSTR(cVarImp,11,02)+SUBSTR(cVarImp,08,02)+SUBSTR(cVarImp,05,02)+SUBSTR(cVarImp,14,02)+SUBSTR(cVarImp,23,02)+SUBSTR(cVarImp,20,02)+SUBSTR(cVarImp,17,02)+SUBSTR(cVarImp,26,02)+SUBSTR(cVarImp,29,04)
     cVarImp2 := "(11)"+SUBSTR(cVarImp,11,02)+SUBSTR(cVarImp,08,02)+SUBSTR(cVarImp,05,02)+"(15)"+SUBSTR(cVarImp,23,02)+SUBSTR(cVarImp,20,02)+SUBSTR(cVarImp,17,02)+"(37)"+SUBSTR(cVarImp,29,04)
     oPrinter:Code128(nLinha+010 , aPerc[01]+(nRight-nCol)*0.06,cVarImp1/*cCode*/,(nRight-nCol)*0.88 /*nWidth*/,100 /*nHeigth*/,.F./*lSay*/,oFOARNO08 ,(nRight-nCol)*0.88)
@@ -325,7 +326,7 @@ Static Function fImpCabec()
     aTamFont    := GetStringPixSize( cVarImp2, "Arial", 15, .F., .F., .F. )
     oPrinter:Say(nLinha+100+aTamFont[1], (nRight*0.5)-aTamFont[2]/4 , cVarImp2, oFOARNO15)
 
-    cVarImp  := "(91)"+Alltrim(MV_PAR04)+"(90)"+Alltrim(MV_PAR08)+"(10)"+Alltrim(MV_PAR11)
+    cVarImp  := "(91)"+Alltrim(MV_PAR04)+"(90)"+Alltrim(MV_PAR05)+"(10)"+Alltrim(MV_PAR08)
     cVarImp1 := strtran(cVarImp,"(")
     cVarImp2 := strtran(cVarImp1,")") 
     oPrinter:Code128(nLinha+150 , aPerc[01]+(nRight-nCol)*0.06,cVarImp2/*cCode*/,(nRight-nCol)*0.88 /*nWidth*/,100 /*nHeigth*/,.F./*lSay*/,oFOARNO08,(nRight-nCol)*0.88)
@@ -333,7 +334,7 @@ Static Function fImpCabec()
     aTamFont    := GetStringPixSize( cVarImp, "Arial", 15, .F., .F., .F. )
     oPrinter:Say(nLinha+240+aTamFont[1], (nRight*0.5)-aTamFont[2]/4 , cVarImp, oFOARNO15)
     
-    cVarImp := "(00)"+cValtoChar(PadL(MV_PAR05,8,'0'))+cValtoChar(MV_PAR06)+cValtoChar(MV_PAR07)+"(240)"+Alltrim(MV_PAR03)
+    cVarImp := "(00)"+cValtoChar(PadL(cPrefixo,8,'0'))+cValtoChar(nPalete)+cValtoChar(nDig)+"(240)"+Alltrim(MV_PAR03)
     cVarImp1 := strtran(cVarImp,"(")
     cVarImp2 := strtran(cVarImp1,")") 
     oPrinter:Code128(nLinha+290 , aPerc[01]+(nRight-nCol)*0.06,cVarImp2/*cCode*/,(nRight-nCol)*0.88 /*nWidth*/,100 /*nHeigth*/,.F./*lSay*/,oFOARNO08,(nRight-nCol)*0.88)
