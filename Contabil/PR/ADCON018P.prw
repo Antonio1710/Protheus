@@ -15,6 +15,7 @@
     (examples)
     @see (links_or_references)
     @ticket 5530 - Inclusão Regra de Rateio - Safeeg
+    @history ticket 64246 - Fernando Macieira - 24/11/2021 - Correções rotina importação Rateio Off Line
 /*/
 User Function ADCON018P(cAcao)
 
@@ -113,15 +114,9 @@ Static Function RunImpCTQ(cAcao)
 
     Local lFile     := .f.
     Local cTxt      := ""
-    Local nlCont    := 0
     Local nCount    := 0
-    Local aTxt      := {}
-    Local aSIEG     := {}
     Local aDadCTQ   := {}
-    Local cCNPJ     := ""
-    Local cDOC      := ""
-    Local nMoeda    := 1
-    Local lYesNo    := .f.
+    Local lRet      := .t.
 
     cFile := cGetFile("Arquivos CSV (Separados por Vírgula) | *.CSV",;
     ("Selecione o diretorio onde encontra-se o arquivo a ser processado"), 0, "Servidor\", .t., GETF_LOCALFLOPPY + GETF_LOCALHARD + GETF_NETWORKDRIVE)// + GETF_RETDIRECTORY)
@@ -155,9 +150,11 @@ Static Function RunImpCTQ(cAcao)
             If cAcao == "I"
 
                 // Processamento
+                nCount := 0
                 Do While !ft_fEOF() //.and. !lAbortPrint
                     
-                    IncProc( "Consistindo novas regras de rateio off-line... " + StrZero(nCount++, 9) )
+                    //IncProc( "Consistindo novas regras de rateio off-line... " + StrZero(nCount++, 9) )
+                    MsAguarde({||  },"Consistindo arquivo txt","Linha: " + StrZero(nCount++, 9) )
                     
                     cTxt     := ft_fReadLn()
                     aDadCTQ  := Separa(cTxt, ";")
@@ -339,45 +336,61 @@ Static Function RunImpCTQ(cAcao)
                 ft_fSkip() // Pula linha do SEGUNDO cabeçalho
             
                 // Processamento
-                Do While !ft_fEOF() //.and. !lAbortPrint
+                nCount := 0
+                Begin Transaction
+
+                    Do While !ft_fEOF() //.and. !lAbortPrint
+                        
+                        //IncProc( "Importando novas regras de rateio off-line... " + StrZero(nCount++, 9) )
+                        MsAguarde({||  },"Processando arquivo txt","Linha: " + StrZero(nCount++, 9) )
+
+                        cTxt     := ft_fReadLn()
+                        aDadCTQ  := Separa(cTxt, ";")
+
+                        cCTQ_RATEIO := AllTrim(aDadCTQ[2])
+                        cCTQ_DESC   := AllTrim(aDadCTQ[3])
+                        cCTQ_TIPO   := AllTrim(aDadCTQ[4])
+                        nCTQ_PERBAS := Val(StrTran(AllTrim(aDadCTQ[5]),",","."))
+                        cCTQ_CTORI  := AllTrim(aDadCTQ[6])
+                        cCTQ_CCORI  := AllTrim(aDadCTQ[7])
+                        cCTQ_ITORI  := AllTrim(aDadCTQ[8])
+                        cCTQ_CLORI  := AllTrim(aDadCTQ[9])
+                        cCTQ_CTPAR  := AllTrim(aDadCTQ[10])
+                        cCTQ_CCPAR  := AllTrim(aDadCTQ[11])
+                        cCTQ_ITPAR  := AllTrim(aDadCTQ[12])
+                        cCTQ_CLPAR  := AllTrim(aDadCTQ[13])
+                        cCTQ_SEQUEN := AllTrim(aDadCTQ[14])
+                        cCTQ_CTCPAR := AllTrim(aDadCTQ[15])
+                        cCTQ_CCCPAR := AllTrim(aDadCTQ[16])
+                        cCTQ_ITCPAR := AllTrim(aDadCTQ[17])
+                        cCTQ_CLCPAR := AllTrim(aDadCTQ[18])
+                        nCTQ_PERCEN := Val(StrTran(AllTrim(aDadCTQ[19]),",","."))
+
+                        // Gravo nova regra off-line
+                        If !GrvCTQ(cAcao)
+                            lRet := .f.
+                            DisarmTransaction()
+                            msUnLockAll()
+                            BREAK
+                            Exit
+                        EndIf
+
+                        aDadCTQ := {}
                     
-                    IncProc( "Importando novas regras de rateio off-line... " + StrZero(nCount++, 9) )
+                        ft_fSkip()
+                    
+                    EndDo
 
-                    cTxt     := ft_fReadLn()
-                    aDadCTQ  := Separa(cTxt, ";")
+                End Transaction
 
-                    cCTQ_RATEIO := AllTrim(aDadCTQ[2])
-                    cCTQ_DESC   := AllTrim(aDadCTQ[3])
-                    cCTQ_TIPO   := AllTrim(aDadCTQ[4])
-                    nCTQ_PERBAS := Val(StrTran(AllTrim(aDadCTQ[5]),",","."))
-                    cCTQ_CTORI  := AllTrim(aDadCTQ[6])
-                    cCTQ_CCORI  := AllTrim(aDadCTQ[7])
-                    cCTQ_ITORI  := AllTrim(aDadCTQ[8])
-                    cCTQ_CLORI  := AllTrim(aDadCTQ[9])
-                    cCTQ_CTPAR  := AllTrim(aDadCTQ[10])
-                    cCTQ_CCPAR  := AllTrim(aDadCTQ[11])
-                    cCTQ_ITPAR  := AllTrim(aDadCTQ[12])
-                    cCTQ_CLPAR  := AllTrim(aDadCTQ[13])
-                    cCTQ_SEQUEN := AllTrim(aDadCTQ[14])
-                    cCTQ_CTCPAR := AllTrim(aDadCTQ[15])
-                    cCTQ_CCCPAR := AllTrim(aDadCTQ[16])
-                    cCTQ_ITCPAR := AllTrim(aDadCTQ[17])
-                    cCTQ_CLCPAR := AllTrim(aDadCTQ[18])
-                    nCTQ_PERCEN := Val(StrTran(AllTrim(aDadCTQ[19]),",","."))
-
-                    // Gravo nova regra off-line
-                    GrvCTQ(cAcao)
-
-                    aDadCTQ := {}
-                
-                    ft_fSkip()
-                
-                EndDo
-
-                If cAcao == "I"
-                    msgInfo("Novas regras geradas com sucesso!")
-                ElseIf cAcao == "E"
-                    msgInfo("Regras bloqueadas com sucesso!")
+                If lRet
+                    If cAcao == "I"
+                        msgInfo("Novas regras geradas com sucesso!")
+                    ElseIf cAcao == "E"
+                        msgInfo("Regras bloqueadas com sucesso!")
+                    EndIf
+                Else
+                    Alert("Nenhuma regra foi gerada/bloqueada! Verifique...")
                 EndIf
             
             EndIf
@@ -516,6 +529,8 @@ Return
 /*/
 Static Function GrvCTQ(cAcao)
 
+    Local lRet := .t.
+    Local cSql := ""
     Default cAcao := ""
 
     If cAcao == "I"
@@ -556,8 +571,24 @@ Static Function GrvCTQ(cAcao)
                 CTQ->CTQ_STATUS := "3"
             CTQ->( msUnLock() )
 
+        Else
+
+            // @history ticket 64246 - Fernando Macieira - 24/11/2021 - Correções rotina importação Rateio Off Line
+            cSql := " UPDATE " + RetSqlName("CTQ")
+            cSql += " SET CTQ_MSEXP='', CTQ_MSBLQL='1', CTQ_STATUS='3'
+            cSql += " WHERE CTQ_FILIAL='"+FWxFilial("CTQ")+"' 
+            cSql += " AND CTQ_RATEIO='"+cCTQ_RATEIO+"' 
+            cSql += " AND CTQ_SEQUEN='"+cCTQ_SEQUEN+"' 
+            cSql += " AND D_E_L_E_T_=''
+
+            If tcSqlExec(cSql) < 0
+                lRet := .f.
+                Alert("Bloqueio da regra/sequência " + cCTQ_RATEIO + "/" + cCTQ_SEQUEN + " não foi realizado! Envie o erro que será mostrado na próxima tela ao TI... A rotina será abortada e não será finalizada!")
+                MessageBox(tcSqlError(),"",16)
+            EndIf
+        
         EndIf
 
     EndIf
     
-Return 
+Return lRet
