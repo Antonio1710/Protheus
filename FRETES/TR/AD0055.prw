@@ -146,61 +146,53 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	DbSelectArea("ZV4")
 	ZV4->(DbSetOrder(1)) //Indice placa
 	ZV4->(DbGoTop())
-	If ! ZV4->(MsSeek(xfilial("ZV4")+ _cPlac))
+	If !ZV4->(MsSeek(xfilial("ZV4")+ _cPlac))
 		MsgStop("Não há cadastro para o veículo " + Alltrim(cValToChar(_cPlac)) + " (ZV4).","Função GravaPLACA(AD0055)")
 		RestArea(aArea)
 		Return .F.
-
 	Else
-
 		If Empty(ZV4->ZV4_EST) //Verifica se o campo de UF está preenchido.
 			MsgStop("O veículo " + Alltrim(cValToChar(_cPlac)) + " está com o cadastro incompleto. Preencha o estado (UF) da Placa deste Veículo!",;
 			"Função GravaPLACA(AD0055)")
 			RestArea(aArea)
 			Return .F.
-
 		EndIf
-
 	EndIf
 
 	_cTipVei := ZV4_TIPVEI
 	_cVeiLoj := ZV4_LOJFOR
 	_cVeiFor := ZV4_FORNEC
 	_cUfPlaca:= ZV4_EST
-	
+
+	// @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
+	PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
+
 	//Everson - 10/07/2019.
 	If  cEmpAnt == "01" .And. cFilAnt $ cFilGFrt 
-		
-		//
+
 		If Alltrim(cValToChar(_cTipVei)) $(cTpVeiCavM) .And. ! Empty(_cPlac)
 			
-			//
 			If ! IsInCallStack("U_IMPRDNET") .And. IsInCallStack("U_ALTEROTE") 
 				If Empty(cPlcCvMec)
 					MsgStop("Para o veículo " + cValToChar(_cPlac) + " (" + cValToChar(_cTipVei) + ") é necessário informar a placa do cavalo mecânico.",;
 					"Função GravaPLACA(AD0055)")
 					RestArea(aArea)
 					Return .F.		
-						
 				EndIf
 			
 			ElseIf IsInCallStack("U_IMPRDNET")
 				MsgAlert("Após a importação do arquivo, é necessário informar a placa do cavalo mecânico para o veículo " + cValToChar(_cPlac) + " no emplacamento manual, para geração do MDF-e.","Função GravaPLACA(AD0055)")
-			
 			EndIf
 		
 		Else
 			
-			//
 			If ! Empty(cPlcCvMec) .And. ! IsInCallStack("U_IMPRDNET") .And. IsInCallStack("U_ALTEROTE")
 				MsgStop("Para o veículo " + cValToChar(_cPlac) + " (" + cValToChar(_cTipVei) + ") não é necessário informar a placa do cavalo mecânico.",;
 				"Função GravaPLACA(AD0055)")
 				RestArea(aArea)
 				Return .F.	
-				
 			ElseIf IsInCallStack("U_IMPRDNET")
 				cPlcCvMec := ""
-				
 			EndIf
 		
 		EndIf
@@ -214,13 +206,11 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	If ZV8->(MsSeek(xfilial("ZV8")+ _cDesti))
 		_cCodCid := ZV8->ZV8_COD
 		_cCidade := ZV8->ZV8_CIDADE
-
 	Else
 		MsgStop("Não foi possível obter dados da tabela de frete referente ao destino " + cValToChar(_cDesti) + ".",;
 		"Função GravaPLACA(AD0055)")
 		RestArea(aArea)
 		Return .F.
-
 	EndIf
 
 	DbSelectArea("ZV9")
@@ -232,13 +222,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 				_nVlCA := ZV9->ZV9_VLTON
 				_nVlTK := ZV9->ZV9_VLTK
 				_nVlTC := ZV9->ZV9_VLTC
-
 			EndIf
-
 			ZV9->(DbSkip())
-
 		Enddo
-
 	EndIf
 
 	//Seleciona o código de fornecedor da transportadora.
@@ -250,14 +236,12 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 		_cTraLoja := SA2->A2_LOJA
 		_cNomeTra := SA2->A2_NOME
 		// Consulto Tipo de Frete para saber se considera transportadora
-
 	Else
 		MsgAlert("O veículo " + Alltrim(cValToChar(_cPlac)) + " (" + Alltrim(cValToChar(_cVeiFor)) + "/" + Alltrim(cValToChar(_cVeiLoj)) +;
 		" ) não possui transportadora cadastrada (fornecedor SA2). Roteiro " + Alltrim(cValToChar(_cRote)) + ".","Função GravaPLACA(AD0055)")
 		_cTraCod  := "ERRO"
 		_cTraLoja := "ER"
 		_cNomeTra := "ERRO"
-
 	EndIf
 
 	//Daniel - faco a busca fora do seek anterior
@@ -945,7 +929,8 @@ Static Function PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
 
 	Local aArea     := GetArea()
 	Local aAreaSC5  := SC5->( GetArea() )
-	Local cQuery := ""
+	Local cQuery    := ""
+	Local cSQL      := ""
 
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
@@ -956,6 +941,7 @@ Static Function PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
 	cQuery += " WHERE C5_FILIAL='"+FWxFilial("SC5")+"' 
 	cQuery += " AND C5_ROTEIRO='"+_cRote+"' 
 	cQuery += " AND C5_DTENTR='"+DtoS(_dtEntr)+"' 
+	cQuery += " AND C5_PLACA<>'"+_cPlac+"'
 	cQuery += " AND C5_NOTA=''
 	cQuery += " AND D_E_L_E_T_=''
 
@@ -972,10 +958,6 @@ Static Function PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
 			SC5->( msUnLock() )
 		EndIf
 
-		//grava log
-		u_GrLogZBE( msDate(), TIME(), cUserName," ALTEROU PLACA DO VEICULO", "PUTPLACA", "AD0055",;
-		"PEDIDO: "+SC5->C5_NUM+" PLACA: "+_cPlac+" ROTEIRO: "+_cRote, ComputerName(), LogUserName() ) 
-
 		Work->( dbSkip() )
 
 	EndDo
@@ -983,6 +965,18 @@ Static Function PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
+
+	// Forço a gravação
+	cSql := " UPDATE " + RetSqlName("SC5")
+	cSql += " SET C5_PLACA='"+_cPlac+"', C5_UFPLACA='"+_cUFPlaca+"' 
+	cSql += " WHERE C5_FILIAL='"+FWxFilial("SC5")+"' 
+	cSql += " AND C5_ROTEIRO='"+_cRote+"' 
+	cSql += " AND C5_DTENTR='"+DtoS(_dtEntr)+"' 
+	cSql += " AND C5_PLACA<>'"+_cPlac+"'
+	cSql += " AND C5_NOTA=''
+	cSql += " AND D_E_L_E_T_=''
+
+	tcSqlExec(cSql)
 
 	RestArea( aArea )
 	RestArea( aAreaSC5 )
