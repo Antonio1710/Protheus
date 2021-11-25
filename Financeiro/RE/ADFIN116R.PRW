@@ -16,6 +16,10 @@
 
 User Function ADFIN116R()
 	Local lEnd		 := .T.
+	Private cAliSA2		:= Replace(GetNextAlias()+cValtochar(seconds()),".","")
+	Private cAliSE2 	:= Replace(GetNextAlias()+cValtochar(seconds()),".","")
+	Private cAliSE5 	:= Replace(GetNextAlias()+cValtochar(seconds()),".","")
+	Private cAliCT2 	:= Replace(GetNextAlias()+cValtochar(seconds()),".","")
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de conciliação de fornecedores')
 
@@ -50,18 +54,18 @@ User Function ADFIN116R()
 	Private CbTxt        := ""
 	Private limite       := 220
 	Private tamanho      := "G"
-	Private nomeprog     := "RCONCFOR"
+	Private nomeprog     := "ADFIN116R"
 	Private nTipo        := 18
 	Private aReturn      := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
 	Private nLastKey     := 0
 	Private cbcont       := 00
 	Private CONTFL       := 01
 	Private m_pag        := 01
-	Private wnrel        := "RCONCFOR"
+	Private wnrel        := "ADFIN116R"
 	Private nLin         := 80
 	Private nSA2TMP	 	 := 0
 	Private nSE2TMP	 	 := 0
-	Private nSE5TMP	 	 := 0
+	Private nSE5MOV	 	 := 0
 	Private nCT2TMP	 	 := 0
 	Private nTotal		 := 0
 	
@@ -161,7 +165,7 @@ Static Function RunReport(lEnd, Cabec1,Cabec2,Titulo,nLin)
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                               	
 	//³ Monta Querys                                      ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	oProcess:incRegua1("Consultado os dados (1/7)")
+	oProcess:incRegua1("Consultado os dados (1/8)")
 	fDados() 
 	
 	nSldFin  := 0          
@@ -175,15 +179,17 @@ Static Function RunReport(lEnd, Cabec1,Cabec2,Titulo,nLin)
 	cDtFim	:= Dtoc(Date())+"-"+Alltrim(Time())
 	MsgInfo("Tempo de processamento:"+Chr(13)+chr(10)+" - Início:"+cDtIni+Chr(13)+chr(10)+" - Final:"+cDtFim, "Mensagem de término")
 	/*
-	dbselectArea("CT2TMP")
-	dbCloseArea()      
-	dbselectArea("SE5TMP")
-	dbCloseArea()  
-	dbselectArea("SE2TMP")
-	dbCloseArea()  
+	dbselectArea(cAliCT2)
+	(cAliCT2)->(dbCloseArea())
+	dbselectArea(cAliSE5)
+	(cAliSE5)->(dbCloseArea())
+	dbselectArea(cAliSE2)
+	(cAliSE2)->(dbCloseArea())
 	*/
-	dbselectArea("SA2TMP")
-	dbCloseArea()
+	IF SELECT(cAliSA2) > 0
+		dbselectArea(cAliSA2)
+		(cAliSA2)->(dbCloseArea())
+	endif
 
 	If Select("TMPANL") > 0
 		dbselectArea("TMPANL")
@@ -218,133 +224,133 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 
 	nAcumul	:= 0
 	
-	dbselectArea("SE2TMP")
-	SE2TMP->(DbgoTop())
+	dbselectArea(cAliSE2)
+	(cAliSE2)->(DbgoTop())
 
-	While SE2TMP->(!EOF())
+	While (cAliSE2)->(!EOF())
 	   	     
 		RecLock("TMPANL",.T.)	
-			TMPANL->FILIAL    := SE2TMP->FILIAL	
-			TMPANL->FORNECE   := SE2TMP->FORNECE
-			TMPANL->LOJA      := SE2TMP->LOJA
-			TMPANL->PREFIXO   := SE2TMP->PREFIXO
-			TMPANL->NUMERO    := SE2TMP->NUMERO
-			TMPANL->PARCELA   := SE2TMP->PARCELA
-			TMPANL->TIPO      := SE2TMP->TIPO
-			TMPANL->DATASE2   := STOD(SE2TMP->DATASE2)
-			TMPANL->VALORSE2  := SE2TMP->VALORSE2
+			TMPANL->FILIAL    := (cAliSE2)->FILIAL	
+			TMPANL->FORNECE   := (cAliSE2)->FORNECE
+			TMPANL->LOJA      := (cAliSE2)->LOJA
+			TMPANL->PREFIXO   := (cAliSE2)->PREFIXO
+			TMPANL->NUMERO    := (cAliSE2)->NUMERO
+			TMPANL->PARCELA   := (cAliSE2)->PARCELA
+			TMPANL->TIPO      := (cAliSE2)->TIPO
+			TMPANL->DATASE2   := STOD((cAliSE2)->DATASE2)
+			TMPANL->VALORSE2  := (cAliSE2)->VALORSE2
 		MsUnLock()
 		
 		nAcumul	+= 1
 		oProcess:incRegua2("Títulos a pagar processados: "+ CValToChar(nAcumul) +" de "+ CValToChar(nSE2TMP) +" ")
-		SE2TMP->(dbSkip())
+		(cAliSE2)->(dbSkip())
 	Enddo
 	*/
 	
-	oProcess:incRegua1("Importando mov. baixas (6/7)")
+	oProcess:incRegua1("Importando mov. baixas (6/8)")
 	oProcess:setRegua2(nPerc+1)
 	oProcess:incRegua2("Importando...")
 	
 	nAcumul	:= 0
 	nCont	:= 0
-	nAmPerc	:= ROUND(nSE5TMP/nPerc,0)
+	nAmPerc	:= ROUND(nSE5MOV/nPerc,0)
 
-	dbselectArea("SE5TMP")
-	SE5TMP->(DbgoTop())
+	dbselectArea(cAliSE5)
+	(cAliSE5)->(DbgoTop())
 
-	While SE5TMP->(!EOF())
+	While (cAliSE5)->(!EOF())
 
 	    //@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
-		nValor 		:= IIF( SE5TMP->E5_TXMOEDA > 1 .and. SE5TMP->E5_DATA >='20210901', SE5TMP->E5_VLMOED2 , SE5TMP->E5_VALOR)
+		nValor 		:= IIF( (cAliSE5)->E5_TXMOEDA > 1 .and. (cAliSE5)->E5_DATA >='20210901', (cAliSE5)->E5_VLMOED2 , (cAliSE5)->E5_VALOR)
 		nVALORSE2	:= 0
-		nValorTMP	
+		//nValorTMP	:= 0
 			
-		If Alltrim(SE5TMP->E5_TIPODOC) == "ES" .And. Alltrim(SE5TMP->E5_RECPAG) == "R"
-		    IF SE5TMP->E5_VLACRES <> 0
-		       IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
- 		          nVALORSE2 += nValor-SE5TMP->E5_VLACRES
+		If Alltrim((cAliSE5)->E5_TIPODOC) == "ES" .And. Alltrim((cAliSE5)->E5_RECPAG) == "R"
+		    IF (cAliSE5)->E5_VLACRES <> 0
+		       IF (cAliSE5)->E5_VLACRES == (cAliSE5)->E5_VLJUROS
+ 		          nVALORSE2 += nValor-(cAliSE5)->E5_VLACRES
 		       Else
-		          nVALORSE2 += nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		          nVALORSE2 += nValor-(cAliSE5)->E5_VLACRES - (cAliSE5)->E5_VLJUROS
 		       Endif
 		    Else   
-			   nVALORSE2 += nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+			   nVALORSE2 += nValor-(cAliSE5)->E5_VLACRES - (cAliSE5)->E5_VLJUROS
 			Endif   
 			
 			// ********* INICIO  WILL chamado 028902  ************ //
-			IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
-		       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
-		          nVALORSE2 += SE5TMP->E5_VLDECRE
+			IF nValor <> 0 .AND. ((cAliSE5)->E5_VLDECRE <> 0 .OR. (cAliSE5)->E5_VLDESCO <> 0)
+		       IF (cAliSE5)->E5_VLDECRE == (cAliSE5)->E5_VLDESCO
+		          nVALORSE2 += (cAliSE5)->E5_VLDECRE
 		       Else 
-		          IF SE5TMP->E5_VLDESCO > SE5TMP->E5_VLDECRE
+		          IF (cAliSE5)->E5_VLDESCO > (cAliSE5)->E5_VLDECRE
 		          
-		          	IF SE5TMP->E5_VLDESCO == SE5TMP->E5_VLJUROS
-			       		  	nVALORSE2 += SE5TMP->E5_VLDESCO + SE5TMP->E5_VLJUROS
+		          	IF (cAliSE5)->E5_VLDESCO == (cAliSE5)->E5_VLJUROS
+			       		  	nVALORSE2 += (cAliSE5)->E5_VLDESCO + (cAliSE5)->E5_VLJUROS
 			       	ELSE
-			          		nVALORSE2 += SE5TMP->E5_VLDESCO
+			          		nVALORSE2 += (cAliSE5)->E5_VLDESCO
 			        ENDIF	
 		       		
-		          ELSEIF SE5TMP->E5_VLDESCO == 0 .AND. SE5TMP->E5_VLDECRE > 0	
+		          ELSEIF (cAliSE5)->E5_VLDESCO == 0 .AND. (cAliSE5)->E5_VLDECRE > 0	
 		          
 		          	nVALORSE2 := nVALORSE2
 		          		
 		          ELSE	
 		          
-		          	nVALORSE2 += SE5TMP->E5_VLDECRE + SE5TMP->E5_VLDESCO
+		          	nVALORSE2 += (cAliSE5)->E5_VLDECRE + (cAliSE5)->E5_VLDESCO
 		          
 		          ENDIF	
 		       Endif
 		    
-		    ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
-		    	nVALORSE2 += SE5TMP->E5_VLDESCO
+		    ELSEIF nValor == 0 .AND. (cAliSE5)->E5_VLDESCO > 0
+		    	nVALORSE2 += (cAliSE5)->E5_VLDESCO
 		    Endif   
 			// ********* FINAL  WILL chamado 028902  ************ //
 			
-		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "MT" .And. Alltrim(SE5TMP->E5_RECPAG) == "P"
+		ElseIf Alltrim((cAliSE5)->E5_TIPODOC) == "MT" .And. Alltrim((cAliSE5)->E5_RECPAG) == "P"
 			nVALORSE2 += nValor
 		//INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
-		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "CM" .And. Alltrim(SE5TMP->E5_RECPAG) == "P"
+		ElseIf Alltrim((cAliSE5)->E5_TIPODOC) == "CM" .And. Alltrim((cAliSE5)->E5_RECPAG) == "P"
 			nVALORSE2 -= ABS(nValor)
-		ElseIf Alltrim(SE5TMP->E5_TIPODOC) == "CM" .And. Alltrim(SE5TMP->E5_RECPAG) == "R"
+		ElseIf Alltrim((cAliSE5)->E5_TIPODOC) == "CM" .And. Alltrim((cAliSE5)->E5_RECPAG) == "R"
 			nVALORSE2 += ABS(nValor)
 		//FIM Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 		Else
-	    	IF SE5TMP->E5_VLACRES <> 0
-		       IF SE5TMP->E5_VLACRES == SE5TMP->E5_VLJUROS
-		          nVALORSE2 -= nValor-SE5TMP->E5_VLACRES
+	    	IF (cAliSE5)->E5_VLACRES <> 0
+		       IF (cAliSE5)->E5_VLACRES == (cAliSE5)->E5_VLJUROS
+		          nVALORSE2 -= nValor-(cAliSE5)->E5_VLACRES
 		       Else
-		          nVALORSE2 -= nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+		          nVALORSE2 -= nValor-(cAliSE5)->E5_VLACRES - (cAliSE5)->E5_VLJUROS
 		       Endif
 		    Else   
-			   nVALORSE2 -= nValor-SE5TMP->E5_VLACRES - SE5TMP->E5_VLJUROS
+			   nVALORSE2 -= nValor-(cAliSE5)->E5_VLACRES - (cAliSE5)->E5_VLJUROS
 			Endif  
 			
 			// ********* INICIO  WILL chamado 028902  ************ //
-			IF nValor <> 0 .AND. (SE5TMP->E5_VLDECRE <> 0 .OR. SE5TMP->E5_VLDESCO <> 0)
-		       IF SE5TMP->E5_VLDECRE == SE5TMP->E5_VLDESCO
-		          nVALORSE2 -= SE5TMP->E5_VLDECRE
+			IF nValor <> 0 .AND. ((cAliSE5)->E5_VLDECRE <> 0 .OR. (cAliSE5)->E5_VLDESCO <> 0)
+		       IF (cAliSE5)->E5_VLDECRE == (cAliSE5)->E5_VLDESCO
+		          nVALORSE2 -= (cAliSE5)->E5_VLDECRE
 		       Else
-		       		IF SE5TMP->E5_VLDESCO > SE5TMP->E5_VLDECRE
+		       		IF (cAliSE5)->E5_VLDESCO > (cAliSE5)->E5_VLDECRE
 		       		
-		       			IF SE5TMP->E5_VLDESCO == SE5TMP->E5_VLJUROS
-			       		  	nVALORSE2 -= SE5TMP->E5_VLDESCO - SE5TMP->E5_VLJUROS
+		       			IF (cAliSE5)->E5_VLDESCO == (cAliSE5)->E5_VLJUROS
+			       		  	nVALORSE2 -= (cAliSE5)->E5_VLDESCO - (cAliSE5)->E5_VLJUROS
 			       		ELSE
-			          		nVALORSE2 -= SE5TMP->E5_VLDESCO
+			          		nVALORSE2 -= (cAliSE5)->E5_VLDESCO
 			          	ENDIF	
 		       		
-		       		ELSEIF SE5TMP->E5_VLDESCO == 0 .AND. SE5TMP->E5_VLDECRE > 0	
+		       		ELSEIF (cAliSE5)->E5_VLDESCO == 0 .AND. (cAliSE5)->E5_VLDECRE > 0	
 		          
 			          	nVALORSE2 := nVALORSE2	
 		          	
 		          	ELSE	
 		          
-		          		nVALORSE2 -= SE5TMP->E5_VLDECRE + SE5TMP->E5_VLDESCO
+		          		nVALORSE2 -= (cAliSE5)->E5_VLDECRE + (cAliSE5)->E5_VLDESCO
 		          
 		          	ENDIF			
 		       Endif
 		       
-			ELSEIF nValor == 0 .AND. SE5TMP->E5_VLDESCO > 0
+			ELSEIF nValor == 0 .AND. (cAliSE5)->E5_VLDESCO > 0
 		    
-		    	nVALORSE2 -= SE5TMP->E5_VLDESCO
+		    	nVALORSE2 -= (cAliSE5)->E5_VLDESCO
 		    			       
 		    Endif   
 	 
@@ -353,39 +359,39 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		cQuery := " INSERT INTO "+ cTabTMP +"(FILIAL, FORNECE, LOJA, PREFIXO, NUMERO, PARCELA, TIPO, DATASE2, "
 		cQuery += "							  DATASE5, DATACT2, VALORSE2, VALORCT2, DEBITO, CREDIT, TIPODOC," 
 		cQuery += "							  RECPAG, VLACRES, D_E_L_E_T_, R_E_C_D_E_L_)"
-		cQuery += " SELECT	'"+SE5TMP->E5_FILIAL+"' FILIAL,"
-		cQuery += "			'"+SE5TMP->E5_CLIFOR+"' FORNECE,"
-		cQuery += "			'"+SE5TMP->E5_LOJA+"' LOJA,"
-		cQuery += "			'"+SE5TMP->E5_PREFIXO+"' PREFIXO,"
-		cQuery += "			'"+SE5TMP->E5_NUMERO+"' NUMERO,"
-		cQuery += "			'"+SE5TMP->E5_PARCELA+"' PARCELA,"
-		cQuery += "			'"+SE5TMP->E5_TIPO+"' TIPO,"
+		cQuery += " SELECT	'"+(cAliSE5)->E5_FILIAL+"' FILIAL,"
+		cQuery += "			'"+(cAliSE5)->E5_CLIFOR+"' FORNECE,"
+		cQuery += "			'"+(cAliSE5)->E5_LOJA+"' LOJA,"
+		cQuery += "			'"+(cAliSE5)->E5_PREFIXO+"' PREFIXO,"
+		cQuery += "			'"+(cAliSE5)->E5_NUMERO+"' NUMERO,"
+		cQuery += "			'"+(cAliSE5)->E5_PARCELA+"' PARCELA,"
+		cQuery += "			'"+(cAliSE5)->E5_TIPO+"' TIPO,"
 		cQuery += "			'' DATASE2,"
-		cQuery += "			'"+SE5TMP->E5_DATA+"' DATASE5,"
+		cQuery += "			'"+(cAliSE5)->E5_DATA+"' DATASE5,"
 		cQuery += "			'' DATACT2,"
 		cQuery += "			 "+ replace(cValtochar(nVALORSE2),",",".") +" VALORSE2,"
 		cQuery += "			 0 VALORCT2,"
 		cQuery += "			 '' DEBITO,"
 		cQuery += "			 '' CREDIT,"
-		cQuery += "			 '"+SE5TMP->E5_TIPODOC+"' TIPODOC,"
-		cQuery += "			 '"+SE5TMP->E5_RECPAG+"' RECPAG,"
+		cQuery += "			 '"+(cAliSE5)->E5_TIPODOC+"' TIPODOC,"
+		cQuery += "			 '"+(cAliSE5)->E5_RECPAG+"' RECPAG,"
 		cQuery += "			 0 VLACRES,"
 		cQuery += "			 '' D_E_L_E_T_," 
 		cQuery += "			 0 R_E_C_D_E_L_"
 		
 		/*
 		RecLock("TMPANL",.T.)	
-			TMPANL->FORNECE   	:= SE5TMP->E5_CLIFOR
-			TMPANL->LOJA      	:= SE5TMP->E5_LOJA
+			TMPANL->FORNECE   	:= (cAliSE5)->E5_CLIFOR
+			TMPANL->LOJA      	:= (cAliSE5)->E5_LOJA
 			TMPANL->VALORSE2	:= nVALORSE2
-			TMPANL->FILIAL     	:= SE5TMP->E5_FILIAL	
-			TMPANL->PREFIXO    	:= SE5TMP->E5_PREFIXO
-			TMPANL->NUMERO     	:= SE5TMP->E5_NUMERO
-			TMPANL->PARCELA    	:= SE5TMP->E5_PARCELA
-			TMPANL->TIPO       	:= SE5TMP->E5_TIPO
-			TMPANL->DATASE5    	:= STOD(SE5TMP->E5_DATA)
-			TMPANL->TIPODOC    	:= SE5TMP->E5_TIPODOC
-			TMPANL->RECPAG     	:= SE5TMP->E5_RECPAG
+			TMPANL->FILIAL     	:= (cAliSE5)->E5_FILIAL	
+			TMPANL->PREFIXO    	:= (cAliSE5)->E5_PREFIXO
+			TMPANL->NUMERO     	:= (cAliSE5)->E5_NUMERO
+			TMPANL->PARCELA    	:= (cAliSE5)->E5_PARCELA
+			TMPANL->TIPO       	:= (cAliSE5)->E5_TIPO
+			TMPANL->DATASE5    	:= STOD((cAliSE5)->E5_DATA)
+			TMPANL->TIPODOC    	:= (cAliSE5)->E5_TIPODOC
+			TMPANL->RECPAG     	:= (cAliSE5)->E5_RECPAG
 		TMPANL->(MsUnLock())
 		*/
 		
@@ -397,77 +403,113 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		nAcumul	+= 1
 		nCont	+= 1
 		if nCont > nAmPerc .or. nAcumul ==1
-			oProcess:incRegua2("Mov. de baixas ("+cValtochar(Round(nAcumul/nSE5TMP*100,0))+"%) proc.: "+ CValToChar(nAcumul) +" de "+ CValToChar(nSE5TMP) +" ")
+			oProcess:incRegua2("Mov. de baixas ("+cValtochar(Round(nAcumul/nSE5MOV*100,0))+"%) proc.: "+ CValToChar(nAcumul) +" de "+ CValToChar(nSE5MOV) +" ")
 			nCont := 1
 		endif
-		SE5TMP->(dbSkip())
+		(cAliSE5)->(dbSkip())
 	Enddo	
-	//oProcess:incRegua2("Movimentos de baixas proc.: "+ CValToChar(nAcumul) +" de "+ CValToChar(nSE5TMP) +" ")
-	/*
-	oProcess:incRegua1("Movimentos contábeis (4/5)")
-	oProcess:setRegua2(nCT2TMP)
+	//oProcess:incRegua2("Movimentos de baixas proc.: "+ CValToChar(nAcumul) +" de "+ CValToChar(nSE5MOV) +" ")
+	
+	(cAliSE5)->(Dbclosearea())
+
+	oProcess:incRegua1("Movimentos contábeis (7/8)")
+	oProcess:setRegua2(nPerc+1)
+	oProcess:incRegua2("Importando...")
+	
 	nAcumul	:= 0
 	nCont	:= 0
-	nAmPerc	:= nCT2TMP/10
+	nAmPerc	:= ROUND(nCT2TMP/nPerc,0)
 
-	dbselectArea("CT2TMP")
-	CT2TMP->(DbgoTop())
-
-	While CT2TMP->(!EOF())
+	dbselectArea(cAliCT2)
+	(cAliCT2)->(DbgoTop())
 	
-		dbSelectArea("TMPANL")
-		dbSetOrder(1)
-		dbGoTop()
-	*/	
+	While (cAliCT2)->(!EOF())
+	
+		//dbSelectArea("TMPANL")
+		//TMPANL->(dbSetOrder(1))
+		//TMPANL->(dbGoTop())
+		
 	    /* somente para testes e analise Mauricio - 01/06/16
 	    _cPf   := "MAN"
 	    _cNum  := "203449   "
 	    _cPa   := "A  "
 	
-	    IF CT2TMP->(CT2_PREFIX+CT2_NUMDOC+CT2_PARCEL) <> _cPF+_cNum + _cPa
-	       CT2TMP->(dbSkip())
+	    IF (cAliCT2)->(CT2_PREFIX+CT2_NUMDOC+CT2_PARCEL) <> _cPF+_cNum + _cPa
+	       (cAliCT2)->(dbSkip())
 	       loop
 	    Endif  
 	    */
-	/*
+		/*
 		RecLock("TMPANL",.T.)	
-			TMPANL->FORNECE   := CT2TMP->CT2_CLIFOR
-			TMPANL->LOJA      := CT2TMP->CT2_LOJACF
-			If Alltrim(CT2TMP->CT2_DEBITO) == Alltrim(mv_par09)//"211110001"
-				TMPANL->VALORCT2  -= CT2TMP->CT2_VALOR
-			ElseIf Alltrim(CT2TMP->CT2_CREDIT) == Alltrim(mv_par09)//"211110001"
-				TMPANL->VALORCT2  += CT2TMP->CT2_VALOR			
-			Endif				
-			TMPANL->FILIAL    := CT2TMP->CT2_FILKEY	
-			TMPANL->PREFIXO   := CT2TMP->CT2_PREFIX
-			TMPANL->NUMERO    := CT2TMP->CT2_NUMDOC
-			TMPANL->PARCELA   := CT2TMP->CT2_PARCEL
-			TMPANL->TIPO      := CT2TMP->CT2_TIPODC
-			TMPANL->DATACT2   := STOD(CT2TMP->CT2_DATA)						
+			TMPANL->FILIAL    := (cAliCT2)->CT2_FILKEY
+			TMPANL->FORNECE   := (cAliCT2)->CT2_CLIFOR
+			TMPANL->LOJA      := (cAliCT2)->CT2_LOJACF
+			If Alltrim((cAliCT2)->CT2_DEBITO) == Alltrim(mv_par09)//"211110001"
+				TMPANL->VALORCT2  -= (cAliCT2)->CT2_VALOR
+			ElseIf Alltrim((cAliCT2)->CT2_CREDIT) == Alltrim(mv_par09)//"211110001"
+				TMPANL->VALORCT2  += (cAliCT2)->CT2_VALOR			
+			Endif
+			TMPANL->PREFIXO   := (cAliCT2)->CT2_PREFIX
+			TMPANL->NUMERO    := (cAliCT2)->CT2_NUMDOC
+			TMPANL->PARCELA   := (cAliCT2)->CT2_PARCEL
+			TMPANL->TIPO      := (cAliCT2)->CT2_TIPODC
+			TMPANL->DATACT2   := STOD((cAliCT2)->CT2_DATA)						
 		MsUnLock()
+		*/
+	
+		cQuery := " INSERT INTO "+ cTabTMP +"(FILIAL, FORNECE, LOJA, PREFIXO, NUMERO, PARCELA, TIPO, DATASE2, "
+		cQuery += "							  DATASE5, DATACT2, VALORSE2, VALORCT2, DEBITO, CREDIT, TIPODOC," 
+		cQuery += "							  RECPAG, VLACRES, D_E_L_E_T_, R_E_C_D_E_L_)"
+		cQuery += " SELECT	'"+(cAliCT2)->FILIAL+"' FILIAL,"
+		cQuery += "			'"+(cAliCT2)->FORNECE+"' FORNECE,"
+		cQuery += "			'"+(cAliCT2)->LOJA+"' LOJA,"
+		cQuery += "			'"+(cAliCT2)->PREFIXO+"' PREFIXO,"
+		cQuery += "			'"+(cAliCT2)->NUMERO+"' NUMERO,"
+		cQuery += "			'"+(cAliCT2)->PARCELA+"' PARCELA,"
+		cQuery += "			'"+(cAliCT2)->TIPO+"' TIPO,"
+		cQuery += "			'' DATASE2,"
+		cQuery += "			'' DATASE5,"
+		cQuery += "			'"+(cAliCT2)->DATACT2+"' DATACT2,"
+		cQuery += "			 0 VALORSE2,"
+		cQuery += "			 "+ replace(cValtochar((cAliCT2)->VALORCT2),",",".") +" VALORCT2,"
+		cQuery += "			 '' DEBITO,"
+		cQuery += "			 '' CREDIT,"
+		cQuery += "			 '' TIPODOC,"
+		cQuery += "			 '' RECPAG,"
+		cQuery += "			 0 VLACRES,"
+		cQuery += "			 '' D_E_L_E_T_," 
+		cQuery += "			 0 R_E_C_D_E_L_"
 		
+		If TcSqlExec(cQuery) < 0
+			MsgStop("Não foi possível inserir os títulos do movimentos contábeis.","Erro na inclusão")
+		EndIf
+
 		nAcumul	+= 1
 		nCont	+= 1
 		if nCont > nAmPerc .or. nAcumul ==1
-			oProcess:incRegua2("Movimentos contábeis ("+cValtochar(Round(nAcumul/nCT2TMP*100,0))+"%) proc.: "+ CValToChar(nAcumul) +" de "+ CValToChar(nCT2TMP) +" ")
+			oProcess:incRegua2("Movim. contábeis ("+cValtochar(Round(nAcumul/nCT2TMP*100,0))+"%) proc.: "+ CValToChar(nAcumul) +" de "+ CValToChar(nCT2TMP) +" ")
 			nCont := 1
 		endif
 		
-		CT2TMP->(dbSkip())
+		(cAliCT2)->(dbSkip())
 	Enddo		           
-	*/
-	oProcess:incRegua1("Gerando impressão (7/7)")
+	
+	(cAliCT2)->(DbcloseArea())
+
+	oProcess:incRegua2("Mov. contábeis importados...")
+
+	oProcess:incRegua1("Gerando impressão (7/8)")
 	oProcess:setRegua2(nPerc+1)
 	oProcess:incRegua2("Imprimindo...")
-	
+
 	nAcumul	:= 0
 	nCont	:= 0
 	nAmPerc	:= ROUND(nSA2TMP/nPerc,0)        
 	//Impressao
-	dbSelectArea("SA2TMP")
-	SA2TMP->(dbGoTop())
+	dbSelectArea(cAliSA2)
+	(cAliSA2)->(dbGoTop())
 
-	While SA2TMP->(!EOF())
+	While (cAliSA2)->(!EOF())
 		If nLin > 65
 			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 			nLin := 8
@@ -478,17 +520,17 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		dbSelectArea("TMPANL")
 		TMPANL->(dbSetOrder(1))
 		TMPANL->(dbGoTop())
-		TMPANL->(dbSeek(SA2TMP->A2_COD+SA2TMP->A2_LOJA))
+		TMPANL->(dbSeek((cAliSA2)->A2_COD+(cAliSA2)->A2_LOJA))
 		*/
 
 		cQuery 	:= " SELECT * "
 		cQuery 	+= " FROM "+ cTabTMP +" "
-		cQuery	+= " WHERE D_E_L_E_T_='' AND FORNECE='"+SA2TMP->A2_COD+"' AND LOJA='"+SA2TMP->A2_LOJA+"' "
+		cQuery	+= " WHERE D_E_L_E_T_='' AND FORNECE='"+Alltrim((cAliSA2)->A2_COD)+"' AND LOJA='"+Alltrim((cAliSA2)->A2_LOJA)+"' "
 		cQuery	+= " ORDER BY FORNECE, LOJA, FILIAL, NUMERO, PREFIXO, PARCELA, TIPO; "
 
 		TcQuery cQuery ALIAS "QTMPANL" NEW
 
-		//While TMPANL->(!EOF()) .And. SA2TMP->A2_COD == TMPANL->FORNECE .And. SA2TMP->A2_LOJA == TMPANL->LOJA
+		//While TMPANL->(!EOF()) .And. (cAliSA2)->A2_COD == TMPANL->FORNECE .And. (cAliSA2)->A2_LOJA == TMPANL->LOJA
 		while QTMPANL->(!eof())	
 			If nLin > 65
 		   		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
@@ -499,9 +541,9 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 				lEntrou := .T.
 				nTotFSE2 := 0
 				nTotFCT2 := 0			
-				@nLin,000 Psay SA2TMP->A2_COD
-				@nLin,008 Psay SA2TMP->A2_LOJA				
-				@nLin,012 Psay Substr(SA2TMP->A2_NOME,1,30)
+				@nLin,000 Psay (cAliSA2)->A2_COD
+				@nLin,008 Psay (cAliSA2)->A2_LOJA				
+				@nLin,012 Psay Substr((cAliSA2)->A2_NOME,1,30)
 			Endif	                                    				
 			
 			IF MV_PAR08 == 1 &&Analitico                                                                
@@ -542,15 +584,15 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 			Endif		
 		    
 		    IF MV_PAR08 == 1
-			nLin += 1		
-			@nLin,000 Psay "Total Fornecedor"
-			@nLin,120 Psay nTotFSE2 PICTURE "@E 999,999,999.99"
-			@nLin,140 Psay nTotFCT2 PICTURE "@E 999,999,999.99"
-			If nTotFSE2 > 0 .and. nTotFCT2 > 0
-				@nLin,160 Psay nTotFSE2-nTotFCT2 PICTURE "@E 999,999,999.99"		
-			Else
-				@nLin,160 Psay nTotFSE2+nTotFCT2 PICTURE "@E 999,999,999.99"
-			Endif
+				nLin += 1		
+				@nLin,000 Psay "Total Fornecedor"
+				@nLin,120 Psay nTotFSE2 PICTURE "@E 999,999,999.99"
+				@nLin,140 Psay nTotFCT2 PICTURE "@E 999,999,999.99"
+				If nTotFSE2 > 0 .and. nTotFCT2 > 0
+					@nLin,160 Psay nTotFSE2-nTotFCT2 PICTURE "@E 999,999,999.99"		
+				Else
+					@nLin,160 Psay nTotFSE2+nTotFCT2 PICTURE "@E 999,999,999.99"
+				Endif
 			else   &&sintetico
 			    @nLin,52 Psay nTotFSE2 PICTURE "@E 999,999,999.99"
 			    @nLin,72 Psay nTotFCT2 PICTURE "@E 999,999,999.99"
@@ -573,9 +615,10 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 			nCont := 1
 		endif
 
-		SA2TMP->(dbSkip())
+		(cAliSA2)->(dbSkip())
 	Enddo
-
+	(cAliSA2)->(DbcloseArea())
+	
 	If MV_PAR08 == 1
 		nLin += 1
 		@nLin,000 Psay "Total Geral"
@@ -619,13 +662,13 @@ Return
 Static Function fDados()
 
 	Local cQuery:=""
-	oProcess:incRegua1("Consultando clientes (2/7)")
+	oProcess:incRegua1("Consultando clientes (2/8)")
 	oProcess:setRegua2(4)
 	oProcess:incRegua2("Consultando clientes...")
 
-	If Select("SA2TMP") > 0
-		DbSelectArea("SA2TMP")
-		DbCloseArea("SA2TMP")
+	If Select(cAliSA2) > 0
+		DbSelectArea(cAliSA2)
+		DbCloseArea(cAliSA2)
 	Endif
 	
 	cQuery:=" SELECT A2_COD,A2_LOJA,A2_NOME "
@@ -634,19 +677,19 @@ Static Function fDados()
 	cQuery+=" AND A2_COD BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"	
 	cQuery+=" AND A2_LOJA BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "'" 
 	
-	TCQUERY cQuery NEW ALIAS "SA2TMP"
+	TCQUERY cQuery NEW ALIAS &cAliSA2
 	
-	dbselectArea("SA2TMP")
-	SA2TMP->(DbgoTop())
+	dbselectArea(cAliSA2)
+	(cAliSA2)->(DbgoTop())
 	Count to nSA2TMP
-	SA2TMP->(DbgoTop())
+	(cAliSA2)->(DbgoTop())
 	
-	If Select("SE2TMP") > 0
-		DbSelectArea("SE2TMP")
-		DbCloseArea("SE2TMP")
+	If Select(cAliSE2) > 0
+		DbSelectArea(cAliSE2)
+		DbCloseArea(cAliSE2)
 	Endif
 	
-	oProcess:incRegua1("Importando títulos a pagar (3/7)")
+	oProcess:incRegua1("Importando títulos a pagar (3/8)")
 	oProcess:setRegua2(2)
 	oProcess:incRegua2("Importando...")
 	
@@ -697,20 +740,20 @@ Static Function fDados()
 	oProcess:incRegua2("Títulos Contas a Pagar importados...")
 
 	/*
-	TCQUERY cQuery NEW ALIAS "SE2TMP"
+	TCQUERY cQuery NEW ALIAS cAliSE2
 
-	dbselectArea("SE2TMP")
-	SE2TMP->(DbgoTop())
+	dbselectArea(cAliSE2)
+	(cAliSE2)->(DbgoTop())
 	Count to nSE2TMP
-	SE2TMP->(DbgoTop())
+	(cAliSE2)->(DbgoTop())
 	*/
 
-	If Select("SE5TMP") > 0
-		DbSelectArea("SE5TMP")
-		DbCloseArea("SE5TMP")
+	If Select(cAliSE5) > 0
+		DbSelectArea(cAliSE5)
+		DbCloseArea(cAliSE5)
 	Endif
 
-	oProcess:incRegua1("Consultando movimentos financeiros (4/7)")
+	oProcess:incRegua1("Consultando movimentos financeiros (4/8)")
 	oProcess:setRegua2(2)
 	oProcess:incRegua2("Importando...")
 	
@@ -754,30 +797,32 @@ Static Function fDados()
 	cQuery+=" ) "
 	cQuery+=" ORDER BY E5_CLIFOR,E5_LOJA,E5_DATA,E5_RECPAG "	
 	
-	TCQUERY cQuery NEW ALIAS "SE5TMP"
+	TCQUERY cQuery ALIAS &cAliSE5 NEW
 	
-	dbselectArea("SE5TMP")
-	SE5TMP->(DbgoTop())
-	Count to nSE5TMP
-	SE5TMP->(DbgoTop())
+	dbselectArea(cAliSE5)
+	(cAliSE5)->(DbgoTop())
+	Count to nSE5MOV
+	(cAliSE5)->(DbgoTop())
 
 	oProcess:incRegua2("Mov. financeiros importados...")
-	/*
-	If Select("CT2TMP") > 0
-		DbSelectArea("CT2TMP")
-		DbCloseArea("CT2TMP")
+	
+	If Select(cAliCT2) > 0
+		DbSelectArea(cAliCT2)
+		DbCloseArea(cAliCT2)
 	Endif
-	*/
-	oProcess:incRegua1("Importando mov. contábeis (5/7)")
+	
+	oProcess:incRegua1("Importando mov. contábeis (5/8)")
 	oProcess:setRegua2(2)
 	oProcess:incRegua2("Importando...")
 
 	//If mv_par08 == 1 //Analitico
-	cQuery:=" INSERT INTO "+cTabTMP+"(FILIAL, FORNECE, LOJA, PREFIXO, NUMERO, PARCELA, TIPO, DATASE2, DATASE5, DATACT2, VALORSE2, VALORCT2, DEBITO, CREDIT, TIPODOC, RECPAG, VLACRES, D_E_L_E_T_, R_E_C_D_E_L_) "
-	cQuery+=" SELECT CT2_FILKEY FILIAL,CT2_CLIFOR FORNECE,CT2_LOJACF LOJA, CT2_PREFIX PREFIXO,CT2_NUMDOC NUMERO,CT2_PARCEL PARCELA,CT2_TIPODC TIPO, "
+	//cQuery:=" INSERT INTO "+cTabTMP+"(FILIAL, FORNECE, LOJA, PREFIXO, NUMERO, PARCELA, TIPO, DATASE2, DATASE5, DATACT2, VALORSE2, VALORCT2, DEBITO, CREDIT, TIPODOC, RECPAG, VLACRES, D_E_L_E_T_, R_E_C_D_E_L_) "
+	
+	cQuery:=" SELECT CT2_FILKEY FILIAL,CT2_CLIFOR FORNECE,CT2_LOJACF LOJA, CT2_PREFIX PREFIXO,CT2_NUMDOC NUMERO,CT2_PARCEL PARCELA,CT2_TIPODC TIPO, "
 	cQuery+= "		 '' DATASE2, '' DATASE5,CT2_DATA DATACT2, 0 VALORSE2,
 	cQuery+= "		 CASE WHEN rtrim(ltrim(CT2_DEBITO)) = '"+Alltrim(mv_par09)+"' THEN CT2_VALOR*(-1) WHEN rtrim(ltrim(CT2_CREDIT)) = '"+Alltrim(mv_par09)+"' THEN CT2_VALOR END VALORCT2, "
 	cQuery+= "		 '' DEBITO,'' CREDIT,'' TIPODOC,'' RECPAG,0 VLACRES,'' D_E_L_E_T_,0 R_E_C_D_E_L_ "
+	
 	cQuery+=" FROM " + RetSqlName("CT2") + " WITH(NOLOCK) "
 	cQuery+=" WHERE D_E_L_E_T_ <> '*' "
 	cQuery+=" AND CT2_DATA BETWEEN '" + DTOS(mv_par05) + "' AND '" + DTOS(mv_par06) + "' "	
@@ -787,21 +832,20 @@ Static Function fDados()
 	cQuery+=" AND CT2_LOJACF BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "' "
 	cQuery+=" AND CT2_CLIFOR <> '' "			
 	cQuery+=" ORDER BY CT2_CLIFOR,CT2_LOJACF,CT2_DATA "	
-	
+	/*
 	If TcSqlExec(cQuery) < 0
 		MsgStop("Não foi possível inserir os movimentos contábeis.","Erro na inclusão")
 	EndIf
-
-	oProcess:incRegua2("Mov. contábeis importados...")
-	/*
-	TCQUERY cQuery NEW ALIAS "CT2TMP"
-	
-	dbselectArea("CT2TMP")
-	CT2TMP->(DbgoTop())
-	Count to nCT2TMP
-	CT2TMP->(DbgoTop())
 	*/
+	
+	TCQUERY cQuery ALIAS &cAliCT2 NEW
+	
+	dbselectArea(cAliCT2)
+	(cAliCT2)->(DbgoTop())
+	Count to nCT2TMP
+	(cAliCT2)->(DbgoTop())
+	
+	oProcess:incRegua2("Mov. contábeis importados...")
 
-
-	nTotal := nCT2TMP+nSE5TMP+nSE2TMP+nSA2TMP
+	nTotal := nCT2TMP+nSE5MOV+nSE2TMP+nSA2TMP
 Return
