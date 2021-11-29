@@ -20,8 +20,8 @@
 	@history Tkt.62460 - ABEL BABINI - 22/11/2021 - Conforme conversa com a Rosangela em 22/11/2021, alterar a regra para apenas se o valor das despesas do XML for maior que o valor das despesas do Pedido.
 	@history Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
 	@history Tkt.64073 - ABEL BABINI - 23/11/2021 - Alteração na regra do IPI para não utilizar o campo de valor do IPI, mas calcular o valor baseado na aliquota.
+	@history Tkt.64415 - JONATHAN CARVALHO - 26/11/2021 - Alteração no calculo do IPIC para somar o valor do frete junto.
 /*/
-
 User Function MT103PN     
 Local lRet := .T. // ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
 //INICIO Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
@@ -41,21 +41,18 @@ Local nRgSC7		:= 0
 Local nValFrPC	:= 0 //Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
 //FIM Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
 Local cnumPedi      := ' '
-
 //INICIO Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
 Local _cNFOri := ""
 Local _cSrOri := ""
 Local _cItOri := ""
 Local cQrySD1 := ""
 //FIM Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
-
 If l103Class
 	if MAFISRET(,"NF_FRETE") = 0 .and. SF1->F1_FRETE > 0
 		MAFISALT("NF_FRETE", SF1->F1_FRETE, )     
 	Endif
 	//INICIO Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
 	aAreaDC := GetArea()
-
 	IF Alltrim(cChvXML) <> ''
 		//Retorna valor das despesas do XML
 		If Select(cAl103XM) > 0
@@ -72,7 +69,6 @@ If l103Class
 				AND RECNFXMLITENS.%notDel%
 			GROUP BY RECNFXMLITENS.XIT_CHAVE
 		EndSQL
-
 		(cAl103XM)->(dbGoTop())
 		DbSelectArea(cAl103XM)
 		IF !(cAl103XM)->(eof())
@@ -81,7 +77,6 @@ If l103Class
 		(cAl103XM)->(dbCloseArea())	
 	
 	ENDIF
-
 	//Retorna valor das despesas do Pedido de Compra
 	If Select(cAl103C7) > 0
 		(cAl103C7)->(dbCloseArea())
@@ -109,7 +104,8 @@ If l103Class
 				AND SC7B.D_E_L_E_T_ = ''), 0) AS FRETEPC2,
 			//Atendendo o ticket 63068 JONATHAN.CARVALHO 28/10/2021	
 			//CASE WHEN C7_FRETE > 0 THEN ROUND(((SC7.C7_TOTAL+SC7.C7_FRETE) * C7_IPI)/100,2) ELSE ROUND(((SC7.C7_TOTAL+SC7.C7_VALFRE) * C7_IPI)/100,2) END AS IPIPC,
-			((SC7.C7_TOTAL*(SC7.C7_IPI/100))/SC7.C7_QUANT) AS IPIPC,
+			//Atendendo o ticket 64415 valor do IPIC + Frete 
+			(((SC7.C7_TOTAL+SC7.C7_FRETE)*(SC7.C7_IPI/100))/SC7.C7_QUANT) AS IPIPC,
 			(SC7.C7_FRETE) AS FRETEPC,
 			//Tkt.62460 - ABEL BABINI - 01/11/2021 - Valor da despesa causando erro. O Valor da despesa é rateado por item e deve ser totalizado para a comparação.
 			ISNULL((SELECT 
@@ -163,7 +159,6 @@ If l103Class
 	(cAl103C7)->(dbGoTop())
 	(cAl103C7)->( dbEval( { || nRgSC7 ++ },,{ || !Eof() } ) )
 	(cAl103C7)->(dbGoTop()) 
-
 	//nRgSC7	:= (cAl103C7)->(RecCount()) //Ch. 053416 OS 056667 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 27/01/2020 | Verificado se existe pedido de compra
 	If nRgSC7 > 0 //Ch. 053416 OS 056667 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 27/01/2020 | Verificado se existe pedido de compra
 		//Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
@@ -183,9 +178,7 @@ If l103Class
 			(cAl103C7)->(dbSkip())
 		EndDo
 		(cAl103C7)->(dbGoTop())
-
 		//Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
-
 		nVlDesp	:=	((cAl103C7)->SEGUROPC + (cAl103C7)->DESPPC + nValFrPC) - ;
 								((cAl103C7)->SEGUROREC + (cAl103C7)->DESPESAREC + (cAl103C7)->FRETEREC) 
 		
@@ -196,7 +189,6 @@ If l103Class
 		EndDo
 		(cAl103C7)->(dbGoTop())
 		nVlDesp := nVlDesp + nVlIpi
-
 		IF !(cAl103C7)->(eof())
 			IF !(cAl103C7)->C7_MOEDA > 1
 				nSC7VDsp := round(nVlDesp,2)
@@ -218,12 +210,9 @@ If l103Class
 				Else
 					nVlrDlr := (cAl103C7)->C7_TXMOEDA
 				ENDIF
-
 				nSC7VDsp := round(nVlDesp * nVlrDlr,2)
 			ENDIF
 		ENDIF
-
-
 		//valida valores
 		//IF nXMLVDsp <> nSC7VDsp
 		//Conforme conversa com a Rosangela em 22/11/2021, alterar a regra para apenas se o valor das despesas do XML for maior que o valor das despesas do Pedido.
@@ -239,7 +228,6 @@ If l103Class
 	RestArea(aAreaDC)
 	//FIM Ch. 053416 - ABEL BABINI | DEJAIME | FISCAL | Bloqueio de Imposto | 24/01/2020
 Endif
-
 // INICIO ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
 dbSelectArea('ZCW')
 dbSetOrder(2)
@@ -255,10 +243,8 @@ Else
 	Endif
 Endif
 // FIM ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
-
 //INICIO Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
 IF lRet .AND. SF1->F1_FORMUL = 'S' .AND. SF1->F1_TIPO = 'N' .AND. INCLUI
-
 	cQrySD1 := GetNextAlias()
 	BEGINSQL Alias cQrySD1
 		SELECT 
@@ -279,12 +265,10 @@ IF lRet .AND. SF1->F1_FORMUL = 'S' .AND. SF1->F1_TIPO = 'N' .AND. INCLUI
 	ENDSQL
 	DbSelectArea(cQrySD1)
 	(cQrySD1)->(dbGoTop())
-
 	WHILE !(cQrySD1)->(EOF())
 		_cNFOri := (cQrySD1)->D1_NFORI
 		_cSrOri := (cQrySD1)->D1_SERIORI
 		_cItOri := (cQrySD1)->D1_ITEMORI
-
 		cQryNFO := GetNextAlias()
 		BEGINSQL Alias cQryNFO
 			SELECT 
@@ -321,7 +305,6 @@ IF lRet .AND. SF1->F1_FORMUL = 'S' .AND. SF1->F1_TIPO = 'N' .AND. INCLUI
 			ENDIF
 		ENDIF
 		(cQryNFO)->(dbCloseArea())
-
 		(cQrySD1)->(DbSkip())
 	ENDDO
 	(cQrySD1)->(dbCloseArea())

@@ -21,9 +21,8 @@
 	@history Ticket  14631  - Everson      - 27/05/2021 - Adiconado totalizador do grupo 6 no txt
 	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
-	
 	/*/
-User Function AD0012_DIA // U_AD0012_DIA()
+User Function ADVEN106R // U_ADVEN106R()
 
 	SetPrvt("AORD,TAMANHO,LIMITE,NOMEPROG,MV_TABPR,NTIPO")
 	SetPrvt("ARETURN,NLASTKEY,NLIN,NITEM,LCONTINUA,M_PAG")
@@ -44,15 +43,14 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	Private _Eof  		:= CHR(13)+CHR(10)
 	PRIVATE _cFilial 	:= ""
 	PRIVATE _lVnd		:= .F.
+	Private oTabSZA		:= THashMap():New()
+
+	//MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
+
+	//return .f.
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de geracao de realizado de vendas das regioes')
 	
-	if !__CUSERID$(SuperGetMV("MV_XUSRECO",,"000835"))
-		MsgAlert("Usuário não autorizado a emitir o relatório na versão descontinuada!", "..:: Erro ::..")
-
-		return .f.
-	ENDIF
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Variaveis utilizadas para parametros - AD0012                        ³
 	//³ mv_par01             // Periodo De                                   ³
@@ -75,7 +73,7 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	aOrd             := {}
 	tamanho          := "M"
 	limite           := 132
-	nomeprog         := "AD0012"
+	nomeprog         := "ADVEN106R"
 	mv_tabpr         := ""
 	nTipo            := 18
 	aReturn := { "Zebrado", 1,"Administracao", 2, 2, 1, "",0 }
@@ -275,7 +273,7 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	cDesc1  := "Este programa tem como objetivo calcular a demonstrativo de "
 	cDesc2  := "vendas das regioes "
 	cDesc3  := "Equipe Protheus"
-	NomeRel := "AD0012"
+	NomeRel := "ADVEN116R"
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³Totaliza por grupos                                           ³
@@ -416,6 +414,7 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	Private _nTotF1	:= 0
 	Private _nTotF2	:= 0
 	Private _nTotF3	:= 0
+	Private aDSR	:= {}
 	
 	nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
 	
@@ -431,12 +430,41 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	
 	nTipo := If(aReturn[4]==1,15,18)
 	
+	aDSR := fGetDSR(MV_PAR02)
+
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Inicializa a regua de processamento                                 ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Processa({|| RunCont()})
 	//RunCont()
+
+	//FREEOBJ("oTabSZA")
 Return
+
+Static Function fGetDSR(dDtFim)
+	Local cQuery 	:= ""
+	Local aRet 		:= {}
+	Local cDtFim	:= Dtos(dDtFim)
+
+	if !Empty(cDtFim)
+		cquery := " SELECT * "
+		cquery += " FROM "+ retsqlname("ZHA") +" "
+		cquery += " WHERE D_E_L_E_T_='' AND ZHA_FILIAL='"+ xfilial("ZHA") +"' AND ZHA_ANOMES='"+ left(cDtFim,4)+"/"+SubStr(cDtfim, 5, 2) +"'; "
+		
+		TcQuery cquery ALIAS "QZHA" new
+
+		if qzha->(!eof())
+			aRet 		:= array(4)
+			aret[1] := QZHA->ZHA_ANOMES
+			aret[2] := QZHA->ZHA_DIATOT
+			aret[3] := QZHA->ZHA_DUTEIS
+			aret[4] := QZHA->ZHA_DSR
+		endif
+
+		qzha->(Dbclosearea())
+	endif
+
+return aRet
 
 Static Function RunCont()
 	ProcRegua(RecCount())
@@ -471,6 +499,8 @@ Static Function RunCont()
 	AADD (aStru,{"T1_FATBRT" 	, "N",10,2})	// Total Faturado vendida
 	AADD (aStru,{"T1_DESFIN" 	, "N",10,2})	// Total Faturado vendida
 	AADD (aStru,{"T1_TABELA"	, "C",04,0})	// Tabela de Comissao
+	AADD (aStru,{"T1_PERCTAB"	, "N",04,0})	// Percentual de comissão
+	
 	AADD (aStru,{"T1_POSIN"		, "N",03,0})	// Posicao NETO
 	AADD (aStru,{"T1_POSIP"		, "N",03,0})	// Posicao PAI
 	AADD (aStru,{"T1_TABFAIN"	, "C",01,0})	// Faixa da tabela NETO
@@ -547,6 +577,7 @@ Static Function RunCont()
 	AADD (aStru,{"T6_GRUPON" 	, "C",04,0})	// grupo de produto NETO
 	AADD (aStru,{"T6_VEND"   	, "C",06,0})	// Vendedor
 	AADD (aStru,{"T6_TABELA"	, "C",04,0})	// Tabela de Comissao do vendedor
+	AADD (aStru,{"T6_PERCTAB"	, "N",04,0})	// Percentual de comissão
 	AADD (aStru,{"T6_GRPCOM"	, "C",01,0})	// Grupo de Comissao do vendedor
 	AADD (aStru,{"T6_DATA" 		, "D",08,0})	// Data faturamento para calculo
 	AADD (aStru,{"T6_QTDADE" 	, "N",07,0})	// Quantidade de vendedores do grupo
@@ -621,17 +652,29 @@ Return
 
 Static Function Sele1()
 
-	cQuery:="SELECT F2_FILIAL, F2_DOC, F2_EMISSAO, F2_VEND1, F2_SERIE, F2_CLIENTE ,F2_LOJA  , A1_NOME , A1_DESC "+;
-	"FROM "+retsqlname("SF2")+" SF2 (NOLOCK), " +retsqlname("SA1")+" SA1 (NOLOCK) "+; // Chamado n. TI - FWNM - 23/05/2019
-	"WHERE F2_FILIAL IN ("+AllTrim(_cFilial)+") AND "+; // Chamado n. TI - FWNM - 23/05/2019
-	"F2_EMISSAO BETWEEN '"+dtos(mv_par01)+"' AND '"+dtos(mv_par02)+"' AND "+; // Chamado n. TI - FWNM - 23/05/2019
-	"F2_TIPO='N' AND "+;
-	"F2_VEND1   BETWEEN '"+mv_par03+"' AND '"+mv_par04+"' AND "+;
-	"F2_CLIENTE = A1_COD AND F2_LOJA = A1_LOJA  AND "+;
-	"SF2.D_E_L_E_T_= '' AND "+;
-	"SA1.D_E_L_E_T_= '' "+; // Chamado n. TI - FWNM - 23/05/2019
-	"ORDER BY F2_EMISSAO,F2_DOC,F2_SERIE"
-	//" AND SF2.F2_DOC='002365590' "+;
+	cQuery	:= " SELECT F2_FILIAL, F2_DOC, F2_EMISSAO, F2_VEND1, F2_SERIE, F2_CLIENTE ,F2_LOJA," 
+	cQuery	+= "	A1_NOME, A1_DESC, "
+	cQuery	+= "	A3_CODSUP, A3_REGIAO, A3_TABELA, A3_NOME, A3_PERCTAB "
+	cQuery	+= " FROM "+retsqlname("SF2")+" SF2 (NOLOCK) INNER JOIN " +retsqlname("SA1")+" SA1 (NOLOCK) ON SA1.D_E_L_E_T_='' AND SF2.D_E_L_E_T_='' AND SA1.A1_COD=SF2.F2_CLIENTE AND SA1.A1_LOJA=SF2.F2_LOJA "
+	cQuery	+= "  		INNER JOIN "+ RetSqlName("SA3") +" SA3 (NOLOCK) ON SA3.D_E_L_E_T_='' AND SA3.A3_COD=SF2.F2_VEND1	"
+	cQuery	+= " WHERE F2_FILIAL IN ("+AllTrim(_cFilial)+") "
+	cQuery	+= " 	AND SF2.D_E_L_E_T_= '' "
+	cQuery	+= " 	AND F2_EMISSAO BETWEEN '"+dtos(mv_par01)+"' AND '"+dtos(mv_par02)+"' "
+	cQuery	+= " 	AND F2_TIPO='N' "
+	cQuery	+= " 	AND A3_COMSN !='N' "
+	cQuery	+= " 	AND F2_VEND1   BETWEEN '"+mv_par03+"' AND '"+mv_par04+"' "
+	cQuery	+= " 	AND A3_TABELA  BETWEEN '"+mv_par10+"' AND '"+mv_par11+"' "
+	//cQuery  += " 	AND F2_DOC='002365590' "
+	if (mv_par05 == 1)
+		cQuery	+= " AND SA3.A3_CODSUP   BETWEEN '"+mv_par06+"' AND '"+mv_par07+"' "
+	endif
+
+	if (mv_par05 == 2)
+		cQuery	+= " AND SA3.A3_REGIAO   BETWEEN '"+mv_par08+"' AND '"+mv_par09+"' "
+	Endif
+	cQuery	+= " ORDER BY F2_EMISSAO,F2_DOC,F2_SERIE"
+
+
 	TCQUERY cQuery new alias "XF2"
 	//return
 
@@ -659,250 +702,272 @@ Return
 */
 
 Static Function MontaTra()
-
+	
 	//ProcRegua(RecCount())
 	XF2->(dbgotop())
 	_cTabela:=''
 	
+	dbSelectArea("TEM1")
+	dbSelectArea("TEM2")
+	dbSelectArea("TEM3")
+	dbSelectArea("TEM4")
+	dbSelectArea("TEM5")
+	dbSelectArea("TEM6")
+
+	dbSelectArea("SZR")
+	dbSelectArea("SZP")
+
 	nCount := 0
-	
-	While !eof()
-		nCount++
-
-		If nLastKey == 27
-			Return
-		Endif
+	if XF2->(!eof())
 		
-		_cVend	 	:= 	XF2->F2_VEND1
-		
-		dbSelectArea("SA3")
-		DBSETORDER(1)
-		dbSeek(xfilial() + _cVend)
-		_cNomeVen	:=	SA3->A3_NOME
+		fCarSZA()
 
-		If SA3->A3_COMSN == 'N'					//  VENDEDOR E COMISSIONADO
-			dbSelectArea("XF2")
-			dbskip()
-			Loop
-		Endif
-		
-		If (SA3->A3_REGIAO < mv_par08 .OR. SA3->A3_REGIAO > mv_par09) .AND. (mv_par05 == 2)  // REGIAO DE VENDAS
-			dbSelectArea("XF2")
-			dbskip()
-			Loop
-		Endif
-		
-		If (SA3->A3_CODSUP < mv_par06 .OR. SA3->A3_CODSUP > mv_par07)  .AND. (mv_par05 == 1) // SUPERVISOR
-			dbSelectArea("XF2")
-			dbskip()
-			Loop
-		Endif
-
-		If SA3->A3_TABELA < mv_par10 .OR. SA3->A3_TABELA > mv_par11 	// CLASSE DE COMISSAO
-			dbSelectArea("XF2")
-			dbskip()
-			Loop
-		Endif
-
-		dbSelectArea("SZR")				// TABELA DE SUPERVISOR
-		DbSetOrder(1)
-		dbSeek(xfilial() + SA3->A3_CODSUP)
-
-		dbSelectArea("SZP")				// TABELA DE REGIOES DE MERCADO
-		DbSetOrder(1)
-		dbSeek(xfilial() + SA3->A3_REGIAO)
-
-		_cSuper		:=	SA3->A3_CODSUP
-		_cNomSup	:=	SZR->ZR_DESCRIC
-		_cRegiao	:= 	SA3->A3_REGIAO
-		_cNomReg	:=	SZP->ZP_DESCRIC
-		_cGrpCom	:= 	SA3->A3_TABELA
-
-		dbSelectArea("SD2")
-		//dbSeek(xfilial("SD2") + XF2->F2_DOC + XF2->F2_SERIE + XF2->F2_CLIENTE + XF2->F2_LOJA)
-		dbSeek(XF2->F2_FILIAL + XF2->F2_DOC + XF2->F2_SERIE + XF2->F2_CLIENTE + XF2->F2_LOJA)   &&Mauricio Chamado 006076.
-		
-		//MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
-		
-		nCount := 0
-		DO WHILE !EOF() .AND. 	SD2->D2_DOC		  	== XF2->F2_DOC     	.AND. ;
-			SD2->D2_FILIAL      == XF2->F2_FILIAL .AND. ;
-			SD2->D2_SERIE	  	== XF2->F2_SERIE  	.AND. ;
-			SD2->D2_CLIENTE		== XF2->F2_CLIENTE .AND. ;
-			SD2->D2_LOJA		== XF2->F2_LOJA
-			
+		While XF2->(!eof())
 			nCount++
 
-			If (LEFT(SD2->D2_CF,2) == "59" .OR. LEFT(SD2->D2_CF,2) == "69") .AND. SD2->D2_TES <> '526'  //REMESSA DESCONSIDERA
-				dbSelectArea("SD2")
-				dbskip()
-				LOOP
-			Endif
-		
-			If SD2->D2_TP != "PA"		// se nao for produto acabado desconsidera
-				dbSelectArea("SD2")
-				dbskip()
-				LOOP
+			If nLastKey == 27
+				Return
 			Endif
 			
-			
-			_cProduto 	:= 	SD2->D2_COD
-			_nQtd      	:= 	SD2->D2_QUANT
-			_nVal      	:= 	SD2->D2_TOTAL
-			_dData		:=  SD2->D2_EMISSAO
-			
-			_nValLiq    := (SD2->D2_TOTAL - SD2->D2_VALDEV)
-			_nMedio  	:=	_nVal / _nQtd
-			_nDesFin    :=	XF2->A1_DESC
-			
-	
-			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³DESCONTO FINANCEIRO                                                                                         ³
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			IF _nDesFin > 0
-				_nVal  :=  _nVal - ((_nDesFin/100)* _nValLiq)
-				_nMedio:=  _nVal / _nQtd
-			ENDIF
-			
-			//
-			dbSelectArea("SB1")
-			dbSeek(xfilial("SB1") + _cProduto)
-			_cGrupoN	:=	SB1->B1_GRUPO     //ALTERADO EM  28/12/06 - XGRPANT PRESERVA GRUPO
-			//		_cGrupoN	:=	SB1->B1_XGRPANT
-			_cDescric	:=	SB1->B1_DESC
-			_cGrupoP	:=	""
-			_cDescGrN	:=	""
-			_cDescGrP	:=	""
+			// TABELA DE SUPERVISOR
+			SZR->(DbSetOrder(1))
+			SZR->(dbSeek(xfilial() + XF2->A3_CODSUP))
 
-				//MsProcTxt( "Procurando grupo... " + time() )// Chamado n. TI - FWNM - 23/05/2019
-			PROCURAGRUPO()
+			// TABELA DE REGIOES DE MERCADO
+			SZP->(DbSetOrder(1))
+			SZP->(dbSeek(xfilial() + XF2->A3_REGIAO))
 
-			dbSelectArea("TEM1")
-			IF !dbSeek(_cVend + _cGrupoN + _cProduto + dtos(_dData))
-				
-				RecLock("TEM1",.T.)
-				TEM1->T1_SUPER		:=	_cSuper
-				TEM1->T1_REGIAO		:=	_cRegiao
-				TEM1->T1_VEND		:=	_cVend
-				TEM1->T1_NOMSUP		:=	_cNomSup
-				TEM1->T1_NOMREG		:=	_cNomReg
-				TEM1->T1_NOMVEND	:=	_cNomeVen
-				TEM1->T1_GRPCOM		:=	_cGrpCom
-				TEM1->T1_GRUPOP		:=	_cGrupoP
-				TEM1->T1_NOMEGP		:=	_cDescGrP
-				TEM1->T1_GRUPON		:=	_cGrupoN
-				TEM1->T1_NOMEGN		:=	_cDescGrN
-				TEM1->T1_PROD		:=	_cProduto
-				TEM1->T1_DESCRIC	:=	_cDescric
-				TEM1->T1_DATA    	:=	_dData
-				TEM1->T1_VLMEDIO  	:= _nMedio
-				TEM1->T1_QTDADE  	:= _nQtd
-				TEM1->T1_FATUR    	:= _nVal
-				TEM1->T1_TABELA    	:= _cTabela
-				
-				MsUnLock()
 
-			Else
-				
-				RecLock("TEM1",.F.)
-				_nQtdAc      	:= _nQtd	+ TEM1->T1_QTDADE
-				_nValAc      	:= _nVal	+ TEM1->T1_FATUR
-				_nMedio			:= _nValAc / _nQtdAc
-				
-				//			_nValbrt+=_nValbrt
-				//			TEM1->T1_FATBRT		:=_nValbrt
-				TEM1->T1_VLMEDIO  	:= _nMedio
-				TEM1->T1_QTDADE  	:= _nQtdAc
-				TEM1->T1_FATUR    	:= _nValAc
-				MsUnLock()
+			_cVend	 	:= 	XF2->F2_VEND1
+			_cNomeVen	:=	XF2->A3_NOME
 
-			endif
+			_cVend	 	:= 	XF2->F2_VEND1
+			_cSuper		:=	XF2->A3_CODSUP
+			_cNomSup	:=	SZR->ZR_DESCRIC
+			_cRegiao	:= 	XF2->A3_REGIAO
+			_cNomReg	:=	SZP->ZP_DESCRIC
+			_cGrpCom	:= 	XF2->A3_TABELA
+			_nPerTab	:=  IIF(EMPTY(XF2->A3_PERCTAB), 0, val(XF2->A3_PERCTAB))
 
-			//
-			dbSelectArea("TEM3")
-			IF !dbSeek(_cProduto+_cVend+_cGrpCom+DTos(_dData))
-				
+			//dbSelectArea("SD2")
+			//dbSeek(xfilial("SD2") + XF2->F2_DOC + XF2->F2_SERIE + XF2->F2_CLIENTE + XF2->F2_LOJA)
+			//dbSeek(XF2->F2_FILIAL + XF2->F2_DOC + XF2->F2_SERIE + XF2->F2_CLIENTE + XF2->F2_LOJA)   &&Mauricio Chamado 006076.
 			
-				RecLock("TEM3",.T.)
-				TEM3->T3_VEND  		:= 	_cVend
-				TEM3->T3_PROD		:=	_cProduto
-				TEM3->T3_GRPCOM		:=	_cGrpCom
-				TEM3->T3_DATA		:= 	_dData
-				TEM3->T3_QTDADE  	:= 1
-				MsUnLock()
-				
-				dbSelectArea("TEM2")
-				IF !dbSeek(_cProduto+_cGrpCom+DTos(_dData))
-						
-					RecLock("TEM2",.T.)
-					TEM2->T2_PROD		:=	_cProduto
-					TEM2->T2_GRPCOM		:=	_cGrpCom
-					TEM2->T2_DATA		:= 	_dData
-					TEM2->T2_QTDADE  	:= 1
-					MsUnLock()
-				Else
-							
-					RecLock("TEM2",.F.)
-					TEM2->T2_QTDADE  	:= TEM2->T2_QTDADE + 1
-					MsUnLock()
+			//MsProcTxt( TIME() )// Chamado n. TI - FWNM - 23/05/2019
+			
+			cQuery := " SELECT D2_FILIAL, D2_COD, D2_EMISSAO, D2_QUANT, D2_TOTAL, D2_VALDEV, D2_CF, D2_TP, D2_TES, "
+			cQuery += " 	B1_GRUPO, B1_DESC, "
+			cQuery += " 	ISNULL(BMA.BM_GRUPO,'') GRUPO_N, ISNULL(BMA.BM_DESC,'') DESC_N, ISNULL(BMA.BM_NIVEL,'') NIVEL_N, ISNULL(BMA.BM_TABCOM,'') TABCOM_N, "
+			cQuery += " 	ISNULL(BMB.BM_GRUPO,'') GRUPO_2, ISNULL(BMB.BM_DESC,'') DESC_2, ISNULL(BMB.BM_NIVEL,'') NIVEL_2, ISNULL(BMB.BM_TABCOM,'') TABCOM_2, "
+			cQuery += " 	ISNULL(BMC.BM_GRUPO,'') GRUPO_1, ISNULL(BMC.BM_DESC,'') DESC_1, ISNULL(BMC.BM_NIVEL,'') NIVEL_1, ISNULL(BMC.BM_TABCOM,'') TABCOM_1 "
+			cQuery += " FROM "+ RetSqlName("SD2") +" (NOLOCK) D2 INNER JOIN "+ RetSqlName("SB1") +" (NOLOCK) B1 ON D2.D_E_L_E_T_='' AND D2.D_E_L_E_T_='' AND B1.B1_FILIAL='"+ xFilial("SB1") +"' AND D2.D2_FILIAL='"+ XF2->F2_FILIAL +"' AND D2.D2_COD=B1.B1_COD "
+			cQuery += "  LEFT JOIN (SELECT A.BM_GRUPO, A.BM_NIVEL, A.BM_DESC, A.BM_TABCOM, ISNULL(MAX(B.BM_GRUPO),'') MAX_2, ISNULL(MAX(C.BM_GRUPO),'') MAX_1 "
+			cQuery += " 				  FROM "+ RetSqlName("SBM") +" (NOLOCK) A LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) B ON A.D_E_L_E_T_='' AND B.D_E_L_E_T_='' AND A.BM_GRUPO>B.BM_GRUPO AND A.BM_NIVEL > '2' AND B.BM_NIVEL='2' "
+			cQuery += " 								LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) C ON A.D_E_L_E_T_='' AND C.D_E_L_E_T_='' AND A.BM_GRUPO>C.BM_GRUPO AND A.BM_NIVEL > '1' AND C.BM_NIVEL='1' "
+			cQuery += " 				  WHERE A.D_E_L_E_T_='' "
+			cQuery += " 				  GROUP BY A.BM_GRUPO, A.BM_NIVEL, A.BM_DESC, A.BM_TABCOM) BMA ON B1.D_E_L_E_T_='' AND B1.B1_GRUPO=BMA.BM_GRUPO "
+			cQuery += " 	   LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) BMB ON BMB.D_E_L_E_T_='' AND BMB.BM_GRUPO=BMA.MAX_2 AND BMB.BM_NIVEL='2' "
+			cQuery += " 	   LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) BMC ON BMC.D_E_L_E_T_='' AND BMC.BM_GRUPO=BMA.MAX_1 AND BMC.BM_NIVEL='1' "
+			cQuery += " WHERE D2.D_E_L_E_T_='' "
+			cQuery += "  AND D2.D2_FILIAL='"+ XF2->F2_FILIAL +"' "
+			cQuery += "  AND D2.D2_DOC='"+ XF2->F2_DOC +"' "
+			cQuery += "  AND D2.D2_SERIE='"+ XF2->F2_SERIE +"' "
+			cQuery += "  AND D2.D2_CLIENTE='"+ XF2->F2_CLIENTE +"' "
+			cQuery += "  AND D2.D2_LOJA='"+ XF2->F2_LOJA +"' "
+			cQuery += "  AND D2_TP = 'PA' "
+			cQuery += "  AND NOT ( (LEFT(D2_CF,2) = '59' OR LEFT(D2_CF,2) = '69') AND D2_TES <> '526' ) "
+
+			TcQuery cQuery ALIAS "QSD2" NEW
+
+			TCSETFIELD( "QSD2", "D2_EMISSAO", "D", 8, 0 )
+
+			nCount := 0
+			While QSD2->(!eof())
+			/*
+			DO WHILE !EOF() .AND. 	SD2->D2_DOC		  	== XF2->F2_DOC     	.AND. ;
+				SD2->D2_FILIAL      == XF2->F2_FILIAL .AND. ;
+				SD2->D2_SERIE	  	== XF2->F2_SERIE  	.AND. ;
+				SD2->D2_CLIENTE		== XF2->F2_CLIENTE .AND. ;
+				SD2->D2_LOJA		== XF2->F2_LOJA
+			*/	
+				nCount++
+				// LPM - Descontinuar esse trecho.
+				If (LEFT(QSD2->D2_CF,2) == "59" .OR. LEFT(QSD2->D2_CF,2) == "69") .AND. QSD2->D2_TES <> '526'  //REMESSA DESCONSIDERA
+					dbSelectArea("QSD2")
+					QSD2->(dbskip())
+					LOOP
 				Endif
+				
+				// LPM - Descontinuar esse trecho.
+				If QSD2->D2_TP != "PA"		// se nao for produto acabado desconsidera
+					dbSelectArea("QSD2")
+					QSD2->(dbskip())
+					LOOP
+				Endif
+				
+				
+				_cProduto 	:= 	QSD2->D2_COD
+				_nQtd      	:= 	QSD2->D2_QUANT
+				_nVal      	:= 	QSD2->D2_TOTAL
+				_dData		:=  QSD2->D2_EMISSAO
+				
+				_nValLiq    := (QSD2->D2_TOTAL - QSD2->D2_VALDEV)
+				_nMedio  	:=	_nVal / _nQtd
+				_nDesFin    :=	XF2->A1_DESC
+				
+		
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³DESCONTO FINANCEIRO                                                                                         ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				IF _nDesFin > 0
+					_nVal  :=  _nVal - ((_nDesFin/100)* _nValLiq)
+					_nMedio:=  _nVal / _nQtd
+				ENDIF
+				
+				
+				//dbSelectArea("SB1")
+				//dbSeek(xfilial("SB1") + _cProduto)
+				_cGrupoN	:=	QSD2->B1_GRUPO     //ALTERADO EM  28/12/06 - XGRPANT PRESERVA GRUPO
+				//		_cGrupoN	:=	SB1->B1_XGRPANT
+				_cDescric	:=	QSD2->B1_DESC
+				_cGrupoP	:=	""
+				_cDescGrN	:=	""
+				_cDescGrP	:=	""
 
-			Else
-				
-				RecLock("TEM3",.F.)
-				TEM3->T3_QTDADE  	:= 	TEM3->T3_QTDADE  + 1
-				MsUnLock()
-			Endif
+					//MsProcTxt( "Procurando grupo... " + time() )// Chamado n. TI - FWNM - 23/05/2019
+				//PROCURAGRUPO()
 
-			dbSelectArea("TEM5")
-			IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+_cVend+DTos(_dData))
-				
-			
-				RecLock("TEM5",.T.)
-				TEM5->T5_GRUPON		:=	_cGrupoN
-				TEM5->T5_VEND  		:= 	_cVend
-				TEM5->T5_GRPCOM		:=	_cGrpCom
-				TEM5->T5_TABELA		:=	_cTabela
-				TEM5->T5_DATA		:= 	_dData
-				TEM5->T5_QTDADE  	:= 1
-				MsUnLock()
-				
-				dbSelectArea("TEM4")
-				IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+DTos(_dData))
+				if !EMPTY(QSD2->TABCOM_N)
+					_cTabela	:=	QSD2->TABCOM_N
+				elseif !EMPTY(QSD2->TABCOM_2)
+					_cTabela	:=	QSD2->TABCOM_2
+				elseif !EMPTY(QSD2->TABCOM_1)
+					_cTabela	:=	QSD2->TABCOM_1
+				ELSE
+					_cTabela	:=	"0001"
+				endif
+
+				_cDescGrN	:=	QSD2->DESC_N
+				_cGrupoF	:=	QSD2->GRUPO_2 // NIVEL 2
+				_cGrupoP	:=	QSD2->GRUPO_1
+				_cDescGrP	:=	QSD2->DESC_1
+
+				IF TEM1->(!dbSeek(_cVend + _cGrupoN + _cProduto + dtos(_dData)))
+					//002365590
+					RecLock("TEM1",.T.)
+						TEM1->T1_SUPER		:=	_cSuper
+						TEM1->T1_REGIAO		:=	_cRegiao
+						TEM1->T1_VEND		:=	_cVend
+						TEM1->T1_NOMSUP		:=	_cNomSup
+						TEM1->T1_NOMREG		:=	_cNomReg
+						TEM1->T1_NOMVEND	:=	_cNomeVen
+						TEM1->T1_GRPCOM		:=	_cGrpCom
+						TEM1->T1_GRUPOP		:=	_cGrupoP
+						TEM1->T1_NOMEGP		:=	_cDescGrP
+						TEM1->T1_GRUPON		:=	_cGrupoN
+						TEM1->T1_NOMEGN		:=	_cDescGrN
+						TEM1->T1_PROD		:=	_cProduto
+						TEM1->T1_DESCRIC	:=	_cDescric
+						TEM1->T1_DATA    	:=	_dData
+						TEM1->T1_VLMEDIO  	:= _nMedio
+						TEM1->T1_QTDADE  	:= _nQtd
+						TEM1->T1_FATUR    	:= _nVal
+						TEM1->T1_TABELA    	:= _cTabela
+						TEM1->T1_PERCTAB   	:= _nPerTab
+					TEM1->(MsUnLock())
+
+				Else
 					
-					RecLock("TEM4",.T.)
-					TEM4->T4_GRUPON		:=	_cGrupoN
-					TEM4->T4_TABELA		:=	_cTabela
-					TEM4->T4_GRPCOM		:=	_cGrpCom
-					TEM4->T4_DATA		:= 	_dData
-					TEM4->T4_QTDADE  	:= 1
-					MsUnLock()
+					RecLock("TEM1",.F.)
+						_nQtdAc      	:= _nQtd	+ TEM1->T1_QTDADE
+						_nValAc      	:= _nVal	+ TEM1->T1_FATUR
+						_nMedio			:= _nValAc / _nQtdAc
+						
+						//			_nValbrt+=_nValbrt
+						//			TEM1->T1_FATBRT		:=_nValbrt
+						TEM1->T1_VLMEDIO  	:= _nMedio
+						TEM1->T1_QTDADE  	:= _nQtdAc
+						TEM1->T1_FATUR    	:= _nValAc
+					TEM1->(MsUnLock())
+
+				endif
+
+				IF TEM3->(!dbSeek(_cProduto+_cVend+_cGrpCom+DTos(_dData)))
+	
+					RecLock("TEM3",.T.)
+						TEM3->T3_VEND  		:= 	_cVend
+						TEM3->T3_PROD		:=	_cProduto
+						TEM3->T3_GRPCOM		:=	_cGrpCom
+						TEM3->T3_DATA		:= 	_dData
+						TEM3->T3_QTDADE  	:= 1
+					TEM3->(MsUnLock())
+
+					IF TEM2->(!dbSeek(_cProduto+_cGrpCom+DTos(_dData)))
+							
+						RecLock("TEM2",.T.)
+							TEM2->T2_PROD		:=	_cProduto
+							TEM2->T2_GRPCOM		:=	_cGrpCom
+							TEM2->T2_DATA		:= 	_dData
+							TEM2->T2_QTDADE  	:= 1
+						TEM2->(MsUnLock())
+					Else
+								
+						RecLock("TEM2",.F.)
+							TEM2->T2_QTDADE  	:= TEM2->T2_QTDADE + 1
+						MsUnLock()
+					Endif
+
 				Else
-				
-					RecLock("TEM4",.F.)
-					TEM4->T4_QTDADE  	:= TEM4->T4_QTDADE + 1
-					MsUnLock()
+					
+					RecLock("TEM3",.F.)
+						TEM3->T3_QTDADE  	:= 	TEM3->T3_QTDADE  + 1
+					TEM3->(MsUnLock())
 				Endif
-			Else
+
+				IF TEM5->(!dbSeek(_cGrupoN+_cTabela+_cGrpCom+_cVend+DTos(_dData)))
+					
 				
-				RecLock("TEM5",.F.)
-				TEM5->T5_QTDADE  	:= 	TEM5->T5_QTDADE  + 1
-				MsUnLock()
-			Endif
-			
+					RecLock("TEM5",.T.)
+						TEM5->T5_GRUPON		:=	_cGrupoN
+						TEM5->T5_VEND  		:= 	_cVend
+						TEM5->T5_GRPCOM		:=	_cGrpCom
+						TEM5->T5_TABELA		:=	_cTabela
+						TEM5->T5_DATA		:= 	_dData
+						TEM5->T5_QTDADE  	:= 1
+					TEM5->(MsUnLock())
 
-			dbSelectArea("SD2")
-			dbskip()
+					IF TEM4->(!dbSeek(_cGrupoN+_cTabela+_cGrpCom+DTos(_dData)))
+						
+						RecLock("TEM4",.T.)
+							TEM4->T4_GRUPON		:=	_cGrupoN
+							TEM4->T4_TABELA		:=	_cTabela
+							TEM4->T4_GRPCOM		:=	_cGrpCom
+							TEM4->T4_DATA		:= 	_dData
+							TEM4->T4_QTDADE  	:= 1
+						TEM4->(MsUnLock())
+					Else
+					
+						RecLock("TEM4",.F.)
+							TEM4->T4_QTDADE  	:= TEM4->T4_QTDADE + 1
+						TEM4->(MsUnLock())
+					Endif
+				Else
+					
+					RecLock("TEM5",.F.)
+						TEM5->T5_QTDADE  	:= 	TEM5->T5_QTDADE  + 1
+					TEM5->(MsUnLock())
+				Endif
+
+				QSD2->(dbskip())
+			ENDDO
+			QSD2->(DbcloseArea())
+
+			XF2->(dbskip())
 		ENDDO
-		
-		
-		dbSelectArea("XF2")
-		dbskip()
-	ENDDO
-	
-	
 
-	dbclosearea("XF2")
+	endif
+
+	XF2->(dbclosearea())
 	
 	//DEVOLUCOES
 	cQuery:="select * "+;
@@ -918,7 +983,8 @@ Static Function MontaTra()
 	XF1->(dbgotop())
 	nCount := 0
 	ProcRegua(RecCount())
-	DO WHILE !EOF()
+
+	DO WHILE XF1->(!EOF())
 		nCount++
 		//  INCREMENTA A BARRA DE EVOLUCAO
 		IncProc(" Filial-Devolucao: " + XF1->F1_FILIAL+"-"+XF1->F1_DOC + " - Dt.Emissao : "+XF1->F1_DTDIGIT + " - Regs: " + AllTrim(Str(nCount))) 
@@ -926,216 +992,237 @@ Static Function MontaTra()
 		If nLastKey == 27
 			Return
 		Endif
-		
+		/*
 		dbSelectArea("SD1")
-		dbSetOrder(1)
+		SD1->(dbSetOrder(1))
 		//dbSeek(xfilial("SD1") + XF1->F1_DOC + XF1->F1_SERIE + XF1->F1_FORNECE +XF1->F1_LOJA)
 		dbSeek(XF1->F1_FILIAL + XF1->F1_DOC + XF1->F1_SERIE + XF1->F1_FORNECE +XF1->F1_LOJA)    //&&Mauricio Chamado 006076.
+		*/
+
+		cQuery := " SELECT D1_FILIAL, D1_COD, D1_NFORI, D1_SERIORI, D1_FORNECE, D1_LOJA, D1_DTDIGIT, D1_CF, D1_QUANT, D1_TOTAL, D1_VALDEV, F2_VEND1, "
+		cQuery += " 	B1_GRUPO, B1_DESC, "
+		cQuery += "		A3_NOME, A3_TABELA, A3_CODSUP, A3_REGIAO, A3_PERCTAB, "
+		cQuery += " 	ISNULL(BMA.BM_GRUPO,'') GRUPO_N, ISNULL(BMA.BM_DESC,'') DESC_N, ISNULL(BMA.BM_NIVEL,'') NIVEL_N, ISNULL(BMA.BM_TABCOM,'') TABCOM_N, "
+		cQuery += " 	ISNULL(BMB.BM_GRUPO,'') GRUPO_2, ISNULL(BMB.BM_DESC,'') DESC_2, ISNULL(BMB.BM_NIVEL,'') NIVEL_2, ISNULL(BMB.BM_TABCOM,'') TABCOM_2, "
+		cQuery += " 	ISNULL(BMC.BM_GRUPO,'') GRUPO_1, ISNULL(BMC.BM_DESC,'') DESC_1, ISNULL(BMC.BM_NIVEL,'') NIVEL_1, ISNULL(BMC.BM_TABCOM,'') TABCOM_1 "
+		cQuery += " FROM "+ RetSqlName("SD1") +" (NOLOCK) D1 INNER JOIN "+ RetSqlName("SB1") +" (NOLOCK) B1 ON D1.D_E_L_E_T_='' AND D1.D_E_L_E_T_='' AND B1.B1_FILIAL='"+ xFilial("SB1") +"' AND D1.D1_FILIAL='"+ XF1->F1_FILIAL +"' AND D1.D1_COD=B1.B1_COD "
+		cQuery += " 								 INNER JOIN "+ RetSqlName("SF2") +" (NOLOCK) F2 ON F2.D_E_L_E_T_='' AND F2.F2_FILIAL=D1.D1_FILIAL AND F2.F2_DOC=D1.D1_NFORI AND F2.F2_SERIE=D1.D1_SERIORI AND F2.F2_CLIENTE=D1.D1_FORNECE AND F2.F2_LOJA=D1.D1_LOJA "
+		cQuery += " 								 INNER JOIN "+ RetSqlName("SA3") +" (NOLOCK) A3 ON A3.D_E_L_E_T_='' AND A3.A3_FILIAL='"+ xFilial("SA3") +"' AND F2.F2_VEND1=A3.A3_COD "		
+		cQuery += "  LEFT JOIN (SELECT A.BM_GRUPO, A.BM_NIVEL, A.BM_DESC, A.BM_TABCOM, ISNULL(MAX(B.BM_GRUPO),'') MAX_2, ISNULL(MAX(C.BM_GRUPO),'') MAX_1 "
+		cQuery += " 				  FROM "+ RetSqlName("SBM") +" (NOLOCK) A LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) B ON A.D_E_L_E_T_='' AND B.D_E_L_E_T_='' AND A.BM_GRUPO>B.BM_GRUPO AND A.BM_NIVEL > '2' AND B.BM_NIVEL='2' "
+		cQuery += " 								LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) C ON A.D_E_L_E_T_='' AND C.D_E_L_E_T_='' AND A.BM_GRUPO>C.BM_GRUPO AND A.BM_NIVEL > '1' AND C.BM_NIVEL='1' "
+		cQuery += " 				  WHERE A.D_E_L_E_T_='' "
+		cQuery += " 				  GROUP BY A.BM_GRUPO, A.BM_NIVEL, A.BM_DESC, A.BM_TABCOM) BMA ON B1.D_E_L_E_T_='' AND B1.B1_GRUPO=BMA.BM_GRUPO "
+		cQuery += " 	   LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) BMB ON BMB.D_E_L_E_T_='' AND BMB.BM_GRUPO=BMA.MAX_2 AND BMB.BM_NIVEL='2' "
+		cQuery += " 	   LEFT JOIN "+ RetSqlName("SBM") +" (NOLOCK) BMC ON BMC.D_E_L_E_T_='' AND BMC.BM_GRUPO=BMA.MAX_1 AND BMC.BM_NIVEL='1' "
+		cQuery += " WHERE D1.D_E_L_E_T_='' AND D1.D1_TIPO='D' AND D1.D1_NFORI !='' "
+		cQuery += "  AND D1.D1_FILIAL='"+ XF1->F1_FILIAL +"' "
+		cQuery += "  AND D1.D1_DOC='"+ XF1->F1_DOC +"' "
+		cQuery += "  AND D1.D1_SERIE='"+ XF1->F1_SERIE +"' "
+		cQuery += "  AND D1.D1_FORNECE='"+ XF1->F1_FORNECE +"' "
+		cQuery += "  AND D1.D1_LOJA='"+ XF1->F1_LOJA +"' "
+		cQuery += "  AND D1_TP = 'PA' "
 		
+		// CLASSE DE COMISSAO
+		cQuery += " AND (A3.A3_TABELA BETWEEN '"+mv_par10+"' AND '"+mv_par11+"') "
+		// REGIAO DE VENDAS
+		If  (mv_par05 == 2)
+			cQuery += " AND (A3.A3_REGIAO BETWEEN '"+mv_par08+"' AND '"+mv_par09+"') "
+		endif
+		// SUPERVISOR
+		If (mv_par05 == 1)
+			cQuery += " AND (A3.A3_CODSUP BETWEEN '"+mv_par06+"' AND '"+mv_par07+"') "
+		Endif
+		// FILTRA VENDEDOR DA NFE DE ORIGEM.
+		cQuery += "  AND F2.F2_VEND1 BETWEEN '"+ mv_par03 +"' AND '"+ mv_par04 +"' "
+		// FILTRA CLASSES DE CFOPS.
+		cQuery += "  AND NOT (LEFT(D1.D1_CF,2) = '19' OR LEFT(D1.D1_CF,2) = '29')"
+
+		TcQuery cQuery ALIAS "QSD1" NEW
+
+		TcsetField("QSD1","D1_DTDIGIT","D", 8, 0)
+
 		nCount := 0
-		DO WHILE !EOF() .AND. 	SD1->D1_DOC 		== XF1->F1_DOC     	.AND. ;
-			SD1->D1_FILIAL      == XF1->F1_FILIAL .AND. ;
-			SD1->D1_SERIE    	== XF1->F1_SERIE   	.AND. ;
-			SD1->D1_FORNECE  	== XF1->F1_FORNECE .AND. ;
-			SD1->D1_LOJA		== XF1->F1_LOJA
-			
+		Do While QSD1->(!eof())
+		/*
+		DO WHILE !EOF() .AND. 	QSD1->D1_DOC 		== XF1->F1_DOC     	.AND. ;
+			QSD1->D1_FILIAL      == XF1->F1_FILIAL .AND. ;
+			QSD1->D1_SERIE    	== XF1->F1_SERIE   	.AND. ;
+			QSD1->D1_FORNECE  	== XF1->F1_FORNECE .AND. ;
+			QSD1->D1_LOJA		== XF1->F1_LOJA
+		*/	
 			nCount++
 
-			IF !EMPTY(SD1->D1_NFORI)
-				If LEFT(SD1->D1_CF,2) == "19" .OR. LEFT(SD1->D1_CF,2) == "29"  //REMESSA DESCONSIDERA
-					dbSelectArea("SD1")
-					dbskip()
+			IF !EMPTY(QSD1->D1_NFORI)
+				If LEFT(QSD1->D1_CF,2) == "19" .OR. LEFT(QSD1->D1_CF,2) == "29"  //REMESSA DESCONSIDERA
+					dbSelectArea("QSD1")
+					QSD1->(dbskip())
 					LOOP
 				Endif
-				_cOriDOC   	:= 	SD1->D1_NFORI
-				_cSERIE    	:= 	SD1->D1_SERIORI
-				_cCLIENTE  	:= 	SD1->D1_FORNECE
-				_cLOJA     	:= 	SD1->D1_LOJA
+				_cOriDOC   	:= 	QSD1->D1_NFORI
+				_cSERIE    	:= 	QSD1->D1_SERIORI
+				_cCLIENTE  	:= 	QSD1->D1_FORNECE
+				_cLOJA     	:= 	QSD1->D1_LOJA
 				
+				_cVend	 	:= 	QSD1->F2_VEND1
+				_cGrpCom 	:=  QSD1->A3_TABELA
+				_cNomeven	:=  QSD1->A3_NOME
 				
-				dbSelectArea("SF2")
-				DBSETORDER(1)
-				//dbSeek(xfilial("SF2") + _cOriDOC + _cSERIE + _cCLIENTE + _cLOJA)
-				dbSeek(XF1->F1_FILIAL + _cOriDOC + _cSERIE + _cCLIENTE + _cLOJA)
-				_cVend	 	:= 	SF2->F2_VEND1
-				//
-				If  _cVend > mv_par04 .or. _cVend < mv_par03  // Incluido dia 26/11/03 - Heraldo
-					dbSelectArea("SD1")
-					dbskip()
-					Loop
-				Endif
+				_nQtd      	:= QSD1->D1_QUANT	* (-1)
+				_nVal      	:= QSD1->D1_TOTAL	* (-1)
+				_cProduto 	:= QSD1->D1_COD
+				_dData		:= QSD1->D1_DTDIGIT
 				
-			
-				dbSelectArea("SA3")
-				dbSeek(xfilial() + _cVend)
-				_cGrpCom 	:= SA3->A3_TABELA
-				_cNomeven	:=	SA3->A3_NOME
-				
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³ESTA ROTINA VALIDA OS PAREMETROS DO SUPERVISOR E SEGMENTO DE MERCADO ³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-				If (SA3->A3_REGIAO < mv_par08 .OR. SA3->A3_REGIAO > mv_par09) .AND. (mv_par05 == 2)  // REGIAO DE VENDAS
-					dbSelectArea("SD1")
-					dbskip()
-					Loop
-				Endif
-				
-			
-				If (SA3->A3_CODSUP < mv_par06 .OR. SA3->A3_CODSUP > mv_par07)  .AND. (mv_par05 == 1) // SUPERVISOR
-					dbSelectArea("SD1")
-					dbskip()
-					Loop
-				Endif
-				
-				If SA3->A3_TABELA < mv_par10 .OR. SA3->A3_TABELA > mv_par11 	// CLASSE DE COMISSAO
-					dbSelectArea("SD1")
-					dbskip()
-					Loop
-				Endif
-				
-				_nQtd      	:= SD1->D1_QUANT	* (-1)
-				_nVal      	:= SD1->D1_TOTAL	* (-1)
-				_cProduto 	:= SD1->D1_COD
-				_dData		:= SD1->D1_DTDIGIT
-				//
-
-				
-				dbSelectArea("SB1")
-				dbSeek(xfilial("SB1")+ _cProduto)
-				If SB1->B1_TIPO != "PA"		// se nao for produto acabado desconsidera
-					dbSelectArea("SD1")
-					dbskip()
-					LOOP
-				Endif
-
-				
-				_cGrupoN	:=	SB1->B1_GRUPO   //ALTERADO EM  28/12/06 - XGRPANT PRESERVA GRUPO
-				_cDescric :=	SB1->B1_DESC
+				_cGrupoN	:=	QSD1->B1_GRUPO   //ALTERADO EM  28/12/06 - XGRPANT PRESERVA GRUPO
+				_cDescric 	:=	QSD1->B1_DESC
 				_cGrupoP	:=	""
 				_cDescGrN	:=	""
 				_cDescGrP	:=	""
 				//
-				PROCURAGRUPO()
-			
-				dbSelectArea("SZR")				// TABELA DE SUPERVISOR
-				dbSeek(xfilial() + SA3->A3_CODSUP)
+				//PROCURAGRUPO()
+
+				if !EMPTY(QSD1->TABCOM_N)
+					_cTabela	:=	QSD1->TABCOM_N
+				elseif !EMPTY(QSD1->TABCOM_2)
+					_cTabela	:=	QSD1->TABCOM_2
+				elseif !EMPTY(QSD1->TABCOM_1)
+					_cTabela	:=	QSD1->TABCOM_1
+				ELSE
+					_cTabela	:=	"0001"
+				endif
+
+				_cDescGrN	:=	QSD1->DESC_N
+				_cGrupoF	:=	QSD1->GRUPO_2 // NIVEL 2
+				_cGrupoP	:=	QSD1->GRUPO_1
+				_cDescGrP	:=	QSD1->DESC_1
+
+				// TABELA DE SUPERVISOR
+				SZR->(dbSeek(xfilial() + QSD1->A3_CODSUP))
 				_cNomSup	:=	SZR->ZR_DESCRIC
-				dbSelectArea("SZP")				// TABELA DE REGIOES DE MERCADO
-				dbSeek(xfilial() + SA3->A3_REGIAO)
+
+				// TABELA DE REGIOES DE MERCADO
+				SZP->(dbSeek(xfilial() + QSD1->A3_REGIAO))
 				_cNomReg	:=	SZP->ZP_DESCRIC
 				
-				_cSuper		:=	SA3->A3_CODSUP
-				_cRegiao	:= 	SA3->A3_REGIAO
-				_cGrpCom	:= 	SA3->A3_TABELA
+				_cSuper		:=	QSD1->A3_CODSUP
+				_cRegiao	:= 	QSD1->A3_REGIAO
+				_cGrpCom	:= 	QSD1->A3_TABELA
+				_nPerTab	:=  iif(Empty(QSD1->A3_PERCTAB), 0, Val(QSD1->A3_PERCTAB))
 				
-				dbSelectArea("TEM1")
-				IF !dbSeek(_cVend + _cGrupoN + _cProduto + dtos(_dData))
+				//dbSelectArea("TEM1")
+				IF TEM1->(!dbSeek(_cVend + _cGrupoN + _cProduto + dtos(_dData)))
 					
 			
 					RecLock("TEM1",.T.)
-					_nMedio		:=	_nVal / _nQtd
-					TEM1->T1_SUPER		:=	_cSuper
-					TEM1->T1_REGIAO		:=	_cRegiao
-					TEM1->T1_VEND	    :=	_cVend
-					TEM1->T1_NOMSUP		:=	_cNomSup
-					TEM1->T1_NOMREG		:=	_cNomReg
-					TEM1->T1_NOMVEND	:=	_cNomeven
-					TEM1->T1_GRPCOM		:=	_cGrpCom
-					TEM1->T1_GRUPOP		:=	_cGrupoP
-					TEM1->T1_NOMEGP		:=	_cDescGrP
-					TEM1->T1_GRUPON		:=	_cGrupoN
-					TEM1->T1_NOMEGN		:=	_cDescGrN
-					TEM1->T1_PROD		:=	_cProduto
-					TEM1->T1_DESCRIC	:=	_cDescric
-					TEM1->T1_DATA   	:=	_dData
-					TEM1->T1_VLMEDIO  	:= _nMedio
-					TEM1->T1_QTDADE  	:= _nQtd
-					TEM1->T1_FATUR    	:= _nVal
-					TEM1->T1_TABELA    	:= _cTabela
-					MsUnLock()
+						_nMedio		:=	_nVal / _nQtd
+						TEM1->T1_SUPER		:=	_cSuper
+						TEM1->T1_REGIAO		:=	_cRegiao
+						TEM1->T1_VEND	    :=	_cVend
+						TEM1->T1_NOMSUP		:=	_cNomSup
+						TEM1->T1_NOMREG		:=	_cNomReg
+						TEM1->T1_NOMVEND	:=	_cNomeven
+						TEM1->T1_GRPCOM		:=	_cGrpCom
+						TEM1->T1_GRUPOP		:=	_cGrupoP
+						TEM1->T1_NOMEGP		:=	_cDescGrP
+						TEM1->T1_GRUPON		:=	_cGrupoN
+						TEM1->T1_NOMEGN		:=	_cDescGrN
+						TEM1->T1_PROD		:=	_cProduto
+						TEM1->T1_DESCRIC	:=	_cDescric
+						TEM1->T1_DATA   	:=	_dData
+						TEM1->T1_VLMEDIO  	:= _nMedio
+						TEM1->T1_QTDADE  	:= _nQtd
+						TEM1->T1_FATUR    	:= _nVal
+						TEM1->T1_TABELA    	:= _cTabela
+						TEM1->T1_PERCTAB   	:= _nPerTab
+						
+					TEM1->(MsUnLock())
 				Else
 					
 					RecLock("TEM1",.F.)
-					_nQtdAc      		:= 	_nQtd	+ TEM1->T1_QTDADE
-					_nValAc      		:= 	_nVal	+ TEM1->T1_FATUR
-					_nMedio				:=	_nValAc / _nQtdAc
-					TEM1->T1_VLMEDIO  	:= _nMedio
-					TEM1->T1_QTDADE  	:= _nQtdAc
-					TEM1->T1_FATUR    	:= _nValAc
-					MsUnLock()
+						_nQtdAc      		:= 	_nQtd	+ TEM1->T1_QTDADE
+						_nValAc      		:= 	_nVal	+ TEM1->T1_FATUR
+						_nMedio				:=	_nValAc / _nQtdAc
+						TEM1->T1_VLMEDIO  	:= _nMedio
+						TEM1->T1_QTDADE  	:= _nQtdAc
+						TEM1->T1_FATUR    	:= _nValAc
+					TEM1->(MsUnLock())
 				endif
 				
-				dbSelectArea("TEM3")
-				IF !dbSeek(_cProduto+_cVend+_cGrpCom+dTos(_dData))
+				//dbSelectArea("TEM3")
+				IF TEM3->(!dbSeek(_cProduto+_cVend+_cGrpCom+dTos(_dData)))
 					
 				
 					RecLock("TEM3",.T.)
-					TEM3->T3_VEND  		:= 	_cVend
-					TEM3->T3_PROD		:=	_cProduto
-					TEM3->T3_GRPCOM		:=	_cGrpCom
-					TEM3->T3_DATA		:=  _dData
-					TEM3->T3_QTDADE  	:= 0
-					MsUnLock()
+						TEM3->T3_VEND  		:= 	_cVend
+						TEM3->T3_PROD		:=	_cProduto
+						TEM3->T3_GRPCOM		:=	_cGrpCom
+						TEM3->T3_DATA		:=  _dData
+						TEM3->T3_QTDADE  	:= 0
+					TEM3->(MsUnLock())
 					
-					dbSelectArea("TEM2")
-					IF !dbSeek(_cProduto+_cGrpCom+dTos(_dData))
+					//dbSelectArea("TEM2")
+					IF TEM2->(!dbSeek(_cProduto+_cGrpCom+dTos(_dData)))
 				
 						RecLock("TEM2",.T.)
-						TEM2->T2_PROD		:=	_cProduto
-						TEM2->T2_GRPCOM		:=	_cGrpCom
-						TEM2->T2_DATA		:=  _dData
-						TEM2->T2_QTDADE  	:= 1
-						MsUnLock()
+							TEM2->T2_PROD		:=	_cProduto
+							TEM2->T2_GRPCOM		:=	_cGrpCom
+							TEM2->T2_DATA		:=  _dData
+							TEM2->T2_QTDADE  	:= 1
+						TEM2->(MsUnLock())
 					Else
 					
 						RecLock("TEM2",.F.)
-						TEM2->T2_QTDADE  	:= TEM2->T2_QTDADE - 1
-						MsUnLock()
+							TEM2->T2_QTDADE  	:= TEM2->T2_QTDADE - 1
+						TEM2->(MsUnLock())
 					Endif
 				Else
 					RecLock("TEM3",.F.)
-					TEM3->T3_QTDADE  	:= 	TEM3->T3_QTDADE  - 1
-					MsUnLock()
+						TEM3->T3_QTDADE  	:= 	TEM3->T3_QTDADE  - 1
+					TEM3->(MsUnLock())
 				Endif
-				dbSelectArea("TEM5")
-				IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+_cVend+dTos(_dData))
+
+				//dbSelectArea("TEM5")
+				IF TEM5->(!dbSeek(_cGrupoN+_cTabela+_cGrpCom+_cVend+dTos(_dData)))
 				
 					RecLock("TEM5",.T.)
-					TEM5->T5_GRUPON		:=	_cGrupoN
-					TEM5->T5_VEND  		:= 	_cVend
-					TEM5->T5_GRPCOM		:=	_cGrpCom
-					TEM5->T5_TABELA		:=	_cTabela
-					TEM5->T5_DATA		:= 	_dData
-					TEM5->T5_QTDADE  	:= 1
-					MsUnLock()
+						TEM5->T5_GRUPON		:=	_cGrupoN
+						TEM5->T5_VEND  		:= 	_cVend
+						TEM5->T5_GRPCOM		:=	_cGrpCom
+						TEM5->T5_TABELA		:=	_cTabela
+						TEM5->T5_DATA		:= 	_dData
+						TEM5->T5_QTDADE  	:= 1
+					TEM5->(MsUnLock())
 					
-					dbSelectArea("TEM4")
-					IF !dbSeek(_cGrupoN+_cTabela+_cGrpCom+dTos(_dData))
+					//dbSelectArea("TEM4")
+					IF TEM4->(!dbSeek(_cGrupoN+_cTabela+_cGrpCom+dTos(_dData)))
 					
 						RecLock("TEM4",.T.)
-						TEM4->T4_GRUPON		:=	_cGrupoN
-						TEM4->T4_TABELA		:=	_cTabela
-						TEM4->T4_GRPCOM		:=	_cGrpCom
-						TEM4->T4_DATA		:=  _dData
-						TEM4->T4_QTDADE  	:= 1
-						MsUnLock()
+							TEM4->T4_GRUPON		:=	_cGrupoN
+							TEM4->T4_TABELA		:=	_cTabela
+							TEM4->T4_GRPCOM		:=	_cGrpCom
+							TEM4->T4_DATA		:=  _dData
+							TEM4->T4_QTDADE  	:= 1
+						TEM4->(MsUnLock())
 					Else
 						RecLock("TEM4",.F.)
-						TEM4->T4_QTDADE  	:= TEM4->T4_QTDADE + 1
-						MsUnLock()
+							TEM4->T4_QTDADE  	:= TEM4->T4_QTDADE + 1
+						TEM4->(MsUnLock())
 					Endif
 				Else
 					
 					RecLock("TEM5",.F.)
-					TEM5->T5_QTDADE  	:= 	TEM5->T5_QTDADE  + 1
-					MsUnLock()
+						TEM5->T5_QTDADE  	:= 	TEM5->T5_QTDADE  + 1
+					TEM5->(MsUnLock())
 				Endif
 			Endif
-			dbSelectArea("SD1")
-			dbskip()
+			
+			//dbSelectArea("QSD1")
+			QSD1->(dbskip())
 		ENDDO
-		dbSelectArea("XF1")
-		dbskip()
+		QSD1->(DbcloseArea())
+
+		//dbSelectArea("XF1")
+		XF1->(dbskip())
 	ENDDO
 	
 	XF1->(dbclosearea())
@@ -1152,13 +1239,14 @@ Static Function MontaTra()
 	
 return
 
+
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³  AQUI TERMINA O PROCESSAMENTO E COMECA A CLASSIFICACAO DO TEMP      ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function RunCom()
 
-	ProcRegua(RecCount())
-	dbGoTop()
+	TEM1->(ProcRegua(RecCount()))
+	TEM1->(dbGoTop())
 
 	_cProduto	:=	""
 	_cFaixa		:=	"A"
@@ -1169,9 +1257,10 @@ Static Function RunCom()
 	_nPerce		:=	0
 	_cTabCom	:=	""
 	_cGRPCom	:=	""
+	_nPerTab	:= 0
 
 	nCount := 0
-	DO WHILE !EOF()
+	DO WHILE TEM1->(!EOF())
 		nCount++
 		IncProc("Produtos: " + TEM1->T1_PROD +" Data "+dToC(TEM1->T1_DATA))
 		////MsProcTxt("Produtos: " + TEM1->T1_PROD +" Data "+dToC(TEM1->T1_DATA) + " Regs: " + AllTrim(Str(nCount)) )
@@ -1181,22 +1270,25 @@ Static Function RunCom()
 			_dData		:= 	TEM1->T1_DATA
 			_cTabCom	:=	""
 			_cGRPCom	:=	""
+			_nPerTab	:=  0	
 		Else
 			_nPos++
 		Endif
 		If _cTabCom	!= 	TEM1->T1_TABELA .or. _cGRPCom	!=	TEM1->T1_GRPCOM
-			_cGRPCom	:=	TEM1->T1_GRPCOM
+			
 			_cTabCom	:= 	TEM1->T1_TABELA
+			_cGRPCom	:=	TEM1->T1_GRPCOM
 			_nClass		:=	0
 			_nPos		:=	1
 			_nCoef2		:=	0
+			_nPerTab	:=  0
 			_cFaixa		:=	"A"
 			
 			////MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
-			LETABELA(TEM1->T1_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
+			LETABELA(TEM1->T1_VEND, TEM1->T1_PERCTAB)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 			
 			dbSelectArea("TEM2") 		//AQUI EU LEIO A QUANTIDADE DE VENDEDORES QUE ATUOU NESTE GRUPO DE PRODUTOS
-			If 	!dbSeek(_cProduto+_cGRPCom+dTos(_dData))
+			If 	TEM2->(!dbSeek(_cProduto+_cGRPCom+dTos(_dData)))
 				MsgStop("ERRO AO LER ARQUIVO DE TRABALHO 2 - "+_cGRPCom+"-"+TEM1->T1_PROD)
 				EXIT
 			Endif
@@ -1204,7 +1296,7 @@ Static Function RunCom()
 			_nCoef1		:=	100/_nQuant    				// para classificar o vendedor
 		else
 			////MsProcTxt( "Procurando tabela comissao cadastrada... " + time() )
-			LETABELA(TEM1->T1_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
+			LETABELA(TEM1->T1_VEND, TEM1->T1_PERCTAB)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 		Endif
 		_nCoef2		:=	INT(_nQuant * (_nPerce/100))
 		_nClass		:=	_nClass	+ _nCoef1
@@ -1212,21 +1304,21 @@ Static Function RunCom()
 		//MsProcTxt( "Alterand TEMP1... " + time() )
 		dbSelectArea("TEM1")
 		RecLock("TEM1",.F.)
-		TEM1->T1_VLMEDIO  	        :=  TEM1->T1_FATUR     /  	TEM1->T1_QTDADE
-		TEM1->T1_TABFAIN			:=	_cFaixa
-		TEM1->T1_VALFAIN     		:=	(TEM1->T1_QTDADE/1000)	*	_nValor
-		TEM1->T1_CLASS				:= 	_nClass
-		TEM1->T1_POSIN				:=	_nPos
+			TEM1->T1_VLMEDIO  	        :=  TEM1->T1_FATUR/TEM1->T1_QTDADE
+			TEM1->T1_TABFAIN			:=	_cFaixa
+			TEM1->T1_VALFAIN     		:=	(TEM1->T1_QTDADE/1000)	*	_nValor
+			TEM1->T1_CLASS				:= 	_nClass
+			TEM1->T1_POSIN				:=	_nPos
 		msunlock()
 		// Recalculo o Preço Médio para considerar o desconto financeiro depois da devolução
 		// Vou Subtrair o deconto financeito
 		// Gravo valor anterior
 		IF _nPos	>= _nCoef2
 			_cFaixa		:=	CHR(ASC(_cFaixa)+ 1)
-			LETABELA(TEM1->T1_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
+			LETABELA(TEM1->T1_VEND, TEM1->T1_PERCTAB)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 		ENDIF
 		dbSelectArea("TEM1")
-		dbskip()
+		TEM1->(dbskip())
 	enddo
 	
 	dbSelectArea("TEM1")
@@ -1247,22 +1339,23 @@ RETURN
 STATIC FUNCTION RUNGRP
 
 	dbSelectArea("TEM1")
-	ProcRegua(RecCount())
-	dbGoTop()
+	TEM1->(ProcRegua(RecCount()))
+	TEM1->(dbGoTop())
 	
 	nCount := 0
 	
-	DO WHILE !EOF()
+	DO WHILE TEM1->(!EOF())
 		
 		nCount++
 		////MsProcTxt( "RunGrp: " + AllTrim(Str(nCount)) )
 		
 		dbSelectArea("TEM6")
-		IF !dbSeek(TEM1->T1_GRUPON + TEM1->T1_TABELA + TEM1->T1_GRPCOM + TEM1->T1_VEND + DTOS(TEM1->T1_DATA ))
+		IF TEM6->(!dbSeek(TEM1->T1_GRUPON + TEM1->T1_TABELA + TEM1->T1_GRPCOM + TEM1->T1_VEND + DTOS(TEM1->T1_DATA )))
 			RecLock("TEM6",.T.)
 			_nQtd      	:= 	TEM1->T1_QTDADE
 			_nVal      	:= 	TEM1->T1_FATUR
 			_nMedio		:=	_nVal / _nQtd
+
 			TEM6->T6_GRUPON		:=	TEM1->T1_GRUPON
 			TEM6->T6_VEND  		:= 	TEM1->T1_VEND
 			TEM6->T6_GRPCOM		:=	TEM1->T1_GRPCOM
@@ -1270,6 +1363,7 @@ STATIC FUNCTION RUNGRP
 			TEM6->T6_QTDADE  	:= 	TEM1->T1_QTDADE
 			TEM6->T6_FATUR		:=	TEM1->T1_FATUR
 			TEM6->T6_TABELA		:=	TEM1->T1_TABELA
+			TEM6->T6_PERCTAB	:=	TEM1->T1_PERCTAB
 			TEM6->T6_VLMEDIO  	:=	_nMedio
 			TEM6->T6_SUPER		:=	TEM1->T1_SUPER
 			TEM6->T6_REGIAO		:=	TEM1->T1_REGIAO
@@ -1282,17 +1376,18 @@ STATIC FUNCTION RUNGRP
 			MsUnLock()
 		Else
 			RecLock("TEM6",.F.)
-			_nQtd      	:= 	TEM6->T6_QTDADE + TEM1->T1_QTDADE
-			_nVal      	:= 	TEM6->T6_FATUR	+ TEM1->T1_FATUR
-			_nMedio		:=	_nVal / _nQtd
-			
-			TEM6->T6_QTDADE  	:= 	_nQtd
-			TEM6->T6_FATUR    	:= 	_nVal
-			TEM6->T6_VLMEDIO  	:=	_nMedio
+				_nQtd      	:= 	TEM6->T6_QTDADE + TEM1->T1_QTDADE
+				_nVal      	:= 	TEM6->T6_FATUR	+ TEM1->T1_FATUR
+				_nMedio		:=	_nVal / _nQtd
+				
+				TEM6->T6_QTDADE  	:= 	_nQtd
+				TEM6->T6_FATUR    	:= 	_nVal
+				TEM6->T6_VLMEDIO  	:=	_nMedio
 			MsUnLock()
 		Endif
+
 		dbSelectArea("TEM1")
-		dbskip()
+		TEM1->(dbskip())
 	Enddo
 	dbSelectArea("TEM6")
 	// Chamado n. Chamado  ³ 049140 || OS 050426 || ADM. || VAGNER || 8469 || REL METRAS - FWNM - 13/05/2019
@@ -1313,7 +1408,7 @@ STATIC FUNCTION RUNGRP
 	_nValor		:=	0
 	
 	nCount:=0
-	DO WHILE !EOF()
+	DO WHILE TEM6->(!EOF())
 		
 		nCount++
 		
@@ -1335,16 +1430,16 @@ STATIC FUNCTION RUNGRP
 			_nCoef2		:=	0
 			_nPos		:=	1
 			_cFaixa		:=	"A"
-			LETABELA(TEM6->T6_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
+			LETABELA(TEM6->T6_VEND, TEM6->T6_PERCTAB)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 			dbSelectArea("TEM4") 		//AQUI EU LEIO A QUANTIDADE DE VENDEDORES QUE ATUOU NESTE GRUPO DE PRODUTOS
-			If 	!dbSeek(_cGrupoN+_cTabCom+_cGRPCom+dtos(_dData))
+			If 	TEM4->(!dbSeek(_cGrupoN+_cTabCom+_cGRPCom+dtos(_dData)))
 				MsgStop("ERRO AO LER ARQUIVO DE TRABALHO 2"+_cGrupoN+_cTabCom+_cGRPCom)
 				EXIT
 			Endif
 			_nQVend		:=	TEM4->T4_QTDADE
 			_nCoef1		:=	100/_nQVend    				// para classificar o vendedor
 		else
-			LETABELA(TEM6->T6_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
+			LETABELA(TEM6->T6_VEND, TEM6->T6_PERCTAB)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 		Endif
 		
 		_nCoef2		:=	INT(_nQVend * (_nPerce/100))
@@ -1352,18 +1447,19 @@ STATIC FUNCTION RUNGRP
 		
 		dbSelectArea("TEM6")
 		RecLock("TEM6",.F.)
-		TEM6->T6_CLASS				:=	_nClass
-		TEM6->T6_POSIP				:=	_nPos
-		TEM6->T6_TABFAIP			:=	_cFaixa
-		TEM6->T6_VLFAI				:=	_nValor
-		
+			TEM6->T6_CLASS				:=	_nClass
+			TEM6->T6_POSIP				:=	_nPos
+			TEM6->T6_TABFAIP			:=	_cFaixa
+			TEM6->T6_VLFAI				:=	_nValor	
 		msunlock()
+
 		If _nPos	>= _nCoef2
 			_cFaixa		:=	CHR(ASC(_cFaixa)+ 1)
-			LETABELA(TEM6->T6_VEND)					//PROCURA A TABELA DE COMISSAO CADASTRADA
+			LETABELA(TEM6->T6_VEND, TEM6->T6_PERCTAB)					//PROCURA A TABELA DE COMISSAO CADASTRADA
 		Endif
+
 		dbSelectArea("TEM6")
-		dbskip()
+		TEM6->(dbskip())
 		
 	enddo
 	//³ mv_par12             // Demonstrativo de Vendas por Vendedor         ³
@@ -1397,89 +1493,49 @@ STATIC FUNCTION RUNGRP
 
 Return
 
-/*BEGINDOC
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³Função montada para achar o grupo de produtos pai do grupo de produtos                ³
-//³O grupo de produtos PAI, faz o papel de centralizador de outros grupos ou totalizador.³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-//ENDDOC
-*/
-STATIC FUNCTION PROCURAGRUPO
 
-	_cTabela	:=	""			// deixa vazio para montar em qual tabela de comissao sera feita o calculo
-	dbSelectArea("SBM")
-	DbSetOrder(1)
-	dbSeek(xfilial() + _cGRUPON )
-	_cTabela	:=	SBM->BM_TABCOM
-	_cDescGrN	:=	SBM->BM_DESC
+Static function fCarSZA()
+
+	Local cQuery := ""
 	
-	nCount := 0
-	Do While !EOF() .AND. !BOF()
-		nCount++
-		//Conout("Procurando grupo " + Alltrim(str(nCount)) + " PROCURAGRUPO " + cValToChar(nCount) + TIME())
-		////MsProcTxt("Procurando grupo " + Alltrim(str(nCount)) + " " + TIME() )
+	cQuery := " SELECT ZA_FILIAL, ZA_CODTAB, ZA_TABELA, ZA_FAIXA, ZA_PERCATE, ZA_VLFAIXA "
+	cQuery += " FROM "+Retsqlname("SZA")+" ZA "
+	cQuery += " WHERE D_E_L_E_T_='' AND ZA_FILIAL='02' "
+	cQuery += " ORDER BY ZA_CODTAB, ZA_TABELA, ZA_FAIXA; "
+
+	TcQuery cQuery ALIAS "QSZA" NEW
+
+	While QSZA->(!eof())
+		oTabSZA:set(QSZA->ZA_FILIAL+QSZA->ZA_CODTAB+QSZA->ZA_TABELA+QSZA->ZA_FAIXA, {QSZA->ZA_PERCATE, QSZA->ZA_FAIXA, QSZA->ZA_VLFAIXA})
+		qsza->(dbskip())
+	ENDDO
 	
-		If 	SBM->BM_NIVEL	== "2"
-			_cGrupoF		:=	SBM->BM_GRUPO
-			If EMPTY(_cTabela)
-				_cTabela	:=	SBM->BM_TABCOM
-			Endif
-			dbskip(-1)
+	qsza->(Dbclosearea())
+	
+return
 
-			Do While !EOF()
-				//conout("nCount >>>>>>>> " + cValToChar(nCount))
-				nCount++
-				////("Procurando Nivel " + Alltrim(str(nCount)) + " " + TIME() )
 
-				If 	SBM->BM_NIVEL	== "1"
-					_cGrupoP				:=	SBM->BM_GRUPO
-					_cDescGrP				:=	SBM->BM_DESC
-					If EMPTY(_cTabela)
-						_cTabela	:=	SBM->BM_TABCOM
-					Endif
-					Exit
-				else
-					dbskip(-1)
-				Endif
-				//MsProcTxt( TIME() )
-			Enddo
-			Exit
-		Else
-			//MsProcTxt( TIME() )
-			dbskip(-1)
-		Endif
-		//MsProcTxt( TIME() )
-	Enddo
-
-	If EMPTY(_cTabela)
-		//	MSGSTOP("GRUPO DE PRODUTOS SEM TABELA DE PRECOS")
-		_cTabela	:=	"0001"
-	Endif
-	//MsProcTxt( TIME() )
-
-RETURN
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ESTA ROTINA BUSCA A TABELA DE COMISSAO CADASTRADA   ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-STATIC FUNCTION LETABELA(_cVendedor)
+STATIC FUNCTION LETABELA(_cVendedor, _nPercTab)
 	
-	Local _nPerTab := Posicione("SA3",1,xFilial("SA3")+_cVendedor,"A3_PERCTAB") //incluido por Adriana em 05/10/10 para atender chamado 008059
+	//Local _nPerTab := Posicione("SA3",1,xFilial("SA3")+_cVendedor,"A3_PERCTAB") //incluido por Adriana em 05/10/10 para atender chamado 008059
+	Local _nPerxTab	:= _nPercTab
+	Local aVlrRet		:= {}
+
+	//_nPerTab := Val(_nPerTab)
+	_nPerTab := iif(_nPerxTab > 0, _nPerxTab / 100, 1)                            //busca percetual para calculo da comissao
 	
-	_nPerTab := Val(_nPerTab)
-	_nPerTab := iif(_nPerTab > 0, _nPerTab / 100, 1)                            //busca percetual para calculo da comissao
-	
-	dbSelectArea("SZA")
-	dbsetorder(1)
-	//IF !dbSeek(xFilial()+ _cTabcom+_cGRPCom+_cFaixa) //ALTERADO LEONARDO (HC) PARA PEGAR DADOS DA FILIAL 02 - VARZEA
-	IF !dbSeek("02"+ _cTabcom+_cGRPCom+_cFaixa)
+	if oTabSZA:Get("02"+_cTabcom+_cGRPCom+_cFaixa,@aVlrRet)
+		_nPerce		:=	aVlrRet[1]
+		_cTabVen	:=	aVlrRet[2]
+		_nValor		:=	aVlrRet[3] * _nPerTab //incluido percentual da tabela de comissao por Adriana em 05/10/10 para atender chamado 008059
+	else
 		_nPerce		:=	0
 		_cTabVen	:=	""
-		_nValor		:=	0
-	Else
-		_nPerce		:=	SZA->ZA_PERCATE
-		_cTabVen	:=	SZA->ZA_FAIXA
-		_nValor		:=	SZA->ZA_VLFAIXA * _nPerTab //incluido percentual da tabela de comissao por Adriana em 05/10/10 para atender chamado 008059
+		_nValor		:=	0	
 	Endif
 
 RETURN
@@ -1823,6 +1879,34 @@ STATIC FUNCTION AD0012A
 				@nlin,106 PSAY "|"
 				@nlin,116 PSAY "|"
 				@nLin,118 PSAY	_nTCFat	PICTURE "@E 999,999.99"
+				@nLin,129 PSAY  "|"
+				nLin := nLin + 1
+				
+				@nLin,000 PSAY	"|----------------------------------------------------------------------------- -------------- ------------ --------- ------------|"
+				nLin := nLin + 1
+				
+				@nLin,000 PSAY 	"|Total  DSR (Total Comissão(A) / Dias Úteis(B) * DSR(C) = Valor Final(D))"
+				@nlin,078 PSAY "|"
+				//@nLin,079 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
+				if len(aDSR) > 0
+					@nLin,079 PSAY	"(A)"
+					@nLin,082 PSAY	_nTCFat	PICTURE "@E 999,999.99"
+				endif
+				@nlin,093 PSAY "|"
+				if len(aDSR) > 0
+					@nLin,094 PSAY	"(B)"
+					@nLin,097 PSAY	aDSR[3]	PICTURE "@E 999,999"
+				endif
+				@nlin,106 PSAY "|"
+				if len(aDSR) > 0
+					@nLin,107 PSAY	"(C)"
+					@nlin,110 PSAY aDSR[4] picture "@E 99,999"
+				endif
+				@nlin,116 PSAY "|"
+				if len(aDSR) > 0
+					@nLin,117 PSAY	"(D)"
+					@nLin,120 PSAY	((_nTCFat/aDSR[3])*aDSR[4])	PICTURE "@E 99,999.99"
+				endif
 				@nLin,129 PSAY  "|"
 				nLin := nLin + 1
 				
@@ -2222,6 +2306,34 @@ STATIC FUNCTION AD0012A
 	@nLin,129 PSAY "|"
 	nLin := nLin + 1
 	
+	@nLin,000 PSAY	"|----------------------------------------------------------------------------- -------------- ------------ --------- ------------|"
+	nLin := nLin + 1
+	
+	@nLin,000 PSAY 	"|Total  DSR (Total Comissão(A) / Dias Úteis(B) * DSR(C) = Valor Final(D))"
+	@nlin,078 PSAY "|"
+	//@nLin,079 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
+	if len(aDSR) > 0
+		@nLin,079 PSAY	"(A)"
+		@nLin,082 PSAY	_nTCFat	PICTURE "@E 999,999.99"
+	endif
+	@nlin,093 PSAY "|"
+	if len(aDSR) > 0
+		@nLin,094 PSAY	"(B)"
+		@nLin,097 PSAY	aDSR[3]	PICTURE "@E 999,999"
+	endif
+	@nlin,106 PSAY "|"
+	if len(aDSR) > 0
+		@nLin,107 PSAY	"(C)"
+		@nlin,110 PSAY aDSR[4] picture "@E 99,999"
+	endif
+	@nlin,116 PSAY "|"
+	if len(aDSR) > 0
+		@nLin,117 PSAY	"(D)"
+		@nLin,120 PSAY	((_nTCFat/aDSR[3])*aDSR[4])	PICTURE "@E 99,999.99"
+	endif
+	@nLin,129 PSAY  "|"
+	nLin := nLin + 1
+
 	@nLin,000 PSAY	cabec02
 	nLin := nLin + 1
 	
@@ -2421,7 +2533,7 @@ STATIC FUNCTION AD0012B
 	Endif
 	
 	//SetRegua(RecCount())
-	dbGoTop()
+	TEM1->(dbGoTop())
 	Cabec1 := "Periodo de : "+dtoc(mv_par01)+" Ate : "+dtoc(mv_par02)
 	Cabec1	:= space(61-(len(Cabec1)/2)) + Cabec1
 	_cVend	:=	""
@@ -3082,6 +3194,8 @@ Return
 Static Function RunRep()
 
 	Local nOrdem
+	Local _nI 	:= 0
+	Local _nCi	:= 0
 	nLin:=8
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -4112,59 +4226,6 @@ static function _atualizaSX1()
 
 return
 
-User Function FXFIL_DIA()
-
-	Local MvPar
-	Local MvParDef:=""
-	Local nTam := 2
-	Local nX := 0
-	Local nLen := 0
-	
-	Private aGrupo:={}
-
-	U_ADINF009P('AD0012_DIA' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de geracao de realizado de vendas das regioes')
-	
-	//cAlias := Alias() 					 // Salva Alias Anterior
-	
-	MvPar:=&(Alltrim(ReadVar()))		 // Carrega Nome da Variavel do Get em Questao
-	mvRet:=Alltrim(ReadVar())			 // Iguala Nome da Variavel ao Nome variavel de Retorno
-	
-	dbSelectArea("SM0")
-	_SM0cAlias := Alias()
-	_SM0cOrder := IndexOrd()
-	_SM0cRecno := Recno()
-	
-	DbGotop()
-	CursorWait()
-	While !Eof() .And. SM0->M0_CODIGO == cEmpAnt
-		Aadd(aGrupo,SM0->M0_CODFIL + " - " + Alltrim(SM0->M0_FILIAL))
-		MvParDef+=SM0->M0_CODFIL
-		dbSkip()
-	Enddo
-
-	CursorArrow()
-	IF f_Opcoes(@MvPar,"Filiais",aGrupo,MvParDef,12,49,.F., nTam, Len(aGrupo))  // Chama funcao f_Opcoes
-		
-		mvpar := StrTran(mvpar, "*", "")
-		nLen := Len(mvpar)-1
-		
-		For nX := 0 To nLen Step nTam
-			mvpar := SubStr(mvpar, 1, nX+nTam+Int(nX/nTam))+","+SubStr(mvpar, nX+nTam+Int(nX/nTam)+1, Len(mvpar))
-		Next nX
-		
-		_nTam := LEN(MVPAR)
-		MVPAR := SUBSTR(MVPAR,1,_nTAM-1)
-		
-		&MvRet := mvpar                                                                          // Devolve Resultado
-		
-	EndIF
-	
-	dbSelectArea(_SM0cAlias)
-	dbSetOrder(_SM0cOrder)
-	dbGoto(_SM0cRecno)
-	// Retorna Alias
-
-Return MvParDef
 
 
 /*/
