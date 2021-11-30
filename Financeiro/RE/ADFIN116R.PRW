@@ -9,8 +9,9 @@
 	@since 11/07/2013
 	@version 01
 	@history chamado TI - Abel Babino - 02/07/2019 - Ch.atorio de conciliação de fornecedores. Entre SE5 e CT2. Ch.Interno TI - Abel Babini - Considerar Var.Cambial no Contas à Pagar.
-	@history chamado 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
-	@history chamado 63633 - Leonardo P. Monteiro - 012/11/2021 - Correção dos valores em segunda moeda.
+	@history chamado 8797  - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
+	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Correção dos valores em segunda moeda.
+	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Melhoria e correções após validação.
 
 /*/
 

@@ -11,6 +11,7 @@
     @history Chamado 8465  - Leonardo P. Monteiro    - 01/08/2021 - Adição do detalhamento das embalagens (ZGA/ZGB).
     @history Chamado 8465  - Leonardo P. Monteiro    - 09/08/2021 - Correção e implementação de melhorias como formatação de campos.
     @history Chamado 18431 - Leonardo P. Monteiro    - 16/08/2021 - Correção no programa para excluir os registros somente após todas as checagens e modificar a mesagem de alerta.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 
@@ -584,14 +585,16 @@ return lRet
 Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx, cCompon)
     
     //Variáveis.
-    Local aArea     := GetArea()
-    Local cErro     := ""
-    Local cResponse := ""
-    Local aUrl      := Separa(cUrlAnx,"/",.F.)
-    Local cArq      := Alltrim(cValToChar(aUrl[Len(aUrl)]))
-    Local cComm     := ""
-    PRivate cPasta    := Alltrim(SuperGetMV("ZZ_QUA002H",,"/fotos_inspecoes_qualidade/")) //Criar Mv.
-    Private cPastaLoc := Alltrim(SuperGetMV("ZZ_QUA002I",,"c:\fotos_inspecoes_qualidade\")) //Criar Mv.
+    Local aArea         := GetArea()
+    Local cErro         := ""
+    Local cResponse     := ""
+    Local lWait         := .T.
+    Local aUrl          := Separa(cUrlAnx,"/",.F.)
+    Local cArq          := Alltrim(cValToChar(aUrl[Len(aUrl)]))
+    Local cComm         := ""
+    Local cRotDir       := GetSrvProfString ("ROOTPATH","")
+    PRivate cPasta      := Alltrim(SuperGetMV("ZZ_QUA002H",,"\fotos_inspecoes_qualidade\")) //Criar Mv.
+    Private cPastaLoc   := cPasta+"temp\" //Criar Mv.
 
     //
     If ! consulta(@ cErro, cToken, @cResponse, dParData, cUrlAnx, "")
@@ -607,24 +610,27 @@ Static Function downImg(cUrlAnx, cToken, dParData, aImagens, cInspId, cDescAnx, 
     endif
     
     // Transfere o executável do aplicativo zipado para a pasta local.
-    MsAguarde({|| fTraZip() }, "Processando", "Importando arquivos para tratamento das imagens.")
+    //MsAguarde({|| fTraZip() }, "Processando", "Importando arquivos para tratamento das imagens.")
     
     //Grava o arquivo de imagem na pasta local para ser reduzido o tamanho da imagem pelo aplicativo Magick.
     MemoWrite(cPastaLoc + cArq, cResponse)
-    if file(cPastaLoc+"ImageMagick\magick.exe")
-        cComm := cPastaLoc+"ImageMagick\magick.exe mogrify -resize 25% "+cPastaLoc + cArq 
-        WaitRun(cComm, 0 )
+    if file("ImageMagick\magick.exe")
+        cComm := cRotDir+"\ImageMagick\magick.exe mogrify -resize 25% "+cRotDir+cPastaLoc + cArq 
+        WaitRunSrv(cComm, lWait,"c:\" )
     endif
 
     // Transfere o arquivo redimensionado para a pasta do servidor e grava na array que irá registrar na tabela do BD.
-    if CpyT2S(cPastaLoc+cArq, cPasta, .F., .F. )
+    
+    //if CpyT2S(cPastaLoc+cArq, cPasta, .F., .F. )
+    if __CopyFile(cPastaLoc+cArq, cPasta+cArq,,,.F.)
         Aadd(aImagens,{cInspId, cPasta + cArq, cDescAnx, cCompon})
+        fErase(cPastaLoc+cArq)
     endif
     
     RestArea(aArea)
 
 Return .T.
-
+/*
 Static function fTraZip()
 
     if !file(cPastaLoc+"ImageMagick\magick.exe")
@@ -632,7 +638,7 @@ Static function fTraZip()
         FUnzip(cPastaLoc+"\ImageMagick.zip",cPastaLoc)
     endif
 return
-
+*/
 Static Function fMakeDir(cPath)
 	Local lret 			:= .T.
 	Local aFolder		:= {}
