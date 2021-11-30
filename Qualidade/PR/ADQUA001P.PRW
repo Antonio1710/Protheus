@@ -16,6 +16,7 @@ Static cFormatRet := "application/json"
     @history Everson, 29/07/2021, Chamado 4257 Tratamento para quebra de informações.
     @history Leonardo, 01/08/2021, Chamado 8465 Gravação na tabela ZGA os dados detalhados dos pallets pelo identificador das caixas.
     @history Everson, 05/08/2021, Chamado 4257 Tratamento para alteração de tags do webservice do Edata.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
 
 /*/
 User Function ADQUA001P
@@ -402,7 +403,18 @@ Static Function getPalete(cErro, aDados, cPallete)
                 aDados := {}
                 For nAux := 1 To Len(xCaixas)
                     oItem := xCaixas[nAux]
-                    cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2) //Everson - 29/07/2021. Chamado 4257. 
+                    //63954 - Mudança na regra de quebra dos turnos e lotes.
+                    //cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2) //Everson - 29/07/2021. Chamado 4257.
+
+                    //cTurno := oItem:_PrintedShiftNo:TEXT
+                    cTurno := XmlChildEx(oItem,"_PRINTEDSHIFTNO")
+                    
+                    if valtype(cTurno) != "U"
+                        cTurno := "T"+Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT))
+                    else
+                        cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2)
+                    endif
+
                     Aadd(aDados,{;
                         Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)) + StrTran(Substr(Alltrim(cValToChar(oItem:_STANDARDDATE:TEXT)),1,10),"-","") + cTurno,; //Chave. 1. Everson - 26/07/2021. Chamado 4257.
                         Alltrim(cValToChar(oItem:_PRODUCTNO:TEXT)),; //Código do produto no Protheus. 2

@@ -16,6 +16,7 @@
     @history Chamado 8465  - Leonardo P. Monteiro - 01/08/2021 - Inclusão de novos recuros e rastreabilidades no relatório.
     @history Chamado 8465  - Leonardo P. Monteiro - 09/08/2021 - Melhorias e ajustes solicitadas pelos usuários e SIF.
     @history Chamado 18816 - Leonardo P. Monteiro - 09/08/2021 - Inclusão de espaço entre os campos de observação. E quebra do nome do importador.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
     
 /*/
 #Define IMP_SPOOL  2
@@ -125,6 +126,9 @@ Static function fProcessa()
     Private nTarCon             := 0
     Private cMonQua             := ""
     Private cPlaca              := ""
+    Private dAPRDAT             := Stod("")
+    Private cAPRHOR             := ""
+    Private cAPRQUA             := ""
     Private nPageAct            := 0
     
     //cRelImp := __CUSERID+"_"+cNomRel+"_"+DtoS(dDatabase)+Replace(Time(),":","")
@@ -1003,6 +1007,19 @@ Static Function fModelo01()
         oPrinter:Say(nLinha+017, aPerc[04]+010 , ALLTRIM(cMonQua) , oFOARNO09)
 
         nLinha += nAltura
+        
+        aPerc   := {nCol, round(nRight*0.40,0), nRight}
+
+        nAltura := 20
+        oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
+        oPrinter:Say(nLinha+007, aPerc[01]+002 , "Data da Aprovação:", oFOARNE09)
+        oPrinter:Say(nLinha+017, aPerc[01]+010 , alltrim(dToc(dAPRDAT) +" "+ cAPRHOR) , oFOARNO09)
+
+        oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
+        oPrinter:Say(nLinha+007, aPerc[02]+002 , "Aprovador da Qualidade:", oFOARNE09)
+        oPrinter:Say(nLinha+017, aPerc[02]+010 , ALLTRIM(cAPRQUA) , oFOARNO09)
+
+        nLinha += nAltura
 
         //------------------------------------------
         // Sessão 09 - Condições do Veículo
@@ -1699,7 +1716,7 @@ Static function fGetInfo()
 
     cQuery := " SELECT DISTINCT ZEX_DTICAR, ZEX_DTTCAR, ZEX_HRICAR, ZEX_HRTCAR, ZEX_MONQUA, ZEX_DTLACR, ZEX_HRLACR, "+ cEOL
 	cQuery += "  ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, ZEX_TERMOG, ZEX_TARCON, ZEX_TRADOB, ZEX_PLACA,"+ cEOL
-	cQuery += "  ZEX_LIMPIN, ZEX_LIMPEX, ZEX_TEMPBA, ZEX_BORRAC, ZEX_EQUIPF "+ cEOL
+	cQuery += "  ZEX_LIMPIN, ZEX_LIMPEX, ZEX_TEMPBA, ZEX_BORRAC, ZEX_EQUIPF, ZEX_APRQUA, ZEX_APRDAT, ZEX_APRHOR "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" ZEX "+ cEOL
     cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xFilial("ZEX") +"' AND ZEX.ZEX_NUMERO='"+ TRB->C5_NUM +"'; "
 
@@ -1708,6 +1725,8 @@ Static function fGetInfo()
     TCSETFIELD("QINF","ZEX_DTICAR"		,"D",08,00)
     TCSETFIELD("QINF","ZEX_DTTCAR"		,"D",08,00)
     TCSETFIELD("QINF","ZEX_DTLACR"		,"D",08,00)
+    TCSETFIELD("QINF","ZEX_APRDAT"		,"D",08,00)
+
     
     if QINF->(!EOF())
         dDtICar     := QINF->ZEX_DTICAR
@@ -1729,6 +1748,9 @@ Static function fGetInfo()
         cContain    := Alltrim(QINF->ZEX_CONTAI)
         cTermog     := Alltrim(QINF->ZEX_TERMOG)
         nTarCon     := QINF->ZEX_TARCON
+        dAPRDAT     := QINF->ZEX_APRDAT
+        cAPRHOR     := Alltrim(QINF->ZEX_APRHOR)
+        cAPRQUA     := Alltrim(QINF->ZEX_APRQUA)
 
     endif
 

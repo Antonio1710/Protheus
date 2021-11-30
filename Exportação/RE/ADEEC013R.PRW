@@ -13,7 +13,7 @@
     @since 26/08/2021
     @version 02
     @history Ticket: 62189 - 19/10/2021 - ADRIANO SAVOINE - Gerada a calculadora de digito GS1 apartir dos requisitos disponiveis no site da GS1 e gerado o sequencial do Palete na SX5 para não repetir mais os dados.
-    @history Ticket: 63577 - 25/11/2021 - ADRIANO SAVOINE - Ajustado a etiqueta para o novo Modelo da MARS.
+    @history Ticket: 63577 - 26/11/2021 - ADRIANO SAVOINE - Ajustado a etiqueta para o novo Modelo da MARS.
     
 /*/
 #Define IMP_SPOOL  2
@@ -89,17 +89,14 @@ User Function ADEEC013R() // U_ADEEC013R()
     Private aColTmp             := {}
     
     Aadd( aParamBox ,{1,"Quantidade Cópias"       ,nVal     ,"@E 999" ,'positivo()',"",'.T.',80,.F.}) /*01*/
-    Aadd( aParamBox ,{1,"Material Description"    ,LEFT("MARS GmbH"+SPACE(17),17)  ,"" ,'.T.',"",'.T.',80,.F.}) /*02*/
+    Aadd( aParamBox ,{1,"Material Description"    ,LEFT("Chicken Liver Frozen"+SPACE(21),21)  ,"" ,'.T.',"",'.T.',80,.F.}) /*02*/
     Aadd( aParamBox ,{1,"GRD8 (240)"              ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*03*/
     Aadd( aParamBox ,{1,"VENDOR CODE (91)"        ,LEFT("15140808"+Space(10),10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*04*/
-    //Aadd( aParamBox ,{1,"SSCC (00) (01)"          ,'07897560' ,"" ,'.T.',"",'.T.',80,.F.}) /*05*/
-    //Aadd( aParamBox ,{1,"SSCC (00) (02)"          ,VAL(nPalete) ,"" ,'.T.',"",'.T.',80,.F.}) /*06*/
-    //Aadd( aParamBox ,{1,"SSCC (00) (03)"          ,CVALTOCHAR(nDig) ,"" ,'.T.',"",'.T.',80,.F.}) /*07*/
-    Aadd( aParamBox ,{1,"Mars Batch (90)"         ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*08*/
-    Aadd( aParamBox ,{1,"Manuf. Date (11)"        ,Space(08)  ,"99.99.99" ,'.T.',"",'.T.',80,.F.}) /*09*/
-    Aadd( aParamBox ,{1,"Expiry Date (15)"        ,Space(08)  ,"99.99.99" ,'.T.',"",'.T.',80,.F.}) /*10*/
-    Aadd( aParamBox ,{1,"Vendor Batch/ Lot (10)"  ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*11*/
-    Aadd( aParamBox ,{1,"Quantity (37)"           ,nValor     ,"@E 9999" ,'positivo()',"",'.T.',80,.F.}) /*12*/
+    Aadd( aParamBox ,{1,"Mars Batch (90)"         ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*05*/
+    Aadd( aParamBox ,{1,"Manuf. Date (11)"        ,Space(08)  ,"99.99.99" ,'.T.',"",'.T.',80,.F.}) /*06*/
+    Aadd( aParamBox ,{1,"Expiry Date (15)"        ,Space(08)  ,"99.99.99" ,'.T.',"",'.T.',80,.F.}) /*07*/
+    Aadd( aParamBox ,{1,"Vendor Batch/ Lot (10)"  ,Space(10)  ,"" ,'.T.',"",'.T.',80,.F.}) /*08*/
+    Aadd( aParamBox ,{1,"Quantity (37)"           ,nValor     ,"@E 9999" ,'positivo()',"",'.T.',80,.F.}) /*09*/
 
 
     if ParamBox(aParamBox,"Parâmetros",@aRet)
