@@ -19,6 +19,7 @@
 	@history Everson - 01/07/2020. Chamado 059245. Tratamento para informar o centro de custo para baixa de abastecimento no estoque.
 	@history Everson - 12/11/2021. Chamado 63536.  Tratamento para zera km na tabela ZFD.
 	@history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
+	@history Fernando Sigoli   - 29/11/2021 - Ticket 64163 - Tratamento para pedidos de exportação, nao zerar KM
 /*/
 User Function AD0055()
 
@@ -83,7 +84,7 @@ User Function AD0055()
 		@ (085),(095) MsGet o_cCCDiesel Var cCCDiesel Valid (Empty(Alltrim(cCCDiesel)) .Or. ExistCpo("CTT" ,cCCDiesel)) F3 "CTT"  							Size (050),(009) COLOR CLR_BLACK PIXEL OF _oDlg	
 		//
 		
-		bBlock := {|| lRegGrv := GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel), Iif(lRegGrv, zeraKm(SC5->C5_NUM), Nil) } ////Everson - 12/11/2021. Chamado 63536.
+		bBlock := {|| lRegGrv := GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel), Iif(lRegGrv, zeraKm(SC5->C5_NUM,SC5->C5_EST), Nil) } ////Everson - 12/11/2021. Chamado 63536.
 		DEFINE SBUTTON FROM (100),(150) TYPE 1 ENABLE OF _oDlg ACTION (Eval(bBlock)) //Everson - 10/07/2019. //Everson - 01/07/2020. Chamado 059245. //Everson - 12/11/2021. Chamado 63536.
 		DEFINE SBUTTON FROM (100),(185) TYPE 2 ENABLE OF _oDlg ACTION ( _oDlg:END())
 		ACTIVATE MSDIALOG _oDlg CENTERED
@@ -868,7 +869,7 @@ Return Nil
 	@since 12/11/2021
 	@version 01
 /*/
-Static Function zeraKm(cPedido)
+Static Function zeraKm(cPedido,cUfCli)
 
 	//Variáveis.
 	Local aArea    := GetArea()
@@ -881,6 +882,12 @@ Static Function zeraKm(cPedido)
 		RestArea(aArea)
 		Return Nil
 
+	EndIf
+
+	//29/11/2021 - TKT - 64163 Fernando Sigoli - Tratamento para pedidos de exportação, nao zerar KM
+	If cUfCli = 'EX'
+		RestArea(aArea)
+		Return Nil
 	EndIf
 
 	//

@@ -49,9 +49,9 @@
 	@history ticket   14360 - Everson 			- 24/05/2021 - Tratamento para validação de importação de nota fiscal de produtor rural, movimento 6.
 	@history ticket   33037 - Fernando Sigoli   - 01/10/2021 - Correção notas de Transferencia 
 	@history ticket   62952 - Fernando Sigoli   - 27/10/2021 - Na inclusa do PC carregar na condição de pagamento que vem do SAG e nao mais do parametro.
+	@history ticket   64254 - Jonathan Carvalho - 30/11/2021 - Filtro: 8 Frango 1 retorno de criação puxar 50 registros por vez
 /*/
 User Function INTNFEB()
-
 	Local aArea             := GetArea()
 	Local oInterface
 	Local oSBtn01
@@ -69,7 +69,6 @@ User Function INTNFEB()
 	Local oBusca
 	Local oBtnBusca
 	Local oCSV 
-
 	Private cBusca          := ""
 	Private _sDtLim         := DToS(dDatabase)
 	Private _conProthe      := advConnection()
@@ -90,16 +89,13 @@ User Function INTNFEB()
 	Private aColsInterface  := {}
 	Private cInsSer         := Alltrim(cValToChar(GetMv("MV_#SERIMP"))) // Everson - 03/07/2017. Chamado 035012.
 	Private cNFApanha       := ''
-
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Vai gerar Pre-Notas por uma opção no menu do usuario ')
-
 	// FWNM - CHAMADO 037757 - 07/05/2018
 	If msgYesNo("Classificar as notas fiscais diárias de Complemento de Frango Vivo?")
 		LFVClass()
 		Return
 	EndIf
 	// FWNM - FIM
-
 	aFiltro := {}
 	Aadd(aFiltro,"1=Todos")
 	Aadd(aFiltro,"2=Entrada por compra")
@@ -114,15 +110,12 @@ User Function INTNFEB()
 	Aadd(aFiltro,"11=Produtor rural")
 	Aadd(aFiltro,"12=Nota de frete")
 	Aadd(aFiltro,"13=Exclusão Nota de frete")
-
 	_cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
 	_cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
 	_cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-
 	//Everson - 10/08/2017.
 	//Ajuste da data do CT-e.
 	MsAguarde({|| procDtCTE() },"Aguarde","Checando datas de lançamento dos CT-e's pendentes de importação...")
-
 	//Cria objeto MsDialog.
 	oInterface:= MsDialog():Create()
 	oInterface:cName     := "oInterface"
@@ -133,10 +126,8 @@ User Function INTNFEB()
 	oInterface:nHeight   := 460
 	oInterface:lShowHint := .F.
 	oInterface:lCentered := .T.
-
 	//
 	oDtBase := TSay():New(005,004,{|| "Data base: " + cDtBase },oInterface,,oFontDtBs,,,,.T.,CLR_RED,CLR_WHITE,200,20)
-
 	//Cria botão de busca.
 	oTxtBusca := TSay():New(005,180,{||"Localiza pedido:"},oInterface,,,,,,.T.,CLR_RED,CLR_WHITE,250,20)
 	cSelBusca := Space(15)
@@ -144,20 +135,16 @@ User Function INTNFEB()
 	cSelBusca := aSelBusca[1]
 	oSelBusca := TComboBox():New(005,220,{|u|if(PCount()>0,cSelBusca:=u,cSelBusca)},;
 		aSelBusca,050,25,oInterface,,,,,,.T.,,,,,,,,,'cSelBusca')
-
 	cBusca := Space(10)
 	oBusca   := TGet():New(005,271,{|u|If(PCount() == 0,cBusca,cBusca := u)},oInterface,050,010,"@C",,0,16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cBusca",,,,.T.,,,"",2)
-
 	oBtnBusca:= TButton():New(005,322,"Ok",oInterface,,20,12,,,.F.,.T.,.F.,,.F.,,,.F. )
 	oBtnBusca:bAction := {|| nBusca := Ascan(oRegistros:aCols,{|x| AllTrim(Upper(cBusca))$Upper(x[Val(cValToChar(cSelBusca))])}),;
 		Iif(nBusca > 0,Eval({||oRegistros:ForceRefresh(),oRegistros:GoTo(nBusca),oRegistros:Refresh()}),;
 		MsgAlert("Não foi possível localizar o registro","Função IntNFEB"))}
-
 	//Combobox para seleção de filtro.
 	nOpcImp := aFiltro[1]
 	oCombo2 := TComboBox():New(005,445,{|u|if(PCount() > 0,nOpcImp := u, nOpcImp)},;
 		aFiltro,100,20,oInterface,,{|| MsAguarde({|| pendImp() },"Aguarde","Carregando registros...") },,,,.T.,,,,,,,,,'nOpcImp')
-
 	//Cria Header.
 	Aadd(aHInterface,{" ","LEG"    	  ,"@BMP"    ,01     			     , 00,.T.,"","","","R","","",.F.,"V","","","",""})
 	Aadd(aHInterface,{"Operação"  	  ,"OPER"	 ,""	 				 , 10,0,"","" ,"C","",""})
@@ -187,22 +174,17 @@ User Function INTNFEB()
 	Aadd(aHInterface,{"D1 Loja"       ,"D1LOJA"  ,""	 				 , 02,0,"","" ,"C","",""})
 	Aadd(aHInterface,{"Mensagem 1"    ,"MENNOTA1"   ,""	 				 , 200,0,"","" ,"C","",""})
 	Aadd(aHInterface,{"Mensagem 2"    ,"MENNOTA2"  ,""	 				 , 200,0,"","" ,"C","",""})
-
 	//Cria objeto MsNewGetDados(Grid).
 	oRegistros := MsNewGetDados():New(025,004,165,545,,"Allwaystrue()","Allwaystrue()","",aAltInterface,Nil,999,Nil,Nil,Nil,oInterface,aHInterface,@aColsInterface)
-
 	//
 	oGroupTot := TGroup():Create(oInterface,162,433,185,545,"",,,.T.)
 	oGroupTot:SetCss("QGroupBox{background-color: #F5F5F5}")
-
 	//
 	oQtdReg := TGet():New(170,438, { | u | If( PCount() == 0, nQtdReg, nQtdReg := u ) },oInterface, ;
 		060, 010, "@E 999,999,999",, 0, 16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nQtdReg",,,,.F.,,,"Total de registros:",2,,CLR_RED)
-
 	//
 	oGroup1 := TGroup():Create(oInterface,190,004,210,545,"",,,.T.)
 	oGroup1:SetCss("QGroupBox{background-color: #F5F5F5}")
-
 	//Importação.
 	oSBtn01:= SButton():Create(oInterface)
 	oSBtn01:cName := "oSBtn01"
@@ -215,7 +197,6 @@ User Function INTNFEB()
 	oSBtn01:lReadOnly := .F.
 	oSBtn01:Align := 0
 	oSBtn01:bAction := {|| procEntr() }
-
 	//Sped.
 	oSBtn05:= SButton():Create(oInterface)
 	oSBtn05:cName := "oSBtn05"
@@ -228,7 +209,6 @@ User Function INTNFEB()
 	oSBtn05:lReadOnly := .F.
 	oSBtn05:Align := 0
 	oSBtn05:bAction := {|| /*//TCSetConn(_conProthe),*/ MsAguarde({|| SPEDNFe()    },"Aguarde","Acessando rotina SPEDNFe...") }
-
 	//Cria para recarregar dados.
 	oSBtn02:= SButton():Create(oInterface)
 	oSBtn02:cName := "oSBtn02"
@@ -242,7 +222,6 @@ User Function INTNFEB()
 	oSBtn02:Align := 0
 	oSBtn02:lVisibleControl := .T.
 	oSBtn02:bAction := {|| procDtCTE(), MsAguarde({|| pendImp() },"Aguarde","Carregando registros...") }
-
 	//Cria botão de confirmação.
 	oSBtn03:= SButton():Create(oInterface)
 	oSBtn03:cName := "oSBtn03"
@@ -255,7 +234,6 @@ User Function INTNFEB()
 	oSBtn03:lReadOnly := .F.
 	oSBtn03:Align := 0
 	oSBtn03:bAction := {||lngPedImp()}
-
 	//Cria botão de cancelamento.
 	oSBtn04:= SButton():Create(oInterface)
 	oSBtn04:cName := "oSBtn04"
@@ -270,16 +248,12 @@ User Function INTNFEB()
 	oSBtn04:lVisibleControl := .T.
 	oSBtn04:bAction := {||oInterface:End()}
 	oSBtn04:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")
-
 	//
 	oInterface:Activate(,,,.T.,{||.T.},,{|| pendImp() })
-
 	//
 	//TcUnLink(_conSAG)
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -294,9 +268,7 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 Static Function grLRCCSV(oRegistros,aHReg,cArq)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -307,67 +279,42 @@ Static Function grLRCCSV(oRegistros,aHReg,cArq)
 	Local nHdl
 	Local cEof		:= Chr(13) + Chr(10)
 	Local cLin		:= ""
-
 	cDir := cGetFile("Arquivo CSV.", "Selecione o diretório para salvar o CSV",,'C:\',.T.,GETF_RETDIRECTORY + GETF_LOCALHARD + GETF_NETWORKDRIVE)
-
 	//
 	If Empty(Alltrim(cValToChar(cDir)))
 		Return Nil
-
 	EndIf
-
 	//Cria o arquivo no disco.
 	nHdl := FCreate(cDir + cArq,0)
-
 	//Verifica se foi possível criar o arquivo.
 	If nHdl == -1
 		MsgAlert("O Arquivo não " + cArq + " pode ser criado:" + cEof + STR(FERROR()),"Função grLRCCSV")
 		Return Nil
-
 	EndIf
-
 	//
 	cLin := ""
 	For i := 2 To Len(aHReg)
 		cLin += cValToChar(aHReg[i][1]) + ";"
-
 	Next i
-
 	cLin += cEof
-
 	For i := 2 To Len(oRegistros:aCols)
-
 		For w := 2 To Len(aHReg)
-
 			If Alltrim(cValToChar(aHReg[w][8])) == "N"
-
 				cLin += Transform(Val(cValToChar(oRegistros:aCols[i][w])),"@E 999,999,999.99") + ";"
-
 			Else
 				cLin += cValToChar(oRegistros:aCols[i][w]) + ";"
-
 			EndIf
-
 		Next w
-
 		cLin += cEof
-
 		FWrite(nHdl,cLin,Len(cLin))
-
 		cLin := ""
-
 	Next i
-
 	//Fecha o arquivo.
 	FClose(nHdl)
-
 	WinExec("Explorer.exe" + Space(1) + cDir )
-
 	MsgInfo("Arquivo gerado.","Função grLRCCSV")
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -382,63 +329,46 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 Static Function scriptSql(nRadio)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea	:= GetArea()
 	Local cQry	:= ""
-
+	Local nTop  := Supergetmv("MV_#TPNFEB",,50)
 	//
 	If nRadio == 1 // ENTRADA POR COMPRA				SGNFE010	PO01MVES	SEQ UNICO	Menu\PROTHEUS
 		cQry := " SELECT '1' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND (TABEGENE IN ('PO01MVES','POCAMVES','PO11MVES','PO12MVES') ) AND F1_EMISSAO <= '" + _sDtlim + "' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND F1_FORMUL = 'N' "  //Leon | 05/08/2019 | Ch:050855
-
 		// DEBUG - VOLTAR
 		//cQry += " AND F1_FORNECE='029421'
-
 	ElseIf nRadio == 2 //ENTRADA POR DEVOLUÇÃO			SGNFE010	PO02MVES	SEQ UNICO	Menu\PROTHEUS  -- Adriana Garcia, Rosangela, Simone
 		cQry := " SELECT '2' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND TABEGENE = 'PO02MVES' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
 	ElseIf nRadio == 3 //ENTRADA POR TRANS. EMPRESA		SGNFE010	PO03MVES	SEQ UNICO	Menu\PROTHEUS  -- Noemi, Rosangla, Simone
 		cQry := " SELECT '3' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND TABEGENE = 'PO03MVES' AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' " //Everson - 12/08/2020. Chamado 060547.
-
 	ElseIf nRadio == 4 //NOTAS DE SERVIÇO				SGNFE010	POCAFINA	SEQ UNICO
 		cQry := " SELECT '4' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND (TABEGENE = 'POCAFINA' OR TABEGENE='POCAMVNE') AND D1_TIPO <> 'F' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
 	ElseIf nRadio == 5 //ENTRADA POR TRANS. INTEGRADO	SGNFE010	POCAMVTP	SEQ UNICO	Menu\PROTHEUS     -- Adriana Garcia, Adriana Caldeira, Rosangela, Simone, Noemi, Pera, Fornari
 		cQry := " SELECT '5' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND TABEGENE = 'POCAMVTP' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
 	ElseIf nRadio == 6 //ENTRADA FRANGO VIVO APANHA		SGNFE010	FCCAMVAP	SEQ UNICO	Automatico        -- Simone, rosangela, Valeria
 		cQry := " SELECT '6' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND TABEGENE = 'FCCAMVAP' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
 		//(IDENTICO A ESTE)
 	ElseIf nRadio == 7 //FRANGO 1 RETORNO DE CRIACAO		SGNFE010	EC01LOTE	SEQ UNICO	Menu\PROTHEUS -- Adriana Garcia, Rosangela, Simone
-		cQry := " SELECT '7' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC01LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
+		//@Ticket 64254 - JONATHAN.CARVALHO - 29/11/2021 puxar 50 registros por vez 
+		cQry := " SELECT TOP "+CValToChar(nTop)+"  '7' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC01LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 8 //FRANGO 2 RETORNO SIMBOL CRIACAO	SGNFE010	EC02LOTE	SEQ UNICO	Menu\PROTHEUS  -- Adriana Garcia, Rosangela, Simone
 		cQry := " SELECT '8' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC02LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
 	ElseIf nRadio == 9 //FRANGO 4 COMPRA FRANGO VIVO		SGNFE010	EC04LOTE	SEQ UNICO	Menu\PROTHEUS   -- Adriana Garcia, Rosangela, Simone
 		cQry := " SELECT '9' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC04LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
-
 	ElseIf nRadio == 10 //PRODUTOR RURAL
 		cQry := " SELECT '10' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE IN ('PO11MVES','PO01MVES') AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND F1_FORMUL = 'S' "
-
 	ElseIf nRadio == 11 //Nota de Frete
 		cQry := " SELECT '11' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E')) AND F1_FILIAL = '" + cFilAnt + "'  AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND TABEGENE LIKE 'POCAMVNE' AND OPERACAO_INT <> 'E' "
-
 	ElseIf nRadio == 12 //Exclusão Nota de Frete
 		cQry := " SELECT '12' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '" + cFilAnt + "' AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND TABEGENE LIKE 'POCAMVNE' AND OPERACAO_INT = 'E'  "
-
 	EndIf
-
 	//
 	RestArea(aArea)
-
 Return cQry
-
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -452,13 +382,10 @@ Return cQry
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 Static Function pendImp()
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
 	Local aArea		:= GetArea()
 	Local i			:= 1
 	Local cQuery	:= ""
@@ -475,62 +402,40 @@ Static Function pendImp()
 	Local oCinza	:= LoadBitmap( GetResources(), "BR_CINZA")
 	Local oVdEsc	:= LoadBitmap( GetResources(), "BR_VERDE_ESCURO")
 	Local cOper		:= ""
-
 	nOpcImp := Val(Alltrim(cValToChar(nOpcImp)))
-
 	oRegistros:aCols := {}
 	oRegistros:Refresh()
 	nQtdReg := 0
 	oQtdReg:Refresh()
-
 	cQuery += " SELECT * FROM ( "
-
 	For i := 1 To 12
-
 		cQuery += scriptSql(i) + Chr(13) + Chr(10)
-
 		If i < 12
 			cQuery += " UNION ALL " + Chr(13) + Chr(10)
-
 		EndIf
-
 	Next i
-
 	cQuery += " ) AS FONTE "
-
 	If (nOpcImp - 1 ) > 0
-
 		cQuery += " WHERE FONTE.TP = '" + Alltrim(cValToChar((nOpcImp - 1 ))) + "' "
-
 	EndIf
-
 	cQuery += "  ORDER BY CAST(FONTE.TP AS NUMERIC), FONTE.F1_FILIAL,FONTE.CODIGENE,FONTE.R_E_C_N_O_ , FONTE.D1_TRANSIT  "
-
 	//
 	If Select("CARR_PEND") > 0
 		CARR_PEND->(DbCloseArea())
-
 	EndIf
-
 	//
 	//////TCSetConn(_conSAG)
-
 	MsAguarde({|| DbUseArea(.t., "TOPCONN", TcGenQry(,,cQuery), "CARR_PEND", .T., .F.) },"Aguarde","Carregando registros...")
 	DbSelectArea("CARR_PEND")
 	CARR_PEND->(DbGoTop())
 	If CARR_PEND->(Eof())
-
 		Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 		oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"    })] 	:= ""
-
 	EndIf
-
 	//
 	While ! CARR_PEND->(Eof())
-
 		IIf( Alltrim(cValToChar(CARR_PEND->OPERACAO_INT)) = "E" ,cOper := "Exclusão" , cOper := "Inclusão")
-
 		Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 		oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"    })] 	:= cOper
@@ -561,60 +466,40 @@ Static Function pendImp()
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "MENNOTA1"   })] := Alltrim(cValToChar(CARR_PEND->F1_MENNOTA))
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "MENNOTA2"  })] 	:= Alltrim(cValToChar(CARR_PEND->F1_MENNOTB))
 		//
-
 		If Alltrim(cValToChar(CARR_PEND->TP)) == "1"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVerde
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "2"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVermelho
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "3"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAmarelo
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "4"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oMarrom
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "5"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAzul
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "6"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oLaranja
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "7"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oBranco
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "8"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oPreto
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "9"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oPink
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "10"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVioleta
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "11"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oCinza
-
 		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "12"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVdEsc
-
 		EndIf
-
 		nQtdReg++
-
 		CARR_PEND->(DbSkip())
-
 	EndDo
-
 	CARR_PEND->(DbCloseArea())
-
 	//
 	oRegistros:Refresh()
 	oQtdReg:Refresh()
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -631,13 +516,10 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */                        
 Static Function procEntr()
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
 	Local aArea	    := GetArea()
-
 	Private cMensagem	:= ""
 	Private cImpOK		:= "Notas Importadas com Sucesso:" + CRLF + CRLF
 	Private cImpEr		:= "Notas Não Importadas:" + CRLF + CRLF"
@@ -650,22 +532,17 @@ Static Function procEntr()
 	Private cAssunto    := ""
 	Private cDe         := ""
 	Private cLocal      := ""
-
 	cEmp := cEmpAnt
 	cFil := cFilAnt
-
 	//
 	If Val(cValToChar(nOpcImp)) == 1
 		MsgStop("Por favor, selecione uma opção diferente de 1 - Todos no filtro.","Função procEntr")
 		RestArea(aArea)
 		Return Nil
-
 	EndIf
-
 	Private nRadio  := Val(cValToChar(nOpcImp)) - 1
 	Private cQueryP := ''
 	Private cCod    := "" //Incluido por Adriana chamado 028496
-
 	cPara      := SuperGetMV("MV_XMPARA" ,,"")
 	cCopia     := SuperGetMV("MV_XMCOPIA",,"")
 	cCpOcul    := SuperGetMV("MV_XMCPOCU",,"")
@@ -673,19 +550,14 @@ Static Function procEntr()
 	cDe        := SuperGetMV("MV_XMAILDE",,"")
 	cEmail	   := GetMV("MV_XEMAIL",.F.,"")
 	cExt	   := GetMv("MV_XEXT",.F.,"*.CSV")
-
 	Processa({|lEnd| U_InteNfeB() },"Aguarde...","Gerando Interface ...",.F.)
 	MsAguarde({|| pendImp() },"Aguarde","Carregando registros...")
-
 	cMensagem += cImpOK + CRLF + CRLF
 	cMensagem += cImpER + CRLF + CRLF
 	U_ExTelaMen("INTNFEB - Processo de Importação concluido!!!", cMensagem, "Arial", 10, , .F., .T.)
-
 	//
 	RestArea(aArea)
-
 Return Nil
-
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -701,7 +573,6 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 User Function InteNfeB()
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -727,7 +598,6 @@ User Function InteNfeB()
 	Local aNFtrans	 := {} //Everson - 06/11/2018.
 	Local cTpNrNfs	 := "" //Everson - 06/11/2018.
 	Local cErro		 := "" //Everson - 06/11/2018.
-
 	//Everson - 18/10/2019. Chamado 052348.
 	Local cTesTrans	 := Alltrim(cValToChar(GetMv("MV_#TESTRA",,"1X1X1X1/1X1X1X1/1X1X1X1")))
 	Local aTesTrans	 := StrToKarr(cTesTrans,"/")
@@ -735,14 +605,11 @@ User Function InteNfeB()
 	Local cCCPTra	 := aTesTrans[2]
 	Local cICCPTra	 := aTesTrans[3]
 	//
-
 	Local aPCSAG := {}
-
 	// define link com a base da Interface
 	_cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
 	_cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
 	_cPortBco2 := Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-
 	Private cAliasNFE	:= GetNextAlias()
 	Private lMsErroAuto 	:= .F.
 	Private lMsHelpAuto 	:= .T.
@@ -781,7 +648,6 @@ User Function InteNfeB()
 	Private cCheckOr  		:= ""
 	Private cCheckOp		:= ""
 	Private nVlrFrt			:= 0 //Everson - 13/10/2017. Chamado 037596.
-
 	Private cCheckFor  		:= ""//fernando sigoli - 22/02/2018
 	Private	cCheckLoj  		:= ""//fernando sigoli - 22/02/2018
 	Private cCheckRur  		:= ""//fernando sigoli - 22/02/2018
@@ -795,47 +661,32 @@ User Function InteNfeB()
 	Private cMunOri         := ''//fernando sigoli - 10/04/2018
 	Private cEstDes         := ''//fernando sigoli - 10/04/2018
 	Private cMunDes         := ''//fernando sigoli - 10/04/2018
-
 	Private cCCFV           :=GetMV("MV_#CCFRVI",,"6110")
 	Private cITFV           :=GetMV("MV_#ITFRVI",,"121")
-
 	Private cCNPJ           := "" //fernando sigoli - 05/1/2019
-
 	U_ADINF009P('INTNFEB' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Vai gerar Pre-Notas por uma opção no menu do usuario ')
-
 	//
 	//////TCSetConn(_conSAG)
-
 	If nRadio <> 11 .And. nRadio <> 12
 		cQry := scriptSql(nRadio)
 		cQry += " ORDER BY F1_FILIAL,CODIGENE,R_E_C_N_O_ , D1_TRANSIT "
-
 	ElseIf nRadio == 11 .Or. nRadio == 12
-
 		//
 		If nRadio == 11 //Nota de Frete.
 			GeraFrete()
-
 		ElseIf nRadio == 12 //Exclusão Nota de Frete.
 			ExcluiFrete()
-
 		EndIf
-
 		Return Nil
-
 	Else
 		MsgStop("Opção selecionada inválida.","Função InteNfeB")
 		Return Nil
-
 	EndIf
-
 	//
 	DbUseArea(.t., "TOPCONN", TcGenQry(,, cQry), cAliasNFE, .T., .F.)
 	TcSetField( cAliasNFE, "F1_EMISSAO", "D", 8, 0)
 	TcSetField( cAliasNFE, "F1_XREC", "D", 8, 0)
 	TcSetField( cAliasNFE, "F1_DTDIGIT", "D", 8, 0)   //chamado 057922 - || Fernando Sigoli 07/05/2020 - OS 059404 || CONTROLADORIA || THIAGO || 8439
-
-
 	(cAliasNFE)->(DbGoTop())
 	If (cAliasNFE)->(Eof())
 		MsgInfo("Não há documentos de entrada a serem importados.","Função InteNfeB")
@@ -843,72 +694,51 @@ User Function InteNfeB()
 		(cAliasNFE)->(DbCloseArea())
 		RestArea(_aArea)
 		Return Nil
-
 	EndIf
-
 	//
 	If nRadio == 6
 	dOrigB := dDataBase
-
 EndIf
-
 cChave   := ""
 cNotaDe  := Space(9)
 cNotaAte := Space(9)
-
 DbSelectArea(cAliasNFE)
 (cAliasNFE)->(dbGotop())
-
 nTotReg := 0
 While ! (cAliasNFE)->(Eof())
-
 	nTotReg++
-
 	(cAliasNFE)->(DbSkip())
-
 EndDo
-
 ProcRegua(nTotReg)
-
 (cAliasNFE)->(dbGotop())
-
 While ! (cAliasNFE)->(Eof())
-
 	//Conexão banco de dados integração.
 	//////TCSetConn(_conSAG)
 	IncProc("NF | " + Alltrim(cValToChar((cAliasNFE)->F1_DOC)) + "/" + Alltrim(cValToChar((cAliasNFE)->F1_Serie))  )
-
 	// ** INICIO DA CRIACAO DE LOG CHAMADO 032948 - WILLIAM COSTA ** //
 	TcSqlExec("UPDATE SGNFE010 SET DTPROCESSO='" +DTOS(DATE()) + "' , HRPROCESSO='"+SUBSTR(TIME(),1,5)+ "' WHERE CODIGENE = '" + CVALTOCHAR((cAliasNFE)->CODIGENE) + "'")
 	// ** FINAL DA CRIACAO DE LOG CHAMADO 032948 - WILLIAM COSTA ** //
-
 	cCheckDoc 	:= 	Alltrim(cValToChar((cAliasNFE)->F1_DOC))
 	cCheckForn	:= 	Alltrim(cValToChar((cAliasNFE)->F1_FORNECE))
 	cCheckLoja	:= 	Alltrim(cValToChar((cAliasNFE)->F1_LOJA))
 	cCheckOr  	:= 	Alltrim(cValToChar((cAliasNFE)->D1_NFORI))
 	cCheckOp  	:= 	Alltrim(cValToChar((cAliasNFE)->OPERACAO_INT))
-
 	//Fernando Sigoli 22/02/2018
 	cCheckFor  := (cAliasNFE)->F1_Fornece
 	cCheckLoj  := (cAliasNFE)->F1_Loja
 	cCheckRur  := (cAliasNFE)->(D1_SRRURAL+D1_NFRURAL)
 	cCheckTG   := ALLTRIM((cAliasNFE)->TABEGENE)
 	cCheckTP   := ALLTRIM((cAliasNFE)->D1_IDENTB6)
-
 	If Alltrim(cValToChar((cAliasNFE)->D1_TIPO)) == 'X'
 		//////TCSetConn(_conProthe)
 		cQryS:=" SELECT F1_DOC FROM " + RetSqlName("SF1") + " WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_DOC = '" + Padl(cCheckOr,9,"0") + "' AND F1_FORNECE = '" + cCheckForn + "' AND F1_LOJA = '" + cCheckLoja + "' AND D_E_L_E_T_ = '' "
-
 		If Select("ChecRess") > 0
 			ChecRess->(DbCloseArea())
-
 		EndIf
-
 		TcQuery cQryS New Alias "ChecRess"
 		DbSelectArea("ChecRess")
 		ChecRess->(DbGoTop())
 		If ChecRess->(Eof())
-
 			cErro := "A nota de origem " + cCheckOr + " referente à remessa " + cCheckDoc + " não está lançada no Protheus."
 			cImpEr+= cErro + CRLF + CRLF
 			MsgStop(cErro,"Função InteNfeB")
@@ -918,77 +748,52 @@ While ! (cAliasNFE)->(Eof())
 			(cAliasNFE)->(dbSkip())
 			//////TCSetConn(_conProthe)
 			Loop
-
 		Else
-
 			//////TCSetConn(_conSAG)
 			ChecRess->(DbCloseArea())
-
 		EndIf
-
 	EndIf
-
 	cFornec := (cAliasNFE)->F1_FORNECE
 	cLoja  	:= (cAliasNFE)->F1_LOJA
-
 	//
 	If (cAliasNFE)->OPERACAO_INT == 'A'
-
 		//
 		If Alltrim(cValToChar((cAliasNFE)->F1_Formul)) == "S" //Everson - 09/11/2018.
 			lInc:=.T.
-
 		Else
 			cDoc := (cAliasNFE)->F1_DOC
-
 			cCodiGene  := (cAliasNFE)->(CODIGENE)
-
 			//SE TIPO A E NÃO EXISTIR NO SISTEMA, EFETUA A INCLUSÃO
 			////TCSetConn(_conProthe)
 			cAliasT := GetNextAlias()
 			cQryS	:= "SELECT 1 FROM "+RetSqlName("SF1")+" (NOLOCK) WHERE F1_CODIGEN = " +alltrim(str(cCodiGene))+ " AND D_E_L_E_T_='' "
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryS), cAliasT, .T., .F.)
-
 			If (cAliasT)->(Eof())
 				lInc:=.T.
-
 			Else
 				IntNFEB1(.F.)
 				lInc:=.T.
-
 			EndIf
-
 			//
 			(cAliasT)->(DbCloseArea())
-
 		EndIf
-
 	Else
-
 		If (cAliasNFE)->OPERACAO_INT == 'E'
 			lInc:=.F.
-
 		Else
 			lInc:=.T.
-
 		EndIf
-
 	EndIf
-
 	//Conexão banco de dados integração.
 	////TCSetConn(_conSAG)
 	If lInc
-
 		// para verificar se a nota ja esta no protheus
 		// estes campos sao da base de interface e nao do protheus
 		If SubStr((cAliasNFE)->F1_Doc,1,1) == "E"
 			cDoc := SubStr((cAliasNFE)->F1_Doc,2,10)
-
 		Else
 			cDoc := StrZero(Val((cAliasNFE)->F1_Doc),9)
-
 		EndIf
-
 		cNota	 := rTrim((cAliasNFE)->F1_DOC)
 		cNotaSag := rTrim((cAliasNFE)->F1_DOC)
 		cFornSag := rTrim((cAliasNFE)->F1_FORNECE)
@@ -1002,84 +807,59 @@ While ! (cAliasNFE)->(Eof())
 		cProdCod := (cAliasNFE)->D1_COD
 		_CONTA   :=  ''
 		_ITEMCC  :=  ''
-
 		//Conexão banco de dados Protheus.
 		////TCSetConn(_conProthe)
-
 		cCNPJ    := Posicione('SA2',1,xFilial('SA2')+ cFornec + cLoja,"A2_CGC") //Fernanado Sigoli 05/11/2018 Chamado: 044933
-
 		//Inicio: fernando sigoli 21/09/2018 Chamado: 044053
 		If !Empty((cAliasNFE)->F1_CHVNFE)
-
 			If (cAliasNFE)->F1_DOC <> SubStr((cAliasNFE)->F1_CHVNFE,26,9)
-
 				cErro     := "NFE "+alltrim((cAliasNFE)->F1_DOC)+" com chave diferente do numero da Nota Fiscal Informada, favor verificar!!!" + CRLF + CRLF
 				cImpEr	  += cErro + CRLF + CRLF
 				//////TCSetConn(_conSAG)
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(dbSkip())
 				Loop
-
 			EndIF
-
 		EndIf
 		//Fim: fernando sigoli 21/09/2018 Chamado: 044053
-
-
 		//inicio: Fernanado Sigoli 05/11/2018 Chamado: 044933
 		If !Empty((cAliasNFE)->F1_CHVNFE)
-
 			If cCNPJ <> SubStr((cAliasNFE)->F1_CHVNFE,07,14)
-
 				cErro     := "NFE "+alltrim((cAliasNFE)->F1_DOC)+" com CNPJ diferente do numero da Nota Fiscal Informada, favor verificar!!!" + CRLF + CRLF
 				cImpEr	  += cErro + CRLF + CRLF
 				//////TCSetConn(_conSAG)
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(dbSkip())
 				Loop
-
 			EndIF
-
 		EndIf
 		//Fim: Fernanado Sigoli 05/11/2018 Chamado: 044933
-
 		// *** INICIO WILLIAM COSTA 09/08/2019 CHAMADO 046976 || OS 048247 || TECNOLOGIA || WAGNER || 3522 || PROTHEUS X SAG
 		IF ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP'
-
 			cNFApanha := GetNextAlias()
 			cQryf := " SELECT F2_DOC, F2_SERIE, F2_EMISSAO FROM " + RetSqlName("SF2") + " WITH (NOLOCK) WHERE F2_FILIAL = '03' AND F2_SERIE = '" + (cAliasNFE)->F1_SERIE + "' AND F2_DOC = '" + StrZero(Val(Alltrim((cAliasNFE)->F1_DOC)),9) + "' AND D_E_L_E_T_ <> '*' " // Leon | Chamado 051029 | 13/08/2019 | StrZero para F1_DOC
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryf), cNFApanha, .T., .F.)
-
 			(cNFApanha)->(dbGotop())
 			If (cNFApanha)->(Eof())
-
 				cErro := "Nota fiscal de Saida nao encontrada no Protheus: "+AllTrim((cAliasNFE)->F1_DOC)+ CRLF + CRLF
 				cImpEr+= cErro + CRLF + CRLF
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(dbSkip())
 				Loop
-
 			Else
-
 				IF (cAliasNFE)->F1_EMISSAO < STOD((cNFApanha)->F2_EMISSAO)
-
 					cErro := "Data da Nota fiscal de Entrada Menor que a Data da Nota Fiscal de Saida: "+AllTrim((cAliasNFE)->F1_DOC)+ CRLF + CRLF
 					cImpEr+= cErro + CRLF + CRLF
 					DbSelectArea(cAliasNFE)
 					(cAliasNFE)->(dbSkip())
 					Loop
-
 					(cNFApanha)->(DbCloseArea())
-
 				ELSE
-
 					(cNFApanha)->(DbCloseArea())
-
 				ENDIF
 			ENDIF
 		ENDIF
 		// *** FINAL WILLIAM COSTA 09/08/2019 CHAMADO 046976 || OS 048247 || TECNOLOGIA || WAGNER || 3522 || PROTHEUS X SAG
-
 		// Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 08/05/2019
 		If !u_ExistXML((cAliasNFE)->F1_DOC, (cAliasNFE)->F1_SERIE, cCNPJ, (cAliasNFE)->F1_ESPECIE, (cAliasNFE)->F1_FORMUL, 0)
 			cErro     := "XML da NF n. " + (cAliasNFE)->F1_DOC + "/" + (cAliasNFE)->F1_SERIE + " - CNPJ " + Transform(cCNPJ,"@R 99.999.999/9999-99") + " não encontrada na tabela da Central XML..." + CRLF + CRLF
@@ -1087,7 +867,6 @@ While ! (cAliasNFE)->(Eof())
 			(cAliasNFE)->(dbSkip())
 			Loop
 		EndIf
-
 		// Chamado n. 048529 || OS 049805 || FISCAL || ALLAN || 8394 || VALIDAR NFE INT - FWNM - 14/05/2019
 		//User Function ChkChvNF(cFilNF, cDoc, cSer, cFor, cLoj, cTipo, cSistema, cChaveNFe, cUF, cAnoMes, cCNPJ)
 		If !u_ChkChvNF((cAliasNFE)->F1_FILIAL, (cAliasNFE)->F1_DOC, (cAliasNFE)->F1_SERIE, (cAliasNFE)->F1_FORNECE, (cAliasNFE)->F1_LOJA, (cAliasNFE)->F1_TIPO, "SAG", (cAliasNFE)->F1_CHVNFE, DtoS((cAliasNFE)->F1_EMISSAO), cCNPJ)
@@ -1097,11 +876,9 @@ While ! (cAliasNFE)->(Eof())
 			Loop
 		EndIf
 		//
-
 		///// Consisto total da NF
 		// Chamado n. 052097 || OS 053474 || FISCAL || SIMONE || 8463 || CTES 3182 E 3189 - fwnm - 02/10/2019
 		If !Empty( (cAliasNFE)->F1_CHVNFE ) // Chamado n. 052097 || Nao consistir valor quando nao possuir chave eletronica - FWNM - 04/10/2019
-
 			nValrNFE := 0
 			cFilNFE  := (cAliasNFE)->F1_FILIAL
 			cNumeNFE := (cAliasNFE)->F1_DOC
@@ -1111,16 +888,12 @@ While ! (cAliasNFE)->(Eof())
 			cLojaNFE := (cAliasNFE)->F1_LOJA
 			cChavNFE := (cAliasNFE)->F1_CHVNFE
 			cEspNFE  := (cAliasNFE)->F1_ESPECIE
-
 			// Conecto com DBINTERFACE/SAG para buscar total da NF no SAG
 			aTamSX3 := TamSX3("D1_TOTAL")
-
 			//TCSetConn(_conSAG)
-
 			If Select("Work1") > 0
 				Work1->( dbCloseArea() )
 			EndIf
-
 			cQuery := " SELECT SUM(D1_TOTAL) TOT_NF "
 			cQuery += " FROM SGNFE010 (NOLOCK) "
 			cQuery += " WHERE F1_FILIAL = '"+cFilNFE+"' "
@@ -1132,37 +905,27 @@ While ! (cAliasNFE)->(Eof())
 			cQuery += " AND F1_CHVNFE = '"+cChavNFE+"' "
 			cQuery += " AND	F1_ESPECIE = '"+cEspNFE+"' "
 			cQuery += " AND	OPERACAO_INT <> 'E' " // Chamado n. 052097 || Exclusao de NF - Filtrar OPERACAO_INT <> E - fwnm - 03/10/2019
-
 			tcQuery cQuery New Alias "Work1"
-
 			// Compatibilizo campos numericos e data
 			tcSetField("Work1","TOT_NF", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 			If Work1->( !EOF() )
 				nValrNFE := Work1->TOT_NF
 			EndIf
-
 			If Select("Work1") > 0
 				Work1->( dbCloseArea() )
 			EndIf
-
 			// Restauro conexao Protheus e busco total da NF na Central XML
 			////TCSetConn(_conProthe)
-
 			If Select("Work2") > 0
 				Work2->( dbCloseArea() )
 			EndIf
-
 			cQuery := " SELECT SUM(XIT_TOTNFE) XIT_TOTNFE "
 			cQuery += " FROM RECNFXMLITENS (NOLOCK) "
 			cQuery += " WHERE XIT_CHAVE = '"+cChavNFE+"' "
 			cQuery += " AND	D_E_L_E_T_='' "
-
 			tcQuery cQuery New Alias "Work2"
-
 			aTamSX3 := TamSX3("D1_TOTAL")
 			tcSetField("Work2","XIT_TOTNFE", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 			If Work2->( !EOF() )
 				// Chamado n. 052097 || Consistir valor considerando apenas 1 digito decimal - FWNM - 04/10/2019
 				cXIT_TOTNFE := AllTrim(Str(Work2->XIT_TOTNFE))
@@ -1174,48 +937,34 @@ While ! (cAliasNFE)->(Eof())
 					Loop
 				EndIf
 			EndIf
-
 			If Select("Work2") > 0
 				Work2->( dbCloseArea() )
 			EndIf
-
 		EndIf
 		/////
 		//
-
 		//inicio - Fernando Sigoli 22/02/2017
 		If cCheckTG == 'POCAMVTP'
-
 			//verifico se a nota informado do produtor rural existe no sistema
 			If cCheckTP == 'TRANS'   //TRANS = Transferencia ou SOBRA = Sobra
-
 				If !Empty(cCheckRur)
-
 					NFRURAL := GetNextAlias()
 					cQryf := " SELECT F2_DOC, F2_SERIE FROM " + RetSqlName("SF2") + " WITH (NOLOCK) WHERE F2_FILIAL = '" +cFilAnt+ "' AND F2_SERIE+F2_DOC = '" +cCheckRur+ "' AND D_E_L_E_T_ = '' "
 					DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryf), NFRURAL, .T., .F.)
-
 					(NFRURAL)->(dbGotop())
 					If (NFRURAL)->(Eof())
-
 						cErro := "Nota fiscal do produtor informado não encontrada no Protheus "+AllTrim(cCheckRur)+ CRLF + CRLF
 						cImpEr+= cErro + CRLF + CRLF
 						DbSelectArea(cAliasNFE)
 						(cAliasNFE)->(dbSkip())
 						Loop
-
 					Else
 						(NFRURAL)->(DbCloseArea())
-
 					EndIf
-
 				EndIF
-
 			EndIf
-
 			//verifico se a nota do produtor rural ja foi feito entrada de trasnferencia
 			If !Empty(cCheckRur)
-
 				NFTRANF := GetNextAlias()
 				cQryt := " SELECT "
 				cQryt += " TOP(1)  D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA,D1_LOCAL  "
@@ -1223,76 +972,53 @@ While ! (cAliasNFE)->(Eof())
 				cQryt += " 	WHERE "
 				cQryt += " D1_FILIAL   = '" +cFilAnt+ "' AND D1_SRRURAL+D1_NFRURAL  = '" +cCheckRur+ "'  AND D1_FORNECE  = '" +cCheckFor+ "' AND D1_LOJA = '" +cCheckLoj+ "' AND D_E_L_E_T_ <> '*' "
 				DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryt), NFTRANF, .T., .F.)
-
 				(NFTRANF)->(dbGotop())
 				If !(NFTRANF)->(Eof())
-
 					cErro := "Nota fiscal do produtor rural "+AllTrim(cCheckRur)+"encontra-se como tranferencia realizada. Operacao Abortada"+CRLF + CRLF
 					cImpEr+= cErro + CRLF + CRLF
 					DbSelectArea(cAliasNFE)
 					(cAliasNFE)->(dbSkip())
 					Loop
-
 				Else
-
 					(NFTRANF)->(DbCloseArea())
-
 				EndIf
-
 			EndIF
-
 			//verificar se produto da sobra e transferencia esta como os itens corretos.
 			_CONTA  := Posicione('SB1',1,xFilial('SB1')+cProdCod,"B1_CONTA")
 			_ITEMCC := Posicione('SB1',1,xFilial('SB1')+cProdCod,"B1_ITEMCC")
-
 			//
 			If  Alltrim(_CONTA) <> '111520004' .or. Alltrim(_ITEMCC) <> '114'
-
 				cErro := "Nota fiscal "+AllTrim(cNota)+" nao importada, verificar no cadastro de produtos Nro.CONTA e ITEM CONTA. Operacao Abortada"+CRLF + CRLF
 				cImpEr+= cErro + CRLF + CRLF
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(dbSkip())
 				Loop
-
 			EndIf
-
 		EndIf
 		//fim - Fernando Sigoli 22/02/2017
-
 		// VERIFICA SE A NOTA JA EXISTE NO SISTEMA A PESAR DE NAO ESTAR FLEGADA NO SGNFE010 INTERFACE
 		NFSEEK := GetNextAlias()
 		//chamado 041786- fernando sigoli 30/05/2018
 		cQryS := " SELECT * FROM " + RetSqlName("SF1") + " WHERE D_E_L_E_T_ = ' ' AND F1_FILIAL = '" + cFilAnt + "' AND F1_NOTASAG = '"+ cCheckDoc +"' AND F1_FORNECE = '"+ cCheckForn +"' AND F1_LOJA = '" + cCheckLoja + "' "
 		cQryS += " AND NOT EXISTS(SELECT * FROM " + RetSqlName("SD2") + " SD2 WHERE D2_TIPO = 'D' AND D2_NFORI=F1_DOC AND D2_SERIORI=F1_SERIE AND D2_FILIAL=F1_FILIAL AND SD2.D_E_L_E_T_ = ' ') "
-
 		DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryS), NFSEEK, .T., .F.)
-
 		(NFSEEK)->(dbGotop())
 		If ! (NFSEEK)->(Eof()) .And. ! nRadio == 5 //Everson - 24/05/2021. Chamado 14360. A validação de nota de produtor rural é realizada na SD1.
-
 			MsgStop("Já há no Protheus entrada da nota do SAG " + cCheckDoc + ", fornecedor " + cCheckForn + ".","Função InteNfeB")
-
 			////TCSetConn(_conSAG)
 			cStrUpd := "UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' , MENSAGEM_INT='' , F1_XDOC= '"+ cCheckDoc +"' , STATUS_PRC= 'P' WHERE F1_DOC = '" + cCheckDoc + "' AND F1_FORNECE = '" + cCheckForn + "' AND F1_LOJA = '" + cCheckLoja  + "' AND F1_ESPECIE = 'NF' AND OPERACAO_INT = '" + cCheckOp + "' "
-
 			TcSqlExec(cStrUpd)
-
 			(NFSEEK)->(DbCloseArea())
 			////TCSetConn(_conSAG)
 			dbSelectArea(cAliasNFE)
 			(cAliasNFE)->(dbSkip())
 			////TCSetConn(_conProthe)
 			Loop
-
 		Else
 			(NFSEEK)->(DbCloseArea())
-
 		EndIf
-
 		If nRadio == 10
-
 			If Empty(Alltrim(cValToChar((cAliasNFE)->D1_TES)))
-
 				cErro := "Nota.: "+AllTrim(cNota)+" - Sem TES informada!: "+cFornec+" Lj.:"+cLoja + CRLF + CRLF
 				cImpEr+= cErro + CRLF + CRLF
 				MsgAlert("Nota produtor rural sem TES informada!")
@@ -1301,14 +1027,10 @@ While ! (cAliasNFE)->(Eof())
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(dbSkip())
 				Loop
-
 			EndIf
-
 		EndIf
-
 		////TCSetConn(_conProthe)
 		If cTipo == "B"
-
 			DbSelectArea("SA1")
 			SA1->(DbSetOrder(1))
 			If ! SA1->(DbSeek(xFilial("SA1")+cFornec+cLoja))
@@ -1320,11 +1042,8 @@ While ! (cAliasNFE)->(Eof())
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(DbSkip())
 				Loop
-
 			EndIf
-
 		Else
-
 			dbSelectArea("SA2")
 			SA2->(DbSetOrder(1))
 			If ! SA2->(DbSeek(xFilial("SA2")+cFornec+cLoja))
@@ -1336,13 +1055,9 @@ While ! (cAliasNFE)->(Eof())
 				DbSelectArea(cAliasNFE)
 				(cAliasNFE)->(DbSkip())
 				Loop
-
 			EndIf
-
 		EndIf
-
 		////TCSetConn(_conSAG)
-
 		//Inicio: fernando sigoli 21/09/2018 Chamado: 044053
 			/*
 		If !Empty((cAliasNFE)->F1_CHVNFE)
@@ -1361,24 +1076,16 @@ While ! (cAliasNFE)->(Eof())
 		EndIf
 			*/
 		//Fim: fernando sigoli 21/09/2018 Chamado: 044053
-
-
 		If (cAliasNFE)->F1_Serie == "000"
-
 			If ! Empty((cAliasNFE)->D1_SERIORI)
 				cSerie := (cAliasNFE)->D1_SERIORI
-
 			Else
 				cSerie  := (cAliasNFE)->F1_Serie
-
 			EndIf
-
 		Else
 			cSerie  := (cAliasNFE)->F1_Serie
-
 		EndIf
 		cSerie  := (cAliasNFE)->F1_Serie
-
 			/*
 			D1_TIPO = 'C' notas com tipo de despesa de Comissão
 			D1_TIPO = 'F' notas com tipo de despesa de Frete
@@ -1387,77 +1094,58 @@ While ! (cAliasNFE)->(Eof())
 			*/
 		cTpNota  := "NORMAL"
 		cEspecie := "SPED"
-
 		If (cAliasNFE)->D1_TIPO == "C"
 			cTpNota  := "COMISS"
 			cEspecie := (cAliasNFE)->F1_ESPECIE
-
 		ElseIf (cAliasNFE)->D1_TIPO == "F"
 			cTpNota  := "FRETE"
 			cEspecie := "CTE"
-
 		ElseIf (cAliasNFE)->D1_TIPO == "A"
 			cTpNota := "ARMAZEN"
-
 		ElseIf (cAliasNFE)->D1_TIPO == "O"
 			cTpNota := "OUTROS"
-
 		ElseIf (cAliasNFE)->D1_TIPO == "R"
 			cTpNota := "CORRETAG"
-
 		ElseIf (cAliasNFE)->D1_TIPO == "L"
 			cTpNota := "FRANGO"
-
 		ElseIf (cAliasNFE)->D1_TIPO == "M"
 			cTpNota := "FRANGO"
-
 		ElseIf (cAliasNFE)->D1_TIPO == 'T'
 			//cCod := '813526' //por Adriana em 04/05/2016 - conforme chamado 028384
 			cCod :=(cAliasNFE)->D1_COD //Chamado:047834 Fernando sigoli 13/03/2019
 			cTpNota := "TRANSP"
 			cEspecie := "NFS"
-
 		ElseIf (cAliasNFE)->D1_TIPO == 'S'
 			//cCod := '824729' //por Adriana em 03/06/2016 - conforme chamado 028846
 			cCod :=(cAliasNFE)->D1_COD //fernando sigoli 13/04/2018
 			cEspecie := "NFS"
-
 		ElseIf (cAliasNFE)->D1_TIPO == 'V' // TIPO NFA
 			cTpNota  := "FRETE"
 			cEspecie := "NFA"
-
 		ElseIf (cAliasNFE)->D1_TIPO == 'X' // Remessa.
 			cTpNota  := "REMESSA"
-
 		ElseIf (cAliasNFE)->D1_TIPO == 'U' 	// Chamado: 050135 - Fernando Sigoli 01/07/2019 - Nao consistir na central xml, quando Especie = NF
 			cTpNota  := "NORMAL"
 			cEspecie := (cAliasNFE)->F1_ESPECIE
 		EndIf
-
 		// se o produto for servico a especie muda para NFS
 		If cEspecie == "SPED"
-
 			cCod := (cAliasNFE)->D1_Cod
 			////TCSetConn(_conProthe)
 			cTip  := Posicione('SB1',1,xFilial('SB1')+cCod,"B1_TIPO")
 			////TCSetConn(_conSAG)
 			If rTrim(cTip) == "SV"
 				cEspecie := "NFS"
-
 			EndIf
-
 		EndIf
-
 		//tratamento para pegar chave da NF de-Entrada por Compra //fernando sigoli 06/03/2018
 		If (nRadio == 1 .and. ALLTRIM((cAliasNFE)->TABEGENE) == 'PO01MVES') .OR. (nRadio == 5 .and. ALLTRIM((cAliasNFE)->TABEGENE) == 'POCAMVTP') .OR. (nRadio == 1 .and. ALLTRIM((cAliasNFE)->TABEGENE) == 'PO11MVES') //Leon | 05/08/2019 | Ch:050855
 			cCHVNFE := (cAliasNFE)->F1_CHVNFE
 		EndIf
-
 		//CHAMADO: 040531 - FERNANDO SIGOLI
 		If nRadio == 3 .and. ALLTRIM((cAliasNFE)->TABEGENE) == 'PO03MVES'
 			cCHVNFE := (cAliasNFE)->F1_CHVNFE
 		EndIf
-
 		// se o tipo for frango apanha pegar a chave da nota de saida
 		If ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP'
 			cCHVNFE := ''
@@ -1465,7 +1153,6 @@ While ! (cAliasNFE)->(Eof())
 			cCHVNFE  := Posicione("SF2",1,'03'+cDoc+cSerie,"F2_CHVNFE")
 			////TCSetConn(_conSAG)
 		EndIf
-
 		//
 		aCabec	  := {}
 		aCabNFR   := {}
@@ -1473,144 +1160,101 @@ While ! (cAliasNFE)->(Eof())
 		aItensNFR := {}
 		aRec	  := {}
 		cFormul   := (cAliasNFE)->F1_Formul
-
 		If cFormul == "S"
 			cDoc := "         "
-
 		Else
-
 			// retira a letra do sag do numero da nota
 			If SubStr((cAliasNFE)->F1_Doc,1,1) == "E"
 				cDoc := SubStr((cAliasNFE)->F1_Doc,2,10)
-
 			Else
 				cDoc := StrZero(Val((cAliasNFE)->F1_Doc),9)
-
 			EndIf
-
 		EndIf
-
 		////TCSetConn(_conProthe)
 		xDoc := ""
 		xPrc := ""
 		If cFormul == "S"
-
 			//Everson - 06/11/2018.
 			cSerie := Alltrim(cValToChar(GETMV("MV_#SRNFIT",,""))) // "01 "
 			If Empty(cSerie)
 				MsgStop("Série da nota fiscal não definida no parâmetro MV_#SRNFIT.","Função InteNfeB")
 				RestArea(aArea)
 				Return Nil
-
 			EndIf
 			//
-
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³ Atualiza o Documento com o Numero do Proximo Documento de Saida ou Entrada com formulario proprio  ³
 			//ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 			// Obtem numero do documento dentro da transacao
-
 			cTpNrNfs  := SuperGetMV("MV_TPNRNFS") //Everson - 09/11/2018.
-
-
 			DbSelectArea("SX5") //Tkt 33037 - Fernando Sigoli 01/10/2021
     		SX5->(DbSetOrder(1)) //Tkt 33037 - Fernando Sigoli 01/10/2021
 			SX5->(DbGoTop()) //Tkt 33037 - Fernando Sigoli 01/10/2021
 			If SX5->(DbSeek(xFilial("SX5")+'01'+cSerie))
-
 				// funcao do padrao do protheus que retorna o proximo numero da nota				
 				SX3->(dbSetOrder(1))
-
 				If (SX3->(dbSeek("SD9"))) .And. cTpNrNfs == "3"
 					cNumero	 := MA461NumNf(.T.,cSerie,Nil)
-
 				Else
 					cNumero  := NxtSX5Nota( cSerie,.T.,cTpNrNfs)
-
 				EndIf
-
 			Else
-
 				cErro     := "Nota SAG "+(cAliasNFE)->F1_Doc+" Série não localizada na tabela 01: "+Alltrim(cSerie)
 				cImpEr	  += cErro + CRLF + CRLF
 				////TCSetConn(_conSAG)
 				dbSelectArea(cAliasNFE)
 				dbSkip()
 				Loop
-
 			EndIf
-
 			cDoc := cNumero
 			xDoc := cNumero
 			xPrc := "P"
-
 		EndIf
-
 		////TCSetConn(_conSAG)
-
 		//	nota de Frango
 		If (cAliasNFE)->D1_TIPO = 'M'
-
 			// O USUARIO TERA QUE DIGITAR a observação da nota
 			If Empty((cAliasNFE)->F1_MENNOTA)
-
 				cObs := DigObs((cAliasNFE)->F1_Doc)
-
 			Else
-
 				cObs := (cAliasNFE)->F1_MENNOTA
-
 			EndIf
-
 		EndIf
-
 		// NO CASO DE FORMULARIO PROPRIO A DATA DE EMISSAO VAI SER SEMPRE A DATA BASE DO SISTEMA PARA NAO
 		// PEGAR UMA DATA RETROATIVA DO SAG E EMITIR UMA NOTA 70 COM DIA 10 E 71 COM DIA 09
 		dEmissao := iIf((cAliasNFE)->F1_Formul == "S",DDATABASE, (cAliasNFE)->F1_EMISSAO)
-
 		If nRadio == 6
-
 			dDataBase := dOrigB
 			////TCSetConn(_conProthe)
 			NFSEEK := GetNextAlias()
-
 			cQryS:="SELECT F2_EMISSAO FROM "+RetSqlName("SF2")+" WHERE D_E_L_E_T_ = ' ' AND F2_FILIAL = '03' AND F2_CLIENTE = '027601' AND F2_DOC = '" + cDoc + "'"
-
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryS), NFSEEK, .T., .F.)
 			TcSetField( NFSEEK, "F2_EMISSAO", "D", 8, 0)
 			dbGotop()
-
 			If !Eof()
 				dEmissao   := (NFSEEK)->(F2_EMISSAO)
 				(NFSEEK)->(DbCloseArea())
 				////TCSetConn(_conSAG)
-
 			EndIf
-
 			////TCSetConn(_conSAG)
 			//dDataBase  := (cAliasNFE)->F1_Emissao //chamado 057922 - || Fernando Sigoli 07/05/2020 - OS 059404 || CONTROLADORIA || THIAGO || 8439
 			dDataBase  := (cAliasNFE)->F1_DTDIGIT  //chamado 057922 - || Fernando Sigoli 07/05/2020 - OS 059404 || CONTROLADORIA || THIAGO || 8439
 		EndIf
-
 		//cSerie := Iif((cAliasNFE)->F1_Formul == "S","01 ", cSerie) - Everson 06/11/2018.
 		Aadd(aCabec,{"F1_FILIAL" , (cAliasNFE)->F1_Filial})  //Tipo de Nf
 		Aadd(aCabec,{"F1_TIPO"   , (cAliasNFE)->F1_Tipo})    //Tipo de Nf
 		Aadd(aCabec,{"F1_FORMUL" , cFormul})  		 //Formulário próprio
 		Aadd(aCabec,{"F1_DOC"    , cDoc})     //Número do documento
 		//Aadd(aCabec,{"F1_SERIE"  , iIf((cAliasNFE)->F1_Fo»rmul == "S","001", StrZero(Val(cSerie),2))})   //Serie
-
 		//Everson - 03/07/2017. Chamado 035012.
 		If nRadio == 1 .And. Alltrim(cValToChar((cAliasNFE)->F1_Fornece)) $(cInsSer)
 			cSerie := Padl(Alltrim(cValToChar(cSerie)),2,"0")
-
 		EndIf
-
 		//
 		Aadd(aCabec,{"F1_SERIE"  , cSerie})   //Serie
 		Aadd(aCabec,{"F1_EMISSAO", dEmissao}) //Emissao
 		Aadd(aCabec,{"F1_DTDIGIT", DDATABASE})//Emissao
 		Aadd(aCabec,{"F1_DESPESA", Val(cValToChar((cAliasNFE)->F1_DESPESA)) }) //Everson - 06/05/2019. Chamado 048963.
-
 		Aadd(aCabec,{"F1_FORNECE", (cAliasNFE)->F1_Fornece}) //Fornecedor
 		Aadd(aCabec,{"F1_LOJA"   , (cAliasNFE)->F1_Loja})    //Loja
 		Aadd(aCabec,{"F1_ESPECIE", iIf(ALLTRIM((cAliasNFE)->F1_Formul) == "S" .OR. ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP',"SPED",cEspecie)})	 //Especie
@@ -1623,11 +1267,8 @@ While ! (cAliasNFE)->(Eof())
 		Aadd(aCabec,{"F1_CODIGEN", (cAliasNFE)->CODIGENE, Nil}) // TIPO DA NOTA NO SAG
 		Aadd(aCabec,{"F1_XREC"   , (cAliasNFE)->F1_XREC, Nil}) // TIPO DA NOTA NO SAG
 		//Aadd(aCabec,{"E2_NATUREZ", (cAliasNFE)->F1_NATUREZ, Nil}) // NATUREZA
-
 		// ** INICIO REGRA NOTA PRODUTOR - WILLIAM COSTA 28/06/2016  CHAMADO - 028768 ** //
-
 		////TCSetConn(_conProthe)
-
 		cQueryP := " SELECT TOP(1)  D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA,D1_LOCAL "
 		cQueryP += " FROM "+RetSqlName("SD1")+ " "
 		cQueryP += " WHERE D1_FILIAL   = '" + xFilial("SD1")                      + "'"
@@ -1636,133 +1277,95 @@ While ! (cAliasNFE)->(Eof())
 		cQueryP += " AND D1_FORNECE  = '" + (cAliasNFE)->D1_FORNECE               + "'"
 		cQueryP += " AND D1_LOJA     = '" + (cAliasNFE)->D1_LOJA                  + "'"
 		cQueryP += " AND D_E_L_E_T_ <> '*' "
-
 		DbUseArea(.t., "TOPCONN", TcGenQry(,, cQueryP), "TRB", .F., .T.)
-
 		While TRB->(!EOF())
-
 			cPnfOri 	 := TRB->D1_DOC
 			cPseriOri 	 := TRB->D1_SERIE
 			cPforneceOri := TRB->D1_FORNECE
 			cPLojaOri    := TRB->D1_LOJA
 			cLocal       := TRB->D1_LOCAL
-
 			TRB->(dbSkip())
-
 		ENDDO
 		TRB->(dbCloseArea())
-
-
 		////TCSetConn(_conSAG)
-
 		// ** FINAL REGRA NOTA PRODUTOR - WILLIAM COSTA 28/06/2016  CHAMADO - 028768 ** //
 		If dEmissao < dDataBase
 			nDias := dDataBase - dEmissao
-
 		Else
 			nDias := 0
-
 		EndIf
-
 		//
 		If AllTrim((cAliasNFE)->NOMECOND) == "ICM"    //alterado por Adriana em 01/07/2016 - chamado 029508
 			Aadd(aCabec ,{"F1_COND", "ICM", Nil})
-
 		ElseIf ALLTRIM((cAliasNFE)->F1_COND) == ''
 			cCond := "S" + PadL(cValToChar(Abs(Val((cAliasNFE)->NOMECOND)-nDias)),2,"0")    //Incluido "S" no codigo para Condicoes utilizadas na integracao com SAG - por Adriana em 18/11/14 - chamado 020980 //Everson - 27/05/2020. Chamado 058500.
 			Aadd(aCabec,{"F1_COND" ,cCond        ,Nil})	 // Condição Pagamento
-
 		Else
 			Aadd(aCabec	,{"F1_COND" ,(cAliasNFE)->F1_COND	, Nil})
-
 		EndIf
-
 		nRecNFE := (cAliasNFE)->R_E_C_N_O_
 		cFilNFE := (cAliasNFE)->F1_Filial
 		cChave  := (cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT)
 		aAreaNFE:= (cAliasNFE)->(GetArea())
-
 		nVlrFrt := 0
 		While (cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT) == cChave
-
 			aLinha :={}
 			cLocal := ''
-
 			nVlrFrt += (cAliasNFE)->F1_FRETE //Everson - 13/10/2017. Chamado 037596.
-
 			//Everson - 27/06/2017. Chamado 035949.
 			cVlrTxt := Alltrim(cValToChar((cAliasNFE)->D1_Total))
 			cCsDec  := ""
 			If At(".",cVlrTxt) > 0
-
 				cCsDec := Alltrim(cValToChar(Substr(cVlrTxt, at(".",cVlrTxt) + 1 , Len(cVlrTxt))))
-
 			EndIf
-
 			//
 			Conout("nRadio " + cValToChar(nRadio) )
 			If nRadio == 1 .And. Len(cCsDec) >= 3 .And. (cAliasNFE)->D1_VUnit > 0 .And. (cAliasNFE)->D1_Total > 0
-
 				nTotal   := (cAliasNFE)->D1_Total
 				nVlrUnit := (cAliasNFE)->D1_VUnit
 				nValDesc := Round((cAliasNFE)->D1_Desc,TamSX3("D1_VALDESC")[2])
 				nQuant	 := (cAliasNFE)->D1_Total / nVlrUnit
-
 			ElseIf nRadio == 3 .And. Alltrim(cValToChar((cAliasNFE)->D1_TES)) == Alltrim(cValToChar(cTesPTra)) //Everson - 18/10/2019. Chamado - 052348.
 				nTotal   := (cAliasNFE)->D1_Total
 				nVlrUnit := (cAliasNFE)->D1_VUnit
 				nQuant	 := (cAliasNFE)->D1_QUANT
 				nValDesc := Round((cAliasNFE)->D1_Desc,TamSX3("D1_VALDESC")[2])
-
 			Else
-
 				nTotal	:= Round((cAliasNFE)->D1_Total,2)
 				nVlrUnit := (cAliasNFE)->D1_VUnit
 				nValDesc := Round((cAliasNFE)->D1_Desc,TamSX3("D1_VALDESC")[2])
-
 				If nTotal > 0 .And. nRadio <> 7 .And. nRadio <> 8 .And. nRadio <> 9 .and. nRadio <> 5
 					nQuant	:= nTotal / nVlrUnit
 					nValDesc := Round((cAliasNFE)->D1_Desc,TamSX3("D1_VALDESC")[2])
 					nTotal   := Round(nTotal,2) //AJUSTE ERRO NO VALOR TOTAL DA NOTA CHAMADO - 024345 - WILLIAM COSTA
-
 				Else
 					nQuant   := (cAliasNFE)->D1_QUANT
 					nTotal   := Round(nQuant * nVlrUnit,TamSX3("D1_TOTAL")[2])
 					nTotal   := Round(nTotal,2) //AJUSTE ERRO NO VALOR TOTAL DA NOTA CHAMADO - 024345 - WILLIAM COSTA
-
 				EndIf
-
 			EndIf
-
 			If AllTrim((cAliasNFE)->D1_LOCAL) == "04" .and. Alltrim((cAliasNFE)->D1_COD) <> ""
-
 				////TCSetConn(_conProthe)
 				cLocal  :=  IIF(!RetArqProd((cAliasNFE)->D1_COD),POSICIONE("SBZ",1,xFilial("SBZ")+(cAliasNFE)->D1_COD,"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+(cAliasNFE)->D1_COD,"B1_LOCPAD")) //alterado pelo chamado 030317 - William Costa iIf((AllTrim(Nfe->D1_LOCAL)) == "04",SubStr(AllTrim(Nfe->D1_CC),3,2),RetFldProd(Nfe->D1_COD,"B1_LOCPAD"))
 				////TCSetConn(_conSAG)
 			Endif
-
 			If ((cAliasNFE)->D1_TIPO == 'C' .Or. (cAliasNFE)->D1_TIPO == 'A' .Or. (cAliasNFE)->D1_TIPO == 'R' .Or. (cAliasNFE)->D1_TIPO == 'O' .Or. (cAliasNFE)->D1_TIPO == 'S')
-
 				_NFORI 		:= (cAliasNFE)->D1_NFORI
 				_SERIORI 	:= (cAliasNFE)->D1_SERIORI
 				_FORNECE	:= (cAliasNFE)->D1_FORNECE
 				_LOJA		:= (cAliasNFE)->D1_LOJA
-
 				//D1_TIPO,D1_NFORI,D1_SERIORI,D1_FORNECE,D1_ITEMORI
 				////TCSetConn(_conSAG)
 				cQryF:="SELECT * FROM SGNFE010 WHERE F1_FILIAL = '"+cFilAnt+"' AND F1_DOC = '"+_NFORI+"' AND F1_SERIE = '"+_SERIORI+"' AND F1_FORNECE = '"+_FORNECE+"' AND F1_LOJA = '"+rTrim(_LOJA)+"'"
 				DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryF), "NFRETE", .T., .F.)
-
 				TcSetField( "NFRETE", "F1_EMISSAO", "D", 8, 0 )
 				dbSelectArea("NFRETE")
 				NFRETE->(dbGotop())
 				If ! NFRETE->(Eof())
-
 					cCod := NFRETE->D1_COD
 					////TCSetConn(_conProthe)
 					dbSelectArea("ZA3")
 					dbSeek(xFilial("ZA3")+cCod)
-
 					If ZA3->(Eof())
 						NFRETE->(DbCloseArea())
 						cErFrete  := Posicione('SB1',1,xFilial('SB1')+cCod,"B1_DESC")
@@ -1774,37 +1377,25 @@ While ! (cAliasNFE)->(Eof())
 						dbSkip()
 						Loop
 						cCod := Space(15)
-
 					Else
 						cCod := ZA3->ZA3_FRETE
-
 					EndIf
-
 					////TCSetConn(_conSAG)
-
 				Else
 					NFRETE->(DbCloseArea())
-
 					If (cAliasNFE)->D1_TIPO == "C"
 						cErro     := "Nao foi localizada a nota original da comissao.: "+Alltrim(_NFORI)+" Serie " + rTrim(_SERIORI)
-
 					ElseIf (cAliasNFE)->D1_TIPO == "F"
 						cErro     := "Nao foi localizada a nota original do transporte do frete.: "+Alltrim(_NFORI)+" Serie " + rTrim(_SERIORI)
-
 					ElseIf (cAliasNFE)->D1_TIPO == "A"
 						cErro     := "Nao foi localizada a nota original de armazenagem.: "+Alltrim(_NFORI)+" Serie " + rTrim(_SERIORI)
-
 					ElseIf (cAliasNFE)->D1_TIPO == "O"
 						cErro     := "Nao foi localizada a nota original 'outros'.: "+Alltrim(_NFORI)+" Serie " + rTrim(_SERIORI)
-
 					ElseIf (cAliasNFE)->D1_TIPO == "R"
 						cErro     := "Nao foi localizada a nota original da corretagem.: "+Alltrim(_NFORI)+" Serie " + rTrim(_SERIORI)
-
 					ElseIf (cAliasNFE)->D1_TIPO == 'V' // TIPO NFA
 						cErro     := "Nao foi localizada a nota original NFA.: "+Alltrim(_NFORI)+" Serie " + rTrim(_SERIORI)
-
 					EndIf
-
 					cImpEr    += cErro + CRLF + CRLF
 					////TCSetConn(_conSAG)
 					TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+ "' WHERE R_E_C_N_O_="+AllTrim(Str(nRecno)))
@@ -1812,9 +1403,7 @@ While ! (cAliasNFE)->(Eof())
 					dbSkip()
 					Loop
 					cCod := Space(15)
-
 				EndIf
-
 				If (cAliasNFE)->D1_TIPO == 'C'
 					//cCod := '821948' //Alterado de 813533 para 821948 conforme chamado 022493
 					cCod :=(cAliasNFE)->D1_COD //Chamado:047834 Fernando sigoli 13/03/2019
@@ -1827,79 +1416,49 @@ While ! (cAliasNFE)->(Eof())
 				ElseIf (cAliasNFE)->D1_TIPO == 'S'
 					//cCod := '824729' //conforme chamado 027518
 					cCod :=(cAliasNFE)->D1_COD //Chamado:047834 Fernando sigoli 13/03/2019
-
 				EndIf
 				NFRETE->(DbCloseArea())
-
 			Else
-
 				////TCSetConn(_conSAG)
 				dbSelectArea(cAliasNFE)
 				cCod := iif((cAliasNFE)->D1_TIPO <> 'T',(cAliasNFE)->D1_Cod,cCod) //cCod := (cAliasNFE)->D1_Cod //por Adriana em 11/05/16 chamado  //por Adriana em 04/05/2016 - conforme chamado 028384
-
 			EndIf
-
 			dbSelectArea(cAliasNFE)
 			cTpNota := "NORMAL"
 			If (cAliasNFE)->D1_TIPO == "C"
 				cTpNota := "COMISS"
-
 			ElseIf (cAliasNFE)->D1_TIPO == "F"
 				cTpNota := "FRETE"
-
 			ElseIf (cAliasNFE)->D1_TIPO == "A"
 				cTpNota := "ARMAZEN"
-
 			ElseIf (cAliasNFE)->D1_TIPO == "O"
 				cTpNota := "OUTROS"
-
 			ElseIf (cAliasNFE)->D1_TIPO == "R"
 				cTpNota := "CORRETAG"
-
 			ElseIf (cAliasNFE)->D1_TIPO == 'V' // TIPO NFA
 				cTpNota  := "FRETE"
 				cEspecie := "NFA"
-
 			EndIf
-
 			////TCSetConn(_conProthe) //Everson 26/10/2017. Chamado 037789 -- ////TCSetConn(_conSAG)
 			If((cAliasNFE)->TABEGENE = 'FCCAMVAP' .And. (cAliasNFE)->F1_Filial = '02')
 				cLocal := IIF(!RetArqProd((cAliasNFE)->D1_COD),POSICIONE("SBZ",1,xFilial("SBZ")+(cAliasNFE)->D1_COD,"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+(cAliasNFE)->D1_COD,"B1_LOCPAD")) //chamado 030317 - William Costa // "16" 	//CHAMADO 029720 WILLIAM COSTA //"05"
-
 			EndIf
-
 			dbSelectArea(cAliasNFE)
-
 			// ** INICIO ENCONTRAR O LOCAL CORRETO - chamado 030317 - William Costa ** //
 			////TCSetConn(_conProthe)
-
 			If (ALLTRIM(cLocal) == '' .AND. ALLTRIM((cAliasNFE)->D1_NFORI) == '') .Or. (Alltrim((cAliasNFE)->D1_TIPO) == 'X') .Or. (Alltrim((cAliasNFE)->TABEGENE) $('EC01LOTE|EC02LOTE|EC04LOTE|POCAMVTP'))  //fernando sigoli 21/02/2017
-
-
 				If ALLTRIM(cCod) == ''
-
 					cLocal := IIF(!RetArqProd((cAliasNFE)->D1_COD),POSICIONE("SBZ",1,xFilial("SBZ")+(cAliasNFE)->D1_COD,"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+(cAliasNFE)->D1_COD,"B1_LOCPAD")) //chamado 030317 - William Costa // "16" //CHAMADO 029720 WILLIAM COSTA
-
 				Else
-
 					cLocal := IIF(!RetArqProd(cCod + SPACE(TamSX3("B1_COD")[1] - (LEN(cCod)))),POSICIONE("SBZ",1,xFilial("SBZ")+cCod + SPACE(TamSX3("B1_COD")[1] - (LEN(cCod))),"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+cCod + SPACE(TamSX3("B1_COD")[1] - (LEN(cCod))),"B1_LOCPAD")) //chamado 030317 - William Costa // "16" //CHAMADO 029720 WILLIAM COSTA
-
 				EndIf
-
 				//fernando sigoli 21/02/2018
 				If Alltrim((cAliasNFE)->TABEGENE) $ ('POCAMVTP')
-
 					cLocal :=  Alltrim((cAliasNFE)->D1_LOCAL)
-
 				EndIF
-
-
 			Else
-
 				If Alltrim((cAliasNFE)->D1_NFORI) <> '' .And. Alltrim(cLocal) == '' .And. Alltrim((cAliasNFE)->D1_TIPO) <> 'X' .And. !(Alltrim((cAliasNFE)->TABEGENE) $('EC01LOTE|EC02LOTE|EC04LOTE|POCAMVTP'))
-
 					////TCSetConn(_conProthe)
-
 					cQueryP := " SELECT TOP(1)  D1_LOCAL "
 					cQueryP += "           FROM "+RetSqlName("SD1")+ " "
 					cQueryP += "          WHERE D1_FILIAL   = '" + xFilial("SD1")                + "'"
@@ -1908,25 +1467,16 @@ While ! (cAliasNFE)->(Eof())
 					cQueryP += "            AND D1_FORNECE  = '" + (cAliasNFE)->D1_FORNECE               + "'"
 					cQueryP += "            AND D1_LOJA     = '" + (cAliasNFE)->D1_LOJA                  + "'"
 					cQueryP += "            AND D_E_L_E_T_ <> '*' "
-
 					DbUseArea(.t., "TOPCONN", TcGenQry(,, cQueryP), "TRC", .F., .T.)
-
 					While TRC->(!EOF())
-
 						cLocal := TRC->D1_LOCAL //chamado 030317 - William Costa
-
 						TRC->(dbSkip())
 					ENDDO
-
 					TRC->(dbCloseArea())
 					////TCSetConn(_conSAG)
-
 				EndIf
-
 			EndIf
 			// ** FINAL ENCONTRAR O LOCAL CORRETO - chamado 030317 - William Costa ** //
-
-
 			////TCSetConn(_conSAG)
 			Aadd(aLinha,{"D1_FILIAL"  	, (cAliasNFE)->F1_Filial, Nil}) //item da nota
 			Aadd(aLinha,{"D1_COD"   	, cCod			, Nil}) //código do produto
@@ -1937,40 +1487,31 @@ While ! (cAliasNFE)->(Eof())
 			Aadd(aLinha,{"D1_VALDESC" 	, nValDesc		, Nil}) //valor desconto do item
 			Aadd(aLinha,{"D1_TPNOTA" 	, cTpNota		, Nil}) //tipo da nota que veio do SAG - frete, armazenagem, outros....
 			Aadd(aLinha,{"D1_FORMUL" 	, cFormul, Nil})
-
 			//Nota de origem da remessa.
 			If Alltrim((cAliasNFE)->D1_TIPO) == 'X'
 				Aadd(aLinha,{"D1_NFORI"   , Padl(Alltrim((cAliasNFE)->D1_NFORI),9,"0") , Nil})
 				Aadd(aLinha,{"D1_SERIORI" , Alltrim((cAliasNFE)->D1_SERIORI)   , Nil})
-
 			EndIf
-
 			//Everson - 19/10/2017. Chamado 037488.
 			If Alltrim((cAliasNFE)->TABEGENE) $('EC01LOTE|EC02LOTE|EC04LOTE')  //fernando sigoli 21/02/2017
 				Aadd(aLinha,{"D1_NFRURAL" 	, Padl(Alltrim((cAliasNFE)->D1_NFORI),9,"0") , Nil})
 				Aadd(aLinha,{"D1_SRRURAL" 	, Alltrim((cAliasNFE)->D1_SERIORI)   , Nil})
-
 			Endif
-
 			//D1_NFORI, D1_SERIORI,
 			//fernando sigoli 21/02/2017
 			If Alltrim((cAliasNFE)->TABEGENE) $('POCAMVTP')  //fernando sigoli 21/02/2017
-
 				Aadd(aLinha,{"D1_NFORI" 	, Padl(Alltrim((cAliasNFE)->D1_NFORI),9,"0")    , Nil})
 				Aadd(aLinha,{"D1_SERIORI" 	, Alltrim((cAliasNFE)->D1_SERIORI)   		    , Nil})
 				Aadd(aLinha,{"D1_ITEMORI" 	, Alltrim((cAliasNFE)->D1_ITEMORI)   		    , Nil})
 				//
 				Aadd(aLinha,{"D1_NFRURAL" 	, Padl(Alltrim((cAliasNFE)->D1_NFRURAL),9,"0")  , Nil})
 				Aadd(aLinha,{"D1_SRRURAL" 	, Alltrim((cAliasNFE)->D1_SRRURAL)   			, Nil})
-
 			Endif
-
 			//ajuste aplicado apenas para notas de produtor rural.
 			If	nRadio == 10
 				Aadd(aLinha,{"D1_NFRURAL" 	, (cAliasNFE)->F1_DOC, Nil})	//nota do produtor rural
 				Aadd(aLinha,{"D1_SRRURAL" 	, (cAliasNFE)->F1_SERIE, Nil})	//série do produtor rural
 			Endif
-
 			If ((cAliasNFE)->D1_TIPO == "L" .Or. (cAliasNFE)->D1_TIPO == "M") .Or.;
 					(ALLTRIM((cAliasNFE)->TABEGENE) = 'FCCAMVAP' .And.(cAliasNFE)->F1_Filial = '02') .Or.;
 					(ALLTRIM((cAliasNFE)->TABEGENE) = 'EC01LOTE') .Or.;
@@ -1978,79 +1519,55 @@ While ! (cAliasNFE)->(Eof())
 					(ALLTRIM((cAliasNFE)->TABEGENE) = 'EC04LOTE') .Or.;
 					(Substring(ALLTRIM((cAliasNFE)->TABEGENE),1,2) ==  'PO' .and. (cAliasNFE)->F1_FORMUL=='S') .Or.;
 					(ALLTRIM((cAliasNFE)->TABEGENE) = 'POCAMVTP' .And.(cAliasNFE)->F1_FORMUL = 'S')
-
 				lMata103 := .T.
-
 				If nRadio == 6 // ENTRADA FRANGO VIVO APANHA
-
 					//chamado: 041255 - 26/04/2018 - Fernando Sigoli
 					Aadd(aLinha,{"D1_TES" 	 , (cAliasNFE)->D1_TES, Nil})
 					Aadd(aLinha,{"D1_CC" 	 , cCCFV     		  , Nil}) //Centro de Custos
 					Aadd(aLinha,{"D1_ITEMCTA", cITFV              , Nil}) //Centro de Custos
 					////TCSetConn(_conSAG)
-
 					If ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP' .And. (cAliasNFE)->F1_Filial == '02'
 						Aadd(aLinha,{"D1_CONTA" 	, "111520005", Nil})   	//alterado por Everson em 06/03/17 chamado 033784
-
 					EndIf
-
 				Else
-
 					//ajuste feito paras as nota de entrada de produtor rural transferencia e sobra
 					//fernando sigoli 21/02/2017
 					//IF  ALLTRIM((cAliasNFE)->TABEGENE) == 'POCAMVTP' .and. cCheckTP == 'SOBRA'
-
 					//	Aadd(aLinha,{"D1_CONTA" 	, "111520004", Nil}) //Conta contabil
 					//	Aadd(aLinha,{"D1_ITEMCTA"   , "114"      , Nil}) //item da conta
-
 					//EndIF
-
 					lMata103 := .T.
 					Aadd(aLinha,{"D1_TES" 	, (cAliasNFE)->D1_TES, Nil})
-
 					If ALLTRIM((cAliasNFE)->TABEGENE) <> 'POCAMVTP'
 						Aadd(aLinha,{"D1_CC" 	, "5131"     , Nil}) //Centro de Custos
 					EndIf
-
 					////TCSetConn(_conSAG)
-
 					If ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP' .And. (cAliasNFE)->F1_Filial == '02'
 						Aadd(aLinha,{"D1_CONTA" 	, "111520005", Nil})	//alterado por Everson em 06/03/17 chamado 033784
-
 					EndIf
-
 				EndIf
-
 			ElseIf nRadio == 3 .And. Alltrim(cValToChar((cAliasNFE)->D1_TES)) == Alltrim(cValToChar(cTesPTra)) //Everson - 18/10/2019. Chamado 052348.
 				lMata103 := .T.
 				Aadd(aLinha,{"D1_TES" 	 , cTesPTra, Nil})
 				Aadd(aLinha,{"D1_CONTA"  , cCCPTra , Nil})
 				Aadd(aLinha,{"D1_ITEMCTA", cICCPTra, Nil})
-
 			Else
 				Aadd(aLinha,{"D1_CC" 		, (cAliasNFE)->D1_CC	, Nil}) //Centro de Custos
 				lMata103 := .F.
-
 			EndIf
-
 			////TCSetConn(_conProthe)
-
 			// @history ticket 3873 - FWNM - 26/10/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
 			//aPCSAG := UpCompSAG( (cAliasNFE)->F1_Filial, cDoc, cSerie, (cAliasNFE)->F1_TIPO, (cAliasNFE)->F1_FORNECE, (cAliasNFE)->F1_LOJA, cCod, nRadio, (cAliasNFE)->D1_CC )
 			aPCSAG := UpCompSAG( (cAliasNFE)->F1_Filial, (cAliasNFE)->F1_DOC, (cAliasNFE)->F1_SERIE, (cAliasNFE)->F1_TIPO, (cAliasNFE)->F1_FORNECE, (cAliasNFE)->F1_LOJA, (cAliasNFE)->D1_COD, nRadio, (cAliasNFE)->D1_CC ) // @history ticket    8201 - Fernando Macieira - 18/01/2021 - IMPORTAÇÃO NFS 13820 E 13821
 			If Len(aPCSAG) >= 2
-
 				If !Empty(aPCSAG[1]) // @history ticket    3873 - Fernando Macieira - 24/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
 					aAdd(aLinha,{"D1_PEDIDO" , aPCSAG[1]	, Nil}) // PC SAG
 				EndIf
-
 				If !Empty(aPCSAG[2]) // @history ticket    3873 - Fernando Macieira - 24/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
 					aAdd(aLinha,{"D1_ITEMPC" , aPCSAG[2]	, Nil}) // Item PC SAG
 				EndIf
-
 			EndIf
 			//
-
 			//-----------------------|
 			//log de registro        |
 			//-----------------------|
@@ -2063,95 +1580,65 @@ While ! (cAliasNFE)->(Eof())
 			Replace ZBE_LOG	        WITH ("INTEGRACAO dDataBase" + Alltrim(dDataBase) + " NOTA : " + (cAliasNFE)->F1_DOC + " SERIE : " + (cAliasNFE)->F1_SERIE + " FORNECEDOR: "  + (cAliasNFE)->F1_FORNECE + " LOJA: " + (cAliasNFE)->F1_LOJA + " NOTA ORIGINAL " + (cAliasNFE)->D1_NFORI + " cPnfOri " + cPnfOri + " SERIE ORIGINAL: " + (cAliasNFE)->D1_SERIORI + " cPseriOri " + cPseriOri + " FORNECEDOR ORIGINAL: " + " cFornecOri: " + cFornecOri + " cPforneceOri: " + cPforneceOri + " LOJA: " + " cLojaForOri " + cLojaForOri + " cPLojaOri " + cPLojaOri)
 			Replace ZBE_MODULO	    WITH "COMPRAS"
 			Replace ZBE_ROTINA	    WITH "INTNFEB"
-
 			////TCSetConn(_conSAG)
 			dbSelectArea(cAliasNFE)
-
 			Aadd(aRec,(cAliasNFE)->R_E_C_N_O_)
 			Aadd(aItens, aLinha)
 			(cAliasNFE)->(DbSkip())
-
 		EndDo
-
 		//Everson - 18/10/2019. Chamado 052348.
 		If lMata103 .And. nRadio == 3
 			Aadd(aCabec,{"F1_STATUS" ,"A"   , Nil})
-
 		EndIf
-
 		Aadd(aCabec,{"F1_FRETE"  , nVlrFrt, Nil}) 				 //Frete - incluido em 28/05/15 por Adriana  //Everson - 13/10/2017. Chamado 037596.
-
 		////TCSetConn(_conProthe)
-
 		// Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 08/05/2019
 		If u_ExistXML(cDoc, cSerie, cCNPJ, cEspecie, cFormul, nRadio)
-
 			// Chamado n. 052097 || OS 053474 || FISCAL || SIMONE || 8463 || CTES 3182 E 3189 - fwnm - 02/10/2019
 			If u_DestOk(cDoc, cSerie, cCNPJ, cEspecie, cFormul, nRadio)
-
 				lMsErroAuto	:= .F.
 				lMsHelpAuto := .F.
-
 				If lMata103 == .T.
-
 					//Ordena os campos conforme dicionário de dados.
 					aCabec := FWVetByDic(aCabec,"SF1")
 					aItens := FWVetByDic(aItens,"SD1",.T.)
-
 					//
 					Conout( DToC(Date()) + " " + Time() + " INTNFEB  aCabec ")
 					VarInfo("aCabec",aCabec)
 					VarInfo("aItens",aItens)
-
 					Conout("INTNFEB - MsExecAuto 103")
 					MsExecAuto({|x,y| MATA103(x,y)},aCabec,aItens,3) // Inclusao
-
 					If lMsErroAuto
 						MostraErro()
-
 					Endif
-
 				Else
-
 					//Ordena os campos conforme dicionário de dados.
 					aCabec := FWVetByDic(aCabec,"SF1")
 					aItens := FWVetByDic(aItens,"SD1",.T.)
-
 					Conout("INTNFEB - MsExecAuto 140") 
 					MsExecAuto({|x,y| MATA140(x,y)},aCabec,aItens,3)
-
 				EndIf
-
 			Else
 				lMsErroAuto := .T.
 				msgStop("[INTNFEB-01] - Lançamento não realizado! " + Chr(13) + Chr(10) + "CNPJ do destinatário contido no XML da NF n. " + cDoc + "/" + cSerie + " não coincide com o CNPJ da empresa/filial que você está tentando lançar! Verifique ou entre na empresa/filial do CNPJ do destinatário...")
-
 			EndIf
 			//
-
-
 		Else
 			lMsErroAuto := .T.
 			msgStop("[INTNFEB-02] - Lançamento não realizado! " + Chr(13) + Chr(10) + "XML da NF n. " + cDoc + "/" + cSerie + " - CNPJ " + Transform(cCNPJ,"@R 99.999.999/9999-99") + " não encontrada na tabela da Central XML...")
-
 		EndIf
 		//
 		//************ FINAL DO ACABEC WILLIAM COSTA***********//
-
 		// Formulario Proprio vai mandar e-mail avisado os responsaveis.
 		If !lMsErroAuto .And. cFormul == 'S'
-
 			////TCSetConn(_conProthe)
 			DbSelectArea("SF1")
 			SF1->(DbSetOrder(1))
 			If ! SF1->(DbSeek( xFilial("SF1") + cDoc + cSerie + Space(TamSX3("F1_SERIE")[1] - Len(cSerie)) +  cFornec +  cLoja ))
 				MsgStop("Não foi possível gerar a nota fiscal número " + cDoc + "/" + cSerie + " para o fornecedor " + cFornec + "/" + cLoja)
 				lMsErroAuto := .T.
-
 			Else
-
 				Aadd(aNFtrans,{cNumero,cSerie, cFornec, cLoja})
-
 				cDe			:= "workflow@adoro.com.br"
 				cMensag		:= "Foi emitida via interface SAG X Protheus a nota fiscal com formularo próprio de numero " + cDoc
 				If  nRadio == 2 // ENTRADA POR DEVOLUÇÃO		 	-- Adriana Garcia, Rosangela, Simone
@@ -2196,16 +1683,11 @@ While ! (cAliasNFE)->(Eof())
 					cMensag		:= "Foi emitida via interface SAG X Protheus a nota fiscal PRODUTOR RURAL com formularo próprio de numero "+cDoc
 				EndIf
 				lHtml		:= .F.
-
 				U_M001MAIL(cPara,cCopia,cCpOcul,cAssunto,cDe,cMensag,lHtml,cAnexo,_lJob)
-
 			EndIf
-
 		EndIf
-
 		//Tratamento caso haja erro no execauto.
 		If lMsErroAuto
-
 			cErro := ""
 			aErroLog := GetAutoGrLog()
 			If Len(aErrolog) > 0
@@ -2213,29 +1695,21 @@ While ! (cAliasNFE)->(Eof())
 				For k:=1 to Len(aErroLog) 
 					If "INVALIDO" $ UPPER (aErroLog[k])
 						cErro+= Alltrim(aErroLog[k]) + Chr(13)+Chr(10)
-
 					EndIf
 				Next
-
 			Else
 				cErro := "[INTNFEB-03] - Lançamento não realizado! " + Chr(13) + Chr(10) + "XML da NF n. " + cDoc + "/" + cSerie + " - CNPJ " + Transform(cCNPJ,"@R 99.999.999/9999-99") + " não encontrada na tabela da Central XML..."
 			EndIf
-
 			////TCSetConn(_conProthe)
 			U_CCSGrvLog(cErro, cAliasNFE, nRecNFE, 3, cFilNFE)
 			cImpEr+= cErro + CRLF + CRLF
 			MsgAlert(cErro)
 			////TCSetConn(_conSAG)
-
 			For ncont:=1 to Len (aRec)
 				TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+ "' WHERE R_E_C_N_O_="+AllTrim(Str(aRec[nCont])))
-
 			Next nCont
-
 		Else
-
 			If cFormul <> 'S'
-
 				////TCSetConn(_conProthe)
 				NFSEEK := GetNextAlias()
 				If lMata116 == .T.
@@ -2247,116 +1721,76 @@ While ! (cAliasNFE)->(Eof())
 				//				dbSelectArea(NFSEEK)
 				dbGotop()
 				If Eof() // nao encontrou a nota no protheus
-
 					(NFSEEK)->(DbCloseArea())
 					lErroFrete := .T.
 					cErro     := "Nota.: "+cDoc+" Fornec.: "+cFornec+" Nao importada para o Protheus!!!"
 					cImpEr	  += cErro + CRLF + CRLF
-
 				Else
-
 					(NFSEEK)->(DbCloseArea())
 					////TCSetConn(_conSAG)
-
 					For ncont := 1 to Len (aRec)
 						cImpOK += "Nota.: "+AllTrim(cDoc)+" - Fornecedor :"+cFornec+" Lj.:"+cLoja	+ CRLF + CRLF
 						TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S', MENSAGEM_INT='"+Space(50)+"' WHERE R_E_C_N_O_="+AllTrim(Str(aRec[nCont])))
-
 					Next nCont
-
 					If lMata116 == .T. //ALTERACAO DE NOTA DE FRETE
 						////TCSetConn(_conProthe)
 						For ncont:=1 to Len (aRec)
 							TcSqlExec("UPDATE "+RetSqlName("SF1")+ "  SET F1_CHVNFE = " + "'" + cChaveNfeFrete + "'" + " WHERE F1_FILIAL = " + "'"  + xFILIAL("SF1") + "'" + " AND F1_DOC = " + "'"  + cDocFrete + "'" + " AND F1_SERIE = " + "'"  + cSerieFrete + "'" + " AND F1_FORNECE = " + "'"  + cForneceFrete + "'" + " AND F1_LOJA = " + "'"  + cLojaFrete + "'" + " AND D_E_L_E_T_ <> '*' ")
-
 						Next nCont
-
 						For ncont:=1 to Len (aRec)
 							TcSqlExec("UPDATE "+RetSqlName("SFT")+ " SET FT_CHVNFE = " + "'" + cChaveNfeFrete + "'" + " WHERE FT_FILIAL = " + "'"  + xFILIAL("SFT") + "'" + " AND FT_NFISCAL = " + "'"  + cDocFrete + "'" + " AND FT_SERIE = " + "'"  + cSerieFrete + "'" + " AND FT_CLIEFOR = " + "'"  + cForneceFrete + "'" + " AND FT_LOJA = " + "'"  + cLojaFrete + "'" + " AND D_E_L_E_T_ <> '*' ")
-
 						Next nCont
-
 						For ncont:=1 to Len (aRec)
 							TcSqlExec("UPDATE "+RetSqlName("SF3")+ " SET F3_CHVNFE = " + "'" + cChaveNfeFrete + "'" + " WHERE F3_FILIAL = " + "'"  + xFILIAL("SF3") + "'" + " AND F3_NFISCAL = " + "'"  + cDocFrete + "'" + " AND F3_SERIE = " + "'"  + cSerieFrete + "'" + " AND F3_CLIEFOR = " + "'"  + cForneceFrete + "'" + " AND F3_LOJA = " + "'"  + cLojaFrete + "'" + " AND D_E_L_E_T_ <> '*' ")
-
 						Next nCont
-
 						////TCSetConn(_conSAG)
-
 					EndIf
-
 				EndIf
-
 			Else
-
 				If Empty(cNotaDe)
 					cNotaDe := cDoc+" Serie "+cSerie
-
 				EndIf
-
 				cNotaAte := cDoc+" Serie "+cSerie
 				////TCSetConn(_conSAG)
-
 				cImpOK += "Nota.: "+AllTrim(cDoc)+" - Fornecedor :"+cFornec+" Lj.:"+cLoja	+ CRLF + CRLF
-
 				For ncont:=1 to Len (aRec)
 					TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='' , MENSAGEM_INT='"+Space(50)+"' , F1_XDOC= '"+ xDoc +"' , STATUS_PRC= '"+ xPrc +"' WHERE R_E_C_N_O_="+AllTrim(Str(aRec[nCont])))
-
 				Next nCont
-
 			EndIF
-
 		EndIf
-
 		////TCSetConn(_conSAG)
 		RestArea(aAreaNFE)
 		dbSelectArea(cAliasNFE)
-
 	Else
-
 		//******************************************************************************************************
 		// EXCLUSAO
 		// efetua cancelamento da nota no Protheus
 		If IntNFEB1(.T.)
 			cDoc := (cAliasNFE)->F1_DOC
-
 		EndIf
-
 	EndIf
-
 EndDo
-
 //
 If nRadio == 6
 	dDataBase := dOrigB
-
 EndIf
-
 //Everson - 06/11/2018.
 If Len(aNFtrans) > 0
 	MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's")
-
 ElseIf !Empty(cNotaDe)
 	MsgAlert("Geradas Notas Fiscais De.: "+cNotaDe+" a Ate -> "+cNotaAte)
-
 ELSEIF !Empty(cDoc) .AND. Empty(cNotaDe) .AND. lErroFrete == .F.  .and. cDoc <> '000000000'
 	MsgAlert("Geradas Notas Fiscais De.: "+cDoc+" a Ate -> "+cDoc)
-
 EndIf
-
 If ALLTRIM(cMensFinal) <> ''
 	MsgAlert(cMensFinal + ' Verifique o Email Enviado ')
-
 EndIf
-
 //
 ////TCSetConn(_conSAG)
 DbSelectArea(cAliasNFE)
 (cAliasNFE)->(DbCloseArea())
-
 //
 RestArea(_aArea)
-
 Return NiL
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -2378,7 +1812,6 @@ Return NiL
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 */
 Static Function IntNFEB1(lFlega)
-
 	Local aArea			:= GetArea()
 	Local aCabec		:= {}
 	Local aItens		:= {}
@@ -2406,19 +1839,14 @@ Static Function IntNFEB1(lFlega)
 	Local lMsErroAuto	:= .F.
 	Local nRec 			:= 0
 	Local nREcNFE 		:= 0
-
 	// efetua cancelamento da nota no Protheus
 	nRec := (cAliasNFE)->(R_E_C_N_O_)
-
 	//
 	If SubStr((cAliasNFE)->F1_DOC,1,1) == "E"
 		cDoc := SubStr((cAliasNFE)->F1_DOC,2,10)
-
 	Else
 		cDoc := StrZero(Val((cAliasNFE)->F1_DOC),9)
-
 	EndIf
-
 	nRecNFE  := (cAliasNFE)->R_E_C_N_O_
 	cFilNFE  := (cAliasNFE)->F1_Filial
 	cChave   := (cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT)
@@ -2432,31 +1860,24 @@ Static Function IntNFEB1(lFlega)
 	cDocSag	 := (cAliasNFE)->F1_DOC
 	cNotaSag := (cAliasNFE)->F1_DOC
 	nCodGen	 := (cAliasNFE)->CODIGENE
-
 	//
 	////TCSetConn(_conProthe)
 	If File("NFSEEK")
 		(NFSEEK)->(dbCloseArea())
-
 	EndIf
-
 	//
 	NFSEEK := GetNextAlias()
 	cQryS	:= "SELECT R_E_C_N_O_ recn ,* FROM " + RetSqlName("SF1") + " WHERE D_E_L_E_T_=' ' AND F1_FILIAL = '" + cFilAnt + "' AND F1_FORNECE = '" + nfeFor + "' AND F1_CODIGEN = '" + ALLTRIM(STR(nCodGen)) + "' "	//"' AND F1_NOTASAG = '" + cNotaSag + "' "
 	DbUseArea(.T., "TOPCONN", TcGenQry(,, cQryS), NFSEEK, .T., .F.)
-
 	dbGotop()
 	If Eof() // nao encontrou a nota no protheus
-
 		lCancNFE := .F.
 		(NFSEEK)->(dbCloseArea())
 		////TCSetConn(_conSAG)
 		(cAliasNFE)->(DbSkip())
 		RestArea(aArea)
 		Return .F.
-
 	Else
-
 		nRec := (NFSEEK)->Recn
 		dbSelectArea("SF1")
 		dbSetOrder(1)
@@ -2466,12 +1887,9 @@ Static Function IntNFEB1(lFlega)
 		//	D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_ITEM+D1_COD
 		dbSetNickname("D1INTERFAC")
 		SD1->(dbSeek(xFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA))
-
 		If Eof()
 			lCancNFE := .F.
-
 		Else
-
 			lJaClassif  := .F. // indica se a nota ja foi classificada ou não
 			aCabec		:= {}
 			aItens		:= {}
@@ -2488,15 +1906,11 @@ Static Function IntNFEB1(lFlega)
 			Aadd(aCabec,{"F1_LOJA"   	, SF1->F1_LOJA 		, Nil})
 			Aadd(aCabec,{"F1_ESPECIE"	, SF1->F1_ESPECIE	, Nil})
 			Aadd(aCabec,{"F1_CHVNFE"	, SF1->F1_CHVNFE	, Nil})
-
 			While ! SD1->(Eof()) .AND. xFilial("SD1") + SF1->(F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA) == SD1->(D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA)
-
 				If ! Empty(SD1->D1_TES)  // ja foi classificada
 					lCancNFE := .F.
 					Exit
-
 				EndIf
-
 				If Empty(SD1->D1_TES)
 					Aadd(aLinha,{"D1_ITEM"		,SD1->D1_ITEM		, Nil})
 					Aadd(aLinha,{"D1_COD"		,SD1->D1_COD		, Nil})
@@ -2507,7 +1921,6 @@ Static Function IntNFEB1(lFlega)
 					RecLock("SD1",.F.)
 					dbDelete()
 					MsUnLock()
-
 				Else
 					Aadd(aLinha,{"D1_FILIAL"	,SD1->D1_FILIAL		, Nil})
 					Aadd(aLinha,{"D1_ITEM"		,SD1->D1_ITEM		, Nil})
@@ -2529,101 +1942,69 @@ Static Function IntNFEB1(lFlega)
 					Aadd(aLinha,{"D1_TP"		,SD1->D1_TP			, Nil})
 					Aadd(aLinha,{"D1_TES"		,SD1->D1_TES		, Nil})
 					lJaClassif := .T.
-
 				EndIf
-
 				If ! lJaClassif
 					dbSelectArea("SF1")
 					RecLock("SF1",.F.)
 					dbDelete()
 					MsUnLock()
-
 				EndIf
-
 				Aadd(aItens, aLinha)
-
 				SD1->(dbSkip()) // Everson - 25/09/2017. Chamado 037326.
-
 			EndDo
-
 			lMsErroAuto:=.F.
-
 			If ! lJaClassif // pre-nota
 				// NAO FAZ NADA POIS JA EXCLUIU POR DELEÇÃO
 				//					MsExecAuto({|x,y| MATA140(x,y)},aCabec,aItens,5) // Exclusao
 			Else  // ja classificada
 				MsExecAuto({|x,y| MATA103(x,y)},aCabec,aItens,5) // Exclusao
-
 			EndIf
-
 			If lMsErroAuto
-
 				aErroLog:=GetAutoGrLog()
 				cErro := ""
-
 				For k:=1 to Len(aErroLog)
 					//If "INVALIDO" $ UPPER (aErroLog[k])
 					cErro+= Alltrim(aErroLog[k]) + Chr(13)+Chr(10)
 					//EndIf
 				Next
-
 				cImpEr+= cErro + CRLF + CRLF
 				U_CCSGrvLog(cErro, cAliasNFE, nRecNFE, 5, cFilNFE)
 				////TCSetConn(_conSAG)
 				dbSelectArea(cAliasNFE)
 				cChave :=(cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT)
 				cImpEr += "Nota.: "+AllTrim(cDoc)+" - Fornecedor :"+cFornec+" Lj.:"+cLoja	+ CRLF + CRLF
-
 				If lFlega
-
 					While (cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT) == cChave
 						nRec := (cAliasNFE)->(R_E_C_N_O_)
 						//cQuery := "UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+"' "
 						cQuery := "UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' "
 						cQuery += " WHERE R_E_C_N_O_="+AllTrim(Str(nRec))
 						TcSqlExec(cQuery)
-
 						dbSkip()
-
 					EndDo
-
 				EndIf
-
 			Else
-
 				////TCSetConn(_conSAG)
 				dbSelectArea(cAliasNFE)
 				cChave:=(cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT)
-
 				If lFlega .And. lCancNFE
-
 					cImpOK += "Nota.: "+AllTrim(cDoc)+" - Fornecedor :"+cFornec+" Lj.:"+cLoja	+ CRLF + CRLF
-
 					While (cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT) == cChave
 						nRec := (cAliasNFE)->(R_E_C_N_O_)
 						cQuery := "UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' "
 						cQuery += " WHERE R_E_C_N_O_="+AllTrim(Str(nRec))
 						TcSqlExec(cQuery)
-
 						dbSkip()
-
 					EndDo
-
 				EndIF
-
 			EndIf
-
 		EndIf
-
 		////TCSetConn(_conProthe)
 		(NFSEEK)->(dbCloseArea())
 		////TCSetConn(_conSAG)
-
 	EndIf
-
 	//
 	If ! lCancNFE // Nao foi possivel excluir a nota
-
 		////TCSetConn(_conProthe)
 		cErro := "Nota fiscal nao encontrada no Protheus, ou a nota já está classificada. "
 		cImpEr+= cErro + CRLF + CRLF
@@ -2631,48 +2012,33 @@ Static Function IntNFEB1(lFlega)
 		////TCSetConn(_conSAG)
 		dbSelectArea(cAliasNFE)
 		cChave:=(cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT)
-
 		If cOperInt == "E"
 			MsgStop(cErro + CRLF + CRLF + Alltrim(cValToChar(F1_DOC)) + "/" + Alltrim(cValToChar(F1_SERIE)) + " Fornecedor: " + Alltrim(cValToChar(F1_FORNECE)) + "-" + Alltrim(cValToChar(F1_LOJA)) + ".","Função IntNFEB1")
-
 		EndIf
-
 		//
 		If !Empty(cChave)
-
 			cImpEr += "Nota.: "+AllTrim(cDoc)+" - Fornecedor :"+cFornec+" Lj.:"+cLoja	+ CRLF + CRLF
 			While (cAliasNFE)->(F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT) == cChave
 				nRec := (cAliasNFE)->(R_E_C_N_O_)
 				//cQuery := "UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='E', MENSAGEM_INT='"+cErro+"' "
-
 				cQuery := "UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S', MENSAGEM_INT='"+cErro+"' "
 				cQuery += " WHERE R_E_C_N_O_="+AllTrim(Str(nRec))
 				TcSqlExec(cQuery)
 				dbSelectArea(cAliasNFE)
 				dbSkip()
-
 			EndDo
-
 		EndIf
-
 	EndIf
-
 	//
 	////TCSetConn(_conSAG)
 	If lFlega
-
 		dbSelectArea(cAliasNFE)
 		While (cAliasNFE)->(!Eof()) .And. cChave == F1_FILIAL+F1_TIPO+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+OPERACAO_INT
-
 			(cAliasNFE)->(DbSkip())
-
 		EndDo
-
 	EndIf
-
 	//
 	RestArea(aArea)
-
 Return lCancNFE
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -2689,32 +2055,23 @@ Return lCancNFE
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function SerieFrete(cDoc,cSerie)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Define variaveis proprias da rotina                          ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	//Local cSerie := CriaVar("F1_SERIE",.F.)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Dialog Principal.														  ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
 	DEFINE MSDIALOG oDlg1 FROM 000,000 TO 160,215 TITLE "Confirmação da Serie das Notas" PIXEL
-
 	@ 003,003 To 030,106 OF oDlg1 PIXEL
 	@ 003,005 Say "Nota " Size 25,10 Of oDlg1 PIXEL
 	@ 015,015 Say cDoc   SIZE 36,10 OF oDlg1 PIXEL
-
 	@ 033,003 To 060,106 OF oDlg1 PIXEL
 	@ 033,005 Say "Informe a Serie" Size 40,10 OF oDlg1 PIXEL
 	@ 045,020 MsGet cSerie SIZE 35,10 OF oDlg1 PIXEL
-
 	DEFINE SBUTTON FROM 066,075 TYPE 1 ACTION (oDlg1:End()) ENABLE OF oDlg1
 	Activate Dialog oDlg1 Centered
-
 Return(cSerie)
-
-
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -2730,35 +2087,27 @@ Return(cSerie)
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function DigObs(cDoc)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Define variaveis proprias da rotina                          ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local cMenNota := CriaVar("F1_MENNOTA",.F.)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Dialog Principal.														  ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
 	DEFINE MSDIALOG oDlg1 FROM 000,000 TO 160,315 TITLE "Observação Nota Produtor Rural" PIXEL
-
 	@ 003,003 To 030,156 OF oDlg1 PIXEL
 	@ 003,005 Say "Nota " Size 25,10 Of oDlg1 PIXEL
 	@ 015,015 Say cDoc   SIZE 36,10 OF oDlg1 PIXEL
-
 	@ 033,003 To 060,156 OF oDlg1 PIXEL
 	@ 033,005 Say "Digite a Obs:" Size 40,10 OF oDlg1 PIXEL
 	@ 045,020 MsGet cMenNota SIZE 100,10 OF oDlg1 PIXEL
-
 	DEFINE SBUTTON FROM 066,075 TYPE 1 ACTION (oDlg1:End()) ENABLE OF oDlg1
 	Activate Dialog oDlg1 Centered
-
 Return(cMenNota)
 //--------------------------------------------------------------------|
 //rotina de geraçaõ de frete, utilizando a rotina Automatica MATA116  |
 //--------------------------------------------------------------------|  
 STATIC FUNCTION GeraFrete()
-
 	aRecno         := {}
 	aRecnos        := {}
 	aCabNFR        := {}
@@ -2783,29 +2132,20 @@ STATIC FUNCTION GeraFrete()
 	lErroFrete     := .F.
 	ncont          := 0
 	lAltFrete      := .F.
-
 	cSerNfOri	   := ""
-
 	cQry       	   := '' //fernando sigoli 19/06/2018
 	cNumeCTE       := '' //fernando sigoli 19/06/2018
 	cFornCTE       := '' //fernando sigoli 19/06/2018
 	cChavCTE       := '' //fernando sigoli 19/06/2018
 	nValrCTE       := '' //fernando sigoli 19/06/2018
-
 	cCNPJ          := '' //fernando sigoli 05/11/2018
-
 	////TCSetConn(_conSAG)
 	SqlCabFrete()
-
 	ProcRegua(Contar("TRC","!Eof()"))
 	TRC->(DbGoTop())
-
 	While TRC->(!EOF())
-
 		IncProc("CT-e | " + Alltrim(cValToChar(TRC->F1_DOC)) + "/" + Alltrim(cValToChar(TRC->F1_SERIE))  )
-
 		// ************ INICIO DO ACABEC WILLIAM COSTA*********** //
-
 		// *********************** INICIO ACABNFR MATA116 - WILLIAM COSTA 17/09/2015 ******************* //
 		aRecno     := {}
 		aRecnos    := {}
@@ -2813,57 +2153,39 @@ STATIC FUNCTION GeraFrete()
 		aItensNFR  := {}
 		lAltFrete  := .F.
 		lErroFrete := .F.
-
 		If ALLTRIM(TRC->OPERACAO_INT) == 'A'
-
 			lAltFrete      := .T.
-
 			////TCSetConn(_conProthe)
 			cQryS:= "SELECT * FROM "+RetSqlName("SF1")+" WHERE D_E_L_E_T_ = ' ' AND F1_FILIAL = '"+cFilAnt+"' AND F1_DOC = '"+STRZERO(VAL(TRC->F1_DOC),9)+"' AND F1_SERIE = '" + rTrim(TRC->F1_SERIE) + "' AND F1_FORNECE = '"+rTrim(TRC->F1_FORNECE)+"' AND F1_ESPECIE = 'CTE' "
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryS), 'NFSEEK', .F., .T.)
-
 			DBGOTOP()
 			If EOF() // nao encontrou a nota no protheus
 				NFSEEK->(DbCloseArea())
 				lAltFrete := .F.
-
 			Else
-
 				lAltFrete      := .T.
 				ExcluiFrete()
 				NFSEEK->(DbCloseArea())
-
 			EndIf
-
 		EndIf
-
-
 		////TCSetConn(_conProthe)
 		cEstado  := POSICIONE("SA2",1,xFilial("SA2")+TRC->F1_FORNECE + TRC->F1_LOJA,"A2_EST")
 		//cNaturez := POSICIONE("SA2",1,xFilial("SA2")+TRC->F1_FORNECE + TRC->F1_LOJA,"A2_NATUREZ") //Chamado: 055874 - Fernando Sigoli  17/02/2020
-
 		//Inicio: fernando sigoli 10/04/2018
 		//Estado+municio - Origem
 		cEstOri := POSICIONE("SA2",1,xFilial("SA2")+TRC->D1_FORNECE + TRC->D1_LOJA,"A2_EST")
 		cMunOri := POSICIONE("SA2",1,xFilial("SA2")+TRC->D1_FORNECE + TRC->D1_LOJA,"A2_COD_MUN")
-
-
 		//Estado+municio - Destino
 		DbSelectArea("SM0")
 		SM0->(DbGoTop())
 		While ! SM0->(Eof() .And. SM0->M0_CODIGO == cEmpAnt)	//While SM0->(!Eof() .And. SM0->M0_CODIGO == cEmpAnt)
-
 			If TRC->F1_FILIAL = Alltrim(cValToChar(SM0->M0_CODFIL))
-
 				cEstDes := Alltrim(SM0->M0_ESTENT)
 				cMunDes := substr(Alltrim(SM0->M0_CODMUN),3,5)
 				Exit
-
 			Endif
-
 			SM0->(DbSkip())
 		EndDo
-
 		//Fim: fernando sigoli 10/04/2018
 		////TCSetConn(_conSAG)
 		aCabNFR        := {}
@@ -2896,12 +2218,9 @@ STATIC FUNCTION GeraFrete()
 		Aadd(aCabNFR,{"F1_MUORITR"  ,cMunOri					 	    ,Nil}) // Município Original do Transporte
 		Aadd(aCabNFR,{"F1_UFDESTR"  ,cEstDes    					 	,Nil}) // UF Destino do Transporte
 		Aadd(aCabNFR,{"F1_MUDESTR"  ,cMunDes   					     	,Nil}) // Município Destino Transporte
-
 		Aadd(aCabNFR,{"F1_DESPESA"  ,Val(cValToChar(TRC->F1_DESPESA))   ,Nil}) // Despesas. //Everson - 06/05/2019. Chamado 048963.
 		// *********************** FINAL ACABNFR MATA116 - WILLIAM COSTA 17/09/2015 *******************/
-
 		////TCSetConn(_conSAG)
-
 		//Inicio. Chamado: 055874 - Fernando Sigoli  17/02/2020
 		If Empty(TRC->F1_NATUREZ)
 			cNaturez := POSICIONE("SA2",1,xFilial("SA2")+TRC->F1_FORNECE + TRC->F1_LOJA,"A2_NATUREZ")
@@ -2909,31 +2228,20 @@ STATIC FUNCTION GeraFrete()
 			cNaturez := TRC->F1_NATUREZ
 		EndIf
 		//Fim. Chamado: 055874 - Fernando Sigoli  17/02/2020
-
 		SqlItensFrete(TRC->F1_DOC,TRC->F1_SERIE,TRC->F1_FORNECE,TRC->F1_LOJA)
-
 		If ! TRD->(Eof())
 			Aadd(aCabNFR,{"F1_CODIGEN"  ,TRD->CODIGENE 	,Nil})
-
 		EndIf
-
 		While TRD->(!EOF())
-
 			// *** INICIO VERIFICACAO SE A NOTA FISCAL ESTA NO PROTHEUS *** //
 			////TCSetConn(_conProthe)
-
 			cSerNfOri := Alltrim(cValToChar(TRD->D1_SERIORI ))
-
 			If Alltrim(cValToChar(TRD->D1_FORNECE)) $cInsSer
-
 				cSerNfOri := Padl(cSerNfOri,2,"0")
-
 			EndIf
-
 			//
 			cQueryTRG := ""
 			If Alltrim(cValToChar(TRD->ORIGRURAL)) == "S"
-
 				cQueryTRG := " SELECT F1_DOC,F1_SERIE,F1_FORNECE,F1_LOJA,D1_TES,F1_DTDIGIT "
 				cQueryTRG += "   FROM SF1010, SD1010    "
 				cQueryTRG += "  WHERE F1_FILIAL          = '" + xFilial("SF1")                + "'"
@@ -2948,9 +2256,7 @@ STATIC FUNCTION GeraFrete()
 				cQueryTRG += "    AND D1_FORNECE         = F1_FORNECE "
 				cQueryTRG += "    AND D1_LOJA            = F1_LOJA  "
 				cQueryTRG += "    AND SD1010.D_E_L_E_T_ <> '*'  "
-
 			Else
-
 				cQueryTRG := " SELECT F1_DOC,F1_SERIE,F1_FORNECE,F1_LOJA,D1_TES,F1_DTDIGIT "
 				cQueryTRG += "   FROM SF1010, SD1010    "
 				cQueryTRG += "  WHERE F1_FILIAL          = '" + xFilial("SF1")                + "'"
@@ -2965,85 +2271,57 @@ STATIC FUNCTION GeraFrete()
 				cQueryTRG += "    AND D1_FORNECE         = F1_FORNECE "
 				cQueryTRG += "    AND D1_LOJA            = F1_LOJA  "
 				cQueryTRG += "    AND SD1010.D_E_L_E_T_ <> '*'  "
-
 			EndIf
-
 			If Select("TRG") > 0
 				TRG->(DbCloseArea())
-
 			EndIf
-
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQueryTRG), "TRG", .F., .T.)
 			TRG->(DbGoTop())
-
 			If TRG->(EOF()) // nao encontrou a nota no protheus
 				TRG->(DbCloseArea())
-
 				If lErroFrete == .F.
 					lErroFrete := .T.
 				EndIf
-
 				cImpEr+= "Nota.: "+STRZERO(VAL(TRD->D1_NFORI),9)+" Fornec.: "+TRD->D1_FORNECE+" Nota de Entrada não encontrada no Protheus, favor verificar!!!" + CRLF + CRLF
 			Else
-
 				//Validacao de TES
 				If ALLTRIM(TRG->D1_TES) == ''
-
 					If lErroFrete == .F.
 						lErroFrete := .T.
 					EndIf
-
 					cImpEr+= "Nota.: "+STRZERO(VAL(TRD->D1_NFORI),9)+" Fornec.: "+TRD->D1_FORNECE+" Nota de Entrada não classificada no Protheus, favor verificar!!!" + CRLF + CRLF
-
 				EndIf
-
 				//Validacao de Data de Digitação
 				If STOD(TRG->F1_DTDIGIT) > dDataBase
-
 					If lErroFrete == .F.
 						lErroFrete := .T.
 					EndIf
-
 					cImpEr+= "Nota.: "+STRZERO(VAL(TRD->D1_NFORI),9)+" Fornec.: "+TRD->D1_FORNECE+" Nota de Entrada com Data de Digitação maior que a Database." + CRLF + "Data Digitação = " + DTOC(STOD(TRG->F1_DTDIGIT)) + " Data Base = " + DTOC(dDataBase) + " , favor verificar!!!" + CRLF + CRLF
-
 				EndIf
-
 				//valida se a nota CTE que esta sendo integrada existe o XML na central
 				//nesse momento o xml esta apenas importado/baixa do sefaz
 				//Inicio Fernando Sigoli 19/06/2018
-
 				cNumeCTE := TRC->F1_DOC
 				cFornCTE := TRC->F1_FORNECE
 				cChavCTE := TRD->F1_CHVNFE
 				nValrCTE := TRD->D1_TOTAL + TRC->F1_DESPESA
-
 				cCNPJ   := Posicione('SA2',1,xFilial('SA2')+TRC->F1_FORNECE + TRC->F1_LOJA,"A2_CGC")   // Fernanado Sigoli 05/11/2018 Chamado: 044933
-
 				//Inicio: fernando sigoli 21/09/2018 Chamado: 044053
 				If !Empty(cChavCTE)
-
 					If cNumeCTE <> SubStr(cChavCTE,26,9)
-
 						cImpEr+= "CTE.: "+alltrim(STRZERO(VAL(cNumeCTE),9))+" Fornec.: "+cFornCTE+" chave diferente do numero da Nota Fiscal Informada, favor verificar!!!" + CRLF + CRLF
 						lErroFrete := .T.
-
 					EndIF
 				EndIf
 				//Fim: fernando sigoli 21/09/2018 Chamado: 044053
-
-
 				//inicio:  Fernanado Sigoli 05/11/2018 Chamado: 044933
 				If !Empty(cChavCTE)
-
 					If cCNPJ <> SubStr(cChavCTE,07,14)
-
 						cImpEr+= "CTE.: "+alltrim(STRZERO(VAL(cNumeCTE),9))+" Fornec.: "+cFornCTE+" CNPJ diferente do numero da Nota Fiscal Informada, favor verificar!!!" + CRLF + CRLF
 						lErroFrete := .T.
 					EndIF
-
 				EndIf
 				//Fim: Fernanado Sigoli 05/11/2018 Chamado: 044933
-
 				// Chamado n. 047900 || OS 049165 || FISCAL || ALLAN || 8394 || VALIDAR EMISSAO CTE - FWNM - 14/05/2019
 				//User Function ChkChvNF(cFilNF, cDoc, cSer, cFor, cLoj, cTipo, cSistema, cChaveNFe, cUF, cAnoMes, cCNPJ)
 				If !u_ChkChvNF(TRC->F1_FILIAL, TRC->F1_DOC, TRC->F1_SERIE, TRC->F1_FORNECE, TRC->F1_LOJA, TRC->F1_TIPO, "SAG", cChavCTE, TRC->F1_EMISSAO, cCNPJ)
@@ -3052,9 +2330,7 @@ STATIC FUNCTION GeraFrete()
 					lErroFrete := .T.
 				EndIf
 				//
-
 				////TCSetConn(_conProthe)
-
 				RCTE := GetNextAlias()
 				BeginSQL Alias RCTE
 					SELECT	XML_CHAVE, XML_TOTCTE
@@ -3062,36 +2338,21 @@ STATIC FUNCTION GeraFrete()
 					WHERE	%NotDel%
 					AND		XML_CHAVE = %Exp:cChavCTE%
 				EndSQL
-
 				If !( RCTE )->( Eof() )
-
 					If ( RCTE )->XML_TOTCTE <> nValrCTE
-
 						cImpEr+= "CTE.: "+STRZERO(VAL(cNumeCTE),9)+" Fornec.: "+cFornCTE+" com valor "+cvaltochar(nValrCTE)+ " diferente do XML " +cvaltochar((RCTE)->XML_TOTCTE) +  ", favor verificar!!!" + CRLF + CRLF
 						lErroFrete := .T.
-
 					EndIf
-
 				Else
-
 					lErroFrete := .T.
 					cImpEr+= "CTE.: "+STRZERO(VAL(cNumeCTE),9)+" Fornec.: "+cFornCTE+" não encontrado na central XML. Importação nao autorizada, favor verificar!!!" + CRLF + CRLF
-
-
 				EndIf
-
 				(RCTE)->(dbCloseArea())
-
 				////TCSetConn(_conSAG)
 				//Fim: Fernando Sigoli 19/06/2018
-
-
 				TRG->(DbCloseArea())
-
 			EndIf
-
 			// *** FINAL VERIFICACAO SE A NOTA FISCAL ESTA NO PROTHEUS *** //
-
 			aRecno := {}
 			Aadd(aRecno,TRD->R_E_C_N_O_)
 			Aadd(aRecno,TRD->F1_CHVNFE)
@@ -3102,11 +2363,8 @@ STATIC FUNCTION GeraFrete()
 			Aadd(aRecno,STRZERO(VAL(TRD->D1_NFORI),9))
 			Aadd(aRecno,TRD->D1_SERIORI )
 			Aadd(aRecnos,aRecno)
-
 			// ** INICIO REGRA NOTA PRODUTOR - WILLIAM COSTA 28/06/2016  CHAMADO - 028768 ** //
-
 			////TCSetConn(_conProthe)
-
 			cQueryP := " SELECT TOP(1)  D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA "
 			cQueryP += "           FROM SD1010 "
 			cQueryP += "          WHERE D1_FILIAL   = '" + xFilial("SD1")                + "'"
@@ -3115,64 +2373,44 @@ STATIC FUNCTION GeraFrete()
 			cQueryP += "            AND D1_FORNECE  = '" + TRD->D1_FORNECE               + "'"
 			cQueryP += "            AND D1_LOJA     = '" + TRD->D1_LOJA                  + "'"
 			cQueryP += "            AND D_E_L_E_T_ <> '*' "
-
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQueryP), "TRB", .F., .T.)
-
 			//Everson - 11/01/2018. Chamado 039161.
 			cPnfOri 	 := ""
 			cPseriOri 	 := ""
 			cPforneceOri := ""
 			cPLojaOri    := ""
 			//
-
 			While TRB->(!EOF())
-
 				cPnfOri 	 := TRB->D1_DOC
 				cPseriOri 	 := TRB->D1_SERIE
 				cPforneceOri := TRB->D1_FORNECE
 				cPLojaOri    := TRB->D1_LOJA
-
 				TRB->(dbSkip())
 			ENDDO
 			TRB->(dbCloseArea())
-
 			////TCSetConn(_conSAG)
 			// ** FINAL REGRA NOTA PRODUTOR - WILLIAM COSTA 28/06/2016  CHAMADO - 028768 ** //
-
 			If	ALLTRIM(cPnfOri) 		== '' .AND. ;
 					ALLTRIM(cPseriOri) 	 	== '' .AND. ;
 					ALLTRIM(cPforneceOri)	== '' .AND. ;
 					ALLTRIM(cPLojaOri)    	== ''
-
 				aCabNFR[4][2] := TRD->D1_FORNECE
 				aCabNFR[5][2] := TRD->D1_LOJA
-
 				Aadd(aItensNFR,{{"",STRZERO(VAL(TRD->D1_NFORI),9)+ALLTRIM(cSerNfOri)+SPACE(( TamSX3("F1_SERIE")[1] - LEN(ALLTRIM(cSerNfOri)))),nil}})
-
 			Else
-
 				aCabNFR[4][2] := cPforneceOri
 				aCabNFR[5][2] := cPLojaOri
-
 				Aadd(aItensNFR,{{"",STRZERO(VAL(cPnfOri),9)+ALLTRIM(cPseriOri)+SPACE(( TamSX3("F1_SERIE")[1] - LEN(ALLTRIM(cPseriOri)))),nil}})
-
 			EndIf
-
 			TRD->(dbSkip())
 		ENDDO
 		TRD->(dbCloseArea())
-
 		If lErroFrete == .F.
-
 			lMsErroAuto 	:= .F.
-
 			Begin Transaction
-
 				////TCSetConn(_conProthe)
-
 				// Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 08/05/2019
 				If u_ExistXML(cNumeCTE, TRC->F1_SERIE, cCNPJ, TRC->F1_ESPECIE, TRC->F1_FORMUL, 0)
-
 					// Chamado n. 052097 || OS 053474 || FISCAL || SIMONE || 8463 || CTES 3182 E 3189 - fwnm - 02/10/2019
 					If u_DestOk(cNumeCTE, TRC->F1_SERIE, cCNPJ, TRC->F1_ESPECIE, TRC->F1_FORMUL, 0)
 						MsExecAuto({|x,y| MATA116(x,y)},aCabNFR,aItensNFR)
@@ -3189,15 +2427,11 @@ STATIC FUNCTION GeraFrete()
 					msgStop("[INTNFEB-04] - Lançamento não realizado! " + Chr(13) + Chr(10) + "XML do CTE n. " + cNumeCTE + "/" + TRC->F1_SERIE + " - CNPJ " + Transform(cCNPJ,"@R 99.999.999/9999-99") + " não encontrada na tabela da Central XML...")
 				EndIf
 				//
-
 			End Transaction //fecha transacao
-
 			If lMsErroAuto == .T. //não importou
-
 				If lErroFrete == .F.
 					lErroFrete := .T.
 				EndIf
-
 				aErroLog := GetAutoGrLog()
 				cErro := ""
 				If Len(aErrolog) > 0
@@ -3205,94 +2439,57 @@ STATIC FUNCTION GeraFrete()
 				Else
 					cErro := "[INTNFEB-05] - Lançamento não realizado! " + Chr(13) + Chr(10) + "XML do CTE n. " + cNumeCTE + "/" + TRC->F1_SERIE + " - CNPJ " + Transform(cCNPJ,"@R 99.999.999/9999-99") + " não encontrada na tabela da Central XML..."
 				EndIf
-
 				For k:=1 to Len(aErroLog)
-
 					If "INVALIDO" $ UPPER (aErroLog[k])
 						cErro += Alltrim(aErroLog[k]) + CRLF + CRLF
-
 					EndIf
-
 				Next
-
 				MsgStop(cErro,"Erro importação")
-
 				For ncont:=1 to Len (aRecnos)
-
 					cImpEr+= "Nota.: "+STRZERO(VAL(aRecnos[ncont][7]),9)+" Serie.: "+aRecnos[ncont][8]+" Nao importada para o Protheus, verifique as notas de entrada!!!" + CRLF + CRLF
-
 				NEXT
-
 			Else
-
 				For ncont:=1 to Len (aRecnos)
-
 					////TCSetConn(_conProthe)
 					cQryS:= "SELECT * FROM "+RetSqlName("SF1")+" WHERE D_E_L_E_T_ = ' ' AND F1_FILIAL = '"+cFilAnt+"' AND F1_DOC = '"+STRZERO(VAL(aRecnos[ncont][3]),9)+"' AND F1_SERIE = '" + cValToChar(aRecnos[ncont][4]) + "' AND F1_FORNECE = '" + rTrim(aRecnos[ncont][5]) + "' AND F1_ESPECIE = 'CTE' "
 					DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryS), 'NFSEEK', .F., .T.)
-
 					NFSEEK->(dbGotop())
 					If Eof() // nao encontrou a nota no protheus
 						NFSEEK->(DbCloseArea())
-
 						If lErroFrete == .F.
 							lErroFrete := .T.
 						EndIf
-
 						cImpEr+= "Nota.: "+STRZERO(VAL(aRecnos[ncont][3]),9)+" Fornec.: "+aRecnos[ncont][5]+" Nao importada para o Protheus, verifique as notas de entrada do frete!!!" + CRLF + CRLF
-
-
 					Else
-
-
 						NFSEEK->(DbCloseArea())
 						////TCSetConn(_conSAG)
-
 						TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S', MENSAGEM_INT='"+Space(50)+"' WHERE R_E_C_N_O_="+AllTrim(Str(aRecnos[nCont][1])))
-
 						////TCSetConn(_conProthe)
-
 						//força a gravação do estado e municiipo
 						TcSqlExec("UPDATE SF1010 SET F1_UFORITR = " + "'" + cEstOri  + "'" + " WHERE F1_FILIAL = " + "'"  + xFILIAL("SF1") + "'" + " AND F1_DOC = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND F1_SERIE   = " + "'"  + aRecnos[nCont][4] + "'" + " AND F1_FORNECE = " + "'"  + aRecnos[nCont][5] + "'" + " AND F1_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
 						TcSqlExec("UPDATE SF1010 SET F1_MUORITR = " + "'" + cMunOri  + "'" + " WHERE F1_FILIAL = " + "'"  + xFILIAL("SF1") + "'" + " AND F1_DOC = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND F1_SERIE   = " + "'"  + aRecnos[nCont][4] + "'" + " AND F1_FORNECE = " + "'"  + aRecnos[nCont][5] + "'" + " AND F1_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
 						TcSqlExec("UPDATE SF1010 SET F1_MUORITR = " + "'" + cMunOri  + "'" + " WHERE F1_FILIAL = " + "'"  + xFILIAL("SF1") + "'" + " AND F1_DOC = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND F1_SERIE   = " + "'"  + aRecnos[nCont][4] + "'" + " AND F1_FORNECE = " + "'"  + aRecnos[nCont][5] + "'" + " AND F1_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
-
 						//FORÇA A GRAVAR A NATUREZA DO TITULO APAGAR
 						//Inicio. Chamado: 055874 - Fernando Sigoli  17/02/2020
 						TcSqlExec("UPDATE SE2010 SET E2_NATUREZ = " + "'" + cNaturez + "'" + " WHERE E2_FILIAL = " + "'"  + xFILIAL("SE2") + "'" + " AND E2_NUM = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND E2_PREFIXO = " + "'"  + aRecnos[nCont][4] + "'" + " AND E2_FORNECE = " + "'"  + aRecnos[nCont][5] + "'" + " AND E2_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
 						//Fim. Chamado: 055874 - Fernando Sigoli  17/02/2020
-
-
 						TcSqlExec("UPDATE SF1010 SET F1_CHVNFE = " + "'" + aRecnos[nCont][2] + "'" + " WHERE F1_FILIAL = " + "'"  + xFILIAL("SF1") + "'" + " AND F1_DOC = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND F1_SERIE = " + "'"  + aRecnos[nCont][4] + "'" + " AND F1_FORNECE = " + "'"  + aRecnos[nCont][5] + "'" + " AND F1_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
 						TcSqlExec("UPDATE SFT010 SET FT_CHVNFE = " + "'" + aRecnos[nCont][2] + "'" + " WHERE FT_FILIAL = " + "'"  + xFILIAL("SFT") + "'" + " AND FT_NFISCAL = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND FT_SERIE = " + "'"  + aRecnos[nCont][4] + "'" + " AND FT_CLIEFOR = " + "'"  + aRecnos[nCont][5] + "'" + " AND FT_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
 						TcSqlExec("UPDATE SF3010 SET F3_CHVNFE = " + "'" + aRecnos[nCont][2] + "'" + " WHERE F3_FILIAL = " + "'"  + xFILIAL("SF3") + "'" + " AND F3_NFISCAL = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND F3_SERIE = " + "'"  + aRecnos[nCont][4] + "'" + " AND F3_CLIEFOR = " + "'"  + aRecnos[nCont][5] + "'" + " AND F3_LOJA = " + "'"  + aRecnos[nCont][6] + "'" + " AND D_E_L_E_T_ <> '*' ")
 						//TcSqlExec("UPDATE SD1010 SET D1_LOCAL = '05' " + "WHERE D1_FILIAL = " + "'"  + xFILIAL("SD1") + "'" + " AND D1_DOC = " + "'"  + STRZERO(VAL(aRecnos[ncont][3]),9) + "'" + " AND D1_SERIE = " + "'"  + aRecnos[nCont][4] + "'" + " AND D1_FORNECE = " + "'"  + aRecnos[nCont][5] + "'" + " AND D1_LOJA = " + "'"  + aRecnos[nCont][6] + "'"+ " AND D_E_L_E_T_ <> '*' ") //Everson 31/08/2017. Removido update. Chamado 036928
-
 						////TCSetConn(_conSAG)
-
 					EndIf
-
 					If lErroFrete == .F.
-
 						If EMPTY(cNotaDe)
-
 							cNotaDe := STRZERO(VAL(aRecnos[ncont][3]),9)+" Serie "+aRecnos[ncont][4]
-
 						EndIf
-
 						cNotaAte := STRZERO(VAL(aRecnos[ncont][3]),9)+" Serie "+aRecnos[ncont][4]
-
 						////TCSetConn(_conSAG)
-
 						TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' , MENSAGEM_INT='"+Space(50)+"' , F1_XDOC= '"+ STRZERO(VAL(aRecnos[ncont][3]),9) +"' , STATUS_PRC= 'P'" + "WHERE R_E_C_N_O_="+AllTrim(Str(aRecnos[nCont][1])))
-
 					EndIf
 				Next nCont
-
 			EndIF
-
 		EndIf
-
 		//-----------------------|
 		//log de registro        |
 		//-----------------------|
@@ -3306,24 +2503,15 @@ STATIC FUNCTION GeraFrete()
 		Replace ZBE_LOG	        WITH ("INTEGRACAO " + Alltrim(dDataBase) + " CTE : " + TRC->F1_DOC + " SERIE : " + TRC->F1_SERIE + " FORNECEDOR: "  + TRC->F1_FORNECE + " LOJA: " + TRC->F1_LOJA)
 		Replace ZBE_MODULO	    WITH "COMP-ICTE"
 		Replace ZBE_ROTINA	    WITH "INTNFEB"
-
 		DbSelectArea("TRC")
-
 		TRC->(dbSkip())
-
 	ENDDO
 	TRC->(dbCloseArea())
-
 	If ALLTRIM(cNotaDe) <> ''
-
 		cMensagem += "Geradas Notas Fiscais De.: "+cNotaDe+" a Ate -> "+cNotaAte + CRLF + CRLF
-
 	EndIf
-
 Return Nil
-
 Static Function SqlCabFrete()
-
 	cQueryFrete := "SELECT F1_DOC, "
 	cQueryFrete += "       F1_SERIE, "
 	cQueryFrete += "       F1_FORNECE, "
@@ -3344,25 +2532,16 @@ Static Function SqlCabFrete()
 	cQueryFrete += "   AND F1_FILIAL     = '" +cFilAnt+ "' ) "
 	cQueryFrete += "   AND TABEGENE      = 'POCAMVNE' "
 	cQueryFrete += "   AND D1_TIPO       = 'F' "
-
 	//cQueryFrete += "   AND F1_DOC        = '000065223' "
-
 	cQueryFrete += "   AND (OPERACAO_INT = 'I' "
 	cQueryFrete += "   OR OPERACAO_INT  = 'A') "
 	cQueryFrete += "   AND F1_DTDIGIT    = '" +DTOS(DDATABASE)+ "' "
 	cQueryFrete += "   AND F1_EMISSAO   <= '" +DTOS(DDATABASE)+ "' "
-
 	cQueryFrete += " GROUP BY F1_DOC,F1_SERIE,F1_FORNECE,F1_LOJA,D1_TES,D1_TOTAL,F1_FORMUL,NOMECOND,F1_COND,F1_NATUREZ,F1_EMISSAO, F1_DESPESA, OPERACAO_INT, ORIGRURAL, D1_FORNECE, D1_LOJA, F1_FILIAL, F1_ESPECIE, F1_TIPO "
-
 	cQueryFrete += " ORDER BY F1_DOC,F1_SERIE,F1_FORNECE,F1_LOJA,D1_TES,D1_TOTAL,F1_FORMUL,NOMECOND,F1_COND,F1_NATUREZ,F1_EMISSAO, F1_DESPESA, OPERACAO_INT, ORIGRURAL, D1_FORNECE, D1_LOJA, F1_FILIAL, F1_ESPECIE, F1_TIPO "
-
 	dbUseArea(.T., "TOPCONN", TCGenQry(,,cQueryFrete), "TRC", .F., .T.)
-
 Return Nil
-
-
 Static Function SqlItensFrete(cF1_DOC,cF1_SERIE,cF1_FORNECE,cF1_LOJA)
-
 	cQueryFrete := "SELECT D1_NFORI, "
 	cQueryFrete += "       D1_SERIORI, "
 	cQueryFrete += "       D1_FORNECE, "
@@ -3386,21 +2565,14 @@ Static Function SqlItensFrete(cF1_DOC,cF1_SERIE,cF1_FORNECE,cF1_LOJA)
 	cQueryFrete += "   AND F1_FORNECE    = '"+cF1_FORNECE+ "' "
 	cQueryFrete += "   AND F1_LOJA       = '"+cF1_LOJA+ "' "
 	cQueryFrete += "   AND F1_DTDIGIT    = '" +DTOS(DDATABASE)+ "' "
-
 	cQueryFrete += " ORDER BY F1_FILIAL,CODIGENE,R_E_C_N_O_ , D1_TRANSIT, F1_DESPESA "
-
 	If Select("TRD") > 0
 		TRD->(DbCloseArea())
-
 	Endif
-
 	dbUseArea(.T., "TOPCONN", TCGenQry(,,cQueryFrete), "TRD", .F., .T.)
 	TRD->(DbGoTop())
-
 Return Nil
-
 STATIC FUNCTION ExcluiFrete()
-
 	aRecno         := {}
 	aRecnos        := {}
 	aCabNFR        := {}
@@ -3421,38 +2593,27 @@ STATIC FUNCTION ExcluiFrete()
 	ncont          := 0
 	cQrChek		   := ""
 	cRemUpd		   := ""
-
 	////TCSetConn(_conSAG)
 	SqlExcCabFrete()
-
 	ProcRegua(Contar("TRE","!Eof()"))
 	TRE->(DbGoTop())
-
 	While TRE->(!EOF())
-
 		IncProc("CT-e | " + Alltrim(cValToChar(TRE->F1_DOC)) + "/" + Alltrim(cValToChar(TRE->F1_SERIE))  )
-
 		// ************ INICIO DO ACABEC WILLIAM COSTA*********** //
-
 		// *********************** INICIO ACABNFR MATA116 - WILLIAM COSTA 17/09/2015 ******************* //
 		aRecno     := {}
 		aRecnos    := {}
-
 		////TCSetConn(_conProthe)
 		cEstado  := POSICIONE("SA2",1,xFilial("SA2")+TRE->F1_FORNECE + TRE->F1_LOJA,"A2_EST")
 		cNaturez := POSICIONE("SA2",1,xFilial("SA2")+TRE->F1_FORNECE + TRE->F1_LOJA,"A2_NATUREZ")
 		////TCSetConn(_conSAG)
-
 		cQrChek := " SELECT * FROM " + RetSqlName("SF1") + " "
 		cQrChek += " WHERE F1_FILIAL = '" + cFilAnt +  "' "
 		cQrChek += " AND F1_DOC = '" + STRZERO(VAL(Alltrim(cValToChar(TRE->F1_DOC))),9) + "' "
 		cQrChek += " AND F1_SERIE = '" + Alltrim(cValToChar(TRE->F1_SERIE)) + "' AND F1_FORNECE = '" + Alltrim(cValToChar(TRE->F1_FORNECE)) + "' AND F1_LOJA = '" + Alltrim(cValToChar(TRE->F1_LOJA)) + "' AND F1_ESPECIE = 'CTE' AND D_E_L_E_T_ = '' "
-
 		If Select("CK_CTE") > 0
 			CK_CTE->(DbCloseArea())
-
 		EndIf
-
 		////TCSetConn(_conProthe)
 		TcQuery cQrChek New Alias "CK_CTE"
 		DbSelectArea("CK_CTE")
@@ -3460,17 +2621,12 @@ STATIC FUNCTION ExcluiFrete()
 		If CK_CTE->(Eof())
 			MsgStop("O CT-e " + Alltrim(cValToChar(TRE->F1_DOC)) + " não será excluído, pois não está lançado no Protheus.","Função ExcluiFrete")
 			////TCSetConn(_conSAG)
-
 			TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' , MENSAGEM_INT='"+Space(50)+"' , F1_XDOC= '"+ Alltrim(cValToChar(TRE->F1_DOC)) +"' , STATUS_PRC= 'P'" +" WHERE F1_DOC = '" + Alltrim(cValToChar(TRE->F1_DOC)) + "' AND F1_SERIE = '" + Alltrim(cValToChar(TRE->F1_SERIE)) + "' AND F1_FORNECE = '" + Alltrim(cValToChar(TRE->F1_FORNECE)) + "' AND F1_LOJA = '" + Alltrim(cValToChar(TRE->F1_LOJA))  + "' AND F1_ESPECIE = 'CTE' AND OPERACAO_INT = 'E' " )
-
 			CK_CTE->(DbCloseArea())
 			TRE->(DbSkip())
-
 			Loop
-
 		EndIf
 		CK_CTE->(DbCloseArea())
-
 		aCabNFR        := {}
 		aItensNFR      := {}
 		Aadd(aCabNFR,{"",dDataBase-90                            ,Nil}) // Data Inicial
@@ -3495,14 +2651,10 @@ STATIC FUNCTION ExcluiFrete()
 		Aadd(aCabNFR,{"F1_ESPECIE"  ,"CTE"                       ,Nil})
 		Aadd(aCabNFR,{"F1_NATUREZ"  ,TRE->F1_NATUREZ             ,Nil})
 		Aadd(aCabNFR,{"F1_TPNOTA"   ,"FRETE"                     ,Nil}) // TIPO DA NOTA NO SAG
-
 		// *********************** FINAL ACABNFR MATA116 - WILLIAM COSTA 17/09/2015 *******************/
-
 		////TCSetConn(_conSAG)
 		SqlExcItensFrete(TRE->F1_DOC,TRE->F1_SERIE,TRE->F1_FORNECE,TRE->F1_LOJA)
-
 		While TRF->(!EOF())
-
 			aRecno := {}
 			Aadd(aRecno,TRF->R_E_C_N_O_)
 			Aadd(aRecno,TRF->F1_CHVNFE)
@@ -3511,11 +2663,8 @@ STATIC FUNCTION ExcluiFrete()
 			Aadd(aRecno,TRE->F1_FORNECE)
 			Aadd(aRecno,TRE->F1_LOJA)
 			Aadd(aRecnos,aRecno)
-
 			// ** INICIO REGRA NOTA PRODUTOR - WILLIAM COSTA 28/06/2016  CHAMADO - 028768 ** //
-
 			////TCSetConn(_conProthe)
-
 			cQueryP := " SELECT TOP(1)  D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA "
 			cQueryP += "           FROM SD1010 "
 			cQueryP += "          WHERE D1_FILIAL   = '" + xFilial("SD1")                + "'"
@@ -3524,107 +2673,70 @@ STATIC FUNCTION ExcluiFrete()
 			cQueryP += "            AND D1_FORNECE  = '" + TRF->D1_FORNECE               + "'"
 			cQueryP += "            AND D1_LOJA     = '" + TRF->D1_LOJA                  + "'"
 			cQueryP += "            AND D_E_L_E_T_ <> '*' "
-
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQueryP), "TRB", .F., .T.)
-
 			While TRB->(!EOF())
-
 				cPnfOri 	 := TRB->D1_DOC
 				cPseriOri 	 := TRB->D1_SERIE
 				cPforneceOri := TRB->D1_FORNECE
 				cPLojaOri    := TRB->D1_LOJA
-
 				TRB->(dbSkip())
 			ENDDO
 			TRB->(dbCloseArea())
-
 			////TCSetConn(_conSAG)
 			// ** FINAL REGRA NOTA PRODUTOR - WILLIAM COSTA 28/06/2016  CHAMADO - 028768 ** //
-
 			If ALLTRIM(cPnfOri) 	 == '' .AND. ;
 					ALLTRIM(cPseriOri) 	 == '' .AND. ;
 					ALLTRIM(cPforneceOri) == '' .AND. ;
 					ALLTRIM(cPLojaOri)    == ''
-
 				aCabNFR[4][2] := TRF->D1_FORNECE
 				aCabNFR[5][2] := TRF->D1_LOJA
 				Aadd(aItensNFR,{{"",STRZERO(VAL(TRF->D1_NFORI),9)+ALLTRIM(TRF->D1_SERIORI)+SPACE(( TamSX3("F1_SERIE")[1] - LEN(ALLTRIM(TRF->D1_SERIORI)))),nil}})
-
 			Else
-
 				aCabNFR[4][2] := cPforneceOri
 				aCabNFR[5][2] := cPLojaOri
 				Aadd(aItensNFR,{{"",STRZERO(VAL(cPnfOri),9)+ALLTRIM(cPseriOri)+SPACE(( TamSX3("F1_SERIE")[1] - LEN(ALLTRIM(cPseriOri)))),nil}})
-
 			EndIf
-
 			TRF->(dbSkip())
-
 		ENDDO
-
 		TRF->(dbCloseArea())
-
 		Begin Transaction
-
 			////TCSetConn(_conProthe)
 			lMsErroAuto 	:= .F.
-
 			cRemUpd := " UPDATE SF1010 SET F1_CODIGEN = 0 WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_ESPECIE = 'CTE' AND F1_DOC = '" + Alltrim(cValToChar(STRZERO(VAL(TRE->F1_DOC),9))) + "' AND F1_SERIE = '" + Alltrim(cValToChar(TRE->F1_SERIE)) + "' AND F1_FORNECE = '" + Alltrim(cValToChar(TRE->F1_FORNECE)) + "' AND F1_LOJA = '" + Alltrim(cValToChar(TRE->F1_LOJA)) + "' "
-
 			If TcSqlExec(cRemUpd) < 0
-
 				MsgStop("Não foi possível excluir o CT-e " + Alltrim(cValToChar(TRE->F1_DOC)) + "/" + Alltrim(cValToChar(TRE->F1_SERIE)) + ". Fornecedor " +;
 					Alltrim(cValToChar(TRE->F1_FORNECE)) + "-" + Alltrim(cValToChar(TRE->F1_LOJA)) + Chr(10) + Chr(13) + "Não efetuou update no campo F1_CODIGEN","Função ExcluiFrete")
 				cImpEr += "CT-E.: "+ Alltrim(cValToChar(TRE->F1_DOC)) +" Serie.: "+ Alltrim(cValToChar(TRE->F1_SERIE)) + Chr(10) + Chr(13) + cErro + Chr(10) + Chr(13) + Chr(10) + Chr(13)
-
 			Else
 				MsExecAuto({|x,y| MATA116(x,y)},aCabNFR,aItensNFR)
 				SF1->(dbClearFilter())
-
 			EndIf
-
 		End Transaction //fecha transacao
-
 		If lMsErroAuto == .T. //não importou
-
 			If lErroFrete == .F.
 				lErroFrete := .T.
 			EndIf
-
 			aErroLog := GetAutoGrLog()
 			cErro := ""
 			For k := 1 to Len(aErroLog)
 				//If "INVALIDO" $ UPPER (aErroLog[k])
 				cErro += Alltrim(aErroLog[k]) + Chr(13)+Chr(10)
-
 				//EndIf
 			Next
-
 			cImpEr += "CT-E.: "+ Alltrim(cValToChar(TRE->F1_DOC)) +" Serie.: "+ Alltrim(cValToChar(TRE->F1_SERIE)) + Chr(10) + Chr(13) + cErro + Chr(10) + Chr(13) + Chr(10) + Chr(13)
-
 			MsgStop("Não foi possível excluir o CT-e " + Alltrim(cValToChar(TRE->F1_DOC)) + "/" + Alltrim(cValToChar(TRE->F1_SERIE)) + ". Fornecedor " +;
 				Alltrim(cValToChar(TRE->F1_FORNECE)) + "-" + Alltrim(cValToChar(TRE->F1_LOJA)) + Chr(10) + Chr(13) + cErro,"Função ExcluiFrete")
-
 		Else
-
 			For ncont:=1 to Len (aRecnos)
-
 				If EMPTY(cNotaDe)
-
 					cNotaDe := STRZERO(VAL(aRecnos[ncont][3]),9)+" Serie "+aRecnos[ncont][4]
-
 				EndIf
-
 				cNotaAte := STRZERO(VAL(aRecnos[ncont][3]),9)+" Serie "+aRecnos[ncont][4]
 				//				MsgAlert("Geradas Notas processo Frango De.: "+cNotaDe+" Ate -> "+cNotaAte)
 				////TCSetConn(_conSAG)
-
 				TcSqlExec("UPDATE SGNFE010 SET D1_MSEXP='" +DTOS(DDATABASE) + "' ,STATUS_INT='S' , MENSAGEM_INT='"+Space(50)+"' , F1_XDOC= '"+ STRZERO(VAL(aRecnos[ncont][3]),9) +"' , STATUS_PRC= 'P'" +" WHERE R_E_C_N_O_="+AllTrim(Str(aRecnos[nCont][1])))
-
 			Next nCont
-
 		EndIF
-
 		//-----------------------|
 		//log de registro        |
 		//-----------------------|
@@ -3638,23 +2750,14 @@ STATIC FUNCTION ExcluiFrete()
 		Replace ZBE_LOG	        WITH ("INTEGRACAO " + Alltrim(dDataBase) + " CTE : " + TRE->F1_DOC + " SERIE : " + TRE->F1_SERIE + " FORNECEDOR: "  + TRE->F1_FORNECE + " LOJA: " + TRE->F1_LOJA)
 		Replace ZBE_MODULO	    WITH "COMP-ECTE"
 		Replace ZBE_ROTINA	    WITH "INTNFEB"
-
 		TRE->(dbSkip())
-
 	ENDDO
-
 	TRE->(dbCloseArea())
-
 	If lErroFrete == .F.
-
 		cMensagem += "Excluidas Notas Fiscais De.: "+cNotaDe+" a Ate -> "+cNotaAte + CRLF + CRLF
-
 	EndIf
-
 Return Nil
-
 Static Function SqlExcCabFrete()
-
 	cQueryFrete := "SELECT F1_DOC, "
 	cQueryFrete += "       F1_SERIE, "
 	cQueryFrete += "       F1_FORNECE, "
@@ -3673,43 +2776,25 @@ Static Function SqlExcCabFrete()
 	cQueryFrete += "   AND F1_FILIAL     = '" +cFilAnt+ "' ) "
 	cQueryFrete += "   AND TABEGENE      = 'POCAMVNE' "
 	cQueryFrete += "   AND D1_TIPO       = 'F' "
-
 	If lAltFrete == .T.
-
 		cQueryFrete += "   AND (OPERACAO_INT = 'E' "
 		cQueryFrete += "    OR OPERACAO_INT  = 'A') "
-
 	Else
-
 		cQueryFrete += "   AND OPERACAO_INT = 'E' "
-
-
 	EndIf
-
 	cQueryFrete += "   AND F1_EMISSAO   <= '" +DTOS(DDATABASE)+ "' "
 	cQueryFrete += "   AND F1_DTDIGIT   = '" +DTOS(DDATABASE)+ "' "
-
 	If lAltFrete == .T.
-
 		cQueryFrete += "   AND F1_DOC        = '"+TRC->F1_DOC+ "' "
 		cQueryFrete += "   AND F1_SERIE      = '"+TRC->F1_SERIE+ "' "
 		cQueryFrete += "   AND F1_FORNECE    = '"+TRC->F1_FORNECE+ "' "
 		cQueryFrete += "   AND F1_LOJA       = '"+TRC->F1_LOJA+ "' "
-
-
 	EndIf
-
-
 	cQueryFrete += " GROUP BY F1_DOC,F1_SERIE,F1_FORNECE,F1_LOJA,D1_TES,D1_TOTAL,F1_FORMUL,NOMECOND,F1_COND,F1_NATUREZ,F1_EMISSAO, ORIGRURAL "
-
 	cQueryFrete += " ORDER BY F1_DOC,F1_SERIE,F1_FORNECE,F1_LOJA,D1_TES,D1_TOTAL,F1_FORMUL,NOMECOND,F1_COND,F1_NATUREZ,F1_EMISSAO, ORIGRURAL "
-
 	dbUseArea(.T., "TOPCONN", TCGenQry(,,cQueryFrete), "TRE", .F., .T.)
-
 Return Nil
-
 Static Function SqlExcItensFrete(cF1_DOC,cF1_SERIE,cF1_FORNECE,cF1_LOJA)
-
 	cQueryFrete := "SELECT D1_NFORI, "
 	cQueryFrete += "       D1_SERIORI, "
 	cQueryFrete += "       D1_FORNECE, "
@@ -3725,28 +2810,18 @@ Static Function SqlExcItensFrete(cF1_DOC,cF1_SERIE,cF1_FORNECE,cF1_LOJA)
 	cQueryFrete += "   AND F1_EMISSAO   <= '"+DTOS(DDATABASE)+ "' "
 	cQueryFrete += "   AND F1_DTDIGIT   = '" +DTOS(DDATABASE)+ "' "
 	cQueryFrete += "   AND D1_TIPO       = 'F' "
-
 	If lAltFrete == .T.
-
 		cQueryFrete += "   AND (OPERACAO_INT = 'E' "
 		cQueryFrete += "    OR OPERACAO_INT  = 'A') "
-
 	Else
-
 		cQueryFrete += "   AND OPERACAO_INT = 'E' "
-
-
 	EndIf
-
 	cQueryFrete += "   AND F1_DOC        = '"+cF1_DOC+ "' "
 	cQueryFrete += "   AND F1_SERIE      = '"+cF1_SERIE+ "' "
 	cQueryFrete += "   AND F1_FORNECE    = '"+cF1_FORNECE+ "' "
 	cQueryFrete += "   AND F1_LOJA       = '"+cF1_LOJA+ "' "
-
 	cQueryFrete += " ORDER BY F1_FILIAL,CODIGENE,R_E_C_N_O_ , D1_TRANSIT "
-
 	dbUseArea(.T., "TOPCONN", TCGenQry(,,cQueryFrete), "TRF", .F., .T.)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -3763,7 +2838,6 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function procDtCTE()
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -3771,41 +2845,28 @@ Static Function procDtCTE()
 	Local cQuery	:= ""
 	Local aCTEInteg	:= {}
 	Local cSeriOri	:= ""
-
 	//Altera conexão para o banco integração.
 	////TCSetConn(_conSAG)
-
 	cQuery := " SELECT * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '" + cFilAnt + "' AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND TABEGENE LIKE 'POCAMVNE' ORDER BY F1_FILIAL,CODIGENE,R_E_C_N_O_ , D1_TRANSIT "
-
 	//
 	If Select("DT_CTE") > 0
 		DT_CTE->(DbCloseArea())
-
 	EndIf
-
 	MsAguarde({|| DbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), "DT_CTE", .T., .F.) },"Aguarde","Consultando banco integração...")
 	DbSelectArea("DT_CTE")
 	DT_CTE->(DbGoTop())
 	If DT_CTE->(Eof())
-
 		//Altera conexão para o banco Protheus.
 		////TCSetConn(_conProthe)
 		RestArea(aArea)
 		Return Nil
-
 	EndIf
-
 	//
 	While ! DT_CTE->(Eof())
-
 		cSeriOri := Alltrim(cValToChar(DT_CTE->D1_SERIORI))
-
 		If Alltrim(cValToChar(DT_CTE->D1_FORNECE)) $cInsSer
-
 			cSeriOri := Padl(cSeriOri,2,"0")
-
 		EndIf
-
 		Aadd(aCTEInteg,{;
 			DT_CTE->F1_FILIAL,;
 			DT_CTE->F1_DOC,;
@@ -3819,24 +2880,17 @@ Static Function procDtCTE()
 			DT_CTE->F1_DTDIGIT,;
 			DT_CTE->ORIGRURAL;
 			})
-
 		DT_CTE->(DbSkip())
-
 	EndDo
-
 	//
 	If Len(aCTEInteg) > 0
 		Processa({|| ajtDtCTE(aCTEInteg) },"Aguarde","Ajustando datas de lançamentos de CT-e's...")
-
 	Else
 		MsgStop("Ocorreu um erro ao obter os CT-e's para ajuste da data de lançamento.","Função procDtCTE")
-
 	EndIf
-
 	//Altera conexão para o banco Protheus.
 	////TCSetConn(_conProthe)
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -3853,29 +2907,21 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function ajtDtCTE(aCTEInteg)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea		:= GetArea()
 	Local i 		:= 1
 	Local cQuery	:= ""
-
 	Local cCTENNFOr	  := "CT-e's sem notas de origem localizadas no Protheus " + Chr(13) + Chr(10) + Chr(13) + Chr(10)
 	Private cCTEAjust := ""
-
 	//
 	ProcRegua(Len(aCTEInteg))
-
 	For i := 1 To Len(aCTEInteg)
-
 		//Altera conexão para o banco Protheus.
 		////TCSetConn(_conProthe)
-
 		IncProc("CT-e | " + Alltrim(cValToChar(aCTEInteg[i][2])) + "/" + Alltrim(cValToChar(aCTEInteg[i][3])) )
-
 		If Alltrim(cValToChar(aCTEInteg[i][11])) == "S"
-
 			cQuery := " SELECT TOP 1 F1_DTDIGIT "
 			cQuery += "   FROM SF1010, SD1010    "
 			cQuery += "  WHERE F1_FILIAL          = '" + xFilial("SF1")                + "'"
@@ -3890,9 +2936,7 @@ Static Function ajtDtCTE(aCTEInteg)
 			cQuery += "    AND D1_FORNECE         = F1_FORNECE "
 			cQuery += "    AND D1_LOJA            = F1_LOJA  "
 			cQuery += "    AND SD1010.D_E_L_E_T_ <> '*'  "
-
 		Else
-
 			cQuery := " SELECT "
 			cQuery += " F1_DTDIGIT "
 			cQuery += " FROM " + RetSqlName("SF1") + " AS SF1 "
@@ -3904,48 +2948,33 @@ Static Function ajtDtCTE(aCTEInteg)
 			cQuery += " AND F1_DOC = '"     + Alltrim(cValToChar(aCTEInteg[i][8])) + "' "
 			cQuery += " AND F1_SERIE = '"   + Alltrim(cValToChar(aCTEInteg[i][9])) + "' "
 			cQuery += " AND F1_ESPECIE = 'SPED'"
-
 		EndIf
-
 		//
 		If Select("CON_SF1") > 0
 			CON_SF1->(DbCloseArea())
-
 		EndIf
-
 		//
 		TcQuery cQuery New Alias "CON_SF1"
 		DbSelectArea("CON_SF1")
 		CON_SF1->(DbGoTop())
-
 		If ! CON_SF1->(Eof())
-
 			If ! Empty(Alltrim(cValToChar(CON_SF1->F1_DTDIGIT))) .And. (Alltrim(cValToChar(CON_SF1->F1_DTDIGIT)) <> Alltrim(cValToChar(aCTEInteg[i][10]))) .And. (Alltrim(cValToChar(CON_SF1->F1_DTDIGIT)) >= Alltrim(cValToChar(aCTEInteg[i][10])))
-
 				cCte	:= Alltrim(cValToChar(aCTEInteg[i][2]))
 				cSerie	:= Alltrim(cValToChar(aCTEInteg[i][3]))
 				cForne	:= Alltrim(cValToChar(aCTEInteg[i][4]))
 				cLoja	:= Alltrim(cValToChar(aCTEInteg[i][5]))
 				cDtAnt	:= Alltrim(cValToChar(aCTEInteg[i][10]))
 				cDtPos	:= Alltrim(cValToChar(CON_SF1->F1_DTDIGIT))
-
 				updDtCTE(cCte,cSerie,cForne,cLoja,cDtAnt,cDtPos)
-
 			EndIf
-
 		Else
 			cCTENNFOr += "CT-e " + Alltrim(cValToChar(aCTEInteg[i][2]))  + "/" + Alltrim(cValToChar(aCTEInteg[i][3])) + Chr(13) + Chr(10)
-
 		EndIf
-
 		CON_SF1->(DbCloseArea())
-
 	Next i
-
 	//Altera conexão para o banco Protheus.
 	////TCSetConn(_conProthe)
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -3962,14 +2991,12 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function updDtCTE(cCte,cSerie,cForne,cLoja,cDtAnt,cDtPos)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea		:= GetArea()
 	Local Pula		:= Chr(13) + Chr(10)
 	Local cUpdate	:= ""
-
 	//
 	cCte	:= Alltrim(cValToChar(cCte))
 	cSerie	:= Alltrim(cValToChar(cSerie))
@@ -3977,24 +3004,17 @@ Static Function updDtCTE(cCte,cSerie,cForne,cLoja,cDtAnt,cDtPos)
 	cLoja	:= Alltrim(cValToChar(cLoja))
 	cDtAnt	:= Alltrim(cValToChar(cDtAnt))
 	cDtPos	:= Alltrim(cValToChar(cDtPos))
-
 	//Altera conexão para o banco integração.
 	////TCSetConn(_conSAG)
-
 	cUpdate := " UPDATE SGNFE010 SET F1_DTDIGIT = '" + cDtPos + "' WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_ESPECIE = 'CTE' AND F1_DOC = '" + cCte + "' AND F1_SERIE = '" + cSerie + "' AND F1_FORNECE = '" + cForne + "' AND F1_LOJA = '" + cLoja + "' AND F1_DTDIGIT = '" + cDtAnt + "' "
-
 	//
 	If TcSqlExec(cUpdate) < 0
 		MsgStop("Não foi possível atualizar a data do CT-e " + cCte + "/" + cSerie + " - For: " + cForne + "/" + cLoja + ".","Função updDtCTE")
-
 	Else
 		cCTEAjust += "CT-e " + cCte + "/" + cSerie + " - For: " + cForne + "/" + cLoja + " - DtAnt: " + DToC(SToD(cDtAnt)) + " DTPos: " + DToC(SToD(cDtPos)) + Pula
-
 	EndIf
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4010,10 +3030,8 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function lngPedImp()
-
 	Local cTitulo := "Status pedido"
 	Local aLegenda:= {}
-
 	Aadd(aLegenda, {"BR_VERDE"    		,"Entrada por compra"					})
 	Aadd(aLegenda, {"BR_VERMELHO" 		,"Entrada por devolução"				})
 	Aadd(aLegenda, {"BR_AMARELO"  		,"Entrada por transferência filial" 	})
@@ -4026,9 +3044,7 @@ Static Function lngPedImp()
 	Aadd(aLegenda, {"BR_VIOLETA"  		,"Produtor rural" 						})
 	Aadd(aLegenda, {"BR_CINZA"    		,"Nota de frete" 						})
 	Aadd(aLegenda, {"BR_VERDE_ESCURO"  	,"Exclusão nota de frete" 				})
-
 	BrwLegenda("Legenda do Browse",cTitulo,aLegenda)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4044,9 +3060,7 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 Static Function LFVClass()
-
 	Local aArea			:= GetArea()
 	Local oInterface
 	Local oSBtn01
@@ -4063,15 +3077,10 @@ Static Function LFVClass()
 	Local oBusca
 	Local oBtnBusca
 	Local oCSV
-
 	Private cMails  := GetMV("MV_#LFVMA2",,"danielle.meira@adoro.com.br") // -------- VOLTAR ESTA LINHA ANTES DE PUBLICAR EM PRD
 	Private cDescri := "CLASSIFICAÇÃO NFE - COMPLEMENTO FRANGO VIVO"
-
-
 	aFiltro := {}
 	Aadd(aFiltro,"1=Complemento Frango Vivo")
-
-
 //Cria objeto MsDialog.
 	oInterface:= MsDialog():Create()
 	oInterface:cName     := "oInterface"
@@ -4082,10 +3091,8 @@ Static Function LFVClass()
 	oInterface:nHeight   := 460
 	oInterface:lShowHint := .F.
 	oInterface:lCentered := .T.
-
 //
 	oDtBase := TSay():New(005,004,{|| "Data base: " + cDtBase },oInterface,,oFontDtBs,,,,.T.,CLR_RED,CLR_WHITE,200,20)
-
 //Cria Header.
 	Aadd(aHInterface,{" ","LEG"    	  ,"@BMP"    ,01     			     , 00,.T.,"","","","R","","",.F.,"V","","","",""})
 	Aadd(aHInterface,{"Filial"        ,"FILIAL"	 ,""	 				 , 02,0,"","" ,"C","",""})
@@ -4103,29 +3110,22 @@ Static Function LFVClass()
 	Aadd(aHInterface,{"Valor"         ,"VLR"     ,"@E 999,999,999.99"	 , 15,2,"","" ,"N","",""})
 	Aadd(aHInterface,{"ChaveNF"       ,"CHAVENF" ,""	 			  	 , 50,0,"","" ,"C","",""})
 	Aadd(aHInterface,{"Tes"       	  ,"TES"     ,""	 				 , 05,0,"","" ,"C","",""})
-
 //Cria objeto MsNewGetDados(Grid).
 	oRegistros := MsNewGetDados():New(025,004,165,545,,"Allwaystrue()","Allwaystrue()","",aAltInterface,Nil,999,Nil,Nil,Nil,oInterface,aHInterface,@aColsInterface)
-
 //
 	oCSV := TButton():New(170,009,"CSV",oInterface,,40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
 	oCSV:bAction := {||MsAguarde({||;
 		grLRCCSV(oRegistros,aHInterface,"ntentrada_" + cUserName + "_" + DToS(Date()) + "_" + StrTran(cValToChar(Time()),":","") + ".CSV");
 		},"Aguarde","Exportando CSV...") }
-
 //
 	oGroupTot := TGroup():Create(oInterface,162,433,185,545,"",,,.T.)
 	oGroupTot:SetCss("QGroupBox{background-color: #F5F5F5}")
-
 //
 	oQtdReg := TGet():New(170,438, { | u | If( PCount() == 0, nQtdReg, nQtdReg := u ) },oInterface, ;
 		060, 010, "@E 999,999,999",, 0, 16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nQtdReg",,,,.F.,,,"Total de registros:",2,,CLR_RED)
-
 //
 	oGroup1 := TGroup():Create(oInterface,190,004,210,545,"",,,.T.)
 	oGroup1:SetCss("QGroupBox{background-color: #F5F5F5}")
-
-
 // Classificacao
 	oSBtn01:= SButton():Create(oInterface)
 	oSBtn01:cName := "oSBtn01"
@@ -4139,8 +3139,6 @@ Static Function LFVClass()
 	oSBtn01:Align := 0
 //oSBtn01:bAction := {|| u_ExecAu103() }
 	oSBtn01:bAction := {|| RunLFVClass() }
-
-
 //Cria para recarregar dados.
 	oSBtn02:= SButton():Create(oInterface)
 	oSBtn02:cName := "oSBtn02"
@@ -4154,8 +3152,6 @@ Static Function LFVClass()
 	oSBtn02:Align := 0
 	oSBtn02:lVisibleControl := .T.
 	oSBtn02:bAction := {|| LFVPreNotas() }
-
-
 //Cria botão de confirmação.
 	oSBtn03:= SButton():Create(oInterface)
 	oSBtn03:cName := "oSBtn03"
@@ -4168,7 +3164,6 @@ Static Function LFVClass()
 	oSBtn03:lReadOnly := .F.
 	oSBtn03:Align := 0
 	oSBtn03:bAction := {||LFVLegenda()}
-
 //Cria botão de cancelamento.
 	oSBtn04:= SButton():Create(oInterface)
 	oSBtn04:cName := "oSBtn04"
@@ -4183,13 +3178,10 @@ Static Function LFVClass()
 	oSBtn04:lVisibleControl := .T.
 	oSBtn04:bAction := {||oInterface:End()}
 	oSBtn04:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")
-
 //
 	oInterface:Activate(,,,.T.,{||.T.},,{|| LFVPreNotas() })
-
 //
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4206,7 +3198,6 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function LFVPreNotas(lClass)
-
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Declaracao de Variaveis                                             ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -4214,20 +3205,16 @@ Static Function LFVPreNotas(lClass)
 	Local cQuery	:= ""
 	Local aCTEInteg	:= {}
 	Local cSeriOri	:= ""
-
 	Local i			:= 1
 	Local cQuery	:= ""
 	Local oVerde 	:= LoadBitmap( GetResources(), "BR_VERDE")
 	Local oVermelho := LoadBitmap( GetResources(), "BR_VERMELHO")
 	Local cOper		:= ""
-
 	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
 	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
 	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
-
-
 // Dados da Pre-Nota
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cFornCod  := GetMV("MV_#LFVFOR",,"000217")
@@ -4238,17 +3225,12 @@ Static Function LFVPreNotas(lClass)
 	Local cLocal    := GetMV("MV_#LFVALM",,"16")
 	Local cEspLFV   := GetMV("MV_#LFVESP",,"SPED")
 	Local cProduto  := GetMV("MV_#LFVPRD",,"300042")  //  publicar este em producao
-
 	Default lClass := .f.
-
 	nOpcImp := Val(Alltrim(cValToChar(nOpcImp)))
-
 	oRegistros:aCols := {}
 	oRegistros:Refresh()
 	nQtdReg := 0
 	oQtdReg:Refresh()
-
-
 	cQuery := " SELECT D1_FILIAL, D1_TIPO, F1_ESPECIE, D1_DOC, D1_SERIE, D1_EMISSAO, D1_DTDIGIT, D1_FORNECE, D1_LOJA, D1_COD, D1_QUANT, D1_VUNIT, D1_TOTAL, D1_TES, F1_CHVNFE "
 	cQuery += " FROM " + RetSqlName("SD1") + " SD1, " + RetSqlName("SF1") + " SF1 "
 	cQuery += " WHERE F1_FILIAL=D1_FILIAL "
@@ -4269,62 +3251,43 @@ Static Function LFVPreNotas(lClass)
 	EndIf
 	cQuery += " AND SD1.D_E_L_E_T_='' "
 	cQuery += " AND SF1.D_E_L_E_T_='' "
-
 	cQuery += " ORDER BY D1_DOC, D1_SERIE DESC "
-
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
-
 	tcQuery cQuery New Alias "Work"
-
 	aTamSX3 := TamSX3("D1_DTDIGIT")
 	tcSetField("Work", "D1_DTDIGIT", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 	aTamSX3 := TamSX3("D1_EMISSAO")
 	tcSetField("Work", "D1_EMISSAO", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 	aTamSX3 := TamSX3("D1_QUANT")
 	tcSetField("Work", "D1_QUANT", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 	aTamSX3 := TamSX3("D1_VUNIT")
 	tcSetField("Work", "D1_VUNIT", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 	aTamSX3 := TamSX3("D1_TOTAL")
 	tcSetField("Work", "D1_TOTAL", aTamSX3[3], aTamSX3[1], aTamSX3[2])
-
 //////
 	If Work->( EOF() )
-
 		Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 		oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FILIAL"    })] 	:= ""
-
 	EndIf
-
 	//
 	Do While !Work->( EOF() )
-
 		cC5_XLFVCMP := ""
 		cChvNFe     := ""
-
 		SD2->( dbSetOrder(3) ) // D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM
 		If SD2->( dbSeek(cFilPV + Work->D1_DOC + PadR(Work->D1_SERIE,TamSX3("D2_SERIE")[1]) + cCliCod + cCliLoj) )
-
 			SC5->( dbSetOrder(1) ) // C5_FILIAL+C5_NUM
 			If SC5->( dbSeek(cFilPV+SD2->D2_PEDIDO) )
 				cC5_XLFVCMP := SC5->C5_XLFVCMP
 			EndIf
-
 		EndIf
-
 		// Pedido de Complemento de Frango Vivo
 		If AllTrim(cC5_XLFVCMP) == "S"
-
 			SF2->( dbSetOrder(1) ) // F2_FILIAL+F2_DOC+F2_SERIE+F2_CLIENTE+F2_LOJA+F2_FORMUL+F2_TIPO
 			If SF2->( dbSeek(cFilPV + Work->D1_DOC + PadR(Work->D1_SERIE,TamSX3("F2_SERIE")[1]) + cCliCod + cCliLoj) )
 				cChvNFe := SF2->F2_CHVNFE
-
 				If !Empty(cChvNFe)
 					Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 					oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
@@ -4343,44 +3306,28 @@ Static Function LFVPreNotas(lClass)
 					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLR"     })] 	:= Val(cValToChar(Work->D1_TOTAL))
 					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "CHAVENF" })] 	:= Alltrim(cValToChar(Work->F1_CHVNFE))
 					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TES"     })] 	:= Alltrim(cValToChar(Work->D1_TES))
-
-
 					If !Empty(Work->D1_TES)
 						oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVerde
 					Else
 						oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVermelho
 					EndIf
-
 					nQtdReg++
-
 				EndIf
 			EndIf
-
 		EndIf
-
 		Work->(DbSkip())
-
 	EndDo
-
 	Work->(DbCloseArea())
-
 	//
 	oRegistros:Refresh()
 	oQtdReg:Refresh()
-
 	//
 	RestArea(aArea)
-
-
 //////
-
-
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
-
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4396,17 +3343,12 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 Static Function LFVLegenda()
-
 	Local cTitulo := "Legenda - Complemento Frango Vivo"
 	Local aLegenda:= {}
-
 	Aadd(aLegenda, {"BR_VERDE"    		,"Classificada"			})
 	Aadd(aLegenda, {"BR_VERMELHO" 		,"Pré-Nota"     		})
-
 	BrwLegenda("Legenda do Browse",cTitulo,aLegenda)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4423,18 +3365,14 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function RunLFVClass()
-
 	Local i
 	Local aAreaAtu := GetArea()
-
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
-
 	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
 	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
 	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
 	Local cChvNfe := ""
-
 	Local aCabec := {}
 	Local aItens := {}
 	Local aLinha := {}
@@ -4444,39 +3382,26 @@ Static Function RunLFVClass()
 	Local nY := 0
 	Local cDoc := ""
 	Local lOk := .T.
-
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
-
 	For i:=1 to Len(oRegistros:aCols)
-
 		If Empty(oRegistros:aCols[i][16])
-
 			// Busco dados da NF de SAIDA
 			//		cChvNFe := Posicione("SF2", 1, cFilPV + oRegistros:aCols[i][5] + PadR(oRegistros:aCols[i][6],TamSX3("F2_SERIE")[1]) + cCliCod + cCliLoj, "F2_CHVNFE")
-
 			SF2->( dbSetOrder(1) ) //F2_FILIAL+F2_DOC+F2_SERIE+F2_CLIENTE+F2_LOJA+F2_FORMUL+F2_TIPO
 			If SF2->( dbSeek(cFilPV + oRegistros:aCols[i][5] + PadR(oRegistros:aCols[i][6],TamSX3("F2_SERIE")[1]) + cCliCod + cCliLoj) )
 				cChvNFe  := SF2->F2_CHVNFE
 				dDtClass := SF2->F2_EMISSAO
-
 			Else
 				cChvNFe  := ""
 				dDtClass := CtoD("  /  /  ")
-
 			EndIf
-
-
 			If !Empty(cChvNfe) .and. !Empty(dDtClass)
-
 				// Posiciono na NF a classificar
 				SF1->( dbSetOrder(1) )  // F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
 				SF1->( dbSeek(oRegistros:aCols[i][2] + oRegistros:aCols[i][5] + PadR(oRegistros:aCols[i][6],TamSX3("D1_SERIE")[1]) + oRegistros:aCols[i][9] + oRegistros:aCols[i][10] + "N") )
-
 				SD1->( dbSetOrder(1) )  // D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
 				SD1->( dbSeek(oRegistros:aCols[i][2] + oRegistros:aCols[i][5] + PadR(oRegistros:aCols[i][6],TamSX3("D1_SERIE")[1]) + oRegistros:aCols[i][9] + oRegistros:aCols[i][10] + oRegistros:aCols[i][11]) )
-
-
 				//ExpA1 - Array contendo os dados do cabeçalho da Nota Fiscal de Entrada.
 				Aadd(aCabec,{"F1_TIPO" , SF1->F1_TIPO , Nil})
 				Aadd(aCabec,{"F1_FORMUL" , SF1->F1_FORMUL , Nil})
@@ -4491,7 +3416,6 @@ Static Function RunLFVClass()
 				Aadd(aCabec,{"F1_TXMOEDA" , 1 , Nil})
 				Aadd(aCabec,{"F1_STATUS" , "A" , Nil})
 				Aadd(aCabec,{"F1_DTDIGIT" , dDtClass , Nil}) // Chamado 043071 (Classificar na data da NF de Saída) - FWNM - 21/08/2018
-
 				//ExpA2- Array contendo os itens da Nota Fiscal de Entrada.
 				aLinha := {}
 				Aadd(aLinha,{"D1_DTDIGIT" , dDtClass   , Nil}) // Chamado 043071 (Classificar na data da NF de Saída) - FWNM - 21/08/2018
@@ -4501,38 +3425,26 @@ Static Function RunLFVClass()
 				Aadd(aLinha,{"D1_CONTA"   ,SD1->D1_CONTA  ,NIL})
 				Aadd(aLinha,{"D1_ITEMCTA" ,SD1->D1_ITEMCTA,NIL})
 				Aadd(aLinha,{"AUTDELETA" , "N" , Nil}) // Incluir sempre no último elemento do array de cada item
-
 				Aadd(aItens,aLinha)
-
 				//ExpA6 - Array contendo os dados do rateio por centro de custo
-
 				//ExpA7 - Array contendo a informação se gera DIRF e os códigos de retenção por imposto
 				Aadd( aCodRet, {01, "0297", 1, "..."} )
 				Aadd( aCodRet, {02, "0297", 1, "IRR"} )
 				Aadd( aCodRet, {03, "5979", 1, "PIS"} )
 				Aadd( aCodRet, {04, "5960", 1, "COF"} )
 				Aadd( aCodRet, {05, "5987", 1, "CSL"} )
-
-
-
 				Begin Transaction
-
 					// Bkp filial setada
 					cFilBkp := cFilAnt
-
 					// Mudo filial para codigo onde NF de entrada se encontra
 					cFilAnt  := cFilPre
-
 					// Classificação
 					dBkpDtBs := dDataBase // Chamado 043071 (Classificar na data da NF de Saída) - FWNM - 21/08/2018
 					dDataBase := dDtClass // Chamado 043071 (Classificar na data da NF de Saída) - FWNM - 21/08/2018
 					MsAguarde({|| MATA103(aCabec,aItens,4,,,,,aColsCC,,,aCodRet) },"Aguarde","Classificando NF n. " + SD1->D1_DOC + "/" + SD1->D1_SERIE)
 					//	MsAguarde({|| msExecAuto({|x,y,z| MATA103(x,y,z)}, _aCabec, _aItens, 4) },"Aguarde","Classificando NF n. " + SD1->D1_DOC + "/" + SD1->D1_SERIE)
 					dDataBase := dBkpDtBs // Chamado 043071 (Classificar na data da NF de Saída) - FWNM - 21/08/2018
-
-
 					If lMsErroAuto
-
 					/*
 					Aviso("INTNFEB-01", "Será necessário CLASSIFICAR manualmente a Pré-Nota de Complemento de Frango Vivo..." + chr(10) + chr(13) +;
 					"Verifique os CADASTROS... " + chr(10) + chr(13) + chr(10) + chr(13) +;
@@ -4543,15 +3455,10 @@ Static Function RunLFVClass()
 					"Fornecedor: " + SD1->D1_FORNECE + "/" + SD1->D1_LOJA + chr(10) + chr(13) +;
 					"Fantasia: " + Posicione("SA2",1,xFilial("SA2")+SD1->D1_FORNECE+SD1->D1_LOJA,"A2_NREDUZ"), {"&Ok"}, 3, "Pré-Nota de Entrada NÃO foi CLASSIFICADA! Cadastros inconsistentes!")
 					*/
-
 						msgInfo("Pré-Nota n. " + SD1->D1_DOC + "/" + SD1->D1_SERIE + " NÃO FOI CLASSIFICADA!")
-
 						ConOut("ERRO NA INCLUSAO! " + SD1->D1_DOC + "/" + SD1->D1_SERIE)
-
 						MostraErro()
-
 					Else
-
 					/*
 					Aviso("INTNFEB-02", "Pré-Nota de Complemento de Frango Vivo CLASSIFICADA" + chr(10) + chr(13) + chr(10) + chr(13) +;
 					"Abaixo, dados da Pré-Nota classificada: " + chr(10) + chr(13) +;
@@ -4562,32 +3469,20 @@ Static Function RunLFVClass()
 					"Fornecedor: " + SD1->D1_FORNECE + "/" + SD1->D1_LOJA + chr(10) + chr(13) +;
 					"Fantasia: " + Posicione("SA2",1,xFilial("SA2")+SD1->D1_FORNECE+SD1->D1_LOJA,"A2_NREDUZ"), {"&Ok"}, 3, "Pré-Nota Complemento Frango Vivo CLASSIFICADA com Sucesso!")
 					*/
-
 						ConOut("Incluido com sucesso! " + SD1->D1_DOC + "/" + SD1->D1_SERIE)
-
 						msgInfo("Pré-Nota n. " + SD1->D1_DOC + "/" + SD1->D1_SERIE + " classificada com sucesso!")
-
 						// Enviar email
 						EmailFVL()
-
 					EndIf
-
 					// Restauro filial corrente
 					cFilAnt := cFilBkp
-
 				End Transaction
-
 			EndIf
-
 		EndIf
-
 	Next i
-
 	RestArea(aAreaAtu)
-
 	LFVPreNotas()
 //	LFVPreNotas(.t.)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4604,13 +3499,9 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function EmailFVL()
-
 	LogZBN("1")
-
 	ProcRel()
-
 	LogZBN("2")
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4626,49 +3517,36 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function logZBN(cStatus)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea	:= GetArea()
 	Local cNomeRotina := "INTNFEB"
-
 	DbSelectArea("ZBN")
 	ZBN->(DbSetOrder(1))
 	ZBN->(DbGoTop())
 	If ZBN->(DbSeek(xFilial("ZBN") + cNomeRotina))
-
 		RecLock("ZBN",.F.)
-
 		ZBN_FILIAL  := xFilial("ZBN")
 		ZBN_DATA    := Date()
 		ZBN_HORA    := cValToChar(Time())
 		ZBN_ROTINA	:= cNomeRotina
 		ZBN_DESCRI  := cDescri
 		ZBN_STATUS	:= cStatus
-
 		MsUnlock()
-
 	Else
-
 		RecLock("ZBN",.T.)
-
 		ZBN_FILIAL  := xFilial("ZBN")
 		ZBN_DATA    := Date()
 		ZBN_HORA    := cValToChar(Time())
 		ZBN_ROTINA	:= cNomeRotina
 		ZBN_DESCRI  := cDescri
 		ZBN_STATUS	:= cStatus
-
 		MsUnlock()
-
 	EndIf
-
 	ZBN->(dbCloseArea())
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4684,7 +3562,6 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function procRel()
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -4692,15 +3569,12 @@ Static Function procRel()
 	Local cAssunto	:= cDescri
 	Local cMensagem	:= ""
 	Local cQuery	:= ""
-
 	//
 	cQuery := _ScriptSQL()
-
 	//
 	If Select("DADOS") > 0
 		DADOS->(DbCloseArea())
 	EndIf
-
 	//
 	cMensagem += '<html>'
 	cMensagem += '<body>'
@@ -4725,13 +3599,10 @@ Static Function procRel()
 	cMensagem += '<td>Almoxarifado</td>'
 	cMensagem += '<td>Data Digitação</td>'
 	cMensagem += '</tr>'
-
 	TcQuery cQuery New Alias "DADOS"
 	DbSelectArea("DADOS")
 	DADOS->(DbGoTop())
-
 	While ! DADOS->(Eof())
-
 		cMensagem += '<tr>'
 		cMensagem += '<td>' + cValToChar(DADOS->F1_FILIAL)    + '</td>'
 		cMensagem += '<td>' + cValToChar(DADOS->F1_DOC)       + '</td>'
@@ -4749,26 +3620,17 @@ Static Function procRel()
 		cMensagem += '<td>' + cValToChar(DADOS->D1_TES)   + '</td>'
 		cMensagem += '<td>' + cValToChar(DADOS->D1_LOCAL)   + '</td>'
 		cMensagem += '<td>' + cValToChar(DADOS->D1_DTDIGIT)   + '</td>'
-
 		cMensagem += '</tr>'
-
 		DADOS->(DbSkip())
-
 	EndDo
-
 	cMensagem += '</table>'
 	cMensagem += '</body>'
 	cMensagem += '</html>'
-
 	DADOS->(DbCloseArea())
-
-
 	//
 	ProcessarEmail(cAssunto,cMensagem,cMails)
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4784,13 +3646,11 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function _ScriptSQL()
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
-
 	/*
 		cMensagem += '<td>' + cValToChar(DADOS->F1_FILIAL)    + '</td>'
 		cMensagem += '<td>' + cValToChar(DADOS->F1_DOC)       + '</td>'
@@ -4808,9 +3668,7 @@ Static Function _ScriptSQL()
 		cMensagem += '<td>' + cValToChar(DADOS->D1_TES)   + '</td>'
 		cMensagem += '<td>' + cValToChar(DADOS->D1_LOCAL)   + '</td>'
 		cMensagem += '<td>' + cValToChar(DADOS->D1_DTDIGIT)   + '</td>'
-
 	*/
-
 	cQuery := " "
 	cQuery += "  SELECT "
 	cQuery += "  F1_FILIAL, F1_DOC, F1_SERIE, F1_ESPECIE, F1_FORNECE, F1_LOJA, A2_NREDUZ, F1_CHVNFE, D1_COD, B1_DESC, D1_QUANT, D1_VUNIT, D1_TOTAL, D1_TES, D1_LOCAL, CONVERT(VARCHAR(10),CAST(D1_DTDIGIT AS DATE),103) AS D1_DTDIGIT, F1_DTDIGIT "  //chamado 057922 - || Fernando Sigoli 07/05/2020 - OS 059404 || CONTROLADORIA || THIAGO || 8439
@@ -4834,9 +3692,7 @@ Static Function _ScriptSQL()
 	cQuery += "  AND SD1.D_E_L_E_T_ = '' "
 	cQuery += "  AND SA2.D_E_L_E_T_ = '' "
 	cQuery += "  AND SB1.D_E_L_E_T_ = '' "
-
 	RestArea(aArea)
-
 Return cQuery
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4852,7 +3708,6 @@ Return cQuery
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function ProcessarEmail(cAssunto,cMensagem,email)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -4870,38 +3725,27 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email)
 	Local lAutOk        := .F.
 	Local cAtach        := ""
 	Local cSubject      := ""
-
 	//Assunto do e-mail.
 	cSubject := cAssunto
-
 	//Conecta ao servidor SMTP.
 	Connect Smtp Server cServer Account cAccount  Password cPassword Result lOk
-
 	//
 	If !lAutOk
 		If ( lSmtpAuth )
 			lAutOk := MailAuth(cAccount,cPassword)
-
 		Else
 			lAutOk := .T.
-
 		EndIf
-
 	EndIf
-
 	//
 	If lOk .And. lAutOk
-
 		//Envia o e-mail.
 		Send Mail From cFrom To cTo Subject cSubject Body cBody ATTACHMENT cAtach Result lOk
-
 		//Tratamento de erro no envio do e-mail.
 		If !lOk
 			Get Mail Error cErrorMsg
 			ConOut("3 - " + cErrorMsg)
-
 		Else
-
 			// Aviso ao usuario
 			// Aviso(	"INTNFEB-01",;
 				// "Email enviado com sucesso!"  + chr(13) + chr(10)+;
@@ -4909,25 +3753,17 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email)
 				// "" + Subs(cMails,67,Len(cMails)),;
 				// { "&OK" },3,;
 				// "NFE - Classificação Complemento Frango Vivo" )
-
 			MsgInfo("Email enviado com sucesso! Emails: "  + cMails)
-
 		EndIf
-
 	Else
 		Get Mail Error cErrorMsg
 		ConOut("4 - " + cErrorMsg)
-
 	EndIf
-
 	If lOk
 		Disconnect Smtp Server
-
 	EndIf
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4943,7 +3779,6 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function transmNF(aNFTrans,cSerie)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -4953,21 +3788,15 @@ Static Function transmNF(aNFTrans,cSerie)
 	Local cFornec	:= aNFTrans[1][3]
 	Local cLoja		:= aNFTrans[1][4]
 	Local cAmbiTrans:= Alltrim(cValToChar(GetMv("MV_#AMBNF",,"")))
-
-
 	////TCSetConn(_conProthe)
-
 	//
 	MsgInfo("Notas geradas de " + cNFIni + " até " + cNFFim + ".","Função emitNfGrp")
-
 	//
 	If Empty(cAmbiTrans)
 		MsgStop("Não foi possível transmitir as notas fiscais pois o parâmetro MV_#AMBNF não está preenchido.","Função transmNF")
 		RestArea(aArea)
 		Return .F.
-
 	EndIf
-
 	//
 	DbSelectArea("SF1")
 	SF1->(DbSetOrder(1))
@@ -4975,15 +3804,11 @@ Static Function transmNF(aNFTrans,cSerie)
 	If SF1->(DbSeek( xFilial("SF1") + cNFIni + cSerie + Space(TamSX3("F1_SERIE")[1] - Len(cSerie)) +  cFornec +  cLoja ))
 		MsAguarde({|| AutoNfeEnv(cEmpAnt,SF1->F1_FILIAL,"5",cAmbiTrans,SF1->F1_SERIE,cNFIni,cNFFim) },"Transmitindo NF","De " + cNFIni + " até " + cNFFim + " Série: " + cValToChar(SF1->F1_SERIE) + " ..." )
 		MsAguarde({|| imprimeNF(cValToChar(aNFTrans[1][1]),cValToChar(aNFTrans[Len(aNFTrans)][1])) },"Aguarde","Imprimindo notas fiscais...")
-
 	Else
 		MsgStop("Não foi possível efetuar a transmissão das notas fiscais.","Função transmNF")
-
 	EndIf
-
 	//
 	RestArea(aArea)
-
 Return .T.
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -4999,31 +3824,24 @@ Return .T.
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function imprimeNF(cNFIni,cNFFim)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea 	:= GetArea()
 	Local cCondicao := "F2_FILIAL=='"+xFilial("SF2")+"'"
 	Private aFilBrw	:=	{'SF2',cCondicao}
-
 	Default cNFIni	:= ""
 	Default cNFFim	:= ""
-
 	//
 	If ! Empty(cNFIni) .And. ! Empty(cNFFim)
 		zAtuPerg("NFSIGW", "MV_PAR01", cNFIni)
 		zAtuPerg("NFSIGW", "MV_PAR02", cNFFim)
 		zAtuPerg("NFSIGW", "MV_PAR04", 1)
-
 	EndIf
-
 	//
 	SpedDanfe()
-
 	//
 	RestArea(aArea)
-
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -5039,7 +3857,6 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function zAtuPerg(cPergAux, cParAux, xConteud)
-
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -5049,44 +3866,31 @@ Static Function zAtuPerg(cPergAux, cParAux, xConteud)
 	Local nLinEncont := 0
 	Local aPergAux   := {}
 	Default xConteud := ''
-
 	//Se não tiver pergunta, ou não tiver ordem.
 	If Empty(cPergAux) .Or. Empty(cParAux)
 		Return Nil
-
 	EndIf
-
 	//Chama a pergunta em memória.
 	Pergunte(cPergAux, .F., /*cTitle*/, /*lOnlyView*/, /*oDlg*/, /*lUseProf*/, @aPergAux)
-
 	//Procura a posição do MV_PAR.
 	nLinEncont := aScan(aPergAux, {|x| Upper(Alltrim(x[nPosPar])) == Upper(cParAux) })
-
 	//Se encontrou o parâmetro
 	If nLinEncont > 0
 		//Caracter
 		If ValType(xConteud) == 'C'
 			&(cParAux+" := '"+xConteud+"'")
-
 			//Data
 		ElseIf ValType(xConteud) == 'D'
 			&(cParAux+" := sToD("+dToS(xConteud)+")")
-
 			//Numérico ou Lógico
 		ElseIf ValType(xConteud) == 'N' .Or. ValType(xConteud) == 'L'
 			&(cParAux+" := "+cValToChar(xConteud)+"")
-
 		EndIf
-
 		//Chama a rotina para salvar os parâmetros
 		__SaveParam(cPergAux, aPergAux)
-
 	EndIf
-
 	RestArea(aArea)
-
 Return Nil
-
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -5100,49 +3904,39 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 User Function ExistXML(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
-
 	Local aAreaAtu   := GetArea()
 	Local lExistXML  := .f.
 	Local cQuery     := ""
 	Local cXMLNUMNF  := ""
 	Local cXMLNUNFX  := ""
-
 	Default cNum     := ""
 	Default cSer     := ""
 	Default cCNPJ    := ""
 	Default cEspecie := ""
 	Default cFormul  := ""
-
 	U_ADINF009P('INTNFEB' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Vai gerar Pre-Notas por uma opção no menu do usuario ')
-
 	// Chamado TI - Formulario proprio nao devera consistir Central XML - FWNM - 08/05/2019
 	If AllTrim(cFormul) == "S"
 		lExistXML := .t.
 		Return lExistXML
 	EndIf
-
 	// Chamado: 050135 - Fernando Sigoli 01/07/2019 - Nao consistir na central xml, quando Especie = NF
 	If AllTrim(cFormul) == "N" .and. AllTrim(cEspecie) == 'NF'
 		lExistXML := .t.
 		Return lExistXML
 	EndIf
-
 	// Consisto chave que sera utilizada na pesquisa
 	// TI - Fernando Sigol 16/05/2019
 	cXMLNUMNF := PADR(cvaltochar(Val(cSer)) ,3,'')+ cNum
 	cXMLNUNFX := cSer + cNum
-
 	If Empty(cXMLNUMNF) .or. Empty(cCNPJ) .or. Empty(cEspecie)
 		Return lExistXML
 	EndIf
-
 	// Busco XML na tabela da central
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
-
 	If AllTrim(cEspecie) == "SPED"
 		cQuery := " SELECT COUNT(1) TT "
 		cQuery += " FROM RECNFXML (NOLOCK) "
@@ -5150,7 +3944,6 @@ User Function ExistXML(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 		cQuery += " OR XML_NUMNF = '"+cXMLNUNFX+"' )"      //Chamado TI, 20/05/2019 - Fernando Sigoli
 		cQuery += " AND XML_EMIT = '"+cCNPJ+"' "
 		cQuery += " AND D_E_L_E_T_='' "
-
 	ElseIf AllTrim(cEspecie) == "CTE" .or. AllTrim(cEspecie) == 'CTEOS'"
 		cQuery := " SELECT COUNT(1) TT "
 		cQuery += " FROM RECNFCTE (NOLOCK) "
@@ -5158,25 +3951,17 @@ User Function ExistXML(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 		cQuery += " OR XML_NUMNF = '"+cXMLNUNFX+"' )"   //Chamado TI, 20/05/2019 - Fernando Sigoli
 		cQuery += " AND XML_EMIT = '"+cCNPJ+"' "
 		cQuery += " AND D_E_L_E_T_='' "
-
 	EndIf
-
 	tcQuery cQuery new alias "Work"
-
 	Work->( dbGoTop() )
-
 	If Work->TT >= 1
 		lExistXML := .t.
 	EndIf
-
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
-
 	RestArea( aAreaAtu )
-
 Return lExistXML
-
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -5196,45 +3981,34 @@ Return lExistXML
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 User Function ChkChvNF(cFilNF, cDoc, cSer, cFor, cLoj, cTipo, cSistema, cChaveNFe, cAnoMes, cCNPJ)
-
 	Local aAreaAtu    := GetArea()
 	Local lXMLOk      := .t.
 	Local cQuery      := ""
-
 	Default cFilNF    := ""
 	Default cDoc      := ""
 	Default cSer      := ""
 	Default cFor      := ""
 	Default cLoj      := ""
 	Default cTipo     := ""
-
 	Default cSistema  := ""
 	Default cChaveNFe := ""
-
 	Default cAnoMes   := ""
 	Default cCNPJ     := ""
-
 	U_ADINF009P('INTNFEB' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Vai gerar Pre-Notas por uma opção no menu do usuario ')
-
 	// Nao consisto qdo nao possui chave
 	If Empty(cChaveNFe)
 		Return lXMLOk
 	EndIf
-
 	// Consisto chave que sera utilizada na pesquisa
 	If Empty(cFilNF) .or. Empty(cDoc) .or. Empty(cSer) .or. Empty(cFor) .or. Empty(cLoj) .or. Empty(cTipo) .or. Empty(cSistema) .or. Empty(cAnoMes) .or. Empty(cCNPJ)
 		lXMLOk := .f.
 		Return lXMLOk
 	EndIf
-
 	If cSistema == "PROTHEUS"
-
 		If Select("Work") > 0
 			Work->( dbCloseArea() )
 		EndIf
-
 		//F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
 		cQuery := " SELECT F1_EST, F1_EMISSAO, F1_DTDIGIT, F1_SERIE, F1_DOC, F1_FORNECE, F1_LOJA, F1_TIPO, F1_ESPECIE, F1_CHVNFE, A2_CGC "
 		cQuery += " FROM " + RetSqlName("SF1") + " SF1 (NOLOCK) "
@@ -5246,13 +4020,9 @@ User Function ChkChvNF(cFilNF, cDoc, cSer, cFor, cLoj, cTipo, cSistema, cChaveNF
 		cQuery += " AND F1_LOJA='"+cLoj+"' "
 		cQuery += " AND F1_TIPO='"+cTipo+"' "
 		cQuery += " AND SF1.D_E_L_E_T_='' "
-
 		tcQuery cQuery new alias "Work"
-
 		Work->( dbGoTop() )
-
 		If Work->( !EOF() )
-
 			/*
 			//  Formacao da Chave de Acesso de uma NF-e, NFC-e, de um CT-e e um MDF-e
 			
@@ -5269,48 +4039,39 @@ User Function ChkChvNF(cFilNF, cDoc, cSer, cFor, cLoj, cTipo, cSistema, cChaveNF
 			12345678901234567890123456789012345678901234
 			UFAAMMCNPJ123456CNPJ12SER123456789
 			*/
-
 			_cAnoMes := Subs(Work->F1_CHVNFE,3,4)
 			_cCNPJ   := Subs(Work->F1_CHVNFE,7,14)
 			_cSerie  := Subs(Work->F1_CHVNFE,23,3)
 			_cDoc    := Subs(Work->F1_CHVNFE,26,9)
-
 			//Consisto DATA, CNPJ, SERIE e DOC
-
 			// DATA
 			If lXMLOk
 				If _cAnoMes <> Subs(Work->F1_EMISSAO,3,4)
 					lXMLOk := .f.
 				EndIf
 			EndIf
-
 			// CNPJ
 			If lXMLOk
 				If _cCNPJ <> AllTrim(Work->A2_CGC)
 					lXMLOk := .f.
 				EndIf
 			EndIf
-
 			// Serie
 			If lXMLOk
 				If _cSerie <> StrZero(Val(AllTrim(Work->F1_SERIE)),3)
 					lXMLOk := .f.
 				EndIf
 			EndIf
-
 			// Documento
 			If lXMLOk
 				If _cDoc <> AllTrim(Work->F1_DOC)
 					lXMLOk := .f.
 				EndIf
 			EndIf
-
 		EndIf
-
 		If Select("Work") > 0
 			Work->( dbCloseArea() )
 		EndIf
-
 		// SAG
 	Else
 		/*
@@ -5329,48 +4090,38 @@ User Function ChkChvNF(cFilNF, cDoc, cSer, cFor, cLoj, cTipo, cSistema, cChaveNF
 		12345678901234567890123456789012345678901234
 		UFAAMMCNPJ123456CNPJ12SER123456789
 		*/
-
 		_cAnoMes := Subs(cChaveNFe,3,4)
 		_cCNPJ   := Subs(cChaveNFe,7,14)
 		_cSerie  := Subs(cChaveNFe,23,3)
 		_cDoc    := Subs(cChaveNFe,26,9)
-
 		//Consisto UF, DATA, CNPJ, SERIE e DOC
-
 		// DATA
 		If lXMLOk
 			If _cAnoMes <> Subs(cAnoMes,3,4)
 				lXMLOk := .f.
 			EndIf
 		EndIf
-
 		// CNPJ
 		If lXMLOk
 			If _cCNPJ <> AllTrim(cCNPJ)
 				lXMLOk := .f.
 			EndIf
 		EndIf
-
 		// Serie
 		If lXMLOk
 			If _cSerie <> StrZero(Val(AllTrim(cSer)),3)
 				lXMLOk := .f.
 			EndIf
 		EndIf
-
 		// Documento
 		If lXMLOk
 			If _cDoc <> AllTrim(cDoc)
 				lXMLOk := .f.
 			EndIf
 		EndIf
-
 	EndIf
-
 	RestArea( aAreaAtu )
-
 Return lXMLOk
-
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -5385,9 +4136,7 @@ Return lXMLOk
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-
 User Function DestOk(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
-
 	Local lDestOk    := .f.
 	Local cQuery     := ""
 	Local cXMLNUMNF  := ""
@@ -5395,50 +4144,41 @@ User Function DestOk(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 	Local aAreaAtu   := GetArea()
 	Local aAreaSM0   := SM0->( GetArea() )
 	Local cCNPJDest  := ""
-
 	Default cNum     := ""
 	Default cSer     := ""
 	Default cCNPJ    := ""
 	Default cEspecie := ""
 	Default cFormul  := ""
 	Default nRdo     := ""
-
 	U_ADINF009P('INTNFEB' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Vai gerar Pre-Notas por uma opção no menu do usuario ')
-
 	// Chamado n. 052097 || Formulario proprio nao consistir CNPJ Destino - fwnm - 04/10/2019
 	// Chamado TI - Formulario proprio nao devera consistir Central XML - FWNM - 08/05/2019
 	If AllTrim(cFormul) == "S"
 		lDestOk := .t.
 		Return lDestOk
 	EndIf
-
 	// Chamado: 050135 - Fernando Sigoli 01/07/2019 - Nao consistir na central xml, quando Especie = NF
 	If AllTrim(cFormul) == "N" .and. AllTrim(cEspecie) == 'NF'
 		lDestOk := .t.
 		Return lDestOk
 	EndIf
-
 	// Consisto chave que sera utilizada na pesquisa
 	// TI - Fernando Sigol 16/05/2019
 	cXMLNUMNF := PADR(cvaltochar(Val(cSer)) ,3,'')+ cNum
 	cXMLNUNFX := cSer + cNum
-
 	If Empty(cXMLNUMNF) .or. Empty(cCNPJ) .or. Empty(cEspecie)
 		Return lDestOk
 	EndIf
 	//
-
 	// Carrego CGC da empresa/filial corrente
 	SM0->( dbSetOrder(1) ) // M0_CODIGO + M0_CODFIL
 	If SM0->( dbSeek( cEmpAnt + cFilAnt ) )
 		cCNPJDest := AllTrim(SM0->M0_CGC)
 	EndIf
-
 	// Busco Destino na tabela da central
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
-
 	If AllTrim(cEspecie) == "SPED"
 		cQuery := " SELECT XML_DEST "
 		cQuery += " FROM RECNFXML (NOLOCK) "
@@ -5446,7 +4186,6 @@ User Function DestOk(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 		cQuery += " OR XML_NUMNF = '"+cXMLNUNFX+"' )"      //Chamado TI, 20/05/2019 - Fernando Sigoli
 		cQuery += " AND XML_EMIT = '"+cCNPJ+"' "
 		cQuery += " AND D_E_L_E_T_='' "
-
 	ElseIf AllTrim(cEspecie) == "CTE" .or. AllTrim(cEspecie) == 'CTEOS'"
 		cQuery := " SELECT XML_DEST "
 		cQuery += " FROM RECNFCTE (NOLOCK) "
@@ -5454,28 +4193,20 @@ User Function DestOk(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 		cQuery += " OR XML_NUMNF = '"+cXMLNUNFX+"' )"   //Chamado TI, 20/05/2019 - Fernando Sigoli
 		cQuery += " AND XML_EMIT = '"+cCNPJ+"' "
 		cQuery += " AND D_E_L_E_T_='' "
-
 	EndIf
-
 	tcQuery cQuery new alias "Work"
-
 	Work->( dbGoTop() )
-
 	If Work->( !EOF() )
 		If AllTrim(Work->XML_DEST) == cCNPJDest
 			lDestOk := .t.
 		EndIf
 	EndIf
-
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
-
 	RestArea( aAreaAtu )
 	RestArea( aAreaSM0 )
-
 Return lDestOk
-
 /*/{Protheus.doc} Static Function UpCompSAG()
 	Insere PC na NF e gera amarração entre adiantamentos SAG e PC
 	@type  Function
@@ -5490,7 +4221,6 @@ Return lDestOk
 	ticket 3873 - FWNM - 26/10/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
 /*/
 Static Function UpCompSAG(cF1_Filial, cDoc, cSerie, cTipo, cF1_FORNECE, cF1_LOJA, cCod, nRadio, cCCusto)
-
 	Local cPCSAG   := ""
 	Local cLinked  := GetMV("MV_#SAGLS",,"SCSRV03")
 	Local cQuery   := ""
@@ -5504,9 +4234,7 @@ Static Function UpCompSAG(cF1_Filial, cDoc, cSerie, cTipo, cF1_FORNECE, cF1_LOJA
 	Local cCondPC  := GetMV("MV_#SAGSE4",,"SAG")
 	Local cItemPC  := "0001"
 	Local lGeraFIE := .T.
-
 	PRIVATE lMsErroAuto := .F.
-
 	Default cF1_Filial  := ""
 	Default cDoc        := ""
 	Default cSerie      := ""
@@ -5516,14 +4244,11 @@ Static Function UpCompSAG(cF1_Filial, cDoc, cSerie, cTipo, cF1_FORNECE, cF1_LOJA
 	Default cCod        := ""
 	Default nRadio      := 0
 	Default cCCusto     := ""
-
 	//Begin Transaction
-
 	// Busco os dados do PC na view POCANFE contida no banco ADORO do servidor SAG
 	If Select("WorkPC") > 0
 		WorkPC->( dbCloseArea() )
 	EndIf
-
 	cQuery := " SELECT * FROM OPENQUERY (SCSRV03, '
 	cQuery += " SELECT F1_PED, D1_QUANT, D1_VUNIT,F1_COND 
 	cQuery += " FROM ADORO.dbo.POCANFE (NOLOCK)
@@ -5536,49 +4261,37 @@ Static Function UpCompSAG(cF1_Filial, cDoc, cSerie, cTipo, cF1_FORNECE, cF1_LOJA
 	cQuery += " AND D1_COD=''"+cCod+"''
 	cQuery += " AND F1_PED IS NOT NULL
 	cQuery += " ')
-
 	tcQuery cQuery New Alias "WorkPC"  
-
 	WorkPC->( dbGoTop() )
 	If WorkPC->( !EOF() )
 		cPCSAG := "S" + AllTrim(Str(WorkPC->F1_PED))
-
 		If !Empty(WorkPC->F1_COND)  //ticket   62952   - Fernando Sigoli   - 27/10/2021
 			cCondPC := WorkPC->F1_COND	
 		EndIf	
-
 	EndIf
-
 	// debug
 	/*If AllTrim(cPCSAG) == "S20594"
 		cDebug := ""
 	EndIf */
 	// debug
-
-
 		// Checo se o PC existe
 		//If Empty(cPCSAG) 
 If Empty(cPCSAG) .or. ( Len(cPCSAG) < TamSX3("C7_NUM")[1] ) // // @history ticket    6082 - Fernando Macieira - 07/12/2020 - IMPORTAÇÃO NF 49322 - PC n. S0
 			
 			cPCSAG  := ""
 			cItemPC := ""
-
 			Return {}
-
 Else
-
 			// @history ticket    6376 - Fernando Macieira - 09/12/2020 - ERRO DE LOG IMPORTAÇÃO
 			SC7->( dbSetOrder(1) ) //C7_FILIAL, C7_NUM, C7_ITEM, C7_SEQUEN, R_E_C_N_O_, D_E_L_E_T_
 	If SC7->( dbSeek( cF1_Filial + PadR(cPCSAG,TamSX3("C7_NUM")[1]) ) )
 				
 				// Checo se é o mesmo fornecedor
 		If cF1_FORNECE <> SC7->C7_FORNECE .or. cF1_LOJA <> SC7->C7_LOJA
-
 					//MsgAlert("PC n. : " + cPCSAG + " na filial " + cF1_Filial + " já existe na base para outro fornecedor... NF " + cDoc + " não será incluida! Verifique no SAG!")
 				
 				    cErro := "PC n. : " + cPCSAG + " na filial " + cF1_Filial + " já existe na base para outro fornecedor... NF " + cDoc + " será incluida sem o PC! Verifique no SAG!"+CRLF + CRLF
 					cImpEr+= cErro + CRLF + CRLF
-
 					u_GrLogZBE ( msDate(), TIME(), cUserName, "DOCUMENTO ENTRADA", "SAG", "INTNFEB",;
                 	"PC n. : " + cPCSAG + " na filial " + cF1_Filial + " já existe na base para outro fornecedor... NF " + cDoc + " não será incluida! Verifique no SAG!", ComputerName(), LogUserName() )
 				
@@ -5587,15 +4300,12 @@ Else
 					Return {}
 				
 		EndIf
-
 				// Gero SCY - Historico PC (Antes da alteracao)
 				//GrvSCY(cPCSAG) // @history ticket    6376 - Fernando Macieira - 09/12/2020 - ERRO DE LOG IMPORTAÇÃO
-
 				// defino o C7_ITEM sequencial
 		If Select("WorkPCItem") > 0
 					WorkPCItem->( dbCloseArea() )
 		EndIf
-
 				cQuery := " SELECT ISNULL(MAX(C7_ITEM),0) C7_ITEM
 				cQuery += " FROM " + RetSqlName("SC7") + " (NOLOCK)
 				cQuery += " WHERE C7_FILIAL='"+cF1_Filial+"'
@@ -5603,29 +4313,22 @@ Else
 				cQuery += " AND C7_FORNECE='"+cF1_FORNECE+"'
 				cQuery += " AND C7_LOJA='"+cF1_LOJA+"'
 				cQuery += " AND D_E_L_E_T_=''
-
 				tcQuery cQuery New Alias "WorkPCItem"
 				
 				cItemPC  := Soma1(WorkPCItem->C7_ITEM,Len(SC7->C7_ITEM))
-
 		If Select("WorkPCItem") > 0
 			WorkPCItem->( dbCloseArea() )
 		EndIf
 				
 	EndIf
-
 	// ExecAuto PC (SC7)
-
 	ConOut("INTNFEB - SAG - Incluido PC: " + cPCSAG)
-
 	SB1->( dbSetOrder(1) ) // B1_FILIAL + B1_COD
 	SB1->( dbSeek(FWxFilial("SB1")+PadR(cCod,TamSX3("B1_COD")[1])))
-
 	// Insert manual autorizado do PC (SC7) pois
 	// o mesmo existirá apenas para fazer amarração do realizado e não deverá cair nas regras atuais
 	// e também não mudaremos os pontos de entradas existentes devido complexidade e utilização que logo será desativaada
 	RecLock("SC7", lLockSC7)
-
 	SC7->C7_FILIAL  := FWxFilial("SC7")
 	SC7->C7_NUM     := cPCSAG
 	SC7->C7_EMISSAO := dDataBase
@@ -5637,10 +4340,8 @@ Else
 	SC7->C7_FILENT  := cF1_Filial
 	SC7->C7_TIPO    := 1
 	SC7->C7_XRESPON := AllTrim(cUserName)
-
 	SC7->C7_USER    := __CUSERID
 	SC7->C7_CONAPRO := "L"
-
 	SC7->C7_ITEM    := cItemPC
 	SC7->C7_PRODUTO := cCod
 	SC7->C7_UM      := SB1->B1_UM
@@ -5653,14 +4354,11 @@ Else
 	SC7->C7_CC      := cCCusto
 	//SC7->C7_CONTA   := ""
 	//SC7->C7_ITEMCTA := ""
-
 	SC7->( msUnLock() )
-
 	// Amarro todos os adiantamentos existentes a este PC
 	If Select("WorkPA") > 0
 		WorkPA->( dbCloseArea() )
 	EndIf
-
 	cQuery := " SELECT E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, E2_SALDO, E2_VALOR
 	cQuery += " FROM " + RetSqlName("SE2") + " (NOLOCK)
 	cQuery += " WHERE E2_FILIAL='"+cF1_Filial+"'
@@ -5669,12 +4367,9 @@ Else
 	cQuery += " AND E2_FORNECE='"+cF1_FORNECE+"'
 	cQuery += " AND E2_LOJA='"+cF1_LOJA+"'
 	cQuery += " AND D_E_L_E_T_=''
-
 	tcQuery cQuery New Alias "WorkPA"
-
 	WorkPA->( dbGoTop() )
 	Do While WorkPA->( !EOF() )
-
 		// Parametro para gerar FIE mesmo quando o PA não possuir movimento bancário (ocorre apenas no retorno do CNAB)
 		// => Ativar o parâmetro quando a TOTVS corrigir a classificação da NF com condição de pagamento que não é de adiantamento e mesmo assim obriga o usuário a desamarrar o PA x PC (mesmo que a compensação não ocorrerá)
 		// => Chamado TOTVS #10116918
@@ -5683,19 +4378,15 @@ Else
 		Else
 			lGeraFIE := ChkSE5(cF1_Filial, WorkPA->E2_PREFIXO, WorkPA->E2_NUM, WorkPA->E2_PARCELA, WorkPA->E2_TIPO, cF1_FORNECE, cF1_LOJA)
 		EndIf
-
 		If lGeraFIE
-
 			FIE->( dbSetOrder(3) ) // FIE_FILIAL, FIE_CART, FIE_FORNEC, FIE_LOJA, FIE_PREFIX, FIE_NUM, FIE_PARCEL, FIE_TIPO, FIE_PEDIDO, R_E_C_N_O_, D_E_L_E_T_
 			If FIE->( dbSeek(cF1_Filial+"P"+cF1_FORNECE+cF1_LOJA+WorkPA->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)+cPCSAG) )
 				lLockFIE := .f.
 			Else
 				lLockFIE := .t.
 			EndIf
-
 			// Gero vinculo do PA com o Pedido de Vendas
 			RecLock("FIE", lLockFIE)
-
 			FIE->FIE_FILIAL := FWxFilial("FIE")
 			FIE->FIE_CART   := "P"
 			FIE->FIE_PEDIDO := cPCSAG
@@ -5707,31 +4398,20 @@ Else
 			FIE->FIE_LOJA   := WorkPA->E2_LOJA
 			FIE->FIE_VALOR  := WorkPA->E2_VALOR
 			FIE->FIE_SALDO  := 0 //WorkPA->E2_SALDO (Saldo zerado pois o financeiro precisa compensar adiantamento manualmente e com outros documentos - Padrão do sistema não permite!) // @history ticket    3873 - Fernando Macieira - 25/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
-
 			FIE->( msUnLock() )
 			//FIE->( fkCommit() )
-
 		EndIf
-
 		WorkPA->( dbSkip() )
-
 	EndDo
-
 	//Else
 	//	MostraErro()
 EndIf
-
 If Select("WorkPC") > 0
 	WorkPC->( dbCloseArea() )
 EndIf
-
 //End Transaction
-
 RestArea( aAreaAtu )
-
 Return { cPCSAG, cItemPC }
-
-
 /*/{Protheus.doc} Static Function GrvSCY
 	Armazena dados do PC antes de alterações
 	@type  Static Function
@@ -5739,68 +4419,45 @@ Return { cPCSAG, cItemPC }
 	@since 28/10/2020
 /*/
 Static Function GrvSCY(cPCSAG)
-
 	Local cQuery   := ""
 	Local aAreaAtu := GetArea()
-
 	Default cPCSAG := ""
-
 	//  Verifica a ultima versao de alteracao do pedido no SCY e
 	//  disponibiliza a proxima versao disponivel para a alteracao.
 	If Select("MA120GRVQ2") > 0
 		MA120GRVQ2->( dbCloseArea() )
 	EndIf
-
 	cVerSCY := StrZero(0,Len(SCY->CY_VERSAO))
-
 	cQuery := "SELECT MAX(CY_VERSAO) VERSCY
 	cQuery += "FROM " + RetSqlName("SCY") + " SCY (NOLOCK)
 	cQuery += "WHERE CY_FILIAL='"+FWxFilial("SCY")+"' AND
 	cQuery += "CY_NUM ='"+cPCSAG+"' AND
 	cQuery += "SCY.D_E_L_E_T_=' '
-
 	cQuery := ChangeQuery(cQuery)
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"MA120GRVQ2",.T.,.T.)
-
 	cVerSCY := Substr(VERSCY,1,TamSX3("CY_VERSAO")[1])
-
 	If Select("MA120GRVQ2") > 0
 		MA120GRVQ2->( dbCloseArea() )
 	EndIf
-
 	dbSelectArea("SCY")
-
 	cVerSCY := Soma1(cVerSCY,Len(SCY->CY_VERSAO))
-
 	//  Antes de atualizar o Pedido de Compras SC7 com a alteracao
 	//  atual, grava o SCY com os dados do SC7 gerando assim um
 	//  historico com as versoes anteriores da alteracoes do PC.
 	RecLock("SCY",.T.)
-
 	For nX:=1 to SC7->( fCount() )
-
 		cNomCpoSC7 := AllTrim(SC7->( FieldName( nX ) ))
 		cNomCpoSCY := StrTran( cNomCpoSC7, "C7", "CY" )
-
 		If SCY->( FieldPos( cNomCpoSCY ) ) > 0
-
 			cNomCpoSC7 := SC7->( FieldName( nX ) )
 			cVlrCpo := SC7->( FieldGet( FieldPos( cNomCpoSC7 ) ) )
-
 			SCY->( FieldPut( FieldPos( cNomCpoSCY ), cVlrCpo ) )
-
 		EndIf
-
 	Next nX
-
 	SCY->CY_VERSAO := cVerSCY
-
 	SCY->( msUnLock() )
-
 	RestArea( aAreaAtu )
-
 Return
-
 /*/{Protheus.doc} Static Function ChkSE5(cF1_Filial, WorkPA->E2_PREFIXO, WorkPA->E2_NUM, WorkPA->E2_PARCELA, WorkPA->E2_TIPO, cF1_FORNECE, cF1_LOJA)
 	Determina se o PA possui movimento bancário para fazer amarração
 	@type  Function
@@ -5814,14 +4471,11 @@ Return
 	@see (links_or_references)
 /*/
 Static Function ChkSE5(cF1_Filial, cE2_PREFIXO, cE2_NUM, cE2_PARCELA, cE2_TIPO, cF1_FORNECE, cF1_LOJA)
-
 	Local lTemSE5 := .f.
 	Local cQuery  := ""
-
 	If Select("WorkSE5") > 0
 		WorkSE5->( dbCloseArea() )
 	EndIf
-
 	cQuery := " SELECT E5_FILIAL, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_TIPO, E5_CLIFOR, E5_LOJA, E5_RECPAG, E5_TIPODOC, E5_MOTBX
 	cQuery += " FROM " + RetSqlName("SE5") + " (NOLOCK)
 	cQuery += " WHERE E5_FILIAL='"+cF1_Filial+"'
@@ -5834,17 +4488,12 @@ Static Function ChkSE5(cF1_Filial, cE2_PREFIXO, cE2_NUM, cE2_PARCELA, cE2_TIPO, 
 	cQuery += " AND E5_RECPAG='P'
 	cQuery += " AND E5_TIPODOC='PA'
 	cQuery += " AND D_E_L_E_T_=''
-
 	tcQuery cQuery new Alias "WorkSE5"
-
 	WorkSE5->( dbGoTop() )
-
 	If WorkSE5->( !EOF() )
 		lTemSE5 := .t.
 	EndIf
-
 	If Select("WorkSE5") > 0
 		WorkSE5->( dbCloseArea() )
 	EndIf
-
 Return lTemSE5
