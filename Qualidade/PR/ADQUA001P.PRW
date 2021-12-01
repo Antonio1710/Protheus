@@ -408,10 +408,17 @@ Static Function getPalete(cErro, aDados, cPallete)
 
                     //cTurno := oItem:_PrintedShiftNo:TEXT
                     cTurno := XmlChildEx(oItem,"_PRINTEDSHIFTNO")
-                    
+
+                    // Valida se existe a TAG _PRINTEDSHIFTNO no arquivo para considerar como turno.
                     if valtype(cTurno) != "U"
                         cTurno := "T"+Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT))
+
+                        // Mesmo tendo a TAG, o conteúdo pode vir em branco.
+                        if Empty(cTurno)
+                            cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2)
+                        endif
                     else
+                        // Se a TAG _PRINTEDSHIFTNO não existir, carrega o turno padrão do arquivo.
                         cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2)
                     endif
 
