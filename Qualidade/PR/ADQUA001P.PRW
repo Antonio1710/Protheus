@@ -411,10 +411,11 @@ Static Function getPalete(cErro, aDados, cPallete)
 
                     // Valida se existe a TAG _PRINTEDSHIFTNO no arquivo para considerar como turno.
                     if valtype(cTurno) != "U"
-                        cTurno := "T"+Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT))
-
+                        
+                        if !Empty(Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT)))
+                            cTurno := "T"+Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT))
                         // Mesmo tendo a TAG, o conteúdo pode vir em branco.
-                        if Empty(cTurno)
+                        else
                             cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2)
                         endif
                     else
