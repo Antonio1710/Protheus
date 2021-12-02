@@ -272,7 +272,13 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
         //
         cInspecao   := oJson[nAux] //Objeto inspeção.
         cInspId     := cInspecao["_id"] // Id da Inspeção.
-        cMonQua     := cInspecao["inspectionHeaderPerformed"]["userRealName"]
+        cMonQua     := Alltrim(cInspecao["inspectionHeaderPerformed"]["userRealName"])
+        cAprQua     := Alltrim(cInspecao["inspectionApprovedBy"]["name"])
+        cDtApro     := Alltrim(cInspecao["inspectionApprovedBy"]["dateOfApprovedFormated"])
+        if len(cDtApro) > 0
+            dDatApr := Ctod(left(cDtApro,10))
+            cHorApr := Right(cDtApro,5)
+        endif
         aElementos  := cInspecao["data"]["content"]["elements"] //Elementos inspecionados.
 
         
@@ -425,7 +431,7 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                                     cDtFab  := oProduto["dataFabricacao"]
                                     cDtVal  := oProduto["dataValidade"]
                                     
-                                    grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
+                                    grvDados(cInspId, cMonQua, cAprQua, dDatApr, cHorApr, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
                                             nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, dDtICar, dDtTCar, cHrICar, cHrTCar,;
                                             cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cTraDobr, cDtIQld,cHrIQld, cHrTQld,;
                                             cTaraCo, cTermog, aImagens)
@@ -670,11 +676,11 @@ Return lRet
     @since 31/05/2021
     @version 01
     /*/
-Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
+Static Function grvDados(cInspId, cMonQua, cAprQua, dDatApr, cHorApr, cDtRot, cRot, cPdVend, cPlaca, cCarga, cConte, cPalId, cProd, cProdEdt, nTotCx, nTotKg,;
                         nTotKgR, nTotTara, cTurno, cDtFab, cDtVal, cTemp, cLacreSIF, cLacreArm, dDtICar, dDtTCar, cHrICar, cHrTCar,;
                         cLacData, cLacHora, cLimpInt, cLimpExt, cTempBau, cBorrach, cEquipFr, cTraDobr, cDtIQld,cHrIQld, cHrTQld,;
                         cTaraCo, cTermog, aImagens)
-    
+
     //Nova tabela.
     varinfo('aImagens',aImagens)  //aImagens. //Id da inspeção, descrição da foto, caminho relativo.
     
@@ -731,6 +737,9 @@ Static Function grvDados(cInspId, cMonQua, cDtRot, cRot, cPdVend, cPlaca, cCarga
                 ZEX_HRIQLD  := cHrIQld      //Hora de início da qualidade.
                 ZEX_HRTQLD  := cHrTQld      //Hora de término da qualidade.
                 ZEX_MONQUA  := cMonQua
+                ZEX_APRQUA  := cAprQua
+                ZEX_APRDAT  := dDatApr
+                ZEX_APRHOR  := cHorApr
                 ZEX_TARCON  := Val(cTaraCo)
                 ZEX_TERMOG  := cTermog
                 ZEX_LOGDAT  := Date()

@@ -21,6 +21,7 @@
 	@history Ticket  14631  - Everson      - 27/05/2021 - Adiconado totalizador do grupo 6 no txt
 	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
+	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Inclusão das colunas de DSR, valores sem DSR e mudança de orientação na impressão do relatório.
 	/*/
 User Function ADVEN106R // U_ADVEN106R()
 
@@ -44,6 +45,19 @@ User Function ADVEN106R // U_ADVEN106R()
 	PRIVATE _cFilial 	:= ""
 	PRIVATE _lVnd		:= .F.
 	Private oTabSZA		:= THashMap():New()
+	Private _nXi		:= 0
+	Private _nI			:= 0
+	Private _nVenders	:= 0
+	Private nCol04	:= 093
+	Private nCol05	:= 106
+	Private nCol06	:= 119
+	Private nCol07	:= 130
+	Private nCol08	:= 145
+	Private nCol09	:= 157
+	Private nCol10	:= 168
+	Private nCol11	:= 182
+	Private nCol12	:= 196
+	Private nCol13	:= 211
 
 	//MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
 
@@ -70,24 +84,24 @@ User Function ADVEN106R // U_ADVEN106R()
 	//³ mv_par15             // 1=Analitico/ 2=Sintetico                     ³
 	//³ mv_par16             // 1=Arquivo/ 2=Relatorio                       ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	aOrd             := {}
-	tamanho          := "M"
-	limite           := 132
-	nomeprog         := "ADVEN106R"
-	mv_tabpr         := ""
-	nTipo            := 18
-	aReturn := { "Zebrado", 1,"Administracao", 2, 2, 1, "",0 }
+	aOrd             	:= {}
+	tamanho          	:= "G"
+	limite           	:= 132
+	nomeprog         	:= "ADVEN106R"
+	mv_tabpr         	:= ""
+	nTipo            	:= 18
+	aReturn 			:= { "Zebrado", 1,"Administracao", 2, 2, 1, "",0 }
 	
-	nLastKey         := 0
-	nlin             := 80
-	nItem            := 1
-	lContinua        := .T.
+	nLastKey         	:= 0
+	nlin             	:= 80
+	nItem            	:= 1
+	lContinua        	:= .T.
 	
-	m_pag	   	:= 01
-	imprime    	:= .T.
-	_cSupVends	:=""
-	_cCodVen	:=""
-	_bFlagVend	:=.T.
+	m_pag	   			:= 01
+	imprime    			:= .T.
+	_cSupVends			:=""
+	_cCodVen			:=""
+	_bFlagVend			:=.T.
 
 	VerificaUser()		// Faz a verificacao do usuario - Heraldo 01/12/03
 	
@@ -273,7 +287,7 @@ User Function ADVEN106R // U_ADVEN106R()
 	cDesc1  := "Este programa tem como objetivo calcular a demonstrativo de "
 	cDesc2  := "vendas das regioes "
 	cDesc3  := "Equipe Protheus"
-	NomeRel := "ADVEN116R"
+	NomeRel := "ADVEN106R"
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³Totaliza por grupos                                           ³
@@ -333,8 +347,40 @@ User Function ADVEN106R // U_ADVEN106R()
 	Private _Grp13Css	:=0
 	Private _Grp14Css	:=0
 	Private _Grp15Css	:=0
-	//
 	
+	Private _Grp1cDSR	:=0
+	Private _Grp2cDSR	:=0
+	Private _Grp3cDSR	:=0
+	Private _Grp4cDSR	:=0
+	Private _Grp5cDSR	:=0
+	Private _Grp6cDSR	:=0
+	Private _Grp7cDSR	:=0
+	Private _Grp8cDSR	:=0
+	Private _Grp9cDSR	:=0
+	Private _Grp10cDSR	:=0
+	Private _Grp11cDSR	:=0
+	Private _Grp12cDSR	:=0
+	Private _Grp13cDSR	:=0
+	Private _Grp14cDSR	:=0
+	Private _Grp15cDSR	:=0
+
+	Private _Grp1sDSR	:=0
+	Private _Grp2sDSR	:=0
+	Private _Grp3sDSR	:=0
+	Private _Grp4sDSR	:=0
+	Private _Grp5sDSR	:=0
+	Private _Grp6sDSR	:=0
+	Private _Grp7sDSR	:=0
+	Private _Grp8sDSR	:=0
+	Private _Grp9sDSR	:=0
+	Private _Grp10sDSR	:=0
+	Private _Grp11sDSR	:=0
+	Private _Grp12sDSR	:=0
+	Private _Grp13sDSR	:=0
+	Private _Grp14sDSR	:=0
+	Private _Grp15sDSR	:=0
+
+
 	Private _nTot1G1	:= 0
 	Private _nTot2G1	:= 0
 	Private _nTot3G1	:= 0
@@ -409,11 +455,46 @@ User Function ADVEN106R // U_ADVEN106R()
 	Private _nTot13G4	:=0
 	Private _nTot14G4	:=0
 	Private _nTot15G4	:=0
-	//
 	
-	Private _nTotF1	:= 0
-	Private _nTotF2	:= 0
-	Private _nTotF3	:= 0
+	Private _nTot1SDSR	:= 0
+	Private _nTot2SDSR	:= 0
+	Private _nTot3SDSR	:= 0
+	Private _nTot4SDSR	:= 0
+	Private _nTot5sDSR	:= 0
+	Private _nTot6sDSR	:= 0
+	Private _nTot7sDSR	:= 0
+	Private _nTot8sDSR	:= 0
+	Private _nTot9sDSR	:= 0
+	Private _nTot10sDSR	:= 0
+	Private _nTot11sDSR	:= 0
+	Private _nTot12sDSR	:= 0
+	Private _nTot13sDSR	:= 0
+	Private _nTot14sDSR	:= 0
+	Private _nTot15sDSR	:= 0
+	
+	Private _nTot1CDSR	:= 0
+	Private _nTot2CDSR	:= 0
+	Private _nTot3CDSR	:= 0
+	Private _nTot4CDSR	:= 0
+	Private _nTot5CDSR	:= 0
+	Private _nTot6CDSR	:= 0
+	Private _nTot7CDSR	:= 0
+	Private _nTot8CDSR	:= 0
+	Private _nTot9CDSR	:= 0
+	Private _nTot10CDSR	:= 0
+	Private _nTot11CDSR	:= 0
+	Private _nTot12CDSR	:= 0
+	Private _nTot13CDSR	:= 0
+	Private _nTot14CDSR	:= 0
+	Private _nTot15CDSR	:= 0
+
+
+	Private _nTotF1		:= 0
+	Private _nTotF2		:= 0
+	Private _nTotF3		:= 0
+	Private _nTotsDSR	:= 0
+	Private _nTotcDSR	:= 0
+
 	Private aDSR	:= {}
 	
 	nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
@@ -1578,12 +1659,14 @@ STATIC FUNCTION AD0012A
 	0         1         2         3         4         5         6         7         8         9         10        11        12        13        14        15        16        17        18        19        20        21        22
 	012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234
 	*/
-	cabec02	:=	"+--------------------------------------------------------------------------------------------------------------------------------+"
-	cabec04	:=	"| COD VEND /       NOME                  |                           Posicao/ |    Valor     |    Peso    |         |   Valor    |"
-	cabec05	:=	"|   GRUPO /        DESCR                 |Dt. Faturam.| Prec Medio | Tabela   |   Faturado   |  Faturado  | Classif.| Referencia |"
-	cabec06	:=	"|---------------------------------------- ------------ ------------ ---------- -------------- ------------ --------- ------------|"
-	cabec07	:=	"|                                        |            |            |          |              |            |         |            |"
-	
+
+	cabec02	:=	"+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+"
+	cabec04	:=	"| COD VEND /       NOME                                                                      |            |            | Posicao/ |    Valor     |    Peso    |         |   Valor     |    Valor    |   Valor      |"
+	cabec05	:=	"|   GRUPO /        DESCR                                                                     |Dt. Faturam.| Prec Medio | Tabela   |   Faturado   |  Faturado  | Classif.|Prêmio s/ DSR|     DSR     | Prêmio Total |"
+	cabec06	:=	"|-------------------------------------------------------------------------------------------- ------------ ------------ ---------- -------------- ------------ --------- ------------- ------------- --------------|"
+	cabec07	:=	"|                                                                                             |            |            |          |              |            |         |             |            |              |"
+
+
 	dbSelectArea("TEM6")
 	
 	If mv_par05	== 1		// ordem por supervisor
@@ -1607,11 +1690,15 @@ STATIC FUNCTION AD0012A
 	_nTVFat		:=	0
 	_nTQFat		:=	0
 	_nTCFat		:=	0
+	_nTCsDSR	:=  0
+	_nTCcDSR	:=  0
 	_xQuebra	:=	.F.
 	_cGRUPON 	:= "X99"
 	_nTFaturado :=  0
 	_nTPeso 	:=  0
 	_nTComiss 	:=  0
+	_nTComCDSR	:=  0
+	_nTComSDSR	:=  0
 	_cNomVen	:=	""
 	
 	While !EOF()
@@ -1636,7 +1723,7 @@ STATIC FUNCTION AD0012A
 			Endif
 		Endif
 		
-		If nLin > 67 .or. _xQuebra
+		If nLin > 72 .or. _xQuebra
 			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 			nLin := 8
 			Cabeca2()
@@ -1644,7 +1731,7 @@ STATIC FUNCTION AD0012A
 				@nLin,000 PSAY "|"
 				@nLin,003 PSAY _cVend
 				@nLin,012 PSAY _cNomVen
-				@nLin,129 PSAY "|"
+				@nlin,nCol13 PSAY "|"
 				nLin++
 				@nLin,000 PSAY  cabec06
 				nLin ++
@@ -1671,19 +1758,25 @@ STATIC FUNCTION AD0012A
 				if mv_par15 = 1
 					@nlin,000 PSAY "|"
 				endif
-				@nlin,041 PSAY "|"
-				@nLin,044 PSAY "TOTAL"
-				@nlin,054 PSAY "|"
-				@nLin,059 PSAY (_nTFaturado/_nTPeso)	PICTURE "@E 99.9999" //Incluido por Adriana HC, para atender chamado 008155 - 19/10/10
-				@nlin,067 PSAY "|"
-				@nlin,078 PSAY "|"
-				@nLin,079 PSAY _nTFaturado		PICTURE "@E 99,999,999.99"
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY _nTPeso			PICTURE "@E 9999,999.99"
-				@nlin,106 PSAY "|"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY _nTComiss		PICTURE "@E 999,999.99"
-				@nLin,129 PSAY  "|"
+
+				@nlin,nCol04 PSAY "|"
+				@nlin,nCol04+3 PSAY "TOTAL"
+				@nlin,nCol05 PSAY "|"
+				@nlin,nCol05+5 PSAY (_nTFaturado/_nTPeso)	PICTURE "@E 99.9999" //Incluido por Adriana HC, para atender chamado 008155 - 19/10/10
+				@nlin,nCol06 PSAY "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY _nTFaturado		PICTURE "@E 99,999,999.99"
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY _nTPeso			PICTURE "@E 9999,999.99"
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY _nTComSDSR		PICTURE "@E 999,999.99"
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY _nTComCDSR		PICTURE "@E 999,999.99"
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY _nTComiss		PICTURE "@E 999,999.99"
+				@nlin,nCol13 PSAY  "|"
+
 				nLin ++
 				@nLin,000 PSAY	cabec02
 				nLin := nLin + 1
@@ -1691,223 +1784,265 @@ STATIC FUNCTION AD0012A
 				@nLin,000 PSAY	cabec02
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome1))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp1Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp1Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp1Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp1Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp1Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp1sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp1cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp1Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
+
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome2))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp2Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp2Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp2Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp2Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp2Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp2sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp2cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp2Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
+
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome3))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp3Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp3Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp3Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp3Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp3Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp3sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp3cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp3Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
+
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome4))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp4Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp4Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp4Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp4Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp4Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp4sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp4cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp4Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
+
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome5))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp6Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp6Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp6Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp6Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp6Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp6sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp6cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp6Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
+
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome6))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp7Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp7Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp7Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp7Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp7Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp7sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp7cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp7Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				//Everson - 19/05/2021. Chamado 14094.
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome7))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp8Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp8Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp8Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp8Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp8Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp8sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp8cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp8Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome8))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp9Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp9Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp9Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp9Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp9Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp9sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp9cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp9Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome9))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp10Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp10Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp10Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp10Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp10Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp10sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp10cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp10Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome10))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp11Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp11Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp11Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp11Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp11Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp11sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp11cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp11Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome11))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp12Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp12Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp12Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp12Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp12Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp12sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp12cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp12Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome12))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp13Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp13Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp13Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp13Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp13Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp13sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp13cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp13Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome13))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp14Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp14Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp14Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp14Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp14Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp14sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp14cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp14Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 				
 				nLin := nLin + 1
 				@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome14))
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp15Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp15Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp15Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp15Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp15Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp15sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp15cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp15Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 				//
 
 				nLin := nLin + 1	
 				@nlin,000 PSAY "|Outros Grupos: "
-				@nlin,078 PSAY "|"
-				@nlin,079 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY Transform(_Grp5Pes,"@E 9999,999.99")
-				@nlin,106 PSAY "|"
-				@nlin,109 PSAY ((_Grp5Pes/_nTQFat)*100) picture "@E 999.99%"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY Transform(_Grp5Css,"@E 999,999.99")
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY Transform(_Grp5Pes,"@E 9999,999.99")
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol09+2 PSAY ((_Grp5Pes/_nTQFat)*100) picture "@E 999.99%"
+				@nlin,nCol10 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_Grp5sDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_Grp5cDSR,"@E 9999,999.99")
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY Transform(_Grp5Css,"@E 999,999.99")
+				@nlin,nCol13 PSAY  "|"
 				nLin := nLin + 1
 				
-				@nLin,000 PSAY	"|----------------------------------------------------------------------------- -------------- ------------ --------- ------------|"
+				@nLin,000 PSAY	"|-------------------------------------------------------------------------------------------- ------------ ------------ ---------- -------------- ------------ --------- ------------- ------------- --------------|"
+								 
 				nLin := nLin + 1
 				
 				@nLin,000 PSAY 	"|Total  Sub-Regiao"
-				@nlin,078 PSAY "|"
-				@nLin,079 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
-				@nlin,093 PSAY "|"
-				@nLin,094 PSAY	_nTQFat	PICTURE "@E 9999,999.99"
-				@nlin,106 PSAY "|"
-				@nlin,116 PSAY "|"
-				@nLin,118 PSAY	_nTCFat	PICTURE "@E 999,999.99"
-				@nLin,129 PSAY  "|"
-				nLin := nLin + 1
-				
-				@nLin,000 PSAY	"|----------------------------------------------------------------------------- -------------- ------------ --------- ------------|"
-				nLin := nLin + 1
-				
-				@nLin,000 PSAY 	"|Total  DSR (Total Comissão(A) / Dias Úteis(B) * DSR(C) = Valor Final(D))"
-				@nlin,078 PSAY "|"
-				//@nLin,079 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
-				if len(aDSR) > 0
-					@nLin,079 PSAY	"(A)"
-					@nLin,082 PSAY	_nTCFat	PICTURE "@E 999,999.99"
-				endif
-				@nlin,093 PSAY "|"
-				if len(aDSR) > 0
-					@nLin,094 PSAY	"(B)"
-					@nLin,097 PSAY	aDSR[3]	PICTURE "@E 999,999"
-				endif
-				@nlin,106 PSAY "|"
-				if len(aDSR) > 0
-					@nLin,107 PSAY	"(C)"
-					@nlin,110 PSAY aDSR[4] picture "@E 99,999"
-				endif
-				@nlin,116 PSAY "|"
-				if len(aDSR) > 0
-					@nLin,117 PSAY	"(D)"
-					@nLin,120 PSAY	((_nTCFat/aDSR[3])*aDSR[4])	PICTURE "@E 99,999.99"
-				endif
-				@nLin,129 PSAY  "|"
+				@nlin,nCol07 PSAY "|"
+				@nlin,nCol07+1 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
+				@nlin,nCol08 PSAY "|"
+				@nlin,nCol08+1 PSAY	_nTQFat	PICTURE "@E 9999,999.99"
+				@nlin,nCol09 PSAY "|"
+				@nlin,nCol10+2 PSAY Transform(_nTCsDSR ,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol11+2 PSAY Transform(_nTCcDSR,"@E 9999,999.99")
+				@nlin,nCol11 PSAY "|"
+				@nlin,nCol12 PSAY "|"
+				@nlin,nCol12+2 PSAY	_nTCFat	PICTURE "@E 999,999.99"
+				@nlin,nCol13 PSAY  "|"
 				nLin := nLin + 1
 				
 				@nLin,000 PSAY	cabec02
@@ -1918,6 +2053,9 @@ STATIC FUNCTION AD0012A
 				_nTVFat		:=	0
 				_nTQFat		:=	0
 				_nTCFat		:=	0
+				_nTCsDSR	:=  0
+				_nTCcDSR	:=  0
+
 				_Grp1Sms:=0
 				_Grp2Sms:=0
 				_Grp3Sms:=0
@@ -1956,13 +2094,13 @@ STATIC FUNCTION AD0012A
 				_Grp15Pes	:=0
 				//
 				
-				_Grp1Css:=0
-				_Grp2Css:=0
-				_Grp3Css:=0
-				_Grp4Css:=0
-				_Grp5Css:=0
-				_Grp6Css:=0
-				_Grp7Css:=0
+				_Grp1Css	:=0
+				_Grp2Css	:=0
+				_Grp3Css	:=0
+				_Grp4Css	:=0
+				_Grp5Css	:=0
+				_Grp6Css	:=0
+				_Grp7Css	:=0
 
 				//Everson - 19/05/2021. Chamado 14094.
 				_Grp8Css	:=0
@@ -1973,7 +2111,38 @@ STATIC FUNCTION AD0012A
 				_Grp13Css	:=0
 				_Grp14Css	:=0
 				_Grp15Css	:=0
-				//
+				
+				_Grp1cDSR	:=0
+				_Grp2cDSR	:=0
+				_Grp3cDSR	:=0
+				_Grp4cDSR	:=0
+				_Grp5cDSR	:=0
+				_Grp6cDSR	:=0
+				_Grp7cDSR	:=0
+				_Grp8cDSR	:=0
+				_Grp9cDSR	:=0
+				_Grp10cDSR	:=0
+				_Grp11cDSR	:=0
+				_Grp12cDSR	:=0
+				_Grp13cDSR	:=0
+				_Grp14cDSR	:=0
+				_Grp15cDSR	:=0
+
+				_Grp1sDSR	:=0
+				_Grp2sDSR	:=0
+				_Grp3sDSR	:=0
+				_Grp4sDSR	:=0
+				_Grp5sDSR	:=0
+				_Grp6sDSR	:=0
+				_Grp7sDSR	:=0
+				_Grp8sDSR	:=0
+				_Grp9sDSR	:=0
+				_Grp10sDSR	:=0
+				_Grp11sDSR	:=0
+				_Grp12sDSR	:=0
+				_Grp13sDSR	:=0
+				_Grp14sDSR	:=0
+				_Grp15sDSR	:=0
 
 				//			If nLin > 64 .or. _xQuebra
 				Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
@@ -1992,7 +2161,7 @@ STATIC FUNCTION AD0012A
 			@nLin,000 PSAY "|"
 			@nLin,003 PSAY _cVend
 			@nLin,012 PSAY _cNomVen
-			@nLin,129 PSAY "|"
+			@nlin,nCol13 PSAY "|"
 			
 			nLin++
 			@nLin,000 PSAY  cabec06
@@ -2001,6 +2170,8 @@ STATIC FUNCTION AD0012A
 			_nTFaturado :=  0
 			_nTPeso 	:=  0
 			_nTComiss 	:=  0
+			_nTComCDSR	:=  0
+			_nTComSDSR	:=  0
 			
 		Endif
 		
@@ -2015,19 +2186,23 @@ STATIC FUNCTION AD0012A
 				endif
 			endif
 			
-			@nlin,041 PSAY "|"
-			@nLin,044 PSAY "TOTAL"
-			@nlin,054 PSAY "|"
-			@nLin,059 PSAY (_nTFaturado/_nTPeso)	PICTURE "@E 99.9999" //Incluido por Adriana HC, para atender chamado 008155 - 19/10/10
-			@nlin,067 PSAY "|"
-			@nlin,078 PSAY "|"
-			@nLin,079 PSAY _nTFaturado		PICTURE "@E 99,999,999.99"
-			@nlin,093 PSAY "|"
-			@nLin,094 PSAY _nTPeso			PICTURE "@E 9999,999.99"
-			@nlin,106 PSAY "|"
-			@nlin,116 PSAY "|"
-			@nLin,118 PSAY _nTComiss		PICTURE "@E 999,999.99"
-			@nLin,129 PSAY  "|"
+			@nlin,nCol04 PSAY "|"
+			@nlin,nCol04+3 PSAY "TOTAL"
+			@nlin,nCol05 PSAY "|"
+			@nlin,nCol05+5 PSAY (_nTFaturado/_nTPeso)	PICTURE "@E 99.9999" //Incluido por Adriana HC, para atender chamado 008155 - 19/10/10
+			@nlin,nCol06 PSAY "|"
+			@nlin,nCol07 PSAY "|"
+			@nlin,nCol07+1 PSAY _nTFaturado		PICTURE "@E 99,999,999.99"
+			@nlin,nCol08 PSAY "|"
+			@nlin,nCol08+1 PSAY _nTPeso			PICTURE "@E 9999,999.99"
+			@nlin,nCol09 PSAY "|"
+			@nlin,nCol10 PSAY "|"
+			@nlin,nCol10+2 PSAY _nTComSDSR		PICTURE "@E 999,999.99"
+			@nlin,nCol11 PSAY "|"
+			@nlin,nCol11+2 PSAY _nTComCDSR		PICTURE "@E 999,999.99"
+			@nlin,nCol12 PSAY "|"
+			@nlin,nCol12+2 PSAY _nTComiss		PICTURE "@E 999,999.99"
+			@nlin,nCol13 PSAY  "|"
 			nLin ++
 			@nLin,000 PSAY  cabec06
 			nLin ++
@@ -2038,6 +2213,12 @@ STATIC FUNCTION AD0012A
 			_nTFaturado :=  TEM6->T6_FATUR
 			_nTPeso 	:=  TEM6->T6_QTDADE
 			_nTComiss 	:=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
+
+			if Len(aDSR) > 0
+				_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+				_nTComCDSR	:= _nTComiss-_nTComSDSR
+			endif
+
 			@nlin,000 PSAY "|"
 			@nLin,005 PSAY _cGRUPON			PICTURE "@!"
 			@nLin,012 PSAY SUBSTR(_cNOMEGN,1,25)
@@ -2045,6 +2226,12 @@ STATIC FUNCTION AD0012A
 			_nTFaturado +=  TEM6->T6_FATUR
 			_nTPeso 	+=  TEM6->T6_QTDADE
 			_nTComiss 	+=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
+
+			if Len(aDSR) > 0
+				_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+				_nTComCDSR	:= _nTComiss-_nTComSDSR
+			endif
+
 			if nlin = 15 .and. mv_par15 = 1
 				@nlin,000 PSAY "|"
 				@nLin,005 PSAY _cGRUPON			PICTURE "@!"
@@ -2063,29 +2250,42 @@ STATIC FUNCTION AD0012A
 		_nClass		:=		TEM6->T6_CLASS
 		
 		_nComiss	:=		(_nPeso / 1000) * TEM6->T6_VLFAI
+		_nTComsDSR	:= _nComiss*(aDSR[3]/aDSR[2])
+		_nTComcDSR	:= _nComiss-_nTComsDSR
+
 		if mv_par15 = 1 //Analitico - incluido por Adriana HC para atender chamado 008155 - 19/10/10
-			@nlin,041 PSAY "|"
-			@nLin,044 PSAY _dData
-			@nlin,054 PSAY "|"
-			@nLin,059 PSAY _nVlMedio		PICTURE "@E 99.9999"
-			@nlin,067 PSAY "|"
-			@nLin,069 PSAY _nPosi			PICTURE "99"
-			@nLin,071 PSAY "/"
-			@nLin,073 PSAY _cTabela
-			@nlin,078 PSAY "|"
-			@nLin,079 PSAY _nFaturado		PICTURE "@E 99,999,999.99"
-			@nlin,093 PSAY "|"
-			@nLin,094 PSAY _nPeso			PICTURE "@E 9999,999.99"
-			@nlin,106 PSAY "|"
-			@nLin,109 PSAY _nClass			PICTURE "@E 999.99"
-			@nlin,116 PSAY "|"
-			@nLin,118 PSAY _nComiss			PICTURE "@E 999,999.99"
-			@nLin,129 PSAY  "|"
+			@nlin,nCol04 PSAY "|"
+			@nlin,nCol04+3 PSAY _dData
+			@nlin,nCol05 PSAY "|"
+			@nlin,nCol05+5 PSAY _nVlMedio		PICTURE "@E 99.9999"
+			@nlin,nCol06 PSAY "|"
+			cPosTab := Strzero(_nPosi,2)+"/"+Alltrim(_cTabela)
+			@nLin,nCol06+2 PSAY cPosTab
+			//@nLin,nCol06+1 PSAY _nPosi			PICTURE "99"
+			//@nLin,nCol06+2 PSAY "/"
+			//@nLin,nCol06+4 PSAY _cTabela
+			@nlin,nCol07 PSAY "|"
+			@nlin,nCol07+1 PSAY _nFaturado		PICTURE "@E 99,999,999.99"
+			@nlin,nCol08 PSAY "|"
+			@nlin,nCol08+1 PSAY _nPeso			PICTURE "@E 9999,999.99"
+			@nlin,nCol09 PSAY "|"
+			@nlin,nCol09+2 PSAY _nClass			PICTURE "@E 999.99"
+			@nlin,nCol10 PSAY "|"
+			@nlin,nCol10+2 PSAY _nTComSDSR		PICTURE "@E 999,999.99"
+			@nlin,nCol11 PSAY "|"
+			@nlin,nCol11+2 PSAY _nTComCDSR		PICTURE "@E 999,999.99"
+			@nlin,nCol12 PSAY "|"
+			@nlin,nCol12+2 PSAY _nComiss		PICTURE "@E 999,999.99"
+			@nlin,nCol13 PSAY  "|"
 			nLin := nLin + 1
 		endif
 		_nTVFat		:=	_nTVFat	+	_nFaturado
 		_nTQFat		:=	_nTQFat	+	_nPeso
 		_nTCFat		:=	_nTCFat	+	_nComiss
+
+		_nTCsDSR	:=  _nTCFat*(aDSR[3]/aDSR[2])
+		_nTCcDSR	:=  _nTCFat-_nTCsDSR
+
 		SmsGrp (_cGRUPON)
 		
 		dbSelectArea("TEM6")
@@ -2095,19 +2295,23 @@ STATIC FUNCTION AD0012A
 	if mv_par15 = 1
 		@nlin,000 PSAY "|"
 	endif
-	@nlin,041 PSAY "|"
-	@nLin,044 PSAY "TOTAL"
-	@nlin,054 PSAY "|"
-	@nLin,059 PSAY (_nTFaturado/_nTPeso)	PICTURE "@E 99.9999" //Incluido por Adriana HC, para atender chamado 008155 - 19/10/10
-	@nlin,067 PSAY "|"
-	@nlin,078 PSAY "|"
-	@nLin,079 PSAY _nTFaturado		PICTURE "@E 99,999,999.99"
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY _nTPeso			PICTURE "@E 9999,999.99"
-	@nlin,106 PSAY "|"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY _nTComiss		PICTURE "@E 999,999.99"
-	@nLin,129 PSAY  "|"
+	@nlin,nCol04 PSAY "|"
+	@nlin,nCol04+3 PSAY "TOTAL"
+	@nlin,nCol05 PSAY "|"
+	@nlin,nCol05+5 PSAY (_nTFaturado/_nTPeso)	PICTURE "@E 99.9999" //Incluido por Adriana HC, para atender chamado 008155 - 19/10/10
+	@nlin,nCol06 PSAY "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY _nTFaturado		PICTURE "@E 99,999,999.99"
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY _nTPeso			PICTURE "@E 9999,999.99"
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY _nTComSDSR		PICTURE "@E 999,999.99"
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY _nTComCDSR		PICTURE "@E 999,999.99"
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY _nTComiss		PICTURE "@E 999,999.99"
+	@nlin,nCol13 PSAY  "|"
 	nLin ++
 	
 	@nLin,000 PSAY	cabec02
@@ -2116,224 +2320,260 @@ STATIC FUNCTION AD0012A
 	@nLin,000 PSAY	cabec02
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome1))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp1Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp1Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp1Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp1Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp1Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp1sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp1cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp1Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome2))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp2Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp2Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp2Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp2Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp2Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp2sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp2cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp2Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome3))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp3Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp3Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp3Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp3Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp3Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp3sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp3cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp3Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome4))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp4Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp4Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp4Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp4Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp4Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp4sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp4cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp4Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome5))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp6Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp6Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp6Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp6Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp6Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp6sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp6cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp6Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome6))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp7Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp7Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp7Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp7Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp7Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp7sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp7cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp7Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	//Everson - 19/05/2021. Chamado 14094.
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome7))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp8Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp8Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp8Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp8Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp8Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp8sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp8cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp8Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome8))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp9Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp9Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp9Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp9Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp9Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp9sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp9cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp9Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome9))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp10Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp10Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp10Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp10Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp10Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp10sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp10cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp10Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome10))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp11Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp11Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp11Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp11Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp11Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp11sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp11cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp11Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome11))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp12Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp12Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp12Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp12Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp12Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp12sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp12cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp12Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome12))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp13Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp13Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp13Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp13Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp13Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp13sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp13cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp13Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome13))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp14Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp14Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp14Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp14Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp14Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp14sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp14cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp14Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome14))
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp15Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp15Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp15Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp15Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp15Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp15sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp15cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp15Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	//
 
 	nLin := nLin + 1
 	@nlin,000 PSAY "|Outros Grupos: "
-	@nlin,078 PSAY "|"
-	@nlin,079 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY Transform(_Grp5Pes,"@E 9999,999.99")
-	@nlin,106 PSAY "|"
-	@nlin,109 PSAY ((_Grp5Pes/_nTQFat)*100) picture "@E 999.99%"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY Transform(_Grp5Css,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp5Pes,"@E 9999,999.99")
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol09+2 PSAY ((_Grp5Pes/_nTQFat)*100) picture "@E 999.99%"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY Transform(_Grp5sDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY Transform(_Grp5cDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY Transform(_Grp5Css,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	
-	@nLin,000 PSAY	"|----------------------------------------------------------------------------- -------------- ------------ --------- ------------|"
+	@nLin,000 PSAY	"|-------------------------------------------------------------------------------------------- ------------ ------------ ---------- -------------- ------------ --------- ------------- ------------- --------------|"
 	nLin := nLin + 1
 	
 	@nLin,000 PSAY "|Total  Sub-Regiao"
-	@nlin,078 PSAY "|"
-	@nLin,079 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
-	@nlin,093 PSAY "|"
-	@nLin,094 PSAY _nTQFat	PICTURE "@E 9999,999.99"
-	@nlin,106 PSAY "|"
-	@nlin,116 PSAY "|"
-	@nLin,118 PSAY _nTCFat	PICTURE "@E 999,999.99"
-	@nLin,129 PSAY "|"
+	@nlin,nCol07 PSAY "|"
+	@nlin,nCol07+1 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
+	@nlin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY _nTQFat	PICTURE "@E 9999,999.99"
+	@nlin,nCol09 PSAY "|"
+	@nlin,nCol10 PSAY "|"
+	@nlin,nCol10+2 PSAY _nTCsDSR	PICTURE "@E 999,999.99"
+	@nlin,nCol11 PSAY "|"
+	@nlin,nCol11+2 PSAY _nTCcDSR	PICTURE "@E 999,999.99"
+	@nlin,nCol12 PSAY "|"
+	@nlin,nCol12+2 PSAY _nTCFat	PICTURE "@E 999,999.99"
+	@nlin,nCol13 PSAY "|"
 	nLin := nLin + 1
 	
-	@nLin,000 PSAY	"|----------------------------------------------------------------------------- -------------- ------------ --------- ------------|"
-	nLin := nLin + 1
-	
-	@nLin,000 PSAY 	"|Total  DSR (Total Comissão(A) / Dias Úteis(B) * DSR(C) = Valor Final(D))"
-	@nlin,078 PSAY "|"
-	//@nLin,079 PSAY	_nTVFat	PICTURE "@E 99,999,999.99"
-	if len(aDSR) > 0
-		@nLin,079 PSAY	"(A)"
-		@nLin,082 PSAY	_nTCFat	PICTURE "@E 999,999.99"
-	endif
-	@nlin,093 PSAY "|"
-	if len(aDSR) > 0
-		@nLin,094 PSAY	"(B)"
-		@nLin,097 PSAY	aDSR[3]	PICTURE "@E 999,999"
-	endif
-	@nlin,106 PSAY "|"
-	if len(aDSR) > 0
-		@nLin,107 PSAY	"(C)"
-		@nlin,110 PSAY aDSR[4] picture "@E 99,999"
-	endif
-	@nlin,116 PSAY "|"
-	if len(aDSR) > 0
-		@nLin,117 PSAY	"(D)"
-		@nLin,120 PSAY	((_nTCFat/aDSR[3])*aDSR[4])	PICTURE "@E 99,999.99"
-	endif
-	@nLin,129 PSAY  "|"
-	nLin := nLin + 1
-
 	@nLin,000 PSAY	cabec02
 	nLin := nLin + 1
 	
@@ -2344,6 +2584,8 @@ STATIC FUNCTION AD0012A
 	_nTVFat		:=	0
 	_nTQFat		:=	0
 	_nTCFat		:=	0
+	_nTCsDSR	:=  0
+	_nTCcDSR	:=  0
 	_Grp1Sms:=0
 	_Grp2Sms:=0
 	_Grp3Sms:=0
@@ -2399,7 +2641,38 @@ STATIC FUNCTION AD0012A
 	_Grp13Css:=0
 	_Grp14Css:=0
 	_Grp15Css:=0
-	//
+	
+	_Grp1cDSR	:=0
+	_Grp2cDSR	:=0
+	_Grp3cDSR	:=0
+	_Grp4cDSR	:=0
+	_Grp5cDSR	:=0
+	_Grp6cDSR	:=0
+	_Grp7cDSR	:=0
+	_Grp8cDSR	:=0
+	_Grp9cDSR	:=0
+	_Grp10cDSR	:=0
+	_Grp11cDSR	:=0
+	_Grp12cDSR	:=0
+	_Grp13cDSR	:=0
+	_Grp14cDSR	:=0
+	_Grp15cDSR	:=0
+
+	_Grp1sDSR	:=0
+	_Grp2sDSR	:=0
+	_Grp3sDSR	:=0
+	_Grp4sDSR	:=0
+	_Grp5sDSR	:=0
+	_Grp6sDSR	:=0
+	_Grp7sDSR	:=0
+	_Grp8sDSR	:=0
+	_Grp9sDSR	:=0
+	_Grp10sDSR	:=0
+	_Grp11sDSR	:=0
+	_Grp12sDSR	:=0
+	_Grp13sDSR	:=0
+	_Grp14sDSR	:=0
+	_Grp15sDSR	:=0
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Finaliza a execucao do relatorio...                                 ³
@@ -2501,12 +2774,13 @@ STATIC FUNCTION AD0012B
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Prepara o cabecalho padrao para o relatorio DEMONSTRATIVO DE VENDA VENDEDOR           ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	cabec02	:=	"|--------------------------------------------------------------------------------------------------------------------------------------------------------|"
-	cabec03	:=	"| GRUPO  NOME                                                                    +-------------------------------+--------------+-------------+----------|"
-	cabec04	:=	"|                   COD/NOME REGIAO     COD PROD   DESCRICAO                     |             PRODUTO           |   Valor      |    Peso     |  Valor   |"
-	cabec05	:=	"|                      COD PROD        DESCRICAO                                 | Prec Medio | Posicao | Tabela |  Faturado    |  Faturado   |Referencia|"
-	cabec06	:=	"|--------------------------------------------------------------------------------------------------------------------------------------------------------|"
 	
+	cabec02	:=	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
+	cabec03	:=	"| GRUPO  NOME                                                                                               +--------------------------------------------------------------+--------------+-------------+----------|"
+	cabec04	:=	"|                   COD/NOME REGIAO     COD PROD   DESCRICAO                                                |             PRODUTO           |   Valor      |    Peso     |   Valor     |    Valor   |   Valor      |"
+	cabec05	:=	"|                      COD PROD        DESCRICAO                                                            | Prec Medio | Posicao | Tabela |  Faturado    |  Faturado   |Prêmio s/ DSR|     DSR    | Prêmio Total |"	
+	cabec06	:=	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
+
 	//           0         1         2         3         4         5         6         7         8         9         10        11        12        13        14        15        16
 	//           01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
 	
@@ -2564,7 +2838,7 @@ STATIC FUNCTION AD0012B
 		Endif
 		
 		
-		If nLin > 60
+		If nLin > 65
 			If	_xVez
 				@nLin,000 PSAY Cabec06
 			Endif
@@ -2575,122 +2849,154 @@ STATIC FUNCTION AD0012B
 		
 		If mv_par05			== 1 .and. _cSuper	!=	TEM1->T1_SUPER
 			//IMPRIMINDO TOTAL POR GRUPOS
-			@nLin,000 PSAY	"+--------------------------------------------------------------------------------------------------------------------------------------------------------+"
+			@nLin,000 PSAY	"+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+"
 			nLin := nLin + 1
 			nLin := nLin + 1
-			@nLin,000 PSAY	"|--------------------------------------------------------------------------------------------------------------------------------------------------------|"
+			@nLin,000 PSAY	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 			nLin := nLin + 1
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome1))
-			@nlin,115 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp1Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp1Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp1Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp1sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp1cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp1Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1
 
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome2))
-			@nlin,115 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp2Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp2Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp2Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp2sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp2cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp2Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome3))
-			@nlin,115 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp3Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp3Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp3Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp3sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp3cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp3Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1
 
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome4))
-			@nlin,115 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp4Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp4Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp4Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp4sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp4cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp4Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1
 
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome5))
-			@nlin,115 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp6Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp6Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp6Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp6sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp6cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp6Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1
 
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome6))
-			@nlin,115 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp7Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp7Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp7Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp7sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp7cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp7Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			//Everson - 19/05/2021. Chamado 14094.
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome7))
-			@nlin,115 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp8Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp8Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp8Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp8sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp8cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp8Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome8))
-			@nlin,115 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp9Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp9Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp9Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp9sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp9cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp9Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome9))
-			@nlin,115 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp10Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp10Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp10Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp10sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp10cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp10Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome10))
-			@nlin,115 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp11Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp11Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp11Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp11sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp11cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp11Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome11))
-			@nlin,115 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp12Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp12Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp12Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp12sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp12cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp12Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome12))
-			@nlin,115 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp13Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp13Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp13Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp13sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp13cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp13Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome13))
-			@nlin,115 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp14Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp14Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp14Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp14sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp14cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp14Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			
 			@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome14))
-			@nlin,115 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp15Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp15Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp15Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp15sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp15cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp15Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			nLin := nLin + 1	
 			//	
 			
 			@nlin,000 PSAY "|Outros Grupos: "
 			
-			@nlin,115 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
-			@nLin,129 PSAY Transform(_Grp5Pes,"@E 99,999,999.99")
-			@nLin,143 PSAY Transform(_Grp5Css,"@E 99,999.99")
-			@nLin,153 PSAY  "|"
+			@nlin,nCol08+2 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
+			@nlin,nCol09+2 PSAY Transform(_Grp5Pes,"@E 99,999,999.99")
+			@nLin,nCol10+2 PSAY Transform(_Grp5sDSR,"@E 99,999.99")
+			@nLin,nCol11+2 PSAY Transform(_Grp5cDSR,"@E 99,999.99")
+			@nLin,nCol12+2 PSAY Transform(_Grp5Css,"@E 99,999.99")
+			@nLin,nCol13 PSAY  "|"
 			
 			nLin := nLin + 1
 			_nTVFat		:=	0
 			_nTQFat		:=	0
 			_nTCFat		:=	0
+			_nTCsDSR	:=  0
+			_nTCcDSR	:=  0
 			_Grp1Sms:=0
 			_Grp2Sms:=0
 			_Grp3Sms:=0
@@ -2746,7 +3052,38 @@ STATIC FUNCTION AD0012B
 			_Grp13Css:=0
 			_Grp14Css:=0
 			_Grp15Css:=0
-			//
+			
+			_Grp1cDSR	:=0
+			_Grp2cDSR	:=0
+			_Grp3cDSR	:=0
+			_Grp4cDSR	:=0
+			_Grp5cDSR	:=0
+			_Grp6cDSR	:=0
+			_Grp7cDSR	:=0
+			_Grp8cDSR	:=0
+			_Grp9cDSR	:=0
+			_Grp10cDSR	:=0
+			_Grp11cDSR	:=0
+			_Grp12cDSR	:=0
+			_Grp13cDSR	:=0
+			_Grp14cDSR	:=0
+			_Grp15cDSR	:=0
+
+			_Grp1sDSR	:=0
+			_Grp2sDSR	:=0
+			_Grp3sDSR	:=0
+			_Grp4sDSR	:=0
+			_Grp5sDSR	:=0
+			_Grp6sDSR	:=0
+			_Grp7sDSR	:=0
+			_Grp8sDSR	:=0
+			_Grp9sDSR	:=0
+			_Grp10sDSR	:=0
+			_Grp11sDSR	:=0
+			_Grp12sDSR	:=0
+			_Grp13sDSR	:=0
+			_Grp14sDSR	:=0
+			_Grp15sDSR	:=0
 			
 			_cSuper		:=	TEM1->T1_SUPER
 			Cabec2	:=	"Supervisor: " + TEM1->T1_SUPER + " - " + TEM1->T1_NOMSUP
@@ -2770,9 +3107,9 @@ STATIC FUNCTION AD0012B
 		If	_cGRUPON	!=	TEM1->T1_GRUPON		// FAZ A QUEBRA DO GRUPO DE PRODUTO
 			If	_xVez
 				Cabeca2B()
-				@nLin,000 PSAY	"|________________________________________________________________________________________________________________________________________________________|"
+				@nLin,000 PSAY	"|__________________________________________________________________________________________________________________________________________________________________________________________________________________|"
 				nLin := nLin + 1
-				@nLin,000 PSAY	"|________________________________________________________________________________________________________________________________________________________|"
+				@nLin,000 PSAY	"|__________________________________________________________________________________________________________________________________________________________________________________________________________________|"
 				nLin := nLin + 1
 				_xQuebra	:=	.F.
 			Endif
@@ -2787,15 +3124,15 @@ STATIC FUNCTION AD0012B
 			@nLin,104 PSAY "|"
 			@nLin,113 PSAY "|"
 			@nLin,128 PSAY "|"
-			@nLin,142 PSAY "|"
-			@nLin,153 PSAY "|"
+			@nLin,nCol12 PSAY"|"
+			@nLin,nCol13 PSAY "|"
 			nLin := nLin + 1
 			_cVend	:=	""
 		Endif
 		If	_cVend	!=	TEM1->T1_VEND							    //quebra vendedor
 			If	_xVez  .and. _xQuebra			   					// IMPRIME O TOTAL DO VENDEDOR SOMENTE QUANDO NAO É A PRIMEIRA VEZ
 				Cabeca2B()
-				@nLin,000 PSAY	"|--------------------------------------------------------------------------------------------------------------------------------------------------------|"
+				@nLin,000 PSAY	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 				nLin := nLin + 1
 				
 			Endif
@@ -2805,13 +3142,14 @@ STATIC FUNCTION AD0012B
 			@nLin,000 PSAY "|"
 			@nLin,020 PSAY _cVend		PICTURE "@!"
 			@nLin,035 PSAY _cNomeVen		PICTURE "@!"
-			@nLin,081 PSAY "|"
-			@nLin,094 PSAY "|"
-			@nLin,104 PSAY "|"
-			@nLin,113 PSAY "|"
-			@nLin,128 PSAY "|"
-			@nLin,142 PSAY "|"
-			@nLin,153 PSAY "|"
+			
+			@nLin,nCol07 PSAY "|"
+			@nLin,nCol08 PSAY "|"
+			@nLin,nCol09 PSAY "|"
+			@nLin,nCol10 PSAY "|"
+			@nLin,nCol11 PSAY "|"
+			@nLin,nCol12 PSAY "|"
+			@nLin,nCol13 PSAY "|"
 			
 			nLin := nLin + 1
 			_xVez		:=	.T.
@@ -2831,19 +3169,21 @@ STATIC FUNCTION AD0012B
 		@nLin,000 PSAY "|"
 		@nLin,024 PSAY _cProduto		PICTURE "@!"
 		@nLin,040 PSAY _cDescric		PICTURE "@!"
-		@nLin,081 PSAY "|"
-		@nLin,084 PSAY _nVlMedio		PICTURE "@E 99.9999"
-		@nLin,094 PSAY "|"
-		@nLin,097 PSAY _nPos 			PICTURE "999"
-		@nLin,104 PSAY "|"
-		@nLin,106 PSAY _cFaixa			PICTURE "@!"
-		@nLin,113 PSAY "|"
-		@nLin,116 PSAY _nFaturado		PICTURE "@E 9999,999.99"
-		@nLin,128 PSAY "|"
-		@nLin,131 PSAY _nPeso			PICTURE "@E 999,999.99"
-		@nLin,142 PSAY "|"
-		@nLin,143 PSAY _nComiss			PICTURE "@E 99,999.99"
-		@nLin,153 PSAY "|"
+		@nlin,nCol05 PSAY "|"
+		@nlin,nCol05+2 PSAY _nVlMedio		PICTURE "@E 99.9999"
+		@nlin,nCol06 PSAY "|"
+		@nlin,nCol06+2 PSAY _nPos 			PICTURE "999"
+		@nlin,nCol07 PSAY "|"
+		@nlin,nCol07+2 PSAY _cFaixa			PICTURE "@!"
+		@nlin,nCol08 PSAY "|"
+		@nlin,nCol08+1 PSAY _nFaturado		PICTURE "@E 9999,999.99"
+		@nlin,nCol09 PSAY "|"
+		@nlin,nCol09+1 PSAY _nPeso			PICTURE "@E 999,999.99"
+		@nLin,nCol10 PSAY"|"
+		@nLin,nCol11 PSAY"|"
+		@nLin,nCol12 PSAY"|"
+		@nLin,nCol12+2 PSAY _nComiss			PICTURE "@E 99,999.99"
+		@nLin,nCol13 PSAY "|"
 		nLin := nLin + 1
 		SmsGrp (_cGRUPON)
 		_nPesoAc	:=	_nPesoAc 	+ 	_nPeso
@@ -2855,122 +3195,154 @@ STATIC FUNCTION AD0012B
 	Enddo
 	
 	//IMPRIMINDO TOTAL POR GRUPOS
-	@nLin,000 PSAY	"+--------------------------------------------------------------------------------------------------------------------------------------------------------+"
+	@nLin,000 PSAY	"+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+"
 	nLin := nLin + 1
 	nLin := nLin + 1
-	@nLin,000 PSAY	"|--------------------------------------------------------------------------------------------------------------------------------------------------------|"
+	@nLin,000 PSAY	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 	nLin := nLin + 1
 	
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome1))
-	@nlin,115 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp1Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp1Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp1Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp1Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp1sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp1cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp1Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome2))
-	@nlin,115 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp2Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp2Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+2 PSAY Transform(_Grp2Sms,"@E 99,999,999.99")
+	@nlin,nCol09+2 PSAY Transform(_Grp2Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp2sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp2cDSR,"@E 99,999.99")
+	@nLin,nCol12+2 PSAY Transform(_Grp2Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome3))
-	@nlin,115 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp3Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp3Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp3Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp3Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp3sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp3cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp3Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome4))
-	@nlin,115 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp4Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp4Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp4Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp4Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp4sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp4cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp4Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome5))
-	@nlin,115 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp6Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp6Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp6Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp6Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp6sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp6cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp6Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome6))
-	@nlin,115 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp7Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp7Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp7Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp7Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp7sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp7cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp7Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	//Everson - 19/05/2021. Chamado 14094.
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome7))
-	@nlin,115 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp8Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp8Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp8Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp8Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp8sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp8cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp8Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome8))
-	@nlin,115 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp9Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp9Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp9Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp9Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp9sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp9cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp9Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome9))
-	@nlin,115 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp10Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp10Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp10Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp10Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp10sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp10cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp10Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome10))
-	@nlin,115 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp11Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp11Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp11Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp11Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp11sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp11cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp11Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome11))
-	@nlin,115 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp12Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp12Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp12Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp12Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp12sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp12cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp12Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome12))
-	@nlin,115 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp13Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp13Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp13Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp13Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp13sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp13cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp13Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome13))
-	@nlin,115 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp14Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp14Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp14Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp14Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp14sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp14cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp14Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 
 	@nlin,000 PSAY "|Total "+UPPER(alltrim(_cNome14))
-	@nlin,115 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp15Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp15Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp15Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp15Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp15sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp15cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp15Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	nLin := nLin + 1
 	//
 	
 	@nlin,000 PSAY "|Outros Grupos: "
-	@nlin,115 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
-	@nLin,129 PSAY Transform(_Grp5Pes,"@E 99,999,999.99")
-	@nLin,143 PSAY Transform(_Grp5Css,"@E 99,999.99")
-	@nLin,153 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_Grp5Sms,"@E 99,999,999.99")
+	@nlin,nCol09+1 PSAY Transform(_Grp5Pes,"@E 99,999,999.99")
+	@nLin,nCol10+1 PSAY Transform(_Grp5sDSR,"@E 99,999.99")
+	@nLin,nCol11+1 PSAY Transform(_Grp5cDSR,"@E 99,999.99")
+	@nLin,nCol12+1 PSAY Transform(_Grp5Css,"@E 99,999.99")
+	@nLin,nCol13 PSAY  "|"
 	
 	nLin := nLin + 1
 	_nTVFat		:=	0
 	_nTQFat		:=	0
 	_nTCFat		:=	0
+	_nTCsDSR	:=  0
+	_nTCcDSR	:=  0
 	_Grp1Sms:=0
 	_Grp2Sms:=0
 	_Grp3Sms:=0
@@ -3026,7 +3398,38 @@ STATIC FUNCTION AD0012B
 	_Grp13Css:=0
 	_Grp14Css:=0
 	_Grp15Css:=0
-	//
+	
+	_Grp1cDSR	:=0
+	_Grp2cDSR	:=0
+	_Grp3cDSR	:=0
+	_Grp4cDSR	:=0
+	_Grp5cDSR	:=0
+	_Grp6cDSR	:=0
+	_Grp7cDSR	:=0
+	_Grp8cDSR	:=0
+	_Grp9cDSR	:=0
+	_Grp10cDSR	:=0
+	_Grp11cDSR	:=0
+	_Grp12cDSR	:=0
+	_Grp13cDSR	:=0
+	_Grp14cDSR	:=0
+	_Grp15cDSR	:=0
+
+	_Grp1sDSR	:=0
+	_Grp2sDSR	:=0
+	_Grp3sDSR	:=0
+	_Grp4sDSR	:=0
+	_Grp5sDSR	:=0
+	_Grp6sDSR	:=0
+	_Grp7sDSR	:=0
+	_Grp8sDSR	:=0
+	_Grp9sDSR	:=0
+	_Grp10sDSR	:=0
+	_Grp11sDSR	:=0
+	_Grp12sDSR	:=0
+	_Grp13sDSR	:=0
+	_Grp14sDSR	:=0
+	_Grp15sDSR	:=0
 	
 	@nLin,000 PSAY Cabec06
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -3079,18 +3482,18 @@ Static Function Cabeca2B
 	_cTabela	:=		TEM6->T6_TABELA	+ " " +TEM6->T6_TABFAIP
 	_nPesoAc	:=		TEM6->T6_QTDADE
 	_nComiss	:=		(_nPesoAc / 1000) * TEM6->T6_VLFAI
-	@nLin,084 PSAY _nVlMedAc		PICTURE "@E 99.9999"
-	@nLin,094 PSAY "|"
-	@nLin,097 PSAY _nPosi			PICTURE "999"
-	@nLin,104 PSAY "|"
-	@nLin,106 PSAY _cTabela			PICTURE "@!"
-	@nLin,113 PSAY "|"
-	@nLin,116 PSAY _nFatAc			PICTURE "@E 9999,999.99"
-	@nLin,128 PSAY "|"
-	@nLin,131 PSAY _nPesoAc			PICTURE "@E 999,999.99"
-	@nLin,142 PSAY "|"
-	@nLin,143 PSAY _nComiss			PICTURE "@E 99,999.99"
-	@nLin,153 PSAY "|"
+	@nLin,nCol05+2 PSAY _nVlMedAc		PICTURE "@E 99.9999"
+	@nlin,nCol06 PSAY "|"
+	@nLin,nCol06+2 PSAY _nPosi			PICTURE "999"
+	@nLin,nCol09 PSAY "|"
+	@nlin,nCol09 PSAY _cTabela			PICTURE "@!"
+	@nLin,nCol10 PSAY "|"
+	@nlin,nCol10+1 PSAY _nFatAc			PICTURE "@E 9999,999.99"
+	@nLin,nCol08 PSAY "|"
+	@nlin,nCol08+1 PSAY _nPesoAc			PICTURE "@E 999,999.99"
+	@nLin,nCol12 PSAY"|"
+	@nLin,nCol12+2 PSAY _nComiss			PICTURE "@E 99,999.99"
+	@nLin,nCol13 PSAY "|"
 	nLin := nLin + 1
 	_nPesoAc	:=	0
 	_nFatAc		:=	0
@@ -3279,7 +3682,7 @@ Static Function RunRep()
 			If _xVez
 				Totaliz()
 				nlin++
-				@nLin,000 PSAY "|_______________________________________________________________________________________________________________________________________________________________________________________________________________________________|"
+				@nLin,000 PSAY "|__________________________________________________________________________________________________________________________________________________________________________________________________________________|"
 				nlin++
 				//	_nI	:=	_nCi - 1
 			Endif
@@ -3290,11 +3693,11 @@ Static Function RunRep()
 			Endif
 			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 			nLin := 8
-			@nLin,000 PSAY " _______________________________________________________________________________________________________________________________________________________________________________________________________________________________ "
+			@nLin,000 PSAY " __________________________________________________________________________________________________________________________________________________________________________________________________________________ "
 			nlin++
 			@nLin,000 PSAY "|  REGIAO : " + _aVend[_nI][1] + " - " + _aVend[_nI][5]
 			nlin++
-			@nLin,000 PSAY "|_______________________________________________________________________________________________________________________________________________________________________________________________________________________________|"
+			@nLin,000 PSAY "|__________________________________________________________________________________________________________________________________________________________________________________________________________________|"							
 			_xVez	:=	.T.
 			_cVend	:=	_aVend[_nI][1]
 		Endif
@@ -3321,12 +3724,12 @@ Static Function RunRep()
 			Endif
 		Next _nCi
 		nlin++
-		@nLin,000 PSAY "|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
+		@nLin,000 PSAY "|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 		If _nCi > _nVends
 			_nI	:=	_nCi - 1
 			Totaliz()
 			nlin++
-			@nLin,000 PSAY "|_______________________________________________________________________________________________________________________________________________________________________________________________________________________________|"
+			@nLin,000 PSAY "|__________________________________________________________________________________________________________________________________________________________________________________________________________________|"
 			Exit
 		Endif
 	Next _nI
@@ -3366,7 +3769,7 @@ Static Function RunRep()
 Return
 
 Static Function ImpCabec()
-
+	
 	nLin++
 	_nCol		:= 2
 	Cabec10		:=	"|"
@@ -3390,7 +3793,7 @@ Static Function ImpCabec()
 	nLin++
 	@nLin,000 PSAY Cabec10
 	nLin++
-	@nLin,000 PSAY "|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
+	@nLin,000 PSAY "|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 	nLin++
 
 Return
@@ -3399,7 +3802,8 @@ Static Function Totaliz
 
 	nLin++
 	_nIx	:=	_nI - 1
-	@nLin,000 PSAY "|===============================================================================================================================================================================================================================|"
+	
+	@nLin,000 PSAY "|==================================================================================================================================================================================================================|"
 	_Cabec10		:=	"|"
 	_Cabec11		:=	"|"
 	_Cabec12		:=	"|"
@@ -3563,81 +3967,155 @@ Return(_lVnd)
 Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 
 	IF   (_GrpAT$_PERG1)
-		_Grp1Sms+=_nFaturado
-		_Grp1Pes+=_nPeso
-		_Grp1Css+=_nComiss
+		_Grp1Sms	+=_nFaturado
+		_Grp1Pes	+=_nPeso
+		_Grp1Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp1sDSR	:= _Grp1Css*(aDSR[3]/aDSR[2])
+			_Grp1cDSR	:= _Grp1Css-_Grp1sDSR
+		endif
 		
 	ELSEIF (_GrpAT$_PERG2)
-		_Grp2Sms+=_nFaturado
-		_Grp2Pes+=_nPeso
-		_Grp2Css+=_nComiss
-		
+		_Grp2Sms	+=_nFaturado
+		_Grp2Pes	+=_nPeso
+		_Grp2Css	+=_nComiss
+
+		if Len(aDSR) > 0
+			_Grp2sDSR	:= _Grp2Css*(aDSR[3]/aDSR[2])
+			_Grp2cDSR	:= _Grp2Css-_Grp2sDSR
+		endif
+
 	ELSEIF (_GrpAT$_PERG3)
-		_Grp3Sms+=_nFaturado
-		_Grp3Pes+=_nPeso
-		_Grp3Css+=_nComiss
+		_Grp3Sms	+=_nFaturado
+		_Grp3Pes	+=_nPeso
+		_Grp3Css	+=_nComiss
 		
+		if Len(aDSR) > 0
+			_Grp3sDSR	:= _Grp3Css*(aDSR[3]/aDSR[2])
+			_Grp3cDSR	:= _Grp3Css-_Grp3sDSR
+		endif
+
 	ELSEIF (_GrpAT$_PERG4)
-		_Grp4Sms+=_nFaturado
-		_Grp4Pes+=_nPeso
-		_Grp4Css+=_nComiss
+		_Grp4Sms	+=_nFaturado
+		_Grp4Pes	+=_nPeso
+		_Grp4Css	+=_nComiss
 		
+		if Len(aDSR) > 0
+			_Grp4sDSR	:= _Grp4Css*(aDSR[3]/aDSR[2])
+			_Grp4cDSR	:= _Grp4Css-_Grp4sDSR
+		endif
+
 	ELSEIF (_GrpAT$_PERG5)            //Mauricio
-		_Grp6Sms+=_nFaturado
-		_Grp6Pes+=_nPeso
-		_Grp6Css+=_nComiss
+		_Grp6Sms	+=_nFaturado
+		_Grp6Pes	+=_nPeso
+		_Grp6Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp6sDSR	:= _Grp6Css*(aDSR[3]/aDSR[2])
+			_Grp6cDSR	:= _Grp6Css-_Grp6sDSR
+		endif
 	
 	ELSEIF (_GrpAT$_PERG6)            //Mauricio
-		_Grp7Sms+=_nFaturado
-		_Grp7Pes+=_nPeso
-		_Grp7Css+=_nComiss
+		_Grp7Sms	+=_nFaturado
+		_Grp7Pes	+=_nPeso
+		_Grp7Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp7sDSR	:= _Grp7Css*(aDSR[3]/aDSR[2])
+			_Grp7cDSR	:= _Grp7Css-_Grp7sDSR
+		endif
 
 	//Everson - 19/05/2021. Chamado 14094.	
 	ELSEIF (_GrpAT$_PERG7)
-		_Grp8Sms+=_nFaturado
-		_Grp8Pes+=_nPeso
-		_Grp8Css+=_nComiss	
+		_Grp8Sms	+=_nFaturado
+		_Grp8Pes	+=_nPeso
+		_Grp8Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp8sDSR	:= _Grp8Css*(aDSR[3]/aDSR[2])
+			_Grp8cDSR	:= _Grp8Css-_Grp8sDSR
+		endif
 
 	ELSEIF (_GrpAT$_PERG8)
-		_Grp9Sms+=_nFaturado
-		_Grp9Pes+=_nPeso
-		_Grp9Css+=_nComiss
+		_Grp9Sms	+=_nFaturado
+		_Grp9Pes	+=_nPeso
+		_Grp9Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp9sDSR	:= _Grp9Css*(aDSR[3]/aDSR[2])
+			_Grp9cDSR	:= _Grp9Css-_Grp9sDSR
+		endif
 
 	ELSEIF (_GrpAT$_PERG9)
-		_Grp10Sms+=_nFaturado
-		_Grp10Pes+=_nPeso
-		_Grp10Css+=_nComiss	
+		_Grp10Sms	+=_nFaturado
+		_Grp10Pes	+=_nPeso
+		_Grp10Css	+=_nComiss	
+		
+		if Len(aDSR) > 0
+			_Grp10sDSR	:= _Grp10Css*(aDSR[3]/aDSR[2])
+			_Grp10cDSR	:= _Grp10Css-_Grp10sDSR
+		endif
 
 	ELSEIF (_GrpAT$_PERG10)
-		_Grp11Sms+=_nFaturado
-		_Grp11Pes+=_nPeso
-		_Grp11Css+=_nComiss	
+		_Grp11Sms	+=_nFaturado
+		_Grp11Pes	+=_nPeso
+		_Grp11Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp11sDSR	:= _Grp11Css*(aDSR[3]/aDSR[2])
+			_Grp11cDSR	:= _Grp11Css-_Grp11sDSR
+		endif
 
 	ELSEIF (_GrpAT$_PERG11)
 		_Grp12Sms+=_nFaturado
 		_Grp12Pes+=_nPeso
 		_Grp12Css+=_nComiss
 
+		if Len(aDSR) > 0
+			_Grp12sDSR	:= _Grp12Css*(aDSR[3]/aDSR[2])
+			_Grp12cDSR	:= _Grp12Css-_Grp12sDSR
+		endif
+
 	ELSEIF (_GrpAT$_PERG12)
-		_Grp13Sms+=_nFaturado
-		_Grp13Pes+=_nPeso
-		_Grp13Css+=_nComiss
+		_Grp13Sms	+=_nFaturado
+		_Grp13Pes	+=_nPeso
+		_Grp13Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp13sDSR	:= _Grp13Css*(aDSR[3]/aDSR[2])
+			_Grp13cDSR	:= _Grp13Css-_Grp13sDSR
+		endif
 
 	ELSEIF (_GrpAT$_PERG13)
-		_Grp14Sms+=_nFaturado
-		_Grp14Pes+=_nPeso
-		_Grp14Css+=_nComiss	
+		_Grp14Sms	+=_nFaturado
+		_Grp14Pes	+=_nPeso
+		_Grp14Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp14sDSR	:= _Grp14Css*(aDSR[3]/aDSR[2])
+			_Grp14cDSR	:= _Grp14Css-_Grp14sDSR
+		endif
 
 	ELSEIF (_GrpAT$_PERG14)
-		_Grp15Sms+=_nFaturado
-		_Grp15Pes+=_nPeso
-		_Grp15Css+=_nComiss
-	//
-
+		_Grp15Sms	+=_nFaturado
+		_Grp15Pes	+=_nPeso
+		_Grp15Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp15sDSR	:= _Grp15Css*(aDSR[3]/aDSR[2])
+			_Grp15cDSR	:= _Grp15Css-_Grp15sDSR
+		endif
+	
 	ELSE
-		_Grp5Sms+=_nFaturado
-		_Grp5Pes+=_nPeso
-		_Grp5Css+=_nComiss
+		_Grp5Sms	+=_nFaturado
+		_Grp5Pes	+=_nPeso
+		_Grp5Css	+=_nComiss
+		
+		if Len(aDSR) > 0
+			_Grp5sDSR	:= _Grp5Css*(aDSR[3]/aDSR[2])
+			_Grp5cDSR	:= _Grp5Css-_Grp5sDSR
+		endif
 	End
 
 Return
@@ -3719,11 +4197,45 @@ Static Function fAtuTot()
 	_nTot13G4	+= _Grp13Css
 	_nTot14G4	+= _Grp14Css
 	_nTot15G4	+= _Grp15Css
-	//
 	
-	_nTotF1	+= _nTVFat
-	_nTotF2	+= _nTQFat
-	_nTotF3	+= _nTCFat
+	_nTot1SDSR	+= _Grp1sDSR
+	_nTot2SDSR	+= _Grp2sDSR
+	_nTot3SDSR	+= _Grp3sDSR
+	_nTot4SDSR	+= _Grp4sDSR
+	_nTot5SDSR	+= _Grp5sDSR
+	_nTot6SDSR	+= _Grp6sDSR
+	_nTot7SDSR	+= _Grp7sDSR
+	_nTot8SDSR	+= _Grp8sDSR
+	_nTot9SDSR	+= _Grp9sDSR
+	_nTot10SDSR	+= _Grp10sDSR
+	_nTot11SDSR	+= _Grp11sDSR
+	_nTot12SDSR	+= _Grp12sDSR
+	_nTot13SDSR	+= _Grp13sDSR
+	_nTot14SDSR	+= _Grp14sDSR
+	_nTot15SDSR	+= _Grp15sDSR
+
+	_nTot1cDSR	+= _Grp1cDSR
+	_nTot2cDSR	+= _Grp2cDSR
+	_nTot3cDSR	+= _Grp3cDSR
+	_nTot4cDSR	+= _Grp4cDSR
+	_nTot5cDSR	+= _Grp5cDSR
+	_nTot6cDSR	+= _Grp6cDSR
+	_nTot7cDSR	+= _Grp7cDSR
+	_nTot8cDSR	+= _Grp8cDSR
+	_nTot9cDSR	+= _Grp9cDSR
+	_nTot10cDSR	+= _Grp10cDSR
+	_nTot11cDSR	+= _Grp11cDSR
+	_nTot12cDSR	+= _Grp12cDSR
+	_nTot13cDSR	+= _Grp13cDSR
+	_nTot14cDSR	+= _Grp14cDSR
+	_nTot15cDSR	+= _Grp15cDSR
+	
+	_nTotF1		+= _nTVFat
+	_nTotF2		+= _nTQFat
+	_nTotF3		+= _nTCFat
+	_nTotsDSR	+= _nTCsDSR
+	_nTotcDSR	+= _nTCcDSR
+
 
 Return()
 
@@ -3734,7 +4246,7 @@ Static Function fImpTot()
 	
 	nLin := 99
 	
-	If nLin > 67
+	If nLin > 72
 		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 		nLin := 8
 		//	Cabeca2()
@@ -3746,209 +4258,273 @@ Static Function fImpTot()
 	@nLin,000 PSAY	cabec02
 	nLin ++
 	@nlin,000 PSAY "|Vendedor de  : " + MV_PAR03 + " a: " + MV_PAR04 + " "
-	@nLin,129 PSAY  "|"
+	@nlin,nCol13 PSAY  "|"
 	nLin ++
 	@nlin,000 PSAY "|Supervisor de: " + MV_PAR06 + " a: " + MV_PAR07 + " "
-	@nLin,129 PSAY  "|"
+	@nlin,nCol13 PSAY  "|"
 	nLin++
 	
-	@nLin,000 PSAY	"|--------------------------------------------------------------------------------------------------------------------------------|"
+	@nLin,000 PSAY	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome1))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot1G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot1G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot1G2 /_nTot1G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot1G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot1G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot1G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot1G2 /_nTot1G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot1SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot1CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot1G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome2))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot2G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot2G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot2G2 /_nTot2G3)*100) 		picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot2G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot2G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot2G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot2G2 /_nTot2G3)*100) 		picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot2SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot2CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot2G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome3))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot3G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot3G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot3G2 /_nTot3G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot3G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot3G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot3G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot3G2 /_nTot3G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot3SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot3CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot3G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome4))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot4G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot4G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot4G2 /_nTot4G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot4G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot4G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot4G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot4G2 /_nTot4G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot4SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot4CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot4G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome5))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot6G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot6G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot6G2 /_nTot6G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot6G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot6G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot6G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot6G2 /_nTot6G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot6SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot6CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot6G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome6))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot7G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot7G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot7G2 /_nTot7G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot7G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot7G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot7G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot7G2 /_nTot7G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot7SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot7CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot7G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	//Everson - 19/05/2021. Chamado 14094.
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome7))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot8G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot8G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot8G2 /_nTot8G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot8G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot8G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot8G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot8G2 /_nTot8G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot8SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot8CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot8G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome8))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot9G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot9G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot9G2 /_nTot9G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot9G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot9G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot9G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol09+2 PSAY ((_nTot9G2 /_nTot9G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot9SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot9CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot9G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome9))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot10G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot10G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot10G2 /_nTot10G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot10G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot10G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot10G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot10G2 /_nTot10G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot10SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot10CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot10G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome10))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot11G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot11G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot11G2 /_nTot11G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot11G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot11G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot11G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot11G2 /_nTot11G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot11SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot11CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot11G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome11))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot12G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot12G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot12G2 /_nTot12G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot12G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot12G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot12G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot12G2 /_nTot12G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot12SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot12CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot12G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome12))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot13G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot13G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot13G2 /_nTot13G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot13G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot13G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot13G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot13G2 /_nTot13G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot13SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot13CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot13G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome13))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot14G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot14G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot14G2 /_nTot14G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot14G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot14G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot14G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot14G2 /_nTot14G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot14SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot14CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot14G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 
 	nLin ++
 	@nlin,000 PSAY "|Total Geral "+UPPER(alltrim(_cNome14))
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot15G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot15G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot15G2 /_nTot15G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot15G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot15G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot15G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot15G2 /_nTot15G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot15SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot15CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot15G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	//
 	
 	nLin++
 	@nlin,000 PSAY "|Total Geral Outros Grupos: "
-	@nLin,078 PSAY  "|"
-	@nlin,079 PSAY Transform(_nTot5G1,"@E 99,999,999.99")
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY Transform(_nTot5G2,"@E 9999,999.99")
-	@nLin,106 PSAY  "|"
-	@nlin,108 PSAY ((_nTot5G2 /_nTot5G3)*100) 	picture "@E 999.99%"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY Transform(_nTot5G4,"@E 999,999.99")
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY Transform(_nTot5G1,"@E 99,999,999.99")
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY Transform(_nTot5G2,"@E 9999,999.99")
+	@nlin,nCol09 PSAY  "|"
+	@nLin,nCol09+2 PSAY ((_nTot5G2 /_nTot5G3)*100) 	picture "@E 999.99%"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY Transform(_nTot5SDSR,"@E 999,999.99")
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY Transform(_nTot5CDSR,"@E 999,999.99")
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY Transform(_nTot5G4,"@E 999,999.99")
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
-	@nLin,000 PSAY	"|--------------------------------------------------------------------------------------------------------------------------------|"
+	@nLin,000 PSAY	"|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|"
 	
 	nLin ++
 	@nLin,000 PSAY 	"|Total Geral"
-	@nLin,078 PSAY  "|"
-	@nLin,079 PSAY	_nTotF1	PICTURE "@E 99,999,999.99"
-	@nLin,093 PSAY  "|"
-	@nLin,094 PSAY	_nTotF2	PICTURE "@E 9999,999.99"
-	@nLin,106 PSAY  "|"
-	@nLin,116 PSAY  "|"
-	@nLin,118 PSAY	_nTotF3	PICTURE "@E 999,999.99"
-	@nLin,129 PSAY  "|"
+	@nlin,nCol07 PSAY  "|"
+	@nlin,nCol07+1 PSAY	_nTotF1	PICTURE "@E 99,999,999.99"
+	@nlin,nCol08 PSAY  "|"
+	@nlin,nCol08+1 PSAY	_nTotF2	PICTURE "@E 9999,999.99"
+	@nlin,nCol09 PSAY  "|"
+	@nlin,nCol10 PSAY  "|"
+	@nlin,nCol10+2 PSAY _nTotSDSR PICTURE "@E 999,999.99"
+	@nlin,nCol11 PSAY  "|"
+	@nlin,nCol11+2 PSAY _nTotCDSR PICTURE "@E 999,999.99"
+	@nlin,nCol12 PSAY  "|"
+	@nlin,nCol12+2 PSAY	_nTotF3	PICTURE "@E 999,999.99"
+	@nlin,nCol13 PSAY  "|"
 	
 	nLin ++
 	@nLin,000 PSAY	cabec02
@@ -4301,6 +4877,8 @@ STATIC FUNCTION AD0012EX
 		_nTVFat		:=	0
 		_nTQFat		:=	0
 		_nTCFat		:=	0
+		_nTCsDSR	:=  0
+		_nTCcDSR	:=  0
 		_xQuebra	:=	.F.
 		While !EOF()
 			If lAbortPrint
@@ -4498,6 +5076,8 @@ STATIC FUNCTION AD0012EX
 					_nTVFat		:=	0
 					_nTQFat		:=	0
 					_nTCFat		:=	0
+					_nTCsDSR	:=  0
+					_nTCcDSR	:=  0
 					_Grp1Sms:=0
 					_Grp2Sms:=0
 					_Grp3Sms:=0
@@ -4590,10 +5170,20 @@ STATIC FUNCTION AD0012EX
 				_nTFaturado :=  TEM6->T6_FATUR
 				_nTPeso 	:=  TEM6->T6_QTDADE
 				_nTComiss 	:=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
+
+				if Len(aDSR) > 0
+					_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+					_nTComCDSR	:= _nTComiss-_nTComSDSR
+				endif
 			else
 				_nTFaturado +=  TEM6->T6_FATUR
 				_nTPeso 	+=  TEM6->T6_QTDADE
 				_nTComiss 	+=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
+
+				if Len(aDSR) > 0
+					_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+					_nTComCDSR	:= _nTComiss-_nTComSDSR
+				endif
 			endif
 			_cGRUPON	:=		TEM6->T6_GRUPON
 			_cNOMEGN	:=		TEM6->T6_NOMEGN //LEFT(TEM6->T6_NOMEGN,15)
@@ -4621,6 +5211,9 @@ STATIC FUNCTION AD0012EX
 			_nTVFat		:=	_nTVFat	+	_nFaturado
 			_nTQFat		:=	_nTQFat	+	_nPeso
 			_nTCFat		:=	_nTCFat	+	_nComiss
+			
+			_nTCsDSR	:=  _nTCFat*(aDSR[3]/aDSR[2])
+			_nTCcDSR	:=  _nTCFat-_nTCsDSR
 			SmsGrp (_cGRUPON)
 			
 			dbSelectArea("TEM6")
@@ -4779,15 +5372,17 @@ STATIC FUNCTION AD0012EX
 		
 		fImpTotEX()		&& Funcao de Impressao com Total Geral
 		
-		_nTVFat	:=0
-		_nTQFat	:=0
-		_nTCFat	:=0
-		_Grp1Sms:=0
-		_Grp2Sms:=0
-		_Grp3Sms:=0
-		_Grp4Sms:=0
-		_Grp5Sms:=0
-		_Grp6Sms:=0
+		_nTVFat		:=0
+		_nTQFat		:=0
+		_nTCFat		:=0
+		_nTCsDSR	:= 0
+		_nTCcDSR	:= 0
+		_Grp1Sms	:=0
+		_Grp2Sms	:=0
+		_Grp3Sms	:=0
+		_Grp4Sms	:=0
+		_Grp5Sms	:=0
+		_Grp6Sms	:=0
 
 		//Everson - 27/05/2021. Chamado 14631.
 		_Grp7Sms:=0

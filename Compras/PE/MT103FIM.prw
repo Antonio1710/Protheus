@@ -42,6 +42,7 @@
   @history Ticket 62250   - Everson         - 11/10/2021 - Tratamento para salvar a data no pedido de compra.
   @history Ticket 62250   - Everson         - 15/10/2021 - Tratamento para salvar a data no pedido de compra.
   @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
+  @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -454,6 +455,7 @@ User Function MT103FIM()
     UpSDASDB()
   EndIf
   // 
+  u_ChkSDA() // @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
     
   RestArea(aAreaSE1)
 	RestArea(aAreaSF1)
@@ -2118,7 +2120,13 @@ Static Function UpSDASDB()
   Local _aItensSDB := {} 
   Local cLocZAM    := GetMV("MV_#LOCZAM",,"PROD")
   Local aAreaSD1   := SD1->( GetArea() )
+  Local aAreaSF1   := SF1->( GetArea() )
   Local aAreaSA2   := SA2->( GetArea() )
+  Local nX
+
+  PRIVATE lMsErroAuto := .F.// variável que define que o help deve ser gravado no arquivo de log e que as informações estão vindo à partir da rotina automática.
+  Private lMsHelpAuto	:= .T.    // força a gravação das informações de erro em array para manipulação da gravação ao invés de gravar direto no arquivo temporário 
+  Private lAutoErrNoFile := .T. 
 
   /////////////////////////////////
   // PROJETO INDUSTRIALIZAÇÃO 
@@ -2132,7 +2140,8 @@ Static Function UpSDASDB()
 
       If AllTrim(SA2->A2_XTIPO) == '4' // Terceiro
 
-        SD1->( dbsetorder(1) )
+        SD1->( dbGoTop() )
+        SD1->( dbsetorder(1) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_COD, D1_ITEM, R_E_C_N_O_, D_E_L_E_T_
         If SD1->( dbSeek(FWxFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA) )
 
           Do While SD1->(!EOF()) .and. SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA) == SD1->(D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA)
@@ -2166,18 +2175,41 @@ Static Function UpSDASDB()
               aAdd(_aItensSDB, aitSDB)
 
               //Executa o endereçamento do item
+              nModAux := nModulo
+              nModulo := 4
+
+              aAreaSF1 := SF1->( GetArea() )
+              aAreaSD1 := SD1->( GetArea() )
+              
               lMSErroAuto := .F.
               MATA265(aCabSDA, _aItensSDB, 3)
+              
+              RestArea( aAreaSF1 )
+              RestArea( aAreaSD1 )
+
+              nModulo := nModAux
 
               If lMSErroAuto
 
-                u_GrLogZBE( msDate(), TIME(), cUserName," RETORNO INDUSTRIALIZACAO - ENDERECAMENTO AUTOMATICO","CONTROLADORIA","MT103FIM",;
-                "ENDERECAMENTO AUTOMATICO NO RETORNO DA INDUSTRIALIZACAO NAO REALIZADO - MATA265", ComputerName(), LogUserName() )
+                u_GrLogZBE( msDate(), TIME(), cUserName,"ENDERECAMENTO AUTOMATICO NO RETORNO DA INDUSTRIALIZACAO NAO REALIZADO - MATA265","CONTROLADORIA","MT103FIM",;
+                "NF/SERIE/FORNECE " + SF1->F1_DOC + "/" + SF1->F1_SERIE + "/" + SF1->F1_FORNECE + " PRODUTO/ARMAZEM/ENDERECO " + SD1->D1_COD + "/" + SD1->D1_LOCAL + "/" + cLocZAM, ComputerName(), LogUserName() )
 
-                Alert("Endereçamento automático não realizado! Informe a controladoria...")
+                aLog := GetAutoGrLog()
+
+                //grava as informações de log no arquivo especificado			
+                For nX := 1 To Len(aLog)
+                  u_GrLogZBE( msDate(), TIME(), cUserName,"ENDERECAMENTO AUTOMATICO NO RETORNO DA INDUSTRIALIZACAO NAO REALIZADO - MATA265","CONTROLADORIA","MT103FIM",;
+                  "Linha Error log " + AllTrim(Str(nX)) + " - Erro " + aLog[nX], ComputerName(), LogUserName() )
+                Next nX			
+                    
+                Alert("Endereçamento automático não realizado! Copie e envie a mensagem a seguir para sistemas@adoro.com.br e controladoria@adoro.com.br...")
+
+                lMsErroAuto    := .T. 
+                lMsHelpAuto	   := .F. 
+                lAutoErrNoFile := .F.
 
                 MostraErro()
-
+                
               Else
 
                 u_GrLogZBE( msDate(), TIME(), cUserName," RETORNO INDUSTRIALIZACAO - ENDERECAMENTO AUTOMATICO","CONTROLADORIA","MT103FIM",;
@@ -2205,6 +2237,7 @@ Static Function UpSDASDB()
 
 	//
 
+  RestArea( aAreaSF1 )
   RestArea( aAreaSD1 )
   RestArea( aAreaSA2 )
   
@@ -2259,3 +2292,104 @@ Static Function atlSC7Dt(cForn, cLj, cDoc, cSerie)
   RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} nomeStaticFunction
+  (long_description)
+  @type  Static Function
+  @author FWNM
+  @since 01/12/2021
+  @version version
+  @param param_name, param_type, param_descr
+  @return return_var, return_type, return_description
+  @example
+  (examples)
+  @see (links_or_references)
+/*/
+User Function ChkSDA()
+
+  Local cQuery     := ""
+  Local aCabSDA    := {}
+  Local aItSDB     := {}
+  Local _aItensSDB := {} 
+  Local cLocZAM    := GetMV("MV_#LOCZAM",,"PROD")
+  Local aAreaAtu   := GetArea()
+  Local nX
+
+  PRIVATE lMsErroAuto := .F.// variável que define que o help deve ser gravado no arquivo de log e que as informações estão vindo à partir da rotina automática.
+  Private lMsHelpAuto	:= .T.    // força a gravação das informações de erro em array para manipulação da gravação ao invés de gravar direto no arquivo temporário 
+  Private lAutoErrNoFile := .T. 
+
+  If Select("Work3") > 0
+    Work3->( dbCloseArea() )
+  EndIf
+
+  cQuery := " SELECT DA_FILIAL, DA_PRODUTO, DA_SALDO, DA_LOCAL, DA_NUMSEQ, DA_DOC, DA_SERIE, DA_CLIFOR
+  cQuery += " FROM " + RetSqlName("SDA") + " SDA (NOLOCK)
+  cQuery += " INNER JOIN " + RetSqlName("SA2") + " SA2 (NOLOCK) ON A2_FILIAL='"+FWxFilial("SA2")+"' AND A2_COD=DA_CLIFOR AND A2_LOJA=DA_LOJA AND SA2.D_E_L_E_T_=''
+  cQuery += " WHERE DA_FILIAL='"+FWxFilial("SDA")+"' 
+  cQuery += " AND DA_LOCAL BETWEEN '70' AND '74'
+  cQuery += " AND DA_ORIGEM='SD1'
+  cQuery += " AND DA_TIPONF='N'
+  cQuery += " AND DA_SALDO>0
+  cQuery += " AND SDA.D_E_L_E_T_=''
+  cQuery += " AND A2_XTIPO='4'
+
+  tcQuery cQuery New Alias "Work3"
+
+  aTamSX3	:= TamSX3("DA_SALDO")
+  tcSetField("Work3", "DA_SALDO", aTamSX3[3], aTamSX3[1], aTamSX3[2])
+
+  Work3->( dbGoTop() )
+  Do While Work3->( !EOF() )
+
+    //Cabeçalho com a informação do item e NumSeq que sera endereçado.
+    aCabSDA := {{"DA_PRODUTO" , Work3->DA_PRODUTO    , Nil},;	  
+                {"DA_NUMSEQ"  , Work3->DA_NUMSEQ , Nil}}
+
+    //Dados do item que será endereçado
+    aItSDB := {{"DB_ITEM"	   , "0001"	        , Nil},;                   
+              {"DB_ESTORNO"  , ""	            , Nil},;                   
+              {"DB_LOCALIZ"  , cLocZAM        , Nil},;                   
+              {"DB_DATA"	   , msDate()       , Nil},;                   
+              {"DB_QUANT"    , Work3->DA_SALDO  , Nil}}       
+
+    aAdd(_aItensSDB, aitSDB)
+
+    //Executa o endereçamento do item
+    nModAux := nModulo
+    nModulo := 4
+
+    lMSErroAuto := .F.
+    MATA265(aCabSDA, _aItensSDB, 3)
+    
+    nModulo := nModAux
+
+    If lMSErroAuto
+
+      u_GrLogZBE( msDate(), TIME(), cUserName,"ENDERECAMENTO AUTOMATICO NO RETORNO DA INDUSTRIALIZACAO NAO REALIZADO - MATA265","CONTROLADORIA","CHKSDA",;
+      "NF/SERIE/FORNECE " + SDA->DA_DOC + "/" + SDA->DA_SERIE + "/" + SDA->DA_CLIFOR + " PRODUTO/ARMAZEM/ENDERECO " + SDA->DA_PRODUTO + "/" + SDA->DA_LOCAL + "/" + cLocZAM, ComputerName(), LogUserName() )
+
+      aLog := GetAutoGrLog()
+
+      //grava as informações de log no arquivo especificado			
+      For nX := 1 To Len(aLog)
+        u_GrLogZBE( msDate(), TIME(), cUserName,"ENDERECAMENTO AUTOMATICO NO RETORNO DA INDUSTRIALIZACAO NAO REALIZADO - MATA265","CONTROLADORIA","CHKSDA",;
+        "Linha Error log " + AllTrim(Str(nX)) + " - Erro " + aLog[nX], ComputerName(), LogUserName() )
+      Next nX			
+          
+    Endif
+
+    aCabSDA    := {}
+    aItSDB     := {}
+    _aItensSDB := {} 
+
+    Work3->( dbSkip() )
+
+  EndDo
+
+  If Select("Work3") > 0
+    Work3->( dbCloseArea() )
+  EndIf
+
+  RestArea( aAreaAtu )
+
+Return
