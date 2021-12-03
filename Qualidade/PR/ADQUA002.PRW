@@ -11,7 +11,7 @@
     @history Chamado 8465  - Leonardo P. Monteiro    - 01/08/2021 - Adição do detalhamento das embalagens (ZGA/ZGB).
     @history Chamado 8465  - Leonardo P. Monteiro    - 09/08/2021 - Correção e implementação de melhorias como formatação de campos.
     @history Chamado 18431 - Leonardo P. Monteiro    - 16/08/2021 - Correção no programa para excluir os registros somente após todas as checagens e modificar a mesagem de alerta.
-    @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação. Nova compilação em produção.
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 

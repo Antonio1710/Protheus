@@ -21,7 +21,7 @@
 	@history Ticket  14631  - Everson      - 27/05/2021 - Adiconado totalizador do grupo 6 no txt
 	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
-	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Inclusão das colunas de DSR, valores sem DSR e mudança de orientação na impressão do relatório.
+	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Inclusão das colunas de DSR, valores sem DSR e mudança de orientação na impressão do relatório. Nova compilação em produção.
 	/*/
 User Function ADVEN106R // U_ADVEN106R()
 

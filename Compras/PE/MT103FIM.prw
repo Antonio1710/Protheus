@@ -42,7 +42,7 @@
   @history Ticket 62250   - Everson         - 11/10/2021 - Tratamento para salvar a data no pedido de compra.
   @history Ticket 62250   - Everson         - 15/10/2021 - Tratamento para salvar a data no pedido de compra.
   @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
-  @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
+  @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO. Nova compilação em produção.
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -453,9 +453,9 @@ User Function MT103FIM()
 	// @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
   If nConfirma == 1 .and. (nOpcao == 3 .or. nOpcao == 4) .and. AllTrim(SF1->F1_TIPO) == "N"
     UpSDASDB()
+    u_ChkSDA() // @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
   EndIf
   // 
-  u_ChkSDA() // @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
     
   RestArea(aAreaSE1)
 	RestArea(aAreaSF1)
