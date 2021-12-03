@@ -23,9 +23,10 @@
 	@history Ticket  63537  - Leonardo P. Monteiro - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
 	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Início da estruturação das validações em funções.
 	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validação do item que controla endereço para tornar obrigatório o preenchimento do campo 'Localização'.
-	
-	--------------- Observação ---------------
+	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Preenchimento do endereçamento dos produtos que controlam localização.
 	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
+	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
+
 /*/
 
 User Function MT410TOK()
@@ -130,7 +131,8 @@ User Function MT410TOK()
 	Private _cUM		:= ""
 	Private _cSEGUM		:= ""
 	Private nUM	        := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_UM" })
-	Private _nLocaliz	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCALIZ"  })   	//incluido por Adriana
+	Private _nLocaliz	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCALIZ"  })
+	Private _nLocal		:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCAL"  })
 
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
@@ -2125,7 +2127,16 @@ return
 Static Function fVldLocaliz()
 	IF SF4->F4_ESTOQUE == "S" .AND. _cLocaliz == "S"
 		if Empty(ACOLS[_nX, _nLocaliz])
-			IF IsInCallStack('U_ADVEN002P')  == .T.
+
+			cQuery := " SELECT BF_LOCALIZ FROM "+ RetSqlName("SBF") +" WHERE D_E_L_E_T_='' AND BF_FILIAL='"+ xFilial("SBF") +"' AND BF_PRODUTO='"+ _cProduto +"' AND BF_LOCAL='"+ ACOLS[_nX, _nLocal] +"' AND BF_QUANT > 0; "
+		
+			TcQuery cQuery ALIAS "QBF" NEW
+
+			if qbf->(!eof())
+				ACOLS[_nX, _nLocaliz] := qbf->BF_LOCALIZ
+			else
+
+				IF IsInCallStack('U_ADVEN002P')  == .T.
 					Aadd(aPedidos,{cchave, ;
 					''    , ;
 					''    , ;
@@ -2139,7 +2150,12 @@ Static Function fVldLocaliz()
 					ApMsgInfo('Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!')
 				endif
 
-			lRet := .F.
+				lRet := .F.
+			endif
+
+			qbf->(dbclosearea())
+			
+			
 		endif
 	endif
 
