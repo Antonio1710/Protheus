@@ -17,6 +17,7 @@ Static cFormatRet := "application/json"
     @history Leonardo, 01/08/2021, Chamado 8465 Gravação na tabela ZGA os dados detalhados dos pallets pelo identificador das caixas.
     @history Everson, 05/08/2021, Chamado 4257 Tratamento para alteração de tags do webservice do Edata.
     @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 06/12/2021 - Ajustado o campo de lote para considerar o ShiftNo ao invés PrintedShiftNo.
 
 /*/
 User Function ADQUA001P
@@ -406,20 +407,20 @@ Static Function getPalete(cErro, aDados, cPallete)
                     //63954 - Mudança na regra de quebra dos turnos e lotes.
                     //cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2) //Everson - 29/07/2021. Chamado 4257.
 
-                    //cTurno := oItem:_PrintedShiftNo:TEXT
-                    cTurno := XmlChildEx(oItem,"_PRINTEDSHIFTNO")
+                    //cTurno := oItem:_SHIFTNO:TEXT
+                    cTurno := XmlChildEx(oItem,"_SHIFTNO")
 
-                    // Valida se existe a TAG _PRINTEDSHIFTNO no arquivo para considerar como turno.
+                    // Valida se existe a TAG _SHIFTNO no arquivo para considerar como turno.
                     if valtype(cTurno) != "U"
                         
-                        if !Empty(Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT)))
-                            cTurno := "T"+Alltrim(cValToChar(oItem:_PRINTEDSHIFTNO:TEXT))
+                        if !Empty(Alltrim(cValToChar(oItem:_SHIFTNO:TEXT)))
+                            cTurno := "T"+Substr(Alltrim(cValToChar(oItem:_SHIFTNO:TEXT)),1,1)
                         // Mesmo tendo a TAG, o conteúdo pode vir em branco.
                         else
                             cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2)
                         endif
                     else
-                        // Se a TAG _PRINTEDSHIFTNO não existir, carrega o turno padrão do arquivo.
+                        // Se a TAG _SHIFTNO não existir, carrega o turno padrão do arquivo.
                         cTurno := Substr(Alltrim(cValToChar(oItem:_LOTNO:TEXT)),1,2)
                     endif
 
