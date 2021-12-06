@@ -15,17 +15,18 @@
     (examples)
     @see (links_or_references)
     @chamado 055674 || OS 057082 || CONTROLADORIA || THIAGO || 8439 || RATEIO OFF - LINE
-    @history ticket 5530 - Fernando Macieira - 25/11/2020 - Inclusão Regra de Rateio - Safeeg
-    @history ticket 5566 - Fernando Macieira - 25/11/2020 - Bloqueio Rateio - RNX2
-    @history ticket 9548 - Fernando Macieira - 16/02/2021 - Rotina Copia regra de rateio (Rateio off line) - Não está limpando a flag para importação no novo Sig
+    @history ticket 5530  - Fernando Macieira - 25/11/2020 - Inclusão Regra de Rateio - Safeeg
+    @history ticket 5566  - Fernando Macieira - 25/11/2020 - Bloqueio Rateio - RNX2
+    @history ticket 9548  - Fernando Macieira - 16/02/2021 - Rotina Copia regra de rateio (Rateio off line) - Não está limpando a flag para importação no novo Sig
+    @history ticket 64246 - Fernando Macieira - 03/12/2021 - coloquei asterisco nas rotinas para identificar que são customizadas
 /*/
 User Function CT270BUT()
 
     Local aCT270BUT := {}
 
-    aAdd(aCT270BUT,{"Copia regra rateio" , "U_RunCT270DLB()"   , 0, 6, 0, NIL})
-    aAdd(aCT270BUT,{"Importa regras XLS" , "U_ADCON018P('I')"  , 0, 7, 0, NIL}) // @history ticket 5530 - Fernando Macieira - 25/11/2020 - Inclusão Regra de Rateio - Safeeg
-    aAdd(aCT270BUT,{"Bloqueia regras XLS", "U_ADCON018P('E')"  , 0, 8, 0, NIL}) // @history ticket 5566 - Fernando Macieira - 25/11/2020 - Bloqueio Rateio - RNX2
+    aAdd(aCT270BUT,{"* Copia regra rateio" , "U_RunCT270DLB()"   , 0, 6, 0, NIL})
+    aAdd(aCT270BUT,{"* Importa regras XLS" , "U_ADCON018P('I')"  , 0, 7, 0, NIL}) // @history ticket 5530 - Fernando Macieira - 25/11/2020 - Inclusão Regra de Rateio - Safeeg
+    aAdd(aCT270BUT,{"* Bloqueia regras XLS", "U_ADCON018P('E')"  , 0, 8, 0, NIL}) // @history ticket 5566 - Fernando Macieira - 25/11/2020 - Bloqueio Rateio - RNX2
 
 Return aCT270BUT
 

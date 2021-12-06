@@ -16,6 +16,7 @@
     @see (links_or_references)
     @ticket 5530 - Inclusão Regra de Rateio - Safeeg
     @history ticket 64246 - Fernando Macieira - 24/11/2021 - Correções rotina importação Rateio Off Line
+    @history ticket 64246 - Fernando Macieira - 03/12/2021 - consistências também na exclusão
 /*/
 User Function ADCON018P(cAcao)
 
@@ -316,13 +317,54 @@ Static Function RunImpCTQ(cAcao)
                     
                 EndDo
 
+            // @history ticket 64246 - Fernando Macieira - 03/12/2021 - consistências também na exclusão
+            ElseIf cAcao == "E"
+
+                // Processamento
+                nCount := 0
+                Do While !ft_fEOF() //.and. !lAbortPrint
+                    
+                    MsAguarde({||  },"Consistindo arquivo txt","Linha: " + StrZero(nCount++, 9) )
+                    
+                    cTxt     := ft_fReadLn()
+                    aDadCTQ  := Separa(cTxt, ";")
+
+                    cCTQ_RATEIO := AllTrim(aDadCTQ[2])
+                    cCTQ_SEQUEN := AllTrim(aDadCTQ[14])
+
+                    // Efetuo consistência CTQ
+                    cLog := ""
+                    CTQ->( dbSetOrder(1) ) // CTQ_FILIAL, CTQ_RATEIO, CTQ_SEQUEN, R_E_C_N_O_, D_E_L_E_T_
+                    If CTQ->( !dbSeek(FWxFilial("CTQ")+PadR(cCTQ_RATEIO,TamSX3("CTQ_RATEIO")[1])+PadR(cCTQ_SEQUEN,TamSX3("CTQ_SEQUEN")[1])) )
+                        cLog := "RATEIO+SEQUENCIA não encontrada " + cCTQ_RATEIO + "/" + cCTQ_SEQUEN
+                        GrvTRB(cCTQ_RATEIO, cLog, cTxt)
+                    EndIf
+
+                    cLog := ""
+                    If Len(cCTQ_RATEIO) <> TamSX3("CTQ_RATEIO")[1]
+                        cLog := "RATEIO precisa ser preenchido com zeros a esquerda ou ter tamanho de " + AllTrim(Str(Len(cCTQ_RATEIO)))
+                        GrvTRB(cCTQ_RATEIO, cLog, cTxt)
+                    EndIf
+
+                    cLog := ""
+                    If Len(cCTQ_SEQUEN) <> TamSX3("CTQ_SEQUEN")[1]
+                        cLog := "SEQUÊNCIA precisa ser preenchido com zeros a esquerda ou ter tamanho de " + AllTrim(Str(Len(cCTQ_SEQUEN)))
+                        GrvTRB(cCTQ_RATEIO, cLog, cTxt)
+                    EndIf
+
+                    aDadCTQ := {}
+                    
+                    ft_fSkip()
+                    
+                EndDo
+            
             EndIf
             
             // 
             TRB->( dbGoTop() )
             If TRB->( !EOF() )
                 
-                If msgYesNo("Nenhuma regra foi gerada, pois existem inconsistências! Deseja listá-las agora?")
+                If msgYesNo("Nenhuma regra foi gerada/bloqueada, pois existem inconsistências! Deseja listá-las agora?")
                     ReportCTQ()
                 EndIf
             
@@ -557,7 +599,8 @@ Static Function GrvCTQ(cAcao)
             CTQ->CTQ_CLCPAR := cCTQ_CLCPAR
             CTQ->CTQ_PERCEN := nCTQ_PERCEN
             CTQ->CTQ_STATUS := "1"
-
+            CTQ->CTQ_MSBLQL := "2" // Desbloqueado
+            
         CTQ->( msUnLock() )
 
     ElseIf cAcao == "E"
