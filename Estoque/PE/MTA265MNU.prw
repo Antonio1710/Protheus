@@ -3,7 +3,7 @@
 /*/{Protheus.doc} User Function nomeFunction
     (long_description)
     @type  Function
-    @author user
+    @author Fernando Macieira
     @since 01/12/2021
     @version version
     @param param_name, param_type, param_descr
@@ -11,7 +11,7 @@
     @example
     (examples)
     @see (links_or_references)
-    @history Chamado TI - Leonardo P. Monteiro    - 29/11/2021 - Nova compilação em produção.
+    @history Ticket 62276   - Fer Macieira    - 06/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
 /*/
 User Function MTA265MNU()
 

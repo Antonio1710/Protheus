@@ -13,6 +13,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 62276 - Fernando Macieira - 13/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74
+	@history Ticket 62276 - Fer Macieira      - 06/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
 /*/
 USER FUNCTION MA265TDOK()
 	
@@ -46,12 +47,16 @@ USER FUNCTION MA265TDOK()
 			*/
 			//
 			
-			IF aCols[nCont][nPosData] <> M->DA_DATA   
-			
-				MsgStop("OLÁ " + Alltrim(cUserName) + ", Só é permitido endereçar produto com a mesma data da entrada", "MA265TDOK-02 - VALIDA ENDEREÇAMENTO")
-				lRet        := .F.
+			If !IsInCallStack("u_CHKSDA") // @history Ticket 62276 - Fer Macieira      - 06/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
+
+				IF aCols[nCont][nPosData] <> M->DA_DATA   
 				
-			ENDIF
+					MsgStop("OLÁ " + Alltrim(cUserName) + ", Só é permitido endereçar produto com a mesma data da entrada", "MA265TDOK-02 - VALIDA ENDEREÇAMENTO")
+					lRet        := .F.
+					
+				ENDIF
+
+			EndIf
 			
 		ENDIF
 	NEXT

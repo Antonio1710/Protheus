@@ -42,7 +42,7 @@
   @history Ticket 62250   - Everson         - 11/10/2021 - Tratamento para salvar a data no pedido de compra.
   @history Ticket 62250   - Everson         - 15/10/2021 - Tratamento para salvar a data no pedido de compra.
   @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
-  @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO. Nova compilação em produção.
+  @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
 /*/
 
 STATIC cResponsavel  := SPACE(60)
