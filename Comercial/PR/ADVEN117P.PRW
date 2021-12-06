@@ -13,7 +13,8 @@
     (examples)
     @see (links_or_references)
     @history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Criação de cadastro de DSR.
-    U_ADVEN117P()
+    @history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Gravação de logs de alteração.
+    
 /*/
 
 Static cTitulo := "..:: Cadastro Dias Úteis por Mês ::.."
@@ -58,7 +59,7 @@ Return aRotina
 // InÃ­cio da ViewDef e ModelDef.
 // --------------------------------------------------------------------------------------------------------
 Static Function ModelDef()
- Local oModel		:= MPFormModel():New("mdlADVEN117P",, {|| .T.})
+ Local oModel		:= MPFormModel():New("mdlADVEN117P",, {|| ZHAPos()})
  Local oStrutZHA	:= FWFormStruct(1,"ZHA")
  
  oModel:SetDescription(cTitulo)
@@ -69,6 +70,31 @@ Static Function ModelDef()
 
 return oModel
 
+Static Function ZHAPos()
+
+	Local oModelVld := FWModelActive()
+	
+	Local cPeriodo  := oModelVld:GetValue("CABEC_ZHA", "ZHA_ANOMES")
+	Local nTotDias  := oModelVld:GetValue("CABEC_ZHA", "ZHA_DIATOT")
+	Local nDUteis   := oModelVld:GetValue("CABEC_ZHA", "ZHA_DUTEIS")
+	Local nDSR      := oModelVld:GetValue("CABEC_ZHA", "ZHA_DSR")
+    Local nOper     := oModelVld:GetOperation()
+	
+	Local lRet      := .t.
+
+	DbSelectArea("ZBE")
+	RecLock("ZBE",.T.)
+		Replace ZBE_FILIAL 	   	With xFilial("ZBE")
+		Replace ZBE_DATA 	   	With Date()
+		Replace ZBE_HORA 	   	With Time()
+		Replace ZBE_USUARI	    With Upper(Alltrim(cUserName))
+		Replace ZBE_LOG	        With "ADVEN117P - Alteração de registros"
+		Replace ZBE_PARAME 		With 'Alterado o período'+cPeriodo+",Operação: "+ cValtochar(nOper) +", Dias Totais: "+ cValtochar(nTotDias)+", Dias Úteis: "+ cValtochar(nDUteis)+", Dias DSR: "+ cValtochar(nDSR)
+		Replace ZBE_MODULO	    With "COMERCIAL"
+		Replace ZBE_ROTINA	    With "ADVEN117P" 
+	MsUnlock()
+	
+Return lRet
 
 Static Function viewDef()
  Local oView		:= Nil

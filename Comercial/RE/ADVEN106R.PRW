@@ -23,7 +23,7 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Inclusão das colunas de DSR, valores sem DSR e mudança de orientação na impressão do relatório. Nova compilação em produção.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Atualizações pontuais.
-	
+	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Correção dos valores do DSR para itens sintéticos.
 	/*/
 User Function ADVEN106R // U_ADVEN106R()
 
@@ -513,38 +513,54 @@ User Function ADVEN106R // U_ADVEN106R()
 	
 	nTipo := If(aReturn[4]==1,15,18)
 	
-	aDSR := fGetDSR(MV_PAR02)
+	aDSR := fGetDSR(MV_PAR01, MV_PAR02)
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Inicializa a regua de processamento                                 ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Processa({|| RunCont()})
+	if Len(aDSR) != 0
+		Processa({|| RunCont()})	
+	endif
 	//RunCont()
 
 	//FREEOBJ("oTabSZA")
 Return
 
-Static Function fGetDSR(dDtFim)
+Static Function fGetDSR(dDtIni, dDtFim)
 	Local cQuery 	:= ""
+	Local nReg		:= 0
 	Local aRet 		:= {}
+	Local cDtIni	:= Dtos(dDtIni)
 	Local cDtFim	:= Dtos(dDtFim)
-
-	if !Empty(cDtFim)
+	
+	if !Empty(cDtFim) .and. !Empty(cDtIni) .AND. cDtFim > cDtIni
 		cquery := " SELECT * "
 		cquery += " FROM "+ retsqlname("ZHA") +" "
-		cquery += " WHERE D_E_L_E_T_='' AND ZHA_FILIAL='"+ xfilial("ZHA") +"' AND ZHA_ANOMES='"+ left(cDtFim,4)+"/"+SubStr(cDtfim, 5, 2) +"'; "
+		cquery += " WHERE D_E_L_E_T_='' AND ZHA_FILIAL='"+ xfilial("ZHA") +"' AND  ('"+ cDtFim +"' BETWEEN ZHA_DATINI AND ZHA_DATFIM OR '"+ cDtIni +"' BETWEEN ZHA_DATINI AND ZHA_DATFIM); "
 		
 		TcQuery cquery ALIAS "QZHA" new
+		Count to nReg
+		QZHA->(DBGOTOP())
 
-		if qzha->(!eof())
-			aRet 		:= array(4)
-			aret[1] := QZHA->ZHA_ANOMES
-			aret[2] := QZHA->ZHA_DIATOT
-			aret[3] := QZHA->ZHA_DUTEIS
-			aret[4] := QZHA->ZHA_DSR
+		if nReg == 0
+			MsgStop("Período de DSR não encontrado!", "DSR")
+		elseif nReg >  1
+			MsgStop("Informe um período fechado entre o dia 19 e 18 do mês seguinte!", "Período")
+		elseif nReg == 1
+			if qzha->(!eof())
+				aRet 		:= array(6)
+				aret[1] := QZHA->ZHA_ANOMES
+				aret[2] := QZHA->ZHA_DATINI
+				aret[3] := QZHA->ZHA_DATFIM
+				aret[4] := QZHA->ZHA_DIATOT // 02
+				aret[5] := QZHA->ZHA_DUTEIS // 03
+				aret[6] := QZHA->ZHA_DSR    // 04
+			endif
 		endif
 
 		qzha->(Dbclosearea())
+	else
+		MsgStop("Informe uma data válida para a data de início e final do período!", "Parâmetros")
 	endif
 
 return aRet
@@ -2217,7 +2233,7 @@ STATIC FUNCTION AD0012A
 			_nTComiss 	:=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
 
 			if Len(aDSR) > 0
-				_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+				_nTComSDSR	:= _nTComiss*(aDSR[5]/aDSR[4])
 				_nTComCDSR	:= _nTComiss-_nTComSDSR
 			endif
 
@@ -2230,7 +2246,7 @@ STATIC FUNCTION AD0012A
 			_nTComiss 	+=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
 
 			if Len(aDSR) > 0
-				_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+				_nTComSDSR	:= _nTComiss*(aDSR[5]/aDSR[4])
 				_nTComCDSR	:= _nTComiss-_nTComSDSR
 			endif
 
@@ -2252,8 +2268,8 @@ STATIC FUNCTION AD0012A
 		_nClass		:=		TEM6->T6_CLASS
 		
 		_nComiss	:=		(_nPeso / 1000) * TEM6->T6_VLFAI
-		_nTComsDSR	:= _nComiss*(aDSR[3]/aDSR[2])
-		_nTComcDSR	:= _nComiss-_nTComsDSR
+		_nComsDSR	:= _nComiss*(aDSR[5]/aDSR[4])
+		_nComcDSR	:= _nComiss-_nComsDSR
 
 		if mv_par15 = 1 //Analitico - incluido por Adriana HC para atender chamado 008155 - 19/10/10
 			@nlin,nCol04 PSAY "|"
@@ -2273,9 +2289,9 @@ STATIC FUNCTION AD0012A
 			@nlin,nCol09 PSAY "|"
 			@nlin,nCol09+2 PSAY _nClass			PICTURE "@E 999.99"
 			@nlin,nCol10 PSAY "|"
-			@nlin,nCol10+2 PSAY _nTComSDSR		PICTURE "@E 999,999.99"
+			@nlin,nCol10+2 PSAY _nComSDSR		PICTURE "@E 999,999.99"
 			@nlin,nCol11 PSAY "|"
-			@nlin,nCol11+2 PSAY _nTComCDSR		PICTURE "@E 999,999.99"
+			@nlin,nCol11+2 PSAY _nComCDSR		PICTURE "@E 999,999.99"
 			@nlin,nCol12 PSAY "|"
 			@nlin,nCol12+2 PSAY _nComiss		PICTURE "@E 999,999.99"
 			@nlin,nCol13 PSAY  "|"
@@ -2284,8 +2300,7 @@ STATIC FUNCTION AD0012A
 		_nTVFat		:=	_nTVFat	+	_nFaturado
 		_nTQFat		:=	_nTQFat	+	_nPeso
 		_nTCFat		:=	_nTCFat	+	_nComiss
-
-		_nTCsDSR	:=  _nTCFat*(aDSR[3]/aDSR[2])
+		_nTCsDSR	:=  _nTCFat*(aDSR[5]/aDSR[4])
 		_nTCcDSR	:=  _nTCFat-_nTCsDSR
 
 		SmsGrp (_cGRUPON)
@@ -3166,6 +3181,8 @@ STATIC FUNCTION AD0012B
 		_nFaturado  := 	TEM1->T1_FATUR
 		_nPeso      := 	TEM1->T1_QTDADE
 		_nComiss    :=	TEM1->T1_VALFAIN
+		_nComsDSR	:= _nComiss*(aDSR[5]/aDSR[4])
+		_nComcDSR	:= _nComiss-_nComsDSR	
 		_cTabela	:=	TEM1->T1_TABELA
 		_cGrupo		:=	TEM1->T1_GRPCOM
 		@nLin,000 PSAY "|"
@@ -3182,7 +3199,9 @@ STATIC FUNCTION AD0012B
 		@nlin,nCol09 PSAY "|"
 		@nlin,nCol09+1 PSAY _nPeso			PICTURE "@E 999,999.99"
 		@nLin,nCol10 PSAY"|"
+		@nLin,nCol12+2 PSAY _nComSDSR			PICTURE "@E 99,999.99"
 		@nLin,nCol11 PSAY"|"
+		@nLin,nCol12+2 PSAY _nComCDSR			PICTURE "@E 99,999.99"
 		@nLin,nCol12 PSAY"|"
 		@nLin,nCol12+2 PSAY _nComiss			PICTURE "@E 99,999.99"
 		@nLin,nCol13 PSAY "|"
@@ -3974,7 +3993,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp1Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp1sDSR	:= _Grp1Css*(aDSR[3]/aDSR[2])
+			_Grp1sDSR	:= _Grp1Css*(aDSR[5]/aDSR[4])
 			_Grp1cDSR	:= _Grp1Css-_Grp1sDSR
 		endif
 		
@@ -3984,7 +4003,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp2Css	+=_nComiss
 
 		if Len(aDSR) > 0
-			_Grp2sDSR	:= _Grp2Css*(aDSR[3]/aDSR[2])
+			_Grp2sDSR	:= _Grp2Css*(aDSR[5]/aDSR[4])
 			_Grp2cDSR	:= _Grp2Css-_Grp2sDSR
 		endif
 
@@ -3994,7 +4013,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp3Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp3sDSR	:= _Grp3Css*(aDSR[3]/aDSR[2])
+			_Grp3sDSR	:= _Grp3Css*(aDSR[5]/aDSR[4])
 			_Grp3cDSR	:= _Grp3Css-_Grp3sDSR
 		endif
 
@@ -4004,7 +4023,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp4Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp4sDSR	:= _Grp4Css*(aDSR[3]/aDSR[2])
+			_Grp4sDSR	:= _Grp4Css*(aDSR[5]/aDSR[4])
 			_Grp4cDSR	:= _Grp4Css-_Grp4sDSR
 		endif
 
@@ -4014,7 +4033,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp6Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp6sDSR	:= _Grp6Css*(aDSR[3]/aDSR[2])
+			_Grp6sDSR	:= _Grp6Css*(aDSR[5]/aDSR[4])
 			_Grp6cDSR	:= _Grp6Css-_Grp6sDSR
 		endif
 	
@@ -4024,7 +4043,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp7Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp7sDSR	:= _Grp7Css*(aDSR[3]/aDSR[2])
+			_Grp7sDSR	:= _Grp7Css*(aDSR[5]/aDSR[4])
 			_Grp7cDSR	:= _Grp7Css-_Grp7sDSR
 		endif
 
@@ -4035,7 +4054,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp8Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp8sDSR	:= _Grp8Css*(aDSR[3]/aDSR[2])
+			_Grp8sDSR	:= _Grp8Css*(aDSR[5]/aDSR[4])
 			_Grp8cDSR	:= _Grp8Css-_Grp8sDSR
 		endif
 
@@ -4045,7 +4064,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp9Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp9sDSR	:= _Grp9Css*(aDSR[3]/aDSR[2])
+			_Grp9sDSR	:= _Grp9Css*(aDSR[5]/aDSR[4])
 			_Grp9cDSR	:= _Grp9Css-_Grp9sDSR
 		endif
 
@@ -4055,7 +4074,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp10Css	+=_nComiss	
 		
 		if Len(aDSR) > 0
-			_Grp10sDSR	:= _Grp10Css*(aDSR[3]/aDSR[2])
+			_Grp10sDSR	:= _Grp10Css*(aDSR[5]/aDSR[4])
 			_Grp10cDSR	:= _Grp10Css-_Grp10sDSR
 		endif
 
@@ -4065,7 +4084,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp11Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp11sDSR	:= _Grp11Css*(aDSR[3]/aDSR[2])
+			_Grp11sDSR	:= _Grp11Css*(aDSR[5]/aDSR[4])
 			_Grp11cDSR	:= _Grp11Css-_Grp11sDSR
 		endif
 
@@ -4075,7 +4094,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp12Css+=_nComiss
 
 		if Len(aDSR) > 0
-			_Grp12sDSR	:= _Grp12Css*(aDSR[3]/aDSR[2])
+			_Grp12sDSR	:= _Grp12Css*(aDSR[5]/aDSR[4])
 			_Grp12cDSR	:= _Grp12Css-_Grp12sDSR
 		endif
 
@@ -4085,7 +4104,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp13Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp13sDSR	:= _Grp13Css*(aDSR[3]/aDSR[2])
+			_Grp13sDSR	:= _Grp13Css*(aDSR[5]/aDSR[4])
 			_Grp13cDSR	:= _Grp13Css-_Grp13sDSR
 		endif
 
@@ -4095,7 +4114,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp14Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp14sDSR	:= _Grp14Css*(aDSR[3]/aDSR[2])
+			_Grp14sDSR	:= _Grp14Css*(aDSR[5]/aDSR[4])
 			_Grp14cDSR	:= _Grp14Css-_Grp14sDSR
 		endif
 
@@ -4105,7 +4124,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp15Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp15sDSR	:= _Grp15Css*(aDSR[3]/aDSR[2])
+			_Grp15sDSR	:= _Grp15Css*(aDSR[5]/aDSR[4])
 			_Grp15cDSR	:= _Grp15Css-_Grp15sDSR
 		endif
 	
@@ -4115,7 +4134,7 @@ Static Function SmsGrp (_GrpAT) //SOMA POR GRUPOS
 		_Grp5Css	+=_nComiss
 		
 		if Len(aDSR) > 0
-			_Grp5sDSR	:= _Grp5Css*(aDSR[3]/aDSR[2])
+			_Grp5sDSR	:= _Grp5Css*(aDSR[5]/aDSR[4])
 			_Grp5cDSR	:= _Grp5Css-_Grp5sDSR
 		endif
 	End
@@ -5174,7 +5193,7 @@ STATIC FUNCTION AD0012EX
 				_nTComiss 	:=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
 
 				if Len(aDSR) > 0
-					_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+					_nTComSDSR	:= _nTComiss*(aDSR[5]/aDSR[4])
 					_nTComCDSR	:= _nTComiss-_nTComSDSR
 				endif
 			else
@@ -5183,7 +5202,7 @@ STATIC FUNCTION AD0012EX
 				_nTComiss 	+=  (TEM6->T6_QTDADE / 1000) * TEM6->T6_VLFAI
 
 				if Len(aDSR) > 0
-					_nTComSDSR	:= _nTComiss*(aDSR[3]/aDSR[2])
+					_nTComSDSR	:= _nTComiss*(aDSR[5]/aDSR[4])
 					_nTComCDSR	:= _nTComiss-_nTComSDSR
 				endif
 			endif
@@ -5214,7 +5233,7 @@ STATIC FUNCTION AD0012EX
 			_nTQFat		:=	_nTQFat	+	_nPeso
 			_nTCFat		:=	_nTCFat	+	_nComiss
 			
-			_nTCsDSR	:=  _nTCFat*(aDSR[3]/aDSR[2])
+			_nTCsDSR	:=  _nTCFat*(aDSR[5]/aDSR[4])
 			_nTCcDSR	:=  _nTCFat-_nTCsDSR
 			SmsGrp (_cGRUPON)
 			

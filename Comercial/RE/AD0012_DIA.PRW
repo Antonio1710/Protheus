@@ -21,9 +21,11 @@
 	@history Ticket  14631  - Everson      - 27/05/2021 - Adiconado totalizador do grupo 6 no txt
 	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
+	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Direcionamento do relatório atual para o ADVEN106R.
 	
 	/*/
 User Function AD0012_DIA // U_AD0012_DIA()
+	Local cUserVld		:= Alltrim(SuperGetMV("MV_XUSRECO",,"000835"))
 
 	SetPrvt("AORD,TAMANHO,LIMITE,NOMEPROG,MV_TABPR,NTIPO")
 	SetPrvt("ARETURN,NLASTKEY,NLIN,NITEM,LCONTINUA,M_PAG")
@@ -32,7 +34,7 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	SetPrvt("CABEC6,CABEC7,ATRASO,POSICA,CVEND,ASTRU")
 	SetPrvt("_CNOMTRB,CINDEX,_TOTSAL,_TOTDEV,_CLIENTE,_NOME")
 	SetPrvt("_LOJA,_REGVEND,_cVEND,_PREFIXO,CABEC4,")
-
+	
 	Private _prime 		:= 1
 	Private _nVenders 	:= 0
 	Private _aGrupos	:= {}
@@ -42,16 +44,26 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	Private aHelpSpa 	:= {}
 	Private aHelpEng 	:= {}
 	Private _Eof  		:= CHR(13)+CHR(10)
-	PRIVATE _cFilial 	:= ""
-	PRIVATE _lVnd		:= .F.
+	Private _cFilial 	:= ""
+	Private _lVnd		:= .F.
+
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de geracao de realizado de vendas das regioes')
 	
-	if !__CUSERID$(SuperGetMV("MV_XUSRECO",,"000835"))
+	if !Empty(cUserVld)
+		if __CUSERID$(cUserVld)
+			//MsgAlert("Usuário não autorizado a emitir o relatório na versão descontinuada!", "..:: Erro ::..")
+			if MsgYesNo("Deseja executar o novo (Sim) relatório ou antigo(Não)?", "Relatório de Comissões")
+				U_ADVEN106R()
+				return .f.
+			ENDIF
+		ELSE
+			U_ADVEN106R()
+			return .f.
+		ENDIF
+	else
 		MsgAlert("Usuário não autorizado a emitir o relatório na versão descontinuada!", "..:: Erro ::..")
-
-		return .f.
-	ENDIF
+	Endif
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Variaveis utilizadas para parametros - AD0012                        ³
