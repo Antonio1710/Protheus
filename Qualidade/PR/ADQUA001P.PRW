@@ -18,9 +18,15 @@ Static cFormatRet := "application/json"
     @history Everson, 05/08/2021, Chamado 4257 Tratamento para alteração de tags do webservice do Edata.
     @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
     @history Chamado 63954 - Leonardo P. Monteiro    - 06/12/2021 - Ajustado o campo de lote para considerar o ShiftNo ao invés PrintedShiftNo.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 07/12/2021 - Tratamento de error.log na importação de um pallet com apenas uma caixa. O retorno, quando nessas condições é de um objeto ao invés de uma array.
 
 /*/
 User Function ADQUA001P
+    Local aResult   := {}
+    Local cErro     := ""
+    // Teste
+    //cJsonResp := getPalete(@cErro, @aResult, '907122102000000232')
+
 return Nil
 
 WsRestful inspecaoqualidade Description "Serviço Rest para consultas realizadas pela inspeção da qualidade"
@@ -374,7 +380,7 @@ Static Function getPalete(cErro, aDados, cPallete)
         cErro := "Palete não possui caixas associadas."
         Return .F.
 
-    ElseIf ValType(xCaixas) == "A"
+    ElseIf ValType(xCaixas) == "A" .OR. ValType(xCaixas) == "O"
 
         //Everson - 05/08/2021. Chamado 4257.
         If nOpcTag == 1
@@ -394,7 +400,13 @@ Static Function getPalete(cErro, aDados, cPallete)
             cStatusP  := oXml:_SOAP_ENV_ENVELOPE:_SOAP_ENV_BODY:_NS2_PALLETINFODATA:_PalletStatus:TEXT
 
         EndIf
-     
+
+        IF ValType(xCaixas) == "O"
+            oCaixas := xCaixas
+            xCaixas := {}
+            AADD(xCaixas,oCaixas)
+        endif
+
         //
         cJsonResp += '['
 
