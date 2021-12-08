@@ -12,6 +12,7 @@
     @history Chamado 8465  - Leonardo P. Monteiro    - 09/08/2021 - Correção e implementação de melhorias como formatação de campos.
     @history Chamado 18431 - Leonardo P. Monteiro    - 16/08/2021 - Correção no programa para excluir os registros somente após todas as checagens e modificar a mesagem de alerta.
     @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação. Nova compilação em produção.
+    @history Chamado 63954 - Leonardo P. Monteiro    - 08/12/2021 - Erro na chamada da função procres().
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 
@@ -192,7 +193,7 @@ Return .T.
     @since 31/05/2021
     @version 01
     /*/
-Static Function LEONAR(cErro, cMens, cResponse, cToken, dParData, nReproc)
+Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
 
     //Variáveis.
     Local aArea      := GetArea()

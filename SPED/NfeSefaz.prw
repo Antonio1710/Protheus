@@ -42,6 +42,7 @@
 	@history Ticket 56470   - Abel Babini     - 07/10/2021 - Validação de ambiente Produção x Homologação - validar se trata-se de ambiente de Produção ou Homologação através do nome do ambiente e não mais pelo IP do servidor.
 	@history Ticket     TI  - Fer Macieira    - 13/10/2021 - Consiste modalidade devido mudança sozinho contigência EPEC/DEPEC
 	@history Ticket     TI  - Abel Babini     - 19/10/2021 - Ajuste no Return da validação de ambiente de produção
+	@history Ticket 64961  - Leonardo P. Monteiro   - 08/12/2021 - PROBLEMA PARA FATURAR A NOTA FISCAL DE EXPORTAÇÃO.
 /*/
 User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 
@@ -3280,21 +3281,42 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 								Else
 									aadd(aExp,{})
 									//INICIO ESPECIFICO ADORO TICKET 15969 NF DE SIMPLES REMESSA (CFOP 7949)*/
+									//Correção da array 
 									DbSelectArea("CDL")
 									DbSetOrder(1)
 									DbSeek(xFilial("CDL")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA)
 									While !CDL->(Eof()) .And. CDL->CDL_FILIAL+CDL->CDL_DOC+CDL->CDL_SERIE+CDL->CDL_CLIENT+CDL->CDL_LOJA == xFilial("CDL")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA
 										If CDL->(FieldPos("CDL_PRODNF")) <> 0 .And. CDL->(FieldPos("CDL_ITEMNF")) <> 0 .And. AllTrim(CDL->CDL_PRODNF)+AllTrim(CDL->CDL_ITEMNF) == AllTrim((cAliasSD2)->D2_COD)+AllTrim((cAliasSD2)->D2_ITEM)
 											aDados := {}
+											
+											//Ticket 64961  - Leonardo P. Monteiro   - 08/12/2021 - PROBLEMA PARA FATURAR A NOTA FISCAL DE EXPORTAÇÃO.
+											//01
 											aAdd(aDados,{"ZA02","ufEmbarq"  , IIF(CDL->(FieldPos("CDL_UFEMB"))<>0 , CDL->CDL_UFEMB  ,"") })
-											aAdd(aDados,{"ZA03","xLocEmbarq", IIF(CDL->(FieldPos("CDL_LOCEMB"))<>0, CDL->CDL_LOCEMB ,"") })					
-											aAdd(aDados,{"I51","nDraw", IIF(CDL->(FieldPos("CDL_ACDRAW"))<>0, CDL->CDL_ACDRAW ,"") })
-											aAdd(aDados,{"I53","nRE", IIF(CDL->(FieldPos("CDL_NRREG"))<>0, CDL->CDL_NRREG ,"") })
-											aAdd(aDados,{"I54","chNFe", IIF(CDL->(FieldPos("CDL_CHVEXP"))<>0, CDL->CDL_CHVEXP ,"") })
-											aAdd(aDados,{"I55","qExport", IIF(CDL->(FieldPos("CDL_QTDEXP"))<>0, CDL->CDL_QTDEXP ,"") })
-											aAdd(aDados,{"ZA04","xLocDespacho", IIF(CDL->(FieldPos("CDL_LOCDES"))<>0, CDL->CDL_LOCDES ,"") })	
+											//02
+											aAdd(aDados,{"ZA03","xLocEmbarq", IIF(CDL->(FieldPos("CDL_LOCEMB"))<>0, CDL->CDL_LOCEMB ,"") })
+											//03
+											aAdd(aDados,{"I50","detExport", {} })
+											//For nY := 1 To Len(aExp[nX][3][3][2])
+											
+											//04
+											aAdd(aDados,{"ZA1","exporta", {} })
+											aAdd(aDados[4][3],{"ZA02","UFSaidaPAis"  , IIF(CDL->(FieldPos("CDL_UFEMB"))<>0 , CDL->CDL_UFEMB  ,"") })
+											aAdd(aDados[4][3],{"ZA03","xLocExporta", IIF(CDL->(FieldPos("CDL_LOCEMB"))<>0, CDL->CDL_LOCEMB ,"") })
+											aAdd(aDados[4][3],{"ZA04","xLocDespacho", IIF(CDL->(FieldPos("CDL_LOCDES"))<>0, CDL->CDL_LOCDES ,"") })	
+											
+											//05
+											aAdd(aDados,{"BA02","refNfe", {} })
+											
+											/* Verificar as posições corretas em relação a esses campos.
+											aAdd(aDados,{"I51","nDraw", IIF(CDL->(FieldPos("CDL_ACDRAW"))<>0, CDL->CDL_ACDRAW ,{}) })
+											aAdd(aDados[3][3],{"I53","nRE", IIF(CDL->(FieldPos("CDL_NRREG"))<>0, CDL->CDL_NRREG ,"") })
+											aAdd(aDados[3][3]  ,{"I54","chNFe", IIF(CDL->(FieldPos("CDL_CHVEXP"))<>0, CDL->CDL_CHVEXP ,"") })
+											aAdd(aDados[3][3],{"I55","qExport", IIF(CDL->(FieldPos("CDL_QTDEXP"))<>0, CDL->CDL_QTDEXP ,"") })
+											*/
+
+											//aAdd(aExp[Len(aExp)],aDados)
 										
-											aAdd(aExp[Len(aExp)],aDados)
+											aExp[Len(aExp)] := aDados
 										EndIf
 			
 										CDL->(DbSkip())

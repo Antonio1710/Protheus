@@ -10,15 +10,16 @@
 	@type  Function
 	@author uAbel babini Filhoser
 	@since 11/02/2019 
-	@history CH:045978    - Abel Babini - 25/02/19 | Inclusão de Filtros
-	@history CH:047564    - Abel Babini - 08/02/19 | Inclusão de colunas e novas funcionalidades de recusa Adoro automática na conciliacao de XML´s ja devolvidos e/ou cancelados
-	@history CH:049259    - Abel Babini - 20/05/19 | Ajuste no envio de email e NF´s recusadas 
-	@history CH: TI       - Adriana     - 24/05/2019 Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
-	@history CH:060869    - Abel Babini - 25/08/20 | Ajustar Regra para considerar tambémItens que estão como Pré Nota e acrescentar coluna Status no relatório
-	@history Ticket 11526 - Abel Babini - 26/03/2021 - Ajustar error.log na variavel cDirP
-	@history Ticket 11225 - Abel Babini - 29/03/2021 - Criar novas validação e cruzamentos entre XML, SF1, SD1, SF3, SFT, SE1, SE2
-	@history Ticket 13048 - Abel Babini - 26/04/2021 - Criação de parâmetros para tornar opcional a geração do relatório de conferencia cruzada de tabelas
-	@history Ticket 15290 - Abel Babini - 08/06/2021 - Cria validação se o array possui conteúdo e se o arquivo existe para prevenir error.log
+	@history CH:045978    - Abel Babini     - 25/02/19 | Inclusão de Filtros
+	@history CH:047564    - Abel Babini     - 08/02/19 | Inclusão de colunas e novas funcionalidades de recusa Adoro automática na conciliacao de XML´s ja devolvidos e/ou cancelados
+	@history CH:049259    - Abel Babini     - 20/05/19 | Ajuste no envio de email e NF´s recusadas 
+	@history CH: TI       - Adriana         - 24/05/2019 Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
+	@history CH:060869    - Abel Babini     - 25/08/20 | Ajustar Regra para considerar tambémItens que estão como Pré Nota e acrescentar coluna Status no relatório
+	@history Ticket 11526 - Abel Babini     - 26/03/2021 - Ajustar error.log na variavel cDirP
+	@history Ticket 11225 - Abel Babini     - 29/03/2021 - Criar novas validação e cruzamentos entre XML, SF1, SD1, SF3, SFT, SE1, SE2
+	@history Ticket 13048 - Abel Babini     - 26/04/2021 - Criação de parâmetros para tornar opcional a geração do relatório de conferencia cruzada de tabelas
+	@history Ticket 15290 - Abel Babini     - 08/06/2021 - Cria validação se o array possui conteúdo e se o arquivo existe para prevenir error.log
+	@history Ticket 64960 - Adriano Savoine - 08/12/2021 - Ajustada a variavel cArq pois estava trocada ocorrendo error log mencionado no ticket.
 	/*/
 User Function ADFIS027R()
 
@@ -349,8 +350,9 @@ User Function ADFIS027R()
 		
 		nRet := ShellExecute("open", cArq, "", cDir, 1)
 		//Se houver algum erro.
+		//Ticket 64960 - Ajustada a variavel cArq pois estava trocada ocorrendo error log mencionado no ticket.
 		If nRet <= 32
-			MsgStop("Não foi possível abrir o arquivo " +cDir+cNomeArqP+ ".","RFISR02 - ERRO DE ARQUIVO") //Ticket 11526 - Abel Babini - 26/03/2021 - Ajustar error.log na variavel cDirP para cDir
+			MsgStop("Não foi possível abrir o arquivo " +cDir+cArq+ ".","ADFIS027R - ERRO DE ARQUIVO") //Ticket 11526 - Abel Babini - 26/03/2021 - Ajustar error.log na variavel cDirP para cDir
 		EndIf
 
 		If Alltrim(aRet[3]) == "Área"

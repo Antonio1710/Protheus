@@ -21,6 +21,7 @@
 	@history Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
 	@history Tkt.64073 - ABEL BABINI - 23/11/2021 - Alteração na regra do IPI para não utilizar o campo de valor do IPI, mas calcular o valor baseado na aliquota.
 	@history Tkt.64415 - JONATHAN CARVALHO - 26/11/2021 - Alteração no calculo do IPIC para somar o valor do frete junto.
+	@history Tkt.64992 - JONATHAN CARVALHO - 08/12/2021 - Incluido tratamento para não entrar na integração caso o PC for gerado pela integração com o SAG
 /*/
 User Function MT103PN     
 Local lRet := .T. // ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
@@ -36,6 +37,7 @@ Local cForSF1		:= SF1->F1_FORNECE
 Local cLojSF1		:= SF1->F1_LOJA
 Local dDtESF1		:= SF1->F1_DTDIGIT
 Local dDtEMIS		:= SF1->F1_EMISSAO
+Local nCodigen      := SF1->F1_CODIGEN //Variavel para analiser se o pedido veio do SAG
 Local nVlDesp		:= 0
 Local nRgSC7		:= 0
 Local nValFrPC	:= 0 //Tkt.62460 - ABEL BABINI - 19/10/2021 - Acrescentado o valor do ICMS ST no valor das despesas para que a comparação com o valor do Pedido fique correta
@@ -47,7 +49,7 @@ Local _cSrOri := ""
 Local _cItOri := ""
 Local cQrySD1 := ""
 //FIM Tkt.64171 - ABEL BABINI - 23/11/2021 - Criar validação para garantir que a NF referenciada não foi retornada ainda.
-If l103Class
+If l103Class .and. nCodigen = 0 //Tkt.63294 e Tkt.64992 - Ser for pedido integrado do Sag nÃ£o entra na condiÃ§Ã£o
 	if MAFISRET(,"NF_FRETE") = 0 .and. SF1->F1_FRETE > 0
 		MAFISALT("NF_FRETE", SF1->F1_FRETE, )     
 	Endif
