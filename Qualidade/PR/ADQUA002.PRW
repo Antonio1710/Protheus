@@ -192,7 +192,7 @@ Return .T.
     @since 31/05/2021
     @version 01
     /*/
-Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
+Static Function LEONAR(cErro, cMens, cResponse, cToken, dParData, nReproc)
 
     //Variáveis.
     Local aArea      := GetArea()

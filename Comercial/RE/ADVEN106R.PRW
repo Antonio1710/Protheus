@@ -24,8 +24,9 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Inclusão das colunas de DSR, valores sem DSR e mudança de orientação na impressão do relatório. Nova compilação em produção.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Atualizações pontuais.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Correção dos valores do DSR para itens sintéticos.
+	@history Ticket  64069  - Leonardo P. Monteiro  - 07/12/2021 - Ajuste no totalizador por vendedores. Estava imprimindo em posição incorreta.
 	/*/
-User Function ADVEN106R // U_ADVEN106R()
+User Function ADVEN106R() // U_ADVEN106R()
 
 	SetPrvt("AORD,TAMANHO,LIMITE,NOMEPROG,MV_TABPR,NTIPO")
 	SetPrvt("ARETURN,NLASTKEY,NLIN,NITEM,LCONTINUA,M_PAG")
@@ -60,6 +61,8 @@ User Function ADVEN106R // U_ADVEN106R()
 	Private nCol11	:= 182
 	Private nCol12	:= 196
 	Private nCol13	:= 211
+	Private nQtdTot := 80
+	Private nQtdGer	:= 60
 
 	//MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
 
@@ -1741,7 +1744,7 @@ STATIC FUNCTION AD0012A
 			Endif
 		Endif
 		
-		If nLin > 72 .or. _xQuebra
+		If nLin > nQtdTot .or. _xQuebra
 			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 			nLin := 8
 			Cabeca2()
@@ -2054,10 +2057,10 @@ STATIC FUNCTION AD0012A
 				@nlin,nCol08 PSAY "|"
 				@nlin,nCol08+1 PSAY	_nTQFat	PICTURE "@E 9999,999.99"
 				@nlin,nCol09 PSAY "|"
+				@nlin,nCol10 PSAY "|"
 				@nlin,nCol10+2 PSAY Transform(_nTCsDSR ,"@E 9999,999.99")
 				@nlin,nCol11 PSAY "|"
 				@nlin,nCol11+2 PSAY Transform(_nTCcDSR,"@E 9999,999.99")
-				@nlin,nCol11 PSAY "|"
 				@nlin,nCol12 PSAY "|"
 				@nlin,nCol12+2 PSAY	_nTCFat	PICTURE "@E 999,999.99"
 				@nlin,nCol13 PSAY  "|"
@@ -2855,7 +2858,7 @@ STATIC FUNCTION AD0012B
 		Endif
 		
 		
-		If nLin > 65
+		If nLin > nQtdGer
 			If	_xVez
 				@nLin,000 PSAY Cabec06
 			Endif
@@ -4266,8 +4269,8 @@ Static Function fImpTot()
 	&& Verifica se necessita quebra de pagina e inicia a impressao do quadro final
 	
 	nLin := 99
-	
-	If nLin > 72
+	// Total Geral
+	If nLin > nQtdTot
 		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 		nLin := 8
 		//	Cabeca2()
