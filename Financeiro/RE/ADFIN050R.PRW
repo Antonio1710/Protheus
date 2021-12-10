@@ -46,6 +46,7 @@ Static lErroBI := .f.
 	@history ticket   10451 - Fernando Maciei - 03/05/2021 - Adaptar FIN010 para SGFIN010 dentro do banco DADOSADV
 	@history ticket   14822 - Fernando Maciei - 10/06/2021 - Despesa classificada errada
 	@history ticket   62700 - Leonardo P. Monteiro - 03/11/2021 - Correção da condição de classificação dos títulos como Intercompany. Adicionada a exceção quando os títulos forem do tipo "FOL".
+	@history ticket   64920 - Leonardo P. Monteiro - 07/11/2021 - Melhoria na classificação do tipo de despesas.
 /*/
 User Function ADFIN050R() // U_ADFIN050R()
 
