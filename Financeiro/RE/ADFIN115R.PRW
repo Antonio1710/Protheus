@@ -37,6 +37,7 @@
     @since 15/03/2021
     @version 01
     @history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
+    @history Chamado 65036 - Leonardo P. Monteiro - 09/12/2021 - Correção na passagem de parâmetros para a rotina de geração do relatório como 'Tipo Relatório', 'Retirar Zero' e 'Retirar Col NCC Financeiro'.
 /*/
 user function ADFIN115R()
     Local cTitle    := "..:: Rede e Segmentos ::.."
@@ -920,9 +921,11 @@ Static Function geraRelatorio()
     Private dDtIniFin   := dDTFINDE
     Private dDtFinFin   := dDTFINATE
 
-    Private lFiltroZero := iif(nRETZERO==2,.T., .F.)
-    Private lRetirarNCC := iif(nRETNCC ==2,.T., .F.)
-    Private nTipoRel    := nTPRELAT
+    Private nTipoRel 	:= aScan(aTPRELAT, cTPRELAT)
+    Private lFiltroZero := iif(cRETZERO =="Sim" ,.T., .F.)
+    
+	Private lRetirarNCC := iif(cRETNCC  =="Sim" ,.T., .F.)
+    //Private nTipoRel    := nTPRELAT
 	// *** INICIO VALIDACAO *** //
 
 	nplanfat := aScan(aPLANFAT, cPLANFAT)

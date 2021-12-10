@@ -9,9 +9,10 @@
     @author William Costa
     @since 27/02/2020
     @version 01
-    @history Chamado 8465 - Leonardo P. Monteiro - 04/03/2021 - Inclusão das validações do projeto de exportação.
-    @history Chamado 8465 - Leonardo P. Monteiro - 04/03/2021 - Alteração do campo chave do roteiro para a placa.
-    @history Chamado 8465 - Leonardo P. Monteiro - 18/03/2021 - Valida se o campo Modelo Certificado foi incluso.
+    @history Chamado 8465  - Leonardo P. Monteiro - 04/03/2021 - Inclusão das validações do projeto de exportação.
+    @history Chamado 8465  - Leonardo P. Monteiro - 04/03/2021 - Alteração do campo chave do roteiro para a placa.
+    @history Chamado 8465  - Leonardo P. Monteiro - 18/03/2021 - Valida se o campo Modelo Certificado foi incluso.
+    @history Chamado 64964 - Leonardo P. Monteiro - 08/12/2021 - Torna obrigatório o modelo de certificado somente para a filial de Várzea Paulista.
 /*/
 
 User Function EECPEM44()
@@ -44,9 +45,12 @@ User Function EECPEM44()
 
     ENDIF
     
-    if Empty( M->EE7_XMODCS )
-        lRet    := .F.        
-        MsgStop("[EECPEM44-03] - É necessário informar o Modelo de Certificado para finalizar a inclusão do processo de exportação.")
+    //Chamado 64964 - Leonardo P. Monteiro - 08/12/2021 - Torna obrigatório o modelo de certificado somente para a filial de Várzea Paulista.
+    If (cEmpAnt+cFilAnt)$SuperGetMv("ZZ_PEM4401",,"0102")
+        if Empty( M->EE7_XMODCS )
+            lRet    := .F.        
+            MsgStop("[EECPEM44-03] - É necessário informar o Modelo de Certificado para finalizar a inclusão do processo de exportação.")
+        ENDIF
     ENDIF
 
     DbSelectArea("SC5")
