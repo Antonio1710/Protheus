@@ -15,6 +15,7 @@
 	@history chamado 044314 - Everson Silva     - 31/07/2019 - Remover flag da integração da tabela ZFK (CT-e)
 	@history ticket 14352   - Fernando Macieira - 24/05/2021 - Saldo Negativo
 	@history ticket 18137   - Fernando Macieira - 09/08/2021 - Estorno NF de projeto
+	@history ticket 65120   - Fernando Macieira - 13/12/2021 - Estorno NF de projeto - Acerto arredondamento devido casa decimal
 /*/
 User Function MT103EXC()
 
@@ -124,7 +125,7 @@ Static Function ChkPrjNeg()
 	aAdd( aCampos, {'D1_PROJETO' ,TamSX3("D1_PROJETO")[3]   ,TamSX3("D1_PROJETO")[1]  , 0} )
 	aAdd( aCampos, {'D1_PEDIDO'  ,TamSX3("D1_PEDIDO")[3]    ,TamSX3("D1_PEDIDO")[1]   , 0} )
 	aAdd( aCampos, {'D1_ITEMPC'  ,TamSX3("D1_ITEMPC")[3]    ,TamSX3("D1_ITEMPC")[1]   , 0} )
-	aAdd( aCampos, {'D1_QUANT'   ,TamSX3("D1_QUANT")[3]     ,TamSX3("D1_QUANT")[1]    , 0} )
+	aAdd( aCampos, {'D1_QUANT'   ,TamSX3("D1_QUANT")[3]     ,TamSX3("D1_QUANT")[1]    , TamSX3("D1_QUANT")[2]} ) // @history ticket 65120   - Fernando Macieira - 13/12/2021 - Estorno NF de projeto - Acerto arredondamento devido casa decimal
 	aAdd( aCampos, {'CONSUMO'    ,TamSX3("D1_TOTAL")[3]     ,TamSX3("D1_TOTAL")[1]    , TamSX3("D1_TOTAL")[2]} )
 	aAdd( aCampos, {'SALDO_FUT'  ,TamSX3("D1_TOTAL")[3]     ,TamSX3("D1_TOTAL")[1]    , TamSX3("D1_TOTAL")[2]} )
 

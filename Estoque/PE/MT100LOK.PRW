@@ -48,6 +48,7 @@
 	@history Chamado T.I    - FERNANDO SIGOLI - 03/07/2020 - Projeto manutenção de ativo, ajustado regra para validar Ops somente de controle de estoque/custos
 	@history Ticket 358     - FWNM            - 21/08/2020 - Implementação para diferenciar complemento de ICMS Próprio e ST nos projetos de investimentos
 	@history Chamdo T.I.    - Everson         - 31/03/2021 - Alterada trava de complemento de preço e quantidade.
+	@history Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL.
 /*/ 
 User Function MT100LOK
 
@@ -489,12 +490,12 @@ User Function MT100LOK
 							cQuery += " (SELECT C7_MOEDA FROM "+RetSqlName("SC7")+" C7 WHERE C7_FILIAL = '"+FWxFilial("SC7")+"' AND C7_NUM = '"+cCodpcnf+"' AND C7.D_E_L_E_T_ = ' ' ) MOEDA,"
 							cQuery += " (SELECT M2_MOEDA"+STR(SC7->C7_MOEDA,1)+" FROM "+RetSqlName("SM2")+" M2 WHERE M2_DATA = D1_EMISSAO AND M2.D_E_L_E_T_='' ) TAXA "
 							cQuery += " FROM "+RetSqlName("SD1")+" SD1 "
-							cQuery += " INNER JOIN "+RetSqlName("SF1")+" SF1 ON SD1.D1_DOC = SF1.F1_DOC AND SD1.D1_SERIE = SF1.F1_SERIE AND SF1.F1_FORNECE = SD1.D1_FORNECE AND SF1.F1_LOJA = SF1.F1_LOJA " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
+							cQuery += " INNER JOIN "+RetSqlName("SF1")+" SF1 ON SF1.F1_FILIAL = SD1.D1_FILIAL AND  SD1.D1_DOC = SF1.F1_DOC AND SD1.D1_SERIE = SF1.F1_SERIE AND SF1.F1_FORNECE = SD1.D1_FORNECE AND SF1.F1_LOJA = SD1.D1_LOJA AND SF1.D_E_L_E_T_ = '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli //Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL
 							cQuery += " WHERE D1_FILIAL = '"+FWxFilial("SD1")+"' "
 							cQuery += " AND D1_PEDIDO = '"+cCodpcnf+"' AND D1_ITEMPC = '"+cItepcnf+"' "
-//							cQuery += " AND D1_TES <> ' ' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli 
+							//cQuery += " AND D1_TES <> ' ' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli 
 							cQuery += " AND SF1.F1_STATUS <> '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
-							cQuery += " AND SF1.D_E_L_E_T_ = '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
+							//cQuery += " AND SF1.D_E_L_E_T_ = '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli //Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL
 							cQuery += " AND SD1.D_E_L_E_T_ = '') NOTA "
 							cQuery += " GROUP BY F1_STATUS, D1_FILIAL, D1_PEDIDO, D1_ITEMPC " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
 			
@@ -517,12 +518,12 @@ User Function MT100LOK
 						Else
 							cQuery := " SELECT D1_FILIAL, D1_PEDIDO, D1_ITEMPC, ISNULL(SUM(D1_TOTAL-D1_VALDEV),0) D1_TOTAL "
 							cQuery += " FROM "+RetSqlName("SD1")+" SD1 "
-							cQuery += " INNER JOIN "+RetSqlName("SF1")+" SF1 ON SD1.D1_DOC = SF1.F1_DOC AND SD1.D1_SERIE = SF1.F1_SERIE AND SF1.F1_FORNECE = SD1.D1_FORNECE AND SF1.F1_LOJA = SF1.F1_LOJA " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
+							cQuery += " INNER JOIN "+RetSqlName("SF1")+" SF1 ON SF1.F1_FILIAL = SD1.D1_FILIAL AND SD1.D1_DOC = SF1.F1_DOC AND SD1.D1_SERIE = SF1.F1_SERIE AND SF1.F1_FORNECE = SD1.D1_FORNECE AND SF1.F1_LOJA = SD1.D1_LOJA AND SF1.D_E_L_E_T_ = '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli //Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL
 							cQuery += " WHERE D1_FILIAL = '"+FWxFilial("SD1")+"' "
 							cQuery += " AND D1_PEDIDO = '"+cCodpcnf+"' AND D1_ITEMPC = '"+cItepcnf+"' "
-//							cQuery += " AND D1_TES <> ' ' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
+							//cQuery += " AND D1_TES <> ' ' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
 							cQuery += " AND SF1.F1_STATUS <> '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
-							cQuery += " AND SF1.D_E_L_E_T_ = '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
+							//cQuery += " AND SF1.D_E_L_E_T_ = '' " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli //Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL
 							cQuery += " AND SD1.D_E_L_E_T_ = '' "
 							cQuery += " GROUP BY F1_STATUS,D1_FILIAL, D1_PEDIDO, D1_ITEMPC " // por Adriana em 03/06/2020 - solicitacao do Fernando Sigoli
 				

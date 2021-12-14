@@ -158,6 +158,7 @@ DEFINIÇÃO DE TABELAS
 	@history Ticket 12473                   - Abel Babini - 19/04/2021 - Alteração de alíquotas nos relatórios de crédito outorgado para o mês de abril/2021
 	@history Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
 	@history Ticket 62140										- Abel Babini - 07/10/2021 - Ajustado relatório Porder 3 e adicionado Valores de Dev Serv Industr na Abertura da Gia para Safegg
+	@history Ticket 64836										- Abel Babini - 07/12/2021 - Ajustar query do relatório de Poder de 3s no Relatório de Industriazação de PA para considerar data de digitação e não data de emissão
 	/*/
 
 User Function ADFIS028R()
@@ -17489,11 +17490,15 @@ Static Function xABrw23()
 	WHERE
 			SB6.%notDel%
 		AND SB6.B6_FILIAL = %xFilial:SB6%
-		AND SB6.B6_EMISSAO BETWEEN %Exp:DToS(_dIndTer)% AND %Exp:DToS(_mvpr02)%
+		AND SB6.B6_DTDIGIT BETWEEN %Exp:DToS(_dIndTer)% AND %Exp:DToS(_mvpr02)%
 		AND (SA1.A1_CGC IN %Exp:_cP3Forn% OR SA2.A2_CGC IN %Exp:_cP3Forn% )
 		AND SB1.B1_TIPO NOT IN ('MO')
 		ORDER BY B6_FILIAL,B6_IDENT,B6_DTDIGIT
 	ENDSQL
+
+	//Ticket 64836										- Abel Babini - 07/12/2021 - Ajustar query do relatório de Poder de 3s no Relatório de Industriazação de PA para considerar data de digitação e não data de emissão
+	//AND SB6.B6_EMISSAO BETWEEN %Exp:DToS(_dIndTer)% AND %Exp:DToS(_mvpr02)%
+
 	//Ticket 10417										- Abel Babini - 05/03/2021 - Retirar filtro B1_TIPO NOT IN ('MO') para Relatório de Industrialização de PA, e acrescentado filtro no relatório de Poder de Terceiros
 	//Regra acrescentada => "AND SB1.B1_TIPO NOT IN ('MO')"
 
@@ -18063,7 +18068,7 @@ Static Function Cab23P6()
 	oExcel:AddTable(cFld236,cFld23x6)
 	oExcel:AddColumn(cFld236,cFld23x6,"Filial"  			,1,1) // 01 A
 	oExcel:AddColumn(cFld236,cFld23x6,"Ident.B6"  			,1,1) // 01 A
-	oExcel:AddColumn(cFld236,cFld23x6,"Dt.Emissão"  		,1,1) // 01 A
+	oExcel:AddColumn(cFld236,cFld23x6,"Dt.Digitação"  		,1,1) // 01 A
 	oExcel:AddColumn(cFld236,cFld23x6,"Série" 	 			,1,1) // 01 A
 	oExcel:AddColumn(cFld236,cFld23x6,"NFiscal" 	 		,1,1) // 01 A
 	oExcel:AddColumn(cFld236,cFld23x6,"Cod.Forn."  			,1,1) // 01 A

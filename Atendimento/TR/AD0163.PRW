@@ -11,6 +11,7 @@
 	@history Chamado 4992 - William Costa           - 24/11/2020 - Adicionado no Filtro para ver notas que estão com 'XXXXXX' que são notas denegadas ou Canceladas, e conseguir limpar a Placa delas.
 	@history Chamado 5657 - William Costa           - 30/11/2020 - Voltado versão de limpa placa, pq não deu certo o jeito que foi pensado será feito na tela de Ocorrências de Devoluções.
 	@history ticket  9648 - Fernando Macieira       - 17/02/2021 - variable does not exist CPERG on EPAPERG(AD0163.PRW) 30/11/2020 08:44:35 line : 96
+	@history ticket 64881 - Fernando Sigoli         - 09/12/2021 - Adicionar limpar placa na tela de ocorrencias  
 /*/
 User Function AD0163(xAutoCab,xAutoItens) // U_AD0163() 
 
@@ -55,7 +56,8 @@ User Function AD0163(xAutoCab,xAutoItens) // U_AD0163()
 						 {"Rel. Devol."	          ,'U_AD0016'			  ,0,08},; // rel de fechamento
 						 {"Legenda    "	          ,'Execblock("Legenda")' ,0,09},; 
 						 {"Env. SF.    "          ,'U_envOcorrSF()'	      ,0,10},; 
-						 {"Ped. Não Será Entregue",'U_ADLOG072()'	      ,0,11}}                    
+						 {"Limp. Placa "          ,'ExecBlock("UnRote")'  ,0,11},; //tkt 64881 - Fernando Sigoli - Adicionar limpar placa na tela de ocorrencias  
+						 {"Ped. Não Será Entregue",'U_ADLOG072()'	      ,0,12}}                    
 
 
 	aAdd( aCores , { "C5_MOK = '01' ","BR_VERMELHO" } )
