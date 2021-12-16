@@ -18,14 +18,16 @@
 	@history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio
 	@history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
 	@history ticket      TI - Fernando Macieira - 15/09/2021 - MV_PAR05 no logzbe sem tratativa de conversão data/caracter
+	@history ticket   64740 - Fernando Macieira - 15/12/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
 /*/
 User Function EPCP006()
 
 	Local nOpca  		:= 0
 	Local oDlg          := NIL
-	
+
 	Private cPerg := "PCP006"
-	Private cMV_PAR01, cMV_PAR02, cMV_PAR05
+	Private cMV_PAR01, cMV_PAR02, cMV_PAR03, cMV_PAR04, cMV_PAR05, cMV_PAR06, cMV_PAR07 // @history ticket   64740 - Fernando Macieira - 30/11/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
+	Private lNewEstorno   := GetMV("MV_#KFSDEL",,.T.) // @history ticket   64740 - Fernando Macieira - 30/11/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina de processamento de Estorno de ajuste de inventário customizado')
 
@@ -52,8 +54,22 @@ User Function EPCP006()
 		Return Nil
 	Endif 
 
+	Pergunte(cPerg, .f.) // Chamado n. 058838 || OS 060356 || CONTROLADORIA || FRED_SANTOS || 1196426706 || ROTINA INVENTARIO - FWNM - 10/06/2020
+
+	cMV_PAR01 := MV_PAR01 // do produto
+	cMV_PAR02 := MV_PAR02 // até produto
+	cMV_PAR03 := MV_PAR03 // do inventário
+	cMV_PAR04 := MV_PAR04 // até inventário
+	cMV_PAR05 := MV_PAR05 // data fim inventário
+	cMV_PAR06 := MV_PAR06 // do armazém
+	cMV_PAR07 := MV_PAR07 // até armazém
+
 	If nOpcA == 1	
-		Processa({||PCP006PROC()},,"Analisando os Movimentos Originais...")
+		If lNewEstorno
+			msAguarde({||newPCP006(cMV_PAR01,cMV_PAR02,cMV_PAR03,cMV_PAR04,cMV_PAR06,cMV_PAR07)},,"Estornando movimentação do produto... ") // @history ticket   64740 - Fernando Macieira - 30/11/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
+		Else
+			Processa({||PCP006PROC()},,"Analisando movimentos para estorno...")
+		EndIf
 	Endif 
 
 Return      
@@ -78,6 +94,11 @@ Static Function AjustaSX1()
 	PutSX1(cPerg,"04","Ate o Inventario ","","","mv_ch4","C", 6,0,0,"G","","   ","","","mv_par04"	,""		,""		,""		,"ZZZZZZ"			,""		,""		,""		,"","","","","","","","","",{},{},{})
 	PutSX1(cPerg,"05","Data Fim Invent. ","","","mv_ch5","D",08,0,0,"G","","   ","", "","mv_par05","", "", "", "",    "", "", "", "", "", "", "", "", "", "", "", "", {}, {}, {} )
 
+	// @history ticket   64740 - Fernando Macieira - 15/12/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
+	PutSX1(cPerg,"06","Do Armazem   ","","","mv_ch6","C", TamSX3("NNR_CODIGO")[1],0,0,"G","","   ","","","mv_par06"	,""		,""		,""		,Space(6)			,""		,""		,""		,"","","","","","","","","",{},{},{})
+	PutSX1(cPerg,"07","Ate Armazem  ","","","mv_ch7","C", TamSX3("NNR_CODIGO")[1],0,0,"G","","   ","","","mv_par07"	,""		,""		,""		,"ZZZZZZ"			,""		,""		,""		,"","","","","","","","","",{},{},{})
+	//
+
 Return .T.
 
 /*/{Protheus.doc} nomeStaticFunction
@@ -101,7 +122,6 @@ Static Function PCP006Proc()
 	Local cNumInv,cLog,cCod,cLocal,nTotEnd,nTotSB2,cLocaliz,nQtd,cOp,cLotCtl,cLote,cNumLot,cTm,i
 	Local nCount 		:= 0
 	Local cQuerSD3      
-	Local cAreaSD3
 	Local aMata			:= {} //Array para execucao do ExecAuto   
 	Local aErro 		:= {} 
 	Local aErroSaldo    := {}
@@ -113,15 +133,8 @@ Static Function PCP006Proc()
 	Local cNumOld       := Space(06) 
 	Local aSaldoSBF     := {}
 	Local lSB9 := .F. 
-	Local lSBK := .F.
 
 	Private lMSErroAuto    := .F.  
-
-	Pergunte(cPerg, .f.) // Chamado n. 058838 || OS 060356 || CONTROLADORIA || FRED_SANTOS || 1196426706 || ROTINA INVENTARIO - FWNM - 10/06/2020
-
-	cMV_PAR01 := MV_PAR01
-	cMV_PAR02 := MV_PAR02
-	cMV_PAR05 := MV_PAR05
 
 	// Verifica se a data do inventario e menor que do ultimo fechamento ou MV_DBLQMOV
 	If dDataFec >= MV_PAR05
@@ -129,9 +142,6 @@ Static Function PCP006Proc()
 		Return Nil
 	Endif
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Totaliza registros de digitacao de inventario                          ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	cQuerSD3  := " SELECT D3_NUMINV, D3_TM, D3_COD, D3_UM, D3_QUANT, D3_OP, D3_LOCAL, D3_LOCALIZ, "
 	cQuerSD3  += " D3_CC, D3_EMISSAO, D3_LOTECTL, D3_NUMSERI, D3_NUMLOTE, D3_FLAGINV, D3_DTVALID, "
 	cQuerSD3  += " D3_DOC, D3_NUMSEQ "
@@ -141,7 +151,6 @@ Static Function PCP006Proc()
 	cQuerSD3  += " D3_NUMINV >= '" + MV_PAR03 + "' AND D3_NUMINV <= '" + MV_PAR04 + "' AND " 
 	cQuerSD3  += " D3_NUMINV <> '' AND D3_ESTORNO <> 'S' AND D3_FLAGINV = '2' AND D_E_L_E_T_ <> '*'"
 	cQuerSD3  += " ORDER BY D3_NUMINV, D3_NUMSEQ "
-	//cQuerSD3  := ChangeQuery(cQuerSD3) // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
 
 	If Select("TMPSD3") > 0
 		TMPSD3->(dbCloseArea())
@@ -183,9 +192,7 @@ Static Function PCP006Proc()
 
 			aSaldo  := CalcEst(cCod,cLocal,dDataAte+1)
 			
-			// Chamado n. 058838 || OS 060356 || CONTROLADORIA || FRED_SANTOS || 1196426706 || ROTINA INVENTARIO - FWNM - 10/06/2020
 			nTotSB2 := aSaldo[1]
-			//
 			
 			// Chamado n. 056607 || OS 058077 || CONTROLADORIA || FRED_SANTOS || 8947 || SALDO ESTOQUE - FWNM - 16/03/2020
 			If nTotSB2 < nDif 
@@ -220,21 +227,15 @@ Static Function PCP006Proc()
 				
 		If nAchou == 0
 		
-			//Begin Transaction // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
-		
-				// Inicio do movimentos de estorno
-				While TMPSD3->(!Eof()) .And. cNumInv == TMPSD3->D3_NUMINV
-		
-					cOp		  := TMPSD3->D3_OP		
-					cDoc      := TMPSD3->D3_DOC
-					nQtd      := TMPSD3->D3_QUANT
-							
-					IncProc("Estornando movimentacao do produto: "+cCod)				
+			// Inicio do movimentos de estorno
+			While TMPSD3->(!Eof()) .And. cNumInv == TMPSD3->D3_NUMINV
+	
+				cOp		  := TMPSD3->D3_OP
+				cDoc      := TMPSD3->D3_DOC
+				nQtd      := TMPSD3->D3_QUANT
+						
+				Begin Transaction // @history ticket   64740 - Fernando Macieira - 30/11/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
 
-					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-					//³ Alteracao realizada conforme orientacao da Inteligencia Protheus - 		³
-					//³ Chamado AAXISZ - Limpar o campo C2_DATRF e depois restaura-lo (19/10/06)³
-					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
 					SC2->(DbSetOrder(1))
 					If SC2->(DbSeek(xFilial("SC2")+cOp))
 						dDataSC2 := SC2->C2_DATRF
@@ -248,29 +249,24 @@ Static Function PCP006Proc()
 					Aadd(aMata,{"INDEX"     ,4	      			     ,nil})				   				   										
 					
 					lMSErroAuto := .F.
+					
 					MsExecAuto({|x,y|Mata240(x,y)},aMata,5) //ExecAuto de Estorno
 		
-					If lMSErroAuto  // Se der erro 		   		
-	
+					If lMSErroAuto
+
 						If U_PesqHist(aErro,cNumInv)
 							Aadd(aErro,{cNumInv,5,.F.})
 						Endif						
-	
+
 						If IsBlind()
 							Conout("Erro na gravacao da movimentacao")
 						Endif	
-	
-						//DisarmTransaction() // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
+
+						DisarmTransaction()
 						
-					Else // naum deu erro 
-	
+					Else
+
 						EvalTrigger()
-						//Commit // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
-					
-						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-						//³ Alteracao realizada conforme orientacao da Inteligencia Protheus - 		³
-						//³ Chamado AAXISZ - Restaurar o campo C2_DATRF (19/10/06)					³
-						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
 						SC2->(DbSetOrder(1))
 						If SC2->(DbSeek(xFilial("SC2")+cOp))
 							Reclock("SC2",.F.)
@@ -295,24 +291,17 @@ Static Function PCP006Proc()
 						If U_PesqHist(aErro,cNumInv)
 							Aadd(aErro,{cNumInv,0,.F.})// Processamento OK
 						Endif									
-	
+
 					Endif
-			
-					TMPSD3->(DbSkip())
 
-				Enddo
+				End Transaction 
 		
-			//End Transaction // @history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio 
+				TMPSD3->(DbSkip())
 
+			Enddo
+		
 			If !lMSErroAuto 
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³ Zera Totais do Inventario processado                      ³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ														
 				U_TotalZAM(cNumInv,.T.)	 
-			
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³ Atualiza status de processamento                          ³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 				U_StatusZAM(cLog,cNumInv,.T.)	 
 			Endif		
 	
@@ -509,3 +498,226 @@ Static Function UpSB9(cCod, cLocal, dDataAte)
 	EndIf
 
 Return nQtdB9
+
+/*/{Protheus.doc} Static Function 
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 30/11/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket   64740 - Fernando Macieira - 30/11/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria	
+/*/
+Static Function newPCP006(cProdDe, cProdAte, cInventDe, cInventAte, cArmazDe, cArmazAte)
+
+	Local cSql     := ""
+	Local cQuery   := ""
+	Local lJob     := .t.
+	Local cPergBkp := cPerg
+	Local cPerg300 := "MTA300"
+
+	Local dData2:=GETMV("MV_ULMES")
+	Local dData1:=GETNEWPAR("MV_DBLQMOV",dData2)
+	Local dDataFec:=IIF(dData1>dData2,dData1,dData2)
+
+	// Verifica se a data do inventario e menor que do ultimo fechamento ou MV_DBLQMOV
+	If dDataFec >= MV_PAR05
+		Aviso("Aviso","Data do ultimo fechamento/parametro MV_DBLQMOV deve ser menor que a data final do inventario",{"OK"})
+		Return
+	Endif
+
+	Begin Transaction
+	
+		// DELETO PRODUTOS A ENDEREÇAR/ENDEREÇADOS (SDA)
+		cSql := " DELETE " + RetSqlName("SDA")
+		cSql += " WHERE DA_FILIAL='"+FWxFilial("SDA")+"' 
+		cSql += " AND DA_DATA LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+		cSql += " AND DA_PRODUTO BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+		cSql += " AND DA_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+		cSql += " AND DA_DOC='RATEIO'
+
+		If tcSqlExec(cSql) < 0
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			endIf
+			
+			cQuery := " SELECT R_E_C_N_O_ RECNO, DA_FILIAL, DA_PRODUTO, DA_DOC, DA_NUMSEQ
+			cQuery += " FROM " + RetSqlName("SDA") + " (NOLOCK)
+			cQuery += " WHERE DA_FILIAL='"+FWxFilial("SDA")+"' 
+			cQuery += " AND DA_DATA LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+			cQuery += " AND DA_PRODUTO BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+			cQuery += " AND DA_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+			cQuery += " AND DA_DOC='RATEIO'
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery New Alias "Work"
+
+			Work->( dbGoTop() )
+			Do While Work->( !EOF() )
+
+				SDA->( dbGoTo(Work->RECNO) )
+
+				If SDA->DA_FILIAL == Work->DA_FILIAL .and. SDA->DA_PRODUTO == Work->DA_PRODUTO .and. SDA->DA_DOC == Work->DA_DOC .and. SDA->DA_NUMSEQ == Work->DA_NUMSEQ
+					RecLock("SDA", .F.)
+						SDA->( dbDelete() )
+					SDA->( msUnLock() )
+				EndIf
+
+				Work->( dbSkip() )
+
+			EndDo
+		
+		EndIf
+
+		// DELETO PRODUTOS A ENDEREÇAR/ENDEREÇADOS (SDB)
+		cSql := " DELETE " + RetSqlName("SDB")
+		cSql += " WHERE DB_FILIAL='"+FWxFilial("SDB")+"' 
+		cSql += " AND DB_DATA LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+		cSql += " AND DB_PRODUTO BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+		cSql += " AND DB_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+		cSql += " AND DB_DOC='RATEIO'
+
+		If tcSqlExec(cSql) < 0
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			endIf
+			
+			cQuery := " SELECT R_E_C_N_O_ RECNO, DB_FILIAL, DB_PRODUTO, DB_DOC, DB_NUMSEQ
+			cQuery += " FROM " + RetSqlName("SDB") + " (NOLOCK)
+			cQuery += " WHERE DB_FILIAL='"+FWxFilial("SDA")+"' 
+			cQuery += " AND DB_DATA LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+			cQuery += " AND DB_PRODUTO BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+			cQuery += " AND DB_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+			cQuery += " AND DB_DOC='RATEIO'
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery New Alias "Work"
+
+			Work->( dbGoTop() )
+			Do While Work->( !EOF() )
+
+				SDB->( dbGoTo(Work->RECNO) )
+
+				If SDB->DB_FILIAL == Work->DB_FILIAL .and. SDB->DB_PRODUTO == Work->DB_PRODUTO .and. SDB->DB_DOC == Work->DB_DOC .and. SDB->DB_NUMSEQ == Work->DB_NUMSEQ
+					RecLock("SDB", .F.)
+						SDB->( dbDelete() )
+					SDB->( msUnLock() )
+				EndIf
+
+				Work->( dbSkip() )
+
+			EndDo
+		
+		EndIf
+
+		// Deleto movimentos MATA240 gerados pelo rateio
+		cSql := " DELETE " + RetSqlName("SD3")
+		cSql += " WHERE D3_FILIAL='"+FWxFilial("SD3")+"' 
+		cSql += " AND D3_EMISSAO LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+		cSql += " AND D3_COD BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+		cSql += " AND D3_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+		cSql += " AND D3_DOC='RATEIO'
+
+		If tcSqlExec(cSql) < 0
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			endIf
+			
+			cQuery := " SELECT R_E_C_N_O_ RECNO, D3_FILIAL, D3_COD, D3_DOC, D3_TM, D3_NUMSEQ
+			cQuery += " FROM " + RetSqlName("SD3") + " (NOLOCK)
+			cQuery += " WHERE D3_FILIAL='"+FWxFilial("SD3")+"' 
+			cQuery += " AND D3_EMISSAO LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+			cQuery += " AND D3_COD BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+			cQuery += " AND D3_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+			cQuery += " AND D3_DOC='RATEIO'
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery New Alias "Work"
+
+			Work->( dbGoTop() )
+			Do While Work->( !EOF() )
+
+				SD3->( dbGoTo(Work->RECNO) )
+				If SD3->D3_FILIAL == Work->D3_FILIAL .and. SD3->D3_COD == Work->D3_COD .and. SD3->D3_DOC == Work->D3_DOC .and. SD3->D3_TM == Work->D3_TM .and. SD3->D3_NUMSEQ == Work->D3_NUMSEQ .and. SD3->(Recno()) == Work->RECNO
+					RecLock("SD3", .F.)
+						SD3->( dbDelete() )
+					SD3->( msUnLock() )
+				EndIf
+
+				Work->( dbSkip() )
+
+			EndDo
+
+		EndIf
+
+		// Atualizo status do inventário = 3 = ESTORNADO
+		cSql := " UPDATE " + RetSqlName("ZAM")
+		cSql += " SET ZAM_STATUS='3' 
+		cSql += " WHERE ZAM_FILIAL='"+FWxFilial("ZAM")+"' 
+		cSql += " AND ZAM_NUM BETWEEN '"+cInventDe+"' AND '"+cInventAte+"' 
+		cSql += " AND ZAM_COD BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+		cSql += " AND ZAM_DTATE LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+		cSql += " AND ZAM_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+		cSql += " AND D_E_L_E_T_=''
+
+		If tcSqlExec(cSql) < 0
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			endIf
+			
+			cQuery := " SELECT R_E_C_N_O_ RECNO, ZAM_FILIAL, ZAM_COD, ZAM_NUM
+			cQuery += " FROM " + RetSqlName("ZAM") + " (NOLOCK)
+			cQuery += " WHERE ZAM_FILIAL='"+FWxFilial("ZAM")+"' 
+			cQuery += " AND ZAM_NUM BETWEEN '"+cInventDe+"' AND '"+cInventAte+"' 
+			cQuery += " AND ZAM_COD BETWEEN '"+cProdDe+"' AND '"+cProdAte+"' 
+			cQuery += " AND ZAM_DTATE LIKE '" + Left(DtoS(MV_PAR05),6) + "%'
+			cQuery += " AND ZAM_LOCAL BETWEEN '"+cArmazDe+"' AND '"+cArmazAte+"' 
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery New Alias "Work"
+
+			Work->( dbGoTop() )
+			Do While Work->( !EOF() )
+
+				ZAM->( dbGoTo(Work->RECNO) )
+				If ZAM->ZAM_FILIAL == Work->ZAM_FILIAL .and. ZAM->ZAM_COD == Work->ZAM_COD .and. ZAM->ZAM_NUM == Work->ZAM_NUM .and. ZAM->(Recno()) == Work->RECNO
+					RecLock("ZAM", .F.)
+						ZAM->ZAM_STATUS := "3" // Estornado
+					ZAM->( msUnLock() )
+				EndIf
+
+				Work->( dbSkip() )
+
+			EndDo
+
+		EndIf
+
+	End Transaction
+
+	// Rodo o saldo atual
+	lJob  := .t.
+	cPerg300 := "MTA300"
+
+	Pergunte(cPerg300, .F.)
+		MV_PAR01 := ""
+		MV_PAR02 := "zz"
+		MV_PAR03 := cProdDe
+		MV_PAR04 := cProdAte
+	Pergunte(cPerg300, .F.)
+
+	lMsErroAuto := .F.
+	MSExecAuto({|x| MATA300(x)}, lJob)
+
+	cPerg := cPergBkp
+
+	msgInfo("Estorno realizado com sucesso! O saldo atual dos produtos selecionados também já foram processados! Verifique...")
+	
+Return

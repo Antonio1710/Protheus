@@ -29,6 +29,7 @@
 	@history Everson,  17/05/2021, Ticket 13987 - Validação de tabela de preço e condição de pagamento.
 	@history Everson,  17/09/2021, Ticket 31690 - Tratamento para controle de acesso de usuários da balança SC.
 	@history Everson,  22/09/2021, Ticket TI    - Removido lockbyname.
+	@history Jonathan  14/12/2021, Ticket 64214 - Incluir validação de conexão ao banco do SAG.
 /*/
 User Function PED001B()
 
@@ -354,6 +355,31 @@ Static Function enviStComp()
 	
 Return Nil
 
+/*/{Protheus.doc} testConexao
+	Valida conexão com o banco do SAG.
+	@type  Static Function
+	@author 14/12/2021
+	@since 14/12/2021
+	@version 01
+/*/
+Static Function testConexa(lConexao)
+
+	//Variaveis.
+	Local aArea    := GetArea()
+	Local cQuery   := ""
+
+	//Verificação se o linkedServer esta ativo
+	cQuery := " SELECT * FROM OPENQUERY(SCSRV03, 'SELECT TOP(1) 1 AS CONEXAO FROM ADORO.dbo.VW_ADO_PESAGEM_FRETE_PROTHEUS') " 
+	//
+
+	If TcSqlExec(cQuery) < 0
+		MsgStop("Não foi possível sincronizar com o banco de dados SAG por gentileza reiniciar o processo!!! Caso o problema persista entrar em contato com a T.I", "Erro acesso servidor SAG")
+		lConexao := .F.
+	Endif 
+
+	RestArea(aArea)
+Return Nil
+
 /*/{Protheus.doc} pendenciaNF
 	Carregar dados de pedidos importados, mas não faturados. Chamado 033511.
 	@type  Static Function
@@ -378,186 +404,197 @@ Static Function pendenciaNF()
 	//Local oPink		:= LoadBitmap( GetResources(), "BR_PINK")
 	Local oLaranja 	:= LoadBitmap( GetResources(), "BR_LARANJA")
 	//Local oVioleta  := LoadBitmap( GetResources(), "BR_VIOLETA")
-	
+	Private lConexao := .T.
 	//
 	nQtdReg := 0
+	MsAguarde({|| testConexa(@lConexao) },"Aguarde","Checando a conexão com o servidor 'SAG'...")
+	
 	oQtdReg:Refresh()
 	
 	//Apaga registros do aCols.
 	oRegistros:aCols := {}
 	oRegistros:Refresh()
 	
-	cQuery := ""
-	cQuery += " SELECT  " 
-	cQuery += " TOP 100 C5_EMISSAO, C5_FILIAL, C5_NUM, C5_CLIENTE, C5_LOJACLI, "
-	cQuery += " C5_TIPO, C5_PLACA, C5_GRANJA, C5_GRANJDA, C5_LIBEROK, C5_NOTA, C5_BLQ, " 
-	cQuery += " SUM(C6_QTDVEN) AS C6_QTDVEN, SUM(C6_VALOR) AS C6_VALOR, C5_TRANSP, C5_TPFRETE, C5_UFPLACA, C5_PEDSAG, C5_XLIBSAG, C5_NOTA, C5_SERIE " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("SC5") + " AS SC5 " 
-	cQuery += " INNER JOIN " 
-	cQuery += "  " + RetSqlName("SC6") + "  AS SC6 " 
-	cQuery += " ON C5_FILIAL = C6_FILIAL " 
-	cQuery += " AND C5_NUM = C6_NUM " 
-	cQuery += " WHERE " 
-	cQuery += " SC5.D_E_L_E_T_ = '' " 
-	cQuery += " AND SC6.D_E_L_E_T_ ='' " 
-	cQuery += " AND C5_PEDSAG <> '' " 
-	
-	//
-	If     cCombo2 == "1"
-		cQuery += " AND C5_TABEGEN = 'PO02MVES' "
-		
-	ElseIf cCombo2 == "2"
-		cQuery += " AND C5_TABEGEN = 'PO03MVES' "
-		
-	ElseIf cCombo2 == "3"
-		cQuery += " AND C5_TABEGEN = 'POCAMVTP' "
-		
-	ElseIf cCombo2 == "4"
-		cQuery += " AND ( C5_TABEGEN = 'PO01MVES' OR C5_TABEGEN = 'POCAMVES' ) "
-		
-	ElseIf cCombo2 == "5"
-		cQuery += " AND C5_TABEGEN = 'EC03LOTE' "
-		
-	ElseIf cCombo2 == "6"
-		cQuery += " AND C5_TABEGEN = 'FCCAORAP' "
-		
-	ElseIf cCombo2 == "7"
-		cQuery += " AND C5_TABEGEN = 'PO11MVES' "
-		
-	ElseIf cCombo2 == "8"
-		cQuery += " AND C5_TABEGEN = 'RACAORSA' "
-
-	ElseIf cCombo2 == "9"
-		cQuery += " AND C5_TABEGEN = 'XXXXXXXX' " //Everson - 17/09/2021. Chamado 31690.
-		
-	ElseIf cCombo2 == "10"
-		cQuery += " AND C5_TABEGEN = 'PO14MVES' "
-	
-	ElseIf cCombo2 == "11"
-		cQuery += " AND C5_TABEGEN = 'PO15MVES' "
-
-	// @history Macieira, 18/02/2021, ticket 8897 - Remessa para Criação
-	ElseIf cCombo2 == "12"
-		cQuery += " AND C5_TABEGEN = 'PO16MVES' "
-	//
-
-	EndIf
-	
-	cQuery += " AND C5_NOTA = '' " 
-	cQuery += " AND C5_FILIAL = '" + FWxFilial("SC5") + "' " 
-	cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
-	cQuery += " GROUP BY " 
-	cQuery += " C5_EMISSAO,C5_FILIAL, C5_NUM, C5_CLIENTE,C5_LIBEROK, C5_NOTA, C5_BLQ, C5_TRANSP, C5_TPFRETE, C5_UFPLACA, " 
-	cQuery += " C5_LOJACLI, C5_TIPO, C5_PLACA, C5_GRANJA, C5_GRANJDA, C5_PEDSAG, C5_XLIBSAG, C5_NOTA, C5_SERIE " 
-	cQuery += " ORDER BY C5_NUM DESC " 
-	
-	//
-	If Select("PED_NF") > 0
-		PED_NF->(DbCloseArea())
-		
-	EndIf
-	
-	//Obtém dados do BD Interface.
-	MsAguarde({||DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), "PED_NF", .F., .T.)},"Função pendenciaNF(INTEPEDB)","Carregando registros...")
-	
-	DbSelectArea("PED_NF")
-	PED_NF->(DbGoTop())
-	
-	//Obtém a quantidade de registros.
-	nTotReg := Contar("PED_NF","!EOF()")
-
-	//Configura a quantidade de registros na régua de processamento.
-	ProcRegua(nTotReg)
-
-	//
-	If nTotReg <= 0
-
-		Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
-		oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"})] 	:= ""
-
-		//
-    	oRegistros:Refresh()
-	
-	Else
+	if lConexao
+		cQuery := ""
+		cQuery += " SELECT  " 
+		cQuery += " TOP 100 C5_EMISSAO, C5_FILIAL, C5_NUM, C5_CLIENTE, C5_LOJACLI, "
+		cQuery += " C5_TIPO, C5_PLACA, C5_GRANJA, C5_GRANJDA, C5_LIBEROK, C5_NOTA, C5_BLQ, " 
+		cQuery += " SUM(C6_QTDVEN) AS C6_QTDVEN, SUM(C6_VALOR) AS C6_VALOR, C5_TRANSP, C5_TPFRETE, C5_UFPLACA, C5_PEDSAG, C5_XLIBSAG, C5_NOTA, C5_SERIE " 
+		cQuery += " FROM " 
+		cQuery += " " + RetSqlName("SC5") + " AS SC5 " 
+		cQuery += " INNER JOIN " 
+		cQuery += "  " + RetSqlName("SC6") + "  AS SC6 " 
+		cQuery += " ON C5_FILIAL = C6_FILIAL " 
+		cQuery += " AND C5_NUM = C6_NUM " 
+		cQuery += " WHERE " 
+		cQuery += " SC5.D_E_L_E_T_ = '' " 
+		cQuery += " AND SC6.D_E_L_E_T_ ='' " 
+		cQuery += " AND C5_PEDSAG <> '' " 
 		
 		//
+		If     cCombo2 == "1"
+			cQuery += " AND C5_TABEGEN = 'PO02MVES' "
+			
+		ElseIf cCombo2 == "2"
+			cQuery += " AND C5_TABEGEN = 'PO03MVES' "
+			
+		ElseIf cCombo2 == "3"
+			cQuery += " AND C5_TABEGEN = 'POCAMVTP' "
+			
+		ElseIf cCombo2 == "4"
+			cQuery += " AND ( C5_TABEGEN = 'PO01MVES' OR C5_TABEGEN = 'POCAMVES' ) "
+			
+		ElseIf cCombo2 == "5"
+			cQuery += " AND C5_TABEGEN = 'EC03LOTE' "
+			
+		ElseIf cCombo2 == "6"
+			cQuery += " AND C5_TABEGEN = 'FCCAORAP' "
+			
+		ElseIf cCombo2 == "7"
+			cQuery += " AND C5_TABEGEN = 'PO11MVES' "
+			
+		ElseIf cCombo2 == "8"
+			cQuery += " AND C5_TABEGEN = 'RACAORSA' "
+
+		ElseIf cCombo2 == "9"
+			cQuery += " AND C5_TABEGEN = 'XXXXXXXX' " //Everson - 17/09/2021. Chamado 31690.
+			
+		ElseIf cCombo2 == "10"
+			cQuery += " AND C5_TABEGEN = 'PO14MVES' "
+		
+		ElseIf cCombo2 == "11"
+			cQuery += " AND C5_TABEGEN = 'PO15MVES' "
+
+		// @history Macieira, 18/02/2021, ticket 8897 - Remessa para Criação
+		ElseIf cCombo2 == "12"
+			cQuery += " AND C5_TABEGEN = 'PO16MVES' "
+		//
+
+		EndIf
+		
+		cQuery += " AND C5_NOTA = '' " 
+		cQuery += " AND C5_FILIAL = '" + FWxFilial("SC5") + "' " 
+		cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
+		cQuery += " GROUP BY " 
+		cQuery += " C5_EMISSAO,C5_FILIAL, C5_NUM, C5_CLIENTE,C5_LIBEROK, C5_NOTA, C5_BLQ, C5_TRANSP, C5_TPFRETE, C5_UFPLACA, " 
+		cQuery += " C5_LOJACLI, C5_TIPO, C5_PLACA, C5_GRANJA, C5_GRANJDA, C5_PEDSAG, C5_XLIBSAG, C5_NOTA, C5_SERIE " 
+		cQuery += " ORDER BY C5_NUM DESC " 
+		
+		//
+		If Select("PED_NF") > 0
+			PED_NF->(DbCloseArea())
+			
+		EndIf
+		
+		//Obtém dados do BD Interface.
+		MsAguarde({||DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), "PED_NF", .F., .T.)},"Função pendenciaNF(INTEPEDB)","Carregando registros...")
+		
+		DbSelectArea("PED_NF")
 		PED_NF->(DbGoTop())
-		While ! PED_NF->(Eof())
-			
-			//Incrementa régua de processamento.
-			IncProc("Pedido | " + Alltrim(cValToChar(PED_NF->C5_NUM)))
-			
-			If Alltrim(cValToChar(PED_NF->C5_TIPO)) $("B|D") //Pedido utiliza cadastro de fornecedor.
-				cNome	:=  Posicione("SA2",1,xFilial("SA2") + Alltrim(cValToChar(PED_NF->C5_CLIENTE)) + Alltrim(cValToChar(PED_NF->C5_LOJACLI)),"A2_NOME")
-				
-			Else
-				cNome	:=  Posicione("SA1",1,xFilial("SA1") + Alltrim(cValToChar(PED_NF->C5_CLIENTE)) + Alltrim(cValToChar(PED_NF->C5_LOJACLI)),"A1_NOME")
-				
-			EndIf
+		
+		//Obtém a quantidade de registros.
+		nTotReg := Contar("PED_NF","!EOF()")
 
-			//
+		//Configura a quantidade de registros na régua de processamento.
+		ProcRegua(nTotReg)
+
+		//
+		If nTotReg <= 0
+
+			// Gera linha em branco.
+			fRegLin()
+			
+			/*
 			Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 			oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"})] 	:= DToC(SToD(Alltrim(cValToChar(PED_NF->C5_EMISSAO))))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"  })]  := "-"
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "STOPER"})]  := "-"
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "CLI"   })]  := Alltrim(cValToChar(PED_NF->C5_CLIENTE))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LOJ"   })]  := Alltrim(cValToChar(PED_NF->C5_LOJACLI))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NOM"   })]  := Alltrim(cValToChar(cNome))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"   })]  := Alltrim(cValToChar(PED_NF->C5_NUM))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLQC"})]    := Iif(Alltrim(cValToChar(PED_NF->C5_XLIBSAG)) == "1","Sim","Não")
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLEST"})]   := Iif(blqCrEst(Alltrim(cValToChar(PED_NF->C5_NUM)),1),"Sim","Não")
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLFIN"})]   := Iif(blqCrEst(Alltrim(cValToChar(PED_NF->C5_NUM)),2),"Sim","Não")
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PEDS"})]    := Alltrim(cValToChar(PED_NF->C5_PEDSAG))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPPED" })]  := Alltrim(cValToChar(PED_NF->C5_TIPO))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TRANS"})]   := Alltrim(cValToChar(PED_NF->C5_TRANSP))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPFRT"})]   := Alltrim(cValToChar(PED_NF->C5_TPFRETE))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PLC"   })]  := Alltrim(cValToChar(PED_NF->C5_PLACA))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "UFPLC"})]   := Alltrim(cValToChar(PED_NF->C5_UFPLACA))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "GRJ"   })]  := Alltrim(cValToChar(PED_NF->C5_GRANJA))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "GRJD"  })]  := Alltrim(cValToChar(PED_NF->C5_GRANJDA))
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TES"})]   	:= "-"
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLRUNT"})]  := 0
-			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PROD"})]   	:= "-"
-	    	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLR"   })]  := Val(cValToChar(PED_NF->C6_VALOR))
-	    	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "QTD"   })]  := Val(cValToChar(PED_NF->C6_QTDVEN))
-	    	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NFORI"})]   := "-"
-	    	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SRORI"})]   := "-"
-	    	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ERR"   })]  := "-"
-	    	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPRAD"})]   := "-"
-
-			//	    	
-	    	If Empty(C5_LIBEROK).And.Empty(C5_NOTA) .And. Empty(C5_BLQ) //Pedido aberto.
-				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVerde
-				
-			ElseIf ! Empty(C5_NOTA).Or.C5_LIBEROK=='E' .And. Empty(C5_BLQ) //Pedido encerrado.
-				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVermelho
-				
-			ElseIf ! Empty(C5_LIBEROK).And.Empty(C5_NOTA).And. Empty(C5_BLQ) //Pedido aprovado.
-				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAmarelo
-				
-			ElseIf C5_BLQ == '1' //Bloqueado por regra.
-				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAzul
+			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"})] 	:= ""
 			
-			ElseIf C5_BLQ == '2' //Bloqueado por verba.
-				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oLaranja
-				
-			EndIf
-
+			oRegistros:Refresh()
+			*/
+		Else
+			
 			//
-			PED_NF->(DbSkip())
-			nQtdReg++
-			
-		End
+			PED_NF->(DbGoTop())
+			While ! PED_NF->(Eof())
+				
+				//Incrementa régua de processamento.
+				IncProc("Pedido | " + Alltrim(cValToChar(PED_NF->C5_NUM)))
+				
+				If Alltrim(cValToChar(PED_NF->C5_TIPO)) $("B|D") //Pedido utiliza cadastro de fornecedor.
+					cNome	:=  Posicione("SA2",1,xFilial("SA2") + Alltrim(cValToChar(PED_NF->C5_CLIENTE)) + Alltrim(cValToChar(PED_NF->C5_LOJACLI)),"A2_NOME")
+					
+				Else
+					cNome	:=  Posicione("SA1",1,xFilial("SA1") + Alltrim(cValToChar(PED_NF->C5_CLIENTE)) + Alltrim(cValToChar(PED_NF->C5_LOJACLI)),"A1_NOME")
+					
+				EndIf
+
+				//
+				Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
+				oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"})] 	:= DToC(SToD(Alltrim(cValToChar(PED_NF->C5_EMISSAO))))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"  })]  := "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "STOPER"})]  := "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "CLI"   })]  := Alltrim(cValToChar(PED_NF->C5_CLIENTE))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LOJ"   })]  := Alltrim(cValToChar(PED_NF->C5_LOJACLI))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NOM"   })]  := Alltrim(cValToChar(cNome))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"   })]  := Alltrim(cValToChar(PED_NF->C5_NUM))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLQC"})]    := Iif(Alltrim(cValToChar(PED_NF->C5_XLIBSAG)) == "1","Sim","Não")
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLEST"})]   := Iif(blqCrEst(Alltrim(cValToChar(PED_NF->C5_NUM)),1),"Sim","Não")
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLFIN"})]   := Iif(blqCrEst(Alltrim(cValToChar(PED_NF->C5_NUM)),2),"Sim","Não")
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PEDS"})]    := Alltrim(cValToChar(PED_NF->C5_PEDSAG))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPPED" })]  := Alltrim(cValToChar(PED_NF->C5_TIPO))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TRANS"})]   := Alltrim(cValToChar(PED_NF->C5_TRANSP))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPFRT"})]   := Alltrim(cValToChar(PED_NF->C5_TPFRETE))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PLC"   })]  := Alltrim(cValToChar(PED_NF->C5_PLACA))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "UFPLC"})]   := Alltrim(cValToChar(PED_NF->C5_UFPLACA))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "GRJ"   })]  := Alltrim(cValToChar(PED_NF->C5_GRANJA))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "GRJD"  })]  := Alltrim(cValToChar(PED_NF->C5_GRANJDA))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TES"})]   	:= "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLRUNT"})]  := 0
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PROD"})]   	:= "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLR"   })]  := Val(cValToChar(PED_NF->C6_VALOR))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "QTD"   })]  := Val(cValToChar(PED_NF->C6_QTDVEN))
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NFORI"})]   := "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SRORI"})]   := "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ERR"   })]  := "-"
+				oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPRAD"})]   := "-"
+
+				//	    	
+				If Empty(C5_LIBEROK).And.Empty(C5_NOTA) .And. Empty(C5_BLQ) //Pedido aberto.
+					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVerde
+					
+				ElseIf ! Empty(C5_NOTA).Or.C5_LIBEROK=='E' .And. Empty(C5_BLQ) //Pedido encerrado.
+					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVermelho
+					
+				ElseIf ! Empty(C5_LIBEROK).And.Empty(C5_NOTA).And. Empty(C5_BLQ) //Pedido aprovado.
+					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAmarelo
+					
+				ElseIf C5_BLQ == '1' //Bloqueado por regra.
+					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAzul
+				
+				ElseIf C5_BLQ == '2' //Bloqueado por verba.
+					oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oLaranja
+					
+				EndIf
+
+				//
+				PED_NF->(DbSkip())
+				nQtdReg++
+				
+			End
+		
+		EndIf
+		
+		//
+		PED_NF->(DbCloseArea())
 	
-	EndIf
+	else
+		// Gera linha em branco.
+		fRegLin()
+	endif	
 	
-	//
-	PED_NF->(DbCloseArea())
-	
-	//
+
 	oRegistros:Refresh()
 	oQtdReg:Refresh()
 	
@@ -565,6 +602,42 @@ Static Function pendenciaNF()
 	RestArea(aArea)
 	
 Return Nil
+
+Static function fRegLin()
+	oRegistros:aCols := {}
+
+	Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
+	oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"  	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "STOPER"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "CLI"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LOJ"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NOM"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLQC"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLEST"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "BLFIN"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PEDS"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPPED" 	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TRANS"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPFRT"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PLC"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "UFPLC"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "GRJ"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "GRJD"  	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TES"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLRUNT"	})]  := 0
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PROD"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLR"   	})]  := 0
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "QTD"   	})]  := 0
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NFORI"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SRORI"	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ERR"   	})]  := ""
+	oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TPRAD"	})]  := ""
+
+	oRegistros:Refresh()
+return
 
 /*/{Protheus.doc} telProcess
 	Funções de integração com o Faturamento.
