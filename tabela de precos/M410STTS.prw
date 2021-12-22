@@ -56,6 +56,8 @@
 	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
 	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
 	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
+	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
+	
 /*/
 User Function M410STTS()
 
@@ -3514,7 +3516,8 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	Local _nVlMnParc := 0
 	Local _nDiasAtras := 0
 	Local cPortador := ''
-	Local cPortadIn := '%'+''+'%'
+	//@Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
+	Local cPortadIn := "%('')%"
 	Local nPercen := 0
 
 	Local _nValLim := 0
@@ -3525,7 +3528,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	Local _nRecSA1 := SA1->(RECNO())
 	Local _nRecSZF := SZF->(RECNO())
 	Local _nRecSE4 := SE4->(RECNO())
-	Local	_nRecSC5 := SC5->(RECNO())
+	Local _nRecSC5 := SC5->(RECNO())
 	Local _nRecSZR := SZR->(RECNO())
 	Local cFilPVEx	 := '%'+''+'%'
 
@@ -3537,7 +3540,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 
 	Default lExcPedV 	:= .F.
 	Default cNumPVEx 	:= ''
-	Default cNumPVIn 		:= ''
+	Default cNumPVIn 	:= ''
 
 	//Utiliza sempre a menor data entre a data de entrega e a data do servidor para avaliação de crédito.
 	If dDtEntr > MsDate()
@@ -3608,7 +3611,11 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	_nVlLmCad := aRetRede[2]
 	_dValidLC	:= aRetRede[3]
 	_cCdClIn	:= '%'+FormatIn(aRetRede[1],",")+'%'
-
+	/*
+	IF Empty(cPortadIn)
+		cPortadIn := "%('')%"
+	endif
+	*/
 	//
 	BeginSQL Alias cAls003
 		SELECT 
@@ -3974,11 +3981,11 @@ Static Function fRetClRd(cCliente,cLojaCli)
 						FROM %TABLE:SZF% SZF (NOLOCK)
 						WHERE SZF.%notDel%
 						AND SZF.ZF_CGCMAT = ( SELECT SUBSTRING(SA12.A1_CGC,1,8) 
-																	FROM %TABLE:SA1% SA12 (NOLOCK) 
-																	WHERE 
-																			SA12.A1_COD = %Exp:cCliente% 
-																		AND SA12.A1_LOJA = %Exp:cLojaCli% 
-																		AND SA12.%notDel%)
+											  FROM %TABLE:SA1% SA12 (NOLOCK) 
+											  WHERE 
+													SA12.A1_COD = %Exp:cCliente% 
+												AND SA12.A1_LOJA = %Exp:cLojaCli% 
+												AND SA12.%notDel%)
 						)
 						OR SA1.A1_COD = %Exp:cCliente%  AND SA1.A1_LOJA = %Exp:cLojaCli% 
 					)
