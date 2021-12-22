@@ -17,6 +17,8 @@
 	@history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket  T.I    - Adriano Savoine - 02/09/2021 - Catraca sala dos motoristas para todos os perfis.
+	@history Ticket  65655  - Leonardo P. Monteiro - 22/12/2021 - Correção na obtenção do último número cadastrado.
+
 /*/
 USER FUNCTION ADGPE044P()
 
@@ -1397,10 +1399,12 @@ RETURN(NIL)
 
 Static Function SqlPerfilEspecifico(cEstOrganizacional,cEstOrgEmpresa,cEstRelacionada)
 
+	//Ticket  65655    - Leonardo P. Monteiro - 22/12/2021 - Correção na obtenção do último número cadastrado.
 	BeginSQL Alias "TSD"
 			%NoPARSER%
 		   SELECT MAX(TX_CAMPO08) AS TX_CAMPO08
-		     FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
+		   FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
+		   WHERE ISNULL(TX_CAMPO08,'') NOT IN ('') AND LEFT(ISNULL(TX_CAMPO08,''),1) < 'A'
 	   	  
 	EndSQl             
 RETURN(NIL) 
