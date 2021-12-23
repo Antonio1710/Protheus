@@ -20,6 +20,7 @@
 	@history Ticket 13048 - Abel Babini     - 26/04/2021 - Criação de parâmetros para tornar opcional a geração do relatório de conferencia cruzada de tabelas
 	@history Ticket 15290 - Abel Babini     - 08/06/2021 - Cria validação se o array possui conteúdo e se o arquivo existe para prevenir error.log
 	@history Ticket 64960 - Adriano Savoine - 08/12/2021 - Ajustada a variavel cArq pois estava trocada ocorrendo error log mencionado no ticket.
+	@history Ticket 64960 - Leonardo P. Monteiro - 23/12/2021 - Ajuste de performance do relatório.
 	/*/
 User Function ADFIS027R()
 
@@ -121,20 +122,20 @@ User Function ADFIS027R()
 		Endif*/
 
 		If  Alltrim(aRet[3]) == "Área"
-			_cOrder	:= '%TM_AREA,TM_NOME,TM_DT,TM_TIPO,TM_NOTA%'
+			_cOrder	:= 'TM_AREA,TM_NOME,TM_DT,TM_TIPO,TM_NOTA'
 		Else
-			_cOrder	:= '%TM_NOME,TM_DT,TM_TIPO,TM_NOTA%'			
+			_cOrder	:= 'TM_NOME,TM_DT,TM_TIPO,TM_NOTA'			
 		Endif
 			
 		// *** FINAL ABEL BABINI 08/04/2019 CHAMADO 047564 || FISCAL || ALLAN SANTOS || Ajuste Relatório de XML Pendentes
 		
 		//INÍCIO Abel Babini-25/02/19-CH:045978
 		If Alltrim(aRet[6]) == "Não Recusados"
-			_cWhereBlq	:= "% AND ZCW_OBSERV IS NULL %" 
+			_cWhereBlq	:= " AND ZCW_OBSERV IS NULL " 
 		Elseif Alltrim(aRet[6]) == "Recusados"
-			_cWhereBlq	:= "% AND ZCW_OBSERV IS NOT NULL %"
+			_cWhereBlq	:= " AND ZCW_OBSERV IS NOT NULL "
 		ELse //TODOS
-			_cWhereBlq	:= "% %"
+			_cWhereBlq	:= " "
 		Endif
 		
 		If Alltrim(aRet[7]) == "Não"
@@ -144,8 +145,14 @@ User Function ADFIS027R()
 				_cWhereBlq	:= Substr(_cWhereBlq,1,Len(_cWhereBlq)-1) + " AND CAB.XML_NOMEMT NOT LIKE 'ADORO%' %"
 			Endif
 		Endif
-		//FIM Abel Babini-25/02/19-CH:045978
 		
+		// Cria tabela temporária.
+		MsgRun( "Carregando criando tabela temporária, aguarde...",,{ || fTabCom() } )
+		// Popula os registro complementares.
+		MsgRun( "Carregando dados complementares, aguarde...",,{ || fGerCom() } )
+
+		
+		//FIM Abel Babini-25/02/19-CH:045978
 		MsgRun( "Carregando dados dos XML´s, aguarde...",,{ || xProcSQL() } )
 
 		//Preenche o arquivo.
@@ -428,8 +435,81 @@ User Function ADFIS027R()
 	
 	RestArea(aArea)
 	
+	MsgAlert("Debug", "Alerta")
 	// Alert('FIM')
 Return Nil
+
+Static Function fTabCom()
+	cQuery := ""
+
+	cQuery := "  select count(*) contador   from sys.tables a  where a.name = 'RECNFXMLADDET'; "
+
+	Tcquery cQuery ALIAS "QDET" NEW
+
+	if QDET->contador == 0
+		cQuery := "CREATE TABLE RECNFXMLADDET ( "
+		cQuery += " REGISTRO INT, "
+		cQuery += " XML_CHAVE VARCHAR(250), "
+		cQuery += " XML_REFNFE VARCHAR(250), "
+		cQuery += " XML_REFNUM VARCHAR(9) ) "
+
+		If TCSqlExec(cQuery) < 0
+			MsgAlert("Erro", "Erro ao criar a tabela complementar!")
+		else
+			cQuery := "CREATE INDEX ID01 ON dbo.RECNFXMLADDET(REGISTRO);"
+			
+			If TCSqlExec(cQuery) < 0
+				MsgAlert("Erro", "Ao incluir índice 01!")
+			endif
+
+			cQuery := "CREATE INDEX ID02 ON dbo.RECNFXMLADDET(XML_CHAVE);"
+			
+			If TCSqlExec(cQuery) < 0
+				MsgAlert("Erro", "Ao incluir índice 02!")
+			endif
+
+			cQuery := "CREATE INDEX ID03 ON dbo.RECNFXMLADDET(XML_REFNFE);"
+			
+			If TCSqlExec(cQuery) < 0
+				MsgAlert("Erro", "Ao incluir índice 03!")
+			endif
+
+			cQuery := "CREATE INDEX ID04 ON dbo.RECNFXMLADDET(XML_REFNUM);"
+			
+			If TCSqlExec(cQuery) < 0
+				MsgAlert("Erro", "Ao incluir índice 04!")
+			endif
+		endif
+
+	Endif
+
+return
+
+Static Function fGerCom()
+	Local cQuery 	:= ""
+	Local cEOL		:= Chr(13)+chr(10)
+
+	cQuery := " INSERT INTO RECNFXMLADDET "+cEOL
+	cQuery += " SELECT CAB.R_E_C_N_O_ REGISTR, "+cEOL
+	cQuery += "  CAB.XML_CHAVE, "+cEOL
+	cQuery += "	( IIF(CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') ) > 0,"+cEOL
+	cQuery += "	SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),"+cEOL
+	cQuery += "	CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+8,44)"+cEOL
+	cQuery += "	,'') ) AS XML_REFNFE, "+cEOL
+	cQuery += "	( IIF(CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') ) > 0, "+cEOL
+	cQuery += "	SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '), "+cEOL
+	cQuery += "	CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) "+cEOL
+	cQuery += "	,'') ) AS XML_REFNUM "+cEOL
+	cQuery += "	FROM RECNFXML  AS CAB  (NOLOCK) "+cEOL
+	cQuery += " WHERE CAB.XML_EMISSA >= '"+DToS(aRet[1])+"' AND CAB.XML_EMISSA <= '"+DToS(aRet[2])+"' "+cEOL
+	cQuery += " AND NOT EXISTS ( SELECT * FROM RECNFXMLADDET A WHERE A.REGISTRO=CAB.R_E_C_N_O_ ) "
+	cQuery += "		AND CAB.D_E_L_E_T_=''; "+cEOL
+	
+	If TCSqlExec(cQuery) < 0
+		MsgAlert("Erro", "Erro na inclusão dos regitros na tabela!")
+	endif
+
+return
 
 /*/{Protheus.doc} User Function xConfCan
 	Verifica status dos registros para relatório
@@ -467,166 +547,185 @@ Return lRetorno
 	@since 25/02/2019
 	/*/
 Static Function xProcSQL ()
-	_cAlias	:= GetNextAlias()
-	// *** INICIO ABEL BABINI 08/04/2019 CHAMADO 047564 || FISCAL || ALLAN SANTOS || Ajuste Relatório de XML Pendentes
-	BeginSQL  Alias _cAlias
+	Local cEOL 	:= Chr(13)+chr(10)
+
+	_cAlias		:= GetNextAlias()
 	
-		SELECT 
-			TM_DT,
-			TM_TPDOC,
-			TM_CNPJ,
-			TM_NOTA,
-			TM_SERIE,
-			TM_NOME,
-			TM_CFOP,
-			TM_TIPO,
-			TM_XML,
-			TM_CHAVE,
-			TM_AREA,
-			MOTIVO,
-			VALIDA_DEV,
-			TM_CHVREF,
-			TM_DEV1,
-			TM_DEV2,
-			TM_TOTAL,
-			TM_STATUS
-		FROM (
-			SELECT DISTINCT
-				CASE WHEN CAB.XML_KEYF1 <> '' AND CAB.XML_STATF1 = '' THEN 'PRÉ NOTA' ELSE 'PENDENTE' END AS TM_STATUS,
-				CAB.XML_EMISSA AS TM_DT,
-				CAB.XML_KEYF1 AS TM_KEYF1,
-				CAB.XML_STATF1 AS TM_STATF1,
-				'NF-E' AS TM_TPDOC,
-				CAB.XML_EMIT AS TM_CNPJ,
-				RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9) AS TM_NOTA,
-				LEFT(CAB.XML_NUMNF,3) AS TM_SERIE,
-				CAB.XML_NOMEMT AS TM_NOME,
-				ITEM.XIT_CFNFE AS TM_CFOP,
-				( IIF(ITEM.XIT_CFNFE > '5000','SAÍDA','ENTRADA') ) AS TM_TIPO,			
-				( IIF(CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') ) > 0,
-					SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),
-						CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9)
-				,RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)) ) AS TM_XML,
-				( IIF(CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') ) > 0,
-					SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),
-						CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+8,44)
-				,RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)) ) AS TM_CHVREF,
-				ITEM.XIT_CHAVE AS TM_CHAVE,
-				(	SELECT TOP 1 IIF(SD1.D1_CC >= '9000' AND SD1.D1_CC <= '9998','PROJETOS',CTT.CTT_DESC01) 
-					FROM %TABLE:SD1% SD1  (NOLOCK) 
-					LEFT JOIN %TABLE:CTT% CTT  (NOLOCK) ON 
-						CTT.%notDel% AND 
-						CTT.CTT_CUSTO = SD1.D1_CC 
-					WHERE  SD1.%notDel% AND 
-						SD1.D1_FORNECE = IIF(SA2.A2_COD IS NULL,IIF(SA1.A1_COD IS NULL,' ',SA1.A1_COD),SA2.A2_COD) AND 
-						SD1.D1_LOJA = IIF(SA2.A2_COD IS NULL,IIF(SA1.A1_COD IS NULL,' ',SA1.A1_LOJA),SA2.A2_LOJA)  
-					ORDER BY  SD1.D1_DTDIGIT DESC 
-				)  AS TM_AREA,
-				ISNULL(ZCW_OBSERV,'') AS MOTIVO,
-				SUM(ITEM.XIT_TOTNFE) AS TM_TOTAL,
-				( IIF(ITEM.XIT_CFNFE > '5000',
-					(IIF( ( SUM(ITEM.XIT_TOTNFE) - ISNULL((
-						SELECT SUM(ITEM2.XIT_TOTNFE)
-						FROM RECNFXML  AS CAB2 (NOLOCK) 
-						INNER JOIN RECNFXMLITENS  AS ITEM2  (NOLOCK) ON 
-							CAB2.XML_CHAVE = ITEM2.XIT_CHAVE 
-						WHERE  
-							CAB2.XML_EMISSA >= %Exp:DToS(aRet[1])% AND CAB2.XML_EMISSA <= %Exp:DToS(aRet[2])% AND
-							CAB2.XML_EMIT = CAB.XML_EMIT AND
-							RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' '),
-							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' ') )+33,9) AND
-							ITEM2.XIT_CFNFE NOT IN (%Exp:_cCFOP%) AND 
-							CAB2.%notDel% AND 
-							ITEM2.%notDel%
-						),0) -ISNULL((
-						SELECT SUM(ITEM2.XIT_TOTNFE)
-						FROM RECNFXML  AS CAB2 (NOLOCK) 
-						INNER JOIN RECNFXMLITENS  AS ITEM2  (NOLOCK) ON 
-							CAB2.XML_CHAVE = ITEM2.XIT_CHAVE 
-						WHERE  
-							CAB2.XML_EMIT = CAB.XML_EMIT AND
-							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),
-							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) AND
-							ITEM2.XIT_CFNFE NOT IN (%Exp:_cCFOP%) AND 
-							CAB2.%notDel% AND 
-							ITEM2.%notDel%
-						),0) )=0,'DEV','OK') ),
-					(IIF(SUM(ITEM.XIT_TOTNFE)-ISNULL((
-						SELECT SUM(ITEM2.XIT_TOTNFE)
-						FROM RECNFXML  AS CAB2  (NOLOCK) 
-						INNER JOIN RECNFXMLITENS  AS ITEM2 ON 
-							CAB2.XML_CHAVE = ITEM2.XIT_CHAVE 
-						WHERE  
-							CAB2.XML_EMIT = CAB.XML_EMIT AND
-							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),
-							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) AND
-							ITEM2.XIT_CFNFE NOT IN (%Exp:_cCFOP%) AND 
-							CAB2.%notDel% AND 
-							ITEM2.%notDel%
-				),0)=0,'DEV','OK')) ) ) AS VALIDA_DEV,
-				ISNULL((
-						SELECT TOP 1 SUBSTRING(CAB2.XML_CHAVE,1,44)+CAB2.XML_CLIFOR+CAB2.XML_EMISSA
-						FROM RECNFXML  AS CAB2  (NOLOCK) 
-						WHERE  
-							CAB2.XML_EMIT = CAB.XML_EMIT AND
-							RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' '),
-							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' ') )+33,9) AND 
-							CAB2.%notDel%
-						),'') AS TM_DEV1,
-				ISNULL((
-						SELECT TOP 1 SUBSTRING(CAB2.XML_CHAVE,1,44)+CAB2.XML_CLIFOR+CAB2.XML_EMISSA
-						FROM RECNFXML  AS CAB2  (NOLOCK) 
-						INNER JOIN RECNFXMLITENS  AS ITEM2 ON 
-							CAB2.XML_CHAVE = ITEM2.XIT_CHAVE 
-						WHERE  
-							CAB2.XML_EMIT = CAB.XML_EMIT AND
-							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),
-							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) AND
-							CAB2.%notDel%
-						),'') AS TM_DEV2
-			FROM RECNFXML  AS CAB  (NOLOCK) 
-			INNER JOIN RECNFXMLITENS  AS ITEM ON 
-				CAB.XML_CHAVE = ITEM.XIT_CHAVE 
-			LEFT JOIN %TABLE:SA2% SA2 (NOLOCK) ON 
-				SA2.%notDel% AND 
-				SA2.A2_CGC = CAB.XML_EMIT 
-			LEFT JOIN %TABLE:SA1% SA1 (NOLOCK) ON 
-				SA1.%notDel% AND 
-				SA1.A1_CGC = CAB.XML_EMIT 
-			LEFT JOIN %TABLE:ZCW% ZCW (NOLOCK) ON 
-				ZCW.%notDel% AND 
-				ZCW.ZCW_CHVNFE = CAB.XML_CHAVE 
-			WHERE  
-				(CAB.XML_KEYF1 = '' OR (CAB.XML_KEYF1 <> '' AND CAB.XML_STATF1 = '')) AND 
-				CAB.XML_KEYRUR = '' AND 
-				CAB.XML_DEST = %Exp:_cCNPJ%  AND 
-				CAB.XML_EMISSA >= %Exp:DToS(aRet[1])% AND CAB.XML_EMISSA <= %Exp:DToS(aRet[2])% AND
-				ITEM.XIT_CFNFE NOT IN (%Exp:_cCFOP%) AND 
-				CAB.%notDel%  AND 
-				ITEM.%notDel% 
-				%Exp:_cWhereBlq%
-			GROUP BY 
-				CAB.XML_EMISSA, 
-				CAB.XML_EMIT, 
-				SA2.A2_COD, 
-				SA2.A2_LOJA, 
-				SA1.A1_COD, 
-				SA1.A1_LOJA, 
-				RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9), 
-				LEFT(CAB.XML_NUMNF,3), 
-				CAB.XML_NOMEMT, 
-				ITEM.XIT_CFNFE, 
-				ITEM.XIT_CHAVE, 
-				CAB.XML_ARQ,
-				CAB.XML_KEYF1,
-				CAB.XML_STATF1,
-				ZCW_OBSERV  
-			) AS RESULTADO
+	_cCFOP		:= iif(Empty(_cCFOP),"''",_cCFOP)
+	// *** INICIO ABEL BABINI 08/04/2019 CHAMADO 047564 || FISCAL || ALLAN SANTOS || Ajuste Relatório de XML Pendentes
+	//BeginSQL  Alias _cAlias
+	
+	cQuery := "	SELECT "+cEOL
+	cQuery += "		TM_DT,"+cEOL
+	cQuery += "			TM_TPDOC,"+cEOL
+	cQuery += "			TM_CNPJ,"+cEOL
+	cQuery += "			TM_NOTA,"+cEOL
+	cQuery += "			TM_SERIE,"+cEOL
+	cQuery += "			TM_NOME,"+cEOL
+	cQuery += "			TM_CFOP,"+cEOL
+	cQuery += "			TM_TIPO,"+cEOL
+	cQuery += "			TM_XML,"+cEOL
+	cQuery += "			TM_CHAVE,"+cEOL
+	cQuery += "			TM_AREA,"+cEOL
+	cQuery += "			MOTIVO,"+cEOL
+	cQuery += "			VALIDA_DEV,"+cEOL
+	cQuery += "			TM_CHVREF,"+cEOL
+	cQuery += "			TM_DEV1,"+cEOL
+	cQuery += "			TM_DEV2,"+cEOL
+	cQuery += "			TM_TOTAL,"+cEOL
+	cQuery += "			TM_STATUS"+cEOL
+	cQuery += "		FROM ("+cEOL
+	cQuery += "			SELECT DISTINCT"+cEOL
+	cQuery += "				CASE WHEN CAB.XML_KEYF1 <> '' AND CAB.XML_STATF1 = '' THEN 'PRÉ NOTA' ELSE 'PENDENTE' END AS TM_STATUS,"+cEOL
+	cQuery += "				CAB.XML_EMISSA AS TM_DT,"+cEOL
+	cQuery += "				CAB.XML_KEYF1 AS TM_KEYF1,"+cEOL
+	cQuery += "				CAB.XML_STATF1 AS TM_STATF1,"+cEOL
+	cQuery += "				'NF-E' AS TM_TPDOC,"+cEOL
+	cQuery += "				CAB.XML_EMIT AS TM_CNPJ,"+cEOL
+	cQuery += "				RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9) AS TM_NOTA,"+cEOL
+	cQuery += "				LEFT(CAB.XML_NUMNF,3) AS TM_SERIE,"+cEOL
+	cQuery += "				CAB.XML_NOMEMT AS TM_NOME,"+cEOL
+	cQuery += "				ITEM.XIT_CFNFE AS TM_CFOP,"+cEOL
+	cQuery += "				( IIF(ITEM.XIT_CFNFE > '5000','SAÍDA','ENTRADA') ) AS TM_TIPO,			"+cEOL
+	cQuery += "				( IIF(ISNULL(DET.XML_REFNUM,'') != '', DET.XML_REFNUM, RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)) ) AS TM_XML,"+cEOL
+	/*
+	cQuery += "				( IIF(CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') ) > 0,"+cEOL
+	cQuery += "					SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),"+cEOL
+	cQuery += "						CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9)"+cEOL
+	cQuery += "				,RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)) ) AS TM_XML,"+cEOL
+	*/
+	cQuery += "				( IIF(ISNULL(DET.XML_REFNFE,'') != '', DET.XML_REFNFE, RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)) ) AS TM_CHVREF,"+cEOL
+	/*
+	cQuery += "				( IIF(CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') ) > 0,"+cEOL
+	cQuery +="				SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),"+cEOL
+	cQuery += "						CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+8,44)	"+cEOL
+	cQuery += "				,RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)) ) AS TM_CHVREF,"+cEOL
+	*/
+	cQuery += "				ITEM.XIT_CHAVE AS TM_CHAVE,"+cEOL
+	cQuery += "				(	SELECT TOP 1 IIF(SD1.D1_CC >= '9000' AND SD1.D1_CC <= '9998','PROJETOS',CTT.CTT_DESC01) "+cEOL
+	cQuery += "					FROM "+ Retsqlname("SD1") +" SD1  (NOLOCK) "+cEOL
+	cQuery += "					LEFT JOIN "+ retsqlname("CTT") +" CTT  (NOLOCK) ON "+cEOL
+	cQuery += "						CTT.D_E_L_E_T_='' AND "+cEOL
+	cQuery += "						CTT.CTT_CUSTO = SD1.D1_CC "+cEOL
+	cQuery += "					WHERE  SD1.D_E_L_E_T_='' AND "+cEOL
+	cQuery += "						SD1.D1_FORNECE = IIF(SA2.A2_COD IS NULL,IIF(SA1.A1_COD IS NULL,' ',SA1.A1_COD),SA2.A2_COD) AND "+cEOL
+	cQuery += "						SD1.D1_LOJA = IIF(SA2.A2_COD IS NULL,IIF(SA1.A1_COD IS NULL,' ',SA1.A1_LOJA),SA2.A2_LOJA)  "+cEOL
+	cQuery += "					ORDER BY  SD1.D1_DTDIGIT DESC "+cEOL
+	cQuery += "				)  AS TM_AREA,"+cEOL
+	cQuery += "				ISNULL(ZCW_OBSERV,'') AS MOTIVO,"+cEOL
+	cQuery += "				SUM(ITEM.XIT_TOTNFE) AS TM_TOTAL,"+cEOL
+	cQuery += "				( IIF(ITEM.XIT_CFNFE > '5000',"+cEOL
+	cQuery += "					(IIF( ( SUM(ITEM.XIT_TOTNFE) - ISNULL(("+cEOL
+	cQuery += "						SELECT SUM(ITEM2.XIT_TOTNFE)"+cEOL
+	cQuery += "						FROM RECNFXML  AS CAB2 (NOLOCK) INNER JOIN RECNFXMLITENS  AS ITEM2  (NOLOCK) ON CAB2.XML_CHAVE = ITEM2.XIT_CHAVE "+cEOL
+	//cQuery += "							 LEFT JOIN RECNFXMLADDET DET (NOLOCK) ON DET.REGISTRO=CAB2.R_E_C_N_O_ AND CAB2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						WHERE  "+cEOL
+	cQuery += "							CAB2.XML_EMISSA >= '"+DToS(aRet[1])+"' AND CAB2.XML_EMISSA <= '"+DToS(aRet[2])+"' AND"+cEOL
+	cQuery += "							CAB2.XML_EMIT = CAB.XML_EMIT AND"+cEOL
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)=ISNULL(DET.XML_REFNUM,'') AND "+cEOL
+	/*
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' '),"+cEOL
+	cQuery += "							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' ') )+33,9) AND"+cEOL
+	*/
+	cQuery += "							ITEM2.XIT_CFNFE NOT IN ("+_cCFOP+") AND "+cEOL
+	cQuery += "							CAB2.D_E_L_E_T_='' AND "+cEOL
+	cQuery += "							ITEM2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						),0) -ISNULL(("+cEOL
+	cQuery += "						SELECT SUM(ITEM2.XIT_TOTNFE)"+cEOL
+	cQuery += "						FROM RECNFXML  AS CAB2 (NOLOCK) "+cEOL
+	cQuery += "						INNER JOIN RECNFXMLITENS  AS ITEM2  (NOLOCK) ON CAB2.XML_CHAVE = ITEM2.XIT_CHAVE "+cEOL
+	//cQuery += "							 LEFT JOIN RECNFXMLADDET DET (NOLOCK) ON DET.REGISTRO=CAB2.R_E_C_N_O_ AND CAB2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						WHERE  "+cEOL
+	cQuery += "							CAB2.XML_EMIT = CAB.XML_EMIT AND"+cEOL
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=ISNULL(DET.XML_REFNUM,'') AND "+cEOL
+	/*
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),"+cEOL
+	cQuery += "							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) AND"+cEOL
+	*/
+	cQuery += "							ITEM2.XIT_CFNFE NOT IN ("+_cCFOP+") AND "+cEOL
+	cQuery += "							CAB2.D_E_L_E_T_='' AND "+cEOL
+	cQuery += "							ITEM2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						),0) )=0,'DEV','OK') ),"+cEOL
+	cQuery += "					(IIF(SUM(ITEM.XIT_TOTNFE)-ISNULL(("+cEOL
+	cQuery += "						SELECT SUM(ITEM2.XIT_TOTNFE)"+cEOL
+	cQuery += "						FROM RECNFXML  AS CAB2  (NOLOCK) INNER JOIN RECNFXMLITENS  AS ITEM2 (NOLOCK) ON CAB2.XML_CHAVE = ITEM2.XIT_CHAVE "+cEOL
+	//cQuery += "							 LEFT JOIN RECNFXMLADDET DET (NOLOCK) ON DET.REGISTRO=CAB2.R_E_C_N_O_ AND CAB2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						WHERE  "+cEOL
+	cQuery += "							CAB2.XML_EMIT = CAB.XML_EMIT AND"+cEOL
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=ISNULL(DET.XML_REFNUM,'') AND "+cEOL
+	/*
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),"+cEOL
+	cQuery += "							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) AND"+cEOL
+	*/
+	cQuery += "							ITEM2.XIT_CFNFE NOT IN ("+_cCFOP+") AND "+cEOL
+	cQuery += "							CAB2.D_E_L_E_T_='' AND "+cEOL
+	cQuery += "							ITEM2.D_E_L_E_T_='' "+cEOL
+	cQuery += "				),0)=0,'DEV','OK')) ) ) AS VALIDA_DEV,"+cEOL
+	cQuery += "				ISNULL(("+cEOL
+	cQuery += "						SELECT TOP 1 SUBSTRING(CAB2.XML_CHAVE,1,44)+CAB2.XML_CLIFOR+CAB2.XML_EMISSA"+cEOL
+	cQuery += "						FROM RECNFXML  AS CAB2  (NOLOCK) "+cEOL
+	//cQuery += "							 LEFT JOIN RECNFXMLADDET DET (NOLOCK) ON DET.REGISTRO=CAB2.R_E_C_N_O_ AND CAB2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						WHERE  "+cEOL
+	cQuery += "							CAB2.XML_EMIT = CAB.XML_EMIT AND"+cEOL
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)=ISNULL(DET.XML_REFNUM,'') AND "+cEOL
+	/*
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' '),"+cEOL
+	cQuery += "							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB2.XML_ARQ)),' ') )+33,9) AND "+cEOL
+	*/
+	cQuery += "							CAB2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						),'') AS TM_DEV1,"+cEOL
+	cQuery += "				ISNULL(("+cEOL
+	cQuery += "						SELECT TOP 1 SUBSTRING(CAB2.XML_CHAVE,1,44)+CAB2.XML_CLIFOR+CAB2.XML_EMISSA"+cEOL
+	cQuery += "						FROM RECNFXML  AS CAB2  (NOLOCK) INNER JOIN RECNFXMLITENS  AS ITEM2 (NOLOCK) ON CAB2.XML_CHAVE = ITEM2.XIT_CHAVE "+cEOL
+	//cQuery += "							 LEFT JOIN RECNFXMLADDET DET (NOLOCK) ON DET.REGISTRO=CAB2.R_E_C_N_O_ AND CAB2.D_E_L_E_T_='' "+cEOL
+	cQuery += "						WHERE  "+cEOL
+	cQuery += "							CAB2.XML_EMIT = CAB.XML_EMIT AND"+cEOL
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=ISNULL(DET.XML_REFNUM,'') AND "+cEOL
+	/*
+	cQuery += "							RIGHT(RTRIM(LTRIM(CAB2.XML_NUMNF)),9)=SUBSTRING(ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' '),"+cEOL
+	cQuery += "							CHARINDEX('<refNFe>',ISNULL(CONVERT(VARCHAR(2047),CONVERT(VARBINARY(2047),CAB.XML_ARQ)),' ') )+33,9) AND"+cEOL
+	*/
+	cQuery += "							CAB2.D_E_L_E_T_=''"+cEOL
+	cQuery += "						),'') AS TM_DEV2"+cEOL
+	cQuery += "			FROM RECNFXML  AS CAB  (NOLOCK) INNER JOIN RECNFXMLITENS  AS ITEM ON CAB.XML_CHAVE = ITEM.XIT_CHAVE "+cEOL
+	cQuery += "			LEFT JOIN RECNFXMLADDET DET (NOLOCK) ON DET.REGISTRO=CAB.R_E_C_N_O_ AND CAB.D_E_L_E_T_='' "+cEOL
+	cQuery += "			LEFT JOIN "+ retsqlname("SA2") +" SA2 (NOLOCK) ON SA2.D_E_L_E_T_='' AND SA2.A2_CGC = CAB.XML_EMIT  "+cEOL
+	cQuery += "			LEFT JOIN "+ retsqlname("SA1") +" SA1 (NOLOCK) ON SA1.D_E_L_E_T_='' AND SA1.A1_CGC = CAB.XML_EMIT "+cEOL
+	cQuery += "			LEFT JOIN "+ retsqlname("ZCW") +" ZCW (NOLOCK) ON ZCW.D_E_L_E_T_='' AND ZCW.ZCW_CHVNFE = CAB.XML_CHAVE "+cEOL
+	cQuery += "			WHERE  "+cEOL
+	cQuery += "				(CAB.XML_KEYF1 = '' OR (CAB.XML_KEYF1 <> '' AND CAB.XML_STATF1 = '')) AND "+cEOL
+	cQuery += "				CAB.XML_KEYRUR = '' AND "+cEOL
+	cQuery += "				CAB.XML_DEST = '"+_cCNPJ+"'  AND "+cEOL
+	cQuery += "				CAB.XML_EMISSA >= '"+DToS(aRet[1])+"' AND CAB.XML_EMISSA <= '"+DToS(aRet[2])+"' AND "+cEOL
+	cQuery += "				ITEM.XIT_CFNFE NOT IN ("+_cCFOP+") AND "+cEOL
+	cQuery += "				CAB.D_E_L_E_T_=''  AND "+cEOL
+	cQuery += "				ITEM.D_E_L_E_T_='' "+cEOL
+	cQuery += " "+ _cWhereBlq+cEOL
+	cQuery += "			GROUP BY "+cEOL
+	cQuery += "				CAB.XML_EMISSA, "+cEOL
+	cQuery += "				CAB.XML_EMIT, "+cEOL
+	cQuery += "				SA2.A2_COD, "+cEOL
+	cQuery += "				SA2.A2_LOJA, "+cEOL
+	cQuery += "				SA1.A1_COD, "+cEOL
+	cQuery += "				SA1.A1_LOJA, "+cEOL
+	cQuery += "				RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9), "+cEOL
+	cQuery += "				LEFT(CAB.XML_NUMNF,3), "+cEOL
+	cQuery += "				CAB.XML_NOMEMT, "+cEOL
+	cQuery += "				ITEM.XIT_CFNFE, "+cEOL
+	cQuery += "				ITEM.XIT_CHAVE, "+cEOL
+	cQuery += "				CAB.XML_ARQ,"+cEOL
+	cQuery += "				CAB.XML_KEYF1,"+cEOL
+	cQuery += "				CAB.XML_STATF1,"+cEOL
+	cQuery += "				DET.REGISTRO,  "+cEOL
+	cQuery += "				DET.XML_REFNFE, "+cEOL
+	cQuery += "				DET.XML_REFNUM, "+cEOL
+	cQuery += "				ZCW_OBSERV  "+cEOL
+	cQuery += "			) AS RESULTADO"+cEOL
 
-			ORDER BY
-				%Exp:_cOrder%
-
-	EndSQL	
+	cQuery += "			ORDER BY "+_cOrder+cEOL
+	
+	Tcquery cQuery ALIAS (_cAlias) new
+	//EndSQL	
 	//INICIO CH:060869 - Abel Babini - 25/08/20 | Ajustar Regra para considerar tambémItens que estão como Pré Nota.
 	//(CAB.XML_KEYF1 = '' OR (CAB.XML_KEYF1 <> '' AND CAB.XML_STATF1 = '')) AND 
 	//FIM CH:060869 - Abel Babini - 25/08/20 | Ajustar Regra para considerar tambémItens que estão como Pré Nota.
