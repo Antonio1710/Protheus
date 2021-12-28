@@ -62,24 +62,13 @@ Static cMsgFim	:= "Termina Processamento do item: "
     @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 	@history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
 	@history ticket 31248 - Fernando Macieira - 12/11/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs - Alteradas linhs 1290 E 1308
+	@history ticket 64738 - Fernando Macieira - 07/12/2021 - Editar coluna LOCAL
 /*/
 User Function ADEDA007R()
 
 	Local oDlg
 
 	Private cPerg := "ADEDA007R"
-
-	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-	/*
-	Private _cNomBco1  := GetPvProfString("INTEDTBD","BCO1","ERROR",GetADV97())
-	Private _cSrvBco1  := GetPvProfString("INTEDTBD","SRV1","ERROR",GetADV97())
-	Private _cPortBco1 := Val(GetPvProfString("INTEDTBD","PRT1","ERROR",GetADV97()) )
-	Private _cNomBco2  := GetPvProfString("INTEDTBD","BCO2","ERROR",GetADV97())
-	Private _cSrvBco2  := GetPvProfString("INTEDTBD","SRV2","ERROR",GetADV97())
-	Private _cPortBco2 := Val(GetPvProfString("INTEDTBD","PRT2","ERROR",GetADV97()))
-	Private _nTcConn1  := advConnection()
-	Private _nTcConn2  := 0
-	*/
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 
@@ -89,18 +78,6 @@ User Function ADEDA007R()
 		Aviso("AtenÁ„o", "Existe outro processamento sendo executado! Verifique com seu colega de trabalho...", {"OK"}, 3)
 		Return
 	EndIf
-	//
-
-	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-	/*
-	If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-		_lRet     := .F.
-		cMsgError := "N„o foi possÌvel  conectar ao banco integraÁ„o"
-		MsgInfo("N„o foi possÌvel  conectar ao banco integraÁ„o, verifique com administrador","ERROR")	
-	EndIf
-
-	TcSetConn(_nTcConn1) //fernando sigoli 01/05/2018
-	*/
 
 	/*Cria as perguntas no SX1*/
 	AjustaSX1(cPerg)         
@@ -109,20 +86,16 @@ User Function ADEDA007R()
 	Pergunte(cPerg,.F.)    	
 
 	DEFINE MSDIALOG oDlg FROM  96,9 TO 320,612 TITLE OemToAnsi("Tela de filtro") PIXEL
-	@ 11,6 TO 90,287 LABEL "" OF oDlg  PIXEL
-	@ 16, 15 SAY OemToAnsi("Este programa faz o processamento no Protheus da carga do EDATA") SIZE 268, 8 OF oDlg PIXEL
+		@ 11,6 TO 90,287 LABEL "" OF oDlg  PIXEL
+		@ 16, 15 SAY OemToAnsi("Este programa faz o processamento no Protheus da carga do EDATA") SIZE 268, 8 OF oDlg PIXEL
 
-	DEFINE SBUTTON FROM 93, 163 TYPE 15 ACTION Processa({|lEnd| ADEDA007D()},OemToAnsi("Log"),OemToAnsi("Processando..."),.F.) ENABLE OF oDlg
-	DEFINE SBUTTON FROM 93, 193 TYPE 5  ACTION Pergunte(cPerg,.T.) ENABLE OF oDlg
-	DEFINE SBUTTON FROM 93, 223 TYPE 1  ACTION If(.T.,(Processa({|lEnd| ADEDA007A()},OemToAnsi("Processando a carga"),OemToAnsi("Processando..."),.F.),oDlg:End()),) ENABLE OF oDlg
-	DEFINE SBUTTON FROM 93, 253 TYPE 2  ACTION oDlg:End() ENABLE OF oDlg
+		DEFINE SBUTTON FROM 93, 163 TYPE 15 ACTION Processa({|lEnd| ADEDA007D()},OemToAnsi("Log"),OemToAnsi("Processando..."),.F.) ENABLE OF oDlg
+		DEFINE SBUTTON FROM 93, 193 TYPE 5  ACTION Pergunte(cPerg,.T.) ENABLE OF oDlg
+		DEFINE SBUTTON FROM 93, 223 TYPE 1  ACTION If(.T.,(Processa({|lEnd| ADEDA007A()},OemToAnsi("Processando a carga"),OemToAnsi("Processando..."),.F.),oDlg:End()),) ENABLE OF oDlg
+		DEFINE SBUTTON FROM 93, 253 TYPE 2  ACTION oDlg:End() ENABLE OF oDlg
 	ACTIVATE MSDIALOG oDlg CENTERED
 
-	//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-
-	//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ?
 	//≥Destrava a rotina para o usu·rio	    ?
-	//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ?
 	UnLockByName("ADEDA007R") // @history Fernando Macieira, 05/03/2021, Ticket 10248. Revis„o das rotinas de apontamento de OP¥s
 
 Return
@@ -145,8 +118,6 @@ Static Function ADEDA007A
 	Local aCoord	:= FWGetDialogSize(oMainWnd)
 	Local aTamObj	:= Array(4)
 	Local oDlg
-	Local aHeader   := {}
-	Local aCols     := {}
 	Local aAux		:= {}
 	Local aCampos   := {}  /*Array aCampos utilizado para colocar quais campos dever· fazer uma busca para o array aHeader*/
 	Local aPergunte	:= {}
@@ -160,7 +131,6 @@ Static Function ADEDA007A
 	Local bAtGD		:= {|lAtGD,lFoco| IIf(lAtGD,(oGD01:SetArray(aCols),oGD01:bLine := &(cLine01),oGD01:GoTop()),.T.),;
 							IIf(ValType(lFoco) == "L" .AND. lFoco,(oGD01:SetFocus(), oGD01:Refresh()),.T.)}
 	Local bAtFim	:= {|| ( oTela:End() ) }	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-	//Local bAtFim	:= {|| ( TcUnLink(_nTcConn1), TcUnLink(_nTcConn2), oTela:End() ) }	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 
 	//Objetos graficos
 	Local oTela
@@ -183,6 +153,9 @@ Static Function ADEDA007A
 	Local oGray		:= LoadBitmap( GetResources(), "BR_CINZA")
 	Local y,x,z,ni
 
+	Private aHeader   := {}
+	Private aCols     := {}
+
 	Private cLine01	:= ""
 	Private ALTERA	  := .T.
 	Private aAux	  := {} //Array auxiliar utilizado para guardar informaÁıes que ser„o necessarias
@@ -201,6 +174,7 @@ Static Function ADEDA007A
 	Private oBot03
 	Private oBot04
 	Private oBot05
+	Private oBot06
 
 	aFill(aTamObj,0)
 
@@ -239,6 +213,7 @@ Static Function ADEDA007A
 	
     SX3->( dbSeek( "C2_OBS" ) )
 	For x:=1 To Len(aOutros)
+		
 		AADD( aHeader, { 	AllTrim( aOutros[x] ),; // 01 - Titulo
 							SX3->X3_CAMPO		 ,;			// 02 - Campo
 							SX3->X3_Picture		 ,;			// 03 - Picture
@@ -254,8 +229,15 @@ Static Function ADEDA007A
 							SX3->X3_INIBRW  	 ,;			// 13 - Inicializador Browse
 							SX3->X3_Browse  	 ,;			// 14 - Mostra no Browse
 							SX3->X3_VISUAL  } )
+
+		// @history ticket 64738 - Fernando Macieira - 07/12/2021 - Editar coluna LOCAL
+		If AllTrim(aOutros[x]) == "LOCAL"
+			aHeader[12,6] := "u_ChkLocal(aCols)"
+		EndIf
+		//
+
 	Next x
-	
+
 	If nPerg01Tip <> 4
 
 		cAliasT	:= GetNextAlias()
@@ -263,7 +245,6 @@ Static Function ADEDA007A
 		ADEDA007RF(@cAliasT, nPerg01Tip)
 		
 		(cAliasT)->(dbGoTop())
-		
 		Do While !(cAliasT)->(Eof())
 			
 			DO CASE
@@ -277,15 +258,11 @@ Static Function ADEDA007A
 					xCor := oGray
 			ENDCASE
 			
-			//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-			
 			cDescri := ""
 			SB1->(DbSetOrder(1))
 			If SB1->(DbSeek( xFilial("SB1") + Padr((cAliasT)->PRODUTO, TamSx3("B1_COD")[1]) ))
 				cDescri := SB1->B1_DESC
 			EndIf
-			
-			//TcSetConn(_nTcConn2)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 			
 			AADD(aCols,	{	xCor				,;
 							.F.                 ,;
@@ -367,15 +344,11 @@ Static Function ADEDA007A
 						xCor := oGray
 				ENDCASE
 				
-				//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-				
 				cDescri := ""
 				SB1->(DbSetOrder(1))
 				If SB1->(DbSeek( xFilial("SB1") + Padr((cAliasT)->PRODUTO, TamSx3("B1_COD")[1]) ))
 					cDescri := SB1->B1_DESC
 				EndIf
-				
-				//TcSetConn(_nTcConn2)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 				
 				AADD(aCols,	{	xCor				,;
 								.F.                 ,;
@@ -496,13 +469,11 @@ Static Function ADEDA007A
 
 		/*Mapeamento da area*/	
 		oArea:AddLine("L01",100 * nCoefDif,.T.)
-
 	
 		/*Colunas*/
 		oArea:AddCollumn("L01C01",LRG_COL01,.F.,"L01")
 		oArea:AddCollumn("L01C02",LRG_COL02,.F.,"L01")
 		oArea:AddCollumn("L01C03",LRG_COL03,.F.,"L01")
-	
 	
 		/*Paineis*/
 		oArea:AddWindow("L01C01","L01C01P01","Par‚metros",100,.F.,.F.,/*bAction*/,"L01",/*bGotFocus*/)
@@ -513,8 +484,6 @@ Static Function ADEDA007A
 		
 		oArea:AddWindow("L01C03","L01C03P01","FunÁıes",100,.F.,.F.,/*bAction*/,"L01",/*bGotFocus*/)
 		oPainel03 := oArea:GetWinPanel("L01C03","L01C03P01","L01")
-	
-	
 	
 		/*
 			Painel 01 - Filtros
@@ -539,28 +508,22 @@ Static Function ADEDA007A
 										.F.)},;
 										aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
 	
-	
 		/*
 			Painel 02 - Lista de dados
 		*/
 		/*Cria tela com os dados*/
 		//oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,{' ', ' ', 'FILIAL', 'PRODUTO', 'DESCRICAO', 'QUANTIDADE', 'DATA', 'MSEXP', 'STATUS', 'OPERACAO', 'TIPO'},,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
-        oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,{' ', ' ', 'FILIAL', 'PRODUTO', 'DESCRICAO', 'QUANTIDADE', 'DATA', 'MSEXP', 'STATUS', 'OPERACAO', 'TIPO', 'LOCAL', 'PRODUCAO'},,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+        oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,{' ', ' ', 'FILIAL', 'PRODUTO', 'DESCRICAO', 'QUANTIDADE', 'DATA', 'MSEXP', 'STATUS', 'OPERACAO', 'TIPO', 'LOCAL', 'PRODUCAO'},,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,{||u_ChkLocal(aCols)}/*bValid*/,.T.,.T.) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 		oGD01:bHeaderClick	:= {|oObj,nCol| ADEDA007G(2,@aCols,@oGD01,nCol,aClone(aHeader)),oGD01:Refresh()}
 		oGD01:blDblClick	:= {|| ADEDA007B(1,@aCols,@oGD01,,aClone(aHeader)),oGD01:Refresh()}
 		oGD01:Align 		:= CONTROL_ALIGN_ALLCLIENT
 		
-		/*
+		// @history ticket 64738 - Fernando Macieira - 07/12/2021 - Editar coluna LOCAL
+		oGD01:bRClicked     := { || lEditCell(@aCols, oGD01, "@!", 12) }
+		//oGD01:bValid        := { || u_ChkLocal() }
+		//
 		
-			Bloco de execuÁ„o para executar os seguintes mÈtodos:
-				oGD01:SetArray(aCols)
-				oGD01:bLine := {|| {aCols[oGD01:nAt,01], Iif(aCols[oGD01:nAt,02],oOk,oNo),aCols[oGD01:nAt,03], aCols[oGD01:nAt,04], Transform(aCols[oGD01:nAt,05],'@E 99,999,999,999.99'), aCols[oGD01:nAt,06], aCols[oGD01:nAt,07], aCols[oGD01:nAt,08], aCols[oGD01:nAt,09], aCols[oGD01:nAt,10]} }
-				oGD01:GoTop()
-				oGD01:SetFocus()
-		*/
 		Eval(bAtGD,.T.,.F.)
-	
-	
 	
 		/*
 			Painel 03 - Botıes e Suas FunÁıes
@@ -597,14 +560,13 @@ Static Function ADEDA007A
 		/*Log*/
 		U_DefTamObj(@aTamObj, aTamObj[1] + nAltBot + (nDistPad*3) )
 		oBot05 := tButton():New(aTamObj[1], aTamObj[2], cHK + "Log", oPainel03, {|| ADEDA007D() }, aTamObj[3], aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
-		
-		
+
 		If cPerg06Sta  == 1
 			oBot02:Hide()
 		ElseIf cPerg06Sta  == 2
 			oBot01:Hide()
 		EndIf
-		
+
 	oTela:Activate(,,,.T.,/*valid*/,,{|| .T.})
 
 Return
@@ -630,23 +592,9 @@ Static Function ADEDA007A1(aCols, aAux)
     Local cMsgLog	:= ""
     Local lRet		:= .F.
     Local x,y
+	Local cLocal3  := GetMV("MV_#OPRTER",,"70#71#72#73#74")
 
     Private _MsgMotivo := ""
-
-    /*
-    TcConType("TCPIP")
-    If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1))<0
-        _lRet     := .F.
-        cMsgError := "N„o foi possÌvel  conectar ao banco Protheus"
-        MsgInfo("N„o foi possÌvel  conectar ao banco produÁ„o, verifique com administrador","ERROR")	
-    EndIf
-
-    If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-        _lRet     := .F.
-        cMsgError := "N„o foi possÌvel  conectar ao banco integraÁ„o"
-        MsgInfo("N„o foi possÌvel  conectar ao banco integraÁ„o, verifique com administrador","ERROR")	
-    EndIf
-    */
 
     /*BEGINDOC
     //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
@@ -672,7 +620,6 @@ Static Function ADEDA007A1(aCols, aAux)
     //Begin Transaction
 	
    	For x:=1 To Len(aCols)
-		//If aCols[x,2] .AND. !aCols[x,12]
         If aCols[x,2] .AND. !aCols[x,14]
 			If aCols[x,11] == "OPR"
 				AADD(aOPR, { aCols[x], aAux[x] } )
@@ -682,6 +629,47 @@ Static Function ADEDA007A1(aCols, aAux)
 				AADD(aINV, { aCols[x], aAux[x] } )
 			EndIf
   		EndIf
+
+		// @history ticket 64738 - Fernando Macieira - 07/12/2021 - Editar coluna LOCAL
+		If aCols[x,2] // Marcado
+			
+			If AllTrim(aCols[x,11]) == "OPR" .and. AllTrim(aCols[x,13]) == "T"
+			
+				// Consisto conte˙do LOCAL
+				If Empty(aCols[x,12]) .or. !(AllTrim(aCols[x,12]) $ cLocal3)
+					
+					msgAlert("ProduÁ„o de terceiro precisa possuir um LOCAL v·lido! " + Chr(13) + Chr(10) + "Verifique/Corrija a linha " + AllTrim(Str(x)) + " clicando com o bot„o direito do mouse..." )
+					Return .f.
+
+				Else
+					
+					// Gravo novo conte˙do na tabela OPR010 pois a funÁ„o ADEDA003P que far· os execautos n„o olha o acols e sim faz uma nova query na tabela OPR010)
+					cLocOPR := GetOPR(aAux[x,1])
+					If AllTrim(aCols[x,12]) <> cLocOPR
+
+						cSql := " UPDATE OPR010 
+						cSql += " SET LOCAL='"+AllTrim(aCols[x,12])+"' 
+						cSql += " WHERE REC='"+AllTrim(Str(aAux[x,1]))+"' 
+
+						If tcSqlExec(cSql) < 0
+							Alert("Local alterado na linha " + Str(x) + " n„o foi gravado na tabela OPR010! Informe ao TI o erro que ser· mostrado na prÛxima tela...")
+							MessageBox(tcSqlError(),"",16)
+							Return .f.
+						Else
+							//gera log de reprogramacao
+							u_GrLogZBE ( msDate(), TIME(), cUserName, "LOCAL TERCEIRO ALTERADO PELO USUARIO","CONTROLADORIA","ADEDA007R",;
+							"OPR010 RECNO " + AllTrim(Str(aAux[x,1])) + " LOCAL ANTES " + cLocOPR + " LOCAL NOVO " + AllTrim(aCols[x,12]), ComputerName(), LogUserName() )
+						EndIf
+
+					EndIf
+
+				EndIf
+
+			EndIf
+
+		EndIf
+		//
+
 	Next x
     
 	If Len(aOPR) < 1 .AND. Len(aMOV) < 1 .AND. Len(aINV) < 1
@@ -701,39 +689,22 @@ Static Function ADEDA007A1(aCols, aAux)
 				cMsg := "FILIAL=" + ALLTRIM(aArrays[x,y,1,3]) + "; PRODUTO=" + ALLTRIM(aArrays[x,y,1,4]) + "; DESCRI=" + ALLTRIM(aArrays[x,y,1,5]) +;
 						"; QUANTIDADE=" + ALLTRIM( STR(aArrays[x,y,1,6]) ) + "; RECEDATA=" + ALLTRIM( StrZero(aArrays[x,y,2,1], 10) ) + "; "
 				
-				/* CondiÁ„o para assegurar que est· incluindo itens apenas que n„o foram processados ainda(campo MSEXP vazio) */
-				// If ! EMPTY( ALLTRIM( aArrays[x,y,1,8] ))
-				// 	LOOP
-				// EndIf
-
-
-				//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-
 				If x == 1
 
 					U_CCSGrvLog(cMsgIni+cMsg, "OPR", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
-					
 					lRet := U_ADEDA003P( aArrays[x,y,2,1] ) //nRec
-					//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-					
 					U_CCSGrvLog(cMsgFim+cMsg, "OPR", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
 					
 				ElseIf x == 2
 
 					U_CCSGrvLog(cMsgIni+cMsg, "MOV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
-					
 					lRet :=	IIF( aArrays[x,y,1,10] == "Exclus„o", U_ADEDA005P(aArrays[x,y,2,1], .F.), U_ADEDA004P( aArrays[x,y,2,1] ) )
-					//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-					
 					U_CCSGrvLog(cMsgFim+cMsg, "MOV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
 					
 				Else
 
 					U_CCSGrvLog(cMsgIni+cMsg, "INV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
-					
 					lRet :=	IIF( aArrays[x,y,1,10] == "Exclus„o", U_ADEDA006P(aArrays[x,y,2,1], .F., .F.), U_ADEDA006P( aArrays[x,y,2,1], .T. ) )					
-					//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-					
 					U_CCSGrvLog(cMsgFim+cMsg, "INV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
 
 				EndIf
@@ -749,8 +720,6 @@ Static Function ADEDA007A1(aCols, aAux)
 		Next y
 
 	Next x
-	
-	//TcSetConn(_nTcConn2)		// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 	
 	//alerta n„o foi selecionado nenhum valor		
 	cMens := "Todos os itens selecionados foram processados! Verifique o log para verificar erros por favor no bot„o 'Visualizar' "
@@ -858,15 +827,11 @@ Static Function ADEDA007C(aHeader,aCols, aAux)
 					xCor := oGray
 			ENDCASE
 			
-			//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-			
 			cDescri := ""
 			SB1->(DbSetOrder(1))
 			If SB1->(DbSeek( xFilial("SB1") + Padr((cAliasT)->PRODUTO, TamSx3("B1_COD")[1]) ))
 				cDescri := SB1->B1_DESC
 			EndIf
-			
-			//TcSetConn(_nTcConn2)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 				
 			AADD(aCols,	{	xCor				,;
 							.F.                 ,;
@@ -945,15 +910,11 @@ Static Function ADEDA007C(aHeader,aCols, aAux)
 						xCor := oGray
 				ENDCASE
 				
-				//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-				
 				cDescri := ""
 				SB1->(DbSetOrder(1))
 				If SB1->(DbSeek( xFilial("SB1") + Padr((cAliasT)->PRODUTO, TamSx3("B1_COD")[1]) ))
 					cDescri := SB1->B1_DESC
 				EndIf
-				
-				//TcSetConn(_nTcConn2)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 				
 				AADD(aCols,	{	xCor				,;
 								.F.                 ,;
@@ -1064,82 +1025,56 @@ Return Nil
 */
 Static Function ADEDA007D
 
-Local oDlg
-Local oTcBrowse
-Local aValues 	:= {}
-Local cAlias 	:= GetNextAlias()
-Local cAcao		:= ""
+	Local oDlg
+	Local oTcBrowse
+	Local aValues 	:= {}
+	Local cAlias 	:= GetNextAlias()
+	Local cAcao		:= ""
 
-/*
-TcConType("TCPIP")
-If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1))<0
-	_lRet     := .F.
-	cMsgError := "N„o foi possÌvel  conectar ao banco Protheus"
-	MsgInfo("N„o foi possÌvel  conectar ao banco produÁ„o, verifique com administrador","ERROR")	
-EndIf
+	BeginSql Alias cAlias
+		SELECT ZA1_FILIAL, ZA1_TABELA, ZA1_ACAO, (SUBSTRING(ZA1_DATA,7,2)+'/'+SUBSTRING(ZA1_DATA,5,2)+'/'+SUBSTRING(ZA1_DATA,1,4)) AS ZA1_DAT, ZA1_HORA, ZA1_MENSAG, ZA1_USER
+		FROM ZA1010 ZA1 (NOLOCK)
+		WHERE ZA1.%notDel%
+		AND ZA1_TABELA IN ('OPR', 'MOV', 'INV')	
+		ORDER BY ZA1_DATA DESC, ZA1_HORA DESC
+	EndSql
 
-If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-	_lRet     := .F.
-	cMsgError := "N„o foi possÌvel  conectar ao banco integraÁ„o"
-	MsgInfo("N„o foi possÌvel  conectar ao banco integraÁ„o, verifique com administrador","ERROR")	
-EndIf
-*/
+	Do While !(cAlias)->(Eof())
+		DO CASE
+			CASE (cAlias)->ZA1_ACAO == "I"
+				cAcao := "Inclus„o"
+			CASE (cAlias)->ZA1_ACAO == "A"
+				cAcao := "AlteraÁ„o"
+			CASE (cAlias)->ZA1_ACAO == "E"
+				cAcao := "Exclus„o"
+			CASE (cAlias)->ZA1_ACAO == "P"
+				cAcao := "Processamento"
+			OTHERWISE
+				cAcao := ""
+		ENDCASE
+		
+		AADD(aValues,{	(cAlias)->ZA1_FILIAL		 ,;
+						(cAlias)->ZA1_TABELA		 ,;
+						cAcao						 ,;
+						(cAlias)->ZA1_DAT			 ,;
+						(cAlias)->ZA1_HORA			 ,;
+						ALLTRIM((cAlias)->ZA1_MENSAG),;
+						(cAlias)->ZA1_USER 			   })
+		(cAlias)->(DbSkip())
+	EndDo
+		
+	DEFINE MSDIALOG oDlg FROM  0,0 TO 520,970 TITLE OemToAnsi("Tela de Logs") PIXEL
 
-//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-
-BeginSql Alias cAlias
-	SELECT ZA1_FILIAL, ZA1_TABELA, ZA1_ACAO, (SUBSTRING(ZA1_DATA,7,2)+'/'+SUBSTRING(ZA1_DATA,5,2)+'/'+SUBSTRING(ZA1_DATA,1,4)) AS ZA1_DAT, ZA1_HORA, ZA1_MENSAG, ZA1_USER
-	FROM ZA1010 ZA1 (NOLOCK)
-	WHERE ZA1.%notDel%
-	AND ZA1_TABELA IN ('OPR', 'MOV', 'INV')	
-	ORDER BY ZA1_DATA DESC, ZA1_HORA DESC
-EndSql
-
-Do While !(cAlias)->(Eof())
-	DO CASE
-		CASE (cAlias)->ZA1_ACAO == "I"
-			cAcao := "Inclus„o"
-		CASE (cAlias)->ZA1_ACAO == "A"
-			cAcao := "AlteraÁ„o"
-		CASE (cAlias)->ZA1_ACAO == "E"
-			cAcao := "Exclus„o"
-		CASE (cAlias)->ZA1_ACAO == "P"
-			cAcao := "Processamento"
-		OTHERWISE
-			cAcao := ""
-	ENDCASE
-	
-	AADD(aValues,{	(cAlias)->ZA1_FILIAL		 ,;
-   		   			(cAlias)->ZA1_TABELA		 ,;
-   					cAcao						 ,;
-  					(cAlias)->ZA1_DAT			 ,;
- 					(cAlias)->ZA1_HORA			 ,;
- 					ALLTRIM((cAlias)->ZA1_MENSAG),;
- 					(cAlias)->ZA1_USER 			   })
-	(cAlias)->(DbSkip())
-EndDo
-	
-DEFINE MSDIALOG oDlg FROM  0,0 TO 520,970 TITLE OemToAnsi("Tela de Logs") PIXEL
-
-	oTcBrowse := TCBrowse():New(000,000,000,000,/*bLine*/,{'FILIAL', 'TABELA', 'ACAO', 'DATA', 'HORA', 'MENSAGEM', 'USUARIO'},/*aColsSpace*/,oDlg,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
-	oTcBrowse:Align := CONTROL_ALIGN_ALLCLIENT
-	oTcBrowse:SetArray(aValues)
-	oTcBrowse:bLine := {|| {aValues[oTcBrowse:nAt,1], aValues[oTcBrowse:nAt,2], aValues[oTcBrowse:nAt,3], aValues[oTcBrowse:nAt,4], aValues[oTcBrowse:nAt,5], aValues[oTcBrowse:nAt,6], aValues[oTcBrowse:nAt,7]} }
-	oTcBrowse:GoTop()
-	oTcBrowse:SetFocus()
-	
-ACTIVATE MSDIALOG oDlg CENTERED	
-
+		oTcBrowse := TCBrowse():New(000,000,000,000,/*bLine*/,{'FILIAL', 'TABELA', 'ACAO', 'DATA', 'HORA', 'MENSAGEM', 'USUARIO'},/*aColsSpace*/,oDlg,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
+		oTcBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+		oTcBrowse:SetArray(aValues)
+		oTcBrowse:bLine := {|| {aValues[oTcBrowse:nAt,1], aValues[oTcBrowse:nAt,2], aValues[oTcBrowse:nAt,3], aValues[oTcBrowse:nAt,4], aValues[oTcBrowse:nAt,5], aValues[oTcBrowse:nAt,6], aValues[oTcBrowse:nAt,7]} }
+		oTcBrowse:GoTop()
+		oTcBrowse:SetFocus()
+		
+	ACTIVATE MSDIALOG oDlg CENTERED	
 
 Return
-
-
-
-
-
-
-
-
 
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
@@ -1160,47 +1095,47 @@ Return
 */
 Static Function ADEDA007RE(cPerg,aPergunte)
 
-Local lRet				:= .T.
-Local ni				:= 0
+	Local lRet				:= .T.
+	Local ni				:= 0
 
-	//Gravar variaveis no grupo de perguntas do SX1
-	__SaveParam(cPerg,@aPergunte)	
-	//Reinicializar as perguntas
-	ResetMVRange()
-	For ni := 1 to Len(aPergunte)
-		//Inicializar as perguntas c/ array caso existam diferencas, para as validacoes
-		Do Case
-			Case AllTrim(aPergunte[ni][POS_X1OBJ]) == "C"
-				aPergunte[ni][POS_X1VAL] := &(aPergunte[ni][POS_X1VAR])
-			Otherwise
-				&(aPergunte[ni][POS_X1VAR]) := aPergunte[ni][POS_X1VAL]
-		EndCase
-		//Definir a variavel corrente como sendo o parametro a validar, para aquelas validacoes que utilizar a variavel de campo posicionado
-		__ReadVar := aPergunte[ni][POS_X1VAR]
-		//Executar validacao
-		If !Eval(&("{|| " + aPergunte[ni][POS_X1VLD] + "}"))
-			MsgAlert(cNomeUs + ", inconsistÍncia na pergunta " + StrZero(ni,2) + " (" + StrTran(AllTrim(Capital(aPergunte[ni][POS_X1DES])),"?","") + ")")
-			Return !lRet
-		Endif
-	Next ni
-	
-	nPerg01Tip := mv_par01 // Tabela
-	dPerg02Dta := mv_par02 // PerÌodo De
-	dPerg03Dta := mv_par03 // PerÌodo Ate
-	cPerg04Pdt := mv_par04 // Produto De
-	cPerg05Pdt := mv_par05 // Produto Ate
-	cPerg06Sta := mv_par06 // Status
-	cPerg07Ope := mv_par07 // Tipo de OperaÁ„o
-	cPerg08Prd := mv_par08 // ProduÁ„o (PrÛpria/Terceiro) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
+		//Gravar variaveis no grupo de perguntas do SX1
+		__SaveParam(cPerg,@aPergunte)	
+		//Reinicializar as perguntas
+		ResetMVRange()
+		For ni := 1 to Len(aPergunte)
+			//Inicializar as perguntas c/ array caso existam diferencas, para as validacoes
+			Do Case
+				Case AllTrim(aPergunte[ni][POS_X1OBJ]) == "C"
+					aPergunte[ni][POS_X1VAL] := &(aPergunte[ni][POS_X1VAR])
+				Otherwise
+					&(aPergunte[ni][POS_X1VAR]) := aPergunte[ni][POS_X1VAL]
+			EndCase
+			//Definir a variavel corrente como sendo o parametro a validar, para aquelas validacoes que utilizar a variavel de campo posicionado
+			__ReadVar := aPergunte[ni][POS_X1VAR]
+			//Executar validacao
+			If !Eval(&("{|| " + aPergunte[ni][POS_X1VLD] + "}"))
+				MsgAlert(cNomeUs + ", inconsistÍncia na pergunta " + StrZero(ni,2) + " (" + StrTran(AllTrim(Capital(aPergunte[ni][POS_X1DES])),"?","") + ")")
+				Return !lRet
+			Endif
+		Next ni
+		
+		nPerg01Tip := mv_par01 // Tabela
+		dPerg02Dta := mv_par02 // PerÌodo De
+		dPerg03Dta := mv_par03 // PerÌodo Ate
+		cPerg04Pdt := mv_par04 // Produto De
+		cPerg05Pdt := mv_par05 // Produto Ate
+		cPerg06Sta := mv_par06 // Status
+		cPerg07Ope := mv_par07 // Tipo de OperaÁ„o
+		cPerg08Prd := mv_par08 // ProduÁ„o (PrÛpria/Terceiro) // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 
-	oBot01:Show()
-	oBot02:Show()
+		oBot01:Show()
+		oBot02:Show()
 
-	If cPerg06Sta  == 1
-		oBot02:Hide()
-	ElseIf cPerg06Sta  == 2
-		oBot01:Hide()
-	EndIf
+		If cPerg06Sta  == 1
+			oBot02:Hide()
+		ElseIf cPerg06Sta  == 2
+			oBot01:Hide()
+		EndIf
 
 Return lRet
 
@@ -1225,22 +1160,6 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 	Local cOPERACAO	:= ""
 	Local cPrdPTA   := "A" // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 
-	/*
-	TcConType("TCPIP")
-	If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1))<0
-		_lRet     := .F.
-		cMsgError := "N„o foi possÌvel  conectar ao banco Protheus"
-		MsgInfo("N„o foi possÌvel  conectar ao banco produÁ„o, verifique com administrador","ERROR")	
-	EndIf
-
-	If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2))<0
-		_lRet     := .F.
-		cMsgError := "N„o foi possÌvel  conectar ao banco integraÁ„o"
-		MsgInfo("N„o foi possÌvel  conectar ao banco integraÁ„o, verifique com administrador","ERROR")	
-	EndIf
-	*/
-	//TcSetConn(_nTcConn2)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-
 	DO CASE
 		CASE cPerg06Sta == 1
 			cSTATUS := "I"
@@ -1259,10 +1178,6 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 			cOPERACAO := "E"
 	ENDCASE
 
-	// @history ticket 31248 - Fernando Macieira - 14/09/2021 - ADEDA007 - Ajustar novo filtro Processamento das OPs
-	// Ajustado o campo na query pois estava fazendo where com a coluna PRODUCAO e foi mudada para LOCAL
-	//
-
 	// @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
 	If cPerg08Prd == 1 // produÁ„o PR”PRIA
 		cPrdPTA := "P"
@@ -1278,11 +1193,8 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 		
 			BeginSQL Alias cAliasT
 
-				//SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC
 				SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC, LOCAL, PRODUCAO // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
-						
 				FROM OPR010 (NOLOCK)
-				
 				WHERE DATA BETWEEN %Exp:dPerg02Dta% AND %Exp:dPerg03Dta%
 					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
 					AND STATUS = %Exp:cSTATUS%
@@ -1296,11 +1208,8 @@ Static Function ADEDA007RF(cAliasT, nOpc)
 		
 			BeginSQL Alias cAliasT
 
-				//SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC
 				SELECT FILIAL, PRODUTO, QUANT, (SUBSTRING(DATA,7,2)+'/'+SUBSTRING(DATA,5,2)+'/'+SUBSTRING(DATA,1,4)) AS DATA, MSEXP, STATUS, OPERACAO, REC, LOCAL, PRODUCAO // @history ticket 11639 - Fernando Macieira - 26/05/2021 - Projeto - OPS Documento de entrada - IndustrializaÁ„o/Beneficiamento
-						
 				FROM OPR010 (NOLOCK)
-				
 				WHERE DATA BETWEEN %Exp:dPerg02Dta% AND %Exp:dPerg03Dta%
 					AND PRODUTO BETWEEN %Exp:cPerg04Pdt% AND %Exp:cPerg05Pdt%
 					AND STATUS = %Exp:cSTATUS%
@@ -1482,50 +1391,25 @@ Static Function ADEDA007RH(aCols, aAux)
 					cMsg := "FILIAL=" + ALLTRIM(aArrays[x,y,1,3]) + "; PRODUTO=" + ALLTRIM(aArrays[x,y,1,4]) + "; DESCRI=" + ALLTRIM(aArrays[x,y,1,5]) +;
 							"; QUANTIDADE=" + ALLTRIM( STR(aArrays[x,y,1,6]) ) + "; RECEDATA=" + ALLTRIM( StrZero(aArrays[x,y,2,1], 10) ) + "; " + "MOTIVO="
 
-					//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-
-					/* CondiÁ„o criada para garantir que apenas itens que j· foram processados e estejam com o campo igual a 'S' sejam estornados */
-					// If ALLTRIM( aArrays[x,y,1,9] ) <> "S"
-					// 	LOOP
-					// EndIf
-
 					If x == 1
 					
 						U_CCSGrvLog(cMsgIni+cMsg, "OPR", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
-						
-						/*
-							ADEDA003P(nRec, lExclui)
-						*/
 						lRet := U_ADEDA003P( aArrays[x,y,2,1], .T. )
-						//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 						cTabela := "OPR010"
-							
 						U_CCSGrvLog(cMsgFim+cMsg+_MsgMotivo, "OPR", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
 
 					ElseIf x == 2
 
 						U_CCSGrvLog(cMsgIni+cMsg, "MOV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
-						
-						/*
-							ADEDA005P(nRec)
-						*/
 						lRet := U_ADEDA005P( aArrays[x,y,2,1], .T. ) //nRec
-						//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 						cTabela := "MOV010"
-						
 						U_CCSGrvLog(cMsgFim+cMsg+_MsgMotivo, "MOV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
 
 					Else
 						
 						U_CCSGrvLog(cMsgIni+cMsg, "INV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
-						
-						/*
-							U_ADEDA006P(nRec, lInclui)
-						*/
 						lRet := U_ADEDA006P( aArrays[x,y,2,1], .F., .T. ) 
-						//TcSetConn(_nTcConn1)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 						cTabela := "INV010"
-						
 						U_CCSGrvLog(cMsgFim+cMsg+_MsgMotivo, "INV", aArrays[x,y,2,1], 6, aArrays[x,y,1,3], .T.)
 					
 					EndIf
@@ -1535,19 +1419,19 @@ Static Function ADEDA007RH(aCols, aAux)
 					If !lRet
 						cMsgLog += " - Problema no estorno do item: " + cMsg + _MsgMotivo + CHR(13) + CHR(10)
 					Else
-						//TcSetConn(_nTcConn2)	// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
 						TcSqlExec("UPDATE " + cTabela + " SET D_E_L_E_T_='*' WHERE REC = " + ALLTRIM( StrZero(aArrays[x,y,2,1], 10) ) )	
 					EndIf
 					
 					lRet := .F.
+
 				EndIf
+
 			Next y
+
 		Next x
 
 		MsUnlockAll()
 		
-		//TcSetConn(_nTcConn2)		// @history ticket 12048 - Fernando Macieira - 07/04/2021 - Revis„o das integraÁıes e geraÁ„o das OPS - Banco DBINTEREDATA
-				
 		cMens := "Todos os itens selecionados foram processados! Verifique o log clicando no bot„o 'Log'" + CHR(13) + CHR(10)
 		cMens +=  CHR(13) + CHR(10) + cMsgLog
 
@@ -1611,3 +1495,81 @@ Static Function AjustaSX1(cPerg)
     U_newGrSX1(cPerg, aMensSX1)
 
 Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 07/12/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 64738 - Fernando Macieira - 07/12/2021 - Editar coluna LOCAL
+/*/
+User Function ChkLocal(aCols)
+
+	Local lRet := .t.
+	Local i
+	Local cLocal3  := GetMV("MV_#OPRTER",,"70#71#72#73#74")
+		
+	For i:=1 to Len(aCols)
+
+		If aCols[i,2] // Marcado
+					
+			If AllTrim(aCols[i,11]) == "OPR" .and. AllTrim(aCols[i,13]) == "T"
+
+				// Consisto conte˙do LOCAL
+				If Empty(aCols[i,12]) .or. !(AllTrim(aCols[i,12]) $ cLocal3)
+
+					lRet := .f.
+					msgAlert("ProduÁ„o de terceiro precisa possuir um LOCAL v·lido! " + Chr(13) + Chr(10) + "Verifique/Corrija a linha " + AllTrim(Str(i)) + " clicando com o bot„o direito do mouse..." )
+				
+				EndIf
+
+			EndIf
+
+		EndIf
+
+	Next i
+
+Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 08/12/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function GetOPR(nRecnoOPR)
+
+	Local cRet   := ""
+	Local cQuery := ""
+
+	If Select("WorkOPR") > 0
+		WorkOPR->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT LOCAL
+	cQuery += " FROM OPR010 (NOLOCK)
+	cQuery += " WHERE REC='"+AllTrim(Str(nRecnoOPR))+"'"
+
+	tcQuery cQuery New Alias "WorkOPR"
+
+	If WorkOPR->( !EOF() )
+		cRet := AllTrim(WorkOPR->LOCAL)
+	EndIf
+
+	If Select("WorkOPR") > 0
+		WorkOPR->( dbCloseArea() )
+	EndIf
+
+Return cRet

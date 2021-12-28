@@ -29,6 +29,7 @@ Static cFil := "02"
 	@Ticket 63090, Data 03/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 11/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket 63090, Data 18/11/2021, Everson, Tratamento para processamento com mais de uma thread.
+	@Ticket TI   , Data 28/12/2021, Everson, Tratamento para data incorreta enviada pelo Salesforce.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
@@ -1841,6 +1842,7 @@ Static Function comparaCab(oParseJSON,cPedido)
 	Local cJsonSF := ""
 	Local cJsonPr := ""
 	Local lRet    := .F.
+	Local cData	  := "" //Everson - 28/12/2019 - Chamado T.I.
 
 	//Monta string do SalesForce.
 	cJsonSF += Alltrim(cValToChar(oParseJSON:CABECALHO:C5_TIPO)) +"_"
@@ -1849,7 +1851,17 @@ Static Function comparaCab(oParseJSON,cPedido)
 
 	cJsonSF += Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)) +"_"
 
-	cJsonSF += DToS(SToD(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_DTENTR)))) +"_"
+	//Everson - 28/12/2019 - Chamado T.I.
+	If (SToD(oParseJSON:CABECALHO:C5_DTENTR) - dDataBase) > 20
+		cData := Substr(DToS(dDataBase),1,4)+Substr(oParseJSON:CABECALHO:C5_DTENTR,5,10)
+
+	Else
+		cData := oParseJSON:CABECALHO:C5_DTENTR
+
+	EndIf
+	//
+
+	cJsonSF += DToS(SToD(Alltrim(cValToChar(cData)))) +"_"
 
 	cJsonSF += Alltrim(cValToChar(oParseJSON:CABECALHO:C5_MOEDA)) +"_"
 

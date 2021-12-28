@@ -21,6 +21,7 @@
 	@history Ticket 15290 - Abel Babini     - 08/06/2021 - Cria validação se o array possui conteúdo e se o arquivo existe para prevenir error.log
 	@history Ticket 64960 - Adriano Savoine - 08/12/2021 - Ajustada a variavel cArq pois estava trocada ocorrendo error log mencionado no ticket.
 	@history Ticket 64960 - Leonardo P. Monteiro - 23/12/2021 - Ajuste de performance do relatório.
+	@history Ticket 64960 - Leonardo P. Monteiro - 28/12/2021 - Correção de error.log.
 	/*/
 User Function ADFIS027R()
 
@@ -140,9 +141,9 @@ User Function ADFIS027R()
 		
 		If Alltrim(aRet[7]) == "Não"
 			If Len(_cWhereBlq) == 3
-				_cWhereBlq	:= "% AND CAB.XML_NOMEMT NOT LIKE 'ADORO%' %"
+				_cWhereBlq	:= " AND CAB.XML_NOMEMT NOT LIKE 'ADORO%' "
 			Else
-				_cWhereBlq	:= Substr(_cWhereBlq,1,Len(_cWhereBlq)-1) + " AND CAB.XML_NOMEMT NOT LIKE 'ADORO%' %"
+				_cWhereBlq	:= _cWhereBlq + " AND CAB.XML_NOMEMT NOT LIKE 'ADORO%' "
 			Endif
 		Endif
 		
@@ -435,7 +436,7 @@ User Function ADFIS027R()
 	
 	RestArea(aArea)
 	
-	MsgAlert("Debug", "Alerta")
+	//MsgAlert("Debug", "Alerta")
 	// Alert('FIM')
 Return Nil
 

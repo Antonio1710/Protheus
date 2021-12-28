@@ -20,6 +20,7 @@ Static cCadastro := "Reembolso"
 ±±ºAlteraçaõ ³ Everson - 16/05/2019. Ch. TI. Adicionado preço unitário ao reembolso e tela de valid produto.º±±
 ±±ºAlteraçaõ ³ Everson - 08/08/2019. Ch. TI. Removida atualização do campo de pedido de compra.             º±±
 ±±ºAlteraçaõ ³ Everson - 09/09/2019. Ch. 051527. Adicionada a opção de nú´mero de projeto.                  º±±
+±±ºAlteraçaõ ³ Everson - 28/12/2021. Ch. 051527. Adicionada a opção de nú´mero de projeto.                  º±±
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
@@ -30,16 +31,22 @@ User Function ADFIN073P() // U_ADFIN073P
 	//³ Declaração de variáveis.                                            |
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local oBrowse
-
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para lançamento de reembolso.')
+	Local cEmpAdo	:= SuperGetMv("ZZ_FIN073A",,"01")
 	
 	//
-	oBrowse := FWMBrowse():New()
-	oBrowse:SetAlias("ZFI")
-	oBrowse:SetDescription(cCadastro)
-	oBrowse:AddLegend("ZFI_STATUS = '1'","BR_VERDE"   ,"Aberto")
-	oBrowse:AddLegend("ZFI_STATUS = '2'","BR_VERMELHO","Pedido de compra gerado")
-	oBrowse:Activate()
+	IF !cEmpAnt$cEmpAdo
+		MsgInfo("Empresa não está configurada para utilização da rotina!", "Empresa não Autorizada")
+	else
+		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para lançamento de reembolso.')
+		
+		//
+		oBrowse := FWMBrowse():New()
+		oBrowse:SetAlias("ZFI")
+		oBrowse:SetDescription(cCadastro)
+		oBrowse:AddLegend("ZFI_STATUS = '1'","BR_VERDE"   ,"Aberto")
+		oBrowse:AddLegend("ZFI_STATUS = '2'","BR_VERMELHO","Pedido de compra gerado")
+		oBrowse:Activate()
+	ENDIF
 
 Return Nil
 /*

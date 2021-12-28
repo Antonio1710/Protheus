@@ -19,20 +19,11 @@
 	@history ticket 12048 - Fernando Macieira - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
 	@history ticket 13858 - Fernando Macieira - 10/05/2021 - APONTAMENTO DE PRODUÇÃO ABRIL - FILIAL 02
     @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+	@history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
 /*/
 User Function ADEDA002P(cEmp,cFil,cJobFile)
 
 	Local   aTables		:={"SB1","SC2","SD3","SB2","SD4","SF5","ZA1","SD1","SD2","SD5","TD9","QP6"}
-
-	// @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-	/*
-	Private _cNomBco1   := ""
-	Private _cSrvBco1   := ""
-	Private _cPortBco1  := ""
-	Private _cNomBco2   := ""
-	Private _cSrvBco2   := ""
-	Private _cPortBco2  := ""
-	*/
 
 	Private cPara       := ""
 	Private cCopia      := ""
@@ -40,19 +31,9 @@ User Function ADEDA002P(cEmp,cFil,cJobFile)
 	Private cAssunto    := ""
 	Private cDe         := ""
 	
-	// @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-	/*
-	Private _nTcConn1	:= advConnection()
-	Private _nTcConn2
-	*/
-
 	Default cEmp		:= "01"
 	Default cFil		:= "02"
 	Default cJobFile	:= "ADEDA002P"
-
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³TRATAMENTO DO JOB³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
 	//Apaga arquivo ja existente
 	If File(cJobFile)
@@ -73,16 +54,6 @@ User Function ADEDA002P(cEmp,cFil,cJobFile)
 	RpcSetEnv( cEmp, cFil,,,"PCP","MATA650",aTables, , , ,   )
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funções de integração com o Edata')
-
-	// @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-	/*
-	_cNomBco1  := GetPvProfString("INTEDTBD","BCO1","ERROR",GetADV97())
-	_cSrvBco1  := GetPvProfString("INTEDTBD","SRV1","ERROR",GetADV97())
-	_cPortBco1 := Val(GetPvProfString("INTEDTBD","PRT1","ERROR",GetADV97()) )
-	_cNomBco2  := GetPvProfString("INTEDTBD","BCO2","ERROR",GetADV97())
-	_cSrvBco2  := GetPvProfString("INTEDTBD","SRV2","ERROR",GetADV97())
-	_cPortBco2 := Val(GetPvProfString("INTEDTBD","PRT2","ERROR",GetADV97()))
-	*/
 
 	cPara      := SuperGetMV("MV_XMPARA" ,,"")
 	cCopia     := SuperGetMV("MV_XMCOPIA",,"")
@@ -155,8 +126,6 @@ User Function ADEDA003P(nRec, lExclui)
     Private cLoc3           := "" // @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
     Private cPrd3           := "" // @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 
-	//Private _nTcConn1,_nTcConn2
-
 	Default nRec 		:= 0
 	Default lExclui		:= .F.
 	Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADEDA007R como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADEDA007R*/
@@ -166,50 +135,20 @@ User Function ADEDA003P(nRec, lExclui)
     lMsErroAuto := .F.
     _lJob       := .F.
     
-    /*
-    TcConType("TCPIP")
-    If (_nTcConn1 := TcLink(_cNomBco1,_cSrvBco1,_cPortBco1)) < 0
-        _lRet     := .F.
-        cMsgError := "Não foi possível  conectar ao banco Protheus"
-        MsgInfo("Não foi possível  conectar ao banco produção, verifique com administrador","ERROR")
-        
-    EndIf
-    
-    If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2)) < 0
-        _lRet     := .F.
-        cMsgError := "Não foi possível  conectar ao banco integração"
-        MsgInfo("Não foi possível  conectar ao banco integração, verifique com administrador","ERROR")
-        
-    EndIf
-    */
-    
-    //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-    
     cQry := " SELECT * FROM OPR010 (NOLOCK) WHERE D_E_L_E_T_=' ' AND "
-    
     If lExclui
         cQry += " MSEXP <> ' ' "
     Else		
         cQry +=	" (MSEXP='' OR ( MSEXP<> '' AND  STATUS ='E' )) "
     EndIf
-    
     If nRec > 0
         cQry +=	" AND REC = '" + ALLTRIM(StrZero(nRec,10)) + "' "
     EndIf
-    
-    // @history ticket   13858 - Fernando Macieira     - 10/05/2021 - APONTAMENTO DE PRODUÇÃO ABRIL - FILIAL 02
     cQry += " AND QUANT > 0 
-    /*If IsInCallStack("U_ADEDA007R")
-        cQry += " AND DATA BETWEEN '"+DtoS(dPerg02Dta)+"' AND '"+DtoS(dPerg03Dta)+"'
-    EndIf*/
-    //
-
     cQry += " ORDER BY FILIAL,DATA,PRODUTO "
     
     cAliasOPR	:= GetNextAlias()
-    
     DbUseArea(.t., "TOPCONN", TcGenQry(,, cQry), cAliasOPR, .F., .T.)
-    
     TcSetField( cAliasOPR, "EMISSAO", "D", 8, 0 )
 
     nQuantOP := 0
@@ -238,11 +177,9 @@ User Function ADEDA003P(nRec, lExclui)
             
             If !FwInTTSBreak() // @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 
-                //Begin Transaction // analiseFWNM
+                Begin Transaction // @history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
                 
                     nRecOPR := (cAliasOPR)->REC
-                
-                    //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
                 
                     If ( _lRet := ADEDA002PD(cAliasOPR, @cOp) ) //ESTORNA APONTAMENTOS DE PRODUÇÃO (SD3) MATA250
                         
@@ -251,46 +188,34 @@ User Function ADEDA003P(nRec, lExclui)
                             If ( _lRet := ADEDA002PE(cAliasOPR, nQtdeTot, 5, cOp) ) //ESTORNA PRODUÇÃO (SC2) MATA650
                                 
                                 DDATABASE := _dData
-                                
                                 U_CCSGrvLog("ok", "OPR", 0, 3, (cAliasOPR)->FILIAL, .T.)
-                                
-                                //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
                                 TcSqlExec("UPDATE OPR010 SET D_E_L_E_T_='*' WHERE REC=" + AllTrim(Str(nRecOPR)) + " AND D_E_L_E_T_=' ' " )
 
                             Else
 
                                 _MsgMotivo += "(Problema no estorno da Ordem de Produção) " + CHR(13) + CHR(10)
-
-                                // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                                 DisarmTransaction() 
-                                //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                                //
+                                Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                             EndIf
 
                         Else
 
                             _MsgMotivo += "(Problema no estorno da Movimentação Interna) " + CHR(13) + CHR(10)
-
-                            // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                             DisarmTransaction() 
-                            //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                            //
+                            Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                         EndIf
 
                     Else
 
                         _MsgMotivo += "(Problema no estorno do Apontamento de Produção) " + CHR(13) + CHR(10)
-
-                        // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                         DisarmTransaction() 
-                        //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                        //
+                        Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                     EndIf
                 
-                //End Transaction // analiseFWNM
+                End Transaction
 
                 MsUnLockAll() 									// @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
 
@@ -300,100 +225,73 @@ User Function ADEDA003P(nRec, lExclui)
             
             If !FwInTTSBreak() // @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 
-                //Begin Transaction // analiseFWNM
+				PutSBFSB2()
+                
+				Begin Transaction //@history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
                 
                     nRecOPR 	:= (cAliasOPR)->REC
                     cOPProduto	:= (cAliasOPR)->PRODUTO
                     
-                    //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-                
 				 	//GERA A PRODUÇÃO (SC2) MATA650
                     If ( _lRet := ADEDA002PB(cAliasOPR, nQtdeTot, nRecOPR, @cOp) )
                         
                         /* Função usada para verificar se controla saldo e se existe saldo */
                         If _lRet := ADEDA002PG(cOPProduto, nQtdeTot)
 
-							 //CRIA A MOVIMENTAÇÃO (SD3) MATA240
+							//CRIA A MOVIMENTAÇÃO (SD3) MATA240 // MOVIMENTO ESPECÍFICO DO FRANGO VIVO 300042
                             If ( _lRet := ADEDA002G(nRecOPR, nQtdeTot, cOp, 3, cData) )
                 
 								// CRIA O APONTAMENTO DA PRODUÇÃO (SD3) MATA250
-                                If !( _lRet := ADEDA002PC(@cErro,nRecOPR,cOp) ) //(cAliasOPR)->(dbGotop())   
+                                If !( _lRet := ADEDA002PC(@cErro,nRecOPR,cOp) ) 
                                     
-                                    ADEDA002PF(nRecOPR) //ESTORNA A MOVIMENTAÇÃO
+									ADEDA002PF(nRecOPR) //ESTORNA A MOVIMENTAÇÃO
                                     ADEDA002PE(cAliasOPR,nQtdeTot,5,cOp) //ESTORNA A PRODUCAO
                                     
-                                    DDATABASE := _dData
-                                    U_CCSGrvLog(cErro, "OPR", 0, 3, (cAliasOPR)->FILIAL, .T.)
-                                    
-                                    //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
                                     TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='E', MSG='"+cErro+ "' WHERE REC="+AllTrim(Str(nRecOPR))+" AND OPERACAO='I' ")
 
-                                Else
-
+                                    DDATABASE := _dData
+                                    U_CCSGrvLog(cErro, "OPR", 0, 3, (cAliasOPR)->FILIAL, .T.)
                                     _MsgMotivo += "(Problema na geração do Apontamento de Produção) " + CHR(13) + CHR(10)
 
-                                    // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                                     DisarmTransaction() 
-                                    //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                                    //
+                                    Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                                 EndIf
                     
                             Else
                             
                                 _MsgMotivo += "(Problema na geração da Movimentação Interna) " + CHR(13) + CHR(10)
-                    
                                 ADEDA002PE(cAliasOPR,nQtdeTot,5,cOp) //ESTORNA A PRODUCAO
-                    
                                 DDATABASE := _dData
-                    
                                 cErro := "Não foi possível criar uma requisição da ordem de produção criada" 
                                 U_CCSGrvLog(cErro, "OPR", 0, 3, (cAliasOPR)->FILIAL, .T.)
-                    
-                                //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
                                 TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='E', MSG='"+cErro+ "' WHERE REC="+AllTrim(Str(nRecOPR))+" AND OPERACAO='I' ")
-
-                                // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                                 DisarmTransaction() 
-                                //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                                //
+                                Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                             EndIf
 
                         Else
 
                             ADEDA002PE(cAliasOPR, nQtdeTot, 5, cOp) //ESTORNA A PRODUCAO
-                
                             DDATABASE := _dData
-                
                             cErro := "Não foi possível gerar a movimentação da OP, porque algum componente não possui saldo." 
-                            
                             U_CCSGrvLog(cErro, "OPR", nRecOPR, 3, cFilAnt, .T.)
-                            
-                            //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
                             TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='E', MSG='" + cErro + "' WHERE REC="+AllTrim(Str(nRecOPR))+" ")
-
-                            //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-
-                            // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                             DisarmTransaction() 
-                            //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                            //
+                            Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                         EndIf					
                     
                     Else
 
                         _MsgMotivo += "(Problema na geração da Ordem de Produção) " + CHR(13) + CHR(10)
-
-                        // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                         DisarmTransaction() 
-                        //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                        //
+                        Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
 
                     EndIf
                 
-                //End Transaction // analiseFWNM
+                End Transaction
 
                 MsUnLockAll() // @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 
@@ -403,22 +301,15 @@ User Function ADEDA003P(nRec, lExclui)
                 
         EndIf
         
-        //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
         go nRecXOpr
         (cAliasOPR)->(DbSkip())
         
     EndDo
 
     (cAliasOPR)->(DbCloseArea())
-    
-    //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-            
     cFilAnt := cFilBkp
-    
     DDATABASE := _dData
-    
     RestArea(_aArea)        
-
     MsUnLockAll() // @history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 
 Return _lRet
@@ -446,18 +337,12 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
 	Local cError  	:= ""
 	Local k
 	
-	// @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	Local cRevisao  := "" 
 	Local _cCCustoC2 := GetMV("MV_#CCPROP",,"5131") 
-	//Local _cLocalC2  := ""
-	//
 
-	//Private cAliasOPR		:= GetNextAlias()
 	Private lMsErroAuto 	:= .F.
 	Private lMsHelpAuto 	:= .T.
 	Private lAutoErrNoFile 	:= .T.
-
-	//Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADEDA007R como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADEDA007R*/
 
     cFilBkp 	:= cFilAnt
     cCod		:= (cAliasOPR)->PRODUTO
@@ -470,20 +355,15 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
     dbSeek(xFilial("SB1") + cCod)
     If Eof()
 
-        //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
         cErro := "OPR - Produto nao cadastrado no Protheus "+cCod
         TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='E', MSG='"+cErro+ "' WHERE REC="+AllTrim(Str(nRecB1))+" AND OPERACAO='I' ")
 
-        // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
         DisarmTransaction() 
         //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-        //
 
         Return lRet
 
     EndIf
-    
-    //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
     
     cFilAnt	:= (cAliasOPR)->FILIAL
     
@@ -508,14 +388,10 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
 			_cCCustoC2 := GetMV("MV_#3CCGAL",,"5906")
 		EndIf
 
-		//_cLocalC2 := cLoc3
-
 		If At("-", cLoc3) > 0
 			cRevisao := Right(AllTrim(cLoc3),3)
 		EndIf
 
-	Else
-		//_cLocalC2 := RetFldProd(SB1->B1_COD,"B1_LOCPAD")
 	EndIf
 	//
     
@@ -548,7 +424,6 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
     
     CTT->(dbSetOrder(1))  // B1_FILIAL+B1_COD
     CTT->(dbSeek(xFilial("CTT") + _cCCustoC2)) // @history ticket 11639 - Fernando Macieira - 28/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
-	//CTT->(dbSeek(xFilial("CTT") + '5131'))
     
     lMsErroAuto := .F.
     
@@ -557,14 +432,10 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
     dbSetOrder(1)
     dbSeek(xFilial("SC2")+cChaveOP)
     If !Eof()
-
         Return .T.
-
     Else
 
         // ABERTURA DA OP
-        
-        //MSExecAuto({|x,y| MATA650(x,y)}, aAuto, 3)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
         MsAguarde({|| MSExecAuto({|x,y| MATA650(x,y)}, aAuto, 3) },"Execauto MATA650","Incluindo OP... " + cChaveOP )
         
         dbSelectArea("SC2")
@@ -600,6 +471,8 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
         
         If lMsErroAuto
 
+            lRet := .F.
+
             aErroLog := GetAutoGrLog()
             cErro 	 := Alltrim(aErrolog[1])
             For k := 1 to Len(aErroLog)
@@ -615,25 +488,15 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
             _MsgMotivo += "Mensagem de ErrorLog Protheus : " + cErro
             
             U_CCSGrvLog(cErro, "OPR", 0, 3, cFilOPR, .T.)
-            
-            //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
             TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='E', MSG='"+cErro+ "' WHERE REC="+AllTrim(Str(nRecOPR))+" AND OPERACAO='I' ")
-            
-            lRet := .F.
-
-            // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
             DisarmTransaction() 
             //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-            //
 
         Else
             
-            DDATABASE := _dData
-            
-            //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-            TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='S' WHERE REC="+AllTrim(Str(nRecOPR))+" AND OPERACAO='I' ")
-            
             lRet := .T.
+            DDATABASE := _dData
+            TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='S' WHERE REC="+AllTrim(Str(nRecOPR))+" AND OPERACAO='I' ")
 
         EndIf
 
@@ -642,8 +505,6 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
     MsUnLockAll() 								// @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
 
 Return lRet
-
-
 
 /*/{Protheus.doc} User Function nomeFunction
 	aponta produção
@@ -676,22 +537,10 @@ Static Function ADEDA002PC(cErro, nRecOPR, cOp)
 	Private lMsHelpAuto 	:= .T.
 	Private lAutoErrNoFile 	:= .T.
 
-	//Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADEDA007R como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADEDA007R*/
-
     cFilBkp := cFilAnt           
     
-    //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-    
-    // @history ticket   13858 - Fernando Macieira     - 10/05/2021 - APONTAMENTO DE PRODUÇÃO ABRIL - FILIAL 02
-
-    /*
-    SC2->(DbOrderNickName("RECORISC2"))
-    SC2->(DbSeek(xFilial("SC2") + StrZero(nRecOPR,10) ))
-    */
-
     SC2->( dbSetOrder(1) ) // C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD, R_E_C_N_O_, D_E_L_E_T_
     If SC2->( dbSeek(FWxFilial("SC2")+cOp) )
-    //		
 
         nQuantC2	:= SC2->C2_QUANT - SC2->C2_QUJE
         cLocalC2	:= SC2->C2_LOCAL
@@ -717,12 +566,17 @@ Static Function ADEDA002PC(cErro, nRecOPR, cOp)
         cError += " PRODUTO = " + ALLTRIM(SC2->C2_PRODUTO) + "; TM = " + ALLTRIM(cTM) + "; OP = " + ALLTRIM(SC2->(C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD)) + "; EMISSAO = " + ALLTRIM( DTOC(DDATABASE)) + "; RECORI = " + ALLTRIM( StrZero(nRecOPR,10) ) + "; "
         
         //Begin Transaction // já está dentro de um begin
+
             lMsErroAuto := .F.
-            //MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 3)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
             MsAguarde({|| MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 3) },"Execauto MATA250","Incluindo apontamento... " + SC2->(C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD) )
+
             If lMsErroAuto
+
+				lRet      := .F.
+
                 aErroLog := GetAutoGrLog()
                 cErro := Alltrim(aErrolog[1])
+
                 For k := 1 to Len(aErroLog)
                     If "INVALIDO" $ UPPER (aErroLog[k])
                         cErro+= Alltrim(aErroLog[k])
@@ -730,28 +584,21 @@ Static Function ADEDA002PC(cErro, nRecOPR, cOp)
                 Next
 
                 cErro := CleanStr(cErro)			
-
                 _MsgMotivo += "Erro no Apontamento de Produção " + cError + CHR(13) + CHR(10)
                 _MsgMotivo += "Mensagem de ErrorLog Protheus : " + cErro
-                
                 U_CCSGrvLog(cErro, "OPR", nRecOPR, 3, cFilAnt, .T.)
-
-                // @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
                 DisarmTransaction() 
                 //Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-                //
-
+				
             Else
 
                 lRet := .T.
-                //TcSetConn(_nTcConn2) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
                 TcSqlExec("UPDATE OPR010 SET MSEXP='" +DTOS(DDATABASE) + "' ,STATUS='S' WHERE REC="+AllTrim(Str(nRecOPR))+" AND OPERACAO='I' ")
 
             Endif
 
-            //TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-
         //End Transaction
+
     Else
 
         _MsgMotivo += "Erro no Apontamento de Produção " + cError + CHR(13) + CHR(10)
@@ -762,15 +609,11 @@ Static Function ADEDA002PC(cErro, nRecOPR, cOp)
     EndIf
     
     cFilAnt := cFilBkp
-    
     RestArea(aSavAre)
-    
     DDATABASE :=_dData
-
     MsUnLockAll() 										// @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
 
 Return (lRet)
-
 
 /*/{Protheus.doc} static Function nomeFunction
 	(long_description)
@@ -797,18 +640,12 @@ Static Function ADEDA002PD(cAliasOPR, cOp)
 	Private lMsHelpAuto 	:= .T.
 	Private lAutoErrNoFile 	:= .T.
 
-	//Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADEDA007R como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADEDA007R*/
-
 		//BUSCAR MOVIMENTO DE PRODUCAO COM BASE NO RECNO DE ORIGEM	
 		cFilBkp := cFilAnt
-		
-		//TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
-		
 		SD3->(DbOrderNickName("RECORI"))
 		SD3->(DbSeek(xFilial("SD3") + StrZero((cAliasOPR)->REC, 10) + PADR((cAliasOPR)->PRODUTO, TamSX3("D3_COD")[1]) ))
-		
 		cOp := SD3->D3_OP
-		
+
 		aAuto := {	{"D3_FILIAL"    , SD3->D3_FILIAL	, Nil}, ;
 					{"D3_TM"        , SD3->D3_TM		, Nil}, ;
 					{"D3_COD"       , SD3->D3_COD       , Nil}, ;
@@ -827,8 +664,6 @@ Static Function ADEDA002PD(cAliasOPR, cOp)
 		
 		//Begin Transaction // já esta dentro de um begin
 		lMsErroAuto := .F.
-		
-		//MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 5)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
 		MsAguarde({|| MSExecAuto({|x,y| MATA250(x,y)}, aAuto, 5) },"Execauto MATA250","Excluindo apontamento... " + SD3->D3_OP + " " + SD3->D3_COD )
 
 		If lMsErroAuto
@@ -843,27 +678,19 @@ Static Function ADEDA002PD(cAliasOPR, cOp)
 			Next
 			
 			cErro := CleanStr(cErro)
-			
 			_MsgMotivo += "Erro no Estorno do Apontamento de Produção " + cError + CHR(13) + CHR(10)
 			_MsgMotivo += "Mensagem de ErrorLog Protheus : " + cErro + CHR(13) + CHR(10)
-			
 			MsUnlockAll()
-
-			// @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
 			DisarmTransaction() 
 			//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-			//
 			
 		Else
-
 			lRet := .T.
-
 		Endif
 		
 		//End Transaction
 		
 		cFilAnt := cFilBkp
-		
 		RestArea(aSavAre)
 	
 Return .T.	//lRet	//Retorna valor default como True(.T.) porque pode ser que não tenha gerado a Produção, mas sempre terá a requisição
@@ -882,8 +709,6 @@ Return .T.	//lRet	//Retorna valor default como True(.T.) porque pode ser que não
 /*/
 Static Function ADEDA002PE (cAliasOPR, nQuant, nOpc, cOp)
 
-	//NECESSÁRIO LOCALIZAR A OP COM BASE NO NÚMERO DE INTEGRAÇÃO DO EDATA (CHAVE OPEDATA+PRODUTO+DATA)
-
 	Local aAuto   := Nil
 	Local aSavAre := SaveArea1({"SB1"})
 	Local lRet    := .F.
@@ -901,23 +726,14 @@ Static Function ADEDA002PE (cAliasOPR, nQuant, nOpc, cOp)
 
 	Private lAutoErrNoFile 	:= .T.
 
-	//Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADEDA007R como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADEDA007R*/
-
 		cFilBkp := cFilAnt
 		cFilAnt := (cAliasOPR)->FILIAL
-		
-		//TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
 		
 		SB1->(dbSetOrder(1))  // B1_FILIAL+B1_COD
 		SB1->(dbSeek(xFilial("SB1") + cCod))
 		
-		/*
-		SC2->(DbOrderNickName("RECORISC2"))
-		SC2->(DbSeek(xFilial("SC2") + StrZero((cAliasOPR)->REC, 10) ))
-		*/
-		
-			SC2->( dbSetOrder(1) ) // C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD, R_E_C_N_O_, D_E_L_E_T_
-			If SC2->( dbSeek(FWxFilial("SC2")+cOp) )
+		SC2->( dbSetOrder(1) ) // C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD, R_E_C_N_O_, D_E_L_E_T_
+		If SC2->( dbSeek(FWxFilial("SC2")+cOp) )
 
 			cNum 	:= SC2->C2_NUM
 			cItem	:= SC2->C2_ITEM
@@ -948,7 +764,6 @@ Static Function ADEDA002PE (cAliasOPR, nQuant, nOpc, cOp)
 			EndIf
 
 			lMsErroAuto := .F.
-			//MSExecAuto({|x,y| MATA650(x,y)}, aAuto, nOpc)  // 3 - Inclusão, 4 - Alteração e 5 - Exclusão
 			MsAguarde({|| MSExecAuto({|x,y| MATA650(x,y)}, aAuto, nOpc) },"Execauto MATA650","Ordem de produção... " + cNum + " " + cCod )
 			
 			If lMsErroAuto
@@ -963,26 +778,19 @@ Static Function ADEDA002PE (cAliasOPR, nQuant, nOpc, cOp)
 				Next
 				
 				cErro := CleanStr(cErro)
-				
 				_MsgMotivo += "Erro " + IIF( nOpc == 3, "no Cadastro", IIF( nOpc == 4, "na Alteração", "no Estorno" ) ) + " da Produção " + cError + CHR(13) + CHR(10)
 				_MsgMotivo += "Mensagem de ErrorLog Protheus : " + cErro
-
-				// @history ticket 10248 - Fernando Macieira - 03/03/2021 - Revisão das rotinas de apontamento de OP´s
 				DisarmTransaction() 
 				//Break // Reabilitar apenas se o Begin Transaction estiver habilitado! 
-				//
 
 			Else
-
 				lRet := .T. 		
-
 			Endif
 
 		Else
 			
 			_MsgMotivo += "Erro no estorno do Apontamento de Produção " + cError + CHR(13) + CHR(10)
 			_MsgMotivo += "OP não encontrada: " + cOp
-			
 			U_CCSGrvLog(cErro, "OPR", nRecOPR, 3, cFilAnt, .T.)
 
 		EndIf
@@ -1786,9 +1594,9 @@ Static Function ADEDA002G(nRec, nQuant, cOP, nOpc, cData)
 
 	Local _aArea    := GetArea()
 	Local _lRet     := .F.
-	Local cProd		:= GetMv("MV_XPRDFV",.F.,"")
+	Local cProd		:= GetMv("MV_XPRDFV",.F.,"") // 300042
 	Local cTPMov	:= GetMv("MV_XTMFV",.F.,"")
-	Local cLoc		:= RetFldProd(cProd,"B1_LOCPAD")  //GetMv("MV_XLOCPF",.F.,"16")
+	Local cLoc		:= RetFldProd(cProd,"B1_LOCPAD")   // 26
 	Local dData		:= DDATABASE
 	Local cError  := ""
 	Local k
@@ -1806,9 +1614,9 @@ Static Function ADEDA002G(nRec, nQuant, cOP, nOpc, cData)
 	//Default _MsgMotivo 	:= "" /*Esta variável está criada no fonte ADEDA007R como privada e por precaução está sendo criada caso este fonte tenha sido chamado por outro fonte que não seja o ADEDA007R*/
 
     // @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
- 	If Upper(AllTrim(cPrd3)) == "T" // Produção de terceiro
-        _lRet     := .T.
-        Return _lRet
+ 	If Upper(AllTrim(cPrd3)) == "T" // Produção de terceiro NUNCA DEVE GERAR O MOVIMENTO DE FRANGO VIVO 300042
+		_lRet := .t.
+		Return _lRet
     EndIf
    //
     
@@ -2152,6 +1960,7 @@ Static Function ADEDA002PG(cProduto, nQuant)
 
 	Local nQnt		:= 0
 	Local nSaldo    := 0
+	Local nZ
 
 	//TcSetConn(_nTcConn1) // @history ticket   12048 - Fernando Macieira     - 07/04/2021 - Revisão das integrações e geração das OPS - Banco DBINTEREDATA
 
@@ -2160,7 +1969,7 @@ Static Function ADEDA002PG(cProduto, nQuant)
 		cAlEst := cLoc3
 	EndIf
 	//
-	
+
 	// Pega os componentes da estrutura da PA no SG1 e guarda em um array para ser usado 
 	dbSelectArea("SG1")
 	SG1->(dbSetOrder(1))
@@ -2250,3 +2059,32 @@ Static Function ADEDA002PG(cProduto, nQuant)
 	RestArea(aArea)
 
 Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 09/12/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function PutSBFSB2()
+	
+	Local cSql := ""
+
+	cSql := " UPDATE " + RetSqlName("SBF") + " SET BF_QUANT=B2_QATU
+	cSql += " FROM " + RetSqlName("SBF") + " SBF
+	cSql += " INNER JOIN " + RetSqlName("SB2") + " SB2 ON B2_FILIAL=BF_FILIAL AND B2_COD=BF_PRODUTO AND B2_LOCAL=BF_LOCAL AND SB2.D_E_L_E_T_=''
+	cSql += " WHERE BF_FILIAL='"+FWxFilial("SBF")+"' 
+	cSql += " AND BF_LOCAL BETWEEN '' AND 'ZZ'
+	cSql += " AND BF_LOCALIZ='PROD'
+	cSql += " AND BF_QUANT<>B2_QATU
+	cSql += " AND SBF.D_E_L_E_T_=''
+	
+	tcSqlExec( cSql )
+
+Return

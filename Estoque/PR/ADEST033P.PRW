@@ -1,6 +1,7 @@
 #include "rwmake.ch"
 #Include "Protheus.ch"
 #Include "Topconn.ch"
+
 /*/{Protheus.doc} User Function nomeFunction
     CHAMADO:037647 - Gera ordem de produção e aponta a mesma por integração do SAG         
     Quando a OP for excluida no SAG e gravado um log, a partir                             
@@ -12,12 +13,14 @@
     @history Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 OP DE OVOS - FWNM - 03/04/2019
     @history Chamado 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
     @history Chamado 058675 || OS 060648 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG X SAFEEG - Everson 23/06/2020
+    @history Ticket T.I. - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
     /*/
 
-User Function ADEST033P  // U_ADEST033P()
+User Function ADEST033P()  // U_ADEST033P()
 
     //Variáveis.
-    Local lAutoJob := .F.
+    Local lAutoJob      := .F.
+    Private cDataIni    := ""
 
     //
     If Select("SX6") == 0
@@ -38,18 +41,41 @@ User Function ADEST033P  // U_ADEST033P()
             Return
         EndIf
 
-        ConOut( DToC(Date()) + " " + Time() + " ADEST033P - Início Job importação de Ops.")
+        //ConOut( "[ADEST033P] - "+DToC(Date())+" "+Time()+" - Início Job importação de Ops.")
         PtInternal(1,ALLTRIM(PROCNAME()))
 
     EndIf
 
-        //
-        U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gera ordem de produção e aponta a mesmo por integração do SAG Quando a OP for excluida no SAG e gravado um log, a partir desse log, o protheus estorna o apontamento e faz a exclusao')
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gera ordem de produção e aponta a mesmo por integração do SAG Quando a OP for excluida no SAG e gravado um log, a partir desse log, o protheus estorna o apontamento e faz a exclusao')
+    
+    cDataIni    := Dtos(Date()-30)
 
+    u_GrLogZBE( Date(),;
+                TIME(),;
+                cUserName,;
+                "00 - Início da integração com o SAG",;
+                "ESTOQUE E CUSTOS",;
+                "ADEST033P",;
+                "[ADEST033P] - cEmpAnt/cFilAnt: "+cEmpAnt+cFilAnt+" -  "+DToC(Date())+" "+Time()+" - Início Job importação de Ops.",;
+                ComputerName(),;
+                LogUserName())
+
+    //Leonardo - 27/12/2021 - Checa a conexão com a database do SAG.
+    if fChkSAG()
         //Everson - 23/06/2020 - Chamado 058675.
         procRot(lAutoJob)
-
-    //
+    else
+        u_GrLogZBE( Date(),;
+                    TIME(),;
+                    cUserName,;
+                    "01-Erro na abertura do LinkedServer c\ o SAG",;
+                    "ESTOQUE E CUSTOS",;
+                    "ADEST033P",;
+                    "[ADEST033P] - cEmpAnt/cFilAnt: "+cEmpAnt+cFilAnt+" -  "+DToC(Date())+" "+Time()+" - Erro na abertura do LinkedServer para integração com o Protheus.",;
+                    ComputerName(),;
+                    LogUserName())
+    endif
+    
     If lAutoJob 
 
         //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
@@ -57,13 +83,40 @@ User Function ADEST033P  // U_ADEST033P()
         //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
         UnLockByName("ADEST033P")
 
-        ConOut( DToC(Date()) + " " + Time() + " ADEST033P - Fim Job importação de Ops.")
+        //ConOut( DToC(Date()) + " " + Time() + " ADEST033P - Fim Job importação de Ops.")
+        u_GrLogZBE( Date(),;
+                TIME(),;
+                cUserName,;
+                "99 - Término da integração com o SAG",;
+                "ESTOQUE E CUSTOS",;
+                "ADEST033P",;
+                "[ADEST033P] - cEmpAnt/cFilAnt: "+cEmpAnt+cFilAnt+" -  "+DToC(Date()) + " " + Time() + " ADEST033P - Fim Job importação de Ops.",;
+                ComputerName(),;
+                LogUserName())
 
 		RpcClearEnv()
 
 	EndIf
 
 Return Nil
+
+Static Function fChkSAG()
+    Local lRet      := .F.
+	Local cQuery    := ""
+
+	//Verificao se o linkedServer esta ativo 
+	cQuery := " SELECT TOP(1) 1 AS CONEXAO FROM SCSRV03.SAG.dbo.INGEOVOS WHERE DATAOVOS >= '" + cDataIni + "' AND TIPOOVOS='PROD';"
+    //cQuery += " OPENQUERY(SCSRV03, 'SELECT TOP(1) 1 AS CONEXAO FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ') "
+	
+	If TcSqlExec(cQuery) < 0
+		lRet := .F.
+	else
+        lRet := .T.
+    Endif
+
+return lRet
+
+
 /*/{Protheus.doc} procRot
     Processa rotina.
     @type  Static Function
@@ -111,7 +164,7 @@ Static Function incluiOp(lAutoJob,NReg)
     //Variáveis.
     Local aArea    := GetArea()
     Local cQuery   := ""
-    Local cDataIni := GetMV( "MV_#ADE331" , .F. , "01/01/2019")
+    //Local cDataIni := GetMV( "MV_#ADE331" , .F. , "01/01/2019")
     
     // Chamado n. 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
     Local cDescLt := ""
@@ -126,7 +179,7 @@ Static Function incluiOp(lAutoJob,NReg)
     //
     
     //
-    cQuery += sqlInOp(cDataIni)
+    cQuery += sqlInOp()
 
     If Select("ADEST33I") > 0
 		ADEST33I->(DbCloseArea())
@@ -207,13 +260,13 @@ Static Function deleteOp(lAutoJob)
     //Variáveis.
     Local aArea    := GetArea()
     Local cQuery   := ""
-    Local cDataIni := GetMV( "MV_#ADE331" , .F. , "01/01/2019")
+    //Local cDataIni := GetMV( "MV_#ADE331" , .F. , "01/01/2019")
 
     //
     ConOut( DToC(Date()) + " " + Time() + " ADEST033P - deleteOp - Início exclusão de Ops.")
 
     // Exclusão de OP
-    cQuery := sqlDeOp(cDataIni)
+    cQuery := sqlDeOp()
     
     //
     If Select("ADEST33D") > 0
@@ -311,7 +364,7 @@ Return lOk
     @since 23/06/2020
     @version 01
     /*/
-Static Function sqlInOp(cDataIni)
+Static Function sqlInOp()
 
     //Variáveis.
     Local cQuery := ""
@@ -337,7 +390,7 @@ Return cQuery
     @since 23/06/2020
     @version 01
     /*/
-Static Function sqlDeOp(cDataIni)
+Static Function sqlDeOp()
 
     //Variáveis.
     Local cQuery := ""
@@ -346,8 +399,6 @@ Static Function sqlDeOp(cDataIni)
     cQuery += " FROM SCSRV03.SAG.dbo.INLOOVOS "
     cQuery += " WHERE DATAOVOS >= '" + cDataIni + "' "
     cQuery += " AND PSITLOG_='D' "
-    cQuery += " AND CODIOVOS IN ( "
-    cQuery += "     SELECT ZCV_CODOP FROM "+RetSqlName("ZCV")+" ZCV "
-    cQuery += "     WHERE D_E_L_E_T_ = ' ' )  "
+    cQuery += " AND CODIOVOS IN ( SELECT ZCV_CODOP FROM "+RetSqlName("ZCV")+" ZCV WHERE D_E_L_E_T_ = ' ' ) "
 
 Return cQuery

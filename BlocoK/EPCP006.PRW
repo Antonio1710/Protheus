@@ -18,7 +18,7 @@
 	@history ticket      TI - Fernando Macieira - 19/08/2021 - Lentidão e bloqueio
 	@history ticket   18250 - Fernando Macieira - 23/08/2021 - Perda de Endereçamento - Protheus
 	@history ticket      TI - Fernando Macieira - 15/09/2021 - MV_PAR05 no logzbe sem tratativa de conversão data/caracter
-	@history ticket   64740 - Fernando Macieira - 15/12/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
+	@history ticket   64740 - Fernando Macieira - 30/11/2021 - Otimização do tempo na rotina de estorno, decisão conjunta gestores TI e Controladoria
 /*/
 User Function EPCP006()
 

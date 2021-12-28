@@ -14,6 +14,7 @@
    (examples)
    @see (links_or_references)
 	@history chamado 050729  - FWNM         - 25/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE   
+   @history Ticket TI - Leonardo P. Monteiro - 28/12/2021 - Correção de error.log.
 /*/
 User Function EXPFATVD()  
 
@@ -57,10 +58,12 @@ User Function EXPFATVD()
       TSD2->(DbCloseArea())
    ENDIF
 
-   // Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - FWNM - 25/06/2020
-   If File(_cArqTmp+GetDBExtension()); fErase(_cArqTmp+GetDBExtension()); EndIf
-   If File(_cArqTmp); fErase(_cArqTmp); EndIf
-
+   //@Ticket TI - Leonardo P. Monteiro - 28/12/2021 - Correção de error.log.
+   if type("_cArqTmp") == "C"
+      // Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - FWNM - 25/06/2020
+      If File(_cArqTmp+GetDBExtension()); fErase(_cArqTmp+GetDBExtension()); EndIf
+      If File(_cArqTmp); fErase(_cArqTmp); EndIf
+   endif
    //If File(_cArqTmp+".DBF"); fErase(_cArqTmp+".DBF"); EndIf
    //If File(_cArqTmp); fErase(_cArqTmp); EndIf
 
