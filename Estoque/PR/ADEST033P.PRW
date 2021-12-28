@@ -105,7 +105,7 @@ Static Function fChkSAG()
 	Local cQuery    := ""
 
 	//Verificao se o linkedServer esta ativo 
-	cQuery := " SELECT TOP(1) 1 AS CONEXAO FROM SCSRV03.SAG.dbo.INGEOVOS WHERE DATAOVOS >= '" + cDataIni + "' AND TIPOOVOS='PROD';"
+	cQuery := " SELECT TOP(1) 1 AS CONEXAO FROM  OPENQUERY(SCSRV03, ' SELECT * FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ');"
     //cQuery += " OPENQUERY(SCSRV03, 'SELECT TOP(1) 1 AS CONEXAO FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ') "
 	
 	If TcSqlExec(cQuery) < 0
@@ -369,20 +369,18 @@ Static Function sqlInOp()
     //Variáveis.
     Local cQuery := ""
 
-    //
-    cQuery += " SELECT CODIOVOS, CODITPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
-    cQuery += " FROM SCSRV03.SAG.dbo.INGEOVOS AS INGEOVOS "
-    cQuery += " LEFT JOIN SCSRV03.SAG.dbo.POCaEmpr AS POCAEMPR "
-    cQuery += " ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS " //Everson - 23/06/2020. Chamado 058675.
-    cQuery += " WHERE DATAOVOS >= '" + cDataIni + "' "
-    cQuery += " AND TIPOOVOS='PROD' "
-    cQuery += " AND POCAEMPR.Te07Empr = '" + cEmpAnt + "' " //Everson - 23/06/2020. Chamado 058675.
-    cQuery += " AND CODIOVOS NOT IN ( "
-	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "
-	cQuery += "     WHERE D_E_L_E_T_ = ' ' ) "
+    cQuery += " SELECT * FROM "
+    cQuery += " OPENQUERY(SCSRV03,"
+    cQuery += "  'SELECT CODIOVOS, CODITPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ  "
+    cQuery += "   FROM SAG.dbo.INGEOVOS AS INGEOVOS  LEFT JOIN SAG.dbo.POCaEmpr AS POCAEMPR  ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS  "
+    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
+    cQuery += " WHERE NOT EXISTS  (SELECT 1 "
+    cQuery += "                    FROM " + RetSqlName("ZCV") + " ZCV  "
+    cQuery += "                    WHERE D_E_L_E_T_ = ' ' AND A.CODIOVOS = ZCV.ZCV_CODOP) "
     cQuery += " ORDER BY CODIOVOS "
 
 Return cQuery 
+
 /*/{Protheus.doc} sqlDeOp
     Script sql para exclusão de ordens de produção.
     @type  Static Function
@@ -395,10 +393,11 @@ Static Function sqlDeOp()
     //Variáveis.
     Local cQuery := ""
 
-    cQuery += " SELECT CODIOVOS "
-    cQuery += " FROM SCSRV03.SAG.dbo.INLOOVOS "
-    cQuery += " WHERE DATAOVOS >= '" + cDataIni + "' "
-    cQuery += " AND PSITLOG_='D' "
-    cQuery += " AND CODIOVOS IN ( SELECT ZCV_CODOP FROM "+RetSqlName("ZCV")+" ZCV WHERE D_E_L_E_T_ = ' ' ) "
+    cQuery := " SELECT * FROM "
+    cQuery += " OPENQUERY(SCSRV03, "
+    cQuery += " 'SELECT CODIOVOS "
+    cQuery += "  FROM SAG.dbo.INLOOVOS "
+    cQuery += "  WHERE DATAOVOS >= ''" + cDataIni + "'' AND PSITLOG_=''D'' ') SAG "
+    cQuery += " WHERE CODIOVOS IN ( SELECT ZCV_CODOP FROM "+RetSqlName("ZCV")+" ZCV WHERE D_E_L_E_T_ = ' ' ) "
 
 Return cQuery
