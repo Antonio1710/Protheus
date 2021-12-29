@@ -64,15 +64,17 @@ Static cHK				:= "&"
 	@history ticket 9122    - Fernando Maciei - 09/02/2021 - melhoria no envio Carga EDATA
 	@history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
 	@history ticket 63303   - Leonardo P. Monteiro - 24/11/2021 - Correção na declaração da variável In utilizada na função FENCECARG.
+	@history ticket TI   	- Leonardo P. Monteiro - 28/12/2021 - Correção de error.log.
 /*/
 User Function CCSP_001()
 
 	LOCAL oSay,oSay2,oSay3
 	LOCAL oBtn1,oBtn2,oBtn3
 	LOCAL oDlg            
-	PRIVATE cPerg     :="CCSP01" 
-	Private cCadastro :="Integracao Protheus x Edata"
-	Private cErro     := ''
+	PRIVATE cPerg     	:="CCSP01" 
+	Private cCadastro 	:="Integracao Protheus x Edata"
+	Private cErro     	:= ''
+	Private lVldEnv		:= SuperGetMV("MV_ZSP001A",,.T.)
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao Protheus x Edata')
 
@@ -571,8 +573,7 @@ Static Function CCS_001P(oTela)
 	Local ncontPedTot       := 0
 	Local ncontPedNor       := 0
 	Local ncontPedDiv       := 0
-	Local lVldEnv			:= SuperGetMV("MV_ZSP001A",,.T.)
-
+	
 	Private cFilia         	:= ""
 	Private ni				:= 0
 	Private _nx				:= 0

@@ -108,13 +108,22 @@ User Function ADFIS027R()
 		EndIf
 		
 		_aCFOP	:= STRTOKARR( Alltrim(aRet[4]) , ',' ) //Separa(Alltrim(aRet[4]),',')
-	 
-		For _i:=1 to len(_aCFOP)
-			_cCFOP	:=  _cCFOP +_aCFOP[_i]
-			If !(_i == len(_aCFOP))
-				_cCFOP	+=  + "','"
-			Endif
-		Next _i
+
+		if Len(_aCFOP) > 0
+			For _i:=1 to len(_aCFOP)
+				_cCFOP	:=  _cCFOP +_aCFOP[_i]
+				If !(_i == len(_aCFOP))
+					_cCFOP	+=  + "','"
+				Endif
+			Next _i
+
+			_cCFOP	:= Alltrim(_cCFOP)
+
+			_cCFOP	:= "'" + _cCFOP + "'"
+		else
+			_cCFOP := "''"
+		endif
+
 		// *** INICIO ABEL BABINI 08/04/2019 CHAMADO 047564 || FISCAL || ALLAN SANTOS || Ajuste Relatório de XML Pendentes
 		/*If  aRet[3] == "Área"
 			_cOrder	:= '%TM_AREA,CAB.XML_EMISSA,CAB.XML_EMIT,RIGHT(RTRIM(LTRIM(CAB.XML_NUMNF)),9)%'

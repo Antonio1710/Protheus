@@ -3793,7 +3793,8 @@ Static Function RunRep()
 Return
 
 Static Function ImpCabec()
-	
+	Local _nXi	:= 0
+
 	nLin++
 	_nCol		:= 2
 	Cabec10		:=	"|"
@@ -3823,9 +3824,9 @@ Static Function ImpCabec()
 Return
 
 Static Function Totaliz
-
+	Local _nXi	:= 0
+	_nIx		:=	_nI - 1
 	nLin++
-	_nIx	:=	_nI - 1
 	
 	@nLin,000 PSAY "|==================================================================================================================================================================================================================|"
 	_Cabec10		:=	"|"
@@ -4868,14 +4869,14 @@ STATIC FUNCTION AD0012EX
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ Prepara o cabecalho padrao para o relatorio DEMONSTRATIVO DE VENDA VENDEDOR           ³
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-		cLin := "COD.VEND./;GRUPO;;;;;;VALOR;PESO;;VALOR" +_Eof
+		cLin := "COD.VEND./;GRUPO;;;;;;VALOR;PESO;;VALOR;PRÊMIO;VALOR" +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
 				Exit
 			Endif
 		Endif
 		
-		cLin :=	"SUPERV.;;DESCRICAO;DT.FATURAM.;PREC.MEDIO;POSICAO;TABELA;FATURADO;FATURADO;CLASSIF.;REFERENCIA" +_Eof
+		cLin :=	"SUPERV.;;DESCRICAO;DT.FATURAM.;PREC.MEDIO;POSICAO;TABELA;FATURADO;FATURADO;CLASSIF.;s/ DSR; DSR;REFERENCIA" +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
 				Exit
@@ -4941,6 +4942,7 @@ STATIC FUNCTION AD0012EX
 					
 					cLin := _cVend+";"+_cGRUPON+";"+_cNOMEGN+";SubTotal;"+STRTRAN(STR((_nTFaturado/_nTPeso)),".",",")+";;;"+;
 					STRTRAN(STR(_nTFaturado),".",",")+";"+STRTRAN(STR(_nTPeso),".",",")+";;"+;
+					STRTRAN(STR(Round(_nTCsDSR,2) ),".",",") +";"+STRTRAN(STR(Round(_nTCcDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_nTComiss),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -4950,6 +4952,7 @@ STATIC FUNCTION AD0012EX
 	
 					cLin :=	_cVend+";;"+"Total "+UPPER(alltrim(_cNome1))+";;;;;"+STRTRAN(STR(_Grp1Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp1Pes),".",",")+";"+STRTRAN(STR(((_Grp1Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp1sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp1cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp1Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -4959,6 +4962,7 @@ STATIC FUNCTION AD0012EX
 					
 					cLin :=	_cVend+";;"+"Total "+UPPER(alltrim(_cNome2))+";;;;;"+STRTRAN(STR(_Grp2Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp2Pes),".",",")+";"+STRTRAN(STR(((_Grp2Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp2sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp2cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp2Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -4968,6 +4972,7 @@ STATIC FUNCTION AD0012EX
 					
 					cLin :=	_cVend+";;"+"Total "+UPPER(alltrim(_cNome3))+";;;;;"+STRTRAN(STR(_Grp3Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp3Pes),".",",")+";"+STRTRAN(STR(((_Grp3Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp3sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp3cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp3Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -4977,6 +4982,7 @@ STATIC FUNCTION AD0012EX
 					
 					cLin :=	_cVend+";;"+"Total "+UPPER(alltrim(_cNome4))+";;;;;"+STRTRAN(STR(_Grp4Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp4Pes),".",",")+";"+STRTRAN(STR(((_Grp4Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp4sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp4cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp4Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -4986,6 +4992,7 @@ STATIC FUNCTION AD0012EX
 					
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome5))+";;;;;"+STRTRAN(STR(_Grp6Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp6Pes),".",",")+";"+STRTRAN(STR(((_Grp6Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp6sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp6cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp6Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -4996,6 +5003,7 @@ STATIC FUNCTION AD0012EX
 					//Everson - 27/05/2021. Chamado 14631.
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome6))+";;;;;"+STRTRAN(STR(_Grp7Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp7Pes),".",",")+";"+STRTRAN(STR(((_Grp7Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp7sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp7cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp7Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5007,6 +5015,7 @@ STATIC FUNCTION AD0012EX
 					//Everson - 19/05/2021. Chamado 14094.
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome7))+";;;;;"+STRTRAN(STR(_Grp8Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp8Pes),".",",")+";"+STRTRAN(STR(((_Grp8Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp8sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp8cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp8Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5016,6 +5025,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome8))+";;;;;"+STRTRAN(STR(_Grp9Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp9Pes),".",",")+";"+STRTRAN(STR(((_Grp9Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp9sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp9cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp9Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5025,6 +5035,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome9))+";;;;;"+STRTRAN(STR(_Grp10Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp10Pes),".",",")+";"+STRTRAN(STR(((_Grp10Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp10sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp10cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp10Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5034,6 +5045,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome10))+";;;;;"+STRTRAN(STR(_Grp11Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp11Pes),".",",")+";"+STRTRAN(STR(((_Grp11Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp11sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp11cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp11Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5043,6 +5055,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome11))+";;;;;"+STRTRAN(STR(_Grp12Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp12Pes),".",",")+";"+STRTRAN(STR(((_Grp12Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp12sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp12cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp12Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5052,6 +5065,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome12))+";;;;;"+STRTRAN(STR(_Grp13Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp13Pes),".",",")+";"+STRTRAN(STR(((_Grp13Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp13sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp13cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp13Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5061,6 +5075,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome13))+";;;;;"+STRTRAN(STR(_Grp14Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp14Pes),".",",")+";"+STRTRAN(STR(((_Grp14Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp14sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp14cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp14Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5070,6 +5085,7 @@ STATIC FUNCTION AD0012EX
 
 					cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome14))+";;;;;"+STRTRAN(STR(_Grp15Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp15Pes),".",",")+";"+STRTRAN(STR(((_Grp15Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp15sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp15cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp15Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5080,6 +5096,7 @@ STATIC FUNCTION AD0012EX
 					
 					cLin := _cVend+";;"+"Outros Grupos"+";;;;;"+STRTRAN(STR(_Grp5Sms),".",",")+";"+;
 					STRTRAN(STR(_Grp5Pes),".",",")+";"+STRTRAN(STR(((_Grp5Pes/_nTQFat)*100)),".",",")+";"+;
+					STRTRAN(STR(Round(_Grp5sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp5cDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_Grp5Css),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5087,8 +5104,9 @@ STATIC FUNCTION AD0012EX
 						Endif
 					Endif
 					
-					cLin := _cVend+";;"+"Total  Sub-Regiao"+";;;;;"+STRTRAN(STR(_nTVFat),".",",")+";"+;
-					STRTRAN(STR(_nTQFat),".",",")+";;"+STRTRAN(STR(_nTCFat),".",",") +_Eof
+					cLin := _cVend+";;"+"Total  Sub-Regiao"+";;;;;"+STRTRAN(STR(_nTVFat),".",",")+";"+STRTRAN(STR(_nTQFat),".",",")+";;"+;
+					STRTRAN(STR(Round(_nTCsDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTCcDSR,2) ),".",",")+";"+;
+					STRTRAN(STR(_nTCFat),".",",") +_Eof
 					If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 						If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
 							Exit
@@ -5144,7 +5162,6 @@ STATIC FUNCTION AD0012EX
 					_Grp13Pes:=0
 					_Grp14Pes:=0
 					_Grp15Pes:=0
-					//
 					
 					_Grp1Css:=0
 					_Grp2Css:=0
@@ -5166,7 +5183,39 @@ STATIC FUNCTION AD0012EX
 					_Grp13Css:=0
 					_Grp14Css:=0
 					_Grp15Css:=0
-					//
+					
+					_Grp1sDSR	:= 0
+					_Grp2sDSR	:= 0
+					_Grp3sDSR	:= 0
+					_Grp4sDSR	:= 0
+					_Grp5sDSR	:= 0
+					_Grp6sDSR	:= 0
+					_Grp7sDSR	:= 0
+					_Grp8sDSR	:= 0
+					_Grp9sDSR	:= 0
+					_Grp10sDSR	:= 0
+					_Grp11sDSR	:= 0
+					_Grp12sDSR	:= 0
+					_Grp13sDSR	:= 0
+					_Grp14sDSR	:= 0
+					_Grp15sDSR	:= 0
+
+					_Grp1cDSR	:= 0
+					_Grp2cDSR	:= 0
+					_Grp3cDSR	:= 0
+					_Grp4cDSR	:= 0
+					_Grp5cDSR	:= 0
+					_Grp6cDSR	:= 0
+					_Grp7cDSR	:= 0
+					_Grp8cDSR	:= 0
+					_Grp9cDSR	:= 0
+					_Grp10cDSR	:= 0
+					_Grp11cDSR	:= 0
+					_Grp12cDSR	:= 0
+					_Grp13cDSR	:= 0
+					_Grp14cDSR	:= 0
+					_Grp15cDSR	:= 0
+
 
 				Endif
 				IF !_xVez
@@ -5185,6 +5234,7 @@ STATIC FUNCTION AD0012EX
 			if _cGRUPON <> TEM6->T6_GRUPON .and. _cGrupon <> "X99"
 				cLin := _cVend+";"+_cGRUPON+";"+_cNOMEGN+";SubTotal;"+STRTRAN(STR((_nTFaturado/_nTPeso)),".",",")+";;;"+;
 					STRTRAN(STR(_nTFaturado),".",",")+";"+STRTRAN(STR(_nTPeso),".",",")+";;"+;
+					STRTRAN(STR(Round(_nTComSDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTComCDSR,2) ),".",",")+";"+;
 					STRTRAN(STR(_nTComiss),".",",") +_Eof
 				If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 					If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5224,6 +5274,7 @@ STATIC FUNCTION AD0012EX
 			If MV_PAR15 == 1   &&Mauricio - 27/02/13 - tratamento para parametro sintetico ou analitico...
 			   cLin := _cVend+";"+_cGRUPON+";"+_cNOMEGN+";"+dTOc(_dData)+";"+STRTRAN(STR(_nVLMedio),".",",")+";"+Transform(_nPosi, "999")+";"+;
 			   _cTabela+";"+STRTRAN(STR(_nFaturado),".",",")+";"+STRTRAN(STR(_nPeso),".",",")+";"+Transform(_nClass, "999.9999")+";"+;
+			   STRTRAN(STR(Round(_nTComSDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTComCDSR,2) ),".",",")+";"+;
 			   STRTRAN(STR(_nComiss),".",",") +_Eof
 			   If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 				  If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5247,6 +5298,7 @@ STATIC FUNCTION AD0012EX
 		
 		cLin :=  _cVend+";;"+"Total "+UPPER(alltrim(_cNome1))+";;;;;"+STRTRAN(STR(_Grp1Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp1Pes),".",",")+";"+STRTRAN(STR(((_Grp1Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp1sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp1cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp1Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5256,6 +5308,7 @@ STATIC FUNCTION AD0012EX
 		
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome2))+";;;;;"+STRTRAN(STR(_Grp2Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp2Pes),".",",")+";"+STRTRAN(STR(((_Grp2Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp2sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp2cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp2Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5265,6 +5318,7 @@ STATIC FUNCTION AD0012EX
 		
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome3))+";;;;;"+STRTRAN(STR(_Grp3Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp3Pes),".",",")+";"+STRTRAN(STR(((_Grp3Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp3sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp3cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp3Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5274,6 +5328,7 @@ STATIC FUNCTION AD0012EX
 		
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome4))+";;;;;"+STRTRAN(STR(_Grp4Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp4Pes),".",",")+";"+STRTRAN(STR(((_Grp4Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp4sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp4cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp4Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5283,6 +5338,7 @@ STATIC FUNCTION AD0012EX
 		
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome5))+";;;;;"+STRTRAN(STR(_Grp6Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp6Pes),".",",")+";"+STRTRAN(STR(((_Grp6Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp6sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp6cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp6Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5293,6 +5349,7 @@ STATIC FUNCTION AD0012EX
 		//Everson - 27/05/2021. Chamado 14631.
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome6))+";;;;;"+STRTRAN(STR(_Grp7Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp7Pes),".",",")+";"+STRTRAN(STR(((_Grp7Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp7sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp7cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp7Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5304,6 +5361,7 @@ STATIC FUNCTION AD0012EX
 		//Everson - 19/05/2021. Chamado 14094.
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome7))+";;;;;"+STRTRAN(STR(_Grp8Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp8Pes),".",",")+";"+STRTRAN(STR(((_Grp8Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp8sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp8cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp8Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5313,6 +5371,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome8))+";;;;;"+STRTRAN(STR(_Grp9Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp9Pes),".",",")+";"+STRTRAN(STR(((_Grp9Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp9sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp9cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp9Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5322,6 +5381,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome9))+";;;;;"+STRTRAN(STR(_Grp10Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp10Pes),".",",")+";"+STRTRAN(STR(((_Grp10Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp10sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp10cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp10Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5331,6 +5391,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome10))+";;;;;"+STRTRAN(STR(_Grp11Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp11Pes),".",",")+";"+STRTRAN(STR(((_Grp11Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp11sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp11cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp11Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5340,6 +5401,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome11))+";;;;;"+STRTRAN(STR(_Grp12Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp12Pes),".",",")+";"+STRTRAN(STR(((_Grp12Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp12sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp12cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp12Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5349,6 +5411,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome12))+";;;;;"+STRTRAN(STR(_Grp13Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp13Pes),".",",")+";"+STRTRAN(STR(((_Grp13Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp13sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp13cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp13Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5358,6 +5421,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome13))+";;;;;"+STRTRAN(STR(_Grp14Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp14Pes),".",",")+";"+STRTRAN(STR(((_Grp14Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp14sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp14cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp14Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5367,6 +5431,7 @@ STATIC FUNCTION AD0012EX
 
 		cLin := _cVend+";;"+"Total "+UPPER(alltrim(_cNome14))+";;;;;"+STRTRAN(STR(_Grp15Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp15Pes),".",",")+";"+STRTRAN(STR(((_Grp15Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp15sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp15cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp15Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5377,6 +5442,7 @@ STATIC FUNCTION AD0012EX
 		
 		cLin := _cVend+";;"+"Outros Grupos "+";;;;;"+STRTRAN(STR(_Grp5Sms),".",",")+";"+;
 		STRTRAN(STR(_Grp5Pes),".",",")+";"+STRTRAN(STR(((_Grp5Pes/_nTQFat)*100)),".",",")+";"+;
+		STRTRAN(STR(Round(_Grp5sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_Grp5cDSR,2) ),".",",")+";"+;
 		STRTRAN(STR(_Grp5Css),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5384,8 +5450,9 @@ STATIC FUNCTION AD0012EX
 			Endif
 		Endif
 		
-		cLin := _cVend+";;"+"Total  Sub-Regiao"+";;;;;"+STRTRAN(STR(_nTVFat),".",",")+";"+;
-		STRTRAN(STR(_nTQFat),".",",")+";;"+STRTRAN(STR(_nTCFat),".",",") +_Eof
+		cLin := _cVend+";;"+"Total  Sub-Regiao"+";;;;;"+STRTRAN(STR(_nTVFat),".",",")+";"+STRTRAN(STR(_nTQFat),".",",")+";;"+;
+		STRTRAN(STR(Round(_nTCsDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTCcDSR,2) ),".",",")+";"+;
+		STRTRAN(STR(_nTCFat),".",",") +_Eof
 		If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 			If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
 				Exit
@@ -5399,8 +5466,8 @@ STATIC FUNCTION AD0012EX
 		_nTVFat		:=0
 		_nTQFat		:=0
 		_nTCFat		:=0
-		_nTCsDSR	:= 0
-		_nTCcDSR	:= 0
+		_nTCsDSR	:=0
+		_nTCcDSR	:=0
 		_Grp1Sms	:=0
 		_Grp2Sms	:=0
 		_Grp3Sms	:=0
@@ -5464,8 +5531,39 @@ STATIC FUNCTION AD0012EX
 		_Grp13Css:=0
 		_Grp14Css:=0
 		_Grp15Css:=0
-		//
 		
+		_Grp1sDSR	:= 0
+		_Grp2sDSR	:= 0
+		_Grp3sDSR	:= 0
+		_Grp4sDSR	:= 0
+		_Grp5sDSR	:= 0
+		_Grp6sDSR	:= 0
+		_Grp7sDSR	:= 0
+		_Grp8sDSR	:= 0
+		_Grp9sDSR	:= 0
+		_Grp10sDSR	:= 0
+		_Grp11sDSR	:= 0
+		_Grp12sDSR	:= 0
+		_Grp13sDSR	:= 0
+		_Grp14sDSR	:= 0
+		_Grp15sDSR	:= 0
+
+		_Grp1cDSR	:= 0
+		_Grp2cDSR	:= 0
+		_Grp3cDSR	:= 0
+		_Grp4cDSR	:= 0
+		_Grp5cDSR	:= 0
+		_Grp6cDSR	:= 0
+		_Grp7cDSR	:= 0
+		_Grp8cDSR	:= 0
+		_Grp9cDSR	:= 0
+		_Grp10cDSR	:= 0
+		_Grp11cDSR	:= 0
+		_Grp12cDSR	:= 0
+		_Grp13cDSR	:= 0
+		_Grp14cDSR	:= 0
+		_Grp15cDSR	:= 0
+
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ O arquivo texto deve ser fechado, bem como o dialogo criado na fun- ³
 		//³ cao anterior.                                                       ³
@@ -5482,6 +5580,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome1))+";;;;;"+STRTRAN(STR(_nTot1G1),".",",")+";"+;
 	STRTRAN(STR(_nTot1G2),".",",")+";"+STRTRAN(STR(((_nTot1G2 /_nTot1G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot1sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot1cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot1G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5491,6 +5590,7 @@ Static Function fImpTotEX()
 	
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome2))+";;;;;"+STRTRAN(STR(_nTot2G1),".",",")+";"+;
 	STRTRAN(STR(_nTot2G2),".",",")+";"+STRTRAN(STR(((_nTot2G2 /_nTot2G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot2sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot2cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot2G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5500,6 +5600,7 @@ Static Function fImpTotEX()
 	
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome3))+";;;;;"+STRTRAN(STR(_nTot3G1),".",",")+";"+;
 	STRTRAN(STR(_nTot3G2),".",",")+";"+STRTRAN(STR(((_nTot3G2 /_nTot3G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot3sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot3cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot3G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5509,6 +5610,7 @@ Static Function fImpTotEX()
 	
 	cLin := ";;"+"Total Geral "+UPPER(alltrim(_cNome4))+";;;;;"+STRTRAN(STR(_nTot4G1,),".",",")+";"+;
 	STRTRAN(STR(_nTot4G2),".",",")+";"+STRTRAN(STR(((_nTot4G2 /_nTot4G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot4sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot4cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot4G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5518,6 +5620,7 @@ Static Function fImpTotEX()
 	
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome5))+";;;;;"+STRTRAN(STR(_nTot6G1),".",",")+";"+;
 	STRTRAN(STR(_nTot6G2),".",",")+";"+STRTRAN(STR(((_nTot6G2 /_nTot6G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot6sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot6cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot6G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5528,6 +5631,7 @@ Static Function fImpTotEX()
 	//Everson - 27/05/2021. Chamado 14631.
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome6))+";;;;;"+STRTRAN(STR(_nTot7G1),".",",")+";"+;
 	STRTRAN(STR(_nTot7G2),".",",")+";"+STRTRAN(STR(((_nTot7G2 /_nTot7G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot7sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot7cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot7G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5539,6 +5643,7 @@ Static Function fImpTotEX()
 	//Everson - 19/05/2021. Chamado 14094.
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome7))+";;;;;"+STRTRAN(STR(_nTot8G1),".",",")+";"+;
 	STRTRAN(STR(_nTot8G2),".",",")+";"+STRTRAN(STR(((_nTot8G2 /_nTot8G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot8sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot8cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot8G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5548,6 +5653,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome8))+";;;;;"+STRTRAN(STR(_nTot9G1),".",",")+";"+;
 	STRTRAN(STR(_nTot9G2),".",",")+";"+STRTRAN(STR(((_nTot9G2 /_nTot9G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot9sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot9cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot9G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5557,6 +5663,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome9))+";;;;;"+STRTRAN(STR(_nTot10G1),".",",")+";"+;
 	STRTRAN(STR(_nTot10G2),".",",")+";"+STRTRAN(STR(((_nTot10G2 /_nTot10G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot10sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot10cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot10G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5566,6 +5673,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome10))+";;;;;"+STRTRAN(STR(_nTot11G1),".",",")+";"+;
 	STRTRAN(STR(_nTot11G2),".",",")+";"+STRTRAN(STR(((_nTot11G2 /_nTot11G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot11sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot11cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot11G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5575,6 +5683,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome11))+";;;;;"+STRTRAN(STR(_nTot12G1),".",",")+";"+;
 	STRTRAN(STR(_nTot12G2),".",",")+";"+STRTRAN(STR(((_nTot12G2 /_nTot12G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot12sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot12cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot12G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5584,6 +5693,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome12))+";;;;;"+STRTRAN(STR(_nTot13G1),".",",")+";"+;
 	STRTRAN(STR(_nTot13G2),".",",")+";"+STRTRAN(STR(((_nTot13G2 /_nTot13G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot13sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot13cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot13G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5593,6 +5703,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome13))+";;;;;"+STRTRAN(STR(_nTot14G1),".",",")+";"+;
 	STRTRAN(STR(_nTot14G2),".",",")+";"+STRTRAN(STR(((_nTot14G2 /_nTot14G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot14sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot14cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot14G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5602,6 +5713,7 @@ Static Function fImpTotEX()
 
 	clin := ";;"+"Total Geral "+UPPER(alltrim(_cNome14))+";;;;;"+STRTRAN(STR(_nTot15G1),".",",")+";"+;
 	STRTRAN(STR(_nTot15G2),".",",")+";"+STRTRAN(STR(((_nTot15G2 /_nTot15G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot15sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot15cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot15G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5612,6 +5724,7 @@ Static Function fImpTotEX()
 	
 	clin := ";;"+"Total Geral Outros Grupos: "+";;;;;"+STRTRAN(STR(_nTot5G1),".",",")+";"+;
 	STRTRAN(STR(_nTot5G2),".",",")+";"+STRTRAN(STR(((_nTot5G2 /_nTot5G3)*100)),".",",")+";"+;
+	STRTRAN(STR(Round(_nTot5sDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTot5cDSR,2) ),".",",")+";"+;
 	STRTRAN(STR(_nTot5G4),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
@@ -5620,7 +5733,9 @@ Static Function fImpTotEX()
 	Endif
 	
 	clin := ";;"+"Total Geral"+";;;;;"+STRTRAN(STR(_nTotF1),".",",")+";"+;
-	STRTRAN(STR(_nTotF2),".",",")+";;"+STRTRAN(STR(_nTotF3),".",",") +_Eof
+	STRTRAN(STR(_nTotF2),".",",")+";;"+;
+	STRTRAN(STR(Round(_nTotsDSR,2) ),".",",") +";"+ STRTRAN(STR(Round(_nTotcDSR,2) ),".",",")+";"+;
+	STRTRAN(STR(_nTotF3),".",",") +_Eof
 	If fWrite(nHdl,cLin,Len(cLin)) != Len(cLin)
 		If !MsgAlert("Ocorreu um erro na gravacao do arquivo. Continua?","Atencao!")
 			return
