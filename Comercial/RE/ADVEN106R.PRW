@@ -25,6 +25,7 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 01/12/2021 - Atualizações pontuais.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Correção dos valores do DSR para itens sintéticos.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 07/12/2021 - Ajuste no totalizador por vendedores. Estava imprimindo em posição incorreta.
+	@history Ticket  62249  - Leonardo P. Monteiro  - 29/12/2021 - Ajustes na geração dos arquivos texto.
 	/*/
 User Function ADVEN106R() // U_ADVEN106R()
 
