@@ -13,7 +13,8 @@
     @history Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 OP DE OVOS - FWNM - 03/04/2019
     @history Chamado 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
     @history Chamado 058675 || OS 060648 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG X SAFEEG - Everson 23/06/2020
-    @history Ticket T.I. - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
+    @history Ticket T.I.  - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
+    @history Ticket 65674 - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
     /*/
 
 User Function ADEST033P()  // U_ADEST033P()
@@ -103,6 +104,7 @@ Return Nil
 Static Function fChkSAG()
     Local lRet      := .F.
 	Local cQuery    := ""
+    Local cDataIni := Dtos(Date()-30)
 
 	//Verificao se o linkedServer esta ativo 
 	cQuery := " SELECT TOP(1) 1 AS CONEXAO FROM  OPENQUERY(SCSRV03, ' SELECT * FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ');"
@@ -164,7 +166,7 @@ Static Function incluiOp(lAutoJob,NReg)
     //Variáveis.
     Local aArea    := GetArea()
     Local cQuery   := ""
-    //Local cDataIni := GetMV( "MV_#ADE331" , .F. , "01/01/2019")
+    
     
     // Chamado n. 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
     Local cDescLt := ""
@@ -220,7 +222,8 @@ Static Function incluiOp(lAutoJob,NReg)
                 ZCV->ZCV_CODAOJ := Alltrim(Str(ADEST33I->CODIALOJ))
                 // Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 || OP DE OVOS - FWNM - 01/04/2019
                 ZCV->ZCV_DESCLT := Posicione("ZCN",1,FWxFilial("ZCN")+PadR(Alltrim(Str(ADEST33I->CODILOTE)),TamSX3("ZCN_LOTE")[1]),"ZCN_DESCLT")
-                //
+                ZCV->ZCV_DESCTP := Alltrim(ADEST33I->NOMETPOV)//Adriano Savoine - 28/12/2021 - Ticket : 65674
+    
             MsUnlock()
             
             ConOut( DToC(Date()) + " " + Time() + " ADEST033P - incluiOp - Incluido a OP SAG Numero: " + Alltrim(Str(ADEST33I->CODIOVOS)))
@@ -260,7 +263,7 @@ Static Function deleteOp(lAutoJob)
     //Variáveis.
     Local aArea    := GetArea()
     Local cQuery   := ""
-    //Local cDataIni := GetMV( "MV_#ADE331" , .F. , "01/01/2019")
+ 
 
     //
     ConOut( DToC(Date()) + " " + Time() + " ADEST033P - deleteOp - Início exclusão de Ops.")
@@ -367,16 +370,21 @@ Return lOk
 Static Function sqlInOp()
 
     //Variáveis.
-    Local cQuery := ""
+    Local cQuery   := ""
+    Local cDataIni := Dtos(Date()-30)
 
-    cQuery += " SELECT * FROM "
-    cQuery += " OPENQUERY(SCSRV03,"
-    cQuery += "  'SELECT CODIOVOS, CODITPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ  "
-    cQuery += "   FROM SAG.dbo.INGEOVOS AS INGEOVOS  LEFT JOIN SAG.dbo.POCaEmpr AS POCAEMPR  ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS  "
-    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
-    cQuery += " WHERE NOT EXISTS  (SELECT 1 "
-    cQuery += "                    FROM " + RetSqlName("ZCV") + " ZCV  "
-    cQuery += "                    WHERE D_E_L_E_T_ = ' ' AND A.CODIOVOS = ZCV.ZCV_CODOP) "
+    cQuery += " SELECT CODIOVOS, INGEOVOS.CODITPOV, INCATPOV.NOMETPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
+    cQuery += " FROM SCSRV03.SAG.dbo.INGEOVOS AS INGEOVOS "
+    cQuery += " LEFT JOIN SCSRV03.SAG.dbo.POCaEmpr AS POCAEMPR "
+    cQuery += " ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS " //Everson - 23/06/2020. Chamado 058675.
+    cQuery += " LEFT JOIN SCSRV03.SAG.dbo.INCATPOV AS INCATPOV " //Adriano Savoine - 28/12/2021 - Ticket : 65674
+    cQuery += " ON INCATPOV.CODITPOV = INGEOVOS.CODITPOV " //Adriano Savoine - 28/12/2021 - Ticket : 65674
+    cQuery += " WHERE DATAOVOS >= '" + cDataIni + "' "
+    cQuery += " AND TIPOOVOS='PROD' "
+    cQuery += " AND POCAEMPR.Te07Empr = '" + cEmpAnt + "' " //Everson - 23/06/2020. Chamado 058675.
+    cQuery += " AND CODIOVOS NOT IN ( "
+	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "
+	cQuery += "     WHERE D_E_L_E_T_ = ' ' ) "
     cQuery += " ORDER BY CODIOVOS "
 
 Return cQuery 
@@ -392,6 +400,7 @@ Static Function sqlDeOp()
 
     //Variáveis.
     Local cQuery := ""
+    Local cDataIni := Dtos(Date()-30)
 
     cQuery := " SELECT * FROM "
     cQuery += " OPENQUERY(SCSRV03, "

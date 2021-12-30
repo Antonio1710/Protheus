@@ -14,6 +14,7 @@
     @see (links_or_references)
     @chamado 056479 - FWNM                  - 20/03/2020 - || OS 057949 || CONTROLADORIA || DAIANE || 3549 || PEDIDO COMPRA
     @chamado T.I. - Leonardo P. Monteiro    - 01/09/2021 - Inclusão do comando RestArea.
+    @history ticket 65456 - Fernando Macieira - 29/12/2021 - Cotação diferentes com a mesma SC gerando compras indevidas
 /*/
 User Function MT131VAL()
 
@@ -31,6 +32,8 @@ User Function MT131VAL()
     Local cItemCta  := ""
     Local cProduto  := ""
     Local aAprov    := {}
+    Local lExistSC8 := .f.
+    Local cNumC8    := ""
 
     dbSelectArea("SC1")
     dbSetOrder(1)
@@ -42,7 +45,7 @@ User Function MT131VAL()
     cQuery += " AND C1_OK<>''
     cQuery += " AND " + cQuerySC1
 
-    cQuery := ChangeQuery(cQuery)
+    //cQuery := ChangeQuery(cQuery)
     Iif( Select(cMy1Alias) > 0,(cMy1Alias)->(dbCloseArea()),Nil )
     dbUseArea( .T., "TOPCONN", TCGenQry( ,,cQuery ), cMy1Alias, .F., .T. )
 
@@ -73,7 +76,7 @@ User Function MT131VAL()
                 cQuery += " AND C1_CC<>'"+cCusto+"' 
                 cQuery += " AND " + cQuerySC1
 
-                cQuery := ChangeQuery(cQuery)
+                //cQuery := ChangeQuery(cQuery)
                 Iif( Select(cMy2Alias) > 0,(cMy2Alias)->(dbCloseArea()),Nil )
                 dbUseArea( .T., "TOPCONN", TCGenQry( ,,cQuery ), cMy2Alias, .F., .T. )
 
@@ -101,7 +104,85 @@ User Function MT131VAL()
 
     EndDo    
 
+    // @history ticket 65456 - Fernando Macieira - 29/12/2021 - Cotação diferentes com a mesma SC gerando compras indevidas
+    If lRet
+        
+        If Select("Work") > 0
+            Work->( dbCloseArea() )
+        EndIf
+
+        cQuery := " SELECT C1_FILIAL, C1_NUM, C1_PRODUTO
+        cQuery += " FROM " + RetSqlName("SC1") + " SC1 (NOLOCK)
+        cQuery += " WHERE " + cQuerySC1
+        cQuery += " AND C1_OK<>''
+        cQuery += " AND SC1.D_E_L_E_T_=''
+
+        tcQuery cQuery New Alias "Work"
+
+        Work->( dbGoTop() )
+        Do While Work->( !EOF() )
+
+            lExistSC8 := GetSC8(Work->C1_FILIAL, Work->C1_NUM, Work->C1_PRODUTO, @cNumC8)
+            If lExistSC8
+                lRet := .f.
+                msgAlert("Já existe uma cotação n. " + cNumC8 + " para a SC n. " + Work->C1_NUM + " para este produto " + Work->C1_PRODUTO + " nesta filial! Verifique...")
+                Exit
+            EndIf
+
+            Work->( dbSkip() )
+
+        EndDo
+
+        If Select("Work") > 0
+            Work->( dbCloseArea() )
+        EndIf
+
+    EndIf
+
     RestArea( aArea )
     RestArea( aAreaSC1 )
 	RestArea( aAreaSC8 ) 
+
 Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+    (long_description)
+    @type  Static Function
+    @author FWNM
+    @since 29/12/2021
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function GetSC8(cC1_FILIAL, cC1_NUM, cC1_PRODUTO, cNumC8)
+
+    Local lTemC8 := .F.
+    Local cQuery := ""
+
+    If Select("WorkC8") > 0
+        WorkC8->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT DISTINCT C8_FILIAL, C8_NUM, C8_PRODUTO
+    cQuery += " FROM " + RetSqlName("SC8") + " SC8 (NOLOCK)
+    cQuery += " WHERE C8_FILIAL='"+FWxFilial("SC8")+"' 
+    cQuery += " AND C8_NUMSC='"+cC1_NUM+"' 
+    cQuery += " AND C8_PRODUTO='"+cC1_PRODUTO+"' 
+    cQuery += " AND SC8.D_E_L_E_T_=''
+
+    tcQuery cQuery New Alias "WorkC8"
+
+    WorkC8->( dbGoTop() )
+    If WorkC8->( !EOF() )
+        cNumC8 := WorkC8->C8_NUM
+        lTemC8 := .T.
+    EndIf
+
+    If Select("WorkC8") > 0
+        WorkC8->( dbCloseArea() )
+    EndIf
+
+Return lTemC8

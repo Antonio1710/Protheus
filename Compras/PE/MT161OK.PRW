@@ -1,25 +1,20 @@
 #include "protheus.ch"
 #include "topconn.ch"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³MT161OK   ºAutor  ³Fernando Macieira   º Data ³  22/01/2019 º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Ponto de entrada usado para validar as propostas dos       º±±
-±±º          ³ fornecedores no momento da gravação da análise da cotação. º±±
-±±º          ³ Se .T. finaliza o processo. Se .F., interrompe o processo. º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºChamado   ³ TI - FWNM - 23/01/2019 - Consistencia pedidos sem alcada   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Adoro                                                      º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function nomeFunction
+	Ponto de entrada usado para validar as propostas dos fornecedores no momento da gravação da análise da cotação. 
+	Se .T. finaliza o processo. Se .F., interrompe o processo. 
+	@type  Function
+	@author Fernando Macieira
+	@since 22/01/2019
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 65456 - Fernando Macieira - 29/12/2021 - Cotação diferentes com a mesma SC gerando compras indevidas
+/*/
 User Function MT161OK()
 
 	Local lMT161Ok   := .t.
@@ -35,6 +30,9 @@ User Function MT161OK()
 	Local aAreaSC1   := SC1->( GetArea() )
 	Local aAreaSC8   := SC8->( GetArea() )
 	Local aAreaAF8   := AF8->( GetArea() )
+	Local aArea      := GetArea()
+	Local lOutraC1   := .f.
+	Local cNumOutC8  := ""
 
 	// Projetos Investimentos
 	For nY := 1 To Len(aPropostas)
@@ -87,6 +85,43 @@ User Function MT161OK()
 						EndIf
 			
 					EndIf
+
+					// FWNM - TI - 23/01/2019 - pedidos sem alcada
+					If lMT161Ok
+
+						// Total da cotacao vencedora/escolhida
+						nTotCot := UpTotCot()
+						
+						cItemCta := Posicione("SC1",1,SC8->C8_FILIAL+SC8->C8_NUMSC,"C1_ITEMCTA")
+
+						// Obtem os aprovadores para os centros de custo
+						aAprov	:= u_GetAprov( SC8->C8_CC, cItemCta, nTotCot )
+		
+						If Len(aAprov)==0
+
+							lMT161Ok := .f.
+							
+							Aviso(	"MT161OK-02",;
+							"Não foi localizado controle de alçada para o centro de custo / Item Contábil! Pedido de compras não será gerado...",;
+							{ "&Retorna" },,;
+							"CCusto/ItemCta: " + AllTrim(SC8->C8_CC) + "/" + AllTrim(cItemCta) )
+							
+							Exit
+
+						EndIf						
+					
+					EndIf
+
+					// @history ticket 65456 - Fernando Macieira - 29/12/2021 - Cotação diferentes com a mesma SC gerando compras indevidas
+					If lMT161Ok
+						lOutraC1 := ChkOutSC8(@cNumOutC8)
+						If lOutraC1
+							lMT161Ok := .f.
+							msgAlert("Já existe outra cotação n. " + cNumOutC8 + " para a mesma SC n. " + SC8->C8_NUMSC + " para o mesmo produto " + SC8->C8_PRODUTO + " nesta filial! Verifique...")
+							Exit
+						EndIf
+					EndIf
+					//
 				
 				EndIf
 			
@@ -101,7 +136,8 @@ User Function MT161OK()
 	Next nY
 
 
-	// FWNM - TI - 23/01/2019 - pedidos sem alcada
+	// FWNM - TI - 23/01/2019 - pedidos sem alcada - OTIMIZACAO
+	/*
 	If lMT161Ok
 
 		For nY := 1 To Len(aPropostas)
@@ -149,10 +185,12 @@ User Function MT161OK()
 		Next nY
 
 	EndIf
+	*/
 	
 	RestArea( aAreaAF8 )
 	RestArea( aAreaSC8 )
 	RestArea( aAreaSC1 )
+	RestArea( aArea )
 
 Return lMT161Ok
 
@@ -242,3 +280,46 @@ Static Function UpTotCot()
 	WorkSC8->( dbCloseArea() )
 
 Return nTotCot
+
+/*/{Protheus.doc} nomeStaticFunction
+	Outra cotação com a mesma SC e Produto
+	@type  Static Function
+	@author FWNM
+	@since 29/12/2021
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function ChkOutSC8(cNumOutC8)
+
+	Local lOutra := .f.
+    Local cQuery := ""
+
+    If Select("WorkC8") > 0
+        WorkC8->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT DISTINCT C8_FILIAL, C8_NUM, C8_PRODUTO
+    cQuery += " FROM " + RetSqlName("SC8") + " SC8 (NOLOCK)
+    cQuery += " WHERE C8_FILIAL='"+FWxFilial("SC8")+"' 
+    cQuery += " AND C8_NUM<>'"+SC8->C8_NUM+"' 
+	cQuery += " AND C8_NUMSC='"+SC8->C8_NUMSC+"' 
+    cQuery += " AND C8_PRODUTO='"+SC8->C8_PRODUTO+"' 
+    cQuery += " AND SC8.D_E_L_E_T_=''
+
+    tcQuery cQuery New Alias "WorkC8"
+
+    WorkC8->( dbGoTop() )
+    If WorkC8->( !EOF() )
+        cNumOutC8 := WorkC8->C8_NUM
+        lOutra := .T.
+    EndIf
+
+    If Select("WorkC8") > 0
+        WorkC8->( dbCloseArea() )
+    EndIf
+	
+Return lOutra

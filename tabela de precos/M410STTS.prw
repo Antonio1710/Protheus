@@ -3611,11 +3611,11 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	_nVlLmCad := aRetRede[2]
 	_dValidLC	:= aRetRede[3]
 	_cCdClIn	:= '%'+FormatIn(aRetRede[1],",")+'%'
-	/*
+	
 	IF Empty(cPortadIn)
 		cPortadIn := "%('')%"
 	endif
-	*/
+	
 	//
 	BeginSQL Alias cAls003
 		SELECT 

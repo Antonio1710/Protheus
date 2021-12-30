@@ -55,6 +55,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
 	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar".
 	@history Tickets 13526  - Everson - 14/10/2021 - Tratamento para gravar a relação A1_XTPDESC x PB3_XTPDES.
+	@history Tickets TI  - Leonardo P. Monteiro - 29/10/2021 - Tratamento de error.log gerado por caracter especial informado no código do produto e razão social.
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -212,13 +213,13 @@ User Function ADOA005() // U_ADOA005()
 	@ 009,030 MSGET oNomeVen VAR cNomeVen SIZE 140,10 OF oTPane1 PIXEL  When .F.
 
 	@ 010,190 SAY "Cod. Cliente" SIZE 200,15 OF oTPane1 PIXEL
-	@ 010,224 MSGET oCliente VAR cCliente Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )	 SIZE 40,10 OF oTPane1 PIXEL
+	@ 010,224 MSGET oCliente VAR cCliente Picture "999999" Valid fVldCar(cCliente) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )	 SIZE 40,10 OF oTPane1 PIXEL
 
 	@ 010,285 /*030,204*/ SAY "CNPJ" SIZE 200,15 OF oTPane1 PIXEL
-	@ 009,305 /*029,224*/ MSGET oCNPJ VAR cCNPJ	 Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  ) SIZE 47,10 OF oTPane1 PIXEL
+	@ 009,305 /*029,224*/ MSGET oCNPJ VAR cCNPJ	 Valid fVldCar(cCNPJ) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  ) SIZE 47,10 OF oTPane1 PIXEL
 
 	@ 010,355 /*030,375*/ SAY "Razão Social" SIZE 200,15 OF oTPane1 PIXEL
-	@ 009,390 /*029,410*/ MSGET oRazao VAR cRazao Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 90,10 OF oTPane1 PIXEL
+	@ 009,390 /*029,410*/ MSGET oRazao VAR cRazao  Picture PesqPict("SA2","A2_NOME") Valid fVldCar(cRazao) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData ) SIZE 90,10 OF oTPane1 PIXEL
 
 
 	//@ 030,006 SAY "Enviado" SIZE 200,15 OF oTPane1 PIXEL
@@ -247,16 +248,16 @@ User Function ADOA005() // U_ADOA005()
 	//oComboAnalise := tComboBox():New( 060, 060/*142*/, {|u|If( pCount() > 0, cComboAnalise := u, cComboAnalise)},;
 
 	@ 050,123/*193*/ SAY "Vendedor" SIZE 200,15 OF oTPane1 PIXEL
-	@ 049,153/*223*/ MSGET oVendedor VAR cVendedor	Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  ) SIZE 40,10 OF oTPane1 PIXEL
+	@ 049,153/*223*/ MSGET oVendedor VAR cVendedor	Valid fVldCar(cVendedor) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  ) SIZE 40,10 OF oTPane1 PIXEL
 
 	@ 050,200/*270*/ SAY "Supervisor" SIZE 200,15 OF oTPane1 PIXEL
-	@ 049,230/*300*/ MSGET oSupervisor VAR cSupervisor Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 40,10 OF oTPane1 PIXEL
+	@ 049,230/*300*/ MSGET oSupervisor VAR cSupervisor Valid fVldCar(cSupervisor) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 40,10 OF oTPane1 PIXEL
 
 	@ 050,285/*355*/ SAY "Data" SIZE 200,15 OF oTPane1 PIXEL
 	@ 049,304/*374*/ MSGET oData VAR dData	 Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 40,10 OF oTPane1 PIXEL
     
 	@ 050,365 SAY "UF" SIZE 200,15 OF oTPane1 PIXEL
-	@ 049,385 MSGET oSigla VAR cSigla Valid fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 40,10 OF oTPane1 PIXEL
+	@ 049,385 MSGET oSigla VAR cSigla Valid fVldCar(cSigla) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 40,10 OF oTPane1 PIXEL
 
 	oBotaoParecer 	:= tButton():New( 050, 430,'Parecer',oDlg,{||Adoa5Parec(oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_COD' }) ], oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_LOJA' }) ]),/*, fGetDados("PB3",nRecno,nOpca,@aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData)*/ },50,15,,,,.t.,,,,,,,,,,,.f.)
 	//oBotaoParecer:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	 CHAMADO: TI - ADRIANO SAVOINE - 22/07/2020
@@ -309,6 +310,17 @@ User Function ADOA005() // U_ADOA005()
 	RestArea( aArea )
 
 Return NIL
+
+Static Function fVldCar(cValor)
+	Local lRet := .T.
+
+	if "'"$cValor
+		MsgStop("Esse campo não permite caracter especial", "Valor Inválido")
+		lRet := .F.
+	endif
+
+return lRet
+
 
 /*{Protheus.doc} Static Function FGETDADOS
 	Montagem da Enchoice

@@ -3,6 +3,7 @@
 #Include 'FWMVCDef.ch'
 #INCLUDE "TOTVS.CH"
 #Include "Topconn.ch"
+
 /*/{Protheus.doc} User Function ADEST040P
 	Gera ordem de produção por integração do SAG
 	@type  Function
@@ -16,7 +17,9 @@
 	@history chamado 058675 - Everson         - 23/06/2020 - OS 060165 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || ADEST040P
 	@history chamado 059430 - Everson		  - 07/08/2020 - Alterado nome do arquivo temporário.
 	@history chamado 7087   - Everson		  - 04/01/2021 - Tratamento para execução de sincronização com o SAG.
+	@hystory Ticket 65674   - ADRIANO SAVOINE - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo ZCV_DESCTP.
 /*/
+
 User Function ADEST040P()
 
 	//Variáveis.
@@ -208,6 +211,7 @@ User Function ADES40GO(nOpc)
 	Aadd( aCpoBro,{"OK" 		,  , "Mark"      		, "@!"} )
 	Aadd( aCpoBro,{"ZCV_CODOP"  ,  , "Num OP SAG"      , " " } )
 	Aadd( aCpoBro,{"ZCV_CODTIP" ,  , "Tipo"            , " " } )
+	Aadd( aCpoBro,{"ZCV_DESCTP" ,  , "Descricao Tipo"  , " " } )  //Ticket 65674   - ADRIANO SAVOINE - 28/12/2021
 	Aadd( aCpoBro,{"ZCV_CDLOTE" ,  , "Lote"            , " " } )
 	Aadd( aCpoBro,{"ZCN_DESCLT" ,  , "Descricao Lote"  , " " } )
 	Aadd( aCpoBro,{"ZCV_DATA"   ,  , "Data"            , " " } )
@@ -289,6 +293,7 @@ Static Function ADES40DO(nOpc)
 	Aadd( aCampos,{"OK"  		 , "C"	 , 2  , 0  } )
 	Aadd( aCampos,{"ZCV_CODOP"  , TamSX3("ZCV_CODOP")[3]  , TamSX3("ZCV_CODOP")[1]  , TamSX3("ZCV_CODOP")[2]  } )
 	Aadd( aCampos,{"ZCV_CODTIP" , TamSX3("ZCV_CODTIP")[3] , TamSX3("ZCV_CODTIP")[1] , TamSX3("ZCV_CODTIP")[2] } )
+	Aadd( aCampos,{"ZCV_DESCTP" , TamSX3("ZCV_DESCTP")[3] , TamSX3("ZCV_DESCTP")[1] , TamSX3("ZCV_DESCTP")[2] } ) //Ticket 65674   - ADRIANO SAVOINE - 28/12/2021
 	Aadd( aCampos,{"ZCV_CDLOTE" , TamSX3("ZCV_CDLOTE")[3] , TamSX3("ZCV_CDLOTE")[1] , TamSX3("ZCV_CDLOTE")[2] } )
 	Aadd( aCampos,{"ZCN_DESCLT" , TamSX3("ZCN_DESCLT")[3] , TamSX3("ZCN_DESCLT")[1] , TamSX3("ZCN_DESCLT")[2] } )
 	Aadd( aCampos,{"ZCV_DATA"   , TamSX3("ZCV_DATA")[3]   , TamSX3("ZCV_DATA")[1]   , TamSX3("ZCV_DATA")[2]   } )
@@ -307,8 +312,8 @@ Static Function ADES40DO(nOpc)
 	dbCreateIndex(cNameIdx,'ZCV_CODOP+ZCV_CDLOTE')
 
 	Pergunte("ADES040P",.F.)
-
-	cQuery := " SELECT ZCV_FILIAL, ZCV_CODOP, ZCV_CODTIP, ZCV_CDLOTE, ZCV_DATA, ZCV_IDADEO, ZCV_QTDOVO, ZCV_CODAOJ, ZCV_NUMERP "
+		//Ticket 65674   - ADRIANO SAVOINE - 28/12/2021
+	cQuery := " SELECT ZCV_FILIAL, ZCV_CODOP, ZCV_CODTIP, ZCV_DESCTP, ZCV_CDLOTE, ZCV_DATA, ZCV_IDADEO, ZCV_QTDOVO, ZCV_CODAOJ, ZCV_NUMERP "
 	cQuery += " FROM "+RetSqlName("ZCV")+" ZCV (NOLOCK) "
 	cQuery += " WHERE ZCV_FILIAL = '"+FWxFilial("ZCV")+"' "
 	cQuery += " AND ZCV_DATA BETWEEN '"+DtoS(MV_PAR01)+"' AND '"+DtoS(MV_PAR02)+"' "
@@ -343,6 +348,7 @@ Static Function ADES40DO(nOpc)
 			RecLock("ADES40DT", .T.)
 				ADES40DT->ZCV_CODOP  := tADES40T->ZCV_CODOP
 				ADES40DT->ZCV_CODTIP := tADES40T->ZCV_CODTIP
+				ADES40DT->ZCV_DESCTP := tADES40T->ZCV_DESCTP // Ticket 65674   - ADRIANO SAVOINE - 28/12/2021
 				ADES40DT->ZCV_CDLOTE := tADES40T->ZCV_CDLOTE
 				ADES40DT->ZCN_DESCLT := Posicione("ZCN",1,FWxFilial("ZCN")+PadR(tADES40T->ZCV_CDLOTE,TamSX3("ZCN_LOTE")[1]),"ZCN_DESCLT")
 				ADES40DT->ZCV_DATA   := StoD(tADES40T->ZCV_DATA)
