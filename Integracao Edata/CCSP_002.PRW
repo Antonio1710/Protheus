@@ -30,6 +30,7 @@ Static nQtdePerg := 4
 	@history chamado     ti - Fernando Maci- 24/08/2021 - Consistências Integração EDATA devido RECNO com CAST na view [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01]
 	@history chamado     ti - Fernando Maci- 05/09/2021 - Correção urgente após problema golive cloud
 	@history chamado  62433 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
+	@history chamado  TI 	- Leonardo P. Monteiro      - 29/12/2021 - Tratamento de error.log quando não existem dados na aCols.
 /*/
 User Function CCSP_002() // U_CCSP_002()
 
@@ -282,9 +283,17 @@ Static Function geraCTE()
 	//³ Declaração de variáveis.                                            |
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea		:= GetArea()
-	Local cData	 	:= AllTrim(Dtos(opGridSC5:aCols[opGridSC5:NAT,nPosEntr]))
-	Local cRoteiro	:= AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosRot])
+	Local cData	 	:= ""
+	Local cRoteiro	:= ""
 	
+	if Len(opGridSC5:aCols) == 0
+		MsgAlert("Não existem itens para serem processados!", "..:: Seleção de Itens ::..")
+		return
+	endif
+
+	cData	 	:= AllTrim(Dtos(opGridSC5:aCols[opGridSC5:NAT,nPosEntr]))
+	cRoteiro	:= AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosRot])
+
 	//
 	If ! MsgYesNo("Deseja iniciar a rotina de CT-e para o roteiro " + cRoteiro + " " + DToC(SToD(cData)) + "?","Função geraCTE(CCSP_002)")
 		RestArea(aArea)
@@ -333,6 +342,11 @@ Static Function CCS_002P(Par1,Par2,Par3,Par4)
 
 	EndIf
 	//
+
+	if Len(opGridSC5:aCols) == 0
+		MsgAlert("Não existem itens para serem processados!", "..:: Seleção de Itens ::..")
+		return
+	endif
 
 	Pergunte(cPerg,.F.)
 

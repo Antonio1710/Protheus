@@ -1,6 +1,10 @@
-#INCLUDE "rwmake.ch"
-#INCLUDE "Topconn.ch"
-#INCLUDE "PROTHEUS.ch"
+#Include 'Protheus.ch'
+#include "rwmake.ch"
+#include "topconn.ch"
+#INCLUDE "FWMVCDEF.CH"
+#INCLUDE "FWMBROWSE.CH"
+#INCLUDE "FILEIO.CH"
+
 
 /*/{Protheus.doc} User Function F050ROT
 	Ponto de entrada que permite modificar os itens de menu do browse de seleção de títulos a pagar , por meio de edição da variável aRotina (passada como parâmetro no ponto de entrada). 
@@ -15,6 +19,7 @@
 	@history Chamado 043974 - WILLIAM COSTA - 18/09/2019 - Adicionado o campo de Codigo do Imposto
 	@history Chamado 052897 - WILLIAM COSTA - 28/10/2019 - Adicionado os campos cnpj, nome benefeciario, banco, agencia, digito agencia, conta, digito da conta
 	@history Chamado T.I    - ABEL BABINI   - 14/07/2020 - Ajustes na chamada da função para versão 12.1.27
+	@history Ticket 18035 - Leonardo P. Monteiro - 27/12/2021 - Ajustes na rotina e separação referente ao ponto de entrada F050ROT.
 /*/
 
 User Function F050ROT()
@@ -27,7 +32,7 @@ Local aRotina := ParamIxb
 		// Chamado T.I    - ABEL BABINI   - 14/07/2020 - Ajustes na chamada da função para versão 12.1.27
     // Chamado n. 050958 - Tela para alteracao de campos controlados (SISPAG)
     aAdd( aRotina, { "Altera Títulos RH e PA" , "u_AltCodBar()" , 0 , 8 , 0 , .F. } ) // CHAMADO T.I 30/08/2019
-
+	aAdd( aRotina, { "Importação de NDF´s"    , "u_ADFIN117P()" , 0 , 8 , 0 , .F. } ) // CHAMADO T.I 30/08/2019
 Return aRotina                                        
 
 /*/{Protheus.doc} User Function AltCodBar
@@ -188,3 +193,6 @@ Static Function VldE2CODBAR(cCodBar)
 	ENDIF
 
 Return lRet
+
+
+

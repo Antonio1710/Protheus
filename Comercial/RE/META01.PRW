@@ -19,6 +19,7 @@
 	@history ticket   10654	- Fernando Macieira  - 11/03/2021 - type mismatch on $  on U_META01(META01.PRW) 17/04/2020 13:07:57 line : 53
 	@history ticket   63207	- Everson            - 03/11/2021 - Tratamento para melhorar a performance do relatório.
 	@history ticket   63802	- Leonardo P. Monteiro            - 16/11/2021 - Correção no posicionamento e recuperação do código do produto eData.
+	@history ticket   TI	- Leonardo P. Monteiro            - 30/12/2021 - Inclusão de Openquery para prevenção de timeout nas consultas ao eData.
 /*/
 User Function META01() // U_META01()
 	
@@ -1259,9 +1260,17 @@ Static Function carEdtPrd()
 	Local oHash 	  := THashMap():New()
 
 	//
+	/*
 	cQuery := " SELECT PROD_EDATA.IE_DEFIMATEEMBA AS PRODPROT, PROD_EDATA.ID_PRODDEFIMATEEMBA AS PRODEDATA "
     cQuery += " FROM [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] AS PROD_EDATA WHERE PROD_EDATA.IE_DEFIMATEEMBA IS NOT NULL AND PROD_EDATA.IE_DEFIMATEEMBA <> '' ORDER BY PRODPROT "
-    
+    */
+
+	cQuery := " SELECT PROD_EDATA.IE_DEFIMATEEMBA AS PRODPROT, PROD_EDATA.ID_PRODDEFIMATEEMBA AS PRODEDATA "
+	cQuery += " FROM OPENQUERY(LNKMIMS,'SELECT * FROM [SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] AS PROD_EDATA "
+	cQuery += " WHERE PROD_EDATA.IE_DEFIMATEEMBA IS NOT NULL AND PROD_EDATA.IE_DEFIMATEEMBA <> '''' ') PROD_EDATA "
+	cQuery += " ORDER BY PRODPROT "
+
+
 	//
 	TcQuery cQuery New alias "DDS_PROD"
 	

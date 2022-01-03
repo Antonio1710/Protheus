@@ -1,7 +1,11 @@
 #Include 'Protheus.ch'
+#include "rwmake.ch"
+#include "topconn.ch"
 #INCLUDE "FWMVCDEF.CH"
 #INCLUDE "FWMBROWSE.CH"
 #INCLUDE "FILEIO.CH"
+
+#DEFINE CGETFILE_TYPE GETF_LOCALHARD
 
 /*/{Protheus.doc} User Function ADFIN102P
 	PROGRAMA PARA GERAR UM GRUPO DE TITULOS A RECEBER PARA SE REALIZAR A BAIXA INDIVIDUALMENTE.
@@ -9,8 +13,10 @@
 	@type  Function
 	@author ANDRE MENDES
 	@since 04/11/2020
-	@history Ticket 101  - Andre Mendes - 29/10/2020 - RequisiÃ§Ã£o - Baixa TÃ­tulos DAÃ‡Ã‚O
-	@history Ticket 3810 - Andre Mendes - 10/12/2020 - ApÃ³s criar o grupo , informar a quantidade de tÃ­tulos que contÃ©m no grupo e o valor total do grupo
+	@history Ticket 101   - Andre Mendes - 29/10/2020 - RequisiÃ§Ã£o - Baixa TÃ­tulos DAÃ‡Ã‚O
+	@history Ticket 3810  - Andre Mendes - 10/12/2020 - ApÃ³s criar o grupo , informar a quantidade de tÃ­tulos que contÃ©m no grupo e o valor total do grupo
+	@history Ticket 3810  - Andre Mendes - 10/12/2021 - Ajustes nos gatilhos e validações de campo, carga dos títulos de abatimentos.
+	@history Ticket 18035 - Leonardo P. Monteiro - 27/12/2021 - Ajustes na rotina e cálculo dos abatimentos.
 /*/
 User Function ADFIN102P()
 	Local aCoors := FWGetDialogSize( oMainWnd )
@@ -99,9 +105,9 @@ Static Function MenuDef()
 	//Local aRotina := fwmvcmenu("ADFIN102P")
 	Local aRotina := {}
 	
-	ADD OPTION aRotina TITLE "Gerar Grupo" 	ACTION "VIEWDEF.ADFIN102P"     	OPERATION 3	ACCESS 0
-	ADD OPTION aRotina TITLE "Baixar" 		ACTION "Processa( {|| StaticCall(ADFIN102P,FIN102Bx) } )"     	OPERATION 4	ACCESS 0
-	ADD OPTION aRotina TITLE "Cancelar" 	ACTION "Processa( {|| StaticCall(ADFIN102P,FIN102Can) } )"     	OPERATION 4	ACCESS 0
+	ADD OPTION aRotina TITLE "Gerar Grupo" 	ACTION "VIEWDEF.ADFIN102P"     									OPERATION 3	ACCESS 0
+	ADD OPTION aRotina TITLE "Baixar" 		ACTION "Msaguarde( {|| StaticCall(ADFIN102P,FIN102Bx) } )"     	OPERATION 4	ACCESS 0
+	ADD OPTION aRotina TITLE "Cancelar" 	ACTION "Msaguarde( {|| StaticCall(ADFIN102P,FIN102Can) } )"     OPERATION 4	ACCESS 0
 
 	
 Return aRotina
@@ -139,7 +145,13 @@ Static Function ModelDef()
 	oStruZG6:SetProperty('ZG6_MOTBAI', MODEL_FIELD_VALUES,aCombo)
 
 	oStruZG7:SetProperty('ZG7_MOTBAI', MODEL_FIELD_VALUES,aCombo)
-
+	
+	oStruZG7:SetProperty( "ZG7_PARCEL"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
+	oStruZG7:SetProperty( "ZG7_DESCON"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
+	oStruZG7:SetProperty( "ZG7_MULTA"    , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
+	oStruZG7:SetProperty( "ZG7_TXPERM"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
+	
+	/*
    	aAux := FwStruTrigger('ZG7_PARCEL', 'ZG7_CLIENT' ,'SE1->E1_CLIENTE',.f.,,0,)
 	oStruZG7:AddTrigger( aAux[1], aAux[2] ,aAux[3] ,aAux[4] )	
 
@@ -184,11 +196,7 @@ Static Function ModelDef()
 
     aAux := FwStruTrigger('ZG7_TXPERM', 'ZG7_VLREC' ,'Posicione("SE1",1,xFilial("SE1")+FwFldGet("ZG7_PREFIX")+FwFldGet("ZG7_NUMERO")+FwFldGet("ZG7_PARCEL")+FwFldGet("ZG7_TIPO"),"E1_SALDO") - FwFldGet("ZG7_DESCON")+FwFldGet("ZG7_MULTA")+FwFldGet("ZG7_TXPERM")',.f.,,0,)
 	oStruZG7:AddTrigger( aAux[1], aAux[2] ,aAux[3] ,aAux[4] )
-
-    
-
-               
-    
+	*/
 	
 // Cria o objeto do Modelo de Dados
 	oModel := MPFormModel():New('MOD_02' )
@@ -238,6 +246,7 @@ Static Function ViewDef()
 
 	Set Key VK_F4 To fF4()
 	Set Key VK_F5 To fF5()
+	Set Key VK_F6 To fF6()
 
 	For nI := 1 to Len(aMotBx)
 		If substr(aMotBx[nI],34,01) == "A" .or. substr(aMotBx[nI],34,01) =="R"
@@ -253,7 +262,7 @@ Static Function ViewDef()
 	oStruZG6:SetProperty( "ZG6_MOTBAI", MVC_VIEW_COMBOBOX, aCombo )
 	oStruZG7:SetProperty( "ZG7_MOTBAI", MVC_VIEW_COMBOBOX, aCombo )
 
-	oStruZG6:SetProperty("ZG6_TPBAIX" , MVC_VIEW_LOOKUP    , "ZK")
+	oStruZG6:SetProperty( "ZG6_TPBAIX" , MVC_VIEW_LOOKUP    , "ZK")
 	
 	oStruZG7:SetProperty( 'ZG7_CODIGO' , MVC_VIEW_CANCHANGE, .F.)
 	oStruZG7:SetProperty( 'ZG7_ITEM' , MVC_VIEW_CANCHANGE, .F.)
@@ -329,6 +338,22 @@ Static Function FIN102Grp()
 
 Return .t.
 
+Static Function FIN102Csv()
+	Local aTitulos 	:= {}
+	Local cTipo 	:= FwFldGet('ZG6_TPBAIX')
+	Local lRet 
+
+	aTitulos := FIN102Exc(cTipo)
+	
+	If Len(aTitulos) >0 
+
+		Processa( {|lEnd| lRet := FIN102Add(aTitulos) },; 
+						OemToAnsi("Grupo de titulos a receber."),; 
+						OemToAnsi("Adicionando os titulos..."),; 
+						.F. )
+	Endif
+
+Return .t.
 
 /*/{Protheus.doc} Static Function FIN102Bx
 	Realiza a baixa de um grupo de tÃ­tulos, individualmente
@@ -339,10 +364,10 @@ Return .t.
 
 Static Function FIN102Bx()
 
-	Local aArea	:= GetArea()
-	Local aAreaZG6 := ZG6->(GetArea())
-	Local aAreaZG7 := ZG7->(GetArea())
-	Local aAreaSE1 := SE1->(GetArea())
+	Local aArea		:= GetArea()
+	Local aAreaZG6 	:= ZG6->(GetArea())
+	Local aAreaZG7 	:= ZG7->(GetArea())
+	Local aAreaSE1 	:= SE1->(GetArea())
 	Local cCodigo 	:= ZG6->ZG6_CODIGO
 	Local cPrefixo
 	Local cNum
@@ -350,6 +375,8 @@ Static Function FIN102Bx()
 	Local cTipo
 	Local aVetor
 	Local nItem
+	Local cAlerta	:= ""
+	Local lRet		:= .F.
 
 	AcessaPerg("FIN070",.T.)
 
@@ -401,9 +428,11 @@ Static Function FIN102Bx()
 				MSExecAuto({|x,y| fina070(x,y)},aVetor,3)
 
 				If lMsErroAuto  //## "Erro ao Baixar parcela no Contas a Receber! (Pref/Num/Parc: " ##
-					Alert("Erro ao Baixar parcela no Contas a Receber! (Pref/Num/Parc: " + SE1->E1_PREFIXO + "/" + SE1->E1_NUM + "/" + SE1->E1_PARCELA + ")")
-					MostraErro()
-				
+					cAlerta += +Chr(13)+Chr(10)+" - " + Alltrim(SE1->E1_PREFIXO) + "/" + Alltrim(SE1->E1_NUM) + "/" + Alltrim(SE1->E1_PARCELA)
+					//Alert("Erro ao Baixar parcela no Contas a Receber! (Pref/Num/Parc: " + SE1->E1_PREFIXO + "/" + SE1->E1_NUM + "/" + SE1->E1_PARCELA + ")")
+					//MostraErro()
+				else
+					lRet := .T.
 				EndIf
 
 			Endif
@@ -412,18 +441,28 @@ Static Function FIN102Bx()
 		End
 
 	Endif
+	
+	if lRet
+		DbSelectarea("ZG6")
+		ZG6->(Dbsetorder(1))
+		ZG6->(Dbseek(xFilial("ZG6")+cCodigo))
+		RecLock("ZG6", .f.)
 
-	RecLock("ZG6", .f.)
+		ZG6->ZG6_DTPROC := ddatabase
+		ZG6->ZG6_HRPROC := StrTran(Left(Time(),5),":","")
 
-	ZG6->ZG6_DTPROC := ddatabase
-	ZG6->ZG6_HRPROC := StrTran(Left(Time(),5),":","")
-
-	ZG6->(MSUnlock())
+		ZG6->(MSUnlock())
+	endif
 
 	RestArea(aArea)
 	ZG6->(RestArea(aAreaZG6))
 	ZG7->(RestArea(aAreaZG7))
 	SE1->(RestArea(aAreaSE1))
+
+	if !Empty(cAlerta)
+		MsgAlert("Houve erro na baixa dos seguintes títulos:"+Chr(13)+chr(10)+cAlerta, "..:: Inconsistências ::..")
+	endif
+
 Return 
 
 /*/{Protheus.doc} Static Function FIN102Bx
@@ -434,11 +473,12 @@ Return
 /*/
 
 Static Function FIN102Can()
-	Local aArea	:= GetArea()
-	Local aAreaZG6 := ZG6->(GetArea())
-	Local aAreaZG7 := ZG7->(GetArea())
-	Local aAreaSE1 := SE1->(GetArea())
+	Local aArea		:= GetArea()
+	Local aAreaZG6 	:= ZG6->(GetArea())
+	Local aAreaZG7 	:= ZG7->(GetArea())
+	Local aAreaSE1 	:= SE1->(GetArea())
 	Local cCodigo 	:= ZG6->ZG6_CODIGO
+	Local lRet		:= .F.
 	Local cPrefixo
 	Local cNum
 	Local cParcela
@@ -477,7 +517,8 @@ Static Function FIN102Can()
 				If lMsErroAuto  //## "Erro ao Baixar parcela no Contas a Receber! (Pref/Num/Parc: " ##
 					Alert("Erro ao cancelar parcela no Contas a Receber! (Pref/Num/Parc: " + SE1->E1_PREFIXO + "/" + SE1->E1_NUM + "/" + SE1->E1_PARCELA + ")")
 					MostraErro()
-				
+				else
+					lRet := .T.
 				EndIf
 
 			Endif
@@ -487,13 +528,17 @@ Static Function FIN102Can()
 
 	Endif
 
-	RecLock("ZG6", .f.)
+	if lRet
+		DbSelectarea("ZG6")
+		ZG6->(Dbsetorder(1))
+		ZG6->(Dbseek(xFilial("ZG6")+cCodigo))
+		RecLock("ZG6", .f.)
+	
+		ZG6->ZG6_DTPROC := Criavar("ZG6_DTPROC")
+		ZG6->ZG6_HRPROC := Criavar("ZG6_HRPROC")
 
-	ZG6->ZG6_DTPROC := Criavar("ZG6_DTPROC")
-	ZG6->ZG6_HRPROC := Criavar("ZG6_HRPROC")
-
-	ZG6->(MSUnlock())
-
+		ZG6->(MSUnlock())
+	endif
 
 	RestArea(aArea)
 	ZG6->(RestArea(aAreaZG6))
@@ -604,6 +649,111 @@ Static Function FIN102Qry(cTipo)
 return aRet
 
 
+/*/{Protheus.doc} Static Function FIN102Qry
+	Executa a query de acordo com o tipo de selecao de titulos. Retorna um array com os titulos selecionados.
+	@type  Function
+	@author ANDRE MENDES
+	@since 04/11/2020
+/*/
+Static Function FIN102Exc(cTipo)
+	Local aArea 		:= GetArea()
+	Private aRet		:= {}
+	Private Arquivo 	:= Space(40)
+	Private lExec		:= .T.
+	Private lMsErroAuto	:= .F.
+	Private lContinua	:= .T.
+
+	@ 200, 001 To 377, 380 Dialog oLeTxt Title OemToAnsi("Conversão de Lançamentos")
+	@ 002, 004 To 040, 187 Title OemToAnsi("Comentário : ")
+	//
+	@ 009, 020 Say "Este programa tem como objetivo fazer a importação de um  "
+	@ 019, 020 Say "arquivo texto, gerado em Planilha Excel (extensão .csv),  "
+	@ 029, 020 Say "contendo os títulos a receber que serão baixados."
+	//
+	@ 044, 004 To 060, 187
+	@ 049, 010 Say "Arquivo : "
+	@ 065, 004 To 085, 187 Title OemToAnsi("Opções : ")
+	//
+	@ 70, 065 BmpButton Type 14 Action SelecArq()
+	@ 70, 105 BmpButton Type 01 Action Close(oLeTxt)
+	@ 70, 145 BmpButton Type 02 Action (lExec := .F.,Close(oLeTxt))
+	//
+	Activate Dialog oLeTxt Centered
+	//
+	If !lExec
+	return(.t.)
+	Endif
+	If MsgBox("Confirma a Importação da Planilha?", "Atenção !!!", "YESNO")
+		Processa({|| Converte()}, "Conversão das Movimentações (.csv)")
+	Endif
+	RestArea(aArea)
+Return (aRet)
+
+//========================
+Static Function SelecArq()
+//========================
+cDirIni	:= "C:\BX LOTE\"
+cTipo 	:=         "*.CSV           | *.CSV |   "
+cTipo 	:= cTipo + "Todos os Arquivos *.* | *.* "
+//cArq 	:= cGetFile('Arquivo CSV|*.CSV|Arquivo *|*.CSV','Selecione arquivo',0,'C:\',.T.,GETF_LOCALHARD + GETF_NETWORKDRIVE,.T.) 
+Arquivo := cGetFile(cTipo, "Seleção de Arquivo",0,cDirIni,.T.,GETF_LOCALHARD + GETF_NETWORKDRIVE,.T.)
+Arquivo := Alltrim(Arquivo)
+
+@ 048, 035 Get Arquivo When .F. Size 140, 10
+
+Return (.T.)
+
+//========================
+Static Function Converte()
+//========================
+	aRet	:= {}
+	If !Empty(Arquivo)
+		cArqCSV := Alltrim(Arquivo)         // Arquivo Texto Selecionado
+	EndIf
+
+	If File(cArqCSV)
+
+		FT_FUSE(cArqCSV)
+		FT_FGOTO(1)
+		ProcRegua(100)
+		While lContinua .And. !FT_FEOF()
+		
+			cLinha		:= FT_FREADLN()
+			aLinha		:= StrTokArr2(cLinha, ";", .T.)
+
+			If !Empty(aLinha[02]) .And. aLinha[01] <> "FILIAL" .And. Val(aLinha[08]) > 0
+
+				
+				cE1_EMPRESA := aLinha[01]
+				cE1_FILIAL	:= Strzero(Val(aLinha[02]), TamSX3("E1_FILIAL")[1])
+				cE1_CLIENTE	:= Strzero(Val(aLinha[05]), TamSX3("E1_CLIENTE")[1])
+				cE1_LOJA	:= StrZero(Val(aLinha[06]), TamSX3("E1_LOJA")[1])
+				cE1_NUM		:= strzero(val(aLinha[03]),9)// StrZero(Val(aLinha[04]), TamSX3("E1_NUM")[1],9)
+				cE1_PREFIXO := PadR(strzero(val(aLinha[04]),2),TamSX3("E1_PREFIXO")[1])
+				cE1_PARCELA	:= CriaVar("E2_PARCELA")
+				cE1_TIPO	:= "NF "
+				/*
+				SF2->( DbSEtORder(1))
+				If SF2->( DbSeek(xFilial("SF2") + cE1_NUM + cE1_PREFIXO) )
+					cE1_CLIENTE := SF2->F2_CLIENTE
+					cE1_LOJA	:= SF2->F2_LOJA
+				Endif
+				If SE1->( dbSeek(FWxFilial("SE1")+cPrefixo+cNum+cParcela+cTipo) )
+				E1_FILIAL+E1_CLIENTE+E1_LOJA+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO
+				*/
+				IncProc("Lendo Arquivo: "+cE1_PREFIXO+"-"+cE1_NUM)
+				SE1->( DbSetOrder(2) )
+				If SE1->( DbSeek(xFilial("SE1") + cE1_CLIENTE + cE1_LOJA + cE1_PREFIXO + cE1_NUM + cE1_PARCELA + cE1_TIPO) )
+					aAdd(aRet, {SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->(Recno()) })
+				Endif
+			Endif
+			FT_FSKIP()
+		EndDo
+	Endif
+	FT_FUSE()
+return aRet
+
+
 /*/{Protheus.doc} Static Function FIN102Add
 	Adiciona os itens na Grid para que os usuÃ¡rio possa salvar.
 	@type  Function
@@ -611,62 +761,56 @@ return aRet
 	@since 04/11/2020
 /*/
 Static Function FIN102Add(aTitulos)
-	Local aArea := GetArea()
-	Local aAreaSE1 := SE1->(GetArea())
-	Local lRet := .t.
+	Local aArea 	:= GetArea()
+	Local lRet 		:= .t.
 
-	Local oModel := FWModelActive()
-	Local oView := FWViewActive()
-	Local oStruZG7 := oModel:GetModel( 'ENT_02_ZG7' )
+	Local oModel 	:= FWModelActive()
+	Local oView 	:= FWViewActive()
+	Local oStruZG7 	:= oModel:GetModel( 'ENT_02_ZG7' )
 	Local aSaveLine	:= FWSaveRows()
-	
-	
+
 	Local nX
 	Local nL
 	Local nI := 0
 
-
-	
 	//deleta todos os registros ativos
-	For nI := 1 To oStruZG7:Length()
-		oStruZG7:GoLine( nI )
-		If !oStruZG7:IsDeleted()
-			oStruZG7:DeleteLine()
-		EndIf
-	Next
+	if !(oStruZG7:Length() == 1 .and. Empty(oStruZG7:getValue("ZG7_NUMERO")))
+		For nI := 1 To oStruZG7:Length()
+			oStruZG7:GoLine( nI )
+			
+			If !oStruZG7:IsDeleted()
+				oStruZG7:DeleteLine()
+			EndIf
+		Next
+	ENDIF
 
 	FWRestRows( aSaveLine ) 
 
-	
 	For nX:= 1 To Len(aTitulos)
-		
-			nL := oStruZG7:AddLine()
-			SE1->(DbGoto(aTitulos[nX][05]))
+
+			if !(oStruZG7:getLine() == 1 .and. Empty(oStruZG7:getValue("ZG7_NUMERO")))
+				nL := oStruZG7:AddLine()
+			endif
+			
 			oStruZG7:SetValue('ZG7_PREFIX', aTitulos[nX][01] )
 			oStruZG7:SetValue('ZG7_NUMERO', aTitulos[nX][02] )
 			oStruZG7:SetValue('ZG7_PARCEL', aTitulos[nX][03] )
-			oStruZG7:SetValue('ZG7_TIPO', aTitulos[nX][04] )
-
+			oStruZG7:SetValue('ZG7_TIPO'  , aTitulos[nX][04] )
 			oStruZG7:SetValue('ZG7_MOTBAI', FwFldGet("ZG6_MOTBAI") )
-			oStruZG7:SetValue('ZG7_BANCO', FwFldGet("ZG6_BANCO") )
+			oStruZG7:SetValue('ZG7_BANCO' , FwFldGet("ZG6_BANCO") )
 			oStruZG7:SetValue('ZG7_AGENCI', FwFldGet("ZG6_AGENCI") )
-			oStruZG7:SetValue('ZG7_CONTA', FwFldGet("ZG6_CONTA") )
+			oStruZG7:SetValue('ZG7_CONTA' , FwFldGet("ZG6_CONTA") )
+
+			fieldValidPos(oStruZG7, "*", nil, oStruZG7:GetLine(), nil)
 
 			oView:Refresh()
 
-				
 	Next nX
 	
-	
-	
-	
 	RestArea(aArea)
-	SE1->(RestArea(aAreaSE1))
-
-
+	
 	fF5()
 Return lRet
-
 
 Static Function fF4()
 
@@ -676,13 +820,18 @@ Static Function fF4()
 Return .t.
 
 
+Static Function fF6()
+StaticCall(ADFIN102P,FIN102CSV)
+Return .t.
+
+
 Static Function fF5()
-	Local oView := FWViewActive()
-	Local oModel := FWModelActive()
+	Local oView 	:= FWViewActive()
+	Local oModel 	:= FWModelActive()
 	Local oModelZG7 := oModel:GetModel( 'ENT_02_ZG7' )
-	Local nI := 0
-	Local nReg := 0
-	Local nTotRec := 0
+	Local nI 		:= 0
+	Local nReg 		:= 0
+	Local nTotRec 	:= 0
 	Local aSaveLine	:= FWSaveRows()
 
 	For nI := 1 To oModelZG7:Length()
@@ -691,7 +840,6 @@ Static Function fF5()
 			nReg++
 
 			nTotRec += oModelZG7:GetValue('ZG7_VLREC')
-
 
 		EndIf
 	Next
@@ -743,3 +891,100 @@ Static Function fTotal(cFilZG6, cCodigo, nTipo)
 
 	RestArea(aArea)
 Return nRet
+
+Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
+    Local lRet      := .T.
+	Local cQuery    := ""
+	Local nVlRec	:= 0
+	Local cParcela	:= iif(cField=="ZG7_PARCELA", xValue, FwFldGet("ZG7_PARCEL"))
+	Local nDesconto	:= 0
+	Local nMulta	:= 0
+	Local nTxPerm	:= 0
+	Local nAbatimen	:= 0
+
+
+	if oModelSit:cID == "ENT_02_ZG7"
+
+		if select("QSE1") == 0
+			cQuery  := " SELECT E1.E1_PREFIXO, E1.E1_NUM, E1.E1_PARCELA, E1.E1_TIPO, E1.E1_PORTADO, E1.E1_NATUREZ, E1.E1_EMISSAO, E1. E1_EMIS1, "
+			cQuery  += " E1.E1_CLIENTE, E1.E1_LOJA, SA1.A1_NOME, E1.E1_VENCREA, E1_SALDO, E1_VALOR, E1_DESCONT, "
+			cQuery  += " EA.EA_VALOR "
+			cQuery  += " FROM "+ RetSqlName("SE1") +" E1 "
+			cQuery += "	INNER JOIN "+ RetSqlName("SA1") +"	SA1	ON " 
+			cQuery += "	        SA1.A1_FILIAL='"+ xFilial("SA1") +"' AND "
+			cQuery += "			SA1.A1_COD	= E1.E1_CLIENTE		AND "
+			cQuery += "			SA1.A1_LOJA	= E1.E1_LOJA "
+			cQuery += "	LEFT JOIN (SELECT E1_FILIAL, E1_TITPAI, SUM(E1_VALOR) EA_VALOR "
+			cQuery  += " 					  FROM "+ RetSqlName("SE1") +" EA  "
+			cQuery  += " 					  WHERE D_E_L_E_T_='' AND E1_TITPAI !='' "
+			cQuery  += " 					  GROUP BY E1_FILIAL, E1_TITPAI) EA "
+			cQuery  += " 		  ON E1.E1_FILIAL=EA.E1_FILIAL AND E1.E1_PREFIXO+E1.E1_NUM+E1.E1_PARCELA+E1.E1_TIPO+E1.E1_CLIENTE+E1.E1_LOJA =EA.E1_TITPAI "
+			cQuery  += " WHERE E1.D_E_L_E_T_='' AND E1.E1_FILIAL='"+ xFilial("SE1") +"' AND E1.E1_PREFIXO='"+FwFldGet("ZG7_PREFIX")+"' AND E1.E1_NUM='"+FwFldGet("ZG7_NUMERO")+"' AND E1.E1_PARCELA='"+cParcela+"' AND E1.E1_TIPO='"+FwFldGet("ZG7_TIPO")+"' AND E1.E1_TITPAI=''; "
+			
+			TcQuery cQuery ALIAS "QSE1" NEW
+		endif
+		TCSETFIELD( "QSE1", "E1_EMISSAO", "D", 8, 0)
+		TCSETFIELD( "QSE1", "E1_VENCREA", "D", 8, 0)
+		
+		//if SE1->(Dbseek(xFilial("SE1")+FwFldGet("ZG7_PREFIX")+FwFldGet("ZG7_NUMERO")+FwFldGet("ZG7_PARCEL")+FwFldGet("ZG7_TIPO")))
+		IF QSE1->(!eof())
+
+			nSaldo 		:= QSE1->E1_VALOR
+			nDesconto	:= QSE1->E1_DESCONT
+			nAbatimen	:= QSE1->EA_VALOR
+			nMulta		:= iif(cField=="ZG7_MULTA"	, xValue, FwFldGet("ZG7_MULTA"))
+			nTxPerm		:= iif(cField=="ZG7_TXPERM"	, xValue, FwFldGet("ZG7_TXPERM"))
+
+			if cField == "*" .or. cField == "ZG7_PARCEL"
+					
+				oModelSit:LoadValue("ZG7_CLIENT"	, QSE1->E1_CLIENTE)
+				oModelSit:LoadValue("ZG7_LOJA"		, QSE1->E1_LOJA)
+				oModelSit:LoadValue("ZG7_DESCRI"	, QSE1->A1_NOME)
+				oModelSit:LoadValue("ZG7_NATURE"	, QSE1->E1_NATUREZ)
+				oModelSit:LoadValue("ZG7_EMISSA"	, QSE1->E1_EMISSAO)
+				oModelSit:LoadValue("ZG7_VENCRE"	, QSE1->E1_VENCREA)
+				oModelSit:LoadValue("ZG7_DTREC"		, ddatabase)
+				oModelSit:LoadValue("ZG7_DTCRED"	, ddatabase)
+				oModelSit:LoadValue("ZG7_HISTBA"	, "VALOR RECEBIDO S/ TITULO")
+				
+				oModelSit:LoadValue("ZG7_VALORI"	, QSE1->E1_VALOR)
+				oModelSit:LoadValue("ZG7_DESCON"	, nDesconto)
+				oModelSit:LoadValue("ZG7_ABATIM"	, nAbatimen)
+				
+				nValLiq := FwFldGet("ZG7_VALORI")-FwFldGet("ZG7_ABATI")-FwFldGet("ZG7_IMPOST")-FwFldGet("ZG7_DESCON")-FwFldGet("ZG7_ABATIM")
+				oModelSit:LoadValue("ZG7_VLREC"		, nSaldo)
+				oModelSit:LoadValue("ZG7_VALLIQ"	, nValLiq)
+
+			endif
+			
+			if cField == "*" .or. cField == "ZG7_PARCEL" .or. cField == "ZG7_DESCON"
+				
+				nVlRec := nSaldo-nDesconto+nMulta+nTxPerm-nAbatimen
+				oModelSit:LoadValue("ZG7_VLREC"		, nVlRec)
+			
+			endif
+
+			if cField == "*" .or. cField == "ZG7_PARCEL" .or. cField == "ZG7_MULTA"
+
+				nVlRec := nSaldo-nDesconto+nMulta+nTxPerm-nAbatimen
+				oModelSit:LoadValue("ZG7_VLREC"		, nVlRec)
+			
+			endif
+			
+			if cField == "*" .or. cField == "ZG7_PARCEL" .or. cField == "ZG7_TXPERM"
+
+				nVlRec := nSaldo-nDesconto+nMulta+nTxPerm-nAbatimen
+				oModelSit:LoadValue("ZG7_VLREC"		, nVlRec)
+
+			endif
+		else
+			MsgAlert("Título não encontrado, informe um registro válido.", "Erro")
+		endif
+
+		if select("QSE1") > 0
+			QSE1->(dbclosearea())
+		endif
+
+	endif
+    
+return lRet
