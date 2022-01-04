@@ -13,6 +13,7 @@
     @history Chamado 11355 - Leonardo P. Monteiro - 01/04/2021 - Desenvolvimento e adição do campo de custo.
 	@history Chamado 13429 - Leonardo P. Monteiro - 05/05/2021 - Adicionado campo transportadora.
 	@history Chamado 13949 - Denis Guedes Adicionado o campo tipo de frete (ZK_TPFRETE)
+	@history Ticket  65945 - Adriano Savoine - 03/01/2021 - Adicionado o Campo Valor total da NF para a Logistica fazar seguro da Carga apartir do mesmo.
 /*/
 
 User Function ADLOG075R() 
@@ -131,6 +132,7 @@ Static Function GeraExcel()
 				TRB->C5_MENNOTA,;
 				TRB->C5_NOTA,;
 				TRB->C5_SERIE,;
+				TRB->C5_VALORNF,;  //Ticket 65945 - Adriano Savoine - 03/01/2021 
 				TRB->C5_SHELFLF,;
 				TRB->C5_PALLETZ,;
 				TRB->C5_X_SQED,;
@@ -207,6 +209,7 @@ Static Function SqlGeral()
 	cQuery += " C5.C5_MENNOTA, "+cEOL
 	cQuery += " C5.C5_NOTA, "+cEOL
 	cQuery += " C5.C5_SERIE, "+cEOL
+	cQuery += " C5.C5_VALORNF, "+cEOL  //Ticket 65945 - Adriano Savoine - 03/01/2021 
 	cQuery += " C5.C5_SHELFLF, "+cEOL
 	cQuery += " C5.C5_PALLETZ, "+cEOL
 	cQuery += " C5.C5_X_SQED, "+cEOL
@@ -305,21 +308,23 @@ Static Function Cabec()
     oExcel:AddColumn(cPlanilha,cTitulo,"Mens.p/ Nota"        		,1,1) // 31 B
     oExcel:AddColumn(cPlanilha,cTitulo,"Nota Fiscal"        		,1,1) // 32 B
     oExcel:AddColumn(cPlanilha,cTitulo,"Serie"        				,1,1) // 33 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Shelflife?"        			,1,1) // 34 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Palletizado?"        		,1,1) // 35 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Carga Edata"        		,1,1) // 36 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Dt.Edata"        			,1,1) // 37 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Intreg Ravex"        		,1,1) // 38 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Hr Logistica"        		,1,1) // 39 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Ini Tar"        		,1,1) // 40 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Fin Tar"        		,1,1) // 41 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Ini Man"        		,1,1) // 42 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Fin Man"        		,1,1) // 43 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Status"        				,1,1) // 44 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Id Rot Ravex"        		,1,1) // 45 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Latitude Ent"        		,1,1) // 46 B
-    oExcel:AddColumn(cPlanilha,cTitulo,"Longitude En"        		,1,1) // 47 B
-	oExcel:AddColumn(cPlanilha,cTitulo,"Tipo de frete"        		,1,1) // 47 B
+	//Ticket 65945 - Adriano Savoine - 03/01/2021 
+	oExcel:AddColumn(cPlanilha,cTitulo,"Valor Total NF"        		,1,1) // 34 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Shelflife?"        			,1,1) // 35 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Palletizado?"        		,1,1) // 36 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Carga Edata"        		,1,1) // 37 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Dt.Edata"        			,1,1) // 38 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Intreg Ravex"        		,1,1) // 39 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Hr Logistica"        		,1,1) // 40 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Ini Tar"        		,1,1) // 41 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Fin Tar"        		,1,1) // 42 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Ini Man"        		,1,1) // 43 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Hora Fin Man"        		,1,1) // 44 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Status"        				,1,1) // 45 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Id Rot Ravex"        		,1,1) // 46 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Latitude Ent"        		,1,1) // 47 B
+    oExcel:AddColumn(cPlanilha,cTitulo,"Longitude En"        		,1,1) // 48 B
+	oExcel:AddColumn(cPlanilha,cTitulo,"Tipo de frete"        		,1,1) // 49 B
     
 					
 RETURN(NIL)

@@ -17,6 +17,7 @@
 	@history ticket    9930 - Macieira   , 23/02/2021, array out of bounds ( 10 of 9 )  on { || {_aDet[oDet:nAt,1],_aDet[oDet:nAt][2],_aDet[oDet:nAt][3],_aDet[oDet:nAt][4],_aDet[oDet:nAt][5],_aDet[oDet:nAt][6],_aDet[oDet:nAt][7],_aDet[oDet:nAt][8],_aDet[oDet:nAt][9],_aDet[oDet:nAt][10]}}(ADLOG031P.PRW) 14/09/2020 08:37:18 line : 367
 	@history TICKET   10851 - ADRIANO SAVOINE - 19/03/2021 - Ajustado o campo de Pedidos Liberados para abrir a Janela ao clicar sobre e imprimir o excel.
 	@history TICKET   63590 - Everson - 12/11/2021 - Adicionado openquery para melhorar o desempenho do relatório.
+	@history TICKET   T.I   - Fernando Sigoli 03/01/2022 - Removido atualização automatica e adicionado para atualizar no botao
 /*/
 User Function ADLOG031P() //U_ADLOG031P()
 
@@ -67,15 +68,16 @@ User Function ADLOG031P() //U_ADLOG031P()
 
 	@ 10,10 LISTBOX oLbx FIELDS HEADER " ","Situacao","Pedido(s)","Caixa(s)", "  KG  ","  R$  "," % ", SIZE 340,100 OF oDlg PIXEL 
 
-	DEFINE TIMER oTimer INTERVAL 40000 ACTION  LoadArq(2) OF oDlg
+	//DEFINE TIMER oTimer INTERVAL 40000 ACTION  LoadArq(2) OF oDlg
 
-	oTimer:Activate()
+	//oTimer:Activate()
 	LoadArq(2) 
 
 	@ 120,20 SAY "Entrega De : "+Dtoc(Mv_Par01) SIZE 100,007 OF oDlg PIXEL
 	@ 130,20 SAY "Entrega Ate: "+Dtoc(Mv_Par02) SIZE 100,007 OF oDlg PIXEL 
 
-	DEFINE SBUTTON FROM 120,260 TYPE 1 ACTION oDlg:End() ENABLE OF oDlg
+	DEFINE SBUTTON FROM 120,260 TYPE 15 ACTION Processa({|lEnd| LoadArq(2) },OemToAnsi("Atualiza"),OemToAnsi("Processando..."),.F.) ENABLE OF oDlg //Removido atualização automatica e adicionado para atualizar no botao
+	DEFINE SBUTTON FROM 120,300 TYPE 2  ACTION oDlg:End() ENABLE OF oDlg
 
 	ACTIVATE MSDIALOG oDlg CENTER
 

@@ -51,7 +51,7 @@
 	@history ticket   62952 - Fernando Sigoli   - 27/10/2021 - Na inclusa do PC carregar na condição de pagamento que vem do SAG e nao mais do parametro.
 	@history ticket   64254 - Jonathan Carvalho - 30/11/2021 - Filtro: 8 Frango 1 retorno de criação puxar 50 registros por vez
 	@history ticket   65598 - Jonathan Carvalho - 28/12/2021 - Filtro: 8 Frango 1 retorno correção no filtro do ticket 64254 e ordenação
-
+	@history ticket   66115 - Everson - 03/01/2022 - Tratamento para error log.
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -3388,7 +3388,7 @@ Static Function RunLFVClass()
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
 	For i:=1 to Len(oRegistros:aCols)
-		If Empty(oRegistros:aCols[i][16])
+		If Empty(oRegistros:aCols[i][16]) .And. ! Empty(oRegistros:aCols[i][5]) .And. ! Empty(oRegistros:aCols[i][6]) //Everson - 03/01/2022. Chamado 66115.
 			// Busco dados da NF de SAIDA
 			//		cChvNFe := Posicione("SF2", 1, cFilPV + oRegistros:aCols[i][5] + PadR(oRegistros:aCols[i][6],TamSX3("F2_SERIE")[1]) + cCliCod + cCliLoj, "F2_CHVNFE")
 			SF2->( dbSetOrder(1) ) //F2_FILIAL+F2_DOC+F2_SERIE+F2_CLIENTE+F2_LOJA+F2_FORMUL+F2_TIPO
