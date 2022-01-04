@@ -31,7 +31,7 @@ User Function ADLOG031P() //U_ADLOG031P()
 	Private oNo    := LoadBitmap( GetResources(), "BR_AMARELO" )
 	Private oLbx   := Nil
 	Private aVetor := {}
-	Private oTimer := Nil   
+	//Private oTimer := Nil   
 	Private cPerg  := "META01"
 	Private oDlg1  := Nil
 	Private _cLin  := ""
@@ -96,9 +96,9 @@ Static Function LoadArq(nTp)
 
 	aVetor := {} 
 
-	If nTp==2
-		oTimer:Deactivate()
-	Endif 
+	//If nTp==2
+	//	oTimer:Deactivate()
+	//Endif 
 
 	nTotalCX  := 0
 	nTotalKG  := 0
@@ -308,7 +308,7 @@ Static Function LoadArq(nTp)
 		oLbx:BLdbLclick := { || ftela() }      &&Mauricio - 18/08/17 - Chamado 036794
 		oLbx:GoBottom()
 		oLbx:Refresh()
-		oTimer:Activate()
+		//oTimer:Activate()
 
 	Endif
 

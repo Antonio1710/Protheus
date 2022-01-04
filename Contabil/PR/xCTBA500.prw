@@ -16,8 +16,9 @@
 	@see (links_or_references)
 	@history chamado 055592 - FWNM - OS 057029 || CONTROLADORIA || JOYCE || 8386 || TXT - SIG NOVO
 	@history ticket  8674   - Fernando Macieira - 03/02/2021 - Erro arquivo csv
+	@history ticket  66191  - Everson - 04/01/2022 - Tratamento para error log.
 /*/
-User Function xCTBA500()
+User Function xCTBA500() // U_xCTBA500()
 
 	Local aSays 	:= {}
 	Local aButtons	:= {}
@@ -111,6 +112,7 @@ Static Function Ctb500Proc()
 	Local aDadXLS := {}
 	Local cEmpZCN := GetMV("MV_#ZCNEMP",,"07")
 	Local cFilZCN := GetMV("MV_#ZCNFIL",,"70")
+	Local nTotLinha := 0 //Everson - 04/01/2022. Chamado 66191.
 	// 
 	
 	PRIVATE xBuffer	:=Space(nTamLinha)
@@ -170,6 +172,8 @@ Static Function Ctb500Proc()
 	//
 	
 	Do While !ft_fEOF()
+		
+		nTotLinha++ //Everson - 04/01/2022. Chamado 66191.
 
 		If lAtureg
 			IncProc()
@@ -180,8 +184,17 @@ Static Function Ctb500Proc()
 		// Chamado n. 055592 || OS 057029 || CONTROLADORIA || JOYCE || 8386 || TXT - SIG NOVO - FWNM - 07/02/2020
 		aDadXLS := Separa(xBuffer, ";") 
 
+		//Everson - 04/01/2022. Chamado 66191.
+		If Len(aDadXLS) <> 11
+			Aviso("XCTBA500-04", "A linha " + cValToChar(nTotLinha) + " não será processada, pois não possui 11 colunas.", {"&Ok"},, "Versão/Leiaute da planilha incorreta!")
+			ft_fSkip()
+			Loop
+
+		EndIf
+		//
+
 		// Variaveis utilizadas no LP CSV
-		DEBITO     := aDadXLS[1]
+		DEBITO   := aDadXLS[1]
 		CREDITO    := aDadXLS[2]
 		CCD        := aDadXLS[3]
 		CCC        := aDadXLS[4]

@@ -15,6 +15,8 @@
     @history Chamado 058675 || OS 060648 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG X SAFEEG - Everson 23/06/2020
     @history Ticket T.I.  - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
     @history Ticket 65674 - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
+    @history Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
+
     /*/
 
 User Function ADEST033P()  // U_ADEST033P()
@@ -33,7 +35,8 @@ User Function ADEST033P()  // U_ADEST033P()
 
         RpcClearEnv()
         RpcSetType(3)
-        RpcSetEnv("07","01")
+        //@Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
+        RpcSetEnv("01","03")
 
         // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
         If !LockByName("ADEST033P", .T., .F.)
@@ -372,7 +375,8 @@ Static Function sqlInOp()
     //Variáveis.
     Local cQuery   := ""
     Local cDataIni := Dtos(Date()-30)
-
+   
+    /*
     cQuery += " SELECT CODIOVOS, INGEOVOS.CODITPOV, INCATPOV.NOMETPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
     cQuery += " FROM SCSRV03.SAG.dbo.INGEOVOS AS INGEOVOS "
     cQuery += " LEFT JOIN SCSRV03.SAG.dbo.POCaEmpr AS POCAEMPR "
@@ -383,6 +387,22 @@ Static Function sqlInOp()
     cQuery += " AND TIPOOVOS='PROD' "
     cQuery += " AND POCAEMPR.Te07Empr = '" + cEmpAnt + "' " //Everson - 23/06/2020. Chamado 058675.
     cQuery += " AND CODIOVOS NOT IN ( "
+	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "
+	cQuery += "     WHERE D_E_L_E_T_ = ' ' ) "
+    cQuery += " ORDER BY CODIOVOS "
+    */
+    
+    //@Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
+    cQuery += " SELECT CODIOVOS, CODITPOV, NOMETPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
+    cQuery += " FROM "
+    cQuery += " OPENQUERY(SCSRV03,"
+    cQuery += "  'SELECT CODIOVOS, INGEOVOS.CODITPOV, INCATPOV.NOMETPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
+    cQuery += "   FROM SAG.dbo.INGEOVOS AS INGEOVOS  "
+    cQuery += "         LEFT JOIN SAG.dbo.POCaEmpr AS POCAEMPR  ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS  "
+    cQuery += "         LEFT JOIN SAG.dbo.INCATPOV AS INCATPOV ON INCATPOV.CODITPOV = INGEOVOS.CODITPOV " //Adriano Savoine - 28/12/2021 - Ticket : 65674
+    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
+    cQuery += " WHERE   "
+    cQuery += "     CODIOVOS NOT IN ( "
 	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "
 	cQuery += "     WHERE D_E_L_E_T_ = ' ' ) "
     cQuery += " ORDER BY CODIOVOS "
