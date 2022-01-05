@@ -10,7 +10,8 @@
 	@version 01
 	@history Adriana, 24/05/2019, TI-Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM.
 	@history Everson, 28/07/2020, Chamado 059891. Tratamento para error log array out of bounds.
-	@history Macieir, 16/02/2021, ticket 9574 - Error Log - APRVLOG.PRW) 28/07/2020 16:58:10 line : 608
+	@history Macieir, 16/02/2021, ticket 9574  - Error Log - APRVLOG.PRW) 28/07/2020 16:58:10 line : 608
+	@history Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 /*/
 User Function AprvTran(cAlias,nReg,nOpc)
 
@@ -117,20 +118,20 @@ User Function AprvTran(cAlias,nReg,nOpc)
 	oPedido:bChange := { || fSelSupervisor( _aPedido[ oPedido:nAt ][ 02 ],_aPedido[ oPedido:nAt ][ 03 ] ,@_aSupervisor, "S" ) }
 
 	oPedido:SetArray( _aPedido )
-
-	oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-							_aPedido[oPedido:nAt][02],;
-							_aPedido[oPedido:nAt][03],;
-							_aPedido[oPedido:nAt][04],;
-							_aPedido[oPedido:nAt][05],;
-							_aPedido[oPedido:nAt][06],;
-							_aPedido[oPedido:nAt][07],;
-							_aPedido[oPedido:nAt][08],;
-							_aPedido[oPedido:nAt][09],;
-							_aPedido[oPedido:nAt][10],;
-							_aPedido[oPedido:nAt][11],;
-							_aPedido[oPedido:nAt][12],;				   
-							_aPedido[oPedido:nAt][13]}}
+	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+	oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;				   
+							oPedido:AARRAY[oPedido:nAt][13]}}
 
 	oPedido:Refresh()
 
@@ -161,22 +162,22 @@ User Function AprvTran(cAlias,nReg,nOpc)
 	@ _aPosObj1[02][01]+155,_aPosObj2[01][02]+450 BUTTON "Sair"     SIZE 064,014 PIXEL OF oDlg ACTION oDlg:End()                  //135
 
 	oItemped:SetArray( _aSupervisor )
-
-	oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+	oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 
 	oItemped:Refresh()
 
@@ -270,22 +271,22 @@ Static Function fSelSupervisor( _cNF,_cSer, _aSupervisor, _cTipo )
 	If oItemped != Nil
 
 		oItemped:SetArray( _aSupervisor )
-		
-		oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 		oItemped:Refresh()
 
 	EndIf
@@ -320,42 +321,42 @@ User function Aprovt(_nPos)
 			if oPedido != Nil
 						
 						oPedido:SetArray( _aPedido )
-						
-						oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-							_aPedido[oPedido:nAt][02],;
-							_aPedido[oPedido:nAt][03],;
-							_aPedido[oPedido:nAt][04],;
-							_aPedido[oPedido:nAt][05],;
-							_aPedido[oPedido:nAt][06],;
-							_aPedido[oPedido:nAt][07],;
-							_aPedido[oPedido:nAt][08],;
-							_aPedido[oPedido:nAt][09],;
-							_aPedido[oPedido:nAt][10],;
-							_aPedido[oPedido:nAt][11],;
-							_aPedido[oPedido:nAt][12],;				   
-							_aPedido[oPedido:nAt][13]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;				   
+							oPedido:AARRAY[oPedido:nAt][13]}}
 						
 						oPedido:Refresh()
 			EndIf
 			if oItemped != Nil
 						
 						oItemped:SetArray( _aSupervisor )
-						
-						oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 						oItemped:Refresh()
 						
 			EndIf
@@ -390,42 +391,42 @@ User function REJT(_nPos)
 			if oPedido != Nil
 						
 						oPedido:SetArray( _aPedido )
-						
-						oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-							_aPedido[oPedido:nAt][02],;
-							_aPedido[oPedido:nAt][03],;
-							_aPedido[oPedido:nAt][04],;
-							_aPedido[oPedido:nAt][05],;
-							_aPedido[oPedido:nAt][06],;
-							_aPedido[oPedido:nAt][07],;
-							_aPedido[oPedido:nAt][08],;
-							_aPedido[oPedido:nAt][09],;
-							_aPedido[oPedido:nAt][10],;
-							_aPedido[oPedido:nAt][11],;
-							_aPedido[oPedido:nAt][12],;				   
-							_aPedido[oPedido:nAt][13]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;				   
+							oPedido:AARRAY[oPedido:nAt][13]}}
 						
 						oPedido:Refresh()
 			EndIf
 			if oItemped != Nil
 						
 						oItemped:SetArray( _aSupervisor )
-						
-						oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 						oItemped:Refresh()
 						
 			EndIf
@@ -606,23 +607,23 @@ User Function AprvCli(cAlias,nReg,nOpc)
 	if len(_aPedido) >= oPedido:nAt //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 		
 		//Everson - 28/07/2020. Chamado 059891.
-		If Len(_aPedido[oPedido:nAt]) >= 13
+		If Len(oPedido:AARRAY[oPedido:nAt]) >= 13
 
 			If oPedido:nAt <= Len(_aPedido) // @history Macieir, 16/02/2021, ticket 9574 - Error Log - APRVLOG.PRW) 28/07/2020 16:58:10 line : 608
-
-				oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-									_aPedido[oPedido:nAt][02],;
-									_aPedido[oPedido:nAt][03],;
-									_aPedido[oPedido:nAt][04],;
-									_aPedido[oPedido:nAt][05],;
-									_aPedido[oPedido:nAt][06],;
-									_aPedido[oPedido:nAt][07],;
-									_aPedido[oPedido:nAt][08],;
-									_aPedido[oPedido:nAt][09],;
-									_aPedido[oPedido:nAt][10],;
-									_aPedido[oPedido:nAt][11],;
-									_aPedido[oPedido:nAt][12],;				   
-									_aPedido[oPedido:nAt][13]}}
+				//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+				oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+									oPedido:AARRAY[oPedido:nAt][02],;
+									oPedido:AARRAY[oPedido:nAt][03],;
+									oPedido:AARRAY[oPedido:nAt][04],;
+									oPedido:AARRAY[oPedido:nAt][05],;
+									oPedido:AARRAY[oPedido:nAt][06],;
+									oPedido:AARRAY[oPedido:nAt][07],;
+									oPedido:AARRAY[oPedido:nAt][08],;
+									oPedido:AARRAY[oPedido:nAt][09],;
+									oPedido:AARRAY[oPedido:nAt][10],;
+									oPedido:AARRAY[oPedido:nAt][11],;
+									oPedido:AARRAY[oPedido:nAt][12],;				   
+									oPedido:AARRAY[oPedido:nAt][13]}}
 			
 				oPedido:Refresh()
 			
@@ -663,22 +664,23 @@ User Function AprvCli(cAlias,nReg,nOpc)
 	oItemped:SetArray( _aSupervisor )
 
 	//Everson - 28/07/2020. Chamado 059891.
-	If Len(_aSupervisor[oItemped:nAt]) >= 15
-		oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-								_aSupervisor[oItemped:nAt][02],;
-								_aSupervisor[oItemped:nAt][03],;
-								_aSupervisor[oItemped:nAt][04],;
-								_aSupervisor[oItemped:nAt][05],;
-								_aSupervisor[oItemped:nAt][06],;
-								_aSupervisor[oItemped:nAt][07],;
-								_aSupervisor[oItemped:nAt][08],;
-								_aSupervisor[oItemped:nAt][09],;
-								_aSupervisor[oItemped:nAt][10],;
-								_aSupervisor[oItemped:nAt][11],;
-								_aSupervisor[oItemped:nAt][12],;
-								_aSupervisor[oItemped:nAt][13],;
-								_aSupervisor[oItemped:nAt][14],;													
-								_aSupervisor[oItemped:nAt][15]}}
+	If Len(oItemped:AARRAY[oItemped:nAt]) >= 15
+		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+								oItemped:AARRAY[oItemped:nAt][02],;
+								oItemped:AARRAY[oItemped:nAt][03],;
+								oItemped:AARRAY[oItemped:nAt][04],;
+								oItemped:AARRAY[oItemped:nAt][05],;
+								oItemped:AARRAY[oItemped:nAt][06],;
+								oItemped:AARRAY[oItemped:nAt][07],;
+								oItemped:AARRAY[oItemped:nAt][08],;
+								oItemped:AARRAY[oItemped:nAt][09],;
+								oItemped:AARRAY[oItemped:nAt][10],;
+								oItemped:AARRAY[oItemped:nAt][11],;
+								oItemped:AARRAY[oItemped:nAt][12],;
+								oItemped:AARRAY[oItemped:nAt][13],;
+								oItemped:AARRAY[oItemped:nAt][14],;													
+								oItemped:AARRAY[oItemped:nAt][15]}}
 
 		oItemped:Refresh()
 
@@ -730,22 +732,22 @@ STATIC FUNCTION PesqCli()
 	    fSupervisor( _aPedido[ oPedido:nAt ][ 02 ],_aPedido[ oPedido:nAt ][ 03 ] ,@_aSupervisor, "S" )
 	    
 	    oItemped:SetArray( _aSupervisor )
-	
-		oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-					  			_aSupervisor[oItemped:nAt][02],;
-								_aSupervisor[oItemped:nAt][03],;
-								_aSupervisor[oItemped:nAt][04],;
-								_aSupervisor[oItemped:nAt][05],;
-								_aSupervisor[oItemped:nAt][06],;
-								_aSupervisor[oItemped:nAt][07],;
-								_aSupervisor[oItemped:nAt][08],;
-								_aSupervisor[oItemped:nAt][09],;
-								_aSupervisor[oItemped:nAt][10],;
-								_aSupervisor[oItemped:nAt][11],;
-								_aSupervisor[oItemped:nAt][12],;
-								_aSupervisor[oItemped:nAt][13],;
-								_aSupervisor[oItemped:nAt][14],;													
-								_aSupervisor[oItemped:nAt][15]}}
+		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+					  			oItemped:AARRAY[oItemped:nAt][02],;
+								oItemped:AARRAY[oItemped:nAt][03],;
+								oItemped:AARRAY[oItemped:nAt][04],;
+								oItemped:AARRAY[oItemped:nAt][05],;
+								oItemped:AARRAY[oItemped:nAt][06],;
+								oItemped:AARRAY[oItemped:nAt][07],;
+								oItemped:AARRAY[oItemped:nAt][08],;
+								oItemped:AARRAY[oItemped:nAt][09],;
+								oItemped:AARRAY[oItemped:nAt][10],;
+								oItemped:AARRAY[oItemped:nAt][11],;
+								oItemped:AARRAY[oItemped:nAt][12],;
+								oItemped:AARRAY[oItemped:nAt][13],;
+								oItemped:AARRAY[oItemped:nAt][14],;													
+								oItemped:AARRAY[oItemped:nAt][15]}}
 		
 		oItemped:Refresh()
 	
@@ -844,22 +846,22 @@ Static Function fSupervisor( _cNF,_cSer, _aSupervisor, _cTipo )
 	If oItemped != Nil
 
 		oItemped:SetArray( _aSupervisor )
-		
-		oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 		oItemped:Refresh()
 
 	EndIf
@@ -1009,42 +1011,43 @@ User function Aprovc(_nPos)
 			if oPedido != Nil .and. len(_aPedido) >= oPedido:nAt //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 						
 						oPedido:SetArray( _aPedido )
-						
-						oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-							_aPedido[oPedido:nAt][02],;
-							_aPedido[oPedido:nAt][03],;
-							_aPedido[oPedido:nAt][04],;
-							_aPedido[oPedido:nAt][05],;
-							_aPedido[oPedido:nAt][06],;
-							_aPedido[oPedido:nAt][07],;
-							_aPedido[oPedido:nAt][08],;
-							_aPedido[oPedido:nAt][09],;
-							_aPedido[oPedido:nAt][10],;
-							_aPedido[oPedido:nAt][11],;
-							_aPedido[oPedido:nAt][12],;				   
-							_aPedido[oPedido:nAt][13]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;				   
+							oPedido:AARRAY[oPedido:nAt][13]}}
 						
 						oPedido:Refresh()
 			EndIf
+
 			if oItemped != Nil .and. len(_aSupervisor) >= oItemped:nAt//alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 						
 						oItemped:SetArray( _aSupervisor )
-						
-						oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 						oItemped:Refresh()
 						
 			EndIf
@@ -1079,42 +1082,42 @@ User function REJC(_nPos)
 			if oPedido != Nil .and. len(_aPedido) >= oPedido:nAt //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 						
 						oPedido:SetArray( _aPedido )
-						
-						oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-							_aPedido[oPedido:nAt][02],;
-							_aPedido[oPedido:nAt][03],;
-							_aPedido[oPedido:nAt][04],;
-							_aPedido[oPedido:nAt][05],;
-							_aPedido[oPedido:nAt][06],;
-							_aPedido[oPedido:nAt][07],;
-							_aPedido[oPedido:nAt][08],;
-							_aPedido[oPedido:nAt][09],;
-							_aPedido[oPedido:nAt][10],;
-							_aPedido[oPedido:nAt][11],;
-							_aPedido[oPedido:nAt][12],;				   
-							_aPedido[oPedido:nAt][13]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;				   
+							oPedido:AARRAY[oPedido:nAt][13]}}
 						
 						oPedido:Refresh()
 			EndIf
 			if oItemped != Nil
 						
 						oItemped:SetArray( _aSupervisor )
-						
-						oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 						oItemped:Refresh()
 						
 			EndIf
@@ -1282,20 +1285,20 @@ User Function JustVend(cAlias,nReg,nOpc)
 	oPedido:bChange := { || fSelVend( _aPedido[ oPedido:nAt ][ 02 ],_aPedido[ oPedido:nAt ][ 03 ] ,@_aSupervisor, "S" ) }
 
 	oPedido:SetArray( _aPedido )
-
-	oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-							_aPedido[oPedido:nAt][02],;
-							_aPedido[oPedido:nAt][03],;
-							_aPedido[oPedido:nAt][04],;
-							_aPedido[oPedido:nAt][05],;
-							_aPedido[oPedido:nAt][06],;
-							_aPedido[oPedido:nAt][07],;
-							_aPedido[oPedido:nAt][08],;
-							_aPedido[oPedido:nAt][09],;
-							_aPedido[oPedido:nAt][10],;
-							_aPedido[oPedido:nAt][11],;
-							_aPedido[oPedido:nAt][12],;				   
-							_aPedido[oPedido:nAt][13]}}
+	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+	oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;				   
+							oPedido:AARRAY[oPedido:nAt][13]}}
 
 	oPedido:Refresh()
 
@@ -1332,22 +1335,22 @@ User Function JustVend(cAlias,nReg,nOpc)
 	@ _aPosObj1[02][01]+155,_aPosObj2[01][02]+490 BUTTON "Sair"     SIZE 064,014 PIXEL OF oDlg ACTION oDlg:End() 
 					
 	oItemped:SetArray( _aSupervisor )
-
-	oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-							_aSupervisor[oItemped:nAt][02],;
-							_aSupervisor[oItemped:nAt][03],;
-							_aSupervisor[oItemped:nAt][04],;
-							_aSupervisor[oItemped:nAt][05],;
-							_aSupervisor[oItemped:nAt][06],;
-							_aSupervisor[oItemped:nAt][07],;
-							_aSupervisor[oItemped:nAt][08],;
-							_aSupervisor[oItemped:nAt][09],;
-							_aSupervisor[oItemped:nAt][10],;
-							_aSupervisor[oItemped:nAt][11],;
-							_aSupervisor[oItemped:nAt][12],;
-							_aSupervisor[oItemped:nAt][13],;
-							_aSupervisor[oItemped:nAt][14],;													
-							_aSupervisor[oItemped:nAt][15]}}
+	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+	oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
 
 	oItemped:Refresh()
 
@@ -1466,22 +1469,22 @@ EndIf
 If oItemped != Nil
 
 	oItemped:SetArray( _aSupervisor )
-	
-    oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+    oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 	oItemped:Refresh()
 
 EndIf
@@ -1519,42 +1522,42 @@ If MsgYesNo("Concordo com o desconto relativo ao pedido "+_aPedido[_nPos][1]+" n
 		if oPedido != Nil
 					
 					oPedido:SetArray( _aPedido )
-					
-					oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-                           _aPedido[oPedido:nAt][02],;
-						   _aPedido[oPedido:nAt][03],;
-						   _aPedido[oPedido:nAt][04],;
-						   _aPedido[oPedido:nAt][05],;
-						   _aPedido[oPedido:nAt][06],;
-						   _aPedido[oPedido:nAt][07],;
-						   _aPedido[oPedido:nAt][08],;
-						   _aPedido[oPedido:nAt][09],;
-						   _aPedido[oPedido:nAt][10],;
-						   _aPedido[oPedido:nAt][11],;
-						   _aPedido[oPedido:nAt][12],;				   
-						   _aPedido[oPedido:nAt][13]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+                           oPedido:AARRAY[oPedido:nAt][02],;
+						   oPedido:AARRAY[oPedido:nAt][03],;
+						   oPedido:AARRAY[oPedido:nAt][04],;
+						   oPedido:AARRAY[oPedido:nAt][05],;
+						   oPedido:AARRAY[oPedido:nAt][06],;
+						   oPedido:AARRAY[oPedido:nAt][07],;
+						   oPedido:AARRAY[oPedido:nAt][08],;
+						   oPedido:AARRAY[oPedido:nAt][09],;
+						   oPedido:AARRAY[oPedido:nAt][10],;
+						   oPedido:AARRAY[oPedido:nAt][11],;
+						   oPedido:AARRAY[oPedido:nAt][12],;				   
+						   oPedido:AARRAY[oPedido:nAt][13]}}
 					
 					oPedido:Refresh()
 		EndIf
 		if oItemped != Nil
 					
 					oItemped:SetArray( _aSupervisor )
-					
-					oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 					oItemped:Refresh()
 					
 		EndIf
@@ -1601,42 +1604,42 @@ If MsgYesNo("Discordo do desconto(Justificativa deve estar preenchida!) no valor
 		if oPedido != Nil
 					
 					oPedido:SetArray( _aPedido )
-					
-					oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-                           _aPedido[oPedido:nAt][02],;
-						   _aPedido[oPedido:nAt][03],;
-						   _aPedido[oPedido:nAt][04],;
-						   _aPedido[oPedido:nAt][05],;
-						   _aPedido[oPedido:nAt][06],;
-						   _aPedido[oPedido:nAt][07],;
-						   _aPedido[oPedido:nAt][08],;
-						   _aPedido[oPedido:nAt][09],;
-						   _aPedido[oPedido:nAt][10],;
-						   _aPedido[oPedido:nAt][11],;
-						   _aPedido[oPedido:nAt][12],;				   
-						   _aPedido[oPedido:nAt][13]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+                           oPedido:AARRAY[oPedido:nAt][02],;
+						   oPedido:AARRAY[oPedido:nAt][03],;
+						   oPedido:AARRAY[oPedido:nAt][04],;
+						   oPedido:AARRAY[oPedido:nAt][05],;
+						   oPedido:AARRAY[oPedido:nAt][06],;
+						   oPedido:AARRAY[oPedido:nAt][07],;
+						   oPedido:AARRAY[oPedido:nAt][08],;
+						   oPedido:AARRAY[oPedido:nAt][09],;
+						   oPedido:AARRAY[oPedido:nAt][10],;
+						   oPedido:AARRAY[oPedido:nAt][11],;
+						   oPedido:AARRAY[oPedido:nAt][12],;				   
+						   oPedido:AARRAY[oPedido:nAt][13]}}
 					
 					oPedido:Refresh()
 		EndIf
 		if oItemped != Nil
 					
 					oItemped:SetArray( _aSupervisor )
-					
-					oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 					oItemped:Refresh()
 					
 		EndIf
@@ -1901,21 +1904,21 @@ MsAguarde( {|| AtuList( @_aPedido, @_aSupervisor ) }, OemToAnsi( "Aguarde" ) )
 oPedido:bChange := { || fVend( _aPedido[ oPedido:nAt ][ 02 ],_aPedido[ oPedido:nAt ][ 03 ] ,@_aSupervisor, "S" ) }
 
 oPedido:SetArray( _aPedido )
-
-oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-                           _aPedido[oPedido:nAt][02],;
-						   _aPedido[oPedido:nAt][03],;
-						   _aPedido[oPedido:nAt][04],;
-						   _aPedido[oPedido:nAt][05],;
-						   _aPedido[oPedido:nAt][06],;
-						   _aPedido[oPedido:nAt][07],;
-						   _aPedido[oPedido:nAt][08],;
-						   _aPedido[oPedido:nAt][09],;
-						   _aPedido[oPedido:nAt][10],;
-						   _aPedido[oPedido:nAt][11],;
-						   _aPedido[oPedido:nAt][12],;
-						   _aPedido[oPedido:nAt][13],;				   
-						   _aPedido[oPedido:nAt][14]}}
+//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+                           oPedido:AARRAY[oPedido:nAt][02],;
+						   oPedido:AARRAY[oPedido:nAt][03],;
+						   oPedido:AARRAY[oPedido:nAt][04],;
+						   oPedido:AARRAY[oPedido:nAt][05],;
+						   oPedido:AARRAY[oPedido:nAt][06],;
+						   oPedido:AARRAY[oPedido:nAt][07],;
+						   oPedido:AARRAY[oPedido:nAt][08],;
+						   oPedido:AARRAY[oPedido:nAt][09],;
+						   oPedido:AARRAY[oPedido:nAt][10],;
+						   oPedido:AARRAY[oPedido:nAt][11],;
+						   oPedido:AARRAY[oPedido:nAt][12],;
+						   oPedido:AARRAY[oPedido:nAt][13],;				   
+						   oPedido:AARRAY[oPedido:nAt][14]}}
 
 oPedido:Refresh()
 
@@ -1949,22 +1952,22 @@ oPedido:Refresh()
 @ _aPosObj1[02][01]+155,_aPosObj2[01][02]+450 BUTTON "Sair"     SIZE 064,014 PIXEL OF oDlg ACTION oDlg:End() 
                 
 oItemped:SetArray( _aSupervisor )
-
-oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 
 oItemped:Refresh()
 
@@ -2111,22 +2114,22 @@ EndIf
 If oItemped != Nil
 
 	oItemped:SetArray( _aSupervisor )
-	
-    oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+    oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 	oItemped:Refresh()
 
 EndIf
@@ -2160,43 +2163,43 @@ If MsgYesNo("Aprova desconto relativo ao pedido "+_aPedido[_nPos][1]+" no valor 
 		if oPedido != Nil
 					
 					oPedido:SetArray( _aPedido )
-					
-					oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-                           _aPedido[oPedido:nAt][02],;
-						   _aPedido[oPedido:nAt][03],;
-						   _aPedido[oPedido:nAt][04],;
-						   _aPedido[oPedido:nAt][05],;
-						   _aPedido[oPedido:nAt][06],;
-						   _aPedido[oPedido:nAt][07],;
-						   _aPedido[oPedido:nAt][08],;
-						   _aPedido[oPedido:nAt][09],;
-						   _aPedido[oPedido:nAt][10],;
-						   _aPedido[oPedido:nAt][11],;
-						   _aPedido[oPedido:nAt][12],;
-						   _aPedido[oPedido:nAt][13],;				   
-						   _aPedido[oPedido:nAt][14]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+                           oPedido:AARRAY[oPedido:nAt][02],;
+						   oPedido:AARRAY[oPedido:nAt][03],;
+						   oPedido:AARRAY[oPedido:nAt][04],;
+						   oPedido:AARRAY[oPedido:nAt][05],;
+						   oPedido:AARRAY[oPedido:nAt][06],;
+						   oPedido:AARRAY[oPedido:nAt][07],;
+						   oPedido:AARRAY[oPedido:nAt][08],;
+						   oPedido:AARRAY[oPedido:nAt][09],;
+						   oPedido:AARRAY[oPedido:nAt][10],;
+						   oPedido:AARRAY[oPedido:nAt][11],;
+						   oPedido:AARRAY[oPedido:nAt][12],;
+						   oPedido:AARRAY[oPedido:nAt][13],;				   
+						   oPedido:AARRAY[oPedido:nAt][14]}}
 					
 					oPedido:Refresh()
 		EndIf
 		if oItemped != Nil
 					
 					oItemped:SetArray( _aSupervisor )
-					
-					oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 					oItemped:Refresh()
 					
 		EndIf
@@ -2231,43 +2234,43 @@ If MsgYesNo("Rejeita desconto ao vendedor no valor de R$ "+_aPedido[_nPos][10]+"
 		if oPedido != Nil
 					
 					oPedido:SetArray( _aPedido )
-					
-					oPedido:bLine := { || { _aPedido[oPedido:nAt][01],;
-                           _aPedido[oPedido:nAt][02],;
-						   _aPedido[oPedido:nAt][03],;
-						   _aPedido[oPedido:nAt][04],;
-						   _aPedido[oPedido:nAt][05],;
-						   _aPedido[oPedido:nAt][06],;
-						   _aPedido[oPedido:nAt][07],;
-						   _aPedido[oPedido:nAt][08],;
-						   _aPedido[oPedido:nAt][09],;
-						   _aPedido[oPedido:nAt][10],;
-						   _aPedido[oPedido:nAt][11],;
-						   _aPedido[oPedido:nAt][12],;
-						   _aPedido[oPedido:nAt][13],;				   
-						   _aPedido[oPedido:nAt][14]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+                           oPedido:AARRAY[oPedido:nAt][02],;
+						   oPedido:AARRAY[oPedido:nAt][03],;
+						   oPedido:AARRAY[oPedido:nAt][04],;
+						   oPedido:AARRAY[oPedido:nAt][05],;
+						   oPedido:AARRAY[oPedido:nAt][06],;
+						   oPedido:AARRAY[oPedido:nAt][07],;
+						   oPedido:AARRAY[oPedido:nAt][08],;
+						   oPedido:AARRAY[oPedido:nAt][09],;
+						   oPedido:AARRAY[oPedido:nAt][10],;
+						   oPedido:AARRAY[oPedido:nAt][11],;
+						   oPedido:AARRAY[oPedido:nAt][12],;
+						   oPedido:AARRAY[oPedido:nAt][13],;				   
+						   oPedido:AARRAY[oPedido:nAt][14]}}
 					
 					oPedido:Refresh()
 		EndIf
 		if oItemped != Nil
 					
 					oItemped:SetArray( _aSupervisor )
-					
-					oItemped:bLine := { || {_aSupervisor[oItemped:nAt][01],;
-			  			_aSupervisor[oItemped:nAt][02],;
-						_aSupervisor[oItemped:nAt][03],;
-						_aSupervisor[oItemped:nAt][04],;
-						_aSupervisor[oItemped:nAt][05],;
-						_aSupervisor[oItemped:nAt][06],;
-						_aSupervisor[oItemped:nAt][07],;
-						_aSupervisor[oItemped:nAt][08],;
-						_aSupervisor[oItemped:nAt][09],;
-						_aSupervisor[oItemped:nAt][10],;
-						_aSupervisor[oItemped:nAt][11],;
-						_aSupervisor[oItemped:nAt][12],;
-						_aSupervisor[oItemped:nAt][13],;
-						_aSupervisor[oItemped:nAt][14],;													
-						_aSupervisor[oItemped:nAt][15]}}
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
 					oItemped:Refresh()
 					
 		EndIf

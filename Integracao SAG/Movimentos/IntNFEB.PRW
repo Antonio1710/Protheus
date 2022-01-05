@@ -52,6 +52,8 @@
 	@history ticket   64254 - Jonathan Carvalho - 30/11/2021 - Filtro: 8 Frango 1 retorno de criação puxar 50 registros por vez
 	@history ticket   65598 - Jonathan Carvalho - 28/12/2021 - Filtro: 8 Frango 1 retorno correção no filtro do ticket 64254 e ordenação
 	@history ticket   66115 - Everson - 03/01/2022 - Tratamento para error log.
+	@history ticket   66204 - Leonardo P. Monteiro - 05/01/2022 - Correção/melhoria nas consultas dos registros pendentes.
+
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -340,34 +342,34 @@ Static Function scriptSql(nRadio)
 	Local nTop  := Supergetmv("MV_#TPNFEB",,50)
 	//
 	If nRadio == 1 // ENTRADA POR COMPRA				SGNFE010	PO01MVES	SEQ UNICO	Menu\PROTHEUS
-		cQry := " SELECT '1' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND (TABEGENE IN ('PO01MVES','POCAMVES','PO11MVES','PO12MVES') ) AND F1_EMISSAO <= '" + _sDtlim + "' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND F1_FORMUL = 'N' "  //Leon | 05/08/2019 | Ch:050855
+		cQry := " SELECT '1' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND (TABEGENE IN ('PO01MVES','POCAMVES','PO11MVES','PO12MVES') ) AND F1_EMISSAO <= '" + _sDtlim + "' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND F1_FORMUL = 'N' "  //Leon | 05/08/2019 | Ch:050855
 		// DEBUG - VOLTAR
 		//cQry += " AND F1_FORNECE='029421'
 	ElseIf nRadio == 2 //ENTRADA POR DEVOLUÇÃO			SGNFE010	PO02MVES	SEQ UNICO	Menu\PROTHEUS  -- Adriana Garcia, Rosangela, Simone
-		cQry := " SELECT '2' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND TABEGENE = 'PO02MVES' AND F1_EMISSAO <= '"+_sDtlim+"' "
+		cQry := " SELECT '2' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND TABEGENE = 'PO02MVES' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 3 //ENTRADA POR TRANS. EMPRESA		SGNFE010	PO03MVES	SEQ UNICO	Menu\PROTHEUS  -- Noemi, Rosangla, Simone
-		cQry := " SELECT '3' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND TABEGENE = 'PO03MVES' AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' " //Everson - 12/08/2020. Chamado 060547.
+		cQry := " SELECT '3' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND substring(F1_DOC,1,2) <> '0 ' AND F1_DOC <> '999999') AND TABEGENE = 'PO03MVES' AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' " //Everson - 12/08/2020. Chamado 060547.
 	ElseIf nRadio == 4 //NOTAS DE SERVIÇO				SGNFE010	POCAFINA	SEQ UNICO
-		cQry := " SELECT '4' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND (TABEGENE = 'POCAFINA' OR TABEGENE='POCAMVNE') AND D1_TIPO <> 'F' AND F1_EMISSAO <= '"+_sDtlim+"' "
+		cQry := " SELECT '4' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND (TABEGENE = 'POCAFINA' OR TABEGENE='POCAMVNE') AND D1_TIPO <> 'F' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 5 //ENTRADA POR TRANS. INTEGRADO	SGNFE010	POCAMVTP	SEQ UNICO	Menu\PROTHEUS     -- Adriana Garcia, Adriana Caldeira, Rosangela, Simone, Noemi, Pera, Fornari
-		cQry := " SELECT '5' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND TABEGENE = 'POCAMVTP' AND F1_EMISSAO <= '"+_sDtlim+"' "
+		cQry := " SELECT '5' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND TABEGENE = 'POCAMVTP' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 6 //ENTRADA FRANGO VIVO APANHA		SGNFE010	FCCAMVAP	SEQ UNICO	Automatico        -- Simone, rosangela, Valeria
-		cQry := " SELECT '6' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND TABEGENE = 'FCCAMVAP' AND F1_EMISSAO <= '"+_sDtlim+"' "
+		cQry := " SELECT '6' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' ) AND TABEGENE = 'FCCAMVAP' AND F1_EMISSAO <= '"+_sDtlim+"' "
 		//(IDENTICO A ESTE)
 	ElseIf nRadio == 7 //FRANGO 1 RETORNO DE CRIACAO		SGNFE010	EC01LOTE	SEQ UNICO	Menu\PROTHEUS -- Adriana Garcia, Rosangela, Simone
 		//@Ticket 64254 - JONATHAN.CARVALHO - 29/11/2021 puxar 50 registros por vez 
 		//@Ticket 65598 - JONATHAN.CARVALHO - 22/12/2021 incluido a consulta dentro da função IN para puxar os F1_DOC iguais
-		cQry := " SELECT '7' AS TP, * FROM SGNFE010 WHERE F1_DOC IN(SELECT TOP "+CValToChar(nTop)+" F1_DOC FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC01LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' ) "
+		cQry := " SELECT '7' AS TP, * FROM SGNFE010 (nolock) WHERE F1_DOC IN(SELECT TOP "+CValToChar(nTop)+" F1_DOC FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC01LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' ) "
 	ElseIf nRadio == 8 //FRANGO 2 RETORNO SIMBOL CRIACAO	SGNFE010	EC02LOTE	SEQ UNICO	Menu\PROTHEUS  -- Adriana Garcia, Rosangela, Simone
-		cQry := " SELECT '8' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC02LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
+		cQry := " SELECT '8' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC02LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 9 //FRANGO 4 COMPRA FRANGO VIVO		SGNFE010	EC04LOTE	SEQ UNICO	Menu\PROTHEUS   -- Adriana Garcia, Rosangela, Simone
-		cQry := " SELECT '9' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC04LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
+		cQry := " SELECT '9' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC04LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 10 //PRODUTOR RURAL
-		cQry := " SELECT '10' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE IN ('PO11MVES','PO01MVES') AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND F1_FORMUL = 'S' "
+		cQry := " SELECT '10' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE IN ('PO11MVES','PO01MVES') AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND F1_FORMUL = 'S' "
 	ElseIf nRadio == 11 //Nota de Frete
-		cQry := " SELECT '11' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E')) AND F1_FILIAL = '" + cFilAnt + "'  AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND TABEGENE LIKE 'POCAMVNE' AND OPERACAO_INT <> 'E' "
+		cQry := " SELECT '11' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E')) AND F1_FILIAL = '" + cFilAnt + "'  AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND TABEGENE LIKE 'POCAMVNE' AND OPERACAO_INT <> 'E' "
 	ElseIf nRadio == 12 //Exclusão Nota de Frete
-		cQry := " SELECT '12' AS TP, * FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '" + cFilAnt + "' AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND TABEGENE LIKE 'POCAMVNE' AND OPERACAO_INT = 'E'  "
+		cQry := " SELECT '12' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '" + cFilAnt + "' AND D1_TIPO = 'F' AND F1_ESPECIE = 'CTE' ) AND F1_EMISSAO <= '"+_sDtlim+"' AND F1_DTDIGIT = '"+DTOS(dDatabase)+"' AND TABEGENE LIKE 'POCAMVNE' AND OPERACAO_INT = 'E'  "
 	EndIf
 	//
 	RestArea(aArea)
@@ -405,99 +407,111 @@ Static Function pendImp()
 	Local oCinza	:= LoadBitmap( GetResources(), "BR_CINZA")
 	Local oVdEsc	:= LoadBitmap( GetResources(), "BR_VERDE_ESCURO")
 	Local cOper		:= ""
+	Local cAlias	:= GetNextAlias()
+
 	nOpcImp := Val(Alltrim(cValToChar(nOpcImp)))
 	oRegistros:aCols := {}
 	oRegistros:Refresh()
 	nQtdReg := 0
 	oQtdReg:Refresh()
 	cQuery += " SELECT * FROM ( "
-	For i := 1 To 12
-		cQuery += scriptSql(i) + Chr(13) + Chr(10)
-		If i < 12
-			cQuery += " UNION ALL " + Chr(13) + Chr(10)
-		EndIf
-	Next i
+	
+	//@ticket  66204 - Leonardo P. Monteiro - 05/01/2022 - Correção/melhoria nas consultas dos registros pendentes.
+	if nOpcImp == 1
+		For i := 1 To 12
+			cQuery += scriptSql(i) + Chr(13) + Chr(10)
+			If i < 12
+				cQuery += " UNION ALL " + Chr(13) + Chr(10)
+			EndIf
+		Next i
+	else
+		cQuery += scriptSql(nOpcImp-1) + Chr(13) + Chr(10)
+	endif
+
 	cQuery += " ) AS FONTE "
 	If (nOpcImp - 1 ) > 0
 		cQuery += " WHERE FONTE.TP = '" + Alltrim(cValToChar((nOpcImp - 1 ))) + "' "
 	EndIf
 	cQuery += "  ORDER BY CAST(FONTE.TP AS NUMERIC), FONTE.F1_FILIAL,FONTE.CODIGENE,FONTE.R_E_C_N_O_ , FONTE.D1_TRANSIT  "
 	//
-	If Select("CARR_PEND") > 0
-		CARR_PEND->(DbCloseArea())
+	If Select(cAlias) > 0
+		(cAlias)->(DbCloseArea())
 	EndIf
 	//
 	//////TCSetConn(_conSAG)
-	MsAguarde({|| DbUseArea(.t., "TOPCONN", TcGenQry(,,cQuery), "CARR_PEND", .T., .F.) },"Aguarde","Carregando registros...")
-	DbSelectArea("CARR_PEND")
-	CARR_PEND->(DbGoTop())
-	If CARR_PEND->(Eof())
+	//MsAguarde({|| DbUseArea(.t., "TOPCONN", TcGenQry(,,cQuery), "(cAlias)", .T., .F.) },"Aguarde","Carregando registros...")
+	//DbUseArea(.t., "TOPCONN", TcGenQry(,,cQuery), "(cAlias)", .T., .F.)
+	TcQuery cQuery ALIAS (cAlias) NEW
+	
+	DbSelectArea(cAlias)
+	(cAlias)->(DbGoTop())
+	If (cAlias)->(Eof())
 		Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 		oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"    })] 	:= ""
 	EndIf
 	//
-	While ! CARR_PEND->(Eof())
-		IIf( Alltrim(cValToChar(CARR_PEND->OPERACAO_INT)) = "E" ,cOper := "Exclusão" , cOper := "Inclusão")
+	While ! (cAlias)->(Eof())
+		IIf( Alltrim(cValToChar((cAlias)->OPERACAO_INT)) = "E" ,cOper := "Exclusão" , cOper := "Inclusão")
 		Aadd(oRegistros:aCols , Array(Len(aHInterface)+1) )
 		oRegistros:aCols[Len(oRegistros:aCols), Len(oRegistros:aCols[1]) ] := .F.
 		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "OPER"    })] 	:= cOper
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "STATUS"  })] 	:= Alltrim(cValToChar(CARR_PEND->STATUS_INT))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FILIAL"  })] 	:= Alltrim(cValToChar(CARR_PEND->F1_FILIAL))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TIPO"    })] 	:= Alltrim(cValToChar(CARR_PEND->F1_TIPO))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ESPEC"    })] 	:= Alltrim(cValToChar(CARR_PEND->F1_ESPECIE))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DOCSG"   })] 	:= Alltrim(cValToChar(CARR_PEND->F1_DOC))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SERIE"   })] 	:= Alltrim(cValToChar(CARR_PEND->F1_SERIE))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FORMPROP"})] 	:= Alltrim(cValToChar(CARR_PEND->F1_FORMUL))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"  })] 	:= Iif(Empty(Alltrim(cValToChar(CARR_PEND->F1_EMISSAO))),"",DToC(SToD(CARR_PEND->F1_EMISSAO)))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTALNC"  })] 	:= Iif(Empty(Alltrim(cValToChar(CARR_PEND->F1_DTDIGIT))),"",DToC(SToD(CARR_PEND->F1_DTDIGIT)))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FORN"    })] 	:= Alltrim(cValToChar(CARR_PEND->F1_FORNECE))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LOJ"     })] 	:= Alltrim(cValToChar(CARR_PEND->F1_LOJA))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "CHAVENF" })] 	:= Alltrim(cValToChar(CARR_PEND->F1_CHVNFE))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PROD"    })] 	:= Alltrim(cValToChar(CARR_PEND->D1_COD))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "QTD"     })] 	:= Val(cValToChar(CARR_PEND->D1_QUANT))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLRUNT"  })] 	:= Val(cValToChar(CARR_PEND->D1_VUNIT))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLR"     })] 	:= Val(cValToChar(CARR_PEND->D1_TOTAL))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TES"     })] 	:= Alltrim(cValToChar(CARR_PEND->D1_TES))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DESC"    })] 	:= Val(cValToChar(CARR_PEND->D1_DESC))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ERR"     })] 	:= Alltrim(cValToChar(CARR_PEND->MENSAGEM_INT))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NFORI"   })] 	:= Alltrim(cValToChar(CARR_PEND->D1_NFORI))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SRORI"   })] 	:= Alltrim(cValToChar(CARR_PEND->D1_SERIORI))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PLACA"   })] 	:= Alltrim(cValToChar(CARR_PEND->D1_PLACA))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "D1FOR"   })] 	:= Alltrim(cValToChar(CARR_PEND->D1_FORNECE))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "D1LOJA"  })] 	:= Alltrim(cValToChar(CARR_PEND->D1_LOJA))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "MENNOTA1"   })] := Alltrim(cValToChar(CARR_PEND->F1_MENNOTA))
-		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "MENNOTA2"  })] 	:= Alltrim(cValToChar(CARR_PEND->F1_MENNOTB))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "STATUS"  })] 	:= Alltrim(cValToChar((cAlias)->STATUS_INT))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FILIAL"  })] 	:= Alltrim(cValToChar((cAlias)->F1_FILIAL))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TIPO"    })] 	:= Alltrim(cValToChar((cAlias)->F1_TIPO))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ESPEC"    })] 	:= Alltrim(cValToChar((cAlias)->F1_ESPECIE))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DOCSG"   })] 	:= Alltrim(cValToChar((cAlias)->F1_DOC))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SERIE"   })] 	:= Alltrim(cValToChar((cAlias)->F1_SERIE))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FORMPROP"})] 	:= Alltrim(cValToChar((cAlias)->F1_FORMUL))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTEMIS"  })] 	:= Iif(Empty(Alltrim(cValToChar((cAlias)->F1_EMISSAO))),"",DToC(SToD((cAlias)->F1_EMISSAO)))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DTALNC"  })] 	:= Iif(Empty(Alltrim(cValToChar((cAlias)->F1_DTDIGIT))),"",DToC(SToD((cAlias)->F1_DTDIGIT)))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "FORN"    })] 	:= Alltrim(cValToChar((cAlias)->F1_FORNECE))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LOJ"     })] 	:= Alltrim(cValToChar((cAlias)->F1_LOJA))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "CHAVENF" })] 	:= Alltrim(cValToChar((cAlias)->F1_CHVNFE))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PROD"    })] 	:= Alltrim(cValToChar((cAlias)->D1_COD))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "QTD"     })] 	:= Val(cValToChar((cAlias)->D1_QUANT))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLRUNT"  })] 	:= Val(cValToChar((cAlias)->D1_VUNIT))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "VLR"     })] 	:= Val(cValToChar((cAlias)->D1_TOTAL))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "TES"     })] 	:= Alltrim(cValToChar((cAlias)->D1_TES))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "DESC"    })] 	:= Val(cValToChar((cAlias)->D1_DESC))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "ERR"     })] 	:= Alltrim(cValToChar((cAlias)->MENSAGEM_INT))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "NFORI"   })] 	:= Alltrim(cValToChar((cAlias)->D1_NFORI))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "SRORI"   })] 	:= Alltrim(cValToChar((cAlias)->D1_SERIORI))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "PLACA"   })] 	:= Alltrim(cValToChar((cAlias)->D1_PLACA))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "D1FOR"   })] 	:= Alltrim(cValToChar((cAlias)->D1_FORNECE))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "D1LOJA"  })] 	:= Alltrim(cValToChar((cAlias)->D1_LOJA))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "MENNOTA1"   })] := Alltrim(cValToChar((cAlias)->F1_MENNOTA))
+		oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "MENNOTA2"  })] 	:= Alltrim(cValToChar((cAlias)->F1_MENNOTB))
 		//
-		If Alltrim(cValToChar(CARR_PEND->TP)) == "1"
+		If Alltrim(cValToChar((cAlias)->TP)) == "1"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVerde
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "2"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "2"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVermelho
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "3"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "3"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAmarelo
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "4"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "4"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oMarrom
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "5"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "5"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oAzul
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "6"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "6"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oLaranja
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "7"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "7"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oBranco
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "8"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "8"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oPreto
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "9"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "9"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oPink
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "10"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "10"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVioleta
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "11"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "11"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oCinza
-		ElseIf Alltrim(cValToChar(CARR_PEND->TP)) == "12"
+		ElseIf Alltrim(cValToChar((cAlias)->TP)) == "12"
 			oRegistros:aCols[Len(oRegistros:aCols),Ascan(aHInterface,{|x| AllTrim(x[2]) == "LEG"   })]	:= oVdEsc
 		EndIf
 		nQtdReg++
-		CARR_PEND->(DbSkip())
+		(cAlias)->(DbSkip())
 	EndDo
-	CARR_PEND->(DbCloseArea())
+	(cAlias)->(DbCloseArea())
 	//
 	oRegistros:Refresh()
 	oQtdReg:Refresh()
@@ -3388,7 +3402,7 @@ Static Function RunLFVClass()
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
 	For i:=1 to Len(oRegistros:aCols)
-		If Empty(oRegistros:aCols[i][16]) .And. ! Empty(oRegistros:aCols[i][5]) .And. ! Empty(oRegistros:aCols[i][6]) //Everson - 03/01/2022. Chamado 66115.
+		If Empty(oRegistros:aCols[i][16]) .And. !Empty(oRegistros:aCols[i][5]) .And. !Empty(oRegistros:aCols[i][6]) //Everson - 03/01/2022. Chamado 66115.
 			// Busco dados da NF de SAIDA
 			//		cChvNFe := Posicione("SF2", 1, cFilPV + oRegistros:aCols[i][5] + PadR(oRegistros:aCols[i][6],TamSX3("F2_SERIE")[1]) + cCliCod + cCliLoj, "F2_CHVNFE")
 			SF2->( dbSetOrder(1) ) //F2_FILIAL+F2_DOC+F2_SERIE+F2_CLIENTE+F2_LOJA+F2_FORMUL+F2_TIPO

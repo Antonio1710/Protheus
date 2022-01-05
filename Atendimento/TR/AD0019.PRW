@@ -14,7 +14,8 @@
 	@history Chamado 1751   - William Costa   - 18/09/2020 - Identificado que uma ocorrencia de quebra que é lançado duas vezes não vai para a tela de aprovaçaõ de cliente o novo valor de desconto lançado, ajustado isso.
 	@history ticket  TI     - Adriano Savoine - 29/01/2021 - Quando pedido de pagamento antecipado é reprogramado, o mesmo nasce liberado estoque, credito e pagamento realizado C5_XWSPAGO = 'M'
 	@history ticket  9579   - Fernando Macieir- 17/02/2021 - type mismatch on *  on U_AD0019(AD0019.PRW) 29/01/2021 11:47:55 line : 821
-	@history ticket  T.I	- Sigoli	      - 03/11/2021 -  removido o email monitor.sistemas@adoro.com.br de receber este workflow 
+	@history ticket  T.I	- Sigoli	      - 03/11/2021 - removido o email monitor.sistemas@adoro.com.br de receber este workflow 
+	@history Ticket  65889/65927 - Sigoli     - 04/01/2022 - Tratamento de pedido reprogramados com a condiçãp de pagamento antecipado 
 /*/
 USER FUNCTION AD0019(nOpc)     
 
@@ -1699,12 +1700,6 @@ STATIC FUNCTION LiberaPVAutomatico(cNumPedOri)
 
 				SC5->C5_LIBEROK := "" 
 				
-				
-				//29/01/2021 : Adriano Savoine
-				IF _lCondRA
-					SC5->C5_XWSPAGO := "M" 
-				EndIF
-
 				MSUNLOCK()
 
 			ENDIF
@@ -1714,7 +1709,12 @@ STATIC FUNCTION LiberaPVAutomatico(cNumPedOri)
 
 				SC5->C5_XGERSF  := "1"
 				SC5->C5_XPEDSAL := "" 
-
+				
+				//Ticket  65889/65927 - Sigoli - 04/01/2022 
+				IF _lCondRA
+					SC5->C5_XWSPAGO := "M" 
+				EndIF
+			
 			MSUNLOCK()			
 			
 		ENDIF
@@ -1777,7 +1777,7 @@ STATIC FUNCTION SqlBuscaPedCopiado(cFilSc5,cNumOri)
 
 	BeginSQL Alias "TRC"
 		%NoPARSER%  
-		SELECT C5_NUM,C5_CLIENTE,C5_LOJACLI,C5_TIPO,C5_EST,C5_VEND1,C5_DTENTR,C5_CONDPAG
+		SELECT C5_NUM,C5_CLIENTE,C5_LOJACLI,C5_TIPO,C5_EST,C5_VEND1,C5_DTENTR,C5_CONDPAG,C5_XWSPAGO
 		FROM SC5010 WITH (NOLOCK)
 		WHERE C5_FILIAL  = %EXP:cFilSc5%
 		AND C5_XPDEVOR = %EXP:cNumOri%

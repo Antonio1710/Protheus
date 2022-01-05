@@ -19,6 +19,8 @@
 	@history Ticket  n.9969   - Andre Mendes - 24/02/2021 - Inclusão de PA no sistema - O valor de validação está incorreto.
 	@history Ticket  n.11157  - Abel Babini  - 22/03/2021 - Ajuste saldo do pedido - valor frete
 	@history Ticket  n.11157  - Abel Babini  - 26/03/2021 - Ajuste saldo do pedido - solicitações de PA compensadas com NF´s atreladas ao mesmo pedido
+	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+
 /*/
 User Function ADFIN081P()
 
@@ -47,6 +49,8 @@ User Function ADFIN081P()
 	Local nValCMP := 0 //INICIO Ticket  n.11157  - Abel Babini  - 26/03/2021 - Ajuste saldo do pedido - solicitações de PA compensadas com NF´s atreladas ao mesmo pedido
 	Local cQryCMP := GetNextAlias() //INICIO Ticket  n.11157  - Abel Babini  - 26/03/2021 - Ajuste saldo do pedido - solicitações de PA compensadas com NF´s atreladas ao mesmo pedido
 
+	Local lGrpPrSv := .F. //INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+
 	Private oDlgAtB
 	Private dSrvData	:= CtoD(substr(FwTimeUF('SP')[1],7,2)+"/"+substr(FwTimeUF('SP')[1],5,2)+"/"+substr(FwTimeUF('SP')[1],1,4))
 	Private dVencPA	:= dSrvData
@@ -62,7 +66,7 @@ User Function ADFIN081P()
 		Alert('Usuário sem acesso para incluir Solicitação de Pagamento Antecipado!')
 		Return
 	endif
-
+	/**/
 	If AllTrim(SC7->C7_USER) <> AllTrim(RetCodUsr())
 		Aviso(	"ADFIN081P-01",;
 				"Somente comprador que incluiu este PC pode incluir Solicitação de PA... Inclusão não permitida!",;
@@ -70,7 +74,7 @@ User Function ADFIN081P()
 				"Solicitação de PA" )
 		Return
 	EndIf
-	
+	/**/
 	//Valida Condição de Pagamento
 	//Chamado 052421 || OS 053774 || FINANCAS || DRIELE || 8376 || SOLICITACAO PA || ABEL BABINI || 08/10/2019
 	//Validação comentada por solicitação do usuário e gestor
@@ -85,7 +89,12 @@ User Function ADFIN081P()
 	SC7->(dbSeek(xFilial('SC7')+_nNumPed)) //Chamado n.053482 - Considerar Valor de Frete, Despesas, IPI e Desconto no Saldo da Solicitação de PA - Abel Babini - 02/12/2019
 	
 	While ! SC7->(eof()) .AND. SC7->C7_FILIAL == cFilAnt .AND. SC7->C7_NUM == _nNumPed
-		
+		//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+		IF SC7->C7_TIPO == 'SV'
+			lGrpPrSv := .T.
+		ENDIF
+		//FIM Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+
 		//Valida se Pedido de compra está liberado
 		if (SC7->C7_CONAPRO == 'L') .AND. (SC7->C7_RESIDUO != 'S')
 			nItLib += 1		
@@ -105,6 +114,17 @@ User Function ADFIN081P()
 	EndDo
 	
 	SC7->(dbGoTo(nRegSC7))
+
+	//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+	If lGrpPrSv
+		Aviso(	"ADFIN081P-06",;
+				"Não é possível gerar solicitação de PA para pedidos que possuem itens relacionados ao grupo de serviço. Inclusão não permitida!",;
+				{ "&Retorna" },,;
+				"Solicitação de PA" )
+		Return
+	Endif
+	//FIM Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+
 	//Chamado n.059471 - Considerar o Valor do Seguro no Saldo da Solicitação de PA - Abel Babini - 06/07/2019
 	//Chamado n.053482 - Considerar Valor de Frete, Despesas, IPI e Desconto no Saldo da Solicitação de PA - Abel Babini - 02/12/2019
 	//Ticket  n.9969   - Andre Mendes - 24/02/2021 - Inclusão de PA no sistema
@@ -404,7 +424,7 @@ Static Function ValidAT (nVlSldPC, nVlSolPA, nValPPA, cNatureza)
 	If lRet
 		If Empty(cNatureza)
 			lRet := .f.
-			Alert("[ADFIN081P-1] - Informe uma natureza financeira!")
+			Alert("[ADFIN081P-5] - Informe uma natureza financeira!")
 		Else
 			SED->( dbSetOrder(1) ) // ED_FILIAL + ED_CODIGO
 			If SED->( dbSeek(FWxFilial("SED")+cNatureza) ) 
@@ -428,3 +448,38 @@ Static Function ValidAT (nVlSldPC, nVlSolPA, nValPPA, cNatureza)
 
 Return lRet
 
+//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
+Static Function xPedPrdS()
+	Local lRet := .T.
+	
+	SC7->(dbSeek(xFilial('SC7')+_nNumPed)) //Chamado n.053482 - Considerar Valor de Frete, Despesas, IPI e Desconto no Saldo da Solicitação de PA - Abel Babini - 02/12/2019
+	
+	While ! SC7->(eof()) .AND. SC7->C7_FILIAL == cFilAnt .AND. SC7->C7_NUM == _nNumPed
+		
+		//Valida se Pedido de compra está liberado
+		if (SC7->C7_CONAPRO == 'L') .AND. (SC7->C7_RESIDUO != 'S')
+			nItLib += 1		
+		endif
+		
+		if (SC7->C7_QUJE < SC7->C7_QUANT) .AND. (SC7->C7_RESIDUO != 'S')
+			nItQtM += 1
+		endif
+		
+		if (SC7->C7_QUJE < SC7->C7_QUANT) .AND. (SC7->C7_CONAPRO == 'L') .AND. (SC7->C7_RESIDUO != 'S')
+			//Chamado n.053482 - Considerar Valor de Frete, Despesas, IPI e Desconto no Saldo da Solicitação de PA - Abel Babini - 02/12/2019
+			//nVlSldPC += Round((SC7->C7_QUANT - SC7->C7_QUJE )*C7_PRECO ,2)
+			nVlSldPC += Round((SC7->C7_QUANT - SC7->C7_QUJE )*C7_PRECO,2)+ROUND(SC7->C7_VALIPI/SC7->C7_QUANT*(SC7->C7_QUANT - SC7->C7_QUJE ),2)
+		endif
+		
+		SC7->(dbSkip())
+	EndDo
+	
+	SC7->(dbGoTo(nRegSC7))
+	If SC7->C7_PRODUTO <> ""
+		If SC7->C7_PRODUTO <> "S"
+			lRet := .F.
+			Alert("Não é permitido solicitação de PA para produtos de serviço!")
+		EndIf
+	EndIf
+Return lRet
+//FIM Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
