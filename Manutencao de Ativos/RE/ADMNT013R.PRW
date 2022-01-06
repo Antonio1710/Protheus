@@ -16,9 +16,10 @@
     (examples)
     @see (links_or_references)
     @history Ticket 15804  - Rodrigo Romão  - 27/08/2021 - preparado rotina para enviar email por scheduled
+    @history Ticket 64562  - Everson  - 05/01/2022 - Tratamento error log.
 /*/
 
-User Function ADMNT013R(aParam)
+User Function ADMNT013R(aParam) // U_ADMNT013R()
 	local cTitulo     := "Relatorio de Ordem de Serviço"
 	local nX					:= 0
 	local aFiles			:= {}
@@ -65,7 +66,7 @@ User Function ADMNT013R(aParam)
 		//Dialogo do TReport
 		oReport:PrintDialog()
 
-	ELSE
+	ElseIf !lPerguntas .And. lJob //Everson - 05/01/2022. Chamado 64562.
 		// EXECUCAO VIA JOB
 		RpcSetType(3)
 		lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")

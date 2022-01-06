@@ -65,6 +65,8 @@ Static cHK				:= "&"
 	@history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
 	@history ticket 63303   - Leonardo P. Monteiro - 24/11/2021 - Correção na declaração da variável In utilizada na função FENCECARG.
 	@history ticket TI   	- Leonardo P. Monteiro - 28/12/2021 - Correção de error.log.
+	@history ticket 65889  	- Leonardo P. Monteiro - 05/01/2022 - Validação adicional na integração de cargas no eData para bloquear PVs com adiantamentos vinculados ao PV e que não foram aprovados pelo Financeiro.
+
 /*/
 User Function CCSP_001()
 
@@ -573,10 +575,13 @@ Static Function CCS_001P(oTela)
 	Local ncontPedTot       := 0
 	Local ncontPedNor       := 0
 	Local ncontPedDiv       := 0
-	
+	Local nLstPED			:= len(aLstPED)
+
 	Private cFilia         	:= ""
 	Private ni				:= 0
 	Private _nx				:= 0
+	
+
 
 	// @history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
 	If !LockByName("CCS_001P", .T., .F.) .AND. lVldEnv
@@ -600,9 +605,9 @@ Static Function CCS_001P(oTela)
 
 		//Mauricio - 26/06/2017 - chamado 35017 - INICIO - Não processar se existir mais de um pedido DIVERSOS com roteiros iguais. Roteiros devem ser diferentes.
 		_aPedDiv := {}
-		For _nx := 1 to len(aLstPED)
+		For _nx := 1 to nLstPED
 
-			fchkped(aLstPED[_nx][4],aLstPED[_nx][5],aLstPED[_nx][10]) 
+			fchkped(aLstPED[_nx][4],aLstPED[_nx][5],aLstPED[_nx][10])
 			cFilia := aLstPED[_nx][10]
 
 		Next _nx
@@ -626,19 +631,21 @@ Static Function CCS_001P(oTela)
 			Endif
 		Endif   
 
-		For ni := 1 to Len(aLstPED)                   
+		For ni := 1 to nLstPED
 
 			If !(aLstPED[ni][8] $ "1|2|4| " )
 				cMens += "- Roteiro não processado, enviado anteriormente Roteiro: [" + AllTrim(aLstPED[ni][2]) + "]" + CRLF
+			
 			Else
 
+				
 				If cData+cRoteiro+cPlaca <> AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2])+AllTrim(aLstPED[ni][3])
 
 					//Salva Roteiro em processamento
 					cData	    := AllTrim(Dtos(aLstPED[ni][1]))
 					cRoteiro    := AllTrim(aLstPED[ni][2])
 					cPlaca	    := AllTrim(aLstPED[ni][3])
-					cErro       := ""      
+					cErro       := ""
 					lCargaOk    := .F.
 					cPed        := ''
 					cProduto    := ''
@@ -651,9 +658,13 @@ Static Function CCS_001P(oTela)
 					
 					// Valida se a carga já existe no eData e não foi encerrada.
 					fEnceCarg(@lCargaOk)
+					
+					// Valida condição financeira.
+					fVerFin(cData, cRoteiro, cPlaca)
 
 					// *** INICIO CHAMADO 038577 WILLIAM COSTA *** //
 					// *** INICIO VERIFICA SE EXISTE CARGA DIVERSA EM CARGA NORMAL *** //
+					
 					SqlVerifRoteiro(cData,cRoteiro) //ve quantos pedidos tem no roteiro
 					
 					While TDIX->(!EOF())
@@ -770,8 +781,10 @@ Static Function CCS_001P(oTela)
 					Endif								
 					
 					END TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  					  
-
+			
 				EndIf	        
+
+
 			Endif
 
 			//envio carga edata
@@ -794,6 +807,31 @@ Static Function CCS_001P(oTela)
 	Endif
 
 Return lRet
+
+Static Function fVerFin(cData, cRoteiro, cPlaca)
+	Local cQuery 	:= ""
+	Local lRet		:= .T.
+
+	// FIE_FILIAL+FIE_CLIENT+FIE_LOJA+FIE_PREFIX+FIE_NUM+FIE_PARCEL+FIE_TIPO
+	cQuery := " SELECT DISTINCT C5_NUM, C5_XWSPAGO, E1.E1_SALDO, C5.R_E_C_N_O_ REGSC5  "
+	cQuery += " FROM  "+ Retsqlname("SC5") +" C5 WITH(NOLOCK) "
+	cQuery += " 	INNER JOIN "+ RetsqlName("FIE") +" FIE WITH(NOLOCK) ON FIE.D_E_L_E_T_='' AND C5.C5_FILIAL=FIE.FIE_FILIAL AND C5.C5_NUM=FIE.FIE_PEDIDO AND FIE.FIE_CART='R' "
+	CqUERY += " 	INNER JOIN "+ Retsqlname("SE1") +" E1  WITH(NOLOCK) ON E1.D_E_L_E_T_='' AND FIE.FIE_FILIAL=E1.E1_FILIAL AND FIE.FIE_CLIENT=E1.E1_CLIENTE AND FIE.FIE_LOJA=E1.E1_LOJA AND FIE.FIE_PREFIX=E1.E1_PREFIXO AND FIE.FIE_NUM=E1.E1_NUM AND FIE.FIE_PARCEL=E1.E1_PARCELA AND FIE.FIE_TIPO=E1.E1_TIPO "
+	cQuery += " WHERE C5.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND C5.C5_DTENTR='"+ cData +"' AND C5.C5_ROTEIRO='"+ cRoteiro +"' AND C5.C5_PLACA='"+ cPlaca +"'; "
+
+	TcQuery cQuery ALIAS "QSC5" NEW
+
+	While QSC5->(!eof())
+		if empty(QSC5->C5_XWSPAGO)
+			cErro += "Roteiro ["+ cRoteiro +"] não pôde ser integrado devido ao PV ["+ QSC5->C5_NUM +"] ter adiantamentos pendentes de aprovação."
+		endif
+
+		QSC5->(Dbskip())
+	Enddo
+
+	QSC5->(DBCLOSEAREA())
+
+return lRet
 
 Static Function fEnceCarg(lCargaOk)
 
@@ -849,7 +887,7 @@ Static Function fExistCarg(lCargaOk)
 
 		IF TRB->ID_CARGEXPE > 0 //so retorna erro se tiver informacao da carga na tabela do edata
 
-			cErro += "Carga não enviada para o EDATA, j?existe a carga no Edata, favor estornar antes de enviar novamente, favor verificar!!! " + CRLF
+			cErro += "Carga não enviada para o EDATA, já existe a carga no Edata, favor estornar antes de enviar novamente, favor verificar!!! " + CRLF
 
 			IF VAL(AllTrim(aLstPED[ni][7])) == TRB->ID_CARGEXPE .OR. ;
 			AllTrim(aLstPED[ni][7])      == ''
@@ -1331,7 +1369,7 @@ Static Function CCSP_001F (cData,cRoteiro,cPlaca,cFlag,cObs)
 
 		If _lLib
 
-			RecLock("SC5",.F.)
+			IF RecLock("SC5",.F.)
 
 				SC5->C5_XOBS	:= cObs
 				SC5->C5_XINT	:= cFlag 
@@ -1352,8 +1390,10 @@ Static Function CCSP_001F (cData,cRoteiro,cPlaca,cFlag,cObs)
 
 				EndIf
 
-			SC5->(MsUnlock()) 
-
+				SC5->(MsUnlock()) 
+			else
+				MsgAlert("Não foi possível alterar o PV "+SC5->C5_NUM+".", "Problema na gravação do PV")
+			ENDIF
 		EndIf	 
 
 		DbSelectArea("SC5")
@@ -1611,26 +1651,24 @@ STATIC FUNCTION SqlVerifDiversos(cDtEntr,cRoteiro)
 RETURN(NIL)
 
 STATIC FUNCTION SqlVerifProdutos(cDtEntr,cRoteiro)
-
-	BeginSQL Alias "TDJA"
-		%NoPARSER% 
+	Local cQuery := ""
+	//BeginSQL Alias "TDJA"
+	//	%NoPARSER% 
 		
-	    SELECT 
-	    	C6_NUM,C6_PRODUTO,IE_MATEEMBA
-		FROM %Table:SC6% SC6  WITH(NOLOCK)
-		LEFT JOIN [LNKMIMS].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM]
-		ON IE_MATEEMBA    = (C6_PRODUTO COLLATE Latin1_General_CI_AS)
-		INNER JOIN %Table:SC5% SC5 WITH(NOLOCK) ON SC5.C5_FILIAL = SC6.C6_FILIAL AND SC5.C5_NUM = SC6.C6_NUM  //Chamado: 051387 - Fernando Sigoli - 29/08/2019  
-		AND SC5.C5_CLIENTE = SC6.C6_CLI AND SC5.C5_LOJACLI = SC6.C6_LOJA
-		WHERE 
-		  C6_FILIAL  = %EXP:cFilia% //Chamado: 048868 - 02/05/2019 - FERNANDO SIGOLI
-		  AND C6_ENTREG   = %EXP:cDtEntr%  
-		  AND C5_ROTEIRO  = %EXP:cRoteiro%
-		  AND C6_NOTA     =  ''
-		  AND SC6.D_E_L_E_T_ <> '*'
-		  AND SC5.D_E_L_E_T_ <> '*'	
-
-
-	EndSQl   
+	cQuery := " SELECT C6_NUM,C6_PRODUTO,IE_MATEEMBA "
+	cQuery += " FROM "+ retsqlname("SC6") +" SC6  WITH(NOLOCK) "
+	cQuery += " 	LEFT JOIN ["+cLnkSrv+"].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] ON IE_MATEEMBA    = (C6_PRODUTO COLLATE Latin1_General_CI_AS) "
+	//Chamado: 051387 - Fernando Sigoli - 29/08/2019  
+	cQuery += " 	INNER JOIN "+ retsqlname("SC5") +" SC5 WITH(NOLOCK) ON SC5.C5_FILIAL = SC6.C6_FILIAL AND SC5.C5_NUM = SC6.C6_NUM AND SC5.C5_CLIENTE = SC6.C6_CLI AND SC5.C5_LOJACLI = SC6.C6_LOJA "
+	cQuery += " 	WHERE  "
+	cQuery += " 	  C6_FILIAL  = '"+cFilia +"' " //Chamado: 048868 - 02/05/2019 - FERNANDO SIGOLI
+	cQuery += " 	  AND C6_ENTREG   = '"+cDtEntr+"' "  
+	cQuery += " 	  AND C5_ROTEIRO  = '"+cRoteiro+"' "
+	cQuery += " 	  AND C6_NOTA     =  '' "
+	cQuery += " 	  AND SC6.D_E_L_E_T_ <> '*' "
+	cQuery += " 	  AND SC5.D_E_L_E_T_ <> '*' "
+		  
+	Tcquery cQuery ALIAS "TDJA" NEW	  
+	//EndSQl   
 
 RETURN(NIL)
