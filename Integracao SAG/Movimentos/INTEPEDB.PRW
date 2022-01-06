@@ -30,6 +30,7 @@
 	@history Everson,  17/09/2021, Ticket 31690 - Tratamento para controle de acesso de usuários da balança SC.
 	@history Everson,  22/09/2021, Ticket TI    - Removido lockbyname.
 	@history Jonathan  14/12/2021, Ticket 64214 - Incluir validação de conexão ao banco do SAG.
+	@history Everson   06/01/2022, Ticket 66328 - Tratamento para error log.
 /*/
 User Function PED001B()
 
@@ -69,7 +70,7 @@ User Function PED001B()
 	Private aColsInterface	:= {}
 	Private oRegistros		:= Nil
 	Private cCombo2			:= ""
-	Private oCombo2			:= Nil
+	Private oListOpc			:= Nil
 	Private oQtdReg			:= Nil
 	Private nQtdReg			:= 0
 	Private aFiltTpMv		:= {}
@@ -133,9 +134,9 @@ User Function PED001B()
 		
 		//Combobox para seleção de filtro.
 		cCombo2 := aFiltTpMv[1]
-	    oCombo2 := TComboBox():New(005,445,{|u|if(PCount()>0,cCombo2 := u,cCombo2)},;
+	    oListOpc := TComboBox():New(005,445,{|u|if(PCount()>0,cCombo2 := u,cCombo2)},;
 	    aFiltTpMv,100,20,oInterface,,{|| MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") },,,,.T.,,,,,,,,,'cCombo2',"Filtro:",1)
-	    oCombo2:lVisibleControl := .T.
+	    oListOpc:lVisibleControl := .T.
 	    
 	    //Cria botão de busca.
 		oTxtBusca := TSay():New(005,180,{||"Localiza pedido:"},oInterface,,,,,,.T.,CLR_RED,CLR_WHITE,250,20)
@@ -1930,10 +1931,12 @@ Static Function altDadosGrid(nOpc)
 		oInterface:nHeight   := 460
 		oInterface:lShowHint := .F.
 		oInterface:lCentered := .T.
+
 	EndIf
 
 	If oPnlBtn2 == Nil
 		oPnlBtn2 := TPanel():New(035,145,"",oInterface,,.T.,,,,400,018)
+
 	EndIf
 	
 	If oSBtn07 == Nil
@@ -1948,11 +1951,35 @@ Static Function altDadosGrid(nOpc)
 		oSBtn07:lReadOnly := .F.
 		oSBtn07:Align := 0
 		oSBtn07:lVisibleControl := .F.
+
 	EndIf
 	//
-	
-	//Variáveis.
-	
+
+	//Everson - 06/01/2022. Chamado 66328.
+		If ValType(oListOpc) <> "O"
+			oListOpc := TComboBox():New(005,445,{|u|if(PCount()>0, cCombo2 := u, cCombo2)},;
+			aFiltTpMv,100,20,oInterface,,{|| MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") },,,,.T.,,,,,,,,,'cCombo2',"Filtro:",1)
+			oListOpc:lVisibleControl := .T.
+
+		EndIf
+
+		If ValType(oSBtn03) <> "O"
+			oSBtn03:= SButton():Create(oInterface)
+			oSBtn03:cName := "oSBtn03"
+			oSBtn03:cCaption := "Atualizar"
+			oSBtn03:nLeft := 125
+			oSBtn03:nTop := 075
+			oSBtn03:nWidth := 50
+			oSBtn03:nHeight := 20
+			oSBtn03:lShowHint := .F.
+			oSBtn03:lReadOnly := .F.
+			oSBtn03:Align := 0
+			oSBtn03:lVisibleControl := .T.
+			oSBtn03:bAction := {|| MsAguarde({|| enviStComp() },"Aguarde","Checando movimentos 'Saída por venda'..."), MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") }
+			
+		EndIf
+	//
+
 	//
 	If nOpc == 1
 		oDataIni:lVisibleControl := .T.
@@ -1962,7 +1989,7 @@ Static Function altDadosGrid(nOpc)
 		oPnlBtn2:lVisibleControl := .F.
 		oSBtn07:lVisibleControl	:= .F.
 		oSBtn03:bAction := {|| MsAguarde({|| enviStComp() },"Aguarde","Checando movimentos 'Saída por venda'..."), MsAguarde({|| pendenciaNF()},"Aguarde","Carregando registros...") }
-		oCombo2:bChange := {|| pendenciaNF() }
+		oListOpc:bChange := {|| pendenciaNF() }
 		MsAguarde({|| enviStComp() },"Aguarde","Checando movimentos 'Saída por venda'...")
 		MsAguarde({|| pendenciaNF()},"Aguarde","Carregando registros...")
 		
@@ -1974,7 +2001,7 @@ Static Function altDadosGrid(nOpc)
 		oPnlBtn2:lVisibleControl := .T.
 		oSBtn07:lVisibleControl	:= .T.
 		oSBtn03:bAction := {|| MsAguarde({|| enviStComp() },"Aguarde","Checando movimentos 'Saída por venda'..."), MsAguarde({|| sCrgDado(cCombo2)},"Aguarde","Carregando registros...") }
-		oCombo2:bChange := {|| MsAguarde({|| sCrgDado(cCombo2)},"Aguarde","Carregando registros...") }
+		oListOpc:bChange := {|| MsAguarde({|| sCrgDado(cCombo2)},"Aguarde","Carregando registros...") }
 		MsAguarde({|| enviStComp() },"Aguarde","Checando movimentos 'Saída por venda'...")
 		MsAguarde({|| sCrgDado(cCombo2)},"Aguarde","Carregando registros...")
 

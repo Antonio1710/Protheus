@@ -20,6 +20,7 @@
 	@history chamado TI       - FWNM         - 23/01/2019 - Consistencia pedidos sem alcada
 	@history chamado 056195   - FWNM         - 28/02/2020 - OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
 	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
+	@history Ticket  n.66324  - Everson      - 06/01/2022 - Tratamento error log.
 /*/
 User Function MT120OK()
 
@@ -39,6 +40,8 @@ User Function MT120OK()
 	Local aAprov    := {}
 	Local lSolPdPA	:= .F.
 	//
+
+	Local i			:= 1
 
 	If lRet
 		
@@ -122,7 +125,7 @@ User Function MT120OK()
 	//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
 	If lRet
 
-		lSolPdPA := xVrSolPA(SC7.C7_NUM)
+		lSolPdPA := xVrSolPA(SC7->C7_NUM) //Everson - 06/01/2022. Chamado 66324.
 
 		For i:=1 To Len(aCols)
 			
