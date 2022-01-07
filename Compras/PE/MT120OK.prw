@@ -17,16 +17,13 @@
 	@example
 	(examples)
 	@see (links_or_references)
-	@history chamado TI       - FWNM         - 23/01/2019 - Consistencia pedidos sem alcada
-	@history chamado 056195   - FWNM         - 28/02/2020 - OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
-	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
-	@history Ticket  n.66324  - Everson      - 06/01/2022 - Tratamento error log.
+	@history chamado TI     - FWNM - 23/01/2019 - Consistencia pedidos sem alcada
+	@history chamado 056195 - FWNM - 28/02/2020 - OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
 /*/
 User Function MT120OK()
 
 	Local nPosXRespon := aScan(aHeader,{|x| AllTrim(x[2]) == "C7_XRESPON"})
 	Local nPosNumSc   := aScan(aHeader,{|x| AllTrim(x[2]) == 'C7_NUMSC'})
-	Local nPosTpPr   := aScan(aHeader,{|x| AllTrim(x[2]) == 'C7_TIPO'})
 	Local lRet        := .T.
 	Local nCont       := 0
 	Local aAreaATU    := GetArea()
@@ -38,10 +35,7 @@ User Function MT120OK()
 	Local cCCusto   := ""
 	Local cItemCta  := ""
 	Local aAprov    := {}
-	Local lSolPdPA	:= .F.
 	//
-
-	Local i			:= 1
 
 	If lRet
 		
@@ -122,27 +116,6 @@ User Function MT120OK()
 	EndIf
 	//
 	
-	//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
-	If lRet
-
-		lSolPdPA := xVrSolPA(SC7->C7_NUM) //Everson - 06/01/2022. Chamado 66324.
-
-		For i:=1 To Len(aCols)
-			
-			If !gdDeleted(i) .AND. acold[i][nPosTpPr] = "SV" .AND. lSolPdPA
-				lRet := .f.
-				Aviso(	"MT120OK-03",;
-				"Não é permitido alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA.",;
-				{ "&Retorna" },,;
-				"Pedido: " + AllTrim(gdFieldGet("C7_NUMSC", i)) )
-				Exit
-			EndIf
-			
-		Next i
-
-	EndIf
-	//FIM Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
-
 	RestArea( aAreaATU )
 
 Return(lRet)
@@ -189,33 +162,3 @@ Static Function PCEEC(nLinha)
 	EndIf
 	
 Return lPCEEC
-
-/*/{Protheus.doc} Static Function xVrSolPA()
-	(long_description)
-	@type  Static Function
-	@author Abel Babini
-	@since 27/12/2021
-	@Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
-/*/
-Static Function xVrSolPA(cNumPdCp)
-
-	Local lRet := False
-	Local cQuery := GetNextAlias()
-
-	BeginSQL alias cQuery
-		SELECT COUNT(*) AS NUM_SOL_PA
-		FROM %TABLE:ZFQ% ZFQ 
-		WHERE 
-			ZFQ_FILIAL = %xFilial:SC7% AND 
-			ZFQ_NUM = %Exp:cNumPdCp% AND 
-			ZFQ.%notDel%
-	EndSQL
-
-	If (cQuery)->NUM_SOL_PA > 0
-		lRet := .t.
-	Endif
-	(cQuery)->(dbCloseArea())
-
-
-	
-Return lRet
