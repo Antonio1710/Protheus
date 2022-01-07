@@ -52,7 +52,7 @@ User Function ADEST033P()  // U_ADEST033P()
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gera ordem de produção e aponta a mesmo por integração do SAG Quando a OP for excluida no SAG e gravado um log, a partir desse log, o protheus estorna o apontamento e faz a exclusao')
     
-    cDataIni    := Dtos(Date()-30)
+    cDataIni    := Dtos(Date()-60)
 
     u_GrLogZBE( Date(),;
                 TIME(),;
@@ -107,7 +107,7 @@ Return Nil
 Static Function fChkSAG()
     Local lRet      := .F.
 	Local cQuery    := ""
-    Local cDataIni := Dtos(Date()-30)
+    Local cDataIni := Dtos(Date()-60)
 
 	//Verificao se o linkedServer esta ativo 
 	cQuery := " SELECT TOP(1) 1 AS CONEXAO FROM  OPENQUERY(SCSRV03, ' SELECT * FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ');"
@@ -374,7 +374,7 @@ Static Function sqlInOp()
 
     //Variáveis.
     Local cQuery   := ""
-    Local cDataIni := Dtos(Date()-30)
+    Local cDataIni := Dtos(Date()-60)
    
     /*
     cQuery += " SELECT CODIOVOS, INGEOVOS.CODITPOV, INCATPOV.NOMETPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
@@ -420,7 +420,7 @@ Static Function sqlDeOp()
 
     //Variáveis.
     Local cQuery := ""
-    Local cDataIni := Dtos(Date()-30)
+    Local cDataIni := Dtos(Date()-60)
 
     cQuery := " SELECT * FROM "
     cQuery += " OPENQUERY(SCSRV03, "
