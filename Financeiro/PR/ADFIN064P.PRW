@@ -53,6 +53,7 @@
 	@history Ticket 10986   - Fernando Macieira - 15/03/2021 - App de aprovação - melhorias
 	@history Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
 	@history Ticket T.I     - Fernando Sigoli   - 10/11/2021 - Alterado função para remover caracteres especiais - C7_DESCRI
+	@history Chamado 66096  - Everson           - 07/01/2022 - Tratamento para exibir observações dos registros de frete. 
 /*/
 
 User Function ADFIN064P
@@ -87,15 +88,15 @@ End WsRestFul
 WsMethod Get WsService CentralAprovacao
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormatAceito := "application/json"
+	//Local cBody 		:= Self:GetContent()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
 	Local cJsonRet      := ""
-	Local cCodUser      := ""
+	//Local cCodUser      := ""
 	Local nNumCA 		:= 0
 	Local nNumPC 		:= 0
 	Local nNumDB 		:= 0
@@ -165,20 +166,21 @@ WsMethod Post WsService CentralAprovacao
 
 	//Variáveis.
     Local aArea			:= GetArea()
-	Local cFormatAceito	:= "application/json"
-	Local cBody			:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormatAceito	:= "application/json"
+	//Local cBody			:= Self:GetContent()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cUrlServ		:= Self:GetPath()
 	Local cJsonRet     	:= ""
-	Local cCodUser     	:= ""
+	//Local cCodUser     	:= ""
 	Local sMsgObs      	:= ""
 	Local Nome_Fil     	:= ""
 	Local sNivApr      	:= "10"
 	Local lAprProj		:= .F.
 	Local sNmcliZc7		:= '' // Ricardo Lima-26/02/2019
 	Local cTpOp			:= "" //15/04/19 | Everson - Chamado 044314.
+	Local cTpMov		:= "" //07/01/2022 | Everson - Chamado 66096.
 	Local cUsrTst       := Self:GetHeader("ChkAdm") //Everson - 06/03/2019. Chamado T.I.
 	Local lVistador     := .t. // Chamado n. 047440 || OS 048708 || FINANCEIRO || REGINALDO || 8451 || APROVACAO PROJETOS - FWNM - 30/04/2019
 	Local lOk           := .f. // Chamado n. 047440 || OS 048708 || FINANCEIRO || REGINALDO || 8451 || APROVACAO PROJETOS - FWNM - 30/04/2019
@@ -773,10 +775,11 @@ WsMethod Post WsService CentralAprovacao
 
 				cJsonRet += '	"nivel" : "'+Alltrim(JSNZC7->ZC7_NIVEL)+'", '
 				
-				cTpOp := "" //15/04/19 | Everson - Chamado 044314.
+				cTpOp := "" //15/04/19 | Everson - Chamado 044314. 
+				cTpMov:= Alltrim(cValToChar(JSNZC7->ZC7_TPBLQ)) //Everson - 07/01/2022 - Chamado 66096.
 				If !EMPTY(JSNZC7->ZC7_NIVEL) .Or. ( Alltrim(cValToChar(JSNZC7->ZC7_TPBLQ)) $cTpBlFr ) //Everson - 12/12/2019 - Chamado 029058.
 				
-					sMsgObs := BuscaObs( JSNZC7->ZC7EMP, JSNZC7->ZC7_FILIAL, JSNZC7->ZC7_PREFIX, JSNZC7->ZC7_NUM, JSNZC7->ZC7_CLIFOR, JSNZC7->ZC7_LOJA, JSNZC7->ZC7_PARCEL, JSNZC7->ZC7_TIPO, JSNZC7->ZC7_ORIGEM, @cTpOp ) //15/04/19 | Everson - Chamado 044314.
+					sMsgObs := BuscaObs( JSNZC7->ZC7EMP, JSNZC7->ZC7_FILIAL, JSNZC7->ZC7_PREFIX, JSNZC7->ZC7_NUM, JSNZC7->ZC7_CLIFOR, JSNZC7->ZC7_LOJA, JSNZC7->ZC7_PARCEL, JSNZC7->ZC7_TIPO, JSNZC7->ZC7_ORIGEM, @cTpOp, cTpMov ) //15/04/19 | Everson - Chamado 044314. //Everson - 07/01/2022 - Chamado 66096.
 					//Everson - 06/03/2019. Chamdo T.I. Comentado bloco que remove caracteres especiais, pois já estão sendo removidos na função BuscaObs.
 					//Ricardo Lima-04/02/2019
 	/*					sMsgObs := StrTran(sMsgObs,Chr(40),"")
@@ -867,14 +870,15 @@ Return .T.
 WsMethod Put WsService CentralAprovacao
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
+	//Local cFormatAceito := "application/json"
 	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
 	Local oParseJSON
+	Local j				:= 1
 
 	Private lRetAcaoAR  := .F.
 	Private cMsgWBs     := ""
@@ -1117,7 +1121,7 @@ Return .T.
 	@since 07/08/2018
 	@version 01
 	/*/
-Static Function BuscaObs( ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_CLIFOR, ZC7_LOJA, ZC7_PARCEL, ZC7_TIPO, ZC7_ORIGEM, cTpOp)
+Static Function BuscaObs( ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_CLIFOR, ZC7_LOJA, ZC7_PARCEL, ZC7_TIPO, ZC7_ORIGEM, cTpOp, cTpMov) //Everson - 07/01/2022 - Chamado 66096.
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.                                            |
@@ -1151,11 +1155,11 @@ Static Function BuscaObs( ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_CLIFOR, Z
 	TcQuery cQuery New Alias "OBSZC7"
 
 	While OBSZC7->(!Eof())
-		IF !Empty(Alltrim(OBSZC7->ZC7_OBS)) .Or. Alltrim(cValToChar(OBSZC7->ZC7_TPBLQ)) = Alltrim(cTpOp) .Or. !Empty(Alltrim(OBSZC7->ZC7_MSGSOL)) //Everson - 12/12/2019 - Chamado 029058. //Everson - 09/11/2020. Chamado 4734.
+		IF !Empty(Alltrim(OBSZC7->ZC7_OBS)) .Or. Alltrim(cValToChar(OBSZC7->ZC7_TPBLQ)) = Alltrim(cTpMov) .Or. !Empty(Alltrim(OBSZC7->ZC7_MSGSOL)) //Everson - 12/12/2019 - Chamado 029058. //Everson - 09/11/2020. Chamado 4734. //Everson - 07/01/2022 - Chamado 66096.
 			
 			////15/04/19 | Everson - Chamado 044314.
 			cObsZFA := ""
-			If Alltrim(cValToChar(OBSZC7->ZC7_TPBLQ)) = Alltrim(cTpOp) //Everson - 12/12/2019 - Chamado 029058.
+			If Alltrim(cValToChar(OBSZC7->ZC7_TPBLQ)) = Alltrim(cTpMov) //Everson - 12/12/2019 - Chamado 029058. //Everson - 07/01/2022 - Chamado 66096.
 				
 				cObsZFA := obsZFA(ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_CLIFOR, ZC7_LOJA, ZC7_ORIGEM,@cTpOp)
 				
@@ -1291,15 +1295,15 @@ End WsRestFul
 WsMethod Post WsService PedidoCompra
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormatAceito := "application/json"
+	//Local cBody 		:= Self:GetContent()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
 	Local cJsonRet      := ""
-	Local cCodUser      := ""
+	//Local cCodUser      := ""
 	Local jDetPed       := ""
 	Local Nome_Fil      := ""
 	Local jObsApr       := ""
@@ -1575,18 +1579,20 @@ Return .T.
 WsMethod Put WsService PedidoCompra
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
+	//Local cFormatAceito := "application/json"
 	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
-	Local cJsonRet      := ""
-	Local cCodUser      := ""
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
+	//Local cJsonRet      := ""
+	//Local cCodUser      := ""
 	Local lRetPed       := .T.
 	Local nOpcPed       := 0
 	Local oParseJSON
+	Local j				:= 1
+
 	Private cRecno      := 0
 	Private sObsSCR     := ""
 
@@ -1663,8 +1669,8 @@ Static Function HistPedC (CRFILIAL , CRNUM , CREMP)
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local sMsgRet 		:= ""
 	Local cQuery  		:= ""
-	Local sDescriPrd 	:= ""
-	Local sObsPed 		:= ""
+	//Local sDescriPrd 	:= ""
+	//Local sObsPed 		:= ""
 	Local cSituaca		:= ""
 	Local cTipoDoc		:= ""
 	Local nAux			:= 0
@@ -1975,13 +1981,13 @@ End WsRestFul
 WsMethod Post WsService DoacaoBonificacao
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormatAceito := "application/json"
+	//Local cBody 		:= Self:GetContent()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
 	
 	Local cUsrTst := Self:GetHeader("ChkAdm") //Everson - 06/03/2019. Chamado T.I.
 
@@ -2099,13 +2105,13 @@ Return .T.
 WsMethod Put WsService DoacaoBonificacao
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
+	//Local cFormatAceito := "application/json"
 	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
 	Local oParseJSON
 	Private cRecno
 
@@ -2158,7 +2164,7 @@ Static Function DetPedDB( C7FILIAL , C7NUM , C7EMP )
 	Local sMsgRet := ""
 	Local cQuery  := ""
 	Local sDescriPrd := ""
-	Local sObsPed := ""
+	//Local sObsPed := ""
 
 	cQuery := " SELECT C6_ITEM, C6_PRODUTO, C6_DESCRI, C6_SEGUM, C6_UNSVEN, C6_UM,C6_QTDVEN, C6_PRCVEN, C6_VALOR "
 	cQuery += "FROM SC6"+C7EMP+"0 C6 "
@@ -2353,12 +2359,12 @@ End WsRestFul
 WsMethod Post WsService Refaturamento
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormatAceito := "application/json"
+	//Local cBody 		:= Self:GetContent()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cUrlServ		:= Self:GetPath()
 	Local jDetPed       := ""
 	
 	Local cObsRefat		:= ""
@@ -2527,14 +2533,16 @@ Return .T.
 WsMethod Put WsService Refaturamento
 
     Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
+	//Local cFormatAceito := "application/json"
 	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cCodUsuario	:= Self:GetHeader("UsrApr")
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cCodUsuario	:= Self:GetHeader("UsrApr")
+	//Local cUrlServ		:= Self:GetPath()
 	Local oParseJSON
+	Local j				:= 1
+
 	Private cRecno
 	Private sMsgpRet 	:= ""
 	Private nOpc 
@@ -2617,12 +2625,12 @@ WsMethod Get WsService pedidossag
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea			:= GetArea()
-	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormatAceito := "application/json"
+	//Local cBody 		:= Self:GetContent()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cUrlServ		:= Self:GetPath()
 	Local cJsonRet      := ""
 	Local cQuery		:= ""
 	Local jDetPed		:= ""
@@ -2749,12 +2757,12 @@ WsMethod Put WsService pedidossag
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea	:= GetArea()
-	Local cFormatAceito := "application/json"
+	//Local cFormatAceito := "application/json"
 	Local cBody 		:= Alltrim(cValToChar(Self:GetContent()))
-	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
-	Local cContentType	:= Self:GetHeader("Content-Type")
-    Local aParametros	:= Self:aURLParms
-	Local cUrlServ		:= Self:GetPath()
+	//Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local cContentType	:= Self:GetHeader("Content-Type")
+    //Local aParametros	:= Self:aURLParms
+	//Local cUrlServ		:= Self:GetPath()
 	Local oParseJSON	:= Nil
 	Local cCodEmp		:= ""
 	Local cCodFil		:= ""
@@ -2794,7 +2802,7 @@ WsMethod Put WsService pedidossag
 	//
 	cQuery := " SELECT ZCQ_APROVA FROM ZCQ010 WHERE ZCQ_FILIAL = '02' AND ZCQ_CODEMP = '" + cCodEmp + "' AND ZCQ_CODFIL = '" + cCodFil + "' AND ZCQ_PEDIDO = '" + cPedido + "' AND ZCQ_USUARI = '" + Alltrim(cValToChar(__cUserID)) + "' "
 	If Select("CHK_PED") > 0
-		CHK_PED0>(DbCloseArea())
+		CHK_PED0->(DbCloseArea())
 		
 	EndIf
 	TcQuery cQuery New Alias "CHK_PED"
@@ -2864,7 +2872,7 @@ Static Function DetSAG(cCodEmp,cCodFilial,cNumPed,cUsuario)
 	Local aArea	  := GetArea()
 	Local sMsgRet := ""
 	Local cQuery  := ""
-	Local sDescriPrd := ""
+	//Local sDescriPrd := ""
 	Local sObsPed := ""
 	
 	//
