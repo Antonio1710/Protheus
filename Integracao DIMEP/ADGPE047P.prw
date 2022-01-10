@@ -1,6 +1,6 @@
+#INCLUDE "TOTVS.CH"
 #INCLUDE "FWMVCDEF.CH"
-#INCLUDE "PROTHEUS.CH"
-#INCLUDE "TBICONN.CH"
+//#INCLUDE "TBICONN.CH"
 #INCLUDE "TOPCONN.CH"
    
 Static cTitulo      := "Libera Empresas Terceiras para ser visto no Dimep "
@@ -12,86 +12,136 @@ Static cTitulo      := "Libera Empresas Terceiras para ser visto no Dimep "
 	@since 20/03/2019
 	@version version
 	@history chamado 050729 - FWNM          - 26/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
-	@history TICKET  224    - William Costa - 11/11/2020 - AlteraÁ„o do Fonte na parte de Funcion·rios, trocar a integraÁ„o do Protheus para a IntegraÁ„o do RM
+	@history TICKET  224    - William Costa - 11/11/2020 - AlteraÁ„o do Fonte na parte de Funcion·rios, trocar a integraùùo do Protheus para a Integraùùo do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
-	@history Ticket: 65853  - Adriano Savoine - 28/12/2021 - Corrigido o Local da variavel o mesmo estava como Priveate e fora da Static function, Declarei como Local e movi a mesma para a static function correta.
+	@history ticket  62822  - Leonardo P. Monteiro - 11/11/2021 - Reformul·rio da rotina e do grid para a Cloud.
+	@history Ticket: 65853  - Adriano Savoine 		- 28/12/2021 - Corrigido o Local da variavel o mesmo estava como Priveate e fora da Static function, Declarei como Local e movi a mesma para a static function correta.
+	@history Ticket: TI     - Leonardo P. Monteiro 	- 07/01/2022 - CorreÁ„o do versionamento do fonte ADGPE047P colocado em base PLEONARDO.
+
 /*/
 
 User Function ADGPE047P()
 
-	Local   oMark      := NIL
-	Local   cFunNamBkp := FunName()
-	Local   aSeek      := {}
-    Local   aIndex     := {}
-    Local   lMarcar    := .F.
-    Private aMark      := {}
-    Private cAliasTmp  := "TRC"
-    Private cInd1      := ""
-	Private cInd2      := ""
-	Private cInd3      := ""
-	Private cInd4      := ""
-	Private aTrab      := NIL
-	Private cArqs      := ""
-	Private aAllUser   := FWSFALLUSERS()
-	Private lIntegra   := .T.
-	Private aArea      := GetArea()
 	
+	//Local   cFunNamBkp := FunName()
+    Local aIndex     	:= {}
+    Local aMark      	:= {}
+    Local nAlt      	:= 0
+    Local nLarg    		:= 0
+    Local aSize     	:= {}
+    Private oWnd
+	Private aAllUser   	:= FWSFALLUSERS()
+	//Private cIntregou  := ''
+	//Private lIntegra   := .T.
+	Private aArea      	:= GetArea()
+	Private oArqTmp	
+	Private oMarkBrw    := NIL
+	Private bMark       := {|oBrowser| fMark(oBrowser)}
+    Private bDblClk     := {|oBrowser| fDblClk(oBrowser)}
+    Private bHeaClk     := {|oBrowser| fHeaClk(oBrowser)}
+	Private cMark   	:= GetMark()
+	Private aButtons	:= {}
+	Private aSeek       := {}
+
+	//SetFunName("ADGPE047P")
+	/*
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao Protheus e Dimep Envia os Usuarios que podem ver as empresas Terceiras no DMP')
 	
 	If Select("TRC") > 0
 		TRC->(DbCloseArea())
 	EndIf
-	
-	MsgRun("Criando estrutura e carregando dados no arquivo tempor·rio...",,{|| aTRC := FileTRC() } )
+	*/
+
+	if type("cFilAnt") == "U"
+        //RpcsetType(3)
+        //Rpcsetenv("01","02","LEONARDO_MONTEIRO","")
+        nAlt    := GetScreenRes()[02]*0.965
+        nLarg   := GetScreenRes()[01]
+    else
+        aSize   := MsAdvSize(.T.)
+        nAlt    := aSize[06]
+        nLarg   := aSize[05]
+    endif
+
+	oWnd            := Msdialog():Create()
+    oWnd:cTitle     := cTitulo
+    ownd:nWidth     := nLarg
+    oWnd:nHeight    := nAlt
+    oWnd:lMaximized := .T.
+
+	Aadd( aButtons, {"Processar Campos Marcados", {|| GPE047Processa()}, "Processando...", "Processando" , {|| .T.}} ) 
+
+	EnchoiceBar(oWnd,{||lOk:=.T.,oWnd:End()},{||oWnd:End()},,@aButtons)
+
+	MsgRun("Criando estrutura e carregando dados no arquivo temporùrio...",,{|| FileTRC() } )
 		
-	//Definindo as colunas que ser„o usadas no browse
+	//Definindo as colunas que serùo usadas no browse
 	
-	aAdd(aMark,{"Num Estrutura" , "TMP_NUESTR","C",010,0,"@!"            })
-    aAdd(aMark,{"Nome Estrutura", "TMP_NMESTR","C",100,0,"@!"            })
-    aAdd(aMark,{"CNPJ"          , "TMP_CGC"   ,"N",014,0,"99999999999999"})
-    aAdd(aMark,{"Razao Social"  , "TMP_RZSOCI","C",150,0,"@!"            })
+	aAdd(aMark,fGetCol({"Num Estrut"    , "TMP_NUESTR","C",010,0,"@!"   }))
+    aAdd(aMark,fGetCol({"Nome Estrut"   , "TMP_NMESTR","C",100,0,"@!"   }))
+    aAdd(aMark,fGetCol({"CNPJ"          , "TMP_CGC"   ,"N",014,0,""		}))
+    aAdd(aMark,fGetCol({"Razao Social"  , "TMP_RZSOCI","C",150,0,"@!"   }))
     
-    SetFunName("ADGPE047P")
-	
-	aAdd(aIndex, "TMP_NUESTRU" )
-	aAdd(aIndex, "TMP_NMESTRU" )
+
+	aAdd(aIndex, "TMP_NUESTR" )
+	aAdd(aIndex, "TMP_NMESTR" )
 	aAdd(aIndex, "TMP_CGC" )
-	aAdd(aIndex, "TMP_RZSOCIAL" )
+	aAdd(aIndex, "TMP_RZSOCI" )
 	
-	aAdd(aSeek,{"Num Estrutura" ,{{"","C",010,0,"TMP_NUESTR","@!"            }}})
-	aAdd(aSeek,{"Nome Estrutura",{{"","C",100,0,"TMP_NMESTR","@!"            }}})
-	aAdd(aSeek,{"CNPJ"          ,{{"","N",014,0,"TMP_CGC"   ,"99999999999999"}}})
-    aAdd(aSeek,{"Razao Social"  ,{{"","C",150,0,"TMP_RZSOCI","@!"            }}})
-	 
-    //Criando o browse da tempor·ria
-    oMark := FWMarkBrowse():New()
-    oMark:SetAlias(cAliasTmp)
-    oMark:oBrowse:SetQueryIndex(aIndex)
-    oMark:SetTemporary(.T.)
-    oMark:SetSeek(.T.,aSeek) //Habilita a utilizaÁ„o da pesquisa de registros no Browse
-    oMark:SetFields(aMark)
-    oMark:DisableDetails()
-    oMark:SetDescription(cTitulo)
-    oMark:SetFieldMark( 'TMP_OK' )
-    oMark:oBrowse:Setfocus() //Seta o foco na grade
+	aAdd(aSeek,{"Num Estrut" ,{{"","C",010,0,"TMP_NUESTR","@!"            }}})
+	aAdd(aSeek,{"Nome Estru" ,{{"","C",100,0,"TMP_NMESTR","@!"            }}})
+	aAdd(aSeek,{"CNPJ"       ,{{"","N",014,0,"TMP_CGC"   ,""			  }}})
+    aAdd(aSeek,{"Raz. Social",{{"","C",150,0,"TMP_RZSOCI","@!"            }}})
+
     
-    oMark:Activate()
+    
+
+    //Criando o browse da temporùria
+    oMarkBrw := FWBrowse():New(oWnd)
+    oMarkBrw:SetDataTable(.T.)
+	oMarkBrw:SetAlias("TRC")
+	oMarkBrw:SetQueryIndex(aIndex)
+    //oMarkBrw:SetTemporary(.T.)
+    //oMarkBrw:SetSeek(.T.,aSeek) //Habilita a utilizaùùo da pesquisa de registros no Browse
+	oMarkBrw:setSeek({|oSeek, oBrowse| fFiltra(oSeek, oBrowse)}, aSeek)
+	oMarkBrw:setLocate()
+    oMarkBrw:setFieldFilter({ {"TMP_NUESTR", "Num Estrut" 	, "C", 010, 0, "@!"},;
+                            {"TMP_NMESTR", "Nome Estru" 	, "C", 100, 0, "@!"},;
+							{"TMP_CGC"	 , "CNPJ"			, "C", 100, 0, 	 ""},;
+							{"TMP_RZSOCI", "Raz. Social"	, "C", 150, 0, "@!"};
+						  })
+    oMarkBrw:addMarkColumns(bMark, bDblClk, bHeaClk)
+	oMarkBrw:SetColumns(aMark)
+    //oMarkBrw:DisableDetails()
+	//oMarkBrw:DisableReport()
+    oMarkBrw:SetDescription(cTitulo)
+    //oMarkBrw:SetFieldMark( 'TMP_OK' )
+    oMarkBrw:SetProfileID('ADGPE047P') 
+	//oMarkBrw:oBrowse:SetFilterDefault("")          
 	
-	SetFunName("cFunNamBkp")
-	DelTabTemporaria()
+    oMarkBrw:Activate()
+	
+	oWnd:Activate()
+
+	//SetFunName("cFunNamBkp")
+	oArqTmp:Delete()
+	//DelTabTemporaria()
 	RestArea(aArea)
 	
 Return Nil
 
-Static Function MenuDef()
-
-	Local aRot := {}
+Static Function fGetCol(aCol)
+	Local oColumn 	:= FWBrwColumn():New()
 	
-	ADD OPTION aRot TITLE 'Marcar Todos'              ACTION 'u_GPE047Marcar()'    OPERATION 2 ACCESS 0
-	ADD OPTION aRot TITLE 'Desmarcar Todos'           ACTION 'u_GPE047Desmarcar()' OPERATION 2 ACCESS 0
-	ADD OPTION aRot TITLE 'Processar Campos Marcados' ACTION 'u_GPE047Processa()'  OPERATION 2 ACCESS 0
+	// {"Razao Social"  , "TMP_RZSOCI","C",150,0,"@!"   }
 	
-Return(aRot)
+	oColumn:SetTitle(aCol[01])
+	oColumn:SetData(&("{|| " + aCol[02] + "}"))
+	oColumn:SetType(aCol[03])
+	oColumn:SetSize(aCol[04])
+	oColumn:setPicture(aCol[06])
+    
+return oColumn
 
 Static Function ModelDef()
 	
@@ -111,133 +161,58 @@ Static Function ViewDef()
 	
 Return(oView)
 
-STATIC FUNCTION DelTabTemporaria()
-
-    DbSelectArea('TRC')
-    Dbclosearea('TRC')
-
-    //FErase( GetSrvProfString("StartPath", "\undefined") + cArqs + ".DBF" )
-    FErase( GetSrvProfString("StartPath", "\undefined") + cArqs + GETDBEXTENSION() ) // Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - FWNM - 26/06/2020
-    	
-	FErase( GetSrvProfString("StartPath", "\undefined") + cInd1 + OrdBagExt() )
-    FErase( GetSrvProfString("StartPath", "\undefined") + cInd2 + OrdBagExt() )
-    FErase( GetSrvProfString("StartPath", "\undefined") + cInd3 + OrdBagExt() )
-    FErase( GetSrvProfString("StartPath", "\undefined") + cInd4 + OrdBagExt() )
-     
-Return (NIL)
-
 Static Function FileTRC()
 
 	Local aStrut   := {}
 	
-    //Criando a estrutura que ter· na tabela
-    aAdd(aStrut, {"TMP_OK"    ,"C",002,0})
+    //Criando a estrutura que terù na tabela
+	aAdd(aStrut, {"TMP_OK"    ,"C",002,0})
 	aAdd(aStrut, {"TMP_NUESTR","C",010,0})
     aAdd(aStrut, {"TMP_NMESTR","C",100,0})
     aAdd(aStrut, {"TMP_CGC"   ,"N",014,0})
     aAdd(aStrut, {"TMP_RZSOCI","C",150,0})
     aAdd(aStrut, {"TMP_CDESTR","N",010,0})
-     
-    // Criar fisicamente o arquivo.
-	cArqs := CriaTrab( aStrut, .T. )
-	cInd1 := Left( cArqs, 7 ) + "1"
-	cInd2 := Left( cArqs, 7 ) + "2"
-	cInd3 := Left( cArqs, 7 ) + "3"
-	cInd4 := Left( cArqs, 7 ) + "4"
-	
-	// Acessar o arquivo e coloca-lo na lista de arquivos abertos.
-	dbUseArea( .T., __LocalDriver, cArqs, cAliasTmp, .F., .F. )
-	
-	// Criar os Ìndices.               
-	IndRegua( cAliasTmp, cInd1, "TMP_NUESTR",,,"Criando Ìndices...")
-	IndRegua( cAliasTmp, cInd2, "TMP_NMESTR",,,"Criando Ìndices...")
-	IndRegua( cAliasTmp, cInd3, "TMP_CGC"   ,,,"Criando Ìndices...")
-	IndRegua( cAliasTmp, cInd4, "TMP_RZSOCI",,,"Criando Ìndices...")
-	
-	// Libera os Ìndices.
-	dbClearIndex()
-	
-	// Agrega a lista dos Ìndices da tabela (arquivo).
-	dbSetIndex( cInd1 + OrdBagExt() )  
-	dbSetIndex( cInd2 + OrdBagExt() )
-	dbSetIndex( cInd3 + OrdBagExt() )
-	dbSetIndex( cInd4 + OrdBagExt() )
-	
+
+	oArqTmp := FWTemporaryTable():New("TRC")
+
+	oArqTmp:SetFields(aStrut)
+
+	// Criar os ùndices.               
+	oArqTmp:AddIndex("01", {"TMP_NUESTR"} )
+	oArqTmp:AddIndex("02", {"TMP_NMESTR"} )
+	oArqTmp:AddIndex("03", {"TMP_CGC"} )
+	oArqTmp:AddIndex("04", {"TMP_RZSOCI"} )
+	oArqTmp:AddIndex("05", {"TMP_CDESTR"} )
+
+	oArqTmp:Create()
+
 	// *** INICIO CRIAR LINHAS TABELA TEMPORARIA *** //
 	SqlEstrutura()
-	WHILE TRB->(!EOF())
+	WHILE DIMEP->(!EOF())
 	
-		TRC->(RecLock("TRC",.T.))
-		
-			 TRC->TMP_OK     := ''
-			 TRC->TMP_NUESTR := TRB->NU_ESTRUTURA
-			 TRC->TMP_NMESTR := TRB->NM_ESTRUTURA
-			 TRC->TMP_CGC    := TRB->NU_CNPJ
-			 TRC->TMP_RZSOCI := TRB->DS_RAZAO_SOCIAL
-			 TRC->TMP_CDESTR := TRB->CD_ESTRUTURA_ORGANIZACIONAL
+		IF RecLock("TRC",.T.)
+			TRC->TMP_OK     := ''
+			TRC->TMP_NUESTR := Alltrim(DIMEP->NU_ESTRUTURA)
+			TRC->TMP_NMESTR := Alltrim(DIMEP->NM_ESTRUTURA)
+			TRC->TMP_CGC    := DIMEP->NU_CNPJ
+			TRC->TMP_RZSOCI := ALLTRIM(REPLACE(REPLACE(DIMEP->DS_RAZAO_SOCIAL,CHR(13),""),CHR(10),""))
+			TRC->TMP_CDESTR := DIMEP->CD_ESTRUTURA_ORGANIZACIONAL
 			 
-		TRC->(MsUnLock())
-		TRB->(dbSkip())    
+			TRC->(MsUnLock())
+		ENDIF
+		DIMEP->(dbSkip())    
 	
-	END //end do while TRB
-	TRB->( DBCLOSEAREA() ) 
+	ENDdo //end do while DIMEP
+	DIMEP->( DBCLOSEAREA() ) 
 	
 	// *** FINAL CRIAR LINHAS TABELA TEMPORARIA *** //
-	
-Return({cArqs,cInd1,cInd2,cInd3,cInd4})
+	TRC->(DbGotop())
+	DbSelectArea("TRC")
+Return
 
-User Function GPE047Marcar(cMarca,lMarcar)
-
-    Local aArea  := TRC->( GetArea() )
-    Local cMarca := oMark:Mark()
-
-	U_ADINF009P('ADGPE047' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao Protheus e Dimep Envia os Usuarios que podem ver as empresas Terceiras no DMP')
-    
-    dbSelectArea("TRC")
-    TRC->( dbGoTop() )
-    While !TRC->( Eof() )
-    
-        RecLock( "TRC", .F. )
-        	TRC->TMP_OK := cMarca
-        MsUnlock()
-        
-        TRC->( dbSkip() )
-        
-    EndDo
- 
- 	oMark:Refresh(.T.)
-    RestArea(aArea)
-    
-Return(Nil)
-
-User Function GPE047Desmarcar(cMarca,lMarcar)
-
-    Local aArea  := TRC->( GetArea() )
-
-	U_ADINF009P('ADGPE047' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao Protheus e Dimep Envia os Usuarios que podem ver as empresas Terceiras no DMP')
- 
-    dbSelectArea("TRC")
-    TRC->( dbGoTop() )
-    While !TRC->( Eof() )
-    
-        RecLock( "TRC", .F. )
-        	TRC->TMP_OK := ''
-        MsUnlock()
-        
-        TRC->( dbSkip() )
-        
-    EndDo
- 
- 	oMark:Refresh(.T.)
-    RestArea(aArea)
-    
-Return(Nil)
-
-User Function GPE047Processa()
+Static Function GPE047Processa()
 
 	Local aArea    := GetArea()
-    Local cMarca   := oMark:Mark()
-    Local lInverte := oMark:IsInvert()
     Local oDlg     := NIL
 
 	U_ADINF009P('ADGPE047' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao Protheus e Dimep Envia os Usuarios que podem ver as empresas Terceiras no DMP')
@@ -258,20 +233,26 @@ User Function GPE047Processa()
 		
 
 	ACTIVATE MSDIALOG oDlg CENTERED
-	
+
+	RestArea(aArea)
+return
+
 STATIC FUNCTION PROCESSAR()
 
-	Local nCont      := 0
-	Local nCont1     := 0
+	Local nCont  := 0
+	Local nCont1 := 0
+
 	Local cIntregou  := '' // Ticket: 65853 - Adriano Savoine - 28/12/2021.
 	
     //Percorrendo os registros da TRC
     DBSELECTAREA("TRC")
-    TRC->(DbGoTop())
+	TRC->(DbSetOrder(1))
+    
+	TRC->(DbGoTop())
     While !TRC->(EoF())
     
         //Caso esteja marcado processa as informacoes.
-        If oMark:IsMark(oMark:Mark())
+        If TRC->TMP_OK == cMark
         
         	nCont:= nCont + 1
         	
@@ -315,7 +296,7 @@ STATIC FUNCTION PROCESSAR()
 			// *** FINAL LIBERA PERFIL DE ACESSO PARA OUTROS USUARIOS *** //
         	
         	//Limpando a marca
-    		RecLock('TRC', .F.)
+    		RecLock("TRC", .F.)
     		
                 TRC->TMP_OK     := ''
                 
@@ -328,14 +309,15 @@ STATIC FUNCTION PROCESSAR()
     ENDDO
 	    
     //Mostrando a mensagem de registros marcados
-    MsgInfo('Foram Processados <b>' + cValToChar(nCont) + ' Campo(s)</b>.', "AtenÁ„o")
+    MsgInfo('Foram Processados <b>' + cValToChar(nCont) + ' Campo(s)</b>.', "Atenùùo")
      
-    //Restaurando ·rea armazenada
+    //Restaurando ùrea armazenada
     RestArea(aArea)
 	
-	oMark:Refresh(.T.)
+	oMarkBrw:Refresh(.T.)
 	
 RETURN(.T.)
+
 
 STATIC FUNCTION GERALOG(cFil,cTexto,cParam)
 
@@ -354,9 +336,10 @@ STATIC FUNCTION GERALOG(cFil,cTexto,cParam)
 	
 RETURN(NIL)
 
+
 STATIC FUNCTION SqlEstrutura()	
 
-	BeginSQL Alias "TRB"
+	BeginSQL Alias "DIMEP"
 			%NoPARSER%
 			SELECT NU_ESTRUTURA,
 			       NM_ESTRUTURA,
@@ -368,7 +351,7 @@ STATIC FUNCTION SqlEstrutura()
 						
 	EndSQl      
 	
-RETURN(NIL)
+RETURN
 
 Static Function SqlUsuProtheus()
 
@@ -422,3 +405,85 @@ STATIC FUNCTION INSDIM(nEst,nUsers)
 	EndIf        
 	
 RETURN(NIL)
+
+Static Function fMark(oBrowse)
+    Local cRet := "LBNO"
+
+	cRet := iif(Empty(TRC->TMP_OK), 'LBNO', 'LBOK')
+
+return cRet
+
+Static Function fDblClk(oBrowse)
+    Local lRet      := .T.
+    
+    if Empty(TRC->TMP_OK)
+			TRC->TMP_OK := cMark
+	else
+		TRC->TMP_OK := ''
+	endif
+	
+return lRet
+
+
+Static Function fHeaClk(oBrowse)
+    Local lRet 		:= .T.
+	Local aAreaTRC	:= TRC->(GetArea())
+
+	TRC->(dbgotop())
+
+	While TRC->(!EOF())
+		fDblClk(oBrowse)
+
+		TRC->(DbSkip())
+	enddo
+
+	RestArea(aAreaTRC)
+	oBrowse:refresh()
+return lRet
+
+
+static function fFiltra(oSeek, oBrowse)
+	Local nRet		:= 0
+	Local nAt		:= oBrowse:At()
+	Local lEOF		:= .F.
+	Local nPosAtu	:= 0
+	Local cFiltro	:= Alltrim(oSeek:getSeek())
+	Local nFiltro	:= Len(cFiltro)
+    Local nOrder	:= oSeek:getOrder()
+	Local cCampo	:= aSeek[nOrder][2][1][5]
+
+	if !Empty(cFiltro)
+		
+		oBrowse:gotop()
+
+		while !lEOF .and. nRet == 0
+			if nOrder == 1
+				uValor := Alltrim(cValtochar(&("TRC->"+Alltrim(cCampo))))
+			else
+				uValor := Left(Alltrim(cValtochar(&("TRC->"+Alltrim(cCampo)))),nFiltro)
+			endif
+
+			//Caso encontre um registro vùlido
+			if  uValor == cFiltro
+				nRet := oBrowse:at()
+			// Caso seja o final do arquivo
+			elseif nPosAtu == oBrowse:at()
+				lEOF := .T.
+			else
+				nPosAtu := oBrowse:at()
+				oBrowse:GoDown()
+			endif
+				
+				
+		enddo
+
+		if nRet == 0
+			MsgAlert("Nùo foi encontrado nenhum registro!")
+			nRet	:= nAt
+		endif
+	else
+		MsgInfo("Informe um valor vùlido!", "Pesquisa")
+		//nRet	:= nAt
+	endif
+	oBrowse:Refresh()
+return nRet

@@ -21,6 +21,7 @@
 	@history ticket     483 - FWNM            - 26/08/2020 - CONTROLADORIA || DRIELE_LEME || 8507 || AJUSTE LP 610-001
 	@history ticket    9226 - Fernando Maciei - 25/02/2021 - Lançamento Padrão 610-001 - abertura/alteração
 	@history ticket   16175 - Fernando Maciei - 30/06/2021 - Alteração LP -Receita serviço Ceres
+	@history ticket   66325 - Everson - 07/01/2022 - Tratamento para filial 04.
 /*/
 User Function LP610cc()
 
@@ -462,6 +463,16 @@ User Function LP610cta()
 		If Right(AllTrim(SD2->D2_CF),3) == "124" .and. AllTrim(SD2->D2_COD) == "151296"
 			_cConta := "311110002"
 		EndIf
+
+	EndIf
+	//
+
+	//Everson - 07/01/2022. Chamado 66325.
+	If cEmpAnt == "01" .And. cFilAnt == "04" .And.; 
+	   AllTrim(cValToChar(SD2->D2_CF)) == "5101" .And.; 
+	   AllTrim(cValToChar(SD2->D2_COD)) == "391650"
+		
+		_cConta := "337110003"
 
 	EndIf
 	//

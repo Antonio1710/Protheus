@@ -53,6 +53,8 @@
 	@history ticket   65598 - Jonathan Carvalho - 28/12/2021 - Filtro: 8 Frango 1 retorno correção no filtro do ticket 64254 e ordenação
 	@history ticket   66115 - Everson - 03/01/2022 - Tratamento para error log.
 	@history ticket   66204 - Leonardo P. Monteiro - 05/01/2022 - Correção/melhoria nas consultas dos registros pendentes.
+	@history ticket   63028 - Wagner Moro		- 15/12/2021 - Permite a inclusão do armazém quando for transferencia de ração entre filiais do Projeto Granja HH - Filial "0A"
+@history ticket   63028 - Wagner Moro		- 22/12/2021 - Filtra o fornecedor para trazer a filial de transferencia.
 
 /*/
 User Function INTNFEB()
@@ -539,7 +541,7 @@ Static Function procEntr()
 	Local aArea	    := GetArea()
 	Private cMensagem	:= ""
 	Private cImpOK		:= "Notas Importadas com Sucesso:" + CRLF + CRLF
-	Private cImpEr		:= "Notas Não Importadas:" + CRLF + CRLF"
+	Private cImpEr		:= "Notas Não Importadas:" + CRLF + CRLF
 	Private _cNomBco2   := ""
 	Private _cSrvBco2   := ""
 	Private _cPortBco2  := ""
@@ -853,8 +855,23 @@ While ! (cAliasNFE)->(Eof())
 		//Fim: Fernanado Sigoli 05/11/2018 Chamado: 044933
 		// *** INICIO WILLIAM COSTA 09/08/2019 CHAMADO 046976 || OS 048247 || TECNOLOGIA || WAGNER || 3522 || PROTHEUS X SAG
 		IF ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP'
+			// Ticket 63028 - 22/12/2021 - Wagner
+			// Busca o fornecedor para trazer a filial de transferencia.
+			DbSelectArea("SA2")
+			SA2->(dbGoTop())
+			SA2->(DbSeek(xFilial("SA2") + Alltrim((cAliasNFE) -> F1_FORNECE)+AllTrim((cAliasNFE) -> F1_LOJA)))
+			
+			If !SA2->(Eof())
+				cFiltr = ALLTRIM(SA2-> A2_FILTRF)
+			Else
+				MsgStop("Não foi possível localizar o código da filial de transferêcia no cadastro de fornecedor! " + cFornMVAP + '-' + cLojaMVAP+  CRLF + CRLF)
+			EndIF
+
+			SA2 -> (DBCloseArea())
+			
 			cNFApanha := GetNextAlias()
-			cQryf := " SELECT F2_DOC, F2_SERIE, F2_EMISSAO FROM " + RetSqlName("SF2") + " WITH (NOLOCK) WHERE F2_FILIAL = '03' AND F2_SERIE = '" + (cAliasNFE)->F1_SERIE + "' AND F2_DOC = '" + StrZero(Val(Alltrim((cAliasNFE)->F1_DOC)),9) + "' AND D_E_L_E_T_ <> '*' " // Leon | Chamado 051029 | 13/08/2019 | StrZero para F1_DOC
+			// Ticket 63028 - 22/12/2021 - Wagner							
+			cQryf := "SELECT F2_DOC, F2_SERIE, F2_EMISSAO FROM " + RetSqlName("SF2") + " WITH (NOLOCK) WHERE F2_FILIAL = '" + cFiltr +"' AND F2_SERIE = '" + (cAliasNFE)->F1_SERIE + "' AND F2_DOC = '" + StrZero(Val(Alltrim((cAliasNFE)->F1_DOC)),9) + "' AND D_E_L_E_T_ <> '*' " // Leon | Chamado 051029 | 13/08/2019 | StrZero para F1_DOC
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryf), cNFApanha, .T., .F.)
 			(cNFApanha)->(dbGotop())
 			If (cNFApanha)->(Eof())
@@ -1494,13 +1511,18 @@ While ! (cAliasNFE)->(Eof())
 				EndIf
 			EndIf
 			// ** FINAL ENCONTRAR O LOCAL CORRETO - chamado 030317 - William Costa ** //
+			//Se for transferencia entre filial e o armazém em branco. - Wagner // Ticket 63028
+			If AllTrim((cAliasNFE)->TABEGENE) $ ('PO03MVES') .and. cCheckTP == 'TRANS' .and. cLocal="" .or. cCheckTP == 'PROPR' // Força entrada no almoxarifado para H.H.
+				cLocal=(cAliasNFE)->D1_LOCAL
+				cCCFV = (cAliasNFE) ->D1_CC
+				Aadd(aLinha,{"D1_CC" 	 , Alltrim(cCCFV)     		  , Nil}) //Centro de Custos
 			////TCSetConn(_conSAG)
 			Aadd(aLinha,{"D1_FILIAL"  	, (cAliasNFE)->F1_Filial, Nil}) //item da nota
 			Aadd(aLinha,{"D1_COD"   	, cCod			, Nil}) //código do produto
 			Aadd(aLinha,{"D1_QUANT" 	, iIf(cTpNota == "FRETE", 1 ,nQuant)		, Nil}) //quantidade
 			Aadd(aLinha,{"D1_VUNIT" 	, iIf(cTpNota == "FRETE", nTotal ,nVlrUnit)		, Nil}) //valor unitário
 			Aadd(aLinha,{"D1_TOTAL" 	, nTotal		, Nil}) //total
-			Aadd(aLinha,{"D1_LOCAL" 	, cLocal		, Nil}) //Centro de Custos
+			Aadd(aLinha,{"D1_LOCAL" 	, AllTrim(cLocal)		, Nil}) //Centro de Custos
 			Aadd(aLinha,{"D1_VALDESC" 	, nValDesc		, Nil}) //valor desconto do item
 			Aadd(aLinha,{"D1_TPNOTA" 	, cTpNota		, Nil}) //tipo da nota que veio do SAG - frete, armazenagem, outros....
 			Aadd(aLinha,{"D1_FORMUL" 	, cFormul, Nil})
