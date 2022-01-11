@@ -9,6 +9,9 @@
 	@since 21/09/2021
 	@version 01
 	@history TI - ADRIANO SAVOINE - Dismembrando o Schedule ADGPE024P para rodar somente Motoristas neste.
+	@history Chamado 66187 - Leonardo P. Monteiro  - 10/01/2022 - Implementação da integração de motoristas estrangeiros que utilizam passaporte ao invés do CPF como identificação.
+	
+
 /*/
 
 USER FUNCTION ADGPE067P(aParam)
@@ -49,7 +52,9 @@ USER FUNCTION ADGPE067P(aParam)
     PRIVATE nCont1             := 0  
 	PRIVATE nCont2             := 0  
     PRIVATE cBloqMot           := ''
+    PRIVATE nMatMot            := 0 
     PRIVATE cCpfMot            := '' 
+    PRIVATE cPasPorMot         := '' 
     PRIVATE cNomeMot           := '' 
     PRIVATE cRgMot             := '' 
     PRIVATE cFilMot            := ''
@@ -727,9 +732,11 @@ STATIC FUNCTION DimepCaminhoneiro()
         nEstRelacionada    := 0 
         nEstOrgEmpresa     := 0
         cBloqMot           := TRK->ZVC_MOTBLQ
-        cCpfMot            := IIF(ALLTRIM(TRK->DA4_CGC)    == '',TRK->ZVC_CPF   ,TRK->DA4_CGC)
-        cNomeMot           := IIF(ALLTRIM(TRK->DA4_NOME)   == '',TRK->ZVC_MOTORI,TRK->DA4_NOME)
-        cRgMot             := IIF(ALLTRIM(TRK->DA4_RG)     == '',TRK->ZVC_RG    ,TRK->DA4_RG)
+        nMatMot      	   := 0
+		cCpfMot			   := ""
+		cPasPorMot 	   	   := ""
+		cNomeMot           := IIF(ALLTRIM(TRK->DA4_NOME)   == '',TRK->ZVC_MOTORI,TRK->DA4_NOME)
+        cRgMot             := ""
         cFilMot            := '02' 
         cCcMot             := IIF(ALLTRIM(TRK->DA4_XCC) == '',TRK->ZVC_CC,TRK->DA4_XCC)
         nCredMot           := IIF(TRK->DA4_XCREDE == 0          ,TRK->ZVC_XCREDE,TRK->DA4_XCREDE)
@@ -738,6 +745,19 @@ STATIC FUNCTION DimepCaminhoneiro()
         cIntregou          := ''
         cTexto             := ''
         
+		//@history 66187 - LEONARDO P. MONTEIRO - Implementação da integração de motoristas estrangeiros que utilizam passaporte ao invés do CPF como identificação.
+		if Empty(TRK->ZVC_CPF)
+			nMatMot		:= Val(TRK->ZVC_PASPOR)
+			cCpfMot		:= ""
+			cPasPorMot	:= Alltrim(TRK->ZVC_PASPOR)
+			cRgMot		:= ""
+		ELSE
+			cCpfMot		:= IIF(ALLTRIM(TRK->DA4_CGC)    == '',TRK->ZVC_CPF   ,TRK->DA4_CGC)
+			nMatMot 	:= Val(cCpfMot)
+			cPasPorMot	:= ""
+			cRgMot      := IIF(ALLTRIM(TRK->DA4_RG)     == '',TRK->ZVC_RG    ,TRK->DA4_RG)
+		endif
+
         VEmpresaDimep(cFilMot,cCcMot) // aqui checa cÃ³digo organizaÃ§Ã£o/organograma/centro custo
 
 		// *** INICIO VERIFICA SITUACAO DO CAMINHONEIRO *** //
@@ -748,17 +768,18 @@ STATIC FUNCTION DimepCaminhoneiro()
 		ENDIF	
 		
 		// *** INICIO VERIFICA PESSOA SE JA ESTA CADASTRADO NO DIMEP *** //
-		SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
+		SqlVFuncDimep(nMatMot,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
 		While TRC->(!EOF())
 		
 			nCdPessoa := TRC->CD_PESSOA    
 			
 			// *** INICIO VERIFICA PESSOA *** //
-		
-			IF TRC->NM_PESSOA           <> cNomeMot     .OR. ;
-			   TRC->NU_CPF              <> cCpfMot      .OR. ;
-			   TRC->NU_RG               <> cRgMot       .OR. ;
-			   TRC->CD_ESTRORG          <> nEstOrganizacional // @history Ticket  16699  - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
+			// @history 66187 - LEONARDO P. MONTEIRO - Implementação da integração de motoristas estrangeiros que utilizam passaporte ao invés do CPF como identificação.
+			IF  TRC->NM_PESSOA           <> cNomeMot     .OR. ;
+			   (!Empty(cCpfMot) .AND. Alltrim(TRC->NU_CPF) 	  <> Alltrim(cCpfMot)    ) .OR.; 
+			   ( Empty(cCpfMot) .AND. Alltrim(TRC->TX_CAMPO05) <> Alltrim(cPasPorMot) ) .OR. ;
+			    TRC->NU_RG               <> cRgMot       .OR. ;
+			    TRC->CD_ESTRORG          <> nEstOrganizacional // @history Ticket  16699  - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
 			   
 			   lCamIntegrar := .T. 
 		
@@ -893,7 +914,7 @@ Static Function CargaFuncDimep()
     	
     	// Integra Pessoa
     	//INTPESSOA(nMatProth,TRB->NOME,nSitFol,nEstOrganizacional,nEstOrgEmpres,TRB->CPF,TRB->CARTIDENTIDADE,TRB->PISPASEP,nPerfilAcesso,nRep,nCredencial)
-		INTPESSOA(nMatProth,TRB->NOME,nSitFol,nEstOrganizacional,nEstOrgEmpres,TRB->CPF,Left(AllTrim(TRB->CARTIDENTIDADE),9),TRB->PISPASEP,nPerfilAcesso,nRep,nCredencial) // fwnm - 19/07/2021  ticket 17021
+		INTPESSOA(nMatProth,TRB->NOME,nSitFol,nEstOrganizacional,nEstOrgEmpres,TRB->CPF,Left(AllTrim(TRB->CARTIDENTIDADE),9),TRB->PISPASEP,nPerfilAcesso,nRep,nCredencial,"") // fwnm - 19/07/2021  ticket 17021
     		                                     
     	// Verifica o numero do Funcionario
     	SqlVFuncDimep(nMatProth,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
@@ -999,7 +1020,7 @@ Static Function CargaMotDimep()
 	VEmpresaDimep(cFilMot,cCcMot)
 
 	// *** Inicio Verifica se existe o CAMINHONEIRO na tabela *** //
-    SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
+    SqlVFuncDimep(nMatMot,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
     		
     IF TRC->(EOF()) == .T. 
     		
@@ -1037,10 +1058,10 @@ Static Function CargaMotDimep()
     	INTUSUSISCREDENCIAL(nCredencial) 
     	
     	// Integra PESSOA
-    	INTPESSOA(VAL(cCpfMot),cNomeMot,nSitFol,nEstOrganizacional,nEstOrgEmpres,cCpfMot,cRgMot,'0',nPerfilAcesso,'NULL',nCredencial)
+    	INTPESSOA(nMatMot,cNomeMot,nSitFol,nEstOrganizacional,nEstOrgEmpres,cCpfMot,cRgMot,'0',nPerfilAcesso,'NULL',nCredencial, cPasPorMot)
     		                                     
     	// Verifica o numero do CAMINHONEIRO
-    	SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
+    	SqlVFuncDimep(nMatMot,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
 
 		While TRC->(!EOF()) 
 					
@@ -1054,14 +1075,14 @@ Static Function CargaMotDimep()
 			INTUSUSISPESSOA(TRC->CD_PESSOA)   
 			
 			// *** INICIO GERA LOG *** //              
-			cTexto := '3 Log Cam'                                                                                                          + ';' + ;
+			cTexto := '3 Log Cam'                                                                                                            + ';' + ;
 						' Fil: '            + '02'                                                                                           + ';' + ;
-						' Mat: '            + cCpfMot                                                                                        + ';' + ;
+						' Mat: '            + cValtochar(nMatMot)                                                                                  + ';' + ;
 						' Nome: '           + cNomeMot                                                                                       + ';' + ;
 						' Folha: '          + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
 						' Credencial: '     + CVALTOCHAR(nCredMot)                                                                           + ';' + ;
 						' Sit Mult: '       + IIF(nSitFolMult = 13,CVALTOCHAR(nSitFolMult) + ' ' + IIF(nSitFolMult == 14,'Feri','Afas'), '') + ';' + ;
-						' Turno:'           + '102999'                                                                                          + ';' + ;
+						' Turno:'           + '102999'                                                                                       + ';' + ;
 						' lCamIntegrar: '   + TRANSFORM(lCamIntegrar,"@!")                                                                   + ';' + ;
 						' lCamSitFolha: '   + TRANSFORM(lCamSitFolha,"@!")                                                                   + ';' + ;
 						' lCamCredencial: ' + TRANSFORM(lCamCredencial,"@!")
@@ -1477,27 +1498,31 @@ STATIC FUNCTION AlterCamDimep()
 	// *** INICIO ALTERAR DADOS NO DIMEP PARA INCLUIR NOVOS *** //
 	VEmpresaDimep(cFilMot,cCcMot)
 	
-	SqlVFuncDimep(VAL(cCpfMot),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
+	SqlVFuncDimep(nMatMot,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
     IF TRC->(!EOF()) 
         
         // *** INICIO ALTERACAO CADASTRAL *** //
 		IF lCamIntegrar == .T. 
 			
-			IF ALLTRIM(TRC->NM_PESSOA) <> ALLTRIM(cNomeMot)
-				UPDPESSOA('NM_PESSOA',cNomeMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+			IF !(ALLTRIM(TRC->NM_PESSOA) == ALLTRIM(cNomeMot))
+				UPDPESSOA('NM_PESSOA',cNomeMot,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 			ENDIF
-			
-			IF ALLTRIM(TRC->NU_CPF)    <> ALLTRIM(cCpfMot)
-				UPDPESSOA('NU_CPF',cCpfMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+			//@history 66187 - LEONARDO P. MONTEIRO - Implementação da integração de motoristas estrangeiros que utilizam passaporte ao invés do CPF como identificação.
+			IF !(ALLTRIM(TRC->TX_CAMPO05)  == ALLTRIM(cPasPorMot))
+				UPDPESSOA('TX_CAMPO05',cPasPorMot,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
+			ENDIF
+
+			IF ALLTRIM(TRC->NU_CPF)    <> ALLTRIM(cCPFMot)
+				UPDPESSOA('NU_CPF',cCpfMot,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 			ENDIF
 			
 			IF ALLTRIM(TRC->NU_RG)     <> ALLTRIM(cRgMot)
-				UPDPESSOA('NU_RG',cRgMot,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+				UPDPESSOA('NU_RG',cRgMot,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 			ENDIF
 
 			// @history Ticket 16699 - Fernando Macieir- 28/07/2021 - DIVERGENCIA NO CC NO DIMEP - CAMINHONEIROS
 			IF TRC->CD_ESTRORG <> nEstOrganizacional
-				UPDPESSOA('CD_ESTRUTURA_ORGANIZACIONAL',AllTrim(Str(nEstOrganizacional)),VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+				UPDPESSOA('CD_ESTRUTURA_ORGANIZACIONAL',AllTrim(Str(nEstOrganizacional)),nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 			ENDIF
 			//
 
@@ -1513,7 +1538,7 @@ STATIC FUNCTION AlterCamDimep()
 				IF nSitFol == 12 
 				    
 				    //ALTERA SITUACAO DA FOLHA
-				    UPDPESS1('CD_SITUACAO_PESSOA',nSitFol,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+				    UPDPESS1('CD_SITUACAO_PESSOA',nSitFol,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 				    
 				    //Integra Historico da Pessoa
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
@@ -1530,7 +1555,7 @@ STATIC FUNCTION AlterCamDimep()
 				IF nSitFol == 11 
 				    
 				    //ALTERA SITUACAO DA FOLHA
-				    UPDPESS1('CD_SITUACAO_PESSOA',nSitFol,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+				    UPDPESS1('CD_SITUACAO_PESSOA',nSitFol,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 				    
 				    //Integra Historico da Pessoa
 					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
@@ -1573,7 +1598,7 @@ STATIC FUNCTION AlterCamDimep()
 		    INTUSUSISCREDENCIAL(nCredencial)
 			INTCREPESSOA(TRC->CD_PESSOA,nCredencial,cDataIni,cDataFin) 
 			//ALTERA SITUACAO DA FOLHA
-			UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,VAL(cCpfMot),nEstOrganizacional,nEstOrgEmpresa)
+			UPDPESS1('CD_CREDENCIAL_FACE',nCredencial,nMatMot,nEstOrganizacional,nEstOrgEmpresa)
 		    
 		ENDIF //lCamCredencial == .T.
 		
@@ -1582,7 +1607,7 @@ STATIC FUNCTION AlterCamDimep()
 		// *** INICIO GERA LOG *** //              
 		cTexto := '5 Log Cam'                                                                                                          + ';' + ;
 	              ' Fil: '            + '02'                                                                                           + ';' + ;
-	              ' Mat: '            + cCpfMot                                                                                        + ';' + ;
+	              ' Mat: '            + cValtochar(nMatMot)                                                                                        + ';' + ;
 	              ' Nome: '           + cNomeMot                                                                                       + ';' + ;
 	              ' Folha: '          + CVALTOCHAR(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
 			      ' Credencial: '     + CVALTOCHAR(nCredMot)                                                                           + ';' + ;
@@ -1741,13 +1766,20 @@ RETURN(NIL)
 
 STATIC FUNCTION DimepBloqCaminhoneiro()
 
-	Local dDtVlCNH := ''
+	Local dDtVlCNH 		:= ''
+	Local nMatMot		:= 0
 
 	cDtVlCNH := DTOS(DATE() - 1)
 	SqlCaminhoneiro(cDtVlCNH)           
 	While TRK->(!EOF())
 
-		SqlVFuncDimep(VAL(TRK->ZVC_CPF),cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
+		if Empty(TRK->ZVC_CPF)
+			nMatMot	:= VAL(TRK->ZVC_PASPOR)
+		ELSE
+			nMatMot	:= VAL(TRK->ZVC_CPF)
+		ENDIF
+
+		SqlVFuncDimep(nMatMot,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada))
 		While TRC->(!EOF())
 	
 			dDtVlCNH := STOD(TRK->ZVC_CNHVCT)
@@ -1764,7 +1796,7 @@ STATIC FUNCTION DimepBloqCaminhoneiro()
 					
 					// *** INICIO GERA LOG *** //              
 					cTexto := '10 Log DimepBloqCaminhoneiro Vencimento Carteira:' + ';' + ;
-							' Mat: '             + TRK->ZVC_CPF                 + ';' + ;
+							' Mat: '             + CValToChar(nMatMot)                 + ';' + ;
 							' Nome: '            + ALLTRIM(TRK->ZVC_MOTORI)     + ';' + ;
 							' dDtVlCNH: '       + DTOC(dDtVlCNH)                
 							
@@ -2060,7 +2092,7 @@ Static Function Sqlfuncionario(cEmpresa)
 
 RETURN(NIL)   	  
 
-Static Function SqlVFuncDimep(cMat,cEstOrganizacional,cEstOrgEmpresa,cEstRelacionada)
+Static Function SqlVFuncDimep(nMat,cEstOrganizacional,cEstOrgEmpresa,cEstRelacionada)
 
 	BeginSQL Alias "TRC"
 
@@ -2079,9 +2111,10 @@ Static Function SqlVFuncDimep(cMat,cEstOrganizacional,cEstOrgEmpresa,cEstRelacio
 				          CD_PERFIL_ACESSO,
 				          CD_CREDENCIAL_FACE,
 				          CD_CREDENCIAL_REP,
-				          TX_CAMPO08 
+				          TX_CAMPO08,
+						  TX_CAMPO05 
 				     FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
-			       WHERE NU_MATRICULA                          = %EXP:cMat%
+			       WHERE NU_MATRICULA                          = %EXP:nMat%
 						
 	EndSQl
 
@@ -2264,11 +2297,12 @@ Static Function SqlCaminhoneiro(cDtVlCNH)
 					  DA4.DA4_XCREDE,
 					  ZVC.ZVC_CC,
 					  DA4.DA4_XCC,
-					  ZVC.ZVC_CNHVCT
+					  ZVC.ZVC_CNHVCT,
+					  ZVC.ZVC_PASPOR
 			     FROM %Table:ZVC% ZVC WITH (NOLOCK)
 			LEFT JOIN %Table:DA4% DA4 WITH (NOLOCK)
 			       ON ZVC.ZVC_FILIAL        = DA4.DA4_FILIAL
-				  AND ZVC.ZVC_CPF           = DA4.DA4_CGC
+				  AND ( (ZVC.ZVC_CPF != '' AND ZVC.ZVC_CPF           = DA4.DA4_CGC) )
 				  AND DA4.D_E_L_E_T_       <> '*'
 			   WHERE  ZVC.ZVC_FILIAL        = ''             // TICKET 2692 - 01/10/2020 - ADRIANO SAVOINE
 				  AND ZVC.D_E_L_E_T_       <> '*' 
@@ -2279,7 +2313,8 @@ Static Function SqlCaminhoneiro(cDtVlCNH)
 				  AND (LEN(ZVC.ZVC_CC)      = 4 
 				   OR LEN(DA4.DA4_XCC)      = 4)  
 				  AND ZVC.ZVC_CNHVCT       <= %EXP:cDtVlCNH%
-					
+				  // Degugar motoristas estrangeiros.
+				  AND ZVC.ZVC_CPF =''
 					//and ZVC.ZVC_CPF='38489231818' // debug
 
 			ORDER BY ZVC.ZVC_MOTORI
@@ -2644,7 +2679,8 @@ Static Function SqlCCDIMEP(nMatricula)
 	EndSQl             
 RETURN(NIL) 
 
-Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerfilAcesso,nRep,nCredencial)   
+Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerfilAcesso,nRep,nCredencial, cPasPor)   
+	Default cPasPor	:= ""
 
     cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
 	cQuery += "(NU_MATRICULA, " 
@@ -2653,6 +2689,7 @@ Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerf
 	cQuery += "CD_ESTRUTURA_ORGANIZACIONAL, " 
 	cQuery += "CD_ESTRUTURA_ORG_EMPRESA, " 
 	cQuery += "NU_CPF, " 
+	cQuery += "TX_CAMPO05, " 
 	cQuery += "NU_RG, " 
 	cQuery += "NU_PIS, "
 	cQuery += "CD_PERFIL_ACESSO, "
@@ -2664,9 +2701,19 @@ Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerf
 	cQuery += ""         + CVALTOCHAR(nSitFol)       + ","  // Situacao da Folha
 	cQuery += "'"        + CVALTOCHAR(nGrupo)        + "'," // Grupo Empresa
 	cQuery += "'"        + CVALTOCHAR(nEmpresa)      + "'," // Empresa
-	cQuery += "'"        + cCic                      + "'," // Cpf
-	cQuery += "'"        + cRg                       + "'," // Rg  
-	cQuery += "'"        + cPis                      + "'," // Pis  
+	
+	if Empty(cCic)
+		cQuery += "''," 										// Cpf
+		cQuery += "'"        + cPasPor                   + "'," // Pasporte
+		cQuery += "''," 										// Rg  
+		cQuery += "''," 										// Pis  
+	else
+		cQuery += "'"        + cCic                      + "'," // Cpf
+		cQuery += "''," 										// Pasporte
+		cQuery += "'"        + cRg                       + "'," // Rg  
+		cQuery += "'"        + cPis                      + "'," // Pis  
+	endif
+
 	cQuery += "'"        + CVALTOCHAR(nPerfilAcesso) + "'," // Perfil de Acesso 
 	cQuery += ""         + CVALTOCHAR(nRep)          + ","  // Cod Rep 
 	cQuery += ""         + CVALTOCHAR(nCredencial)   + " "  // Cod Face

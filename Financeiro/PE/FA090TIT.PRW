@@ -14,9 +14,10 @@
 	(examples)
 	@see (links_or_references)
 	@chamado 038609
-    @history Chamado 038611 - Ricardo Lima - 03/01/2018 - Não permitido baixa de titulo gerados por pedido de compra com a condicao de pagamento "ICM", tera que ser feito por Compensacao - Projeto Financas   
+	@history Chamado 038611 - Ricardo Lima - 03/01/2018 - Não permitido baixa de titulo gerados por pedido de compra com a condicao de pagamento "ICM", tera que ser feito por Compensacao - Projeto Financas   
 	@history Chamado 053347 - FWNM         - 29/11/2019 - 053347 || OS 054719 || FINANCAS || EDUARDO || 8352 || IMPLANTAR CENTRAL
-    @history Chamado 056247 - FWNM         - 15/05/2020 - OS 059676 || FINANCAS || LUIZ || 8451 || CONTAS APAGAR
+	@history Chamado 056247 - FWNM         - 15/05/2020 - OS 059676 || FINANCAS || LUIZ || 8451 || CONTAS APAGAR
+	@history Chamado 066396 - Abel Babini  - 10/01/2022 - Título com Saldo Indevido. Impede baixas com data inferior ao E2_BAIXA
 /*/
 User Function FA090TIT
 
@@ -29,10 +30,17 @@ User Function FA090TIT
 	Local lPgICM    := .F.
 	Local cTpDivf   := "000004"
 
-    // Chamado n. 058216 || OS 059676 || FINANCAS || LUIZ || 8451 || CONTAS APAGAR - FWNM - 15/05/2020
-    If AllTrim(SE2->E2_XDIVERG) == "S" .or. AllTrim(SE2->E2_RJ) == "X" 
-    	_lRet := .F.
-        MsgAlert("Título não pode ser movimentado pois está aguardando aprovação!", "Central Aprovação")
+	//INICIO Chamado 066396 - Abel Babini  - 10/01/2022 - Título com Saldo Indevido. Impede baixas com data inferior ao E2_BAIXA
+	If Alltrim(DTOS(SE2->E2_BAIXA)) <> '' .AND. SE2->E2_BAIXA > dDatabase
+		_lRet := .F.
+		MsgAlert("Título já possui baixa com data superior. Exclua as baixas existentes antes de prosseguir!", "FA090TIT-01")
+	Endif
+	//FIM Chamado 066396 - Abel Babini  - 10/01/2022 - Título com Saldo Indevido. Impede baixas com data inferior ao E2_BAIXA
+
+	// Chamado n. 058216 || OS 059676 || FINANCAS || LUIZ || 8451 || CONTAS APAGAR - FWNM - 15/05/2020
+	If AllTrim(SE2->E2_XDIVERG) == "S" .or. AllTrim(SE2->E2_RJ) == "X" 
+		_lRet := .F.
+		MsgAlert("Título não pode ser movimentado pois está aguardando aprovação!", "Central Aprovação")
 	EndIf
     //
 	
