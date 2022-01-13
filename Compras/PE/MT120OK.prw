@@ -21,6 +21,7 @@
 	@history chamado 056195   - FWNM         - 28/02/2020 - OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
 	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
 	@history Ticket  n.64674  - Abel Babini  - 10/01/2022 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
+	@history Ticket  n.66672  - Leonardo P. Monteiro  - 13/01/2022 - Correção emergencial de error.log.
 /*/
 User Function MT120OK()
 
@@ -125,7 +126,7 @@ User Function MT120OK()
 	//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
 	If lRet
 
-		lSolPdPA := xVrSolPA(nPosNumPd)
+		lSolPdPA := xVrSolPA(CA120NUM)
 
 		For i:=1 To Len(aCols)
 			//Ticket  n.64674  - Abel Babini  - 10/01/2022 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
@@ -199,7 +200,7 @@ Return lPCEEC
 /*/
 Static Function xVrSolPA(cNumPdCp)
 
-	Local lRet := False
+	Local lRet := .f.
 	Local cQuery := GetNextAlias()
 
 	BeginSQL alias cQuery

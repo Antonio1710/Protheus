@@ -2314,8 +2314,8 @@ Static Function SqlCaminhoneiro(cDtVlCNH)
 				   OR LEN(DA4.DA4_XCC)      = 4)  
 				  AND ZVC.ZVC_CNHVCT       <= %EXP:cDtVlCNH%
 				  // Degugar motoristas estrangeiros.
-				  AND ZVC.ZVC_CPF =''
-					//and ZVC.ZVC_CPF='38489231818' // debug
+				  //AND ZVC.ZVC_CPF =''
+				  //and ZVC.ZVC_CPF='38489231818' // debug
 
 			ORDER BY ZVC.ZVC_MOTORI
 			
