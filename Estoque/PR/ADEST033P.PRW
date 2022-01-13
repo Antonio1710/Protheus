@@ -16,7 +16,7 @@
     @history Ticket T.I.  - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
     @history Ticket 65674 - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
     @history Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
-
+    @history Ticket 66335 - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
     /*/
 
 User Function ADEST033P()  // U_ADEST033P()
@@ -393,6 +393,7 @@ Static Function sqlInOp()
     */
     
     //@Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
+    //@Ticket 66335 - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP
     cQuery += " SELECT CODIOVOS, CODITPOV, NOMETPOV, CODILOTE, DATAOVOS, IDADOVOS, QTDEOVOS, CODIALOJ "
     cQuery += " FROM "
     cQuery += " OPENQUERY(SCSRV03,"
@@ -400,7 +401,7 @@ Static Function sqlInOp()
     cQuery += "   FROM SAG.dbo.INGEOVOS AS INGEOVOS  "
     cQuery += "         LEFT JOIN SAG.dbo.POCaEmpr AS POCAEMPR  ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS  "
     cQuery += "         LEFT JOIN SAG.dbo.INCATPOV AS INCATPOV ON INCATPOV.CODITPOV = INGEOVOS.CODITPOV " //Adriano Savoine - 28/12/2021 - Ticket : 65674
-    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
+    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "'' AND STATUSOP <> 'I'  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
     cQuery += " WHERE   "
     cQuery += "     CODIOVOS NOT IN ( "
 	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "
