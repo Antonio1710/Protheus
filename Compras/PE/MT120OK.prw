@@ -21,12 +21,13 @@
 	@history chamado 056195   - FWNM         - 28/02/2020 - OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
 	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
 	@history Ticket  n.64674  - Abel Babini  - 10/01/2022 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
-	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
 /*/
 User Function MT120OK()
 
 	Local nPosXRespon := aScan(aHeader,{|x| AllTrim(x[2]) == "C7_XRESPON"})
 	Local nPosNumSc   := aScan(aHeader,{|x| AllTrim(x[2]) == 'C7_NUMSC'})
+	Local nPosNumPd   := aScan(aHeader,{|x| AllTrim(x[2]) == 'C7_NUM'})
+	
 	Local lRet        := .T.
 	Local nCont       := 0
 	Local aAreaATU    := GetArea()
@@ -124,7 +125,7 @@ User Function MT120OK()
 	//INICIO Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
 	If lRet
 
-		lSolPdPA := xVrSolPA(SC7.C7_NUM)
+		lSolPdPA := xVrSolPA(nPosNumPd)
 
 		For i:=1 To Len(aCols)
 			//Ticket  n.64674  - Abel Babini  - 10/01/2022 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
@@ -158,7 +159,6 @@ Return(lRet)
 	(examples)
 	@see (links_or_references)
 	@chamado 056195 || OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
-	
 /*/
 Static Function PCEEC(nLinha)
 

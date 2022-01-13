@@ -54,7 +54,7 @@
 	@history ticket   66115 - Everson - 03/01/2022 - Tratamento para error log.
 	@history ticket   66204 - Leonardo P. Monteiro - 05/01/2022 - Correção/melhoria nas consultas dos registros pendentes.
 	@history ticket   63028 - Wagner Moro		- 15/12/2021 - Permite a inclusão do armazém quando for transferencia de ração entre filiais do Projeto Granja HH - Filial "0A"
-@history ticket   63028 - Wagner Moro		- 22/12/2021 - Filtra o fornecedor para trazer a filial de transferencia.
+	@history ticket   63028 - Wagner Moro		- 22/12/2021 - Filtra o fornecedor para trazer a filial de transferencia.
 
 /*/
 User Function INTNFEB()
@@ -1516,6 +1516,7 @@ While ! (cAliasNFE)->(Eof())
 				cLocal=(cAliasNFE)->D1_LOCAL
 				cCCFV = (cAliasNFE) ->D1_CC
 				Aadd(aLinha,{"D1_CC" 	 , Alltrim(cCCFV)     		  , Nil}) //Centro de Custos
+			endif
 			////TCSetConn(_conSAG)
 			Aadd(aLinha,{"D1_FILIAL"  	, (cAliasNFE)->F1_Filial, Nil}) //item da nota
 			Aadd(aLinha,{"D1_COD"   	, cCod			, Nil}) //código do produto
