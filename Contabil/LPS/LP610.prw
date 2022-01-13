@@ -22,6 +22,7 @@
 	@history ticket    9226 - Fernando Maciei - 25/02/2021 - Lançamento Padrão 610-001 - abertura/alteração
 	@history ticket   16175 - Fernando Maciei - 30/06/2021 - Alteração LP -Receita serviço Ceres
 	@history ticket   66325 - Everson - 07/01/2022 - Tratamento para filial 04.
+	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
 /*/
 User Function LP610cc()
 

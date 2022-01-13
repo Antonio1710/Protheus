@@ -17,6 +17,7 @@
     @history Ticket 65674 - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
     @history Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
     @history Ticket 66335 - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
+    @history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
     /*/
 
 User Function ADEST033P()  // U_ADEST033P()

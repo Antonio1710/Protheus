@@ -21,6 +21,7 @@
 	@history chamado 056195   - FWNM         - 28/02/2020 - OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
 	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
 	@history Ticket  n.64674  - Abel Babini  - 10/01/2022 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
+	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
 /*/
 User Function MT120OK()
 
@@ -157,6 +158,7 @@ Return(lRet)
 	(examples)
 	@see (links_or_references)
 	@chamado 056195 || OS 057640 || ADM || EVERTON || 45968485 || PC.ORIGEM SIGAEEC
+	
 /*/
 Static Function PCEEC(nLinha)
 

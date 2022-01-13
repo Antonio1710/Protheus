@@ -17,7 +17,7 @@ Static cTitulo      := "Libera Empresas Terceiras para ser visto no Dimep "
 	@history ticket  62822  - Leonardo P. Monteiro - 11/11/2021 - Reformulário da rotina e do grid para a Cloud.
 	@history Ticket: 65853  - Adriano Savoine 		- 28/12/2021 - Corrigido o Local da variavel o mesmo estava como Priveate e fora da Static function, Declarei como Local e movi a mesma para a static function correta.
 	@history Ticket: TI     - Leonardo P. Monteiro 	- 07/01/2022 - Correção do versionamento do fonte ADGPE047P colocado em base PLEONARDO.
-
+	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
 /*/
 
 User Function ADGPE047P()

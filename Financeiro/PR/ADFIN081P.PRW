@@ -21,6 +21,7 @@
 	@history Ticket  n.11157  - Abel Babini  - 26/03/2021 - Ajuste saldo do pedido - solicitações de PA compensadas com NF´s atreladas ao mesmo pedido
 	@history Ticket  n.64674  - Abel Babini  - 27/12/2021 - Apenas permitir solicitação de PA quando não hourver produtos de serviço.
 	@history Ticket  n.64674  - Abel Babini  - 10/01/2022 - Não permitir alterar Pedidos de compra com produtos do tipo serviço caso já exista Solicitação de PA
+	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
 /*/
 User Function ADFIN081P()
 
