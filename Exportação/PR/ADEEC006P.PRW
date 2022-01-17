@@ -45,6 +45,8 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 16/03/2021 - Correção nos saldos em estoque do eData.
     @history Chamado 8465 - Leonardo P. Monteiro - 02/07/2021 - Implementação dos novos recursos de integração com o App da qualidade.
     @history Chamado 8465 - Leonardo P. Monteiro - 19/07/2021 - Inclusão do relatório de respaldo.
+    @history Chamado 18301 - Leonardo P. Monteiro - 13/01/2022 - Inclusão de variável do LinkedServer do eData.
+    @history Chamado 18301 - Leonardo P. Monteiro - 13/01/2022 - Inclusão do workflow como opção para os usuários.
 /*/
 user function ADEEC006P()
     Local cTitle    := "..:: Monitor de Exportação ::.."
@@ -117,6 +119,7 @@ user function ADEEC006P()
     Private oDblClick   := {|| fDblClick(PANEL01_VIEW)}
     Private oChgItEx    := {|| fChgItEx() }
 
+    Private cLinkSe  := Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
     cLayCSS := "QFrame{ margin-top: 10px; } TButton{ margin-bottom: 7px; } TSay{ margin-bottom: 7px; margin-top: 7px; }"
     
@@ -596,10 +599,12 @@ Static Function layPanel()
     oMenu0301 := tMenuItem():new(oWnd, "Prev. Embarques"    , , ,       , {|| fAcao(3,   1, .F.)},,,,,,,,,.T.)
     oMenu0302 := tMenuItem():new(oWnd, "Noti. Embarques"    , , ,       , {|| fAcao(3,   2, .F.)},,,,,,,,,.T.)
     oMenu0303 := tMenuItem():new(oWnd, "Inspec. Qualidade"  , , ,       , {|| fAcao(3,   3, .F.)},,,,,,,,,.T.)
+    oMenu0304 := tMenuItem():new(oWnd, "Noti. Faturamento"  , , ,       , {|| fAcao(3,   4, .F.)},,,,,,,,,.T.)
 
     oMenu03:add(oMenu0301)
     oMenu03:add(oMenu0302)
     oMenu03:add(oMenu0303)
+    oMenu03:add(oMenu0304)
     oButEmb:setPopupMenu(oMenu03)
 
     oButDet := TButton():New( 0, oSize:GetDimension("OBJ04","COLINI"), "Monitor", oOpc,{|| }    , oSize:GetDimension("OBJ04","XSIZE"),;
@@ -709,6 +714,11 @@ Static Function fAcao(nAcao, nOper, lRefresh)
                 msginfo("Processamento finalizado!")
             else
                 msginfo("Operação cancelada pelo operador!")
+            endif
+        // Processa envio do workflow de notificação para faturamento.
+        elseif nOper == 4
+            If msgYesNo("Deseja enviar o workflow de notificação p/ faturamento?")
+                U_ADEEC014P()
             endif
         endif
     
@@ -1192,7 +1202,7 @@ Static function fGetEst()
     cQuery += "   ,[QN_PESOPROD]
     cQuery += "   ,[QN_PROG]
     cQuery += "   ,[QN_PESOPROG]
-    cQuery += " FROM [LNKMIMS].SMART.dbo.[VW_ESTOQUE_SALDO]
+    cQuery += " FROM ["+cLinkSe+"].SMART.dbo.[VW_ESTOQUE_SALDO]
     cQuery += " WHERE [IE_MATEEMBA]='"+ cProd +"' "
 
     TcQuery cQuery ALIAS "QEST" NEW

@@ -22,6 +22,7 @@
 	@history Tkt.64073 - ABEL BABINI - 23/11/2021 - Alteração na regra do IPI para não utilizar o campo de valor do IPI, mas calcular o valor baseado na aliquota.
 	@history Tkt.64415 - JONATHAN CARVALHO - 26/11/2021 - Alteração no calculo do IPIC para somar o valor do frete junto.
 	@history Tkt.64992 - JONATHAN CARVALHO - 08/12/2021 - Incluido tratamento para não entrar na integração caso o PC for gerado pela integração com o SAG
+	@history Tkt.65032 - JONATHAN CARVALHO - 14/01/2021 - Retirado a comparação de quando for devolução a quantidade for igual somente se for maior
 /*/
 User Function MT103PN     
 Local lRet := .T. // ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
@@ -296,7 +297,7 @@ IF lRet .AND. SF1->F1_FORMUL = 'S' .AND. SF1->F1_TIPO = 'N' .AND. INCLUI
 		DbSelectArea(cQryNFO)
 		(cQryNFO)->(dbGoTop())
 		IF !(cQryNFO)->(EOF())
-			IF (cQryNFO)->QTD_RETORNO >= (cQryNFO)->D2_QUANT
+			IF (cQryNFO)->QTD_RETORNO > (cQryNFO)->D2_QUANT //@history Tkt.65032 - JONATHAN CARVALHO - 14/01/2021 - somente se for maior
 				AVISO('MT103PN-001 => NF de Origem já retornada',;
 						'A NF de Origem relacionada a esse documento já foi retornada anteriormente! A mesma não poderá ser relacionada novamente.', {"Fechar"}, 2 )   
 				lRet:= .F.					

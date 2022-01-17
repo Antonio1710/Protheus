@@ -19,6 +19,7 @@
 	@history Ticket T.I.   - Leonardo P. Monteiro - 22/07/2021 - Inclusão de validações para não deixar que manobristas sejam vinculados a veículos e a transportadoras.
 	@history ticket 18125  - 10/08/2021 - ADRIANO SAVOINE - Bloqueio de Exclusão e Bloqueio do campo em modo de edição.
 	@history ticket 61154  - 05/10/2021 - SIGOLI - Feito tratamento para mostrar o erro na tela de usuario, para quando ocorrer erro do lado do edata, apreentar na tela. 
+	@history ticket 65889  	- Leonardo P. Monteiro - 05/01/2022 - Adição de variável para indicar o LinkedServer.
 /*/
 
 User Function AXFV4() 
@@ -27,7 +28,7 @@ User Function AXFV4()
 	Local cUsrSAG    := Alltrim(GetMv("MV_#VEISAG",,""))
 	Local aButtons   := {}
 	Local bNoTTs	 := {|| fInteDa()}
-	Private cLinkSe  := Alltrim(SuperGetMv("MV_#IEDATA",,"[LNKMIMS].[SMART].[dbo]"))
+	Private cLinkSe  := Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Alltrim(SuperGetMv("MV_#IEDATA",,"[LNKMIMS].[SMART].[dbo]"))
 	Private _CALTER  := "" //Chamado: 047273 //Everson - 26/02/2020. Chamado 053926.
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de veiculos')
@@ -594,7 +595,7 @@ Static Function fEnveData(cCPFPass, cFornece, cPlaca, cEmpresa)
 	if SqlMotorista(cCPFPass)
 		
 
-		nStatus :=  TcSQLExec('EXEC '+cLinkSe+'.[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+     "'"+cPlaca+"'"   +",'"+  cCPFPass +"',"+  "'"+cEmpresa+"'" )
+		nStatus :=  TcSQLExec('EXEC ['+cLinkSe+'].[SMART].[dbo].[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+     "'"+cPlaca+"'"   +",'"+  cCPFPass +"',"+  "'"+cEmpresa+"'" )
 		
 		// Inicio Ticket 61154  - 05/10/2021 - SIGOLI 
 		cError := U_RetErroED() 

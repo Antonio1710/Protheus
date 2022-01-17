@@ -2072,6 +2072,9 @@ Return
 ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
 ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
 ฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+
+@history ticket 65889  	- Leonardo P. Monteiro - 05/01/2022 - Adi็ใo de variแvel para indicar o LinkedServer.
+
 */
 
 
@@ -2080,11 +2083,12 @@ User Function RetErroED()
 Local cQuery 			:= ""
 Local cAliasERR	    	:= CriaTrab(NIL,.F.)	
 Local cErro				:= ""
+Local cLnkSrv			:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 U_ADINF009P('CCSKFXFUN' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 
 
-	cQuery := "SELECT * FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_01] "
+	cQuery := "SELECT * FROM ["+ cLnkSrv +"].[SMART].[dbo].[VW_ERRO_01] "
 	cQuery := ChangeQuery(cQuery)		
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasERR,.T.,.F.)
 	

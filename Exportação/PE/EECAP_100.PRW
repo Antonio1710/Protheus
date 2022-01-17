@@ -20,7 +20,7 @@
     @history 04/06/2021 - Chamado   8465 Leonardo P. Monteiro - Correção do error.log na linha 85.
     @history 22/07/2021 - Chamado   8465 Leonardo P. Monteiro - Limpa os campos na cópia do pedido de exportação.
     @history 17/08/2021 - Chamado  18514 Leonardo P. Monteiro - Gravação das mensagens nos pedidos de venda.
-    
+    @history 06/01/2022 - Chamado  18301 Leonardo P. Monteiro - Grava o flag da inspeção da Qualidade.
 /*/
 
 User Function EECAP100
@@ -126,7 +126,9 @@ User Function EECAP100
                     SC5->C5_MENNOTA  := EE7->EE7_MENSG
                     SC5->C5_MENNOT2  := EE7->EE7_MENSG2
                     SC5->C5_MENNOT3  := EE7->EE7_MENSG3
-
+                    
+                    // Grava o flag de inspeção da qualidade.
+                    SC5->C5_XINSQLD  := EE7->EE7_XINQLD
 
                 MsUnlock("SC5")
                 //INICIO Chamado 050701 - Abel Babini - Corrigi Local Padrão baseado no Indicador de Produtos - 06/08/2019

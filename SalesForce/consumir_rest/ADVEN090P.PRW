@@ -31,6 +31,7 @@ Static cFil := "02"
 	@Ticket 63090, Data 18/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket TI   , Data 28/12/2021, Everson, Tratamento para data incorreta enviada pelo Salesforce.
 	@history Chamado 66524 - Leonardo P. Monteiro  - 11/01/2022 - Correção na função comparaCab responsável pela comparação do cabeçalho dos PVs. Tratamento dos campos de mensagens C5_MENNOTA para a correta decodificação.
+	@history Chamado T.I  - Leonardo P. Monteiro   - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
@@ -774,7 +775,7 @@ Static Function execProc(cRecnos, nRecGetErr, cGrvErro) //Everson - 25/09/20219.
 						//
 						lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
 
-						//Verifica e há mudança de status no pedido.
+						//Verifica se há mudança de status no pedido.
 						If (lPedBloq .And. Alltrim(cValToChar( SC5->C5_BLQ )) == "1") .Or. (! lPedBloq .And. Empty(Alltrim(cValToChar( SC5->C5_BLQ ))) )
 							//cHoraExec := ELAPTIME(cHoraAnt, Time())
 							DbSelectArea("ZCI")
@@ -799,7 +800,7 @@ Static Function execProc(cRecnos, nRecGetErr, cGrvErro) //Everson - 25/09/20219.
 								Break
 							EndIf
 		
-							cHoraExec := ELAPTIME(cHoraExec, Time())
+							cHoraExec := ELAPTIME(cHoraAnt, Time())
 							DbSelectArea("ZCI")					
 							ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
 							RecLock("ZCI",.F.)
@@ -892,6 +893,15 @@ Static Function execProc(cRecnos, nRecGetErr, cGrvErro) //Everson - 25/09/20219.
 				EndIf
 			EndIf
 
+			// Grava a data, hora e a quantidade de processamentos do registro.
+			RecLock("ZCI",.F.)
+				if Empty(ZCI->ZCI_DTPROC)
+					ZCI->ZCI_DTPROC	:= Date()
+					ZCI->ZCI_HRPROC	:= Time()
+				endif
+
+				ZCI->ZCI_QTPROC := ZCI->ZCI_QTPROC+1
+			ZCI->(MsUnlock())
 			//
 			MsUnlockAll()
 			

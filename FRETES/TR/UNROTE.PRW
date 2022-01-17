@@ -8,6 +8,8 @@
 	@history Chamado 4992 - William Costa   - 24/11/2020 - Adicionado no Filtro para ver notas que estão com 'XXXXXX' que são notas denegadas ou Canceladas, e conseguir limpar a Placa delas.
 	@history Chamado 5657 - William Costa   - 26/11/2020 - Voltado versão de limpa placa, pq não deu certo o jeito que foi pensado será feito na tela de Ocorrências de Devoluções.
 	@history Ticket 64881 - Fernando Sigoli - 04/01/2022 - Adicionado Função LIMPAZCI, para quando limpar placa , liberar a msg do ZCI, com isso liberar a intergação novamente do pedido
+	@history Ticket 64881 - Fernando Sigoli - 14/01/2022 - Adicionado tratamento da LIMPAZCI, apenas para a empresa 01/02 que em salesforce
+
 /*/
 
 USER FUNCTION UNROTE() 
@@ -37,7 +39,7 @@ USER FUNCTION UNROTE()
 
 
 			//Ticket 64881 - Fernando Sigoli - 04/01/2022
-			IF 	SC5->C5_XSFPED <> ''
+			IF 	SC5->C5_XSFPED <> '' .And. cEmpAnt == "01" .And. cFilAnt == "02"
 				LIMPAZCI(SC5->C5_NUM)
 			ENDIF
 

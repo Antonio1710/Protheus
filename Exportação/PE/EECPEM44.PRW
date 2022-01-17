@@ -51,6 +51,12 @@ User Function EECPEM44()
             lRet    := .F.        
             MsgStop("[EECPEM44-03] - É necessário informar o Modelo de Certificado para finalizar a inclusão do processo de exportação.")
         ENDIF
+
+        if Empty( M->EE7_XINQLD )
+            lRet    := .F.        
+            MsgStop("[EECPEM44-04] - É necessário informar um valor no campo'Inspec. Qual' para informar se o processo está apto ou não para o faturamento.")
+        ENDIF
+
     ENDIF
 
     DbSelectArea("SC5")

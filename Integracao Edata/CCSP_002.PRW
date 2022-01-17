@@ -31,14 +31,16 @@ Static nQtdePerg := 4
 	@history chamado     ti - Fernando Maci- 05/09/2021 - Correção urgente após problema golive cloud
 	@history chamado  62433 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
 	@history chamado  TI 	- Leonardo P. Monteiro      - 29/12/2021 - Tratamento de error.log quando não existem dados na aCols.
+	@history chamado  18301 - Leonardo P. Monteiro      - 06/01/2022 - Grava o flag da inspeção da Qualidade.
 /*/
 User Function CCSP_002() // U_CCSP_002()
 
 	// LOCAL oSay,oSay2,oSay3
 	// LOCAL oBtn1,oBtn2,oBtn3
 	LOCAL oDlg            
-	PRIVATE cPerg:="CCSP02" 
-	Private cRotDesc := "Integração Protheus x Edata"
+	PRIVATE cPerg		:= "CCSP02" 
+	Private cRotDesc 	:= "Integração Protheus x Edata"
+	Private cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 	Private cCadastro:="Fechamento Carga Edata"
 
@@ -175,7 +177,9 @@ Static Function E001Proces(clAlias)
 	Private nPosNF		:= AScan(apHeader,{|x| AllTrim(x[2]) == "C5_NOTA"   	})
 	Private nPosSNF		:= AScan(apHeader,{|x| AllTrim(x[2]) == "C5_SERIE"   	})
 	Private nPosPVRA    := AScan(apHeader,{|x| AllTrim(x[2]) == "C5_XWSPAGO"   	}) // Chamado n. 059415 || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - FWNM - 12/08/2020
-
+	Private nPosEst		:= AScan(apHeader,{|x| AllTrim(x[2]) == "C5_EST"	   	})
+	Private nPosInQ		:= AScan(apHeader,{|x| AllTrim(x[2]) == "C5_XINSQLD"   	})
+	
 	Pergunte(cPerg,.F.)
 
 	opOdlg := TDialog():New(alCoord[1],alCoord[2],alCoord[6],alCoord[5],"Monitoramento Roteiros Liberados",,,,,CLR_BLACK,CLR_WHITE,,,.T.)
@@ -524,7 +528,7 @@ Static Function CCS_002PN()
 				//cQuery := "SELECT COUNT(ID_ITEMPEDIVEND) AS CONTAR FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "		
 				//dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasEXP,.T.,.F.)
 	
-				cQuery := "SELECT * FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "
+				cQuery := "SELECT * FROM ["+cLinkSe+"].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = " + Str(Val(AllTrim(opGridSC5:aCols[opGridSC5:NAT,nPosSeq]))) + " "
 				cQuery += "ORDER BY FILIAL+ID_PEDIVEND"	
 				dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasEXP,.T.,.F.)		
 				
@@ -1029,7 +1033,7 @@ Static Function CCS_002PD()
 			DBORDERNICKNAME("SC5_9")
 			DbSeek(xFilial("SC5")+cData+cRoteiro+cPlaca)
 
-			cQuery := "SELECT COUNT(*) AS REC FROM [LNKMIMS].[SMART].[dbo].[VW_PESADIVE_01] WHERE ID_PEDIVEND = " + Str(SC5->(RECNO())) + " "		
+			cQuery := "SELECT COUNT(*) AS REC FROM ["+cLinkSe+"].[SMART].[dbo].[VW_PESADIVE_01] WHERE ID_PEDIVEND = " + Str(SC5->(RECNO())) + " "		
 
 			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSC5,.T.,.F.)
 
@@ -1047,7 +1051,7 @@ Static Function CCS_002PD()
 				Return
 			EndIf
 
-			cQuery := "SELECT * FROM [LNKMIMS].[SMART].[dbo].[VW_PESADIVE_01] WHERE ID_PEDIVEND = " + Str(SC5->(RECNO()))  + " "
+			cQuery := "SELECT * FROM ["+cLinkSe+"].[SMART].[dbo].[VW_PESADIVE_01] WHERE ID_PEDIVEND = " + Str(SC5->(RECNO()))  + " "
 			cQuery += "ORDER BY FILIAL+ID_PEDIVEND"	
 
 			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSC5,.T.,.F.)
@@ -1338,25 +1342,30 @@ Static Function FAHECOLS(clAlias)
 
 	If Len(apHeader) == 0
 
-		AADD(aCmpHeader,"C5_DTENTR")
-		AADD(aCmpHeader,"C5_ROTEIRO")
-		AADD(aCmpHeader,"C5_PLACA")
-		AADD(aCmpHeader,"C5_NUM")
-		AADD(aCmpHeader,"C5_CLIENTE")
-		AADD(aCmpHeader,"A1_NREDUZ")
-		AADD(aCmpHeader,"C5_X_SQED")
-		AADD(aCmpHeader,"C5_XTIPO")		
-		AADD(aCmpHeader,"C5_XFATANT")
+		AADD(aCmpHeader,"C5_DTENTR")	// 02
+		AADD(aCmpHeader,"C5_ROTEIRO")	// 03
+		AADD(aCmpHeader,"C5_PLACA")		// 04
+		AADD(aCmpHeader,"C5_NUM")		// 05
+		AADD(aCmpHeader,"C5_CLIENTE")	// 06
+		AADD(aCmpHeader,"A1_NREDUZ")	// 07
+		AADD(aCmpHeader,"C5_X_SQED")	// 08
+		AADD(aCmpHeader,"C5_XTIPO")		// 09
+		AADD(aCmpHeader,"C5_XFATANT")	// 10
 		// RICARDO LIMA - 10/01/18
-		AADD(aCmpHeader,"C5_NOTA")
-		AADD(aCmpHeader,"C5_SERIE")		
-		//AADD(aCmpHeader,"C5_XWSPAGO")	// 059415 || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - FWNM - 12/08/2020	
+		AADD(aCmpHeader,"C5_NOTA")		// 11
+		AADD(aCmpHeader,"C5_SERIE")		// 12
+		// 059415 || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - FWNM - 12/08/2020	
+		//AADD(aCmpHeader,"C5_XWSPAGO")	
+		
+		AADD(aCmpHeader,"C5_EST")		// 13
+		AADD(aCmpHeader,"C5_XINSQLD")	// 14
+
 
 		Aadd(apHeader,	{	"","C5_XFLAGE","@BMP",;
 		10,0,"",;
 		"","C",	;
 		"","","",,"",	;
-		"","","",""	})	
+		"","","",""	})	// 01
 
 		SX3->(DbSetOrder(2))
 		For nI := 1 to Len(aCmpHeader)
@@ -1385,10 +1394,18 @@ Static Function FAHECOLS(clAlias)
 
 			If Alltrim(apHeader[i,2]) == "C5_XFLAGE" 
 
+				// Bloqueado
 				If (clAlias)->(&(apHeader[i,2])) == "1" 
 					apCols[Len(apCols)][i] := "BR_VERMELHO"
+				// Pedidos com embarque finalizados.
 				ElseIf  (clAlias)->(&(apHeader[i,2])) == "2"
-					apCols[Len(apCols)][i] := "BR_VERDE"								
+					// Ped. Export. liberados aquardando inspeção da qualidade.	
+					if (clAlias)->(&(apHeader[13,2])) 	== "EX" .AND. left((clAlias)->(&(apHeader[14,2])),2) 	!= "1"
+						apCols[Len(apCols)][i] := "BR_LARANJA"
+					// Liberado
+					else
+						apCols[Len(apCols)][i] := "BR_VERDE"
+					endif
 				EndIf 
 				
 				// RICARDO LIMA - 10/01/18
@@ -1455,19 +1472,22 @@ Static Function FQRY002()
 	If  ValType(MV_PAR04) == "N"
 
 		If MV_PAR04 == 1		
-			cWh := " AND C5_XFLAGE IN ('1') " //Pendentes
+			// Pedidos de venda que ainda não tenham sido integrados do eData e pedidos de exportação que ainda não foram liberados pela qualidade.
+			cWh := " AND (C5_XFLAGE IN ('1') OR (C5_EST='EX' AND C5_XINSQLD != '1')) " //Pendentes
 		ElseIf MV_PAR04 == 2		
-			cWh := " AND C5_XFLAGE IN ('2') AND C5_NOTA = '' " //Liberados //ADD NA CONDIÇÃO DE NOTAS EM BANCO QUANDO LEGENDA LIBERADOS CHAMADO:044699 23/10/2018 - FERNANDO SIGOLI
+			cWh := " AND C5_XFLAGE IN ('2') AND C5_NOTA = '' AND NOT (C5_EST='EX' AND C5_XINSQLD != '1') " //Liberados //ADD NA CONDIÇÃO DE NOTAS EM BANCO QUANDO LEGENDA LIBERADOS CHAMADO:044699 23/10/2018 - FERNANDO SIGOLI
 		Else
 			cWh := "AND C5_XFLAGE IN ('1','2')" // todos
 		EndIf
 
 	Else
 
-		If MV_PAR04 == "1"		
-			cWh := " AND C5_XFLAGE IN ('1') " //Pendentes
+		If MV_PAR04 == "1"
+			// Pedidos de venda que ainda não tenham sido integrados do eData e pedidos de exportação que ainda não foram liberados pela qualidade.
+			cWh := " AND (C5_XFLAGE IN ('1') OR (C5_EST='EX' AND C5_XINSQLD != '1') ) " //Pendentes
 		ElseIf MV_PAR04 == "2"		
-			cWh := " AND C5_XFLAGE IN ('2') AND C5_NOTA = '' " //Liberados //ADD NA CONDIÇÃO DE NOTAS EM BANCO QUANDO LEGENDA LIBERADOS CHAMADO:044699 23/10/2018 - FERNANDO SIGOLI
+			// Pedidos de venda integrados pelo eData e pedidos de exportação que foram liberados pela qualidade.
+			cWh := " AND C5_XFLAGE IN ('2') AND C5_NOTA = '' AND NOT (C5_EST='EX' AND C5_XINSQLD != '1') " //Liberados //ADD NA CONDIÇÃO DE NOTAS EM BANCO QUANDO LEGENDA LIBERADOS CHAMADO:044699 23/10/2018 - FERNANDO SIGOLI
 		Else
 			cWh := "AND C5_XFLAGE IN ('1','2')" // todos
 		EndIf	
@@ -1475,7 +1495,9 @@ Static Function FQRY002()
 	EndIf
 
 	//cSql:= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A1_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO,C5_XFATANT, C5_NOTA, C5_SERIE "
-	cSql:= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A1_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO,C5_XFATANT, C5_NOTA, C5_SERIE, C5_XWSPAGO, C5_XWSBOLG "
+	//cSql:= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A1_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO,C5_XFATANT, C5_NOTA, C5_SERIE, C5_XWSPAGO, C5_XWSBOLG "
+	cSql:= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A1_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO,C5_XFATANT, C5_NOTA, C5_SERIE, C5_XWSPAGO, C5_XWSBOLG, C5_EST, "
+	cSql+= " C5_XINSQLD  "
 	cSql+= " FROM " + RetSqlName("SC5") + " SC5 , " + RetSqlName("SA1") + " SA1 "
 	cSql+= " WHERE SC5.D_E_L_E_T_ =' ' AND SA1.D_E_L_E_T_ =' ' AND SC5.C5_FILIAL = '" + xFilial("SC5") + "' AND SA1.A1_FILIAL = '" + xFilial("SA1") + "' "
 	cSql+= " AND SC5.C5_CLIENTE = SA1.A1_COD "
@@ -1489,7 +1511,9 @@ Static Function FQRY002()
 	cSql+= cWh
 	cSql+= " UNION ALL	"
 	//cSql+= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A2_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO, C5_XFATANT, C5_NOTA, C5_SERIE "
-	cSql+= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A2_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO, C5_XFATANT, C5_NOTA, C5_SERIE, C5_XWSPAGO, C5_XWSBOLG "
+	//cSql:= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A1_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO,C5_XFATANT, C5_NOTA, C5_SERIE, C5_XWSPAGO, C5_XWSBOLG "
+	cSql+= "SELECT C5_DTENTR,C5_ROTEIRO,C5_PLACA,C5_NUM,C5_CLIENTE,A2_NREDUZ,C5_X_SQED,C5_XFLAGE,C5_XTIPO, C5_XFATANT, C5_NOTA, C5_SERIE, C5_XWSPAGO, C5_XWSBOLG, C5_EST,  "
+	cSql+= " C5_XINSQLD  "
 	cSql+= " FROM " + RetSqlName("SC5") + " SC5 , " + RetSqlName("SA2") + " SA2 "
 	cSql+= " WHERE SC5.D_E_L_E_T_ =' ' AND SA2.D_E_L_E_T_ =' ' AND SC5.C5_FILIAL = '" + xFilial("SC5") + "' AND SA2.A2_FILIAL = '" + xFilial("SA2") + "' "
 	cSql+= " AND SC5.C5_CLIENTE = SA2.A2_COD "
@@ -1598,6 +1622,7 @@ Static Function CCS_LEG()
 	Local aCor := {}
 	// RICARDO LIMA - 10/01/18
 	aAdd(aCor,{"BR_VERMELHO","Pendente"     })
+	aAdd(aCor,{"BR_LARANJA"	,"Ped. Export. s/ Insp. da Qualidade"  	})
 	aAdd(aCor,{"BR_VERDE"	,"Liberado"  	})
 	aAdd(aCor,{"BR_AZUL"	,"Faturado"  	})
 	//aAdd(aCor,{"BR_AMARELO"	,"PV com Adiantamento não recebido" }) //@history Chamado 059415 - FWNM          - 12/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação
@@ -1712,10 +1737,13 @@ Static Function AtuaPedVend(cPedRemessa,cPedOrdem)
 
 
 	DbSelectArea("SC5")
-	dbSetOrder(1) 
-	If dbseek(xFilial("SC5")+Alltrim(cPedOrdem))
+	SC5->(dbSetOrder(1))
+	If SC5->(dbseek(xFilial("SC5")+Alltrim(cPedOrdem)))
 		If !Empty(SC5->C5_NOTA) 
 			MsgAlert(" Pedido de venda à ordem  "+cPedOrdem+" ja faturado ou eliminado. Por favor, verifique!" )
+			Return
+		Elseif SC5->C5_EST='EX' .AND. left(SC5->C5_XINSQLD,1) !='1'
+			MsgAlert(" Processo de Exportação "+cPedOrdem+" ("+ Alltrim(SC5->C5_PEDEXP) +") aguardando inspeção da qualidade, verifique!" )
 			Return
 		EndIf
 	Else
@@ -1994,7 +2022,7 @@ Static Function chkEdtLk()
 
 	//Variáveis.
 	Local aArea  := GetArea()
-	Local cQuery := " SELECT TOP 1 '1' FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = '000000' "
+	Local cQuery := " SELECT TOP 1 '1' FROM ["+cLinkSe+"].[SMART].[dbo].[VW_EXPECARG_01] WHERE ID_CARGEXPE = '000000' "
 	Local lRet   := .T.
   	Local oError := ErrorBlock({|e| lRet:= .F.,;
 	  							MsgAlert("Não foi possível conectar no banco de dados do Edata: " + Chr(10) + e:Description, "chkEdtLk(CCSP_002)");

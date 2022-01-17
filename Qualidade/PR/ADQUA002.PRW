@@ -13,6 +13,8 @@
     @history Chamado 18431 - Leonardo P. Monteiro    - 16/08/2021 - Correção no programa para excluir os registros somente após todas as checagens e modificar a mesagem de alerta.
     @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação. Nova compilação em produção.
     @history Chamado 63954 - Leonardo P. Monteiro    - 08/12/2021 - Erro na chamada da função procres().
+    @history Chamado 18301 - Leonardo P. Monteiro    - 06/01/2022 - Grava o flag da inspeção da Qualidade.
+    
     /*/
 User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
 
@@ -696,6 +698,28 @@ Static Function grvDados(cInspId, cMonQua, cAprQua, dDatApr, cHorApr, cDtRot, cR
 
     IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
         IF SC5->C5_NUM == cPdVend
+            
+            // Preenche o flag no PV e no Pedido de Exportação que as inspeções da qualidade estão integradas.
+            IF Reclock("SC5",.F.)
+                SC5->C5_XINSQLD := "1"
+                SC5->(MsUnlock())
+
+                if !Empty(SC5->C5_PEDEXP)
+                    
+                    DbSelectArea("EE7")
+                    EE7->(DbSetOrder(1))
+                    
+                    if EE7->(Dbseek(xFilial("EE7")+SC5->C5_PEDEXP,.F.))
+                        If Reclock("EE7",.F.)
+                            EE7->EE7_XINQLD := "1"
+                            EE7->(Msunlock())
+                        endif
+                    endif
+                endif
+
+
+            endif
+
 
             //Faz a correção na variável vinda do aplicativo.
             //Revisar depois com o Everson.

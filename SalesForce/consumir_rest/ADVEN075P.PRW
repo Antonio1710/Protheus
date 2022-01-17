@@ -34,6 +34,7 @@ Static cHK				:= "&"
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 @history Chamado T.I  - Leonardo P. Monteiro  - 30/07/2021 - Inclusão do campo de controle GUUID.
+@history Chamado T.I  - Leonardo P. Monteiro  - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
 */
 User Function ADVEN075P(cServico,cMetodo,cBody,cMsg,aResponse) // U_ADVEN075P()
 
@@ -1416,6 +1417,12 @@ Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPed
 		ZCI->ZCI_METD  := cMetodo
 		ZCI->ZCI_TMPR  := cTmProc
 		ZCI->ZCI_PEDSAL:= cPedSF
+
+		// Grava a data, hora e a quantidade de processamentos do registro.
+		ZCI->ZCI_DTPROC	:= Stod("")
+		ZCI->ZCI_HRPROC	:= ""
+		ZCI->ZCI_QTPROC := 0
+
 		if Alltrim(URL) == "/pedidosdevenda" .and. Alltrim(cMetodo) == "POST"
 			ZCI->ZCI_UUID := "1"
 		ELSE

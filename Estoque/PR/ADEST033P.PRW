@@ -18,6 +18,7 @@
     @history Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
     @history Ticket 66335 - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
     @history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
+    @history Ticket TI - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
     /*/
 
 User Function ADEST033P()  // U_ADEST033P()
@@ -402,7 +403,7 @@ Static Function sqlInOp()
     cQuery += "   FROM SAG.dbo.INGEOVOS AS INGEOVOS  "
     cQuery += "         LEFT JOIN SAG.dbo.POCaEmpr AS POCAEMPR  ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS  "
     cQuery += "         LEFT JOIN SAG.dbo.INCATPOV AS INCATPOV ON INCATPOV.CODITPOV = INGEOVOS.CODITPOV " //Adriano Savoine - 28/12/2021 - Ticket : 65674
-    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "'' AND STATUSOP <> 'I'  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
+    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "'' AND STATUSOP <> ''I''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
     cQuery += " WHERE   "
     cQuery += "     CODIOVOS NOT IN ( "
 	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "
