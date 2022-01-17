@@ -16,12 +16,19 @@
 //±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 //±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 //ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-              
-USER FUNCTION ADFIN002P()
+
+/*/{Protheus.doc} User Function U_ADFIN002P()
+    Funcao para gerar a data de acumulo e o valor do maior acumulo do envio de arquivo da cisp do financeiro.
+    @type  Function
+    @author WILLIAM COSTA
+    @since 27/05/2015
+    @version XX
+    @history Chamado 66686 - Leonardo P. Monteiro - 14/01/2022 - Correção dos valores acumulados da CISP com a inclusão e tratamento dos títulos com AB-.
+/*/
+
+
+USER FUNCTION ADFIN002P() // U_ADFIN002P()
     
-    Private cCliente    := ''
-    Private cLoja       := ''
-	Private cData       := ''
 	Private aAcumulo    := {}
 	Private aReceber    := {}
 	Private aRecAux     := {}
@@ -61,12 +68,13 @@ USER FUNCTION ADFIN002P()
 	// ****************************FINAL PARA RODAR COM SCHEDULE**************************************** //  
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
+	
 	If !LockByName("ADFIN002P", .T., .F.)
 		ConOut("[ADFIN002P] - Existe outro processamento sendo executado! Verifique...")
 		RPCClearEnv()
 		Return
 	EndIf
-
+	
 	ConOut("INICIO DO SCHEDULE ADFIN002P" + '||' + DTOC(DATE()) + '||' + TIME()) 
 
 	PtInternal(1,ALLTRIM(PROCNAME()))
@@ -94,16 +102,18 @@ USER FUNCTION ADFIN002P()
 	CalcDtPenComp() // calcula data da penultima compra da rede 	
 
 	IF nId <> 3
-	
-		SqlContaCliente() 
+
+		SqlContaCliente() // Verifica se existem clientes sem o cálculo do acúmulo feito ao menos uma vez.
 		
 		While TRA->(!EOF()) 
-			        
+
+			// Caso exista algum cliente que nunca tenha feito o cálculo de acúmulo.        
 		    IF TRA->CONT == 0
-		    
-		    	GeraAcumPrimeiraVez()
+		    	
+				// Gera o acúmulo para o cliente pela primeira vez.
+		    	GeraAcumPrimeiraVez() 
 		    	                  
-		    	//depois que rodou todos roda pela ultima vez
+		    	//depois que rodou todos roda pela ultima vez.
 		    	GravarAcumulo()
 			    aCloneAcum := {}
 	    		aAcumulo   := {} 
@@ -111,8 +121,8 @@ USER FUNCTION ADFIN002P()
 	    		cCgcOld    := cCgc
 		    
 		    ELSE
-		    
-		    	GeraAcumSegundaVez()	
+		    	// Reprocessa o acúmulo para os demais clientes que já tiveram um cálculo pela primeira vez.
+		    	GeraAcumSegundaVez() 
 		    	
 		    	//depois que rodou todos roda pela ultima vez
 		    	GravarAcumulo()
@@ -255,7 +265,8 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
 		AADD(aReceber, TRC->E1_VALOR)
 		AADD(aReceber, 'SE1')
 		AADD(aReceber, 0) 
-		AADD(aReceber, TRC->E1_TIPO) 
+		AADD(aReceber, TRC->E1_TIPO)
+
 		AADD(aAcumulo, aReceber) 
 		AADD(aRecAux, aReceber)
 	    aReceber := {} 
@@ -339,13 +350,15 @@ RETURN(NIL)
 
 Static Function GravarAcumulo()
     
-	Local CCliSA1  := ''
-	Local ClojaSA1 := '' 
+	//Local CCliSA1  	:= ''
+	//Local ClojaSA1 	:= ''
+	Local nCont			:= 1 
+	Local nAcumulo		:= Len(aAcumulo)
 	
 	//ConOut("ADFIN002P - GravarAcumulo - ENTREI NA STATIC FUNCTION GravarAcumulo" + '||' + DTOC(DATE()) + '||' + TIME())
 	
 
-	IF LEN(aAcumulo) > 0
+	IF nAcumulo > 0
 		// **************************** inicio organiza vetor aAcumulo por data ************** //
 		
 		aSort(aAcumulo,,,{ |X, Y| X[1] + cvaltochar(X[2]) + X[5] < Y[1] + cvaltochar(Y[2]) + Y[5]})
@@ -368,7 +381,7 @@ Static Function GravarAcumulo()
 		// depois a posicao 4 recebe o valor de saldo correto
 		
 		nSaldo := 0
-		FOR nCont := 1 TO LEN(aAcumulo)
+		FOR nCont := 1 TO nAcumulo
 		
 			IF aAcumulo[nCont][3] == 'SE1'
 			
@@ -376,7 +389,7 @@ Static Function GravarAcumulo()
 				
 			ELSEIF aAcumulo[nCont][3]  == 'SE5' .AND. ;
 			       (aAcumulo[nCont][5] == 'ES' .OR.  ;
-			        aAcumulo[nCont][5] == 'E2')//CANCELAMENTO SOMA DINOVO
+			        aAcumulo[nCont][5] == 'E2')//CANCELAMENTO SOMA DE NOVO
 			
 				nSaldo := nSaldo + aAcumulo[nCont][2]	
 				
@@ -456,19 +469,24 @@ Static Function GravarAcumulo()
 	    While TRG->(!EOF())
 	    
 	    	DBSELECTAREA("SA1")
-			DbSetOrder(1)
+			SA1->(DbSetOrder(1))
 			
 			IF SA1->(DbSeek(xFilial("SA1")+TRG->A1_COD+TRG->A1_LOJA, .T.))
 			
 				//ConOut("ADFIN002P - GravarAcumulo - Dentro do While"+TRG->A1_COD+TRG->A1_LOJA+ '||' + DTOC(DATE()) + '||' + TIME())
 			
 				IF EMPTY(SA1->A1_DTACUMU) .AND. SA1->A1_VLACUMU  <= 0 .AND. nVlAcum <= 0
-			   		RecLock("SA1",.F.)              
+			   		IF RecLock("SA1",.F.)              
 					
 						SA1->A1_DTACUMU	:= IIF(STOD(cDtAcum) < SA1->A1_DTACUMU,SA1->A1_DTACUMU, STOD(cDtAcum))
 						SA1->A1_VLACUMU	:= 0
 		
-					MsUnlock()
+						MsUnlock()
+					ELSE
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"1- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+									ComputerName(),LogUserName())
+					ENDIF
 				   
 			    ELSEIF !EMPTY(SA1->A1_DTACUMU) .AND. ;
 			          SA1->A1_DTACUMU  < STOD(cDtAcum) .AND. ; 
@@ -478,23 +496,32 @@ Static Function GravarAcumulo()
 		                                 CVALTOCHAR(MONTH(DATE())),CVALTOCHAR(MONTH(DATE())))+'/'+;
 		                                 CVALTOCHAR((YEAR(DATE()) - 1)))))))  
 			          
-			   		RecLock("SA1",.F.)              
+			   		if RecLock("SA1",.F.)              
 					
 						SA1->A1_DTACUMU	:= IIF(STOD(cDtAcum) < SA1->A1_DTACUMU,SA1->A1_DTACUMU, STOD(cDtAcum))
 						SA1->A1_VLACUMU	:= nVlAcum //IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
 		
-					MsUnlock() 
-					
+						MsUnlock() 
+					ELSE
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"2- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+									ComputerName(),LogUserName())
+					endif
 			    ELSEIF SA1->A1_VLACUMU <= 0 .AND. ;
 			           nVlAcum         >= 0 .AND. ;
 			           SA1->A1_DTULTRE >= STOD(cDtAcum)        
 			   
-			   		RecLock("SA1",.F.)              
+			   		if RecLock("SA1",.F.)              
 					
 						SA1->A1_DTACUMU	:= IIF(STOD(cDtAcum) < SA1->A1_DTACUMU,SA1->A1_DTACUMU, STOD(cDtAcum))
 						SA1->A1_VLACUMU	:= IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
 		
-					MsUnlock()		
+						MsUnlock()		
+					ELSE
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"3- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+									ComputerName(),LogUserName())
+					endif
 					
 				ELSEIF SA1->A1_DTULTRE < STOD(cDtAcum) .AND. ;
 			           nVlAcum         > 0   
@@ -504,12 +531,17 @@ Static Function GravarAcumulo()
 			        While TRJ->(!EOF())
 			            
 			            IF ROUND(TRJ->E1_VALOR,0) >= nVlAcum
-					   		RecLock("SA1",.F.)              
+					   		if RecLock("SA1",.F.)              
 							
 								SA1->A1_DTACUMU	:= SA1->A1_DTULTRE						
 								SA1->A1_VLACUMU	:= IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
 				
-							MsUnlock() 
+								MsUnlock() 
+							ELSE
+								u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+											"4- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+											ComputerName(),LogUserName())
+							endif
 						ENDIF			
 					TRJ->(DBSKIP())
 					ENDDO
@@ -517,16 +549,21 @@ Static Function GravarAcumulo()
 			   
 			    ELSE   		
 			   
-			   		RecLock("SA1",.F.)              
+			   		IF RecLock("SA1",.F.)              
 					
 					    SA1->A1_DTACUMU	:= SA1->A1_DTACUMU
 						SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
 		
-					MsUnlock()
-					
+						MsUnlock()
+					ELSE
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"5- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+									ComputerName(),LogUserName())
+					ENDIF
 			    
 			    ENDIF
-				DBCLOSEAREA("SA1")
+
+				SA1->(DBCLOSEAREA())
 	        ENDIF
 		
 			TRG->(DBSKIP())
@@ -550,8 +587,8 @@ STATIC FUNCTION CalcDtUltComp()
 	    	While TRI->(!EOF())    
 	    	
 	    	    DBSELECTAREA("SA1")
-	    	    DBGOTOP()
-				DbSetOrder(1)
+	    	    SA1->(DBGOTOP())
+				SA1->(DbSetOrder(1))
 				
 				IF SA1->(DbSeek(xFilial("SA1")+TRI->A1_COD+TRI->A1_LOJA, .T.))
 				
@@ -560,27 +597,40 @@ STATIC FUNCTION CalcDtUltComp()
 				
 				    IF EMPTY(SA1->A1_DTULTRE)
 				    
-				    	RecLock("SA1",.F.)              
+				    	if RecLock("SA1",.F.)              
 						
 							SA1->A1_DTULTRE	:= STOD(TRH->E1_EMISSAO)	//GRAVA DT ULT COMPRA DA REDE				
 							
-						MsUnlock() 
+							MsUnlock() 
+						ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"5- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
                     
                     ELSEIF SA1->A1_DTULTRE < STOD(TRH->E1_EMISSAO)
-				   		RecLock("SA1",.F.)              
+				   		if RecLock("SA1",.F.)              
 						
 							SA1->A1_DTULTRE	:= STOD(TRH->E1_EMISSAO)	//GRAVA DT ULT COMPRA DA REDE				
 							
-						MsUnlock()
-						
+							MsUnlock()
+						ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"6- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
 					ELSE	      
 					
-						RecLock("SA1",.F.)              
+						if RecLock("SA1",.F.)              
 						
 							SA1->A1_DTULTRE	:= SA1->A1_DTULTRE	
 							
-						MsUnlock()
-					   
+							MsUnlock()
+					   	ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"7- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
 				    ENDIF
 				ENDIF           
 			    
@@ -612,8 +662,8 @@ STATIC FUNCTION CalcDtPenComp()
 	Local cDtPenulCom  := '' 
 	Local cDtUltCom    := ''
 	Local nVlMaiorAcum := ''
-	Local nCont        := 0 
-	Local lCont        := .F.
+	//Local nCont        := 0 
+	//Local lCont        := .F.
 	
 	//ConOut("ADFIN002P - CalcDtPenComp - ENTREI NA STATIC FUNCTION CalcDtPenComp ||" + '||' + DTOC(DATE()) + '||' + TIME())
 	
@@ -628,7 +678,7 @@ STATIC FUNCTION CalcDtPenComp()
 	cEOL := Chr(13)+Chr(10)
 	
 	If nHdl4 == -1
-		cMetodo   := 'Não gerou a validacao da penultima comra'
+		cMetodo   := 'Não gerou a validacao da penultima compra'
 		nId       := 3
 		cmensagem := "O Arquivo de nome " + AllTrim(cArq) + " nao pode ser aberto verifique se ele existe...ERRO(5)"
 		 
@@ -665,8 +715,8 @@ STATIC FUNCTION CalcDtPenComp()
 	    	While TRI->(!EOF())    
 	    	
 	    	    DBSELECTAREA("SA1")
-	    	    DBGOTOP()
-				DbSetOrder(1)
+	    	    SA1->(DBGOTOP())
+				SA1->(DbSetOrder(1))
 				
 				IF SA1->(DbSeek(xFilial("SA1")+TRI->A1_COD+TRI->A1_LOJA, .T.))
 				
@@ -677,28 +727,41 @@ STATIC FUNCTION CalcDtPenComp()
 				       STOD(cDtUltCom) == SA1->A1_DTULTRE .AND. ;
 				       STOD(cDtUltCom)  > STOD(cDtPenulCom)
 				    
-				    	RecLock("SA1",.F.)              
+				    	if RecLock("SA1",.F.)              
 						
 							SA1->A1_XDTPENU	:= STOD(cDtPenulCom)	//GRAVA DT ULT COMPRA DA REDE				
 							
-						MsUnlock() 
+							MsUnlock() 
+						ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"7- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
                     
-                    ELSEIF SA1->A1_DTULTRE > STOD(cDtUltCom) .AND. ;
-                           !EMPTY(SA1->A1_XDTPENU)                // se a data da ultima compra salva no banco de dados for maior do que a ultima data da ultima compra do arquivo então
-				   		RecLock("SA1",.F.)              
+                    ELSEIF SA1->A1_DTULTRE > STOD(cDtUltCom) .AND. !EMPTY(SA1->A1_XDTPENU)                // se a data da ultima compra salva no banco de dados for maior do que a ultima data da ultima compra do arquivo então
+				   		if RecLock("SA1",.F.)              
 						
 							SA1->A1_XDTPENU	:= STOD(cDtUltCom)	//GRAVA DT PENULTIMA COMPRA DA REDE COMO SENDO A EX ULTIMA DATA, ASSUMINDO ASSIM A ULTIMA COMPRA ANTERIOR				
 							
-						MsUnlock()
+							MsUnlock()
+						ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"8- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
 						
 					ELSE	      
 					
-						RecLock("SA1",.F.)              
+						if RecLock("SA1",.F.)              
 						
 							SA1->A1_XDTPENU	:= SA1->A1_XDTPENU
 							
-						MsUnlock()
-					   
+							MsUnlock()
+					   	ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"9- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
 				    ENDIF
 				ENDIF           
 			    
@@ -719,7 +782,7 @@ STATIC FUNCTION CalcDtPenComp()
 	EndDO
     //MSGINFO("Total de CNPJ " + cvaltochar(nCont), "Arquivo importado com sucesso")
 	FClose(nHdl4)           
-	
+	// Em casos que o cliente não tiver penúltima compra a última compra é gravada no campo.
 	// ** inicio gravar informacao da penultima compra da rede que estiver em branco** //
 	SqlTotPenultim() //CARREGA TODOS OS CNPJ
     While TRK->(!EOF())        
@@ -737,22 +800,31 @@ STATIC FUNCTION CalcDtPenComp()
 			
 			    IF EMPTY(SA1->A1_XDTPENU)
 			    
-			    	RecLock("SA1",.F.)              
+			    	if RecLock("SA1",.F.)              
 					
 						SA1->A1_XDTPENU	:= STOD(TRK->E1_DTPENULTIMA)	//GRAVA DT ULT COMPRA DA REDE				
 						
-					MsUnlock() 
-                    
+						MsUnlock() 
+                    ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"10- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
                 ELSE	      
 				
-					RecLock("SA1",.F.)              
+					if RecLock("SA1",.F.)              
 					
 						SA1->A1_XDTPENU	:= SA1->A1_XDTPENU	
 						
-					MsUnlock()
-				   
+						MsUnlock()
+				    ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"11- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+					endif
 			    ENDIF
-				DBCLOSEAREA("SA1")
+
+				SA1->(DBCLOSEAREA())
 	        ENDIF           
 		    
 	        TRL->(DBSKIP())
@@ -817,6 +889,7 @@ STATIC FUNCTION EmailMaiorAcum(cMetodo,nId,cmensagem)
     Local cPassword    := AllTrim(GetMv("MV_INTPSW"))
     Local cFrom        := AllTrim(GetMv("MV_INTACNT"))
     Local cTo          := AllTrim(GetMv("MV_#USUMAI"))
+	//Local cTo		   := "leonardo.monteiro@adoro.com.br"
     Local lOk          := .T.  
     Local lAutOk       := .F. 
     Local lSmtpAuth    := GetMv("MV_RELAUTH",,.F.) 
@@ -824,8 +897,8 @@ STATIC FUNCTION EmailMaiorAcum(cMetodo,nId,cmensagem)
     Local cBody        := ""
     Local cAtach       := ""               
     Local _cStatEml    := ""
-    Local _cPedido     := ""
-    Local _cStatEml    := ""
+    //Local _cPedido     := ""
+    //Local _cStatEml    := ""
     
 	_cStatEml    := cMetodo 
     cBody        := RetHTML(_cStatEml,nId,cmensagem)
@@ -858,7 +931,7 @@ RETURN(NIL)
 Static Function RetHTML(_cStatEml,nId,cmensagem)
 
 	Local cRet       := "" 
-	Local nContEmail := 0
+	//Local nContEmail := 0
 
 	cRet := "<p <span style='"
 	cRet += 'font-family:"Calibri"'
@@ -1002,7 +1075,8 @@ Static Function SqlReceber()
 
 	BeginSQL Alias "TRC"
 			%NoPARSER%  
-			SELECT SE1.E1_VALOR,
+			SELECT (CASE WHEN SE1.E1_TIPO = 'AB-' THEN (SE1.E1_VALOR*-1) ELSE (SE1.E1_VALOR*1) END) AS E1_VALOR,
+				   //SE1.E1_VALOR,
 			       SE1.E1_EMISSAO,
 			       SE1.E1_FILIAL,
 			       SE1.E1_PREFIXO,
@@ -1010,15 +1084,17 @@ Static Function SqlReceber()
 			       SE1.E1_PARCELA,
 			       SE1.E1_TIPO,
 			       SE1.E1_CLIENTE,
-			       SE1.E1_LOJA
-			  FROM %Table:SE1% SE1 WITH(NOLOCK)
-			 WHERE SE1.E1_CLIENTE  = %EXP:cCliente%
-			   AND SE1.E1_LOJA     = %EXP:cLoja%
-			   AND SE1.E1_EMISSAO  > %EXP:cData%
-			   AND SE1.E1_TIPO     = 'NF' 
+			       SE1.E1_LOJA,
+				   SE1.R_E_C_N_O_ REGISTRO
+			FROM %Table:SE1% SE1 WITH(NOLOCK)
+			WHERE SE1.E1_CLIENTE  = %EXP:cCliente%
+			   AND SE1.E1_LOJA    = %EXP:cLoja%
+			   AND SE1.E1_EMISSAO > %EXP:cData%
+			   AND SE1.E1_TIPO IN ('NF','AB-') 
 			   AND SE1.D_E_L_E_T_ <> '*'
-			   AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
-			 ORDER BY E1_EMISSAO,E1_VALOR
+			   //AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
+			ORDER BY E1_EMISSAO,E1_VALOR
 	EndSQl             
 RETURN(NIL)
 
@@ -1047,7 +1123,8 @@ Static Function SqlPagar()
 			   AND SE5.E5_NUMERO   = SE1.E1_NUM
 			   AND SE5.E5_PARCELA  = SE1.E1_PARCELA
 			   AND SE5.E5_TIPO     = SE1.E1_TIPO
-			   AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			   //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
 			   AND SE1.D_E_L_E_T_ <> '*' 
 			   
 	EndSQl             
@@ -1065,13 +1142,15 @@ Static Function SqlCliAnoAtual()
 			 WHERE SE1.E1_EMISSAO >= CONVERT(VARCHAR(4),(YEAR(GETDATE()) -1)) + CASE WHEN LEN(MONTH(GETDATE())) = 1 then '0' + CONVERT(VARCHAR(2),(MONTH(GETDATE())))  else CONVERT(VARCHAR(2),(MONTH(GETDATE()))) END + '01'
 			   AND SE1.E1_TIPO     = 'NF' 
 			   AND SE1.D_E_L_E_T_ <> '*' 
-               AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+               //AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
 			   AND SE1.E1_CLIENTE  = SA1.A1_COD
 			   AND SE1.E1_LOJA     = SA1.A1_LOJA
 			   AND RTRIM((LEFT(SA1.A1_CGC,8))) <> '00000000'
 			   AND RTRIM((LEFT(SA1.A1_CGC,8))) <> '' 
 			   AND SA1.D_E_L_E_T_ <> '*'           
-			   			   
+			   //Debugar a rotina.
+			   //AND A1_XCGC='47508411'
 			 GROUP BY E1_CLIENTE, E1_LOJA, SA1.A1_CGC 
 			 
 			 ORDER BY SA1.A1_CGC 
@@ -1107,7 +1186,8 @@ Static Function SqlEstorno()
 			   AND SE5.E5_NUMERO   = SE1.E1_NUM
 			   AND SE5.E5_PARCELA  = SE1.E1_PARCELA
 			   AND SE5.E5_TIPO     = SE1.E1_TIPO
-			   AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			   //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
 			   AND SE1.D_E_L_E_T_ <> '*'     
 			   
 	EndSQl             
@@ -1156,7 +1236,8 @@ Static Function SqlTOTCGC()
 				  AND E1_TIPO                  = 'NF'  
 				  //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 				  //AND SE1010.D_E_L_E_T_       <> '*'  
-				  
+				  //Debugar a rotina.
+				  //AND A1_XCGC='47508411'
 				GROUP BY A1_DTACUMU,A1_VLACUMU,LEFT(A1_CGC,8)
 			
 				ORDER BY A1_CGC
@@ -1203,7 +1284,8 @@ STATIC FUNCTION SqlVerifSaldo(cCnpjnew2)
 			  AND A1_LOJA                 = E1_LOJA
 			  AND %Table:SA1%.D_E_L_E_T_ <> '*'
 			  AND %Table:SE1%.D_E_L_E_T_ <> '*' 
-			  AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			  //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
+			  AND LEFT(SE1.E1_PORTADO,1) != 'P'
 			  AND E1_TIPO = 'NF' 
 			
 			GROUP BY A1_DTACUMU,A1_DTULTRE,A1_ULTCOM, A1_VLACUMU

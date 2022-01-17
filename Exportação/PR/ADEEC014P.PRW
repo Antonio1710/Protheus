@@ -111,7 +111,7 @@ Static Function execWF(lAutom)
 
             cBody	:= " <Strong>Para, Comex / Faturamento</Strong>"
             cBody	+= " <Br><br><br>"
-            cBody   += " Favor notar os dados do pedido EXPORT: "
+            cBody   += " Liberado para faturamento por EXPORT: "
             cBody	+= " <Br><br><br>"
             cBody	+= " <strong>Invoice(PV):</strong> "+QEXP->EE7_PEDIDO +"("+ QEXP->EE7_PEDFAT +") "
             cBody	+= " <br>"
