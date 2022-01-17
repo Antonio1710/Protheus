@@ -3,7 +3,8 @@
 #Include "ParmType.ch"
 #Include "rwmake.ch"
 
-Static nQtdePerg := 4
+Static nQtdePerg 	:= 4
+Static cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 /*/{Protheus.doc} User Function CCSP_002
 	Rotina para fechamento de carga do edata
@@ -32,6 +33,7 @@ Static nQtdePerg := 4
 	@history chamado  62433 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
 	@history chamado  TI 	- Leonardo P. Monteiro      - 29/12/2021 - Tratamento de error.log quando não existem dados na aCols.
 	@history chamado  18301 - Leonardo P. Monteiro      - 06/01/2022 - Grava o flag da inspeção da Qualidade.
+	@history chamado  18301 - Leonardo P. Monteiro      - 17/01/2022 - Correção de error.log na chamada da função CCSP_003.
 /*/
 User Function CCSP_002() // U_CCSP_002()
 
@@ -40,7 +42,7 @@ User Function CCSP_002() // U_CCSP_002()
 	LOCAL oDlg            
 	PRIVATE cPerg		:= "CCSP02" 
 	Private cRotDesc 	:= "Integração Protheus x Edata"
-	Private cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
+	//Private cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 	Private cCadastro:="Fechamento Carga Edata"
 
@@ -2019,6 +2021,7 @@ Return Nil
 	@version 01
 /*/
 Static Function chkEdtLk()
+	//Private cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 	//Variáveis.
 	Local aArea  := GetArea()

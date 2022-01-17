@@ -15,6 +15,7 @@
 	@history  12/02/2019 - Fernando Sigoli Chamado: 047155 - Enviar carga para edata apenas notas fiscais com volume fisico, excluimos nf de quebra
 	@history  08/10/2021 - Fernando Sigoli Ticket : 61334  - Comentado Begin Tran nao faz sentido essa rotina, desarmar.
 	@history chamado  62436 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
+	@history chamado  TI - Leonardo P. Monteiro - 17/10/2021 - Tratamento de error.log na chamada da função CCSP_002.
 /*/
 
 
@@ -64,6 +65,7 @@ Static nAltEtq			:= 007
 Static nLargEtq			:= 035 
 Static nLargBot			:= 040
 Static cHK				:= "&"
+Static cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 
 User Function CCSP_003 () // U_CCSP_003()
 
@@ -632,7 +634,7 @@ For ni := 1 to Len(aLstPED)
 						  //a mesma tem que mostrar o error	
 				
 				//Executa a Stored Procedure
-				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_DEVOCARG_01] ' +Str(Val(cSeq)) )
+				TcSQLExec('EXEC ['+cLinkSe+'].[SMART].[dbo].[FI_DEVOCARG_01] ' +Str(Val(cSeq)) )
 				cErro := ""
 				cErro := U_RetErroED()
 				
@@ -721,7 +723,7 @@ For ni := 1 to Len(aLstPED)
 			//BeginTran()
 				
 				//Executa a Stored Procedure
-				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_DEVOCARG_01] ' +Str(Val(cSeq)) )
+				TcSQLExec('EXEC ['+cLinkSe+'].[SMART].[dbo].[FD_DEVOCARG_01] ' +Str(Val(cSeq)) )
 				cErro := ""
 				cErro := U_RetErroED()
 				If Empty(cErro)
