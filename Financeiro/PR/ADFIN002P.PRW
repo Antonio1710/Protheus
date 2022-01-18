@@ -4,18 +4,6 @@
 #INCLUDE "rwmake.ch"    
 #INCLUDE "TBICONN.CH"
 
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-//ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-//ฑฑบPrograma  ณADFIN002P บAutor  ณWILLIAM COSTA       บ Data ณ  27/05/2015 บฑฑ
-//ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-//ฑฑบDesc.     ณFuncao para gerar a data de acumulo e o valor do maior acumuบฑฑ
-//ฑฑบ          ณlo do envio de arquivo da cisp do financeiro.               บฑฑ
-//ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-//ฑฑบUso       ณ SIGAFIN                                                    บฑฑ
-//ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-//ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-//฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
 
 /*/{Protheus.doc} User Function U_ADFIN002P()
     Funcao para gerar a data de acumulo e o valor do maior acumulo do envio de arquivo da cisp do financeiro.
@@ -23,7 +11,8 @@
     @author WILLIAM COSTA
     @since 27/05/2015
     @version XX
-    @history Chamado 66686 - Leonardo P. Monteiro - 14/01/2022 - Corre็ใo dos valores acumulados da CISP com a inclusใo e tratamento dos tํtulos com AB-.
+    @history Chamado 66834 - Leonardo P. Monteiro - 14/01/2022 - Corre็ใo dos valores acumulados da CISP com a inclusใo e tratamento dos tํtulos com AB-.
+	@history Chamado 66834 - Leonardo P. Monteiro - 17/01/2022 - Corre็ใo de error.log.
 /*/
 
 
@@ -1285,7 +1274,7 @@ STATIC FUNCTION SqlVerifSaldo(cCnpjnew2)
 			  AND %Table:SA1%.D_E_L_E_T_ <> '*'
 			  AND %Table:SE1%.D_E_L_E_T_ <> '*' 
 			  //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
-			  AND LEFT(SE1.E1_PORTADO,1) != 'P'
+			  AND LEFT(%Table:SE1%.E1_PORTADO,1) != 'P'
 			  AND E1_TIPO = 'NF' 
 			
 			GROUP BY A1_DTACUMU,A1_DTULTRE,A1_ULTCOM, A1_VLACUMU

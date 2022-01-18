@@ -16,6 +16,7 @@
 	@see (links_or_references)
 	@history chamado 051044 - Adriana      - 27/08/2019 - SAFEGG
 	@history chamado 055188 - FWNM         - 17/02/2020 - OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA
+	@history Ticket  066334 - Abel Babini  - 11/01/2022 - Não permitir a entrada de Solicitação com Centro de Custo Bloqueado.
 /*/
 USER FUNCTION MTA105OK()
 
@@ -189,6 +190,21 @@ USER FUNCTION MTA105OK()
 		EndIf
 	
 	ENDIF
+
+	//@history Ticket  066334 - Abel Babini  - 11/01/2021 - Não permitir a entrada de Solicitação com Centro de Custo Bloqueado.
+	FOR nCont:=1 TO LEN(acols)
+
+		If Posicione("CTT",1,xFilial("CTT")+Alltrim(aCols[nCont,nPosCC]),"CTT_BLOQ") == "1"
+			lRet:= .F.
+			MsgAlert("Centro de Custo " + Alltrim(acols[nCont,nPosCC]) + " bloqueado!")
+			u_GrLogZBE (Date(),TIME(),cUserName,"7 INCLUSAO DE SOLICITACAO DE ARMAZEM ","ESTOQUE","MTA105OK",;
+					"Numero: "+cA105Num+" Grupo: " +ALLTRIM(ACOLS[nCont,nGrupo])+ " Cc: " +ALLTRIM(ACOLS[nCont,nCc])+ " User: " +__cUserId+ " CC Bloqueado para uso. Sol. Arm. Não gravada " ,;
+					ComputerName(),LogUserName())
+			EXIT
+		Endif
+
+	NEXT
+	//@history Ticket  066334 - Abel Babini  - 11/01/2021 - Não permitir a entrada de Solicitação com Centro de Custo Bloqueado.
 
 	RestArea(aArea)
 

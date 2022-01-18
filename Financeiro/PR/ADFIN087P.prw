@@ -18,33 +18,29 @@ Static cTitulo  := "Gera boleto de adiantamento do PV"
 Static lAuto    := .t.
 
 /*/{Protheus.doc} User Function ADFIN087P
-    Job para gerar adiantamento/boleto cobrança de pedidos de vendas de adiantamento
-    @type  Function
-    @author FWNM
-    @since 24/04/2020
-    @version version
-    @param param_name, param_type, param_descr
-    @return return_var, return_type, return_description
-    @example
-    (examples)
-    @see (links_or_references)
-    @chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
-    @history chamado 056247 - FWNM - 21/05/2020 - Error log apenas via execauto na criação do arquivo e inclusao de ZBE em diversos pontos
-	@history chamado 056247 - FWNM - 22/05/2020 - Geração do RA com D+1
-	@history chamado 056247 - FWNM - 25/05/2020 - Geração do RA com valor total do PV com impostos (pré-nota)
-	@history chamado 056247 - FWNM - 26/05/2020 - Registrar boleto no banco com data do servidor
-	@history chamado 056247 - FWNM - 05/06/2020 - Geração do RA considerando finais de semana e feriados
-	@history chamado 056247 - FWNM - 17/06/2020 - Criação de recurso para controle dos testes em produção
-	@history chamado 056247 - FWNM - 17/06/2020 - Registrar boleto sempre com vencimento pela emissao do servidor
-	@history chamado 059655 - FWNM - 21/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
-	@history chamado 059712 - FWNM - 22/07/2020 - || OS 061191 || CONTROLADORIA || CRISTIANE_MELO || 11986587658 || RA- PEDIDO ANTECIPAD
-	@history chamado 059415 - FWNM - 05/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Ajuste na geração do E1_IDCNAB devido desativação das customizações antigas 
-	@history ticket 102 - FWNM - 18/08/2020 - WS BRADESCO - Gerar boleto mesmo com bloqueio comercial
-	@history ticket 102 - FWNM - 27/08/2020 - WS BRADESCO
-	@history ticket 1429 - FWNM - 11/09/2020 - Bloquear registro de boleto para pedido de exportação
-	@history ticket 745 - FWNM - 17/09/2020 - Implementação título PR
-	@history ticket TI  - FWNM - 24/02/2021 - Gerar boleto apenas para PV tipo N
-	@history ticket TI  - FWNM - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
+  Job para gerar adiantamento/boleto cobrança de pedidos de vendas de adiantamento
+  @type  Function
+  @author FWNM
+  @since 24/04/2020
+  @version version
+  @chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+  @history chamado 056247 - FWNM 					- 21/05/2020 - Error log apenas via execauto na criação do arquivo e inclusao de ZBE em diversos pontos
+	@history chamado 056247 - FWNM 					- 22/05/2020 - Geração do RA com D+1
+	@history chamado 056247 - FWNM 					- 25/05/2020 - Geração do RA com valor total do PV com impostos (pré-nota)
+	@history chamado 056247 - FWNM 					- 26/05/2020 - Registrar boleto no banco com data do servidor
+	@history chamado 056247 - FWNM 					- 05/06/2020 - Geração do RA considerando finais de semana e feriados
+	@history chamado 056247 - FWNM 					- 17/06/2020 - Criação de recurso para controle dos testes em produção
+	@history chamado 056247 - FWNM 					- 17/06/2020 - Registrar boleto sempre com vencimento pela emissao do servidor
+	@history chamado 059655 - FWNM 					- 21/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
+	@history chamado 059712 - FWNM 					- 22/07/2020 - || OS 061191 || CONTROLADORIA || CRISTIANE_MELO || 11986587658 || RA- PEDIDO ANTECIPAD
+	@history chamado 059415 - FWNM 					- 05/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Ajuste na geração do E1_IDCNAB devido desativação das customizações antigas 
+	@history ticket 102     - FWNM 					- 18/08/2020 - WS BRADESCO - Gerar boleto mesmo com bloqueio comercial
+	@history ticket 102     - FWNM 					- 27/08/2020 - WS BRADESCO
+	@history ticket 1429    - FWNM 					- 11/09/2020 - Bloquear registro de boleto para pedido de exportação
+	@history ticket 745     - FWNM 					- 17/09/2020 - Implementação título PR
+	@history ticket TI      - FWNM          - 24/02/2021 - Gerar boleto apenas para PV tipo N
+	@history ticket TI      - FWNM          - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
+	@history ticket 515     - Rodrigo Mello - 17/01/2022 - Implementação PIX
 /*/
 User Function ADFIN087P()
 
@@ -58,6 +54,8 @@ User Function ADFIN087P()
 	Local cNumPVsTST := ""
 	Local cCodRetOk  := ""
 	Local cCodRet69  := ""
+	local i
+	locaL cCondPixLnk := ""
 
 	// Inicializo ambiente
 	rpcClearEnv()
@@ -145,6 +143,10 @@ User Function ADFIN087P()
 		cCodRet69 := GetMV("MV_#WSOC69",,"69")
 		//
 
+		// condicoes de pagamento para PIX e Link de Pagamento - 11/01/2022 - Rodrigo Mello | Flek Solutions
+		cCondPixLnk := alltrim(GetNewPar("MV_#CONPIX", "PIX")) + "|"
+		cCondPixLnk += alltrim(GetNewPar("MV_#CONLNK", "LNK"))
+
         Work->( dbGoTop() )
         Do While Work->( !EOF() )
 
@@ -159,7 +161,7 @@ User Function ADFIN087P()
 
 						// Gera Boleto PDF
 						SC5->( dbSetOrder(1) ) // C5_FILIAL, C5_NUM, R_E_C_N_O_, D_E_L_E_T_
-						If SC5->( dbSeek(Work->(C5_FILIAL+C5_NUM)) )
+						If SC5->( dbSeek(Work->(C5_FILIAL+C5_NUM)) ) .and. !SC5->C5_CONDPAG $ cCondPixLnk
 
 							logZBE(SE1->E1_NUM + " esta acessando funcao GERABLPV para gerar o boleto em PDF e enviar o email")
 							u_GeraBlPV(cEmpAnt, cFilAnt, SC5->C5_NUM)
@@ -167,7 +169,9 @@ User Function ADFIN087P()
 
 							Work->( dbSkip() )
 							Loop
-
+						else
+							Work->( dbSkip() )
+							Loop
 						EndIf
 	
 					EndIf
@@ -303,6 +307,12 @@ User Function GeraRAPV()
 
     Local cCodRetOk := GetMV("MV_#WSOCOK",,"00")
     Local cCodRet69 := GetMV("MV_#WSOC69",,"69")
+	local cCondBlt  := GetNewPar("MV_#CONBLT", "001/00 ")
+	local cCondLnk  := GetNewPar("MV_#CONLNK", "LNK")
+	local cCondPIX  := GetNewPar("MV_#CONPIX", "PIX")
+
+	local aCtaLnk	:= GetNewPar("MV_#CTALNK", {"237", "33677", "126500_8"})
+	local aCtaPix	:= GetNewPar("MV_#CTAPIX", {"237", "33677", "126500_8"})
 
 	Local cBcoMVSA1 := GetMV("MV_#WSBCO1",,"237") // TI - Conforme diretriz Reginaldo/Sigoli - FWNM - 06/05/2020
 
@@ -354,10 +364,10 @@ User Function GeraRAPV()
 
 		// Checo se já existe RA e amarração
 		FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
-		If FIE->( dbSeek(SC5->C5_FILIAL+"R"+SC5->C5_NUM) )
+		If FIE->( dbSeek(SC5->C5_FILIAL+"R"+SC5->C5_NUM) ) .AND. alltrim(SC5->C5_CONDPAG) $ cCondBlt  // @history 07/12/2021 - verifica se meio de pagamento é Boleto | Rodrigo Mello - Flek Solutions
 
 			SE1->( dbSetOrder(1) ) // E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, R_E_C_N_O_, D_E_L_E_T_
-			If SE1->( dbSeek(FIE->(FIE_FILIAL+FIE_PREFIX+FIE_NUM+FIE_PARCEL+FIE_TIPO)) )
+			If SE1->( dbSeek(FIE->(FIE_FILIAL+FIE_PREFIX+FIE_NUM+FIE_PARCEL+FIE_TIPO)) ) 
 
 				// Gera nosso número
 				If Empty(SE1->E1_NUMBCO)
@@ -453,6 +463,18 @@ User Function GeraRAPV()
 		If Select("WorkSA6") > 0
 			WorkSA6->( dbCloseArea() )
 		EndIf
+		
+		// @history 27/12/2021 - verifica se meio de pagamento é Pix / Lnk | Rodrigo Mello - Flek Solutions
+		if SC5->C5_CONDPAG == cCondLnk
+			cBcoRA := aCtaLnk[1]
+			cAgeRA := aCtaLnk[2]
+			cCtaRA := aCtaLnk[3]
+		endif
+		if SC5->C5_CONDPAG == cCondPix
+			cBcoRA := aCtaPix[1]
+			cAgeRA := aCtaPix[2]
+			cCtaRA := aCtaPix[3]
+		endif
 
 		nDiasBol := DiaUtil(nDiasBol) // Chamado 056247 - FWNM - 05/06/2020 - Geração do RA considerando finais de semana e feriados
 
@@ -519,6 +541,15 @@ User Function GeraRAPV()
 				SE1->E1_PORTADO := cBcoRA
 				SE1->E1_AGEDEP  := cAgeRA
 				SE1->E1_CONTA   := cCtaRA
+
+				// @history 27/12/2021 - atualiza log Pix / Lnk | Rodrigo Mello - Flek Solutions
+				if SC5->C5_CONDPAG == cCondLnk
+					SE1->E1_XLOGLNK := '000'
+				endif
+				if SC5->C5_CONDPAG == cCondPix
+					SE1->E1_XLOGPIX := '000'
+				endif
+
 			SE1->( msUnLock() )
 
 			// Gero vinculo do boleto com o Pedido de Vendas
@@ -539,19 +570,26 @@ User Function GeraRAPV()
 
 			logZBE(FIE->FIE_PEDIDO + " tabela FIE (Amarracao PV x " + cTipoE1 + ") foi gerado com sucesso")
 
-			// Gera nosso número
-			cE1PORTADO := cBcoRA
-			cE1AGEDEP  := cAgeRA
-			cE1CONTA   := cCtaRA
-			StaticCall(SF2460I, fCalcBlt, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, cBcoRA, cAgeRA, cCtaRA)
+			if alltrim(SC5->C5_CONDPAG) $ cCondBlt  // @history 07/12/2021 - verifica se meio de pagamento é Boleto | Rodrigo Mello - Flek Solutions
+				// Gera nosso número
+				cE1PORTADO := cBcoRA
+				cE1AGEDEP  := cAgeRA
+				cE1CONTA   := cCtaRA
+				StaticCall(SF2460I, fCalcBlt, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, cBcoRA, cAgeRA, cCtaRA)
 
-			logZBE(SE1->E1_NUM + " gerou E1_NUMBCO pela rotina SF2460I via STATICCALL")
+				logZBE(SE1->E1_NUM + " gerou E1_NUMBCO pela rotina SF2460I via STATICCALL")
 
-			// Registra boleto bradesco WS
-			logZBE(SE1->E1_NUM + " esta acessando funcao T288BPCK7 para fazer registro do E1_NUMBCO")				
-			u_T288BPCK7(SE1->E1_FILIAL, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO)
-			logZBE(SE1->E1_NUM + " saiu da funcao T288BPCK7 que faz o registro do E1_NUMBCO")				
-					
+				// Registra boleto bradesco WS
+				logZBE(SE1->E1_NUM + " esta acessando funcao T288BPCK7 para fazer registro do E1_NUMBCO")				
+				u_T288BPCK7(SE1->E1_FILIAL, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO)
+				logZBE(SE1->E1_NUM + " saiu da funcao T288BPCK7 que faz o registro do E1_NUMBCO")				
+
+				// Gera Boleto PDF
+				logZBE(SE1->E1_NUM + " esta acessando funcao GERABLPV para gerar o boleto em PDF e enviar o email")
+				u_GeraBlPV(cEmpAnt, cFilAnt, SC5->C5_NUM)
+				logZBE(SE1->E1_NUM + " saiu da funcao GERABLPV e se o email foi enviado com sucesso o campo C5_XWSBOLG foi flegado")
+			endif
+
 			// Bloqueia por regra
 			/*
 			RecLock("SC5", .f.)
@@ -1188,6 +1226,8 @@ Static Function UpSoap(cXML)
 
 	Local cCodRetWS := ""
 	Local cDscRetWS := ""
+
+	local ii, i
 
 	logZBE(SE1->E1_NUM + " entrou na funcao UPSOAP para gravar retorno bradesco ")
 
