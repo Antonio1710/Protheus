@@ -194,9 +194,9 @@ USER FUNCTION MTA105OK()
 	//@history Ticket  066334 - Abel Babini  - 11/01/2021 - Não permitir a entrada de Solicitação com Centro de Custo Bloqueado.
 	FOR nCont:=1 TO LEN(acols)
 
-		If Posicione("CTT",1,xFilial("CTT")+Alltrim(aCols[nCont,nPosCC]),"CTT_BLOQ") == "1"
+		If Posicione("CTT",1,xFilial("CTT")+Alltrim(aCols[nCont,nCc]),"CTT_BLOQ") == "1"
 			lRet:= .F.
-			MsgAlert("Centro de Custo " + Alltrim(acols[nCont,nPosCC]) + " bloqueado!")
+			MsgAlert("Centro de Custo " + Alltrim(acols[nCont,nCc]) + " bloqueado!")
 			u_GrLogZBE (Date(),TIME(),cUserName,"7 INCLUSAO DE SOLICITACAO DE ARMAZEM ","ESTOQUE","MTA105OK",;
 					"Numero: "+cA105Num+" Grupo: " +ALLTRIM(ACOLS[nCont,nGrupo])+ " Cc: " +ALLTRIM(ACOLS[nCont,nCc])+ " User: " +__cUserId+ " CC Bloqueado para uso. Sol. Arm. Não gravada " ,;
 					ComputerName(),LogUserName())
