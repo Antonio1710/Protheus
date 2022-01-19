@@ -21,6 +21,7 @@
     @history 22/07/2021 - Chamado   8465 Leonardo P. Monteiro - Limpa os campos na cópia do pedido de exportação.
     @history 17/08/2021 - Chamado  18514 Leonardo P. Monteiro - Gravação das mensagens nos pedidos de venda.
     @history 06/01/2022 - Chamado  18301 Leonardo P. Monteiro - Grava o flag da inspeção da Qualidade.
+    @history 19/01/2022 - Chamado  18301 Leonardo P. Monteiro - Na cópia dos pedidos de exportação o campo de inspeção da qualidade vir como "2-Não" e gravar a temperatura como '-18.0'.
 /*/
 
 User Function EECAP100
@@ -186,6 +187,8 @@ User Function EECAP100
         M->EE7_XWFEMH   := ""
         M->EE7_XWFNEE   := "N"
         M->EE7_XMODCS   := Criavar("EE7_XMODCS")
+        M->EE7_XINQLD   := "2"
+        M->EE7_TEMPER   := "-18.0"
         RunTrigger(1,nil,nil,,'EE7_VIA')
         RunTrigger(1,nil,nil,,'EE7_PAISET')
     EndIf

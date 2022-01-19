@@ -13,6 +13,7 @@
     @version XX
     @history Chamado 66834 - Leonardo P. Monteiro - 14/01/2022 - Correção dos valores acumulados da CISP com a inclusão e tratamento dos títulos com AB-.
 	@history Chamado 66834 - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
+	@history Chamado 66834 - Leonardo P. Monteiro - 19/01/2022 - Inclusão de data de corte para D-1 e inclusão no cálculo dos títulos AB-.
 /*/
 
 
@@ -49,6 +50,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private cMetodo     := ''
 	Private nId         := 0 
 	Private cMensagem   := ''
+	Private cDtCorte	:= dtos(Date()-1)
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -1053,8 +1055,7 @@ Static Function SqlCliente()
 			  FROM %Table:SA1% WITH(NOLOCK)  
 			 WHERE RTRIM((LEFT(A1_CGC,8))) <> '00000000'
 			   AND RTRIM((LEFT(A1_CGC,8))) <> '' 
-			   AND D_E_L_E_T_ <> '*'                 
-			   			   
+			   AND D_E_L_E_T_ <> '*'		   
 			 ORDER BY A1_CGC
 			    
 	EndSQl             
@@ -1079,6 +1080,7 @@ Static Function SqlReceber()
 			WHERE SE1.E1_CLIENTE  = %EXP:cCliente%
 			   AND SE1.E1_LOJA    = %EXP:cLoja%
 			   AND SE1.E1_EMISSAO > %EXP:cData%
+			   AND SE1.E1_EMISSAO <= %EXP:cDtCorte%
 			   AND SE1.E1_TIPO IN ('NF','AB-') 
 			   AND SE1.D_E_L_E_T_ <> '*'
 			   //AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
@@ -1114,6 +1116,7 @@ Static Function SqlPagar()
 			   AND SE5.E5_TIPO     = SE1.E1_TIPO
 			   //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
+			   AND SE5.E5_DATA <= %EXP:cDtCorte%
 			   AND SE1.D_E_L_E_T_ <> '*' 
 			   
 	EndSQl             
@@ -1129,6 +1132,7 @@ Static Function SqlCliAnoAtual()
 			       RTRIM((LEFT(SA1.A1_CGC,8))) AS A1_CGC 
 			  FROM %Table:SE1% SE1 WITH(NOLOCK), %Table:SA1% SA1 WITH(NOLOCK)
 			 WHERE SE1.E1_EMISSAO >= CONVERT(VARCHAR(4),(YEAR(GETDATE()) -1)) + CASE WHEN LEN(MONTH(GETDATE())) = 1 then '0' + CONVERT(VARCHAR(2),(MONTH(GETDATE())))  else CONVERT(VARCHAR(2),(MONTH(GETDATE()))) END + '01'
+			   AND SE1.E1_EMISSAO <= %EXP:cDtCorte%
 			   AND SE1.E1_TIPO     = 'NF' 
 			   AND SE1.D_E_L_E_T_ <> '*' 
                //AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
@@ -1139,7 +1143,7 @@ Static Function SqlCliAnoAtual()
 			   AND RTRIM((LEFT(SA1.A1_CGC,8))) <> '' 
 			   AND SA1.D_E_L_E_T_ <> '*'           
 			   //Debugar a rotina.
-			   //AND A1_XCGC='47508411'
+			   AND A1_XCGC='57508426'
 			 GROUP BY E1_CLIENTE, E1_LOJA, SA1.A1_CGC 
 			 
 			 ORDER BY SA1.A1_CGC 
@@ -1177,6 +1181,7 @@ Static Function SqlEstorno()
 			   AND SE5.E5_TIPO     = SE1.E1_TIPO
 			   //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
+			   AND SE5.E5_DATA <= %EXP:cDtCorte%
 			   AND SE1.D_E_L_E_T_ <> '*'     
 			   
 	EndSQl             
@@ -1216,17 +1221,18 @@ Static Function SqlTOTCGC()
 					MAX(A1_ULTCOM)  AS A1_ULTCOM,
 					MAX(E1_EMISSAO) AS E1_EMISSAO, 
 					RTRIM((LEFT(A1_CGC,8))) AS A1_CGC
-				FROM %Table:SA1% WITH(NOLOCK),%Table:SE1% WITH(NOLOCK) 
+				FROM %Table:SA1% WITH(NOLOCK), %Table:SE1% WITH(NOLOCK) 
 				WHERE RTRIM((LEFT(A1_CGC,8))) <> '00000000'
 				  AND RTRIM((LEFT(A1_CGC,8))) <> '' 
 				  AND A1_ULTCOM               <> ''
-				  AND %Table:SA1%.D_E_L_E_T_       <> '*' 
+				  AND %Table:SA1%.D_E_L_E_T_  <> '*' 
 				  AND A1_XCGC                  = E1_XCGC 
 				  AND E1_TIPO                  = 'NF'  
+				  AND E1_EMISSAO 			  <= %EXP:cDtCorte%
 				  //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 				  //AND SE1010.D_E_L_E_T_       <> '*'  
 				  //Debugar a rotina.
-				  //AND A1_XCGC='47508411'
+				  AND A1_XCGC='57508426'
 				GROUP BY A1_DTACUMU,A1_VLACUMU,LEFT(A1_CGC,8)
 			
 				ORDER BY A1_CGC
@@ -1272,7 +1278,8 @@ STATIC FUNCTION SqlVerifSaldo(cCnpjnew2)
 			  AND A1_COD                  = E1_CLIENTE
 			  AND A1_LOJA                 = E1_LOJA
 			  AND %Table:SA1%.D_E_L_E_T_ <> '*'
-			  AND %Table:SE1%.D_E_L_E_T_ <> '*' 
+			  AND %Table:SE1%.D_E_L_E_T_ <> '*'
+			  AND %Table:SE1%.E1_EMISSAO <= %EXP:cDtCorte%
 			  //AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 			  AND LEFT(%Table:SE1%.E1_PORTADO,1) != 'P'
 			  AND E1_TIPO = 'NF' 
@@ -1298,6 +1305,7 @@ STATIC FUNCTION SqlTotPenultim()
 			  AND E1B.E1_TIPO        = 'NF' 
 			  AND E1B.E1_XCGC        = A1_XCGC 
 			  AND E1B.E1_EMISSAO    <> A1_DTULTRE
+			  AND E1B.E1_EMISSAO 	<= %EXP:cDtCorte%
 			  AND A1_VEND           <> '000442'
 			
 			  GROUP BY A1_XCGC,A1_XDTPENU
