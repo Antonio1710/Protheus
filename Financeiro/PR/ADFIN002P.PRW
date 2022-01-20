@@ -51,6 +51,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private nId         := 0 
 	Private cMensagem   := ''
 	Private cDtCorte	:= dtos(Date()-1)
+	//Debugar a rotina.
+	Private cDebugCNPJ	:= ""
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -1143,7 +1145,7 @@ Static Function SqlCliAnoAtual()
 			   AND RTRIM((LEFT(SA1.A1_CGC,8))) <> '' 
 			   AND SA1.D_E_L_E_T_ <> '*'           
 			   //Debugar a rotina.
-			   //AND A1_XCGC='57508426'
+			   AND (A1_XCGC=%Exp:cDebugCNPJ% OR ltrim(rtrim(%exp:cDebugCNPJ%)) ='')
 			 GROUP BY E1_CLIENTE, E1_LOJA, SA1.A1_CGC 
 			 
 			 ORDER BY SA1.A1_CGC 
@@ -1233,6 +1235,7 @@ Static Function SqlTOTCGC()
 				  //AND SE1010.D_E_L_E_T_       <> '*'  
 				  //Debugar a rotina.
 				  //AND A1_XCGC='57508426'
+				  AND (A1_XCGC=%Exp:cDebugCNPJ% OR ltrim(rtrim(%exp:cDebugCNPJ%)) ='')
 				GROUP BY A1_DTACUMU,A1_VLACUMU,LEFT(A1_CGC,8)
 			
 				ORDER BY A1_CGC

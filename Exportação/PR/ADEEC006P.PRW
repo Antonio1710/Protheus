@@ -47,6 +47,7 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 19/07/2021 - Inclusão do relatório de respaldo.
     @history Chamado 18301 - Leonardo P. Monteiro - 13/01/2022 - Inclusão de variável do LinkedServer do eData.
     @history Chamado 18301 - Leonardo P. Monteiro - 13/01/2022 - Inclusão do workflow como opção para os usuários.
+    @history Chamado 18301 - Leonardo P. Monteiro    - 19/01/2022 - Conversão da rotina para execução em schedule.
 /*/
 user function ADEEC006P()
     Local cTitle    := "..:: Monitor de Exportação ::.."
@@ -643,9 +644,9 @@ Static Function fAcao(nAcao, nOper, lRefresh)
     Local cTitulo       := ""
     Local cModel        := ""
     Local nOperation    := 4
-    Local aParamBox     := {}
-    Local aRet          := {}
-    Local nTable        := 1
+    //Local aParamBox   := {}
+    //Local aRet        := {}
+    //Local nTable      := 1
     Private cPedExp     := ""
     
 
@@ -706,6 +707,7 @@ Static Function fAcao(nAcao, nOper, lRefresh)
             endif
         // Importa as inspeções da qualidade.
         elseif nOper == 3
+            /*
             Aadd( aParamBox ,{1,"Data Embarque?"						,dDatabase,"" ,'.T.',"",'.T.',80,.F.})
             aAdd( aParamBox	,{3,"Reprocessar todos?"		        ,1,{'Importar todos','Somente pendentes'},100,"",.F.})
             
@@ -715,6 +717,9 @@ Static Function fAcao(nAcao, nOper, lRefresh)
             else
                 msginfo("Operação cancelada pelo operador!")
             endif
+            */
+            U_ADQUA002()
+
         // Processa envio do workflow de notificação para faturamento.
         elseif nOper == 4
             If msgYesNo("Deseja enviar o workflow de notificação p/ faturamento?")
@@ -749,8 +754,10 @@ Static Function fExporta()
     Local cTabName      := "Exportacao"
     Local oObj          := nil
     Local cDiret        := ""
-    //Local nTabDad       := {}
-    Local cDiret        := ""
+    //Local nTabDad     := {}
+    //Local cDiret      := ""
+    Local nTable        := 1
+    Local nA            := 1
     
     cDiret := Alltrim(cGetFile('Arquivo|*.*|Arquivo *|*.*','Selecione o arquivo',0,'C:\temp\',.T.,GETF_RETDIRECTORY+GETF_LOCALHARD + GETF_NETWORKDRIVE,.T.))
     

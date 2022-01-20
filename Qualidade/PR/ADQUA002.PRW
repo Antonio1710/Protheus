@@ -1,5 +1,6 @@
 #Include "Protheus.ch"
 #Include "Topconn.ch"
+#INCLUDE "TBICONN.CH"
 
 /*/{Protheus.doc} User ADQUA002
     Job para obter dados de cargas da api appqualidade.adoro.com.br
@@ -14,9 +15,60 @@
     @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação. Nova compilação em produção.
     @history Chamado 63954 - Leonardo P. Monteiro    - 08/12/2021 - Erro na chamada da função procres().
     @history Chamado 18301 - Leonardo P. Monteiro    - 06/01/2022 - Grava o flag da inspeção da Qualidade.
-    
+    @history Chamado 18301 - Leonardo P. Monteiro    - 19/01/2022 - Conversão da rotina para execução em schedule.
     /*/
-User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
+
+user function ADQUA002(aEmpFil)
+	//local aEmpIni := {}
+	Local cCodEmp       := ""
+	Local cCodFil       := ""
+    Local aRet          := {}
+    Local aParamBox     := {}
+
+	if valType(aEmpFil) == "A"
+		if len(aEmpFil) >= 2
+			cCodEmp := aEmpFil[1]
+			cCodFil := aEmpFil[2]
+		endIf
+	endIf
+    /*
+    RPCClearEnv()
+    RPCSetType(3)
+    RpcSetEnv("01","02",,,,GetEnvServer(),{ })
+    */
+
+	if (!Empty(cCodEmp) .and. !Empty(cCodFil)) .AND. SELECT("SX2") == 0
+		Qout(" JOB ADQUA002-Protheus - 01 - Executando em modo Schedule Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
+		Qout(" JOB ADQUA002-Protheus - 02 - Início da rotina...")
+
+        
+		PREPARE ENVIRONMENT EMPRESA cCodEmp FILIAL cCodFil
+		lInJob := .F.
+		RPCSetType(3) //nÃ£o consome licenÃ§a.
+		
+        Qout(DtoC(dDatabase) + "-" + Time() + " JOB ADQUA002-Protheus - 03 - Início da rotina na Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
+		// Executa as rotinas de WorkFlow
+		execWF(.T., Date(),2)
+
+        U_ADEEC014P()
+		Qout(DtoC(dDatabase) + "-" + Time() + " JOB ADQUA002-Protheus - 04 - Fim da rotina na Empresa "+ aEmpFil[1] + " e Filial " +aEmpFil[2] +"...")
+		RESET ENVIRONMENT
+		//PREPARE ENVIRONMENT EMPRESA "51" FILIAL "04"
+		Qout(" JOB ADQUA002-Protheus - 05 - Fim da execução...") 
+	else
+		aAdd( aParamBox ,{1,"Data Embarque?"						,dDatabase,"" ,'.T.',"",'.T.',80,.F.})
+        aAdd( aParamBox	,{3,"Reprocessar todos?"		        ,1,{'Importar todos','Somente pendentes'},100,"",.F.})
+        
+        if ParamBox(aParamBox,"Parâmetros",@aRet)
+            MsAguarde({|| execWF(.F., MV_PAR01, MV_PAR02) }, "Processando", "Importando os resultados das inspeções...")
+            msginfo("Processamento finalizado!")
+        else
+            msginfo("Operação cancelada pelo operador!")
+        endif
+	endIf
+return
+
+static Function execWF(lAutom, dParData, nReproc) // U_ADQUA002()
 
     //Variáveis.
     Local cErro         := ""
@@ -27,7 +79,7 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
     Private cStatCar    := SuperGetMV("MV_XSTACAR",,"FE,AP")
     Private lImpFat     := SuperGetMV("MV_XQLDFAT",,.F.)
 
-    Default dParData    := Stod("20210615")
+    Default dParData    :=Date()
     Default nReproc     := 2
     
     //
@@ -46,11 +98,15 @@ User Function ADQUA002(dParData, nReproc) // U_ADQUA002()
                 procRes(@cErro, @cMens, cResponse, cToken, dParData, nReproc) //Processa o resultado da consulta.
                 
                 if !Empty(cMens)
-                    
-                    if "(Rejeitado)"$cMens .OR. "(Ignorado)"$cMens
-                        MsgStop("Eventos de processamento com erros: "+ cMens, "Término da rotina")
+                    if lAutom
+                        u_GrLogZBE(Date(),TIME(),cUserName,"Início da rotina Qualidade Pedido de Venda","SIGAEEC","ADQUA002",;
+			                    "Eventos de processamento com erros: "+ cMens,ComputerName(),LogUserName())
                     else
-                        MsgInfo("Eventos de processamento: "+ cMens, "Término da rotina")
+                        if "(Rejeitado)"$cMens .OR. "(Ignorado)"$cMens
+                            MsgStop("Eventos de processamento com erros: "+ cMens, "Término da rotina")
+                        else
+                            MsgInfo("Eventos de processamento: "+ cMens, "Término da rotina")
+                        endif
                     endif
                 endif
             EndIf
