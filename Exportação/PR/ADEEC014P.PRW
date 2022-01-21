@@ -10,7 +10,7 @@
     @since 13/01/2022
     @version 01
     @history Chamado 18301 - Leonardo P. Monteiro - 13/01/2022 - Desenvolvimento inicial do workflow.
-    @history Chamado 18301 - Leonardo P. Monteiro    - 19/01/2022 - Conversão da rotina para execução em schedule.
+    @history Chamado 18301 - Leonardo P. Monteiro - 19/01/2022 - Conversão da rotina para execução em schedule.
 /*/
 user function ADEEC014P(aEmpFil)
 	//local aEmpIni := {}
