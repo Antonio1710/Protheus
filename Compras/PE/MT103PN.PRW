@@ -301,7 +301,7 @@ IF lRet .AND. SF1->F1_FORMUL = 'S' .AND. SF1->F1_TIPO = 'N' .AND. INCLUI
 				AVISO('MT103PN-001 => NF de Origem já retornada',;
 						'A NF de Origem relacionada a esse documento já foi retornada anteriormente! A mesma não poderá ser relacionada novamente.', {"Fechar"}, 2 )   
 				lRet:= .F.					
-			ELSEIF (cQryNFO)->QTD_RETORNO + (cQrySD1)->QUANT > (cQryNFO)->D2_QUANT
+			ELSEIF (cQryNFO)->QTD_RETORNO + (cQrySD1)->D1_QUANT > (cQryNFO)->D2_QUANT
 				AVISO('MT103PN-002 => Quantidade a ser retornada é maior que a NF de Origem',;
 						'A quantidade a ser retornado ultrapassa o saldo da NF de Origem! Saldo em Qtd: '+Alltrim(Str((cQryNFO)->D2_QUANT-(cQryNFO)->QTD_RETORNO))+ '.', {"Fechar"}, 2 )   
 				lRet:= .F.

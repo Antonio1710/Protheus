@@ -8,6 +8,7 @@
      @since 26/08/2020
      @version 01
      @history chamado 060906 - 26/08/2020 - ADRIANO SAVOINE - Criado o Programa para lançar datas de Feriado.
+     @history Ticket  TI     - 20/01/2022 - ADRIANO SAVOINE - Corrigido o campo para String.
      /*/
  
 
@@ -56,8 +57,8 @@ USER FUNCTION CARRESX5()
 
     Local cQuery := ""
    
-
-    cQuery := "SELECT MAX ((X5.X5_CHAVE) + 1)MX FROM "+RetSqlName("SX5")+" X5, WHERE  X5.X5_TABELA = '63' AND D_E_L_E_T_ = '' AND X5.X5_FILIAL = "+xFilial("SX5")+" 
+    // Ticket  TI     - 20/01/2022 - ADRIANO SAVOINE
+    cQuery := "SELECT MAX ((X5.X5_CHAVE) + 1)MX FROM "+RetSqlName("SX5")+" X5 WHERE  X5.X5_TABELA = '63' AND D_E_L_E_T_ = '' AND X5.X5_FILIAL = '"+xFilial("SX5")+"' 
     cQuery := changequery(cQuery)
 
     dbUsearea(.T.,"TOPCONN",TCGenQry(,,cQuery), "TMPQRY")
