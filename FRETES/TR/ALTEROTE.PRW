@@ -10,6 +10,7 @@
 	@history Chamado TI   - DANIEL PITTHAN SILVEIRA - 27/10/2006 - ALTERADO O 'SET FILTER' PELO FILTRO DA MICROSIGA
 	@history Chamado 4992 - William Costa           - 24/11/2020 - Adicionado no Filtro para ver notas que estão com 'XXXXXX' que são notas denegadas ou Canceladas, e conseguir limpar a Placa delas.
 	@history Chamado 5657 - William Costa           - 26/11/2020 - Voltado versão de limpa placa, pq não deu certo o jeito que foi pensado será feito na tela de Ocorrências de Devoluções.
+	@history Chamado TI   - Leonardo P. Monteiro    - 21/01/2022 - Gravação de log de acesso a rotina.
 /*/
 
 User Function ALTEROTE()
@@ -27,6 +28,16 @@ User Function ALTEROTE()
 	//mv_par03             // Da Emissao                           
 	//mv_par04             // Ate Emissao                          
 	
+	u_GrLogZBE( Date(),;
+                TIME(),;
+                cUserName,;
+                "Altera Roteiro Manual",;
+                "LOGISTICA",;
+                "ALTEROTE",;
+                "Acesso do usuário "+Alltrim(cUserName)+" à rotina para alteração manual dos roteiros.",;
+                ComputerName(),;
+                LogUserName())
+
 	cPerg   := "GERABO"                                   
 
 	Pergunte(cPerg,.T.)

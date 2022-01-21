@@ -14,6 +14,9 @@
     @history Chamado 66834 - Leonardo P. Monteiro - 14/01/2022 - Correção dos valores acumulados da CISP com a inclusão e tratamento dos títulos com AB-.
 	@history Chamado 66834 - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
 	@history Chamado 66834 - Leonardo P. Monteiro - 19/01/2022 - Inclusão de data de corte para D-1 e inclusão no cálculo dos títulos AB-.
+	@history Chamado 66834 - Leonardo P. Monteiro - 21/01/2022 - Correção na gravação do último acúmulo quando a data do último acúmulo é igual a última data de compra ou o valor gravado for maior que o calculado. 
+																 A rotina estava desconsiderando o valor total acumulado quando o valor gravado foi maior que o calculado. 
+																 Ajustamos os cálculos para considerar o abatimento e regravar os valores corretamente.
 /*/
 
 
@@ -51,6 +54,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private nId         := 0 
 	Private cMensagem   := ''
 	Private cDtCorte	:= dtos(Date()-1)
+	//Private cDtCorte	:= dtos(stod("20220120")-1)
 	//Debugar a rotina.
 	Private cDebugCNPJ	:= ""
 	
@@ -516,8 +520,7 @@ Static Function GravarAcumulo()
 									ComputerName(),LogUserName())
 					endif
 					
-				ELSEIF SA1->A1_DTULTRE < STOD(cDtAcum) .AND. ;
-			           nVlAcum         > 0   
+				ELSEIF SA1->A1_DTULTRE < STOD(cDtAcum) .AND. nVlAcum         > 0   
 			        
 			        //verifica a soma do saldo e a soma do valor do titulo   
 			        SqlVerifSaldo(LEFT(SA1->A1_CGC,8))   
@@ -545,7 +548,12 @@ Static Function GravarAcumulo()
 			   		IF RecLock("SA1",.F.)              
 					
 					    SA1->A1_DTACUMU	:= SA1->A1_DTACUMU
-						SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
+						//Chamado 66834 - Leonardo P. Monteiro - 21/01/2022 - Correção na gravação do último acúmulo quando a data do último acúmulo é igual a última data de compra. A rotina estava desconsiderando o valor total acumulado.
+						if nVlAcum > 0 .and. SA1->A1_DTULTRE <= STOD(cDtAcum)
+							SA1->A1_VLACUMU	:= nVlAcum
+						else
+							SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
+						endif
 		
 						MsUnlock()
 					ELSE
