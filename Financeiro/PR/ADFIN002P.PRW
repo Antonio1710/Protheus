@@ -17,6 +17,7 @@
 	@history Chamado 66834 - Leonardo P. Monteiro - 21/01/2022 - Correção na gravação do último acúmulo quando a data do último acúmulo é igual a última data de compra ou o valor gravado for maior que o calculado. 
 																 A rotina estava desconsiderando o valor total acumulado quando o valor gravado foi maior que o calculado. 
 																 Ajustamos os cálculos para considerar o abatimento e regravar os valores corretamente.
+	@history Chamado 66834 - Leonardo P. Monteiro - 24/01/2022 - Agregado o valor do AB- no valor total do título para a composição correta dos valores acumulados diariamente.															
 /*/
 
 
@@ -54,7 +55,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private nId         := 0 
 	Private cMensagem   := ''
 	Private cDtCorte	:= dtos(Date()-1)
-	//Private cDtCorte	:= dtos(stod("20220120")-1)
+	//Private cDtCorte	:= dtos(stod("20220124")-1)
 	//Debugar a rotina.
 	Private cDebugCNPJ	:= ""
 	
@@ -548,13 +549,16 @@ Static Function GravarAcumulo()
 			   		IF RecLock("SA1",.F.)              
 					
 					    SA1->A1_DTACUMU	:= SA1->A1_DTACUMU
+						SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
 						//Chamado 66834 - Leonardo P. Monteiro - 21/01/2022 - Correção na gravação do último acúmulo quando a data do último acúmulo é igual a última data de compra. A rotina estava desconsiderando o valor total acumulado.
+						/*
 						if nVlAcum > 0 .and. SA1->A1_DTULTRE <= STOD(cDtAcum)
 							SA1->A1_VLACUMU	:= nVlAcum
 						else
 							SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
 						endif
-		
+						*/
+
 						MsUnlock()
 					ELSE
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
@@ -1075,7 +1079,7 @@ Static Function SqlReceber()
 
 	BeginSQL Alias "TRC"
 			%NoPARSER%  
-			SELECT (CASE WHEN SE1.E1_TIPO = 'AB-' THEN (SE1.E1_VALOR*-1) ELSE (SE1.E1_VALOR*1) END) AS E1_VALOR,
+			SELECT SE1.E1_VALOR-ISNULL(ABA.E1_VALOR,0) AS E1_VALOR,
 				   //SE1.E1_VALOR,
 			       SE1.E1_EMISSAO,
 			       SE1.E1_FILIAL,
@@ -1086,12 +1090,12 @@ Static Function SqlReceber()
 			       SE1.E1_CLIENTE,
 			       SE1.E1_LOJA,
 				   SE1.R_E_C_N_O_ REGISTRO
-			FROM %Table:SE1% SE1 WITH(NOLOCK)
+			FROM %Table:SE1% SE1 WITH(NOLOCK) LEFT JOIN %Table:SE1% ABA WITH(NOLOCK) ON ABA.D_E_L_E_T_='' AND SE1.D_E_L_E_T_='' AND ABA.E1_FILIAL=SE1.E1_FILIAL AND ABA.E1_PREFIXO=SE1.E1_PREFIXO AND ABA.E1_NUM=SE1.E1_NUM AND ABA.E1_PARCELA=SE1.E1_PARCELA AND ABA.E1_TIPO='AB-' AND ABA.E1_CLIENTE=SE1.E1_CLIENTE AND ABA.E1_LOJA=SE1.E1_LOJA
 			WHERE SE1.E1_CLIENTE  = %EXP:cCliente%
 			   AND SE1.E1_LOJA    = %EXP:cLoja%
 			   AND SE1.E1_EMISSAO > %EXP:cData%
 			   AND SE1.E1_EMISSAO <= %EXP:cDtCorte%
-			   AND SE1.E1_TIPO IN ('NF','AB-') 
+			   AND SE1.E1_TIPO IN ('NF') 
 			   AND SE1.D_E_L_E_T_ <> '*'
 			   //AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 			   AND LEFT(SE1.E1_PORTADO,1) != 'P'

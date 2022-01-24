@@ -663,32 +663,37 @@ Static Function fAcao(nAcao, nOper, lRefresh)
     
     //2. Manutenção.
     elseif nAcao == 2
-        DbSelectArea("EE7")
-        EE7->(DbSetOrder(1))
-        cAlias  := "EE7"
-        nReg    := 0
-        cPedExp := Alltrim(aExpoDad[oBExpo:At(), nPosPed])
+        if oBExpo:At() == 0 .or. Len(aExpoDad) == 0
+            MsgAlert("Selecione ou posicione em um pedido de exportação válido.", "Selecione um Pedido de Exportação")
+        else
+            DbSelectArea("EE7")
+            EE7->(DbSetOrder(1))
+            cAlias  := "EE7"
+            nReg    := 0
+            cPedExp := Alltrim(aExpoDad[oBExpo:At(), nPosPed])
 
-        if EE7->(Dbseek(xFilial("EE7")+cPedExp))
-            nReg := EE7->(Recno())
-        endif
+            if EE7->(Dbseek(xFilial("EE7")+cPedExp))
+                nReg := EE7->(Recno())
+            endif
 
-        //Pedidos de Exportação.
-        if nOper == 1
-            EECAP100()
-        //Embarques.
-        elseif nOper == 2
-            EECAE100()
-        elseif nOper == 3
-            cTitulo     := "Pedido de Exportação"
-            cModel      := "ADEEC009P"
-            nOperation  := 4
-            nConfirma := FWExecView(cTitulo,cModel, nOperation, , { || .T. }, , 0, )
-        elseif nOper == 4
-            cTitulo     := "Pedido de Exportação - Consulta"
-            cModel      := "ADEEC009P"
-            nOperation  := 1
-            nConfirma := FWExecView(cTitulo,cModel, nOperation, , { || .T. }, , 0, )
+            //Pedidos de Exportação.
+            if nOper == 1
+                EECAP100()
+            //Embarques.
+            elseif nOper == 2
+                EECAE100()
+            elseif nOper == 3
+                cTitulo     := "Pedido de Exportação"
+                cModel      := "ADEEC009P"
+                nOperation  := 4
+                nConfirma := FWExecView(cTitulo,cModel, nOperation, , { || .T. }, , 0, )
+            elseif nOper == 4
+                cTitulo     := "Pedido de Exportação - Consulta"
+                cModel      := "ADEEC009P"
+                nOperation  := 1
+                nConfirma := FWExecView(cTitulo,cModel, nOperation, , { || .T. }, , 0, )
+            endif
+
         endif
     
     // 3. Workflows e Integrações.
