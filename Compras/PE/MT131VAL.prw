@@ -12,9 +12,10 @@
     @example
     (examples)
     @see (links_or_references)
-    @chamado 056479 - FWNM                  - 20/03/2020 - || OS 057949 || CONTROLADORIA || DAIANE || 3549 || PEDIDO COMPRA
-    @chamado T.I. - Leonardo P. Monteiro    - 01/09/2021 - Inclusão do comando RestArea.
+    @chamado 056479 - FWNM                    - 20/03/2020 - || OS 057949 || CONTROLADORIA || DAIANE || 3549 || PEDIDO COMPRA
+    @chamado T.I. - Leonardo P. Monteiro      - 01/09/2021 - Inclusão do comando RestArea.
     @history ticket 65456 - Fernando Macieira - 29/12/2021 - Cotação diferentes com a mesma SC gerando compras indevidas
+    @history ticket 66599 - Fernando Macieira - 24/01/2022 - Evolução ticket 65456
 /*/
 User Function MT131VAL()
 
@@ -33,6 +34,7 @@ User Function MT131VAL()
     Local cProduto  := ""
     Local aAprov    := {}
     Local lExistSC8 := .f.
+    Local lItemSC   := .f.
     Local cNumC8    := ""
 
     dbSelectArea("SC1")
@@ -111,7 +113,7 @@ User Function MT131VAL()
             Work->( dbCloseArea() )
         EndIf
 
-        cQuery := " SELECT C1_FILIAL, C1_NUM, C1_PRODUTO
+        cQuery := " SELECT C1_FILIAL, C1_NUM, C1_PRODUTO, C1_ITEM
         cQuery += " FROM " + RetSqlName("SC1") + " SC1 (NOLOCK)
         cQuery += " WHERE " + cQuerySC1
         cQuery += " AND C1_OK<>''
@@ -124,9 +126,26 @@ User Function MT131VAL()
 
             lExistSC8 := GetSC8(Work->C1_FILIAL, Work->C1_NUM, Work->C1_PRODUTO, @cNumC8)
             If lExistSC8
-                lRet := .f.
-                msgAlert("Já existe uma cotação n. " + cNumC8 + " para a SC n. " + Work->C1_NUM + " para este produto " + Work->C1_PRODUTO + " nesta filial! Verifique...")
-                Exit
+                
+                // @history ticket 66599 - Fernando Macieira - 24/01/2022 - Evolução ticket 65456
+                lItemSC := ChkItemSC(Work->C1_FILIAL, Work->C1_NUM, Work->C1_ITEM, Work->C1_PRODUTO)
+
+                If lItemSC
+                    lRet := .f.
+                    msgAlert("Já existe uma cotação n. " + cNumC8 + " para a SC n. " + Work->C1_NUM + " para este produto " + AllTrim(Work->C1_PRODUTO) + " nesta filial! Verifique...")
+                    Exit
+                Else
+                    // @history ticket 66599 - Fernando Macieira - 24/01/2022 - Evolução ticket 65456
+                    If msgYesNo("Já existe uma cotação n. " + cNumC8 + " para a SC n. " + Work->C1_NUM + " para este produto " + AllTrim(Work->C1_PRODUTO) + " nesta filial! Deseja realmente continuar?")
+                        //gera log
+                        u_GrLogZBE( msDate(), TIME(), cUserName, "AUTORIZOU NOVA GERACAO COTACAO PARA O MESMO PRODUTO  " + AllTrim(Work->C1_PRODUTO),"COTACAO","MT131VAL",;
+                        "COTACAO/SC " + cNumC8 + " / " + Work->C1_NUM, ComputerName(), LogUserName() )
+                    Else
+                        lRet := .f.
+                        Exit
+                    EndIf
+                EndIf
+            
             EndIf
 
             Work->( dbSkip() )
@@ -178,6 +197,49 @@ Static Function GetSC8(cC1_FILIAL, cC1_NUM, cC1_PRODUTO, cNumC8)
     WorkC8->( dbGoTop() )
     If WorkC8->( !EOF() )
         cNumC8 := WorkC8->C8_NUM
+        lTemC8 := .T.
+    EndIf
+
+    If Select("WorkC8") > 0
+        WorkC8->( dbCloseArea() )
+    EndIf
+
+Return lTemC8
+
+/*/{Protheus.doc} nomeStaticFunction
+    (long_description)
+    @type  Static Function
+    @author FWNM
+    @since 24/01/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    @history ticket 66599 - Fernando Macieira - 24/01/2022 - Evolução ticket 65456
+/*/
+Static Function ChkItemSC(cC1_FILIAL, cC1_NUM, cC1_ITEM, cC1_PRODUTO)
+
+    Local lTemC8 := .F.
+    Local cQuery := ""
+
+    If Select("WorkC8") > 0
+        WorkC8->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT DISTINCT C8_FILIAL, C8_NUM, C8_PRODUTO
+    cQuery += " FROM " + RetSqlName("SC8") + " SC8 (NOLOCK)
+    cQuery += " WHERE C8_FILIAL='"+FWxFilial("SC8")+"' 
+    cQuery += " AND C8_NUMSC='"+cC1_NUM+"' 
+    cQuery += " AND C8_ITEMSC='"+cC1_ITEM+"' 
+    cQuery += " AND C8_PRODUTO='"+cC1_PRODUTO+"' 
+    cQuery += " AND SC8.D_E_L_E_T_=''
+
+    tcQuery cQuery New Alias "WorkC8"
+
+    WorkC8->( dbGoTop() )
+    If WorkC8->( !EOF() )
         lTemC8 := .T.
     EndIf
 

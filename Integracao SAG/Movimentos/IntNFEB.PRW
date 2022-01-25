@@ -55,7 +55,7 @@
 	@history ticket   66204 - Leonardo P. Monteiro - 05/01/2022 - Correção/melhoria nas consultas dos registros pendentes.
 	@history ticket   63028 - Wagner Moro		- 15/12/2021 - Permite a inclusão do armazém quando for transferencia de ração entre filiais do Projeto Granja HH - Filial "0A"
 	@history ticket   63028 - Wagner Moro		- 22/12/2021 - Filtra o fornecedor para trazer a filial de transferencia.
-
+	@history ticket   66892 - Jonathan.Carvalho - 25/01/2022 - Ordenação pelo CODIGENE quando a opção for 7 
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -361,7 +361,7 @@ Static Function scriptSql(nRadio)
 	ElseIf nRadio == 7 //FRANGO 1 RETORNO DE CRIACAO		SGNFE010	EC01LOTE	SEQ UNICO	Menu\PROTHEUS -- Adriana Garcia, Rosangela, Simone
 		//@Ticket 64254 - JONATHAN.CARVALHO - 29/11/2021 puxar 50 registros por vez 
 		//@Ticket 65598 - JONATHAN.CARVALHO - 22/12/2021 incluido a consulta dentro da função IN para puxar os F1_DOC iguais
-		cQry := " SELECT '7' AS TP, * FROM SGNFE010 (nolock) WHERE F1_DOC IN(SELECT TOP "+CValToChar(nTop)+" F1_DOC FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC01LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' ) "
+		cQry := " SELECT '7' AS TP, * FROM SGNFE010 (nolock) WHERE F1_DOC IN(SELECT TOP "+CValToChar(nTop)+" F1_DOC FROM SGNFE010 WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC01LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' ORDER BY CODIGENE ) "
 	ElseIf nRadio == 8 //FRANGO 2 RETORNO SIMBOL CRIACAO	SGNFE010	EC02LOTE	SEQ UNICO	Menu\PROTHEUS  -- Adriana Garcia, Rosangela, Simone
 		cQry := " SELECT '8' AS TP, * FROM SGNFE010 (nolock) WHERE ((D1_MSEXP=' ' OR (D1_MSEXP <> ' ' AND STATUS_INT ='E' )) AND F1_FILIAL = '"+cFilAnt+"' AND F1_FORMUL = 'S' ) AND TABEGENE = 'EC02LOTE' AND F1_EMISSAO <= '"+_sDtlim+"' "
 	ElseIf nRadio == 9 //FRANGO 4 COMPRA FRANGO VIVO		SGNFE010	EC04LOTE	SEQ UNICO	Menu\PROTHEUS   -- Adriana Garcia, Rosangela, Simone
@@ -434,7 +434,12 @@ Static Function pendImp()
 	If (nOpcImp - 1 ) > 0
 		cQuery += " WHERE FONTE.TP = '" + Alltrim(cValToChar((nOpcImp - 1 ))) + "' "
 	EndIf
-	cQuery += "  ORDER BY CAST(FONTE.TP AS NUMERIC), FONTE.F1_FILIAL,FONTE.CODIGENE,FONTE.R_E_C_N_O_ , FONTE.D1_TRANSIT  "
+	//@ticket 66892 - Jonathan.Carvalho 25/01/2022 - Ordenação pelo CODIGENE quando a opção for 7 
+	If nOpcImp == 7
+		cQuery += " ORDER BY FONTE.F1_FILIAL, FONTE.CODIGENE "
+	else
+		cQuery += "  ORDER BY CAST(FONTE.TP AS NUMERIC), FONTE.F1_FILIAL, FONTE.CODIGENE, FONTE.R_E_C_N_O_ , FONTE.D1_TRANSIT  "
+	EndIf
 	//
 	If Select(cAlias) > 0
 		(cAlias)->(DbCloseArea())

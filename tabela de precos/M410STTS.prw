@@ -119,6 +119,8 @@ User Function M410STTS()
 	Private	_cDireto    := ""
 	Private	_cDiretor   := ""
 
+	Private cBlCred		:= ""
+
 	Private lCfop 		:= .F.  								//fernando chamado 036388 - fernando 20/07/2017 
 	Private cMVCfop     := strtran(GETMV("MV_#CFOPRD"),",","/") //fernando chamado 036388 - fernando 20/07/2017 
 
@@ -205,14 +207,25 @@ User Function M410STTS()
 				dbGoto(_SC5cRecnoSC5)
 			Endif   
 		ENDIF 
+		
+
+		_nLimCred 	:= 0
+		_nLimCred 	:= Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
+		_lBloq 		:= .F. 
+		_nSldAb 	:= fBscSld(_cCliente,_cLoja)   //busca saldo em aberto para o cliente
 
 		dbSelectArea("SC6")
 
-		If dbSeek(xFilial("SC6")+_cNumPed )
-
+		If SC6->(dbSeek(xFilial("SC6")+_cNumPed ))
 
 			//Mauricio 25/09/13 - verifico aqui se existe TES de Doacao/Bonificacao..
 			_lDoa := .F.
+
+			DbSelectArea("SF4")
+			SF4->(DbSetOrder(1))
+
+			DbSelectArea("SC9")
+			SC9->(DbSetOrder(1))
 
 			//Everson - 10/02/2020. Chamado 054941.
 			DbSelectArea("SB1")
@@ -220,10 +233,51 @@ User Function M410STTS()
 			SB1->(DbGoTop())
 
 			//
-			While !Eof() .And. SC6->C6_NUM == _cNumPed
+			While SC6->(!Eof()) .And. SC6->C6_NUM == _cNumPed
 
 				//Everson - 10/02/2020. Chamado 054941.
 				SB1->( DbSeek( FWxFilial("SB1") + SC6->C6_PRODUTO ) )
+
+				if SC6->C6_QTDENT < SC6->C6_QTDVEN  //qtd total pendente
+					_nVlrItem := ((SC6->C6_QTDVEN - SC6->C6_QTDENT) * SC6->C6_PRCVEN)   //valor pendente no pedido (inclusive parcial)
+				endif
+
+				if SF4->(dbseek(xFilial("SF4")+SC6->C6_TES))
+					
+					if SC9->(dbseek(xFilial("SC9")+_cNumPed+SC6->C6_ITEM))
+						cBlCred := SC9->C9_BLCRED
+
+						// If (ALLTRIM(SF4->F4_DUPLIC) = 'S') // Alex Borges 01/12/11
+						If ((ALLTRIM(SF4->F4_DUPLIC) = 'S') .and. (ALLTRIM(_Tipo) $ "N/C") .and. (ALLTRIM(_estado)<> "EX"))
+							if (_nVlrItem + _nSldAb) > _nLimCred   //limite excedido deve bloquear
+								
+									If empty(SC9->C9_BLCRED)    //somente se ja não houver bloqueio
+										If !(SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
+												cBlCred 	:= "01"  //bloqueio por limite de valor
+										Endif
+									Else
+										If (SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
+												cBlCred := ""  //bloqueio por limite de valor
+										Endif		                  		
+									Endif
+							Endif
+						
+						// Não ajuste as liberações de crédito para pedidos de exportação.
+						ElseIF ALLTRIM(_estado)<> "EX"
+							cBlCred := ""  // libera crédito
+						End If
+
+						if Reclock("SC9",.F.)
+							SC9->C9_BLCRED 	:= cBlCred
+							SC9->C9_ROTEIRO := SC6->C6_ROTEIRO
+							SC9->C9_DTENTR  := SC6->C6_ENTREG
+							SC9->C9_VEND1   := SC5->C5_VEND1
+							SC9->(MsUnlock())
+						endif
+					ENDIF
+				EndIf
+
+				_nLimCred -= _nVlrItem  //deduzo o valor do item ja validado do limite utilizado.
 
 				_nTotalPedi += SC6->C6_VALOR
 				_nTotalCx   += SC6->C6_UNSVEN   // Soma qtd caixas (2a. UM)
@@ -290,7 +344,7 @@ User Function M410STTS()
 				Endif
 
 				dbSelectArea("SC6")
-				dbSkip()
+				SC6->(dbSkip())
 
 			EndDo
 
@@ -339,40 +393,6 @@ User Function M410STTS()
 				fAtuRot("197")
 			endif
 
-			/* LPM - Trecho descontinuado.
-			RecLock("SC5",.F.)	      
-			// Ricardo Lima-28/02/2019
-			IF SC5->C5_XTIPO <> '2'
-				SC5->C5_ROTEIRO := "197"      
-			ENDIF
-			SC5->(MsUnlock())
-			*/
-			//Atualizo tabela SC6 com novo roteiro
-			/* LPM - Trecho descontinuado.
-			dbSelectArea("SC6")
-			dbSetOrder(1)			
-			If dbSeek(xFilial("SC6")+_cNumPed)								
-				While !Eof() .And. SC6->C6_NUM == _cNumped
-					RecLock("SC6",.F.)	      
-					SC6->C6_ROTEIRO := "197"      
-					SC6->(MsUnlock())
-					SC6->(dbSkip())
-				Enddo
-			Endif
-			*/
-			//Atualizo tabela SC9 com novo roteiro
-			/* LPM - Trecho descontinuado.
-			dbSelectArea("SC9")
-			dbSetOrder(1)			
-			If dbSeek(xFilial("SC9")+_cNumPed)								
-				While !Eof() .And. SC9->C9_PEDIDO == _cNumped
-					RecLock("SC9",.F.)	      
-					SC9->C9_ROTEIRO := "197"      
-					SC9->(MsUnlock())
-					SC9->(dbSkip())
-				Enddo
-			Endif
-			*/
 			
 		// *** FINAL CHAMADO WILLIAM 11/06/2018 036887 || TECNOLOGIA || MARCEL_BIANCHI || 8451 || VALID.ROT.REPROGR. ***  //
 		//Inclusao	
@@ -387,40 +407,6 @@ User Function M410STTS()
 				fAtuRot("099")
 			endif
 			
-			/*
-			RecLock("SC5",.F.)	      
-			// Ricardo Lima-28/02/2019
-			IF SC5->C5_XTIPO <> '2'
-				SC5->C5_ROTEIRO := "099"      
-			ENDIF
-			SC5->(MsUnlock())
-			*/
-			//Atualizo tabela SC6 com novo roteiro
-			/*
-			dbSelectArea("SC6")
-			dbSetOrder(1)			
-			If dbSeek(xFilial("SC6")+_cNumPed)								
-				While !Eof() .And. SC6->C6_NUM == _cNumped
-					RecLock("SC6",.F.)	      
-					SC6->C6_ROTEIRO := "099"      
-					SC6->(MsUnlock())
-					SC6->(dbSkip())
-				Enddo
-			Endif
-			*/
-			//Atualizo tabela SC9 com novo roteiro
-			/*
-			dbSelectArea("SC9")
-			dbSetOrder(1)			
-			If dbSeek(xFilial("SC9")+_cNumPed)								
-				While !Eof() .And. SC9->C9_PEDIDO == _cNumped
-					RecLock("SC9",.F.)	      
-					SC9->C9_ROTEIRO := "099"      
-					SC9->(MsUnlock())
-					SC9->(dbSkip())
-				Enddo
-			Endif
-			*/
 					
 		Elseif SC5->C5_TPFRETE == "C"  //CIF precisa estar roteirizado....
 			//IF !EMPTY(SC5->C5_ROTEIRO)
@@ -437,41 +423,6 @@ User Function M410STTS()
 						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
 						fAtuRot(cRotSA1)
 					endif
-
-					/* LPM - Trecho descontinuado.
-					RecLock("SC5",.F.)	      
-					// Ricardo Lima-28/02/2019
-					IF SC5->C5_XTIPO <> '2'
-						SC5->C5_ROTEIRO := cRotSA1 //Everson, 26/06/2020. Chamado 059127.
-					ENDIF
-					SC5->(MsUnlock())
-					*/
-					//Atualizo tabela SC6 com novo roteiro
-					/* LPM - Trecho descontinuado.
-					dbSelectArea("SC6")
-					dbSetOrder(1)			
-					If dbSeek(xFilial("SC6")+_cNumPed)								
-						While !Eof() .And. SC6->C6_NUM == _cNumped
-							RecLock("SC6",.F.)	      
-							SC6->C6_ROTEIRO := cRotSA1 //Everson, 26/06/2020. Chamado 059127.    
-							SC6->(MsUnlock())
-							SC6->(dbSkip())
-						Enddo
-					Endif
-					*/
-					//Atualizo tabela SC9 com novo roteiro
-					/* LPM - Trecho descontinuado.
-					dbSelectArea("SC9")
-					dbSetOrder(1)			
-					If dbSeek(xFilial("SC9")+_cNumPed)								
-						While !Eof() .And. SC9->C9_PEDIDO == _cNumped
-							RecLock("SC9",.F.)	      
-							SC9->C9_ROTEIRO := cRotSA1 //Everson, 26/06/2020. Chamado 059127.    
-							SC9->(MsUnlock())
-							SC9->(dbSkip())
-						Enddo
-					Endif
-					*/
 				Else
 
 					IF SC5->C5_XTIPO <> '2'
@@ -480,40 +431,6 @@ User Function M410STTS()
 						fAtuRot("200")
 					endif
 
-					/* LPM - Trecho descontinuado.
-					RecLock("SC5",.F.)	   
-					// Ricardo Lima-28/02/2019
-					IF SC5->C5_XTIPO <> '2'   
-						SC5->C5_ROTEIRO := "200"
-					ENDIF
-					SC5->(MsUnlock())
-					*/
-					//Atualizo tabela SC6 com novo roteiro
-					/* LPM - Trecho descontinuado.
-					dbSelectArea("SC6")
-					dbSetOrder(1)			
-					If dbSeek(xFilial("SC6")+_cNumPed)								
-						While !Eof() .And. SC6->C6_NUM == _cNumped
-							RecLock("SC6",.F.)	      
-							SC6->C6_ROTEIRO := "200"    
-							SC6->(MsUnlock())
-							SC6->(dbSkip())
-						Enddo
-					Endif
-					*/
-					//Atualizo tabela SC9 com novo roteiro
-					/* LPM - Trecho descontinuado.
-					dbSelectArea("SC9")
-					dbSetOrder(1)			
-					If dbSeek(xFilial("SC9")+_cNumPed)								
-						While !Eof() .And. SC9->C9_PEDIDO == _cNumped
-							RecLock("SC9",.F.)	      
-							SC9->C9_ROTEIRO := "200"     
-							SC9->(MsUnlock())
-							SC9->(dbSkip())
-						Enddo
-					Endif
-					*/
 				Endif
 			Endif   
 			//ENDIF
@@ -524,12 +441,7 @@ User Function M410STTS()
 			
 			if RecLock("SC5",.F.)
 				SC5->C5_APRVDOA := _cAprBon   // Aprovador bonificacao qualidade
-				/* LPM - Trecho descontinuado.
-				// Ricardo Lima-28/02/2019
-				IF SC5->C5_XTIPO <> '2'
-					SC5->C5_ROTEIRO := "099"      // Roteiro não utilizado pela logistica - incluido por Adriana em 08/12/2015
-				ENDIF
-				*/
+
 				SC5->(MsUnlock())
 			endif	   
 			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio	
@@ -1859,9 +1771,10 @@ User Function M410STTS()
 	_nSldAb := fBscSld(_cCliente,_cLoja)   //busca saldo em aberto para o cliente
 
 	DbSelectArea("SC6")
-	DbSetOrder(1)
-	If DbSeek(xFilial("SC6")+_cNumPed)
-		While !Eof() .And. SC6->C6_NUM == _cNumPed
+	SC6->(DbSetOrder(1))
+	If SC6->(DbSeek(xFilial("SC6")+_cNumPed))
+		While SC6->(!Eof()) .And. SC6->C6_NUM == _cNumPed
+
 			if SC6->C6_QTDENT < SC6->C6_QTDVEN  //qtd total pendente
 				_nVlrItem := ((SC6->C6_QTDVEN - SC6->C6_QTDENT) * SC6->C6_PRCVEN)   //valor pendente no pedido (inclusive parcial)
 			endif
@@ -1873,41 +1786,44 @@ User Function M410STTS()
 
 			// Alex Borges - 28/11/11 - If para tratar a TES
 			DbSelectArea("SF4")
-			DbSetOrder(1)
-			if dbseek(xFilial("SF4")+SC6->C6_TES)
-				// If (ALLTRIM(SF4->F4_DUPLIC) = 'S') // Alex Borges 01/12/11
-				If ((ALLTRIM(SF4->F4_DUPLIC) = 'S') .and. (ALLTRIM(_Tipo) $ "N/C") .and. (ALLTRIM(_estado)<> "EX"))
-					if (_nVlrItem + _nSldAb) > _nLimCred   //limite excedido deve bloquear
-						DbSelectArea("SC9")
-						DbSetOrder(1)
-						if dbseek(xFilial("SC9")+_cNumPed+SC6->C6_ITEM)  //somente se achou item liberado no SC9
-							If empty(SC9->C9_BLCRED)    //somente se ja não houver bloqueio
-								If !(SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
-									Reclock("SC9",.F.)
-									SC9->C9_BLCRED := "01"  //bloqueio por limite de valor
-									MsUnlock()
-								Endif
-							Else
-								If (SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
-									Reclock("SC9",.F.)
-									SC9->C9_BLCRED := ""  //bloqueio por limite de valor
-									MsUnlock()
-								Endif		                  		
-							Endif      
-						Endif
-					Endif
+			SF4->(DbSetOrder(1))
+			if SF4->(dbseek(xFilial("SF4")+SC6->C6_TES))
 				
-				// Não ajuste as liberações de crédito para pedidos de exportação.
-				ElseIF ALLTRIM(_estado)<> "EX"
-					DbSelectArea("SC9")
-					DbSetOrder(1)
-					if dbseek(xFilial("SC9")+_cNumPed+SC6->C6_ITEM)
-						Reclock("SC9",.F.)
-						SC9->C9_BLCRED := ""  // libera crédito
-						MsUnlock()
+				DbSelectArea("SC9")
+				SC9->(DbSetOrder(1))
+				if SC9->(dbseek(xFilial("SC9")+_cNumPed+SC6->C6_ITEM))
+					cBlCred := SC9->C9_BLCRED
+
+					// If (ALLTRIM(SF4->F4_DUPLIC) = 'S') // Alex Borges 01/12/11
+					If ((ALLTRIM(SF4->F4_DUPLIC) = 'S') .and. (ALLTRIM(_Tipo) $ "N/C") .and. (ALLTRIM(_estado)<> "EX"))
+						if (_nVlrItem + _nSldAb) > _nLimCred   //limite excedido deve bloquear
+							
+								If empty(SC9->C9_BLCRED)    //somente se ja não houver bloqueio
+									If !(SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
+											cBlCred 	:= "01"  //bloqueio por limite de valor
+									Endif
+								Else
+									If (SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
+											cBlCred := ""  //bloqueio por limite de valor
+									Endif		                  		
+								Endif
+						Endif
+					
+					// Não ajuste as liberações de crédito para pedidos de exportação.
+					ElseIF ALLTRIM(_estado)<> "EX"
+						cBlCred := ""  // libera crédito
 					End If
-				End If
-			End If    
+
+					if Reclock("SC9",.F.)
+						SC9->C9_BLCRED 	:= cBlCred
+						SC9->C9_ROTEIRO := SC6->C6_ROTEIRO
+						SC9->C9_DTENTR  := SC6->C6_ENTREG
+						SC9->C9_VEND1   := SC5->C5_VEND1
+						SC9->(MsUnlock())
+					endif
+				ENDIF
+			EndIf
+
 			_nLimCred -= _nVlrItem  //deduzo o valor do item ja validado do limite utilizado.
 			SC6->(dbSkip())
 		Enddo
@@ -1922,20 +1838,6 @@ User Function M410STTS()
 				fAtuRot("189")
 			endif
 		endif
-
-		/* LPM - Trecho descontinuado.
-		DbSelectArea("SC5")
-		DbSetOrder(1) 
-		If dbseek(xFilial("SC5")+Alltrim(_cNumPed))
-			RecLock("SC5",.F.)
-			// Ricardo Lima-28/02/2019
-			IF SC5->C5_XTIPO <> '2'
-				Replace C5_ROTEIRO With  "189"
-			ENDIF
-			MsUnlock()
-		EndIf
-		*/
-
 	EndIf
 	//Fim - fernando chamado 036388 - fernando 20/07/2017
 
@@ -2084,6 +1986,7 @@ Static function fAtuExp(_cNumPed)
 	Local lAvEst   	:= .F.
 	Local _cDtEn	:= ""
 	Local _cVend	:= ""
+	Local _cRote	:= ""
 
 	cMensagem := "FATUEXP - Refazendo os arquivos de liberação SC9 para pedidos de exportação "+_cNumPed+"."
 	logZBE(cMensagem)
@@ -2114,6 +2017,7 @@ Static function fAtuExp(_cNumPed)
 	If  SC6->(dbSeek(xFilial("SC6")+_cNumPed))
 		_cDtEn := SC5->C5_DTENTR
 		_cVend := SC5->C5_VEND1
+		_cRote := SC6->C6_ROTEIRO
 		
 		While sc6->(!Eof()) .And. _cNumPed == SC6->C6_NUM
 			if SC6->C6_QTDLIB == 0
@@ -2139,8 +2043,9 @@ Static function fAtuExp(_cNumPed)
 		if SC9->(dbseek(xFilial("SC9")+_cNumPed))
 			While !Eof() .And. _cNumPed == SC9->C9_PEDIDO
 				RecLock("SC9",.F.)
-				SC9->C9_DTENTR := _cDtEn
-				SC9->C9_VEND1  := _cVend
+				SC9->C9_DTENTR 	:= _cDtEn
+				SC9->C9_VEND1  	:= _cVend
+				SC9->C9_ROTEIRO := _cRote
 				SC9->(MsUnlock())
 				SC9->(dbSkip())
 			EndDo
@@ -2285,7 +2190,7 @@ static function fBscSld(_cCl,_cL)
 	//_cQuery += " WHERE SE1.E1_CLIENTE = '"+_cCL+"' AND SE1.E1_LOJA = '"+_cL+"' AND SE1.D_E_L_E_T_ = '' AND SE1.E1_SALDO > 0"
 
 	_cQuery := " SELECT SUM(E1_SALDO)  E1_SALDO "
-	_cQuery += " FROM "+RetSqlName("SE1")+" SE1 " 
+	_cQuery += " FROM "+RetSqlName("SE1")+" (NOLOCK) SE1 " 
 	_cQuery += " WHERE SE1.E1_CLIENTE = '"+_cCL+"' AND SE1.E1_LOJA = '"+_cL+"' " 
 	_cQuery += " AND SE1.E1_SALDO > 0 AND SE1.D_E_L_E_T_ = ' ' "  
 
@@ -2928,7 +2833,9 @@ User Function GeraSC9()
 			RecLock("SC9", .F.)
 				SC9->C9_BLCRED := "01"
 				If Empty(SC9->C9_DTENTR)
-					SC9->C9_DTENTR := SC5->C5_DTENTR
+					SC9->C9_DTENTR 	:= SC5->C5_DTENTR
+					SC9->C9_VEND1   := SC5->C5_VEND1
+					SC9->C9_ROTEIRO := SC5->C5_ROTEIRO
 				EndIf
 			SC9->( msUnLock() )
 

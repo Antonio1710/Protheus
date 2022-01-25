@@ -28,10 +28,10 @@ User Function MTA410T()      // DELMTA450T()  RENOMEADA PARA DEL PARA TESTAR
 //旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴커
 //� Guarda ambiente inicial                                                  �
 //읕컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴켸
-Local _aArea		:= GetArea()
-Local _cAlias := Alias()
-Local _cOrder := IndexOrd()
-Local _cRecno := Recno()
+Local _aArea	:= GetArea()
+Local _cAlias 	:= Alias()
+Local _cOrder 	:= IndexOrd()
+Local _cRecno 	:= Recno()
 
 /*
 INICIO Retirada trecho de fonte para o chamado 041995 || TECNOLOGIA || FERNANDO_SIGOLI || 8451 || FONTES DO TECLAN WILLIAM COSTA 07/06/2018
