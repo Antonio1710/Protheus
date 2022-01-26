@@ -39,10 +39,12 @@
 	@history Ticket 16838   - Fernando Maci - 13/07/2021 - Título bloqueado - Alçada Central de aprovação
 	@history Ticket 17988 	- ADRIANO SAVOINE 06/08/2021 - Receber Workflows de Rio Claro.
 	@history Ticket    TI 	- F. Macieira   - 03/09/2021 - Aplicativo Central Aprovação com internal error aprovação projetos
+	@history ticket 18141   - F. Macieira   - 27/10/2021 - RM - Acordos - Integração Protheus
 /*/
 User Function ADFIN046P()
 
-	Private cBlqRC1   := GetMV("MV_#ZC7RC1",,"000013") // @history Ticket 11556   - Fernando Maci - 27/04/2021 - Processo Trabalhista - Títulos
+	Private cBlqRC1 := GetMV("MV_#ZC7RC1",,"000013") // @history Ticket 11556   - Fernando Maci - 27/04/2021 - Processo Trabalhista - Títulos
+	Private lSigaOn := GetMV("MV_#RMSIGA",,.T.) // @history ticket 18141   - F. Macieira   - 21/12/2021 - RM - Acordos - Integração Protheus
 
 	Private oBrowse
 	Private cUsrPApr := .F.
@@ -84,8 +86,14 @@ User Function ADFIN046P()
 	Private lAprAus		:= .F. 
 	Private nAprAus		:= 0
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Central Aprovação')
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Central Aprovação')
 	
+	// @history ticket 18141   - Fernando Macieira - 27/10/2021 - RM - Acordos - Integração Protheus
+	//If !lSigaOn
+		FWMsgRun(, {|| u_ADFIN120P() }, "Aguarde", "Checando acordos trabalhistas no RM ["+Time()+"] ...")
+	//EndIf
+	//
+
 	oBrowse := FWMBrowse():New()
 	oBrowse:SetAlias("ZC7")
 	oBrowse:SetDescription("Central de Aprovação")
@@ -1120,7 +1128,7 @@ User Function ADFINA46(nOpc)
 Return( .T. )
 
 /*/{Protheus.doc} User Function ADFINL46
-	Central Aprovacao Menu
+	Central Aprovacao Menu - Aprovação - Função chamada pelo APP ADFIN064P
 	@type  Function
 	@author Ricardo Lima
 	@since 14/11/2017
@@ -1165,8 +1173,13 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 	Local nConsumo  := 0
 	Local nVlrBlq   := 0
 	Local lTudoOk   := .T.
-
-	U_ADINF009P('ADFIN046P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Central Aprovação')
+	Local zc
+	Local cSitAprov := ""
+	
+	Private cLinked := "LKD_PRT_RM" //GetMV("MV_#RMLINK",,"RM") // DEBUG - VOLTAR
+	Private cSGBD   := "CCZERN_119205_RM_DE" //GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - VOLTAR
+	Private lSigaOn := GetMV("MV_#RMSIGA",,.T.) // @history ticket 18141   - F. Macieira   - 21/12/2021 - RM - Acordos - Integração Protheus
+	//U_ADINF009P('ADFIN046P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Central Aprovação')
 
 	//
 	Conout( DToC(Date()) + " " + Time() + " ADFIN046P - ADFINL46 - cOpc " + cValToChar(cOpc) )
@@ -2018,10 +2031,12 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 						cAssunto := "Aprovação de Desbloqueio de Titulo"	
 					endif
 
-					cMensagem := u_ADFINW46(  cCodigo , nNumTit , nParctit , cCodCli , cLojCli , nVlrTit , cNomApr , sTpApr , lAprTit , 'A' , '' )
-					If lEnvWFCA
-						u_F050EnvWF( cAssunto , cMensagem , UsrRetMail(cCodSup) , '' )
-					Endif
+					If cOpc == '1' // Protheus // @history ticket 18141   - F. Macieira   - 27/10/2021 - RM - Acordos - Integração Protheus
+						cMensagem := u_ADFINW46(  cCodigo , nNumTit , nParctit , cCodCli , cLojCli , nVlrTit , cNomApr , sTpApr , lAprTit , 'A' , '' )
+						If lEnvWFCA
+							u_F050EnvWF( cAssunto , cMensagem , UsrRetMail(cCodSup) , '' )
+						Endif
+					EndIf
 				endif
 
 				cFilZC7     := Space(2)
@@ -2254,7 +2269,57 @@ User Function ADFINL46( cDscObs , TpRecPag , cOpc )
 
 			EndIf
 
+			// @history ticket 18141   - F. Macieira   - 27/10/2021 - RM - Acordos - Integração Protheus
+			cSitAprov := u_GetSitZC7(SE2->E2_FILIAL, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO)
+
+			If AllTrim(Posicione("ZC7",2,SE2->E2_FILIAL + SE2->E2_FORNECE + SE2->E2_LOJA + SE2->E2_PREFIXO + SE2->E2_NUM + SE2->E2_PARCELA + SE2->E2_TIPO,"ZC7_TPBLQ")) == "000013"
+
+				If lSigaOn
+
+					ZHB->( dbSetOrder(3) ) // ZHB_FILIAL, ZHB_NUM, R_E_C_N_O_, D_E_L_E_T_
+					If ZHB->( dbSeek(FWxFilial("ZHB")+SE2->E2_NUM) )
+						RecLock("ZHB", .F.)
+							If lAprTit
+								ZHB->ZHB_APROVA := .T.
+							EndIf
+							ZHB->ZHB_STATUS := AllTrim(cSitAprov)
+						ZHB->( msUnLock() )
+					EndIf
+
+					// Gera Parcelas
+					/*
+					If lAprTit
+						u_ADFIN121P(.t.)
+					EndIf
+					*/
+
+				Else
+					// Flego RM (tem que ser fora do begin transaction senão dá erro)
+					cSQL := " UPDATE OPENQUERY ( " + cLinked + ",
+					cSQL += " ' SELECT FLAG_SIGA, FILIAL_SIGA, PREFIXO_SIGA, NUM_SIGA, STATUS_APROVACAO
+					cSQL += "   FROM [" + cSGBD + "].[DBO].[VPROCESSOCOMPL]
+					cSQL += "   WHERE FILIAL_SIGA = ''"+SE2->E2_FILIAL+"''
+					cSQL += "   AND PREFIXO_SIGA = ''"+SE2->E2_PREFIXO+"''
+					cSQL += "   AND NUM_SIGA = ''"+SE2->E2_NUM+"'' ' )
+					cSQL += " SET STATUS_APROVACAO = '"+cSitAprov+"'
+
+					If tcSqlExec(cSQL) < 0
+						Conout( DtoC(msDate()) + " " + Time() + " ADFIN046P - RM ACORDOS " + TCSQLError() )
+					EndIf
+				
+				EndIf
+
+			EndIf
+			//
+
 	END TRANSACTION
+
+	// @history ticket 18141   - F. Macieira   - 30/12/2021 - RM - Acordos - Integração Protheus
+	// Gera Parcelas
+	If lAprTit .and. AllTrim(ZC7->ZC7_TPBLQ) == "000013"
+		u_ADFIN121P(.t.)
+	EndIf
+	//
 
 	RestArea(aArea)
 
