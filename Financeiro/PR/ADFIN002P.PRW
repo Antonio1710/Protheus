@@ -18,6 +18,7 @@
 																 A rotina estava desconsiderando o valor total acumulado quando o valor gravado foi maior que o calculado. 
 																 Ajustamos os cálculos para considerar o abatimento e regravar os valores corretamente.
 	@history Chamado 66834 - Leonardo P. Monteiro - 24/01/2022 - Agregado o valor do AB- no valor total do título para a composição correta dos valores acumulados diariamente.															
+	@history Chamado 66834 - Leonardo P. Monteiro - 26/01/2022 - Ajuste no valor do acúmulo quando o valor calculado é menor que o histórico.
 /*/
 
 
@@ -41,7 +42,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private dDtUltimo   := ''
 	Private cDtUltimo   := ''
 	Private lAcumulo    := .F.
-	Private cDataIni    := '' 
+	Private cDataIni    := ''
+	Private cPerCalc    := '' 
 	Private cDtAcum     := ''
 	Private nVlAcum     := 0   
 	Private cCgcOld     := ''
@@ -92,6 +94,11 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	cMetodo   := ''
 	nId       := 0
 	cmensagem := ''
+
+	cPerCalc  := DTOS(CTOD(CVALTOCHAR(STRZERO(DAY(DATE()),02) + '/' + ;
+		                 IIF(LEN(CVALTOCHAR(MONTH(DATE()))) == 1, '0' + ;
+		                 CVALTOCHAR(MONTH(DATE())),CVALTOCHAR(MONTH(DATE())))+'/'+;
+		                 CVALTOCHAR((YEAR(DATE()) - 1)))))
 	
 	CalcXCGC() // calcula os oito digitos do cgc na SA1 e SE1
 	
@@ -543,8 +550,26 @@ Static Function GravarAcumulo()
 					TRJ->(DBSKIP())
 					ENDDO
 					TRJ->(dbCloseArea())
-			   
-			    ELSE   		
+			    	//@Chamado 66834 - Leonardo P. Monteiro - 26/01/2022 - Ajuste no valor do acúmulo quando o valor calculado é menor que o histórico.
+				Elseif cDtAcum > cPerCalc .AND. STOD(cDtAcum) == SA1->A1_DTACUMU .AND. nVlAcum < SA1->A1_VLACUMU
+					
+					if RecLock("SA1",.F.)              
+					
+						SA1->A1_DTACUMU	:= SA1->A1_DTACUMU
+						SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
+						
+						MsUnlock()
+
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"1- Ajuste no acumulado: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Vlr. Atual:"+ cValtochar(SA1->A1_VLACUMU) +", Vlr. Calculado:"+cValtochar(nVlAcum)+".",;
+									ComputerName(),LogUserName())
+					ELSE
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"9- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+									ComputerName(),LogUserName())
+					endif
+
+				ELSE   		
 			   
 			   		IF RecLock("SA1",.F.)              
 					
@@ -768,6 +793,7 @@ STATIC FUNCTION CalcDtPenComp()
 										ComputerName(),LogUserName())
 						endif
 				    ENDIF
+
 				ENDIF           
 			    
 		        TRI->(DBSKIP())
@@ -1270,6 +1296,7 @@ STATIC FUNCTION SqlCGCCODCLI(cCnpjnew)
 			 WHERE RTRIM((LEFT(A1_CGC,8))) <> '00000000'
 			   AND RTRIM((LEFT(A1_CGC,8))) <> '' 
 			   AND RTRIM((LEFT(A1_CGC,8))) = %EXP:cCnpjnew%
+			   AND (A1_XCGC=%Exp:cDebugCNPJ% OR ltrim(rtrim(%exp:cDebugCNPJ%)) ='')
 			   AND D_E_L_E_T_ <> '*'                  
 			   
              ORDER BY A1_CGC
