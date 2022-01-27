@@ -1,4 +1,3 @@
-
 #INCLUDE "Protheus.ch"
 #INCLUDE "TopConn.ch"
 #DEFINE ENTER CHR(13)+CHR(10)
@@ -11,8 +10,8 @@
 	@author Fernando Macieira
 	@since  09/04/18 
 	@version version
-	@history 01/12/2020, Andre Mendes, TKT:3515- Ajustar a ordem das transferências, colocando as mesmas em primeiro lugar, ou seja 100.               
-
+	@history 01/12/2020, Andre Mendes, TKT:3515 - Ajustar a ordem das transferências, colocando as mesmas em primeiro lugar, ou seja 100.               
+	@history 26/01/2022, Sigoli      , TKT: T.I - Removido a função copy to, objetivando reduzir o tempo de processamento do custo  
 /*/
 
 
@@ -36,7 +35,7 @@ If cEmpAnt $ cEmpProc
 	dbSelectArea("TRB")
 	dbGoTop()
 	
-	Copy to "CMTEMP1"+GETDBEXTENSION()
+	//Copy to "CMTEMP1"+GETDBEXTENSION()
 	Do While !(TRB->(EOF()))
    
 		If TRB->TRB_ALIAS == "SD3" .And. Left(TRB->TRB_CF,3) $ "RE0"
@@ -89,7 +88,7 @@ TKT:3515- Ajustar a ordem das transferências, colocando as mesmas em primeiro lu
 		TRB->( dbSkip() )                                                                                              
 	
 	EndDo
-	Copy to "CMTEMP2"+GETDBEXTENSION()
+	//Copy to "CMTEMP2"+GETDBEXTENSION()
 
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿

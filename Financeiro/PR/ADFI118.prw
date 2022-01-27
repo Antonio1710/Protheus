@@ -14,6 +14,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @return Nil, Função não tem retorno
     @example
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
+    @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
 /*/
 User Function ADFI118()
 
@@ -21,14 +22,14 @@ User Function ADFI118()
     Local oBrowse
     Local cFunBkp := FunName()
       
-    Private cLinked := "LKD_PRT_RM" //GetMV("MV_#RMLINK",,"RM") // DEBUG - VOLTAR
-	Private cSGBD   := "CCZERN_119205_RM_DE" //GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - VOLTAR
+    // @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
+    Private cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
+	Private cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gerando acordos trabalhistas para aprovação.')
     // @history ticket 18141   - Fernando Macieira - 21/12/2021 - RM - Acordos - Integração Protheus
 	FWMsgRun(, {|| u_ADFIN120P() }, "Aguarde", "Gerando acordos trabalhistas para aprovação ["+Time()+"] ...")
     u_Run121P(.f.)
-
-    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para incluir as despesas dos processos de acordos trabalhistas')
 
     SetFunName("ADFI118")
       

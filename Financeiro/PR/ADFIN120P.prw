@@ -19,6 +19,7 @@
     (examples)
     @see (links_or_references)
     @ticket 18141 - RM - Acordos - Integração Protheus
+    @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
 /*/
 User Function ADFIN120P()
 
@@ -27,10 +28,12 @@ User Function ADFIN120P()
     Local cTpDespesa := GetMV("MV_#RMDESP",,"10")
 
     Private lSigaOn := GetMV("MV_#RMSIGA",,.T.)
-    Private cLinked := "LKD_PRT_RM" //GetMV("MV_#RMLINK",,"RM") // DEBUG - VOLTAR
-	Private cSGBD   := "CCZERN_119205_RM_DE" //GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - VOLTAR
     Private aDadRM  := {}
-    
+
+    // @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
+    Private cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
+	Private cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
+
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para gerar alçada de aprovação das despesas dos acordos trabalhistas')
 
     lZCF01 := GetZCF()

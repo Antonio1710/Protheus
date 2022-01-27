@@ -29,6 +29,7 @@ Static cRotina  := "ADFIN121P"
     (examples)
     @see (links_or_references)
     @ticket 18141 - RM - Acordos - Integração Protheus
+    @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -65,9 +66,10 @@ User Function ADFIN121P(lAuto)
     Private cLinked := "RM"
 	Private cSGBD   := "CCZERN_119204_RM_PD"
 
-    //U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM')
-	
-    // Inicializo ambiente
+
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM')
+
+	// Inicializo ambiente
     If lAuto
 
         rpcClearEnv()
@@ -89,8 +91,9 @@ User Function ADFIN121P(lAuto)
     PtInternal(1,ALLTRIM(PROCNAME()))
 
     lSigaOn := GetMV("MV_#RMSIGA",,.T.)
-    cLinked := "LKD_PRT_RM" //GetMV("MV_#RMLINK",,"RM") // DEBUG - VOLTAR
-	cSGBD   := "CCZERN_119205_RM_DE" //GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - VOLTAR
+    // @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
+    cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
+	cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
     cEmpRun := GetMV("MV_#RMAEMP",,"01#02#07#09")
     cFilRun := GetMV("MV_#RMAFIL",,"02")
     

@@ -13,6 +13,7 @@
 	@history Ticket  8      - Abel B.  - 29/01/2021 - Execução de forma automática na Inclusão e Alteração do Pedido de Venda
 	@history Ticket  8      - Abel B.  - 02/02/2021 - Acrescentada informação dos pedidos ainda não processados
 	@history Ticket  63149  - Sigoli   - 01/11/2021 - InterFunctionCall: cannot find function TCSQLERRO in AppMap on PROCATU -- Corrigido o nome da função PARA: TCSQLERROR
+	@history Ticket  T.I    - Sigoli   - 26/01/2022 -  Adicionado tratamento na query para nao trazer pedido de devolução
 /*/
 
 User Function ADFIN019P() // U_ADFIN019P()
@@ -91,6 +92,7 @@ Static Function ProcAtu()
 	cQuery += " AND C5_CLIENTE NOT IN ('031017','030545') "
 	cQuery += " AND C5_XPREAPR IN ('','B') "
 	cQuery += " AND C5_NOTA = '' "
+	cQuery += " AND C5_TIPO NOT IN ('B') " //Ticket  T.I - Sigoli   - 26/01/2022
 	cQuery += " AND SC5.D_E_L_E_T_ = '' "
 	cQuery += " ORDER BY C5_CLIENTE, C5_FILIAL, C5_NUM "	
 
@@ -159,6 +161,7 @@ Static Function xTlCons()
 	cQuery+= " AND C5_CLIENTE NOT IN ('031017','030545') "
 	//cQuery+= " AND C5_XPREAPR IN ('L','B') " //Everson - 13/08/2020. Chamado 060417.
 	cQuery+= " AND C5_NOTA = '' "
+	cQuery+= " AND C5_TIPO NOT IN ('B') " //Ticket  T.I - Sigoli   - 26/01/2022
 	cQuery+= " AND SC5.D_E_L_E_T_ = '' "	
 
 	//		
