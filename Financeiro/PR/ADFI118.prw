@@ -15,6 +15,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @example
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
+    @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
 /*/
 User Function ADFI118()
 
@@ -26,7 +27,6 @@ User Function ADFI118()
     Private cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
 	Private cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
 
-    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gerando acordos trabalhistas para aprovação.')
     // @history ticket 18141   - Fernando Macieira - 21/12/2021 - RM - Acordos - Integração Protheus
 	FWMsgRun(, {|| u_ADFIN120P() }, "Aguarde", "Gerando acordos trabalhistas para aprovação ["+Time()+"] ...")
     u_Run121P(.f.)
@@ -227,6 +227,7 @@ Static Function fValidGrid(oModel)
     Local nQtdPar    := 0
     Local dVencto1   := CtoD("//")
     Local cItem      := ""
+    Local cDespFavor := GetMV("MV_#RMFAVO",,"ACORDO#PERITO") // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     //Local cPictVlr   := PesqPict('ZHB', 'ZHB_VALOR')
  
     // N. Processo Trabalhista obrigatório
@@ -257,11 +258,14 @@ Static Function fValidGrid(oModel)
                 lRet := .f.
                 Alert("N. do Processo informado não existe no RM! Verifique...")
             Else
+                // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
+                /*
                 ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
                 If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso) )
                     lRet := .f.
                     Alert("Processo não possui nenhum favorecido! Verifique...")
                 EndIf
+                */
             EndIf
 
             If Select("WorkRM") > 0
@@ -345,6 +349,17 @@ Static Function fValidGrid(oModel)
                             EndIf
                         EndIf
 
+                    EndIf
+
+                    // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
+                    If AllTrim(cTipDes) $ AllTrim(cDespFavor)
+                        If oModel:nOperation <> 5
+                            ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
+                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso+cTipDes) )
+                                lRet := .f.
+                                Alert("O processo/despesa contido na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique parâmetro MV_#RMFAVO...")
+                            EndIf
+                        EndIf
                     EndIf
                 
                     // Valor
