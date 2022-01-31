@@ -27,6 +27,8 @@ User Function ADFI118()
     Private cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
 	Private cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gerando acordos trabalhistas para aprovação.')
+
     // @history ticket 18141   - Fernando Macieira - 21/12/2021 - RM - Acordos - Integração Protheus
 	FWMsgRun(, {|| u_ADFIN120P() }, "Aguarde", "Gerando acordos trabalhistas para aprovação ["+Time()+"] ...")
     u_Run121P(.f.)
@@ -332,11 +334,14 @@ Static Function fValidGrid(oModel)
                         Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " não existe! Verifique...")
                         Exit
                     Else
-                        ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
-                        If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso+cTipDes) )
-                            lRet := .f.
-                            Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique...")
-                            Exit
+                        // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
+                        If AllTrim(cTipDes) $ AllTrim(cDespFavor)
+                            ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
+                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso+cTipDes) )
+                                lRet := .f.
+                                Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique...")
+                                Exit
+                            EndIf
                         EndIf
 
                         // Inclusões

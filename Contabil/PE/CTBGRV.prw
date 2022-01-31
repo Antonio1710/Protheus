@@ -29,6 +29,7 @@
 	@history ticket  5949   - Fernando Macieira - 10/12/2020 - Projeto - RM - CT2_SEQLAN - Razão Contábil concatena históricos
 	@history ticket  8938   - Fernando Macieira - 03/02/2021 - Histórico de Lançamentos Origem Lote Folha bagunçados no razão
 	@history ticket  9307   - Abel Babini       - 15/02/2021 - Acrescentar indesxadores para rotinas do Ativo de Baixas e Transferências
+	@history ticket 65263   - Fernando Macieira - 24/01/2022 - numero/nome da granja na contabilização da depreciação
 /*/
 User Function CTBGRV()
 
@@ -1131,6 +1132,9 @@ User Function CTBGRV()
 	// @history ticket 1438 - FWNM - 21/10/2020 - Indexadores de NCC incorretos
 	IndexNCC()
 	//
+
+	// @history ticket 65263   - Fernando Macieira - 24/01/2022 - numero/nome da granja na contabilização da depreciação
+	ATFLoteZCN()
 	
 	//ticket  9307   - Abel Babini       - 15/02/2021 - Acrescentar indesxadores para rotinas do Ativo de Baixas e Transferências
 	If IsInCallStack("ATFA036") .or. IsInCallStack("ATFA060") //(Alltrim(nProgra) $ "MATA460" .AND. IsInCallStack("ATFA036"))
@@ -1562,3 +1566,171 @@ Static Function UpCV3RecOri()
 	EndIf
 
 Return nCV3_RECORI
+
+/*/{Protheus.doc} ATFLoteZCN()
+	Preenche o lote recria na contabilização da depreciação
+	@type  Static Function
+	@author FWNM
+	@since 25/01/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 65263   - Fernando Macieira - 24/01/2022 - numero/nome da granja na contabilização da depreciação
+/*/
+Static Function ATFLoteZCN()
+
+	Local aArea  := GetArea()
+	Local cLP    := GetMV("MV_#LPZCN",,"820")
+	Local cQuery := ""
+	Local cCodRecria := ""
+	Local cNomRecria := ""
+
+	If AllTrim(CT2->CT2_LP) $ cLP
+
+		CTL->( dbSetOrder(1) ) // CTL_FILIAL, CTL_LP, R_E_C_N_O_, D_E_L_E_T_
+		If CTL->( dbSeek(FWxFilial("CTL")+CT2->CT2_LP) )
+			
+			// Posiciona na SN3
+			dbSelectArea( CTL->CTL_ALIAS ) // SN3
+			dbSetOrder( Val(CTL->CTL_ORDER) ) // 1
+			If dbSeek( Alltrim(CT2->CT2_KEY) ) // N3_FILIAL+N3_CBASE+N3_ITEM+N3_TIPO+N3_BAIXA+N3_SEQ
+
+				// Posiciono na SN1 para bucar dados da NF ou CC do bem
+				SN1->( dbSetOrder(1) ) // N1_FILIAL, N1_CBASE, N1_ITEM, R_E_C_N_O_, D_E_L_E_T_
+				If SN1->( dbSeek(FWxFilial("SN1")+SN3->N3_CBASE+SN3->N3_ITEM) )
+
+					// Busca precisa
+					SD1->( dbSetOrder(26) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_ITEM, D1_COD, R_E_C_N_O_, D_E_L_E_T_
+					If SD1->( dbSeek(FWxFilial("SD1")+SN1->N1_NFISCAL+SN1->N1_NSERIE+SN1->N1_FORNEC+SN1->N1_LOJA+SN1->N1_NFITEM) )
+
+						cCodRecria := SD1->D1_XLOTECC
+						cNomRecria := SD1->D1_XDLOTCC
+				
+						// Busco o novo lote sequencial do lote pois ele pode ser atualizado e neste caso será este que deverá ser levado para a contabilização do ativo
+						If Select("Work") > 0
+							Work->( dbCloseArea() )
+						EndIf
+
+						cQuery := " SELECT ZCN_LOTE, ZCN_DESCLT 
+						cQuery += " FROM " + RetSqlName("ZCN") + " (NOLOCK)
+						cQuery += " WHERE ZCN_FILIAL='"+SD1->D1_FILIAL+"' 
+						cQuery += " AND ZCN_LOTE='"+SD1->D1_XLOTECC+"'
+						cQuery += " AND ZCN_CENTRO='"+SD1->D1_CC+"'
+						cQuery += " AND ZCN_STATUS='A'
+						cQuery += " AND D_E_L_E_T_=''
+
+						tcQuery cQuery New Alias "Work"
+
+						Work->( dbGoTop() )
+						If Work->( !EOF() )
+							cCodRecria := Work->ZCN_LOTE
+							cNomRecria := Work->ZCN_DESCLT
+						EndIf
+
+						If Select("Work") > 0
+							Work->( dbCloseArea() )
+						EndIf
+
+						// gravo lote na contabilização da depreciação
+						If !Empty(cCodRecria) .or. !Empty(cNomRecria)
+							RecLock("CT2", .F.)
+								CT2->CT2_XLTXCC := cCodRecria
+								CT2->CT2_XDLXCC := cNomRecria
+							CT2->( msUnLock() )
+						EndIf
+
+					Else
+						
+						// Busca sem item pois tem ativos que não possuem item
+						SD1->( dbSetOrder(26) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_ITEM, D1_COD, R_E_C_N_O_, D_E_L_E_T_
+						If SD1->( dbSeek(FWxFilial("SD1")+SN1->N1_NFISCAL+SN1->N1_NSERIE+SN1->N1_FORNEC+SN1->N1_LOJA) )
+
+							cCodRecria := SD1->D1_XLOTECC
+							cNomRecria := SD1->D1_XDLOTCC
+					
+							// Busco o novo lote sequencial do lote pois ele pode ser atualizado e neste caso será este que deverá ser levado para a contabilização do ativo
+							If Select("Work") > 0
+								Work->( dbCloseArea() )
+							EndIf
+
+							cQuery := " SELECT ZCN_LOTE, ZCN_DESCLT 
+							cQuery += " FROM " + RetSqlName("ZCN") + " (NOLOCK)
+							cQuery += " WHERE ZCN_FILIAL='"+SD1->D1_FILIAL+"' 
+							cQuery += " AND ZCN_CENTRO='"+SD1->D1_CC+"'
+							cQuery += " AND ZCN_STATUS='A'
+							cQuery += " AND D_E_L_E_T_=''
+
+							tcQuery cQuery New Alias "Work"
+
+							Work->( dbGoTop() )
+							If Work->( !EOF() )
+								cCodRecria := Work->ZCN_LOTE
+								cNomRecria := Work->ZCN_DESCLT
+							EndIf
+
+							If Select("Work") > 0
+								Work->( dbCloseArea() )
+							EndIf
+
+							// gravo lote na contabilização da depreciação
+							If !Empty(cCodRecria) .or. !Empty(cNomRecria)
+								RecLock("CT2", .F.)
+									CT2->CT2_XLTXCC := cCodRecria
+									CT2->CT2_XDLXCC := cNomRecria
+								CT2->( msUnLock() )
+							EndIf
+
+						EndIf
+					
+					EndIf
+
+				EndIf
+
+				// Busco direto pelo CC N3_CUSTBEM 
+				If Empty(cCodRecria) .or. Empty(cNomRecria)
+
+					If Select("Work") > 0
+						Work->( dbCloseArea() )
+					EndIf
+
+					cQuery := " SELECT ZCN_LOTE, ZCN_DESCLT 
+					cQuery += " FROM " + RetSqlName("ZCN") + " (NOLOCK)
+					cQuery += " WHERE ZCN_FILIAL='"+SN3->N3_FILIAL+"' 
+					cQuery += " AND ZCN_CENTRO='"+SN3->N3_CUSTBEM+"'
+					cQuery += " AND ZCN_STATUS='A'
+					cQuery += " AND D_E_L_E_T_=''
+
+					tcQuery cQuery New Alias "Work"
+
+					Work->( dbGoTop() )
+					If Work->( !EOF() )
+						cCodRecria := Work->ZCN_LOTE
+						cNomRecria := Work->ZCN_DESCLT
+					EndIf
+
+					If Select("Work") > 0
+						Work->( dbCloseArea() )
+					EndIf
+
+					// gravo lote na contabilização da depreciação
+					If !Empty(cCodRecria) .or. !Empty(cNomRecria)
+						RecLock("CT2", .F.)
+							CT2->CT2_XLTXCC := cCodRecria
+							CT2->CT2_XDLXCC := cNomRecria
+						CT2->( msUnLock() )
+					EndIf
+
+				EndIf
+			
+			EndIf
+
+		EndIf
+
+	EndIf
+
+	RestArea( aArea )
+	
+Return
