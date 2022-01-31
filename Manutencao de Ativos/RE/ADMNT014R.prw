@@ -38,6 +38,7 @@ Private cMVPAR04
 Private czEMP
 Private czFIL
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de custo de requisição de almoxarifado ')
 
 If lJob
 	RpcSetType(3)
