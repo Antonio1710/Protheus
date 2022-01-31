@@ -20,6 +20,9 @@ User Function ADMNT010P()
 	Local aInfoCustom 	:= {}
 	Local cTxtIntro	:=	"Rotina responsável pelo CALCULO do Custo da MO das OS do MNT Ativo"
 	Private oProcess
+
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CALCULO do Custo da MO das OS do MNT Ativo')
+
 	//Aadd(aInfoCustom,{"Visualizar",{|oCenterPanel| visualiza(oCenterPanel)},"WATCH" })
 	//Aadd(aInfoCustom,{"Relatorio" ,{|oCenterPanel| Relat(oCenterPanel) },"RELATORIO"})
 	oProcess := tNewProcess():New("ADMNT010","Custo MO OS",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Custo MO OS", .T. )
