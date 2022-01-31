@@ -45,6 +45,7 @@ Private oExcel  := FwMsExcel():New()
 Private dDataIni	:= MV_PAR01
 Private dDataFim	:= MV_PAR02
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Extracao EXCEL dos Valores da OS ')
 
 oExcel:AddworkSheet("CUSTO") // Planilha
 oExcel:AddTable ("CUSTO","Itens") // Titulo da Planilha (Cabeçalho)

@@ -34,6 +34,8 @@ Private oProcess
 Private dMVPAR01   
 Private dMVPAR02   
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de Custo por solicitante ')
+
 
 If lJob
 	RpcSetType(3)
