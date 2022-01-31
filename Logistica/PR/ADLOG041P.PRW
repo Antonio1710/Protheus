@@ -13,7 +13,8 @@
 	@history Everson, 19/03/2020. Chamado 054941. Tratamento para gravar a distância percorrida de frete combinado e tabelas de região e região x produto.
     @history Everson, 01/07/2020. Chamado 059326. Alterado cálculo do frete por peso bruto para cálculo pelo peso líquido.
 	@history Everson, 11/08/2020. Chamado 059326. Tratamento para geração de registros de frete na Ceres.
-	@history Everson, 08/10/2020. Chamado TI. Tratamento para cálculo de frete por região.
+	@history Everson, 08/10/2020. Chamado TI. 	  Tratamento para cálculo de frete por região.
+	@history Everson, 31/01/2022. Chamado 66861.  Tratamento para frete combinado com mais de uma nota fiscal.
 	/*/
 User Function ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr, lAutoJob)
 	
@@ -1014,7 +1015,7 @@ Static Function frtCombina(sCodOcor,sCodTrns,sNumCarg,sNumRot,nVlrTab,nVlrMin,nV
 	ZFF->(DbSetOrder(4)) //ZFF_FILIAL, ZFF_DTENTR, ZFF_PLACA
 	ZFF->(DbGoTop())
 	If ZFF->(DbSeek( FWxFilial("ZFF") + DtoS(dDtEntr) + Alltrim(sCodPlc) + sNumRot ) ) //Everson-08/07/2019|CH:044314.
-		If Alltrim(cValToChar(ZFF->ZFF_USANEG)) = 'N' .And. Alltrim(cValToChar(ZFF->ZFF_APROVA)) = 'S' //Everson-19/06/2019|CH:044314.
+		If /*Alltrim(cValToChar(ZFF->ZFF_USANEG)) = 'N' .And.*/ Alltrim(cValToChar(ZFF->ZFF_APROVA)) = 'S' //Everson-19/06/2019|CH:044314. //Everson - 31/01/2022. Chamado 66861.
 			nVlrTab := ZFF->ZFF_VALOR
 			cCodTab := 'XXXXXX'
 			cDscTab := 'Valor do Frete Negociado, Frete Avulso'
@@ -1128,7 +1129,7 @@ Static Function grvFrt(sCodOcor,sCodTrns,sNumCarg,sNumRot,nVlrTab,nVlrMin,nVlrFr
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.                                            |
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	Local aArea		:= GetArea()
+	//Local aArea		:= GetArea()
 	Local sDscOcos	:= ""
 	Local sTpOcorr	:= ""
 	Local lIclusão	:= .T.
