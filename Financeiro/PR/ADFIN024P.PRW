@@ -11,6 +11,7 @@
    @history Chamado 056381 - William Costa - 17/03/2020 - Adicionado log em todos os reclock do campo ZF_LCREDE para descobrir seu valor antes e depois 
    @history Chamado 057170 - Everson       - 23/04/2020 - Tratamento para otimizar a rotina.
    @history Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados. 
+   @history Ticket  8      - Abel Babini   - 01/02/2022 - Ajuste de variáveis
 */   
 User Function ADFIN024P()
 
@@ -389,7 +390,7 @@ User Function ADFIN024P()
                            aPerPgt	:= {}
                            
                            //Carrega Perfil de Pagamento
-                           aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,(cTbPed)->CODIGO, (cTbPed)->LOJA)
+                           aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI) //01/02/2022 - Ajuste de Variáveis
                            IF ValType(aPerPgt) = 'A' 
                               cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
                               nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])

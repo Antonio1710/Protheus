@@ -44,6 +44,7 @@
 	@history chamado 102    - FWNM     - 17/08/2020 - WS BRADESCO - Pedidos Vendas com Adiantamento que não foram autorizados pelo retorno do CNAB 
 	@history ticket 745 - FWNM - 30/09/2020 - C5_XWSPAGO com identificação para liberação manual
 	@history ticket 12098 - FWNM - 07/04/2020 - Correção emergencial na rotina de aprovação dos clientes do varejo. A rotina entra em loop infinto.
+	@history Ticket  8      - Abel Babini   - 01/02/2022 - Ajuste de variáveis
 /*/
 User Function ADFIN023P()
 
@@ -585,7 +586,7 @@ User Function ADFIN023P()
 							aPerPgt	:= {}
 							
 							//Carrega Perfil de Pagamento
-							aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,(cTbPed)->CODIGO, (cTbPed)->LOJA)
+							aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI) //01/02/2022 - Ajuste de Variáveis
 							IF ValType(aPerPgt) = 'A' 
 								cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
 								nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])
