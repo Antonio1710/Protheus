@@ -13,7 +13,8 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 62276 - Fernando Macieira - 13/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74
-	@history Ticket 62276 - Fer Macieira      - 06/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
+	@history Ticket 62276 - Fernando Macieira - 06/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
+	@history Ticket 67479 - Fernando Macieira - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
 /*/
 USER FUNCTION MA265TDOK()
 	
@@ -31,23 +32,11 @@ USER FUNCTION MA265TDOK()
 	
 		IF aCols[nCont][nEstorno] <> 'S' //Regra para validar somente a linha que não tem estorno
 		
-			// @history ticket 62276 - Fernando Macieira - 13/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74
-			//Regra para a filial 02 local 02
-			/*
-			IF FWFILIAL("SDA")       == '02' .AND. ;
-			   !(ALLTRIM(M->DA_LOCAL) $ GETMV("MV_#ARMEXC",,'03')) // Locais para não entrar nessa validação
-			
-				IF aCols[nCont][nPosLocaliz] <> Posicione("SBE",10,xFilial("SBE")+M->DA_PRODUTO+M->DA_LOCAL,"BE_LOCALIZ")
-				   
-				    MsgStop("OLÁ " + Alltrim(cUserName) + ", o endereço não está correto, favor verificar", "MA265TDOK-01 - VALIDA ENDEREÇAMENTO")
-					lRet        := .F.
-					
-				ENDIF
-			ENDIF
-			*/
-			//
-			
-			If !IsInCallStack("u_CHKSDA") // @history Ticket 62276 - Fer Macieira      - 06/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
+			If IsInCallStack("u_CHKSDA") .or. IsInCallStack("u_UpSDASDB") // @history Ticket 67479 - Fernando Macieira - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
+
+				lRet := .t.
+
+			Else
 
 				IF aCols[nCont][nPosData] <> M->DA_DATA   
 				

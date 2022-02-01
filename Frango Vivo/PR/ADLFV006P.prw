@@ -14,6 +14,7 @@ Static cEst	  := Nil
     @history Everson, 08/08/2019, Ch: 044314 tratamento para criação de tabela de frete por região.
     @history Everson, 09/08/2019, Ch: 044314 adicionado tratamento para frete exportação.
     @history Everson, 17/02/2020, Ch: 054941 tratamento para informar km rodado quando a tabela for por região ou região x produto.
+    @history Everson, 01/02/2022. Chamado 65860.  Adicionado novo cálculo de frete.
     /*/
 User Function ADLFV006P()
 
@@ -180,8 +181,8 @@ Static Function ModelDef()
     //Validações de campos.
     //oStPai:SetProperty('ZF5_TABCOD',  MODEL_FIELD_WHEN,FwBuildFeature(STRUCT_FEATURE_WHEN,    '.F.'))                                 //Modo de Edição
     //oStPai:SetProperty('ZF5_TABCOD',  MODEL_FIELD_INIT,FwBuildFeature(STRUCT_FEATURE_INIPAD,  'GetSXENum("ZF5", "ZF5_TABCOD")'))      //Ini Padrão
-    //oStPai:SetProperty('ZF5_TABDES',  MODEL_FIELD_OBRIGAT, .T. ) //Everson-044314|14/03/2019.                                                                     //Campo Obrigatório
-     
+    //oStPai:SetProperty('ZF5_TABDES',  MODEL_FIELD_OBRIGAT, .T. ) //Everson-044314|14/03/2019. 
+         
     //Cria modelos e relacionamentos.
     oModel := MPFormModel():New('TABFRETE', /*bPreVld*/ , bPosVal, /**/, /*bCancel*/ )
     oModel:AddFields('ZF5MASTER',/*cOwner*/,oStPai)
@@ -333,6 +334,13 @@ Static Function ViewDef()
      	oStFilho:RemoveField('ZF6_TABKMI')
     	//oStFilho:RemoveField('ZF6_TABKMF')
     	oStFilho:RemoveField('ZF6_TABPRC')
+    
+    ElseIf ( INCLUI .And. MV_PAR01 == 4 ) .Or. ( ! INCLUI .And. Alltrim(ZF5->ZF5_TPFRPG) = "X" ) //Everson - 01/02/2022. Chamado 65860.
+        oStFilho:RemoveField('ZF6_UF')
+    	oStFilho:RemoveField('ZF6_CIDADE')
+    	oStFilho:RemoveField('ZF6_NUMCID')
+    	oStFilho:RemoveField('ZF6_VLRREG')
+    	oStFilho:RemoveField('ZF6_PRODUT')
     	
     Else
         oStFilho:RemoveField('ZF6_UF')
@@ -444,6 +452,15 @@ Static Function ADLF6_5(oModel,cTpFrt,nTabSai,nVlrTonel)
             oModel:GetValue( 'ZF6_TABKMF') <= 0 //Everson - 17/02/2020. Chamado 054941.
 			lRet := .F.
 			Help(Nil, Nil, "Validação de linha", Nil, 'Necessário informar valor, estado e Km percorrido.', 1, 0, Nil, Nil, Nil, Nil, Nil, {''}) //Everson - 17/02/2020. Chamado 054941.
+			
+		EndIf
+
+    ElseIf ( INCLUI .And. MV_PAR01 == 4 ) .Or. ( ! INCLUI .And. Alltrim(ZF5->ZF5_TPFRPG) = "X" ) //Everson - 01/02/2022. Chamado 65860.
+
+		If 	oModel:GetValue( 'ZF6_TABPRC') <= 0 .Or.;
+            oModel:GetValue( 'ZF6_TABKMF') <= 0
+			lRet := .F.
+			Help(Nil, Nil, "Validação de linha", Nil, 'Necessário informar Km percorrido e valor.', 1, 0, Nil, Nil, Nil, Nil, Nil, {''})
 			
 		EndIf
 

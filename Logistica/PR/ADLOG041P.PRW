@@ -15,6 +15,7 @@
 	@history Everson, 11/08/2020. Chamado 059326. Tratamento para geração de registros de frete na Ceres.
 	@history Everson, 08/10/2020. Chamado TI. 	  Tratamento para cálculo de frete por região.
 	@history Everson, 31/01/2022. Chamado 66861.  Tratamento para frete combinado com mais de uma nota fiscal.
+	@history Everson, 01/02/2022. Chamado 65860.  Adicionado novo cálculo de frete.
 	/*/
 User Function ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr, lAutoJob)
 	
@@ -409,6 +410,11 @@ Static Function geraFrete( cEmpAnt, cFilAnt, F2DOC, F2SERIE, F2CLIENTE, F2LOJA, 
 				cObsFrR := ""
 				//nVlrFrt += (nTotKgC/1000) * vlrRegProd(sNumRot,dDtEntr,cCodTab,@cObsFrR,cTpNF,@nKmTot) //Everson - 19/03/2020. Chamado 054941.
 				nVlrFrt += (nPesLiq/1000) * vlrRegProd(sNumRot,dDtEntr,cCodTab,@cObsFrR,cTpNF,@nKmTot)	//Everson - 01/07/2020. Chamado 059326.				
+			
+			ElseIf cTpFrt = "X" //Everson - 01/02/2022. Chamado 65860.
+				cObsFrR := ""
+				nVlrFrt += vlrFaFix(cCodTab, nKmTot, @cObsFrR)
+						
 			Else
 				nVlrFrt += nKmTot * nVlrUnFr
 			
@@ -781,6 +787,59 @@ Static Function vlrReg(sNumRot,dDtEntr,cCodTab,cObs,cTpNF,nKmTot) //Everson - 19
 	//
 	RestArea(aArea)
 	
+Return nVlr
+/*/{Protheus.doc} vlrFaFix
+	Valor por faixa fixa. Chamado 65860. 
+	@type  Static Function
+	@author Everson
+	@since 31/01/2022
+	@version 01
+	/*/
+Static Function vlrFaFix(cCodTab, nKmTot, cObs)
+
+	//Variáveis.
+	Local aArea		:= GetArea()
+	Local cQuery	:= ""
+	Local nVlr		:= 0
+	
+	Default cObs	:= ""
+
+	cQuery := ""
+	cQuery += " SELECT  " 
+	cQuery += " 'ITEM ' + CAST(ZF6_ITESEQ AS VARCHAR) + ' FAIXA ' + CAST(ZF6_TABKMI AS VARCHAR) + '-' + CAST(ZF6_TABKMF AS VARCHAR) AS NM_FRM_PG, " 
+	cQuery += " ZF6_TABPRC AS VLR_FRT " 
+	cQuery += " FROM    " 
+	cQuery += "  " + RetSqlName("ZF5") + "  (NOLOCK) AS ZF5    " 
+	cQuery += " INNER JOIN   " 
+	cQuery += " " + RetSqlName("ZF6") + "  (NOLOCK) AS ZF6 ON   " 
+	cQuery += " ZF5_FILIAL = ZF6_FILIAL   " 
+	cQuery += " AND ZF5_TABCOD = ZF6_TABCOD   " 
+	cQuery += " WHERE    " 
+	cQuery += " ZF5_FILIAL = ''    " 
+	cQuery += " AND ZF5_TABCOD = '" + cValToChar(cCodTab) + "'  " 
+	cQuery += " AND ZF6_TABKMI <= " + cValToChar(nKmTot) + " " 
+	cQuery += " AND ZF6_TABKMF >= " + cValToChar(nKmTot) + " "  
+	cQuery += " AND ZF5.D_E_L_E_T_ = ''   " 
+	cQuery += " AND ZF6.D_E_L_E_T_ = '' " 
+	cQuery += " ORDER BY ZF6_TABKMI " 
+	
+	Conout( DToC(Date()) + " " + Time() + " ADLOG041P - vlrFaFix - cQuery " + cQuery )
+	
+	If Select("VLR_FAFIX") > 0
+		VLR_FAFIX->(DbCloseArea())
+		
+	EndIf
+	
+	TcQuery cQuery New Alias "VLR_FAFIX"
+	DbSelectArea("VLR_FAFIX")
+
+		nVlr := Val(cValToChar(VLR_FAFIX->VLR_FRT))
+		cObs := Alltrim(VLR_FAFIX->NM_FRM_PG)
+
+	VLR_FAFIX->(DbCloseArea())
+
+	RestArea(aArea)
+
 Return nVlr
 /*/{Protheus.doc} chkSZK
 	Checa se há carga na tabela SZK. Chamado 044314. 

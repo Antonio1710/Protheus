@@ -44,6 +44,7 @@
   @history Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização
   @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
   @history Ticket 65660   - Fer Macieira    - 23/12/2021 - Bloqueio.
+  @history Ticket 67479   - Fer Macieira    - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -458,7 +459,7 @@ User Function MT103FIM()
     If AllTrim(Posicione("SA2",1,FWxFilial("SA2")+SF1->F1_FORNECE+SF1->F1_LOJA,"A2_XTIPO")) == "4" // // A2_FILIAL, A2_COD, A2_LOJA, R_E_C_N_O_, D_E_L_E_T_
 
       If LockByName("TERCEIRO", .T., .F.)
-        UpSDASDB()
+        u_UpSDASDB()
         u_ChkSDA() // @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
       EndIf
       UnLockByName("TERCEIRO")
@@ -2112,7 +2113,7 @@ Static Function fAbTelaCpl(nOpcao, nConfirma)
 
 Return lRet
 
-/*/{Protheus.doc} Static Function UpSDASDB()
+/*/{Protheus.doc} User Function UpSDASDB()
   Endereça automaticamente os insumos retornados de industrialização
   @type  Static Function
   @author FWNM
@@ -2125,7 +2126,7 @@ Return lRet
   @see (links_or_references)
   @Ticket 62276   - Fer Macieira    - 18/10/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização  
 /*/
-Static Function UpSDASDB()
+User Function UpSDASDB()
 
   Local aCabSDA    := {}
   Local aItSDB     := {}
@@ -2135,6 +2136,7 @@ Static Function UpSDASDB()
   Local aAreaSF1   := SF1->( GetArea() )
   Local aAreaSA2   := SA2->( GetArea() )
   Local nX
+  Local dDtSDB     := CtoD("//")
 
   PRIVATE lMsErroAuto := .F.// variável que define que o help deve ser gravado no arquivo de log e que as informações estão vindo à partir da rotina automática.
   Private lMsHelpAuto	:= .T.    // força a gravação das informações de erro em array para manipulação da gravação ao invés de gravar direto no arquivo temporário 
@@ -2173,6 +2175,15 @@ Static Function UpSDASDB()
                 SBE->( msUnLock() )
               EndIf
               
+              // @history Ticket 67479   - Fer Macieira    - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
+              SDA->( dbSetOrder(1) ) // DA_FILIAL, DA_PRODUTO, DA_LOCAL, DA_NUMSEQ, DA_DOC, DA_SERIE, DA_CLIFOR, DA_LOJA, R_E_C_N_O_, D_E_L_E_T_
+              If SDA->( dbSeek(FWxFilial("SDA")+SD1->(D1_COD+D1_LOCAL+D1_NUMSEQ+D1_DOC+D1_SERIE+SD1->D1_F0RNECE+D1_LOJA)) )
+                dDtSDB := SDA->DA_DATA
+              Else
+                dDtSDB := SD1->D1_DTDIGIT
+              EndIf
+              //
+              
               //Cabeçalho com a informação do item e NumSeq que sera endereçado.
               aCabSDA := {{"DA_PRODUTO" , SD1->D1_COD    , Nil},;	  
                           {"DA_NUMSEQ"  , SD1->D1_NUMSEQ , Nil}}
@@ -2181,7 +2192,7 @@ Static Function UpSDASDB()
               aItSDB := {{"DB_ITEM"	   , "0001"	        , Nil},;                   
                         {"DB_ESTORNO"  , ""	            , Nil},;                   
                         {"DB_LOCALIZ"  , cLocZAM        , Nil},;                   
-                        {"DB_DATA"	   , msDate()       , Nil},;                   
+                        {"DB_DATA"	   , dDtSDB         , Nil},;                   
                         {"DB_QUANT"    , SD1->D1_QUANT  , Nil}}       
 
               aAdd(_aItensSDB, aitSDB)
@@ -2334,7 +2345,7 @@ User Function ChkSDA()
     Work3->( dbCloseArea() )
   EndIf
 
-  cQuery := " SELECT DA_FILIAL, DA_PRODUTO, DA_SALDO, DA_LOCAL, DA_NUMSEQ, DA_DOC, DA_SERIE, DA_CLIFOR
+  cQuery := " SELECT DA_FILIAL, DA_PRODUTO, DA_SALDO, DA_LOCAL, DA_NUMSEQ, DA_DOC, DA_SERIE, DA_CLIFOR, DA_DATA
   cQuery += " FROM " + RetSqlName("SDA") + " SDA (NOLOCK)
   cQuery += " INNER JOIN " + RetSqlName("SA2") + " SA2 (NOLOCK) ON A2_FILIAL='"+FWxFilial("SA2")+"' AND A2_COD=DA_CLIFOR AND A2_LOJA=DA_LOJA AND SA2.D_E_L_E_T_=''
   cQuery += " WHERE DA_FILIAL='"+FWxFilial("SDA")+"' 
@@ -2350,19 +2361,24 @@ User Function ChkSDA()
   aTamSX3	:= TamSX3("DA_SALDO")
   tcSetField("Work3", "DA_SALDO", aTamSX3[3], aTamSX3[1], aTamSX3[2])
 
+  // @history Ticket 67479   - Fer Macieira    - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
+  aTamSX3	:= TamSX3("DA_DATA")
+  tcSetField("Work3", "DA_DATA", aTamSX3[3], aTamSX3[1], aTamSX3[2])
+  //
+
   Work3->( dbGoTop() )
   Do While Work3->( !EOF() )
 
     //Cabeçalho com a informação do item e NumSeq que sera endereçado.
-    aCabSDA := {{"DA_PRODUTO" , Work3->DA_PRODUTO    , Nil},;	  
-                {"DA_NUMSEQ"  , Work3->DA_NUMSEQ , Nil}}
+    aCabSDA := {{"DA_PRODUTO" , Work3->DA_PRODUTO , Nil},;
+                {"DA_NUMSEQ"  , Work3->DA_NUMSEQ  , Nil}}
 
     //Dados do item que será endereçado
-    aItSDB := {{"DB_ITEM"	   , "0001"	        , Nil},;                   
-              {"DB_ESTORNO"  , ""	            , Nil},;                   
-              {"DB_LOCALIZ"  , cLocZAM        , Nil},;                   
-              {"DB_DATA"	   , msDate()       , Nil},;                   
-              {"DB_QUANT"    , Work3->DA_SALDO  , Nil}}       
+    aItSDB := {{"DB_ITEM"	   , "0001"	         , Nil},;
+              {"DB_ESTORNO"  , ""	             , Nil},;
+              {"DB_LOCALIZ"  , cLocZAM         , Nil},;
+              {"DB_DATA"	   , Work3->DA_DATA  , Nil},;
+              {"DB_QUANT"    , Work3->DA_SALDO , Nil}}
 
     aAdd(_aItensSDB, aitSDB)
 
