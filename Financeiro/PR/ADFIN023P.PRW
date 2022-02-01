@@ -67,6 +67,11 @@ User Function ADFIN023P()
 	Local cMotivo  := "Pedido de Venda com Adiantamento não recebido (C5_XWSPAGO)"
 	Local cNomeVen := ""
 
+	//Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
+	Local cPerfPgt := ''
+	Local nMedAtr	:= 0
+	Local aPerPgt	:= {}
+
 	Private _aMot := {}
 	Private oCabD4 
 	//Private _aExclui := {}   //Armazena pedidos de venda para realizar a exclusão destes a posterior.
@@ -573,6 +578,43 @@ User Function ADFIN023P()
 							RecLock("SC5", .F.)
 								SC5->C5_XPREAPR := "L"
 							SC5->(MsUnlock())
+
+							//INICIO Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
+							cPerfPgt := ''
+							nMedAtr	:= 0
+							aPerPgt	:= {}
+							
+							//Carrega Perfil de Pagamento
+							aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,(cTbPed)->CODIGO, (cTbPed)->LOJA)
+							IF ValType(aPerPgt) = 'A' 
+								cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
+								nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])
+							ELSE
+								cPerfPgt	:= 'NDA'
+							ENDIF
+
+							//GRAVA REGISTRO DA LIBERAÇÃO DE CRÉDITO
+							If RecLock("ZEJ",.T.)
+								ZEJ->ZEJ_FILIAL	:= SC5->C5_FILIAL					//
+								ZEJ->ZEJ_NUM		:= SC5->C5_NUM						//
+								ZEJ->ZEJ_DTLIB	:= MsDate()								//
+								ZEJ->ZEJ_HRLIB	:= TIME()									//
+								ZEJ->ZEJ_USRLIB	:= cUserName							//
+								ZEJ->ZEJ_VLLIB	:= SC5->C5_XTOTPED				//
+								ZEJ->ZEJ_MOTLIB	:= ''											//
+								ZEJ->ZEJ_PARECE	:= ''											//
+								ZEJ->ZEJ_PERFPG	:= cPerfPgt								//	
+								ZEJ->ZEJ_RATCIS	:= _cRisco								//
+								ZEJ->ZEJ_MEDATR	:= nMedAtr								//
+								ZEJ->ZEJ_VLPED	:= _nPedPer								//
+								ZEJ->ZEJ_VLAVEN	:= Round(_nSldTit - _nTotVenci,2)	//
+								ZEJ->ZEJ_VLVENC	:= _nTotVenci							//
+								ZEJ->ZEJ_VLPESP	:= 0											//
+								ZEJ->ZEJ_TTACUM	:= 0											//	
+								ZEJ->ZEJ_LIMCRD	:= _nTotRede							//
+								ZEJ->(MsUnlock())
+							Endif
+							//FIM Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
 
 						EndIf
 

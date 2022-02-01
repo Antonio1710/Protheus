@@ -9,7 +9,8 @@
 	@version 01
 	@history Chamado 048296 - William Costa - 05/04/2019 - Adicionado Ab- na query de consulta as redes
    @history Chamado 056381 - William Costa - 17/03/2020 - Adicionado log em todos os reclock do campo ZF_LCREDE para descobrir seu valor antes e depois 
-   @history Chamado 057170 - Everson - 23/04/2020 - Tratamento para otimizar a rotina.
+   @history Chamado 057170 - Everson       - 23/04/2020 - Tratamento para otimizar a rotina.
+   @history Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados. 
 */   
 User Function ADFIN024P()
 
@@ -30,6 +31,11 @@ User Function ADFIN024P()
    Local _dDTENTR1   := MV_PAR02
    Local _dDTENTR2   := MV_PAR03
 
+   //Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
+   Local cPerfPgt := ''
+   Local nMedAtr	:= 0
+   Local aPerPgt	:= {}
+       
    //Mauricio - 28/09/16 - adicionado novo conteudo a tela de liberação de rede(solicitado Alberto)
    Private _aMot     := {}
    Private oCabD4 
@@ -370,18 +376,54 @@ User Function ADFIN024P()
                         */
                         ElseIf _nOpc == 4
                            //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-                        //³Liberacao do pedido pre aprovado³
-                        //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-                        If RecLock("SC5",.F.)
+                           //³Liberacao do pedido pre aprovado³
+                           //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                           If RecLock("SC5",.F.)
+                                 SC5->C5_XPREAPR := "L"
+                                 SC5->(MsUnlock())
+                           EndIf
+
+                           //INICIO Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
+                           cPerfPgt := ''
+                           nMedAtr	:= 0
+                           aPerPgt	:= {}
+                           
+                           //Carrega Perfil de Pagamento
+                           aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,(cTbPed)->CODIGO, (cTbPed)->LOJA)
+                           IF ValType(aPerPgt) = 'A' 
+                              cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
+                              nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])
+                           ELSE
+                              cPerfPgt	:= 'NDA'
+                           ENDIF
+                           //GRAVA REGISTRO DA LIBERAÇÃO DE CRÉDITO
+                           If RecLock("ZEJ",.T.)
+                              ZEJ->ZEJ_FILIAL	:= SC5->C5_FILIAL					//
+                              ZEJ->ZEJ_NUM		:= SC5->C5_NUM						//
+                              ZEJ->ZEJ_DTLIB	   := MsDate()							//
+                              ZEJ->ZEJ_HRLIB	   := TIME()							//
+                              ZEJ->ZEJ_USRLIB	:= cUserName						//
+                              ZEJ->ZEJ_VLLIB	   := SC5->C5_XTOTPED				//
+                              ZEJ->ZEJ_MOTLIB	:= ''									//
+                              ZEJ->ZEJ_PARECE	:= ''									//
+                              ZEJ->ZEJ_PERFPG	:= cPerfPgt								//	
+                              ZEJ->ZEJ_RATCIS	:= _cRisco								//
+                              ZEJ->ZEJ_MEDATR	:= nMedAtr								//
+                              ZEJ->ZEJ_VLPED	   := _nPedPer								//
+                              ZEJ->ZEJ_VLAVEN	:= _nTotAvenc	//
+                              ZEJ->ZEJ_VLVENC	:= _nTotVenci							//
+                              ZEJ->ZEJ_VLPESP	:= 0											//
+                              ZEJ->ZEJ_TTACUM	:= 0											//	
+                              ZEJ->ZEJ_LIMCRD	:= _nTotRede							//
+                              ZEJ->(MsUnlock())
+                           Endif
+                           //FIM Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
+                           /*
+                           if Reclock("SC5",.F.)
                               SC5->C5_XPREAPR := "L"
                               SC5->(MsUnlock())
-                           EndIf
-                        /*
-                        if Reclock("SC5",.F.)
-                           SC5->C5_XPREAPR := "L"
-                           SC5->(MsUnlock())
-                        Endif
-                        */					                        	                      
+                           Endif
+                           */					                        	                      
                         EndIf
                         //Mauricio - 15/02/17 - log de registro		  
                            dbSelectArea("ZBE")
