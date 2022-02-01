@@ -55,8 +55,8 @@ endclass
 method new() class ADFIN123P
 //----------------------------------------------------------
 
-    ::cUser     := GetNewPar("MV_#CLIBRA", "95bd11c5-e42b-4250-9fcd-3d9450050ca1")
-    ::cPassword := GetNewPar("MV_#SRTBRA", "59539a45-0bee-410f-a08f-280f43381ddf") 
+    ::cUser     := GetNewPar("MV_#CLIBRA", "95bd11c5-e42b-4250-9fcd-3d9450050ca1") // HOMOLOG
+    ::cPassword := GetNewPar("MV_#SRTBRA", "59539a45-0bee-410f-a08f-280f43381ddf")  // HOMOLOG
     ::aHeader   := Array(0)
     AAdd( ::aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
     AAdd( ::aHeader, "Content-Type: application/json")

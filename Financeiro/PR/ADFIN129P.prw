@@ -47,8 +47,6 @@ static function Execute()
     private oRes
     private oLnk    := ADFIN124P():New()
     
-    U_ADINF009P('ADFIN129P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Schedule registro PIX')
-
     dbSelectArea("FIE")
     dbSelectArea("SE1")
     dbSelectArea("SC5")
@@ -522,5 +520,7 @@ static function fLogRes(cCodRes, cLogRes)
     SE1->E1_XLOGLNK := cCodRes
     SE1->E1_XMEMLNK := oRes:toJson()
     SE1->(MsUnLock())
+
+    u_GrLogZBE (Date(),TIME(),cUserName, "PROCESSAMENTO SUPERLINK CIELO","TI","ADFIN130P",cLogRes,ComputerName(),LogUserName())
 
 return

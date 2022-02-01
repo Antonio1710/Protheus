@@ -37,9 +37,7 @@ User Function ADFIN126P(cFrom,cTo,cCc,cBcc,cSubject,cBody,aAttach,aAccount,aSmtp
   DEFAULT aAttach  := {}
   DEFAULT aAccount := { GetMV('MV_RELACNT') , GetMV('MV_RELPSW') }
   DEFAULT aSmtp    := StrTokArr (AllTrim(GetMV('MV_RELSERV')) , ":" )
-
-  U_ADINF009P('ADFIN126P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Envio de Email PIX')
-  
+              
   oMail := tMailManager():New()
   oMail:SetUseSSL( .f. /*GetMV('MV_RELSSL')*/ )
   oMail:SetUseTLS( .t. /*GetMV('MV_RELTLS')*/ )

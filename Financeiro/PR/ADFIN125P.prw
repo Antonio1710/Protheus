@@ -17,8 +17,6 @@ Function U_ADFIN125P()
 Private oMark
 Private aRotina := MenuDef()
 
-U_ADINF009P('ADFIN125P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela gestao de PIX ')
-
 oMark := FWMarkBrowse():New()
 oMark:SetAlias('SE1')
 oMark:SetSemaphore(.T.)
@@ -86,9 +84,9 @@ Local cMarca 	:= oMark:Mark()
 Local nCt 		:= 0
 local cTpEv  	:= ""
 
-dbselectArea("SE1")
+//dbselectArea("SE1")
 //SET FILTER TO SE1->E1_OK == cMarca
-SET FILTER TO SE1->E1_TIPO = "PR" .AND. ( SE1->E1_XLOGPIX != "" .OR. SE1->E1_XLOGLNK != "") .AND. SE1->E1_EMISSAO == dDataBase
+//SET FILTER TO SE1->E1_TIPO = "PR" .AND. ( SE1->E1_XLOGPIX != "" .OR. SE1->E1_XLOGLNK != "") .AND. SE1->E1_EMISSAO == dDataBase
 
 SE1->( dbGoTop() )
 While !SE1->( EOF() )
@@ -107,28 +105,57 @@ While !SE1->( EOF() )
 		if cTpEv == "LNK"
 			//FWMsgRun(, {|| startJob( "u_ADFIN129P", getEnvServer(), .T., , SE1->(Recno()) ) }, "Processando", "Processando a rotina...")			
 		else
-			//u_ADFIN130P(,SE1->(Recno()))
-			//FWMsgRun(, {|| startJob( "u_ADFIN130P" , getEnvServer(), .T.,, SE1->(Recno()) ) }, "Processando", "Processando a rotina...")			
 			FWMsgRun(, {|| u_ADFIN130P({cEmpAnt,cFilAnt,,},SE1->(Recno()), .F.) }, "Processando", "Processando a rotina...")			
 		endif
     EndIf
     SE1->( dbSkip() )
 End
 
-SET FILTER TO
+//SET FILTER TO
 
 ApMsgInfo( 'Foram reprocessados ' + AllTrim( Str( nCt ) ) + ' registros.' )
 RestArea( aArea )
 
 Return NIL
 
+//-------------------------------------------------------------------
+Function U_ADRA001VERF()
+
+Local aArea 	:= GetArea()
+Local cMarca 	:= oMark:Mark()
+Local nCt 		:= 0
+local cTpEv  	:= ""
+
+//dbselectArea("SE1")
+//SET FILTER TO SE1->E1_OK == cMarca
+//SET FILTER TO SE1->E1_TIPO = "PR" .AND. ( SE1->E1_XLOGPIX != "" .OR. SE1->E1_XLOGLNK != "") .AND. SE1->E1_EMISSAO == dDataBase
+
+SE1->( dbGoTop() )
+While !SE1->( EOF() )
+    If oMark:IsMark(cMarca)
+		nCt ++
+		cTpEv := iif( !empty( SE1->E1_XLOGLNK )  , "LNK", "PIX" )
+		if cTpEv == "LNK"
+			//FWMsgRun(, {|| startJob( "u_ADFIN129P", getEnvServer(), .T., , SE1->(Recno()) ) }, "Processando", "Processando a rotina...")			
+		else
+			FWMsgRun(, {|| u_ADFIN128P({cEmpAnt,cFilAnt,,},SE1->(Recno()), .F.) }, "Processando", "Processando a rotina...")			
+		endif
+    EndIf
+    SE1->( dbSkip() )
+End
+
+//SET FILTER TO
+
+ApMsgInfo( 'Foram reprocessados ' + AllTrim( Str( nCt ) ) + ' registros.' )
+RestArea( aArea )
+
+Return NIL
 
 //-------------------------------------------------------------------
 Function U_ADRA001MARK()
 
 Local aArea := GetArea()
 Local cMarca := oMark:Mark()
-Local lInverte := oMark:IsInvert()
 
 Local nCt := 0
 

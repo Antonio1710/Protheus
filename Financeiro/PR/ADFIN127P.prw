@@ -22,7 +22,6 @@ function u_ADFIN127P( aParms, nE1Id )
     default aParms := {"","","01","02","",""}
     default nE1Id  := 0
 
-   
     nIdE1 := nE1Id
     
     cEmp := aParms[len(aParms)-3]
@@ -45,8 +44,6 @@ static function Execute()
     private oReq    := JsonObject():new()
     private oRes
     private oLnk    := ADFIN124P():New()
-
-    U_ADINF009P('ADFIN127P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Schedule pagamento recebido PIX')
 
     dbSelectArea("SE1")
     dbSelectArea("SC5")
@@ -114,7 +111,7 @@ Static Function fProcessa(oRes)
 
     Else
         
-        logZBE( SC5->C5_NUM + " NAO GEROU RA! FATURAMENTO NAO LIBERADO PELO RETORNO API LINK CIELO" )
+        //logZBE( SC5->C5_NUM + " NAO GEROU RA! FATURAMENTO NAO LIBERADO PELO RETORNO API LINK CIELO" )
     
     EndIf
 
