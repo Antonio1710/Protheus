@@ -15,6 +15,7 @@
 	@history Ticket 8      - Abel Babini - 29/06/2021 - Ajustes na legenda da tela de pedido. Correções nos campos de análise de liberação e acertos gerais na rotina
 	@history Ticket 8      - Abel Babini - 19/07/2021 - Alterações no layout e sistemática de liberação
 	@history Ticket 8      - Abel Babini - 27/09/2021 - Retirado os pedidos Não Processados como bloqueados em 27/09/2021 conforme solicitação da Flávia
+	@history Ticket 8      - Abel Babini - 01/02/2022 - Ajuste nas regras de liberação de crédito
 /*/
 
 User Function ADFIN109P()
