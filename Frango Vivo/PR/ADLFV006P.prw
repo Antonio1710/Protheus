@@ -15,6 +15,7 @@ Static cEst	  := Nil
     @history Everson, 09/08/2019, Ch: 044314 adicionado tratamento para frete exportação.
     @history Everson, 17/02/2020, Ch: 054941 tratamento para informar km rodado quando a tabela for por região ou região x produto.
     @history Everson, 01/02/2022. Chamado 65860.  Adicionado novo cálculo de frete.
+    @history Everson, 02/02/2022. Chamado 66403.  Adicionado para exportar dados em XLS.
     /*/
 User Function ADLFV006P()
 
@@ -353,8 +354,145 @@ Static Function ViewDef()
     
     //Adiciona campo auto incremento.
     oView:addIncrementField("ZF6DETAIL","ZF6_ITESEQ")
+
+    oView:AddUserButton("Exportar","",{|oView| MSAguarde({|| gerXLS(oView) } , "Aguarde", "Gerando arquivo...") } ,"",, {MODEL_OPERATION_INSERT, MODEL_OPERATION_UPDATE, MODEL_OPERATION_VIEW} , .T. ) //Everson - 02/02/2022. Chamado 66403.
     
 Return oView
+/*/{Protheus.doc} User Function gerXLS
+    Gera arquivo XLS.
+    Chamado 66403.
+    @type  Function
+    @author Everson  
+    @since 02/02/2022
+    @version 01
+    /*/
+Static Function gerXLS(oView)
+
+    //Variáveis.
+    Local aArea	    := GetArea()
+    Local oStPai    := FWFormStruct(1, 'ZF5')
+    Local oCabec    := oView:GetModel("ZF5MASTER")
+    Local oGrid     := oView:GetModel("ZF6DETAIL")
+    Local aCampos   := oView:GetListFields()
+    Local aData     := oGrid:GetOldData()
+    Local aHeader   := aData[1]
+    Local cCmp	    := ""
+    Local aCmpCab   := {}
+    Local aCmpItem  := {}
+    Local nAux      := 1
+    Local nAux2     := 1
+    Local oExcel    := FWMsExcelEx():New()
+    Local cArq      := "\tabfrt_"+substr(time(),1,2)+substr(time(),4,2)+substr(time(),7,2)+".xls"
+    Local cWkS1     := "Cabeçalho"
+    Local cTab1     := "Cabeçalho"
+    Local cWkS2     := "Itens"
+    Local cTab2     := "Itens"
+    Local cPath     := AllTrim(GetTempPath())
+    Local aLinhas   := {}
+    Local cNmCel    := ""
+    Local nLength   := oGrid:length()
+    Local xVlr      := Nil
+    Local aInner    := {}
+
+    For nAux := 1 To Len(aCampos)
+
+        cCmp := Alltrim(cValToChar(aCampos[nAux][2]))
+
+        nPos := 0
+
+        If aCampos[nAux][1] == "VIEW_ZF5"
+            cNmCel := oStPai:GetProperty(cCmp, MODEL_FIELD_TITULO)
+            Aadd(aCmpCab, {cNmCel, aCampos[nAux][2], Nil})
+
+        ElseIf aCampos[nAux][1] == "VIEW_ZF6"
+            nPos := Ascan(aHeader,{|x| x[2] == cCmp} )
+            Aadd(aCmpItem, { aHeader[nPos][1], aHeader[nPos][2], aHeader[nPos][8] })
+
+        EndIf
+
+    Next nAux
+
+    //Cabeçalho.
+    oExcel:AddworkSheet(cWkS1)
+	oExcel:AddTable(cWkS1,cTab1)
+    For nAux := 1 To Len(aCmpCab)
+        cNmCel := aCmpCab[nAux][1]
+        oExcel:AddColumn(cWkS1, cTab1, cNmCel, 1, 1)
+
+    Next nAux
+
+    aInner := {}
+    For nAux := 1 To Len(aCmpCab)
+        xVlr := oCabec:GetValue(aCmpCab[nAux][2])
+        Aadd(aInner, xVlr)
+
+    Next nAux
+
+    oExcel:AddRow(cWkS1, cTab1, aInner)
+
+    //Itens.
+    aLinhas := {}
+    aInner  := {}
+    oExcel:AddworkSheet(cWkS2)
+	oExcel:AddTable(cWkS2,cTab2)
+    For nAux := 1 To Len(aCmpItem)
+        cNmCel := aCmpItem[nAux][1]
+        oExcel:AddColumn(cWkS2, cTab2, cNmCel, 1, 1)
+
+    Next nAux
+
+    For nAux := 1 To nLength
+
+        aInner := {}
+        For nAux2 := 1 To Len(aCmpItem)
+            Aadd(aInner,"")
+
+        Next nAux2
+
+        Aadd(aLinhas, aInner)
+
+        oGrid:GoLine(nAux)
+
+        For nAux2 := 1 To Len(aCmpItem)
+
+            xVlr := oGrid:GetValue(aCmpItem[nAux2][2], nAux)
+
+            aLinhas[nAux][nAux2] := xVlr
+
+        Next nAux2
+
+    Next nLength
+
+	For nAux := 1 to nLength
+
+        aInner := {}
+        For nAux2 := 1 To Len(aCmpItem)
+
+            Aadd(aInner, aLinhas[nAux][nAux2])
+
+        Next nAux2
+
+       	oExcel:AddRow(cWkS2,cTab2,aInner)
+
+    Next nAux 
+
+    oExcel:Activate()
+	oExcel:GetXMLFile(cPath + cArq)
+
+	If ! ApOleClient("MsExcel")
+		MsgStop("Ocorreram problemas que impossibilitaram abrir o MS-Excel ou mesmo n? est?instalado. Por favor, tente novamente." )
+		RestArea(aArea)
+        Return Nil
+
+	EndIf
+
+	oExcelApp:= MsExcel():New()
+	oExcelApp:WorkBooks:Open( cPath + cArq )
+	oExcelApp:SetVisible(.T.)
+    
+    RestArea(aArea)
+
+Return Nil
 /*/{Protheus.doc} User Function ADLF6_2
     Retorna valor de UF selecionado. Chamado 044314. 
     @type  Function
