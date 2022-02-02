@@ -31,6 +31,9 @@ User Function ADSAG002P() // U_ADSAG002P()
     //Variáveis.
     Local aMovSd := {4} //movimentos que serão processados. 
     Local nAux   := 1
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para importação automática de remessa integrado (SAG')
+	
 
 	//Inicia o ambiente.
 	RPCSetType(3)

@@ -33,6 +33,9 @@ Local cMail2  := ""
 Local cMail   := ""
 Local cMail3  := ""
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E p/ consistir alteracao de fase de projetos')
+	
+
 // Consisto se esta na central de aprovacao
 ZC7->( dbSetOrder(3) ) // ZC7_FILIAL+ZC7_PROJET
 If ZC7->( dbSeek( FWxFilial("ZC7") + M->AF8_PROJET + M->AF8_REVISA ) )

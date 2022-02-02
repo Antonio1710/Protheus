@@ -7,9 +7,14 @@
   @history Chamado 057474 - Abel Babini - 04/05/2020 - Corrigir quantidade do CTE na gravação do CTE na central XML conforme orientação da Fabritech
   /*/
 User Function CEXMGRCTE()
-  IF RECNFCTE->XML_TPCTE		== "N"
-    RecLock( "RECNFCTEITENS", .f.)
-    RECNFCTEITENS->XIT_QTE	:= 1
-    Msunlock()
-  ENDIF
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E para corrigir a quantidade de cada item do CTE ')
+	
+	
+	IF RECNFCTE->XML_TPCTE		== "N"
+		RecLock( "RECNFCTEITENS", .f.)
+		RECNFCTEITENS->XIT_QTE	:= 1
+		Msunlock()
+	ENDIF
+  
 Return Nil

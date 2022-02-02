@@ -15,6 +15,9 @@ Local aItens	:= PARAMIXB
 Local cArea     := GetArea()
 Local lRetorno	:= .T.
 Local cMensagem	:= ""
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E para ajustar TES do pedido conforme parametro ')
+	
 	
 //Atualiza dados da NF (Itens)
 If Len( aItens ) > 0

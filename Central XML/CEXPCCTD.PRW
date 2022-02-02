@@ -30,6 +30,9 @@ User Function CEXPCCTD
 	Local nVlTCTe	:= 0
 	Local nVlTPed	:= 0
 	Local nVlTol	:= GETMV("MV_#TOLCTE",,0)
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E Tela do Painel Fiscal   ')
+	
 	 
 	For i:=1 to Len(aHeader)
 		IF aHeader[i,2]=="XIT_TOTNFE"

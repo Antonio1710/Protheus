@@ -35,7 +35,10 @@ User Function CEXMITNFE()
 	Local cPed   := ""
 	Local cIPed  := ""
 	//
-              
+         
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E apos carregar itens para lancar NF-e')
+	
+		 
 	If cTipoNF == 'D' .AND. cfilant $ '02'
 
 		For nX := 1 To Len( aRetorno )

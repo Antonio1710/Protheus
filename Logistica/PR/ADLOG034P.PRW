@@ -23,11 +23,12 @@ USER FUNCTION ADLOG034P()
     Local oBrowse   
     Local cFiltro     := ''         
     Local cFunNamBkp  := FunName()   
-    
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Modelo 1 da tabela ZBV Cadastro de Proprietario de Veiculo')
+	    
     SetFunName("ADLOG034P")
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Modelo 1 da tabela ZBV Cadastro de Proprietario de Veiculo')
-	
+
 	// Instanciamento da Classe de Browse 
 	oBrowse := FWMBrowse():New() 
 	 

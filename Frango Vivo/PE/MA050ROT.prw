@@ -21,6 +21,9 @@ User Function MA050ROT()
 
 Local ARotUser := {}  
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se e grava log de campos alterados')
+
+
 aAdd(ARotUser , { '* LOGS','U_SA4LOG', 0 , 2} )
 
 Return ARotUser

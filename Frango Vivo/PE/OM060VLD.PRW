@@ -21,6 +21,8 @@ User Function OM060VLD()
 	Local _aArea   := GetArea()
 	Local _aNomCpo := {}
 	Local _cAlter  := '' // Ricardo Lima - 14/11/18 | Declarado Variavel, gerava error.log
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se e grava log de campos alterados ')
 
 If ALTERA
 	

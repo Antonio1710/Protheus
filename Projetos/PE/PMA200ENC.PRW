@@ -28,6 +28,8 @@ User Function PMA200ENC()
 	Local cFaseEnc := AllTrim(GetMV("MV_#FASENC",,"04")) 
 	Local cFaseAtu := AF8->AF8_FASE
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E. encerramento do projeto')
+
 	If lEncOK
 		If AllTrim(M->AF8_FASE) == cFaseEnc
 			

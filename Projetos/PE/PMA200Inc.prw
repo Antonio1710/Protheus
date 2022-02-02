@@ -32,6 +32,8 @@ User Function PMA200Inc()
 	Local oBtnPrj  := Array(02)
 	Local cTpPrj   := Space(02)
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gerar o proximo codigo do projeto')
+	
 	//
 	DEFINE MSDIALOG oDlgPrj TITLE "Tipo Projeto" FROM 0,0 TO 100,350  OF oMainWnd PIXEL
 	

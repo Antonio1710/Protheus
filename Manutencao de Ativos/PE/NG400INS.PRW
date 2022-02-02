@@ -12,6 +12,9 @@ User Function NG400INS
 
     Local aArea := GetArea()
     Local cPROD := STL->TL_CODIGO
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'gravar o custo do Salario do Funcionario da Manutenção')
+
 
     If STL->TL_TIPOREG == "M"
 

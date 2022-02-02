@@ -24,6 +24,10 @@ User Function M110MONT()
     Local nOpc    := PARAMIXB[2]
     Local lCopia  := PARAMIXB[3]
     Local cOp     := Space(11)
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E validaçoes na solicitação de compras ')
+
+	
     //Alterado por Tiago Stocco 10/05/2021 - Somente preencher a OP quando nao for copia de SC
     If nOpc == 1
         If lCopia

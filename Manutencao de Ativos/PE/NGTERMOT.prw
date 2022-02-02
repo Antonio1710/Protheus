@@ -17,7 +17,9 @@
 
 User Function NGTERMOT()
 	local lRet := .T.
-
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E finalização de uma Ordem de Serviço, antes de montar a tela')
+	
 	lRet := u_MNT40011("NGTERMOT")
 
 Return (lRet)

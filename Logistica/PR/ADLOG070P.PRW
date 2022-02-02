@@ -15,6 +15,8 @@ User Function ADLOG070P(nTpFrtS,nOpc,dDtDe,dDtAte,cTranDe,cTranAte,cPlacDe,cPlac
     //Variáveis.
     Local aArea := GetArea()
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'lanc/Est de desconto de co-participação no seguro de carga')
+	
     //
     If nOpc == 1
         lancaDes(nTpFrtS,nOpc,dDtDe,dDtAte,cTranDe,cTranAte,cPlacDe,cPlacAte)

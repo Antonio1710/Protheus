@@ -34,6 +34,8 @@ User Function CEXMBNFS()
 	aRetorno[2]	:= "TRMIMG32.PNG"	//[02] - Imagem (Precisa estar no repositorio)
 	aRetorno[3]	:= "CEXFESP"		//[03] - Função de Usuário (User Function)
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E Adiciona botão de usuario na tela da NFS-e ')
+
 Return aRetorno
 
 

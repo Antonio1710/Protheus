@@ -16,9 +16,7 @@ Local aRet    := {}
 Local aParamBox := {} 
 Private cCadastro := "Alterar Executante"
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para deixar alterar executante da O.S')
-//
-
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Deixar alterar executante da O.S')
 
 dbSelectArea("TQB")
 dbGoto(nRegTQB)

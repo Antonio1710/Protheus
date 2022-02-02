@@ -29,6 +29,8 @@ User Function MA030TOK()
 	Local aArea     := GetArea() 
 	Local lRetCondP := .F.
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E. para validacao inclusao e alteracao cadastro de cliente')
+	
 	cAltera := "N"
 	
 	If M->A1_EST == 'EX'

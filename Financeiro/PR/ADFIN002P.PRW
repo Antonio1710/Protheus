@@ -779,7 +779,7 @@ STATIC FUNCTION CalcDtPenComp()
 										"8- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
 										ComputerName(),LogUserName())
 						endif
-						
+	
 					ELSE	      
 					
 						if RecLock("SA1",.F.)              
@@ -793,6 +793,23 @@ STATIC FUNCTION CalcDtPenComp()
 										ComputerName(),LogUserName())
 						endif
 				    ENDIF
+
+					IF SA1->A1_DTACUMU == STOD(cDtMaiorAcum) .AND. SA1->A1_VLACUMU < nVlMaiorAcum
+				   		if RecLock("SA1",.F.)              
+						
+							SA1->A1_VLACUMU	:= nVlMaiorAcum
+							
+							MsUnlock()
+
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"8- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Vlr. Acum Atual = "+ cValtochar(SA1->A1_VLACUMU) +", Vlr Acum Anterior ="+ cValtochar(nVlMaiorAcum) +".",;
+										ComputerName(),LogUserName())
+						ELSE
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"8- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
+						endif
+					ENDIF
 
 				ENDIF           
 			    

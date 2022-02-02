@@ -17,6 +17,9 @@ Local cQryC1    := ""
 Local cQryC7    := ""
 Local usrCancOS := SuperGetMV("MV_#USRCOS",.F.,"000000")
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E antes da exclusão da O.S na tela da OS Corretiva ')
+
+
 If Alltrim(RetCodUsr()) $ usrCancOS
     cQryC1  := " SELECT * "
     cQryC1  += " FROM " + RetSqlName("SC1") + " SC1 "

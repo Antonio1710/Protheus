@@ -20,6 +20,8 @@ User Function OM040TOK()
 Local _aArea := GetArea()
 Local _aNomCpo := {}
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se e grava log de campos alterados')
+
 If ALTERA
 	
 	DbSelectArea("SX3")

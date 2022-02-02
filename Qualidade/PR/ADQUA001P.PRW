@@ -24,6 +24,9 @@ Static cFormatRet := "application/json"
 User Function ADQUA001P
     Local aResult   := {}
     Local cErro     := ""
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para consultas realizadas pela inspeção da qualidade ')
+
     // Teste
     //cJsonResp := getPalete(@cErro, @aResult, '907122102000000232')
 

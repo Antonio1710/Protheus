@@ -18,6 +18,7 @@ Local _cAlter   := ""
 Local _nx       := 0
 Local lRet      := .T.
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se e grava log de campos alterados')
 
 
 IF INCLUI .OR. ALTERA

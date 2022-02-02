@@ -27,6 +27,8 @@ User Function PMA200FA()
 	Local cFaseEnc := AllTrim(GetMV("MV_#FASENC",,"04"))
 	Local aAreaAF8 := AF8->( GetArea() ) 
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E - Encerramento do projeto ')
+
 	If cFasPrj == cFaseEnc
 
 		AF8->( dbSetOrder(1) )

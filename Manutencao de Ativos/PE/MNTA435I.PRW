@@ -15,6 +15,9 @@ User Function MNTA435I()
     Local aAreaSTJ  := STJ->(GetArea())
     Local cPROD     := STL->TL_CODIGO
     Local cOrdem    := STL->TL_ORDEM
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gravar o custo do Salario do Funcionario da Manutenção')
+
 
     WHILE STL->TL_FILIAL+STL->TL_ORDEM == xFilial("STL")+cOrdem
 

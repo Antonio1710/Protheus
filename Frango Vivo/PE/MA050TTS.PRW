@@ -19,6 +19,8 @@
 User Function MA050TTS()
 Local _aArea := GetArea()
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Grava campo customizado para integracao entre Sistemas')
+
 If INCLUI					
    Reclock("SA4",.F.)
 	  SA4->A4_XINTEG := "I"  &&alteracao		

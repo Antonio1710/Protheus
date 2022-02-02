@@ -24,6 +24,9 @@ User Function PMA200DEL()
 	Local cProj  := AF8->AF8_PROJET
 	Local cRevis := AF8->AF8_REVISA
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E exclusao projeto')
+
+	
 	//Checo se existe movimentações
 	// SC7 - Pedidos
 	If Select("Work") > 0
