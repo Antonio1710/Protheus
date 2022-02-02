@@ -45,6 +45,7 @@
   @history Ticket 62276   - Fer Macieira    - 01/12/2021 - Endereçamento automático - Armazéns de terceiros 70 a 74 - Projeto Industrialização - Alguns casos o EXECAUTO retorna ERRO
   @history Ticket 65660   - Fer Macieira    - 23/12/2021 - Bloqueio.
   @history Ticket 67479   - Fer Macieira    - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
+  @history Ticket 67570   - Everson         - 02/02/2022 - Tratamento error log.
 /*/
 
 STATIC cResponsavel  := SPACE(60)
@@ -2177,7 +2178,8 @@ User Function UpSDASDB()
               
               // @history Ticket 67479   - Fer Macieira    - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
               SDA->( dbSetOrder(1) ) // DA_FILIAL, DA_PRODUTO, DA_LOCAL, DA_NUMSEQ, DA_DOC, DA_SERIE, DA_CLIFOR, DA_LOJA, R_E_C_N_O_, D_E_L_E_T_
-              If SDA->( dbSeek(FWxFilial("SDA")+SD1->(D1_COD+D1_LOCAL+D1_NUMSEQ+D1_DOC+D1_SERIE+SD1->D1_F0RNECE+D1_LOJA)) )
+              //If SDA->( dbSeek(FWxFilial("SDA")+SD1->(D1_COD+D1_LOCAL+D1_NUMSEQ+D1_DOC+D1_SERIE+SD1->D1_F0RNECE+D1_LOJA)) )
+              If SDA->( dbSeek(FWxFilial("SDA")+SD1->(D1_COD+D1_LOCAL+D1_NUMSEQ+D1_DOC+D1_SERIE+D1_F0RNECE+D1_LOJA)) ) //Everson - 02/02/2022. Chamado 67570.
                 dDtSDB := SDA->DA_DATA
               Else
                 dDtSDB := SD1->D1_DTDIGIT
