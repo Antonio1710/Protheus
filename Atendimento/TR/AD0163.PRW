@@ -50,7 +50,7 @@ User Function AD0163(xAutoCab,xAutoItens) // U_AD0163()
 						 {"Visualizar"	          ,"AxVisual"			  ,0,02},;
 						 {"Pedido"    	          ,'Execblock("AD0165")'  ,0,03},;                     
 						 {"Consultas" 	          ,'U_AD0168("")'		  ,0,04},;                     
-						 {"Cliente"    	          ,'U_AD0080("")'     	  ,0,05},;  
+						 {"Cliente"    	          ,'U_AD0080("")'     	  ,0,02},;  
 						 {"Ocorrencias"	          ,'U_AD0019("O")'		  ,0,06},; // "O" Ocorrencias                  
 						 {"Romaneio" 	          ,'U_ROMANEIO("B")'	  ,0,07},;	// EXECUTA EM MODO BROWSER
 						 {"Rel. Devol."	          ,'U_AD0016'			  ,0,08},; // rel de fechamento

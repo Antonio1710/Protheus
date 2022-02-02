@@ -48,15 +48,13 @@ static function Execute()
     local cIdPix
     local oPayLoad 
     local cChave    := getNewPar( "MV_#PIXKEY", "4581f4b7-957f-4aba-9ae8-c1c174e9452c")
-    local nExpKey   := getNewPar( "MV_#PIXEXP", 28800)
+    local nExpKey   := 0
 	local cCondPix  := GetNewPar("MV_#CONPIX", "PIX")
     local dDataPrc  := dDataBase
     local cFilE1    := iif( nIdE1 > 0, '% and SE1.R_E_C_N_O_ = '+str(nIdE1)+' %', '%%')
 
     private oPix      := ADFIN123P():New()
     
-    U_ADINF009P('ADFIN130P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Schedule registro PIX')
-
     dbSelectArea("FIE")
     dbSelectArea("SE1")
     dbSelectArea("SC5")
@@ -111,6 +109,8 @@ static function Execute()
         SE1->(dbGoTo((cAlias)->E1_RECNO))
         SC5->(dbGoTo((cAlias)->C5_RECNO))
         SA1->(dbGoTo((cAlias)->A1_RECNO))
+
+        nExpKey := fCalcExp()
 
         if SE1->E1_XLOGPIX != 'GER'
             cIdPix    := alltrim(FWArrFilAtu()[SM0_CGC]) + fwtimestamp(4) + alltrim(cValtoChar(SE1->(Recno())))
@@ -214,8 +214,6 @@ static function fHtmlBody()
                             style="padding: 10px;vertical-align: middle;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             <strong>
                                 #NOMEEMP</br>
-                                <!--#ENDEMP</br>
-                                #MUNEMP / #UFEMP-->
                             </strong>
                         </td>
                     </tr>
@@ -462,6 +460,9 @@ static function fHtmlBody()
     else
         cCnpj := Transform( SA1->A1_CGC, "@R 99.999.999/9999-99")
     endif
+
+    cBody := StrTran( cBody, "#TRANSPORT"   , "" )
+
     cBody := StrTran( cBody, "#CNPJCLI"     , cCnpj )
     cBody := StrTran( cBody, "#VENDENOME"   , posicione("SA3",1, xFilial("SA3") + SC5->C5_VEND1, "A3_NOME") )
     cBody := StrTran( cBody, "#FONECLI"     , SA1->A1_TEL )
@@ -529,4 +530,17 @@ static function fLogRes(cCodRes, cLogRes)
     SE1->E1_XMEMPIX := cLogRes
     SE1->(MsUnLock())
 
+    u_GrLogZBE (Date(),TIME(),cUserName, "PROCESSAMENTO PIX","TI","ADFIN130P",cLogRes,ComputerName(),LogUserName())
+
 return
+
+static function fCalcExp()
+
+    local nRet := 0
+    local nExpPix := getNewPar("MV_#PIXEXP", 21.00)
+
+    nRet := DataHora2Val( date() , TimeToFloat( Time() ) , date() , nExpPix ) * 60
+
+return nRet
+
+

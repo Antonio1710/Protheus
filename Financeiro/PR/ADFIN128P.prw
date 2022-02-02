@@ -13,7 +13,7 @@
 	@since 11/01/2022
 /*/
 
-function u_ADFIN128P( aParms, nE1Id )
+function u_ADFIN128P( aParms, nE1Id, lRpc )
 
     local cEmp := ""
     local cFil := ""
@@ -21,15 +21,20 @@ function u_ADFIN128P( aParms, nE1Id )
 
     default aParms := {"","","01","02","",""}
     default nE1Id  := 0
+    default lRpc := .T.
 
     nIdE1 := nE1Id
     
     cEmp := aParms[len(aParms)-3]
     cFil := aParms[len(aParms)-2]
     
-    PREPARE ENVIRONMENT EMPRESA cEmp FILIAL cFil MODULO 'FAT'
-        Execute()
-    RESET ENVIRONMENT
+    if lRpc
+        PREPARE ENVIRONMENT EMPRESA cEmp FILIAL cFil MODULO 'FIN'
+    endif
+            Execute()
+    if lRpc
+        RESET ENVIRONMENT
+    endif
 
     aParms := Nil
     cEmp := Nil
@@ -46,8 +51,6 @@ static function Execute()
     private oReq    := JsonObject():new()
     private oRes
     private oPix    := ADFIN123P():New()
-
-    U_ADINF009P('ADFIN128P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Schedule pagamento recebido PIX')
 
     dbSelectArea("SE1")
     dbSelectArea("SC5")
