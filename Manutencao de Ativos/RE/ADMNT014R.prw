@@ -38,8 +38,6 @@ Private cMVPAR04
 Private czEMP
 Private czFIL
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de custo de requisição de almoxarifado ')
-
 If lJob
 	RpcSetType(3)
 	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
@@ -63,7 +61,7 @@ Else
     oProcess := tNewProcess():New("ADMNT014R","Custo de requisição",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Custo de requisição", .T. )
 Endif
 
-
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de custo de requisição de almoxarifado ')
 
 Return
 

@@ -20,6 +20,7 @@
 	@history ticket 13858 - Fernando Macieira - 10/05/2021 - APONTAMENTO DE PRODUÇÃO ABRIL - FILIAL 02
     @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	@history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
+	@history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
 /*/
 User Function ADEDA002P(cEmp,cFil,cJobFile)
 
@@ -114,7 +115,7 @@ User Function ADEDA003P(nRec, lExclui)
 	Local cFilBack			:= cFilAnt
 	Local cOP				:= ""
 	Local cOPProduto		:= ""
-	Local cErro				:= ""
+	//Local cErro				:= ""
 	Local cData				:= ""
 
 	Private _dData			:= DDATABASE
@@ -125,6 +126,7 @@ User Function ADEDA003P(nRec, lExclui)
 	Private lAutoErrNoFile 	:= .T.
     Private cLoc3           := "" // @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
     Private cPrd3           := "" // @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+	Private cErro           := ""
 
 	Default nRec 		:= 0
 	Default lExclui		:= .F.
@@ -232,7 +234,7 @@ User Function ADEDA003P(nRec, lExclui)
                     nRecOPR 	:= (cAliasOPR)->REC
                     cOPProduto	:= (cAliasOPR)->PRODUTO
                     
-				 	//GERA A PRODUÇÃO (SC2) MATA650
+				 	//GERA A OP (SC2) MATA650
                     If ( _lRet := ADEDA002PB(cAliasOPR, nQtdeTot, nRecOPR, @cOp) )
                         
                         /* Função usada para verificar se controla saldo e se existe saldo */
@@ -315,7 +317,7 @@ User Function ADEDA003P(nRec, lExclui)
 Return _lRet
 
 /*/{Protheus.doc} nomeStaticFunction
-	(long_description)
+	GERA OP (SC2) MATA650
 	@type  Static Function
 	@author user
 	@since 03/03/2021
@@ -337,7 +339,7 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
 	Local cError  	:= ""
 	Local k
 	
-	Local cRevisao  := "" 
+	Local cRevisao   := "" 
 	Local _cCCustoC2 := GetMV("MV_#CCPROP",,"5131") 
 
 	Private lMsErroAuto 	:= .F.
@@ -442,8 +444,12 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
         dbSetOrder(1)
         dbSeek(xFilial("SC2") + cChaveOP)
         If !Eof()
-            lMsErroAuto := .F.
+            
+			lMsErroAuto := .F.
 
+			// @history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
+			FixSalsicha(cChaveOP)
+			
 			// @history ticket 11639 - Fernando Macieira - 31/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 			If Upper(AllTrim(cPrd3)) == "T" // Produção de terceiro 
 				
@@ -696,7 +702,7 @@ Static Function ADEDA002PD(cAliasOPR, cOp)
 Return .T.	//lRet	//Retorna valor default como True(.T.) porque pode ser que não tenha gerado a Produção, mas sempre terá a requisição
 
 /*/{Protheus.doc} nomeStaticFunction
-	(long_description)
+	Estorna a OP 
 	@type  Static Function
 	@author user
 	@since 03/03/2021
@@ -707,7 +713,7 @@ Return .T.	//lRet	//Retorna valor default como True(.T.) porque pode ser que não
 	(examples)
 	@see (links_or_references)
 /*/
-Static Function ADEDA002PE (cAliasOPR, nQuant, nOpc, cOp)
+Static Function ADEDA002PE(cAliasOPR, nQuant, nOpc, cOp)
 
 	Local aAuto   := Nil
 	Local aSavAre := SaveArea1({"SB1"})
@@ -1972,7 +1978,7 @@ Static Function ADEDA002PG(cProduto, nQuant)
 
 	// Pega os componentes da estrutura da PA no SG1 e guarda em um array para ser usado 
 	dbSelectArea("SG1")
-	SG1->(dbSetOrder(1))
+	SG1->(dbSetOrder(1)) // G1_FILIAL, G1_COD, G1_COMP, G1_TRT, R_E_C_N_O_, D_E_L_E_T_
 	If SG1->(dbSeek( xFilial("SG1") + cProduto ))
 		
 		While SG1->(!Eof()) .and. SG1->G1_COD == cProduto
@@ -2086,5 +2092,104 @@ Static Function PutSBFSB2()
 	cSql += " AND SBF.D_E_L_E_T_=''
 	
 	tcSqlExec( cSql )
+
+Return
+
+/*/{Protheus.doc} Static Function FixSalsicha()
+	Na estrutura do item 193229 - Salsicha temos alguns itens que são Produtos Acabados da Adoro, como por exemplo: 113075 CMS,  395565 Retalho p/ industrialização e outros itens que podem eventualmente ser utilizados, nesse caso precisamos entender que estes itens que são PA da Adoro já foram produzidos e enviados p/ terceiros, NÃO SENDO NECESSÁRIO CRIAR uma ordem de produção para os itens intermediários. 
+	@type  Static Function
+	@author user
+	@since 01/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
+/*/
+Static Function FixSalsicha(cChaveOP)
+
+	Local aArea     := {}
+	Local aAreaSD4  := {}
+	Local aAreaSC2  := {}
+	Local cQuery    := ""
+	Local cOPSD4    := ""
+	Local cNumOP 	:= Left(AllTrim(cChaveOP),6)
+	Local cSequenOP	:= Right(AllTrim(cChaveOP),3)
+
+	Local cSalsicha := GetMV("MV_#EDASAL",,"193229")
+	Local lSalsicha := .f.
+	
+	lSalsicha := AllTrim(cSalsicha) $ AllTRim(SC2->C2_PRODUTO)
+
+	If lSalsicha
+	
+		aArea     := GetArea()
+		aAreaSD4  := SD4->( GetArea() )
+		aAreaSC2  := SC2->( GetArea() )
+
+		If Select("Work") > 0
+			Work->( dbCloseArea() )
+		EndIf
+
+		cQuery := " SELECT C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_PRODUTO, C2_SEQPAI
+		cQuery += " FROM " + RetSqlName("SC2") + " (NOLOCK)
+		cQuery += " WHERE C2_FILIAL='"+FWxFilial("SC2")+"'
+		cQuery += " AND C2_NUM='"+cNumOP+"'
+		cQuery += " AND C2_SEQUEN<>'"+cSequenOP+"'
+		cQuery += " AND C2_SEQPAI='"+cSequenOP+"'
+		cQuery += " AND D_E_L_E_T_=''
+
+		tcQuery cQuery New Alias "Work"
+
+		Work->( dbGoTop() )
+		Do While Work->( !EOF() )
+
+			cOPSD4 := AllTrim(Work->(C2_NUM+C2_ITEM+C2_SEQUEN))
+
+			SD4->( dbSetOrder(2) ) // D4_FILIAL, D4_OP, D4_COD, D4_LOCAL, R_E_C_N_O_, D_E_L_E_T_
+			If SD4->( dbSeek(FWxFilial("SD4")+cOPSD4) )
+			
+				Do While SD4->( !EOF() ) .and. SD4->D4_FILIAL==FWxFilial("SD4") .and. AllTrim(SD4->D4_OP) == cOPSD4
+
+					RecLock("SD4", .F.)
+						SD4->( dbDelete() )
+					SD4->( msUnLock() )
+
+					SD4->( dbSkip() )
+				
+				EndDo
+			
+			EndIf
+
+			// Limpo D4_OPORIG
+			SD4->( dbSetOrder(4) ) // D4_FILIAL, D4_OPORIG, D4_LOTECTL, D4_NUMLOTE, R_E_C_N_O_, D_E_L_E_T_
+			If SD4->( dbSeek(FWxFilial("SD4")+cOPSD4) )
+				RecLock("SD4", .F.)
+					SD4->D4_OPORIG := ""
+				SD4->( msUnLock() )
+			EndIf
+
+			SC2->( dbSetOrder(1) ) // C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD, R_E_C_N_O_, D_E_L_E_T_
+			If SC2->( dbSeek(FWxFilial("SC2")+cOPSD4) )
+				RecLock("SC2", .F.)
+					SC2->( dbDelete() )
+				SC2->( msUnLock() )
+			EndIf
+
+			Work->( dbSkip() )
+		
+		EndDo
+
+		If Select("Work") > 0
+			Work->( dbCloseArea() )
+		EndIf
+
+		RestArea( aArea )
+		RestArea( aAreaSD4 )
+		RestArea( aAreaSC2 )
+	
+	EndIf
 
 Return

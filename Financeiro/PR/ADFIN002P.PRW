@@ -19,6 +19,7 @@
 																 Ajustamos os cálculos para considerar o abatimento e regravar os valores corretamente.
 	@history Chamado 66834 - Leonardo P. Monteiro - 24/01/2022 - Agregado o valor do AB- no valor total do título para a composição correta dos valores acumulados diariamente.															
 	@history Chamado 66834 - Leonardo P. Monteiro - 26/01/2022 - Ajuste no valor do acúmulo quando o valor calculado é menor que o histórico.
+	@history Chamado 66834 - Leonardo P. Monteiro - 03/02/2022 - Descontar das baixas os juros acumulados.
 /*/
 
 
@@ -59,7 +60,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private cDtCorte	:= dtos(Date()-1)
 	//Private cDtCorte	:= dtos(stod("20220124")-1)
 	//Debugar a rotina.
-	Private cDebugCNPJ	:= ""
+	Private cDebugCNPJ	:= "00971157"
+	Private lCalcPen	:= .F.
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -104,7 +106,9 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	
 	CalcDtUltComp() // calcula data da ultima compra da rede 
     
-	CalcDtPenComp() // calcula data da penultima compra da rede 	
+	if lCalcPen
+		CalcDtPenComp() // calcula data da penultima compra da rede 	
+	endif
 
 	IF nId <> 3
 
@@ -393,8 +397,9 @@ Static Function GravarAcumulo()
 				nSaldo := nSaldo + aAcumulo[nCont][2]
 				
 			ELSEIF aAcumulo[nCont][3]  == 'SE5' .AND. ;
-			       (aAcumulo[nCont][5] == 'ES' .OR.  ;
-			        aAcumulo[nCont][5] == 'E2')//CANCELAMENTO SOMA DE NOVO
+			       (aAcumulo[nCont][5] == 'ES' .OR.   ;
+			        aAcumulo[nCont][5] == 'E2' .OR.   ;
+					aAcumulo[nCont][5] == 'JR')
 			
 				nSaldo := nSaldo + aAcumulo[nCont][2]	
 				

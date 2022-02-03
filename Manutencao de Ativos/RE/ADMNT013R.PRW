@@ -43,9 +43,6 @@ User Function ADMNT013R(aParam) // U_ADMNT013R()
 	Private lMostraLog := .F.
 	Private lUsaTLS    := .T.
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Ordem de Serviço')
-	
-
 	// default aParam := {'99','01'}
 
 	lJob :=  iif(valtype(aParam) <> "U",.T.,.F.)
@@ -101,6 +98,9 @@ User Function ADMNT013R(aParam) // U_ADMNT013R()
 
 		oProcess 	:= Executa()
 	endif
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Ordem de Serviço')
+	
 
 Return
 

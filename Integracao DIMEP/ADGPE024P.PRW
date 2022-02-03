@@ -37,6 +37,8 @@
 	@history Ticket  62721  - Everson         - 27/10/2021 - Melhorar o desempenho do relatório.Everson.
 	@history Ticket  TI     - Everson         - 08/11/2021 - Correção de apontamento de campo da consulta sql.
 	@history Ticket  66111  - Everson         - 03/01/2022 - Tratamento para filial 0A.
+	@history Ticket: TI     - Adriano Savoine - 03/02/2022 - Ajustado para o Dimep verificar o demitido ao inves de 7 dias passamos para verificar 1 dia apena apos a data de demissão.
+	
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1837,7 +1839,8 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "			    AND PFUNC.CODTIPO                                   <> ''A''
 	//cQuery += "				AND PFUNC.CODSITUACAO                               <> ''Z'' // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 	cQuery += "				AND PFUNC.CODHORARIO                                <> ''A001''
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE() - 7
+	//Ticket: TI - 03/02/2022 - Adriano Savoine
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE() - 1 
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL)
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine INICIO
 	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE() - 2   

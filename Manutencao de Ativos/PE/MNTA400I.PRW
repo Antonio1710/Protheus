@@ -17,10 +17,7 @@ User Function MNTA400I
 
 Local aRot :=  aClone(ParamIXB[1])
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Adição de botões no retorno de O.S')
-
-	
-	aAdd(aRot,{"GERA OP","U_GEROPMNT()" ,0,4,,.F.})
+aAdd(aRot,{"GERA OP","U_GEROPMNT()" ,0,4,,.F.})
 
 Return aRot
 
