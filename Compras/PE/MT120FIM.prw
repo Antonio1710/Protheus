@@ -19,9 +19,10 @@
     @history Chamado 15804  - Leonardo P. Monteiro  - 26/08/2021 - Inclusão do nome do município.
     @history Chamado 15804  - Leonardo P. Monteiro  - 31/08/2021 - Correção de error.log.
     @history Chamado 34655  - Abel Babini           - 28/09/2021 - Correção preenchimento do campo C7_XSOLIC
+    @history Chamado 64070  - Everson               - 03/02/2022 - Tratamento para zerar valor de frete do item.
 /*/
 User Function MT120FIM()
-    Local aArea       := GetArea()
+    Local aArea      := GetArea()
     Local aAreaSC7   := SC7->( GetArea() )
     Local nQtdApr    := 0
     
@@ -120,6 +121,9 @@ User Function MT120FIM()
     UpAPP() 
     // Grava informações adicionais.
     fGrvInf()
+
+    //Everson - 03/02/2020. Chamado 64070.
+    lmpFrt(SC7->C7_NUM)
 
     RestArea( aAreaSC7 )
     RestArea(aArea)
@@ -342,3 +346,39 @@ Static Function UpApp()
     EndIf
 
 Return
+/*/{Protheus.doc} lmpFrt
+    Função limpa frete.
+    Chamado 64070.
+    @type  Function
+    @author Everson
+    @since 03/02/2022
+    @version 01
+    /*/
+Static Function lmpFrt(cNumPed)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+    DbSelectArea("SC7")
+    SC7->(DbSetOrder(1))
+    If SC7->(DbSeek( FWxFilial("SC7") + cNumPed) )
+
+        While ! SC7->(Eof())
+
+            If SC7->C7_FRETE == 0
+
+                RecLock("SC7", .F.)
+                    SC7->C7_VALFRE := 0
+                SC7->(MsUnLock())
+
+            EndIf
+
+            SC7->(DbSkip())
+
+        End
+
+    EndIf
+
+    RestArea(aArea)
+
+Return Nil
