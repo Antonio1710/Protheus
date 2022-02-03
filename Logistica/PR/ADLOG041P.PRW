@@ -16,6 +16,7 @@
 	@history Everson, 08/10/2020. Chamado TI. 	  Tratamento para cálculo de frete por região.
 	@history Everson, 31/01/2022. Chamado 66861.  Tratamento para frete combinado com mais de uma nota fiscal.
 	@history Everson, 01/02/2022. Chamado 65860.  Adicionado novo cálculo de frete.
+	@history Everson, 03/02/2022. Chamado 65860.  Correção na geração de valores de frete.
 	/*/
 User Function ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr, lAutoJob)
 	
@@ -1255,7 +1256,7 @@ Static Function grvFrt(sCodOcor,sCodTrns,sNumCarg,sNumRot,nVlrTab,nVlrMin,nVlrFr
 		If cTpFrt == "F" .Or. lFrtFx //Frete valor fixo.
 			ZFA->ZFA_VALOR  := Iif( nVlrTab < nVlrMin, nVlrMin, nVlrTab )
 
-		ElseIf ( cTpFrt == "V" .Or. cTpFrt == "R" .Or. 	cTpFrt == "P" )
+		ElseIf ( cTpFrt == "V" .Or. cTpFrt == "R" .Or. 	cTpFrt == "P" .Or. cTpFrt == "X" ) //Everson - 03/02/2022. Chamado 65860.
 			ZFA->ZFA_VALOR  := Iif( nVlrFrt < nVlrMin, nVlrMin, nVlrFrt )
 			ZFA->ZFA_OBSERV	:= cObsFrR
 			
