@@ -34,9 +34,6 @@ Private oProcess
 Private dMVPAR01   
 Private dMVPAR02   
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de Custo por solicitante ')
-
-
 If lJob
 	RpcSetType(3)
 	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
@@ -57,7 +54,7 @@ Else
     oProcess := tNewProcess():New("ADMNT017R","Custo OS Solicitante",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Custo OS Solicitante", .T. )
 Endif
 
-
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de Custo por solicitante ')
 
 Return
 

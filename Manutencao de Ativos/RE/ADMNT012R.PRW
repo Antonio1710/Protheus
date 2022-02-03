@@ -27,9 +27,6 @@ Local aInfoCustom 	:= {}
 Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL da relação das SS"
 local lSetEnv       := .f.
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Custo por OS ')
-
-
 cPara      := ""
 cAssunto   := "Relação das OS´s em Excel"
 cCorpo     := "Relação das OS´s em Excel"
@@ -71,7 +68,7 @@ Else
     oProcess := tNewProcess():New("ADMNT012R","Relação SS",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Relação SS", .T. )
 Endif
 
-
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Custo por OS ')
 
 Return
 

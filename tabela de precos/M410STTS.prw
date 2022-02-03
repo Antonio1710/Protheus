@@ -57,7 +57,7 @@
 	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
 	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
 	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
-	
+	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusão de Conouts.
 /*/
 User Function M410STTS()
 
@@ -128,6 +128,8 @@ User Function M410STTS()
 	//³ Posicionamento original dos arquivos envolvidos ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
+	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO PE" )
+
 	_cAlias := Alias()
 	_cOrder := IndexOrd()
 	_cRecno := Recno()
@@ -178,7 +180,7 @@ User Function M410STTS()
 
 	// Separado em duas partes: uma para INCLUSÃO e outra para ALTERAÇÃO - Paulo - TDS - 23/05/2011
 	If INCLUI
-
+		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO INLCUI" )
 		// Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
 		// Função comentada para não fazer mais a chamada à rotina
 		// IF ALLTRIM(cEmpAnt) == '01' .AND. ALLTRIM(xFilial("SC5")) == '02' // chamado 031739 William Costa, adicionado esse if pois causava lentidão devido ao alta quantidade de pedidos referente ao cliente 60037058
@@ -208,7 +210,7 @@ User Function M410STTS()
 			Endif   
 		ENDIF 
 		
-
+		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO AVALIA CREDITO" )
 		_nLimCred 	:= 0
 		_nLimCred 	:= Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
 		_lBloq 		:= .F. 
@@ -237,7 +239,8 @@ User Function M410STTS()
 
 				//Everson - 10/02/2020. Chamado 054941.
 				SB1->( DbSeek( FWxFilial("SB1") + SC6->C6_PRODUTO ) )
-
+				
+				/*
 				if SC6->C6_QTDENT < SC6->C6_QTDVEN  //qtd total pendente
 					_nVlrItem := ((SC6->C6_QTDVEN - SC6->C6_QTDENT) * SC6->C6_PRCVEN)   //valor pendente no pedido (inclusive parcial)
 				endif
@@ -278,6 +281,8 @@ User Function M410STTS()
 				EndIf
 
 				_nLimCred -= _nVlrItem  //deduzo o valor do item ja validado do limite utilizado.
+
+				*/
 
 				_nTotalPedi += SC6->C6_VALOR
 				_nTotalCx   += SC6->C6_UNSVEN   // Soma qtd caixas (2a. UM)
@@ -349,6 +354,8 @@ User Function M410STTS()
 			EndDo
 
 		EndIf
+
+		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL AVALIA CREDITO" )
 
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ Grava Informacoes em SC5 ³
@@ -476,12 +483,14 @@ User Function M410STTS()
 		lLocUsr := SA3->(dbSeek(xFilial("SA3")+__cUserID))
 
 		//Everson - 29/10/2019. Chamado 052898.
+		/* Temporário
 		u_GrLogZBE (Date(), Time(), cUserName, "PEDIDO DE VENDA", "COMERCIAL", "M410STTS",;
 		"Pedido/!Rest/SA3/!Doação " + cValToChar(SC5->C5_NUM) + " " +;
 		cValToChar(! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')) + " " +;
 		cValToChar( lLocUsr )+ " " +;
 		cValToChar( !_lDoa )+ " ",;
 		ComputerName(), LogUserName())
+		*/
 
 		If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. lLocUsr .And. !(_lDoa) // Só executa se usuario incluindo pedido for vendedor (primeira condição) e não for doação.
 
@@ -555,6 +564,7 @@ User Function M410STTS()
 				//Mauricio - 07/12/11 - tratamento para caso não haver tabela cadastrada ou faixa de peso
 				//precisa ser analisado a posterior, para encontrar melhor alternativa de ação a ser tomada.
 				If Empty(_cTabela)
+					Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 					return()
 				Else
 					//atualizo campo tabela no SC5
@@ -883,6 +893,7 @@ User Function M410STTS()
 			EndIf				
 		Endif	
 
+		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL INLCUI" )
 		// Logica para alteração
 	ElseIf ALTERA
 
@@ -1362,6 +1373,7 @@ User Function M410STTS()
 					//Mauricio - 07/12/11 - tratamento para caso não haver tabela cadastrada ou faixa de peso
 					//precisa ser analisado a posterior, para encontrar melhor alternativa de ação a ser tomada.
 					If Empty(_cTabela)
+						Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 						return()
 					Else
 						//atualizo campo tabela no SC5
@@ -1764,6 +1776,8 @@ User Function M410STTS()
 
 	EndIf
 
+
+	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO BSCSLD" )
 	//Mauricio 16/11/11 - Tratamento para forçar bloqueio por limite de credito(Padrao Protheus estava falhando)
 	_nLimCred := 0
 	_nLimCred := Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
@@ -1839,6 +1853,8 @@ User Function M410STTS()
 			endif
 		endif
 	EndIf
+
+	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL BSCSLD" )
 	//Fim - fernando chamado 036388 - fernando 20/07/2017
 
 	// Chamado 008402 - Mauricio - Correção de problema com programa AD0078.
@@ -1974,6 +1990,8 @@ User Function M410STTS()
 	endif
 	//Everson - 10/02/2020. Chamado 054941.
 	RestArea(aArea)
+	
+	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 
 Return 
 

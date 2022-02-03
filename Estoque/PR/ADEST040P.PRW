@@ -18,8 +18,8 @@
 	@history chamado 059430 - Everson		  - 07/08/2020 - Alterado nome do arquivo temporário.
 	@history chamado 7087   - Everson		  - 04/01/2021 - Tratamento para execução de sincronização com o SAG.
 	@hystory Ticket 65674   - ADRIANO SAVOINE - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo ZCV_DESCTP.
+	@hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
 /*/
-
 User Function ADEST040P()
 
 	//Variáveis.
@@ -272,6 +272,7 @@ User Function ADES40GO(nOpc)
 	ACTIVATE MSDIALOG oDlg CENTERED ON INIT EnchoiceBar(oDlg,{|| oDlg:End()},{|| oDlg:End()})
 
 Return()
+
 /*/{Protheus.doc} Static Function ADES40DO(nOpc)
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -325,6 +326,7 @@ Static Function ADES40DO(nOpc)
 		cQuery += " AND ZCV_NUMERP <> ' ' "
 	Endif
 	
+	cQuery += " AND ZCV_CODTIP IN ('5','6') " // @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
 	cQuery += " AND D_E_L_E_T_ = ' ' "
 
 	// Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 |³ OP DE OVOS - FWNM - 01/04/2019

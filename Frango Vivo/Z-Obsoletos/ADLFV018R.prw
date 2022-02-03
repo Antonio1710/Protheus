@@ -191,6 +191,9 @@ User Function ADLFV018R()
 	Private _cGranjF	:= ""	//Filtra granja
 	Private _cPlacF		:= ""	//Filtra Placa
 	Private _cForc		:= ""	//Filtra por fonecedor
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' RELATORIO DIARIO DE ORDEM CARREGAMENTO FRANGO VIVO')
+	
 
 	oFont10n:Bold := .f.
 	oFont12n:Bold := .f.
