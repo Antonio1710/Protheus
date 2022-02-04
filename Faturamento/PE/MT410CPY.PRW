@@ -43,6 +43,8 @@ User Function MT410CPY()
 	//&&Mauricio - 26/06/2017 - chamado 35017 - INICIO - Copia de pedido "diversos"  
 	Private _cNrPd  := M->C5_NUM                    
 
+	Conout( DToC(Date()) + " " + Time() + " MT410CPY >>> INICIO PE" )
+
 	_lDiv   := fchkped(_cNrPd,_cCli,_cLoj)
 
 	If _lDiv
@@ -271,7 +273,8 @@ User Function MT410CPY()
 
 	M->C5_XWSPAGO := "" // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 09/04/2020
 	M->C5_XWSBOLG := "" // Chamado n. 059415 || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - FWNM - 28/07/2020
-
+	
+	Conout( DToC(Date()) + " " + Time() + " MT410CPY >>> FINAL PE" )
 RETURN
 
 //&&Mauricio - 26/06/2017 - chamado 35017 - Copia de pedido "diversos"  

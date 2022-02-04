@@ -22,7 +22,9 @@ User Function MTA410I()
 	Local aAreaSC6 := SC6->(GetArea())
 	Local nProd    := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_PRODUTO" })
 	Local nItemPV  := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_ITEM" })
-	
+
+	Conout( DToC(Date()) + " " + Time() + " MTA410I >>> INICIO PE" )
+
 	IF ACOLS[nX,Len(aHeader)+1] == .F.
 	
 		DBSELECTAREA("SC6")
@@ -42,4 +44,5 @@ User Function MTA410I()
 	RestArea(aAreaSC6)
 	RestArea(aArea)
 
+	Conout( DToC(Date()) + " " + Time() + " MTA410I >>> FINAL PE" )
 Return(NIL)

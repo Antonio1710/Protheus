@@ -1950,7 +1950,7 @@ User Function M410STTS()
 		//Executa Pre liberação Financeira do Pedido
 		//fPreLibF()
 		
-		Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO 1" )
+		Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 1" )
         If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 
 			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
@@ -1958,14 +1958,14 @@ User Function M410STTS()
 				aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
 				IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
 					//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-					Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO 2" )
+					Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
 					fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-					Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL 2" )
+					Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
 				ENDIF
 
 			EndIf
 
-			Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL 1" )
+			
         Else
 
             // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
@@ -1975,7 +1975,8 @@ User Function M410STTS()
 		    ENDIF
 
         EndIf
-		
+		Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 1" )
+
 	EndIf
 	//
 
