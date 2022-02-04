@@ -628,10 +628,10 @@ User function GPE066PA()
     Private nAcumul     := 0
     Private cPeriod     := ""
     Private cFilMat     := ""
-    Private cCodSitu    := ""
-    Private cCodFunc    := ""
-    Private cCodSess    := ""
-    Private cCodHora    := ""   
+    //Private cCodSitu    := ""
+    //Private cCodFunc    := ""
+    //Private cCodSec    := ""
+    //Private cCodHora    := ""   
     Private cUUID       := FWUUIDV4()
     Private lInclu      := .T.
 
@@ -685,7 +685,7 @@ return lRet
 Static function fImpDados(lEnd, aParam)
     Local cQuery        := ""
     Local cFalVld       := ""
-    
+    Local oADOGPE       := ADOGPE():new()
     if lInclu
         cDtDe   := Substr(cDtDe,1,4) +"-"+Substr(cDtDe,5,2) +"-"+Substr(cDtDe,7,2)  +" 00:00:00.000"
         cDtAte  := Substr(cDtAte,1,4)+"-"+Substr(cDtAte,5,2)+"-"+Substr(cDtAte,7,2) +" 23:59:59.999"
@@ -739,7 +739,7 @@ Static function fImpDados(lEnd, aParam)
                         IF cFilMat != cValtochar(QKAN->CODCOLIGADA)+cvaltochar(QKAN->CODFILIAL)+Alltrim(QKAN->CHAPA)
                             
                             // Cadastra os elegÌveis(colaboradores) na tabela ZI1.
-                            fCadEleg(QZI2->ZI2_FILIAL,;
+                            oADOGPE:fCadEleg(QZI2->ZI2_FILIAL,;
                                     QKAN->PTOCREDENCIAL,;
                                     QKAN->CHAPA,;
                                     cvaltochar(QKAN->CODPESSOA),;
@@ -747,38 +747,19 @@ Static function fImpDados(lEnd, aParam)
                                     QKAN->ADMISSAO,;
                                     QKAN->DEMISSAO,;
                                     QKAN->CODSITUACAO,;
+                                    QKAN->SITUACAO,;
                                     QKAN->CCUSTO,;
                                     QKAN->CODSECAO,;
+                                    QKAN->SECAO,;
                                     QKAN->CODFUNCAO,;
+                                    QKAN->FUNCAO,;
                                     QKAN->CODTIPO,;
                                     QKAN->TIPORECEB,;
                                     QKAN->CODHORARIO,;
+                                    QKAN->HORARIO,;
                                     QKAN->DTNASCIMENTO)
                         endif
 
-                        // ZI3 - Cadastro da funÁ„o.
-                        if cCodSitu != Alltrim(QKAN->CODFUNCAO)
-                            fCadSit(QKAN->CODSITUACAO, QKAN->SITUACAO)
-                        endif
-                        
-                        // ZI4 - Cadastro da funÁ„o.
-                        if cCodFunc != Alltrim(QKAN->CODFUNCAO)
-                            fCadFun(QKAN->CODFUNCAO, QKAN->FUNCAO)
-                        endif
-                        
-                        // ZI5 - Cadastro da seÁ„o.
-                        if cCodSess != Alltrim(QKAN->CODSECAO)
-                            fCadSec(QKAN->CODSECAO, QKAN->SECAO)
-                        endif
-                        
-                        // ZI6 - Cadastro do hor·rio.
-                        if cCodHora != Alltrim(QKAN->CODHORARIO)
-                            fCadHor(QKAN->CODHORARIO, QKAN->HORARIO)
-                        endif
-                        
-                        cCodSitu    := Alltrim(QKAN->CODFUNCAO)
-                        cCodFunc    := Alltrim(QKAN->CODFUNCAO)
-                        cCodSess    := Alltrim(QKAN->CODSECAO)
                         cFilMat     := cValtochar(QKAN->CODCOLIGADA)+cvaltochar(QKAN->CODFILIAL)+Alltrim(QKAN->CHAPA)
                         
                         //Grava o registro principal de entrega na tabela ZI0.
@@ -811,7 +792,7 @@ Static function fImpDados(lEnd, aParam)
                         IF cFilMat != cValtochar(QKMO->CODCOLIGADA)+cvaltochar(QKMO->CODFILIAL)+Alltrim(QKMO->CHAPA)
                             
                             // Cadastra os elegÌveis(colaboradores) na tabela ZI1.
-                            fCadEleg(QZI2->ZI2_FILIAL,;
+                            oADOGPE:fCadEleg(QZI2->ZI2_FILIAL,;
                                     QKMO->PTOCREDENCIAL,;
                                     QKMO->CHAPA,;
                                     cvaltochar(QKMO->CODPESSOA),;
@@ -819,38 +800,20 @@ Static function fImpDados(lEnd, aParam)
                                     QKMO->ADMISSAO,;
                                     QKMO->DEMISSAO,;
                                     QKMO->CODSITUACAO,;
+                                    QKMO->SITUACAO,;
                                     QKMO->CCUSTO,;
                                     QKMO->CODSECAO,;
+                                    QKMO->SECAO,;
                                     QKMO->CODFUNCAO,;
+                                    QKMO->FUNCAO,;
                                     QKMO->CODTIPO,;
                                     QKMO->TIPORECEB,;
                                     QKMO->CODHORARIO,;
+                                    QKMO->HORARIO,;
                                     Stod(""))
+                            
                         endif
 
-                        // ZI3 - Cadastro da funÁ„o.
-                        if cCodSitu != Alltrim(QKMO->CODFUNCAO)
-                            fCadSit(QKMO->CODSITUACAO, QKMO->SITUACAO)
-                        endif
-                        
-                        // ZI4 - Cadastro da funÁ„o.
-                        if cCodFunc != Alltrim(QKMO->CODFUNCAO)
-                            fCadFun(QKMO->CODFUNCAO, QKMO->FUNCAO)
-                        endif
-                        
-                        // ZI5 - Cadastro da seÁ„o.
-                        if cCodSess != Alltrim(QKMO->CODSECAO)
-                            fCadSec(QKMO->CODSECAO, QKMO->SECAO)
-                        endif
-                        
-                        // ZI6 - Cadastro do hor·rio.
-                        if cCodHora != Alltrim(QKMO->CODHORARIO)
-                            fCadHor(QKMO->CODHORARIO, QKMO->HORARIO)
-                        endif
-
-                        cCodSitu    := Alltrim(QKMO->CODFUNCAO)
-                        cCodFunc    := Alltrim(QKMO->CODFUNCAO)
-                        cCodSess    := Alltrim(QKMO->CODSECAO)
                         cFilMat     := cValtochar(QKMO->CODCOLIGADA)+cvaltochar(QKMO->CODFILIAL)+Alltrim(QKMO->CHAPA)
                         
                         //Grava o registro principal de entrega na tabela ZI0.
@@ -885,7 +848,7 @@ Static function fImpDados(lEnd, aParam)
                         IF cFilMat != cValtochar(QKME->CODCOLIGADA)+cvaltochar(QKME->CODFILIAL)+Alltrim(QKME->CHAPA)
                             
                             // Cadastra os elegÌveis(colaboradores) na tabela ZI1.
-                            fCadEleg(QZI2->ZI2_FILIAL,;
+                            oADOGPE:fCadEleg(QZI2->ZI2_FILIAL,;
                                     QKME->PTOCREDENCIAL,;
                                     QKME->CHAPA,;
                                     cvaltochar(QKME->CODPESSOA),;
@@ -893,52 +856,30 @@ Static function fImpDados(lEnd, aParam)
                                     QKME->ADMISSAO,;
                                     QKME->DEMISSAO,;
                                     QKME->CODSITUACAO,;
+                                    QKME->SITUACAO,;
                                     QKME->CCUSTO,;
                                     QKME->CODSECAO,;
+                                    QKME->SECAO,;
                                     QKME->CODFUNCAO,;
+                                    QKME->FUNCAO,;
                                     QKME->CODTIPO,;
                                     QKME->TIPORECEB,;
                                     QKME->CODHORARIO,;
+                                    QKME->HORARIO,;
                                     Stod(""))
                         endif
 
-                        // ZI3 - Cadastro da funÁ„o.
-                        if cCodSitu != Alltrim(QKME->CODFUNCAO)
-                            fCadSit(QKME->CODSITUACAO, QKME->SITUACAO)
-                        endif
-                        
-                        // ZI4 - Cadastro da funÁ„o.
-                        if cCodFunc != Alltrim(QKME->CODFUNCAO)
-                            fCadFun(QKME->CODFUNCAO, QKME->FUNCAO)
-                        endif
-                        
-                        // ZI5 - Cadastro da seÁ„o.
-                        if cCodSess != Alltrim(QKME->CODSECAO)
-                            fCadSec(QKME->CODSECAO, QKME->SECAO)
-                        endif
-                        
-                        // ZI6 - Cadastro do hor·rio.
-                        if cCodHora != Alltrim(QKME->CODHORARIO)
-                            fCadHor(QKME->CODHORARIO, QKME->HORARIO)
-                        endif
-                        
                         //Grava os registros de faltas vinculados ao perÌodo.
                         //IF cFilMat != cValtochar(QKME->CODCOLIGADA)+cvaltochar(QKME->CODFILIAL)+Alltrim(QKME->CHAPA)
-                            cFalVld := "Z"
-                            cFalVld := fGrvFal(QZI2->ZI2_FILIAL, QZI2->ZI2_COLRM, Alltrim(QZI2->ZI2_KMEPRD), cPeriod, QKME->CHAPA, cDtDe, cDtAte )
+                        cFalVld := "Z"
+                        cFalVld := fGrvFal(QZI2->ZI2_FILIAL, QZI2->ZI2_COLRM, Alltrim(QZI2->ZI2_KMEPRD), cPeriod, QKME->CHAPA, cDtDe, cDtAte )
                         //ENDIF
 
                         //Grava o registro principal de entrega na tabela ZI0.
                         fGrvKME(cFalVld)
 
-                        
-                        cCodSitu    := Alltrim(QKME->CODFUNCAO)
-                        cCodFunc    := Alltrim(QKME->CODFUNCAO)
-                        cCodSess    := Alltrim(QKME->CODSECAO)
                         cFilMat     := cValtochar(QKME->CODCOLIGADA)+cvaltochar(QKME->CODFILIAL)+Alltrim(QKME->CHAPA)
                         
-                        
-
                     endif
 
                     oProcess:incRegua2("Kit Mensal (3/4)-S: "+ CValToChar(nCont) +" de "+ CValToChar(nSubFME) +" - T: "+ CValToChar(nAcumul) +" de "+ CValToChar(nTotaKit) +" ")
@@ -972,6 +913,8 @@ Static function fImpDados(lEnd, aParam)
 
         QZI2->(Dbclosearea())
     endif
+
+    FreeObj(oADOGPE)
 return
 
 Static Function fGrvFal(cFilPrt, nColigada, cProd, cPeriod, cChapa, cDtDe, cDtAte)
@@ -1267,73 +1210,6 @@ Static function fExcDados(cFilKit, cKitPrd , cPeriod, dDtDe, dDtAte)
     
 return
 
-Static Function fCadSit(cCod, cDescri)
-    DbselectArea("ZI3")
-    ZI3->(DbSetOrder(1))
-
-    if ZI3->(Dbseek(xFilial("ZI3")+cCod))
-        reclock("ZI3",.F.)
-        ZI3_DESCRI  := cDescri
-        MsUnlock("ZI3")
-    else
-        reclock("ZI3",.T.)
-        ZI3_FILIAL  := xFilial("ZI3")
-        ZI3_CODIGO  := cCod
-        ZI3_DESCRI  := cDescri
-        MsUnlock("ZI3")
-    endif
-return
-
-Static Function fCadFun(cCod, cDescri)
-    DbselectArea("ZI4")
-    ZI4->(DbSetOrder(1))
-
-    if ZI4->(Dbseek(xFilial("ZI4")+cCod))
-        reclock("ZI4",.F.)
-        ZI4_DESCRI  := cDescri
-        MsUnlock("ZI4")
-    else
-        reclock("ZI4",.T.)
-        ZI4_FILIAL  := xFilial("ZI4")
-        ZI4_CODIGO  := cCod
-        ZI4_DESCRI  := cDescri
-        MsUnlock("ZI4")
-    endif
-return
-
-Static Function fCadSec(cCod, cDescri)
-    DbselectArea("ZI5")
-    ZI5->(DbSetOrder(1))
-
-    if ZI5->(Dbseek(xFilial("ZI5")+cCod))
-        reclock("ZI5",.F.)
-        ZI5_DESCRI  := cDescri
-        MsUnlock("ZI5")
-    else
-        reclock("ZI5",.T.)
-        ZI5_FILIAL  := xFilial("ZI5")
-        ZI5_CODIGO  := cCod
-        ZI5_DESCRI  := cDescri
-        MsUnlock("ZI5")
-    endif
-return
-
-Static Function fCadHor(cCod, cDescri)
-    DbselectArea("ZI6")
-    ZI6->(DbSetOrder(1))
-
-    if ZI6->(Dbseek(xFilial("ZI6")+cCod))
-        reclock("ZI6",.F.)
-        ZI6_DESCRI  := cDescri
-        MsUnlock("ZI6")
-    else
-        reclock("ZI6",.T.)
-        ZI6_FILIAL  := xFilial("ZI6")
-        ZI6_CODIGO  := cCod
-        ZI6_DESCRI  := cDescri
-        MsUnlock("ZI6")
-    endif
-return
 
 Static Function fGrvAUT()
     //Para os colaboradores inclusos manualmente os registros de kits devem ser gerados de forma independentes.
@@ -1628,105 +1504,6 @@ Static Function fRetVld(cLabel)
         cRet := "N"
     endif
 return cRet
-
-// Cadastra os elegÌveis(colaboradores) na tabela ZI1.
-Static function fCadEleg(cFilPro,;
-             cCredencial,;
-             cChapa,;
-             cCodPessoa,;
-             cNome,;
-             dAdmissao,;
-             dDemissao,;
-             cCodSit,;
-             cCC,;
-             cCodSecao,;
-             cCodFunc,;
-             cCodTipo,;
-             cCodTpRec,;
-             cCodHorar,;
-             dDtNasc)
-
-    Local lIncAlt   := .F.
-    Local cQuery    := ""
-
-    DbSelectarea("ZI1")
-
-    cQuery := " SELECT ZI1.R_E_C_N_O_ REGZI1, isnull(ZI1A.R_E_C_N_O_,0) REGZI1A "
-    cQuery += " FROM "+ Retsqlname("ZI1") +" (nolock) ZI1 LEFT JOIN "+ Retsqlname("ZI1") +" (nolock) ZI1A ON ZI1.D_E_L_E_T_='' AND ZI1A.D_E_L_E_T_='' AND ZI1.R_E_C_N_O_=ZI1A.R_E_C_N_O_ "
-    cQuery += "  AND ZI1A.ZI1_CODPES != '"+ Alltrim(cCodPessoa) +"' "
-    cQuery += "  AND ZI1A.ZI1_CREDEN != '"+ Alltrim(cCredencial) +"' "
-    cQuery += "  AND ZI1A.ZI1_NOME   != '"+ Alltrim(cNome) +"' "
-    cQuery += "  AND ZI1A.ZI1_CC     != '"+ Alltrim(cCC) +"' "
-    cQuery += "  AND ZI1A.ZI1_SECAO  != '"+ Alltrim(cCodSecao) +"' "
-    cQuery += "  AND ZI1A.ZI1_FUNCAO != '"+ Alltrim(cCodFunc) +"' "
-    cQuery += "  AND ZI1A.ZI1_CODTIP != '"+ Alltrim(cCodTipo) +"' "
-    cQuery += "  AND ZI1A.ZI1_CODSIT != '"+ Alltrim(cCodSit) +"' "
-    cQuery += "  AND ZI1A.ZI1_TIPREC != '"+ Alltrim(cCodTpRec) +"' "
-    cQuery += "  AND ZI1A.ZI1_CODHOR != '"+ Alltrim(cCodHorar) +"' "
-    cQuery += "  AND ZI1A.ZI1_ADMISS != '"+ Dtos(dAdmissao) +"' "
-    cQuery += "  AND ZI1A.ZI1_DEMISS != '"+ Dtos(dDemissao) +"' "
-    
-    if !Empty(dDtNasc)
-        cQuery += "  AND ZI1A.ZI1_DTNASC != '"+ Dtos(dDtNasc) +"' "
-    endif
-
-    cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+ cFilPro +"' AND ZI1.ZI1_MAT='"+ cChapa +"' "
-
-    Tcquery cQuery ALIAS "QZI1" NEW
-
-    If QZI1->(!eof())
-        if QZI1->REGZI1A != 0
-            ZI1->(Dbgoto(QZI1->REGZI1))
-            if ZI1->(Recno()) == QZI1->REGZI1
-                if Reclock("ZI1",.F.)
-                    Dbdelete()
-                    ZI1->(MsUnlock())
-                    lIncAlt := .T.
-                endif
-
-            endif
-            
-        endif
-        
-    else
-        lIncAlt := .T.
-    endif
-
-    if lIncAlt
-        if Reclock("ZI1",.T.)
-            ZI1_FILIAL  := cFilPro
-            ZI1_MAT     := cChapa
-            ZI1_CREDEN  := cCredencial
-            ZI1_CODPES  := cCodPessoa
-            ZI1_NOME    := cNome
-            ZI1_CC      := cCC
-            ZI1_SECAO   := cCodSecao
-            ZI1_FUNCAO  := cCodFunc
-            ZI1_CODTIP  := cCodTipo
-            ZI1_CODSIT  := cCodSit
-            ZI1_TIPREC  := cCodTpRec
-            ZI1_CODHOR  := cCodHorar
-            ZI1_ADMISS  := dAdmissao
-            ZI1_DEMISS  := dDemissao
-            ZI1_KITMON  := "2"
-            ZI1_MONATV  := "2"
-            ZI1_KITANI  := "2"
-            ZI1_KITMEN  := "2"
-
-            if !Empty(dDtNasc)
-                ZI1_DTNASC := dDtNasc
-            endif
-
-            ZI1_TIPINC  := "I"
-            ZI1_MSBLQL  := "2" 
-            ZI1->(MsUnlock())
-        endif
-    endif
-
-    if select("QZI1") > 0
-        QZI1->(DbcloseArea())
-    endif
-return
 
 // --------------------------------------------------------------------------------------------------------
 // In√≠cio da ViewDef e ModelDef.
