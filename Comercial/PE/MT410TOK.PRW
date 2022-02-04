@@ -26,7 +26,7 @@
 	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Preenchimento do endereçamento dos produtos que controlam localização.
 	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
 	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
-
+	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validação de quantidade liberada para cópia de pedido.
 /*/
 
 User Function MT410TOK()
@@ -1606,6 +1606,15 @@ User Function MT410TOK()
 
 					// 4. Tratamento integração eData
 					fVldDat()
+
+					If FWIsInCallStack("A410COPIA") //Everson - 03/02/2022. Chamado 67573.
+						If gdFieldGet("C6_QTDLIB", _nX) <= 0
+							lRet := .F.
+							Aviso("Atenção","Há item sem quantidade liberada(" + Alltrim(cValToChar(gdFieldGet("C6_PRODUTO", _nX))) + ").",{"OK"})
+						
+						EndIf
+
+					EndIf
 
 			Endif
 
