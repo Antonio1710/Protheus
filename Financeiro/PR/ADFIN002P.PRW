@@ -60,8 +60,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private cDtCorte	:= dtos(Date()-1)
 	//Private cDtCorte	:= dtos(stod("20220124")-1)
 	//Debugar a rotina.
-	Private cDebugCNPJ	:= "00971157"
-	Private lCalcPen	:= .F.
+	Private cDebugCNPJ	:= ""
+	Private lCalcPen	:= .T.
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
