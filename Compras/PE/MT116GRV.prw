@@ -1,23 +1,16 @@
 #INCLUDE "PROTHEUS.CH"
-               
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณMT116GRV  บAutor  ณWilliam Costa       บ Data ณ  22/01/2016 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณEste ponto de entrada pertence a rotina de digita็ใo de     บฑฑ
-ฑฑบ          ณconhecimento de frete, MATA116(). ษ executado na rotina de  บฑฑ
-ฑฑบ          ณinclusใo do conhecimento de frete, A116INCLUI(), quando a   บฑฑ
-ฑฑบ          ณtela com o conhecimento e os itens sใo montados.            บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ WORKFLOW CHAMADOS -SCHEDULE                                บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบAltera็ใo ณ Ch.Interno TI - Abel Babini - Preenche Tipo CTe - 17/06/19 บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
+
+/*/{Protheus.doc} User Function MT116GRV
+	Este ponto de entrada pertence a rotina de digita็ใo de conhecimento de frete, MATA116(). ษ executado na rotina de  
+	inclusใo do conhecimento de frete, A116INCLUI(), quando a tela com o conhecimento e os itens sใo montados.            
+	WORKFLOW CHAMADOS -SCHEDULE
+	@type  Function
+	@author William Costa
+	@since 22/01/2016
+	@history Ch.Interno TI - Abel Babini - 17/06/19 - Preenche Tipo CTe
+	@history Ticket  67715 - Abel Babini - 07/02/22 - Preenche local padrใo quando existente na SBZ - Indicador de Produtos
+
+	/*/
 
 
 User Function MT116GRV() 
@@ -36,9 +29,13 @@ User Function MT116GRV()
 	    //TROCA QUANDO FOR FILIAL 03                 
 		IF XFILIAL() == '03' .AND. ALLTRIM(FUNNAME())=="INTNFEB"
 		
-	    	aCols[nCont][nPosLocal] := IIF(!RetArqProd(aCols[nCont][nPosProd]),POSICIONE("SBZ",1,xFilial("SBZ")+aCols[nCont][nPosProd],"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+aCols[nCont][nPosProd],"B1_LOCPAD")) //LTERACAO REFERENTE A TABELA SBZ INDICADORES DE PRODUTOS CHAMADO 030317 - WILLIAM COSTA     
-	    	
-	    ENDIF	
+			aCols[nCont][nPosLocal] := IIF(!RetArqProd(aCols[nCont][nPosProd]),POSICIONE("SBZ",1,xFilial("SBZ")+aCols[nCont][nPosProd],"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+aCols[nCont][nPosProd],"B1_LOCPAD")) //LTERACAO REFERENTE A TABELA SBZ INDICADORES DE PRODUTOS CHAMADO 030317 - WILLIAM COSTA     
+
+		//INICIO Ticket  67715 - Abel Babini - 07/02/22 - Preenche local padrใo quando existente na SBZ - Indicador de Produtos
+		ELSEIF xFilial() == '03' .And. Alltrim(cValToChar(CESPECIE)) == "CTE" .and. Alltrim(POSICIONE("SBZ",1,xFilial("SBZ")+aCols[nCont][nPosProd],"BZ_LOCPAD")) != ''
+	    aCols[nCont][nPosLocal] := POSICIONE("SBZ",1,xFilial("SBZ")+aCols[nCont][nPosProd],"BZ_LOCPAD")
+			//FIM Ticket  67715 - Abel Babini - 07/02/22 - Preenche local padrใo quando existente na SBZ - Indicador de Produtos
+		ENDIF	
 	
 	NEXT  
 
