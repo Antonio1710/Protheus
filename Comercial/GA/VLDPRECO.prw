@@ -15,6 +15,15 @@
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
 
+/*/{Protheus.doc} User Function ADEST034P
+    programa chamado por gatilho (C6_PRCVEN) conforme solicitado por Vagner/Marcus coemrcial(preco maximo e minimo)
+    @type  Function
+    @author Mauricio da Silva
+    @since 01/02/2011
+    @version 01
+    @history Macieira - ticket TI   - 07/02/2022 - Mudança do cabeçalho do fonte.
+/*/
+
 User Function VLDPRECO()            
 
 	Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> INICIAL PE" )
