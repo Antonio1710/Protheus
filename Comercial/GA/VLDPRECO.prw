@@ -1,18 +1,13 @@
 #INCLUDE "rwmake.ch"
 
-/*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณVLDPRECO  บ Autor ณ Mauricio da Silva  บ Data ณ  01/02/11   บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDescricao ณ programa chamado por gatilho (C6_PRCVEN) conforme solicita-บฑฑ
-ฑฑบ          ณ do por Vagner/Marcus coemrcial(preco maximo e minimo)      บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ Adoro                                                      บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+
+/*/{Protheus.doc} User Function ADEST034P
+    programa chamado por gatilho (C6_PRCVEN) conforme solicitado por Vagner/Marcus coemrcial(preco maximo e minimo)
+    @type  Function
+    @author Mauricio da Silva
+    @since 01/02/2011
+    @version 01
+    @history Macieira - ticket TI   - 07/02/2022 - Mudan็a do cabe็alho do fonte..
 /*/
 
 User Function VLDPRECO()            

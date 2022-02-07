@@ -1,5 +1,9 @@
 #INCLUDE "totvs.ch"
 #INCLUDE "FWMVCDef.ch"
+#INCLUDE "Topconn.ch"
+
+#define ZI5EXCLUS  '|ZHH_FILIAL|' // Registro de produtos.
+#define ZHKEXCLUS  '|ZHI_FILIAL|ZHK_CODZI5|' // Embalagens.
 
 /*/{Protheus.doc} User Function ADGPE074P
     Cadastro de elegíveis para o Kit Adoro (Frango).
@@ -58,14 +62,28 @@ Return aRotina
 // InÃ­cio da ViewDef e ModelDef.
 // --------------------------------------------------------------------------------------------------------
 Static Function ModelDef()
- Local oModel		:= MPFormModel():New("mdlADGPE074P",, {|| .T.})
- Local oStrutZI5	:= FWFormStruct(1,"ZI5")
- 
- oModel:SetDescription(cTitulo)
- 
- oModel:addFields("CABEC_ZI5",nil,oStrutZI5)
+    Local oModel		:= MPFormModel():New("mdlADGPE074P",, {|| .T.})
+    Local oStrutZI5	    := FWFormStruct(1,"ZI5")
+    Local oStrutZHK     := FWFormStruct(1,"ZHK")
+    Local aZI5ZHK       := {}
+    
+    oModel:addFields("CABECZI5",nil,oStrutZI5)
+    oModel:addGrid("DETAIZHK","CABECZI5", oStrutZHK)
 
- oModel:setPrimaryKey({"ZI5_FILIAL","ZI5_CODIGO"})
+    oModel:SetDescription(cTitulo)
+    oModel:GetModel("CABECZI5"):SetDescription("Cadastro da Seção/Departamento")
+    oModel:GetModel("DETAIZHK"):SetDescription("Unidades de Uniformes")
+    oModel:GetModel("DETAIZHK"):SetOptional(.T.)
+    
+    oStrutZHK:SetProperty( "ZHK_CODZHH"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
+
+    aAdd( aZI5ZHK, {"ZHK_FILIAL", "ZI5_FILIAL"} )
+    aAdd( aZI5ZHK, {"ZHK_CODZI5", "ZI5_CODIGO"} )
+
+    oModel:SetRelation("DETAIZHK", aZI5ZHK, ZHK->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
+    oModel:GetModel("DETAIZHK"):SetUniqueLine({"ZHK_CODZHH"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
+
+    oModel:setPrimaryKey({"ZI5_FILIAL","ZI5_CODIGO"})
 
 return oModel
 
@@ -73,7 +91,8 @@ return oModel
 Static Function viewDef()
  Local oView		:= Nil
  Local oModel		:= FWLoadModel("ADGPE074P")
- Local oStrutZI5	:= FWFormStruct(2,"ZI5")
+ Local oStrutZI5	:= FWFormStruct(2,"ZI5",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZI5EXCLUS)  })
+ Local oStrutZHK	:= FWFormStruct(2,"ZHK",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHKEXCLUS)  })
   
  DbSelectArea("ZI5")
  
@@ -84,11 +103,101 @@ Static Function viewDef()
  
  oView:GetProgressBar(.T.)
  
- oView:addField("V_CABEC_ZI5",oStrutZI5,"CABEC_ZI5")
+ oView:addField("CABEC_ZI5",oStrutZI5, "CABECZI5")
+ oView:AddGrid("DETAIL_ZHI",oStrutZHK, "DETAIZHK")
    
- oView:createHorizontalBox("H_CABEC",100)
- oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
+ oView:createHorizontalBox("H_CABEC",30)
+ oView:createHorizontalBox("H_DETAI",70)
  
- oView:setOwnerView("V_CABEC_ZI5","V_CABEC")
+ 
+ oView:setOwnerView("CABEC_ZI5","H_CABEC")
+ oView:setOwnerView("DETAIL_ZHI","H_DETAI")
   
 Return oView
+
+Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
+	Local lRet          := .T.
+	Local oModel		:= FWModelActive()
+	Local oModZI5		:= oModel:getModel("CABECZI5")
+    Local oModZHK		:= oModel:getModel("DETAIZHK")
+	Local aSaveLines 	:= FWSaveRows()
+    //Local cQuery        := ""
+    Local cValGrid      := ""
+    Local nI            := 1
+    Local cNumKit       := ""
+
+    if oModelSit:cId == "DETAIZHK"
+
+        If cField == "ZHK_CODZHH"    
+           
+            DbSelectArea("ZHH")
+            ZHH->(DbSetOrder(1))
+            
+            if ZHH->(DbSeek(xFilial("ZHH")+Alltrim(xValue),.F.))
+                
+                oModZHK:LoadValue("ZHK_CODZI5"  ,oModZI5:GetValue("ZI5_CODIGO") )
+                oModZHK:LoadValue("ZHK_CODZHH"  ,ZHH->ZHH_CODIGO)
+                oModZHK:LoadValue("ZHK_DESCRI"  ,ZHH->ZHH_DESCRI)
+                oModZHK:LoadValue("ZHK_TIPO"    ,ZHH->ZHH_TIPO)
+                oModZHK:LoadValue("ZHK_NUMKIT"  ,ZHH->ZHH_NUMKIT)
+                oModZHK:LoadValue("ZHK_OBRIGA"  ,"S")
+
+                cNumKit := ZHH->ZHH_NUMKIT
+                
+                cValGrid    := Alltrim(xValue)
+
+                For nI := 1 To oModZHK:Length()
+                    oModZHK:GoLine( nI )
+
+                    IF !oModZHK:IsDeleted() .AND. !Empty(oModZHK:getValue("ZHK_CODZHH"))
+                        cValGrid += ","+Alltrim(oModZHK:getValue("ZHK_CODZHH"))
+                    endif
+                next nI
+
+                cValGrid    := Formatin(cValGrid,",")
+
+                cQuery := " SELECT * FROM "+ Retsqlname("ZHH") +" WHERE D_E_L_E_T_='' AND ZHH_FILIAL='"+ xFilial("ZHH") +"' AND ZHH_NUMKIT='"+cNumKit+"' AND ZHH_CODIGO NOT IN "+ cValGrid +" "
+                
+                Tcquery cQuery ALIAS "QZHH" NEW
+
+                IF QZHH->(!EOF())
+                    
+                    if MsgYesNo("Existem outros uniformes que fazem parte do Kit. Deseja importar os demais itens?", "..:: ")
+                        while QZHH->(!EOF())
+                            
+                            oModZHK:goLine(oModZHK:Length())
+
+                            if !Empty(oModZHK:getValue("ZHK_CODZHH"))
+                                oModZHK:addLine()
+                            endif
+
+                            oModZHK:LoadValue("ZHK_CODZI5"  ,oModZI5:GetValue("ZI5_CODIGO") )
+                            oModZHK:LoadValue("ZHK_CODZHH"  ,QZHH->ZHH_CODIGO)
+                            oModZHK:LoadValue("ZHK_DESCRI"  ,QZHH->ZHH_DESCRI)
+                            oModZHK:LoadValue("ZHK_TIPO"    ,QZHH->ZHH_TIPO)
+                            oModZHK:LoadValue("ZHK_NUMKIT"  ,QZHH->ZHH_NUMKIT)
+                            oModZHK:LoadValue("ZHK_OBRIGA"  ,"S")
+
+                            QZHH->(DBSKIP())
+                        enddo
+
+                    endif
+
+                Endif
+
+                IF select("QZHH") > 0
+                    QZHH->(Dbclosearea())
+                endif
+
+                lRet := .T.
+            else
+                lRet := .F.
+                Help( ,, 'HELP',, 'Não xistem uniformes cadastrados com esse código!.', 1, 0)
+            endif
+        
+        endif
+
+    Endif
+
+   FWRestRows( aSaveLines )
+Return lRet 

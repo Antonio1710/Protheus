@@ -1,21 +1,19 @@
 #include "rwmake.ch" 
-User Function WhenSC5()    
 
+/*/{Protheus.doc} User Function WhenSC5
+   Especifico Ad'oro Alimenticia 
+   Rotina utilizada na propriedade X3_WHEN dos campos do SC5
+   Rotina utilizada na propriedade X3_WHEN dos campos do SC5
+   para que nao sejam editados na rotina AROTEM2.PRX, ou seja
+   na roteirizacao manual (Modelo 2 - GetDados) 
+    @type  Function
+    @author Rogerio Eduardo Nutti
+    @since 01/02/2011
+    @version 01
+    @history Macieira - ticket TI   - 07/02/2022 - Mudança do cabeçalho do fonte..
 /*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Programa  ³ WHENSC5  ³ Autor ³ Rogerio Eduardo Nutti ³ Data ³20/08/02  ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³          ³ Especifico Ad'oro Alimenticia                              ³±±
-±±³          ³                                                            ³±±
-±±³          ³ Rotina utilizada na propriedade X3_WHEN dos campos do SC5  ³±±
-±±³          ³ para que nao sejam editados na rotina AROTEM2.PRX, ou seja ³±±
-±±³          ³ na roteirizacao manual (Modelo 2 - GetDados)               ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-/*/
+
+User Function WhenSC5()    
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Variaveis                                                    ³

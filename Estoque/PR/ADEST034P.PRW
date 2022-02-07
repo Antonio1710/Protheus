@@ -17,7 +17,7 @@
     @history Everson  - Chamado 7989   - 13/01/2021. Incluído tratamento por filial.
 	@history Sigoli	  - Tkt: 17876     - 04/08/2021. Feito tratamento na rotina para atender todas as empresa configuradas no scheduled 
     @hostory Sigoli   - TKT: T.I       - Removido log , pois esta gerando muito log nos scheduledsRemovido log , pois esta gerando muito log nos scheduleds
-    @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto
+    @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
 /*/
 User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 
