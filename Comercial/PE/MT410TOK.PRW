@@ -27,6 +27,7 @@
 	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
 	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
 	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validação de quantidade liberada para cópia de pedido.
+	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validação de quantidade liberada para cópia de pedido.
 /*/
 
 User Function MT410TOK()
