@@ -20,6 +20,7 @@
     @history Chamado 15804  - Leonardo P. Monteiro  - 31/08/2021 - Correção de error.log.
     @history Chamado 34655  - Abel Babini           - 28/09/2021 - Correção preenchimento do campo C7_XSOLIC
     @history Chamado 64070  - Everson               - 03/02/2022 - Tratamento para zerar valor de frete do item.
+    @history Chamado TI     - Everson               - 07/02/2022 - Tratamento para zerar valor de frete do item.
 /*/
 User Function MT120FIM()
     Local aArea      := GetArea()
@@ -363,7 +364,7 @@ Static Function lmpFrt(cNumPed)
     SC7->(DbSetOrder(1))
     If SC7->(DbSeek( FWxFilial("SC7") + cNumPed) )
 
-        While ! SC7->(Eof())
+        While ! SC7->(Eof()) .And. FWxFilial("SC7") == SC7->C7_FILIAL .And. SC7->C7_NUM == cNumPed //Everson - 07/02/2022. Chamado TI.
 
             If SC7->C7_FRETE == 0
 
