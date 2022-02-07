@@ -13,32 +13,36 @@
 
 User Function ADVEN058P()
        
-Local lRet 		:= .F.
-Local i    		:= 0
-Local nVlPrc    := Ascan(aHeader, { |x| Alltrim(x[2]) == "C6_PRCVEN" }) 
-Local nVlTot    := Ascan(aHeader, { |x| Alltrim(x[2]) == "C6_VALOR"  }) 
+	Local lRet 		:= .F.
+	Local i    		:= 0
+	Local nVlPrc    := Ascan(aHeader, { |x| Alltrim(x[2]) == "C6_PRCVEN" }) 
+	Local nVlTot    := Ascan(aHeader, { |x| Alltrim(x[2]) == "C6_VALOR"  }) 
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina de validação de campo C')
+	Conout( DToC(Date()) + " " + Time() + " ADVEN058P >>> INICIO PE" )
 
-IF ! IsInCallStack('RESTEXECUTE')
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina de validação de campo C')
 
-	If aCols[1,nVlPrc] > 0 
-		
-		For i := 1 to Len(aCols)
-			acols[i][nVlPrc] := 0
-			acols[i][nVlTot] := 0 
+	IF ! IsInCallStack('RESTEXECUTE')
+
+		If aCols[1,nVlPrc] > 0 
 			
-			lRet := .T.
+			For i := 1 to Len(aCols)
+				acols[i][nVlPrc] := 0
+				acols[i][nVlTot] := 0 
 				
-		Next i  
-		
-	EndIf
-		
-	If lRet
-		GETDREFRESH()
-		A410LinOk(oGetDad)	
-	EndIf
+				lRet := .T.
+					
+			Next i  
+			
+		EndIf
+			
+		If lRet
+			GETDREFRESH()
+			A410LinOk(oGetDad)	
+		EndIf
 
-ENDIF
+	ENDIF
+
+	Conout( DToC(Date()) + " " + Time() + " ADVEN058P >>> INICIO PE" )
 
 Return .T.

@@ -17,6 +17,8 @@
 
 User Function VLDPRECO()            
 
+	Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> INICIAL PE" )
+
 	_cArea := GetArea()
 
 	_nRet  := M->C6_PRCVEN
@@ -35,11 +37,13 @@ User Function VLDPRECO()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'programa chamado por gatilho (C6_PRCVEN) conforme solicita do por Vagner/Marcus coemrcial(preco maximo e minimo)')
 
 	If cEmpAnt <> "01"   &&somente executa para empresa Adoro.
+		Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 		return(_nret)
 
 	Endif    
 
 	If IsInCallStack('RESTEXECUTE') .Or. IsInCallStack('U_RESTEXECUTE')
+		Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 		return(_nret)
 
 	EndIF
@@ -69,6 +73,9 @@ User Function VLDPRECO()
 		ENDIF
 		_nRet := 0.00
 		RestArea(_cArea)
+
+		Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
+
 		return(_nRet)
 	endif
 
@@ -159,6 +166,7 @@ User Function VLDPRECO()
 						ENDIF
 						_nRet := 0.00
 						RestArea(_cArea)
+						Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 						return(_nRet)
 					Endif
 				Endif
@@ -187,6 +195,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)
 						Endif
 					Endif
@@ -213,6 +222,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)
 						Endif
 					Endif
@@ -293,6 +303,7 @@ User Function VLDPRECO()
 						ENDIF
 						_nRet := 0.00
 						RestArea(_cArea)
+						Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 						return(_nRet)
 					Endif                   
 				Endif
@@ -321,6 +332,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)                   
 						Endif
 					Endif
@@ -347,6 +359,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)                                       
 						Endif
 					Endif                                   
@@ -492,4 +505,6 @@ User Function VLDPRECO()
 	Endif    
 
 	RestArea(_cArea)
+	
+	Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 Return(_nRet)

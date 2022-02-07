@@ -28,6 +28,10 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 	Default aParam[1] := "07"
 	Default aParam[2] := "01"
 
+	// DEBUG - INIBIR
+    //aParam[1] := "01"
+	//aParam[2] := "03"
+
     //
     If Select("SX6") == 0
 	    lAutoJob := .T.
@@ -43,7 +47,7 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 
         // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
         // DEBUG - VOLTAR
-        If !LockByName("ADEST034P", .T., .F.)
+        If !LockByName("EST034P"+AllTrim(cEmpAnt)+AllTrim(cFilAnt), .T., .F.)
             ConOut("[ADEST034P] - Existe outro processamento sendo executado! Verifique...")
             RPCClearEnv()
             Return
@@ -77,7 +81,7 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
         //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
         //³Destrava a rotina para o usuário	    ?
         //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-        UnLockByName("ADEST034P")
+        UnLockByName("EST034P"+AllTrim(cEmpAnt)+AllTrim(cFilAnt))
 
 		RpcClearEnv()
 
