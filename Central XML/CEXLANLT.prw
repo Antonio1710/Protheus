@@ -12,6 +12,8 @@ User Function CEXLANLT()
 	Local dDtVencLot	:= StoD( "" )    
 	Local aParamBox		:= {}   
 	Local aRet 			:= {}   
+		
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E no Lancamento CT-e em Lote ')
 
 	Aadd( aParamBox,{ 1, "Data de Vencimento:", dDtVencLot	,"","","","",0, .T.	} )
 	

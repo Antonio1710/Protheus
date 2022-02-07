@@ -29,6 +29,9 @@ Local cA2CGC   	:= ""
 Local lAlterSD1 := "N"
 Local cPlcVeic  := Alltrim(SF1->F1_PLACA) //chamado: 048464 09/04/2019 - Fernando Sigoli 
          
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- Emissao do Boletim de Entrada ')
+	
+		 
 //Devolução
 If SF1->F1_TIPO == "D" .AND. Alltrim(cFilAnt) $ '02' //devolução com integração com Edata, somente na filial 02
 

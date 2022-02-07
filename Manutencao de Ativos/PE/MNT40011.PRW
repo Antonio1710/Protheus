@@ -16,6 +16,10 @@ USER FUNCTION MNT40011(cNomeJanela)
 	Local aArea    			:= GetArea()
 	Local aAreaSTJ 			:= STJ->(GetArea())
 	local cOpcRotina 		:= Alltrim(iif(cNomeJanela <> nil, 'Cancelar', 'Finalizar'))
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E finalização de uma Ordem de Serviço, antes de montar a tela')
+	
+	
 	default cNomeJanela := "MNT40011"
 
 	// *** INICIO VERIFICA SE A SOLICITACAO DE ARMAZEM FOI BAIXADA OU ENCERRADA

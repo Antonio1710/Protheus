@@ -26,7 +26,7 @@
 	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Preenchimento do endereçamento dos produtos que controlam localização.
 	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
 	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
-
+	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validação de quantidade liberada para cópia de pedido.
 /*/
 
 User Function MT410TOK()
@@ -134,6 +134,8 @@ User Function MT410TOK()
 	Private _nLocaliz	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCALIZ"  })
 	Private _nLocal		:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCAL"  })
 
+	Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
+
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
 	cTpCliSF			:= M->C5_TIPOCLI // Everson - 02/04/2018.
@@ -158,6 +160,7 @@ User Function MT410TOK()
 	//
 
 	if _nOpc = 1 // Exclusão
+		Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 		return .t.
 	endif
 
@@ -1056,6 +1059,7 @@ User Function MT410TOK()
 				// Ricardo Lima - 13/06/18
 				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. CEMPANT = '01' .and. !IsInCallStack('RESTEXECUTE')
 					ApMsgInfo('Vendedor sem PERMISSÃO para Incluir Pedido, verifique com a Supervisão!','Permissões de Vendedores')
+					Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 					Return(.F.)
 				Endif
 
@@ -1607,6 +1611,15 @@ User Function MT410TOK()
 					// 4. Tratamento integração eData
 					fVldDat()
 
+					If FWIsInCallStack("A410COPIA") //Everson - 03/02/2022. Chamado 67573.
+						If gdFieldGet("C6_QTDLIB", _nX) <= 0
+							lRet := .F.
+							Aviso("Atenção","Há item sem quantidade liberada(" + Alltrim(cValToChar(gdFieldGet("C6_PRODUTO", _nX))) + ").",{"OK"})
+						
+						EndIf
+
+					EndIf
+
 			Endif
 
 		Next _nX
@@ -1844,6 +1857,7 @@ User Function MT410TOK()
 									RestArea(_aAreaSF4)
 									RestArea(_aAreaSB1)
 								 	RestArea(aArea)
+									 Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 								 	Return .F.
 								 	
 								 Else
@@ -2001,7 +2015,7 @@ User Function MT410TOK()
 	ENDIF
 
 	RestArea(aArea)
-
+	Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 Return(lRet)
 
 //--------------------------------------------------

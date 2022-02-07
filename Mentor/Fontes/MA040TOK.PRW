@@ -27,6 +27,9 @@ Local cCodVen
 Local cQuery 
 Local aArea := GetArea()
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'troca do Usuario da Cateira - PB3 ')
+
+
 if !SA3->(Eof()) .and. !Empty(SA3->A3_CODUSR) .and. SA3->A3_CODUSR <> M->A3_CODUSR 
    
 	// Trocou o Usuario da Carteira

@@ -12,6 +12,9 @@ User Function ADLOG077P()
 
 Local lRet := .F.
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Bloqueio do campo ZV4_Placa, para não deixar alterar.')
+
+
     IF INCLUI 
         lRet := .T. 
      ELSEIF ALTERA .AND. RetCodUsr() $ GetMV("MV_#ALTPLC")

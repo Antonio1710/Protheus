@@ -16,8 +16,8 @@
 User Function MNTA400I
 
 Local aRot :=  aClone(ParamIXB[1])
-	
-	aAdd(aRot,{"GERA OP","U_GEROPMNT()" ,0,4,,.F.})
+
+aAdd(aRot,{"GERA OP","U_GEROPMNT()" ,0,4,,.F.})
 
 Return aRot
 

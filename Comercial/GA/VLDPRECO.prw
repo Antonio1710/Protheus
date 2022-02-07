@@ -1,21 +1,18 @@
 #INCLUDE "rwmake.ch"
 
-/*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³VLDPRECO  º Autor ³ Mauricio da Silva  º Data ³  01/02/11   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³ programa chamado por gatilho (C6_PRCVEN) conforme solicita-º±±
-±±º          ³ do por Vagner/Marcus coemrcial(preco maximo e minimo)      º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Adoro                                                      º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+
+/*/{Protheus.doc} User Function ADEST034P
+    programa chamado por gatilho (C6_PRCVEN) conforme solicitado por Vagner/Marcus coemrcial(preco maximo e minimo)
+    @type  Function
+    @author Mauricio da Silva
+    @since 01/02/2011
+    @version 01
+    @history Macieira - ticket TI   - 07/02/2022 - Mudança do cabeçalho do fonte..
 /*/
 
 User Function VLDPRECO()            
+
+	Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> INICIAL PE" )
 
 	_cArea := GetArea()
 
@@ -35,11 +32,13 @@ User Function VLDPRECO()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'programa chamado por gatilho (C6_PRCVEN) conforme solicita do por Vagner/Marcus coemrcial(preco maximo e minimo)')
 
 	If cEmpAnt <> "01"   &&somente executa para empresa Adoro.
+		Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 		return(_nret)
 
 	Endif    
 
 	If IsInCallStack('RESTEXECUTE') .Or. IsInCallStack('U_RESTEXECUTE')
+		Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 		return(_nret)
 
 	EndIF
@@ -69,6 +68,9 @@ User Function VLDPRECO()
 		ENDIF
 		_nRet := 0.00
 		RestArea(_cArea)
+
+		Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
+
 		return(_nRet)
 	endif
 
@@ -159,6 +161,7 @@ User Function VLDPRECO()
 						ENDIF
 						_nRet := 0.00
 						RestArea(_cArea)
+						Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 						return(_nRet)
 					Endif
 				Endif
@@ -187,6 +190,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)
 						Endif
 					Endif
@@ -213,6 +217,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)
 						Endif
 					Endif
@@ -293,6 +298,7 @@ User Function VLDPRECO()
 						ENDIF
 						_nRet := 0.00
 						RestArea(_cArea)
+						Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 						return(_nRet)
 					Endif                   
 				Endif
@@ -321,6 +327,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)                   
 						Endif
 					Endif
@@ -347,6 +354,7 @@ User Function VLDPRECO()
 							ENDIF
 							_nRet := 0.00
 							RestArea(_cArea)
+							Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 							return(_nRet)                                       
 						Endif
 					Endif                                   
@@ -492,4 +500,6 @@ User Function VLDPRECO()
 	Endif    
 
 	RestArea(_cArea)
+	
+	Conout( DToC(Date()) + " " + Time() + " VLDPRECO >>> FINAL PE" )
 Return(_nRet)

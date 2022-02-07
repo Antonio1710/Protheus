@@ -19,6 +19,10 @@
 User Function OS040GRV()
 Local _aArea := GetArea()
 
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Grava campo customizado para integracao SAG')
+
+
 If INCLUI					
    Reclock("DA4",.F.)
 	  DA4->DA4_XINTEG := "I"  &&alteracao		

@@ -12,13 +12,16 @@
 
 User Function ADLFV020R()
   
-  local cTitulo       := "RELAÇÃO DE PARADAS"
+	local cTitulo       := "RELAÇÃO DE PARADAS"
   
-  private cPerg       := "ADLFV020R"	
-  private dDtAbatDe   := ctod("")
+	private cPerg       := "ADLFV020R"	
+	private dDtAbatDe   := ctod("")
 	private dDtAbatATE  := ctod("")
 	private cOrdCarrDe  := ""
 	private cOrdCarrAte := ""
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de paradas')
+	
 
 	DbSelectArea("ZV2")
 

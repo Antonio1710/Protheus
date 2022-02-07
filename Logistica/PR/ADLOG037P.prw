@@ -16,6 +16,9 @@ User Function ADLOG037P(cCampo) // U_ADLOG037P()
 	Local cNumCp	:= 0
 	Local cValor	:= ""
 	Local aCad		:= {}
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Validação do campo CPF e Passaporte')
+
 
 	cCampo	:= Alltrim(cCampo)
 

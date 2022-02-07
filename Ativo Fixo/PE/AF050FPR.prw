@@ -20,6 +20,8 @@ Local lRet 	 	:= .F.
 Local aAreaSN3  := SN3->(GetArea())
 Local cChave	:= PARAMIXB[1]
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Não gera depreciação de itens baixados')
+
 If FunName()=='ATFA050'
 	DbSelectArea("SN3")
 	SN3->(DbGoto((cAliasSn3)->RECNO))

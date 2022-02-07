@@ -24,6 +24,8 @@ User Function CEXEXXML()
 	Local lRetorno	:= .T.
     Local _aArea	:= getArea()
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E na na exclusao de XML (Central XML).Valida se usuario ')
+	
 	// NF-e
 	If aParXML[ 01 ] == "RECNFXML" 
 		

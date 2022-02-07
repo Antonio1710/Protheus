@@ -14,12 +14,15 @@
 User Function CEXMBTNFE()
 	
 	Local aRetorno	:= Array( 03 )
+	
 	//Chamado 058532 - Alterado por Adriana para incluir mais botoes em 15/06/2020
 	aRetorno[1]	:= "ADORO"			//[01] - Descricao da Funcao (Sera exibida no menu lateral)
 	aRetorno[2]	:= "TRMIMG32.PNG"	//[02] - Imagem (Precisa estar no repositorio)
 	aRetorno[3]	:= "CEXNFEBT"	    //[03] - Funcao de Usuario (User Function)
 	//Fim Chamado 058532- Alterado por Adriana em 15/06/2020
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E para incluir botão na Central XML ')
+	
 Return aRetorno                
 
 /*/{Protheus.doc} User Function CEXNFEBT

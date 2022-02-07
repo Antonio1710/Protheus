@@ -16,6 +16,8 @@ User Function CEXMGICTE()
 	Local aParans	:= PARAMIXB
 	Local nIteCTE   := 0  
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E para gravacao de Itens do CT-e ')
+	
 	//Para fretes de venda, nao quebrar em itens por xml, sempre retornar 1 Item na acols consolidado.
 	If aParans[ 01 ] == "VENDA"
 		nIteCTE	:= 1 

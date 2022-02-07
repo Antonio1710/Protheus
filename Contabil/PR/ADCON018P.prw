@@ -17,6 +17,7 @@
     @ticket 5530 - Inclusão Regra de Rateio - Safeeg
     @history ticket 64246 - Fernando Macieira - 24/11/2021 - Correções rotina importação Rateio Off Line
     @history ticket 64246 - Fernando Macieira - 03/12/2021 - consistências também na exclusão
+    @history ticket 65572 - Fernando Macieira - 02/02/2022 - Ajustes Regra de Rateio
 /*/
 User Function ADCON018P(cAcao)
 
@@ -334,8 +335,17 @@ Static Function RunImpCTQ(cAcao)
 
                     // Efetuo consistência CTQ
                     cLog := ""
+                    // @history ticket 65572 - Fernando Macieira - 02/02/2022 - Ajustes Regra de Rateio
+                    /*
                     CTQ->( dbSetOrder(1) ) // CTQ_FILIAL, CTQ_RATEIO, CTQ_SEQUEN, R_E_C_N_O_, D_E_L_E_T_
                     If CTQ->( !dbSeek(FWxFilial("CTQ")+PadR(cCTQ_RATEIO,TamSX3("CTQ_RATEIO")[1])+PadR(cCTQ_SEQUEN,TamSX3("CTQ_SEQUEN")[1])) )
+                        cLog := "RATEIO+SEQUENCIA não encontrada " + cCTQ_RATEIO + "/" + cCTQ_SEQUEN
+                        GrvTRB(cCTQ_RATEIO, cLog, cTxt)
+                    EndIf
+                    */
+                    // Criado pois o dbSeek não funciona na segunda vez dentro de um laço de arquivo texto
+                    lExistCTQ := ChkCTQ(cCTQ_RATEIO, cCTQ_SEQUEN)
+                    If !lExistCTQ
                         cLog := "RATEIO+SEQUENCIA não encontrada " + cCTQ_RATEIO + "/" + cCTQ_SEQUEN
                         GrvTRB(cCTQ_RATEIO, cLog, cTxt)
                     EndIf
@@ -621,7 +631,7 @@ Static Function GrvCTQ(cAcao)
             cSql += " SET CTQ_MSEXP='', CTQ_MSBLQL='1', CTQ_STATUS='3'
             cSql += " WHERE CTQ_FILIAL='"+FWxFilial("CTQ")+"' 
             cSql += " AND CTQ_RATEIO='"+cCTQ_RATEIO+"' 
-            cSql += " AND CTQ_SEQUEN='"+cCTQ_SEQUEN+"' 
+            //cSql += " AND CTQ_SEQUEN='"+cCTQ_SEQUEN+"' 
             cSql += " AND D_E_L_E_T_=''
 
             If tcSqlExec(cSql) < 0
@@ -634,4 +644,45 @@ Static Function GrvCTQ(cAcao)
 
     EndIf
     
+Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+    (long_description)
+    @type  Static Function
+    @author user
+    @since 02/02/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function ChkCTQ(cCTQ_RATEIO, cCTQ_SEQUEN)
+
+    Local lRet := .f.
+    Local cQuery := ""
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT CTQ_RATEIO, CTQ_SEQUEN
+    cQuery += " FROM " + RetSqlName("CTQ") + " (NOLOCK)
+    cQuery += " WHERE CTQ_FILIAL='"+FWxFilial("CTQ")+"' 
+    cQuery += " AND CTQ_RATEIO='"+cCTQ_RATEIO+"' 
+    cQuery += " AND CTQ_SEQUEN='"+cCTQ_SEQUEN+"' 
+    cQuery += " AND D_E_L_E_T_=''
+
+    tcQuery cQuery New Alias "Work"
+
+    Work->( dbGoTop() )
+    If Work->( !EOF() )
+        lRet := .t.
+    EndIf
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
 Return lRet

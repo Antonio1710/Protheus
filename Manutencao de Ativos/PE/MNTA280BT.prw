@@ -11,6 +11,10 @@
 User Function MNTA280BT()
 
 Local aRot := {}
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Botões na Rotina Solicitação de Serviço')
+
+
 Aadd(aRot,{ "Altera Executante" ,"u_ADMNT016P(TQB->(RECNO()))",3,0,0 ,NIL} )
 
 Return(arot)

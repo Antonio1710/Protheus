@@ -13,14 +13,14 @@
     @history Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 OP DE OVOS - FWNM - 03/04/2019
     @history Chamado 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
     @history Chamado 058675 || OS 060648 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG X SAFEEG - Everson 23/06/2020
-    @history Ticket T.I.  - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
-    @history Ticket 65674 - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
-    @history Ticket T.I.  - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
-    @history Ticket 66335 - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
-    @history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
-    @history Ticket TI - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
-    /*/
-
+    @history Ticket T.I.    - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
+    @history Ticket 65674   - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
+    @history Ticket T.I.    - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
+    @history Ticket 66335   - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
+    @history Ticket TI      - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
+    @history Ticket TI      - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
+    @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
+/*/
 User Function ADEST033P()  // U_ADEST033P()
 
     //Variáveis.
@@ -111,7 +111,7 @@ Static Function fChkSAG()
 	Local cQuery    := ""
     Local cDataIni := Dtos(Date()-60)
 
-	//Verificao se o linkedServer esta ativo 
+	//Verifica se o linkedServer esta ativo
 	cQuery := " SELECT TOP(1) 1 AS CONEXAO FROM  OPENQUERY(SCSRV03, ' SELECT * FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ');"
     //cQuery += " OPENQUERY(SCSRV03, 'SELECT TOP(1) 1 AS CONEXAO FROM SAG.dbo.INGEOVOS WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD'' ') "
 	
@@ -171,12 +171,9 @@ Static Function incluiOp(lAutoJob,NReg)
     //Variáveis.
     Local aArea    := GetArea()
     Local cQuery   := ""
-    
-    
-    // Chamado n. 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
     Local cDescLt := ""
     Local lLoteOk := .t.
-    //
+    Local lLockZCV := .T.
 
     //
     ConOut( DToC(Date()) + " " + Time() + " ADEST033P - incluiOp - Início importação de Ops.")
@@ -215,8 +212,16 @@ Static Function incluiOp(lAutoJob,NReg)
         lLoteOk := ChkLote( Alltrim(Str(ADEST33I->CODILOTE)), cDescLt)
         
         If lLoteOk 
+
+            // @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
+            ZCV->( dbSetOrder(1) ) // ZCV_FILIAL, ZCV_CODOP, R_E_C_N_O_, D_E_L_E_T_
+            If ZCV->( dbSeek(FWxFilial("ZCV")+Alltrim(Str(ADEST33I->CODIOVOS))) )
+                lLockZCV := .F.
+            Else
+                lLockZCV := .T.
+            EndIf
         
-            RecLock("ZCV",.T.)
+            RecLock("ZCV", lLockZCV)
                 ZCV->ZCV_FILIAL := FWxFilial("ZCV")
                 ZCV->ZCV_CODOP  := Alltrim(Str(ADEST33I->CODIOVOS))
                 ZCV->ZCV_CODTIP := Alltrim(Str(ADEST33I->CODITPOV))
@@ -403,7 +408,8 @@ Static Function sqlInOp()
     cQuery += "   FROM SAG.dbo.INGEOVOS AS INGEOVOS  "
     cQuery += "         LEFT JOIN SAG.dbo.POCaEmpr AS POCAEMPR  ON POCAEMPR.PCODEMPR=INGEOVOS.PEMPOVOS  "
     cQuery += "         LEFT JOIN SAG.dbo.INCATPOV AS INCATPOV ON INCATPOV.CODITPOV = INGEOVOS.CODITPOV " //Adriano Savoine - 28/12/2021 - Ticket : 65674
-    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "'' AND STATUSOP <> ''I''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
+    //cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "'' AND STATUSOP <> ''I''  AND TIPOOVOS=''PROD''  AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "
+    cQuery += "   WHERE DATAOVOS >= ''" + cDataIni + "'' AND TIPOOVOS=''PROD''  AND INGEOVOS.CODITPOV IN (''5'',''6'') AND POCAEMPR.Te07Empr = ''" + cEmpAnt + "'' ') A "// @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
     cQuery += " WHERE   "
     cQuery += "     CODIOVOS NOT IN ( "
 	cQuery += "     SELECT ZCV_CODOP FROM " + RetSqlName("ZCV") + " ZCV "

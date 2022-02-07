@@ -15,6 +15,8 @@ User Function CEXCONSC7()
 	Local aParamIXB	:= PARAMIXB
 	Local nRetQtd	:= 0
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E na conversao, devolver o a quantidade atual ')
+	
 	//Compara as unidades de medida, caso sejam diferentes, forca a nao fazer a conversao
 	//Caso sejam iguais, prevalece a quantidade da NF-e
 	//If Alltrim( aParamIXB[ 01 ] ) <> Alltrim( aParamIXB[ 02 ] )

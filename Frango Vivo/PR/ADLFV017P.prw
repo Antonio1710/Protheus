@@ -22,6 +22,8 @@ User Function ADLFV017P() // U_ADLFV017P()
 	local cPerg   := PadR("ADLFV017P",10)
 	Local oBrowse := nil
 	local cFiltro := ""
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de gestão de ordens de carregamento  - PCP ')	
 
 	lPer := montaPer(cPerg)
 	if lPer

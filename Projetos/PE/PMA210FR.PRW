@@ -24,6 +24,9 @@ User Function PMA210FR()
 	Local aAreaAF8  := AF8->( GetArea() )
 	Local aAreaAFE  := AFE->( GetArea() )
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E. finalização da revisão do projeto')
+
+	
 	If lContinua
 
 		// Popula a central de aprovaçao

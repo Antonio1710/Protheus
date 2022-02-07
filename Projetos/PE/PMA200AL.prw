@@ -21,6 +21,9 @@ User Function PMA200AL()
 	Local lAltera := PARAMIXB[3]
 	Local lExclui := PARAMIXB[4]
 	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E - popular central de aprovações ZC7 ')
+
+	
 	// Consiste campo AF8_XVALOR
 	If AF8->(FieldPos("AF8_XVALOR")) > 0
 		lContinua := .t.

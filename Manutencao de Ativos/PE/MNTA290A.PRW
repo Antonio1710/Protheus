@@ -15,6 +15,9 @@ User Function MNTA290A()
 
     Local aArea   := GetArea()   
     Local aReturn := {}
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'add fechamento da solicitação de serviço')
+
  
     dbSelectArea( 'STL' )
 

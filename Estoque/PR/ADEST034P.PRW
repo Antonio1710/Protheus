@@ -12,13 +12,13 @@
     @history Adriana - CHAMADO TI-27/05/2019: Correçao error.log expected N->C,function STR on U_ADEST034P
     @history Leon Toledo - CHAMADO 051560 - 09/09/2019: Criada validação para Codigo e Descrição antes da 
     integração do Lote do SAG no Protheus.
-    @history Everson - Chamado 058675 - 23/06/2020. Adicionado tratamento para importação de lotes para mais de uma empresa/filial no Protheus.
-    @history Everson - Chamado 059658 - 30/07/2020. Tratamento para não importar lote sem data.
-    @history Everson - Chamado 7989   - 13/01/2021. Incluído tratamento por filial.
-	@history Sigoli	 - Tkt: 17876     - 04/08/2021. Feito tratamento na rotina para atender todas as empresa configuradas no scheduled 
-    @hostory Sigoli  - TKT: T.I       - Removido log , pois esta gerando muito log nos scheduledsRemovido log , pois esta gerando muito log nos scheduleds
+    @history Everson  - Chamado 058675 - 23/06/2020. Adicionado tratamento para importação de lotes para mais de uma empresa/filial no Protheus.
+    @history Everson  - Chamado 059658 - 30/07/2020. Tratamento para não importar lote sem data.
+    @history Everson  - Chamado 7989   - 13/01/2021. Incluído tratamento por filial.
+	@history Sigoli	  - Tkt: 17876     - 04/08/2021. Feito tratamento na rotina para atender todas as empresa configuradas no scheduled 
+    @hostory Sigoli   - TKT: T.I       - Removido log , pois esta gerando muito log nos scheduledsRemovido log , pois esta gerando muito log nos scheduleds
+    @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
 /*/
-
 User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 
     //Variáveis.
@@ -27,6 +27,10 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
     Default aParam    := Array(2)
 	Default aParam[1] := "07"
 	Default aParam[2] := "01"
+
+	// DEBUG - INIBIR
+    //aParam[1] := "01"
+	//aParam[2] := "03"
 
     //
     If Select("SX6") == 0
@@ -42,7 +46,8 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
         RpcSetEnv(aParam[1],aParam[2],,,,GetEnvServer(),{ }) 
 
         // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-        If !LockByName("ADEST034P", .T., .F.)
+        // DEBUG - VOLTAR
+        If !LockByName("EST034P"+AllTrim(cEmpAnt)+AllTrim(cFilAnt), .T., .F.)
             ConOut("[ADEST034P] - Existe outro processamento sendo executado! Verifique...")
             RPCClearEnv()
             Return
@@ -76,7 +81,7 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
         //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
         //³Destrava a rotina para o usuário	    ?
         //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-        UnLockByName("ADEST034P")
+        UnLockByName("EST034P"+AllTrim(cEmpAnt)+AllTrim(cFilAnt))
 
 		RpcClearEnv()
 
@@ -134,12 +139,10 @@ Static Function incluiLt()
     ZCN->(DbSetOrder(1)) //1 ZCN_FILIAL , ZCN_LOTE 
     While ADEST34I->(!Eof())
 
-        //
         If (!Empty(ADEST34I->CODILOTE) .OR. (!Empty(ADEST34I->NOMELOTE)))    //Leon Toledo | 09/09/2019 | Chamado: 051560
             ZCN->(dbGoTop())
             If ZCN->(DbSeek( FWxFilial("ZCN") + Alltrim(Str(ADEST34I->CODILOTE)) ))
                 ConOut( DToC(Date()) + " " + Time() + " ADEST034P - incluiLt - Lote: " + cValToChar(ADEST34I->CODILOTE) + " já integrado, registro ignorado.")
-
             Else
                 RecLock("ZCN",.T.)
                     ZCN->ZCN_FILIAL := FWxFilial("ZCN")
@@ -150,9 +153,9 @@ Static Function incluiLt()
                     ZCN->ZCN_DESCCC := ''
                     ZCN->ZCN_DATLOT := ADEST34I->DATALOTE
                     ZCN->ZCN_STATUS := IIF(Empty(ADEST34I->ENCELOTE),'A','E')
-                Msunlock()
-                ConOut( DToC(Date()) + " " + Time() + " ADEST034P - incluiLt - Lote: " + cValToChar(ADEST34I->CODILOTE) + " integrado com sucesso.")
+                ZCN->( Msunlock() )
 
+                ConOut( DToC(Date()) + " " + Time() + " ADEST034P - incluiLt - Lote: " + cValToChar(ADEST34I->CODILOTE) + " integrado com sucesso.")
             EndIf
         Else
             
@@ -188,6 +191,7 @@ Static Function alteraLt()
     Local aArea     := GetArea()
     Local cQuery    := ""
     Local cDataIni  := GetMv("MV_#ADE331" , .F. , "01/01/2019")
+    Local cZCNStatus := ""
 
     //
     ConOut( DToC(Date()) + " " + Time() + " ADEST034P - alteraLt - Início importação de alterações.")
@@ -207,13 +211,27 @@ Static Function alteraLt()
         DbSelectArea("ZCN")
         ZCN->(DbSetOrder(1))
         IF ZCN->(DbSeek( FWxFilial("ZCN") + Alltrim(Str(ADEST34A->CODILOTE)) ))
+            
+            // @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto
+            If Empty(ADEST34A->ENCELOTE)
+                cZCNStatus := "A"
+            Else
+                If ADEST34A->ENCELOTE > msDate()
+                    cZCNStatus := "A"
+                Else
+                    cZCNStatus := "E"
+                EndIf
+            EndIf
+            //
+
             RecLock("ZCN",.F.)
                 ZCN->ZCN_DESCLT := ADEST34A->NOMELOTE
                 ZCN->ZCN_TIPO   := IIF(ADEST34A->RECRLOTE=1,'RECRIA','PRODUCAO')
                 ZCN->ZCN_DATCAN := ADEST34A->ENCELOTE
                 ZCN->ZCN_LOGUPD := Alltrim(Str(ADEST34A->CODILOG_))
-                ZCN->ZCN_STATUS := IIF(Empty(ADEST34A->ENCELOTE),'A','E')
-            Msunlock()
+                ZCN->ZCN_STATUS := cZCNStatus
+                //ZCN->ZCN_STATUS := IIF(Empty(ADEST34A->ENCELOTE),'A','E')
+            ZCN->( Msunlock() )
             //ConOut( DToC(Date()) + " " + Time() + " ADEST034P - alteraLt - Lote: " + cValToChar(ADEST34A->CODILOTE) + " atualizado com sucesso.") //Tkt: T.I  - Fernando Sigoli - Removido log , pois esta gerando muito log nos scheduleds
         EndIf
 
@@ -314,7 +332,8 @@ Static Function sqlAlLot(cDataIni)
     Local cQuery := ""
 
     //
-    cQuery += " SELECT CODILOTE, NOMELOTE, RECRLOTE, ENCELOTE, CODILOG_ "
+    //cQuery += " SELECT CODILOTE, NOMELOTE, RECRLOTE, ENCELOTE, CODILOG_ "
+    cQuery += " SELECT TOP 1 CODILOTE, NOMELOTE, RECRLOTE, ENCELOTE, CODILOG_ " // @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto
     cQuery += " FROM SCSRV03.SAG.dbo.MPLOLOTE "
     cQuery += " WHERE PSITLOG_ = 'A' "
     cQuery += " AND CODILOTE IN ( "
@@ -326,9 +345,15 @@ Static Function sqlAlLot(cDataIni)
     cQuery += "     FROM "+RetSqlName("ZCN")+" ZCN "
     cQuery += "     WHERE ZCN.D_E_L_E_T_ = ' ' ) "
     cQuery += " AND DATALOTE >= '" + cDataIni + "' "
-    cQuery += " ORDER BY CODILOTE, CODILOG_ "
+
+    // DEBUG - INIBIR
+    //cQuery += " and CODILOTE='1356'
+
+    // cQuery += " ORDER BY CODILOTE, CODILOG_ "
+    cQuery += " ORDER BY CODILOTE, CODILOG_ DESC " // @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto
 
 Return cQuery
+
 /*/{Protheus.doc} sqlDeLot
     Script sql para consulta de lotes no SAG (exclusão). Chamado 058675.
     @type  Static Function

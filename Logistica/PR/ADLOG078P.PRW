@@ -11,8 +11,11 @@ User Function ADLOG078P(cTpCarga, cCampo, nOpc)
     Local aArea   := GetArea()
     Local cRet    := "" 
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Inicialização dos campos  ZFA_TPFABT e ZFA_DSFABT')
     //
-    If cTpCarga <> "1"
+    
+	If cTpCarga <> "1"
         RestArea(aArea)
         Return cRet
 

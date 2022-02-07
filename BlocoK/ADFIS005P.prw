@@ -40,6 +40,7 @@ Static cHK		:= "&"
 	@history Fernando Macieira, 05/03/2021, Ticket 10248   - Revisão das rotinas de apontamento de OP´s
 	@history Fernando Macieira, 27/09/2021, Ticket 29741   - Divergencia ao limpar dados de ordens integradas do SAG
 	@history Fernando Macieira, 29/09/2021, Ticket 30160   - Lentidão ao processar ordem
+	@history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
 /*/
 User Function ADFIS005P() // U_ADFIS005P()
 
@@ -119,6 +120,11 @@ User Function ADFIS005P() // U_ADFIS005P()
 	Private _cPerg5Pdt := Nil /* Produto Ate */
 	Private _cPerg6Sta := Nil /* Status */
 	Private _cPerg7Ope := Nil /* Tipo de Operação */
+	// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+	Private _cFil8De   := Nil // Filial de
+	Private _cFil9Ate  := Nil // Filial de
+	Private _cPerg10SN := mv_par10 // Filtra Tipo Integracao
+	Private _cPerg11Tp := mv_par11 // Tipo Integração
 
 	/* Variáveis para conexão entre os banco do Protheus e o banco intermediário */
 	Private _cNomBco1  := GetPvProfString("INTSAGBD","BCO1","ERROR",GetADV97())
@@ -154,6 +160,11 @@ User Function ADFIS005P() // U_ADFIS005P()
 	_cPerg5Pdt := mv_par05 /* Produto Ate */
 	_cPerg6Sta := mv_par06 /* Status */
 	_cPerg7Ope := mv_par07 /* Tipo de Operação */
+	// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+	_cFil8De   := mv_par08 // Filial de
+	_cFil9Ate  := mv_par09 // Filial de
+	_cPerg10SN := mv_par10 // Filtra Tipo Integracao
+	_cPerg11Tp := mv_par11 // Tipo Integração
 	
 	/* Executa a função para buscar as informações e carregar os arrays para serem usados nos grids */
 	ADFIS005PC(@aCols, @aCols2, @aCols3, @aReqs)	
@@ -492,9 +503,10 @@ Return Nil
 /*/
 Static Function ADFIS005PA(cAliasT, nOpc)
 
-	Local aCampos 	:= {}
-	Local cSTATUS 	:= ""
-	Local cOPERACAO	:= ""
+	Local aCampos 	 := {}
+	Local cSTATUS 	 := ""
+	Local cOPERACAO	 := ""
+	Local cTabegene  := ""
 
 	Default cAliasT := ""	/*Descrição do parâmetro conforme cabeçalho*/
 	Default nOpc 	:= 0	/*Descrição do parâmetro conforme cabeçalho*/
@@ -507,6 +519,21 @@ Static Function ADFIS005PA(cAliasT, nOpc)
 		OTHERWISE
 			cOPERACAO := "E"
 	ENDCASE
+
+	// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+	If _cPerg10SN == 1 
+		If _cPerg11Tp == 1
+			cTabegene := "MPCALOTE"
+		ElseIf _cPerg11Tp == 2
+			cTabegene := "INGETRAM"
+		ElseIf _cPerg11Tp == 3
+			cTabegene := "RACACONT"
+		ElseIf _cPerg11Tp == 4
+			cTabegene := "POCAMVES"
+		ElseIf _cPerg11Tp == 5
+			cTabegene := "POCAMVES"
+		EndIf
+	EndIf
 	
 	If nOpc == 1
 	
@@ -518,30 +545,71 @@ Static Function ADFIS005PA(cAliasT, nOpc)
 			OTHERWISE
 				cSTATUS := "% (SGOPR010.STATUS_INT = 'E' OR SGREQ010.STATUS_INT = 'E') %"
 		ENDCASE
+
+		If _cPerg10SN == 1 
 		
-		BeginSQL Alias cAliasT
-			SELECT 	(SUBSTRING(C2_EMISSAO,7,2) + '/' + SUBSTRING(C2_EMISSAO,5,2) + '/' + SUBSTRING(C2_EMISSAO,1,4)) AS EMISSAO, 
-					(SUBSTRING(D3_EMISSAO,7,2) + '/' + SUBSTRING(D3_EMISSAO,5,2) + '/' + SUBSTRING(D3_EMISSAO,1,4)) AS DATA,
-					C2_MSEXP AS MSEXP, * 
-					
-			FROM SGOPR010 (NOLOCK), SGREQ010 (NOLOCK)
-			
-			WHERE C2_EMISSAO BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
-				AND C2_PRODUTO BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%				
-				AND SGOPR010.OPERACAO_INT = %Exp:cOPERACAO%
-				AND SGOPR010.OPERACAO_INT = SGREQ010.OPERACAO_INT
-				AND SGREQ010.D3_OP = SGOPR010.C2_NUM + SGOPR010.C2_ITEM + SGOPR010.C2_SEQUEN
-				AND %Exp:cSTATUS%
+			BeginSQL Alias cAliasT
 
-				//Everson - 24/06/2020. Chamado 058765.
-				AND SGOPR010.EMPRESA = %Exp:cEmpAnt%
-				AND SGREQ010.EMPRESA = %Exp:cEmpAnt%
-				//
+				SELECT 	(SUBSTRING(C2_EMISSAO,7,2) + '/' + SUBSTRING(C2_EMISSAO,5,2) + '/' + SUBSTRING(C2_EMISSAO,1,4)) AS EMISSAO, 
+						(SUBSTRING(D3_EMISSAO,7,2) + '/' + SUBSTRING(D3_EMISSAO,5,2) + '/' + SUBSTRING(D3_EMISSAO,1,4)) AS DATA,
+						C2_MSEXP AS MSEXP, * 
+						
+				FROM SGOPR010 (NOLOCK), SGREQ010 (NOLOCK)
+				
+				WHERE C2_FILIAL BETWEEN %Exp:_cFil8De% AND %Exp:_cFil9Ate%
+					AND C2_EMISSAO BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
+					AND C2_PRODUTO BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%				
+					AND SGOPR010.OPERACAO_INT = %Exp:cOPERACAO%
+					AND SGOPR010.OPERACAO_INT = SGREQ010.OPERACAO_INT
+					AND SGREQ010.D3_OP = SGOPR010.C2_NUM + SGOPR010.C2_ITEM + SGOPR010.C2_SEQUEN
+					AND %Exp:cSTATUS%
 
-				AND SGOPR010.D_E_L_E_T_ = ' '
-				AND SGREQ010.D_E_L_E_T_ = ' '
-			ORDER BY C2_NUM
-		EndSQL
+					//Everson - 24/06/2020. Chamado 058765.
+					AND SGOPR010.EMPRESA = %Exp:cEmpAnt%
+					AND SGREQ010.EMPRESA = %Exp:cEmpAnt%
+					//
+
+					// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+					AND SGOPR010.TABEGENE = %Exp:cTabegene%
+
+					AND SGOPR010.D_E_L_E_T_ = ' '
+					AND SGREQ010.D_E_L_E_T_ = ' '
+
+				ORDER BY C2_NUM
+
+			EndSQL
+
+		Else
+		
+			BeginSQL Alias cAliasT
+
+				SELECT 	(SUBSTRING(C2_EMISSAO,7,2) + '/' + SUBSTRING(C2_EMISSAO,5,2) + '/' + SUBSTRING(C2_EMISSAO,1,4)) AS EMISSAO, 
+						(SUBSTRING(D3_EMISSAO,7,2) + '/' + SUBSTRING(D3_EMISSAO,5,2) + '/' + SUBSTRING(D3_EMISSAO,1,4)) AS DATA,
+						C2_MSEXP AS MSEXP, * 
+						
+				FROM SGOPR010 (NOLOCK), SGREQ010 (NOLOCK)
+				
+				WHERE C2_FILIAL BETWEEN %Exp:_cFil8De% AND %Exp:_cFil9Ate%
+					AND C2_EMISSAO BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
+					AND C2_PRODUTO BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%				
+					AND SGOPR010.OPERACAO_INT = %Exp:cOPERACAO%
+					AND SGOPR010.OPERACAO_INT = SGREQ010.OPERACAO_INT
+					AND SGREQ010.D3_OP = SGOPR010.C2_NUM + SGOPR010.C2_ITEM + SGOPR010.C2_SEQUEN
+					AND %Exp:cSTATUS%
+
+					//Everson - 24/06/2020. Chamado 058765.
+					AND SGOPR010.EMPRESA = %Exp:cEmpAnt%
+					AND SGREQ010.EMPRESA = %Exp:cEmpAnt%
+					//
+
+					AND SGOPR010.D_E_L_E_T_ = ' '
+					AND SGREQ010.D_E_L_E_T_ = ' '
+
+				ORDER BY C2_NUM
+
+			EndSQL
+
+		EndIf
 		
 		AADD(aCampos, {"C2_FILIAL", "C2_PRODUTO", "C2_QUANT", "C2_LOCAL", "C2_CC", "EMISSAO", "C2_NUM", "C2_ITEM", "C2_SEQUEN", "C2_REVISAO", "STATUS_INT", "OPERACAO_INT", "R_E_C_N_O_"})
 		AADD(aCampos, {"D3_FILIAL", "D3_TM", "D3_COD", "D3_QUANT", "D3_LOCAL", "D3_CC", "D3_OP", "D3_NUMSEQ", "CODIGENE", "D3_CUSTO1", "D3_PARCTOT", "DATA", "STATUS_INT", "OPERACAO_INT", "R_E_C_N_O_"})
@@ -558,23 +626,54 @@ Static Function ADFIS005PA(cAliasT, nOpc)
 				cSTATUS := "% SGMOV010.STATUS_INT = 'E' AND D3_MSEXP <> ' ' %"
 		ENDCASE
 		
-		BeginSQL Alias cAliasT
-			SELECT (SUBSTRING(D3_EMISSAO,7,2) + '/' + SUBSTRING(D3_EMISSAO,5,2) + '/' + SUBSTRING(D3_EMISSAO,1,4)) AS EMISSAO,
-			D3_MSEXP AS MSEXP, *
-					
-			FROM SGMOV010 (NOLOCK)
-	
-			WHERE D3_EMISSAO BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
-				AND D3_COD BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%
-				AND SGMOV010.OPERACAO_INT = %Exp:cOPERACAO%
-				AND %Exp:cSTATUS%
+		If _cPerg10SN == 1 
 
-				//Everson - 24/06/2020. Chamado 058765.
-				AND SGMOV010.EMPRESA = %Exp:cEmpAnt%
-				//
+			BeginSQL Alias cAliasT
 
-				AND SGMOV010.D_E_L_E_T_ = ' '
-		EndSQL
+				SELECT (SUBSTRING(D3_EMISSAO,7,2) + '/' + SUBSTRING(D3_EMISSAO,5,2) + '/' + SUBSTRING(D3_EMISSAO,1,4)) AS EMISSAO,
+				D3_MSEXP AS MSEXP, *
+						
+				FROM SGMOV010 (NOLOCK)
+		
+				WHERE D3_FILIAL BETWEEN %Exp:_cFil8De% AND %Exp:_cFil9Ate%
+					AND D3_EMISSAO BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
+					AND D3_COD BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%
+					AND SGMOV010.OPERACAO_INT = %Exp:cOPERACAO%
+					AND %Exp:cSTATUS%
+
+					//Everson - 24/06/2020. Chamado 058765.
+					AND SGMOV010.EMPRESA = %Exp:cEmpAnt%
+					//
+
+					// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+					AND SGMOV010.TABEGENE = %Exp:cTabegene%
+
+					AND SGMOV010.D_E_L_E_T_ = ' '
+			EndSQL
+
+		Else
+
+			BeginSQL Alias cAliasT
+
+				SELECT (SUBSTRING(D3_EMISSAO,7,2) + '/' + SUBSTRING(D3_EMISSAO,5,2) + '/' + SUBSTRING(D3_EMISSAO,1,4)) AS EMISSAO,
+				D3_MSEXP AS MSEXP, *
+						
+				FROM SGMOV010 (NOLOCK)
+		
+				WHERE D3_FILIAL BETWEEN %Exp:_cFil8De% AND %Exp:_cFil9Ate%
+					AND D3_EMISSAO BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
+					AND D3_COD BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%
+					AND SGMOV010.OPERACAO_INT = %Exp:cOPERACAO%
+					AND %Exp:cSTATUS%
+
+					//Everson - 24/06/2020. Chamado 058765.
+					AND SGMOV010.EMPRESA = %Exp:cEmpAnt%
+					//
+
+					AND SGMOV010.D_E_L_E_T_ = ' '
+			EndSQL
+
+		EndIf
 		
 		AADD(aCampos, { "D3_FILIAL", "D3_TM", "D3_COD", "D3_QUANT", "D3_LOCAL", "D3_CC", "EMISSAO", "D3_OP", "D3_NUMSEQ", "D3_CUSTO1", "D3_PARCTOT", "STATUS_INT", "OPERACAO_INT", "R_E_C_N_O_" })
 		
@@ -596,7 +695,8 @@ Static Function ADFIS005PA(cAliasT, nOpc)
 					
 			FROM SGINV010 (NOLOCK)
 			
-			WHERE B7_DATA BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
+			WHERE B7_FILIAL BETWEEN %Exp:_cFil8De% AND %Exp:_cFil9Ate%
+				AND B7_DATA BETWEEN %Exp:_dPerg2Dta% AND %Exp:_dPerg3Dta%
 				AND B7_COD BETWEEN %Exp:_cPerg4Pdt% AND %Exp:_cPerg5Pdt%
 				AND SGINV010.OPERACAO_INT = %Exp:cOPERACAO%
 				AND %Exp:cSTATUS%
@@ -669,6 +769,11 @@ Static Function ADFIS005PB(cPerg,aPergunte)
 	_cPerg5Pdt := mv_par05 /* Produto Ate */
 	_cPerg6Sta := mv_par06 /* Status */
 	_cPerg7Ope := mv_par07 /* Tipo de Operação */
+	// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+	_cFil8De   := mv_par08 // Filial de
+	_cFil9Ate  := mv_par09 // Filial de
+	_cPerg10SN := mv_par10 // Filtra Tipo Integracao
+	_cPerg11Tp := mv_par11 // Tipo Integração
 
 Return lRet
 
@@ -860,7 +965,12 @@ Static Function ADFIS005PC(aCols, aCols2, aCols3, aReqs) /* Os parâmetros desta 
 	mv_par05 := _cPerg5Pdt /* Produto Ate */
 	mv_par06 := _cPerg6Sta /* Status */
 	mv_par07 := _cPerg7Ope /* Tipo de Operação */
-	
+	// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+	mv_par08 := _cFil8De  // Filial de
+	mv_par09 := _cFil9Ate // Filial de
+	mv_par10 := _cPerg10SN // Filtra Tipo Integracao
+	mv_par11 := _cPerg11Tp // Tipo Integração
+
 	_ItensSlec := {{}, {}, {}}
 
 Return Nil
@@ -1376,7 +1486,12 @@ Static Function AjustaSX1(cPerg)
 	AADD( aMensSX1, {"05", "Produto Ate?"		, "Produto Ate?"		, "Produto Ate?"			,"C"	,TamSX3("B1_COD")[1]		,00, 0		,"G", ""	,""			,""			,"" 		, ""	, ""	, ""			, "" 	 	 , "" 			, ""	, "", ""		, ""		, ""		, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", "SB1" , "S", "", "", "" })
 	AADD( aMensSX1, {"06", "Status?"			, "Status?"				, "Status?"	    			,"C"	,001						,00, 0		,"C", ""	,"Integrado","Integrado","Integrado", ""	, ""	, "Processado" 	,"Processado", "Processado"	, ""	, "", "Erro"	, "Erro"	, "Erro"	, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
 	AADD( aMensSX1, {"07", "Operação?"			, "Operação?"			, "Lista Cálculo ?"	    	,"C"	,001						,00, 0		,"C", ""	,"Inclusão"	,"Inclusão"	,"Inclusão"	, ""	, ""	, "Alteração" 	,"Alteração" , "Alteração"	, ""	, "", "Exclusão", "Exclusão", "Exclusão", "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", ""    , "S", "", "", "" })
-	
+	// @history Fernando Macieira, 02/02/2022, Ticket 65675   - Pré Processamento - Integração SAG
+	AADD( aMensSX1, {"08", "Filial De?"		    , "Filial De?"	    	, "Filial De?"		   		,"C"	,002		                ,00, 0		,"G", ""	,""			,""			,"" 		, ""	, ""	, ""			, "" 		 , "" 			, ""	, "", ""		, ""		, ""		, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", "SM0" , "S", "", "", "" })
+	AADD( aMensSX1, {"09", "Filial Ate?"		, "Filial Ate?"		    , "Filial Ate?"			    ,"C"	,002		                ,00, 0		,"G", ""	,""			,""			,"" 		, ""	, ""	, ""			, "" 	 	 , "" 			, ""	, "", ""		, ""		, ""		, "", "", ""	 , ""	  , ""		, "", "", "", "", "", "", "SM0" , "S", "", "", "" })
+	AADD( aMensSX1, {"10", "Filtra Tipo Integração ?"   , ""    , ""	                            ,"C"	,001						,00, 0		,"C", ""	,"Sim"	,""	,""	    , ""	, ""	, "Não" 	,""  , ""	        , ""	, "", "", "", ""        , "", "", "", "", ""	, "", "", "", "", "", "", ""    , "S", "", "", "" })	
+	AADD( aMensSX1, {"11", "Tipo Integração?"   , "Tipo Integração?"    , "Tipo Integração?"	    ,"C"	,001						,00, 0		,"C", ""	,"PRODUCAO_FRANGO_VIVO"	,""	,""	    , ""	, ""	, "PRODUCAO_OVO_PINTO" 	,""  , ""	        , ""	, "", "INVENTARIO_RACAO", "", ""        , "", "", "PRODUCAO_RACAO", "", ""	, "", "", "AJUSTE_ESTOQUE", "", "", "", ""    , "S", "", "", "" })	
+
     U_newGrSX1(cPerg, aMensSX1)	
 
 Return Nil

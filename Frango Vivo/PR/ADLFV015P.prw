@@ -17,6 +17,9 @@
 User Function ADLFV015P()
 
   Local oBrowse := FwLoadBrw("ADLFV015P")
+  
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de Motivo Parada')
+  
   oBrowse:Activate()
 
 Return

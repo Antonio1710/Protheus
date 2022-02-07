@@ -19,6 +19,9 @@
 User Function OS060GRV()
 Local _aArea := GetArea()
 
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'ampo customizado para integracao entre Sistemas')
+
+
 If INCLUI					
    Reclock("DA3",.F.)
 	  DA3->DA3_XINTEG := "I"  &&alteracao		

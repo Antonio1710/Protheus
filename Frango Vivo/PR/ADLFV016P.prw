@@ -15,6 +15,9 @@
 User Function ADLFV016P()
 
   Local oBrowse := FwLoadBrw("ADLFV016P")
+  
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de Motivo Mortalidade')
+
   oBrowse:Activate()
 
 Return

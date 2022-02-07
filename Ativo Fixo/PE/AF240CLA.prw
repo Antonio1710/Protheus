@@ -8,13 +8,16 @@
   @history Ticket   0019 - Abel Babini - 22/09/2020 - Permite a controladoria informar a vida útil do bem no momento da classificação e salvar a informação no registro do CIAP
   /*/
 User Function AF240CLA()
-	Local oDlg1Frm := Nil
-	Local oSay1Frm := Nil
-	Local oGet1Frm := Nil
-	Local oBtn1Frm := Nil
-	Local oBtn2Frm := Nil
-  Local nGet1Frm := 0
-  Local lRet  := .F.
+Local oDlg1Frm := Nil
+Local oSay1Frm := Nil
+Local oGet1Frm := Nil
+Local oBtn1Frm := Nil
+Local oBtn2Frm := Nil
+Local nGet1Frm := 0
+Local lRet     := .F.
+
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'PE executado após a classificação do bem para validações adicionais')
+	
 
   IF !Empty(ALLTRIM(SN1->N1_CODCIAP))
     If MsgYesNo(OemToAnsi("Deseja informar a vida útil"),OemToAnsi("SPED Fiscal - Reg 0305 - Vida útil"))
@@ -41,4 +44,5 @@ User Function AF240CLA()
       SF9->(msUnlock())
     ENDIF
   ENDIF
+  
 Return .T.

@@ -28,6 +28,9 @@ User Function PMA210Ok()
 	Local nLimite   := GetMV("MV_#ZC7LIM",,1000000)
 	Local nConsumo  := 0
 	Local nVlFuturo := 0
+	
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E. preenchimento da suplementação')
+
 
 
 	// Consiste filial do projeto para não gravar a central de aprovação(ZC7) incorretamente, impactando a diretoria!

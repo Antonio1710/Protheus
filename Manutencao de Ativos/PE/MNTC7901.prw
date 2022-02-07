@@ -15,6 +15,8 @@
 /*/
 User Function MNTC7901()
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Add menu Preventiva (MNTC790)')
+
     //Parâmetros
     aRotina := PARAMIXB[1] // Array contendo as ações relacionadas
 

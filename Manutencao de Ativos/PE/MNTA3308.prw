@@ -19,6 +19,9 @@ User Function MNTA3308()
 Local lReturn   := .F.
 Local cTable    := ParamIXB[1]
 Local aFields   := ParamIXB[2]
+
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gravar o custo do Salario do Funcionario da Manutenção')
+
 //Alert((ctable)->DTREAL+" - "+Transform(DOW((ctable)->DTREAL),"@E 999,99"))
 If DOW((ctable)->DTREAL) == 1 .or. DOW((ctable)->DTREAL) == 7 //Verifica se é sabado e domingo
     lReturn := .T. //Despreza OS de Sabado e Domingo
