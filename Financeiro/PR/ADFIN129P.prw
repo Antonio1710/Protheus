@@ -124,6 +124,11 @@ static function Execute()
 
             if oLnk:postLink(oReq, @oRes)
                 fLogRes('GER', oRes:toJson())
+
+                recLock("SC5", .f.)
+                    SC5->C5_XWSBOLG := "S"
+                SC5->( msUnLock() )
+
             else
                 fLogRes('ERR', oRes:toJson())
             endif 
@@ -179,15 +184,16 @@ static function fMailLnk()
     local cHtml := ""
     local aAttach := {}
     local lRet := .F.
-    local cArqLogo := GetNewPar("MV_#ADLOGO", "/system/logo_cc.png" )
-    local cMail := AllTrim(IIF(!EMPTY(SA1->A1_EMAIL),SA1->A1_EMAIL,SA1->A1_EMAICO)) 
-
+    local cArqLogo  := GetNewPar("MV_#ADLOGO", "/system/logo_cc.png" )
+    local cMail     := AllTrim(IIF(!EMPTY(SA1->A1_EMAIL),SA1->A1_EMAIL,SA1->A1_EMAICO))
+    local cMailCc   := AllTrim(Posicione( "SA3", 1, FWFilial("SA3") + SC5->C5_VEND1, "A3_EMAIL" ))
+    local cMailBcc  := GetNewPar("MV_#EPIXTI", "fernando.sigoli@adoro.com.br;rodrigo.mello@flek.solutions" )
 
     cHtml := fHtmlBody()
 
     AAdd( aAttach, {cArqLogo, 'logo'})
 
-    lRet := u_ADFIN126P(,cMail,,, "Pedido AD'ORO - " + SC5->C5_NUM, cHtml, aAttach )    
+    lRet := u_ADFIN126P(,cMail,cMailCc,cMailBcc, "Pedido AD'ORO - " + SC5->C5_NUM, cHtml, aAttach)    
 
 return lRet
 
@@ -199,8 +205,10 @@ static function fHtmlBody()
     local aArrFilAtu := FWArrFilAtu()
     local cAlias    := GetNextAlias()
     local nQtdPed   := 0
+    local n2QtdPed  := 0    
     local nVlrPed   := 0
     local cCnpj
+    local nDescont  := 0
 
     BeginContent var cBody
         <!doctype html>
@@ -225,8 +233,6 @@ static function fHtmlBody()
                             style="padding: 10px;vertical-align: middle;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             <strong>
                                 #NOMEEMP</br>
-                                <!--#ENDEMP</br>
-                                #MUNEMP / #UFEMP-->
                             </strong>
                         </td>
                     </tr>
@@ -317,7 +323,7 @@ static function fHtmlBody()
                         <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">
                             #PESOBRU</td>
                         <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">
-                            <strong>Peso Liq.:</strong></td>
+                            <strong>Peso Líquido:</strong></td>
                         <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">
                             #PESOLIQ</td>
                     </tr>
@@ -340,7 +346,7 @@ static function fHtmlBody()
                 </table>
                 <table cellpadding="0" cellspacing="0" style="width: 100%;line-height: inherit;text-align: left;padding-bottom: 20px;">
                     <tr>
-                        <td colspan="9"
+                        <td colspan="10"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             <strong>ITENS DO PEDIDO</strong>
                         </td>
@@ -358,9 +364,12 @@ static function fHtmlBody()
                         <td align="right" width="5%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             Qtde</td>
+                        <td align="center" width="10%"
+                            style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
+                            Seg.UM</td>
                         <td align="right" width="5%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
-                            Peso</td>
+                            Qtde Seg.UM</td>
                         <td align="right" width="10%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             Vl.Unit.</td>
@@ -381,10 +390,11 @@ static function fHtmlBody()
                         <td style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;"></td>
                         <td align="center"
                             style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;"></td>
+                        <td style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;">#QTDTOTAL</td>
+                        <td align="center"
+                            style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;"></td>
                         <td align="right"
-                            style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;">#QTDTOTAL</td>
-                        <td align="right"
-                            style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;">#PESOTOTAL</td>
+                            style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;">#2QTDTOTAL</td>
                         <td align="right"
                             style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;"></td>
                         <td align="right" 
@@ -438,7 +448,8 @@ static function fHtmlBody()
             <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#DESCITEM</td>
             <td align="center" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#UMITEM</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#QUANTITEM</td>
-            <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#PESOITEM</td>
+            <td align="center" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#2UMITEM</td>
+            <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#2QUANTITEM</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#PRCITEM</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#DESCONTOITEM</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#PRCVITEM</td>
@@ -460,6 +471,9 @@ static function fHtmlBody()
     else
         cCnpj := Transform( SA1->A1_CGC, "@R 99.999.999/9999-99")
     endif
+
+    cBody := StrTran( cBody, "#TRANSPORT"   , "" )
+
     cBody := StrTran( cBody, "#CNPJCLI"     , cCnpj )
     cBody := StrTran( cBody, "#VENDENOME"   , posicione("SA3",1, xFilial("SA3") + SC5->C5_VEND1, "A3_NOME") )
     cBody := StrTran( cBody, "#FONECLI"     , SA1->A1_TEL )
@@ -473,7 +487,6 @@ static function fHtmlBody()
     cBody := StrTran( cBody, "#MENSCLI"     , SC5->C5_MENNOTA )
     cBody := StrTran( cBody, "#MENSNF"      , SC5->C5_MENNOTA )
     cBody := StrTran( cBody, "#LINKPGTO"    , oRes['shortUrl'] )
-    
 
     beginSQL Alias cAlias
         SELECT 
@@ -493,24 +506,30 @@ static function fHtmlBody()
         SC6->( dbGoTo( (cAlias)->C6_RECNO ) ) 
 
         nQtdPed += SC6->C6_QTDVEN
+        n2QtdPed += SC6->C6_UNSVEN
         nVlrPed += SC6->C6_VALOR
+        nDescont := SC6->(C6_PRCVEN-C6_VALDESC)
+
         cItensTmp := cItensDef
         cItensTmp := StrTran( cItensTmp, "#CODITEM"     , SC6->C6_PRODUTO   )
         cItensTmp := StrTran( cItensTmp, "#DESCITEM"    , SC6->C6_DESCRI    )
         cItensTmp := StrTran( cItensTmp, "#UMITEM"      , SC6->C6_UM        )
-        cItensTmp := StrTran( cItensTmp, "#QUANTITEM"   , transform( SC6->C6_QTDVEN, "@E 999,999,999.99")      )
-        cItensTmp := StrTran( cItensTmp, "#PRCITEM"     , transform( SC6->C6_PRCVEN, "@E 999,999,999.99")  )
-        cItensTmp := StrTran( cItensTmp, "#DESCONTOITEM", transform( SC6->C6_VALDESC, "@E 999,999,999.99") )
-        cItensTmp := StrTran( cItensTmp, "#PRCVITEM"    , transform( SC6->(C6_PRCVEN-C6_VALDESC), "@E 999,999,999.99")   )
-        cItensTmp := StrTran( cItensTmp, "#TOTALITEM"   , transform( SC6->C6_VALOR, "@E 999,999,999.99")   )
+        cItensTmp := StrTran( cItensTmp, "#QUANTITEM"   , transform( SC6->C6_QTDVEN, PesqPict( "SC6", "C6_QTDVEN" ))      )
+        cItensTmp := StrTran( cItensTmp, "#2UMITEM"     , SC6->C6_SEGUM     )
+        cItensTmp := StrTran( cItensTmp, "#2QUANTITEM"  , transform( SC6->C6_UNSVEN, PesqPict( "SC6", "C6_UNSVEN" ))      )
+        cItensTmp := StrTran( cItensTmp, "#PRCITEM"     , transform( SC6->C6_PRCVEN, PesqPict( "SC6", "C6_PRCVEN" ))  )
+        cItensTmp := StrTran( cItensTmp, "#DESCONTOITEM", iif(nDescont>0,transform( SC6->C6_VALDESC, PesqPict( "SC6", "C6_VALDESC" )),"") )
+        cItensTmp := StrTran( cItensTmp, "#PRCVITEM"    , transform( SC6->(C6_PRCVEN-C6_VALDESC), PesqPict( "SC6", "C6_PRCVEN" ))   )
+        cItensTmp := StrTran( cItensTmp, "#TOTALITEM"   , transform( SC6->C6_VALOR, PesqPict( "SC6", "C6_VALOR" ))   )
         cItensRet += cItensTmp
         (cAlias)->(dbSkip())
     enddo
 
     (cAlias)->(dbCloseArea())
     cBody := StrTran( cBody, "#ITENS"       , cItensRet )
-    cBody := StrTran( cBody, "#QTDTOTAL"    , transform( nQtdPed, "@E 999,999,999.99") )
-    cBody := StrTran( cBody, "#VALORTOTAL"  , transform( nVlrPed, "@E 999,999,999.99") )
+    cBody := StrTran( cBody, "#QTDTOTAL"    , transform( nQtdPed , PesqPict( "SC6", "C6_QTDVEN" )) )
+    cBody := StrTran( cBody, "#2QTDTOTAL"   , transform( n2QtdPed, PesqPict( "SC6", "C6_UNSVEN" )) )
+    cBody := StrTran( cBody, "#VALORTOTAL"  , transform( nVlrPed , PesqPict( "SC6", "C6_VALOR"  )) )
 
 return cBody
 

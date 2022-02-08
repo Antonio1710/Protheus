@@ -83,10 +83,10 @@ static function Execute()
             INNER JOIN %table:SE1% SE1  (NOLOCK)
                 ON SE1.%notdel%
                 AND FIE_FILIAL  = E1_FILIAL
-                AND FIE_PREFIX  = E1_PREFIXO
+                AND FIE_PREFIX = E1_PREFIXO
                 AND FIE_NUM		= E1_NUM
                 AND FIE_PARCEL  = E1_PARCELA
-                AND FIE_TIPO 	= E1_TIPO
+                AND FIE_TIPO = E1_TIPO
                 AND FIE_CLIENT  = E1_CLIENTE
                 AND FIE_LOJA    = E1_LOJA
                 AND E1_XLOGPIX  IN ( '', '000', 'GER', 'ERR')
@@ -132,6 +132,11 @@ static function Execute()
             if oPix:putPix( cIdPix, oPayLoad, @oRes )
                 oPix:setEMV( oRes )
                 oPix:setQrCode( oRes )
+
+                recLock("SC5", .f.)
+                    SC5->C5_XWSBOLG := "S"
+                SC5->( msUnLock() )
+
             else
                 fLogRes('ERR', oRes:toJson())
             endif
@@ -165,15 +170,17 @@ static function fMailPix( cIdPix )
     local cHtml := ""
     local aAttach := {}
     local lRet := .F.
-    local cArqLogo := GetNewPar("MV_#ADLOGO", "/system/logo_cc.png" )
-    local cMail := AllTrim(IIF(!EMPTY(SA1->A1_EMAIL),SA1->A1_EMAIL,SA1->A1_EMAICO)) 
+    local cArqLogo  := GetNewPar("MV_#ADLOGO", "/system/logo_cc.png" )
+    local cMail     := AllTrim(IIF(!EMPTY(SA1->A1_EMAIL),SA1->A1_EMAIL,SA1->A1_EMAICO))
+    local cMailCc   := AllTrim(Posicione( "SA3", 1, FWFilial("SA3") + SC5->C5_VEND1, "A3_EMAIL" ))
+    local cMailBcc  := GetNewPar("MV_#EPIXTI", "fernando.sigoli@adoro.com.br;rodrigo.mello@flek.solutions" )
 
     cHtml := fHtmlBody()
 
     AAdd( aAttach, {cArqLogo, 'logo'})
     AAdd( aAttach, {'/qrcode/'+cIdPix+'.png', 'qrcode'})
 
-    lRet := u_ADFIN126P(,cMail,,, "Pedido AD'ORO - " + SC5->C5_NUM, cHtml, aAttach)    
+    lRet := u_ADFIN126P(,cMail,cMailCc,cMailBcc, "Pedido AD'ORO - " + SC5->C5_NUM, cHtml, aAttach)    
 
     FErase( '/qrcode/'+cIdPix+'.png' ) 
 
@@ -408,7 +415,7 @@ static function fHtmlBody()
                             <strong>PIX - Copia/Cola:</strong></td>
                         <td 
                             style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;text-decoration: none;pointer-events: none;">
-                            <code>#EMVSTRING</code></td>
+                            <a href='#' style="color:#000; text-decoration:none">#EMVSTRING</a></td>
                     </tr>
                 </table>
                 <table cellpadding="0" cellspacing="0" style="width: 100%;line-height: inherit;text-align: left;padding-bottom: 20px;">

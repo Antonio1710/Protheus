@@ -28,6 +28,7 @@
 	@history Ticket  1715   - William Costa       - 16/11/2020 - Novo boleto para a Empresa SAFEGG
 	@history Ticket  T.I	- Andre Vinagre       - 02/12/2020 - IMPBOLETO() - Adicionado SM0->(GetArea())SM0->(GetArea())
 	@history Ticket  7075   - Sigoli              - 06/01/2010 - Alteração da instrução de protesto
+	@history Proj.PIX/LNK   - Rodrigo Mello       - 04/02/2022 - Adicionadas condicoes quando a condicao de pagamento e PIX/LNK, enviando apenas o lgo quando ocorreu erro.
 /*/
 
 User Function HCRFIBLT(aParamIXB)
@@ -3507,6 +3508,9 @@ User Function GeraBlPV(cEmpAnt, cFilAnt, cNumPV)
 	Local aParamJob := {}
 	Local cCodRetOk := GetMV("MV_#WSOCOK",,"00")
 	Local cCodRet69 := GetMV("MV_#WSOC69",,"69") // chamado 059655 - FWNM - 21/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
+	Private cCondPix  := alltrim(GetNewPar("MV_#CONPIX", "PIX"))
+	Private cCondLnk  := alltrim(GetNewPar("MV_#CONLNK", "LNK"))
+
 
 	logZBE(cNumPV + " esta na funcao GERABLPV para gerar boleto em PDF e enviar email")  // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
 
@@ -3525,6 +3529,10 @@ User Function GeraBlPV(cEmpAnt, cFilAnt, cNumPV)
 
 	SE1->( dbSetOrder(1) ) // E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, R_E_C_N_O_, D_E_L_E_T_
 	SE1->( dbSeek(FWxFilial("SE1")+FIE->(FIE_PREFIX+FIE_NUM+FIE_PARCEL+FIE_TIPO)) )
+
+	if ( SC5->C5_CONDPAG == cCondPix .or. SC5->C5_CONDPAG == cCondLnk ) .and. ( SE1->E1_XLOGPIX != "ERR" .or. SE1->E1_XLOGLNK != "ERR" )
+		return
+	endif
 
 	//If !Empty(SE1->E1_NUMBCO) .and. !Empty(SE1->E1_XWSBRAC) .and. Val(AllTrim(SE1->E1_XWSBRAC)) == Val(AllTrim(cCodRetOk))
 	If !Empty(SE1->E1_NUMBCO) .and. !Empty(SE1->E1_XWSBRAC) .and. ( Val(AllTrim(SE1->E1_XWSBRAC)) == Val(AllTrim(cCodRetOk)) .or. Val(AllTrim(SE1->E1_XWSBRAC)) == Val(AllTrim(cCodRet69)) ) // chamado 059655 - FWNM - 21/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
@@ -3587,7 +3595,11 @@ Static Function EnvMailErr()
 	cMensagem += '<td>' + cValToChar(SE1->E1_NOMCLI)     + '</td>'
 	cMensagem += '<td>' + cValToChar(Transform(SE1->E1_VALOR,"@E 999,999,999.99"))   + '</td>'
 	cMensagem += '<td>' + cValToChar(SE1->E1_PORTADO) + " | "+ cValToChar(SE1->E1_AGEDEP) + " | " + cValToChar(SE1->E1_CONTA) + '</td>'
-	cMensagem += '<td>' + cValToChar(SE1->E1_XWSBRAC + " | " + SE1->E1_XWSBRAD)    + '</td>'
+	if ( alltrim(SC5->C5_CONDPAG) == cCondPix .or. alltrim(SC5->C5_CONDPAG) == cCondLnk )
+		cMensagem += '<td>' +  cValToChar(SC5->C5_CONDPAG) + "|" + SE1->E1_XMEMPIX + SE1->E1_XMEMLNK + '</td>'	
+	else
+		cMensagem += '<td>' + cValToChar(SE1->E1_XWSBRAC + " | " + SE1->E1_XWSBRAD)    + '</td>'
+	endif
 
 	cMensagem += '</tr>'
 
