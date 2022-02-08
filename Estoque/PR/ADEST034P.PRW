@@ -18,10 +18,10 @@
 	@history Sigoli	  - Tkt: 17876     - 04/08/2021. Feito tratamento na rotina para atender todas as empresa configuradas no scheduled 
     @hostory Sigoli   - TKT: T.I       - Removido log , pois esta gerando muito log nos scheduledsRemovido log , pois esta gerando muito log nos scheduleds
     @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
+    @history Macieira - ticket 67703   - 07/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
 /*/
 User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 
-    //Variáveis.
     Local lAutoJob := .F.
 
     Default aParam    := Array(2)
@@ -88,6 +88,7 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 	Endif
 
 Return Nil  
+
 /*/{Protheus.doc} procRot
     Processa rotina dos lotes de criação SAG. Chamado 058675.
     **** Função também executada via StaticCall no fonte ADEST048P ***
@@ -108,6 +109,7 @@ Static Function procRot()
     deleteLt()
 
 Return Nil 
+
 /*/{Protheus.doc} incluiLt
     Processa importações de inclusões de lotes de criação SAG.
     @type  Static Function
@@ -117,7 +119,6 @@ Return Nil
     /*/
 Static Function incluiLt()
 
-    //Variáveis.
     Local aArea     := GetArea()
     Local cQuery    := ""
 
@@ -130,7 +131,6 @@ Static Function incluiLt()
     //
     If Select("ADEST34I") > 0
         ADEST34I->(DbCloseArea())
-
     EndIf
 
     //
@@ -157,6 +157,7 @@ Static Function incluiLt()
 
                 ConOut( DToC(Date()) + " " + Time() + " ADEST034P - incluiLt - Lote: " + cValToChar(ADEST34I->CODILOTE) + " integrado com sucesso.")
             EndIf
+
         Else
             
             ConOut( DToC(Date()) + " " + Time() + " ADEST034P - incluiLt - Lote: " + cValToChar(ADEST34I->CODILOTE) + " incompleto (código ou descrição).")
@@ -178,6 +179,7 @@ Static Function incluiLt()
     RestArea(aArea)
 
 Return Nil 
+
 /*/{Protheus.doc} alteraLt
     Processa importações de alterações de lotes de criação SAG.
     @type  Static Function
@@ -187,7 +189,6 @@ Return Nil
     /*/
 Static Function alteraLt()
 
-    //Variáveis.
     Local aArea     := GetArea()
     Local cQuery    := ""
     Local cDataIni  := GetMv("MV_#ADE331" , .F. , "01/01/2019")
@@ -202,11 +203,11 @@ Static Function alteraLt()
     //
     If Select("ADEST34A") > 0
         ADEST34A->(DbCloseArea())
-
     EndIf
 
     //
     TcQuery cQuery New Alias "ADEST34A"
+
     While ADEST34A->(!Eof())
         DbSelectArea("ZCN")
         ZCN->(DbSetOrder(1))
@@ -229,7 +230,7 @@ Static Function alteraLt()
                 ZCN->ZCN_TIPO   := IIF(ADEST34A->RECRLOTE=1,'RECRIA','PRODUCAO')
                 ZCN->ZCN_DATCAN := ADEST34A->ENCELOTE
                 ZCN->ZCN_LOGUPD := Alltrim(Str(ADEST34A->CODILOG_))
-                ZCN->ZCN_STATUS := cZCNStatus
+                ZCN->ZCN_STATUS := cZCNStatus // @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
                 //ZCN->ZCN_STATUS := IIF(Empty(ADEST34A->ENCELOTE),'A','E')
             ZCN->( Msunlock() )
             //ConOut( DToC(Date()) + " " + Time() + " ADEST034P - alteraLt - Lote: " + cValToChar(ADEST34A->CODILOTE) + " atualizado com sucesso.") //Tkt: T.I  - Fernando Sigoli - Removido log , pois esta gerando muito log nos scheduleds
@@ -250,6 +251,7 @@ Static Function alteraLt()
     RestArea(aArea)
 
 Return Nil
+
 /*/{Protheus.doc} deleteLt
     Processa importações de exclusões de lotes de criação SAG.
     @type  Static Function
@@ -259,7 +261,6 @@ Return Nil
     /*/
 Static Function deleteLt()
 
-    //Variáveis.
     Local aArea     := GetArea()
     Local cQuery    := ""
 
@@ -273,7 +274,6 @@ Static Function deleteLt()
     //
     If Select("ADEST34D") > 0
         ADEST34D->(DbCloseArea())
-
     EndIf
 
     //
@@ -297,6 +297,7 @@ Static Function deleteLt()
     RestArea(aArea)
 
 Return Nil
+
 /*/{Protheus.doc} sqlIntLot
     Script sql para consulta de lotes no SAG (inclusão). Chamado 058675.
     @type  Static Function
@@ -306,7 +307,6 @@ Return Nil
     /*/
 Static Function sqlInLot()
 
-    //Variáveis.
     Local cQuery := ""
 
     //
@@ -319,16 +319,16 @@ Static Function sqlInLot()
     cQuery += " ORDER BY CODILOTE "
 
 Return cQuery
+
 /*/{Protheus.doc} sqlAlLot
     Script sql para consulta de lotes no SAG (alteração). Chamado 058675.
     @type  Static Function
     @author Everson
     @since 23/06/2020
     @version 01
-    /*/
+/*/
 Static Function sqlAlLot(cDataIni)
 
-    //Variáveis.
     Local cQuery := ""
 
     //
@@ -344,10 +344,10 @@ Static Function sqlAlLot(cDataIni)
     cQuery += "     SELECT ZCN_LOGUPD "
     cQuery += "     FROM "+RetSqlName("ZCN")+" ZCN "
     cQuery += "     WHERE ZCN.D_E_L_E_T_ = ' ' ) "
-    cQuery += " AND DATALOTE >= '" + cDataIni + "' "
+    //cQuery += " AND DATALOTE >= '" + cDataIni + "' " // @history Macieira - ticket 67703   - 07/02/2022 - Cadastro de Lote - Lote Recria x Ccusto
 
     // DEBUG - INIBIR
-    //cQuery += " and CODILOTE='1356'
+    //cQuery += " and CODILOTE='1243'
 
     // cQuery += " ORDER BY CODILOTE, CODILOG_ "
     cQuery += " ORDER BY CODILOTE, CODILOG_ DESC " // @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto
