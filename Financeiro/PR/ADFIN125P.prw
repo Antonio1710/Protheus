@@ -1,5 +1,6 @@
 #INCLUDE 'totvs.ch'
 #INCLUDE 'FWMVCDEF.CH'
+#INCLUDE 'colors.ch'
 
 /*/{Protheus.doc} ADFIN125P
 	ADFIN125P
@@ -24,13 +25,13 @@ oMark:SetDescription('Cobrança via PIX / Link Cielo / Boleto')
 oMark:SetFieldMark( 'E1_OK' )
 oMark:SetAllMark( { || oMark:AllMark() } )
 // legendas
-oMark:AddLegend( "E1_TIPO = 'PR' .AND. ( E1_XLOGPIX == '000' .OR. E1_XLOGLNK == '000' ) .AND. E1_STATUS == 'A'", "GREEN"	, "Nao processado" )
-oMark:AddLegend( "E1_TIPO = 'PR' .AND. ( E1_XLOGPIX == 'GER' .OR. E1_XLOGLNK != 'GER' ) .AND. E1_STATUS == 'A'", "BLUE"  	, "Gerado" )
-oMark:AddLegend( "E1_TIPO = 'PR' .AND. ( E1_XLOGPIX == 'EML' .OR. E1_XLOGLNK != 'EML' ) .AND. E1_STATUS == 'A'", "MAGENTA"  , "Email enviado" )
-oMark:AddLegend( "E1_TIPO = 'PR' .AND. ( E1_XLOGPIX == 'ERR' .OR. E1_XLOGLNK == 'ERR' ) .AND. E1_STATUS == 'A'", "YELLOW"	, "Erro"   )
-oMark:AddLegend( "E1_TIPO = 'PR' .AND. E1_STATUS  == 'B'"                         							   , "RED" 		, "Pago / Baixado" )
+oMark:AddLegend( "alltrim(E1_TIPO) == 'PR' .AND. ( alltrim(E1_XLOGPIX+E1_XLOGLNK) == '000' ) .AND. E1_STATUS == 'A'", "GREEN"	, "Nao processado" )
+oMark:AddLegend( "alltrim(E1_TIPO) == 'PR' .AND. ( alltrim(E1_XLOGPIX+E1_XLOGLNK) == 'GER' ) .AND. E1_STATUS == 'A'", "ORANGEL"	, "Gerado" )
+oMark:AddLegend( "alltrim(E1_TIPO) == 'PR' .AND. ( alltrim(E1_XLOGPIX+E1_XLOGLNK) == 'EML' ) .AND. E1_STATUS == 'A'", "BLUE"    , "Email enviado" )
+oMark:AddLegend( "alltrim(E1_TIPO) == 'PR' .AND. ( alltrim(E1_XLOGPIX+E1_XLOGLNK) == 'ERR' ) .AND. E1_STATUS == 'A'", "YELLOW"	, "Erro"   )
+oMark:AddLegend( "alltrim(E1_TIPO) == 'PR' .AND. E1_STATUS  == 'B'"                          						, "RED" 	, "Pago / Baixado" )
 // filtro padrao
-oMark:AddFilter( "Pix/Link Cielo", 'E1_TIPO = "PR" .AND. ( E1_XLOGPIX != "" .OR. E1_XLOGLNK != "") .AND. E1_EMISSAO = STOD("'+dtos(dDataBase)+'")',.t.,.t.)
+oMark:AddFilter( "Pix/Link Cielo", 'alltrim(E1_TIPO) == "PR" .AND. ( !empty(E1_XLOGPIX) .OR. !empty(E1_XLOGLNK) ) .AND. E1_EMISSAO = STOD("'+dtos(dDataBase)+'")',.t.,.t.)
 
 oMark:Activate()
 
@@ -41,10 +42,8 @@ Static Function MenuDef()
 
 Local aRotina := {}
 
-ADD OPTION aRotina TITLE 'Visualizar'       ACTION 'VIEWDEF.COMP025_MVC' OPERATION 2 ACCESS 0
 ADD OPTION aRotina TITLE 'Reprocessar'      ACTION 'U_ADRA001PROC()'     OPERATION 2 ACCESS 0
 ADD OPTION aRotina TITLE 'Verif.Recebto.'   ACTION 'U_ADRA001VERF()'     OPERATION 2 ACCESS 0
-ADD OPTION aRotina TITLE 'Invert.Marc.'  	ACTION 'U_ADRA001MARK()'     OPERATION 2 ACCESS 0
 
 Return aRotina
 
@@ -73,7 +72,7 @@ Static Function ViewDef()
 	oView:AddField("VIEW_SE1", oStSE1, "FORMSE1")
 	
 	oView:CreateHorizontalBox("TELA",100)
-	oView:SetOwnerView("VIEW_ZZ1","TELA")
+	oView:SetOwnerView("VIEW_MNTPIX","TELA")
 Return oView
 
 //-------------------------------------------------------------------
@@ -84,9 +83,9 @@ Local cMarca 	:= oMark:Mark()
 Local nCt 		:= 0
 local cTpEv  	:= ""
 
-//dbselectArea("SE1")
+dbselectArea("SE1")
 //SET FILTER TO SE1->E1_OK == cMarca
-//SET FILTER TO SE1->E1_TIPO = "PR" .AND. ( SE1->E1_XLOGPIX != "" .OR. SE1->E1_XLOGLNK != "") .AND. SE1->E1_EMISSAO == dDataBase
+SET FILTER TO ALLTRIM(SE1->E1_TIPO) == "PR" .AND. ( !EMPTY(SE1->E1_XLOGPIX) .OR. !EMPTY(SE1->E1_XLOGLNK) ) .AND. SE1->E1_EMISSAO == dDataBase .AND. SE1->E1_SALDO > 0
 
 SE1->( dbGoTop() )
 While !SE1->( EOF() )
@@ -111,9 +110,10 @@ While !SE1->( EOF() )
     SE1->( dbSkip() )
 End
 
-//SET FILTER TO
+SET FILTER TO
 
-ApMsgInfo( 'Foram reprocessados ' + AllTrim( Str( nCt ) ) + ' registros.' )
+FWAlertSuccess( 'Total de registros reprocessados: ' + AllTrim( Str( nCt ) ), FunName() )
+
 RestArea( aArea )
 
 Return NIL
@@ -126,9 +126,9 @@ Local cMarca 	:= oMark:Mark()
 Local nCt 		:= 0
 local cTpEv  	:= ""
 
-//dbselectArea("SE1")
+dbselectArea("SE1")
 //SET FILTER TO SE1->E1_OK == cMarca
-//SET FILTER TO SE1->E1_TIPO = "PR" .AND. ( SE1->E1_XLOGPIX != "" .OR. SE1->E1_XLOGLNK != "") .AND. SE1->E1_EMISSAO == dDataBase
+SET FILTER TO ALLTRIM(SE1->E1_TIPO) == "PR" .AND. ( !EMPTY(SE1->E1_XLOGPIX) .OR. !EMPTY(SE1->E1_XLOGLNK) ) .AND. SE1->E1_EMISSAO == dDataBase .AND. SE1->E1_SALDO > 0
 
 SE1->( dbGoTop() )
 While !SE1->( EOF() )
@@ -144,30 +144,10 @@ While !SE1->( EOF() )
     SE1->( dbSkip() )
 End
 
-//SET FILTER TO
+SET FILTER TO
 
-ApMsgInfo( 'Foram reprocessados ' + AllTrim( Str( nCt ) ) + ' registros.' )
-RestArea( aArea )
+FWAlertSuccess( 'Total de registros consultados : ' + AllTrim( Str( nCt ) ), FunName() )
 
-Return NIL
-
-//-------------------------------------------------------------------
-Function U_ADRA001MARK()
-
-Local aArea := GetArea()
-Local cMarca := oMark:Mark()
-
-Local nCt := 0
-
-SE1->( dbGoTop() )
-While !SE1->( EOF() )
-    If oMark:IsMark(cMarca)
-        nCt++
-    EndIf
-    SE1->( dbSkip() )
-End
-
-ApMsgInfo( 'Foram marcados ' + AllTrim( Str( nCt ) ) + ' registros.' )
 RestArea( aArea )
 
 Return NIL
