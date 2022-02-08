@@ -12,6 +12,7 @@
 	@history Chamado 5657 - William Costa           - 30/11/2020 - Voltado versão de limpa placa, pq não deu certo o jeito que foi pensado será feito na tela de Ocorrências de Devoluções.
 	@history ticket  9648 - Fernando Macieira       - 17/02/2021 - variable does not exist CPERG on EPAPERG(AD0163.PRW) 30/11/2020 08:44:35 line : 96
 	@history ticket 64881 - Fernando Sigoli         - 09/12/2021 - Adicionar limpar placa na tela de ocorrencias  
+	@history ticket TI    - Leonardo P. Monteiro    - 08/02/2022 - Correção da rotina para eliminar o lock na tabela SC5 quando selecionada as opções do menu.
 /*/
 User Function AD0163(xAutoCab,xAutoItens) // U_AD0163() 
 
@@ -48,16 +49,16 @@ User Function AD0163(xAutoCab,xAutoItens) // U_AD0163()
 	Private cCadastro := "Cadastro de Ocorrencias de Entrega"
 	Private aRotina := { {"Pesquisar" 	          ,"AxPesqui"			  ,0,01},;
 						 {"Visualizar"	          ,"AxVisual"			  ,0,02},;
-						 {"Pedido"    	          ,'Execblock("AD0165")'  ,0,03},;                     
-						 {"Consultas" 	          ,'U_AD0168("")'		  ,0,04},;                     
+						 {"Pedido"    	          ,'Execblock("AD0165")'  ,0,02},;                     
+						 {"Consultas" 	          ,'U_AD0168("")'		  ,0,02},;                     
 						 {"Cliente"    	          ,'U_AD0080("")'     	  ,0,02},;  
-						 {"Ocorrencias"	          ,'U_AD0019("O")'		  ,0,06},; // "O" Ocorrencias                  
-						 {"Romaneio" 	          ,'U_ROMANEIO("B")'	  ,0,07},;	// EXECUTA EM MODO BROWSER
-						 {"Rel. Devol."	          ,'U_AD0016'			  ,0,08},; // rel de fechamento
-						 {"Legenda    "	          ,'Execblock("Legenda")' ,0,09},; 
-						 {"Env. SF.    "          ,'U_envOcorrSF()'	      ,0,10},; 
-						 {"Limp. Placa "          ,'ExecBlock("UnRote")'  ,0,11},; //tkt 64881 - Fernando Sigoli - Adicionar limpar placa na tela de ocorrencias  
-						 {"Ped. Não Será Entregue",'U_ADLOG072()'	      ,0,12}}                    
+						 {"Ocorrencias"	          ,'U_AD0019("O")'		  ,0,02},; // "O" Ocorrencias                  
+						 {"Romaneio" 	          ,'U_ROMANEIO("B")'	  ,0,02},;	// EXECUTA EM MODO BROWSER
+						 {"Rel. Devol."	          ,'U_AD0016'			  ,0,02},; // rel de fechamento
+						 {"Legenda    "	          ,'Execblock("Legenda")' ,0,02},; 
+						 {"Env. SF.    "          ,'U_envOcorrSF()'	      ,0,02},; 
+						 {"Limp. Placa "          ,'ExecBlock("UnRote")'  ,0,02},; //tkt 64881 - Fernando Sigoli - Adicionar limpar placa na tela de ocorrencias  
+						 {"Ped. Não Será Entregue",'U_ADLOG072()'	      ,0,02}}                    
 
 
 	aAdd( aCores , { "C5_MOK = '01' ","BR_VERMELHO" } )

@@ -33,14 +33,13 @@ Local oReport
 Local aArea	:= GetArea()
 Local cPerg := PadR( "FIS011", Len( SX1->X1_GRUPO ) )
 
-U_ADINF009P('ADFIS011R' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Customizacao relatorio padrao FINR865 trazendo os titulos')
-
 AjustaSX1(cPerg)
 
 Return U_RFIN865R3() 
 
-
 RestArea(aArea)  
+
+U_ADINF009P('ADFIS011R' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Customizacao relatorio padrao FINR865 trazendo os titulos')
 
 Return
 
