@@ -27,6 +27,7 @@
 	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
 	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
 	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validação de quantidade liberada para cópia de pedido.
+	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validação de quantidade liberada para cópia de pedido. 
 /*/
 
 User Function MT410TOK()
@@ -115,6 +116,11 @@ User Function MT410TOK()
 
 	Local _nz			:= 0
 	Local _nCompRF		:= 0
+
+	//Everson - 07/02/2022. Chamado 67573.
+	Local nTemQt		:= 0
+	Local nNTemQt		:= 0
+	//
 
 	Private cLido 		:= ""
 	Private nCount 		:= 0
@@ -1613,9 +1619,11 @@ User Function MT410TOK()
 
 					If FWIsInCallStack("A410COPIA") //Everson - 03/02/2022. Chamado 67573.
 						If gdFieldGet("C6_QTDLIB", _nX) <= 0
-							lRet := .F.
-							Aviso("Atenção","Há item sem quantidade liberada(" + Alltrim(cValToChar(gdFieldGet("C6_PRODUTO", _nX))) + ").",{"OK"})
-						
+							nTemQt++ //Everson - 07/02/2022. Chamado 67573.
+
+						Else
+							nNTemQt++ //Everson - 07/02/2022. Chamado 67573.
+
 						EndIf
 
 					EndIf
@@ -1625,7 +1633,14 @@ User Function MT410TOK()
 		Next _nX
 
 	EndIf
-	
+
+	If nTemQt > 0 .And. nNTemQt > 0 //Everson - 07/02/2022. Chamado 67573.
+
+		lRet := .F.
+		Aviso("Atenção","Há itens com e sem liberação de quantidade.",{"OK"})
+			
+	EndIf
+
 	// Trecho do código descontinuado.
 	//Mauricio - Chamado 0035716 - 04/08/17 - Nao permitir produto sem local com tes que atualiza estoque
 	/*
