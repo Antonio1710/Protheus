@@ -21,6 +21,7 @@
     @ticket 18141 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
+    @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFIN120P()
 
@@ -51,7 +52,8 @@ User Function ADFIN120P()
             cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, ISNULL(ZHC_BANCO,'') BANCO_SIGA, ISNULL(ZHC_AGENCI,'') AGENCIA_SIGA, '' DIGAGENCIA_SIGA, ISNULL(ZHC_CONTA,'') CONTA_SIGA, ISNULL(ZHC_DIGCTA,'') DIGCONTA_SIGA, ISNULL(ZHC_FAVORE,'') BENEFICIARIO_SIGA, ISNULL(ZHC_CPFCGC,'') CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES " // // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
             cQuery += " FROM " + RetSqlName("ZHB") + " ZHB (NOLOCK)
             //cQuery += " INNER JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_=''
-            cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_='' " // // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
+            //cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
+            cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_CODIGO=ZHB_FAVORE AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
             cQuery += " WHERE ZHB_FILIAL='"+FWxFilial("ZHB")+"' 
             cQuery += " AND ZHB_APROVA='F'
             cQuery += " AND ZHB_GERSE2='F'

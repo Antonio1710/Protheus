@@ -2,7 +2,7 @@
 #Include 'Protheus.ch'
 #Include 'FWMVCDef.ch'
 #include "topconn.ch"
-  
+
 //Variáveis Estáticas
 Static cTitulo := "RM Acordos Trabalhistas - Favorecidos"
   
@@ -15,6 +15,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Favorecidos"
     @example
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
+    @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFI119()
 
@@ -239,23 +240,25 @@ Static Function fValidGrid(oModel)
         EndIf
     EndIf
 
-    If Empty(cCPFCGC)
-        lRet := .f.
-        Alert("CPF/CNPJ não preenchido! Verifique...")
-    Else
-        If oModel:nOperation == 3 .or. oModel:nOperation == 4
-            ZHC->( dbSetOrder(1) ) // ZHC_FILIAL+ZHC_CPFCGC+ZHC_PROCES
-            If ZHC->( dbSeek(FWxFilial("ZHC")+cCPFCGC) ) .and. AllTrim(cCodFavor) <> AllTrim(ZHC->ZHC_CODIGO)
-                lRet := .f.
-                Alert("CPF/CNPJ já cadastrado! Verifique...")
+    If lRet
+        If Empty(cCPFCGC)
+            lRet := .f.
+            Alert("CPF/CNPJ não preenchido! Verifique...")
+        Else
+            If oModel:nOperation == 3 .or. oModel:nOperation == 4
+                ZHC->( dbSetOrder(1) ) // ZHC_FILIAL+ZHC_CPFCGC+ZHC_PROCES
+                If ZHC->( dbSeek(FWxFilial("ZHC")+cCPFCGC) ) .and. AllTrim(cCodFavor) <> AllTrim(ZHC->ZHC_CODIGO)
+                    lRet := .f.
+                    Alert("CPF/CNPJ já cadastrado! Verifique...")
+                EndIf
             EndIf
         EndIf
-    EndIf
 
-    If lRet
-        If Empty(cFavorec)
-            lRet := .f.
-            Alert("Nome do favorecido não preenchido! Verifique...")
+        If lRet
+            If Empty(cFavorec)
+                lRet := .f.
+                Alert("Nome do favorecido não preenchido! Verifique...")
+            EndIf
         EndIf
     EndIf
 

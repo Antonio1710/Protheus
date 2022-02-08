@@ -16,6 +16,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
+    @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFI118()
 
@@ -230,6 +231,7 @@ Static Function fValidGrid(oModel)
     Local dVencto1   := CtoD("//")
     Local cItem      := ""
     Local cDespFavor := GetMV("MV_#RMFAVO",,"ACORDO#PERITO") // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
+    Local cCodFav    := ""
     //Local cPictVlr   := PesqPict('ZHB', 'ZHB_VALOR')
  
     // N. Processo Trabalhista obrigatório
@@ -326,6 +328,26 @@ Static Function fValidGrid(oModel)
 
                 Else
 
+                    // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos                    
+                    // Cod Favorecido - checo se existe o código informado no cadastro ZHC
+                    cCodFav := oModelGRID:GetValue("ZHB_FAVORE")
+                    If !Empty(cCodFav)
+                        ZHC->( dbSetOrder(3) ) // ZHC_FILIAL, ZHC_CODIGO, R_E_C_N_O_, D_E_L_E_T_
+                        If ZHC->( !dbSeek(FWxFilial("ZHC")+cCodFav) )
+                            lRet := .f.
+                            Alert("Favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não existe! Verifique...")
+                            Exit
+                        Else
+                            // Checo se o favorecido está amarrado a este processo
+                            If AllTrim(cProcesso) <> AllTrim(ZHC->ZHC_PROCES)
+                                lRet := .f.
+                                Alert("Este favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não está autorizado para este processo! Verifique...")
+                                Exit
+                            EndIf
+                        EndIf
+                    EndIf
+                    //
+
                     // Tipo Despesa
                     cTipDes := oModelGRID:GetValue("ZHB_TIPDES")
                     SX5->( dbSetOrder(1) )
@@ -342,6 +364,15 @@ Static Function fValidGrid(oModel)
                                 Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique...")
                                 Exit
                             EndIf
+
+                            // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos                    
+                            // Cod Favorecido
+                            If Empty(cCodFav)
+                                lRet := .f.
+                                Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " exige um favorecido! Verifique...")
+                                Exit
+                            EndIf
+                            //
                         EndIf
 
                         // Inclusões
@@ -363,7 +394,17 @@ Static Function fValidGrid(oModel)
                             If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso+cTipDes) )
                                 lRet := .f.
                                 Alert("O processo/despesa contido na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique parâmetro MV_#RMFAVO...")
+                                Exit
                             EndIf
+
+                            // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos                    
+                            // Cod Favorecido
+                            If Empty(cCodFav)
+                                lRet := .f.
+                                Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " exige um favorecido! Verifique...")
+                                Exit
+                            EndIf
+                            //
                         EndIf
                     EndIf
                 
