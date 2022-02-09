@@ -1,11 +1,23 @@
 #include "protheus.ch"
 
+/*/{Protheus.doc} User Function TRAZMENU
+    
+    Chamado 
+    @type  Function
+    @author Adoro
+    @since 99/99/9999
+    @version 01
+    @history Chamado n. TI - Leonardo P. Monteiro - 09/02/2022 - Retirada da função U_ADINF009P.
+
+/*/
 USER FUNCTION TRAZMENU()
 
 	LOCAL aAllUser	:= AllUsers()
 	LOCAL aGrupos	:= AllGroups() 
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+
+
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 	
 	cFileLog := ""
 	cPath := GetSrvProfString("StartPath","")

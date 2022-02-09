@@ -12,6 +12,7 @@
 	@history Chamado 5657 - William Costa           - 30/11/2020 - Voltado versão de limpa placa, pq não deu certo o jeito que foi pensado será feito na tela de Ocorrências de Devoluções.
 	@history ticket  9648 - Fernando Macieira       - 17/02/2021 - variable does not exist CPERG on EPAPERG(AD0163.PRW) 30/11/2020 08:44:35 line : 96
 	@history ticket 64881 - Fernando Sigoli         - 09/12/2021 - Adicionar limpar placa na tela de ocorrencias  
+	@history ticket TI    - Leonardo P. Monteiro    - 08/02/2022 - Correção da rotina para eliminar o lock na tabela SC5 quando selecionada as opções do menu.
 /*/
 User Function AD0163(xAutoCab,xAutoItens) // U_AD0163() 
 
