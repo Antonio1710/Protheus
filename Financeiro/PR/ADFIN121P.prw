@@ -30,6 +30,7 @@ Static cRotina  := "ADFIN121P"
     @see (links_or_references)
     @ticket 18141 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
+    @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -139,7 +140,7 @@ User Function ADFIN121P(lAuto)
         EndIf
 
         // E2_XDIVERG = N (APROVADO)
-        cQuery := " SELECT E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, E2_VALOR, E2_BANCO, E2_AGEN, E2_DIGAG, E2_NOCTA, E2_DIGCTA, E2_NOMCTA, E2_CNPJ, E2_OBS_AP
+        cQuery := " SELECT E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, E2_VALOR, E2_BANCO, E2_AGEN, E2_DIGAG, E2_NOCTA, E2_DIGCTA, E2_NOMCTA, E2_CNPJ, E2_OBS_AP, E2_CCUSTO
         cQuery += " FROM " + RetSqlName("SE2") + " (NOLOCK)
         cQuery += " WHERE E2_FILIAL='"+FWxFilial("SE2")+"' 
         cQuery += " AND E2_PREFIXO='"+cPrefixo+"' 
@@ -275,6 +276,8 @@ User Function ADFIN121P(lAuto)
                                     SE2->E2_NOMCTA := Work->E2_NOMCTA
                                     SE2->E2_CNPJ   := Work->E2_CNPJ
                                     SE2->E2_OBS_AP := Work->E2_OBS_AP
+                                    // Dados contabeis
+                                    SE2->E2_CCUSTO := Work->E2_CCUSTO // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
                                 SE2->( msUnLock() )
 
                                 nDias += 30
