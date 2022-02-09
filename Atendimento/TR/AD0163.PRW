@@ -49,16 +49,16 @@ User Function AD0163(xAutoCab,xAutoItens) // U_AD0163()
 	Private cCadastro := "Cadastro de Ocorrencias de Entrega"
 	Private aRotina := { {"Pesquisar" 	          ,"AxPesqui"			  ,0,01},;
 						 {"Visualizar"	          ,"AxVisual"			  ,0,02},;
-						 {"Pedido"    	          ,'Execblock("AD0165")'  ,0,02},;                     
-						 {"Consultas" 	          ,'U_AD0168("")'		  ,0,02},;                     
+						 {"Pedido"    	          ,'Execblock("AD0165")'  ,0,03},;                     
+						 {"Consultas" 	          ,'U_AD0168("")'		  ,0,04},;                     
 						 {"Cliente"    	          ,'U_AD0080("")'     	  ,0,02},;  
-						 {"Ocorrencias"	          ,'U_AD0019("O")'		  ,0,02},; // "O" Ocorrencias                  
-						 {"Romaneio" 	          ,'U_ROMANEIO("B")'	  ,0,02},;	// EXECUTA EM MODO BROWSER
-						 {"Rel. Devol."	          ,'U_AD0016'			  ,0,02},; // rel de fechamento
-						 {"Legenda    "	          ,'Execblock("Legenda")' ,0,02},; 
-						 {"Env. SF.    "          ,'U_envOcorrSF()'	      ,0,02},; 
-						 {"Limp. Placa "          ,'ExecBlock("UnRote")'  ,0,02},; //tkt 64881 - Fernando Sigoli - Adicionar limpar placa na tela de ocorrencias  
-						 {"Ped. Não Será Entregue",'U_ADLOG072()'	      ,0,02}}                    
+						 {"Ocorrencias"	          ,'U_AD0019("O")'		  ,0,06},; // "O" Ocorrencias                  
+						 {"Romaneio" 	          ,'U_ROMANEIO("B")'	  ,0,07},;	// EXECUTA EM MODO BROWSER
+						 {"Rel. Devol."	          ,'U_AD0016'			  ,0,08},; // rel de fechamento
+						 {"Legenda    "	          ,'Execblock("Legenda")' ,0,09},; 
+						 {"Env. SF.    "          ,'U_envOcorrSF()'	      ,0,10},; 
+						 {"Limp. Placa "          ,'ExecBlock("UnRote")'  ,0,11},; //tkt 64881 - Fernando Sigoli - Adicionar limpar placa na tela de ocorrencias  
+						 {"Ped. Não Será Entregue",'U_ADLOG072()'	      ,0,12}}                    
 
 
 	aAdd( aCores , { "C5_MOK = '01' ","BR_VERMELHO" } )

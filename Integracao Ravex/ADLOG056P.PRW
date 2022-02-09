@@ -15,6 +15,7 @@
 	@history Chamado 058410 - WILLIAM COSTA - 27/05/2020 - Alterado o cálculo do Km quando vier do ravex
 	@history Chamado 058641 - WILLIAM COSTA - 04/06/2020 - Identificado que quando a loja do cliente tem letra o ravex não manda o cliente e loja correto então foi alterado o campo de cliente e loja para pegar da tabela do Protheus não mais do WebService
 	@history Chamado 18824  - Leonardo P. Monteiro - 26/08/2020 - Declaração da variável M_PAG para prevenção do erro variable does not exist M_PAG on SENDCABEC(APLIB080.PRW) 18/05/2020 17:21:57 line : 3218.
+	@history Chamado TI  - Leonardo P. Monteiro - 09/02/2022 - Substituição da função criatrab pelo temporarytable.
 */
  
 User Function ADLOG056P()
@@ -942,14 +943,18 @@ Static Function telaEmplacamento(aDadosRoteiro)
 	Aadd(_stru,{"TMP_TIFRT" ,"C",04,0})
 	Aadd(_stru,{"TMP_DSTI"  ,"C",30,0})
 	
+	oTempTable := FWTemporaryTable():New("TTEMP")
+	oTemptable:SetFields(_stru)
+	oTempTable:Create()
+
 	//Cria arquivo temporário.
-	_carq := "T_" + Criatrab(,.F.)
-	MsCreate(_carq,_stru,"DBFCDX")
+	//_carq := "T_" + Criatrab(,.F.)
+	//MsCreate(_carq,_stru,"DBFCDX")
 	Sleep(1000)
 	
 	//Atribui a tabela temporária ao alias TRB.
-	DbUseArea(.T.,"DBFCDX",_carq,"TTEMP",.T.,.F.)
-	
+	//DbUseArea(.T.,"DBFCDX",_carq,"TTEMP",.T.,.F.)
+	Dbselectarea("TTEMP")
 	//Define quais colunas (campos da TTEMP) serao exibidas na MsSelect.
 	Aadd(aCpoBro,{"OK"			,, ""})		
 	Aadd(aCpoBro,{"TMP_DATA"		,,"Data Entrega"})		
@@ -1037,7 +1042,7 @@ Static Function telaEmplacamento(aDadosRoteiro)
   	EndIf
 	
 	//Apaga arquivo temporário.
-	Iif(File(_carq + GetDBExtension()),FErase(_carq  + GetDBExtension()) ,Nil)
+	//Iif(File(_carq + GetDBExtension()),FErase(_carq  + GetDBExtension()) ,Nil)
 	
 	MsgInfo("Processamento finalizado.","Função telaEmplacamento(IMPRDNET)")
 
