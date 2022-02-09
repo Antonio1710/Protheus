@@ -21,13 +21,21 @@
     @ticket 18141 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
-    @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFIN120P()
 
-    Local cQuery  := ""
-    Local lZCF01  := .f.
-    Local cTpDespesa := GetMV("MV_#RMDESP",,"10")
+    Local cQuery      := ""
+    Local lZCF01      := .f.
+    Local cTpDespesa  := GetMV("MV_#RMDESP",,"10")
+
+    // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    Local cZHC_BANCO  := ""
+    Local cZHC_AGENCI := ""
+    Local cZHC_CONTA  := ""
+    Local cZHC_DIGCTA := ""
+    Local cZHC_FAVORE := ""
+    Local cZHC_CPFCGC := ""
 
     Private lSigaOn := GetMV("MV_#RMSIGA",,.T.)
     Private aDadRM  := {}
@@ -49,11 +57,12 @@ User Function ADFIN120P()
         If lSigaOn
 
             //cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, ZHC_BANCO BANCO_SIGA, ZHC_AGENCI AGENCIA_SIGA, '' DIGAGENCIA_SIGA, ZHC_CONTA CONTA_SIGA, ZHC_DIGCTA DIGCONTA_SIGA, ZHC_FAVORE BENEFICIARIO_SIGA, ZHC_CPFCGC CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES
-            cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, ISNULL(ZHC_BANCO,'') BANCO_SIGA, ISNULL(ZHC_AGENCI,'') AGENCIA_SIGA, '' DIGAGENCIA_SIGA, ISNULL(ZHC_CONTA,'') CONTA_SIGA, ISNULL(ZHC_DIGCTA,'') DIGCONTA_SIGA, ISNULL(ZHC_FAVORE,'') BENEFICIARIO_SIGA, ISNULL(ZHC_CPFCGC,'') CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES " // // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
+            //cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, ISNULL(ZHC_BANCO,'') BANCO_SIGA, ISNULL(ZHC_AGENCI,'') AGENCIA_SIGA, '' DIGAGENCIA_SIGA, ISNULL(ZHC_CONTA,'') CONTA_SIGA, ISNULL(ZHC_DIGCTA,'') DIGCONTA_SIGA, ISNULL(ZHC_FAVORE,'') BENEFICIARIO_SIGA, ISNULL(ZHC_CPFCGC,'') CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES " // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
+            cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, '' BANCO_SIGA, '' AGENCIA_SIGA, '' DIGAGENCIA_SIGA, '' CONTA_SIGA, '' DIGCONTA_SIGA, '' BENEFICIARIO_SIGA, '' CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES, ZHB_FAVORE " // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
             cQuery += " FROM " + RetSqlName("ZHB") + " ZHB (NOLOCK)
             //cQuery += " INNER JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_=''
             //cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
-            cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_CODIGO=ZHB_FAVORE AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+            //cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_CODIGO=ZHB_FAVORE AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
             cQuery += " WHERE ZHB_FILIAL='"+FWxFilial("ZHB")+"' 
             cQuery += " AND ZHB_APROVA='F'
             cQuery += " AND ZHB_GERSE2='F'
@@ -62,7 +71,7 @@ User Function ADFIN120P()
         Else
 
             cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
-            cQuery += "	    SELECT FLAG_SIGA, FILIAL_SIGA, PREFIXO_SIGA, NUM_SIGA, PARCELAS_SIGA, BANCO_SIGA, AGENCIA_SIGA, DIGAGENCIA_SIGA, CONTA_SIGA, DIGCONTA_SIGA, BENEFICIARIO_SIGA, CPF_CNPJ_SIGA, VALOR, VENCTO_PARCELA1, A.CODCOLIGADA, A.CODFORUM, A.NUMPROCESSO, '' ZHB_ITEM, '' ZHB_TIPDES, '' ZHB_NOMDES
+            cQuery += "	    SELECT FLAG_SIGA, FILIAL_SIGA, PREFIXO_SIGA, NUM_SIGA, PARCELAS_SIGA, BANCO_SIGA, AGENCIA_SIGA, DIGAGENCIA_SIGA, CONTA_SIGA, DIGCONTA_SIGA, BENEFICIARIO_SIGA, CPF_CNPJ_SIGA, VALOR, VENCTO_PARCELA1, A.CODCOLIGADA, A.CODFORUM, A.NUMPROCESSO, '' ZHB_ITEM, '' ZHB_TIPDES, '' ZHB_NOMDES, '' ZHB_FAVORE
             cQuery += "		FROM [" + cSGBD + "].[DBO].[VPROCESSOCOMPL] A (NOLOCK)
             cQuery += "		INNER JOIN [" + cSGBD + "].[DBO].[VPROCESSOS] B (NOLOCK) ON A.CODCOLIGADA=B.CODCOLIGADA AND A.CODFORUM=B.CODFORUM AND A.NUMPROCESSO=B.NUMPROCESSO
             cQuery += "		INNER JOIN [" + cSGBD + "].[DBO].[VDESPESAPROCESSOS] C (NOLOCK) ON A.CODCOLIGADA=C.CODCOLIGADA AND A.CODFORUM=C.CODFORUM AND A.NUMPROCESSO=C.NUMPROCESSO AND C.CODTIPODESPESAS=''"+cTpDespesa+"''
@@ -86,6 +95,18 @@ User Function ADFIN120P()
         WorkRM->( dbGoTop() )
         Do While WorkRM->( !EOF() )
 
+            // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+            ZHC->( dbSetOrder(3) ) // ZHC_FILIAL+ZHC_CODIGO
+            If ZHC->( dbSeek(FWxFilial("ZHC")+WorkRM->ZHB_FAVORE) )
+                cZHC_BANCO  := ZHC->ZHC_BANCO
+                cZHC_AGENCI := ZHC->ZHC_AGENCI
+                cZHC_CONTA  := ZHC->ZHC_CONTA
+                cZHC_DIGCTA := ZHC->ZHC_DIGCTA
+                cZHC_FAVORE := ZHC->ZHC_FAVORE
+                cZHC_CPFCGC := ZHC->ZHC_CPFCGC
+            EndIf
+            //
+
             aDadRM := {}
             aAdd( aDadRM, { WorkRM->PARCELAS_SIGA,;
                             WorkRM->VALOR,;
@@ -93,16 +114,16 @@ User Function ADFIN120P()
                             WorkRM->CODFORUM,;
                             WorkRM->NUMPROCESSO,;
                             WorkRM->VENCTO_PARCELA1,;
-                            WorkRM->BANCO_SIGA,;
-                            WorkRM->AGENCIA_SIGA,;
+                            cZHC_BANCO,;
+                            cZHC_AGENCI,;
                             WorkRM->DIGAGENCIA_SIGA,;
-                            WorkRM->CONTA_SIGA,;
-                            WorkRM->DIGCONTA_SIGA,;
+                            cZHC_CONTA,;
+                            cZHC_DIGCTA,;
                             WorkRM->ZHB_ITEM,;
                             WorkRM->ZHB_TIPDES,;
                             WorkRM->ZHB_NOMDES,; 
-                            WorkRM->BENEFICIARIO_SIGA,; 
-                            WorkRM->CPF_CNPJ_SIGA } )
+                            cZHC_FAVORE,; 
+                            cZHC_CPFCGC } )
 
             GeraZC7RM(aDadRM)
 
@@ -139,6 +160,7 @@ Static Function GeraZC7RM(aDadRM)
 	Local cCodSX5   := "Z9"
 	Local cCodBlq   := GetMV("MV_#ZC7RC1",,"000013")
 	Local cDscBlq   := AllTrim(Posicione("SX5",1,xFilial("SX5")+cCodSX5+cCodBlq,"X5_DESCRI"))
+    Local cCCusto   := GetMV("MV_#RMCCUS",,"2204") // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 
     // Email
     Local lEmail    := GetMV("MV_#ZC7EMA",,.F.)
@@ -175,7 +197,7 @@ Static Function GeraZC7RM(aDadRM)
     Local cCPFCGC   := aDadRM[1,16]
 
     Local aDadPR    := {}
-    Local cHist     := cAssunto + " - Processo " + AllTrim(cProcesso) + ", " + AllTrim(cZHBItem) + ", " + AllTrim(cZHBTip)
+    Local cHist     := cAssunto + " - Processo " + AllTrim(cProcesso) + ", " + AllTrim(cZHBItem) + ", " + AllTrim(cZHBTip) + ", " + AllTrim(cCPFCGC)
     Local cSitAprov := ""
 
     Local lExisteP12:= .f.
@@ -183,7 +205,8 @@ Static Function GeraZC7RM(aDadRM)
     Local lExistZHB := .f.
     Local cNumero   := GetSXENUM("RC1","RC1_NUMTIT")   //NextRC1()
 
-    cDscBlq := "Processo " + AllTrim(cProcesso) + AllTrim(cZHBItem) + AllTrim(cZHBTip) + AllTrim(Str(nValor)) + DtoC(dVenctoP1)
+    //cDscBlq := "Processo " + AllTrim(cProcesso) + AllTrim(cZHBItem) + AllTrim(cZHBTip) + AllTrim(Str(nValor)) + DtoC(dVenctoP1)
+    cDscBlq := AllTrim(cProcesso) + AllTrim(cZHBItem) + AllTrim(cCPFCGC) + DtoC(dVenctoP1) + AllTrim(cQtdParc) + AllTrim(Str(nValor)) + AllTrim(cZHBTip) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 
     lExisteP12 := ChkProcess(cDscBlq)
     
@@ -299,6 +322,9 @@ Static Function GeraZC7RM(aDadRM)
 
                     // SBPL
                     SE2->E2_OBS_AP := AllTrim(cZHBDes)
+
+                    // CCusto
+                    SE2->E2_CCUSTO := cCCusto // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 
                 SE2->( msUnLock() )
 

@@ -15,7 +15,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Favorecidos"
     @example
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
-    @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
 /*/
 User Function ADFI119()
 
@@ -82,7 +82,8 @@ Static Function ModelDef()
 
     //Na montagem da estrutura do Modelo de dados, o cabeçalho filtrará e exibirá somente 3 campos, já a grid irá carregar a estrutura inteira conforme função fModStruct
     Local oModel    := NIL
-    Local oStruCab  := FWFormStruct(1, 'ZHC', {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"})
+    //Local oStruCab  := FWFormStruct(1, 'ZHC', {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    Local oStruCab  := FWFormStruct(1, 'ZHC', {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
     Local oStruGrid := fModStruct()
  
     //Monta o modelo de dados, e na Pós Validação, informa a função fValidGrid
@@ -101,8 +102,7 @@ Static Function ModelDef()
             {"ZHC_BANCO" ,  "ZHC_BANCO"},;
             {"ZHC_AGENCI",  "ZHC_AGENCI"},;
             {"ZHC_CONTA" ,  "ZHC_CONTA"},;
-            {"ZHC_DIGCTA",  "ZHC_DIGCTA"},;
-            {"ZHC_TIPDES",  "ZHC_TIPDES"};
+            {"ZHC_DIGCTA",  "ZHC_DIGCTA"};
         }, ZHC->(IndexKey(3)))
      
     //Definindo outras informações do Modelo e da Grid
@@ -129,7 +129,8 @@ Static Function ViewDef()
     //Na montagem da estrutura da visualização de dados, vamos chamar o modelo criado anteriormente, no cabeçalho vamos mostrar somente 3 campos, e na grid vamos carregar conforme a função fViewStruct
     Local oView     := NIL
     Local oModel    := FWLoadModel('ADFI119')
-    Local oStruCab  := FWFormStruct(2, "ZHC", {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"})
+    //Local oStruCab  := FWFormStruct(2, "ZHC", {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    Local oStruCab  := FWFormStruct(2, "ZHC", {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
     Local oStruGRID := fViewStruct()
  
     //Define que no cabeçalho não terá separação de abas (SXA)
@@ -190,7 +191,8 @@ Return oStruct
 /*/
 Static Function fViewStruct()
 
-    Local cCampoCom := "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"
+    //Local cCampoCom := "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;" // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    Local cCampoCom := "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_CODIGO;" // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
     Local oStruct
  
     //Irá filtrar, e trazer todos os campos, menos os que tiverem na variável cCampoCom
@@ -223,7 +225,7 @@ Static Function fValidGrid(oModel)
     Local cAgencia   := oModelMain:GetValue("ZHC_AGENCI")
     Local cConta     := oModelMain:GetValue("ZHC_CONTA")
     Local cDigCta    := oModelMain:GetValue("ZHC_DIGCTA")
-    Local cTipDes    := oModelMain:GetValue("ZHC_TIPDES")
+    //Local cTipDes    := oModelMain:GetValue("ZHC_TIPDES") // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
     Local cCodFavor  := oModelMain:GetValue("ZHC_CODIGO")
     Local cProcesso  := ""
 
@@ -290,6 +292,8 @@ Static Function fValidGrid(oModel)
         EndIf
     EndIf
 
+    // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    /*
     If lRet
         If Empty(cTipDes)
             lRet := .f.
@@ -302,6 +306,7 @@ Static Function fValidGrid(oModel)
             EndIf
         EndIf
     EndIf
+    */
 
     If lRet
 
@@ -352,10 +357,11 @@ Static Function fValidGrid(oModel)
 
             If oModel:nOperation == 5
                 ZHB->( dbSetOrder(1) ) // ZHB_FILIAL, ZHB_PROCES, ZHB_TIPDES, R_E_C_N_O_, D_E_L_E_T_
-                If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso+cTipDes))
+                //If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso+cTipDes)) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+                If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso)) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
                     If ZHB->ZHB_GERSE2 .or. !Empty(ZHB->ZHB_NUM)
                         lRet := .f.
-                        Alert("Exclusão não permitida pois favorecido possui título integrado no financeiro! Verifique as despesas do processo da linha " + AllTrim(Str(nLinAtual)) + " ...")
+                        Alert("Exclusão não permitida pois favorecido possui título integrado no financeiro! Verifique as despesas do processo referente linha " + AllTrim(Str(nLinAtual)) + " ...")
                         Exit
                     EndIf
                 EndIf
