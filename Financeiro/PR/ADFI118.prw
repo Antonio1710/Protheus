@@ -16,7 +16,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
-    @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFI118()
 

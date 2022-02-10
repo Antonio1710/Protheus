@@ -15,7 +15,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Favorecidos"
     @example
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
-    @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
 /*/
 User Function ADFI119()
 
