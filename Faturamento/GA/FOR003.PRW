@@ -2,9 +2,9 @@
 
 User Function FOR003()  
 
-	Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se o Fornecedor (atraves do conteudo da variavel) utilizando:  ExecBlock("FOR003",.F.,.F.,PARAMIXB)')
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se o Fornecedor (atraves do conteudo da variavel) utilizando:  ExecBlock("FOR003",.F.,.F.,PARAMIXB)')
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaracao de variaveis utilizadas no programa atraves da funcao    ³
@@ -82,6 +82,6 @@ User Function FOR003()
 	dbSetOrder(_cOrder)
 	dbGoto(_cRecno)
 
-	Conout( DToC(Date()) + " " + Time() + " FOR003 >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> FINAL PE" )
 
 Return(_lReturn)
