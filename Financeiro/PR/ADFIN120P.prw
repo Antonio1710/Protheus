@@ -21,7 +21,7 @@
     @ticket 18141 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
-    @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFIN120P()
 
