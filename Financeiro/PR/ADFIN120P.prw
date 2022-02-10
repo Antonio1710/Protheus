@@ -7,6 +7,9 @@
 #include "rwmake.ch"
 #include "TbiConn.ch"
 
+// Variaveis estaticas
+Static cRotina  := "ADFIN120P"
+
 /*/{Protheus.doc} User Function ADFIN120P
     Função para gerar alçada de aprovação das despesas dos acordos trabalhistas
     @type  Function
@@ -43,6 +46,12 @@ User Function ADFIN120P()
     // @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     Private cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
 	Private cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
+
+    // Garanto uma única thread sendo executada
+    If !LockByName(cRotina, .T., .F.)
+        ConOut( cRotina + " Rotina não executada pois existe outro processamento" )
+        Return
+    EndIf
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para gerar alçada de aprovação das despesas dos acordos trabalhistas')
 
@@ -136,6 +145,8 @@ User Function ADFIN120P()
         EndIf
 
     EndIf
+
+    UnLockByName(cRotina)
 
 Return /*aDadRM*/
 
