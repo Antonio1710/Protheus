@@ -20,9 +20,9 @@
 //À---------Á--------------Á------------------Á-------------------------------------------------Ù
 USER FUNCTION FAVCLI10(cCod)    
 
-	Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> INICIO PE" )
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida se ja ha pedido lancado para o cliente na database')
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida se ja ha pedido lancado para o cliente na database')
 
 	//+-----------------------------------------------------+
 	//|Declaracao de Variaveis                              |
@@ -65,6 +65,6 @@ USER FUNCTION FAVCLI10(cCod)
 	RestArea(aAreaSA1)
 	RestArea(aAreaSA2)
 
-	Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> FINAL PE" )
 
 RETURN(.T.) 

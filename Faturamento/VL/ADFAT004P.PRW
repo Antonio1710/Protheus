@@ -17,11 +17,12 @@
 
 User Function ADFAT004P(_cTipo)
    Local _lVal := .T.
+   Local _y    := 1
    Local nQtd	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
 
-   Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> INICIO PE" )
+   //Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> INICIO PE" )
 
-   U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida campo C6_QTDVEN e C5_TIPO para permitir ou nao a alteracao da quantidade no pedido de venda')
+   //U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida campo C6_QTDVEN e C5_TIPO para permitir ou nao a alteracao da quantidade no pedido de venda')
 
    If _cTipo == "B"
    
@@ -39,7 +40,7 @@ User Function ADFAT004P(_cTipo)
       
    Endif
 
-   Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> FINAL PE" )
+   //Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> FINAL PE" )
 
 Return(_lVal)
 
@@ -48,9 +49,9 @@ User Function VLDC6QTD(_CodUsr)
 
    Local _lVal := .F.
 
-   Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> INICIO PE" )
+   //Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> INICIO PE" )
 
-   U_ADINF009P('ADFAT004P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida campo C6_QTDVEN e C5_TIPO para permitir ou nao a alteracao da quantidade no pedido de venda')
+   //U_ADINF009P('ADFAT004P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida campo C6_QTDVEN e C5_TIPO para permitir ou nao a alteracao da quantidade no pedido de venda')
 
    If (AllTrim(cModulo)="EEC".Or.Upper(Alltrim(FunName()))$"LEXMLSC/MATA310".Or.M->C5_TIPO<>"N")
       _lVal := .T.
@@ -64,6 +65,6 @@ User Function VLDC6QTD(_CodUsr)
       _lVal := .T.
    Endif
 
-   Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> FINAL PE" )
+   //Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> FINAL PE" )
 
 Return(_lVal)
