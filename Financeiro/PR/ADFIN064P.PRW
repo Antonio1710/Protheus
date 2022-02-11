@@ -53,8 +53,8 @@
 	@history Ticket 10986   - Fernando Macieira - 15/03/2021 - App de aprovação - melhorias
 	@history Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
 	@history ticket 18141   - Fernando Macieira - 27/10/2021 - RM - Acordos - Integração Protheus
+	@history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML
 /*/
-
 User Function ADFIN064P
 // Função para compilar metodos webservice
 Return Nil
@@ -104,7 +104,7 @@ WsMethod Get WsService CentralAprovacao
 	
 	Local cUsrTst := Self:GetHeader("ChkAdm") //Everson - 06/03/2019. Chamado T.I.
 
-	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CentralAprovacao')
+	////U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CentralAprovacao')
 	
 	//Everson - 06/03/2019. Chamado T.I.
 	If ! Empty(__cUserID) .And. __cUserID $(Alltrim(cValToChar(GetMv("MV_#ADMAPP",,"")))) .And. ! Empty(cUsrTst)
@@ -192,7 +192,7 @@ WsMethod Post WsService CentralAprovacao
 	Local cTpBlFr	:= GetMv("MV_#FRTTBL",,"!XXXX!") //Everson - 12/12/2019 - Chamado 029058.
 
 	//
-	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CentralAprovacao')
+	////U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CentralAprovacao')
 	
 	//Everson - 06/03/2019. Chamado T.I.
 	If ! Empty(__cUserID) .And. __cUserID $(Alltrim(cValToChar(GetMv("MV_#ADMAPP",,"")))) .And. ! Empty(cUsrTst)
@@ -631,6 +631,53 @@ WsMethod Post WsService CentralAprovacao
 		ENDIF
 		//FIM Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
 
+		//*************************************************************************************************
+		/* INICIO - @history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML - EMPRESA 03 (CLML)*/
+		cQuery += " UNION ALL "
+		cQuery += " SELECT '' AS ZC7_ORIGEM, ZC7_DATA, ZC7_TPBLQ,'10' ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, A2.A2_NOME AS NOME, ZC7_DSCBLQ, ZC7_VLRBLQ, ZC7_VLRJUR, ZC7_ACRESC, ZC7_DECRES, ZC7_CNABDE, ZC7_NDTVEN, ZC7_NDTVCR, ZC7_ODTVEN, ZC7_ODTVCR, 'CONTAS_PAGAR' AS TIPO, ZC7_CUSFIN, ZC7_PERCUS, ZC7_NUMCAL, ZC7_OBS, ZC7_NIVEL, ZC7_PROJET, ZC7_REVPRJ, ZC7_TIPO, ZC7.R_E_C_N_O_ RECNO, " 
+		cQuery += " CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),1,1) = 'S' THEN '1 - Bloqueio por estar fora da Média de Valor | ' ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),2,1) = 'S' THEN '2 - Bloqueio por Lançamento de Nf-e sem XML | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),3,1) = 'S' THEN '3 - Bloqueio por Entrada de Nf-e sem Pedido de Compras | '  ELSE '' END  +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),4,1) = 'S' THEN '4 - Bloqueio por Não receber Vistoria Fisica no Recebimento | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),5,1) = 'S' THEN '5 - Bloqueio Aprovação Tecnica do Serviço | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),6,1) = 'S' THEN '6 - Bloqueio Integração por Modulo ou subsistema | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),7,1) = 'S' THEN '7 - Bloqueio Validação de Chave Primaria | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),8,1) = 'S' THEN '8 - Bloqueio por Duplicidade(Fornecedor+Valor+Emissão) | '  ELSE '' END +CASE WHEN SUBSTRING(ISNULL(E2_XPTCRTA,''),9,1) = 'S' THEN '9 - Bloqueio Pagamento Posterior a Entrega | '  ELSE '' END AS DESC_NSEG "
+		cQuery += " FROM ZC7030 ZC7 (NOLOCK) "
+		cQuery += " INNER JOIN SA2030 A2 (NOLOCK) ON A2_COD=ZC7_CLIFOR AND A2_LOJA=ZC7_LOJA AND A2.D_E_L_E_T_ = ' ' "
+		cQuery += " LEFT JOIN SE2030 E2 (NOLOCK) ON E2_FILIAL = ZC7_FILIAL AND E2_PREFIXO = ZC7_PREFIX AND E2_NUM = ZC7_NUM AND E2_PARCELA = ZC7_PARCEL AND E2_FORNECE = ZC7_CLIFOR AND E2_LOJA = ZC7_LOJA AND E2_TIPO = ZC7_TIPO "
+		cQuery += " WHERE ZC7_USRAPR = ' ' AND ZC7_TPBLQ IN ( "
+		cQuery += " SELECT ZCF_CODIGO "
+		cQuery += " FROM ZCF030 ZCF (NOLOCK) WHERE ZCF_APROVA = '"+__cUserID+"' AND ZCF.D_E_L_E_T_ = ' ') "
+		cQuery += " AND ZC7_RECPAG = 'P' "
+		If nAprAus == 0 .and. !Empty(sNivApr) 
+			cQuery += " AND ZC7_NIVEL >= '"+cNivMen2+"' AND ZC7_NIVEL <= '"+sNivApr+"' " 
+		ELSE
+			cQuery += " AND ZC7_NIVEL = '"+sNivApr+"' " 
+		ENDIF
+		cQuery += " AND ZC7.D_E_L_E_T_ = ' ' "
+		cQuery += " AND E2.D_E_L_E_T_ = ' ' " 
+		
+		cQuery += " UNION ALL "
+		cQuery += " SELECT '' AS ZC7_ORIGEM, ZC7_DATA, ZC7_TPBLQ,'10' ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, A1.A1_NOME AS NOME, ZC7_DSCBLQ, ZC7_VLRBLQ, ZC7_VLRJUR, ZC7_ACRESC, ZC7_DECRES, ZC7_CNABDE, ZC7_NDTVEN, ZC7_NDTVCR, ZC7_ODTVEN, ZC7_ODTVCR, 'CONTAS_RECEBER' AS TIPO, ZC7_CUSFIN, ZC7_PERCUS, ZC7_NUMCAL, ZC7_OBS, ZC7_NIVEL, ZC7_PROJET, ZC7_REVPRJ, ZC7_TIPO, ZC7.R_E_C_N_O_ RECNO, "
+		cQuery += " '' AS DESC_NSEG " 
+		cQuery += " FROM ZC7030 ZC7 (NOLOCK) "
+		cQuery += " INNER JOIN SA1030 A1 (NOLOCK) ON A1_COD=ZC7_CLIFOR AND A1_LOJA=ZC7_LOJA AND A1.D_E_L_E_T_ = ' ' "
+		cQuery += " WHERE ZC7_USRAPR = ' ' AND ZC7_TPBLQ IN ( "
+		cQuery += " SELECT ZCF_CODIGO "
+		cQuery += " FROM ZCF030 ZCF (NOLOCK) WHERE ZCF_APROVA = '"+__cUserID+"' AND ZCF.D_E_L_E_T_ = ' ') "
+		cQuery += " AND ZC7_RECPAG = 'R' "
+		If nAprAus == 0 .and. !Empty(sNivApr)
+			cQuery += " AND ZC7_NIVEL >= '"+cNivMen2+"' AND ZC7_NIVEL <= '"+sNivApr+"' "
+		ELSE
+			cQuery += " AND ZC7_NIVEL = '"+sNivApr+"' " 
+		ENDIF
+		cQuery += " AND ZC7.D_E_L_E_T_ = ' ' "
+
+		IF lAprProj  
+			cQuery += " UNION ALL "
+			cQuery += " SELECT ZC7_ORIGEM, ZC7_DATA, ZC7_TPBLQ,'10' ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, AF8_DESCRI AS NOME, ZC7_DSCBLQ, ZC7_VLRBLQ, ZC7_VLRJUR, ZC7_ACRESC, ZC7_DECRES, ZC7_CNABDE, ZC7_NDTVEN, ZC7_NDTVCR, ZC7_ODTVEN, ZC7_ODTVCR, 'PROJETO' AS TIPO, ZC7_CUSFIN, ZC7_PERCUS, ZC7_NUMCAL, ZC7_OBS, ZC7_NIVEL, ZC7_PROJET, ZC7_REVPRJ, ZC7_TIPO, ZC7.R_E_C_N_O_ RECNO, "
+			cQuery += " '' AS DESC_NSEG " 
+			cQuery += " FROM ZC7030 ZC7 (NOLOCK) "
+			cQuery += " INNER JOIN AF8030 AF8 ON AF8_PROJET=ZC7_PROJET AND AF8_REVISA=ZC7_REVPRJ AND AF8.D_E_L_E_T_ = ' ' "
+			cQuery += " WHERE ZC7_TPBLQ = '000003' AND ZC7_DTAPR = ' ' AND ZC7_REPROV = ' ' AND ZC7_USRAPR = '"+ __cUserID +"' AND ZC7.D_E_L_E_T_ = ' ' "
+		ENDIF
+		/* FIM - @history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML - EMPRESA 03 (CLML) */
+		//***********************************************************************************************
+
 		cQuery += " ORDER BY ZC7EMP, ZC7_FILIAL "
 		Conout("Query Central de Aprovação " + cValToChar(cQuery) )
 		
@@ -944,7 +991,7 @@ WsMethod Put WsService CentralAprovacao
 	RpcSetType(3)
     RpcSetEnv( cEmpAnt , cFilAnt )
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CentralAprovacao')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CentralAprovacao')
 
 	DbSelectArea("ZC3")
 	DbSetorder(1)
@@ -1093,7 +1140,9 @@ WsMethod Put WsService CentralAprovacao
 	RestArea(aArea)
 	MSUnlockAll()
 	RpcClearEnv()
+
 Return .T.
+
 /*/{Protheus.doc} BuscaObs
 	Busca observações.
 	@type  Static Function
@@ -1191,6 +1240,7 @@ Static Function BuscaObs( ZC7EMP, ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_CLIFOR, Z
 	EndIf
 
 Return(sMsgRet)
+
 /*/{Protheus.doc} obsZFA
 	Retorna observações do registro de frete. Chamado 044314.
 	@type  Static Function
@@ -1292,7 +1342,7 @@ WsMethod Post WsService PedidoCompra
 	
 	Local cUsrTst := Alltrim(cValToChar(Self:GetHeader("ChkAdm"))) //Everson - 06/03/2019. Chamado T.I.
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'PedidoCompra')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'PedidoCompra')
 
 	//Everson - 06/03/2019. Chamado T.I.
 	If ! Empty(__cUserID) .And. __cUserID $(Alltrim(cValToChar(GetMv("MV_#ADMAPP",,"")))) .And. ! Empty(cUsrTst)
@@ -1459,6 +1509,23 @@ WsMethod Post WsService PedidoCompra
 	cQuery += " AND CR_STATUS = '02' "
 	cQuery += " AND SCR.D_E_L_E_T_ = ' ' "
 	//
+
+	//**********************************************************************************************
+	// INICIO - @history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML - EMPRESA 03 (CLML)
+	cQuery += " UNION ALL "
+	cQuery += " SELECT '03' CREMP, CR_FILIAL, CR_NUM, CR_TOTAL, CR_MOEDA, CR_EMISSAO, R_E_C_N_O_ RECNO, CR_USER "
+	cQuery += " FROM SCR030 SCR (NOLOCK) "
+	cQuery += " WHERE CR_NUM IN (SELECT DISTINCT C7_NUM "
+	cQuery += " FROM SCR030 SCR (NOLOCK) "
+	cQuery += " INNER JOIN SC7030 C7 ON C7_FILIAL=CR_FILIAL AND C7_NUM=CR_NUM AND C7.D_E_L_E_T_ = ' ' "
+	cQuery += " WHERE CR_USER = '"+__cUserID+"' "
+	cQuery += " AND CR_STATUS = '02' "
+	cQuery += " AND C7_RESIDUO <> 'S' "
+	cQuery += " AND SCR.D_E_L_E_T_ = ' ') "
+	cQuery += " AND CR_STATUS = '02' "
+	cQuery += " AND SCR.D_E_L_E_T_ = ' ' "
+	// FIM - @history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML - EMPRESA 03 (CLML)
+	//**********************************************************************************************
 		
 	cQuery += " ORDER BY CREMP, CR_FILIAL, CR_NUM "
 
@@ -1570,7 +1637,7 @@ WsMethod Put WsService PedidoCompra
 	Local cCodUser      := ""
 	Local lRetPed       := .T.
 	Local nOpcPed       := 0
-	Local oParseJSON
+	Local oParseJSON, j
 	Private cRecno      := 0
 	Private sObsSCR     := ""
 
@@ -1603,7 +1670,7 @@ WsMethod Put WsService PedidoCompra
 		cFilAnt := SCR->CR_FILIAL
 		RpcSetEnv( cEmpAnt , cFilAnt )
 
-		U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'PedidoCompra')
+		//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'PedidoCompra')
 
 		for j:=1 to len(oParseJSON:obs)
 			sObsSCR += EncodeUtf8(oParseJSON:obs[j]:obs) + ', '
@@ -1788,7 +1855,8 @@ Static Function DestPedC( CRFILIAL , CRNUM , CREMP )
 		cQuery += " INNER JOIN CTT010 CTT ON CTT_CUSTO=C7_CC AND CTT.D_E_L_E_T_ = ' ' "
 	EndIf
 	cQuery += " INNER JOIN SA2"+CREMP+"0 A2 ON A2_COD=C7_FORNECE AND A2_LOJA=C7_LOJA AND A2.D_E_L_E_T_ = ' ' "
-	IF CREMP = '02' .Or. CREMP = '03' .Or. CREMP = '09'
+	//IF CREMP = '02' .Or. CREMP = '03' .Or. CREMP = '09' // @history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML - EMPRESA 03 (CLML)
+	IF CREMP = '02' .Or. CREMP = '03' .Or. CREMP = '09' .OR. CREMP = '03'
 		cQuery += " LEFT OUTER JOIN SE4010 E4 ON E4_CODIGO=C7_COND AND E4.D_E_L_E_T_ = ' ' "
 	Else
 		cQuery += " LEFT OUTER JOIN SE4"+CREMP+"0 E4 ON E4_CODIGO=C7_COND AND E4.D_E_L_E_T_ = ' ' "
@@ -1967,7 +2035,7 @@ WsMethod Post WsService DoacaoBonificacao
 	
 	Local cUsrTst := Self:GetHeader("ChkAdm") //Everson - 06/03/2019. Chamado T.I.
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'DoacaoBonificacao')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'DoacaoBonificacao')
 	
 	Private nTotPed     := 0
 	Private sNomeCli    := ""
@@ -2122,7 +2190,7 @@ WsMethod Put WsService DoacaoBonificacao
 		Endif	
 	EndIf
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'DoacaoBonificacao')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'DoacaoBonificacao')
 
 	RestArea(aArea)
 	MSUnlockAll()
@@ -2189,6 +2257,7 @@ Static Function DetPedDB( C7FILIAL , C7NUM , C7EMP )
 	sMsgRet +=']'
 
 Return(sMsgRet)
+
 /*/{Protheus.doc} AprvPed
 	Aprova pedido de saída. Chamado 043065.
 	@type  Function
@@ -2308,6 +2377,7 @@ User Function RejPed(_cPed1)
 	U_EMAILPEDRJ(_cPed1,_cVend1,_aASC6,"3")		   	   
     
 Return()
+
 //************************** REFATURAMENTO **************************************//
 /*/{Protheus.doc} AprvPed
 	Lista de Metodos Implementado. Chamado 044082.
@@ -2322,6 +2392,7 @@ WsRestFul Refaturamento Description "Serviço REST para Aprovação de Pedido de Ve
 	WsMethod Put  Description "Metodo para Aprovar Pedidos de Refaturamento"  WsSyntax "/Refaturamento"
 
 End WsRestFul
+
 /*/{Protheus.doc} Post
 	Método Post. Chamado 043065.
 	WebService rest para aprovação mobile dos pedidos de Vendas
@@ -2350,7 +2421,7 @@ WsMethod Post WsService Refaturamento
 	
 	Private nTotPed     := 0
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'REFATURAMENTO')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'REFATURAMENTO')
 	
 	//Everson - 06/03/2019. Chamado T.I.
 	If ! Empty(__cUserID) .And. __cUserID $(Alltrim(cValToChar(GetMv("MV_#ADMAPP",,"")))) .And. ! Empty(cUsrTst)
@@ -2496,6 +2567,7 @@ WsMethod Post WsService Refaturamento
 	MSUnlockAll()
 
 Return .T.
+
 /*/{Protheus.doc} Post
 	Método Post. Chamado 043065.
 	WebService rest para aprovação mobile dos pedidos de Vendas
@@ -2565,11 +2637,12 @@ WsMethod Put WsService Refaturamento
 		Endif	
 	EndIf
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'REFATURAMENTO')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'REFATURAMENTO')
 	RestArea(aArea)
 	MSUnlockAll()
 
 Return .T.
+
 //************************** PEDIDOS SAG **************************************//
 /*/{Protheus.doc} ³Get
 	Web Service para aprovação de pedidos de compra - SAG . Chamado 045097.
@@ -2585,6 +2658,7 @@ WsRestFul pedidossag Description "Serviço REST para aprovação de pedidos de comp
 	WsMethod Put  Description "Método put para realizar a aprovação ou reprovação de pedido de compra SAG" WsSyntax "/pedidossag"
 
 End WsRestFul
+
 /*/{Protheus.doc} ³Get
 	Método Get para pedidos SAG. Chamado 045097.
 	Implementação do método Get para o recurso pedidossag
@@ -2612,7 +2686,7 @@ WsMethod Get WsService pedidossag
 	
 	Local cUsrTst := Self:GetHeader("ChkAdm") //Everson - 06/03/2019. Chamado T.I.
 	
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Pedido Sag')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Pedido Sag')
 	
 	//Everson - 06/03/2019. Chamado T.I.
 	If ! Empty(__cUserID) .And. __cUserID $(Alltrim(cValToChar(GetMv("MV_#ADMAPP",,"")))) .And. ! Empty(cUsrTst)
@@ -2717,6 +2791,7 @@ WsMethod Get WsService pedidossag
 	MSUnlockAll()
 	
 Return .T.
+
 /*/{Protheus.doc} Put
 	Método Put para pedidos SAG. Chamado 045097.
 	Implementação do método Put para o recurso pedidossag
@@ -2745,7 +2820,7 @@ WsMethod Put WsService pedidossag
 	Local cUpdate		:= ""
 	Local cQuery		:= ""
 
-	U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Pedido Sag')
+	//U_ADINF009P('ADFIN064P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Pedido Sag')
 	
 	//
 	If Empty(__cUserID)
@@ -2831,6 +2906,7 @@ WsMethod Put WsService pedidossag
 	RestArea(aArea)
 	
 Return .T.
+
 /*/{Protheus.doc} ³DetSAG
 	Retorna detalhe dos pedidos de venda do SAG. Chamado 045097.
 	@type  Static Function
@@ -2909,6 +2985,7 @@ Static Function DetSAG(cCodEmp,cCodFilial,cNumPed,cUsuario)
 	RestArea(aArea)
 
 Return(sMsgRet)
+
 /*/{Protheus.doc} rmvAcento
 	Remove caracteres especiais da string. Chamado 048432.
 	@type  Static Function
