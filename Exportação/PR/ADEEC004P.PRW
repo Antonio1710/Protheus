@@ -18,6 +18,9 @@ User Function ADEEC004P(cProduto) // U_ADEEC004P(M->EE8_COD_I) U_ADEEC004P("1451
     //PGA - Chamada das validações da PGA em relação ao cadastro.
     Local oEST055P  := ADEST055P():New()
     //
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função valida o peso de embalagem entre as tabelas')
+    //
     cProduto := Alltrim(cValToChar(cProduto))
 
     //
