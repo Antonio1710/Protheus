@@ -13,7 +13,7 @@
 	@since 11/01/2022
 /*/
 
-function u_ADFIN129P( aParms, nE1Id )
+function u_ADFIN129P( aParms, nE1Id, lRpc )
 
     local cEmp := ""
     local cFil := ""
@@ -21,15 +21,20 @@ function u_ADFIN129P( aParms, nE1Id )
 
     default aParms := {"","","01","02","",""}
     default nE1Id  := 0
+    default lRpc := .T.
 
     nIdE1 := nE1Id
     
     cEmp := aParms[len(aParms)-3]
     cFil := aParms[len(aParms)-2]
     
-    PREPARE ENVIRONMENT EMPRESA cEmp FILIAL cFil MODULO 'FAT'
-        Execute()
-    RESET ENVIRONMENT
+    if lRpc
+        PREPARE ENVIRONMENT EMPRESA cEmp FILIAL cFil MODULO 'FAT'
+    endif
+            Execute()
+    if lRpc
+        RESET ENVIRONMENT
+    endif
 
     aParms := Nil
     cEmp := Nil
@@ -61,7 +66,7 @@ static function Execute()
                 SA1.R_E_C_N_O_ AS [A1_RECNO]
         FROM 
             %table:FIE% FIE
-            INNER JOIN %table:SC5% SC5 (NOLOCK)
+            INNER JOIN %table:SC5% SC5  (NOLOCK)
                 ON SC5.%notdel%
                 AND FIE_FILIAL  = C5_FILIAL
                 AND FIE_CART 	= 'R'
@@ -72,21 +77,20 @@ static function Execute()
                 AND C5_TIPO 	= 'N'
                 AND C5_CONDPAG  = %exp:cCondLnk%
                 AND C5_EMISSAO  = %exp:dDataPrc%
-            INNER JOIN %table:SE1% SE1 (NOLOCK)
+            INNER JOIN %table:SE1% SE1  (NOLOCK)
                 ON SE1.%notdel%
                 AND FIE_FILIAL  = E1_FILIAL
                 AND FIE_PREFIX  = E1_PREFIXO
                 AND FIE_NUM		= E1_NUM
                 AND FIE_PARCEL  = E1_PARCELA
-                AND FIE_TIPO 	= E1_TIPO
+                AND FIE_TIPO    = E1_TIPO
                 AND FIE_CLIENT  = E1_CLIENTE
                 AND FIE_LOJA    = E1_LOJA
-                AND E1_XLOGLNK  IN ( '', 'GER', 'ERR')
-                AND E1_STATUS   = 'A'
-                AND E1_SALDO    = E1_VALOR
+                AND E1_XLOGLNK  IN ( '', '000', 'GER', 'ERR', 'EML')
                 AND E1_TIPO     = 'PR '
+                AND E1_SALDO    > 0
                 %exp:cFilE1%
-            INNER JOIN %table:SA1% SA1 (NOLOCK)
+            INNER JOIN %table:SA1% SA1  (NOLOCK)
                 ON SA1.%notdel%
                 AND A1_FILIAL   = %xFilial:SA1%
                 AND FIE_CLIENT  = A1_COD
@@ -135,7 +139,7 @@ static function Execute()
         else
             oRes := JsonObject():new()
             oRes:fromJson(SE1->E1_XMEMLNK)            
-        endif
+        endif 
 
         if oRes != Nil .and. SE1->E1_XLOGLNK == 'GER' .and. fMailLnk()
             fLogRes('EML', oRes:toJson())
@@ -187,7 +191,7 @@ static function fMailLnk()
     local cArqLogo  := GetNewPar("MV_#ADLOGO", "/system/logo_cc.png" )
     local cMail     := AllTrim(IIF(!EMPTY(SA1->A1_EMAIL),SA1->A1_EMAIL,SA1->A1_EMAICO))
     local cMailCc   := AllTrim(Posicione( "SA3", 1, FWFilial("SA3") + SC5->C5_VEND1, "A3_EMAIL" ))
-    local cMailBcc  := GetNewPar("MV_#EPIXTI", "fernando.sigoli@adoro.com.br;rodrigo.mello@flek.solutions" )
+    local cMailBcc  := GetNewPar("MV_#EPIXTI", "" )
 
     cHtml := fHtmlBody()
 
@@ -433,13 +437,14 @@ static function fHtmlBody()
                         <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;width: 10%;">
                             <strong>Telefone:</strong></td>
                         <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">
-                            (11) 4596.8400</td>
+                            <a href="tel:1145968400">(11) 4596.8400</a>
+                        </td>
                     </tr>
                 </table>
             </div>
         </body>
+    </html>
 
-        </html>
     endContent
 
     BeginContent var cItensDef
@@ -543,3 +548,4 @@ static function fLogRes(cCodRes, cLogRes)
     u_GrLogZBE (Date(),TIME(),cUserName, "PROCESSAMENTO SUPERLINK CIELO","TI","ADFIN130P",cLogRes,ComputerName(),LogUserName())
 
 return
+

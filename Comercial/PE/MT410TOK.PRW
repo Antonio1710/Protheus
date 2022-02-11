@@ -140,7 +140,7 @@ User Function MT410TOK()
 	Private _nLocaliz	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCALIZ"  })
 	Private _nLocal		:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCAL"  })
 
-	Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
 
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
@@ -166,7 +166,7 @@ User Function MT410TOK()
 	//
 
 	if _nOpc = 1 // Exclusão
-		Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+		//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 		return .t.
 	endif
 
@@ -1065,7 +1065,7 @@ User Function MT410TOK()
 				// Ricardo Lima - 13/06/18
 				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. CEMPANT = '01' .and. !IsInCallStack('RESTEXECUTE')
 					ApMsgInfo('Vendedor sem PERMISSÃO para Incluir Pedido, verifique com a Supervisão!','Permissões de Vendedores')
-					Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+					//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 					Return(.F.)
 				Endif
 
@@ -1860,7 +1860,7 @@ User Function MT410TOK()
 							Enddo
 							
 						ElseIf _cTipoOper $("04|X|Y") //Bonificação, venda à ordem e remessa de venda à ordem, respectivamente.
-							CONOUT("ENTROU EM 04|X|Y ")
+							//Conout("ENTROU EM 04|X|Y ")
 							//
 							lItemSF := Nil
 							If ! SFM->(dbSeek(xFilial("SFM") + Padr(_cTipoOper,2," ") + Alltrim(_cProduto)))
@@ -1872,7 +1872,7 @@ User Function MT410TOK()
 									RestArea(_aAreaSF4)
 									RestArea(_aAreaSB1)
 								 	RestArea(aArea)
-									 Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+									 //Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 								 	Return .F.
 								 	
 								 Else
@@ -2030,7 +2030,7 @@ User Function MT410TOK()
 	ENDIF
 
 	RestArea(aArea)
-	Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 Return(lRet)
 
 //--------------------------------------------------

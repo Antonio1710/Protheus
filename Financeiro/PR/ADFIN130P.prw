@@ -83,10 +83,10 @@ static function Execute()
             INNER JOIN %table:SE1% SE1  (NOLOCK)
                 ON SE1.%notdel%
                 AND FIE_FILIAL  = E1_FILIAL
-                AND FIE_PREFIX = E1_PREFIXO
+                AND FIE_PREFIX  = E1_PREFIXO
                 AND FIE_NUM		= E1_NUM
                 AND FIE_PARCEL  = E1_PARCELA
-                AND FIE_TIPO = E1_TIPO
+                AND FIE_TIPO    = E1_TIPO
                 AND FIE_CLIENT  = E1_CLIENTE
                 AND FIE_LOJA    = E1_LOJA
                 AND E1_XLOGPIX  IN ( '', '000', 'GER', 'ERR')
@@ -173,7 +173,7 @@ static function fMailPix( cIdPix )
     local cArqLogo  := GetNewPar("MV_#ADLOGO", "/system/logo_cc.png" )
     local cMail     := AllTrim(IIF(!EMPTY(SA1->A1_EMAIL),SA1->A1_EMAIL,SA1->A1_EMAICO))
     local cMailCc   := AllTrim(Posicione( "SA3", 1, FWFilial("SA3") + SC5->C5_VEND1, "A3_EMAIL" ))
-    local cMailBcc  := GetNewPar("MV_#EPIXTI", "fernando.sigoli@adoro.com.br;rodrigo.mello@flek.solutions" )
+    local cMailBcc  := GetNewPar("MV_#EPIXTI", "" )
 
     cHtml := fHtmlBody()
 
@@ -197,6 +197,7 @@ static function fHtmlBody()
     local n2QtdPed  := 0    
     local nVlrPed   := 0
     local nDescont  := 0
+    local cEmvB64   := ""
 
     BeginContent var cBody
         <!doctype html>
@@ -413,9 +414,21 @@ static function fHtmlBody()
                     <tr>
                         <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">
                             <strong>PIX - Copia/Cola:</strong></td>
+                        <td style="padding: 5px; text-align: left; vertical-align: top;border-bottom: 1px solid #eee;">
+                            <a  href="https://www.adoro.com.br/pix?emv=#EMVBASE64"
+                                target="_blank"
+                                type="text">
+                                <strong>Click aqui para copiar a chave PIX</strong>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">
+                            <strong>EMV PIX:</strong></td>
                         <td 
                             style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;text-decoration: none;pointer-events: none;">
-                            <a href='#' style="color:#000; text-decoration:none">#EMVSTRING</a></td>
+                            <a href='#' style="color:#000; text-decoration:none">#EMVSTRING</a>
+                        </td>
                     </tr>
                 </table>
                 <table cellpadding="0" cellspacing="0" style="width: 100%;line-height: inherit;text-align: left;padding-bottom: 20px;">
@@ -483,6 +496,9 @@ static function fHtmlBody()
     cBody := StrTran( cBody, "#MENSCLI"     , SC5->C5_MENNOTA )
     cBody := StrTran( cBody, "#MENSNF"      , SC5->C5_MENNOTA )
     cBody := StrTran( cBody, "#EMVSTRING"   , oPix:getEMV() )
+
+    cEmvB64 := ENCODE64( oPix:getEMV() )
+    cBody := StrTran( cBody, "#EMVBASE64"    ,  cEmvB64 )
 
     beginSQL Alias cAlias
         SELECT 

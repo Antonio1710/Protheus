@@ -33,7 +33,7 @@ Local _cRecno := Recno()
 
 Private _nTcConn1	:= advConnection()
 
-Conout( DToC(Date()) + " " + Time() + " M410INIC >>> INICIO PE" )
+//Conout( DToC(Date()) + " " + Time() + " M410INIC >>> INICIO PE" )
 
 /* 
 INICIO Retirada trecho de fonte para o chamado 041995 || TECNOLOGIA || FERNANDO_SIGOLI || 8451 || FONTES DO TECLAN WILLIAM COSTA 07/06/2018 
@@ -189,6 +189,6 @@ dbSelectArea(_cAlias)
 dbSetOrder(_cOrder)
 dbGoto(_cRecno)
 
-Conout( DToC(Date()) + " " + Time() + " M410INIC >>> FINAL PE" )
+//Conout( DToC(Date()) + " " + Time() + " M410INIC >>> FINAL PE" )
 
 Return()

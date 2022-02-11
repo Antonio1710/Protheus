@@ -13,7 +13,7 @@
     @since 11/01/2022
 /*/
 
-function u_ADFIN127P( aParms, nE1Id )
+function u_ADFIN127P( aParms, nE1Id, lRpc )
 
     local cEmp := ""
     local cFil := ""
@@ -21,15 +21,20 @@ function u_ADFIN127P( aParms, nE1Id )
 
     default aParms := {"","","01","02","",""}
     default nE1Id  := 0
+    default lRpc := .T.
 
     nIdE1 := nE1Id
     
     cEmp := aParms[len(aParms)-3]
     cFil := aParms[len(aParms)-2]
     
-    PREPARE ENVIRONMENT EMPRESA cEmp FILIAL cFil MODULO 'FAT'
-        Execute()
-    RESET ENVIRONMENT
+    if lRpc
+        PREPARE ENVIRONMENT EMPRESA cEmp FILIAL cFil MODULO 'FIN'
+    endif
+            Execute()
+    if lRpc
+        RESET ENVIRONMENT
+    endif
 
     aParms := Nil
     cEmp := Nil
@@ -37,34 +42,60 @@ function u_ADFIN127P( aParms, nE1Id )
 
 return
 
-return
-
 static function Execute()
     local cAlias    := GetNextAlias()
+	local cCondLnk  := GetNewPar("MV_#CONLNK", "LNK")
+    local dDataPrc  := dDataBase
+    local cFilE1    := iif( nIdE1 > 0, '% and SE1.R_E_C_N_O_ = '+str(nIdE1)+' %', '%%')    
+
     private oReq    := JsonObject():new()
     private oRes
-    private oLnk    := ADFIN124P():New()
+    private oLnk    := ADFIN123P():New()
 
     dbSelectArea("SE1")
     dbSelectArea("SC5")
     dbSelectArea("SC9")
 
     beginSQL Alias cAlias
-        select
-            E1.R_E_C_N_O_ AS [E1_RECNO],
-            C5.R_E_C_N_O_ AS [C5_RECNO]
-        from %table:SE1% E1
-        inner join %table:SC5% C5
-        on C5.%notdel%
-            and C5_FILIAL   = %xFilial:SC5%
-            and C5_NUM      = E1_NUM
-            AND C5_CLIENTE  = E1_CLIENTE
-            AND C5_LOJACLI  = E1_LOJA
-        where E1.%notdel%
-            and E1_FILIAL   = %xFilial:SE1%
-            and E1_XLOGLNK  IN ( 'GER', 'EML' )
-            and E1_SALDO    > 0
-        order by E1.R_E_C_N_O_
+        SELECT
+                FIE.R_E_C_N_O_ AS [FIE_RECNO], 
+                SE1.R_E_C_N_O_ AS [E1_RECNO], 
+                SC5.R_E_C_N_O_ AS [C5_RECNO],
+                SA1.R_E_C_N_O_ AS [A1_RECNO]
+        FROM 
+            %table:FIE% FIE
+            INNER JOIN %table:SC5% SC5  (NOLOCK)
+                ON SC5.%notdel%
+                AND FIE_FILIAL  = C5_FILIAL
+                AND FIE_CART 	= 'R'
+                AND FIE_PEDIDO  = C5_NUM
+                AND FIE_CLIENT  = C5_CLIENTE
+                AND FIE_LOJA    = C5_LOJACLI
+                AND C5_EST		<> 'EX'
+                AND C5_TIPO 	= 'N'
+                AND C5_CONDPAG  = %exp:cCondLnk%
+                AND C5_EMISSAO  = %exp:dDataPrc%
+            INNER JOIN %table:SE1% SE1  (NOLOCK)
+                ON SE1.%notdel%
+                AND FIE_FILIAL  = E1_FILIAL
+                AND FIE_PREFIX  = E1_PREFIXO
+                AND FIE_NUM		= E1_NUM
+                AND FIE_PARCEL  = E1_PARCELA
+                AND FIE_TIPO 	= E1_TIPO
+                AND FIE_CLIENT  = E1_CLIENTE
+                AND FIE_LOJA    = E1_LOJA
+                AND E1_XLOGLNK  IN ('GER', 'EML')
+                AND E1_TIPO     = 'PR '
+                AND E1_SALDO    > 0
+                %exp:cFilE1%
+            INNER JOIN %table:SA1% SA1  (NOLOCK)
+                ON SA1.%notdel%
+                AND A1_FILIAL   = %xFilial:SA1%
+                AND FIE_CLIENT  = A1_COD
+                AND FIE_LOJA    = A1_LOJA
+        WHERE 
+                FIE.%notdel%
+            AND FIE.FIE_FILIAL  = %xFilial:FIE%
     endSQL
 
     while (cAlias)->(!eof())
@@ -89,8 +120,8 @@ return
 //----------------------------------------------------------
 Static Function fProcessa(oRes)
 //----------------------------------------------------------
-    local lBxPROk 
-    private dDataCred := dDataBase // TODO verificar data de credito para o link de pagamento
+    local lBxPROk
+    Private dDataCred := dDataBase
 
     lBxPROk := u_BxWSPR(.F., SE1->E1_FILIAL, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_CLIENTE, SE1->E1_LOJA)
 
@@ -111,7 +142,8 @@ Static Function fProcessa(oRes)
 
     Else
         
-        //logZBE( SC5->C5_NUM + " NAO GEROU RA! FATURAMENTO NAO LIBERADO PELO RETORNO API LINK CIELO" )
+        //logZBE( SC5->C5_NUM + " NAO GEROU RA! FATURAMENTO NAO LIBERADO PELO RETORNO SUPERLINK CIELO" )
+        //MessageBox( "Boleto n. " + SC5->C5_NUM + " não gerou RA! Faturamento não liberado...","WS Bradesco - Substituição Retorno CNAB PR -> RA", MB_ICONHAND )
     
     EndIf
 
