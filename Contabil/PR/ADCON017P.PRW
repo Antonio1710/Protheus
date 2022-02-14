@@ -42,6 +42,9 @@ User Function ADCON017P() // U_ADCON017P()
     //
     RestArea(aArea)
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Função para gerar histórico da tabela SF4.')
+
+
 Return Nil
 /*/{Protheus.doc} gerlBckup
     Executa stored procedure que salva os dados da tabela SF4.
