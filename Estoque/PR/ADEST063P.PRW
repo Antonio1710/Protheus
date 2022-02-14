@@ -19,6 +19,8 @@ User Function ADEST063P()
     Local   oBrowse
     Private aRotina		:= MenuDef()
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Tela de cadastro de ingredientes')
+
     // Instanciando FWMBROWSE - Somente com dicionario de dados
     oBrowse := FWMBrowse():New()
 
