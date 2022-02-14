@@ -44,4 +44,6 @@ User Function ADCOM039P(cCmp) // U_ADCOM039P()
     //
     RestArea(aArea)
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Inicializador padrão de campo')
+
 Return cRet

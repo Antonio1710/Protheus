@@ -159,6 +159,10 @@ Static Function Modeldef()
 
 	oModel:SetPrimaryKey({'EE7_FILIAL','EE7_PEDIDO'})
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'	Alteracao das devolucoes')
+
+
 Return oModel
 
 // --------------------------------------------------------------------------------------------------------------

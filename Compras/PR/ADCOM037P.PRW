@@ -22,6 +22,10 @@ User Function ADCOM037P() // U_ADCOM037P()
 	//Fecha o ambiente.
 	RpcClearEnv()
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'alteração de revisão de embalagens')
+    //
+
 Return Nil
 /*/{Protheus.doc} nomeStaticFunction
     (long_description)
@@ -118,6 +122,10 @@ Static Function obtDados()
     FreeObj(oObjJ)
     oObjJ := Nil
     
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+    //
+
 Return aRet
 /*/{Protheus.doc} uptCad
     Atualiza descrição do produto.

@@ -84,5 +84,8 @@ User Function ADEEC007P()
     if Type("oSTATUS") == "O"
         oSTATUS:Refresh()
     endif
-//Return MvParDef
+
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Filtro de seleção dos status dos pedidos de exportação')
+
+
 Return .T.

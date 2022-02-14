@@ -46,7 +46,7 @@ User Function ADCOM035P(cCod,cLoja,cNumCT,cEmail,cArq,lEnd) //Everson - 12/05/20
 
 	Local aMoeda		:= {"1-Real (R$)","2-Dólar (US$)","4-Euro (€)"} //Everson - 31/08/2020. Chamado 060873.
 
-	//
+
 	Default cNumCT		:= ""
 	Default cEmail		:= ""
 	Default cArq		:= ""
@@ -260,7 +260,11 @@ User Function ADCOM035P(cCod,cLoja,cNumCT,cEmail,cArq,lEnd) //Everson - 12/05/20
 	TRSC8->(DbCloseArea())
 	   
 	//
-	RestArea(aArea)      
+	RestArea(aArea)  
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Envio de workflow de cotação')
+	//
          
 Return Nil
 /*/{Protheus.doc} BD_SC8

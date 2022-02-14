@@ -185,6 +185,10 @@ User Function ADEEC011R()
     IF FErase( "\SPOOL\"+cRelImp+".rel" ) == -1
     EndIf
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Impressão da Ordem de Carregamento Exportação')
+    //
+
 Return
 
 Static Function fImpCabec()

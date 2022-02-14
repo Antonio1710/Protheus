@@ -42,6 +42,10 @@ user function ADEEC008P(aEmpFil, cPedExp, dDtDe, dDtAte, lAutom)
 		// Executa as rotinas de WorkFlow
 		MsAguarde({|| execWF(.F.)},"Aguarde...","Enviando previsões de embarques...")
 	endIf
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Workflow de previsão de embarque para os processos de exportação')
+
 return
 
 Static Function execWF(lAutom)

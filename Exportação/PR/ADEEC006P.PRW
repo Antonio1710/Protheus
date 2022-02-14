@@ -169,6 +169,11 @@ user function ADEEC006P()
     //layFooter()
 
     oWnd:Activate()
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de gestão dos processos de exportação')
+    //
+
 return
 
 Static Function layGrid()

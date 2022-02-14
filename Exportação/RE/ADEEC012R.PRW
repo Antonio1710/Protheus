@@ -40,6 +40,10 @@ User Function ADEEC012R()
         msginfo("Operação cancelada pelo operador!")
     endif
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Impressão da Ordem de Carregamento Exportação')
+
+
 return
 
 Static function fProcessa()

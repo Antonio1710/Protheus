@@ -25,6 +25,9 @@ User Function ADCOM038P() // U_ADCOM038P()
 	//Fecha o ambiente.
 	RpcClearEnv()
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'envio de e-mail informativo de pedidos de compra rejeitados')
+
+
 Return Nil
 /*/{Protheus.doc} envEmail
     Função envia e-mail com pedidos rejeitados.

@@ -42,6 +42,10 @@ user function ADEEC014P(aEmpFil)
 		// Executa as rotinas de WorkFlow
 		MsAguarde({|| execWF(.F.)},"Aguarde...","Enviando notificação de embarques...")
 	endIf
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Workflow de notificação e autorização para o faturamento')
+
 return
 
 Static Function execWF(lAutom)

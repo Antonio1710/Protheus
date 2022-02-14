@@ -72,6 +72,8 @@ User Function xCTBA500() // U_xCTBA500()
 	
 	dDataBase := dDataSalv
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Contabilização CSV')
+
 Return
 
 /*/{Protheus.doc} Static Function Ctb500Proc
