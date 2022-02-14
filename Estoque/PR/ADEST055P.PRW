@@ -90,6 +90,8 @@ user function ADEST055P(nOperac)
         fProcessa(nOperac)
     endif
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Inclusão de novo estabelecimento')
+
 return
 
 Static Function fProcessa(nOperac)
