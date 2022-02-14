@@ -89,6 +89,8 @@ User Function ADCOM040R() // U_ADCOM040R()
 	oReport := ReportDef()
 	oReport:PrintDialog()
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Workflow de previsão de embarque para os processos de exportação')
+	
 Return
 
 Static Function ReportDef(nReg)
