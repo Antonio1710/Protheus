@@ -34,6 +34,7 @@
 	@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção. 
 	@history Ticket 8465 	- Leonardo P. Monteiro - 09/08/2021 - Implementação da carga automática das informações referente a inspeção da qualidade. 
 	@history Ticket 8465 	- Leonardo P. Monteiro - 13/08/2021 - Inclusão do comando DbselectArea para a tabela ZEX. 
+	@history Ticket 68178 	- Leonardo P. Monteiro - 14/02/2022 - Gerar log das informações de exportação gravadas na NFe.
 /*/
 User Function SF2460I()
 
@@ -81,6 +82,9 @@ User Function SF2460I()
 	// Retorna dados do processo de exportação coletados pela qualidade.
 	if AllTrim(SF2->F2_EST) == "EX"
 		fGetInfo(SC5->C5_FILIAL, SC5->C5_NUM, @cRePlac, @cReCont, @cReDtFa, @cReLac1, @cReLac2)
+		// Gerar log das informações de exportação gravadas na NFe.
+		u_GrLogZBE(Date(),TIME(),cUserName,"GetInfo","SIGAFAT","SF2460I",;
+			    "PV: "+ SC5->C5_NUM +", cRePlac="+cRePlac+", cReCont="+cReCont+", cReDtFa"+cReDtFa+", cReLac1="+cReLac1+", cReLac2="+cReLac2,ComputerName(),LogUserName())
 	Endif
 
 	RecLock("SF2",.F.)
@@ -512,10 +516,10 @@ Static Function fGetInfo(cSC5Fil, cSC5Num, cRePlac, cReCont, cReDtFa, cReLac1, c
 	Local dDtFim	:= Stod("")
 	
 	DbSelectArea("ZEX")
-
+	// Gerar log das informações de exportação gravadas na NFe.
     cQuery := " SELECT ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2, MIN(ZEX_DTFABR) DT_MIN, MAX(ZEX_DTFABR) DT_MAX  "+ cEOL
     cQuery += " FROM "+ RetSqlName("ZEX") +" (NOLOCK) ZEX "+ cEOL
-    cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ xFilial("ZEX") +"' AND ZEX.ZEX_FILIAL='"+ cSC5Fil +"' AND ZEX.ZEX_NUMERO='"+ cSC5Num +"' "+ cEOL
+    cQuery += " WHERE ZEX.D_E_L_E_T_='' AND ZEX.ZEX_FILIAL='"+ cSC5Fil +"' AND ZEX.ZEX_FILIAL='"+ cSC5Fil +"' AND ZEX.ZEX_NUMERO='"+ cSC5Num +"' "+ cEOL
 	cQuery += " GROUP BY ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2 "
 	cQuery += " ORDER BY ZEX_NUMERO, ZEX_PLACA,ZEX_CONTAI, ZEX_LACRE1, ZEX_LACRE2; "
 
