@@ -20,6 +20,7 @@
     @history chamado     ti - Leonardo P. Monteiro - 18/09/2021 - Finalização do desenvolvimento.
     @history chamado     ti - Leonardo P. Monteiro - 19/09/2021 - Ajuste no status de liberação por faltas.
     @history Ticket   65396 - Adriano Savoine      - 17/12/2021 - ADEQUANDO O RELATORIO AOS DADOS EXISTENTES NAS REGRAS DE INFRAESTRUTURA ADORO.
+
 /*/
 
 Static cTitulo := "..:: Manutenção de KITs Frangos ::.."

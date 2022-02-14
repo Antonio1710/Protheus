@@ -17,6 +17,7 @@
     @history chamado  - Leonardo P. Monteiro - 18/09/2021 - Finalização do desenvolvimento.
     @history chamado     ti - Leonardo P. Monteiro - 19/09/2021 - Ajuste no status de liberação por faltas.
     @history Ticket   65396 - Adriano Savoine      - 17/12/2021 - ADEQUANDO O RELATORIO AOS DADOS EXISTENTES NAS REGRAS DE INFRAESTRUTURA ADORO.
+
 /*/
 
 Class ADOGPE
@@ -65,7 +66,8 @@ METHOD fCadEleg(cFilPro,;
                 cCalca1,;
                 cCalcT1,;
                 cCalcado1,;
-                cMeia1) CLASS ADOGPE
+                cMeia1,;
+                cSexo) CLASS ADOGPE
     Local cQuery        := ""
 
     Private cIncAlt       := "N"
@@ -81,7 +83,7 @@ METHOD fCadEleg(cFilPro,;
     Default cCalcT1     := ""
     Default cCalcado1   := ""
     Default cMeia1      := ""
-
+    Default cSexo       := ""
 
     DbSelectarea("ZI1")
 
@@ -109,7 +111,8 @@ METHOD fCadEleg(cFilPro,;
                 cCalca1,;
                 cCalcT1,;
                 cCalcado1,;
-                cMeia1)
+                cMeia1,;
+                cSexo)
 
     Tcquery cQuery ALIAS "QZI1" NEW
 
@@ -218,6 +221,10 @@ METHOD fCadEleg(cFilPro,;
             
             if !Empty(cMeia1)   .AND. Empty(ZI1->ZI1_TMEIAS)
                 ZI1_TMEIAS := Alltrim(cMeia1)
+            endif
+
+            if !Empty(cSexo)
+                ZI1_SEXO := Alltrim(cSexo)
             endif
 
             if !Empty(dDtNasc)
@@ -329,7 +336,8 @@ Static Function fGetSQL(cFilPro,;
                 cCalca1,;
                 cCalcT1,;
                 cCalcado1,;
-                cMeia1)
+                cMeia1,;
+                cSexo)
     Local cQuery := ""
 
     /**************************************************************************************************************
@@ -350,6 +358,7 @@ Static Function fGetSQL(cFilPro,;
     cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_CODHOR)) != '"+ Alltrim(cCodHorar) +"' "
     cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_ADMISS)) != '"+ Dtos(dAdmissao) +"' "
     cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_DEMISS)) != '"+ Dtos(dDemissao) +"' "
+    cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_SEXO)) != '"+ Dtos(cSexo) +"' "
     
     if !Empty(cCamisa1)
         cQuery += "  OR ltrim(rtrim(ZI1A.ZI1_TCAMPA)) != '"+ Alltrim(cCamisa1) +"' "
@@ -397,8 +406,6 @@ Static function fGeraLog(cPosicao,cIncAlt)
         LogUserName())
 
 return
-
-
 
 // --------------------------------------------------------------------------------------------------------
 // Cadastro das Unidades de Medidas.
