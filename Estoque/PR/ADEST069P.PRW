@@ -64,6 +64,9 @@ User Function ADEST069P(cZEDCod)
 	    DbCloseArea("Query1")
 	EndIF
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para seleção de cliente')
+	
+
 Return nRetorno
 
 Static Function fOk(cZEDCod)

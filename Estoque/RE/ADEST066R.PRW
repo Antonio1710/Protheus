@@ -74,6 +74,9 @@ User Function ADEST066R()
     Private aColunas            := {}
     Private aLinhas             := {}
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de condenações por turno e granja')
+
+
     Aadd( aParamBox ,{1,"Dt Referência" ,dDatabase  ,"" ,'.T.',"",'.T.',80,.F.})
 	
     if ParamBox(aParamBox,"Parâmetros",@aRet)

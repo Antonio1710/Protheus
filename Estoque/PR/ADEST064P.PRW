@@ -98,6 +98,10 @@ User Function ADEST064P()
     else
         msginfo("Ação cancelada pelo operador!")
     endif
+
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina de cadastro de condenações por lote.')
+
+
 Return nil
 
 Static Function fGetDados()
