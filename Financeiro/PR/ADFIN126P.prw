@@ -98,6 +98,10 @@ User Function ADFIN126P(cFrom,cTo,cCc,cBcc,cSubject,cBody,aAttach,aAccount,aSmtp
   Endif
   conout( 'Desconectando do SMTP' )
   oMail:SMTPDisconnect()
+
+  //
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funcao generica para envio de email')
+  //
   
 Return .T.
 

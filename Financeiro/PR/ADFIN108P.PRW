@@ -40,6 +40,11 @@ User Function ADFIN108P()
         msginfo("Operação cancelada pelo operador!")
     endif
     */
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'ContabilizaÃ§Ã£o das baixas de AB-')
+    //
+
 Return
 
 /*/{Protheus.doc} Static Function RunF370CTB

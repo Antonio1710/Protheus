@@ -43,6 +43,10 @@ User Function ADFIN112R()
 		oReport:PrintDialog()
 	endif
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relação de Bonificação')
+	//
+
 Return
 
 /*/{Protheus.doc} ReportDef

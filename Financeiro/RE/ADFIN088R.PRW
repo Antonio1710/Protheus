@@ -27,6 +27,10 @@ User Function ADFIN088R()
 
   RestArea(aArea)
 
+  //
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de Pedidos de Venda Liberados')
+
+
 Return
 
 /*/{Protheus.doc} Static Function RPEDLIB

@@ -89,6 +89,10 @@ USER FUNCTION ADFIN052P(cRedePrincipal)
 
 	//
 	RestArea(aArea)
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'gerar a data de acumulo e o valor do maior acumulo')
+	//
 	
 RETURN(NIL) 	  
 	

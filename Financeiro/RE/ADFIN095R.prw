@@ -31,6 +31,10 @@ User Function ADFIN095R() // U_ADFIN095R()
 
     //
     RestArea(aArea)
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de fechamento de receitas financeiras.')
+
     
 Return Nil
 /*/{Protheus.doc} gerRel

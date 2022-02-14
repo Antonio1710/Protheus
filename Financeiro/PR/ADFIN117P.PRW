@@ -63,6 +63,11 @@ If MsgBox("Confirma a Importação da Planilha?", "Atenção !!!", "YESNO")
    	Processa({|| Converte()}, "Inclusão da NDF´s (.csv)")
 Endif
 RestArea(aArea)
+
+//
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'GERAR UM GRUPO DE TITULOS A RECEBER ')
+//
+
 Return
 
 //========================

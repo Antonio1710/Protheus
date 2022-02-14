@@ -35,7 +35,9 @@ USER FUNCTION ADFIN093P()
 
     mBrowse(6, 1, 22, 75, "SX5")
 
-
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de Feriados para o Financeiro')
+    //
 
 RETURN NIL
 

@@ -24,6 +24,10 @@ User Function ADFIN092P() // U_ADFIN092P()
 	//Fecha o ambiente.
 	RpcClearEnv()
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de mensagem de boleto pago ao Salesforce')
+
+
 Return Nil
 /*/{Protheus.doc} envMsgB
     Processa o envio de mensagem de boleto ao Salesforce.

@@ -92,6 +92,12 @@ User Function ADFIN102P()
 //oBrowse:DisableDetails()
 // Ativa��o da Classe
 	Activate MsDialog oDlg Center
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'ERAR UM GRUPO DE TITULOS A RECEBER')
+	//
+
+
 Return
 
 /*/{Protheus.doc} Static Function MenuDef

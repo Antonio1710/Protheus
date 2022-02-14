@@ -40,6 +40,10 @@ function u_ADFIN129P( aParms, nE1Id, lRpc )
     cEmp := Nil
     cFil := Nil
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'registro de cobrancao via Super Link Cielo')
+    //
+
 return
 
 static function Execute()

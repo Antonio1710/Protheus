@@ -40,6 +40,10 @@ function u_ADFIN128P( aParms, nE1Id, lRpc )
     cEmp := Nil
     cFil := Nil
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'pagamentos recebidos via PIX - Banco Bradesco')
+    //
+
 return
 
 static function Execute()
