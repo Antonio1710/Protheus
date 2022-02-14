@@ -63,6 +63,9 @@ User Function ADEST058P(cZE1Reg)
 	    DbCloseArea("Query1")
 	EndIF
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Rotina para seleção de mercados')
+
+
 Return nRetorno
 
 Static Function fOk(cZE1Reg)
