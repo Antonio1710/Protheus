@@ -46,6 +46,8 @@ Static Function ModelDef()
     Local aZE9Rel       := {}
     Local aZEDRel       := {}
     
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Modelo MVC para manutenção do cadastro dos Requisitos de Mercado')
+
     //SetProperty
     oStruZE7A:SetProperty( "ZE7_CODING"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
     oStruZE7A:SetProperty( "ZE7_PORCEN"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
