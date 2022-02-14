@@ -39,7 +39,12 @@ User Function ADGPE080R()
 	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({||GPEADGPE080R()},"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})
 	
-	FormBatch( cCadastro, aSays, aButtons )  
+	FormBatch( cCadastro, aSays, aButtons ) 
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'tempo de permanencia do Dimep de Funcionarios')
+
+
 	
 Return (Nil)  
 

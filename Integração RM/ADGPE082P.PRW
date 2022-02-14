@@ -2,7 +2,7 @@
 #Include "Topconn.ch"
 #INCLUDE "TBICONN.CH"
 
-/*/{Protheus.doc} User Function U_ADGPE083P()
+/*/{Protheus.doc} User Function U_ADGPE082P()
     Worflow de integração dos cadastros de colaboradores.
     Chamado 16833
     @type  Function
@@ -52,6 +52,11 @@ user function ADGPE082P(aEmpFil)
             oProcess:ACTIVATE()
         endif
 	endIf
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Worflow de integração dos cadastros de colaboradores')
+
+
 return
 
 Static Function execWF(lEnd, lAutom, cFilIni, cFilFim, cMatDe, cMatAte)

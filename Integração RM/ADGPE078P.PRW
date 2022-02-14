@@ -20,5 +20,10 @@ User function ADGPE078P()
     
     U_ADGPE076P(2, cTitle)
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de Coleta Kits Frango (Portaria) ')
+
+
+
 return
 

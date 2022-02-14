@@ -53,6 +53,9 @@ User Function ADGPE068P()
 
     Private cBtnCss     := ""
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de elegíveis para o Kit Adoro (Frango)')
+
+
     //Private oRMxPRO     := RMxPRO():New()
     if Empty(cColRM)
         MsgInfo("Não foi encontrado o cadastro de coligadas!", "..:: Cadastro Coligadas ::..")

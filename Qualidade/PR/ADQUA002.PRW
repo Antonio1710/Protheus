@@ -66,6 +66,11 @@ user function ADQUA002(aEmpFil)
             msginfo("Operação cancelada pelo operador!")
         endif
 	endIf
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'obter dados de cargas da api APP Qualidade')
+
+
 return
 
 static Function execWF(lAutom, dParData, nReproc) // U_ADQUA002()
