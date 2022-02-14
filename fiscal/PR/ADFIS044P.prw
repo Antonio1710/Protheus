@@ -39,6 +39,11 @@ User Function ADFIS044P()
 	oBrowse:Activate() 
 
   RestArea(aArea)
+
+  //
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Painel de controle de email de NFSE')
+  //
+
 Return
 
 /*/{Protheus.doc} User Function ModelDef

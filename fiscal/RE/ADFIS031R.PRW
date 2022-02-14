@@ -171,4 +171,8 @@ User Function ADFIS031R()
 	Endif
 
 	RestArea(aArea)	
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'relatório dos fretes')
+
 Return Nil	

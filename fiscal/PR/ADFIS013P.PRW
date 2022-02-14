@@ -103,6 +103,10 @@ User Function ADFIS013P()
 	
 	EndIf
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Efetua leitura de arquivo CSV e grava na tabela ZBL')
+
+
 Return Nil
 
 /*/{Protheus.doc} User Function IMPK200

@@ -78,6 +78,11 @@ MS_FLUSH()
 
 SM0->(RestArea(aAreaSM0))
 cFilAnt	:= SM0->M0_CODFIL
+
+//
+U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'eclaracao para o Indice de Participacao')
+//
+
 Return    
 
 /*
