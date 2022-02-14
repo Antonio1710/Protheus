@@ -29,6 +29,8 @@ User Function ADEST046R()
 	Private cPerg     := "ADEST046R"
 	Private dDtDe, dDtAte, cProdDe, cProdAte, cGrupoDe, cGrupoAte, cTipoDe, cTipoAte, cAlmox, dDtDe3, dDtAte3, nTipo3
 	Private oTempTable
+
+
 	
 	aHelpPor := {}
 	aHelpSpa := {}
@@ -54,6 +56,9 @@ User Function ADEST046R()
 	oReport := ReportDef(@cAliasTRB)
 	oReport:PrintDialog()
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Relatório Evolução Estoque Adoro (baseado no padrão MATR320)')
+
+
 Return
 
 /*/{Protheus.doc} Static Function ReportDef
@@ -74,6 +79,8 @@ Static Function ReportDef(cAliasTRB)
 	Local oFunc2
 	
 	Local cTitulo := "Adoro - Resumo Entradas e Saídas"
+
+	
 
 	cAliasTRB := "QRY"
 	
