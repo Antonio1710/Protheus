@@ -35,6 +35,9 @@ User Function ADCON016R() // U_ADCON016R()
     //
     RestArea(aArea)
 
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Relatório AgriStats')
+
+
 Return Nil
 /*/{Protheus.doc} processa
     Processa o relatório.
