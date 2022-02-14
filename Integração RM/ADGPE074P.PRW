@@ -16,8 +16,7 @@
     @example
     (examples)
     @see (links_or_references)
-
-    U_ADGPE074P()
+    @history chamado  - Leonardo P. Monteiro - 14/02/2022 - Adição do relacionamento com os uniformes.
 /*/
 
 Static cTitulo := "..:: Cadastro Seção ::.."

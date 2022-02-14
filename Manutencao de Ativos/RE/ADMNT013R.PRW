@@ -100,7 +100,6 @@ User Function ADMNT013R(aParam) // U_ADMNT013R()
 	endif
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Ordem de Serviço')
-	
 
 Return
 
