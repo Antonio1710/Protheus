@@ -46,6 +46,8 @@ User Function ADCON019P()
         Processa( { || RunIMPSG1() }, "Criando estruturas dos produtos..." )
     EndIf
    
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cria estrutura de produtos a partir de um excel')
+
 Return
 
 /*/{Protheus.doc} Static Function RUNIMPSG1
