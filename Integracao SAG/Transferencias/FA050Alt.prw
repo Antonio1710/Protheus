@@ -18,6 +18,7 @@
 	@history Chamado 038604 - Ricardo Lima - 22/03/2018 - Implementação tolerância de alteração de alçada de títulos.
 	@history Chamado 053347 - FWNM         - 29/11/2019 - 053347 || OS 054719 || FINANCAS || EDUARDO || 8352 || IMPLANTAR CENTRAL
 	@history Chamado 055321 - FWNM         - 05/02/2020 - OS 056879 || FINANCAS || EDUARDO || 8352 || APROVADOR AUSENTE
+	@history ticket   67909 - Fer Macieira - 15/02/2022 - Pagamento GTA - SC
 /*/
 User Function FA050Alt()
 
@@ -77,6 +78,16 @@ User Function FA050Alt()
 	Local nPerCust := Val( SuperGetMv( "MV_#PERCUS" , .F. , '0' ,  ) )
 	Local cMsgCFin := ""
 	Local lEnvWFCA  := SuperGetMv( "MV_#FA5ENV" , .F. , .T. ,  )
+
+	// @history ticket   67909 - Fer Macieira - 15/02/2022 - Pagamento GTA - SC
+	If !Empty(M->E2_CODBAR)
+		lRet := u_ChkCodBar(M->E2_CODBAR)
+		If lRet
+			lRet := .f.
+			Return lRet
+		EndIf
+	EndIf
+	//
 
 	If Alltrim(cEmpAnt) == "01"
 		If !EMPTY(ALLTRIM(SE2->E2_XRECORI)) .and. !IsInCallStack("U_INTFIN")
@@ -1133,3 +1144,102 @@ User Function FA050Alt()
 	EndIf
 
 Return lRet
+
+/*/{Protheus.doc} User Function nomeFunction
+	(long_description)
+	@type  Function
+	@author user
+	@since 14/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	// @history ticket   67909 - Fer Macieira - 15/02/2022 - Pagamento GTA - SC
+/*/
+User Function ChkCodBar(cCodBar)
+
+	Local lExiste    := .f.
+	Local cX2CodEmp  := ""
+	Local cStartPath := GetSrvProfString("Startpath","")
+	Local cX2ARQUIVO := ""
+	
+	Default cCodBar  := ""
+
+	SM0->( dbGoTop() )
+	Do While SM0->( !EOF() )
+
+		// Outra Empresa
+		If FWCodEmp() <> SM0->M0_CODIGO
+
+			If Select("SX2EMP") > 0
+				SX2EMP->( dbCloseArea() )
+			EndIf
+					
+			dbUseArea(.T., __LocalDriver, cStartPath+"SX2"+SM0->M0_CODIGO+"0"+GetDbExtension(), "SX2EMP", .T., .F.)
+
+			SX2EMP->( dbSetOrder(1) ) // X2_CHAVE
+			If SX2EMP->( dbSeek("SE2") )
+				cX2ARQUIVO := AllTrim(SX2EMP->X2_ARQUIVO)
+			EndIf
+
+		Else
+
+			SX2->( dbSetOrder(1) ) // x2_chave
+			If SX2->( dbSeek("SE2") )
+				cX2ARQUIVO := AllTrim(SX2->X2_ARQUIVO)
+			EndIf
+
+		EndIf
+
+		// 
+		If !(cX2ARQUIVO $ cX2CodEmp)
+
+			cX2CodEmp := cX2ARQUIVO + "#" + cX2CodEmp
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			EndIf
+
+			cQuery := " SELECT E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, E2_NOMFOR
+			cQuery += " FROM " + cX2ARQUIVO + " (NOLOCK)
+			cQuery += " WHERE E2_CODBAR='"+cCodBar+"' 
+			cQuery += " AND E2_CODBAR<>''
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery new Alias "Work"
+
+			Work->( dbGoTop() )
+			If Work->(!EOF() )
+				lExiste := .t.
+				Alert("Código de Barra duplicado! Já existe cadastrado na tabela " + cX2ARQUIVO + chr(13) + chr(10) +;
+						" Dados do título encontrado: " + chr(13) + chr(10) +;
+						" Filial: " + Work->E2_FILIAL + chr(13) + chr(10) +;
+						" Prefixo: " + Work->E2_PREFIXO + chr(13) + chr(10) +;
+						" Número: " + Work->E2_NUM + chr(13) + chr(10) +;
+						" Parcela: " + Work->E2_PARCELA + chr(13) + chr(10) +;
+						" Tipo: " + Work->E2_TIPO + chr(13) + chr(10) +;
+						" Fornecedor: " + Work->E2_FORNECE + "/" + Work->E2_LOJA + " - " + Work->E2_NOMFOR)
+				Exit
+			EndIf
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			EndIf
+
+		EndIf
+
+		SM0->( dbSkip() )
+
+	EndDo
+
+	If Select("SX2EMP") > 0
+		SX2EMP->( dbCloseArea() )
+	EndIf
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+	
+Return lExiste
