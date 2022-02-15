@@ -69,8 +69,8 @@ Return
 Static Function ReportDef(oReport)
 
 	oSection1 := TRSection():New(oReport,"Departamentos x Uniformes")
-	TRCell():New(oSection1,"ZI5_CODIGO"    			,cAlias,"Cód. Depto" 	,"@!"               	,020,  ,,"LEFT",,"LEFT",,,,,,,) //01
-	TRCell():New(oSection1,"ZI5_DESCRI"    			,cAlias,"Departamento" 	,"@!"               	,025,  ,,"LEFT",,"LEFT",,,,,,,) //02
+	TRCell():New(oSection1,"ZI5_CODIGO"    			,cAlias,"Cód. Depto" 	,"@!"               	,030,  ,,"LEFT",,"LEFT",,,,,,,) //01
+	TRCell():New(oSection1,"ZI5_DESCRI"    			,cAlias,"Departamento" 	,"@!"               	,035,  ,,"LEFT",,"LEFT",,,,,,,) //02
 	TRCell():New(oSection1,"ZI6_CODIGO"            	,cAlias,"Cód. Hora"    	,"@!"               	,004,  ,,"CENTER",,"CENTER",,,,,,,) //03
 	TRCell():New(oSection1,"ZI6_DESCRI"            	,cAlias,"Horário"    	,"@!"               	,025,  ,,"LEFT",,"LEFT",,,,,,,) //04
 	TRCell():New(oSection1,"ZHH_CODIGO"            	,cAlias,"Cód. Unif"    	,"@!"               	,004,  ,,"CENTER",,"CENTER",,,,,,,) //03
@@ -83,7 +83,7 @@ Static Function ReportDef(oReport)
 	if MV_PAR09 == 2
 		oSection2 := TRSection():New(oReport,"Colaboradores")
 		TRCell():New(oSection2,"ZI1_MAT"   	            ,cAlias,"Matrícula"    	,"@!"               	,010,  ,,"CENTER",,"CENTER",,,,,,,) //01
-		TRCell():New(oSection2,"ZI1_NOME"   	        ,cAlias,"Nome"        	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //02
+		TRCell():New(oSection2,"ZI1_NOME"   	        ,cAlias,"Nome"        	,"@!"               	,150,  ,,"LEFT",,"LEFT",,,,,,,) //02
 	ENDIF
 
 	oBreak1 := TRBreak():New(oSection1,{|| },"Total Geral",.F.)
@@ -146,6 +146,31 @@ Static Function PrintReport(oReport)
 			
 		oSection1:PrintLine()
 		
+		if MV_PAR09 == 2
+			cQuery := getDadosDet(QREL->ZI5_CODIGO, QREL->ZHH_CODIGO, QREL->ZHH_TIPO, QREL->ZI6_CODIGO, QREL->ZHI_UM)
+
+			TcQuery cQuery ALIAS "QDET" NEW
+
+			if QDET->(!Eof())
+				
+				oSection2:Init()
+
+				while QDET->(!eof())
+					oSection2:Cell("ZI1_MAT"   	):SetValue(QDET->ZI1_MAT) 	// 01
+					oSection2:Cell("ZI1_NOME"  	):SetValue(QDET->ZI1_NOME) 	// 02
+
+					oSection2:Printline()
+					QDET->(Dbskip())
+				ENDDO
+
+				QDET->(DBCLOSEAREA())
+
+				oSection2:Finish()
+
+			endif
+
+		endif
+
 		oReport:IncMeter()
 
 		QREL->(Dbskip())	
@@ -153,8 +178,39 @@ Static Function PrintReport(oReport)
 
 	oSection1:Finish()
 
+	QREL->(DBCLOSEAREA())
 Return
 
+Static Function getDadosDet(cDepto, cUnifCod, cUnifTipo, cCodHor, cUM)
+	local cQuery  	:= ""
+	local CEOL		:= Chr(13)+chr(10)
+
+	cQuery := " SELECT ZI1.ZI1_MAT, ZI1.ZI1_NOME  "+CEOL
+	cQuery += " FROM  "+ retsqlname("ZI1") +" ZI1 "
+	cQuery += "		INNER JOIN "+ retsqlname("ZI5") +" ZI5 ON ZI1.D_E_L_E_T_='' AND ZI5.D_E_L_E_T_='' AND ZI1.ZI1_SECAO=ZI5.ZI5_CODIGO "
+	cQuery += "		INNER JOIN "+ retsqlname("ZHK") +" ZHK ON ZI5.D_E_L_E_T_='' AND ZHK.D_E_L_E_T_='' AND ZI5.ZI5_FILIAL=ZHK.ZHK_FILIAL AND ZI5.ZI5_CODIGO=ZHK.ZHK_CODZI5 "+CEOL
+	cQuery += " 	INNER JOIN "+ retsqlname("ZHH") +" ZHH ON ZHH.D_E_L_E_T_='' AND ZHK.ZHK_FILIAL=ZHH.ZHH_FILIAL AND ZHK.ZHK_CODZHH=ZHH.ZHH_CODIGO "+CEOL
+	cQuery += " WHERE ZI5.D_E_L_E_T_='' "+CEOL
+	cQuery += " 	AND ZI1.ZI1_SECAO  = '"+ alltrim(cDepto) +"' "+CEOL
+	cQuery += " 	AND ZI1.ZI1_CODHOR  = '"+ alltrim(cCodHor) +"' "+CEOL
+	cQuery += " 	AND ZHH.ZHH_CODIGO = '"+ ALLTRIM(cUnifCod) +"' "+CEOL
+	
+
+	IF cUnifTipo == "01"
+		cQuery += " AND ZI1.ZI1_TCAMPA ='"+ Alltrim(cUM) +"' "
+	ElseIF cUnifTipo == "02"
+		cQuery += " AND ZI1.ZI1_TBLUTE ='"+ Alltrim(cUM) +"' "
+	ElseIF cUnifTipo == "03"
+		cQuery += " AND ZI1.ZI1_TCALPA ='"+ Alltrim(cUM) +"' "
+	ElseIF cUnifTipo == "04"
+		cQuery += " AND ZI1.ZI1_TCALTE ='"+ Alltrim(cUM) +"' "
+	ElseIF cUnifTipo == "05"
+		cQuery += " AND ZI1.ZI1_TCALCA ='"+ Alltrim(cUM) +"' "
+	ElseIF cUnifTipo == "06"
+		cQuery += " AND ZI1.ZI1_TMEIAS ='"+ Alltrim(cUM) +"' "
+	ENDIF
+
+return cQuery
 
 
 /*/{Protheus.doc} queryRel
