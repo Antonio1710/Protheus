@@ -11,7 +11,7 @@
     @since 10/02/2022
     @version 01
 /*/
-User Function ADFAT028P()                                    
+User Function ADFAT028P()                            
 Return Nil
 
 WsRestFul barramento Description "Serviço REST para inclusão de registros vindos do barramento."

@@ -17,7 +17,7 @@ Static xPula   := Chr(13) + Chr(10)
     @since 08/02/2022
     @version 01
     /*/
-User Function ADFAT027P() // U_ADFAT027P()
+User Function ADFAT027P() // U_ADFAT027P()  
 
     //Variáveis.
     Local oBrowse := FwLoadBrw("ADFAT027P")
