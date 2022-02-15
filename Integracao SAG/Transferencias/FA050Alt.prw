@@ -82,7 +82,7 @@ User Function FA050Alt()
 	// @history ticket   67909 - Fer Macieira - 15/02/2022 - Pagamento GTA - SC
 	If !Empty(M->E2_CODBAR)
 		lRet := u_ChkCodBar(M->E2_CODBAR)
-		If lRet
+		If !lRet
 			lRet := .f.
 			Return lRet
 		EndIf
@@ -1160,7 +1160,7 @@ Return lRet
 /*/
 User Function ChkCodBar(cCodBar)
 
-	Local lExiste    := .f.
+	Local lOk        := .t.
 	Local cX2CodEmp  := ""
 	Local cStartPath := GetSrvProfString("Startpath","")
 	Local cX2ARQUIVO := ""
@@ -1212,7 +1212,7 @@ User Function ChkCodBar(cCodBar)
 
 			Work->( dbGoTop() )
 			If Work->(!EOF() )
-				lExiste := .t.
+				lOk := .f.
 				Alert("Código de Barra duplicado! Já existe cadastrado na tabela " + cX2ARQUIVO + chr(13) + chr(10) +;
 						" Dados do título encontrado: " + chr(13) + chr(10) +;
 						" Filial: " + Work->E2_FILIAL + chr(13) + chr(10) +;
@@ -1242,4 +1242,4 @@ User Function ChkCodBar(cCodBar)
 		Work->( dbCloseArea() )
 	EndIf
 	
-Return lExiste
+Return lOk
