@@ -56,6 +56,7 @@
 	@history ticket   63028 - Wagner Moro		- 15/12/2021 - Permite a inclusão do armazém quando for transferencia de ração entre filiais do Projeto Granja HH - Filial "0A"
 	@history ticket   63028 - Wagner Moro		- 22/12/2021 - Filtra o fornecedor para trazer a filial de transferencia.
 	@history ticket   66892 - Jonathan.Carvalho - 25/01/2022 - Ordenação pelo CODIGENE quando a opção for 7 
+	@history ticket   68144  - Wagner Moro 		- 11/02/2022 - Tratamento notas com especie NFS para não consultar central XML
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -745,6 +746,10 @@ While ! (cAliasNFE)->(Eof())
 	cCheckDoc 	:= 	Alltrim(cValToChar((cAliasNFE)->F1_DOC))
 	cCheckForn	:= 	Alltrim(cValToChar((cAliasNFE)->F1_FORNECE))
 	cCheckLoja	:= 	Alltrim(cValToChar((cAliasNFE)->F1_LOJA))
+
+	//Wagner 68144 - 11/02/2022
+	cCheckFoOr  := Alltrim(CValToChar((cAliasNFE)-> D1_FORNECE))
+	cCheckLoOr  := Alltrim(CValToChar((cAliasNFE)-> D1_LOJA))
 	cCheckOr  	:= 	Alltrim(cValToChar((cAliasNFE)->D1_NFORI))
 	cCheckOp  	:= 	Alltrim(cValToChar((cAliasNFE)->OPERACAO_INT))
 	//Fernando Sigoli 22/02/2018
@@ -755,7 +760,7 @@ While ! (cAliasNFE)->(Eof())
 	cCheckTP   := ALLTRIM((cAliasNFE)->D1_IDENTB6)
 	If Alltrim(cValToChar((cAliasNFE)->D1_TIPO)) == 'X'
 		//////TCSetConn(_conProthe)
-		cQryS:=" SELECT F1_DOC FROM " + RetSqlName("SF1") + " WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_DOC = '" + Padl(cCheckOr,9,"0") + "' AND F1_FORNECE = '" + cCheckForn + "' AND F1_LOJA = '" + cCheckLoja + "' AND D_E_L_E_T_ = '' "
+		cQryS:="SELECT F1_DOC FROM " + RetSqlName("SF1") + " WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_DOC = '" + Padl(cCheckOr,9,"0") + "' AND F1_FORNECE = '" + cCheckFoOr + "' AND F1_LOJA = '" + cCheckLoOr + "' AND D_E_L_E_T_ = '' "
 		If Select("ChecRess") > 0
 			ChecRess->(DbCloseArea())
 		EndIf
@@ -3982,6 +3987,13 @@ User Function ExistXML(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
+	//Wagner 68144 - 11/02/2022
+
+	IF AllTrim(cEspecie) == 'NFS'
+		lExistXML := .T.
+		Return lExistXML
+	Endif
+
 	If AllTrim(cEspecie) == "SPED"
 		cQuery := " SELECT COUNT(1) TT "
 		cQuery += " FROM RECNFXML (NOLOCK) "
@@ -4207,6 +4219,12 @@ User Function DestOk(cNum, cSer, cCNPJ, cEspecie, cFormul, nRdo)
 		lDestOk := .t.
 		Return lDestOk
 	EndIf
+	//Wagner 68144 - 11/02/2022
+	If AllTrim(cEspecie) == 'NFS'
+		lDestOk := .t.
+		Return lDestOk
+	Endif
+	
 	// Consisto chave que sera utilizada na pesquisa
 	// TI - Fernando Sigol 16/05/2019
 	cXMLNUMNF := PADR(cvaltochar(Val(cSer)) ,3,'')+ cNum

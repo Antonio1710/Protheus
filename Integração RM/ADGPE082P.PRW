@@ -9,7 +9,7 @@
     @author Leonardo P. Monteiro
     @since 24/01/2022
     @version 01
-    @history Chamado 16833 - Leonardo P. Monteiro - 24/01/2022- Desenvolvimento inicial.
+    @history Chamado 16833 - Leonardo P. Monteiro - 14/02/2022- Desenvolvimento inicial.
     
 /*/
 user function ADGPE082P(aEmpFil)

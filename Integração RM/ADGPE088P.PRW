@@ -2,20 +2,26 @@
 #Include "protheus.ch"
 #Include "topconn.ch"
 
-/*/{Protheus.doc} User Function ADGPE071P
-    Seleciona novos monitores.
+/*/{Protheus.doc} User Function ADGPE088P
+    Seleção de armários disponíveis.
     Chamado 
     @type  Function
     @author Leonardo P. Monteiro
-    @since 07/07/2021
+    @since 08/02/2022
     @version 01
 	@history Chamado T.I. - Leonardo P. Monteiro - 30/08/2021 - monitores.
 /*/
 
-User Function ADGPE071P()
+Static cRetParam := Space(06)
+
+User Function GPE088P()
+
+return cRetParam
+
+User Function ADGPE088P()
 
 	//Define quais colunas (campos da TTRB) serao exibidas na MsSelect
-	Local cCampos			:= "ZI1_FILIAL, ZI1_MAT, ZI1_NOME"
+	Local cCampos			:= "ZHL_FILIAL, ZHL_CODIGO, ZHL_DESCRI"
 	
 	Private oGetPesq
 	Private oGroup1
@@ -32,26 +38,22 @@ User Function ADGPE071P()
 	Private aButtons		:= {}
 	Private nCont			:= 0
 	Private nRetorno		:= 1
+	Private cRetorno		:= ""
+	PRivate lRetorno		:= .T.
 
 	Private cFOpen			:= ""
 	Private oOk 			:=	LoadBitmap( GetResources(), "LBOK")
 	Private oNo 			:=	LoadBitmap( GetResources(), "LBNO")
-	Private bOk				:= {|| nRetorno := fOk(),odlg:End()}
-	
-	//
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Seleciona novos monitores')
-
+	Private bOk				:= {|| lRetorno := fOk(),odlg:End()}
 	
 	Default cZEDCod			:= ""
 	//Default cZE2Reg			:= ""
-
-	
 
 	aHeaderBco 	:= MontCabec(cCampos, , 1)
 	aColsBco	:= MontDados(cZEDCod)
 
 	if !Empty(aColsBco[1][2])
-		@ 050,001 TO 600, 600 DIALOG oDlg TITLE "..:: Seleção novo Monitores ::.."
+		@ 050,001 TO 600, 600 DIALOG oDlg TITLE "..:: Seleção de Armários ::.."
 
 		oGroup1 	:= tGroup():New(033,002,75,300,'Pesquisar',oDlg,,,.T.)
 		oOrdem 		:= tComboBox():New(43,10,{|u|if(PCount()>0,cOrdem:=u,cOrdem)},aItens,80,20,oGroup1,,{|| fOrdena()},,,,.T.,,,,,,,,,'nOrdem')
@@ -60,23 +62,22 @@ User Function ADGPE071P()
 		oGet		:= MsNewGetDados():New(077,003,260,300, 2,"AllwaysTrue","AllwaysTrue",,{"ZEK_COD"},,nCont,"AllwaysTrue", "AllwaysTrue","", oDlg, aHeaderBco, aColsBco, "AllwaysTrue")	
 		oGet:oBrowse:BldBlclick := {|| fSeleciona()}
 		
-		ACTIVATE DIALOG oDlg On Init (EnchoiceBar(oDlg,{|| MsAguarde(bOk,"Processando, aguarde...","Aguarde..." )},{|| cRetorno := "", oDlg:End()},,aButtons)) CENTER
+		ACTIVATE DIALOG oDlg On Init (EnchoiceBar(oDlg,{|| MsAguarde(bOk,"Processando, aguarde...","Aguarde..." )},{|| lRetorno:=.F., cRetorno := Space(06), oDlg:End()},,aButtons)) CENTER
 	else
 		msginfo("Não existe itens disponíveis para inclusão.")
 	endif
 
 	IF Select("Query1") > 1
-	    DbCloseArea("Query1")
+	    Query1->(DbCloseArea())
 	EndIF
 
-Return nRetorno
+Return lRetorno
 
 Static Function fOk()
-	Local nRet := 0
+	Local lRet := .F.
 
 	Local nPosOk		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"  })
-	Local nPosFil		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "ZI1_FILIAL" })
-    Local nPosMat		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "ZI1_MAT" })
+    Local nPosCod		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "ZHL_CODIGO" })
 	local nA			:= 0
 	
 	
@@ -86,18 +87,12 @@ Static Function fOk()
 	For nA := 1 TO Len(oGet:aCols)  
 		If oGet:aCols[nA][nPosOk] == oOk
 			
-			if (ZI1->(Dbseek(ALLTRIM(oGet:aCols[nA][nPosFil]+ALLTRIM(oGet:aCols[nA][nPosMat]))) ))
-				
-                if Reclock("ZI1",.F.)
-                    ZI1->ZI1_MONITO	:= "1"
-                    ZI1->(MsUnlock())
-                endif
-            
-			Endif
+			cRetParam 	:= oGet:aCols[nA][nPosCod]
+			lRet		:= .T.
 		EndIf
 	Next nA
 
-return nRet
+return lRet
 
 Static Function fSeleciona()
 	Local nPosOk			:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"	})
@@ -118,8 +113,8 @@ Static Function fCriaTrab(cAlias)
 	Local cArqTrab 	:= NIL  
 
 	cArqTrab			:= FWTemporaryTable():New(cAlias, aStrut)
-	cArqTrab:AddIndex("01",{"ZEK_COD"})
-    cArqTrab:AddIndex("02",{"ZEK_DESCRI"})
+	cArqTrab:AddIndex("01",{"ZHL_CODIGO"})
+    cArqTrab:AddIndex("02",{"ZHL_DESCRI"})
 	
 	cArqTrab:Create()
  
@@ -173,8 +168,7 @@ Static Function MontCabec(cCampos, cAlias,nTipoArray)
 	Local aHeaderA	:= {}
 	Local aCampo	:= {}
 	Local nX		:= 0
-	Local aHeaderA	:= {}
-
+	
 	IF nTipoArray == 1
 		AADD( aHeaderA,{"",;
 		"OK",;
@@ -290,10 +284,11 @@ STATIC FUNCTION MontDados(cZEDCod)
 		QRY->(DBCLOSEAREA())
 	EndIF
 
-	cQry := " SELECT ZI1.ZI1_FILIAL, ZI1.ZI1_MAT, ZI1.ZI1_NOME " + cEOL
-	cQry += " FROM "+ RetSqlName("ZI1") +" (NOLOCK) ZI1 " + cEOL
-	cQry += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_MONITO !='1' " + cEOL
-	cQry += " ORDER BY ZI1.ZI1_FILIAL, ZI1.ZI1_MAT; " + cEOL
+	cQry := " SELECT ZHL_FILIAL, ZHL_CODIGO, ZHL_DESCRI " + cEOL
+	cQry += " FROM "+ RetSqlName("ZHL") +" (NOLOCK) ZHL " + cEOL
+	cQry += " WHERE ZHL.D_E_L_E_T_='' AND ZHL.ZHL_MSBLQL !='1' AND ZHL_VESTIA='"+ ZI1->ZI1_SEXO +"' " + cEOL
+	cQry += " AND NOT EXISTS(SELECT * FROM "+ Retsqlname("ZI1") +" (NOLOCK) ZI1 WHERE ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO ) " + cEOL
+	cQry += " ORDER BY ZHL.ZHL_FILIAL, ZHL.ZHL_CODIGO, ZHL.ZHL_DESCRI; " + cEOL
 
 	TcQuery cQry alias "QRY" new
 	
@@ -337,48 +332,7 @@ STATIC FUNCTION MontDados(cZEDCod)
 	ENDIF
 
 	If Select("QRY") > 0 
-		DBCLOSEAREA("QRY")
+		QRY->(DBCLOSEAREA())
 	EndIF
 
 RETURN aColsA
-
-
-// --------------------------------------------------------------------------------------------------------
-// InÃ­cio da ViewDef e ModelDef.
-// --------------------------------------------------------------------------------------------------------
-Static Function ModelDef()
- Local oModel		:= MPFormModel():New("mdlADGPE071P",, {|| .T.})
- Local oStrutZEZ	:= FWFormStruct(1,"ZEZ")
- 
- oModel:SetDescription("..:: Exigência do País ::..")
- 
- // CabeÃ§alho ZT3 (Pedidos)
- oModel:addFields("CABEC_ZEZ",nil,oStrutZEZ)
-
- oModel:setPrimaryKey({"ZEZ_FILIAL","ZEZ_CODZCO","ZEZ_COD"})
-
-return oModel
-
-
-Static Function viewDef()
- Local oView		:= Nil
- Local oModel		:= FWLoadModel("ADGPE071P")
- Local oStrutZEZ	:= FWFormStruct(2,"ZEZ")
-  
- DbSelectArea("ZEZ")
- 
- ZEZ->(DbSetOrder(1))
-  
- oView	:= FWFormView():New()
- oView:setModel(oModel)
- 
- oView:GetProgressBar(.T.)
- 
- oView:addField("V_CABEC_ZEZ",oStrutZEZ,"CABEC_ZEZ")
-   
- oView:createHorizontalBox("H_CABEC",100)
- oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
- 
- oView:setOwnerView("V_CABEC_ZEZ","V_CABEC")
-  
-Return oView
