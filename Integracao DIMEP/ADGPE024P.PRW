@@ -38,6 +38,7 @@
 	@history Ticket  TI     - Everson         - 08/11/2021 - Correção de apontamento de campo da consulta sql.
 	@history Ticket  66111  - Everson         - 03/01/2022 - Tratamento para filial 0A.
 	@history Ticket: TI     - Adriano Savoine - 03/02/2022 - Ajustado para o Dimep verificar o demitido ao inves de 7 dias passamos para verificar 1 dia apena apos a data de demissão.
+	@history Ticket: 66952  - Adriano Savoine - 15/02/2022 - Ajustado a query funcionario para atualizar os status apos a sua efetivação e ajustado novos status no dimep 24 e 25 como multiplos e ajustada a integração dos mesmos.
 	
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
@@ -602,13 +603,7 @@ Static Function DimepFuncionario()
 
 		ElseIf Alltrim(TRB->CODSITUACAO) == 'D'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 			
-			If Date() >= STOD(DTOS(TRB->DATADEMISSAO)) + 1
-				nSitFol := 12 // demitido
-
-			Else                         
-				nSitFol := 11 // trabalhando 
-
-			EndIf	
+			nSitFol := 12 // demitido
 
 		ElseIf Alltrim(TRB->CODSITUACAO) == 'F'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 			nSitFol     := 13 // Ausencia		
@@ -620,22 +615,28 @@ Static Function DimepFuncionario()
 
 		EndIf	
 
-		// @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
+		// Ticket: 66952  - Adriano Savoine - 15/02/2022
 		If Alltrim(TRB->CODSITUACAO) == 'C'
 			nSitFol       := 23 // C - Contrato de Trabalho Suspenso
 			lFuncSitFolha := .T. 
 
 		EndIf
-		//
-		
+
+		// Ticket: 66952  - Adriano Savoine - 15/02/2022
+		If Alltrim(TRB->CODSITUACAO) == 'E'
+			nSitFol       := 24 // E - LICENÇA MATERNIDADE
+			lFuncSitFolha := .T. 
+
+		EndIf
 		// *** INICIO VERIFICA AFASTAMENTO *** //
-		If Alltrim(TRB->CODSITUACAO) <> 'D' .AND. Alltrim(TRB->CODSITUACAO) <> 'C'	// @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
+		// Ticket: 66952  - Adriano Savoine - 15/02/2022
+		If Alltrim(TRB->CODSITUACAO) <> 'D' 
 			
 			//Everson - 27/10/2021. Chamado 62721.
 			lFerAfast := .F.
 			aDFerAfst := {}
 			If ! oFerias:Get(Alltrim(cValToChar(TRB->CHAPA)), aDFerAfst) //Everson - 27/10/2021. Chamado 62721.
-				nSitFol     := 11 // trabalhando   
+				//nSitFol     := 11 // trabalhando   Ticket: 66952  - Adriano Savoine - 15/02/2022
 				nSitFolMult := 0
 
 				//
@@ -652,7 +653,7 @@ Static Function DimepFuncionario()
 			//
 			If lFerAfast //Everson - 27/10/2021. Chamado 62721.
 
-				nSitFol     := 13 // GERAL
+				//nSitFol     := 13 // GERAL Ticket: 66952  - Adriano Savoine - 15/02/2022
 				nSitFolMult := IIF(nSitFolMult==11,15,nSitFolMult) // Afastamento   
 				cDataIni    := Substr(DToC(STOD(DTOS(aDFerAfst[2]))),1,6) + cValToChar(YEAR(aDFerAfst[2]))
 				cDataIni    := IIF(Alltrim(cDataIni) <> '',cValToChar(YEAR(aDFerAfst[2])) + '-' + Substr(cDataIni,4,2)+ '-' + Substr(cDataIni,1,2) +  "T" + '00:00:00', cDataIni)
@@ -730,7 +731,7 @@ Static Function DimepFuncionario()
 			EndIf
 			   
 			// *** INICIO VERIFICA SITUACAO PESSOA AFASTAMENTO OU FERIAS *** //
-			If nSitFol <> 23 // @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
+			If nSitFol < 23 // Ticket: 66952  - Adriano Savoine - 15/02/2022
 				If TRC->CD_SITUACAO_PESSOA <> nSitFol
 					lFuncSitFolha := .T.
 
@@ -761,6 +762,31 @@ Static Function DimepFuncionario()
 
 			EndIf
 			
+			// *** INICIO VERIFICA SITUACAO PESSOA CONTRATO SUSPENSO COM AFASTAMENTO, LICENÇA MATERNIDADE *** //
+			If nSitFol == 23 .OR. nSitFol == 24 //Ticket: 66952  - Adriano Savoine - 15/02/2022
+
+				SqlVSitPessoaDimep(nCdPessoa)
+				
+				While TRD->(!EOF()) 
+					dDtIniDimep        := IIF(DToC(TRD->DT_INI) == '01/01/00' .AND. Alltrim(cDataIni) == '',CToD("  /  /  "),TRD->DT_INI)                      
+					dDtFinDimep        := IIF(DToC(TRD->DT_FIN) == '01/01/00',CToD("  /  /  "),TRD->DT_FIN)
+					If TRD->CD_SITUACAO_PESSOA <> nSitFolMult                                    .OR. ;
+						dDtIniDimep             <> STOD(STRTRAN(SUBSTRING(cDataIni,1,10),'-','')) .OR. ;
+						dDtFinDimep             <> STOD(STRTRAN(SUBSTRING(cDataFin,1,10),'-','')) 
+					
+						lFuncSitFolha := .T. 
+
+					EndIf  
+					
+					TRD->(DbSkip())
+
+				End
+
+				TRD->(DbCloseArea()) 
+
+			EndIf
+
+
 			// *** INICIO VERIFICA SITUACAO CREDENCIAL *** //
 
 			//Everson - 27/10/2021. Chamado 62721.
@@ -1138,10 +1164,25 @@ Static Function AlterFuncDimep()
 				
 				EndIf
 
+				// *** Inicio Contrato Suspenso com Afastamento *** //
+
+				If nSitFol == 23 .OR. nSitFol == 24   //Ticket: 66952  - Adriano Savoine - 15/02/2022
+				    
+				    //ALTERA SITUACAO DA FOLHA
+				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+				    
+				    //Integrar situação de pessoa multipla
+					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
+				    
+					//Integra Historico da Pessoa
+					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
+				
+				EndIf
+
 			EndIf
 			
-			// *** Inicio Quando Status Ausencia *** //
-			If TRC->CD_SITUACAO_PESSOA ==  13  //Ausencia
+			// *** Inicio Quando Status Ausencia *** // Ticket: 66952  - Adriano Savoine - 15/02/2022
+			If TRC->CD_SITUACAO_PESSOA == 13 .OR. TRC->CD_SITUACAO_PESSOA ==  23 .OR. TRC->CD_SITUACAO_PESSOA ==  24
 		                         
 		        // *** Inicio AusenciaXTrabalhando *** //
 				If nSitFol == 11 
@@ -1158,7 +1199,7 @@ Static Function AlterFuncDimep()
 				EndIf
 
 				// *** Inicio AusenciaXDemitido *** //
-				If nSitFol == 12 .or. nSitFol == 23 // @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
+				If nSitFol == 12  // @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
                                     
 				    //Deleta Pessoa Multipla
 					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
@@ -1173,6 +1214,23 @@ Static Function AlterFuncDimep()
 				
 				// *** Inicio AusenciaXAAfastado ou AusenciaXFerias *** //
 				If nSitFol == 13 
+				
+					//Deleta Pessoa Multipla
+					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
+				    
+				    //ALTERA SITUACAO DA FOLHA
+				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
+				    
+				    //Integrar situação de pessoa multipla
+					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
+				    
+					//Integra Historico da Pessoa
+					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
+				
+				EndIf
+
+				// *** Inicio Contrato Suspenso e Afastado *** // Ticket: 66952  - Adriano Savoine - 15/02/2022
+				If nSitFol == 23 .OR. nSitFol == 24 
 				
 					//Deleta Pessoa Multipla
 					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
@@ -1802,7 +1860,8 @@ Return cEmpresa
 Static Function Sqlfuncionario(cEmpresa) 
 
 	TRB := GetNextAlias()
-
+	
+	//@history Ticket: 66952  - Adriano Savoine - 15/02/2022 - Ajustado a query funcionario para atualizar os status apos a sua efetivação e ajustado novos status no dimep 24 e 25 como multiplos e ajustada a integração dos mesmos.
 	cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
 
 	cQuery += "				SELECT PFUNC.CODCOLIGADA,
@@ -1840,20 +1899,15 @@ Static Function Sqlfuncionario(cEmpresa)
 	//cQuery += "				AND PFUNC.CODSITUACAO                               <> ''Z'' // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 	cQuery += "				AND PFUNC.CODHORARIO                                <> ''A001''
 	//Ticket: TI - 03/02/2022 - Adriano Savoine
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE() - 1 
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL)
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine INICIO
-	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE() - 2   
-	cQuery += "				OR  PFUNC.RECMODIFIEDON >= GETDATE() - 2)
-	cQuery += "				OR (PPESSOA.RECMODIFIEDON >= GETDATE() - 2
-	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 2))
+	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE()   
+	cQuery += "				OR  PFUNC.RECMODIFIEDON >= GETDATE() )
+	cQuery += "				OR (PPESSOA.RECMODIFIEDON >= GETDATE() - 1
+	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
 	cQuery += "				AND PFUNC.PISPASEP                                  NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
-
-	// => DEBUG inibir
-	//cQuery += " AND PPESSOA.CPF IN (''40999310801'',''32016494816'',''31451999860'')
-	//cQuery += " AND PPESSOA.CPF= ''29155451896'' "
-	// => DEBUG inibir
 
 	cQuery += "			ORDER BY PPESSOA.CPF
 
