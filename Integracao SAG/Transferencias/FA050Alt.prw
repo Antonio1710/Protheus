@@ -1203,6 +1203,7 @@ User Function ChkCodBar(cCodBar)
 			cQuery := " SELECT E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, E2_NOMFOR
 			cQuery += " FROM " + cX2ARQUIVO + " (NOLOCK)
 			cQuery += " WHERE E2_CODBAR='"+cCodBar+"' 
+			cQuery += " AND E2_CODBAR<>''
 			cQuery += " AND D_E_L_E_T_=''
 
 			tcQuery cQuery new Alias "Work"
