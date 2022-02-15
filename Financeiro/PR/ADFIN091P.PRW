@@ -22,6 +22,10 @@ User Function ADFIN091P() // U_ADFIN091P()
 	//Fecha o ambiente.
 	RpcClearEnv()
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Envio de relatório com dados de contratos')
+    //
+
 Return Nil
 /*/{Protheus.doc} geraRel
     Processa a geração do relatório

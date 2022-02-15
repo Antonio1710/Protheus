@@ -36,6 +36,10 @@ User Function ADFIN094R() // U_ADFIN094R()
     //
     RestArea(aArea)
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de alteração de limite de crédito')
+
+
 Return Nil
 /*/{Protheus.doc} scptSql
     Processa a geração do relatório.

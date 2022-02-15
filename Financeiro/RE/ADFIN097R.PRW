@@ -37,6 +37,10 @@ User Function ADFIN097R() // U_ADFIN097R()
 
     //
     RestArea(aArea)
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de manutenção de cadastros de clientes')
+
     
 Return Nil
 /*/{Protheus.doc} gerRel

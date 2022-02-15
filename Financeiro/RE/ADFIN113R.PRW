@@ -24,6 +24,11 @@ User Function ADFIN113R() // U_ADFIN113R()
     //
     Processa({|| processRel(MV_PAR01, MV_PAR02, MV_PAR03, MV_PAR04, MV_PAR05, MV_PAR06, MV_PAR07, MV_PAR08, MV_PAR09) })
 
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de apuração de desconto financeiro por NCC')
+    //
+
 Return Nil
 /*/{Protheus.doc} processRel
     Função processa o relatório.

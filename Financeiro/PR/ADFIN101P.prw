@@ -82,6 +82,11 @@ User Function ADFIN101P()
 		lRldDlg := .F.
 		U_ADFIN101P()
 	ENDIF
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de visualização de Pagamentos')
+	//
+	
 Return 
 
 /*/{Protheus.doc} User Function fPnPagto

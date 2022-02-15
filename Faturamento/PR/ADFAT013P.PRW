@@ -15,6 +15,10 @@ User Function ADFAT013P()
 
 	msAguarde( {|| fProcessa() },"Processando","Processandos..." )
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa importador do txt EDI para todos os clientes usando schedules')
+	//
+
 RETURN lRet
 
 Static Function fProcessa()

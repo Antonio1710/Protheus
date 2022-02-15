@@ -26,6 +26,10 @@ User Function ADFIS043R() // U_ADFIS043R()
 
 	RestArea(aArea)
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel de Conferência de escrituração Fiscal')
+
+
 Return
 
 /*/{Protheus.doc} Static Function RCONFESCR

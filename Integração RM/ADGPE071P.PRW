@@ -38,8 +38,14 @@ User Function ADGPE071P()
 	Private oNo 			:=	LoadBitmap( GetResources(), "LBNO")
 	Private bOk				:= {|| nRetorno := fOk(),odlg:End()}
 	
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Seleciona novos monitores')
+
+	
 	Default cZEDCod			:= ""
 	//Default cZE2Reg			:= ""
+
+	
 
 	aHeaderBco 	:= MontCabec(cCampos, , 1)
 	aColsBco	:= MontDados(cZEDCod)

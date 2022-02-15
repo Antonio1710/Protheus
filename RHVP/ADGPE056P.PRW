@@ -56,6 +56,10 @@ User Function ADGPE056P() // U_ADGPE056P()
     //Fecha o ambiente.
 	RpcClearEnv()
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de informações de funcionários')
+
+
 Return Nil
 
 /*/{Protheus.doc} processa

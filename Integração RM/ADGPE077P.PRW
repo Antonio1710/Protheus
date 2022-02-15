@@ -20,5 +20,9 @@ User function ADGPE077P()
     
     U_ADGPE076P(1, cTitle)
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de Coleta Kits Frango (Expedição) ')
+
+
 return
 

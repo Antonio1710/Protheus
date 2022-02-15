@@ -28,6 +28,11 @@ User Function ADFIN111R()
   Endif
 
   RestArea(aArea)
+
+  //
+  U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de Análise de Média de Atraso e Perfil de Pagamento')
+
+
 Return nil
 
 /*/{Protheus.doc} User Function nomeFunction

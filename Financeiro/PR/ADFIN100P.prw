@@ -134,6 +134,11 @@ User Function ADFIN100P(cRotina)
 		ZBE->ZBE_PARAME := "Bordero inicial/final " + cBorIni + " / " + cBorFim
 	ZBE->( msUnLock() )
     
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'geração do arquivo de cnab de pagamentos')
+	//
+
 Return lGera
 
 /*/{Protheus.doc} User Function CHKCNAB

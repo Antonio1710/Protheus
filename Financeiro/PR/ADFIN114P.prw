@@ -68,6 +68,10 @@ User Function ADFIN114P(cRede)
 	EndIf
 
     conout("NEWVLACU - FIM - " + TIME())
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'função para gerar a data e valor do maior acumulo')
+
         
 Return
 

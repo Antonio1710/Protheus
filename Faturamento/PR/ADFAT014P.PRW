@@ -13,6 +13,8 @@ user function ADFAT014P()
     Local cQry      := ""
     Local aArea     := getArea()
     Local cDocFat   := ""
+
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Inicializador padrão do campo C5_XNFECTE')
     
     cDocFat := SC5->C5_NOTA
     

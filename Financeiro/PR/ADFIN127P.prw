@@ -40,6 +40,10 @@ function u_ADFIN127P( aParms, nE1Id, lRpc )
     cEmp := Nil
     cFil := Nil
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'agamentos recebidos via Super Link Cielo')
+
+
 return
 
 static function Execute()

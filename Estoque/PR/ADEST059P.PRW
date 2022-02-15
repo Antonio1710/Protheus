@@ -22,6 +22,9 @@ Static Function ModelDef()
  Local oModel		:= MPFormModel():New("mdlADEST059P",, {|| .T.})
  Local oStrutZE2	:= FWFormStruct(1,"ZE2")
  
+ U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de manutenção dos cadastros PGA')
+ 
+
  oModel:SetDescription("..:: Cadastro Mercado ::..")
  
  // Cabeçalho ZT3 (Pedidos)

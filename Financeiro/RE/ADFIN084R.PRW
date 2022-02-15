@@ -65,6 +65,10 @@ User Function ADFIN084R() // U_ADFIN084R()
 
 	//
 	RestArea(aArea)
+
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Relatório Faturamento x Kg.')
+
 	
 Return Nil
 /*/{Protheus.doc} grDados

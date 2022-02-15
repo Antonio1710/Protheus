@@ -30,6 +30,10 @@ User Function ADFIN110R()
     dDtFim := aRet[2]
 
     MsAguarde({|| gerRel() },"Função ADFIN110R ","Gerando relatório... ")
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de Cambio')
+    //
     
 Return Nil
 

@@ -63,6 +63,10 @@ user function ADGPE076P(nTipo, cTitle)
     
     Private nOpcao       := nTipo
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de retirada de kits na expedição e portaria (Frango)')
+
+
     Default cTitle      := "..:: Tela de Coleta Kits Frango ("+ iif(nOpcao==1,"Expedição","Portaria") +") ::.."
 
     cLayCSS := "QFrame{ margin-top: 10px; } TButton{ margin-bottom: 7px; } TSay{ margin-bottom: 7px; margin-top: 7px; }"    

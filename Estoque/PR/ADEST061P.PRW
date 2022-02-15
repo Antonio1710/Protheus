@@ -21,6 +21,9 @@
 Static Function ModelDef()
  Local oModel		:= MPFormModel():New("mdlADEST061P",, {|| .T.})
  Local oStrutZE3	:= FWFormStruct(1,"ZE3")
+
+ U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de manutenção dos cadastros PGA2')
+
  
  oModel:SetDescription("..:: Cadastro Mercado ::..")
  

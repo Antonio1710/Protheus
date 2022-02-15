@@ -64,6 +64,9 @@ User Function ADEST067P(cZEDCod)
 	    DbCloseArea("Query1")
 	EndIF
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para seleção de países')
+
+
 Return nRetorno
 
 Static Function fOk(cZEDCod)

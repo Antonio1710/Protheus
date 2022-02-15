@@ -210,6 +210,10 @@ User Function ADEEC013R() // U_ADEEC013R()
     IF FErase( "\SPOOL\"+cRelImp+".rel" ) == -1
     EndIf
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Etiqueta de exportação')
+
+
 Return
 
 Static Function fImpCabec()

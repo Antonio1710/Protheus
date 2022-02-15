@@ -23,6 +23,10 @@ User Function ADFIS045R() // U_ADFIS045R()
     //Fecha o ambiente.
 	RpcClearEnv()
 
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de CT-es cancelados e escriturados')
+    //
+
 Return Nil
 /*/{Protheus.doc} gerRel
     (long_description)

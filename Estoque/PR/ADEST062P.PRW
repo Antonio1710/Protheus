@@ -74,6 +74,10 @@ User Function ADEST062P(cZE1Reg, cZEDReg)
 		EndIF
 	
 	endif
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),' Rotina para seleção de Requisitos de Mercado')
+
+
 Return nRetorno
 
 Static Function fOk(cZE1Reg, cZEDReg)

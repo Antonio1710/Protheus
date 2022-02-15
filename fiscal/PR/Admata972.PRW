@@ -127,6 +127,10 @@ User Function ADMATA972(lAutomato)
 	dbSetOrder(aSave[2])
 	dbGoto(aSave[3])
 
+	//
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'alteração para não validar a descontinuidade')
+
+
 Return
 
 /*
