@@ -80,10 +80,12 @@ User Function FA050Alt()
 	Local lEnvWFCA  := SuperGetMv( "MV_#FA5ENV" , .F. , .T. ,  )
 
 	// @history ticket   67909 - Fer Macieira - 15/02/2022 - Pagamento GTA - SC
-	lRet := u_ChkCodBar(M->E2_CODBAR)
-	If lRet
-		lRet := .f.
-		Return lRet
+	If !Empty(M->E2_CODBAR)
+		lRet := u_ChkCodBar(M->E2_CODBAR)
+		If lRet
+			lRet := .f.
+			Return lRet
+		EndIf
 	EndIf
 	//
 
