@@ -62,6 +62,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	//Debugar a rotina.
 	Private cDebugCNPJ	:= ""
 	Private lCalcPen	:= .T.
+	Private lGeraArq	:= .T.
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -159,8 +160,9 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 		PutMv("MV_#DTGACU",	DTOS(DATE()))
 		PutMv("MV_#GARQAC",	.F.)
 		
-		U_ADFIN003P() //Programa que gera o txt da cisp na pasta SYSTEM/cisp
-		
+		if lGeraArq
+			U_ADFIN003P() //Programa que gera o txt da cisp na pasta SYSTEM/cisp
+		endif
 	ENDIF	
 	
 	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
