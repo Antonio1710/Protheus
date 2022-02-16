@@ -20,6 +20,9 @@ User Function EECPEM44()
     Local aArea	    := GetArea()
     Local lRet      := .T.
     Local cUsrVend  := ''
+    Local aMsnEtq   := {}
+    Local nMsnEtq   := 0
+    Local nA        := 0
     Local oEST055P  := ADEST055P():New()
     //PGA - Chamada das validações da PGA em relação ao cadastro.
     //Local oEST055P  := nil
@@ -67,6 +70,21 @@ User Function EECPEM44()
             MsgAlert("[EECPEM44-01] - Pedidos de Venda faturados ou integrados ao eData não podem ser alterados!")
             lRet := .F.
         endif
+    endif
+
+    aMsnEtq := Separa(Alltrim(M->EE7_XETQUE),chr(10))
+    nMsnEtq := Len(aMsnEtq)
+
+    if nMsnEtq <= 10
+        for nA := 1 to nMsnEtq
+            if Len(Alltrim(aMsnEtq[nA])) > 30
+                MsgAlert("[EECPEM44-05] - O campo de emissão da etiqueta contém uma linha ("+ Cvaltochar(nA) +") como mais de 30 caracteres.")
+                lRet := .F.
+            endif
+        next nA
+    else
+        MsgAlert("[EECPEM44-05] - O campo de emissão da etiqueta não pode ter mais que 10 linhas.")
+        lRet := .F.
     endif
 
     // Tkt 8465 - LPM - Valida se o produto está cadastrado e vinculado ao cadastro PGA.
