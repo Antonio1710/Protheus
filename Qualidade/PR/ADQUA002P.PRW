@@ -562,7 +562,7 @@ Static Function fGrvSta(cPdVend, cInspId)
                 endif
             endif
         endif
-
+    endif
 return
 
 Static function fGetPV(cInspId)
