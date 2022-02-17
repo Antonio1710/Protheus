@@ -28,6 +28,7 @@
 	@history Chamado 8465  - Leonardo P. Monteiro    - 02/07/2021 - Ajustes no relacionamento do processo de exportação com os registros de inspeção da qualidade.
 	@history Chamado 8465  - Leonardo P. Monteiro    - 02/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
 	@history Chamado 19284 - Leonardo P. Monteiro    - 12/09/2021 - Ajustado o campo DL/Draft para edição, mesmo após roterização do pedido de exportação.
+	@history Chamado TI    - Leonardo P. Monteiro    - 16/02/2022 - Habilitar o campo de inspeção da qualidade para liberação manual.
 /*/
 // --------------------------------------------------------------------------------------------------------------
 Static Function Modeldef()
@@ -86,6 +87,7 @@ Static Function Modeldef()
 	oStruCab:SetProperty( "EE7_DTPROD"   , MODEL_FIELD_WHEN, {|| .T. } )
 	oStruCab:SetProperty( "EE7_XTARA"    , MODEL_FIELD_WHEN, {|| .T. } )
 	oStruCab:SetProperty( "EE7_XMODCS"   , MODEL_FIELD_WHEN, {|| .T. } )
+	oStruCab:SetProperty( "EE7_XINQLD"   , MODEL_FIELD_WHEN, {|| .T. } )
 	
 	//@history Chamado 19284 - Leonardo P. Monteiro    - 12/09/2021 - Ajustado o campo DL/Draft para edição, mesmo após roterização.
 	oStruCab:SetProperty( "EE7_XDLDRA"   , MODEL_FIELD_WHEN, {|| .T. } )

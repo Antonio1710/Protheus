@@ -16,6 +16,7 @@
     @history Chamado 63954 - Leonardo P. Monteiro    - 08/12/2021 - Erro na chamada da função procres().
     @history Chamado 18301 - Leonardo P. Monteiro    - 06/01/2022 - Grava o flag da inspeção da Qualidade.
     @history Chamado 18301 - Leonardo P. Monteiro    - 19/01/2022 - Conversão da rotina para execução em schedule.
+    @history Chamado 68365 - Leonardo P. Monteiro    - 16/02/2022 - Grava os dados de liberação no cabeçalho do PV e Ped Exportação.
     /*/
 
 user function ADQUA002(aEmpFil)
@@ -505,6 +506,8 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
                     
                 Next nAux2
 
+                // Grava os dados de liberação no cabeçalho do PV e Ped Exportação.
+                fGrvSta(cPdVend, cInspId)
                 cMens += cEOL+" -(Importado) Ped. Venda "+cPdVend+", ID Inspeção "+cInspId +": Inspeção importada."
 
             else
@@ -529,6 +532,38 @@ Static Function procRes(cErro, cMens, cResponse, cToken, dParData, nReproc)
     RestArea(aArea)
 
 Return Nil
+
+Static Function fGrvSta(cPdVend, cInspId)
+    DbselectArea("SC5")
+    SC5->(DbSetOrder(1))
+
+    u_GrLogZBE(Date(),TIME(),cUserName,"Inspeção da Qualidade Pedido de Venda "+ cPdVend +", ID "+ cInspId +" ","SIGAEEC","ADQUA002",;
+			"fGrvSta - Gravando o status no PV "+ cPdVend +" para emissão da NFe. ",ComputerName(),LogUserName())
+
+    IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
+        IF SC5->C5_NUM == cPdVend
+            
+            // Preenche o flag no PV e no Pedido de Exportação que as inspeções da qualidade estão integradas.
+            IF Reclock("SC5",.F.)
+                SC5->C5_XINSQLD := "1"
+                SC5->(MsUnlock())
+
+                if !Empty(SC5->C5_PEDEXP)
+                    
+                    DbSelectArea("EE7")
+                    EE7->(DbSetOrder(1))
+                    
+                    if EE7->(Dbseek(xFilial("EE7")+SC5->C5_PEDEXP,.F.))
+                        If Reclock("EE7",.F.)
+                            EE7->EE7_XINQLD := "1"
+                            EE7->(Msunlock())
+                        endif
+                    endif
+                endif
+            endif
+        endif
+
+return
 
 Static function fGetPV(cInspId)
     Local cRet := ""
@@ -757,28 +792,6 @@ Static Function grvDados(cInspId, cMonQua, cAprQua, dDatApr, cHorApr, cDtRot, cR
     IF SC5->(Dbseek(xFilial("SC5")+cPdVend,.F.))
         IF SC5->C5_NUM == cPdVend
             
-            // Preenche o flag no PV e no Pedido de Exportação que as inspeções da qualidade estão integradas.
-            IF Reclock("SC5",.F.)
-                SC5->C5_XINSQLD := "1"
-                SC5->(MsUnlock())
-
-                if !Empty(SC5->C5_PEDEXP)
-                    
-                    DbSelectArea("EE7")
-                    EE7->(DbSetOrder(1))
-                    
-                    if EE7->(Dbseek(xFilial("EE7")+SC5->C5_PEDEXP,.F.))
-                        If Reclock("EE7",.F.)
-                            EE7->EE7_XINQLD := "1"
-                            EE7->(Msunlock())
-                        endif
-                    endif
-                endif
-
-
-            endif
-
-
             //Faz a correção na variável vinda do aplicativo.
             //Revisar depois com o Everson.
             
