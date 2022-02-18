@@ -8,14 +8,16 @@
     @since 99/99/9999
     @version 01
     @history Chamado n. TI - Leonardo P. Monteiro - 09/02/2022 - Retirada da função U_ADINF009P.
+	@history Chamado n. TI - Fernando Sigoli      - 18/02/2022 - Altera função AllUsser para FWSFALLUSERS
 
 /*/
 USER FUNCTION TRAZMENU()
 
-	LOCAL aAllUser	:= AllUsers()
-	LOCAL aGrupos	:= AllGroups() 
-
-
+	Local  aAllUser	:= FWSFALLUSERS() //https://tdn.totvs.com/display/public/PROT/FWSFALLUSERS
+	//Local  aGrupos	:= FWSFAllGrps()  //https://tdn.totvs.com/display/framework/FWSFallGrps
+	Local  nZ := 0
+	Local  ex := 0
+	Local  nX := 0
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 	
@@ -51,8 +53,6 @@ USER FUNCTION TRAZMENU()
 			NEXT nX 
 
 			IF !lTemMenu
-
-				//AutoGrLog(aAllUser[nz][1][1]+";"+aAllUser[nz][1][2]+";"+padr(cEmpresas,200)+";"+aAllUser[nz][1][12]+";"+aAllUser[nz][1][14]+";"+DTOC(aAllUser[nz][1][16])+";"+aAllUser[nz][2][3]+";;")
 				  AutoGrLog(aAllUser[nz][1][1]+";"+aAllUser[nz][1][2]+";"+padr(cEmpresas,200)+";"+aAllUser[nz][1][12]+";"+aAllUser[nz][1][14]+";"+DTOC(aAllUser[nz][1][16])+";"+aAllUser[nz][2][3]+";"+Substr(aMenus[nX],1,2)+";"+Substr(aMenus[nX],3,1)+";"+Substr(aMenus[nX],4,100)+";"+ AALLUSER[nz][1][22]+";")
 				cFileLog := "LOG_MENU.TXT" 
 
