@@ -9,7 +9,7 @@ Static cSGBDBI := ""
 Static lErroBI := .f.
 //
 
-/*/{Protheus.doc} User Function ADFIN050R
+/*/{Protheus.doc} User Function ADFIN050R (Restore do fonte anterior.)
 	Relatorio de Fluxo de Caixa com balizador
 	@type  Function
 	@author Ricardo Lima
@@ -36,19 +36,17 @@ Static lErroBI := .f.
 	@history Chamado 056357 - FWNM            - 17/03/2020 - || OS 057787 || FINANCAS || DRIELE || 8376 || FLUXO DE CAIXA  
 	@history Chamado T.I    - SIGOLI          - 25/03/2020 - Power BI - Ajuste no insert, faltado virgula , error log
 	@history Chamado 059892 - Everson		  - 23/07/2020 - Tratamento para no retorno do número da semana.
-	@history ticket   10451 - Fernando Macieira    - 05/03/2021 - Retirar restrição para E5_BANCO do código CX1, manter apenas para P98 e Vazio
-	@history ticket   10451 - Fernando Macieira    - 11/03/2021 - TIPODOC = TE entrar no relatório
-	@history ticket   11397 - Fernando Macieira    - 23/03/2021 - Inclusão de Informações no relatório fluxo de caixa
-	@history ticket   10451 - Fernando Macieira    - 25/03/2021 - Visão Previsão, mudar para saldo > 0, tirar inner join se5, vencimento real (mudar!), checar com atenção aquele Where com E2_BANCO (qual o impacto), data do borderô (se branco, buscar a última na tabela SEA)
-	@history ticket   11767 - Fernando Macieira    - 31/03/2021 - Classificação Agrupador - O relatório está com erro quando o tipo de título (E2_TIPO = FT) - A fatura 242320 está agrupando como Milho, porém deveria agrupar como FARELO DE SOJA, visto que o agrupador do produto predominante é FARELO
-	@history ticket   10451 - Fernando Macieira    - 05/04/2021 - Agrupador Investimentos (código = 025) para fatura, Abrir Coluna com nome da Empresa (ADORO, CERES, RNX2, etc) e Acrescentar pergunta Finalidade do Relatório: (opções Previsão, Realizado, Análises), Incluir esta informação no relatório
-	@history ticket   10451 - Fernando Macieira    - 22/04/2021 - Relatório, Visão = Previsto - Trazer títulos tipo = PA somente quando NÃO tiver SE5 para o registro.
-	@history ticket   10451 - Fernando Macieira    - 03/05/2021 - Adaptar FIN010 para SGFIN010 dentro do banco DADOSADV
-	@history ticket   14822 - Fernando Macieira    - 10/06/2021 - Despesa classificada errada
+	@history ticket   10451 - Fernando Maciei - 05/03/2021 - Retirar restrição para E5_BANCO do código CX1, manter apenas para P98 e Vazio
+	@history ticket   10451 - Fernando Maciei - 11/03/2021 - TIPODOC = TE entrar no relatório
+	@history ticket   11397 - Fernando Maciei - 23/03/2021 - Inclusão de Informações no relatório fluxo de caixa
+	@history ticket   10451 - Fernando Maciei - 25/03/2021 - Visão Previsão, mudar para saldo > 0, tirar inner join se5, vencimento real (mudar!), checar com atenção aquele Where com E2_BANCO (qual o impacto), data do borderô (se branco, buscar a última na tabela SEA)
+	@history ticket   11767 - Fernando Maciei - 31/03/2021 - Classificação Agrupador - O relatório está com erro quando o tipo de título (E2_TIPO = FT) - A fatura 242320 está agrupando como Milho, porém deveria agrupar como FARELO DE SOJA, visto que o agrupador do produto predominante é FARELO
+	@history ticket   10451 - Fernando Maciei - 05/04/2021 - Agrupador Investimentos (código = 025) para fatura, Abrir Coluna com nome da Empresa (ADORO, CERES, RNX2, etc) e Acrescentar pergunta Finalidade do Relatório: (opções Previsão, Realizado, Análises), Incluir esta informação no relatório
+	@history ticket   10451 - Fernando Maciei - 22/04/2021 - Relatório, Visão = Previsto - Trazer títulos tipo = PA somente quando NÃO tiver SE5 para o registro.
+	@history ticket   10451 - Fernando Maciei - 03/05/2021 - Adaptar FIN010 para SGFIN010 dentro do banco DADOSADV
+	@history ticket   14822 - Fernando Maciei - 10/06/2021 - Despesa classificada errada
 	@history ticket   62700 - Leonardo P. Monteiro - 03/11/2021 - Correção da condição de classificação dos títulos como Intercompany. Adicionada a exceção quando os títulos forem do tipo "FOL".
 	@history ticket   64920 - Leonardo P. Monteiro - 07/11/2021 - Melhoria na classificação do tipo de despesas.
-	@history ticket   68289 - Fernando Macieira    - 16/02/2022 - Criação de critério Relatório Fluxo de Caixa
-	@history ticket   68310 - Fernando Macieira    - 16/02/2022 - Manutenção no relatório de Fluxo de Caixa
 /*/
 User Function ADFIN050R() // U_ADFIN050R()
 
@@ -299,8 +297,7 @@ Static Function PrintReport(oReport)
 		cQuery += "			ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
 		cQuery += "			ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
 		cQuery += "			ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			'' E5_TIPODOC " +cEOL
+		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC " +cEOL
 		cQuery += "	FROM "+ retsqlname("SE1") +" SE1 (NOLOCK)  " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE1.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE1.E1_NATUREZ=SED.ED_CODIGO " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
@@ -349,8 +346,7 @@ Static Function PrintReport(oReport)
 		cQuery += "			ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
 		cQuery += "			ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
 		cQuery += "			ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			'' E5_TIPODOC " +cEOL
+		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC " +cEOL
 		cQuery += "	FROM "+ retsqlname("SE2") +" SE2 (NOLOCK)  " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE2.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE2.E2_NATUREZ=SED.ED_CODIGO " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
@@ -411,9 +407,7 @@ Static Function PrintReport(oReport)
 		cQuery += "			ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
 		cQuery += "			ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
 		cQuery += "			ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			E5_TIPODOC " +cEOL
-
+		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC " +cEOL
 		cQuery += "	FROM "+ retsqlname("SE5") +" SE5 (NOLOCK) " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE5.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE5.E5_NATUREZ=SED.ED_CODIGO " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
@@ -472,9 +466,7 @@ Static Function PrintReport(oReport)
 		cQuery += "	ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
 		cQuery += "	ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
 		cQuery += "	ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "	ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "	'' E5_TIPODOC " +cEOL
-
+		cQuery += "	ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC " +cEOL
 		cQuery += "	FROM "+ retsqlname("SE2") +" SE2 (NOLOCK) " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE2.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE2.E2_NATUREZ=SED.ED_CODIGO " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
@@ -521,9 +513,7 @@ Static Function PrintReport(oReport)
 		cQuery += "	ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
 		cQuery += "	ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
 		cQuery += "	ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "	ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			'' E5_TIPODOC " +cEOL
-
+		cQuery += "	ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC " +cEOL
 		cQuery += "	FROM "+ retsqlname("SE1") +" SE1 (NOLOCK)  " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE1.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE1.E1_NATUREZ=SED.ED_CODIGO " +cEOL
 		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
@@ -1470,8 +1460,7 @@ Static Function PrintReport(oReport)
 			oSection:Cell("E5_RECPAG"):SetValue( (cAliasTop)->E5_RECPAG )
 			
 			//cEntSai := UpEntSai( (cAliasTop)->E5FILIAL, (cAliasTop)->E5_PREFIXO, (cAliasTop)->E5_NUMERO, (cAliasTop)->E5_PARCELA, (cAliasTop)->E5_TIPO, (cAliasTop)->E5_CLIFOR, (cAliasTop)->E5_LOJA)
-			//cEntSai := UpEntSai( (cAliasTop)->E5FILIAL, (cAliasTop)->E5_PREFIXO, (cAliasTop)->E5_NUMERO, (cAliasTop)->E5_PARCELA, (cAliasTop)->E5_TIPO, (cAliasTop)->E5_CLIFOR, (cAliasTop)->E5_LOJA, (cAliasTop)->GRPFIN_TIPO, nValor) // Chamado n. 055337 || OS 056759 || FINANCAS || DRIELE || 8376 || FLUXO DE CAIXAS - FWNM - 10/02/2020
-			cEntSai := UpEntSai( (cAliasTop)->E5FILIAL, (cAliasTop)->E5_PREFIXO, (cAliasTop)->E5_NUMERO, (cAliasTop)->E5_PARCELA, (cAliasTop)->E5_TIPO, (cAliasTop)->E5_CLIFOR, (cAliasTop)->E5_LOJA, (cAliasTop)->GRPFIN_TIPO, nValor, (cAliasTop)->E5_TIPODOC, (cAliasTop)->E5_RECPAG, cGrpPrd) // @history ticket   68289 - Fernando Macieira    - 16/02/2022 - Criação de critério Relatório Fluxo de Caixa 
+			cEntSai := UpEntSai( (cAliasTop)->E5FILIAL, (cAliasTop)->E5_PREFIXO, (cAliasTop)->E5_NUMERO, (cAliasTop)->E5_PARCELA, (cAliasTop)->E5_TIPO, (cAliasTop)->E5_CLIFOR, (cAliasTop)->E5_LOJA, (cAliasTop)->GRPFIN_TIPO, nValor) // Chamado n. 055337 || OS 056759 || FINANCAS || DRIELE || 8376 || FLUXO DE CAIXAS - FWNM - 10/02/2020
 			oSection:Cell("ENTSAI"):SetValue( cEntSai )
 			
 			oSection:Cell("CNPJ"):SetValue( cCNPJ )
@@ -1909,17 +1898,14 @@ Return cClassFil
 	@version 01
 	@history Chamado 051865
 /*/
-//   cEntSai := UpEntSai( (cAliasTop)->E5FILIAL, (cAliasTop)->E5_PREFIXO, (cAliasTop)->E5_NUMERO, (cAliasTop)->E5_PARCELA, (cAliasTop)->E5_TIPO, (cAliasTop)->E5_CLIFOR, (cAliasTop)->E5_LOJA, (cAliasTop)->GRPFIN_TIPO, nValor, (cAliasTop)->E5_TIPODOC, (cAliasTop)->E5_RECPAG, cGrpPrd) // @history ticket   68289 - Fernando Macieira    - 16/02/2022 - Criação de critério Relatório Fluxo de Caixa 
-Static Function UpEntSai( cE5_FILIAL, cE5_PREFIXO, cE5_NUMERO, cE5_PARCELA, cE5_TIPO, cE5_CLIFOR, cE5_LOJA, cGRPFIN_TIPO, nValor, cE5_TIPODOC, cE5_RECPAG, cGrpPrd )
+Static Function UpEntSai( cE5_FILIAL, cE5_PREFIXO, cE5_NUMERO, cE5_PARCELA, cE5_TIPO, cE5_CLIFOR, cE5_LOJA, cGRPFIN_TIPO, nValor )
 
-	Local cEntSai    := "MOVIMENTO BANCARIO"
-	Local aAreaSE1   := SE1->( GetArea() )
-	Local aAreaSE2   := SE2->( GetArea() )
-	Local cCodGrpPrd := GetMV("MV_#GRPPRD",,"019|022|026")
-	Local cCodGrpSAI := GetMV("MV_#GRPSAI",,"008|009|016")
+	Local cEntSai := "MOVIMENTO BANCARIO"
+	Local aAreaSE1 := SE1->( GetArea() )
+	Local aAreaSE2 := SE2->( GetArea() )
 
 	if cGRPFIN_TIPO == "2"
-		cEntSai := "NAO OPERACIONAL"
+		cEntSai := "NÃO OPERACIONAL"
 	ELSE
 		// Contas a Receber - Entrada
 		SE1->( dbSetOrder(1) ) // E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO
@@ -1943,29 +1929,6 @@ Static Function UpEntSai( cE5_FILIAL, cE5_PREFIXO, cE5_NUMERO, cE5_PARCELA, cE5_
 		EndIf
 	
 	Endif
-
-	// @history ticket   68310 - Fernando Macieira    - 16/02/2022 - Manutenção no relatório de Fluxo de Caixa
-	If AllTrim(cGrpPrd) == "X"
-		cEntSai := "ENTRADA"
-	EndIf
-
-	If AllTrim(cGrpPrd) $ AllTrim(cCodGrpPrd)
-		cEntSai := "NAO OPERACIONAL"
-	EndIf
-
-	If AllTrim(cGrpPrd) $ AllTrim(cCodGrpSAI)
-		cEntSai := "SAIDA"
-	EndIf
-
-	//
-
-	// @history ticket   68289 - Fernando Macieira    - 16/02/2022 - Criação de critério Relatório Fluxo de Caixa
-	If AllTrim(cE5_TIPODOC) == "ES" .and. AllTrim(cE5_RECPAG) == "R"
-		cEntSai := "SAIDA"
-	ElseIf AllTrim(cE5_TIPODOC) == "ES" .and. AllTrim(cE5_RECPAG) == "P"
-		cEntSai := "ENTRADA"
-	EndIf
-	//
 	
 	RestArea( aAreaSE1 )
 	RestArea( aAreaSE2 )
