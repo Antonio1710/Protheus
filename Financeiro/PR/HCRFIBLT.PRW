@@ -3534,7 +3534,7 @@ User Function GeraBlPV(cEmpAnt, cFilAnt, cNumPV)
 	endif
 
 	// @history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
-	If Empty(SC5->C5_XWSBOLG)
+	If AllTrim(SC5->C5_XWSBOLG) == "S"
 		Return
 	EndIf
 	//
