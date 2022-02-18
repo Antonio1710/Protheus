@@ -17,6 +17,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 16/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
 /*/
 User Function ADFI118()
 
@@ -232,6 +233,7 @@ Static Function fValidGrid(oModel)
     Local cItem      := ""
     Local cDespFavor := GetMV("MV_#RMFAVO",,"ACORDO#PERITO") // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     Local cCodFav    := ""
+    Local cZHCCPFCGC := ""
     //Local cPictVlr   := PesqPict('ZHB', 'ZHB_VALOR')
  
     // N. Processo Trabalhista obrigatório
@@ -339,7 +341,10 @@ Static Function fValidGrid(oModel)
                             Exit
                         Else
                             // Checo se o favorecido está amarrado a este processo
-                            If AllTrim(cProcesso) <> AllTrim(ZHC->ZHC_PROCES)
+                            cZHCCPFCGC := ZHC->ZHC_CPFCGC
+                            ZHC->( dbSetOrder(1) ) // ZHC_FILIAL + ZHC_CPFCGC + ZHC_PROCES
+                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cZHCCPFCGC+cProcesso) )
+                            //If AllTrim(cProcesso) <> AllTrim(ZHC->ZHC_PROCES) // @ticket 18141 - Fernando Macieira - 16/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
                                 lRet := .f.
                                 Alert("Este favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não está autorizado para este processo! Verifique...")
                                 Exit
