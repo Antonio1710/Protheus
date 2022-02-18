@@ -106,7 +106,6 @@ User Function ADEDA003P(nRec, lExclui)
 	Local _aArea       		:= GetArea()
 	Local cOP				:= ""
 	Local cOPProduto		:= ""
-	//Local cErro				:= ""
 	Local cData				:= ""
 
 	Private _dData			:= DDATABASE
