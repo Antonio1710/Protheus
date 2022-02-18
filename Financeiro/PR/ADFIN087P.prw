@@ -18,13 +18,13 @@ Static cTitulo  := "Gera boleto de adiantamento do PV"
 Static lAuto    := .t.
 
 /*/{Protheus.doc} User Function ADFIN087P
-  Job para gerar adiantamento/boleto cobrança de pedidos de vendas de adiantamento
-  @type  Function
-  @author FWNM
-  @since 24/04/2020
-  @version version
-  @chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
-  @history chamado 056247 - FWNM 					- 21/05/2020 - Error log apenas via execauto na criação do arquivo e inclusao de ZBE em diversos pontos
+	Job para gerar adiantamento/boleto cobrança de pedidos de vendas de adiantamento
+	@type  Function
+	@author FWNM
+	@since 24/04/2020
+	@version version
+	@chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+	@history chamado 056247 - FWNM 					- 21/05/2020 - Error log apenas via execauto na criação do arquivo e inclusao de ZBE em diversos pontos
 	@history chamado 056247 - FWNM 					- 22/05/2020 - Geração do RA com D+1
 	@history chamado 056247 - FWNM 					- 25/05/2020 - Geração do RA com valor total do PV com impostos (pré-nota)
 	@history chamado 056247 - FWNM 					- 26/05/2020 - Registrar boleto no banco com data do servidor
@@ -38,9 +38,10 @@ Static lAuto    := .t.
 	@history ticket 102     - FWNM 					- 27/08/2020 - WS BRADESCO
 	@history ticket 1429    - FWNM 					- 11/09/2020 - Bloquear registro de boleto para pedido de exportação
 	@history ticket 745     - FWNM 					- 17/09/2020 - Implementação título PR
-	@history ticket TI      - FWNM          - 24/02/2021 - Gerar boleto apenas para PV tipo N
-	@history ticket TI      - FWNM          - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
-	@history ticket 515     - Rodrigo Mello - 17/01/2022 - Implementação PIX
+	@history ticket TI      - FWNM                  - 24/02/2021 - Gerar boleto apenas para PV tipo N
+	@history ticket TI      - FWNM                  - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
+	@history ticket 515     - Rodrigo Mello         - 17/01/2022 - Implementação PIX
+	@history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
 /*/
 User Function ADFIN087P()
 
@@ -161,17 +162,21 @@ User Function ADFIN087P()
 
 						// Gera Boleto PDF
 						SC5->( dbSetOrder(1) ) // C5_FILIAL, C5_NUM, R_E_C_N_O_, D_E_L_E_T_
-						If SC5->( dbSeek(Work->(C5_FILIAL+C5_NUM)) ) .and. !SC5->C5_CONDPAG $ cCondPixLnk
+						If SC5->( dbSeek(Work->(C5_FILIAL+C5_NUM)) )
+						//If SC5->( dbSeek(Work->(C5_FILIAL+C5_NUM)) ) .and. !SC5->C5_CONDPAG $ cCondPixLnk // @history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
 
-							logZBE(SE1->E1_NUM + " esta acessando funcao GERABLPV para gerar o boleto em PDF e enviar o email")
-							u_GeraBlPV(cEmpAnt, cFilAnt, SC5->C5_NUM)
-							logZBE(SE1->E1_NUM + " saiu da funcao GERABLPV e se o email foi enviado com sucesso o campo C5_XWSBOLG foi flegado")
+							If !(SC5->C5_CONDPAG $ cCondPixLnk) // @history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
+								logZBE(SE1->E1_NUM + " esta acessando funcao GERABLPV para gerar o boleto em PDF e enviar o email")
+								u_GeraBlPV(cEmpAnt, cFilAnt, SC5->C5_NUM)
+								logZBE(SE1->E1_NUM + " saiu da funcao GERABLPV e se o email foi enviado com sucesso o campo C5_XWSBOLG foi flegado")
+							EndIf
 
 							Work->( dbSkip() )
 							Loop
-						else
-							Work->( dbSkip() )
-							Loop
+
+						//else
+						/*	Work->( dbSkip() )
+							Loop*/
 						EndIf
 	
 					EndIf
