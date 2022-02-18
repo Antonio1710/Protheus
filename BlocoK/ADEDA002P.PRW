@@ -22,7 +22,7 @@
 	@history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
 	@history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
 	@history ticket T.I   - Fernando Sigoli   - 18/02/2022 - Removido linha de ConOut
-
+ 
 /*/
 User Function ADEDA002P(cEmp,cFil,cJobFile)
 
