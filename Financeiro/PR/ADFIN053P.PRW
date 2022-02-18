@@ -27,7 +27,7 @@
     @history chamado 057682 - FWNM        - 04/05/2020 - || OS 059176 || FINANCAS || ANA || 8384 || LP - PAS
 	@history Chamado 058823 - Everson - 09/06/2020. Tratamento para envio de e-mail, quando não localizar conta contábil para conta bancária informada.
 	@history ticket 10979   - Leonardo P. Monteiro - 24/03/2021 - Tratativa do error.log na linha 381 quando o campo E2_MOEDA vem com valores preenchidos informando o tipo da moeda. Anteriormente esse campo vinha como 'nil'.
-	@history ticket 67861   - Fernando Macieira    - 18/02/2022 - Lançamentos do financeiro não integrados
+	@history ticket 67861   - Fernando Macieira    - 18/02/2022 - Lançamentos do financeiro não integrados (PA SAG)
 /*/
 User Function ADFIN053P(cOpc)
 
