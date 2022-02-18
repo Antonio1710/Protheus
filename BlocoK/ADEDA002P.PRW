@@ -21,6 +21,8 @@
     @history ticket 11639 - Fernando Macieira - 27/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	@history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
 	@history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
+	@history ticket T.I   - Fernando Sigoli   - 18/02/2022 - Removido linha de ConOut
+
 /*/
 User Function ADEDA002P(cEmp,cFil,cJobFile)
 
@@ -66,8 +68,6 @@ User Function ADEDA002P(cEmp,cFil,cJobFile)
 	PutGlbValue("ADEDA002P", "2" )
 	GlbUnLock()
 
-	ConOut(dtoc(Date())+" "+Time()+"Inicio Job Integrações Producao "+cJobFile)
-
 	cEmail		:= GetMV("MV_XEMAIL",.F.,"sistemas@adoro.com.br")
 	cExt		:= GetMv("MV_XEXT",.F.,"*.CSV")
 
@@ -83,7 +83,6 @@ User Function ADEDA002P(cEmp,cFil,cJobFile)
 
 	U_ADEDA006P() // INVENTARIO INCLUSÃO
 
-	ConOut(dtoc(Date())+" "+Time()+"Final do Job Integrações Producao "+cJobFile)
 									
 	PutGlbValue("ADEDA002P","3")
 	GlbUnLock()
@@ -105,14 +104,6 @@ Return()
 User Function ADEDA003P(nRec, lExclui)
 
 	Local _aArea       		:= GetArea()
-	Local _aAreaOPR
-	Local _lExporta	   		:= .F.
-	Local _lRet    	   		:= .T.
-	Local lHtml    		 	:= .T.
-	Local cAnexo   		    := ""
-	Local cMsgError 	    := ""
-	Local aErroLog			:= ""
-	Local cFilBack			:= cFilAnt
 	Local cOP				:= ""
 	Local cOPProduto		:= ""
 	//Local cErro				:= ""
@@ -330,7 +321,6 @@ Return _lRet
 /*/
 Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
 
-	Local cOP		:= ""
 	Local _dData	:= DDATABASE
 	Local cNum		:= GetNumSC2()
 	Local cItem   	:= "01"
@@ -526,7 +516,6 @@ Return lRet
 /*/
 Static Function ADEDA002PC(cErro, nRecOPR, cOp)
 
-	Local cSeek     := Nil
 	Local aAuto     := Nil
 	Local lRet      := .F.
 	Local aSavAre   := GetArea()
@@ -635,7 +624,6 @@ Return (lRet)
 /*/
 Static Function ADEDA002PD(cAliasOPR, cOp)
 
-	Local cSeek   := Nil
 	Local aAuto   := Nil
 	Local lRet    := .F.
 	Local aSavAre := GetArea()
@@ -718,10 +706,6 @@ Static Function ADEDA002PE(cAliasOPR, nQuant, nOpc, cOp)
 	Local aAuto   := Nil
 	Local aSavAre := SaveArea1({"SB1"})
 	Local lRet    := .F.
-	Local nLoop1
-	Local nLoop
-	Local nPos                                 
-
 	Local cFilOP  := (cAliasOPR)->FILIAL
 	Local cCod    := (cAliasOPR)->PRODUTO
 	Local cNum
@@ -829,11 +813,7 @@ User Function ADEDA004P(nRec)
 	// NECESSÁRIO READEQUAR PARA O LAYOUT DA TABELA DE INTEGRAÇÃO COM O EDATA
 
 	Local _aArea    := GetArea()
-	Local _lExporta := .F.
 	Local lRet      := .F.
-	Local lHtml     := .T.
-	Local cAnexo    := ""
-	Local cMsgError := ""
 	Local dData		:= DDATABASE
 	Local k
 
@@ -1016,11 +996,7 @@ User Function ADEDA005P(nRec, lEstorno)
 	// NECESSÁRIO READEQUAR PARA O LAYOUT DA TABELA DE INTEGRAÇÃO COM O EDATA
 
 	Local _aArea    := GetArea()
-	Local _lExporta := .F.
 	Local lRet   	:= .F.
-	Local lHtml     := .T.
-	Local cAnexo    := ""
-	Local cMsgError := ""
 	Local cProduto	:= ""
 	Local cProdTm	:= ""
 	Local k
@@ -1217,11 +1193,7 @@ User Function ADEDA006P(nRec, lInclui, lEstorno)
 	// NECESSÁRIO READEQUAR PARA O LAYOUT DA TABELA DE INTEGRAÇÃO COM O EDATA
 
 	Local _aArea    := GetArea()
-	Local _lExporta := .F.
 	Local lRet 		:= .F.
-	Local lHtml     := .T.
-	Local cAnexo    := ""
-	Local cMsgError := ""
 	Local cFilBkp 	:= cFilAnt
 	Local cCodAux	:= ""			/*Código do produto auxiliar para usar nos processamentos*/
 	Local cDocAux	:= ""			/*Código do documento auxiliar para usar nos processamentos*/
@@ -1959,7 +1931,6 @@ Static Function ADEDA002PG(cProduto, nQuant)
 	Local cEnd 		:= GetMv('MV_X_ENPRO',.F.,"PRODUCAO")
 	Local cAlEst  	:= GetMv('MV_X_ALPRO',.F.,"03")
 	Local cMensAux	:= ""
-	Local cQuery	:= ''
 
 	Local lRet    	:= .T.
 	Local lSaldo	:= .T.
