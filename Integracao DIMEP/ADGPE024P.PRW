@@ -39,7 +39,7 @@
 	@history Ticket  66111  - Everson         - 03/01/2022 - Tratamento para filial 0A.
 	@history Ticket: TI     - Adriano Savoine - 03/02/2022 - Ajustado para o Dimep verificar o demitido ao inves de 7 dias passamos para verificar 1 dia apena apos a data de demissão.
 	@history Ticket: 66952  - Adriano Savoine - 15/02/2022 - Ajustado a query funcionario para atualizar os status apos a sua efetivação e ajustado novos status no dimep 24 e 25 como multiplos e ajustada a integração dos mesmos
-	testet
+	@history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -160,7 +160,7 @@ User Function ADGPE024P(aParam) // U_ADGPE024P()
 
 			If Select("LS") > 0
 				
-				DimepRegraDeAcesso() // DEBUG VOLTAR 
+				DimepRegraDeAcesso()
 
 				carDados() //Everson - 21/10/2021. Chamado 62721.
 
@@ -216,7 +216,7 @@ Static Function carDados()
 		cHrIniAux := Time()
 		carFuncD(.F.)
 	Conout("ADGPE024P - ADGPE024P - Fim carregamento oFuDimep - Tempo " + ElapTime( cHrIniAux, Time() ))
-	
+
 	Conout("ADGPE024P - ADGPE024P - Início carregamento oCdNXC1") //Credenciais Dimep.
 		cHrIniAux := Time()
 		carCreden()
@@ -821,7 +821,7 @@ Static Function DimepFuncionario()
 		    EndIf	                            		
 
 			// FWNM - 22/070/2021 - TICKET 17021 - Checo se o tipo de tecnologia está diferente entre CREDENCIAL e CREDENCIAL_PESSOA
-			UpdTecno( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+			UpdTecno( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) ) 
 
 			// FWNM - 22/07/2021 - AQUI - ticket 17021 - Checo se existem 2 credenciais iguais com tecnologias diferentes
 			If !lFuncCredencial
@@ -830,7 +830,6 @@ Static Function DimepFuncionario()
 					lFuncCredencial := .t.
 				EndIf
 			EndIf
-			//
 
 			// FWNM - 19/07/2021 - AQUI - ticket 17021
 			If !lFuncCredencial
@@ -848,7 +847,6 @@ Static Function DimepFuncionario()
 				EndIf
 
 			EndIf
-			
 
 			TRC->(DbSkip())
 		
@@ -1901,12 +1899,20 @@ Static Function Sqlfuncionario(cEmpresa)
 	//Ticket: TI - 03/02/2022 - Adriano Savoine
 	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL)
+	
+	// @history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine INICIO
+	/*
 	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE()   
 	cQuery += "				OR  PFUNC.RECMODIFIEDON >= GETDATE() )
 	cQuery += "				OR (PPESSOA.RECMODIFIEDON >= GETDATE() - 1
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
+	*/
+	// DEBUG - INIBIR
+	//cQuery += " AND PPESSOA.CPF=''29582097841''
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
+	//
+
 	cQuery += "				AND PFUNC.PISPASEP                                  NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
 
 	cQuery += "			ORDER BY PPESSOA.CPF
@@ -2014,6 +2020,7 @@ Static Function carFuncD(lReload)
 			TX_CAMPO08 
 		FROM 
 			[DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
+		
 		ORDER BY
 			NU_MATRICULA
 	EndSQl
@@ -3868,6 +3875,7 @@ Static Function carCredXPes()
 	D_CREDP->(DbCloseArea())
 
 Return Nil
+
 /*/{Protheus.doc} carCredXPes
 	Função carrega férias.
 	Chamado 62721.
@@ -3923,6 +3931,7 @@ Static Function carFerias(cEmp)
 	D_FERIAS->(DbCloseArea())
 
 Return oHash
+
 /*/{Protheus.doc} carAfast
 	Função carrega afastamentos.
 	Chamado 62721.
