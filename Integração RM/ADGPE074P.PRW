@@ -80,7 +80,7 @@ Static Function ModelDef()
     aAdd( aZI5ZHK, {"ZHK_CODZI5", "ZI5_CODIGO"} )
 
     oModel:SetRelation("DETAIZHK", aZI5ZHK, ZHK->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
-    oModel:GetModel("DETAIZHK"):SetUniqueLine({"ZHK_CODZHH"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
+    oModel:GetModel("DETAIZHK"):SetUniqueLine({"ZHK_CODZHH","ZHK_NUMKIT"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
 
     oModel:setPrimaryKey({"ZI5_FILIAL","ZI5_CODIGO"})
 
@@ -88,31 +88,92 @@ return oModel
 
 
 Static Function viewDef()
- Local oView		:= Nil
- Local oModel		:= FWLoadModel("ADGPE074P")
- Local oStrutZI5	:= FWFormStruct(2,"ZI5",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZI5EXCLUS)  })
- Local oStrutZHK	:= FWFormStruct(2,"ZHK",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHKEXCLUS)  })
-  
- DbSelectArea("ZI5")
- 
- ZI5->(DbSetOrder(1))
-  
- oView	:= FWFormView():New()
- oView:setModel(oModel)
- 
- oView:GetProgressBar(.T.)
- 
- oView:addField("CABEC_ZI5",oStrutZI5, "CABECZI5")
- oView:AddGrid("DETAIL_ZHI",oStrutZHK, "DETAIZHK")
-   
- oView:createHorizontalBox("H_CABEC",30)
- oView:createHorizontalBox("H_DETAI",70)
- 
- 
- oView:setOwnerView("CABEC_ZI5","H_CABEC")
- oView:setOwnerView("DETAIL_ZHI","H_DETAI")
+    Local oView		:= Nil
+    Local oModel		:= FWLoadModel("ADGPE074P")
+    Local oStrutZI5	:= FWFormStruct(2,"ZI5",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZI5EXCLUS)  })
+    Local oStrutZHK	:= FWFormStruct(2,"ZHK",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHKEXCLUS)  })
+    
+    DbSelectArea("ZI5")
+    
+    ZI5->(DbSetOrder(1))
+    
+    oView	:= FWFormView():New()
+    oView:setModel(oModel)
+    
+    oView:AddUserButton( 'Inclui Kits', 'CLIPS', {|oView| BUTTON1()} )
+    
+    oView:GetProgressBar(.T.)
+    
+    oView:addField("CABEC_ZI5",oStrutZI5, "CABECZI5")
+    oView:AddGrid("DETAIL_ZHI",oStrutZHK, "DETAIZHK")
+    
+    oView:createHorizontalBox("H_CABEC",30)
+    oView:createHorizontalBox("H_DETAI",70)
+    
+    
+    oView:setOwnerView("CABEC_ZI5","H_CABEC")
+    oView:setOwnerView("DETAIL_ZHI","H_DETAI")
   
 Return oView
+
+Static Function BUTTON1()
+    Local nI        := 1
+    Local cNumKit   := ""
+	Local oModel		:= FWModelActive()
+	Local oModZI5		:= oModel:getModel("CABECZI5")
+    Local oModZHK		:= oModel:getModel("DETAIZHK")
+	//Local aSaveLines 	:= FWSaveRows()
+
+    cNumKit := U_ADGPE091P()
+
+    if !Empty(cNumKit)
+
+        For nI := 1 To oModZHK:Length()
+            oModZHK:GoLine( nI )
+
+            IF !oModZHK:IsDeleted() .AND. Alltrim(oModZHK:getValue("ZHK_NUMKIT"))$cNumKit
+                oModZHK:DeleteLine()
+            endif
+        next nI
+
+        cQuery := " SELECT ZHH_CODIGO, ZHH_DESCRI, ZHH_TIPO, ZHN_CODIGO "
+        cQuery += " FROM "+ Retsqlname("ZHN") +" ZHN INNER JOIN "+ Retsqlname("ZHM") +" ZHM ON ZHN.D_E_L_E_T_='' AND ZHM.D_E_L_E_T_='' AND ZHN.ZHN_FILIAL=ZHM.ZHM_FILIAL AND ZHN.ZHN_CODIGO=ZHM.ZHM_CODZHN " 
+        cQuery += "       INNER JOIN "+ Retsqlname("ZHH") +" ZHH ON ZHH.D_E_L_E_T_='' AND ZHH.ZHH_FILIAL=ZHM.ZHM_FILIAL AND ZHH.ZHH_CODIGO=ZHM.ZHM_CODZHH "
+        cQuery += " WHERE ZHN.D_E_L_E_T_='' AND ZHN_FILIAL='"+ xFilial("ZHN") +"' AND ltrim(rtrim(ZHN.ZHN_CODIGO)) IN ("+ cNumKit+"); "
+        
+        Tcquery cQuery ALIAS "QZHH" NEW
+
+        IF QZHH->(!EOF())
+            
+
+            while QZHH->(!EOF())
+                
+                oModZHK:goLine(oModZHK:Length())
+
+                if !Empty(oModZHK:getValue("ZHK_CODZHH"))
+                    oModZHK:addLine()
+                endif
+
+                oModZHK:LoadValue("ZHK_CODZI5"  ,oModZI5:GetValue("ZI5_CODIGO") )
+                oModZHK:LoadValue("ZHK_CODZHH"  ,QZHH->ZHH_CODIGO)
+                oModZHK:LoadValue("ZHK_DESCRI"  ,QZHH->ZHH_DESCRI)
+                oModZHK:LoadValue("ZHK_TIPO"    ,QZHH->ZHH_TIPO)
+                oModZHK:LoadValue("ZHK_NUMKIT"  ,QZHH->ZHN_CODIGO)
+                oModZHK:LoadValue("ZHK_OBRIGA"  ,"S")
+
+                QZHH->(DBSKIP())
+            enddo
+
+        Endif
+
+        IF select("QZHH") > 0
+            QZHH->(Dbclosearea())
+        endif
+
+        oModZHK:goLine(1)
+    endif
+
+return
 
 Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 	Local lRet          := .T.
@@ -120,10 +181,7 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 	Local oModZI5		:= oModel:getModel("CABECZI5")
     Local oModZHK		:= oModel:getModel("DETAIZHK")
 	Local aSaveLines 	:= FWSaveRows()
-    //Local cQuery        := ""
-    Local cValGrid      := ""
-    Local nI            := 1
-    Local cNumKit       := ""
+
 
     if oModelSit:cId == "DETAIZHK"
 
@@ -138,9 +196,10 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
                 oModZHK:LoadValue("ZHK_CODZHH"  ,ZHH->ZHH_CODIGO)
                 oModZHK:LoadValue("ZHK_DESCRI"  ,ZHH->ZHH_DESCRI)
                 oModZHK:LoadValue("ZHK_TIPO"    ,ZHH->ZHH_TIPO)
-                oModZHK:LoadValue("ZHK_NUMKIT"  ,ZHH->ZHH_NUMKIT)
+                //oModZHK:LoadValue("ZHK_NUMKIT"  ,ZHH->ZHH_NUMKIT)
                 oModZHK:LoadValue("ZHK_OBRIGA"  ,"S")
-
+                
+                /*
                 cNumKit := ZHH->ZHH_NUMKIT
                 
                 cValGrid    := Alltrim(xValue)
@@ -187,6 +246,7 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
                 IF select("QZHH") > 0
                     QZHH->(Dbclosearea())
                 endif
+                */
 
                 lRet := .T.
             else

@@ -103,7 +103,7 @@ Static Function ReportDef(oReport)
 	
 	TRFunction():New(oSection3:Cell("ZHL_VESTIA"),/*cId*/,"COUNT",oBreak3,/*cTitle*/,/*cPicture*/,/*uFormula*/,.F./*lEndSection*/,.F./*lEndReport*/,/*lEndPage*/)
 	
-	oSection2:SetTotalText({|| "Total Livres" })
+	oSection3:SetTotalText({|| "Total Livres" })
 
 Return
 
@@ -125,6 +125,7 @@ Static Function PrintReport(oReport)
 
 	oSection1 := oReport:Section(1)
 	oSection2 := oReport:Section(2)
+	oSection3 := oReport:Section(3)
 
 	//------------------------------------------
 	// Imprime os Desligados
@@ -152,7 +153,7 @@ Static Function PrintReport(oReport)
 				oSection1:Cell("ZI1_NOME"   	):SetValue(QREL->ZI1_NOME) // 02
 				oSection1:Cell("ZHL_CODIGO" 	):SetValue(QREL->ZHL_CODIGO) // 03
 				oSection1:Cell("ZHL_DESCRI" 	):SetValue(QREL->ZHL_DESCRI) // 04
-				oSection1:Cell("ZHL_VESTIA" 	):SetValue(QREL->ZHL_VESTIA) // 05
+				oSection1:Cell("ZHL_VESTIA" 	):SetValue(iif(QREL->ZHL_VESTIA=="M","Masculino","Feminino")) // 05
 					
 				oSection1:PrintLine()
 				
@@ -226,19 +227,19 @@ Static Function PrintReport(oReport)
 
 		if QREL->(!EOF())
 
-			oSection2:Init()
+			oSection3:Init()
 
 			while QREL->(!EOF())
 
 				oReport:IncMeter()
 				
-				oSection2:Cell("ZI1_MAT"   		):SetValue(QREL->ZI1_MAT) // 01
-				oSection2:Cell("ZI1_NOME"   	):SetValue(QREL->ZI1_NOME) // 02
-				oSection2:Cell("ZHL_CODIGO" 	):SetValue(QREL->ZHL_CODIGO) // 03
-				oSection2:Cell("ZHL_DESCRI" 	):SetValue(QREL->ZHL_DESCRI) // 04
-				oSection2:Cell("ZHL_VESTIA" 	):SetValue(iif(QREL->ZHL_VESTIA=="M","Masculino","Feminino")) // 05
+				oSection3:Cell("ZI1_MAT"   		):SetValue(QREL->ZI1_MAT) // 01
+				oSection3:Cell("ZI1_NOME"   	):SetValue(QREL->ZI1_NOME) // 02
+				oSection3:Cell("ZHL_CODIGO" 	):SetValue(QREL->ZHL_CODIGO) // 03
+				oSection3:Cell("ZHL_DESCRI" 	):SetValue(QREL->ZHL_DESCRI) // 04
+				oSection3:Cell("ZHL_VESTIA" 	):SetValue(iif(QREL->ZHL_VESTIA=="M","Masculino","Feminino")) // 05
 					
-				oSection2:PrintLine()
+				oSection3:PrintLine()
 				
 				oReport:IncMeter()
 
@@ -247,7 +248,7 @@ Static Function PrintReport(oReport)
 
 		endif
 
-		oSection2:Finish()
+		oSection3:Finish()
 	ENDIF
 
 	QREL->(DBCLOSEAREA())
