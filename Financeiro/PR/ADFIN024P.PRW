@@ -414,8 +414,12 @@ User Function ADFIN024P()
                               ZEJ->ZEJ_VLAVEN	:= _nTotAvenc	//
                               ZEJ->ZEJ_VLVENC	:= _nTotVenci							//
                               ZEJ->ZEJ_VLPESP	:= 0											//
-                              ZEJ->ZEJ_TTACUM	:= 0											//	
+                              ZEJ->ZEJ_TTACUM	:= _nTotVenci+_nTotAVenc+_nPedPer
                               ZEJ->ZEJ_LIMCRD	:= _nTotRede							//
+                              ZEJ->ZEJ_PERCEN := ((_nTotSdRede+SC5->C5_XTOTPED)/_nTotRede)*100
+                              ZEJ->ZEJ_VLUTIL := _nTotSdRede
+                              ZEJ->ZEJ_QTDPED := _nQtdPed
+                              ZEJ->ZEJ_TTUTIL := (_nTotSdRede+SC5->C5_XTOTPED)
                               ZEJ->(MsUnlock())
                            Endif
                            //FIM Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
