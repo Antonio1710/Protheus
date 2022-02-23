@@ -18,13 +18,14 @@
 	@history chamado 047891 - William - 15/03/2019 - Adicionado para verificar o Saldo Atual quando o CalcEst retorna 0 tanto para o parametro de MV_ULMES até a database ai verifica se o produto tem saldo pelo campo B2_QATU
 	@history chamado 055188 - FWNM    - 18/02/2020 - || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA
 	@history chamado 058822 - FWNM    - 10/06/2020 - || OS 060309 || TECNOLOGIA || ADRIANO || 8451 || CENTRO DE CUSTO SD3
+	@history Chamado 68696  - Leonardo P. Monteiro - 23/02/2022 - Inclusão de temporizador nas mensagens do ponto de entrada para impedir locks.
 /*/
 User Function M185BAIX()
 
 	Local lRet            := .F.
 	Local aItens          := {}  
 	Local cDoc            := ''
-	Local cNumseq         := '' 
+	//Local cNumseq         := '' 
 	Local cLocalizDestino := '' 
 	Local cDescProd       := ''
 	Local cUMProd         := ''
@@ -32,10 +33,10 @@ User Function M185BAIX()
 	Local cUMProdDes      := ''
 	Local nQuant          := 0     
 	Local cMensagem       := ''
-	Local cProdEnderecado := ''
-	Local cEndereco       := ''
+	//Local cProdEnderecado := ''
+	//Local cEndereco       := ''
 	Local nSomaEndereco   := 0
-	Local cLocalizSB1     := ''
+	//Local cLocalizSB1     := ''
 	Local aArea	          := GetArea()
 	// Chamado n. 055188 || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA - FWNM - 18/02/2020
 	Local cLocManBE       := AllTrim(GetMv("MV_#MANSBE",,"MANUT")) 
@@ -91,8 +92,8 @@ User Function M185BAIX()
 				         "------------------------------------------------------------------------------------------------  "           + CHR(13) + CHR(10) + ;
 				         CHR(13) + CHR(10) 
 			
-			U_ExTelaMen("M185BAIX - Tela de Baixa de Solicitação de Armazém!!!", cMensagem, "Arial", 10, , .F., .T.)		
-		
+			U_ExTelaMen("M185BAIX - Tela de Baixa de Solicitação de Armazém!!!", cMensagem, "Arial", 10,     , .F.    , .T.,"lRet := .F., oTela:end()",6000)		
+
 			RETURN(lRet)
 	   	
 	   	ENDIF
@@ -107,7 +108,7 @@ User Function M185BAIX()
 				         "------------------------------------------------------------------------------------------------  "            + CHR(13) + CHR(10) + ;
 				         CHR(13) + CHR(10) 
 			
-			U_ExTelaMen("M185BAIX - Tela de Baixa de Solicitação de Armazém!!!", cMensagem, "Arial", 10, , .F., .T.)	
+			U_ExTelaMen("M185BAIX - Tela de Baixa de Solicitação de Armazém!!!", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 		
 			RETURN(lRet)
 		   
@@ -214,7 +215,9 @@ User Function M185BAIX()
 					EndIf
 
 				Else
-					msgAlert("M185BAIX - Não encontrado pré-requisição gerada (Tabela SCQ)... Baixa não será realizada!")
+					//msgAlert("M185BAIX - Não encontrado pré-requisição gerada (Tabela SCQ)... Baixa não será realizada!")
+					cMensagem	:= "M185BAIX - Não encontrado pré-requisição gerada (Tabela SCQ)... Baixa não será realizada!"
+					U_ExTelaMen("M185BAIX - Não encontrado pré-requisito!!!", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 					DisarmTransaction()
 				EndIf
 				//
@@ -222,9 +225,13 @@ User Function M185BAIX()
 				SB2->( DBCLOSEAREA() )
 				
 				If AllTrim(SCP->CP_XTIPO) == "M"
-					MsgINFO("Olá " + Alltrim(cusername) + ", Solicitação de Transf Manutenção para o Documento: " + cDoc + " Realizado Com Sucesso ","M185BAIX - Ponto de Entrada Baixa")
+					//MsgINFO("Olá " + Alltrim(cusername) + ", Solicitação de Transf Manutenção para o Documento: " + cDoc + " Realizado Com Sucesso ","M185BAIX - Ponto de Entrada Baixa")
+					cMensagem	:= "Olá " + Alltrim(cusername) + ", Solicitação de Transf Manutenção para o Documento: " + cDoc + " Realizado Com Sucesso "
+					U_ExTelaMen("M185BAIX - Ponto de Entrada Baixa", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 				Else
-					MsgINFO("Olá " + Alltrim(cusername) + ", Solicitação de Transferência para o Documento: " + cDoc + " Realizado Com Sucesso ","M185BAIX - Ponto de Entrada Baixa")
+					//MsgINFO("Olá " + Alltrim(cusername) + ", Solicitação de Transferência para o Documento: " + cDoc + " Realizado Com Sucesso ","M185BAIX - Ponto de Entrada Baixa")
+					cMensagem	:= "Olá " + Alltrim(cusername) + ", Solicitação de Transferência para o Documento: " + cDoc + " Realizado Com Sucesso "
+					U_ExTelaMen("M185BAIX - Ponto de Entrada Baixa", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 				EndIf
 				              
 			ENDIF                
@@ -244,7 +251,9 @@ User Function M185BAIX()
 			TRD->(dbCloseArea())
 			
 			IF nSomaEndereco > 1
-				MsgAlert("Olá " + Alltrim(cusername) + ", Não é Possivel fazer a baixa, existe mais de um Endereço para esse produto:  " + SCP->CP_PRODUTO + "Verifique a SBE.", "M185BAIX - Ponto de Entrada Baixa - 1")
+				//MsgAlert("Olá " + Alltrim(cusername) + ", Não é Possivel fazer a baixa, existe mais de um Endereço para esse produto:  " + SCP->CP_PRODUTO + "Verifique a SBE.", "M185BAIX - Ponto de Entrada Baixa - 1")
+				cMensagem	:= "Olá " + Alltrim(cusername) + ", Não é Possivel fazer a baixa, existe mais de um Endereço para esse produto:  " + SCP->CP_PRODUTO + "Verifique a SBE."
+				U_ExTelaMen("M185BAIX - Ponto de Entrada Baixa - 1", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 				lRet := .F.
 			ELSE
 				lRet := .T.
@@ -273,6 +282,7 @@ RETURN(lRet)
 	(examples)
 	@see (links_or_references)
 /*/
+/*
 Static Function SqlBuscaSequenciaD3(cDoc)
 
 	LOCAL  cFil := xFilial("SD3") 
@@ -288,7 +298,7 @@ Static Function SqlBuscaSequenciaD3(cDoc)
 	EndSQl             
 
 RETURN(NIL)
-
+*/
 
 /*/{Protheus.doc} Static Function SqlBuscaProduto
 	(long_description)
@@ -353,13 +363,20 @@ Static Function QtdDialog()
 		
 		@ 030,025 BUTTON oBtnQtd[01] PROMPT "Confirma"     of oDlgQtd   SIZE 168,12 PIXEL ACTION (lOKConf := .t. , oDlgQtd:End())
 		
+		oTimerTE := tTimer():New(3000,&("{|| lOKConf := .F. }"),oDlgQtd)
+		oTimerTE:Activate() 
+
 		ACTIVATE MSDIALOG oDlgQtd CENTERED
 		
 		If !lOKConf
+			/*
 			Aviso("M185BAIX-01", "Você não clicou no botão CONFIRMA! " + chr(13) + chr(10) + "Se você confirmar a próxima tela, a requisição será baixada total..." , {"OK"}, 3, "Atenção - Baixa Total")
 			If msgYesNo("Confirma a baixa total da requisição?")
 				Exit
 			EndIf
+			*/
+			cMensagem	:= "Você não clicou no botão CONFIRMA! " + chr(13) + chr(10) + "Se você confirmar a próxima tela, a requisição será baixada total..."
+			U_ExTelaMen("M185BAIX-01 - Atenção - Baixa Total", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 		Else
 			Exit
 		Endif
@@ -439,8 +456,11 @@ Static Function GrvCQNumReq(cDoc)
 	
 		If nStatus < 0
 			lRetorno := .f.
-			msgAlert("M185BAIX - Problema na gravação do campo CQ_NUMREQ! Envie o erro que será mostrado na próxima tela ao TI caso contrário não conseguirão fazer estornos destas movimentações...")
-			MessageBox(tcSqlError(),"",16)
+			//msgAlert("M185BAIX - Problema na gravação do campo CQ_NUMREQ! Envie o erro que será mostrado na próxima tela ao TI caso contrário não conseguirão fazer estornos destas movimentações...")
+			//MessageBox(tcSqlError(),"",16)
+			cMensagem	:= "M185BAIX - Problema na gravação do campo CQ_NUMREQ! Envie o erro que será mostrado na próxima tela ao TI caso contrário não conseguirão fazer estornos destas movimentações..."
+			cMensagem	+= Chr(13)+chr(10)+tcSqlError()
+			U_ExTelaMen("M185BAIX - Problema na gravação do campo CQ_NUMREQ!", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 		EndIf
 	
 		BXSD3->( dbCloseArea() )
@@ -448,8 +468,11 @@ Static Function GrvCQNumReq(cDoc)
 	Else
 	
 		lRetorno := .f.
-		msgAlert("M185BAIX - Problema na gravação dos campos D3_NUMSA e D3_ITEMSA! Envie o erro que será mostrado na próxima tela ao TI caso contrário não conseguirão fazer estornos destas movimentações...")
-		MessageBox(tcSqlError(),"",16)
+		//msgAlert("M185BAIX - Problema na gravação dos campos D3_NUMSA e D3_ITEMSA! Envie o erro que será mostrado na próxima tela ao TI caso contrário não conseguirão fazer estornos destas movimentações...")
+		//MessageBox(tcSqlError(),"",16)
+		cMensagem	:= "M185BAIX - Problema na gravação dos campos D3_NUMSA e D3_ITEMSA! Envie o erro que será mostrado na próxima tela ao TI caso contrário não conseguirão fazer estornos destas movimentações..."
+		cMensagem	+= Chr(13)+chr(10)+tcSqlError()
+		U_ExTelaMen("M185BAIX - Problema na gravação dos campos D3_NUMSA e D3_ITEMSA!", cMensagem, "Arial", 10, , .F., .T.,"lRet := .F., oTela:end()",6000)
 
 	EndIf
 	
