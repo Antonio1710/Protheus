@@ -58,8 +58,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private cMetodo     := ''
 	Private nId         := 0 
 	Private cMensagem   := ''
-	//Private cDtCorte	:= dtos(Date()-1)
-	Private cDtCorte	:= dtos(stod("20220221")-1)
+	Private cDtCorte	:= dtos(Date()-1)
+	//Private cDtCorte	:= dtos(stod("20220221")-1)
 	//Debugar a rotina.
 	Private cDebugCNPJ	:= ""
 	Private lCalcPen	:= .T.
@@ -262,7 +262,7 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
     IF cCgc <>  cCgcOld
 
 		u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
-					"CalculaMaiorAcumulo - CLIENTE: "+TRE->E1_CLIENTE+" LOJA: " +TRE->E1_LOJA+ " CGC: " +TRE->A1_CGC +" cCgc ="+cCgc +", cCgcOld ="+cCgcOld,;
+					"CalculaMaiorAcumulo - CLIENTE: "+cCliente+" LOJA: " +cLoja+ " CGC: " +cCgc +" cCgc ="+cCgc +", cCgcOld ="+cCgcOld,;
 					ComputerName(),LogUserName())
 
 	    GravarAcumulo()
@@ -783,7 +783,10 @@ STATIC FUNCTION CalcDtPenComp()
 						
 							SA1->A1_XDTPENU	:= STOD(cDtPenulCom)	//GRAVA DT ULT COMPRA DA REDE				
 							
-							MsUnlock() 
+							MsUnlock()
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"7- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ " cDtPenulCom "+ dtoc(SA1->A1_XDTPENU) +"- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
 						ELSE
 							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 										"7- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
@@ -796,9 +799,13 @@ STATIC FUNCTION CalcDtPenComp()
 							SA1->A1_XDTPENU	:= STOD(cDtUltCom)	//GRAVA DT PENULTIMA COMPRA DA REDE COMO SENDO A EX ULTIMA DATA, ASSUMINDO ASSIM A ULTIMA COMPRA ANTERIOR				
 							
 							MsUnlock()
+
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"10- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ " SA1->A1_XDTPENU = "+ dtoc(SA1->A1_XDTPENU) +"- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
 						ELSE
 							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
-										"8- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
+										"10- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
 										ComputerName(),LogUserName())
 						endif
 	
@@ -809,6 +816,10 @@ STATIC FUNCTION CalcDtPenComp()
 							SA1->A1_XDTPENU	:= SA1->A1_XDTPENU
 							
 							MsUnlock()
+
+							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+										"9- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ " SA1->A1_XDTPENU = "+ dtoc(SA1->A1_XDTPENU) +"- Não foi possível executar o reclock no cadastro do cliente.",;
+										ComputerName(),LogUserName())
 					   	ELSE
 							u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 										"9- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
