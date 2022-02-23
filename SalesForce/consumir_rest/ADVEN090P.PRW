@@ -2539,6 +2539,7 @@ Static Function chkBloTb(nOpc, lLodData, cErro, cPed, aSB2)
 	EndIf
 
 	//Everson - 03/11/2021. Chamado 63090.
+	/*
 	If lRet //Bloqueia SB2.
 		//Conout("ADVEN090P - chkBloTb - bloqueio SB2 " + cValToChar(cPed))
 		//logZBE("Início MultLock SB2 " + cValToChar(cPed), "")
@@ -2547,11 +2548,10 @@ Static Function chkBloTb(nOpc, lLodData, cErro, cPed, aSB2)
 			cErro := "MultLock Falhou SB2"
 			logZBE(cErro, "Pedido " + cValToChar(cPed))
 			Conout("ADVEN090P - RESTEXECUTE - " + cErro + " " + cValToChar(cPed))
-
 		EndIf
-
 	EndIf
-
+	*/
+	
 	//Everson - 03/11/2021. Chamado 63090.
 	// If lRet .And. nOpc == 4 //Bloqueia SC5.
 	// 	//Conout("ADVEN090P - chkBloTb - bloqueio SC5 " + cValToChar(cPed))
