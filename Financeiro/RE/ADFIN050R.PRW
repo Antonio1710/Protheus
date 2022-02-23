@@ -50,6 +50,7 @@ Static lErroBI := .f.
 	@history ticket   68289 - Fernando Macieira    - 16/02/2022 - Criação de critério Relatório Fluxo de Caixa
 	@history ticket   68310 - Fernando Macieira    - 16/02/2022 - Manutenção no relatório de Fluxo de Caixa
 	@history ticket   68310 - Leonardo P. Monteiro - 21/02/2022 - Restore do fonte atualizado.
+	@history ticket   68310 - Fernando Macieira    - 23/02/2022 - Publicação autorizada
 /*/
 User Function ADFIN050R() // U_ADFIN050R()
 
@@ -1916,6 +1917,8 @@ Static Function UpEntSai( cE5_FILIAL, cE5_PREFIXO, cE5_NUMERO, cE5_PARCELA, cE5_
 	Local cEntSai    := "MOVIMENTO BANCARIO"
 	Local aAreaSE1   := SE1->( GetArea() )
 	Local aAreaSE2   := SE2->( GetArea() )
+
+	// @history ticket   68310 - Fernando Macieira    - 16/02/2022 - Manutenção no relatório de Fluxo de Caixa
 	Local cCodGrpPrd := GetMV("MV_#GRPPRD",,"019|022|026")
 	Local cCodGrpSAI := GetMV("MV_#GRPSAI",,"008|009|016")
 
