@@ -12,6 +12,7 @@
 	@since 15/10/2015
 	@history Ticket 3205 - William Costa - 08/10/2020 - Adicionado regra para o erro 25, onde foi feito um ajuste para o proprio fonte do Cisp arrumar o erro 25
 	@history Ticket 3205 - Leonardo P. Monteiro - 08/10/2020 - Alterada a regra 19 para alerta e não erro na geração do arquivo para CISP. Após consulta a CISP os mesmos informam que não é um impeditivo para o envio do arquivo.
+	@history Chamado TI  - Leonardo P. Monteiro - 22/02/2022 - Adição de históricos na gravação do valor acumulados.
 /*/
 
 User Function ADFIN003P() 
@@ -3472,6 +3473,10 @@ STATIC FUNCTION TRATARERROS()
 										SA1->A1_VLACUMU	:= nVlAcumu
 						                SA1->A1_DTULTRE := STOD(cDtUltRe)
 									MsUnlock()
+
+									u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN003P",;
+									"1- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())
 									   
 								ENDIF
 					        DBCLOSEAREA("SA1")
@@ -3741,6 +3746,10 @@ STATIC FUNCTION TRATARERROS()
 										SA1->A1_VLACUMU	:= TRF->A1_VLACUMU
 						                
 									MsUnlock()
+
+									u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN003P",;
+									"2- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())
 									
 								ENDIF
 					        DBCLOSEAREA("SA1")

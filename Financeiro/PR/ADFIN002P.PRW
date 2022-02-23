@@ -20,6 +20,7 @@
 	@history Chamado 66834 - Leonardo P. Monteiro - 24/01/2022 - Agregado o valor do AB- no valor total do título para a composição correta dos valores acumulados diariamente.															
 	@history Chamado 66834 - Leonardo P. Monteiro - 26/01/2022 - Ajuste no valor do acúmulo quando o valor calculado é menor que o histórico.
 	@history Chamado 66834 - Leonardo P. Monteiro - 03/02/2022 - Descontar das baixas os juros acumulados.
+	@history Chamado TI    - Leonardo P. Monteiro - 22/02/2022 - Adição de históricos na gravação do valor acumulados.
 /*/
 
 
@@ -57,12 +58,12 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private cMetodo     := ''
 	Private nId         := 0 
 	Private cMensagem   := ''
-	Private cDtCorte	:= dtos(Date()-1)
-	//Private cDtCorte	:= dtos(stod("20220124")-1)
+	//Private cDtCorte	:= dtos(Date()-1)
+	Private cDtCorte	:= dtos(stod("20220221")-1)
 	//Debugar a rotina.
-	Private cDebugCNPJ	:= ""
-	Private lCalcPen	:= .T.
-	Private lGeraArq	:= .T.
+	Private cDebugCNPJ	:= "37024599"
+	Private lCalcPen	:= .F.
+	Private lGeraArq	:= .F.
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -230,7 +231,7 @@ STATIC FUNCTION GeraAcumSegundaVez()
 	While TRE->(!EOF())
 		
 		u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
-					"CLIENTE: "+TRE->E1_CLIENTE+" LOJA: " +TRE->E1_LOJA+ " CGC: " +TRE->A1_CGC,;
+					"GeraAcumSegundaVez - CLIENTE: "+TRE->E1_CLIENTE+" LOJA: " +TRE->E1_LOJA+ " CGC: " +TRE->A1_CGC,;
 					ComputerName(),LogUserName())
 					
 		//ConOut("ADFIN002P - GeraAcumSegundaVez - Dentro do While TRE" + TRE->E1_CLIENTE+TRE->E1_LOJA + '||' + DTOC(DATE()) + '||' + TIME())
@@ -259,7 +260,11 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
   	//ConOut("ADFIN002P - CalculaMaiorAcumulo - ENTREI NA STATIC FUNCTION CalculaMaiorAcumulo" + cCli+cLoj+cCnpj + '||' + DTOC(DATE()) + '||' + TIME())
     
     IF cCgc <>  cCgcOld
-    
+
+		u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+					"CalculaMaiorAcumulo - CLIENTE: "+TRE->E1_CLIENTE+" LOJA: " +TRE->E1_LOJA+ " CGC: " +TRE->A1_CGC +" cCgc ="+cCgc +", cCgcOld ="+cCgcOld,;
+					ComputerName(),LogUserName())
+
 	    GravarAcumulo()
 	    aCloneAcum := {}
     	aAcumulo   := {}
@@ -489,11 +494,14 @@ Static Function GravarAcumulo()
 			
 				IF EMPTY(SA1->A1_DTACUMU) .AND. SA1->A1_VLACUMU  <= 0 .AND. nVlAcum <= 0
 			   		IF RecLock("SA1",.F.)              
-					
+
 						SA1->A1_DTACUMU	:= IIF(STOD(cDtAcum) < SA1->A1_DTACUMU,SA1->A1_DTACUMU, STOD(cDtAcum))
-						SA1->A1_VLACUMU	:= 0
-		
+						SA1->A1_VLACUMU		:= 0
 						MsUnlock()
+
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"1- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())
 					ELSE
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 									"1- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
@@ -502,7 +510,7 @@ Static Function GravarAcumulo()
 				   
 			    ELSEIF !EMPTY(SA1->A1_DTACUMU) .AND. ;
 			          SA1->A1_DTACUMU  < STOD(cDtAcum) .AND. ; 
-			          (SA1->A1_VLACUMU  < nVlAcum .OR. ;
+			          (SA1->A1_VLACUMU < nVlAcum .OR. ;
 			          SA1->A1_DTACUMU  < STOD(DTOS(CTOD(CVALTOCHAR(STRZERO(DAY(DATE()),02) + '/' + ;
 		                                 IIF(LEN(CVALTOCHAR(MONTH(DATE()))) == 1, '0' + ;
 		                                 CVALTOCHAR(MONTH(DATE())),CVALTOCHAR(MONTH(DATE())))+'/'+;
@@ -512,8 +520,11 @@ Static Function GravarAcumulo()
 					
 						SA1->A1_DTACUMU	:= IIF(STOD(cDtAcum) < SA1->A1_DTACUMU,SA1->A1_DTACUMU, STOD(cDtAcum))
 						SA1->A1_VLACUMU	:= nVlAcum //IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
-		
 						MsUnlock() 
+
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"2- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())
 					ELSE
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 									"2- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
@@ -528,7 +539,11 @@ Static Function GravarAcumulo()
 						SA1->A1_DTACUMU	:= IIF(STOD(cDtAcum) < SA1->A1_DTACUMU,SA1->A1_DTACUMU, STOD(cDtAcum))
 						SA1->A1_VLACUMU	:= IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
 		
-						MsUnlock()		
+						MsUnlock()
+
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"3- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())	
 					ELSE
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 									"3- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
@@ -545,9 +560,13 @@ Static Function GravarAcumulo()
 					   		if RecLock("SA1",.F.)              
 							
 								SA1->A1_DTACUMU	:= SA1->A1_DTULTRE						
-								SA1->A1_VLACUMU	:= IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
+								SA1->A1_VLACUMU		 := IIF(nVlAcum < SA1->A1_VLACUMU,SA1->A1_VLACUMU, nVlAcum)
 				
-								MsUnlock() 
+								MsUnlock()
+								
+								u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"4- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())	
 							ELSE
 								u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 											"4- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
@@ -562,14 +581,14 @@ Static Function GravarAcumulo()
 					
 					if RecLock("SA1",.F.)              
 					
-						SA1->A1_DTACUMU	:= SA1->A1_DTACUMU
-						SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
+						SA1->A1_DTACUMU   := SA1->A1_DTACUMU
+						SA1->A1_VLACUMU		:= SA1->A1_VLACUMU
 						
 						MsUnlock()
 
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
-									"1- Ajuste no acumulado: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Vlr. Atual:"+ cValtochar(SA1->A1_VLACUMU) +", Vlr. Calculado:"+cValtochar(nVlAcum)+".",;
-									ComputerName(),LogUserName())
+									"9- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())	
 					ELSE
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 									"9- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
@@ -581,17 +600,13 @@ Static Function GravarAcumulo()
 			   		IF RecLock("SA1",.F.)              
 					
 					    SA1->A1_DTACUMU	:= SA1->A1_DTACUMU
-						SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
-						//Chamado 66834 - Leonardo P. Monteiro - 21/01/2022 - Correção na gravação do último acúmulo quando a data do último acúmulo é igual a última data de compra. A rotina estava desconsiderando o valor total acumulado.
-						/*
-						if nVlAcum > 0 .and. SA1->A1_DTULTRE <= STOD(cDtAcum)
-							SA1->A1_VLACUMU	:= nVlAcum
-						else
-							SA1->A1_VLACUMU	:= SA1->A1_VLACUMU
-						endif
-						*/
+						SA1->A1_VLACUMU		 := SA1->A1_VLACUMU
 
 						MsUnlock()
+
+						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
+									"5- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- SA1->A1_DTACUMU ="+dTOC(SA1->A1_DTACUMU)+" SA1->A1_VLACUMU= "+cValtochar(SA1->A1_VLACUMU),;
+									ComputerName(),LogUserName())
 					ELSE
 						u_GrLogZBE (Date(),TIME(),cUserName," CISP ","FINANCEIRO","ADFIN002P",;
 									"5- CLIENTE: "+SA1->A1_COD+" LOJA: " +SA1->A1_LOJA+ " CGC: " +SA1->A1_CGC+ "- Não foi possível executar o reclock no cadastro do cliente.",;
