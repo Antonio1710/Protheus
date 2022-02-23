@@ -31,8 +31,8 @@ Static cFil := "02"
 	@Ticket 63090, Data 18/11/2021, Everson, Tratamento para processamento com mais de uma thread.
 	@Ticket TI   , Data 28/12/2021, Everson, Tratamento para data incorreta enviada pelo Salesforce.
 	@history Chamado 66524 - Leonardo P. Monteiro  - 11/01/2022 - Correção na função comparaCab responsável pela comparação do cabeçalho dos PVs. Tratamento dos campos de mensagens C5_MENNOTA para a correta decodificação.
-	@history Chamado T.I  - Leonardo P. Monteiro   - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
-	@history Chamado T.I  - Leonardo P. Monteiro   - 23/02/2022 - Restore do fonte 17/01/2022 para processamento em threads.
+	@history Chamado T.I   - Leonardo P. Monteiro   - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
+	@history Chamado 68737 - Leonardo P. Monteiro   - 23/02/2022 - Restore do fonte 17/01/2022 para processamento em threads.
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
