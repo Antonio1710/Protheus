@@ -31,6 +31,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -66,7 +67,6 @@ User Function ADFIN121P(lAuto)
     Private lSigaOn := .t.
     Private cLinked := "RM"
 	Private cSGBD   := "CCZERN_119204_RM_PD"
-
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM')
 
@@ -150,6 +150,7 @@ User Function ADFIN121P(lAuto)
         cQuery += " AND E2_LOJA='"+cLoja+"' 
         cQuery += " AND E2_XDIVERG='N' AND E2_RJ<>'X'
         cQuery += " AND E2_BAIXA='' AND E2_SALDO>0 AND E2_STATUS<>'B'
+        cQuery += " AND E2_VENCTO>='"+DtoS(msDate())+"' " // @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
         cQuery += " AND D_E_L_E_T_=''
 
         tcQuery cQuery New Alias "Work"
@@ -204,7 +205,6 @@ User Function ADFIN121P(lAuto)
                     
                     //Em caso de erro na baixa
                     If lMsErroAuto
-                        DisarmTransaction()
                         If !lAuto
                             MostraErro()
                         EndIf
@@ -257,7 +257,6 @@ User Function ADFIN121P(lAuto)
 
                             If lMsErroAuto
 
-                                DisarmTransaction()
                                 If !lAuto
                                     MostraErro()
                                 EndIf
@@ -507,8 +506,6 @@ Static Function ExcTitPR()
                     RecLock("SE2", .F.)
                         SE2->E2_ORIGEM := "GPEM670"
                     SE2->( msUnLock() )
-
-                    DisarmTransaction()
 
                 EndIf
 
