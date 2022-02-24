@@ -21,6 +21,8 @@
 	@history Chamado 66834 - Leonardo P. Monteiro - 26/01/2022 - Ajuste no valor do acúmulo quando o valor calculado é menor que o histórico.
 	@history Chamado 66834 - Leonardo P. Monteiro - 03/02/2022 - Descontar das baixas os juros acumulados.
 	@history Chamado TI    - Leonardo P. Monteiro - 22/02/2022 - Adição de históricos na gravação do valor acumulados.
+	@history Chamado 68815 - Leonardo P. Monteiro - 24/02/2022 - Correção da ordenação dos movimentos quando os movimentos de inclusão de títulos e baixas ocorrem no mesmo dia.
+																 Ajustamos também a regras de baixas relacionadas aos movimentos de juros.
 /*/
 
 
@@ -61,9 +63,9 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	Private cDtCorte	:= dtos(Date()-1)
 	//Private cDtCorte	:= dtos(stod("20220221")-1)
 	//Debugar a rotina.
-	Private cDebugCNPJ	:= ""
-	Private lCalcPen	:= .T.
-	Private lGeraArq	:= .T.
+	Private cDebugCNPJ	:= "19994224"
+	Private lCalcPen	:= .F.
+	Private lGeraArq	:= .F.
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -281,7 +283,8 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
 		AADD(aReceber, TRC->E1_VALOR)
 		AADD(aReceber, 'SE1')
 		AADD(aReceber, 0) 
-		AADD(aReceber, TRC->E1_TIPO)
+		AADD(aReceber, Alltrim(TRC->E1_TIPO))
+		AADD(aReceber, '1')
 
 		AADD(aAcumulo, aReceber) 
 		AADD(aRecAux, aReceber)
@@ -314,7 +317,9 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
 			AADD(aTitBaixado, TRD->E5_VLMOED2) 
 			AADD(aTitBaixado, 'SE5') 
 			AADD(aTitBaixado, 0) 
-			AADD(aTitBaixado, TRD->E5_TIPODOC) 
+			AADD(aTitBaixado, Alltrim(TRD->E5_TIPODOC))
+			AADD(aTitBaixado, '2')
+
             AADD(aAcumulo, aTitBaixado)
 		    aTitBaixado := {}
 		    
@@ -346,7 +351,9 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
 			AADD(aTitBaixado, TRF->E5_VLMOED2) 
 			AADD(aTitBaixado, 'SE5') 
 			AADD(aTitBaixado, 0) 
-			AADD(aTitBaixado, TRF->E5_TIPODOC) 
+			AADD(aTitBaixado, Alltrim(TRF->E5_TIPODOC))
+			AADD(aTitBaixado, '3')
+
             AADD(aAcumulo, aTitBaixado)
 		    aTitBaixado := {}
 		    
@@ -377,10 +384,9 @@ Static Function GravarAcumulo()
 	IF nAcumulo > 0
 		// **************************** inicio organiza vetor aAcumulo por data ************** //
 		
-		aSort(aAcumulo,,,{ |X, Y| X[1] + cvaltochar(X[2]) + X[5] < Y[1] + cvaltochar(Y[2]) + Y[5]})
-		
-		
-		
+		//aSort(aAcumulo,,,{ |X, Y| X[1] + cvaltochar(X[2]) + X[3] + X[5] < Y[1] + cvaltochar(Y[2]) + X[3] + Y[5]})
+		aSort(aAcumulo,,,{ |X, Y| X[1] + cvaltochar(X[2]) + X[3] + X[6] + X[5] < Y[1] + cvaltochar(Y[2]) + X[3] + Y[6] + Y[5]})
+
 		// **************************** final organiza vetor aAcumulo por data *************** // 
 			
 		// **************************** inicio calcula os saldo acumulado ******************** //
@@ -406,7 +412,8 @@ Static Function GravarAcumulo()
 			ELSEIF aAcumulo[nCont][3]  == 'SE5' .AND. ;
 			       (aAcumulo[nCont][5] == 'ES' .OR.   ;
 			        aAcumulo[nCont][5] == 'E2' .OR.   ;
-					aAcumulo[nCont][5] == 'JR')
+					aAcumulo[nCont][5] == 'JR' .OR.   ;
+					aAcumulo[nCont][5] == 'J2')
 			
 				nSaldo := nSaldo + aAcumulo[nCont][2]	
 				
