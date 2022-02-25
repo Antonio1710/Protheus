@@ -32,6 +32,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
     @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
+    @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -224,6 +225,7 @@ User Function ADFIN121P(lAuto)
                         u_GrLogZBE( msDate(), TIME(), cUserName, "BAIXOU PR - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
                         "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
                         
+                        nDias := 0 // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
                         aDadSE2 := {}
                         
                         For ii:=1 to nQtdParcelas
@@ -543,5 +545,60 @@ Static Function ExcTitPR()
     If Select("WorkRM") > 0
         WorkRM->( dbCloseArea() )
     EndIf
+
+Return
+
+/*/{Protheus.doc} User Function FixParcNDI
+    Garante/Corrige parcelas para serem sempre sequenciais 30 dias
+    @type  Function
+    @author FWNM
+    @since 25/02/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+User Function FixParcNDI()
+
+    Local nDias := 0
+    Local dNewVencto := CtoD("//")
+
+    ZHB->( dbGoTop() )
+    Do While ZHB->( !EOF() )
+
+        If !Empty(ZHB->ZHB_NUM) /*.and. ZHB->ZHB_PARCEL>1*/ .and. ZHB->ZHB_GERPAR
+
+            SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
+            If SE2->( dbSeek(FWxFilial("SE2")+"GPE"+ZHB->ZHB_NUM) )
+
+                nDias := 0
+
+                Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. SE2->E2_PREFIXO=="GPE" .and. SE2->E2_NUM==ZHB->ZHB_NUM
+
+                    If SE2->E2_TIPO == "NDI"
+                        
+                        RecLock("SE2", .F.)
+                            dNewVencto := ZHB->ZHB_VENCTO+nDias
+                            SE2->E2_VENCTO  := dNewVencto
+                            SE2->E2_VENCREA := DataValida(dNewVencto)
+                        SE2->( msUnLock() )
+                    
+                        nDias := nDias + 30
+                    
+                    EndIf
+
+                    SE2->( dbSkip() )
+            
+                EndDo
+
+            EndIf
+
+        EndIf
+
+        ZHB->( dbSkip() )
+
+    EndDo
 
 Return
