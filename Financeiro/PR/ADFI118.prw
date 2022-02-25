@@ -18,6 +18,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
     @ticket 18141 - Fernando Macieira - 16/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Data vencimento não ignorou despesa com título
 /*/
 User Function ADFI118()
 
@@ -440,10 +441,12 @@ Static Function fValidGrid(oModel)
 
                     // Primeiro Vencimento
                     dVencto1 := oModelGRID:GetValue("ZHB_VENCTO")
-                    If dVencto1 < msDate()
-                        lRet := .f.
-                        Alert("A data do vencimento da primeira parcela na linha " + AllTrim(Str(nLinAtual)) + " não foi informada ou precisa ser superior que a data de hoje! Verifique...")
-                        Exit
+                    If Empty(oModelGrid:GetValue("ZHB_NUM")) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Data vencimento não ignorou despesa com título
+                        If dVencto1 < msDate()
+                            lRet := .f.
+                            Alert("A data do vencimento da primeira parcela na linha " + AllTrim(Str(nLinAtual)) + " não foi informada ou precisa ser superior que a data de hoje! Verifique...")
+                            Exit
+                        EndIf
                     EndIf
 
                     // Alterações
