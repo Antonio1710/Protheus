@@ -208,6 +208,8 @@ User Function ADFIN121P(lAuto)
                     If lMsErroAuto
                         If !lAuto
                             MostraErro()
+                            DisarmTransaction() 
+                            Break 
                         EndIf
                     Else
 
@@ -261,6 +263,8 @@ User Function ADFIN121P(lAuto)
 
                                 If !lAuto
                                     MostraErro()
+                                    DisarmTransaction() 
+                                    Break 
                                 EndIf
 
                             Else
@@ -297,6 +301,8 @@ User Function ADFIN121P(lAuto)
                         RecLock("SE2", .F.)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
+
+                        //u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
 
                     EndIf
 
@@ -560,30 +566,107 @@ Return
     (examples)
     @see (links_or_references)
 /*/
-User Function FixParcNDI()
+User Function FixParcNDI(cNumNDI)
 
-    Local nDias := 0
+    Local nDias      := 0
     Local dNewVencto := CtoD("//")
+    Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
+    Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
+    Local aAreaSE2   := SE2->( GetArea() )
+    Local aAreaZHB   := ZHB->( GetArea() )
+
+    Default cNumNDI := ""
 
     ZHB->( dbGoTop() )
-    Do While ZHB->( !EOF() )
+    ZHB->( dbSetOrder(3) ) // ZHB_FILIAL, ZHB_NUM, R_E_C_N_O_, D_E_L_E_T_
+    If ZHB->( dbSeek(FWxFilial("ZHB")+cNumNDI) )
+    
+        Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB") .and. ZHB->ZHB_NUM==cNumNDI
+
+            If !Empty(ZHB->ZHB_NUM) .and. ZHB->ZHB_PARCEL>1 .and. ZHB->ZHB_GERPAR
+
+                SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
+                If SE2->( dbSeek(FWxFilial("SE2")+PadR(cPrefixo,TamSX3("E2_PREFIXO")[1])+ZHB->ZHB_NUM) )
+
+                    nDias := 0
+
+                    Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. AllTrim(SE2->E2_PREFIXO)==cPrefixo .and. SE2->E2_NUM==ZHB->ZHB_NUM
+
+                        If AllTrim(SE2->E2_TIPO) == cTipoNDI
+
+                            dNewVencto := ZHB->ZHB_VENCTO + nDias
+
+                            If SE2->E2_VENCTO <> dNewVencto
+                                RecLock("SE2", .F.)
+                                    SE2->E2_VENCTO  := dNewVencto
+                                    SE2->E2_VENCREA := DataValida(dNewVencto)
+                                SE2->( msUnLock() )
+                            EndIf
+                        
+                            nDias := nDias + 30
+                        
+                        EndIf
+
+                        SE2->( dbSkip() )
+                
+                    EndDo
+
+                EndIf
+
+            EndIf
+
+            ZHB->( dbSkip() )
+
+        EndDo
+
+    EndIf
+
+    RestArea( aAreaSE2 )
+    RestArea( aAreaZHB )
+
+Return
+
+/*/{Protheus.doc} User Function FixParcNDI
+    Garante/Corrige parcelas para serem sempre sequenciais 30 dias
+    @type  Function
+    @author FWNM
+    @since 25/02/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+User Function FixAllNDI()
+
+    Local nDias      := 0
+    Local dNewVencto := CtoD("//")
+    Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
+    Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
+
+    ZHB->( dbGoTop() )
+    Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB")
 
         If !Empty(ZHB->ZHB_NUM) /*.and. ZHB->ZHB_PARCEL>1*/ .and. ZHB->ZHB_GERPAR
 
             SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
-            If SE2->( dbSeek(FWxFilial("SE2")+"GPE"+ZHB->ZHB_NUM) )
+            If SE2->( dbSeek(FWxFilial("SE2")+PadR(cPrefixo,TamSX3("E2_PREFIXO")[1])+ZHB->ZHB_NUM) )
 
                 nDias := 0
 
-                Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. SE2->E2_PREFIXO=="GPE" .and. SE2->E2_NUM==ZHB->ZHB_NUM
+                Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. AllTrim(SE2->E2_PREFIXO)==cPrefixo .and. SE2->E2_NUM==ZHB->ZHB_NUM
 
-                    If SE2->E2_TIPO == "NDI"
-                        
-                        RecLock("SE2", .F.)
-                            dNewVencto := ZHB->ZHB_VENCTO+nDias
-                            SE2->E2_VENCTO  := dNewVencto
-                            SE2->E2_VENCREA := DataValida(dNewVencto)
-                        SE2->( msUnLock() )
+                    If AllTrim(SE2->E2_TIPO) == cTipoNDI .and. Empty(SE2->E2_BAIXA)
+
+                        dNewVencto := ZHB->ZHB_VENCTO + nDias
+
+                        If SE2->E2_VENCTO <> dNewVencto
+                            RecLock("SE2", .F.)
+                                SE2->E2_VENCTO  := dNewVencto
+                                SE2->E2_VENCREA := DataValida(dNewVencto)
+                            SE2->( msUnLock() )
+                        EndIf
                     
                         nDias := nDias + 30
                     
@@ -600,5 +683,8 @@ User Function FixParcNDI()
         ZHB->( dbSkip() )
 
     EndDo
+
+    RestArea( aAreaSE2 )
+    RestArea( aAreaZHB )
 
 Return
