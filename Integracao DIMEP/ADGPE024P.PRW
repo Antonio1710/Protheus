@@ -1812,7 +1812,7 @@ Return cEmpresa
 /*/
 Static Function Sqlfuncionario(cEmpresa) 
 
-	Local nDias := GetMV("MV_#RMDIAS",,7) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
+	Local nDias := GetMV("MV_#RMDIAS",,7) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
 
 	TRB := GetNextAlias()
 	
