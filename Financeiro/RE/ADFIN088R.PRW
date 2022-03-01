@@ -1,3 +1,5 @@
+#INCLUDE "PROTHEUS.CH"
+
 /*/{Protheus.doc} User Function ADFIN088R
   Relatório de Pedidos de Venda Liberados
   @type  Function
@@ -59,7 +61,7 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       SC5.C5_NUM                  AS NUMPEDIDO,
       ISNULL(ZEJ.ZEJ_PERFPG,'')   AS PERFILPAGTO,
       ISNULL(ZEJ.ZEJ_RATCIS,'')   AS RCISP,
-      ISNULL((SELECT TOP 1 ZBH.ZBH_MOTIVO
+      ISNULL((SELECT STRING_AGG(ZBH.ZBH_MOTIVO, ',') 
         FROM %TABLE:ZBH% ZBH  (NOLOCK)
         WHERE 
           ZBH.ZBH_FILIAL = SC5.C5_FILIAL
@@ -74,6 +76,10 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       ISNULL(ZEJ.ZEJ_VLAVEN,'')   AS TIT_AVENCER,
       ISNULL(ZEJ.ZEJ_VLVENC,'')   AS TIT_VENCIDO,
       ISNULL(ZEJ.ZEJ_LIMCRD,'')   AS LIMITE,
+      ISNULL(ZEJ.ZEJ_PERCEN,'')   AS PERCENTUAL,
+      ISNULL(ZEJ.ZEJ_VLUTIL,'')   AS VLUTIL,
+      ISNULL(ZEJ.ZEJ_QTDPED,'')   AS QTDPED,
+      ISNULL(ZEJ.ZEJ_TTUTIL,'')   AS TTUTIL,
       ISNULL(ZEJ.ZEJ_USRLIB,'')   AS LIBERADOR,
       ISNULL(ZEJ.ZEJ_PARECE,'')   AS TXT_LIBERACAO
     FROM %TABLE:SC5% SC5 (NOLOCK)
@@ -144,6 +150,10 @@ Static Function ExlCab01()
 	oExcel:AddColumn(cWorksht,cPlan01,"Tit.Port.Especial"		  ,2,3,.T.)
 	oExcel:AddColumn(cWorksht,cPlan01,"Tot. Acumulado"			  ,2,3,.T.)
 	oExcel:AddColumn(cWorksht,cPlan01,"Limite Crédito"			  ,2,3,.T.)
+	oExcel:AddColumn(cWorksht,cPlan01,"Percentual"			      ,2,2)
+	oExcel:AddColumn(cWorksht,cPlan01,"Valor Utilizado"			  ,2,3,.T.)
+	oExcel:AddColumn(cWorksht,cPlan01,"Total Utilizado"			  ,2,3,.T.)
+	oExcel:AddColumn(cWorksht,cPlan01,"Qtd Pedido"			      ,2,2,.T.)
   oExcel:AddColumn(cWorksht,cPlan01,"Login Liberador"			  ,1,1)
 	oExcel:AddColumn(cWorksht,cPlan01,"Texto Liberação"			  ,1,1)
 
@@ -181,6 +191,10 @@ Static Function ExlDet01()
                                       nTtAcum,; //Tot Port Especial //Everson - 18/06/2020. Chamado 059049. Removido (cQuery1)->
                                       nTtAcum,; //Everson - 18/06/2020. Chamado 059049. Removido (cQuery1)->
                                       (cQuery1)->LIMITE,;
+                                      (cQuery1)->PERCENTUAL,;
+                                      (cQuery1)->VLUTIL,;
+                                      (cQuery1)->TTUTIL,;
+                                      (cQuery1)->QTDPED,;
                                       (cQuery1)->LIBERADOR,;
                                       (cQuery1)->TXT_LIBERACAO})
     ENDIF 
@@ -188,7 +202,7 @@ Static Function ExlDet01()
     (cQuery1)->(DbSkip())
   EndDo
   
-  oExcel:AddRow(cWorksht,cPlan01,{"","","","","","","","","","","","","","","","","","",""})
+  oExcel:AddRow(cWorksht,cPlan01,{"","","","","","","","","","","","","","","","","","","","","","",""})
 
 Return 
 
