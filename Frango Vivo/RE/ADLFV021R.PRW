@@ -8,6 +8,7 @@
   @author Rodrigo Romão
   @since 04/11/2021
   @history Ticket 63014 - Leonardo P. Monteiro - 04/11/2021 - Desenvolvimento.
+  @history Ticket 68482 - Adriano Savoine      - 28/02/2022 - Aterado a coluna ZV1_PGRANJ por ZV1_RGRANJ a pedido dos analistas frango vivo.  
 /*/
 
 User Function ADLFV021R()
@@ -129,7 +130,7 @@ Static Function PrintReport(oReport)
 		oReport:IncMeter()
 
         
-		oSection1:Cell("GRANJA"   	    ):SetValue((cAlias)->ZV1_PGRANJ)
+		oSection1:Cell("GRANJA"   	    ):SetValue((cAlias)->ZV1_RGRANJ) //Ticket 68482 - Adriano Savoine - 28/02/2022
         oSection1:Cell("GRANJA"   	    ):SetSize(10)
         oSection1:Cell("GRANOM"   	    ):SetValue((cAlias)->A2_NOME)
         oSection1:Cell("GRANOM"   	    ):SetSize(40)
@@ -209,6 +210,7 @@ Static function fSQLSint()
 
     cQuery := " SELECT ZV1.ZV1_PGRANJ, " + CRLF
     cQuery += "    ISNULL(A2.A2_NOME,'') A2_NOME,  "
+    cQuery += "    ZV1.ZV1_RGRANJ,  " //Ticket 68482 - Adriano Savoine - 28/02/2022
     cQuery += "    SUM(ZV1.ZV1_PAVES) TOTAL_AVES, " + CRLF
     cQuery += "    SUM(ZV1_MORTAL) MORTALIDADE, " + CRLF
     cQuery += "    ROUND(SUM(CASE WHEN ZV1.ZV1_PAVES > 0 THEN ZV1.ZV1_MORTAL/ZV1.ZV1_PAVES*100 ELSE 0 END)/COUNT(*),2) MORTAL_MED, " + CRLF
@@ -226,7 +228,7 @@ Static function fSQLSint()
         cQuery += " AND ZV1.ZV1_STATUS ='"+ cStatus +"' "
     endif
 
-  	cQuery += " GROUP BY ZV1.ZV1_PGRANJ, A2.A2_NOME" + CRLF
+  	cQuery += " GROUP BY ZV1.ZV1_PGRANJ, ZV1.ZV1_RGRANJ,A2.A2_NOME" + CRLF
     cQuery += " ORDER BY ZV1.ZV1_PGRANJ, A2.A2_NOME;"
 
 	TCQUERY cQuery NEW ALIAS (cAlias)
