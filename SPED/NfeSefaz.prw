@@ -43,6 +43,8 @@
 	@history Ticket     TI  - Fer Macieira    - 13/10/2021 - Consiste modalidade devido mudança sozinho contigência EPEC/DEPEC
 	@history Ticket     TI  - Abel Babini     - 19/10/2021 - Ajuste no Return da validação de ambiente de produção
 	@history Ticket 64961  - Leonardo P. Monteiro   - 08/12/2021 - PROBLEMA PARA FATURAR A NOTA FISCAL DE EXPORTAÇÃO.
+	@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
+	
 /*/
 User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 
@@ -2591,7 +2593,11 @@ User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 									
 							If SC5->C5_TIPOCLI ='X'  												
 								cMensCli += " Container: "+ALLTRIM(SF2->F2_CONTAIN)+", "	
-								cMensCli += "Lacre: "+ALLTRIM(SF2->F2_NLACRE1)+", Lacre Oficial: "+ALLTRIM(SF2->F2_NLACRE2) //15/03/19-Chamado:047943 - Fernando Sigoli	
+								// Tkt 68663 - Inibir a impressão dos lacres do armador.
+								if SF2->F2_EST <> "EX"
+									cMensCli += "Lacre: "+ALLTRIM(SF2->F2_NLACRE1)+", "
+								endif
+								cMensCli += "Lacre Oficial: "+ALLTRIM(SF2->F2_NLACRE2) //15/03/19-Chamado:047943 - Fernando Sigoli	
 								cMensCli += ", Temperatura: "+ALLTRIM(SF2->F2_TEMPERA)+" ºC" + ", Data de producao: "+ALLTRIM(SF2->F2_DTPROD)
 								DbSelectArea("SM2")       	
 								DbSetOrder(1)                 
