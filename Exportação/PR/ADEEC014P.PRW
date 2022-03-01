@@ -138,12 +138,14 @@ Static Function execWF(lAutom)
             else
                 cBody	+= " <strong>Número do container:</strong> "+ Alltrim(QEXP->ZEX_CONTAI) +" "
             endif
+            /*
             cBody	+= " <br>"
             if Empty(QEXP->ZEX_LACRE1)
                 cBody	+= " <strong>Número do Lacre Container:</strong> "+ Alltrim(QEXP->C5_NLACRE1) +" "
             else
                 cBody	+= " <strong>Número do Lacre Container:</strong> "+ Alltrim(QEXP->ZEX_LACRE1) +" "
             endif
+            */
             cBody	+= " <br>"
             if Empty(QEXP->ZEX_LACRE2)
                 cBody	+= " <strong>Número do Lacre Oficial:</strong> "+ Alltrim(QEXP->C5_NLACRE2) +" "
