@@ -1192,7 +1192,7 @@ Static function getDadoBRW(nTypeBrowse)
         aCampos := strToKarr(CAMPOS_UNIF_ENTREGA, ",")
         cCampos := CAMPOS_UNIF_ENTREGA
         
-        cQuery := " SELECT ZHH.ZHH_CODIGO, ZHH.ZHH_DESCRI, ZHK.ZHK_NUMKIT, ZI5.ZI5_QTDUNF, ZHI.ZHI_UM, ZHI.ZHI_PRODUT, ZHK.ZHK_NUMKIT, (ZI5.ZI5_QTDUNF-ISNULL(ZHO.TMP_SALDO,0)) TMP_SALDO "+cQebra
+        cQuery := " SELECT ZHH.ZHH_CODIGO, ZHH.ZHH_DESCRI, ZHK.ZHK_NUMKIT, ZI5.ZI5_QTDUNF, ZHI.ZHI_UM, ZHI.ZHI_PRODUT, ZHK.ZHK_NUMKIT, ISNULL(ZHO.CONTADOR,0) TMP_SALDO "+cQebra
         cQuery += " FROM "+ retsqlname("ZI1") +" ZI1 INNER JOIN "+ retsqlname("ZI5") +" ZI5 ON ZI1.D_E_L_E_T_='' AND ZI5.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+xFilial("ZI1")+"' AND ZI5.ZI5_FILIAL='"+xFilial("ZI5")+"' AND ZI1.ZI1_SECAO=ZI5.ZI5_CODIGO "+cQebra
         cQuery += "                 INNER JOIN "+ retsqlname("ZHK") +" ZHK ON ZHK.D_E_L_E_T_='' AND ZI5.ZI5_FILIAL='"+xFilial("ZI5")+"' AND ZHK_FILIAL='"+xFilial("ZHK")+"' AND ZI5.ZI5_CODIGO=ZHK.ZHK_CODZI5 "+cQebra
         cQuery += "                 INNER JOIN "+ retsqlname("ZHH") +" ZHH ON ZHH.D_E_L_E_T_='' AND ZHK.ZHK_FILIAL='"+xFilial("ZHK")+"' AND ZHH.ZHH_FILIAL='"+xFilial("ZHH")+"' AND ZHK.ZHK_CODZHH=ZHH.ZHH_CODIGO "+cQebra
@@ -1204,10 +1204,21 @@ Static function getDadoBRW(nTypeBrowse)
         cQuery += "                             OR (ZHH.ZHH_TIPO='05' AND ZI1.ZI1_TCALCA=ZHI.ZHI_UM) "+cQebra
         cQuery += "                             OR (ZHH.ZHH_TIPO='06' AND ZI1.ZI1_TMEIAS=ZHI.ZHI_UM) "+cQebra
         cQuery += "                             ) "+cQebra
+        /*
         cQuery += "                 LEFT  JOIN ( SELECT ZHO.ZHO_FILIAL, ZHO.ZHO_MAT, ZHO.ZHO_CODZHH, COUNT(*) TMP_SALDO "+cQebra
         cQuery += "                              FROM "+ retsqlname("ZHO") +" ZHO "+cQebra
-        cQuery += "                              WHERE ZHO.D_E_L_E_T_='' AND ZHO.ZHO_DEVDAT='' "+cQebra
+        cQuery += "                              WHERE ZHO.D_E_L_E_T_='' AND ZHO.ZHO_ENTDAT='' "+cQebra
         cQuery += "                              GROUP BY ZHO.ZHO_FILIAL, ZHO.ZHO_MAT, ZHO.ZHO_CODZHH) ZHO ON ZHO.ZHO_FILIAL=ZI1.ZI1_FILIAL AND ZHO.ZHO_MAT=ZI1.ZI1_MAT AND ZHK.ZHK_CODZHH=ZHO.ZHO_CODZHH    "+cQebra
+        */
+        cQuery += " LEFT JOIN ( "+cQebra
+        cQuery += " SELECT ZHO_FILIAL, ZHO_MAT, COUNT(*) CONTADOR "+cQebra
+        cQuery += " FROM  "+cQebra
+        cQuery += " (SELECT DISTINCT ZHO_FILIAL, ZHO_MAT, ZHO_UUID "+cQebra
+        cQuery += " FROM "+ Retsqlname("ZHO") +" "+cQebra
+        cQuery += " WHERE D_E_L_E_T_='' AND ZHO_MAT='"+ Alltrim(cZI1MAT) +"' AND ZHO_ENTDAT='"+ Dtos(Date()) +"') ENT "+cQebra
+        // cQuery += " WHERE ENT.ZHO_FILIAL='02' "+cQebra
+        cQuery += " GROUP BY ZHO_FILIAL, ZHO_MAT "+cQebra
+        cQuery += "  ) ZHO ON ZHO.ZHO_FILIAL=ZI1.ZI1_FILIAL AND ZHO.ZHO_MAT=ZI1.ZI1_MAT    "+cQebra
         cQuery += " WHERE ZI5.D_E_L_E_T_='' AND (ZI1.ZI1_CREDEN = '"+ Alltrim(cZI1CREDEN) +"' AND ZI1.ZI1_MAT = '"+ Alltrim(cZI1MAT) +"') "+cQebra
         cQuery += "    ORDER BY ZHK.ZHK_NUMKIT, ZHH.ZHH_CODIGO; "
     

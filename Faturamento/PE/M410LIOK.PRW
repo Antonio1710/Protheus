@@ -18,6 +18,7 @@
 	@history Adriana       - 23/07/2019 - TI     - Valida C6_ITEMPC, correcao da validacao para preenchimento com zeros a esquerda
 	@history Abel Babini   - 22/11/2019 - 040922 || OS 042030 || FISCAL || DEJAIME || 8921 || RE. NF EMITIDAS
 	@history William Costa - 01/04/2020 - 057050 || OS 058523 || ALMOXARIFADO || FABIO || 8410 || SALDO ESTOQUE
+	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 /*/
 
 User Function M410LIOK()
@@ -71,8 +72,13 @@ User Function M410LIOK()
 	Local cCC      := ""
 	Local nLocal   := 0
 	Local nLocaliz := 0
+	Local i			:= 1
+	Local nTotCol	:= 0
+	
+	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-		
+	Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> INICIO PE" )
+
 	//_lSapore	:= .f. //incluido por Adriana para validacao dados SAPORE            
 	_lRedeOp	:= .f. // por Adriana chamado 031238 em novembro/2016
 	_nPosNFRF	:=ASCAN(aHeader,{|x| ALLTRIM(x[2])=="C6_NFORI"})
@@ -99,8 +105,9 @@ User Function M410LIOK()
 		
 		// busco dados da nf de origem
 		aAreaSD1 := SD1->( GetArea() )
+		nTotCol	:= Len(aCols)
 
-		For i:=1 to Len(aCols)
+		For i:=1 to nTotCol
 		
 			cNFOri  := gdFieldGet("C6_NFORI", i)
 			cSerOri := gdFieldGet("C6_SERIORI", i)
@@ -129,6 +136,7 @@ User Function M410LIOK()
 		_lRet := ChkZCN()
 		
 		If !_lRet
+			Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
 			Return _lRet
 		EndIf
 	EndIf
@@ -146,6 +154,7 @@ User Function M410LIOK()
 		RestArea(_aAreaSB1)
 		RestArea(_aArea)                   
 
+		Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
 		Return(_lret)
 
 	Endif
@@ -155,6 +164,7 @@ User Function M410LIOK()
 
 	SB1->(dbSetOrder(1))
 	SB1->( dbSeek(xFilial("SB1")+aCols[N,_nPosPRO]))
+	
 	If aCols[N,_nPosQTD] <> Iif(SB1->B1_TIPCONV<>"M",SB1->B1_CONV*aCols[N,_nPosQTDF],SB1->B1_CONV/aCols[N,_nPosQTDF]) .AND.;
 	!aCOLS[1][Len(aHeader)+1] .AND. SB1->B1_CONV > 0
 
@@ -167,7 +177,7 @@ User Function M410LIOK()
 		lRefresh := .T.
 	Endif
 
-	If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. Alltrim(_cCfop) $ "5116/6116"  // Venda originada em pedido de entrega futura 
+	If !lSfInt .And. Alltrim(_cCfop) $ "5116/6116"  // Venda originada em pedido de entrega futura 
 
 		DbSelectArea("SF2")
 		DbSetOrder(1)
@@ -183,7 +193,7 @@ User Function M410LIOK()
 				'Digite NF Original e Serie Original Nota Fisal Remessa Futura nao Encontrada' , ;
 				cVendedor}) 
 
-			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 				Aadd(aPedidos,{'Digite NF Original e Serie Original Nota Fisal Remessa Futura nao Encontrada'})
 
 			ELSE
@@ -214,7 +224,7 @@ User Function M410LIOK()
 				'Esta Rede, é obrigatório preencher Número Pedido Cliente !!! Ped Cliente' , ;
 				cVendedor}) 
 
-			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 				Aadd(aPedidos,{'Esta Rede, é obrigatório preencher Número Pedido Cliente !!! Ped Cliente'})
 
 			ELSE
@@ -234,7 +244,7 @@ User Function M410LIOK()
 				'É obrigatório preencher NUM.PED.COMP e ITEM PED.COM no item do Pedido !!! A1_XOBRPC' , ;
 				cVendedor}) 
 
-			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 				Aadd(aPedidos,{'É obrigatório preencher NUM.PED.COMP e ITEM PED.COM no item do Pedido !!! A1_XOBRPC'})
 
 			ELSE
@@ -256,7 +266,7 @@ User Function M410LIOK()
 				'Campo ITEM PED.COM só pode ser preenchido com números 0-9, no item do Pedido !!! C6_ITEMPC' , ;
 				cVendedor}) 
 				  
-			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE')  
+			ELSEIF lSfInt 
 				Aadd(aPedidos,{'Campo ITEM PED.COM só pode ser preenchido com números 0-9, no item do Pedido !!! C6_ITEMPC'})
 
 			ELSE
@@ -281,7 +291,7 @@ User Function M410LIOK()
 				'Digite Tipo Saida Cod.Fiscal Incorreto' , ;
 				cVendedor}) 
 
-			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 				Aadd(aPedidos,{'Tipo Saida Cod.Fiscal Incorreto'})
 
 			ELSE
@@ -298,7 +308,7 @@ User Function M410LIOK()
 	// Alterado para verificar se existe produto igual no mesmo pedido 
 	// Alteracao feita pela HCCONSYS EM 15/01/09 
 
-	If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. (cfilant $ "02/06/07")  // Valido somente para empresa Adoro filial Varzea    //incluida filial 07 em 13/08/14
+	If !lSfInt .And. M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. (cfilant $ "02/06/07")  // Valido somente para empresa Adoro filial Varzea    //incluida filial 07 em 13/08/14
 
 		For _n := 1 to Len(aCols)
 			If !aCols[_N,Len(aCols[_N])]
@@ -316,7 +326,7 @@ User Function M410LIOK()
 						'Outro item neste pedido de venda com este produto ('+_Proven[_Elemento]+') ',;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Outro item neste pedido de venda com este produto ('+_Proven[_Elemento]+') '})
 
 					ELSE
@@ -345,7 +355,7 @@ User Function M410LIOK()
 							'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!' , ;
 							cVendedor}) 
 
-						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!'})
 
 						ELSE
@@ -405,7 +415,7 @@ User Function M410LIOK()
 							'TES sem ocorrencia de substituicao. Neste caso devem ser gerados pedidos em separado.', ;
 							cVendedor}) 
 
-						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{"Este Pedido possui itens com TES de Substituicao Tributaria junto a itens com " + Chr(13) + Chr(10) +;
 							"TES sem ocorrencia de substituicao. Neste caso devem ser gerados pedidos em separado."})
 
@@ -449,7 +459,7 @@ User Function M410LIOK()
 							'TES sem ocorrencia de substituicao. Neste caso devem ser gerados pedidos em separado. ',  ;
 							cVendedor}) 
 
-						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Este Pedido possui itens com TES de Substituicao Tributaria junto a itens com ' + ;
 							'TES sem ocorrencia de substituicao. Neste caso devem ser gerados pedidos em separado. '})
 
@@ -479,7 +489,7 @@ User Function M410LIOK()
 
 	_nPosTes  	:= ASCAN(aHeader,{|x| ALLTRIM(x[2])=="C6_TES"  })  
 
-	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. aCols[N][Len(aHeader)+1]==.F. 
+	If !lSfInt .And. aCols[N][Len(aHeader)+1]==.F. 
 
 		If _xOper == "B"
 
@@ -499,7 +509,7 @@ User Function M410LIOK()
 					'Tes invalida para o processo de remessa/incubatorio/integrado. Verifique!' ,;
 					cVendedor}) 
 
-				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Tes invalida para o processo de remessa/incubatorio/integrado. Verifique!'})
 
 				ELSE
@@ -528,7 +538,7 @@ User Function M410LIOK()
 	RestArea(_aArea)                   
 	
 	//Everson - 14/03/2018. Chamado 037261.
-	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
+	If !lSfInt
 		//if INCLUI .Or. ALTERA   //Chamado 008308 - Mauricio - Na exclusão nao chamar a validação abaixo.
 		_lret := (_lret .and. U_AD0078(.T.)) //chama programa de validação de alteração de preços, alterado por Adriana em 10/08/2010
 		//Endif
@@ -536,14 +546,14 @@ User Function M410LIOK()
 	EndIf
 
 	// Ricardo Lima - 02/02/18
-	if !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. Alltrim( FunName() ) = "AD0163"
+	if !lSfInt .And. Alltrim( FunName() ) = "AD0163"
 
 		IF SELECT("M410LIOK") > 0
 			M410LIOK->( DBCLOSEAREA() )
 		ENDIF
 
 		cQuery := " SELECT C6_FILIAL, C6_PRODUTO, C6_QTDVEN "  
-		cQuery += " FROM "+ RetSqlname("SC6") +" "
+		cQuery += " FROM "+ RetSqlname("SC6") +" WITH (NOLOCK) "
 		cQuery += " WHERE C6_FILIAL = '"+ FwxFilial("SC6") +"' AND C6_NUM = '"+ M->C5_XPDEVOR +"' AND C6_PRODUTO = '"+ aCols[N,_nPosPRO] +"' "
 		cQuery += " AND D_E_L_E_T_ = ' ' "	
 		cQuery := ChangeQuery(cQuery)
@@ -556,8 +566,8 @@ User Function M410LIOK()
 		ENDIF
 
 		cQuery := " SELECT C6_FILIAL, C6_PRODUTO, SUM(C6_QTDVEN) C6_QTDVEN "  
-		cQuery += " FROM "+ RetSqlName("SC6") +" C6 "
-		cQuery += " INNER JOIN "+ RetSqlName("SC5") +" C5 ON C5_FILIAL=C6_FILIAL AND C5_NUM=C6_NUM AND C5.D_E_L_E_T_= ' ' "
+		cQuery += " FROM "+ RetSqlName("SC6") +" C6 WITH (NOLOCK) "
+		cQuery += " INNER JOIN "+ RetSqlName("SC5") +" C5 WITH (NOLOCK) ON C5_FILIAL=C6_FILIAL AND C5_NUM=C6_NUM AND C5.D_E_L_E_T_= ' ' "
 		cQuery += " WHERE C6_FILIAL = '"+ FwxFilial("SC6") +"' AND C6_PRODUTO = '"+ aCols[N,_nPosPRO] +"' AND C5_XPDEVOR = '"+ M->C5_XPDEVOR +"' AND C6.D_E_L_E_T_ = ' ' "
 		cQuery += " GROUP BY C6_FILIAL, C6_PRODUTO "
 		cQuery := ChangeQuery(cQuery)
@@ -592,13 +602,19 @@ User Function M410LIOK()
 
 			IF cTesEnt <> cTesDev
 				_lRet := .f.
-				AVISO('Erro na Seleção da TES','O Doc. de Entrada estava com o controle de Estoque = "'+cTesEnt+'". O Doc. de Devolução está com uma TES cujo o controle de Estoque está = "'+cTesDev+'". Entre em contato com a área Fiscal.',{"OK"})
+				IF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					Aadd(aPedidos,{'Erro na Seleção da TES','O Doc. de Entrada estava com o controle de Estoque = "'+cTesEnt+'". O Doc. de Devolução está com uma TES cujo o controle de Estoque está = "'+cTesDev+'". Entre em contato com a área Fiscal.'})
+				ELSE
+					AVISO('Erro na Seleção da TES','O Doc. de Entrada estava com o controle de Estoque = "'+cTesEnt+'". O Doc. de Devolução está com uma TES cujo o controle de Estoque está = "'+cTesDev+'". Entre em contato com a área Fiscal.',{"OK"})
+				ENDIF
 			ENDIF
 			RestArea( aAreaSD1 ) 
 			RestArea( _aAreaSF4 ) 
 		ENDIF
 	ENDIF
 	//FIM Abel Babini - 22/11/2019 - 040922 || OS 042030 || FISCAL || DEJAIME || 8921 || RE. NF EMITIDAS
+
+	Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
 Return(_lret)
 
 /*/{Protheus.doc} User Function ChkZCN
@@ -634,7 +650,11 @@ Static Function ChkZCN()
 						// Consisto lote encerrado
 						If AllTrim(ZCN->ZCN_STATUS) == "E" 
 							lRet := .f.
-							Alert("[M410LIOK-ZCN1] - Lote Recria com status Encerrado! Contate a contabilidade...")
+							IF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								Aadd(aPedidos,{"[M410LIOK-ZCN1] - Lote Recria com status Encerrado! Contate a contabilidade..."})
+							ELSE
+								Alert("[M410LIOK-ZCN1] - Lote Recria com status Encerrado! Contate a contabilidade...")
+							ENDIF
 						EndIf
 					EndIf
 					
@@ -644,7 +664,11 @@ Static Function ChkZCN()
 							gdFieldPut("C6_LOCAL", ZCN->ZCN_ARMAZE, n)
 						Else
 							lRet := .f.
-							Alert("[M410LIOK-ZCN2] - Lote recria não possui armazém cadastrado! Contate a contabilidade...")
+							IF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								Aadd(aPedidos,{"[M410LIOK-ZCN2] - Lote recria não possui armazém cadastrado! Contate a contabilidade..."})
+							ELSE
+								Alert("[M410LIOK-ZCN2] - Lote recria não possui armazém cadastrado! Contate a contabilidade...")
+							ENDIF
 						EndIf
 					EndIf
 					
@@ -652,7 +676,11 @@ Static Function ChkZCN()
 				
 					// Lote informado nao cadastrado na ZCN
 					lRet := .f.
-					Alert("[M410LIOK-ZCN3] - Lote Recria não cadastrado! Contate a contabilidade...")
+					IF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						Aadd(aPedidos,{"[M410LIOK-ZCN3] - Lote Recria não cadastrado! Contate a contabilidade..."})
+					ELSE
+						Alert("[M410LIOK-ZCN3] - Lote Recria não cadastrado! Contate a contabilidade...")
+					ENDIF
 	
 				EndIf
 	
@@ -665,7 +693,11 @@ Static Function ChkZCN()
 			cLoteZCN := gdFieldGet("C6_XLOTECC", n)
 			If cProd == AllTrim(cZCNProd) .and. Empty(cLoteZCN)
 				lRet := .f.
-				Alert("[M410LIOK-ZCN4] - Obrigatório o preenchimento do Lote Recria quando informado este produto código " + cProd)
+				IF lSfInt
+					Aadd(aPedidos,{"[M410LIOK-ZCN4] - Obrigatório o preenchimento do Lote Recria quando informado este produto código " + cProd})
+				ELSE
+					Alert("[M410LIOK-ZCN4] - Obrigatório o preenchimento do Lote Recria quando informado este produto código " + cProd)
+				ENDIF
 			EndIf
 		EndIf
 
@@ -674,7 +706,11 @@ Static Function ChkZCN()
 			cArmaz := gdFieldGet("C6_LOCAL", n)
 			If cProd == AllTrim(cZCNProd) .and. Empty(cArmaz)
 				lRet := .f.
-				Alert("[M410LIOK-ZCN5] - Obrigatório o preenchimento do Armazém quando informado este produto código " + cProd)
+				IF lSfInt
+					Aadd(aPedidos,{"[M410LIOK-ZCN5] - Obrigatório o preenchimento do Armazém quando informado este produto código " + cProd})
+				ELSE
+					Alert("[M410LIOK-ZCN5] - Obrigatório o preenchimento do Armazém quando informado este produto código " + cProd)
+				ENDIF
 			EndIf
 		EndIf
 
@@ -685,7 +721,11 @@ Static Function ChkZCN()
 			If ZCN->( dbSeek( FWxFilial("ZCN")+cLoteZCN ) )
 				If AllTrim(cArmaz) <> AllTrim(ZCN->ZCN_ARMAZE)
 					lRet := .f.
-					Alert("[M410LIOK-ZCN6] - Armazém informado diverge do contido no cadastro de Lote Recria! Contate a contabilidade...")
+					IF lSfInt
+						Aadd(aPedidos,{"[M410LIOK-ZCN6] - Armazém informado diverge do contido no cadastro de Lote Recria! Contate a contabilidade..."})
+					ELSE
+						Alert("[M410LIOK-ZCN6] - Armazém informado diverge do contido no cadastro de Lote Recria! Contate a contabilidade...")
+					ENDIF
 				EndIf
 			EndIf
 		EndIf
@@ -705,14 +745,16 @@ Return lRet
 	/*/
 Static Function UpShelfLife()
 
-	Local nShelf   := 0
-	Local cProduto := ""
-	Local aAreaAtu := GetArea()
-	Local aAreaZFR := ZFR->( GetArea() )
-	Local aAreaZFS := ZFS->( GetArea() )
-	Local aAreaSB1 := SB1->( GetArea() )
+	Local nShelf   	:= 0
+	Local cProduto 	:= ""
+	Local aAreaAtu 	:= GetArea()
+	Local aAreaZFR 	:= ZFR->( GetArea() )
+	Local aAreaZFS 	:= ZFS->( GetArea() )
+	Local aAreaSB1 	:= SB1->( GetArea() )
+	Local nTotGrd	:= Len(aCols)
+	Local i			:= 1
 
-	For i:=1 to Len(aCols)
+	For i:=1 to nTotGrd
 		If !gdDeleted(i)
 			If SC6->(FieldPos("C6_XSHELF")) > 0
 				cProduto := gdFieldGet("C6_PRODUTO", i)

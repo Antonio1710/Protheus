@@ -1,8 +1,19 @@
 #include "rwmake.ch"
 
+/*/{Protheus.doc} User Function FOR003
+	
+	@type  Function
+	@author 
+	@since 
+	@version 01
+	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+/*/
+
 User Function FOR003()  
 
-	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
+	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
+
+	Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se o Fornecedor (atraves do conteudo da variavel) utilizando:  ExecBlock("FOR003",.F.,.F.,PARAMIXB)')
 
@@ -53,21 +64,29 @@ User Function FOR003()
 		If dbSeek( xFilial("SA2")+_cFornece)
 
 			If SA2->A2_ATIVO <> "S"
-
-				MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" inativo")
+				if lSfInt
+					Aadd(aPedidos,{"Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" inativo"})
+				else
+					MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" inativo","Alerta")
+				endif
 				_lReturn := .F.
 
 			Endif
 
 			If SA2->A2_XLIMINS = "S" //incluido por Adriana Chamado 048333 em 25/04/2019
-	
-			MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" com Liminar INSS !")
-			
+				if lSfInt
+					Aadd(aPedidos,{"Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" com Liminar INSS !"})
+				else
+					MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" com Liminar INSS !","")
+				endif
 			Endif
-
 		Else
-
-			MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" nao encontrado")
+			if lSfInt
+				Aadd(aPedidos,{"Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" nao encontrado"})
+			else
+				MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" nao encontrado","Alerta")
+			endif
+			
 			_lReturn := .F.
 
 		Endif                      
@@ -82,6 +101,6 @@ User Function FOR003()
 	dbSetOrder(_cOrder)
 	dbGoto(_cRecno)
 
-	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> FINAL PE" )
+	Conout( DToC(Date()) + " " + Time() + " FOR003 >>> FINAL PE" )
 
 Return(_lReturn)

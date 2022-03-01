@@ -12,10 +12,11 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferência do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravação da data de entrega nos itens do PV.
 /*/
        
 User Function MTA410I()
-
+	/*
 	Local nX       := ParamIXB
 	Local aArea    := Getarea()
 	Local aAreaSC5 := SC5->(GetArea())
@@ -23,7 +24,7 @@ User Function MTA410I()
 	Local nProd    := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_PRODUTO" })
 	Local nItemPV  := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_ITEM" })
 
-	//Conout( DToC(Date()) + " " + Time() + " MTA410I >>> INICIO PE" )
+	Conout( DToC(Date()) + " " + Time() + " MTA410I >>> INICIO PE" )
 
 	IF ACOLS[nX,Len(aHeader)+1] == .F.
 	
@@ -44,5 +45,6 @@ User Function MTA410I()
 	RestArea(aAreaSC6)
 	RestArea(aArea)
 
-	//Conout( DToC(Date()) + " " + Time() + " MTA410I >>> FINAL PE" )
+	Conout( DToC(Date()) + " " + Time() + " MTA410I >>> FINAL PE" )
+	*/
 Return(NIL)

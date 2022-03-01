@@ -13,14 +13,16 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 /*/
 
 User Function ADFAT004P(_cTipo)
-   Local _lVal := .T.
-   Local _y    := 1
-   Local nQtd	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
+   Local _lVal    := .T.
+   Local _y       := 1
+   Local nQtd	   := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
+   Local lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-   //Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> INICIO PE" )
+   Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> INICIO PE" )
 
    //U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida campo C6_QTDVEN e C5_TIPO para permitir ou nao a alteracao da quantidade no pedido de venda')
 
@@ -34,13 +36,13 @@ User Function ADFAT004P(_cTipo)
          Next _y       
       Endif
       
-      If !_lVal
+      If !_lVal .and. !lSfInt
          MsgInfo("Pedido com quantidade ja digitada não pode utilizar tipo de pedido igual a B(utiliza fornecedor).","Atenção")
       Endif
       
    Endif
 
-   //Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> FINAL PE" )
+   Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> FINAL PE" )
 
 Return(_lVal)
 
@@ -49,7 +51,7 @@ User Function VLDC6QTD(_CodUsr)
 
    Local _lVal := .F.
 
-   //Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> INICIO PE" )
+   Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> INICIO PE" )
 
    //U_ADINF009P('ADFAT004P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida campo C6_QTDVEN e C5_TIPO para permitir ou nao a alteracao da quantidade no pedido de venda')
 
@@ -65,6 +67,6 @@ User Function VLDC6QTD(_CodUsr)
       _lVal := .T.
    Endif
 
-   //Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> FINAL PE" )
+   Conout( DToC(Date()) + " " + Time() + " VLDC6QTD >>> FINAL PE" )
 
 Return(_lVal)

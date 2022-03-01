@@ -13,17 +13,18 @@
 ±±³Uso       ³ Comercial                                                  ³±±
 ±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 */
 User Function ADRFICMR()
 
 	Local cRet	:= M->C5_TIPOCLI
 	Local aArea	:= GetArea()
 	Local nProd	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_PRODUTO" })               
-	Local nTES	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_TES" })
+	//Local nTES	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_TES" })
 	Local cUF	:= ""      
 	Local _lConsFinal	:= .F.
 
-	//Conout( DToC(Date()) + " " + Time() + " ADRFICMR >>> INICIO PE" )
+	Conout( DToC(Date()) + " " + Time() + " ADRFICMR >>> INICIO PE" )
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funcao dispara por Gatilho em C6_PRODUTO a fim de validar e atualizar o campo C5_TIPOCLI com S quando o campo B1_PICMRET for maior do que zero')
 
@@ -53,6 +54,6 @@ User Function ADRFICMR()
 
 	RestArea(aArea)
 
-	//Conout( DToC(Date()) + " " + Time() + " ADRFICMR >>> FINAL PE" )
+	Conout( DToC(Date()) + " " + Time() + " ADRFICMR >>> FINAL PE" )
 
 Return(cRet)
