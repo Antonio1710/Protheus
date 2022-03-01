@@ -553,10 +553,10 @@ User Function M410LIOK()
 		ENDIF
 
 		cQuery := " SELECT C6_FILIAL, C6_PRODUTO, C6_QTDVEN "  
-		cQuery += " FROM "+ RetSqlname("SC6") +" WITH (NOLOCK) "
+		cQuery += " FROM "+ RetSqlname("SC6") +" C6 WITH (NOLOCK) "
 		cQuery += " WHERE C6_FILIAL = '"+ FwxFilial("SC6") +"' AND C6_NUM = '"+ M->C5_XPDEVOR +"' AND C6_PRODUTO = '"+ aCols[N,_nPosPRO] +"' "
 		cQuery += " AND D_E_L_E_T_ = ' ' "	
-		cQuery := ChangeQuery(cQuery)
+		//cQuery := ChangeQuery(cQuery)
 		TCQUERY cQuery new alias "M410LIOK"
 
 		nQtdori := M410LIOK->C6_QTDVEN
@@ -570,7 +570,7 @@ User Function M410LIOK()
 		cQuery += " INNER JOIN "+ RetSqlName("SC5") +" C5 WITH (NOLOCK) ON C5_FILIAL=C6_FILIAL AND C5_NUM=C6_NUM AND C5.D_E_L_E_T_= ' ' "
 		cQuery += " WHERE C6_FILIAL = '"+ FwxFilial("SC6") +"' AND C6_PRODUTO = '"+ aCols[N,_nPosPRO] +"' AND C5_XPDEVOR = '"+ M->C5_XPDEVOR +"' AND C6.D_E_L_E_T_ = ' ' "
 		cQuery += " GROUP BY C6_FILIAL, C6_PRODUTO "
-		cQuery := ChangeQuery(cQuery)
+		//cQuery := ChangeQuery(cQuery)
 		TCQUERY cQuery new alias "M410LIOK"
 
 		IF ( M410LIOK->C6_QTDVEN + aCols[N,_nPosQTD] ) > nQtdori
