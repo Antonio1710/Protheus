@@ -27,7 +27,7 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 07/12/2021 - Ajuste no totalizador por vendedores. Estava imprimindo em posição incorreta.
 	@history Ticket  62249  - Leonardo P. Monteiro  - 29/12/2021 - Ajustes na geração dos arquivos texto.
 	@history Ticket  68727  - Leonardo P. Monteiro  - 02/03/2022 - Correção na impressão dos parâmetros do relatório para a exportação do relatório para PDF.
-	/*/
+/*/
 User Function ADVEN106R() // U_ADVEN106R()
 
 	SetPrvt("AORD,TAMANHO,LIMITE,NOMEPROG,MV_TABPR,NTIPO")
