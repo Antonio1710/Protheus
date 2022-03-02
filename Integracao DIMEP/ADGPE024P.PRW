@@ -40,6 +40,7 @@
 	@history Ticket: TI     - Adriano Savoine - 03/02/2022 - Ajustado para o Dimep verificar o demitido ao inves de 7 dias passamos para verificar 1 dia apena apos a data de demissão.
 	@history Ticket: 66952  - Adriano Savoine - 15/02/2022 - Ajustado a query funcionario para atualizar os status apos a sua efetivação e ajustado novos status no dimep 24 e 25 como multiplos e ajustada a integração dos mesmos
 	@history Ticket: 66952  - Fernando Macieir- 23/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
+	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1797,7 +1798,21 @@ Static Function BUSCAEMPDIMEP(cEmpDimep)
 
 Return cEmpresa
 
+/*/{Protheus.doc} Sqlfuncionario
+	Query principal para processar as atualizações no DIMEP
+	@type  Static Function
+	@author user
+	@since 28/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function Sqlfuncionario(cEmpresa) 
+
+	Local nDias := GetMV("MV_#RMDIAS",,7) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
 
 	TRB := GetNextAlias()
 	
@@ -1841,7 +1856,7 @@ Static Function Sqlfuncionario(cEmpresa)
 
 	//Ticket: TI - 03/02/2022 - Adriano Savoine
 	//cQuery += "				AND PFUNC.DATADEMISSAO                             <= GETDATE() " // debug - inibir 
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE() " // debug - voltar 
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()-"+Str(nDias)+" " // debug - voltar 
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL) " // debug - voltar 
 	
 	// @history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
@@ -1853,7 +1868,7 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
 	*/
 	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF=''70784188246''
+	//cQuery += " AND PPESSOA.CPF=''05452774696''
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
 	//
 
@@ -1964,7 +1979,7 @@ Static Function carFuncD(lReload)
 			TX_CAMPO08 
 		FROM 
 			[DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
-		//WHERE NU_CPF='70784188246' // DEBUG - INIBIR
+		//WHERE NU_CPF='05452774696' // DEBUG - INIBIR
 		ORDER BY
 			NU_MATRICULA
 	EndSQl
