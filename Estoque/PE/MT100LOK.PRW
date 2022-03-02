@@ -49,6 +49,7 @@
 	@history Ticket 358     - FWNM            - 21/08/2020 - Implementação para diferenciar complemento de ICMS Próprio e ST nos projetos de investimentos
 	@history Chamdo T.I.    - Everson         - 31/03/2021 - Alterada trava de complemento de preço e quantidade.
 	@history Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL.
+	@history Ticket 68971   - Fer Macieira	  - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 /*/ 
 User Function MT100LOK
 
@@ -1564,22 +1565,32 @@ Return lRet
 	@version 01
 	@history Chamado 051888 - FWNM - 09/10/2019 - REL. INVESTIMENTO
 */
-
 Static Function UpItemCta()
+	
 	// Criar parametro por filial na empresa Adoro e compartilhado nas demais empresas
-	Local cItemCta := GetMV("MV_#ITEMCT",,"")
-	Local cCusto   := gdFieldGet("D1_CC", n)
+	Local cItemCta   := GetMV("MV_#ITEMCT",,"")
+	Local cCusto     := gdFieldGet("D1_CC", n)
+	Local cMVItemCta := ""
 
 	// Excecao
 	If cFilAnt == "03" .and. AllTrim(cCusto) == "5131"
 		cItemCta := GetMV("MV_#ITEM03",,"113")
 	EndIf
 
+	// @history ticket   68971 - Fer Macieira - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+	cMVItemCta := GetMV("MV_#ITM113",,"113")
+	If AllTrim(cCusto) $ GetMV("MV_#CC5134",,"5134")
+		cItemCta := cMVItemCta
+	EndIf
+	//
+
 	If !Empty(cItemCta)
 		gdFieldPut("D1_ITEMCTA", cItemCta, n)
 	Else
 		msgAlert("Parâmetro MV_#ITEMCT não existe ou não possui item contábil definido para esta filial... O item contábil ficará errado! Contate a contabilidade...")
 	EndIf
+
+
 
 Return
 

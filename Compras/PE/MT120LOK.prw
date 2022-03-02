@@ -23,6 +23,7 @@
 	@history ticket    8582 - Fernando Mac - 08/02/2021 - Replicar OP na próxima linha
 	@history ticket   10573 - Fernando Mac - 08/03/2021 - Ponto de Correção - Manutenção de Ativos
 	@history ticket   63516 - Fer Macieira - 09/11/2021 - Reforço para gravar campo C7_XTXMOEDA utilizado para montar o consumo/saldo do projeto de investimento
+	@history ticket   68971 - Fer Macieira - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 /*/
 User Function MT120LOK()
 
@@ -71,6 +72,7 @@ User Function MT120LOK()
 	//
 
 	Local nxTxMoed := 0 // 053444 || OS 054835 || SUPRIMENTOS || EVANDRA || 8362 || PC EM EURO - FWNM - 19/11/2019
+	Local cMVItemCta := ""
 	
 	Private lPrjInvest := Left(AllTrim(cCusto),1) == "9"
 	
@@ -231,12 +233,20 @@ User Function MT120LOK()
 		EndIf
 	Endif
 	
-	
+	//////////////////////////////////////////////////////////
 	// Projetos - FWNM - 16/02/2018
-	
+	//////////////////////////////////////////////////////////
+
 	// Consiste exigência ou não do projeto - FWNM 16/03/2018
 	cCC := gdFieldGet("C7_CC", n)
 	
+	// @history ticket   68971 - Fer Macieira - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+	cMVItemCta := GetMV("MV_#ITM113",,"113")
+	If AllTrim(cCC) $ GetMV("MV_#CC5134",,"5134")
+		gdFieldPut("C7_ITEMCTA", cMVItemCta, n)
+	EndIf
+	//
+
 	lPrjInv := Left(AllTrim(cCC),1) == "9"
 	
 	// Qdo prj for investimento
