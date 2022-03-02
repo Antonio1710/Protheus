@@ -52,11 +52,12 @@ Static lAuto    := .t.
     (examples)
     @see (links_or_references)
     @chamado TI
-	@history chamado 055379 - FWNM       - 30/01/2020 - OS 056780 || SUPRIMENTOS || VICTOR || 3524 || WORKFLOW DE PEDIDOS
-	@history chamado 055379 - FWNM       - 06/02/2020 - OS 057023 || SUPRIMENTOS || VICTOR || 3524 || WORKFLOW DE PEDIDOS - Nenhuma alteração no fonte foi realizada, apenas constatamos que o problema estava nos dicionários das empresas 03, 06 e 08 (falta do índice 4 tabela SCR)
-	@history chamado 056899 - FWNM       - 26/03/2020 - || OS 058363 || COMPRAS || GRAZIELE_ALMEIDA || 8441 || WORKFLOW P.C
-	@history chamado 056899 - FWNM       - 31/03/2020 - || OS 058363 || COMPRAS || GRAZIELE_ALMEIDA || 8441 || WORKFLOW P.C - Comentado sleep
-	@history chamado 050729 - FWNM       - 30/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
+	@history chamado 055379 - FWNM            - 30/01/2020 - OS 056780 || SUPRIMENTOS || VICTOR || 3524 || WORKFLOW DE PEDIDOS
+	@history chamado 055379 - FWNM            - 06/02/2020 - OS 057023 || SUPRIMENTOS || VICTOR || 3524 || WORKFLOW DE PEDIDOS - Nenhuma alteração no fonte foi realizada, apenas constatamos que o problema estava nos dicionários das empresas 03, 06 e 08 (falta do índice 4 tabela SCR)
+	@history chamado 056899 - FWNM            - 26/03/2020 - || OS 058363 || COMPRAS || GRAZIELE_ALMEIDA || 8441 || WORKFLOW P.C
+	@history chamado 056899 - FWNM            - 31/03/2020 - || OS 058363 || COMPRAS || GRAZIELE_ALMEIDA || 8441 || WORKFLOW P.C - Comentado sleep
+	@history chamado 050729 - FWNM            - 30/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
+	@history Ticket  69088  - ADRIANO SAVOINE - 02/03/2022 - RETIRADO O LOCK BY NAME.
 /*/
 User Function ADCOM034P()
 
@@ -69,6 +70,7 @@ User Function ADCOM034P()
     Local cTipoPC   := ""
     Local aEmpresas := {}
     Local aParamJob := {}
+	Local i         := 0
 
 	// Inicializo ambiente
 	rpcClearEnv()
@@ -105,17 +107,17 @@ User Function ADCOM034P()
 		RpcClearEnv()
 		RpcSetType(3)
 		RpcSetEnv( aEmpresas[ i,1 ] , aEmpresas[ i,2 ] )
-
+		//Ticket  69088  - ADRIANO SAVOINE - 02/03/2022
         // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-        If !LockByName("ADCOM034P"+cEmpAnt+cFilAnt, .T., .F.)
+    	 /*   If !LockByName("ADCOM034P"+cEmpAnt+cFilAnt, .T., .F.)
             ConOut("[ADCOM034P] - Existe outro processamento sendo executado! Verifique...")
             RPCClearEnv()
             Return
-        EndIf
+        EndIf*/
 
         PtInternal( 1, cRotina + " - Inicializando ambiente da empresa/filial [" + cEmpAnt + "/" +cFilAnt + "]")
 
-		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina job para envio de relatório de PC aprovados aos compradores/fornecedores')
+		//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina job para envio de relatório de PC aprovados aos compradores/fornecedores')
 
         If Select("Work") > 0
             Work->( dbCloseArea() )
@@ -171,11 +173,12 @@ User Function ADCOM034P()
         If Select("Work") > 0
             Work->( dbCloseArea() )
         EndIf
-
+		
+		//Ticket  69088  - ADRIANO SAVOINE - 02/03/2022
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
         //³Destrava a rotina para o usuário	    ?
         //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-        UnLockByName("ADCOM034P"+cEmpAnt+cFilAnt)
+        //UnLockByName("ADCOM034P"+cEmpAnt+cFilAnt)
 
 		RpcClearEnv()
 
@@ -229,11 +232,11 @@ User Function ADMATR110(ParamIXB)
 		EndIf
 
 	    // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-        If !LockByName("ADMATR110"+cEmpAnt+cFilAnt, .T., .F.)
+        /*If !LockByName("ADMATR110"+cEmpAnt+cFilAnt, .T., .F.)
             ConOut("[ADMATR110] - Existe outro processamento sendo executado! Verifique...")
             RPCClearEnv()
             Return
-        EndIf
+        EndIf*/
 	
 	EndIf
 	
@@ -317,7 +320,7 @@ User Function ADMATR110(ParamIXB)
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
         //³Destrava a rotina para o usuário	    ?
         //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-        UnLockByName("ADMATR110"+cEmpAnt+cFilAnt)
+        //UnLockByName("ADMATR110"+cEmpAnt+cFilAnt)
 
 		rpcClearEnv() // ENCERRRA AMBIENTE
 
