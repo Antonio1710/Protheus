@@ -42,6 +42,7 @@ Static lAuto    := .t.
 	@history ticket TI      - FWNM                  - 10/09/2021 - Melhoria IDCNAB após golive CLOUD
 	@history ticket 515     - Rodrigo Mello         - 17/01/2022 - Implementação PIX
 	@history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
+	@history ticket TI      - Rodrigo Mello         - 01/03/2022 - Ajuste valor default e tipo do MV_#CTAPIX / MV_#CTALINK
 /*/
 User Function ADFIN087P()
 
@@ -316,8 +317,8 @@ User Function GeraRAPV()
 	local cCondLnk  := GetNewPar("MV_#CONLNK", "LNK")
 	local cCondPIX  := GetNewPar("MV_#CONPIX", "PIX")
 
-	local aCtaLnk	:= GetNewPar("MV_#CTALNK", {"237", "33677", "126500_8"})
-	local aCtaPix	:= GetNewPar("MV_#CTAPIX", {"237", "33677", "126500_8"})
+	local aCtaLnk	:= & (GetNewPar("MV_#CTALNK", '{"237", "33677", "126500_8"}'))
+	local aCtaPix	:= & (GetNewPar("MV_#CTAPIX", '{"237", "33677", "126500_8"}'))
 
 	Local cBcoMVSA1 := GetMV("MV_#WSBCO1",,"237") // TI - Conforme diretriz Reginaldo/Sigoli - FWNM - 06/05/2020
 
