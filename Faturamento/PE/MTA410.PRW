@@ -29,7 +29,7 @@ User Function MTA410
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	Public _lVldRot := Space(03)
-	Conout( DToC(Date()) + " " + Time() + " MTA410 >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " MTA410 >>> INICIO PE" )
 
 	// Posicao no array aHEADER
 	_nPValor  := aScan( aHeader, {|x| x[2] = "C6_VALOR" } )
@@ -189,7 +189,7 @@ User Function MTA410
 	RestArea(aAreaSA4)
 	RestArea(aAreaSA1)
 
-	Conout( DToC(Date()) + " " + Time() + " MTA410 >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " MTA410 >>> FINAL PE" )
 
 Return(_lRet)
 

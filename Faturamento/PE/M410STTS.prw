@@ -132,7 +132,7 @@ User Function M410STTS()
 	//³ Posicionamento original dos arquivos envolvidos ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO PE" )
 
 	_cAlias := Alias()
 	_cOrder := IndexOrd()
@@ -184,7 +184,7 @@ User Function M410STTS()
 
 	// Separado em duas partes: uma para INCLUSÃO e outra para ALTERAÇÃO - Paulo - TDS - 23/05/2011
 	If INCLUI
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO INCLUI 1" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO INCLUI 1" )
 		// Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
 		// Função comentada para não fazer mais a chamada à rotina
 		// IF ALLTRIM(cEmpAnt) == '01' .AND. ALLTRIM(xFilial("SC5")) == '02' // chamado 031739 William Costa, adicionado esse if pois causava lentidão devido ao alta quantidade de pedidos referente ao cliente 60037058
@@ -214,7 +214,7 @@ User Function M410STTS()
 			Endif   
 		ENDIF 
 		
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO AVALIA CREDITO" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO AVALIA CREDITO" )
 		_nLimCred 	:= 0
 		_nLimCred 	:= Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
 		_lBloq 		:= .F. 
@@ -316,7 +316,7 @@ User Function M410STTS()
 
 		EndIf
 
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL AVALIA CREDITO" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL AVALIA CREDITO" )
 
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ Grava Informacoes em SC5 ³
@@ -525,7 +525,7 @@ User Function M410STTS()
 				//Mauricio - 07/12/11 - tratamento para caso não haver tabela cadastrada ou faixa de peso
 				//precisa ser analisado a posterior, para encontrar melhor alternativa de ação a ser tomada.
 				If Empty(_cTabela)
-					Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 					return()
 				Else
 					//atualizo campo tabela no SC5
@@ -854,7 +854,7 @@ User Function M410STTS()
 			EndIf				
 		Endif	
 
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL INLCUI" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL INLCUI" )
 		// Logica para alteração
 	ElseIf ALTERA
 
@@ -1334,7 +1334,7 @@ User Function M410STTS()
 					//Mauricio - 07/12/11 - tratamento para caso não haver tabela cadastrada ou faixa de peso
 					//precisa ser analisado a posterior, para encontrar melhor alternativa de ação a ser tomada.
 					If Empty(_cTabela)
-						Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
+						//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 						return()
 					Else
 						//atualizo campo tabela no SC5
@@ -1738,7 +1738,7 @@ User Function M410STTS()
 	EndIf
 
 
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO BSCSLD" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO BSCSLD" )
 	//Mauricio 16/11/11 - Tratamento para forçar bloqueio por limite de credito(Padrao Protheus estava falhando)
 	_nLimCred := 0
 	_nLimCred := Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
@@ -1821,7 +1821,7 @@ User Function M410STTS()
 		endif
 	EndIf
 
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL BSCSLD" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL BSCSLD" )
 	//Fim - fernando chamado 036388 - fernando 20/07/2017
 
 	// Chamado 008402 - Mauricio - Correção de problema com programa AD0078.
@@ -1904,9 +1904,9 @@ User Function M410STTS()
 			If lWSBradOn // @history chamado 059415 - FWNM - 13/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
 				
 				// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alterações de pedidos de vendas com emissões anteriores ao do dia atual e de condições de pagamento normais para antecipado, cenário este não contemplado pelo job
-				Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO" )
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO" )
 				msAguarde( { || u_GeraRAPV() }, "Gerando boleto de adiantamento PV " + _cNumPed )
-				Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL" )
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL" )
 			EndIf
 
 			//U_ADFIN021P(SC5->C5_FILIAL+SC5->C5_NUM) // Gera ZBH // @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
@@ -1917,18 +1917,18 @@ User Function M410STTS()
 		//Executa Pre liberação Financeira do Pedido
 		//fPreLibF()
 		
-		Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 1" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 1" )
         If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 
 			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
-				Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
 				aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
-				Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
 				IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
 					//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-					Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
 					fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-					Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
 				ENDIF
 
 			EndIf
@@ -1941,7 +1941,7 @@ User Function M410STTS()
 		    ENDIF
 
         EndIf
-		Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 1" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 1" )
 
 	EndIf
 	//
@@ -1958,7 +1958,7 @@ User Function M410STTS()
 	//Everson - 10/02/2020. Chamado 054941.
 	RestArea(aArea)
 	
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 
 Return 
 
@@ -3662,9 +3662,9 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 		IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < (cAls002)->C5_XTOTPED)
 			
 			//VALIDA CRÉDITO DO PEDIDO
-			Conout( DToC(Date()) + " " + Time() + " M410STTS - fVldCrd - INICIO 1" )
+			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVldCrd - INICIO 1" )
 				fVldCrd(_cTipoCli, (cAls002)->C5_CLIENTE, (cAls002)->C5_LOJACLI, _cCdClIn, (cAls002)->C5_FILIAL, (cAls002)->C5_NUM, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, (cAls002)->C6_PRCTOT, (cAls002)->C5_CONDPAG, (cAls002)->C5_EMISSAO, _lDiasAtras, _nValLim, (cAls002)->C5_VEND1, lBlqAtr, aTpBlqAt)
-			Conout( DToC(Date()) + " " + Time() + " M410STTS - fVldCrd - FINAL 2" )
+			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVldCrd - FINAL 2" )
 
 		ENDIF
 

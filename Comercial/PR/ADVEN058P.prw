@@ -20,7 +20,7 @@ User Function ADVEN058P()
 	Local nVlTot    := Ascan(aHeader, { |x| Alltrim(x[2]) == "C6_VALOR"  }) 
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-	Conout( DToC(Date()) + " " + Time() + " ADVEN058P >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " ADVEN058P >>> INICIO PE" )
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina de validação de campo C')
 
@@ -45,6 +45,6 @@ User Function ADVEN058P()
 
 	ENDIF
 
-	Conout( DToC(Date()) + " " + Time() + " ADVEN058P >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " ADVEN058P >>> INICIO PE" )
 
 Return .T.

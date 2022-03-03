@@ -13,7 +13,7 @@ USER FUNCTION AD0078(_ori)
 
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-	Conout( DToC(Date()) + " " + Time() + " AD0078 >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " AD0078 >>> INICIO PE" )
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 
@@ -129,6 +129,6 @@ USER FUNCTION AD0078(_ori)
 			ENDIF
 	ENDIF
 
-	Conout( DToC(Date()) + " " + Time() + " AD0078 >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " AD0078 >>> FINAL PE" )
 
 RETURN(iif(_M410LIOK,_LPRECOOK,_NPRCVEN)) //alterado para tratar retorno para o ponto de entrada M410LIOK  por Adriana em 10/08/10	

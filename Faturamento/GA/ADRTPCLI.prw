@@ -25,7 +25,7 @@ User Function ADRTPCLI()
 	Local _lConsFinal	:= .F.
 	Local _CFST 		:= GetMV("MV_XCFST") //CFOP Venda de embutidos com ICMS ST    5401/5910/5118   - incluido por Adriana em 05/06/2017 - chamado 035483
 
-	Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> INICIO PE" )
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funcao dispara por Gatilho em C6_CF a fim de validar e atualizar o campo C5_TIPOCLI com conteudo de A1_TIPO para os CFOPS iguais a 5401/5910')
 
@@ -35,7 +35,7 @@ User Function ADRTPCLI()
 	If M->C5_TIPO $ "D/B"
 		RestArea(aArea)
 
-		Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> FINAL PE" )
+		//Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> FINAL PE" )
 		Return(cRet)
 	Else
 		dbSelectArea("SA1")
@@ -84,7 +84,7 @@ User Function ADRTPCLI()
 
 	RestArea(aArea)
 
-	Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> FINAL PE" )
 	
 Return(cRet)
 

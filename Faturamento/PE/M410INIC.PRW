@@ -35,7 +35,7 @@ User Function M410INIC()
 	Private _nTcConn1	:= advConnection()
 	Private lSfInt		:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-	Conout( DToC(Date()) + " " + Time() + " M410INIC >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410INIC >>> INICIO PE" )
 
 	/* 
 	INICIO Retirada trecho de fonte para o chamado 041995 || TECNOLOGIA || FERNANDO_SIGOLI || 8451 || FONTES DO TECLAN WILLIAM COSTA 07/06/2018 
@@ -60,6 +60,6 @@ User Function M410INIC()
 	dbSetOrder(_cOrder)
 	dbGoto(_cRecno)
 
-	Conout( DToC(Date()) + " " + Time() + " M410INIC >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410INIC >>> FINAL PE" )
 
 Return()
