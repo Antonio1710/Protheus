@@ -2037,7 +2037,7 @@ Static Function xAprvPed()
 									ZEJ->ZEJ_VLPESP	:= 0
 									ZEJ->ZEJ_TTACUM	:= _nTotVenci+_nTotAVenc+(cTbClie)->TOTAL+_nPedFut
 									ZEJ->ZEJ_LIMCRD	:= _nTotRede
-									ZEJ->ZEJ_PERCEN := ((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100
+									ZEJ->ZEJ_PERCEN := iif(((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100 > 999, 999, ((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100)
 									ZEJ->ZEJ_VLUTIL := _nTotSdRede
 									ZEJ->ZEJ_QTDPED := (cTbClie)->NUMPED
 									ZEJ->ZEJ_TTUTIL := (_nTotSdRede+(cTbClie)->TOTAL)
