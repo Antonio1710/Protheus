@@ -17,6 +17,7 @@
 	@history Ticket 3810  - Andre Mendes - 10/12/2020 - ApÃ³s criar o grupo , informar a quantidade de tÃ­tulos que contÃ©m no grupo e o valor total do grupo
 	@history Ticket 3810  - Andre Mendes - 10/12/2021 - Ajustes nos gatilhos e validações de campo, carga dos títulos de abatimentos.
 	@history Ticket 18035 - Leonardo P. Monteiro - 27/12/2021 - Ajustes na rotina e cálculo dos abatimentos.
+	@history Ticket 69104  - Leonardo P. Monteiro - 03/02/2022 - Ajuste nas mensagens de validação quando importados os títulos e gatilhos dos campos de descontos, multas e tx. permanência.
 /*/
 User Function ADFIN102P()
 	Local aCoors := FWGetDialogSize( oMainWnd )
@@ -334,7 +335,7 @@ Static Function FIN102Grp()
     
 	aTitulos := FIN102Qry(cTipo)
 	
-	If Len(aTitulos) >0 
+	If Len(aTitulos) > 0 
 
 		Processa( {|lEnd| lRet := FIN102Add(aTitulos) },; 
 						OemToAnsi("Grupo de titulos a receber."),; 
@@ -567,88 +568,88 @@ Static Function FIN102Qry(cTipo)
 	Local cQuery := ""
 
 
-	pergunte("ADFIN102P",.t.)
+	IF pergunte("ADFIN102P",.t.)
 
-	Do Case 
-        Case cTipo == "01"
+		Do Case 
+			Case cTipo == "01"
 
-			cQuery := "SELECT " + CRLF
-			cQuery += "		E1_PREFIXO, " + CRLF
-			cQuery += "		E1_NUM, " + CRLF
-			cQuery += "		E1_PARCELA, " + CRLF
-			cQuery += "		E1_TIPO, " + CRLF
-			cQuery += "		SE1.R_E_C_N_O_ AS RECNO " + CRLF
-			cQuery += "FROM " + CRLF
-			cQuery += "	"+RetSqlName("SE1")+"	SE1			INNER JOIN " + CRLF
-			cQuery += "	"+RetSqlName("SA1")+"	SA1	ON " + CRLF
-			cQuery += "			SA1.A1_COD	= SE1.E1_CLIENTE		AND " + CRLF
-			cQuery += "			SA1.A1_LOJA	= SE1.E1_LOJA " + CRLF
-			cQuery += "WHERE " + CRLF
-			cQuery += "	SE1.D_E_L_E_T_ = '' " + CRLF
-			cQuery += "AND	SE1.E1_SALDO >0 " + CRLF
-			cQuery += "AND SA1.A1_PESSOA  = 'F' " + CRLF
-			cQuery += "AND SE1.E1_VENCREA BETWEEN '"+DtoS(MV_PAR09)+"' AND '"+DtoS(MV_PAR10)+"' " + CRLF
-			cQuery += "AND SE1.E1_FILIAL	= '"+xFilial("SE1")+"' "
+				cQuery := "SELECT " + CRLF
+				cQuery += "		E1_PREFIXO, " + CRLF
+				cQuery += "		E1_NUM, " + CRLF
+				cQuery += "		E1_PARCELA, " + CRLF
+				cQuery += "		E1_TIPO, " + CRLF
+				cQuery += "		SE1.R_E_C_N_O_ AS RECNO " + CRLF
+				cQuery += "FROM " + CRLF
+				cQuery += "	"+RetSqlName("SE1")+"	SE1			INNER JOIN " + CRLF
+				cQuery += "	"+RetSqlName("SA1")+"	SA1	ON " + CRLF
+				cQuery += "			SA1.A1_COD	= SE1.E1_CLIENTE		AND " + CRLF
+				cQuery += "			SA1.A1_LOJA	= SE1.E1_LOJA " + CRLF
+				cQuery += "WHERE " + CRLF
+				cQuery += "	SE1.D_E_L_E_T_ = '' " + CRLF
+				cQuery += "AND	SE1.E1_SALDO >0 " + CRLF
+				cQuery += "AND SA1.A1_PESSOA  = 'F' " + CRLF
+				cQuery += "AND SE1.E1_VENCREA BETWEEN '"+DtoS(MV_PAR09)+"' AND '"+DtoS(MV_PAR10)+"' " + CRLF
+				cQuery += "AND SE1.E1_FILIAL	= '"+xFilial("SE1")+"' "
 
-		Case cTipo == "02"
+			Case cTipo == "02"
 
-			cQuery := "SELECT " + CRLF
-			cQuery += "		E1_PREFIXO, " + CRLF
-			cQuery += "		E1_NUM, " + CRLF
-			cQuery += "		E1_PARCELA, " + CRLF
-			cQuery += "		E1_TIPO, " + CRLF
-			cQuery += "		SE1.R_E_C_N_O_ AS RECNO " + CRLF
-			cQuery += "FROM " + CRLF
-			cQuery += "	SE1010	SE1			INNER JOIN " + CRLF
-			cQuery += "	SA1010	SA1	ON " + CRLF
-			cQuery += "			SA1.A1_COD	= SE1.E1_CLIENTE		AND " + CRLF
-			cQuery += "			SA1.A1_LOJA	= SE1.E1_LOJA " + CRLF
-			cQuery += "WHERE " + CRLF
-			cQuery += "	SE1.D_E_L_E_T_ = '' " + CRLF
-			cQuery += "AND	SE1.E1_SALDO >0 " + CRLF
-			If mv_par40 == 2
-				cQuery += " AND SE1.E1_VENCTO BETWEEN '" + DTOS(mv_par09)  + "' AND '" + DTOS(mv_par10) + "' " + CRLF
-			Else
-				cQuery += " AND SE1.E1_VENCREA BETWEEN '" + DTOS(mv_par09)  + "' AND '" + DTOS(mv_par10) + "' " + CRLF
-			EndIf
-			cQuery += "AND SE1.E1_FILIAL	= '"+xFilial("SE1")+"' " + CRLF
-			cQuery += "AND SE1.E1_CLIENTE + SE1.E1_LOJA BETWEEN '" + mv_par01 + mv_par24 + "' AND '" + mv_par02 + mv_par25 + "' " + CRLF
-			cQuery += "AND SE1.E1_PREFIXO BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "' " + CRLF
-			cQuery += "AND SE1.E1_NUM BETWEEN '" + mv_par05 + "' AND '" + mv_par06 + "' " + CRLF
-			cQuery += "AND SE1.E1_PORTADO BETWEEN '" + mv_par07 + "' AND '" + mv_par08 + "' " + CRLF
-			cQuery += "AND SE1.E1_NATUREZ BETWEEN '" + MV_PAR11 + "' AND '" + MV_PAR12 + "' " + CRLF
-			cQuery += "AND SE1.E1_EMISSAO BETWEEN '" + DTOS(mv_par13)  + "' AND '" + DTOS(mv_par14)  + "' " + CRLF
-			cQuery += "AND SE1.E1_TIPO	<> 'PR' " + CRLF
-			cQuery += "AND SE1.E1_EMIS1 BETWEEN '"+ DTOS(mv_par27) + "' AND '" + DTOS(mv_par28) + "' " + CRLF
-			cQuery += "AND SA1.A1_CODRED BETWEEN '"+ mv_par44 + "' AND '" + mv_par45 + "' " + CRLF
-			If !Empty(mv_par31)
-				cQuery += "AND SE1.E1_TIPO IN " + FormatIn( mv_par31, ";" ) +" " + CRLF
-			EndIf
-			If !Empty(MV_PAR32)
-				cQuery += " AND SE1.E1_TIPO NOT IN " + FormatIn( MV_PAR32, ";" ) +" " + CRLF
-			EndIf
-			cQuery += " AND SE1.E1_TIPO NOT IN " + FormatIn(MVABATIM,"|")
+				cQuery := "SELECT " + CRLF
+				cQuery += "		E1_PREFIXO, " + CRLF
+				cQuery += "		E1_NUM, " + CRLF
+				cQuery += "		E1_PARCELA, " + CRLF
+				cQuery += "		E1_TIPO, " + CRLF
+				cQuery += "		SE1.R_E_C_N_O_ AS RECNO " + CRLF
+				cQuery += "FROM " + CRLF
+				cQuery += "	SE1010	SE1			INNER JOIN " + CRLF
+				cQuery += "	SA1010	SA1	ON " + CRLF
+				cQuery += "			SA1.A1_COD	= SE1.E1_CLIENTE		AND " + CRLF
+				cQuery += "			SA1.A1_LOJA	= SE1.E1_LOJA " + CRLF
+				cQuery += "WHERE " + CRLF
+				cQuery += "	SE1.D_E_L_E_T_ = '' " + CRLF
+				cQuery += "AND	SE1.E1_SALDO >0 " + CRLF
+				If mv_par40 == 2
+					cQuery += " AND SE1.E1_VENCTO BETWEEN '" + DTOS(mv_par09)  + "' AND '" + DTOS(mv_par10) + "' " + CRLF
+				Else
+					cQuery += " AND SE1.E1_VENCREA BETWEEN '" + DTOS(mv_par09)  + "' AND '" + DTOS(mv_par10) + "' " + CRLF
+				EndIf
+				cQuery += "AND SE1.E1_FILIAL	= '"+xFilial("SE1")+"' " + CRLF
+				cQuery += "AND SE1.E1_CLIENTE + SE1.E1_LOJA BETWEEN '" + mv_par01 + mv_par24 + "' AND '" + mv_par02 + mv_par25 + "' " + CRLF
+				cQuery += "AND SE1.E1_PREFIXO BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "' " + CRLF
+				cQuery += "AND SE1.E1_NUM BETWEEN '" + mv_par05 + "' AND '" + mv_par06 + "' " + CRLF
+				cQuery += "AND SE1.E1_PORTADO BETWEEN '" + mv_par07 + "' AND '" + mv_par08 + "' " + CRLF
+				cQuery += "AND SE1.E1_NATUREZ BETWEEN '" + MV_PAR11 + "' AND '" + MV_PAR12 + "' " + CRLF
+				cQuery += "AND SE1.E1_EMISSAO BETWEEN '" + DTOS(mv_par13)  + "' AND '" + DTOS(mv_par14)  + "' " + CRLF
+				cQuery += "AND SE1.E1_TIPO	<> 'PR' " + CRLF
+				cQuery += "AND SE1.E1_EMIS1 BETWEEN '"+ DTOS(mv_par27) + "' AND '" + DTOS(mv_par28) + "' " + CRLF
+				cQuery += "AND SA1.A1_CODRED BETWEEN '"+ mv_par44 + "' AND '" + mv_par45 + "' " + CRLF
+				If !Empty(mv_par31)
+					cQuery += "AND SE1.E1_TIPO IN " + FormatIn( mv_par31, ";" ) +" " + CRLF
+				EndIf
+				If !Empty(MV_PAR32)
+					cQuery += " AND SE1.E1_TIPO NOT IN " + FormatIn( MV_PAR32, ";" ) +" " + CRLF
+				EndIf
+				cQuery += " AND SE1.E1_TIPO NOT IN " + FormatIn(MVABATIM,"|")
 
+			OtherWise
 			
+		EndCase
 
-        OtherWise
+		If !Empty(cQuery)
+			cQuery := ChangeQuery(cQuery)
+			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAlias,.T.,.T.)
 
-        
-    EndCase
+			DbSelectArea(cAlias)
+			While !Eof()
 
-	If !Empty(cQuery)
-		cQuery := ChangeQuery(cQuery)
-		dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAlias,.T.,.T.)
+				aAdd(aRet, {E1_PREFIXO,E1_NUM,E1_PARCELA,E1_TIPO,RECNO})	
 
-		DbSelectArea(cAlias)
-		While !Eof()
-
-			aAdd(aRet, {E1_PREFIXO,E1_NUM,E1_PARCELA,E1_TIPO,RECNO})	
-
-			dbSkip()
-		End
-	Endif
-	DbCloseArea()
+				dbSkip()
+			End
+		Endif
+		DbCloseArea()
+	else
+		MsgInfo("Operação cancelada pelo operador!", "Operação cancelada")
+	endif
 
 	RestArea(aArea)
 
@@ -798,10 +799,10 @@ Static Function FIN102Add(aTitulos)
 				nL := oStruZG7:AddLine()
 			endif
 			
+			oStruZG7:SetValue('ZG7_TIPO'  , aTitulos[nX][04] )
 			oStruZG7:SetValue('ZG7_PREFIX', aTitulos[nX][01] )
 			oStruZG7:SetValue('ZG7_NUMERO', aTitulos[nX][02] )
 			oStruZG7:SetValue('ZG7_PARCEL', aTitulos[nX][03] )
-			oStruZG7:SetValue('ZG7_TIPO'  , aTitulos[nX][04] )
 			oStruZG7:SetValue('ZG7_MOTBAI', FwFldGet("ZG6_MOTBAI") )
 			oStruZG7:SetValue('ZG7_BANCO' , FwFldGet("ZG6_BANCO") )
 			oStruZG7:SetValue('ZG7_AGENCI', FwFldGet("ZG6_AGENCI") )
@@ -911,6 +912,10 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 
 	if oModelSit:cID == "ENT_02_ZG7"
 
+		if select("QSE1") > 0
+			QSE1->(dbclosearea())
+		endif
+
 		if select("QSE1") == 0
 			cQuery  := " SELECT E1.E1_PREFIXO, E1.E1_NUM, E1.E1_PARCELA, E1.E1_TIPO, E1.E1_PORTADO, E1.E1_NATUREZ, E1.E1_EMISSAO, E1. E1_EMIS1, "
 			cQuery  += " E1.E1_CLIENTE, E1.E1_LOJA, SA1.A1_NOME, E1.E1_VENCREA, E1_SALDO, E1_VALOR, E1_DESCONT, "
@@ -935,8 +940,10 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 		//if SE1->(Dbseek(xFilial("SE1")+FwFldGet("ZG7_PREFIX")+FwFldGet("ZG7_NUMERO")+FwFldGet("ZG7_PARCEL")+FwFldGet("ZG7_TIPO")))
 		IF QSE1->(!eof())
 
+			
 			nSaldo 		:= QSE1->E1_VALOR
-			nDesconto	:= QSE1->E1_DESCONT
+			//nDesconto	:= QSE1->E1_DESCONT
+			nDesconto	:= iif(cField=="ZG7_DESCON"	, xValue, FwFldGet("ZG7_DESCON"))
 			nAbatimen	:= QSE1->EA_VALOR
 			nMulta		:= iif(cField=="ZG7_MULTA"	, xValue, FwFldGet("ZG7_MULTA"))
 			nTxPerm		:= iif(cField=="ZG7_TXPERM"	, xValue, FwFldGet("ZG7_TXPERM"))
@@ -963,13 +970,17 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 
 			endif
 			
-			if cField == "*" .or. cField == "ZG7_PARCEL" .or. cField == "ZG7_DESCON"
+			if cField == "*" .or.; 
+			   cField == "ZG7_PARCEL" .or.; 
+			   cField == "ZG7_DESCON" .or.;
+			   cField == "ZG7_MULTA" .or.;
+			   cField == "ZG7_TXPERM"
 				
 				nVlRec := nSaldo-nDesconto+nMulta+nTxPerm-nAbatimen
 				oModelSit:LoadValue("ZG7_VLREC"		, nVlRec)
 			
 			endif
-
+			/*
 			if cField == "*" .or. cField == "ZG7_PARCEL" .or. cField == "ZG7_MULTA"
 
 				nVlRec := nSaldo-nDesconto+nMulta+nTxPerm-nAbatimen
@@ -983,6 +994,7 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 				oModelSit:LoadValue("ZG7_VLREC"		, nVlRec)
 
 			endif
+			*/
 		else
 			MsgAlert("Título não encontrado, informe um registro válido.", "Erro")
 		endif

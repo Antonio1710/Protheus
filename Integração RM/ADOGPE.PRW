@@ -17,6 +17,7 @@
     @history chamado  - Leonardo P. Monteiro - 18/09/2021 - Finalização do desenvolvimento.
     @history chamado     ti - Leonardo P. Monteiro - 19/09/2021 - Ajuste no status de liberação por faltas.
     @history Ticket   65396 - Adriano Savoine      - 17/12/2021 - ADEQUANDO O RELATORIO AOS DADOS EXISTENTES NAS REGRAS DE INFRAESTRUTURA ADORO.
+    @history Ticket   69148 - Leonardo P. Monteiro - 03/03/2022 - Correção de error.log no tratamento da varíavel cSexo.
 
 /*/
 
@@ -358,7 +359,7 @@ Static Function fGetSQL(cFilPro,;
     cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_CODHOR)) != '"+ Alltrim(cCodHorar) +"' "
     cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_ADMISS)) != '"+ Dtos(dAdmissao) +"' "
     cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_DEMISS)) != '"+ Dtos(dDemissao) +"' "
-    cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_SEXO)) != '"+ Dtos(cSexo) +"' "
+    cQuery += "  OR LTRIM(RTRIM(ZI1A.ZI1_SEXO)) != '"+ Alltrim(cSexo) +"' "
     
     if !Empty(cCamisa1)
         cQuery += "  OR ltrim(rtrim(ZI1A.ZI1_TCAMPA)) != '"+ Alltrim(cCamisa1) +"' "

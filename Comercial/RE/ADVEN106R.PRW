@@ -27,6 +27,7 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 07/12/2021 - Ajuste no totalizador por vendedores. Estava imprimindo em posição incorreta.
 	@history Ticket  62249  - Leonardo P. Monteiro  - 29/12/2021 - Ajustes na geração dos arquivos texto.
 	@history Ticket  68727  - Leonardo P. Monteiro  - 02/03/2022 - Correção na impressão dos parâmetros do relatório para a exportação do relatório para PDF.
+	@history Ticket  68727  - Leonardo P. Monteiro  - 03/03/2022 - Correção no limite de linhas impressas por folha para a geração dos arquivos em PDF.
 /*/
 User Function ADVEN106R() // U_ADVEN106R()
 
@@ -63,7 +64,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	Private nCol11	:= 182
 	Private nCol12	:= 196
 	Private nCol13	:= 211
-	Private nQtdTot := 80
+	Private nQtdTot := 68
 	Private nQtdGer	:= 60
 
 	//MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
@@ -100,7 +101,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	aReturn 			:= { "Zebrado", 1,"Administracao", 2, 2, 1, "",0 }
 	
 	nLastKey         	:= 0
-	nlin             	:= 81
+	nlin             	:= 69
 	nItem            	:= 1
 	lContinua        	:= .T.
 	
