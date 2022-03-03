@@ -30,7 +30,7 @@ USER FUNCTION FAVCLI10(cCod)
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Valida se ja ha pedido lancado para o cliente na database')
 
-	Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> INICIO PE" )
 
 	if !lSfInt
 	
@@ -79,6 +79,6 @@ USER FUNCTION FAVCLI10(cCod)
 	
 	endif
 
-	Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FAVCLI10 >>> FINAL PE" )
 
 RETURN(.T.) 

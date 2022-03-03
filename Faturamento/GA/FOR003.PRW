@@ -13,7 +13,7 @@ User Function FOR003()
 
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-	Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Verifica se o Fornecedor (atraves do conteudo da variavel) utilizando:  ExecBlock("FOR003",.F.,.F.,PARAMIXB)')
 
@@ -101,6 +101,6 @@ User Function FOR003()
 	dbSetOrder(_cOrder)
 	dbGoto(_cRecno)
 
-	Conout( DToC(Date()) + " " + Time() + " FOR003 >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> FINAL PE" )
 
 Return(_lReturn)

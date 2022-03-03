@@ -77,7 +77,7 @@ User Function M410LIOK()
 	
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-	Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> INICIO PE" )
 
 	//_lSapore	:= .f. //incluido por Adriana para validacao dados SAPORE            
 	_lRedeOp	:= .f. // por Adriana chamado 031238 em novembro/2016
@@ -136,7 +136,7 @@ User Function M410LIOK()
 		_lRet := ChkZCN()
 		
 		If !_lRet
-			Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
+			//( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
 			Return _lRet
 		EndIf
 	EndIf
@@ -154,7 +154,7 @@ User Function M410LIOK()
 		RestArea(_aAreaSB1)
 		RestArea(_aArea)                   
 
-		Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
+		//Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
 		Return(_lret)
 
 	Endif
@@ -614,7 +614,7 @@ User Function M410LIOK()
 	ENDIF
 	//FIM Abel Babini - 22/11/2019 - 040922 || OS 042030 || FISCAL || DEJAIME || 8921 || RE. NF EMITIDAS
 
-	Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> FINAL PE" )
 Return(_lret)
 
 /*/{Protheus.doc} User Function ChkZCN
