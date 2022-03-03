@@ -64,7 +64,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	Private nCol11	:= 182
 	Private nCol12	:= 196
 	Private nCol13	:= 211
-	Private nQtdTot := 68
+	Private nQtdTot := 67
 	Private nQtdGer	:= 60
 
 	//MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
@@ -1747,7 +1747,7 @@ STATIC FUNCTION AD0012A
 			Endif
 		Endif
 		
-		If nLin > nQtdTot .or. _xQuebra
+		If nLin > nQtdTot-15 .or. _xQuebra
 			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 			nLin := 8
 			Cabeca2()
