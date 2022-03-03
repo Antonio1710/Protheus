@@ -16,6 +16,7 @@
 	@history Ticket 8      - Abel Babini - 19/07/2021 - Alterações no layout e sistemática de liberação
 	@history Ticket 8      - Abel Babini - 27/09/2021 - Retirado os pedidos Não Processados como bloqueados em 27/09/2021 conforme solicitação da Flávia
 	@history Ticket 8      - Abel Babini - 01/02/2022 - Ajuste nas regras de liberação de crédito
+	@history Ticket 8      - Abel Babini - 03/03/2022 - Ajuste na gravação da liberação
 /*/
 
 User Function ADFIN109P()
@@ -2037,6 +2038,7 @@ Static Function xAprvPed()
 									ZEJ->ZEJ_VLPESP	:= 0
 									ZEJ->ZEJ_TTACUM	:= _nTotVenci+_nTotAVenc+(cTbClie)->TOTAL+_nPedFut
 									ZEJ->ZEJ_LIMCRD	:= _nTotRede
+									//Ticket 8      - Abel Babini - 03/03/2022 - Ajuste na gravação da liberação
 									ZEJ->ZEJ_PERCEN := iif(((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100 > 999, 999, ((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100)
 									ZEJ->ZEJ_VLUTIL := _nTotSdRede
 									ZEJ->ZEJ_QTDPED := (cTbClie)->NUMPED
