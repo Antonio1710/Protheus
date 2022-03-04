@@ -58,6 +58,7 @@ Static lAuto    := .t.
 	@history chamado 056899 - FWNM            - 31/03/2020 - || OS 058363 || COMPRAS || GRAZIELE_ALMEIDA || 8441 || WORKFLOW P.C - Comentado sleep
 	@history chamado 050729 - FWNM            - 30/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
 	@history Ticket  69088  - ADRIANO SAVOINE - 02/03/2022 - RETIRADO O LOCK BY NAME.
+	@history Ticket  69072  - ADRIANO SAVOINE - 04/03/2022 - Ajuste na query para não pegar os pedidos gerados no SAG.
 /*/
 User Function ADCOM034P()
 
@@ -126,12 +127,13 @@ User Function ADCOM034P()
         cQuery := " SELECT DISTINCT C7_FILIAL, C7_NUM "
 		//cQuery := " SELECT DISTINCT TOP 10 C7_FILIAL, C7_NUM " // Chamado n. 056899 || OS 058363 || COMPRAS || GRAZIELE_ALMEIDA || 8441 || WORKFLOW P.C - FWNM - 26/03/2020
         cQuery += " FROM " + RetSqlName("SC7") + " (NOLOCK) "
-        cQuery += " WHERE C7_FILIAL='"+FWxFilial("SC7")+"' " 
-        cQuery += " AND C7_EMISSAO>='"+cDtIni+"'
+        cQuery += " WHERE C7_FILIAL ='"+FWxFilial("SC7")+"' " 
+        cQuery += " AND C7_EMISSAO >= '"+cDtIni+"'
         //cQuery += " AND C7_EMITIDO='' "
-		cQuery += " AND C7_XEMITID='' " // Chamado n. 055379 || OS 056780 || SUPRIMENTOS || VICTOR || 3524 || WORKFLOW DE PEDIDOS - FWNM - 30/01/2020
-        cQuery += " AND C7_CONAPRO='L' "
-        cQuery += " AND D_E_L_E_T_='' "
+		cQuery += " AND C7_XEMITID = '' " // Chamado n. 055379 || OS 056780 || SUPRIMENTOS || VICTOR || 3524 || WORKFLOW DE PEDIDOS - FWNM - 30/01/2020
+        cQuery += " AND C7_CONAPRO = 'L' "
+		cQuery += " AND C7_CONTATO <> 'SAG' " //Ticket  69072  - ADRIANO SAVOINE - 04/03/2022
+        cQuery += " AND D_E_L_E_T_ = '' "
 
 		// DEBUG
 		//cQuery += " AND C7_FILIAL='02'
