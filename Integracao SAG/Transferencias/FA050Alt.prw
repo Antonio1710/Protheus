@@ -19,6 +19,7 @@
 	@history Chamado 053347 - FWNM         - 29/11/2019 - 053347 || OS 054719 || FINANCAS || EDUARDO || 8352 || IMPLANTAR CENTRAL
 	@history Chamado 055321 - FWNM         - 05/02/2020 - OS 056879 || FINANCAS || EDUARDO || 8352 || APROVADOR AUSENTE
 	@history ticket   67909 - Fer Macieira - 15/02/2022 - Pagamento GTA - SC
+	@history ticket   18141 - Fer Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
 /*/
 User Function FA050Alt()
 
@@ -320,7 +321,10 @@ User Function FA050Alt()
 							cMsgCFin := ""
 						EndIf
 						
-						MsgBox('Você não tem Alçada para Alteração, O Titulo será encaminhado para Aprovação!' ,'Alçada de Alteração Financeira','Info')
+						If !IsInCallStack("u_ADFI118") // @history ticket   18141 - Fer Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
+							MsgBox('Você não tem Alçada para Alteração, O Titulo será encaminhado para Aprovação!' ,'Alçada de Alteração Financeira','Info')
+						EndIf
+
 						// guarda o novo vencimento para uso apos aprovacao
 						dE2VECTON := M->E2_VENCTO
 						dE2VECREAN := M->E2_VENCREA

@@ -33,6 +33,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
     @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
     @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -44,6 +45,7 @@ User Function ADFIN121P(lAuto)
     Local aBaixa       := {}
     Local nQtdParcelas := 0
     Local nVlrParcelas := 0
+    Local nDifParcelas := 0
     Local cTipo        := ""
     Local cParcela     := ""
     Local dVencto      := CtoD("//")
@@ -93,9 +95,10 @@ User Function ADFIN121P(lAuto)
     PtInternal(1,ALLTRIM(PROCNAME()))
 
     lSigaOn := GetMV("MV_#RMSIGA",,.T.)
+
     // @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
-    cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
-	cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
+    cLinked := GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
+	cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
     cEmpRun := GetMV("MV_#RMAEMP",,"01#02#07#09")
     cFilRun := GetMV("MV_#RMAFIL",,"02")
     
@@ -121,11 +124,9 @@ User Function ADFIN121P(lAuto)
     For i:=1 to Len(aEmpresas)
 	
     	If lAuto
-
             RpcClearEnv()
             //RpcSetType(3)
             RpcSetEnv( aEmpresas[ i,1 ] , aEmpresas[ i,2 ] )
-
         EndIf
 
         // EXCLUIR_SIGA
@@ -188,10 +189,11 @@ User Function ADFIN121P(lAuto)
                             {"AUTJUROS"    ,0               ,Nil,.T.}}
                             //{"NVALREC" ,SE1->E1_VALOR,Nil }}
 
-                Begin Transaction
+                nQtdParcelas := Val(SE2->E2_PARCELA)
+                nVlrParcelas := Round((SE2->E2_VALOR / nQtdParcelas),TamSX3("E2_VALOR")[2])
+                nDifParcelas := SE2->E2_VALOR - (nQtdParcelas * nVlrParcelas) // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
 
-                    nQtdParcelas := Val(SE2->E2_PARCELA)
-                    nVlrParcelas := SE2->E2_VALOR / nQtdParcelas
+                Begin Transaction
 
 					RecLock("SE2", .F.)
 						SE2->E2_TIPO   := "NDI"
@@ -238,22 +240,22 @@ User Function ADFIN121P(lAuto)
                             If ii == 1
                                 dVencto  := SE2->E2_VENCTO
                             Else
-                                dVencto  := dVencto+nDias
+                                dVencto  := SE2->E2_VENCTO+nDias
                             EndIf
 
                             aDadNDI := {}
-                            aDadNDI := {{ "E2_PREFIXO", SE2->E2_PREFIXO  , NIL },;
-                                        { "E2_NUM"    , SE2->E2_NUM		 , NIL },;
-                                        { "E2_PARCELA", cParcela         , NIL },;
-                                        { "E2_TIPO"   , cTipoNDI         , NIL },;
-                                        { "E2_NATUREZ", SE2->E2_NATUREZ	 , NIL },;
-                                        { "E2_FORNECE", SE2->E2_FORNECE  , NIL },;
-                                        { "E2_LOJA"   , SE2->E2_LOJA     , NIL },;
-                                        { "E2_EMISSAO", msDate()         , NIL },;
-                                        { "E2_VENCTO" , dVencto          , NIL },;
-                                        { "E2_VENCREA", DataValida(dVencto) , NIL },;
-                                        { "E2_VALOR"  , nVlrParcelas     , NIL },;
-                                        { "E2_HIST"   , cHist            , NIL }}
+                            aDadNDI := {{ "E2_PREFIXO", SE2->E2_PREFIXO          , NIL },;
+                                        { "E2_NUM"    , SE2->E2_NUM		         , NIL },;
+                                        { "E2_PARCELA", cParcela                 , NIL },;
+                                        { "E2_TIPO"   , cTipoNDI                 , NIL },;
+                                        { "E2_NATUREZ", SE2->E2_NATUREZ	         , NIL },;
+                                        { "E2_FORNECE", SE2->E2_FORNECE          , NIL },;
+                                        { "E2_LOJA"   , SE2->E2_LOJA             , NIL },;
+                                        { "E2_EMISSAO", msDate()                 , NIL },;
+                                        { "E2_VENCTO" , dVencto                  , NIL },;
+                                        { "E2_VENCREA", DataValida(dVencto)      , NIL },;
+                                        { "E2_VALOR"  , nVlrParcelas+nDifParcelas, NIL },;
+                                        { "E2_HIST"   , cHist                    , NIL }}
 			
                             lMsErroAuto := .f.
                             dbSelectArea("SE2")
@@ -286,6 +288,7 @@ User Function ADFIN121P(lAuto)
                                 SE2->( msUnLock() )
 
                                 nDias += 30
+                                nDifParcelas := 0
 
                                 aAdd( aDadSE2, { SE2->(RecNo()) } )
 
