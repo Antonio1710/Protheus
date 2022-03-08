@@ -16,10 +16,11 @@
     @history Ticket T.I.    - Leonardo P. Monteiro - 28/12/2021 - Correção na falha de conexão com o linkedserver. Session Provider: Physical connection is not usable [xFFFFFFFF].
     @history Ticket 65674   - ADRIANO SAVOINE      - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo.
     @history Ticket T.I.    - Leonardo P. Monteiro - 04/01/2022 - Ajuste da empresa '07' para '01' e filial '01' para '03'.
-    @history Ticket 66335   - Jonathan.Carvalho - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
+    @history Ticket 66335   - Jonathan.Carvalho    - 06/01/2022 - Criado o STATUSOP do lado do SAG para não importar novamente os registros.
     @history Ticket TI      - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
     @history Ticket TI      - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
-    @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
+    @hystory Ticket 67537   - Fernando Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
+    @hystory Ticket 69257   - Fernando Macieira    - 08/03/2022 - Redundancia na consistência de duplicação das OPs
 /*/
 User Function ADEST033P()  // U_ADEST033P()
 
@@ -159,6 +160,7 @@ Static Function procRot(lAutoJob)
     Endif
 
 Return Nil 
+
 /*/{Protheus.doc} incluiOp
     Inclui Ops.
     @type  Static Function
@@ -171,9 +173,10 @@ Static Function incluiOp(lAutoJob,NReg)
     //Variáveis.
     Local aArea    := GetArea()
     Local cQuery   := ""
-    Local cDescLt := ""
-    Local lLoteOk := .t.
+    Local cDescLt  := ""
+    Local lLoteOk  := .t.
     Local lLockZCV := .T.
+    Local lExistOP := .f.
 
     //
     ConOut( DToC(Date()) + " " + Time() + " ADEST033P - incluiOp - Início importação de Ops.")
@@ -196,7 +199,6 @@ Static Function incluiOp(lAutoJob,NReg)
     If !lAutoJob
         Count To NReg
         ProcRegua( NReg )
-
     EndIf
 
     //
@@ -208,36 +210,43 @@ Static Function incluiOp(lAutoJob,NReg)
         //
         ConOut( DToC(Date()) + " " + Time() + " ADEST033P - incluiOp - importando OP " + Alltrim(Str(ADEST33I->CODIOVOS)))
         
-        // Chamado n. 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
-        lLoteOk := ChkLote( Alltrim(Str(ADEST33I->CODILOTE)), cDescLt)
-        
-        If lLoteOk 
+        // @hystory Ticket 69257   - Fernando Macieira    - 08/03/2022 - Redundancia na consistência de duplicação das OPs
+        lExistOP := ChkOPZCV(Alltrim(Str(ADEST33I->CODIOVOS)))
 
-            // @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
-            ZCV->( dbSetOrder(1) ) // ZCV_FILIAL, ZCV_CODOP, R_E_C_N_O_, D_E_L_E_T_
-            If ZCV->( dbSeek(FWxFilial("ZCV")+Alltrim(Str(ADEST33I->CODIOVOS))) )
-                lLockZCV := .F.
-            Else
-                lLockZCV := .T.
-            EndIf
-        
-            RecLock("ZCV", lLockZCV)
-                ZCV->ZCV_FILIAL := FWxFilial("ZCV")
-                ZCV->ZCV_CODOP  := Alltrim(Str(ADEST33I->CODIOVOS))
-                ZCV->ZCV_CODTIP := Alltrim(Str(ADEST33I->CODITPOV))
-                ZCV->ZCV_CDLOTE := Alltrim(Str(ADEST33I->CODILOTE))
-                ZCV->ZCV_DATA   := ADEST33I->DATAOVOS
-                ZCV->ZCV_IDADEO := ADEST33I->IDADOVOS
-                ZCV->ZCV_QTDOVO := ADEST33I->QTDEOVOS
-                ZCV->ZCV_CODAOJ := Alltrim(Str(ADEST33I->CODIALOJ))
-                // Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 || OP DE OVOS - FWNM - 01/04/2019
-                ZCV->ZCV_DESCLT := Posicione("ZCN",1,FWxFilial("ZCN")+PadR(Alltrim(Str(ADEST33I->CODILOTE)),TamSX3("ZCN_LOTE")[1]),"ZCN_DESCLT")
-                ZCV->ZCV_DESCTP := Alltrim(ADEST33I->NOMETPOV)//Adriano Savoine - 28/12/2021 - Ticket : 65674
-    
-            MsUnlock()
+        If !lExistOP
+
+            // Chamado n. 049347 || OS 050685 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || SAG VS PROTHEUS || FWNM - 24/05/2019
+            lLoteOk := ChkLote( Alltrim(Str(ADEST33I->CODILOTE)), cDescLt)
             
-            ConOut( DToC(Date()) + " " + Time() + " ADEST033P - incluiOp - Incluido a OP SAG Numero: " + Alltrim(Str(ADEST33I->CODIOVOS)))
+            If lLoteOk 
+
+                // @hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
+                ZCV->( dbSetOrder(1) ) // ZCV_FILIAL, ZCV_CODOP, R_E_C_N_O_, D_E_L_E_T_
+                If ZCV->( dbSeek(FWxFilial("ZCV")+PadR(Alltrim(Str(ADEST33I->CODIOVOS)),TamSX3("ZCV_CODOP")[1])) )
+                    lLockZCV := .F.
+                Else
+                    lLockZCV := .T.
+                EndIf
+            
+                RecLock("ZCV", lLockZCV)
+                    ZCV->ZCV_FILIAL := FWxFilial("ZCV")
+                    ZCV->ZCV_CODOP  := Alltrim(Str(ADEST33I->CODIOVOS))
+                    ZCV->ZCV_CODTIP := Alltrim(Str(ADEST33I->CODITPOV))
+                    ZCV->ZCV_CDLOTE := Alltrim(Str(ADEST33I->CODILOTE))
+                    ZCV->ZCV_DATA   := ADEST33I->DATAOVOS
+                    ZCV->ZCV_IDADEO := ADEST33I->IDADOVOS
+                    ZCV->ZCV_QTDOVO := ADEST33I->QTDEOVOS
+                    ZCV->ZCV_CODAOJ := Alltrim(Str(ADEST33I->CODIALOJ))
+                    // Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 || OP DE OVOS - FWNM - 01/04/2019
+                    ZCV->ZCV_DESCLT := Posicione("ZCN",1,FWxFilial("ZCN")+PadR(Alltrim(Str(ADEST33I->CODILOTE)),TamSX3("ZCN_LOTE")[1]),"ZCN_DESCLT")
+                    ZCV->ZCV_DESCTP := Alltrim(ADEST33I->NOMETPOV)//Adriano Savoine - 28/12/2021 - Ticket : 65674
         
+                MsUnlock()
+                
+                ConOut( DToC(Date()) + " " + Time() + " ADEST033P - incluiOp - Incluido a OP SAG Numero: " + Alltrim(Str(ADEST33I->CODIOVOS)))
+            
+            EndIf
+
         EndIf
 
         //
@@ -439,3 +448,43 @@ Static Function sqlDeOp()
     cQuery += " WHERE CODIOVOS IN ( SELECT ZCV_CODOP FROM "+RetSqlName("ZCV")+" ZCV WHERE D_E_L_E_T_ = ' ' ) "
 
 Return cQuery
+
+/*/{Protheus.doc} nomeStaticFunction
+    (long_description)
+    @type  Static Function
+    @author FWNM
+    @since 08/03/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    @hystory Ticket 69257   - Fernando Macieira    - 08/03/2022 - Redundancia na consistência de duplicação das OPs
+/*/
+Static Function ChkOPZCV(cOPSAG)
+
+    Local lRet := .f.
+
+    If Select("WorkZCV") > 0
+        WorkZCV->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT ZCV_CODOP
+    cQuery += " FROM " + RetSqlName("ZCV") + " (NOLOCK)
+    cQuery += " WHERE ZCV_CODOP='"+cOPSAG+"'
+    cQuery += " AND D_E_L_E_T_=''
+
+    tcQuery cQuery New Alias "WorkZCV"
+
+    WorkZCV->( dbGoTop() )
+
+    If WorkZCV->( !EOF() )
+        lRet := .t.
+    EndIf
+
+    If Select("WorkZCV") > 0
+        WorkZCV->( dbCloseArea() )
+    EndIf
+    
+Return lRet

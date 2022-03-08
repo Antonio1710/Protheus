@@ -19,6 +19,7 @@
 	@history chamado 7087   - Everson		  - 04/01/2021 - Tratamento para execução de sincronização com o SAG.
 	@hystory Ticket 65674   - ADRIANO SAVOINE - 28/12/2021 - Gerado no sistema o novo campo para trazer a descrição do Tipo Ovo ZCV_DESCTP.
 	@hystory Ticket 67537   - Fer Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
+	@hystory Ticket 69257   - Fernan Macieira - 08/03/2022 - Redundancia na consistência de duplicação das OPs
 /*/
 User Function ADEST040P()
 
@@ -38,9 +39,7 @@ User Function ADEST040P()
 		If !cFilAnt $ FilHbl
 			ApMsgInfo('Empresa ou Filial NÃO Habilitada para usar essa Rotina, Verifique!','Controle de OP')
 			Return Nil
-
 		EndIf
-
 	Endif
 	
 	MontaPerg()
@@ -54,6 +53,7 @@ User Function ADEST040P()
 	oBrowse:Activate()
 
 Return
+
 /*/{Protheus.doc} STATIC Function ModelDef()
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -73,6 +73,7 @@ Static Function ModelDef()
 	oModel:SetPrimaryKey( {"ZCV_FILIAL" } )
 
 Return oModel
+
 /*/{Protheus.doc} STATIC Function ViewDef()
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -94,6 +95,7 @@ Static Function ViewDef()
 	oView:SetCloseOnOk( { || .T. } )
 
 Return oView
+
 /*/{Protheus.doc} STATIC Function AdMnDef()
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -126,6 +128,7 @@ Static Function AdMnDef()
 	ADD OPTION aRotina TITLE "Legenda"    		 ACTION "U_ADES040L()"      OPERATION 9 ACCESS 0
 
 Return aRotina
+
 /*/{Protheus.doc} User Function ADES040L()
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -144,6 +147,7 @@ User Function ADES040L()
 	BrwLegenda("Frete","Legenda",aLegenda)
 
 Return NiL
+
 /*/{Protheus.doc} User Function ADES40GO(nOpc)
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -313,7 +317,8 @@ Static Function ADES40DO(nOpc)
 	dbCreateIndex(cNameIdx,'ZCV_CODOP+ZCV_CDLOTE')
 
 	Pergunte("ADES040P",.F.)
-		//Ticket 65674   - ADRIANO SAVOINE - 28/12/2021
+	
+	//Ticket 65674   - ADRIANO SAVOINE - 28/12/2021
 	cQuery := " SELECT ZCV_FILIAL, ZCV_CODOP, ZCV_CODTIP, ZCV_DESCTP, ZCV_CDLOTE, ZCV_DATA, ZCV_IDADEO, ZCV_QTDOVO, ZCV_CODAOJ, ZCV_NUMERP "
 	cQuery += " FROM "+RetSqlName("ZCV")+" ZCV (NOLOCK) "
 	cQuery += " WHERE ZCV_FILIAL = '"+FWxFilial("ZCV")+"' "
@@ -374,6 +379,7 @@ Static Function ADES40DO(nOpc)
 	dbGoTop()
 
 Return
+
 /*/{Protheus.doc} Static Function ADES40GR( cProdOP , cCcusto , _NumOp )
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -511,6 +517,7 @@ Static Function ADES40GR( cProdOP , cCcusto , _NumOp )
 	oDlg:End()
 
 Return
+
 /*/{Protheus.doc} Static Function MontaPerg()
 	Chamado: 037647,Gera ordem de produção por integração do SAG
 	@type  Static Function
@@ -531,6 +538,7 @@ Static Function MontaPerg()
 	u_xPutSx1(cPerg,'02','Dt Produção Ate ?','Dt Produção Ate ?','Dt Produção Ate ?','mv_ch2','D',8,0,0,'G',bValid,cF3,cSXG,cPyme,'MV_PAR02')
 
 Return Nil
+
 /*/{Protheus.doc} Static Function zADES40GR( cProdOP , cCcusto , _NumOp )
 	Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 |³ OP DE OVOS - FWNM - 01/04/2019
 	@type  Static Function
@@ -723,6 +731,7 @@ Static Function zADES40GR( cProdOP , cCcusto , _NumOp )
 	oDlg:End()
 	
 Return Nil
+
 /*/{Protheus.doc} Static Function yADES40GR( cProdOP , cCcusto , _NumOp )
 	Chamado 048153 || OS 049415 || CONTROLADORIA || ANDRESSA || 45968437 |³ OP DE OVOS - FWNM - 01/04/2019
 	@type  Static Function
@@ -859,6 +868,7 @@ Static Function yADES40GR( cProdOP , cCcusto , _NumOp )
 	Aviso("ADEST040P-01", "OPs e apontamentos gerados com sucesso!" + chr(13) + chr(10) + " Tempo Processamento: " + Elaptime(cTimeIni,cTimeFim), {"OK"}, 3)
 
 Return Nil
+
 /*/{Protheus.doc} User Function BRWADEST040()
 	Usado no campo virtual do campo ZCV_DESCLT
 	@type  Static Function
@@ -868,6 +878,7 @@ Return Nil
 /*/
 User Function BRWADEST040()
 Return Posicione("ZCN",1,FWxFilial("ZCN")+PadR(ZCV->ZCV_CDLOTE,TamSX3("ZCN_LOTE")[1]),"ZCN_DESCLT")
+
 /*/{Protheus.doc} Static Function Disp()
 	Funcao executada ao Marcar/Desmarcar um registro.
 	@type  Static Function
@@ -888,6 +899,7 @@ Static Function Disp()
 	oMark:oBrowse:Refresh()
 
 Return
+
 /*/{Protheus.doc} Static Function ChkLote(cCodLt)
 	Checa se lote pode ser importado.  
 	@type  Static Function
@@ -927,6 +939,7 @@ Static Function ChkLote(cCodLt)
 	EndIf
 
 Return lOk
+
 /*/{Protheus.doc} Static Function GrvMark(nOpc)
 	Checa se lote pode ser importado.  
 	@type  Static Function
@@ -973,6 +986,7 @@ Static Function GrvMark(nOpc)
 	RestArea( aAreaZCV )
 	
 Return
+
 /*/{Protheus.doc} nomeStaticFunction
 	Função para marcar e desmarcar
 	@type  Static Function
