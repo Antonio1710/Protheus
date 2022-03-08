@@ -16,7 +16,8 @@ Static cTitulo  := "..:: Cadastro de Uniformes ::.. "
     @since 24/01/2022
     @version 01
     @history Chamado 16833 - Leonardo P. Monteiro - 24/01/2022- Desenvolvimento inicial.
-    
+    @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
+    @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
 /*/
 
 User Function ADGPE083P()
@@ -98,7 +99,7 @@ oModel:AddGrid( "ZHIDETAIL",;
 aAdd( aZHHZHI, {"ZHI_FILIAL", "ZHH_FILIAL"} )
 aAdd( aZHHZHI, {"ZHI_CODIGO", "ZHH_CODIGO"} )
 
-oModel:SetRelation("ZHIDETAIL", aZHHZHI, ZHI->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
+oModel:SetRelation("ZHIDETAIL", aZHHZHI, ZHI->(IndexKey(3)) ) // IndexKey -> quero a ordenacao e depois filtrado
 oModel:GetModel("ZHIDETAIL"):SetUniqueLine({"ZHI_UM"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
 oModel:SetPrimaryKey( {} )
 

@@ -9,12 +9,14 @@
     @since 06/02/2022
     @version version
     @history Ticket: TI - 06/02/2022 - LEONARDO PINHEIRO MONTEIRO - Desenvolvimento.
-
+    @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
+    @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
+    
     U_ADGPE087P()
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
-#DEFINE CAMPOS_UNIF_DEVOLUCAO   "ZHO_CODZHH,ZHO_UNDESC,ZHO_TAMANH,ZHO_ENTDAT,ZHO_ENTHOR,ZHO_ENTUSU,ZHO_ENTNOM,ZHO_CODZI5,ZHO_DEDESC,ZHO_PRODUT,REGISTRO"
+#DEFINE CAMPOS_UNIF_DEVOLUCAO   "ZHO_CODZHH,ZHO_UNDESC,ZHO_UM,ZHO_ENTDAT,ZHO_ENTHOR,ZHO_ENTUSU,ZHO_ENTNOM,ZHO_CODZI5,ZHO_DEDESC,ZHO_PRODUT,REGISTRO"
 #DEFINE CAMPOS_ARMA_DEVOLUCAO   "ZHL_CODIGO,ZHL_DESCRI,ZHL_MSBLQL,REGISTRO"
 
 #DEFINE CONSULTA_UNIF_ENTREGA      1
@@ -40,6 +42,8 @@ user function ADGPE087P()
     
     Private oP1Pnl01
     Private oP2Pnl02
+
+    Private cLegenda
     
     Private oWnd
     Private oLayer
@@ -85,22 +89,25 @@ user function ADGPE087P()
     Private cZI1SECAO       := Space(100)
     
     Private oTCAMPA
-    Private cZI1TCAMPA      := Space(03)
+    Private cZI1TCAMPA      := Space(06)
 
     Private oTBLUTE
-    Private cZI1TBLUTE      := Space(03)
+    Private cZI1TBLUTE      := Space(06)
+
+    Private oTJALEC
+    Private cZI1TJALEC      := Space(06)
     
     Private oTCALPA
-    Private cZI1TCALPA      := Space(03)
+    Private cZI1TCALPA      := Space(06)
 
     Private oTCALTE
-    Private cZI1TCALTE      := Space(03)
+    Private cZI1TCALTE      := Space(06)
 
     Private oTCALCA
-    Private cZI1TCALCA      := Space(03)
+    Private cZI1TCALCA      := Space(06)
 
     Private oTMEIAS
-    Private cZI1TMEIAS      := Space(03)
+    Private cZI1TMEIAS      := Space(06)
 
     Private oARMARIO
     Private cZI1CODZHL      := Space(06)
@@ -442,7 +449,8 @@ STATIC FUNCTION fValida(cCampo)
             .OR. cCampo == "cZI1TCALPA";
             .OR. cCampo == "cZI1TCALTE";
             .OR. cCampo == "cZI1TCALCA";
-            .OR. cCampo == "cZI1TMEIAS")
+            .OR. cCampo == "cZI1TMEIAS";
+            .OR. cCampo == "cZI1TJALEC")
         
             if cCampo == "cZI1TCAMPA"
                 cChave := "01"
@@ -462,6 +470,9 @@ STATIC FUNCTION fValida(cCampo)
             elseif cCampo == "cZI1TMEIAS"
                 cChave := "06"
                 cField := "ZI1_TMEIAS"
+            elseif cCampo == "cZI1TJALEC"
+                cChave := "07"
+                cField := "ZI1_TJALEC"
             endif
 
             cValor := &(cCampo)
@@ -680,10 +691,10 @@ Static Function fEntrega()
     Local nPosZHIUM     := aScan(aUnEnCam,"ZHI_UM")
     Local nPosProdut    := aScan(aUnEnCam,"ZHI_PRODUT")
 
-    nColuna     := Len(aUnEnDad[1])-1
-    
     if nUnEnDad > 0
-    
+
+        nColuna     := Len(aUnEnDad[1])-1
+
         for nA := 1 To nUnEnDad
             if aUnEnDad[nA, nColuna]
                 //nRegist := aItKiDad[nA, nPosReg]
@@ -702,7 +713,7 @@ Static Function fEntrega()
 
                 ZHO_CODZHH  := aUnEnDad[nA, nPosCodZHH]
                 ZHO_CODZI5  := IIF(Len(aZI1SECAO)>=1,aZI1SECAO[1],"")
-                ZHO_TAMANH  := aUnEnDad[nA, nPosZHIUM]
+                ZHO_UM      := aUnEnDad[nA, nPosZHIUM]
                 ZHO_PRODUT  := aUnEnDad[nA, nPosProdut]
                 ZHO_UUID    := cUUID
 
@@ -758,15 +769,16 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
 
     oSize := FWDefSize():New(.F.)
 	
-    oSize:AddObject( "OBJ01"	, 100 , 12, .T., .T. )
-    oSize:AddObject( "OBJ02"	, 100 , 12, .T., .T. )
-    oSize:AddObject( "OBJ03"	, 100 , 12, .T., .T. )
-    oSize:AddObject( "OBJ04"	, 025 , 12, .T., .T. )
+    oSize:AddObject( "OBJ01"	, 100 , 10, .T., .T. )
+    oSize:AddObject( "OBJ02"	, 100 , 10, .T., .T. )
+    oSize:AddObject( "OBJ03"	, 100 , 10, .T., .T. )
+    oSize:AddObject( "OBJ04"	, 025 , 08, .T., .T. )
     oSize:AddObject( "OBJ05"	, 025 , 10, .T., .T. )
     oSize:AddObject( "OBJ06"	, 025 , 10, .T., .T. )
-    oSize:AddObject( "OBJ07"	, 025 , 12, .T., .T. )
-    oSize:AddObject( "OBJ08"	, 025 , 10, .T., .T. )
+    oSize:AddObject( "OBJ07"	, 025 , 10, .T., .T. )
+    oSize:AddObject( "OBJ08"	, 025 , 08, .T., .T. )
     oSize:AddObject( "OBJ09"	, 025 , 10, .T., .T. )
+    //oSize:AddObject( "OBJ10"	, 025 , 10, .T., .T. )
     
 	oSize:lLateral	:= .F. // Elementos um do lado do outro
 	oSize:lProp		:= .T. // Cálculo dos botões proporcionais
@@ -798,7 +810,7 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
 	oZI1MAT  := TGet():New(oSize:GetDimension("OBJ01","LININI"),;
                            oSize3:GetDimension("OBJ01","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1MAT, cZI1MAT := u)}, oItWin02,; 
-                           oSize3:GetDimension("OBJ01","XSIZE"), 012,;
+                           oSize3:GetDimension("OBJ01","XSIZE"), 011,;
                            ,aRet[01][06],0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cZI0MAT",;
                            ,,,.T.,,,aRet[01][01],1)
     oZI1MAT:SetCSS("QLineEdit{font-size: 15px;}")
@@ -811,7 +823,7 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
 	oZI1CRE  := TGet():New(oSize:GetDimension("OBJ01","LININI"),;
                            oSize3:GetDimension("OBJ02","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1CREDEN, cZI1CREDEN := u)}, oItWin02,; 
-                           oSize3:GetDimension("OBJ02","XSIZE"), 012,;
+                           oSize3:GetDimension("OBJ02","XSIZE"), 011,;
                            ,aRet[01][06],0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cZI1CREDEN",;
                            ,,,.T.,,,aRet[01][01],1)
     oZI1CRE:SetCSS("QLineEdit{font-size: 15px;}")
@@ -824,7 +836,7 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
 	oZI1NOM  := TGet():New(oSize:GetDimension("OBJ02","LININI"),;
                            oSize:GetDimension("OBJ02","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1NOME, cZI1NOME := u)}, oItWin02,; 
-                           oSize:GetDimension("OBJ02","XSIZE"), 014,;
+                           oSize:GetDimension("OBJ02","XSIZE"), 011,;
                            ,aRet[01][06],0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cZI1NOME",;
                            ,,,.T.,,,aRet[01][01],1)
     oZI1NOM:SetCSS("QLineEdit{font-size: 15px;}")
@@ -837,7 +849,7 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
 	oZI1NOM  := TGet():New(oSize:GetDimension("OBJ03","LININI"),;
                            oSize:GetDimension("OBJ03","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1SECAO, cZI1SECAO := u)}, oItWin02,; 
-                           oSize:GetDimension("OBJ03","XSIZE"), 014,;
+                           oSize:GetDimension("OBJ03","XSIZE"), 011,;
                            ,aRet[01][06],0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cZI1SECAO",;
                            ,,,.T.,,,aRet[01][01],1)
     oZI1NOM:SetCSS("QLineEdit{font-size: 15px;}")
@@ -851,7 +863,7 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
     oSay1:= TSay():New(oSize:GetDimension("OBJ04","LININI"),;
                     oSize:GetDimension("OBJ04","COLINI"),;
                     {|| Chr(13)+chr(10)+'::.. Cadastro de Uniformes'},oItWin02,,,,,,.T.,CLR_RED,CLR_WHITE,;
-                    oSize:GetDimension("OBJ04","XSIZE"),20)
+                    oSize:GetDimension("OBJ04","XSIZE"),19)
 
     aRet := fgetSX3("ZI1_TCAMPA")
 	oTCAMPA  := TGet():New(oSize:GetDimension("OBJ05","LININI"),;
@@ -879,11 +891,24 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
     endif
     oTBLUTE:lVisibleControl := .T.
 
-    aRet := fgetSX3("ZI1_TCALPA")
-	oTCALPA  := TGet():New(oSize:GetDimension("OBJ05","LININI"),;
+    aRet := fgetSX3("ZI1_TJALEC")
+	oTJALEC  := TGet():New(oSize:GetDimension("OBJ05","LININI"),;
                            oSize2:GetDimension("OBJ03","COLINI"),; 
-                           {|u|If(PCount() == 0, cZI1TCALPA, cZI1TCALPA := u)}, oItWin02,; 
+                           {|u|If(PCount() == 0, cZI1TJALEC, cZI1TJALEC := u)}, oItWin02,; 
                            oSize2:GetDimension("OBJ03","XSIZE"), 010,;
+                           ,{|| fValida("cZI1TJALEC") },0,16777215,,.F.,,.T.,,.F.,{|| !Empty(cZI1MAT) .and. !Empty(cZI1CREDEN) },.F.,.F.,,.F.,.F. ,,"cZI1TJALEC",;
+                           ,,,.T.,,,aRet[01][01],1)
+    oTJALEC:SetCSS("QLineEdit{font-size: 15px;}")
+	if !Empty(aRet[01][09])
+        oTJALEC:cF3 := Alltrim(aRet[01][09])
+    endif
+    oTJALEC:lVisibleControl := .T.
+
+    aRet := fgetSX3("ZI1_TCALPA")
+	oTCALPA  := TGet():New(oSize:GetDimension("OBJ06","LININI"),;
+                           oSize2:GetDimension("OBJ01","COLINI"),; 
+                           {|u|If(PCount() == 0, cZI1TCALPA, cZI1TCALPA := u)}, oItWin02,; 
+                           oSize2:GetDimension("OBJ01","XSIZE"), 010,;
                            ,{|| fValida("cZI1TCALPA") },0,16777215,,.F.,,.T.,,.F.,{|| !Empty(cZI1MAT) .and. !Empty(cZI1CREDEN) },.F.,.F.,,.F.,.F. ,,"cZI1TCALPA",;
                            ,,,.T.,,,aRet[01][01],1)
     oTCALPA:SetCSS("QLineEdit{font-size: 15px;}")
@@ -894,9 +919,9 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
 
     aRet := fgetSX3("ZI1_TCALTE")
 	oTCALTE  := TGet():New(oSize:GetDimension("OBJ06","LININI"),;
-                           oSize2:GetDimension("OBJ01","COLINI"),; 
+                           oSize2:GetDimension("OBJ02","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1TCALTE, cZI1TCALTE := u)}, oItWin02,; 
-                           oSize2:GetDimension("OBJ01","XSIZE"), 010,;
+                           oSize2:GetDimension("OBJ02","XSIZE"), 010,;
                            ,{|| fValida("cZI1TCALTE") },0,16777215,,.F.,,.T.,,.F.,{|| !Empty(cZI1MAT) .and. !Empty(cZI1CREDEN) },.F.,.F.,,.F.,.F. ,,"cZI1TCALTE",;
                            ,,,.T.,,,aRet[01][01],1)
     oTCALTE:SetCSS("QLineEdit{font-size: 15px;}")
@@ -906,10 +931,10 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
     oTCALTE:lVisibleControl := .T.
 
     aRet := fgetSX3("ZI1_TCALCA")
-	oTCALCA  := TGet():New(oSize:GetDimension("OBJ06","LININI"),;
-                           oSize2:GetDimension("OBJ02","COLINI"),; 
+	oTCALCA  := TGet():New(oSize:GetDimension("OBJ07","LININI"),;
+                           oSize2:GetDimension("OBJ01","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1TCALCA, cZI1TCALCA := u)}, oItWin02,; 
-                           oSize2:GetDimension("OBJ02","XSIZE"), 010,;
+                           oSize2:GetDimension("OBJ01","XSIZE"), 010,;
                            ,{|| fValida("cZI1TCALCA") },0,16777215,,.F.,,.T.,,.F.,{|| !Empty(cZI1MAT) .and. !Empty(cZI1CREDEN) },.F.,.F.,,.F.,.F. ,,"cZI1TCALCA",;
                            ,,,.T.,,,aRet[01][01],1)
     oTCALCA:SetCSS("QLineEdit{font-size: 15px;}")
@@ -919,10 +944,10 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
     oTCALCA:lVisibleControl := .T.
 
     aRet := fgetSX3("ZI1_TMEIAS")
-	oTMEIAS  := TGet():New(oSize:GetDimension("OBJ06","LININI"),;
-                           oSize2:GetDimension("OBJ03","COLINI"),; 
+	oTMEIAS  := TGet():New(oSize:GetDimension("OBJ07","LININI"),;
+                           oSize2:GetDimension("OBJ02","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1TMEIAS, cZI1TMEIAS := u)}, oItWin02,; 
-                           oSize2:GetDimension("OBJ03","XSIZE"), 010,;
+                           oSize2:GetDimension("OBJ02","XSIZE"), 010,;
                            ,{|| fValida("cZI1TMEIAS") },0,16777215,,.F.,,.T.,,.F.,{|| !Empty(cZI1MAT) .and. !Empty(cZI1CREDEN) },.F.,.F.,,.F.,.F. ,,"cZI1TMEIAS",;
                            ,,,.T.,,,aRet[01][01],1)
     oTMEIAS:SetCSS("QLineEdit{font-size: 15px;}")
@@ -931,13 +956,13 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
     endif
     oTMEIAS:lVisibleControl := .T.
 
-    oSay2:= TSay():New(oSize:GetDimension("OBJ07","LININI"),;
-                    oSize:GetDimension("OBJ06","COLINI"),;
+    oSay2:= TSay():New(oSize:GetDimension("OBJ08","LININI"),;
+                    oSize:GetDimension("OBJ08","COLINI"),;
                     {||Chr(13)+chr(10)+'::.. Cadastro de Uniformes'},oItWin02,,,,,,.T.,CLR_RED,CLR_WHITE,;
-                    oSize:GetDimension("OBJ06","XSIZE"),20)
+                    oSize:GetDimension("OBJ08","XSIZE"),19)
 
     aRet := fgetSX3("ZI1_CODZHL")
-	oARMARIO  := TGet():New(oSize:GetDimension("OBJ08","LININI"),;
+	oARMARIO  := TGet():New(oSize:GetDimension("OBJ09","LININI"),;
                            oSize3:GetDimension("OBJ01","COLINI"),; 
                            {|u|If(PCount() == 0, cZI1CODZHL, cZI1CODZHL := u)}, oItWin02,; 
                            oSize3:GetDimension("OBJ01","XSIZE"), 010,;
@@ -948,6 +973,21 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
         oARMARIO:cF3 := Alltrim(aRet[01][09])
     endif
     oARMARIO:lVisibleControl := .T.
+
+    cLegenda := "::.. Legendas ..::"+chr(13)+chr(10)+chr(13)+chr(10)
+    cLegenda += " PP     - 34 a 36 "+chr(13)+chr(10)
+    cLegenda += " P        - 38 a 40 "+chr(13)+chr(10)
+    cLegenda += " M       - 42 a 44 "+chr(13)+chr(10)
+    cLegenda += " G        - 46 a 48 "+chr(13)+chr(10)
+    cLegenda += " GG     - 50 a 52 "+chr(13)+chr(10)
+    cLegenda += " XG      - 54 a 56 "+chr(13)+chr(10)
+    cLegenda += " XGG   - 58 a 60 "+chr(13)+chr(10)
+    cLegenda += " XXGG - 62 a 64 "
+
+    oSay2:= TSay():New(oSize:GetDimension("OBJ06","LININI"),;
+                    oSize2:GetDimension("OBJ03","COLINI"),;
+                    {|| cLegenda },oItWin02,,,,,,.T.,CLR_RED,CLR_WHITE,;
+                    oSize2:GetDimension("OBJ03","XSIZE"),90)
 
 return
 
@@ -1094,7 +1134,8 @@ Static Function fGetDados(lAlerta, lPesquisa, lCabec)
             if !Empty(cMatric)
                 cWhere += " AND ltrim(rTrim(ZI1_MAT))='"+ cColig + Alltrim(cMatric) +"' "
             elseif !Empty(cCredenc)
-                cWhere += " AND ltrim(rTrim(ZI1_CREDEN))='"+ Alltrim(cCredenc) +"' "
+                cWhere += " AND RIGHT(LTRIM(RTRIM('00000000000000'+ZI1_CREDEN)),14)='"+ RIGHT(Alltrim("00000000000000"+cCredenc),14) +"'  "
+                
             Elseif !Empty(cNome)
                 cWhere += " AND UPPER(ZI1_NOME) LIKE '%"+ Alltrim(cNome) +"%' "
             else
@@ -1192,7 +1233,7 @@ Static function getDadoBRW(nTypeBrowse)
         aCampos := strToKarr(CAMPOS_UNIF_ENTREGA, ",")
         cCampos := CAMPOS_UNIF_ENTREGA
         
-        cQuery := " SELECT ZHH.ZHH_CODIGO, ZHH.ZHH_DESCRI, ZHK.ZHK_NUMKIT, ZI5.ZI5_QTDUNF, ZHI.ZHI_UM, ZHI.ZHI_PRODUT, ZHK.ZHK_NUMKIT, ISNULL(ZHO.CONTADOR,0) TMP_SALDO "+cQebra
+        cQuery := " SELECT ZHH.ZHH_CODIGO, ZHH.ZHH_DESCRI, ZHK.ZHK_NUMKIT, ZI5.ZI5_QTDUNF, ZHI.ZHI_UM, ZHI.ZHI_PRODUT, ZHK.ZHK_NUMKIT, CASE WHEN ISNULL(ZI5.ZI5_QTDUNF,0) = 0 THEN 0 ELSE ZI5.ZI5_QTDUNF-ISNULL(ZHO.CONTADOR,0) END TMP_SALDO "+cQebra
         cQuery += " FROM "+ retsqlname("ZI1") +" ZI1 INNER JOIN "+ retsqlname("ZI5") +" ZI5 ON ZI1.D_E_L_E_T_='' AND ZI5.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+xFilial("ZI1")+"' AND ZI5.ZI5_FILIAL='"+xFilial("ZI5")+"' AND ZI1.ZI1_SECAO=ZI5.ZI5_CODIGO "+cQebra
         cQuery += "                 INNER JOIN "+ retsqlname("ZHK") +" ZHK ON ZHK.D_E_L_E_T_='' AND ZI5.ZI5_FILIAL='"+xFilial("ZI5")+"' AND ZHK_FILIAL='"+xFilial("ZHK")+"' AND ZI5.ZI5_CODIGO=ZHK.ZHK_CODZI5 "+cQebra
         cQuery += "                 INNER JOIN "+ retsqlname("ZHH") +" ZHH ON ZHH.D_E_L_E_T_='' AND ZHK.ZHK_FILIAL='"+xFilial("ZHK")+"' AND ZHH.ZHH_FILIAL='"+xFilial("ZHH")+"' AND ZHK.ZHK_CODZHH=ZHH.ZHH_CODIGO "+cQebra
@@ -1203,6 +1244,7 @@ Static function getDadoBRW(nTypeBrowse)
         cQuery += "                             OR (ZHH.ZHH_TIPO='04' AND ZI1.ZI1_TCALTE=ZHI.ZHI_UM) "+cQebra
         cQuery += "                             OR (ZHH.ZHH_TIPO='05' AND ZI1.ZI1_TCALCA=ZHI.ZHI_UM) "+cQebra
         cQuery += "                             OR (ZHH.ZHH_TIPO='06' AND ZI1.ZI1_TMEIAS=ZHI.ZHI_UM) "+cQebra
+        cQuery += "                             OR (ZHH.ZHH_TIPO='07' AND ZI1.ZI1_TJALEC=ZHI.ZHI_UM) "+cQebra
         cQuery += "                             ) "+cQebra
         /*
         cQuery += "                 LEFT  JOIN ( SELECT ZHO.ZHO_FILIAL, ZHO.ZHO_MAT, ZHO.ZHO_CODZHH, COUNT(*) TMP_SALDO "+cQebra
@@ -1223,7 +1265,7 @@ Static function getDadoBRW(nTypeBrowse)
         cQuery += "    ORDER BY ZHK.ZHK_NUMKIT, ZHH.ZHH_CODIGO; "
     
     ElseIF nTypeBrowse == CONSULTA_UNIF_DEVOLUCAO
-        //"ZHO_CODZHH,ZHO_UNDESC,ZHO_TAMANH,ZHO_PRODUT,ZHO_ENTDAT,ZHO_ENTHOR,ZHO_ENTUSU,ZHO_CODZI5,ZHO_DEDESC"
+        //"ZHO_CODZHH,ZHO_UNDESC,ZHO_UM,ZHO_PRODUT,ZHO_ENTDAT,ZHO_ENTHOR,ZHO_ENTUSU,ZHO_CODZI5,ZHO_DEDESC"
         aCampos := strToKarr(CAMPOS_UNIF_DEVOLUCAO, ",")
         cCampos := CAMPOS_UNIF_DEVOLUCAO
         
