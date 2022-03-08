@@ -17,6 +17,7 @@
 	@history Ticket 8      - Abel Babini - 27/09/2021 - Retirado os pedidos Não Processados como bloqueados em 27/09/2021 conforme solicitação da Flávia
 	@history Ticket 8      - Abel Babini - 01/02/2022 - Ajuste nas regras de liberação de crédito
 	@history Ticket 8      - Abel Babini - 03/03/2022 - Ajuste na gravação da liberação
+	@history Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
 /*/
 
 User Function ADFIN109P()
@@ -1100,6 +1101,7 @@ Static Function xGrdLib()
 		_nTotVenci := (cQryVAtr)->E1_SALDO
 		(cQryVAtr)->(dbCloseArea())
 
+		_nTotAvenc := _nTotSdRede - _nTotVenci //Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
 		//Pedidos colocados com data de entrega posterior ao período selecionado
 		cQryPFtr := GetNextAlias()
 		BeginSQL alias cQryPFtr
@@ -2486,14 +2488,15 @@ Static Function xAnPedCl(aSize)
 			// @ aBtnPos[6],000 BUTTON OemToAnsi('Pedidos Venda Adiantamento')	SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN090P()) OF oPnSt01 PIXEL //"Exportar Excel"
 			// @ aBtnPos[3],000 BUTTON OemToAnsi('Painel Contas á Receber')		SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADFIN030P()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 
-			@ aBtnPos[7],000 BUTTON OemToAnsi('Próximo Cliente Ctrl+N')			SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xProxCli(),oDlgPed:End()) 			OF oPnLb01 PIXEL //"Exportar Excel"
+			@ aBtnPos[8],000 BUTTON OemToAnsi('Parecer')										SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xParecer()) OF oPnLb01 PIXEL 
+			@ aBtnPos[7],000 BUTTON OemToAnsi('Próximo Cliente Ctrl+N')			SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xProxCli(),oDlgPed:End()) 			OF oPnLb01 PIXEL 
 			//@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda..."),oDlgPed:End()) 			OF oPnLb01 PIXEL
 			@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION {|| bActLib} 			OF oPnLb01 PIXEL
 
 			@ aBtnPos[5],000 BUTTON OemToAnsi('Posição do Cliente')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA)) 																		OF oPnLb01 PIXEL
 			@ aBtnPos[4],000 BUTTON OemToAnsi('Liberação de Estoque')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnLb01 PIXEL
 			// @ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xRlRdSeg()) 																																OF oPnLb01 PIXEL WHEN (Alltrim((cTbClie)->TPCLI) == 'REDE')
-			@ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (U_ADFIN071R()) 																																OF oPnLb01 PIXEL WHEN (Alltrim((cTbClie)->TPCLI) == 'REDE')
+			@ aBtnPos[3],000 BUTTON OemToAnsi('Rel. Rede Segmento')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (U_ADFIN115R())/*(U_ADFIN071R())*/ 																																OF oPnLb01 PIXEL WHEN (Alltrim((cTbClie)->TPCLI) == 'REDE')
 			@ aBtnPos[2],000 BUTTON OemToAnsi('Excluir Pedido')							SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xDelSC5()) 																																		OF oPnLb01 PIXEL
 			@ aBtnPos[1],000 BUTTON OemToAnsi('Sair da Análise')						SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (lExitLb := .F.,oDlgPed:End()) 																																OF oPnLb01 PIXEL
 
@@ -2555,6 +2558,19 @@ Static Function xAnPedCl(aSize)
 	oGrd10:Refresh(.T.)
 	oGrd10:oBrowse:Refresh()
 	//(cTbClie)->(DbGoTop())
+
+Return
+
+/*/{Protheus.doc} Static Function xParecer()
+	Chama rotina de Parecer de Crédito do Cliente.
+	@type  Static Function
+	@author Abel Babini Filho
+	@since 08/03/2022
+	@version 1
+	/*/
+Static Function xParecer()
+	//Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
+	StaticCall(ADOA005,Adoa5Parec,(cTbPed)->CODIGO,(cTbPed)->LOJA)
 
 Return
 
