@@ -305,7 +305,7 @@ User Function ADFIN121P(lAuto)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
 
-                        //u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
+                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
 
                     EndIf
 
