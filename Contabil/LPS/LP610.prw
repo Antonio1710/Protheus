@@ -22,14 +22,18 @@
 	@history ticket    9226 - Fernando Maciei - 25/02/2021 - Lançamento Padrão 610-001 - abertura/alteração
 	@history ticket   16175 - Fernando Maciei - 30/06/2021 - Alteração LP -Receita serviço Ceres
 	@history ticket   66325 - Everson - 07/01/2022 - Tratamento para filial 04.
-	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
+	@history Ticket TI 		- Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
+	@history Ticket TI 		- Leonardo P. Monteiro - 	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
+	@history Ticket 69333 	- Leonardo P. Monteiro - 07/03/2021 - Compatibilização de estercos (Grp. 9037) na conta 337110003 e Centro de Custo 6140.
+	@history Ticket 69336 	- Leonardo P. Monteiro - 07/03/2021 - Compatibilização de estercos (Grp. 9048) no Centro de Custo 6140.
+
 /*/
 User Function LP610cc()
 
 	Local _cCusto := ""   
 	Local aArea   := SD2->(GetArea())  // Incluido Cellvla 17-04-2014
 	
-	U_ADINF009P('LP610' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+	//U_ADINF009P('LP610' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 	
 	If ALLTRIM(SD2->D2_GRUPO) $ "0511 0541 0542 0543 " //BUSCA POR SUBGRUPO// Alterado por Adriana em 18/03/15 - chamado 022330 // Chamado 050440 William Costa 18/07/2019 
 	   IF SUBSTR(SD2->D2_CF,1,1)$"1,5"
@@ -53,7 +57,12 @@ User Function LP610cc()
 		If ALLTRIM(SD2->D2_CF)$"5118/5101" 
 			_cCusto:="6150"
 		Endif
-	
+
+	//@history Ticket 69333 	- Leonardo P. Monteiro - 	Compatibilização de estercos (Grp. 9037) na conta 337110003 e Centro de Custo 6140.
+	//@history Ticket 69336 	- Leonardo P. Monteiro - 07/03/2021 - Compatibilização de estercos (Grp. 9048) no Centro de Custo 6140.
+	ELSEIF ALLTRIM(SD2->D2_GRUPO)$"9037/9048" 
+			_cCusto:="6140"
+
 	ELSEIF ALLTRIM(SD2->D2_CF)$"5252"
 		//_cCusto:="1102"
 		 _cCusto:="6140" //fernando sigoli 17/08/2018 - Chamado: 043244                                     
@@ -339,7 +348,7 @@ User Function LP610cta()
 	Local _cConta     := "" //fwnmacieira 07/08/2018 
 	Local aArea       := SD2->(GetArea()) // Incluido Cellvla 17-04-2014
 
-	U_ADINF009P('LP610' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
+	//U_ADINF009P('LP610' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 	
 	IF ALLTRIM(SD2->D2_GRUPO) == "0911" //BUSCA POR SUBGRUPO
 
@@ -399,6 +408,11 @@ User Function LP610cta()
     ENDIF
     // *** FINAL CHAMADO 034241 - WILLIAM COSTA *** //
     
+	//@history Ticket 69333 	- Leonardo P. Monteiro - 	Compatibilização de estercos (Grp. 9037) na conta 337110003 e Centro de Custo 6140.
+	IF ALLTRIM(SD2->D2_GRUPO) $ "9037" .AND. ALLTRIM(SD2->D2_CF)$"5102/6102" 
+	    _cConta:= "337110003"
+    ENDIF
+
     // *** INICIO CHAMADO 034750 - WILLIAM COSTA *** //
     IF ALLTRIM(SD2->D2_GRUPO) $ "9040" // Chamado n. 056634 || OS 058079 || CONTROLADORIA || TAMIRES_SERAFIM || 8503 || CHAMADO 055812 - FWNM - 13/03/2020
 	    _cConta:= "337110001"

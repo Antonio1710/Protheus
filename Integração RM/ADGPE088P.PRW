@@ -10,6 +10,7 @@
     @since 08/02/2022
     @version 01
 	@history Chamado T.I. - Leonardo P. Monteiro - 30/08/2021 - monitores.
+	@history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
 /*/
 
 Static cRetParam := Space(06)
@@ -131,9 +132,9 @@ Static Function fOrdena()
 	//alert("Ordena")
 	//Código
 	If oOrdem:Nat == 1
-		aSort(oGet:aCols,,,{|x,y| x[1]<y[1]})
+		//aSort(oGet:aCols,,,{|x,y| x[1]<y[1]})
 	ElseIf oOrdem:Nat == 2
-		aSort(oGet:aCols,,,{|x,y| x[3]<y[3]})
+		//aSort(oGet:aCols,,,{|x,y| x[3]<y[3]})
 	EndIf
 
 	oGet:oBrowse:refresh()
@@ -142,15 +143,15 @@ Return
 /* fPesquisa */
 Static Function fPesquisa(nTipo, cAlias)
 	Local nPos	:= 0
-	Local cPesq := Alltrim(cPesquisa)
+	Local cPesq := Upper(Alltrim(cPesquisa))
 
 	If nTipo == 1
 		If !Empty(cPesq)
 
 			If oOrdem:Nat == 1
-				nPos := aScanX( oGet:aCols, { |X,Y| UPPER(cPesq) == Alltrim(X[3]) })
+				nPos := aScanX( oGet:aCols, { |X,Y| cPesq == RIGHT( Alltrim(X[3]),Len(cPesq) ) })
 			ElseIf oOrdem:Nat == 2
-				nPos := aScanX( oGet:aCols, { |X,Y| UPPER(cPesq) == Left( UPPER(Alltrim(X[4])),Len(cPesq) ) })
+				nPos := aScanX( oGet:aCols, { |X,Y| cPesq == RIGHT( UPPER(Alltrim(X[4])),Len(cPesq) ) })
 			EndIf                                                                               
 
 			oGet:goTo(nPos)
@@ -284,11 +285,11 @@ STATIC FUNCTION MontDados(cZEDCod)
 		QRY->(DBCLOSEAREA())
 	EndIF
 
-	cQry := " SELECT ZHL_FILIAL, ZHL_CODIGO, ZHL_DESCRI " + cEOL
+	cQry := " SELECT ZHL_FILIAL, ZHL_CODIGO, ZHL_DESCRI, CAST(REPLACE(REPLACE(ZHL_CODIGO,'VM-',''),'VF-','') AS INT) ORDEM " + cEOL
 	cQry += " FROM "+ RetSqlName("ZHL") +" (NOLOCK) ZHL " + cEOL
 	cQry += " WHERE ZHL.D_E_L_E_T_='' AND ZHL.ZHL_MSBLQL !='1' AND ZHL_VESTIA='"+ ZI1->ZI1_SEXO +"' " + cEOL
 	cQry += " AND NOT EXISTS(SELECT * FROM "+ Retsqlname("ZI1") +" (NOLOCK) ZI1 WHERE ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO ) " + cEOL
-	cQry += " ORDER BY ZHL.ZHL_FILIAL, ZHL.ZHL_CODIGO, ZHL.ZHL_DESCRI; " + cEOL
+	cQry += " ORDER BY ZHL.ZHL_FILIAL, ORDEM; " + cEOL
 
 	TcQuery cQry alias "QRY" new
 	
