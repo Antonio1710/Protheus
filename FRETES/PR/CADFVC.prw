@@ -17,6 +17,13 @@
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
+/*/{Protheus.doc} User Function CADFVC
+	Tela para cadastro de motoristas.
+	@author Mauricio-MDS TEC - Adoro - Solicitação Sr. James
+	@since 26/06/13
+	@version 01
+	@history ticket 69517 - Leonardo P. Monteiro - 09/03/2022 - Cadastro de motorista Bolivianos. Validação na exclusão de motoristas.
+/*/
 
 User Function CADFVC() 
 
@@ -26,20 +33,85 @@ User Function CADFVC()
 	     
 	aadd(aRotAdic,{ "* LOGS","u_FVCLOG()", 0 , 6 })
 	 
-	AXCADASTRO("ZVC","Cadastro de Motoristas ",,"U_COKMOTO()",aRotAdic,)
-     
+	AXCADASTRO("ZVC","Cadastro de Motoristas ","U_CADFVA()","U_COKMOTO()",aRotAdic,)
+	
 Return()
- 
+
+User function CADFVA()
+	Local lRet 		:= .T.
+	Local cQuery 	:= ""
+
+	cQuery := " SELECT COUNT(*) CONTADOR "
+	cQuery += " FROM "+ retsqlname("ZV4") +" ZV4 "
+	cQuery += " WHERE D_E_L_E_T_='' AND ZV4_FILIAL='"+ xFilial("ZV4") +"' AND "
+	
+	if !Empty(M->ZVC_CPF)
+		cQuery += "   (ZV4_CPF  = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF1 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF2 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF3 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF4 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF5 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF6 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF7 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF8 = '"+ alltrim(ZVC->ZVC_CPF) +"' "
+		cQuery += " OR ZV4_CPF9 = '"+ alltrim(ZVC->ZVC_CPF) +"') "
+	else
+		cQuery += "   (ZV4_PASPO  = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO1 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO2 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO3 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO4 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO5 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO6 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO7 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO8 = '"+ alltrim(ZVC->ZVC_PASPOR) +"' "
+		cQuery += " OR ZV4_PASPO9 = '"+ alltrim(ZVC->ZVC_PASPOR) +"') "
+	endif
+
+	Tcquery cQuery ALIAS "QZV4" NEW
+
+	if QZV4->CONTADOR > 0
+		lRet := .F.
+		MsgStop("Esse motorista está vinculado a um veículo, por isso, não poderá ser deletado.", "Cadastro em uso")
+	endif
+
+	QZV4->(DBCLOSEAREA())
+
+return lRet
+
 //rotina para gravar o log de alteração
 User Function COKMOTO()    
 
-	Local _aNomCpo := {}
-	Local _cAlter  := ''
+	Local _aNomCpo 	:= {}
+	Local _cAlter  	:= ''
+	Local _nx		:= 0
+	Local lRet		:= .T.
 
 	U_ADINF009P('CADFVC' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela para cadastro de motoristas')
 	
 	//rotina para aterar 	
-	If ALTERA
+	if INCLUI
+		cQuery := " SELECT COUNT(*) CONTADOR "
+		cQuery += " FROM "+ retsqlname("ZVC") +" ZVC "
+		cQuery += " WHERE D_E_L_E_T_='' AND ZVC_FILIAL='"+ xFilial("ZVC") +"' AND "
+		
+		if !Empty(M->ZVC_CPF)
+			cQuery += "  ZVC_CPF  = '"+ alltrim(M->ZVC_CPF) +"' "
+		else
+			cQuery += "  ZVC_PASPOR  = '"+ alltrim(M->ZVC_PASPOR) +"' "
+		endif
+
+		Tcquery cQuery ALIAS "QZVC" NEW
+
+		if QZVC->CONTADOR > 0
+			lRet := .F.
+			MsgStop("Já existe um motorista cadastrado com esse CPF.", "Cadastro em uso")
+		endif
+
+		QZVC->(DBCLOSEAREA())
+
+	ElseIf ALTERA
 		
 		DbSelectArea("SX3")
 		DbSetOrder(1)
@@ -103,7 +175,7 @@ User Function COKMOTO()
 		
 	Endif
 	
-Return .T.  
+Return lRet  
   
 //Apresenta Historico/Log com todas as acoes tomadas
 //chamado 029467 02/07/2017 - Fernando Sigoli
