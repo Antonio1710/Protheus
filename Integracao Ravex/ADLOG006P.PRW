@@ -159,23 +159,22 @@ STATIC FUNCTION IMPORTAXML()
 				IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
 						  STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
 						  
+						  // @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
+						  /*
 						  IF SZD->ZD_DEVTOT == 'P'
-						  
 						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA
-						  
 						  ENDIF	
 
 						  IF SZD->ZD_DEVTOT == 'Q'
-						  
-						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA // DEBUG - VOLTAR
-						  
+						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA // DEBUG - VOLTAR - NF 002499061
 						  ENDIF	
 
 						  IF SZD->ZD_DEVTOT == 'T'
-						  
 						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA
-						  
 						  ENDIF	
+						  */
+						  //
+
 				ENDIF		  
 				SZD->(dbCloseArea())		  
 				
