@@ -10,6 +10,7 @@
     @since 18/02/2022
     @version 01
 	@history Chamado 16833 - Leonardo P. Monteiro - 18/02/2022 - Desenvolvimento inicial.
+	@history Chamado 16833 - Leonardo P. Monteiro - 10/03/2022 - Correção de error.log.
 	
     /*/
 
@@ -74,7 +75,7 @@ Static Function fOk()
 	local nA			:= 0
 	
 	DbSelectArea("ZHN")
-	ZEL->(DbsetOrder(1))
+	ZHN->(DbsetOrder(1))
 
 	For nA := 1 TO Len(oGet:aCols)  
 		If oGet:aCols[nA][nPosOk] == oOk
