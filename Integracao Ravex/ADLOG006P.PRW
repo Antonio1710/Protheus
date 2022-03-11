@@ -3,6 +3,7 @@
 #INCLUDE "TBICONN.CH"
 #INCLUDE "TBICODE.CH"   
 #INCLUDE "XMLXFUN.CH" 
+#INCLUDE "TOPCONN.CH"
 
 /*/{Protheus.doc} User Function ADLOG006P
 	Programa consumir de webservice ravex para baixa de devolucoes de notas fiscais 
@@ -12,8 +13,8 @@
 	@history chamado 052861 William Costa 23/10/2019 - Retirado todas as divisões por 1000 nas quantidades de devoluções
 	@history chamado 052977 William Costa 30/10/2019 - Identificado erro para encontrar o produto o fator de conversão e tipo de conversão e alterado os campos de quantidade na devolução total e parcial
 	@history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
+	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados) + Function ChkDupSZX (via query pois já existe seek) + Inclusão PadR
 /*/
-
 User Function ADLOG006P()
 
 	Private nCont3 := 0
@@ -42,9 +43,7 @@ User Function ADLOG006P()
 	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 
 	FOR nCont3 := 1 TO 2
-
 		CRIAWEBSERVICE()
-
 	NEXT nCont3
 	
 	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
@@ -104,6 +103,8 @@ STATIC FUNCTION RETORNAVIAGEM()
 RETURN(NIL)     	
 
 STATIC FUNCTION IMPORTAXML()
+
+	Local lExistSZX     := .f. // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
 
 	Private nCont       := 0
 	Private nCont2      := 0
@@ -186,18 +187,19 @@ STATIC FUNCTION IMPORTAXML()
 					DbOrderNickName("SC5_F") 
 					//achou a nota no sc5          
 					IF DBSEEK(FWFILIAL("SC5")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),.T.) 
+
 						//inicio criar uma ocorrencia 
 						// ******* ALTERA VALORES DA TABELAS PARA ENTREGUE 
 						DO CASE
+
+							////////////////////////////////////////////////////////////////////////
 							// ************************ INICIO DEVOLUCAO TOTAL ****************** //
+							////////////////////////////////////////////////////////////////////////
 							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO == 1
 
 								IF	RecLock("SC5",.F.)
-								
 										SC5->C5_MOK := '03'
-							
 									MsUnlock()            
-									
 								ENDIF
 								
 								// *********** INICIO PARA CARREGAR O SZD *********************** // 
@@ -326,45 +328,51 @@ STATIC FUNCTION IMPORTAXML()
 						
 										DBSELECTAREA("SZX")
 										DBSETORDER(2)
-										IF !DBSEEK(FWFILIAL("SC5") + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-													oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
+										IF !DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 											
 											nConversao := 1
 											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											cTipoConv  := ''
 											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											
-											RecLock("SZX",.T.)
+											// @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+											lExistSZX := ChkDupSZX(FWFILIAL("SZX"), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2), oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+
+											If !lExistSZX
+
+												RecLock("SZX",.T.)
+													SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+													SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+													SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+													SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+													SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+													SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+													SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
+													SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
+													SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+													SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+													SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+													SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+													SZX->ZX_OBSER	:= ''  // Observacao
+													SZX->ZX_TOTAL	:= TRB->D2_TOTAL        // Valor total da devolução
+													SZX->ZX_QUEBRA  := 0  // QUEBRA
+													SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												MsUnLock()
 											
-												SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-												SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-												SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-												SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-												SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-												SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-												SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
-												SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
-												SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-												SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-												SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-												SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-												SZX->ZX_OBSER	:= ''  // Observacao
-												SZX->ZX_TOTAL	:= TRB->D2_TOTAL        // Valor total da devolução
-												SZX->ZX_QUEBRA  := 0  // QUEBRA
-												SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-												
-											MsUnLock()                                  
+											EndIf
+
 										ENDIF	
 										SZX->(dbCloseArea())
 														
 										DBSELECTAREA("SZX")
 										DBSETORDER(2)
 										IF DBSEEK(FWFILIAL("SZX") + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-													oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
 											nConversao := 1
 											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
@@ -415,17 +423,17 @@ STATIC FUNCTION IMPORTAXML()
 								
 							// **************** FINAL DEVOLUCAO TOTAL    ******************* //
 							
+
+
+							///////////////////////////////////////////////////////////////////
 							// **************** INICIO DEVOLUCAO PARCIAL ******************* //
-							
+							///////////////////////////////////////////////////////////////////
 							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
 								oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO <> '39'
 								
 								IF	RecLock("SC5",.F.)
-								
 										SC5->C5_MOK := '03'
-							
 									MsUnlock()            
-									
 								ENDIF
 								
 								// *********** INICIO PARA CARREGAR O SZD *********************** // 
@@ -555,45 +563,51 @@ STATIC FUNCTION IMPORTAXML()
 										DBSELECTAREA("SZX")
 										DBSETORDER(2)
 										IF !DBSEEK(FWFILIAL("SZX") + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-													oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
 											nConversao := 1
 											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											cTipoConv  := ''
 											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											
-											RecLock("SZX",.T.)
-												
-												nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
-												SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-												SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-												SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-												SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-												SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-												SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-												SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
-												SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
-												SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-												SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-												SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-												SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-												SZX->ZX_OBSER	:= ''  // Observacao
-												SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)         // Valor total da devolução
-												SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA
-												SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-												
-											MsUnLock()                                  
+											// @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+											lExistSZX := ChkDupSZX(FWFILIAL("SZX"), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2), oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+
+											If !lExistSZX
+
+												RecLock("SZX",.T.)
+													nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
+													SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+													SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+													SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+													SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+													SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+													SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+													SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
+													SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
+													SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+													SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+													SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+													SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+													SZX->ZX_OBSER	:= ''  // Observacao
+													SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)         // Valor total da devolução
+													SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA
+													SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												MsUnLock()
+
+											EndIf
+
 										ENDIF	
 										SZX->(dbCloseArea())
 										
 										DBSELECTAREA("SZX")
 										DBSETORDER(2)
 										IF DBSEEK(FWFILIAL("SZX") + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-													oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.)  // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
 											nConversao := 1
 											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
@@ -638,17 +652,16 @@ STATIC FUNCTION IMPORTAXML()
 								
 							// **************** FINAL DEVOLUCAO PARCIAL ******************** //
 							
-							// **************** INICIO DEVOLUCAO QUEBRA ******************* //
 							
+							//////////////////////////////////////////////////////////////////
+							// **************** INICIO DEVOLUCAO QUEBRA ******************* //
+							//////////////////////////////////////////////////////////////////
 							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
 								oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO == '39'
 								
 								IF	RecLock("SC5",.F.)
-								
 										SC5->C5_MOK := '06'
-							
 									MsUnlock()            
-									
 								ENDIF
 								
 								// *********** INICIO PARA CARREGAR O SZD *********************** // 
@@ -778,36 +791,41 @@ STATIC FUNCTION IMPORTAXML()
 										DBSELECTAREA("SZX")
 										DBSETORDER(2) // ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD, R_E_C_N_O_, D_E_L_E_T_
 										IF !DBSEEK(FWFILIAL("SZX") + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + SPACE(1) + ; //WILLIAM COSTA 22/10/2019
-													oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
 											nConversao := 1
 											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											cTipoConv  := ''
 											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-											
-											RecLock("SZX",.T.)
-												
-												nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
-												SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-												SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-												SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-												SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-												SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-												SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-												SZX->ZX_QTDE	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao) // Quantidade Devolvida
-												SZX->ZX_QTDEV2U	:= IIF(nCodMotItem == 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA))  // Quantidade Devolvida
-												SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-												SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-												SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-												SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-												SZX->ZX_OBSER	:= ''  // Observacao
-												SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)        // Valor total da devolução
-												SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO ))  // QUEBRA  // WILLIAM COSTA 22/10/2019
-												SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-												
-											MsUnLock()                                  
+
+											// @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+											lExistSZX := ChkDupSZX(FWFILIAL("SZX"), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2), oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+
+											If !lExistSZX
+
+												RecLock("SZX",.T.)
+													nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
+													SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+													SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+													SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+													SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+													SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+													SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+													SZX->ZX_QTDE	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao) // Quantidade Devolvida
+													SZX->ZX_QTDEV2U	:= IIF(nCodMotItem == 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA))  // Quantidade Devolvida
+													SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+													SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+													SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+													SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+													SZX->ZX_OBSER	:= ''  // Observacao
+													SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)        // Valor total da devolução
+													SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO ))  // QUEBRA  // WILLIAM COSTA 22/10/2019
+													SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												MsUnLock()
+
+											EndIf
 											
 											// ** INICIO SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P **//		
 											IF nCodMotItem <> 39
@@ -843,9 +861,9 @@ STATIC FUNCTION IMPORTAXML()
 										DBSELECTAREA("SZX")
 										DBSETORDER(2)
 										IF DBSEEK(FWFILIAL("SZX") + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)            + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + SPACE(01) + ;
-													oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1])            + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
 											nConversao := 1
 											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
@@ -1657,3 +1675,119 @@ STATIC FUNCTION SQLCodProduto(cCodigo)
 				 
 	EndSQl 	  
 RETURN(NIL)
+
+
+/*/{Protheus.doc} User Function DelDupSZX
+    Exclui registros duplicados
+    @type  Function
+    @author FWNM
+    @since 11/03/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados)
+/*/
+User Function DelDupSZX()
+
+    Local cQuery  := ""
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_ITEMNF, ZX_CODPROD, COUNT(1) TT_DUPLICADOS
+    cQuery += " FROM SZX010 SZX (NOLOCK) 
+    cQuery += " INNER JOIN SZD010 SZD (NOLOCK) ON ZD_FILIAL=ZX_FILIAL AND ZD_NUMNF=ZX_NF AND ZD_SERIE=ZX_SERIE AND SZD.D_E_L_E_T_=''
+    cQuery += " WHERE ZD_DTDEV>='20220309'
+    cQuery += " AND ZD_NUMNF<>''
+    cQuery += " AND SZX.D_E_L_E_T_=''
+
+    //cQuery += " AND ZX_NF='002498885'
+    //cQuery += " AND ZX_NF='002498883'
+
+    cQuery += " GROUP BY ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_ITEMNF, ZX_CODPROD
+    cQuery += " HAVING COUNT(1) >= 2
+    cQuery += " ORDER BY 1,2,3,4,5
+
+    tcQuery cQuery New Alias "Work"
+
+    Work->( dbGoTop() )
+    Do While Work->( !EOF() )
+
+        // Exclui duplicados
+        SZX->( dbSetOrder(2) ) // ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD, R_E_C_N_O_, D_E_L_E_T_
+        If SZX->( dbSeek(FWxFilial("SZX")+Work->(ZX_NF+ZX_SERIE+ZX_CODPROD)) )
+            
+            SZX->( dbSkip() ) // Pulo o registro que permanecerá
+
+            Do While SZX->( !EOF() ) .and. SZX->ZX_FILIAL == Work->ZX_FILIAL .and. SZX->ZX_NF == Work->ZX_NF .and. SZX->ZX_SERIE == Work->ZX_SERIE .and. SZX->ZX_ITEMNF == Work->ZX_ITEMNF .and. SZX->ZX_CODPROD == Work->ZX_CODPROD
+
+                RecLock("SZX", .F.)
+                    SZX->( dbDelete() )
+                SZX->( msUnLock() )
+
+                SZX->( dbSkip() )
+
+            EndDo
+        
+        EndIf
+
+        Work->( dbSkip() )
+
+    EndDo
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+Return
+
+/*/{Protheus.doc} ChkDupSZX
+	Checa se o produto devolvido já existe pois mesmo com seek houveram casos da rotina entender que deveria ser incluído
+	@type  Static Function
+	@author FWNM
+	@since 11/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+/*/
+Static Function ChkDupSZX(cFilSZX, cNFSZX, cSerieSZX, cProdSZX)
+
+	Local lRet   := .f.
+	Local cQuery := ""
+	Local aArea  := GetArea()
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	// ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD, R_E_C_N_O_, D_E_L_E_T_
+	cQuery := " SELECT ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD
+	cQuery += " FROM " + RetSqlName("SZX") + " (NOLOCK)
+	cQuery += " WHERE ZX_FILIAL='"+cFilSZX+"'
+	cQuery += " AND ZX_NF='"+cNFSZX+"'
+	cQuery += " AND ZX_SERIE='"+cSerieSZX+"'
+	cQuery += " AND ZX_CODPROD='"+cProdSZX+"'
+	cQuery += " AND D_E_L_E_T_=''
+
+	tcQuery cQuery New Alias "Work"
+
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+		lRet := .t.
+	EndIf
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	RestArea( aArea )
+
+Return lRet
