@@ -4,6 +4,8 @@
 #INCLUDE "FILEIO.CH"
 #INCLUDE "TBICONN.CH"
 
+STATIC cResponsavel  := SPACE(60)
+
 /*/{Protheus.doc} User Function MT103FIM
 	Ponto entrada utilizado apos gravacao do documento de entrada
 	@type  Function
@@ -47,10 +49,8 @@
   @history Ticket 67479   - Fer Macieira    - 01/02/2022 - Endereçamento produto 383104 - Retorno Coopeval
   @history Ticket 67570   - Everson         - 02/02/2022 - Tratamento error log.
   @history Ticket 67570   - Everson         - 04/02/2022 - Tratamento error log.
+  @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 /*/
-
-STATIC cResponsavel  := SPACE(60)
-
 User Function MT103FIM()
 
   Local aAreaSE1 	   := SE1->(GetArea())
@@ -65,11 +65,11 @@ User Function MT103FIM()
   Local lGrBlqIcm    := .T.
   Local lBlqICM      := SuperGetMv( "MV_#MT13F1" , .F. , .F. ,  )
   Local lBlqNvS      := SuperGetMv( "MV_#MT13F2" , .F. , .F. ,  )
-  //Local nCdPed       := Ascan(aHeader, { |x| Alltrim(x[2]) == "D1_PEDIDO" } )
-  //Local nAc          := 0
   Private cToBoletim := ''
   Private lEnviaMail := .F.
   
+  UpItemCta() // @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+
   If SF1->F1_TIPO == "D" .AND. !EMPTY(SF1->F1_DUPL) .AND. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
 
     DbSelectArea("SE1")
@@ -2423,4 +2423,46 @@ User Function ChkSDA()
 
   RestArea( aAreaAtu )
 
+Return
+
+/*/{Protheus.doc} UpItemCta
+  Grava Item Contábil na NF de acordo com regra contábil
+  @type  Static Function
+  @author FWNM
+  @since 14/03/2022
+  @version version
+  @param param_name, param_type, param_descr
+  @return return_var, return_type, return_description
+  @example
+  (examples)
+  @see (links_or_references)
+  @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+/*/
+Static Function UpItemCta()
+
+  Local aAreaSD1   := SD1->( GetArea() )
+  Local cMVItemCta := GetMV("MV_#ITM113",,"113")
+  Local cCC5134    := GetMV("MV_#CC5134",,"5134")
+
+  SD1->( dbsetorder(1) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_COD, D1_ITEM, R_E_C_N_O_, D_E_L_E_T_
+  If SD1->( dbseek(SF1->F1_FILIAL + SF1->F1_DOC + SF1->F1_SERIE + SF1->F1_FORNECE + SF1->F1_LOJA) )
+
+    Do While SD1->( !EOF() ) .and. SF1->F1_FILIAL+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA == SD1->D1_FILIAL+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA
+
+      If AllTrim(SD1->D1_CC) $ AllTrim(cCC5134) .and. AllTrim(SD1->D1_ITEMCTA) <> AllTrim(cMVItemCta)
+
+        Reclock("SD1", .F.)
+          SD1->D1_ITEMCTA := cMVItemCta
+        SD1->( msUnlock() )
+
+      EndIf
+
+      SD1->( dbSkip() )
+
+    EndDo
+
+  EndIf
+
+  RestArea( aAreaSD1 )
+  
 Return
