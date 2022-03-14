@@ -1,0 +1,1644 @@
+#include "MATRAPR.CH"
+#include "PROTHEUS.CH"
+#include "RWMAKE.CH"
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MatrAPR   ³ Autor ³ Mary C. Hergert       ³ Data ³12/06/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Resumo dos Livros - ICMS e IPI                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                      ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function MatrApr()
+
+Local oReport
+
+If FindFunction("TRepInUse") .And. TRepInUse()
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Interface de impressao                                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oReport := ReportDef()
+	oReport:PrintDialog()
+Else
+	u_MatrAprR3()
+EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³ReportDef ³ Autor ³Mary C. Hergert        ³ Data ³12/06/2006³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³A funcao estatica ReportDef devera ser criada para todos os ³±±
+±±³          ³relatorios que poderao ser agendados pelo usuario.          ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpO1: Objeto do relatório                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                      ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function ReportDef()
+
+Local aOrdem 	:= {STR0034} // Serao utilizadas as quebras informadas na Pergunte()
+
+Local oReport
+Local oMovto
+Local oNotas                                
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Componente de impressao³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oReport := TReport():New("MATRAPR",STR0005,"MTRAPR", {|oReport| ReportPrint(oReport)},STR0006) // "Mapa Resumo dos Livros Fiscais" , "Este relatório irá imprimir um resumo com as movimentações através de notas fiscais de entrada/saída, de ICMS ou IPI"
+oReport:SetTotalInLine(.F.)
+
+Pergunte(oReport:uParam,.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Secao 1 - Tipos de Movimento - Entradas/Saidas/Grupos de CFOPs³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oMovto := TRSection():New(oReport,STR0031,{"SF3"},aOrdem,/*Campos do SX3*/,/*Campos do SIX*/) // "Quebras - CFOP/Aliquota/UF"
+oMovto:SetHeaderSection(.F.) 
+oMovto:SetTotalInLine(.F.)            
+oMovto:SetEditCell(.T.)
+TRCell():New(oMovto,"MOVIMENTO"		,"   ",/*Titulo*/,/*Picture*/,100,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oMovto,"TIPOMOV"		,"   ",/*Titulo*/,/*Picture*/,1,/*lPixel*/,/*{|| codblock de impressao }*/)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Secao 2 - Movimentos acumulados por CFOP/Aliquota³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oNotas := TRSection():New(oMovto,STR0030,{"SF3"},aOrdem,/*Campos do SX3*/,/*Campos do SIX*/) // "Livros Fiscais"
+oNotas:SetTotalInLine(.F.)
+oNotas:SetHeaderPage() 
+oNotas:SetEditCell(.T.)    
+TRCell():New(oNotas,"F3_ESTADO"		,"   ",STR0029 /*"UF"*/,/*Picture*/,10/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_CFO"		,"   ",STR0017 /*"CFOP"*/,/*Picture*/,10/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_ALIQICM"	,"   ",STR0018 /*"Alíquota"*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_VALCONT"	,"   ",STR0019 /*"Valor Contábil"*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_BASEICM"	,"   ",STR0020 /*"Base de Cálculo"*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_VALICM"		,"   ",STR0021 /*"Valor Tributado"*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_ISENICM"	,"   ",STR0022 /*"Isentas"*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+TRCell():New(oNotas,"F3_OUTRICM"	,"   ",STR0023 /*"Outras"*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| codblock de impressao }*/)
+
+Return(oReport)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³ReportPrin³ Autor ³Mary C. Hergert        ³ Data ³13/06/06  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³A funcao estatica ReportDef devera ser criada para todos os ³±±
+±±³          ³relatorios que poderao ser agendados pelo usuario.          ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpO1: Objeto Report do Relatório                           ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ 08/03/18 ³ Vogas Júnior  ³Issue DSERFIS2-2263 - Restituindo apresenta-³±±
+±±³          ³               ³cao de totalizadores, presentes em versões  ³±±
+±±³          ³               ³anteriores.                                 ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function ReportPrint(oReport)
+
+Local aNcm  	:= {{"22011000","22090000"},;
+		  		 	{"24022000","24022000"},;
+    	 			{"84291110","84295900"},;
+        			{"84321000","84339090"},;
+		        	{"87011000","87060090"},;
+    			    {"87111000","87119000"}}
+Local aApurado	:= {}
+Local aGrupos	:= {}        
+Local aAuxIPI	:= {}
+Local aFilsCalc	:= {}
+Local aAreaSm0	:= SM0->(GetArea ())
+
+Local cImp	   		:= IIf(mv_par03 == 1,"IC","IP")
+Local cNrLivro 		:= mv_par04
+Local cPictVal		:= ""
+Local cMovimento	:= ""
+Local cCfopQuebra	:= ""                       
+Local cTpMovto		:= ""
+Local cUF			:= ""
+Local cHideCFOP		:= ""
+Local cFilUsu		:= ""
+
+Local dDtIni   		:= mv_par01
+Local dDtFim   		:= mv_par02
+
+Local lQbraAliq		:= .F.
+Local lQbraCFO		:= .F.
+Local lQbraUfCfop	:= .F.
+Local lEnd			:= .F.
+Local lEntr			:= .F.
+Local lSai			:= .F.
+
+Local nOrdem   		:= mv_par05
+Local nIndice		:= IIf(mv_par06 > 0,mv_par06,1)
+Local nApuracao		:= mv_par07
+Local nFormApu    	:= mv_par08
+Local nX			:= 1
+Local nPos			:= 0
+Local nRegs			:= 0
+Local nI			:= 1
+Local nForFilial	:= 0
+
+Local oBreak		
+Local oBreak1
+Local oBreak2
+Local oMovto		:= oReport:Section(1)
+Local oNotas		:= oReport:Section(1):Section(1)
+Local nB
+Local nTGEnt,nTGEBase,nTGETrib,nTGEIsentas,nTGEOutras  	:= 0 
+Local nTGSai,nTGSBase,nTGSTrib,nTGSIsentas,nTGSOutras  	:= 0  
+Local nY := 1
+Local aDadosAgl :={}
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica as filiais selecionadas³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aFilsCalc:= MatFilCalc( mv_par09 == 1 )
+If Empty( aFilsCalc )
+	dbClearFilter()
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica como deverao ser acumuladas as informacoes no ResumeF3³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³nOrdem = Ordem de Impressao/Quebras³
+//³1 = Aliquota                       ³
+//³2 = CFOP                           ³
+//³3 = CFOP + Aliquota                ³
+//³4 = UF + CFOP                      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If cImp=="IP"
+	Do Case
+		Case nOrdem==1 .And. nFormApu == 2  ; lQbraAliq:=.T. ; lQbraCFO:=.F.
+		Case nOrdem==1 .And. nFormApu == 1  ; lQbraAliq:=.T. ; lQbraCFO:=.T.
+		Case nOrdem==2 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case nOrdem==3 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case nOrdem==4 .And. nFormApu == 1 ; lQbraAliq:=.F. ; lQbraCFO:=.F. ; lQbraUfCfop := .T.
+		Case nOrdem==4 .And. nFormApu == 2 ; lQbraAliq:=.F. ; lQbraCFO:=.F. ; lQbraUfCfop := .F.
+	EndCase
+Else 
+	Do Case
+		Case nOrdem==1 ; lQbraAliq:=.T. ; lQbraCFO:=.F.
+		Case nOrdem==2 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case nOrdem==3 ; lQbraAliq:=.T. ; lQbraCFO:=.T.
+		Case nOrdem==4 ; lQbraAliq:=.F. ; lQbraCFO:=.F.; lQbraUfCfop:=.T.
+	EndCase
+Endif
+
+If nIndice != 1
+	cPictVal := "@E 999999999999.999"
+Else
+	cPictVal := "@E 999,999,999,999.99"
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Define as quebras e os totalizadores                          ³
+//³Esta definicao nao foi feita no ReportDef pois sao necessarios³
+//³os conteudos lancados na Pergunte()                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Quebras de acordo com a ordem selecionada³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nOrdem == 2 .Or. nOrdem == 3 .Or. nOrdem == 4
+	oBreak := TRBreak():New(oMovto,oMovto:Cell("TIPOMOV"),STR0024,.F.)  // "Total das Entradas"
+Endif           
+//
+If nOrdem == 3 .And. cImp <> "IP"
+	oBreak1 := TRBreak():New(oNotas,oNotas:Cell("F3_CFO"),STR0024,.F.)  // "Total das Entradas"
+Endif          
+//
+If nOrdem == 4
+	oBreak2 := TRBreak():New(oNotas,oNotas:Cell("F3_ESTADO"),STR0028,.F.)  // "Total do Estado"
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Totalizadores de acordo com a ordem selecionada³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nOrdem == 1 .Or. nOrdem == 2 .Or. nOrdem == 3
+	TRFunction():New(oNotas:Cell("F3_VALCONT"),NIL,"SUM",/*oBreak1*/,/*Titulo*/,cPictVal,/*uFormula*/,.T.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_BASEICM"),NIL,"SUM",/*oBreak1*/,/*Titulo*/,cPictVal,/*uFormula*/,.T.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_VALICM"),NIL,"SUM",/*oBreak1*/,/*Titulo*/,cPictVal,/*uFormula*/,.T.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_ISENICM"),NIL,"SUM",/*oBreak1*/,/*Titulo*/,cPictVal,/*uFormula*/,.T.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_OUTRICM"),NIL,"SUM",/*oBreak1*/,/*Titulo*/,cPictVal,/*uFormula*/,.T.,.F.,.F.)
+Endif
+//   
+If nOrdem == 2 .Or. nOrdem == 3 .Or. nOrdem == 4
+	TRFunction():New(oNotas:Cell("F3_VALCONT"),NIL,"SUM",oBreak,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_BASEICM"),NIL,"SUM",oBreak,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_VALICM"),NIL,"SUM",oBreak,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_ISENICM"),NIL,"SUM",oBreak,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_OUTRICM"),NIL,"SUM",oBreak,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+Endif
+//
+If nOrdem == 3 .And. cImp <> "IP"
+	TRFunction():New(oNotas:Cell("F3_VALCONT"),NIL,"SUM",oBreak1,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_BASEICM"),NIL,"SUM",oBreak1,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_VALICM"),NIL,"SUM",oBreak1,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_ISENICM"),NIL,"SUM",oBreak1,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_OUTRICM"),NIL,"SUM",oBreak1,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+Endif
+//
+If nOrdem == 4
+	TRFunction():New(oNotas:Cell("F3_VALCONT"),NIL,"SUM",oBreak2,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_BASEICM"),NIL,"SUM",oBreak2,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_VALICM"),NIL,"SUM",oBreak2,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_ISENICM"),NIL,"SUM",oBreak2,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+	TRFunction():New(oNotas:Cell("F3_OUTRICM"),NIL,"SUM",oBreak2,/*Titulo*/,cPictVal,/*uFormula*/,.F.,.F.,.F.)
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica o filtro do usuario para passar como parametro na ResumeF3³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Len(oMovto:GetAdvplExp("SF3")) > 0
+	cFilUsu += oMovto:GetAdvplExp("SF3")
+EndIf    
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica os titulos de cada uma das quebras³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nOrdem==1 .And. nFormApu == 1  
+	lQbraCFO  := .F.
+Endif
+
+If lQbraCFO
+	AADD(aGrupos,{STR0007,.T.}) //"1.000 - Entradas e/ou Aquisições de Serviços do Estado"
+	AADD(aGrupos,{STR0008,.T.}) //"2.000 - Entradas e/ou Aquisições de Serviços de Outros Estados" 
+	AADD(aGrupos,{STR0009,.T.}) //"3.000 - Entradas e/ou Aquisições de Serviços do Exterior" 
+	AADD(aGrupos,{STR0010,.T.}) //"5.000 - Saídas e/ou Prestações de Serviços para o Estado" 
+	AADD(aGrupos,{STR0011,.T.}) //"6.000 - Saídas e/ou Prestações de Serviços para Outros Estados"
+	AADD(aGrupos,{STR0012,.T.}) //"7.000 - Saídas e/ou Prestações de Serviços para o Exterior" 
+Elseif lQbraUfCfop
+	AADD(aGrupos,{STR0013,.T.}) //"Entradas e/ou Aquisições de Serviços" 
+	AADD(aGrupos,{STR0014,.T.}) //"Saídas e/ou Prestações de Serviços"
+Else
+	AADD(aGrupos,{STR0015,.T.}) //"Entradas"
+	AADD(aGrupos,{STR0016,.T.}) //"Saídas"
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Secao 1 - Campos apenas para totalizacao de entradas/saidas³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oMovto:Cell("MOVIMENTO"):SetBlock({|| cMovimento })       
+oMovto:Cell("TIPOMOV"):SetBlock({|| cTpMovto })
+oMovto:Cell("TIPOMOV"):Hide()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Secao 2 - Valores dos movimentos que serao apresentados em cada uma das quebras³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oNotas:Cell("F3_CFO"):SetBlock({|| SubStr(aApurado[nX][01],1,1) + "." + SubStr(aApurado[nX][01],2,Len(aApurado[nX][01])) })      
+oNotas:Cell("F3_ALIQICM"):SetBlock({|| aApurado[nX][02] })      
+oNotas:Cell("F3_ESTADO"):SetBlock({|| aApurado[nX][19] })      
+oNotas:Cell("F3_VALCONT"):SetBlock({|| aApurado[nX][11] })
+oNotas:Cell("F3_BASEICM"):SetBlock({|| aApurado[nX][03] })
+oNotas:Cell("F3_VALICM"):SetBlock({|| aApurado[nX][04] })
+oNotas:Cell("F3_ISENICM"):SetBlock({|| aApurado[nX][05] })
+oNotas:Cell("F3_OUTRICM"):SetBlock({|| aApurado[nX][06] })  
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Define a mascara de impressao de cada celula³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oNotas:Cell("F3_VALCONT"):SetPicture(cPictVal)
+oNotas:Cell("F3_BASEICM"):SetPicture(cPictVal)
+oNotas:Cell("F3_VALICM"):SetPicture(cPictVal)
+oNotas:Cell("F3_ISENICM"):SetPicture(cPictVal)
+oNotas:Cell("F3_OUTRICM"):SetPicture(cPictVal)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Cada uma das quebras apresenta apenas um dos campos - CFOP ou Aliquota³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Do Case
+Case nOrdem == 1
+	If cImp == "IC"
+		oNotas:Cell("F3_CFO"):Hide()
+		oNotas:Cell("F3_ALIQICM"):Show()
+	Else                            
+		oNotas:Cell("F3_CFO"):Show()    
+		oNotas:Cell("F3_ALIQICM"):Hide()
+	Endif
+	oNotas:Cell("F3_ESTADO"):Disable()	
+Case nOrdem == 2 
+	oNotas:Cell("F3_CFO"):Show()
+	oNotas:Cell("F3_ALIQICM"):Hide() 
+	oNotas:Cell("F3_ESTADO"):Disable()	
+Case nOrdem == 3
+	oNotas:Cell("F3_CFO"):Show()     
+	If cImp == "IC"
+		oNotas:Cell("F3_ALIQICM"):Show() 
+	Else
+		oNotas:Cell("F3_ALIQICM"):Hide()
+	Endif 
+	oNotas:Cell("F3_ESTADO"):Disable()	
+Case nOrdem == 4
+	oNotas:Cell("F3_CFO"):Show()
+	oNotas:Cell("F3_ALIQICM"):Hide()
+EndCase                                               
+
+For nForFilial := 1 to Len(aFilsCalc)
+	
+	If aFilsCalc[nForFilial,1]
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Altera a filial corrente selecionada³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cFilAnt     := aFilsCalc[nForFilial,2]
+		aApurado    := {}
+		aDadosAgl   := {}
+		cUF         := ""
+		cHideCFOP   := ""
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Chama a ResumeF3 de acordo com os parametros solicitados³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cImp <> "IP"
+			aApurado := ResumeF3(cImp, dDtIni, dDtFim, cNrLivro, lQbraAliq, lQbraCFO, 1, @lEnd, , , , , ,cFilUsu , , , , , , , , , ,lQbraUfCfop,,,,,,"F3_MATRAPR",mv_par10,,,,,,,,,,1)	
+		Else	
+			If nFormApu == 1
+				aApurado := ResumeF3(cImp, dDtIni, dDtFim, cNrLivro, lQbraAliq, lQbraCFO, 1, @lEnd, , , , , ,cFilUsu, , , , , , , , , ,lQbraUfCfop,,,,,,"F3_MATRAPR",mv_par10,,,,,,,,,,1)	
+			Else
+				aApurado := ResumeIP(dDtIni,dDtFim,cNrLivro,1,@lEnd,,,,aNcm,nApuracao,cFilUsu,,,,lQbraUfCfop,"IP_MATRAPR",mv_par10)  
+			Endif	
+		Endif	                
+//RESUME F3, agrupa levando em consideração cfop e f4_ipi, porém precisava que trouxe-se apenas uma vez no relatório
+//Por este motivo adicionei a rotina abaixo para aglutinar apenas por cfop, e não ter mais de uma ocorrencia no relatório
+//só devera rodar quando a quebra for igual a CFOP, chamado : TQGPLI
+		If !lQbraAliq	.and. lQbraCFO	.and. !lQbraUfCfop .and. nordem ==	2
+			For nX:=1 to Len(aApurado)
+				nPosAgl:=AScan( aDadosAgl,{ |x| x[1]==aApurado[nX,1] })
+				If nPosAgl>0
+					For nY:=1 to Len(aApurado[nX])
+						If Len(aDadosAgl[nPosAgl])==Len(aApurado[nX])
+							If ValType(aApurado[nX][nY])=='N'
+							    aDadosAgl[nPosAgl,nY]+=aApurado[nX,nY]
+							Endif
+						Endif
+					 Next                                         
+				Else
+					Aadd(aDadosAgl,aApurado[nX])	 
+				Endif
+			Next
+			aApurado :={}
+			aApurado:=ACLONE(aDadosAgl)
+		Endif
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime o nome de cada filial³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Len(aApurado) > 0
+			oReport:EndPage()
+			oReport:PrintText(STR0033 + Alltrim(aFilsCalc[nForFilial,2]) + " - " + aFilsCalc[nForFilial,3])
+			oReport:ThinLine()
+			oReport:SkipLine()
+		Endif
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Array de impressao³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		// Classifica os CFOPs em Entrada/Saida para ser possivel ordenar o array
+		For nX := 1 To Len(aApurado)
+			If Left(aApurado[nX,01],1) $ "123"
+				Aadd(aApurado[nX],"E")
+			Else                      
+				Aadd(aApurado[nX],"S")
+			Endif      
+			// Nao existe a aliquota no array, por isso e zerada
+			If cImp == "IP"
+				aApurado[nX,2] := 0
+			Endif
+		Next
+		
+		If Len(aApurado) > 0
+			nRegs := Len(aApurado[nX-1]) 
+	
+			If nOrdem == 4                                                                     
+				// Entradas/Saidas + UF
+				Asort(aApurado,,,{|x,y| x[nRegs] + x[19] + x[1] < y[nRegs] + y[19] + y[1] })
+			Else 
+				// CFOP + Aliquota
+				Asort(aApurado,,,{|x,y| x[1] + StrZero(x[2],5,2) < y[1] + StrZero(y[2],5,2)})
+			Endif  
+		Endif
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprimindo o relatorio para todas as quebras³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		oReport:SetMeter(Len(aApurado))     
+		
+		If Len(aApurado) > 0
+			oMovto:Init()      
+		Endif
+		
+		nX := 1
+		Do While !oReport:Cancel() .And. nX <= Len(aApurado)
+		
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Define o tipo de movimento acumulado: Entrada ou Saida³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If Left(aApurado[nX,01],1) $ "123E"
+				cTpMovto := "E"
+			Else               
+				cTpMovto := "S"                        
+			Endif               
+		
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Define o grupo de movimento a ser apresentado e o texto dos totais (Entradas/Saidas)³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			Do Case
+			Case nOrdem == 1  
+				// Movimentos - Entradas ou Saidas
+				nPos := Ascan(aGrupos,{|x| Substr(x[1],1,1) == cTpMovto })
+				If nPos > 0
+					cMovimento := aGrupos[nPos,1]
+				Endif
+				// Total das Entradas/Saidas
+				If cTpMovto == "E"
+					oNotas:SetTotalText(STR0024) // "Total das Entradas"
+				Else                                    
+					oNotas:SetTotalText(STR0025) // "Total das Saídas"
+				Endif       
+				// Para efetuar as quebras por CFOP
+				If cImp == "IC"
+					cCfopQuebra := aApurado[nX,01]
+					cCfop 		:= aApurado[nX,01]
+				Else
+					cCfopQuebra := cTpMovto
+					cCfop 		:= cTpMovto
+				Endif
+			Case nOrdem == 2 .Or. nOrdem == 3 .Or. nOrdem == 4
+				If nOrdem == 2 .Or. nOrdem == 3
+					// Grupos de Entradas/Saidas (do estado, de outros estados, do exterior e etc)
+					nPos := Ascan(aGrupos,{|x| Substr(x[1],1,1) == Substr(aApurado[nX,1],1,1)})
+					If nPos > 0
+						cMovimento := aGrupos[nPos,1]
+					Endif 
+					// Total de cada grupo de CFOP		                                                  
+					oNotas:SetTotalText(STR0026 + Str(Val(Left(aApurado[nX,01],1)),5,2)) // "Total"
+					// Para efetuar as quebras por grupo de CFOP
+				    cCfopQuebra := Left(aApurado[nX,01],1)
+				    cCfop 		:= Left(aApurado[nX,01],1)
+				Else
+					// Movimentos - Entradas ou Saidas
+					nPos := Ascan(aGrupos,{|x| Substr(x[1],1,1) == cTpMovto })
+					If nPos > 0
+						cMovimento := aGrupos[nPos,1]
+					Endif                   
+					// Total das Entradas/Saidas
+					If cTpMovto == "E"
+						oNotas:SetTotalText(STR0024) // "Total das Entradas"
+					Else                                    
+						oNotas:SetTotalText(STR0025) // "Total das Saídas"
+					Endif                          
+					// Para efetuar as quebras por Entrada ou Saida
+				    cCfopQuebra := cTpMovto
+				    cCfop 		:= cTpMovto
+				Endif                      
+			EndCase
+			
+			oMovto:PrintLine() 	
+			oReport:IncMeter()
+			oNotas:Init()
+		
+			Do While !oReport:Cancel() .And. nX <= Len(aApurado) .And. cCfop == cCfopQuebra
+		
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Altera o titulo da quebra por grupo de movimento: Entradas/Saidas³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If nOrdem == 2 .Or. nOrdem == 3 .Or. nOrdem == 4
+					If cTpMovto == "E"
+						oBreak:SetTitle(STR0024) // "Total das Entradas"
+					Else               
+						oBreak:SetTitle(STR0025) // "Total das Saídas"
+					Endif                       
+				Endif
+		
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Quando a quebra for por CFOP + Aliquota, imprime o CFOP apenas uma vez³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			/* 	If nOrdem == 3
+				 	If cHideCFOP == aApurado[nX,01] 
+						oNotas:Cell("F3_CFO"):Hide()				 	
+				 	Else
+				 		oNotas:Cell("F3_CFO"):Show()
+				 	Endif   
+				 	cHideCFOP := aApurado[nX,01]
+				Endif
+		    */
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Quando a quebra for por UF + CFOP, imprime a UF apenas uma vez³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			 	If nOrdem == 4
+				 	If cUF == aApurado[nX,19] 
+						oNotas:Cell("F3_ESTADO"):Hide()				 	
+				 	Else
+				 		oNotas:Cell("F3_ESTADO"):Show()
+				 	Endif   
+				 	cUF := aApurado[nX,19]
+				Endif
+		
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Caso seja informado o indice de conversao, converte os valores calculados³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If nIndice <> 1
+					aApurado[nX,11] := NoRound(aApurado[nX,11]/nIndice,3)
+					aApurado[nX,03] := NoRound(aApurado[nX,03]/nIndice,3)
+					aApurado[nX,04] := NoRound(aApurado[nX,04]/nIndice,3)
+					aApurado[nX,05] := NoRound(aApurado[nX,05]/nIndice,3)
+					aApurado[nX,06] := NoRound(aApurado[nX,06]/nIndice,3)
+				Endif 
+					
+				oNotas:PrintLine()
+		
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Altera o titulo das quebras³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If nOrdem == 3 .And. cImp <> "IP"
+				    oBreak1:SetTitle(STR0026 + " " + SubStr(aApurado[nX][01],1,1) + "." + SubStr(aApurado[nX][01],2,Len(aApurado[nX][01])))  // "Total"
+				ElseIf nOrdem == 4
+				 	oBreak2:SetTitle(STR0028 + " " + Alltrim(aApurado[nX][19])) //"Total do Estado"
+				Endif
+				nX += 1 
+		
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Verifica se deve ser efetuada a quebra de acordo com a quebra selecionada³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If nX <= Len(aApurado)
+					Do Case
+					Case nOrdem == 1                  
+						If cImp == "IC"
+							cCfopQuebra := aApurado[nX,01]
+						Else
+							If Left(aApurado[nX,01],1) $ "123E"
+						    	cCfopQuebra := "E"
+						 	Else
+						 		cCfopQuebra := "S"
+						 	Endif    
+						Endif
+					Case nOrdem == 2 
+					    cCfopQuebra := Left(aApurado[nX,01],1)
+					Case nOrdem == 3
+					    cCfopQuebra := Left(aApurado[nX,01],1)
+					Case nOrdem == 4
+						If Left(aApurado[nX,01],1) $ "123E"
+					    	cCfopQuebra := "E"
+					 	Else
+					 		cCfopQuebra := "S"
+					 	Endif    
+					EndCase
+				Endif
+				
+				oReport:IncMeter()
+			
+			EndDo
+		
+			oNotas:Finish()				 
+		Enddo
+		If Len(aApurado) > 0
+			oMovto:Finish()                                     
+
+			If nOrdem <= 4
+				//,STR0029 //*"UF"
+				//,STR0017 //*"CFOP"
+				//,STR0018 //*"Alíquota"
+				//,STR0019 //*"Valor Contábil"
+				//,STR0020 //*"Base de Cálculo"
+				//,STR0021 //*"Valor Tributado"
+				//,STR0022 //*"Isentas"
+				//,STR0023 //*"Outras"		
+		
+				nTGEnt		:= 0 
+				nTGEBase 	:= 0 
+				nTGETrib	:= 0 
+				nTGEIsentas	:= 0 
+				nTGEOutras 	:= 0 
+		
+				nTGSai 		:= 0 
+				nTGSBase	:= 0 	
+				nTGSTrib  	:= 0 	
+				nTGSIsentas	:= 0   	
+				nTGSOutras 	:= 0   	
+		
+				for nb = 1 to len(aApurado)
+					if substr(aApurado[nb][1],1,1) $ "1,2,3,4,E"  
+						nTGEnt 			+=  aApurado[nb][11]
+						nTGEBase		+= 	aApurado[nb][3]
+						nTGETrib		+=	aApurado[nb][4]
+						nTGEIsentas     +=	aApurado[nb][5]
+						nTGEOutras      +=	aApurado[nb][6]
+		
+					elseif substr(aApurado[nb][1],1,1) $ "5,6,7,8,9,S"
+						nTGSai 			+=  aApurado[nb][11]
+						nTGSBase		+= 	aApurado[nb][3]
+						nTGSTrib  		+=	aApurado[nb][4]
+						nTGSIsentas  	+= 	aApurado[nb][5]
+						nTGSOutras    	+= 	aApurado[nb][6]
+					endif 
+				next nb 
+		
+				oReport:SkipLine()
+				oReport:SkipLine()
+				oReport:SkipLine()
+
+				If nOrdem = 4
+					oReport:PrintText( + Space(34) + STR0019+"    "+STR0020+"   "+STR0021+"           "+STR0022+"            "+STR0023 ) 
+				Else
+					oReport:PrintText( + Space(22) + STR0019+"    "+STR0020+"   "+STR0021+"           "+STR0022+"            "+STR0023 ) 
+				EndIf
+				oReport:ThinLine()
+		
+				If nOrdem = 4
+					oReport:PrintText("TOTAL ENTRADAS    " + Space(12) + transform(nTGEnt,"@E 999,999,999,999.99")+ " "+ transform(nTGEBase,"@E 999,999,999,999.99")+ ""+transform(nTGETrib,"@E 999,999,999,999.99")+ ""+transform(nTGEIsentas,"@E 999,999,999,999.99")+ ""+transform(nTGEOutras,"@E 999,999,999,999.99") ) 
+				Else
+					oReport:PrintText("TOTAL ENTRADAS    " + transform(nTGEnt,"@E 999,999,999,999.99")+ " "+ transform(nTGEBase,"@E 999,999,999,999.99")+ ""+transform(nTGETrib,"@E 999,999,999,999.99")+ ""+transform(nTGEIsentas,"@E 999,999,999,999.99")+ ""+transform(nTGEOutras,"@E 999,999,999,999.99") ) 
+				EndIf
+				
+				oReport:SkipLine()
+				oReport:ThinLine()
+
+				If nOrdem = 4
+					oReport:PrintText("TOTAL SAIDAS      " + Space(12) + transform(nTGSai,"@E 999,999,999,999.99")+ " "+ transform(nTGSBase,"@E 999,999,999,999.99")+ ""+transform(nTGSTrib,"@E 999,999,999,999.99")+ ""+transform(nTGSIsentas,"@E 999,999,999,999.99")+ ""+transform(nTGSOutras,"@E 999,999,999,999.99") ) 
+				Else
+					oReport:PrintText("TOTAL SAIDAS      " + transform(nTGSai,"@E 999,999,999,999.99")+ " "+ transform(nTGSBase,"@E 999,999,999,999.99")+ ""+transform(nTGSTrib,"@E 999,999,999,999.99")+ ""+transform(nTGSIsentas,"@E 999,999,999,999.99")+ ""+transform(nTGSOutras,"@E 999,999,999,999.99") ) 
+				EndIf
+				oReport:SkipLine()
+				oReport:ThinLine()
+				oReport:ThinLine()
+		
+			Endif 
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Quando os CFOPs forem apresentados, ha a indicacao se os mesmos estao ou nao cadastrados na tabela [13]³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			
+			If (cImp == "IC" .And. (nOrdem == 2 .Or. nOrdem == 3 .Or. nOrdem == 4)) .Or. cImp == "IP"
+				oReport:PrintText(STR0027) //"* <- CFOPs não cadastrados na Tabela [13]"
+			Endif
+		Endif
+		
+	Endif
+Next
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Restaura a integridade da rotina                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaSm0)
+cFilAnt	:=	SM0->M0_CODFIL
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MATRAprR3 ºAutor  ³                    º Data ³             º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³RdMake - Resumo dos Livros ICMS e IPI                       º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³SigaFis                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function MatraprR3()        // incluido pelo assistente de conversao do AP5 IDE em 19/11/99
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Declaracao de variaveis utilizadas no programa atraves da funcao    ³
+//³ SetPrvt, que criara somente as variaveis definidas pelo usuario,    ³
+//³ identificando as variaveis publicas do sistema utilizadas no codigo ³
+//³ Incluido pelo assistente de conversao do AP5 IDE                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+LOCAL aFilsCalc :={}
+
+SetPrvt("TITULO,CDESC1,CDESC2,CDESC3,TAMANHO,LIMITE")
+SetPrvt("NOMEPROG,NTIPO,CABEC1,CABEC2,CABEC3,CBCONT")
+SetPrvt("CBTXT,M_PAG,ARETURN,CPERG,CSTRING,NLINHA")
+SetPrvt("LEND,CCTCFO,LCFOINVAL,ADADOS,AENTRADAS,ASAIDAS")
+SetPrvt("AGRUPOS,NLASTKEY,WNREL,AIMP,DDTINI,DDTFIM")
+SetPrvt("CIMP,CNRLIVRO,LQBRAALIQ,LQBRACFO,lQbraUfCfop,NINDICE,CPICTVAL")
+SetPrvt("AL,AAPURADO,IX,NTVALCONTAB,NTBASECALC,NTVALTRIB")
+SetPrvt("NTISENTAS,NTOUTRAS,NTGVALCONTAB,NTGBASECALC,NTGVALTRIB,NTGISENTAS")
+SetPrvt("NTGOUTRAS,NTTVALCONTAB,NTTBASECALC,NTTVALTRIB,NTTISENTAS,NTTOUTRAS")
+SetPrvt("nTEGValContab,nTEGBaseCalc,nTEGValTrib,nTEGIsentas,nTEGOutras")
+SetPrvt("nTSGValContab,nTSGBaseCalc,nTSGValTrib,nTSGIsentas,nTSGOutras")
+SetPrvt("XNI,CIMPOSTO,NPOS,CCFO,cuf,cCFOP,cTipo,cTipoAnt,cChave,cChave1,NALIQUOTA,NVALCONTAB")
+SetPrvt("NBASECALC,NVALTRIB,NISENTAS,NOUTRAS,NO,LQUEBRADET,lFirst")
+SetPrvt("LQUEBRATOT,")
+
+
+
+/*
+_____________________________________________________________________________
+¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+¦¦+-----------------------------------------------------------------------+¦¦
+¦¦¦Funçào    ¦ MATRAPR  ¦ Autor ¦ Juan José Pereira     ¦ Data ¦ 18/06/96 ¦¦¦
+¦¦+----------+------------------------------------------------------------¦¦¦
+¦¦¦Descriçào ¦ Mapa resumo dos Livros Fiscais (ICMS/IPI)                  ¦¦¦
+¦¦+----------+------------------------------------------------------------¦¦¦
+¦¦¦Parametros¦                                                            ¦¦¦
+¦¦+----------+------------------------------------------------------------¦¦¦
+¦¦¦ Uso      ¦ RdMake                                                     ¦¦¦
+¦¦+-----------------------------------------------------------------------+¦¦
+¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+*/
+//+--------------------------------------------------------------+
+//¦ Define Variaveis                                             ¦
+//+--------------------------------------------------------------+
+Titulo:="Mapa Resumo dos Livros Fiscais"
+cDesc1:="Este programa irá imprimir um mapa com resumo dos lançamentos,"
+cDesc2:="efetuados nos Livros Fiscais conforme parâmetros informados pelo"
+cDesc3:="usuário."
+Tamanho:='M'
+Limite:=132
+Nomeprog:="MATRAPR"
+nTipo:=18
+cabec1:=SM0->M0_FILIAL
+cabec2:=''
+cabec3:=''
+cbCont:=0
+cbtxt:=Space(10)
+m_pag:=1
+aReturn := { "Zebrado", 1,"Administraçäo", 2, 2, 1, "",1 }
+cPerg   :="MTRAPR"
+cString :="SF3"
+nLinha	:=80
+lEnd	:=.f.
+cCtCFO  :="XXXXX"
+lCFOInval:=.f.
+aDados	:=Array(7)
+aEntradas:={}
+aSaidas	:={}
+aGrupos	:={}
+//+--------------------------------------------------------------+
+//¦ Verifica as perguntas selecionadas                           ¦
+//+--------------------------------------------------------------+
+pergunte(cperg,.F.)
+//+-----------------------------------------------------------------------------------------------------+
+//¦ Variaveis utilizadas para parametros                         										¦
+//¦ mv_par01             // Data inicial                        										¦
+//¦ mv_par02             // Data Final                          										¦
+//¦ mv_par03             // Imposto a apurar ? ICMS / IPI        										¦
+//¦ mv_par04             // Livro Selecionado                   										¦
+//¦ mv_par05             // Quebra? Aliquota / CFO / CFO/Aliquota /  UF/CFOP							¦
+//¦ mv_par06             // Indice de Conversao                  										¦
+//³ mv_par07             // Tipo de Apuracao ? Decendial / Quinzenal / Mensal / Semestral / Anual³      ¦
+//¦ mv_par08             // Forma de Apuracao ? Normal / Por NCM 										¦   
+//³ mv_par09    		 // Seleciona Filiais ? (Sim/Nao) 			  									*       
+//+-----------------------------------------------------------------------------------------------------+
+
+//+--------------------------------------------------------------+
+//¦ Envia controle para a funcao SETPRINT                        ¦
+//+--------------------------------------------------------------+
+
+nLastKey:=0
+wnrel:=NomeProg
+wnrel:=SetPrint(cString,wnrel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,"",.T.)
+nLastKey:=IIf(LastKey()==27,27,nLastKey)
+If nLastKey == 27
+   	Return
+Endif
+
+SetDefault(aReturn,cString)
+nLastKey:=IIf(LastKey()==27,27,nLastKey)
+If nLastKey == 27
+   	Return
+Endif
+
+// Funcao para a escolha de filiais
+aFilsCalc:= MatFilCalc( mv_par09 == 1 )
+If Empty( aFilsCalc )
+	dbClearFilter()
+	Return
+Endif
+#IFDEF WINDOWS
+	RptStatus({|| RptDetail(aFilsCalc)})// Substituido pelo assistente de conversao do AP5 IDE em 19/11/99 ==> 	RptStatus({|| Execute(RptDetail)})
+
+// Substituido pelo assistente de conversao do AP5 IDE em 19/11/99 ==> FUNCTION RptDetail
+Static FUNCTION RptDetail(aFilsCalc)
+
+#ENDIF
+
+Local ix,xni
+LOCAL aDadosAgl :={}
+LOCAL nPosAgl :=0
+LOCAL nY :=1
+LOCAL nX :=1
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Tratamento da impressao por Filiais³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+LOCAL nForFilial := 0
+LOCAL cFilBack   := cFilAnt 
+
+//+--------------------------------------------------------------+
+//¦ carrega paramentros                                          ¦
+//+--------------------------------------------------------------+
+aImp		:={"IC","IP"}
+dDtIni		:=mv_par01
+dDtFim		:=mv_par02
+cImp		:=aImp[mv_par03]
+cNrLivro	:=mv_par04
+If cImp=="IP"
+	Do Case
+		Case mv_par05==1 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case mv_par05==2 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case mv_par05==3 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case mv_par05==4 ; lQbraAliq:=.F. ; lQbraCFO:=.F.; lQbraUfCfop:=.T.
+	EndCase
+Else
+	Do Case
+		Case mv_par05==1 ; lQbraAliq:=.T. ; lQbraCFO:=.F.
+		Case mv_par05==2 ; lQbraAliq:=.F. ; lQbraCFO:=.T.
+		Case mv_par05==3 ; lQbraAliq:=.T. ; lQbraCFO:=.T.
+		Case mv_par05==4 ; lQbraAliq:=.F. ; lQbraCFO:=.F.; lQbraUfCfop:=.T.
+	EndCase
+Endif
+nIndice		:=IIF(mv_par06>0,mv_par06,1)
+cPictVal	:=IIF(nIndice!=1,"@E 999999999999.999","@E 999,999,999,999.99")
+nApuracao	:=mv_par07
+nFormApu    :=mv_par08
+aNcm  := {{"22011000","22090000"},;
+		 {"24022000","24022000"},;
+         {"84291110","84295900"},;
+         {"84321000","84339090"},;
+         {"87011000","87060090"},;
+         {"87111000","87119000"}}
+//+--------------------------------------------------------------+
+//¦ Define layout padrao do relatorio                            ¦
+//+--------------------------------------------------------------+
+aL:=Array(11)
+aL[01]:="                                RESUMO DOS VALORES LANCADOS DE ######### NOS LIVROS FISCAIS"
+aL[02]:="                                -----------------------------------------------------------"
+aL[03]:="                                  				PERIODO : ######## A ########"
+aL[04]:="  CFO    ALIQ        VALOR CONTABIL        BASE DE CALCULO        VALOR TRIBUTADO             ISENTAS                OUTRAS"
+aL[05]:=" ------ -------  ---------------------- ---------------------- ---------------------- ---------------------- ----------------------"
+aL[06]:="  #########################################################"
+aL[07]:=" ######  #####     ##################     ##################     ##################     ##################     ##################  "
+aL[08]:="                 ---------------------- ---------------------- ---------------------- ---------------------- ----------------------"
+aL[09]:="  TOTAL ######## # ##################     ##################     ##################     ##################     ##################  "
+aL[10]:=" ##  "
+aL[11]:=" --  "
+//       x123456789x123456789x123456789x123456789x123456789x123456789x123456789x123456789x123456789x123456789x123456789x123456789x123456789x12
+//       0         10        20        30        40        50        60        70        80        90        100       110       120       130
+
+For nForFilial := 1 to Len(aFilsCalc)
+	
+	If aFilsCalc[nForFilial,1]
+		
+		// Altera filial corrente
+		cFilAnt     := aFilsCalc[nForFilial,2]
+		Titulo      := "Mapa Resumo dos Livros Fiscais" + " - Filial: " + cFilAnt //" - Filial: "	 
+		nLinha      := 80 //quebra pagina por filial	
+		aApurado    := {}
+		aDadosAgl   := {}
+		aEntradas   := {}
+		aSaidas     := {}
+		
+		//+--------------------------------------------------------------+
+		//¦ Apura valores dos livros fiscais                             ¦
+		//+--------------------------------------------------------------+
+		If cImp<>"IP"
+			aApurado:=ResumeF3(cImp, dDtIni, dDtFim, cNrLivro, lQbraAliq, lQbraCFO, 2, @lEnd, , , , , ,aReturn[7], , , , , , , , , ,lQbraUfCfop,,,,,,"F3_MATRAPR",mv_par10,,,,,,,,,,1)
+		Else
+			If nFormApu == 1
+				aApurado:=ResumeF3(cImp, dDtIni, dDtFim, cNrLivro, lQbraAliq, lQbraCFO, 2, @lEnd, , , , , ,aReturn[7], , , , , , , , , ,lQbraUfCfop,,,,,,"F3_MATRAPR",mv_par10,,,,,,,,,,1)
+			Else
+				aApurado:=  ResumeIP(dDtIni,dDtFim,cNrLivro,2,@lEnd,,,,aNcm,nApuracao,aReturn[7],,,,,"IP_MATRAPR",mv_par10)
+			Endif
+		Endif
+//RESUME F3, agrupa levando em consideração cfop e f4_ipi, porém precisava que trouxe-se apenas uma vez no relatório
+//Por este motivo adicionei a rotina abaixo para aglutinar apenas por cfop, e não ter mais de uma ocorrencia no relatório
+//só devera rodar quando a quebra for igual a CFOP, chamado : TQGPLI
+		If !lQbraAliq	.and. lQbraCFO	.and. !lQbraUfCfop 
+			For nX:=1 to Len(aApurado)
+				nPosAgl:=AScan( aDadosAgl,{ |x| x[1]==aApurado[nX,1] })
+				If nPosAgl>0
+					For nY:=1 to Len(aApurado[nX])
+						If Len(aDadosAgl[nPosAgl])==Len(aApurado[nX])
+							If ValType(aApurado[nX][nY])=='N'
+							    aDadosAgl[nPosAgl,nY]+=aApurado[nX,nY]
+							Endif
+						Endif
+					 Next                                         
+				Else
+					Aadd(aDadosAgl,aApurado[nX])	 
+				Endif
+			Next
+			aApurado :={}
+			aApurado:=ACLONE(aDadosAgl)
+		Endif
+		
+		If lQbraCFO .Or. (cImp<>"IP" .And. lQbraAliq)
+			For ix:=1 to Len(aApurado)
+				If mv_par05==1
+					If aApurado[ix,1]!="ENTR"
+						Loop
+					Endif
+				Else
+					If Val(Substr(aApurado[ix,1],1,1))>=5
+						Loop
+					Endif
+				EndIf
+				AADD(aEntradas,Aclone(aApurado[ix]))
+			Next
+			For ix:=1 to Len(aApurado)
+				If mv_par05==1
+					If aApurado[ix,1]!="SAID"
+						Loop
+					Endif
+				Else
+					If Val(Substr(aApurado[ix,1],1,1))<5
+						Loop
+					Endif
+				EndIf
+				AADD(aSaidas,Aclone(aApurado[ix]))
+			Next
+		Endif
+		
+		//+--------------------------------------------------------------+
+		//¦ Impressao                                                    ¦
+		//+--------------------------------------------------------------+
+		nTValContab	:=0
+		nTBaseCalc	:=0
+		nTValTrib	:=0
+		nTIsentas	:=0
+		nTOutras	:=0
+		nTGValContab:=0
+		nTGBaseCalc	:=0
+		nTGValTrib	:=0
+		nTGIsentas	:=0
+		nTGOutras	:=0
+		nTTValContab:=0
+		nTTBaseCalc	:=0
+		nTTValTrib	:=0
+		nTTIsentas	:=0
+		nTTOutras	:=0
+		
+		If lQbraCFO
+			AADD(aGrupos,{"1.000 - ENTRADAS E/OU AQUISICOES DE SERVICOS DO ESTADO",.T.})
+			AADD(aGrupos,{"2.000 - ENTRADAS E/OU AQUISICOES DE SERVICOS DE OUTROS ESTADOS",.T.})
+			AADD(aGrupos,{"3.000 - ENTRADAS E/OU AQUISICOES DE SERVICOS DO EXTERIOR",.T.})
+			AADD(aGrupos,{"5.000 - SAIDAS E/OU PRESTACOES DE SERVICOS PARA O ESTADO",.T.})
+			AADD(aGrupos,{"6.000 - SAIDAS E/OU PRESTACOES DE SERVICOS PARA OUTROS ESTADOS",.T.})
+			AADD(aGrupos,{"7.000 - SAIDAS E/OU PRESTACOES DE SERVICOS PARA O EXTERIOR",.T.})
+		Elseif lQbraUfCfop
+			AADD(aGrupos,{"ENTRADAS E/OU AQUISICOES DE SERVICOS",.T.})
+			AADD(aGrupos,{"SAIDAS E/OU PRESTACOES DE SERVICOS",.T.})
+		Else
+			AADD(aGrupos,{"ENTRADAS",.T.})
+			AADD(aGrupos,{"SAIDAS",.T.})
+		Endif
+		
+		//+--------------------------------------------------------------+
+		//¦ Imprime Entradas                                             ¦
+		//+--------------------------------------------------------------+
+		SetRegua(Len(aEntradas)+Len(aSaidas))
+		For xni:=1 to Len(aEntradas)
+			IncRegua()
+			If Interrupcao(@lEnd)
+				Exit
+			Endif
+		  	//+--------------------------------------------------------------+
+			//¦ Imprime cabecalho                                            ¦
+			//+--------------------------------------------------------------+
+			If nLinha>55
+				CabecApr()
+			Endif
+			
+			//+--------------------------------------------------------------+
+			//¦ Imprime descricao de grupo de CFOs                           ¦
+			//+--------------------------------------------------------------+
+			nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==Substr(aEntradas[xni,1],1,1)})
+			If nPos>0 .and. aGrupos[nPos,2]
+				nLinha:=nLinha+1
+				FmtLin({aGrupos[nPos,1]},aL[06],,,@nLinha)
+				FmtLin({Replic("-",Len(aGrupos[nPos,1]))},aL[06],,,@nLinha)
+				nLinha:=nLinha+1
+				aGrupos[nPos,2]:=.F.
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Detalhe                                                      ¦
+			//+--------------------------------------------------------------+
+			If cImp=="IP"
+				cCFO		:=aEntradas[xni,01]
+				nAliquota	:=0
+				If cCFO!=cCtCFO
+					aDados[01]:=Substr(cCFO,1,1)+"."+Substr(cCFO,2)
+					cCtCFO:=cCFO
+				Endif
+				If !lCFOInval
+					lCFOInval:=(Substr(cCFO,Len(cCfo),1)=="*")
+				Endif
+			Else
+				cCFO		:=IIF(lQbraCFO,aEntradas[xni,1],'')
+				nAliquota	:=IIF(!lQbraAliq.and.lQbraCFO,0,aEntradas[xni,2])
+				If !Empty(cCFO) .and. cCtCFO!=cCFO
+					aDados[01]:=IIF(lQbraCFO,Substr(cCFO,1,1)+"."+Substr(cCFO,2),)
+					cCtCFO:=cCFO
+					If !lCFOInval
+						lCFOInval:=(Substr(cCFO,4,1)=="*")
+					Endif
+				Endif
+				aDados[02]:=IIF(!lQbraAliq.and.lQbraCFO,,Transform(nAliquota,"@E 99.99"))
+			Endif
+			
+			nValContab	:=NoRound(aEntradas[xni,11]/nIndice,3)
+			nBaseCalc	:=NoRound(aEntradas[xni,03]/nIndice,3)
+			nValTrib	:=NoRound(aEntradas[xni,04]/nIndice,3)
+			nIsentas	:=NoRound(aEntradas[xni,05]/nIndice,3)
+			nOutras		:=NoRound(aEntradas[xni,06]/nIndice,3)
+			
+			aDados[03]:=nValContab
+			aDados[04]:=nBaseCalc
+			aDados[05]:=nValTrib
+			aDados[06]:=nIsentas
+			aDados[07]:=nOutras
+			
+			FmtLin(@aDados,aL[07],cPictVal,,@nLinha) // <= Funcao de Impressao da Linha
+			//Afill(aDados,NIL)
+			//+--------------------------------------------------------------+
+			//¦ Acumuladores                                                 ¦
+			//+--------------------------------------------------------------+
+			If Substr(cCfo,1,1)$"123567" .or. !lQbraCFO
+				nTValContab	:=nTValContab+nValContab
+				nTBaseCalc	:=nTBaseCalc+nBaseCalc
+				nTValTrib	:=nTValTrib+nValTrib
+				nTIsentas	:=nTIsentas+nIsentas
+				nTOutras	:=nTOutras+nOutras
+				
+				nTGValContab:=nTGValContab+nValContab
+				nTGBaseCalc	:=nTGBaseCalc+nBaseCalc
+				nTGValTrib	:=nTGValTrib+nValTrib
+				nTGIsentas	:=nTGIsentas+nIsentas
+				nTGOutras	:=nTGOutras+nOutras
+				
+				nTTValContab:=nTTValContab+nValContab
+				nTTBaseCalc	:=nTTBaseCalc+nBaseCalc
+				nTTValTrib	:=nTTValTrib+nValTrib
+				nTTIsentas	:=nTTIsentas+nIsentas
+				nTTOutras	:=nTTOutras+nOutras
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Totais                                                       ¦
+			//+--------------------------------------------------------------+
+			no:=IIf(xni<Len(aEntradas),xni+1,xni)
+			lQuebraDet:=.F.
+			lQuebraTot:=.F.
+			If !(!lQbraAliq .and. !lQbraCFO)
+				
+				If (xni==no .or. aEntradas[xni,1]!=aEntradas[no,1])
+					lQuebraDet:=(lQbraCFO.and.lQbraAliq)
+					nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==Substr(aEntradas[no,1],1,1)})
+					If xni==no .or. (nPos>0.and.aGrupos[nPos,2])
+						lQuebraTot:=.T.
+					Endif
+					If nPos==0
+						lQuebraDet:=.F.
+						lQuebraTot:=.F.
+					Endif
+				EndIf
+				
+			EndIf
+			//+--------------------------------------------------------------+
+			//¦ Sub-Totais                                                   ¦
+			//+--------------------------------------------------------------+
+			If lQuebraDet .and. Substr(cCFO,1,1)$'123567'
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:=Substr(cCFO,1,1)+"."+Substr(cCFO,2)
+				aDados[03]:=nTValContab
+				aDados[04]:=nTBaseCalc
+				aDados[05]:=nTValTrib
+				aDados[06]:=nTIsentas
+				aDados[07]:=nTOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				//Afill(aDados,NIL)
+				nLinha:=nLinha+1
+				nTValContab:=0
+				nTBaseCalc:=0
+				nTValTrib:=0
+				nTIsentas:=0
+				nTOutras:=0
+			Endif
+			If lQuebraTot .and. Substr(cCFO,1,1)$'123567'
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:=IIf(lQbraCFO,Substr(cCFO,1,1)+".00",)
+				aDados[03]:=nTGValContab
+				aDados[04]:=nTGBaseCalc
+				aDados[05]:=nTGValTrib
+				aDados[06]:=nTGIsentas
+				aDados[07]:=nTGOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				//Afill(aDados,NIL)
+				nLinha:=nLinha+1
+				nTGValContab:=0
+				nTGBaseCalc:=0
+				nTGValTrib:=0
+				nTGIsentas:=0
+				nTGOutras:=0
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Total das Entradas                                           ¦
+			//+--------------------------------------------------------------+
+			If xni==Len(aEntradas)
+				If nLinha > 55
+					CabecApr()
+				Endif
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:="ENTRADAS"
+				aDados[03]:=nTTValContab
+				aDados[04]:=nTTBaseCalc
+				aDados[05]:=nTTValTrib
+				aDados[06]:=nTTIsentas
+				aDados[07]:=nTTOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				//Afill(aDados,NIL)
+				nLinha:=nLinha+1
+			Endif
+		Next
+		//+--------------------------------------------------------------+
+		//¦ Imprime Saidas                                               ¦
+		//+--------------------------------------------------------------+
+		nTValContab	:=0
+		nTBaseCalc	:=0
+		nTValTrib	:=0
+		nTIsentas	:=0
+		nTOutras	:=0
+		nTGValContab:=0
+		nTGBaseCalc	:=0
+		nTGValTrib	:=0
+		nTGIsentas	:=0
+		nTGOutras	:=0
+		nTTValContab:=0
+		nTTBaseCalc	:=0
+		nTTValTrib	:=0
+		nTTIsentas	:=0
+		nTTOutras	:=0
+		
+		For xni:=1 to Len(aSaidas)
+			IncRegua()
+			If Interrupcao(@lEnd)
+				Exit
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Imprime cabecalho                                            ¦
+			//+--------------------------------------------------------------+
+			If nLinha>55
+				CabecApr()
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Imprime descricao de grupo de CFOs                           ¦
+			//+--------------------------------------------------------------+
+			nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==Substr(aSaidas[xni,1],1,1)})
+			If nPos>0 .and. aGrupos[nPos,2]
+				nLinha:=nLinha+1
+				FmtLin({aGrupos[nPos,1]},aL[06],,,@nLinha)
+				FmtLin({Replic("-",Len(aGrupos[nPos,1]))},aL[06],,,@nLinha)
+				nLinha:=nLinha+1
+				aGrupos[nPos,2]:=.F.
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Detalhe                                                      ¦
+			//+--------------------------------------------------------------+
+			If cImp=="IP"
+				cCFO		:=aSaidas[xni,01]
+				nAliquota	:=0
+				If cCFO!=cCtCFO
+					aDados[01]:=Substr(cCFO,1,1)+"."+Substr(cCFO,2)
+					cCtCFO:=cCFO
+				Endif
+				If !lCFOInval
+					lCFOInval:=(Substr(cCFO,4,1)=="*")
+				Endif
+			Else
+				cCFO		:=IIF(lQbraCFO,aSaidas[xni,1],'')
+				nAliquota	:=IIF(!lQbraAliq.and.lQbraCFO,0,aSaidas[xni,2])
+				If !Empty(cCFO) .and. cCtCFO!=cCFO
+					aDados[01]:=IIF(lQbraCFO,Substr(cCFO,1,1)+"."+Substr(cCFO,2),)
+					cCtCFO:=cCFO
+					If !lCFOInval
+						lCFOInval:=(Substr(cCFO,4,1)=="*")
+					Endif
+				Endif
+				aDados[02]:=IIF(!lQbraAliq.and.lQbraCFO,,Transform(nAliquota,"@E 99.99"))
+			Endif
+			nValContab	:=NoRound(aSaidas[xni,11]/nIndice,3)
+			nBaseCalc	:=NoRound(aSaidas[xni,03]/nIndice,3)
+			nValTrib	:=NoRound(aSaidas[xni,04]/nIndice,3)
+			nIsentas	:=NoRound(aSaidas[xni,05]/nIndice,3)
+			nOutras		:=NoRound(aSaidas[xni,06]/nIndice,3)
+			
+			aDados[03]:=nValContab
+			aDados[04]:=nBaseCalc
+			aDados[05]:=nValTrib
+			aDados[06]:=nIsentas
+			aDados[07]:=nOutras
+			
+			FmtLin(@aDados,aL[07],cPictVal,,@nLinha) // <= Funcao de Impressao da Linha
+			//Afill(aDados,NIL)
+			//+--------------------------------------------------------------+
+			//¦ Acumuladores                                                 ¦
+			//+--------------------------------------------------------------+
+			If Substr(cCfo,1,1)$"123567" .Or. !lQbraCFO
+				nTValContab	:=nTValContab+nValContab
+				nTBaseCalc	:=nTBaseCalc+nBaseCalc
+				nTValTrib	:=nTValTrib+nValTrib
+				nTIsentas	:=nTIsentas+nIsentas
+				nTOutras	:=nTOutras+nOutras
+				
+				nTGValContab:=nTGValContab+nValContab
+				nTGBaseCalc	:=nTGBaseCalc+nBaseCalc
+				nTGValTrib	:=nTGValTrib+nValTrib
+				nTGIsentas	:=nTGIsentas+nIsentas
+				nTGOutras	:=nTGOutras+nOutras
+				
+				nTTValContab:=nTTValContab+nValContab
+				nTTBaseCalc	:=nTTBaseCalc+nBaseCalc
+				nTTValTrib	:=nTTValTrib+nValTrib
+				nTTIsentas	:=nTTIsentas+nIsentas
+				nTTOutras	:=nTTOutras+nOutras
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Totais                                                       ¦
+			//+--------------------------------------------------------------+
+			no:=IIf(xni<Len(aSaidas),xni+1,xni)
+			lQuebraDet:=.F.
+			lQuebraTot:=.F.
+			If !(!lQbraAliq .and. !lQbraCFO)
+				If (xni==no .or. aSaidas[xni,1]!=aSaidas[no,1])
+					lQuebraDet:=(lQbraCFO.and.lQbraAliq)
+					nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==Substr(aSaidas[no,1],1,1)})
+					If xni==no .or. (nPos>0.and.aGrupos[nPos,2])
+						lQuebraTot:=.T.
+					Endif
+					If nPos==0
+						lQuebraDet:=.F.
+						lQuebraTot:=.F.
+					Endif
+				EndIf
+			EndIf
+			//+--------------------------------------------------------------+
+			//¦ Sub-Totais                                                   ¦
+			//+--------------------------------------------------------------+
+			If lQuebraDet .and. Substr(cCFO,1,1)$'123567'
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:=Substr(cCFO,1,1)+"."+Substr(cCFO,2)
+				aDados[03]:=nTValContab
+				aDados[04]:=nTBaseCalc
+				aDados[05]:=nTValTrib
+				aDados[06]:=nTIsentas
+				aDados[07]:=nTOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				//Afill(aDados,NIL)
+				nLinha:=nLinha+1
+				nTValContab:=0
+				nTBaseCalc:=0
+				nTValTrib:=0
+				nTIsentas:=0
+				nTOutras:=0
+			Endif
+			If lQuebraTot .and. Substr(cCFO,1,1)$'123567'
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:=IIf(lQbraCFO,Substr(cCFO,1,1)+".00",)
+				aDados[03]:=nTGValContab
+				aDados[04]:=nTGBaseCalc
+				aDados[05]:=nTGValTrib
+				aDados[06]:=nTGIsentas
+				aDados[07]:=nTGOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				//Afill(aDados,NIL)
+				nLinha:=nLinha+1
+				nTGValContab:=0
+				nTGBaseCalc:=0
+				nTGValTrib:=0
+				nTGIsentas:=0
+				nTGOutras:=0
+			Endif
+			//+--------------------------------------------------------------+
+			//¦ Total das Saidas                                             ¦
+			//+--------------------------------------------------------------+
+			If xni==Len(aSaidas)
+				If nLinha > 55
+					CabecApr()
+				Endif
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:="SAIDAS"
+				aDados[03]:=nTTValContab
+				aDados[04]:=nTTBaseCalc
+				aDados[05]:=nTTValTrib
+				aDados[06]:=nTTIsentas
+				aDados[07]:=nTTOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				//Afill(aDados,NIL)
+				nLinha:=nLinha+1
+			Endif
+		Next
+		
+		//+--------------------------------------------------------------+
+		//¦ Imprime Entrada e Saida - Quebra por UF/CFOP                 ¦
+		//+--------------------------------------------------------------+
+		If lQbraUfCfop
+			
+			nTValContab	:=0
+			nTBaseCalc	:=0
+			nTValTrib	:=0
+			nTIsentas	:=0
+			nTOutras	:=0
+			
+			nTEGValContab	:=0
+			nTEGBaseCalc	:=0
+			nTEGValTrib		:=0
+			nTEGIsentas		:=0
+			nTEGOutras		:=0
+			
+			nTSGValContab	:=0
+			nTSGBaseCalc	:=0
+			nTSGValTrib		:=0
+			nTSGIsentas		:=0
+			nTSGOutras		:=0
+			
+			cTipoAnt  		:=""
+			cTipo			:=""
+			cUf             :=""
+			lFirst			:= .T.
+			
+			SetRegua(Len(aApurado))
+			For xni:=1 to Len(aApurado)
+				IncRegua()
+				If Interrupcao(@lEnd)
+					Exit
+				Endif
+				//+--------------------------------------------------------------+
+				//¦ Imprime cabecalho                                            ¦
+				//+--------------------------------------------------------------+
+				If nLinha>55
+					CabecApr()
+					//Quebra por UF
+					If !lFirst
+						nLinha++
+						FmtLin({aApurado[xni,19]},aL[10],,,@nLinha) // uf
+						FmtLin(,aL[11],,,@nLinha)
+						nLinha++
+						//Grupo Entradas/Saidas
+						nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==cTipo})
+						If nPos>0
+							FmtLin({aGrupos[nPos,1]},aL[06],,,@nLinha)
+							FmtLin({Replic("-",Len(aGrupos[nPos,1]))},aL[06],,,@nLinha)
+						Endif
+					Endif
+				Endif
+				
+				
+				If Substr(aApurado[xni,1],1,1) $ "123"
+					cTipo := "E"
+				Else
+					cTipo := "S"
+				Endif
+				
+				//+--------------------------------------------------------------+
+				//¦ Imprime UF                                                   ¦
+				//+--------------------------------------------------------------+
+				If cUf <> aApurado[xni,19]
+					If !lFirst
+						aDados[03]	:=nTValContab
+						aDados[04]	:=nTBaseCalc
+						aDados[05]	:=nTValTrib
+						aDados[06]	:=nTIsentas
+						aDados[07]	:=nTOutras
+						FmtLin(,aL[08],,,@nLinha)
+						FmtLin(@aDados,aL[09],cPictVal,,@nLinha)	//Total
+						nLinha++
+						nTValContab	:=0
+						nTBaseCalc	:=0
+						nTValTrib	:=0
+						nTIsentas	:=0
+						nTOutras	:=0
+					Endif
+					
+					cTipoAnt	:=cTipo
+					
+					//Quebra por UF
+					cUf:=aApurado[xni,19]
+					nLinha++
+					FmtLin({aApurado[xni,19]},aL[10],,,@nLinha) // uf
+					FmtLin(,aL[11],,,@nLinha)
+					nLinha++
+					
+					//Grupo Entradas/Saidas
+					nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==cTipo})
+					If nPos>0
+						FmtLin({aGrupos[nPos,1]},aL[06],,,@nLinha)
+						FmtLin({Replic("-",Len(aGrupos[nPos,1]))},aL[06],,,@nLinha)
+					Endif
+				Endif
+				
+				If cTipo<>cTipoAnt .And. !lFirst
+					aDados[03]	:=nTValContab
+					aDados[04]	:=nTBaseCalc
+					aDados[05]	:=nTValTrib
+					aDados[06]	:=nTIsentas
+					aDados[07]	:=nTOutras
+					FmtLin(,aL[08],,,@nLinha)
+					FmtLin(@aDados,aL[09],cPictVal,,@nLinha)	//Total
+					nLinha++
+					nLinha++
+					cTipoAnt		:=cTipo
+					nTValContab	:=0
+					nTBaseCalc	:=0
+					nTValTrib		:=0
+					nTIsentas		:=0
+					nTOutras		:=0
+					
+					nPos:=Ascan(aGrupos,{|X|Substr(X[1],1,1)==cTipo})
+					If nPos>0
+						FmtLin({aGrupos[nPos,1]},aL[06],,,@nLinha)
+						FmtLin({Replic("-",Len(aGrupos[nPos,1]))},aL[06],,,@nLinha)	//Grupo Entradas/Saidas
+					Endif
+				Endif
+				
+				nValContab	:=NoRound(aApurado[xni,11]/nIndice,3)
+				nBaseCalc	:=NoRound(aApurado[xni,03]/nIndice,3)
+				nValTrib		:=NoRound(aApurado[xni,04]/nIndice,3)
+				nIsentas		:=NoRound(aApurado[xni,05]/nIndice,3)
+				nOutras		:=NoRound(aApurado[xni,06]/nIndice,3)
+				
+				nTValContab	+=nValContab
+				nTBaseCalc	+=nBaseCalc
+				nTValTrib	+=nValTrib
+				nTIsentas	+=nIsentas
+				nTOutras		+=nOutras
+				
+				aDados[01]	:=aApurado[xni,01]
+				aDados[02]	:=""
+				aDados[03]	:=nValContab
+				aDados[04]	:=nBaseCalc
+				aDados[05]	:=nValTrib
+				aDados[06]	:=nIsentas
+				aDados[07]	:=nOutras
+				
+				FmtLin(@aDados,aL[07],cPictVal,,@nLinha) // <= Funcao de Impressao da Linha   //cfop
+				
+				lFirst := .F.
+				
+				If cTipo == "E"
+					nTEGValContab 	:=nTEGValContab+nValContab
+					nTEGBaseCalc	:=nTEGBaseCalc+nBaseCalc
+					nTEGValTrib		:=nTEGValTrib+nValTrib
+					nTEGIsentas		:=nTEGIsentas+nIsentas
+					nTEGOutras		:=nTEGOutras+nOutras
+				Else
+					nTSGValContab 	:=nTSGValContab+nValContab
+					nTSGBaseCalc	:=nTSGBaseCalc+nBaseCalc
+					nTSGValTrib		:=nTSGValTrib+nValTrib
+					nTSGIsentas		:=nTSGIsentas+nIsentas
+					nTSGOutras		:=nTSGOutras+nOutras
+				Endif
+			Next
+			
+			//+--------------------------------------------------------------+
+			//¦ Total das Entradas/Saidas                                    ¦
+			//+--------------------------------------------------------------+
+			If nLinha > 55 .And. Len(aApurado)>0
+				CabecApr()
+			Endif
+			
+			
+			If Len(aApurado)>0
+				aDados[03]	:=nTValContab
+				aDados[04]	:=nTBaseCalc
+				aDados[05]	:=nTValTrib
+				aDados[06]	:=nTIsentas
+				aDados[07]	:=nTOutras
+				FmtLin(,aL[08],,,@nLinha)
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				
+				nLinha++
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:="ENTRADAS"
+				aDados[03]:=nTEGValContab
+				aDados[04]:=nTEGBaseCalc
+				aDados[05]:=nTEGValTrib
+				aDados[06]:=nTEGIsentas
+				aDados[07]:=nTEGOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				nLinha++
+				
+				nLinha++
+				FmtLin(,aL[08],,,@nLinha)
+				aDados[01]:="SAIDAS"
+				aDados[03]:=nTSGValContab
+				aDados[04]:=nTSGBaseCalc
+				aDados[05]:=nTSGValTrib
+				aDados[06]:=nTSGIsentas
+				aDados[07]:=nTSGOutras
+				FmtLin(@aDados,aL[09],cPictVal,,@nLinha)
+				nLinha++
+			EndIf			
+		Endif
+		
+	
+		//+--------------------------------------------------------------+
+		//¦ Rodape                                                       ¦
+		//+--------------------------------------------------------------+
+		If (Len(aEntradas)>0.or.Len(aSaidas)>0) .and. !lEnd
+			If lCFOInval
+				nLinha:=nLinha+2
+				FmtLin(," * <- CFOS NAO CADASTRADOS NA TABELA [13] ",,,@nLinha)
+				FmtLin(,"",,,@nLinha)
+			EndIf
+			roda(cbcont,cbtxt,tamanho)
+		Endif 
+		
+		// Zera Totalizadores
+		nTValContab	    :=0
+		nTBaseCalc	    :=0
+		nTValTrib	    :=0
+		nTIsentas	    :=0
+		nTOutras	    :=0
+		
+		nTEGValContab	:=0
+		nTEGBaseCalc	:=0
+		nTEGValTrib		:=0
+		nTEGIsentas		:=0
+		nTEGOutras		:=0
+			
+		nTSGValContab	:=0
+		nTSGBaseCalc	:=0
+		nTSGValTrib		:=0
+		nTSGIsentas		:=0
+		nTSGOutras		:=0       
+		
+		nTGValContab    :=0
+		nTGBaseCalc  	:=0
+		nTGValTrib	    :=0
+		nTGIsentas	    :=0
+		nTGOutras	    :=0
+		
+		nTTValContab    :=0
+		nTTBaseCalc     :=0
+		nTTValTrib      :=0
+		nTTIsentas      :=0
+		nTTOutras       :=0
+					
+	Endif
+	
+Next nForFilial
+
+// Restaura filial original apos processamento
+cFilAnt:=cFilBack   
+
+//+--------------------------------------------------------------+
+//¦ Spool de Impressao                                           ¦
+//+--------------------------------------------------------------+
+Set Device to Screen
+Set Printer to
+MS_FLUSH()
+If aReturn[5] == 1
+    dbcommitAll()	
+    ourspool(wnrel)
+Endif
+
+RETURN
+
+Static Function CabecApr()
+nLinha := cabec(titulo,cabec1,cabec2,nomeprog,tamanho,If(aReturn[4]==1,15,18))			
+nLinha := nLinha + 1
+cImposto:=IIf(cImp=="IP","IPI ","ICMS")
+FmtLin({cImposto},aL[01],,,@nLinha)
+FmtLin(,aL[02],,,@nLinha)
+nLinha:=nLinha+1
+FmtLin({DTOC(dDtIni),DTOC(dDtFim)},aL[03],,,@nLinha)
+nLinha:=nLinha+1
+FmtLin(,{aL[04],aL[05]},,,@nLinha)
+Return(.t.)
