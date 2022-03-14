@@ -29,6 +29,7 @@
 	@since 05/03/15
 	@version version
 	@history Ticket 069236 - Abel Babini - 07/03/2022 - Ajuste para substituir DBF por tabela no Banco de Dados.
+	@history Ticket 069236 - Abel Babini - 14/03/2022 - Ajuste para substituir DBF por tabela no Banco de Dados.
 	/*/
 User Function ADCON002P()
 
@@ -123,11 +124,12 @@ User Function ADCON002P()
 			EndDo
 
 			//Grava na tabela de Inventario para a filial correspondente
-			cSituac	:= IIF(Alltrim(_aConteudo[2])=="0","1","5")
+			//Ticket 069236 - Abel Babini - 14/03/2022 - Ajuste para substituir DBF por tabela no Banco de Dados.
+			//cSituac	:= IIF(Alltrim(_aConteudo[2])=="0","1","5")
 			cTpCF		:= ""
 			RecLock("TRB_R460",.T.)
 				TRB_R460->FILIAL		:= _aConteudo[1]
-				TRB_R460->SITUACAO	:= cSituac
+				TRB_R460->SITUACAO	:= Alltrim(_aConteudo[2])//cSituac //Ticket 069236 - Abel Babini - 14/03/2022 - Ajuste para substituir DBF por tabela no Banco de Dados.
 				TRB_R460->PRODUTO		:= _aConteudo[3]
 				TRB_R460->UM				:= UPPER(_aConteudo[4])
 				TRB_R460->QUANTIDADE:= _aConteudo[5]
