@@ -17,6 +17,11 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 16/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Data vencimento não ignorou despesa com título
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento antes da geração das parcelas (TIPO PR)
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento das parcelas que não estiverem em borderô ou baixados quando algum deles estiver
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
 /*/
 User Function ADFI118()
 
@@ -74,7 +79,8 @@ Static Function MenuDef()
     ADD OPTION aRot TITLE 'Excluir'                  ACTION 'VIEWDEF.ADFI118' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
     ADD OPTION aRot TITLE '*Favorecidos'             ACTION 'u_ADFI119'       OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 5
     ADD OPTION aRot TITLE '*Manutenção das Parcelas' ACTION 'u_FWSE2'         OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 5
-    ADD OPTION aRot TITLE '*Gera Parcelas'           ACTION 'u_Run121P(.F.)'  OPERATION MODEL_OPERATION_VIEW ACCESS 0 //OPERATION 5
+    ADD OPTION aRot TITLE '*Gera Parcelas'           ACTION 'u_Run121P(.F.)'  OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 5
+    ADD OPTION aRot TITLE '*Alterar vencimento PR'   ACTION 'u_UpdPR()'       OPERATION MODEL_OPERATION_UPDATE ACCESS 0 // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento antes da geração das parcelas
     //ADD OPTION aRot TITLE '*Aprovadores' ACTION 'u_GetZC7(ZHB->ZHB_NUM, ZHB->ZHB_PARCEL)'         OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 5
 
 Return aRot
@@ -232,6 +238,7 @@ Static Function fValidGrid(oModel)
     Local cItem      := ""
     Local cDespFavor := GetMV("MV_#RMFAVO",,"ACORDO#PERITO") // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     Local cCodFav    := ""
+    Local cZHCCPFCGC := ""
     //Local cPictVlr   := PesqPict('ZHB', 'ZHB_VALOR')
  
     // N. Processo Trabalhista obrigatório
@@ -339,7 +346,10 @@ Static Function fValidGrid(oModel)
                             Exit
                         Else
                             // Checo se o favorecido está amarrado a este processo
-                            If AllTrim(cProcesso) <> AllTrim(ZHC->ZHC_PROCES)
+                            cZHCCPFCGC := ZHC->ZHC_CPFCGC
+                            ZHC->( dbSetOrder(1) ) // ZHC_FILIAL + ZHC_CPFCGC + ZHC_PROCES
+                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cZHCCPFCGC+cProcesso) )
+                            //If AllTrim(cProcesso) <> AllTrim(ZHC->ZHC_PROCES) // @ticket 18141 - Fernando Macieira - 16/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
                                 lRet := .f.
                                 Alert("Este favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não está autorizado para este processo! Verifique...")
                                 Exit
@@ -435,10 +445,12 @@ Static Function fValidGrid(oModel)
 
                     // Primeiro Vencimento
                     dVencto1 := oModelGRID:GetValue("ZHB_VENCTO")
-                    If dVencto1 < msDate()
-                        lRet := .f.
-                        Alert("A data do vencimento da primeira parcela na linha " + AllTrim(Str(nLinAtual)) + " não foi informada ou precisa ser superior que a data de hoje! Verifique...")
-                        Exit
+                    If Empty(oModelGrid:GetValue("ZHB_NUM")) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Data vencimento não ignorou despesa com título
+                        If dVencto1 < msDate()
+                            lRet := .f.
+                            Alert("A data do vencimento da primeira parcela na linha " + AllTrim(Str(nLinAtual)) + " não foi informada ou precisa ser superior que a data de hoje! Verifique...")
+                            Exit
+                        EndIf
                     EndIf
 
                     // Alterações
@@ -449,20 +461,25 @@ Static Function fValidGrid(oModel)
                         ZHB->( dbSetOrder(2) ) //ZHB_FILIAL+ZHB_PROCES+ZHB_ITEM+ZHB_TIPDES
                         ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso+cItem) )
 
-                        If oModelGRID:GetValue("ZHB_GERSE2")
-                            //If ZHB->ZHB_TIPDES <> cTipDes .or. ZHB->ZHB_VALOR <> nVlrDes .or. ZHB->ZHB_PARCEL <> nQtdPar .or. ZHB->ZHB_VENCTO <> dVencto1
-                            If ZHB->ZHB_TIPDES <> cTipDes .or. ZHB->ZHB_VALOR <> nVlrDes .or. ZHB->ZHB_PARCEL <> nQtdPar .or. ZHB->ZHB_VENCTO <> dVencto1 .or. ZHB->ZHB_FAVORE <> cCodFav // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+                        If oModelGRID:GetValue("ZHB_GERSE2") .or. !Empty(oModelGRID:GetValue("ZHB_NUM"))
+                            If ZHB->ZHB_TIPDES <> cTipDes .or. ZHB->ZHB_VALOR <> nVlrDes .or. ZHB->ZHB_PARCEL <> nQtdPar /*.or. ZHB->ZHB_VENCTO <> dVencto1*/ .or. ZHB->ZHB_FAVORE <> cCodFav // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
                                 lRet := .f.
-                                Alert("Alteração não permitida! Despesa da linha " + AllTrim(Str(nLinAtual)) + " já está no financeiro para pagamento... Delete a linha para que o título PR seja excluído e refaça a inclusão do item desejado...")
+                                Alert("Alteração não permitida! Despesa da linha " + AllTrim(Str(nLinAtual)) + " já está na central de aprovação e também provisionada no financeiro... Delete a linha para que o título PR seja excluído e refaça a inclusão do item desejado...")
                                 Exit
                             EndIf
+
+                            If ZHB->ZHB_VENCTO <> dVencto1 // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento antes da geração das parcelas
+                                lRet := .f.
+                                Alert("Alteração não permitida! Despesa da linha " + AllTrim(Str(nLinAtual)) + " já está na central de aprovação e também provisionada no financeiro... Para alterar o vencimento de um título PR utilize a função 'Alterar vencimento PR'...")
+                                Exit
+                            EndIf
+
                         EndIf
 
                         If oModelGRID:GetValue("ZHB_APROVA")
-                            //If ZHB->ZHB_TIPDES <> cTipDes .or. ZHB->ZHB_VALOR <> nVlrDes .or. ZHB->ZHB_PARCEL <> nQtdPar .or. ZHB->ZHB_VENCTO <> dVencto1
                             If ZHB->ZHB_TIPDES <> cTipDes .or. ZHB->ZHB_VALOR <> nVlrDes .or. ZHB->ZHB_PARCEL <> nQtdPar .or. ZHB->ZHB_VENCTO <> dVencto1 .or. ZHB->ZHB_FAVORE <> cCodFav // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
                                 lRet := .f.
-                                Alert("Alteração não permitida! Despesa da linha " + AllTrim(Str(nLinAtual)) + " já foi aprovado...")
+                                Alert("Alteração não permitida! Despesa da linha " + AllTrim(Str(nLinAtual)) + " já foi aprovada...")
                                 Exit
                             EndIf
                         EndIf
@@ -825,6 +842,8 @@ Static Function fEfetiva()
     Local aDadNDI := {}
     Local lExecOK := .t.
     Local cParcAlt := ""
+    Local aDadOk   := {} // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento das parcelas que não estiverem em borderô ou baixados quando algum deles estiver
+    Local cCodBlq   := GetMV("MV_#ZC7RC1",,"000013")
 
     If msgYesNo("Tem certeza de que deseja confirmar efetivação no financeiro das alterações realizadas?")
     
@@ -834,10 +853,13 @@ Static Function fEfetiva()
 
             SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
             If SE2->( dbSeek(FWxFilial("SE2")+aColsGrid[i,1]+aColsGrid[i,2]+aColsGrid[i,3]+aColsGrid[i,4]+aColsGrid[i,5]+aColsGrid[i,6]) )
-                If !Empty(SE2->E2_NUMBOR)
-                    lRet := .f.
-                    msgAlert("A parcela " + aColsGrid[i,3] + " está em borderô! Verifique...")
-                    Exit
+                If aColsGrid[i,9] <> SE2->E2_VENCTO .or. aColsGrid[i,10] <> SE2->E2_VALOR // Houve alteração pelo usuário 
+                    If !Empty(SE2->E2_NUMBOR) .or. SE2->E2_SALDO <= 0
+                        lRet := .f. 
+                        aAdd(aDadOk, SE2->E2_PARCELA) // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento das parcelas que não estiverem em borderô ou baixados quando algum deles estiver
+                        msgAlert("A parcela " + aColsGrid[i,3] + " está em borderô ou não possui saldo! Esta parcela não será alterada...")
+                        Exit 
+                    EndIf
                 EndIf
             EndIf
 
@@ -869,50 +891,67 @@ Static Function fEfetiva()
 
                     If aColsGrid[i,9] <> SE2->E2_VENCTO .or. aColsGrid[i,10] <> SE2->E2_VALOR // Houve alteração pelo usuário 
 
-                        cParcAlt += SE2->E2_PARCELA + ", "
-
-                        //gera log
-                        u_GrLogZBE( msDate(), TIME(), cUserName, "EFETIVOU ALTERACOES TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFI118",;
-                        "DATA/VALOR ANTES ALTERACAO " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
-
-                        RecLock("SE2", .F.)
-                            SE2->E2_ORIGEM  := "FINA050" // Em função das customizações existentes
-                        SE2->( msUnLock() )
-
-                        aDadNDI := {}
-                        aDadNDI := {{ "E2_FILIAL" , SE2->E2_FILIAL     , NIL },;
-                                    { "E2_PREFIXO", SE2->E2_PREFIXO    , NIL },;
-                                    { "E2_NUM"    , SE2->E2_NUM	       , NIL },;
-                                    { "E2_PARCELA", SE2->E2_PARCELA    , NIL },;
-                                    { "E2_TIPO"   , SE2->E2_TIPO       , NIL },;
-                                    { "E2_FORNECE", SE2->E2_FORNECE    , NIL },;
-                                    { "E2_LOJA"   , SE2->E2_LOJA       , NIL },;
-                                    { "E2_VENCTO" , aColsGrid[i,9]        , NIL },;
-                                    { "E2_VENCREA", aColsGrid[i,9]        , NIL },;
-                                    { "E2_VALOR"  , aColsGrid[i,10]       , NIL }}
-
-                        // Altero no Contas a Pagar
-                        lMsErroAuto := .f.
-                        msExecAuto( { |x,y,z| FINA050(x,y,z)},aDadNDI,, 4) // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
-
-                        If lMsErroAuto
-
-                            lExecOK := .f.
-                            lRet := .f.
-                            DisarmTransaction()
-                            MostraErro()
-                            Break
-
-                        Else
-
-                            RecLock("SE2", .F.)
-                                SE2->E2_ORIGEM  := "GPEM670" // Em função das customizações existentes
-                                //SE2->E2_XDIVERG := "N" // Pois já foi aprovado anteriormente
-                            SE2->( msUnLock() )
+                        If aScan(aDadOk,{|x| x == SE2->E2_PARCELA}) <= 0 // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento das parcelas que não estiverem em borderô ou baixados quando algum deles estiver
+                    
+                            cParcAlt += SE2->E2_PARCELA + ", "
 
                             //gera log
-							u_GrLogZBE( msDate(), TIME(), cUserName, "EFETIVOU ALTERACOES TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFI118",;
-							"DATA/VALOR APOS ALTERACAO " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+                            u_GrLogZBE( msDate(), TIME(), cUserName, "EFETIVOU ALTERACOES TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFI118",;
+                            "DATA/VALOR ANTES ALTERACAO " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+
+                            RecLock("SE2", .F.)
+                                SE2->E2_ORIGEM  := "FINA050" // Em função das customizações existentes
+                            SE2->( msUnLock() )
+
+                            aDadNDI := {}
+                            aDadNDI := {{ "E2_FILIAL" , SE2->E2_FILIAL     , NIL },;
+                                        { "E2_PREFIXO", SE2->E2_PREFIXO    , NIL },;
+                                        { "E2_NUM"    , SE2->E2_NUM	       , NIL },;
+                                        { "E2_PARCELA", SE2->E2_PARCELA    , NIL },;
+                                        { "E2_TIPO"   , SE2->E2_TIPO       , NIL },;
+                                        { "E2_FORNECE", SE2->E2_FORNECE    , NIL },;
+                                        { "E2_LOJA"   , SE2->E2_LOJA       , NIL },;
+                                        { "E2_VENCTO" , aColsGrid[i,9]        , NIL },;
+                                        { "E2_VENCREA", aColsGrid[i,9]        , NIL },;
+                                        { "E2_VALOR"  , aColsGrid[i,10]       , NIL }}
+
+                            // Altero no Contas a Pagar
+                            lMsErroAuto := .f.
+                            msExecAuto( { |x,y,z| FINA050(x,y,z)},aDadNDI,, 4) // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
+
+                            If lMsErroAuto
+
+                                lExecOK := .f.
+                                lRet := .f.
+                                DisarmTransaction()
+                                MostraErro()
+                                Break
+
+                            Else
+
+                                RecLock("SE2", .F.)
+                                    SE2->E2_ORIGEM  := "GPEM670" // Em função das customizações existentes
+                                    SE2->E2_XDIVERG := "N" // Pois já foi aprovado anteriormente e esta nova aprovação pode gerar multas por atrasos de pagamentos dos processos trabalhistas
+                                SE2->( msUnLock() )
+
+                                // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
+                                ZC7->( dbSetOrder(1) ) // ZC7_FILIAL, ZC7_PREFIX, ZC7_NUM, ZC7_PARCEL, ZC7_CLIFOR, ZC7_LOJA, R_E_C_N_O_, D_E_L_E_T_
+                                If ZC7->( dbSeek(FWxFilial("ZC7")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_FORNECE+E2_LOJA)) )
+                                    Do While ZC7->( !EOF() ) .and. ZC7->ZC7_FILIAL==FWxFilial("ZC7") .and. ZC7->ZC7_PREFIX==SE2->E2_PREFIXO .and. ZC7->ZC7_NUM==SE2->E2_NUM .and. ZC7->ZC7_PARCEL==SE2->E2_PARCELA .and. ZC7->ZC7_CLIFOR==SE2->E2_FORNECE .and. ZC7->ZC7_LOJA==SE2->E2_LOJA
+                                        If AllTrim(ZC7->ZC7_TPBLQ) <> AllTrim(cCodBlq)
+                                            RecLock("ZC7", .F.)
+                                                ZC7->( dbDelete() )
+                                            ZC7->( msUnLock() )
+                                        EndIf
+                                        ZC7->( dbSkip() )
+                                    EndDo
+                                EndIf
+
+                                //gera log
+                                u_GrLogZBE( msDate(), TIME(), cUserName, "EFETIVOU ALTERACOES TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFI118",;
+                                "DATA/VALOR APOS ALTERACAO " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+
+                            EndIf
 
                         EndIf
 
@@ -1594,3 +1633,94 @@ User Function Run121P(lAuto)
 	FWMsgRun(, {|| u_ADFIN121P(lAuto) }, "Aguarde", "Gerando parcelas das despesas aprovadas ["+Time()+"] ...")
     
 Return
+
+/*/{Protheus.doc} User Function UpdPR
+    Permite alterar vencimento do título PR (antes da geração das parcelas)
+    @type  Function
+    @author FWNM
+    @since 03/03/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento antes da geração das parcelas
+/*/
+User Function UpdPR()
+
+    Local lRet := .f.
+    Local cNum    := ZHB->ZHB_NUM
+    Local cParc   := ZHB->ZHB_PARCEL
+    Local lGerPar := ZHB->ZHB_GERPAR
+
+    Local cPrefixo  := GetMV("MV_#ZC7PRE",,"GPE")
+    Local cTipoPR   := GetMV("MV_#ZC7TIP",,"PR")
+    Local cFornece  := GetMV("MV_#ZC7SA2",,"001901")
+    Local cLoja     := GetMV("MV_#ZC7LOJ",,"01")
+
+    Local lOKDt  	:= .F.
+	Local oCmpDt  := Array(01)
+	Local oBtnDt  := Array(02)
+	Local dNewDt  := msDate()
+
+    If lGerPar
+        lRet := .f.
+        Alert("Título " + cNum + " já possui parcelas geradas! Alteração de vencimento não permitida! Utilize '* Manutenção de parcelas'... ")
+        Return lRet
+    EndIf
+
+    Do While .t.
+
+        DEFINE MSDIALOG oDlgDt TITLE "Informe o novo vencimento do título PR" FROM 0,0 TO 100,350  OF oMainWnd PIXEL
+        
+            @ 003, 003 TO 050,175 PIXEL OF oDlgDt
+            
+            @ 010,025 Say "Novo Vencimento:" of oDlgDt PIXEL
+            @ 005,080 MsGet oCmpDt Var dNewDt SIZE 70,12 of oDlgDt PIXEL
+            
+            @ 030,015 BUTTON oBtnDt[01] PROMPT "Confirmar"     of oDlgDt   SIZE 68,12 PIXEL ACTION (lOKDt := .T., oDlgDt:End())
+            @ 030,089 BUTTON oBtnDt[02] PROMPT "Cancelar"      of oDlgDt   SIZE 68,12 PIXEL ACTION (lOKDt := .F., oDlgDt:End()) 
+            
+        ACTIVATE MSDIALOG oDlgDt CENTERED
+
+        If !lOkDt
+            lRet := .f.
+            Alert("Você clicou no botão Cancelar! Nenhuma ação será realizada...")
+            Exit
+        Else
+            If dNewDt < msDate() /*.or. dNewDt <= ZHB->ZHB_VENCTO*/ .or. Empty(dNewDt)
+                lRet := .f.
+                Alert("Informe uma data válida ou superior a de hoje/título!")
+            Else
+                lRet := .t.
+                Exit
+            EndIf
+        EndIf
+
+        lOKDt := .F.
+
+    EndDo
+    
+    // Efetiva alteração do vencimento do PR
+    If lRet
+
+        SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
+        If SE2->( dbSeek(FWxFilial("SE2")+cPrefixo+cNum+PadR(cParc,TamSX3("E2_PARCELA")[1])+PadR(cTipoPR,TamSX3("E2_TIPO")[1])+cFornece+cLoja) )
+            
+            RecLock("SE2", .F.)
+                SE2->E2_VENCTO  := dNewDt
+                SE2->E2_VENCREA := DataValida(dNewDt)
+            SE2->( msUnLock() )
+
+            RecLock("ZHB", .F.)
+                ZHB->ZHB_VENCTO := dNewDt
+            ZHB->( msUnLock() )
+            
+            msgInfo("Vencimento do título PR n. " + SE2->E2_NUM + " alterado com sucesso!")
+
+        EndIf
+
+    EndIf
+
+Return lRet

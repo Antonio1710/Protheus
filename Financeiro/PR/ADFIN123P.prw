@@ -61,7 +61,8 @@ method new() class ADFIN123P
     AAdd( ::aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
     AAdd( ::aHeader, "Content-Type: application/json")
 
-    ::cBaseURL  :=  GetNewPar("MV_#URLPIX", "https://qrpix-h.bradesco.com.br")
+    ::cBaseURL  := GetNewPar("MV_#URLPIX", "https://qrpix-h.bradesco.com.br")
+    ::cUrlLib   := GetNewPar("MV_#URLLIB", "https://drco3ti25sni8.cloudfront.net")
 
     ::oRest := FWRest():new(::cBaseURL )
 
@@ -170,12 +171,50 @@ return ::cEMV
 //----------------------------------------------------------
 method setEMV( oPayLoad ) class ADFIN123P
 //----------------------------------------------------------
+    local cPayLoad := ""
+    local oReq
+    local oRes
+    local aHeader := {}
+    local lAWSEmv := GetNewPar( "MV_#AWSEMV", .F.)
     local lRet := .F.
 
-    if oPayLoad:hasProperty('emv') 
-        ::cEMV := oPayLoad['emv']
-        lRet := .T.
+    if !lAWSEmv 
+        if ( lRet := oPayLoad:hasProperty('emv') ) 
+            ::cEMV := oPayLoad['emv']
+        endif
+        return lRet
     endif
+
+    cPayLoad := left(oPayLoad['emv'],len(oPayLoad['emv'])-4)
+    while at( " ", cPayLoad ) > 0
+        cPayLoad := strTran( cPayLoad, " ", "_")
+    end
+    while at( "'", cPayLoad ) > 0
+        cPayLoad := strTran( cPayLoad, "'", "_")
+    end
+
+    oReq := FWRest():new(::cUrlLib)
+
+    aadd(aHeader,'Content-Type: application/json')
+    oReq:SetPath('/api/pix/emv')
+    oReq:SetPostParams( '{ "payload": "' + cPayLoad +'"}')
+    oReq:post(aHeader)
+
+    if ( lRet := oReq:GetHTTPCode() == "200" )
+        oRes := JsonObject():New()
+        oRes:fromJson( oReq:GetResult() )
+        ::cEMV := cPayLoad + oRes['data']
+    else
+        if !isblind()
+            FWAlertWarning("ERR Bradesco - setEMV", oReq:GetLastError())
+        else
+            varinfo("ERR Bradesco - setEMV", oReq:GetLastError())
+        endif
+    endif
+
+    FreeObj(oReq)
+    FreeObj(oRes)
+    
 return lRet
 
 //----------------------------------------------------------
@@ -217,10 +256,9 @@ method setQrCode(oPayLoad) class ADFIN123P
 return lRet
 
 //----------------------------------------------------------
-/*
 method getUrlLib() class ADFIN123P
 return ::cUrlLib
-*/
+
 //----------------------------------------------------------
 method setUrlLib(cUrlLib) class ADFIN123P
     default cUrlLib := ''

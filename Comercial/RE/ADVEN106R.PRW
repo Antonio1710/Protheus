@@ -26,7 +26,9 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Correção dos valores do DSR para itens sintéticos.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 07/12/2021 - Ajuste no totalizador por vendedores. Estava imprimindo em posição incorreta.
 	@history Ticket  62249  - Leonardo P. Monteiro  - 29/12/2021 - Ajustes na geração dos arquivos texto.
-	/*/
+	@history Ticket  68727  - Leonardo P. Monteiro  - 02/03/2022 - Correção na impressão dos parâmetros do relatório para a exportação do relatório para PDF.
+	@history Ticket  68727  - Leonardo P. Monteiro  - 03/03/2022 - Correção no limite de linhas impressas por folha para a geração dos arquivos em PDF.
+/*/
 User Function ADVEN106R() // U_ADVEN106R()
 
 	SetPrvt("AORD,TAMANHO,LIMITE,NOMEPROG,MV_TABPR,NTIPO")
@@ -38,7 +40,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	SetPrvt("_LOJA,_REGVEND,_cVEND,_PREFIXO,CABEC4,")
 
 	Private _prime 		:= 1
-	Private _nVenders 	:= 0
+	//Private _nVenders 	:= 0
 	Private _aGrupos	:= {}
 	Private _aVendedor	:= {}
 	Private cPerg 		:= PADR("AD012B",10," ")
@@ -51,7 +53,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	Private oTabSZA		:= THashMap():New()
 	Private _nXi		:= 0
 	Private _nI			:= 0
-	Private _nVenders	:= 0
+	//Private _nVenders	:= 0
 	Private nCol04	:= 093
 	Private nCol05	:= 106
 	Private nCol06	:= 119
@@ -62,7 +64,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	Private nCol11	:= 182
 	Private nCol12	:= 196
 	Private nCol13	:= 211
-	Private nQtdTot := 80
+	Private nQtdTot := 67
 	Private nQtdGer	:= 60
 
 	//MsgAlert("Erro no ambiente Cloud, tente mais tarde!", "..:: Erro ::..")
@@ -99,7 +101,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 	aReturn 			:= { "Zebrado", 1,"Administracao", 2, 2, 1, "",0 }
 	
 	nLastKey         	:= 0
-	nlin             	:= 80
+	nlin             	:= 69
 	nItem            	:= 1
 	lContinua        	:= .T.
 	
@@ -503,7 +505,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 
 	Private aDSR	:= {}
 	
-	nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
+	nomerel := SetPrint(cString,Nomerel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho,.T.)
 	
 	If nLastKey == 27
 		Return
@@ -1745,7 +1747,7 @@ STATIC FUNCTION AD0012A
 			Endif
 		Endif
 		
-		If nLin > nQtdTot .or. _xQuebra
+		If nLin > nQtdTot-15 .or. _xQuebra
 			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 			nLin := 8
 			Cabeca2()
@@ -2740,7 +2742,7 @@ STATIC FUNCTION AD0012B
 	nomeprog        := "AD0012B"
 	mv_tabpr        := ""
 	nTipo         	:= 18
-	aReturn := { "Zebrado", 1,"Administracao", 2, 2, 1, "",0 }
+	aReturn := { "Zebrado", 1,"Administracao", 2, 2, 1, "",1 }
 	
 	nLastKey         := 0
 	nlin             := 80

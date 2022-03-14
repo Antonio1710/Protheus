@@ -1,22 +1,25 @@
 #INCLUDE "totvs.ch"
 #INCLUDE "FWMVCDef.ch"
+#INCLUDE "Topconn.ch"
+
+#define ZHNEXCLUS  '|ZHH_FILIAL|'
+#define ZHMEXCLUS  '|ZHM_FILIAL|ZHM_CODZHN|'
 
 /*/{Protheus.doc} User Function ADGPE085P
-    Cadastro de horários e turnos dos elegíveis (Frango).
+    Cadastro de elegíveis para o Kit Adoro (Frango).
     @type  Function
     @author Leonardo P. Monteiro
-    @since 07/09/2021
+    @since 21/07/2021
     @version version
     @param param_name, param_type, param_descr
     @return return_var, return_type, return_description
     @example
     (examples)
     @see (links_or_references)
-
-    U_ADGPE085P()
+    @history chamado 16833 - Leonardo P. Monteiro - 14/02/2022 - Adição do relacionamento com os uniformes.
 /*/
 
-Static cTitulo := "..:: Cadastro Linhas de Transporte ::.."
+Static cTitulo := "..:: Cadastro Grupos de Uniformes ::.."
 
 User Function ADGPE085P()
     Local aArea   := GetArea()
@@ -58,14 +61,28 @@ Return aRotina
 // InÃ­cio da ViewDef e ModelDef.
 // --------------------------------------------------------------------------------------------------------
 Static Function ModelDef()
- Local oModel		:= MPFormModel():New("mdlADGPE085P",, {|| .T.})
- Local oStrutZHN	:= FWFormStruct(1,"ZHN")
- 
- oModel:SetDescription(cTitulo)
- 
- oModel:addFields("CABEC_ZHN",nil,oStrutZHN)
+    Local oModel		:= MPFormModel():New("mdlADGPE085P",, {|| .T.})
+    Local oStrutZHN	    := FWFormStruct(1,"ZHN")
+    Local oStrutZHM     := FWFormStruct(1,"ZHM")
+    Local aZHNZHM       := {}
+    
+    oModel:addFields("CABECZHN",nil,oStrutZHN)
+    oModel:addGrid("DETAIZHM","CABECZHN", oStrutZHM)
 
- oModel:setPrimaryKey({"ZHN_FILIAL","ZHN_CODIGO"})
+    oModel:SetDescription(cTitulo)
+    oModel:GetModel("CABECZHN"):SetDescription("Grupo de Uniformes")
+    oModel:GetModel("DETAIZHM"):SetDescription("Cadastros dos Uniformes")
+    oModel:GetModel("DETAIZHM"):SetOptional(.F.)
+    
+    oStrutZHM:SetProperty( "ZHM_CODZHH"   , MODEL_FIELD_VALID, {|oModelSit, cField, xValue, nLine, xCurrentValue| fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue) } )
+
+    aAdd( aZHNZHM, {"ZHM_FILIAL", "ZHN_FILIAL"} )
+    aAdd( aZHNZHM, {"ZHM_CODZHN", "ZHN_CODIGO"} )
+
+    oModel:SetRelation("DETAIZHM", aZHNZHM, ZHM->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
+    oModel:GetModel("DETAIZHM"):SetUniqueLine({"ZHM_CODZHH"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
+
+    oModel:setPrimaryKey({"ZHN_FILIAL","ZHN_CODIGO"})
 
 return oModel
 
@@ -73,7 +90,8 @@ return oModel
 Static Function viewDef()
  Local oView		:= Nil
  Local oModel		:= FWLoadModel("ADGPE085P")
- Local oStrutZHN	:= FWFormStruct(2,"ZHN")
+ Local oStrutZHN	:= FWFormStruct(2,"ZHN",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHNEXCLUS)  })
+ Local oStrutZHM	:= FWFormStruct(2,"ZHM",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHMEXCLUS)  })
   
  DbSelectArea("ZHN")
  
@@ -84,11 +102,55 @@ Static Function viewDef()
  
  oView:GetProgressBar(.T.)
  
- oView:addField("V_CABEC_ZHN",oStrutZHN,"CABEC_ZHN")
+ oView:addField("CABEC_ZHN",oStrutZHN, "CABECZHN")
+ oView:AddGrid("DETAIL_ZHM",oStrutZHM, "DETAIZHM")
    
- oView:createHorizontalBox("H_CABEC",100)
- oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
+ oView:createHorizontalBox("H_CABEC",30)
+ oView:createHorizontalBox("H_DETAI",70)
  
- oView:setOwnerView("V_CABEC_ZHN","V_CABEC")
+ 
+ oView:setOwnerView("CABEC_ZHN","H_CABEC")
+ oView:setOwnerView("DETAIL_ZHM","H_DETAI")
   
 Return oView
+
+Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
+	Local lRet          := .T.
+	Local oModel		:= FWModelActive()
+	Local oModZHN		:= oModel:getModel("CABECZHN")
+    Local oModZHM		:= oModel:getModel("DETAIZHM")
+	Local aSaveLines 	:= FWSaveRows()
+
+
+    if oModelSit:cId == "DETAIZHM"
+
+        If cField == "ZHM_CODZHH"    
+           
+            DbSelectArea("ZHH")
+            ZHH->(DbSetOrder(1))
+            
+            if ZHH->(DbSeek(xFilial("ZHH")+Alltrim(xValue),.F.))
+                
+                oModZHM:LoadValue("ZHM_CODZHN"  ,oModZHN:GetValue("ZHN_CODIGO") )
+                oModZHM:LoadValue("ZHM_CODZHH"  ,ZHH->ZHH_CODIGO)
+                oModZHM:LoadValue("ZHM_DESCRI"  ,ZHH->ZHH_DESCRI)
+                //oModZHM:LoadValue("ZHM_TIPO"    ,ZHH->ZHH_TIPO)
+                //oModZHM:LoadValue("ZHM_NUMKIT"  ,ZHH->ZHH_NUMKIT)
+                //oModZHM:LoadValue("ZHM_OBRIGA"  ,"S")
+
+                if select("QZHH") > 0
+                    QZHH->(Dbclosearea())
+                endif
+
+                lRet := .T.
+            else
+                lRet := .F.
+                Help( ,, 'HELP',, 'Não Existem uniformes cadastrados com esse código!.', 1, 0)
+            endif
+        
+        endif
+
+    Endif
+
+   FWRestRows( aSaveLines )
+Return lRet 

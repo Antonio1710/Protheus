@@ -12,6 +12,7 @@
 	@version 01
 	@history Chamado 056597 - William Costa - 12/03/2020 - Identificado falha no fechamento da tabela era pra fechar a TRD e estava a TRE
 	@history TICKET  5331   - William Costa - 19/11/2020 - Adicionado o campo B2_QEMPSA, também para ser zerado
+	@history chamado TI     - Leonardo P. Monteiro - 08/03/2022 - Correção do msunlock para prevenir lock na tabela SB2.
 */
 
 USER FUNCTION ADEST045P()
@@ -217,6 +218,7 @@ STATIC FUNCTION VALIDENVIO(cEmpresa,cFilAtu,cLocal,cProd,cEnd)
 							SB2->B2_QEMP    := 0
 							SB2->B2_RESERVA := 0
 							SB2->B2_QEMPSA  := 0
+							SB2->(MsUnlock())
 							
 							MsUnlockAll()
 

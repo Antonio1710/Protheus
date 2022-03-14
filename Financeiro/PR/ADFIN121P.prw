@@ -31,6 +31,9 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
+    @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -42,6 +45,7 @@ User Function ADFIN121P(lAuto)
     Local aBaixa       := {}
     Local nQtdParcelas := 0
     Local nVlrParcelas := 0
+    Local nDifParcelas := 0
     Local cTipo        := ""
     Local cParcela     := ""
     Local dVencto      := CtoD("//")
@@ -67,7 +71,6 @@ User Function ADFIN121P(lAuto)
     Private cLinked := "RM"
 	Private cSGBD   := "CCZERN_119204_RM_PD"
 
-
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM')
 
 	// Inicializo ambiente
@@ -92,9 +95,10 @@ User Function ADFIN121P(lAuto)
     PtInternal(1,ALLTRIM(PROCNAME()))
 
     lSigaOn := GetMV("MV_#RMSIGA",,.T.)
+
     // @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
-    cLinked :=  GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
-	cSGBD   :=  GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
+    cLinked := GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
+	cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
     cEmpRun := GetMV("MV_#RMAEMP",,"01#02#07#09")
     cFilRun := GetMV("MV_#RMAFIL",,"02")
     
@@ -120,11 +124,9 @@ User Function ADFIN121P(lAuto)
     For i:=1 to Len(aEmpresas)
 	
     	If lAuto
-
             RpcClearEnv()
             //RpcSetType(3)
             RpcSetEnv( aEmpresas[ i,1 ] , aEmpresas[ i,2 ] )
-
         EndIf
 
         // EXCLUIR_SIGA
@@ -150,6 +152,7 @@ User Function ADFIN121P(lAuto)
         cQuery += " AND E2_LOJA='"+cLoja+"' 
         cQuery += " AND E2_XDIVERG='N' AND E2_RJ<>'X'
         cQuery += " AND E2_BAIXA='' AND E2_SALDO>0 AND E2_STATUS<>'B'
+        cQuery += " AND E2_VENCTO>='"+DtoS(msDate())+"' " // @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
         cQuery += " AND D_E_L_E_T_=''
 
         tcQuery cQuery New Alias "Work"
@@ -186,10 +189,11 @@ User Function ADFIN121P(lAuto)
                             {"AUTJUROS"    ,0               ,Nil,.T.}}
                             //{"NVALREC" ,SE1->E1_VALOR,Nil }}
 
-                Begin Transaction
+                nQtdParcelas := Val(SE2->E2_PARCELA)
+                nVlrParcelas := Round((SE2->E2_VALOR / nQtdParcelas),TamSX3("E2_VALOR")[2])
+                nDifParcelas := SE2->E2_VALOR - (nQtdParcelas * nVlrParcelas) // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
 
-                    nQtdParcelas := Val(SE2->E2_PARCELA)
-                    nVlrParcelas := SE2->E2_VALOR / nQtdParcelas
+                Begin Transaction
 
 					RecLock("SE2", .F.)
 						SE2->E2_TIPO   := "NDI"
@@ -204,9 +208,10 @@ User Function ADFIN121P(lAuto)
                     
                     //Em caso de erro na baixa
                     If lMsErroAuto
-                        DisarmTransaction()
                         If !lAuto
                             MostraErro()
+                            DisarmTransaction() 
+                            Break 
                         EndIf
                     Else
 
@@ -224,6 +229,7 @@ User Function ADFIN121P(lAuto)
                         u_GrLogZBE( msDate(), TIME(), cUserName, "BAIXOU PR - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
                         "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
                         
+                        nDias := 0 // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
                         aDadSE2 := {}
                         
                         For ii:=1 to nQtdParcelas
@@ -234,22 +240,22 @@ User Function ADFIN121P(lAuto)
                             If ii == 1
                                 dVencto  := SE2->E2_VENCTO
                             Else
-                                dVencto  := dVencto+nDias
+                                dVencto  := SE2->E2_VENCTO+nDias
                             EndIf
 
                             aDadNDI := {}
-                            aDadNDI := {{ "E2_PREFIXO", SE2->E2_PREFIXO  , NIL },;
-                                        { "E2_NUM"    , SE2->E2_NUM		 , NIL },;
-                                        { "E2_PARCELA", cParcela         , NIL },;
-                                        { "E2_TIPO"   , cTipoNDI         , NIL },;
-                                        { "E2_NATUREZ", SE2->E2_NATUREZ	 , NIL },;
-                                        { "E2_FORNECE", SE2->E2_FORNECE  , NIL },;
-                                        { "E2_LOJA"   , SE2->E2_LOJA     , NIL },;
-                                        { "E2_EMISSAO", msDate()         , NIL },;
-                                        { "E2_VENCTO" , dVencto          , NIL },;
-                                        { "E2_VENCREA", DataValida(dVencto) , NIL },;
-                                        { "E2_VALOR"  , nVlrParcelas     , NIL },;
-                                        { "E2_HIST"   , cHist            , NIL }}
+                            aDadNDI := {{ "E2_PREFIXO", SE2->E2_PREFIXO          , NIL },;
+                                        { "E2_NUM"    , SE2->E2_NUM		         , NIL },;
+                                        { "E2_PARCELA", cParcela                 , NIL },;
+                                        { "E2_TIPO"   , cTipoNDI                 , NIL },;
+                                        { "E2_NATUREZ", SE2->E2_NATUREZ	         , NIL },;
+                                        { "E2_FORNECE", SE2->E2_FORNECE          , NIL },;
+                                        { "E2_LOJA"   , SE2->E2_LOJA             , NIL },;
+                                        { "E2_EMISSAO", msDate()                 , NIL },;
+                                        { "E2_VENCTO" , dVencto                  , NIL },;
+                                        { "E2_VENCREA", DataValida(dVencto)      , NIL },;
+                                        { "E2_VALOR"  , nVlrParcelas+nDifParcelas, NIL },;
+                                        { "E2_HIST"   , cHist                    , NIL }}
 			
                             lMsErroAuto := .f.
                             dbSelectArea("SE2")
@@ -257,9 +263,10 @@ User Function ADFIN121P(lAuto)
 
                             If lMsErroAuto
 
-                                DisarmTransaction()
                                 If !lAuto
                                     MostraErro()
+                                    DisarmTransaction() 
+                                    Break 
                                 EndIf
 
                             Else
@@ -281,6 +288,7 @@ User Function ADFIN121P(lAuto)
                                 SE2->( msUnLock() )
 
                                 nDias += 30
+                                nDifParcelas := 0
 
                                 aAdd( aDadSE2, { SE2->(RecNo()) } )
 
@@ -296,6 +304,8 @@ User Function ADFIN121P(lAuto)
                         RecLock("SE2", .F.)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
+
+                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
 
                     EndIf
 
@@ -508,8 +518,6 @@ Static Function ExcTitPR()
                         SE2->E2_ORIGEM := "GPEM670"
                     SE2->( msUnLock() )
 
-                    DisarmTransaction()
-
                 EndIf
 
             End Transaction
@@ -546,5 +554,140 @@ Static Function ExcTitPR()
     If Select("WorkRM") > 0
         WorkRM->( dbCloseArea() )
     EndIf
+
+Return
+
+/*/{Protheus.doc} User Function FixParcNDI
+    Garante/Corrige parcelas para serem sempre sequenciais 30 dias
+    @type  Function
+    @author FWNM
+    @since 25/02/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+User Function FixParcNDI(cNumNDI)
+
+    Local nDias      := 0
+    Local dNewVencto := CtoD("//")
+    Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
+    Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
+    Local aAreaSE2   := SE2->( GetArea() )
+    Local aAreaZHB   := ZHB->( GetArea() )
+
+    Default cNumNDI := ""
+
+    ZHB->( dbGoTop() )
+    ZHB->( dbSetOrder(3) ) // ZHB_FILIAL, ZHB_NUM, R_E_C_N_O_, D_E_L_E_T_
+    If ZHB->( dbSeek(FWxFilial("ZHB")+cNumNDI) )
+    
+        Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB") .and. ZHB->ZHB_NUM==cNumNDI
+
+            If !Empty(ZHB->ZHB_NUM) .and. ZHB->ZHB_PARCEL>1 .and. ZHB->ZHB_GERPAR
+
+                SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
+                If SE2->( dbSeek(FWxFilial("SE2")+PadR(cPrefixo,TamSX3("E2_PREFIXO")[1])+ZHB->ZHB_NUM) )
+
+                    nDias := 0
+
+                    Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. AllTrim(SE2->E2_PREFIXO)==cPrefixo .and. SE2->E2_NUM==ZHB->ZHB_NUM
+
+                        If AllTrim(SE2->E2_TIPO) == cTipoNDI
+
+                            dNewVencto := ZHB->ZHB_VENCTO + nDias
+
+                            If SE2->E2_VENCTO <> dNewVencto
+                                RecLock("SE2", .F.)
+                                    SE2->E2_VENCTO  := dNewVencto
+                                    SE2->E2_VENCREA := DataValida(dNewVencto)
+                                SE2->( msUnLock() )
+                            EndIf
+                        
+                            nDias := nDias + 30
+                        
+                        EndIf
+
+                        SE2->( dbSkip() )
+                
+                    EndDo
+
+                EndIf
+
+            EndIf
+
+            ZHB->( dbSkip() )
+
+        EndDo
+
+    EndIf
+
+    RestArea( aAreaSE2 )
+    RestArea( aAreaZHB )
+
+Return
+
+/*/{Protheus.doc} User Function FixParcNDI
+    Garante/Corrige parcelas para serem sempre sequenciais 30 dias
+    @type  Function
+    @author FWNM
+    @since 25/02/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+User Function FixAllNDI()
+
+    Local nDias      := 0
+    Local dNewVencto := CtoD("//")
+    Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
+    Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
+
+    ZHB->( dbGoTop() )
+    Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB")
+
+        If !Empty(ZHB->ZHB_NUM) /*.and. ZHB->ZHB_PARCEL>1*/ .and. ZHB->ZHB_GERPAR
+
+            SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
+            If SE2->( dbSeek(FWxFilial("SE2")+PadR(cPrefixo,TamSX3("E2_PREFIXO")[1])+ZHB->ZHB_NUM) )
+
+                nDias := 0
+
+                Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. AllTrim(SE2->E2_PREFIXO)==cPrefixo .and. SE2->E2_NUM==ZHB->ZHB_NUM
+
+                    If AllTrim(SE2->E2_TIPO) == cTipoNDI .and. Empty(SE2->E2_BAIXA)
+
+                        dNewVencto := ZHB->ZHB_VENCTO + nDias
+
+                        If SE2->E2_VENCTO <> dNewVencto
+                            RecLock("SE2", .F.)
+                                SE2->E2_VENCTO  := dNewVencto
+                                SE2->E2_VENCREA := DataValida(dNewVencto)
+                            SE2->( msUnLock() )
+                        EndIf
+                    
+                        nDias := nDias + 30
+                    
+                    EndIf
+
+                    SE2->( dbSkip() )
+            
+                EndDo
+
+            EndIf
+
+        EndIf
+
+        ZHB->( dbSkip() )
+
+    EndDo
+
+    RestArea( aAreaSE2 )
+    RestArea( aAreaZHB )
 
 Return

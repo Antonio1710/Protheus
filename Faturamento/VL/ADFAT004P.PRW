@@ -13,12 +13,14 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 /*/
 
 User Function ADFAT004P(_cTipo)
-   Local _lVal := .T.
-   Local _y    := 1
-   Local nQtd	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
+   Local _lVal    := .T.
+   Local _y       := 1
+   Local nQtd	   := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_QTDVEN" })
+   Local lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
    //Conout( DToC(Date()) + " " + Time() + " ADFAT004P >>> INICIO PE" )
 
@@ -34,7 +36,7 @@ User Function ADFAT004P(_cTipo)
          Next _y       
       Endif
       
-      If !_lVal
+      If !_lVal .and. !lSfInt
          MsgInfo("Pedido com quantidade ja digitada não pode utilizar tipo de pedido igual a B(utiliza fornecedor).","Atenção")
       Endif
       

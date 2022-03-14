@@ -21,7 +21,7 @@
     (examples)
     @see (links_or_references)
     @chamado 055749 || OS 057158 || CONTROLADORIA || ANDRE || 8386 || CLASSE DE VALOR SIG
-    @history chamado 
+    @Ticket 69338 	- Leonardo P. Monteiro - 	Ajuste no CC para 5131 quando o produto for '190590'. Alterar LanÇamento PadrÃo 641-008 - Quirera.
 /*/
 User Function LPCTH(cTab, cEntidade)
 
@@ -122,7 +122,7 @@ Return cClasse
     (examples)
     @see (links_or_references)
     @chamado 055749 || OS 057158 || CONTROLADORIA || ANDRE || 8386 || CLASSE DE VALOR SIG
-    @history chamado 
+    @history Ticket 69338 	- Leonardo P. Monteiro - 	Ajuste no CC para 5131 quando o produto for '190590'. Alterar Lançamento Padrão 641-008 - Quirera.
 /*/
 User Function LPCTHCC(cTab, cEntidade)
 
@@ -149,6 +149,13 @@ User Function LPCTHCC(cTab, cEntidade)
             If Empty(cCCusto) .and. AllTrim(SD1->D1_TIPO) == "D"
                 // SD2 - ORDER 3 = D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM                                                                                                     
                 cCCusto := Posicione("SD2",3,SD1->(D1_FILIAL+D1_NFORI+D1_SERIORI+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEMORI),"D2_CCUSTO")
+            
+            elseif AllTrim(cEntidade) == "CREDITO"
+
+                //@history Ticket 69338 	- Leonardo P. Monteiro - 	Ajuste no CC para 5131 quando o produto for '190590'. Alterar Lançamento Padrão 641-008 - Quirera.
+                if Alltrim(SD1->D1_COD) == "190590"
+                    cCCusto := "5131"
+                endif
             EndIf
 
         ElseIf AllTrim(cTab) == "SDE" // LP 651 (RATEIO CC)

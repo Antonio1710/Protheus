@@ -39,7 +39,8 @@
 	@history Ticket  66111  - Everson         - 03/01/2022 - Tratamento para filial 0A.
 	@history Ticket: TI     - Adriano Savoine - 03/02/2022 - Ajustado para o Dimep verificar o demitido ao inves de 7 dias passamos para verificar 1 dia apena apos a data de demissão.
 	@history Ticket: 66952  - Adriano Savoine - 15/02/2022 - Ajustado a query funcionario para atualizar os status apos a sua efetivação e ajustado novos status no dimep 24 e 25 como multiplos e ajustada a integração dos mesmos
-	testet
+	@history Ticket: 66952  - Fernando Macieir- 23/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
+	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -159,19 +160,14 @@ User Function ADGPE024P(aParam) // U_ADGPE024P()
 			tcQuery cQuery New Alias LS
 
 			If Select("LS") > 0
-				
-				DimepRegraDeAcesso() // DEBUG VOLTAR 
-
-				carDados() //Everson - 21/10/2021. Chamado 62721.
-
-				DimepFuncionario()  //Everson - 21/10/2021. Chamado 62721.
-
+				DimepRegraDeAcesso()
+				carDados()
+				DimepFuncionario()
 			Else
 				LS->( DbCloseArea())
-
 			EndIf
 
-			DimepBloqTerceiro() //Everson - 21/10/2021. Chamado 62721.
+			DimepBloqTerceiro()
 
 		RECOVER
 			
@@ -181,25 +177,18 @@ User Function ADGPE024P(aParam) // U_ADGPE024P()
 			
 		END SEQUENCE
 		
-		//Everson - 27/10/2021. Chamado 62721.
 		If ValType(oEstEmp) <> "U"
 			oEstEmp:Delete()
-			
 		EndIf
 
-		//Everson - 27/10/2021. Chamado 62721.
 		If ValType(oFuDimep) <> "U"
 			oFuDimep:Delete()
-
 		EndIf
 		
-		//Everson - 27/10/2021. Chamado 62721.
 		If ValType(oCrXPes2) <> "U"
 			oCrXPes2:Delete()
-
 		EndIf
 
-		//
 		logZBN("2") //Log fim.
 
 		ConOut("ADGPE024P - FINAL DO SCHEDULE ADGPE024P" + '||' + DToC(Date()) + '||' + Time() + '|| Empresa:' + aParam[1] + '|| Filial:' + aParam[2] +  " Tempo Total: " + ElapTime( cHrIniAux, Time() ))
@@ -208,6 +197,18 @@ User Function ADGPE024P(aParam) // U_ADGPE024P()
 
 Return Nil
 
+/*/{Protheus.doc} Static Function carDados
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 23/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function carDados()
 
 	Local cHrIniAux := ""
@@ -216,7 +217,7 @@ Static Function carDados()
 		cHrIniAux := Time()
 		carFuncD(.F.)
 	Conout("ADGPE024P - ADGPE024P - Fim carregamento oFuDimep - Tempo " + ElapTime( cHrIniAux, Time() ))
-	
+
 	Conout("ADGPE024P - ADGPE024P - Início carregamento oCdNXC1") //Credenciais Dimep.
 		cHrIniAux := Time()
 		carCreden()
@@ -283,7 +284,19 @@ Static Function carDados()
 	Conout("ADGPE024P - ADGPE024P - Fim carregamento oAfast - Tempo " + ElapTime( cHrIniAux, Time() ))
 
 Return Nil
-	
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 23/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function DimepRegraDeAcesso()	
 
 	Local cHrIni	:= Time()
@@ -292,7 +305,6 @@ Static Function DimepRegraDeAcesso()
 	Conout("ADGPE024P - ADGPE024P - Início DimepRegraDeAcesso")
 
 	// *** INICIO INTEGRACAO REGRA DE ACESSO *** //
-	
 	SqlTurno(cValToChar(Val(cEmpAnt)))
 	
 	// *** INICIO BUSCA TURNO NO PROTHEUS *** //
@@ -307,7 +319,6 @@ Static Function DimepRegraDeAcesso()
         cTexto       := ''
 		
 		// *** INICIO VERIFICA TURNO SE JA ESTA CADASTRADO NO DIMEP *** //
-	
 		SqlVTurnoDimep(Val(cEmpAnt + TRL->CODIGO))
 		
     	If TRH->(EOF()) 
@@ -530,14 +541,24 @@ Static Function DimepRegraDeAcesso()
 	//
 	Conout("ADGPE024P - ADGPE024P - Fim DimepRegraDeAcesso - Tempo " + ElapTime( cHrIni, Time() ))
     
-Return Nil   
+Return Nil
         
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 23/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function DimepFuncionario()	
 
-	//Local cCodSit := "" 
 	Local cHrIni	:= Time()
 	Local cDdFCr    := ""
-	
 	Local lFerAfast	:= .F.
 	Local aCredPe	:= {}
 	Local nTotR		:= 0
@@ -545,15 +566,14 @@ Static Function DimepFuncionario()
 
 	Conout("ADGPE024P - ADGPE024P - Início DimepFuncionario")
 
-	//
-	Sqlfuncionario(cValToChar(Val(cEmpAnt)))
-	
 	// *** INICIO BUSCA FUNCIONARIOS NO PROTHEUS *** //
+	Sqlfuncionario(cValToChar(Val(cEmpAnt)))
 	
 	TRB->( DbGoTop() )
 	nTotR := Contar("TRB","!Eof()")
+	
 	TRB->( DbGoTop() )
-	While ! TRB->(Eof()) 
+	While !TRB->(Eof())
 
 		nCountR++
 
@@ -597,17 +617,23 @@ Static Function DimepFuncionario()
 		//
 		VEmpresaDimep(cFilFunc, cNu_Estrutura, .F.) //Everson - 27/10/2021. Chamado 62721.
 		
+		/////////////////////////////////////////////////////////////
 		// *** INICIO VERIFICA SITUACAO DO FUNCIONARIO *** //
+		/////////////////////////////////////////////////////////////
+		nSitFol := 11 // trabalhando
+		
 		If Alltrim(TRB->CODSITUACAO) $ 'A/V/X/Z'
 			nSitFol := 11 // trabalhando
 
+		// @history Ticket: 66952  - Fernando Macieir- 22/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
+		/*
 		ElseIf Alltrim(TRB->CODSITUACAO) == 'D'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
-			
 			nSitFol := 12 // demitido
 
 		ElseIf Alltrim(TRB->CODSITUACAO) == 'F'	// @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 			nSitFol     := 13 // Ausencia		
 			nSitFolMult := 14 // Ferias 
+		*/
 
 		ElseIf !(Alltrim(TRB->CODSITUACAO) $ 'A/V/X/D/F/Z')
 			nSitFol     := 13 // Ausencia
@@ -619,35 +645,45 @@ Static Function DimepFuncionario()
 		If Alltrim(TRB->CODSITUACAO) == 'C'
 			nSitFol       := 23 // C - Contrato de Trabalho Suspenso
 			lFuncSitFolha := .T. 
-
 		EndIf
 
 		// Ticket: 66952  - Adriano Savoine - 15/02/2022
 		If Alltrim(TRB->CODSITUACAO) == 'E'
 			nSitFol       := 24 // E - LICENÇA MATERNIDADE
 			lFuncSitFolha := .T. 
-
 		EndIf
+
 		// *** INICIO VERIFICA AFASTAMENTO *** //
 		// Ticket: 66952  - Adriano Savoine - 15/02/2022
-		If Alltrim(TRB->CODSITUACAO) <> 'D' 
+
+		// 	@history Ticket: 66952  - Fernando Macieir- 22/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
+		If !Empty(TRB->DATADEMISSAO)
+			If TRB->DATADEMISSAO < DtoS(msDate())
+				nSitFol := 12 // demitido
+				lFuncSitFolha := .T. 
+			EndIf
+		EndIf
+		//
+
+		//If Alltrim(TRB->CODSITUACAO) <> 'D'
+		If nSitFol <> 12 // @history Ticket: 66952  - Fernando Macieir- 22/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar
 			
 			//Everson - 27/10/2021. Chamado 62721.
 			lFerAfast := .F.
 			aDFerAfst := {}
-			If ! oFerias:Get(Alltrim(cValToChar(TRB->CHAPA)), aDFerAfst) //Everson - 27/10/2021. Chamado 62721.
-				//nSitFol     := 11 // trabalhando   Ticket: 66952  - Adriano Savoine - 15/02/2022
-				nSitFolMult := 0
 
-				//
-				If oAfast:Get(Alltrim(cValToChar(TRB->CHAPA)),aDFerAfst) //Everson - 27/10/2021. Chamado 62721.
-					lFerAfast := .T.
-
-				EndIf
-
-			Else
+			// férias
+			If oFerias:Get(Alltrim(cValToChar(TRB->CHAPA)), aDFerAfst) //Everson - 27/10/2021. Chamado 62721.
 				lFerAfast := .T.
+				lFuncSitFolha := .T. 
+				nSitFol     := 13 // Ausencia		
+				nSitFolMult := 14 // Ferias
+			EndIf
 
+			// afastados
+			If oAfast:Get(Alltrim(cValToChar(TRB->CHAPA)),aDFerAfst) //Everson - 27/10/2021. Chamado 62721.
+				lFerAfast := .T.
+				lFuncSitFolha := .T. 
 			EndIf
 
 			//
@@ -664,42 +700,30 @@ Static Function DimepFuncionario()
 				If nSitFolMult == 0
 					If Empty(aDFerAfst[3])
 						nSitFolMult := 15
-
 					ElseIf ! Empty(aDFerAfst[3]) 
 						If Date() <= aDFerAfst[3]
 							nSitFolMult := 15
-
 						EndIf
-
 					Else	
 						nSitFolMult := nSitFolMult
-
 					EndIf
-
 				EndIf
 
 			EndIf
 			
-		EndIf	
+		EndIf
 		//
 
     	//verifica o turno do funcionario no cadastro de alteração de turno do ponto eletronico
     	CcodTurno := cValToChar(Val(cEmpAnt + TRB->CODHORARIO))
 		If oTurno:Get(Alltrim(cValToChar(TRB->CHAPA)), CcodTurno) //Everson - 27/10/2021. Chamado 62721.
 			CcodTurno :=  Alltrim(cValToChar(Val(cEmpAnt))) + Alltrim(cValToChar(CcodTurno))
-		
 		EndIf
+
 		// *** INICIO VERIFICA PESSOA SE JA ESTA CADASTRADO NO DIMEP *** // // <<<<<<<<<<<<<<<<<<<<<<<<
 		SqlVFuncDimep(nMatProth,cValtoChar(nEstOrganizacional),cValtoChar(nEstOrgEmpresa),cValtoChar(nEstRelacionada)) // chamado 049598
 
-		//
-		If TRC->(Eof())
-			Conout("ADGPE024P - Não possui cadastro no DIMEP nMatProth " + cValToChar(nMatProth))
-
-		EndIf
-
-		// //
-		While ! TRC->(Eof())
+		While !TRC->(Eof())
 		
 			nCdPessoa := TRC->CD_PESSOA
 			cEmpDimep := ""
@@ -711,7 +735,6 @@ Static Function DimepFuncionario()
 				lFuncIntegrar := .F.
 				TRC->(DbSkip())
 				Loop
-				
 			EndIf
 
 			// Pega o Perfil de Acesso Correto
@@ -732,26 +755,26 @@ Static Function DimepFuncionario()
 			   
 			// *** INICIO VERIFICA SITUACAO PESSOA AFASTAMENTO OU FERIAS *** //
 			If nSitFol < 23 // Ticket: 66952  - Adriano Savoine - 15/02/2022
+
 				If TRC->CD_SITUACAO_PESSOA <> nSitFol
 					lFuncSitFolha := .T.
-
 				EndIf  
 
 				SqlVSitPessoaDimep(nCdPessoa)
 				If nSitFol == 13 .AND. (nSitFolMult == 14 .OR. nSitFolMult == 15) .AND. TRD->(EOF()) 
 					lFuncSitFolha := .T.
-
 				EndIf
 				
 				While TRD->(!EOF()) 
+
 					dDtIniDimep        := IIF(DToC(TRD->DT_INI) == '01/01/00' .AND. Alltrim(cDataIni) == '',CToD("  /  /  "),TRD->DT_INI)                      
 					dDtFinDimep        := IIF(DToC(TRD->DT_FIN) == '01/01/00',CToD("  /  /  "),TRD->DT_FIN)
+
 					If TRD->CD_SITUACAO_PESSOA <> nSitFolMult                                    .OR. ;
 						dDtIniDimep             <> STOD(STRTRAN(SUBSTRING(cDataIni,1,10),'-','')) .OR. ;
 						dDtFinDimep             <> STOD(STRTRAN(SUBSTRING(cDataFin,1,10),'-','')) 
 					
 						lFuncSitFolha := .T. 
-
 					EndIf  
 					
 					TRD->(DbSkip())
@@ -768,14 +791,15 @@ Static Function DimepFuncionario()
 				SqlVSitPessoaDimep(nCdPessoa)
 				
 				While TRD->(!EOF()) 
+
 					dDtIniDimep        := IIF(DToC(TRD->DT_INI) == '01/01/00' .AND. Alltrim(cDataIni) == '',CToD("  /  /  "),TRD->DT_INI)                      
 					dDtFinDimep        := IIF(DToC(TRD->DT_FIN) == '01/01/00',CToD("  /  /  "),TRD->DT_FIN)
+
 					If TRD->CD_SITUACAO_PESSOA <> nSitFolMult                                    .OR. ;
 						dDtIniDimep             <> STOD(STRTRAN(SUBSTRING(cDataIni,1,10),'-','')) .OR. ;
 						dDtFinDimep             <> STOD(STRTRAN(SUBSTRING(cDataFin,1,10),'-','')) 
 					
 						lFuncSitFolha := .T. 
-
 					EndIf  
 					
 					TRD->(DbSkip())
@@ -790,18 +814,15 @@ Static Function DimepFuncionario()
 			// *** INICIO VERIFICA SITUACAO CREDENCIAL *** //
 
 			//Everson - 27/10/2021. Chamado 62721.
-			cDdFCr := Nil
 	    	//Verifica se a credencial está vinculada a pessoa correta.
+			cDdFCr := Nil
 	    	If oCdNXC1:Get(nCredFunc, cDdFCr) //Verifica a situação credencial.
 
-				// 
 				aCredPe := {}
 				If ! oCrXPes1:Get( Alltrim(cValtoChar(cDdFCr)) + Alltrim(cValtoChar(nCdPessoa)), aCredPe)
 					lFuncCredencial := .T.
-
 				Else
 
-					//
 					If aCredPe[4] <> CToD("  /  /  ") 	//so entra se a data fim tiver valor  //Everson - 27/10/2021. Chamado 62721.
 
 						// *** Inicio Credencial igual a Matricula *** //
@@ -809,7 +830,6 @@ Static Function DimepFuncionario()
 							nSitFol          == 11 //trabalhando
 					
 							lFuncCredencial := .T. 
-
 						EndIf
 
 					EndIf
@@ -821,7 +841,7 @@ Static Function DimepFuncionario()
 		    EndIf	                            		
 
 			// FWNM - 22/070/2021 - TICKET 17021 - Checo se o tipo de tecnologia está diferente entre CREDENCIAL e CREDENCIAL_PESSOA
-			UpdTecno( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+			UpdTecno( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) ) 
 
 			// FWNM - 22/07/2021 - AQUI - ticket 17021 - Checo se existem 2 credenciais iguais com tecnologias diferentes
 			If !lFuncCredencial
@@ -830,7 +850,6 @@ Static Function DimepFuncionario()
 					lFuncCredencial := .t.
 				EndIf
 			EndIf
-			//
 
 			// FWNM - 19/07/2021 - AQUI - ticket 17021
 			If !lFuncCredencial
@@ -848,7 +867,6 @@ Static Function DimepFuncionario()
 				EndIf
 
 			EndIf
-			
 
 			TRC->(DbSkip())
 		
@@ -856,7 +874,9 @@ Static Function DimepFuncionario()
 
     	TRC->(DbCloseArea()) 
     	
-    	// *** INICIO INSERT NO DIMEP *** //
+    	/////////////////////////////////////////
+		// *** INICIO INTEGRACAO COM DIMEP *** //
+		/////////////////////////////////////////
     	If lFuncIntegrar == .F. .AND. lFuncSitFolha == .F. .AND. lFuncCredencial == .F. // Quando não existe o funcionario na DIMEP
     	    
 			Conout("Criar " + cValToChar(nCountR))
@@ -874,10 +894,8 @@ Static Function DimepFuncionario()
 				
 	End
 
-	//
 	TRB->(DbCloseArea()) 
 
-	//
 	Conout("ADGPE024P - Fim DimepFuncionario - Tempo " + ElapTime( cHrIni, Time() ))
     
     // *** FINAL BUSCA FUNCIONARIOS NO PROTHEUS *** //  
@@ -885,6 +903,18 @@ Static Function DimepFuncionario()
     
 Return Nil	            
 	
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 23/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function CargaFuncDimep()  
 	
 	cNu_Estrutura := BuscaEstrutura(cFilFunc, .F.) // chamado 049598 //Everson - 27/10/2021. Chamado 62721.
@@ -1055,6 +1085,18 @@ Static Function CargaFuncDimep()
     		
 Return Nil
 
+/*/{Protheus.doc} nomeStaticFunction
+	// *** INTEGRACAO COM DIMEP - alteracao *** 
+	@type  Static Function
+	@author user
+	@since 23/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function AlterFuncDimep()
 
 	// *** INICIO ALTERAR DADOS NO DIMEP PARA INCLUIR NOVOS *** //
@@ -1079,33 +1121,25 @@ Static Function AlterFuncDimep()
 			
 			If Substr(TRC->NM_PESSOA,1,30) <> Substr(TRB->NOME,1,30)
 				UpdPessoa('NM_PESSOA',TRB->NOME,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-
 			EndIf
 			
 			If Val(TRC->NU_CPF) <> Val(TRB->CPF)
 				UpdPessoa('NU_CPF',TRB->CPF,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-
 			EndIf
 			
 			If Val(TRC->NU_RG) <> Val(TRB->CARTIDENTIDADE)
 				UpdPessoa('NU_RG',TRB->CARTIDENTIDADE,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-
 			EndIf
 			
 			// Ticket: TI - 13/10/2021 - ADRIANO SAVOINE
 			If Val(TRC->NU_PIS) <> Val(TRB->PISPASEP)
 				UpdPessoa('NU_PIS',Alltrim(TRB->PISPASEP),nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-
 			EndIf
 			
 			If Alltrim(cNomecPerfil) <> Alltrim(CcodTurno)
 
-				If Alltrim(cNomecPerfil) == Alltrim(TRC->TX_CAMPO08)
+				If Alltrim(cNomecPerfil) <> Alltrim(TRC->TX_CAMPO08)
 
-					//NÃO FAZ NADA FOI ALTERADO PARA O PERFIL ESPECIFICO
-
-				ELSE
-			
 					// Pega o Perfil de Acesso Correto
 					SqlPerAc(cCodTurno)
 					If TRP->(!EOF())
@@ -1133,120 +1167,27 @@ Static Function AlterFuncDimep()
 		
 		// *** FINAL ALTERACAO CADASTRAL *** //
 		
+
+		///////////////////////////////////////////////////
 		// *** INICIO SITUACAO FOLHA *** //
+		///////////////////////////////////////////////////
 		If lFuncSitFolha == .T.
-		
-		    // *** Inicio Quando Status Trabalhando *** //
-			If TRC->CD_SITUACAO_PESSOA ==  11  //trabalhando
-		                         
-		        // *** Inicio TrabalhandoXDemitido *** //
-				If nSitFol == 12 
-				    
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
-				EndIf
-				
-				// *** Inicio TrabalhandoXAfastado ou TrabalhandoXFerias *** //
-				If nSitFol == 13  
-				    
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integrar situação de pessoa multipla
-					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
-				    
-					//Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
+
+			// @history Ticket: 66952  - Fernando Macieir- 23/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
+			If TRC->CD_SITUACAO_PESSOA <> nSitFol
+
+				DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) //Deleta Pessoa Multipla
+				UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa) //ALTERA SITUACAO DA FOLHA
+
+				// Afastamentos e férias
+				If oAfast:nStatus >= 1 .or. oFerias:nStatus >= 1
+					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin) //Integrar situação de pessoa multipla
 				EndIf
 
-				// *** Inicio Contrato Suspenso com Afastamento *** //
-
-				If nSitFol == 23 .OR. nSitFol == 24   //Ticket: 66952  - Adriano Savoine - 15/02/2022
-				    
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integrar situação de pessoa multipla
-					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
-				    
-					//Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
-				EndIf
+				INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin) //Integra Historico da Pessoa
 
 			EndIf
-			
-			// *** Inicio Quando Status Ausencia *** // Ticket: 66952  - Adriano Savoine - 15/02/2022
-			If TRC->CD_SITUACAO_PESSOA == 13 .OR. TRC->CD_SITUACAO_PESSOA ==  23 .OR. TRC->CD_SITUACAO_PESSOA ==  24
-		                         
-		        // *** Inicio AusenciaXTrabalhando *** //
-				If nSitFol == 11 
-				                                                     
-				    //Deleta Pessoa Multipla
-					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
-					
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
-				EndIf
-
-				// *** Inicio AusenciaXDemitido *** //
-				If nSitFol == 12  // @history ticket  14991  - Fernando Macieir- 15/06/2021 - Dimep - Contrato de Trabalho Suspenso
-                                    
-				    //Deleta Pessoa Multipla
-					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
-					
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
-				EndIf
-				
-				// *** Inicio AusenciaXAAfastado ou AusenciaXFerias *** //
-				If nSitFol == 13 
-				
-					//Deleta Pessoa Multipla
-					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
-				    
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integrar situação de pessoa multipla
-					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
-				    
-					//Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
-				EndIf
-
-				// *** Inicio Contrato Suspenso e Afastado *** // Ticket: 66952  - Adriano Savoine - 15/02/2022
-				If nSitFol == 23 .OR. nSitFol == 24 
-				
-					//Deleta Pessoa Multipla
-					DELSITPESSOAMULTIPLA(cValToChar(TRC->CD_PESSOA)) 
-				    
-				    //ALTERA SITUACAO DA FOLHA
-				    UpdPess1('CD_SITUACAO_PESSOA',nSitFol,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
-				    
-				    //Integrar situação de pessoa multipla
-					INTSITPESSOAMULTIPLA(TRC->CD_PESSOA,nSitFolMult,cDataIni,cDataFin)	
-				    
-					//Integra Historico da Pessoa
-					INTHISTSITPESSOA(TRC->CD_PESSOA,nSitFol,cDataIni,cDataFin)
-				
-				EndIf
-
-			EndIf
+			//
 
 		EndIf
 		
@@ -1857,7 +1798,21 @@ Static Function BUSCAEMPDIMEP(cEmpDimep)
 
 Return cEmpresa
 
+/*/{Protheus.doc} Sqlfuncionario
+	Query principal para processar as atualizações no DIMEP
+	@type  Static Function
+	@author user
+	@since 28/02/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function Sqlfuncionario(cEmpresa) 
+
+	Local nDias := GetMV("MV_#RMDIAS",,7) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
 
 	TRB := GetNextAlias()
 	
@@ -1876,7 +1831,7 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				PPESSOA.CARTIDENTIDADE,
 	cQuery += "				PFUNC.PISPASEP,
 	cQuery += "				PFUNC.CODHORARIO,
-	cQuery += "				PFUNC.DATADEMISSAO,
+	cQuery += "				CONVERT(VARCHAR(8), DATADEMISSAO, 112) DATADEMISSAO,
 	cQuery += "				PSECAO.NROCENCUSTOCONT,
 	cQuery += "			 	ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') AS PTOCREDENCIAL " // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
 
@@ -1898,15 +1853,25 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "			    AND PFUNC.CODTIPO                                   <> ''A''
 	//cQuery += "				AND PFUNC.CODSITUACAO                               <> ''Z'' // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 	cQuery += "				AND PFUNC.CODHORARIO                                <> ''A001''
+
 	//Ticket: TI - 03/02/2022 - Adriano Savoine
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()
-	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL)
+	//cQuery += "				AND PFUNC.DATADEMISSAO                             <= GETDATE() " // debug - inibir 
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()-"+Str(nDias)+" " // debug - voltar 
+	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL) " // debug - voltar 
+	
+	// @history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine INICIO
+	/*
 	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE()   
 	cQuery += "				OR  PFUNC.RECMODIFIEDON >= GETDATE() )
 	cQuery += "				OR (PPESSOA.RECMODIFIEDON >= GETDATE() - 1
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
+	*/
+	// DEBUG - INIBIR
+	//cQuery += " AND PPESSOA.CPF=''05452774696''
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
+	//
+
 	cQuery += "				AND PFUNC.PISPASEP                                  NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
 
 	cQuery += "			ORDER BY PPESSOA.CPF
@@ -2014,6 +1979,7 @@ Static Function carFuncD(lReload)
 			TX_CAMPO08 
 		FROM 
 			[DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
+		//WHERE NU_CPF='05452774696' // DEBUG - INIBIR
 		ORDER BY
 			NU_MATRICULA
 	EndSQl
@@ -3868,6 +3834,7 @@ Static Function carCredXPes()
 	D_CREDP->(DbCloseArea())
 
 Return Nil
+
 /*/{Protheus.doc} carCredXPes
 	Função carrega férias.
 	Chamado 62721.
@@ -3923,6 +3890,7 @@ Static Function carFerias(cEmp)
 	D_FERIAS->(DbCloseArea())
 
 Return oHash
+
 /*/{Protheus.doc} carAfast
 	Função carrega afastamentos.
 	Chamado 62721.
@@ -3975,6 +3943,7 @@ Static Function carAfast(cEmp)
 	D_AFAST->(DbCloseArea())
 
 Return oHash
+
 /*/{Protheus.doc} carPesXEst
 	Função carrega função dimep.
 	Chamado 62721.

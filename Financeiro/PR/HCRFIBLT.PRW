@@ -29,8 +29,8 @@
 	@history Ticket  T.I	- Andre Vinagre       - 02/12/2020 - IMPBOLETO() - Adicionado SM0->(GetArea())SM0->(GetArea())
 	@history Ticket  7075   - Sigoli              - 06/01/2010 - Alteração da instrução de protesto
 	@history Proj.PIX/LNK   - Rodrigo Mello       - 04/02/2022 - Adicionadas condicoes quando a condicao de pagamento e PIX/LNK, enviando apenas o lgo quando ocorreu erro.
+	@history ticket 68450   - Fernando Macieira   - 18/02/2022 - Email em duplicidade para o cliente/vendedor
 /*/
-
 User Function HCRFIBLT(aParamIXB)
 
 	Local _cRet 			:= ""
@@ -3511,7 +3511,6 @@ User Function GeraBlPV(cEmpAnt, cFilAnt, cNumPV)
 	Private cCondPix  := alltrim(GetNewPar("MV_#CONPIX", "PIX"))
 	Private cCondLnk  := alltrim(GetNewPar("MV_#CONLNK", "LNK"))
 
-
 	logZBE(cNumPV + " esta na funcao GERABLPV para gerar boleto em PDF e enviar email")  // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
 
 	// Posiciono tabelas
@@ -3533,6 +3532,12 @@ User Function GeraBlPV(cEmpAnt, cFilAnt, cNumPV)
 	if ( SC5->C5_CONDPAG == cCondPix .or. SC5->C5_CONDPAG == cCondLnk ) .and. ( SE1->E1_XLOGPIX != "ERR" .or. SE1->E1_XLOGLNK != "ERR" )
 		return
 	endif
+
+	// @history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
+	If AllTrim(SC5->C5_XWSBOLG) == "S"
+		Return
+	EndIf
+	//
 
 	//If !Empty(SE1->E1_NUMBCO) .and. !Empty(SE1->E1_XWSBRAC) .and. Val(AllTrim(SE1->E1_XWSBRAC)) == Val(AllTrim(cCodRetOk))
 	If !Empty(SE1->E1_NUMBCO) .and. !Empty(SE1->E1_XWSBRAC) .and. ( Val(AllTrim(SE1->E1_XWSBRAC)) == Val(AllTrim(cCodRetOk)) .or. Val(AllTrim(SE1->E1_XWSBRAC)) == Val(AllTrim(cCodRet69)) ) // chamado 059655 - FWNM - 21/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA

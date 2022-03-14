@@ -1,6 +1,17 @@
 #include "rwmake.ch"
 
+/*/{Protheus.doc} User Function FOR003
+	
+	@type  Function
+	@author 
+	@since 
+	@version 01
+	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+/*/
+
 User Function FOR003()  
+
+	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	//Conout( DToC(Date()) + " " + Time() + " FOR003 >>> INICIO PE" )
 
@@ -53,21 +64,29 @@ User Function FOR003()
 		If dbSeek( xFilial("SA2")+_cFornece)
 
 			If SA2->A2_ATIVO <> "S"
-
-				MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" inativo")
+				if lSfInt
+					Aadd(aPedidos,{"Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" inativo"})
+				else
+					MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" inativo","Alerta")
+				endif
 				_lReturn := .F.
 
 			Endif
 
 			If SA2->A2_XLIMINS = "S" //incluido por Adriana Chamado 048333 em 25/04/2019
-	
-			MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" com Liminar INSS !")
-			
+				if lSfInt
+					Aadd(aPedidos,{"Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" com Liminar INSS !"})
+				else
+					MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" com Liminar INSS !","")
+				endif
 			Endif
-
 		Else
-
-			MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" nao encontrado")
+			if lSfInt
+				Aadd(aPedidos,{"Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" nao encontrado"})
+			else
+				MsgAlert("Fornecedor "+Alltrim(_cFornece)+"-"+ Alltrim(SA2->A2_NOME)+" nao encontrado","Alerta")
+			endif
+			
 			_lReturn := .F.
 
 		Endif                      

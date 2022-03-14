@@ -15,13 +15,13 @@
 
 function u_ADFIN129P( aParms, nE1Id, lRpc )
 
-    local cEmp := ""
-    local cFil := ""
-    private nIdE1 := 0
+    local cEmp      := ""
+    local cFil      := ""
+    private nIdE1   := 0
 
-    default aParms := {"","","01","02","",""}
-    default nE1Id  := 0
-    default lRpc := .T.
+    default aParms  := {"","","01","02","",""}
+    default nE1Id   := 0
+    default lRpc    := .T.
 
     nIdE1 := nE1Id
     
@@ -39,10 +39,6 @@ function u_ADFIN129P( aParms, nE1Id, lRpc )
     aParms := Nil
     cEmp := Nil
     cFil := Nil
-
-    //
-    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'registro de cobrancao via Super Link Cielo')
-    //
 
 return
 
@@ -217,6 +213,15 @@ static function fHtmlBody()
     local nVlrPed   := 0
     local cCnpj
     local nDescont  := 0
+    local nItem     := 0
+    local nValIST   := 0 
+    local nTotICST  := 0
+    
+    dbSelectArea("SB1")
+    SB1->(dbSetOrder(1))
+
+    dbSelectArea("SF4")
+    SF4->(dbSetOrder(1))
 
     BeginContent var cBody
         <!doctype html>
@@ -354,7 +359,7 @@ static function fHtmlBody()
                 </table>
                 <table cellpadding="0" cellspacing="0" style="width: 100%;line-height: inherit;text-align: left;padding-bottom: 20px;">
                     <tr>
-                        <td colspan="10"
+                        <td colspan="11"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             <strong>ITENS DO PEDIDO</strong>
                         </td>
@@ -366,7 +371,7 @@ static function fHtmlBody()
                         <td width="30%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             Descrição</td>
-                        <td align="center" width="10%"
+                        <td align="center" width="5%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             UM</td>
                         <td align="right" width="5%"
@@ -387,6 +392,9 @@ static function fHtmlBody()
                         <td align="right" width="10%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             Vl.Unit.Liq</td>
+                        <td align="right" width="5%"
+                            style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
+                            Icms.St</td>
                         <td align="right" width="10%"
                             style="padding: 5px;vertical-align: top;background: #eee;border-bottom: 1px solid #ddd;font-weight: bold;">
                             Vl.Total Liq.</td>
@@ -409,6 +417,9 @@ static function fHtmlBody()
                             style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;"></td>
                         <td align="right" 
                             style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;"></td>
+                        <td align="right" 
+                            style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;">#TOTALICST
+                            </td>
                         <td align="right"
                             style="padding: 5px;vertical-align: top;border-top: 2px solid #eee;font-weight: bold;">#VALORTOTAL
                         </td>
@@ -448,7 +459,6 @@ static function fHtmlBody()
             </div>
         </body>
     </html>
-
     endContent
 
     BeginContent var cItensDef
@@ -462,6 +472,7 @@ static function fHtmlBody()
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#PRCITEM</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#DESCONTOITEM</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#PRCVITEM</td>
+            <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#ICMSST</td>
             <td align="right" style="padding: 5px;vertical-align: top;border-bottom: 1px solid #eee;">#TOTALITEM</td>
         </tr>
     endContent
@@ -499,9 +510,19 @@ static function fHtmlBody()
 
     beginSQL Alias cAlias
         SELECT 
-            SC6.R_E_C_N_O_ AS [C6_RECNO]
+            SC6.R_E_C_N_O_ AS [C6_RECNO],
+            SB1.R_E_C_N_O_ AS [B1_RECNO],
+            SF4.R_E_C_N_O_ AS [F4_RECNO]
         FROM 
             %table:SC6% SC6
+            INNER JOIN %table:SB1% SB1 (NOLOCK)
+            ON SB1.%notdel%
+            AND B1_FILIAL = %xFilial:SB1%
+            AND C6_PRODUTO = B1_COD
+            INNER JOIN %table:SF4% SF4 (NOLOCK)
+            ON SF4.%notdel%
+            AND F4_FILIAL = %xFilial:SB1%
+            AND C6_TES = F4_CODIGO
         WHERE
                 SC6.%notdel%
             AND C6_FILIAL   = %xFilial:SC6%
@@ -509,15 +530,51 @@ static function fHtmlBody()
         ORDER BY
             C6_ITEM
     endSQL
-    
+        
     while (cAlias)->(!eof())
 
         SC6->( dbGoTo( (cAlias)->C6_RECNO ) ) 
+        SB1->( dbGoTo( (cAlias)->B1_RECNO ) )         
+        SF4->( dbGoTo( (cAlias)->F4_RECNO ) )         
+        nItem++
 
-        nQtdPed += SC6->C6_QTDVEN
-        n2QtdPed += SC6->C6_UNSVEN
-        nVlrPed += SC6->C6_VALOR
-        nDescont := SC6->(C6_PRCVEN-C6_VALDESC)
+        MaFisIni(SC5->C5_CLIENTE,;                   // 1-Codigo Cliente/Fornecedor
+                SC5->C5_LOJACLI,;                    // 2-Loja do Cliente/Fornecedor
+                If(SC5->C5_TIPO$'DB',"F","C"),;      // 3-C:Cliente , F:Fornecedor
+                SC5->C5_TIPO,;                       // 4-Tipo da NF
+                SC5->C5_TIPOCLI,;                    // 5-Tipo do Cliente/Fornecedor
+                MaFisRelImp("MT100",{"SF2","SD2"}),; // 6-Relacao de Impostos que suportados no arquivo
+                ,;                                   // 7-Tipo de complemento
+                ,;                                   // 8-Permite Incluir Impostos no Rodape .T./.F.
+                "SB1",;                              // 9-Alias do Cadastro de Produtos - ("SBI" P/ Front Loja)
+                "MATA461")                           // 10-Nome da rotina que esta utilizando a funcao
+
+		MaFisAdd(   SC6->C6_PRODUTO,;                     // 1-Codigo do Produto                 ( Obrigatorio )
+					SC6->C6_TES,;                         // 2-Codigo do TES                     ( Opcional )
+					SC6->C6_QTDVEN,;                      // 3-Quantidade                     ( Obrigatorio )
+					SC6->C6_PRCVEN,;                      // 4-Preco Unitario                 ( Obrigatorio )
+					SC6->C6_VALDESC,;                     // 5 desconto
+					SC6->C6_NFORI,;                       // 6-Numero da NF Original             ( Devolucao/Benef )
+					SC6->C6_SERIORI,;                     // 7-Serie da NF Original             ( Devolucao/Benef )
+					0,;                                   // 8-RecNo da NF Original no arq SD1/SD2
+					SC5->C5_FRETE/nItem,;                 // 9-Valor do Frete do Item         ( Opcional )
+					SC5->C5_DESPESA/nItem,;               // 10-Valor da Despesa do item         ( Opcional )
+					SC5->C5_SEGURO/nItem,;                // 11-Valor do Seguro do item         ( Opcional )
+					0,;                                   // 12-Valor do Frete Autonomo         ( Opcional )
+					SC6->C6_VALOR,;                       // 13-Valor da Mercadoria             ( Obrigatorio )
+					0,;                                   // 14-Valor da Embalagem             ( Opcional )
+					0,;                                   // 15-RecNo do SB1
+					0)                                    // 16-RecNo do SF4
+        
+        nValIST   := MaFisRet(,'NF_VALSOL')
+        
+        MaFisEnd()
+
+        nQtdPed     += SC6->C6_QTDVEN
+        n2QtdPed    += SC6->C6_UNSVEN
+        nVlrPed     += SC6->C6_VALOR
+        nDescont    := SC6->(C6_PRCVEN-C6_VALDESC)
+        nTotICST    += nValIST
 
         cItensTmp := cItensDef
         cItensTmp := StrTran( cItensTmp, "#CODITEM"     , SC6->C6_PRODUTO   )
@@ -529,16 +586,19 @@ static function fHtmlBody()
         cItensTmp := StrTran( cItensTmp, "#PRCITEM"     , transform( SC6->C6_PRCVEN, PesqPict( "SC6", "C6_PRCVEN" ))  )
         cItensTmp := StrTran( cItensTmp, "#DESCONTOITEM", iif(nDescont>0,transform( SC6->C6_VALDESC, PesqPict( "SC6", "C6_VALDESC" )),"") )
         cItensTmp := StrTran( cItensTmp, "#PRCVITEM"    , transform( SC6->(C6_PRCVEN-C6_VALDESC), PesqPict( "SC6", "C6_PRCVEN" ))   )
-        cItensTmp := StrTran( cItensTmp, "#TOTALITEM"   , transform( SC6->C6_VALOR, PesqPict( "SC6", "C6_VALOR" ))   )
+        cItensTmp := StrTran( cItensTmp, "#ICMSST"      , transform( nValIST, PesqPict( "SC6", "C6_VALOR" ))   )
+        cItensTmp := StrTran( cItensTmp, "#TOTALITEM"   , transform( SC6->C6_VALOR + nValIST, PesqPict( "SC6", "C6_VALOR" ))   )
         cItensRet += cItensTmp
         (cAlias)->(dbSkip())
     enddo
 
     (cAlias)->(dbCloseArea())
+    
     cBody := StrTran( cBody, "#ITENS"       , cItensRet )
     cBody := StrTran( cBody, "#QTDTOTAL"    , transform( nQtdPed , PesqPict( "SC6", "C6_QTDVEN" )) )
     cBody := StrTran( cBody, "#2QTDTOTAL"   , transform( n2QtdPed, PesqPict( "SC6", "C6_UNSVEN" )) )
-    cBody := StrTran( cBody, "#VALORTOTAL"  , transform( nVlrPed , PesqPict( "SC6", "C6_VALOR"  )) )
+    cBody := StrTran( cBody, "#TOTALICST"   , transform( nTotICST, PesqPict( "SC6", "C6_VALOR" )) )
+    cBody := StrTran( cBody, "#VALORTOTAL"  , transform( nVlrPed + nTotICST, PesqPict( "SC6", "C6_VALOR"  )) )
 
 return cBody
 

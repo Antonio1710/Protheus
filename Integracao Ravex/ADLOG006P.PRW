@@ -3,6 +3,7 @@
 #INCLUDE "TBICONN.CH"
 #INCLUDE "TBICODE.CH"   
 #INCLUDE "XMLXFUN.CH" 
+#INCLUDE "TOPCONN.CH"
 
 /*/{Protheus.doc} User Function ADLOG006P
 	Programa consumir de webservice ravex para baixa de devolucoes de notas fiscais 
@@ -11,8 +12,9 @@
 	@version 01
 	@history chamado 052861 William Costa 23/10/2019 - Retirado todas as divisões por 1000 nas quantidades de devoluções
 	@history chamado 052977 William Costa 30/10/2019 - Identificado erro para encontrar o produto o fator de conversão e tipo de conversão e alterado os campos de quantidade na devolução total e parcial
+	@history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
+	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados) + Function ChkDupSZX (via query pois já existe seek) + Inclusão PadR
 /*/
-
 User Function ADLOG006P()
 
 	Private nCont3 := 0
@@ -41,9 +43,7 @@ User Function ADLOG006P()
 	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 
 	FOR nCont3 := 1 TO 2
-
 		CRIAWEBSERVICE()
-
 	NEXT nCont3
 	
 	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
@@ -90,11 +90,11 @@ STATIC FUNCTION RETORNAVIAGEM()
 	oWs:CCNPJEMISSOR       := '60037058000301'
 	oWs:LVIAGEMFECHADAS    := IIF(nCont3 == 1,.F.,.T.) 
 	oWs:LVIAGENSCANCELADAS := .F.
-	oWs:NPERIODOHORAS      := 24
+	oWs:NPERIODOHORAS      := 24 // debug - voltar!
 
 	If oWs:RetornarAnomalias()
 	    // autenticação ok
-	    oResp   := oWs:oWSRetornarAnomaliasResult  
+	    oResp   := oWs:oWSRetornarAnomaliasResult
 	    
 	    IMPORTAXML()
 	    
@@ -103,6 +103,8 @@ STATIC FUNCTION RETORNAVIAGEM()
 RETURN(NIL)     	
 
 STATIC FUNCTION IMPORTAXML()
+
+	Local lExistSZX     := .f. // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
 
 	Private nCont       := 0
 	Private nCont2      := 0
@@ -134,6 +136,17 @@ STATIC FUNCTION IMPORTAXML()
 	
 			For nCont:= 1 To Len(oResp:OWSANOMALIA)  
 
+				// @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
+				// debug - inibir
+				/*
+				If AllTrim(oResp:OWSANOMALIA[nCont]:CNUMERONF) == "2492557"
+					lDebug := .t.
+				Else
+					Loop
+				EndIf
+				*/
+				// debug - inibir
+
                 // ** INICIO VERIFICA SE A VIAGEM JA FOI ALTERADA ** //
 				// CONFORME NOVA REGRA DA LOGISTICA SE A VIAGEM JA FOI ALTERADA
 				// O WEBSERVICE NAO PODE ALTERAR MAIS NADA
@@ -143,799 +156,819 @@ STATIC FUNCTION IMPORTAXML()
 				//não deixa sobrepor dados de ocorrencia depois que a letra é trocado de O
 
 				DBSELECTAREA("SZD")
-				DbSetOrder(1) 
+				DbSetOrder(1) // ZD_FILIAL, ZD_NUMNF, ZD_SERIE, R_E_C_N_O_, D_E_L_E_T_
 				IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
 						  STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
 						  
+						  // @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
+						  /*
 						  IF SZD->ZD_DEVTOT == 'P'
-						  
 						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA
-						  
 						  ENDIF	
 
 						  IF SZD->ZD_DEVTOT == 'Q'
-						  
-						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA
-						  
+						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA // DEBUG - VOLTAR - NF 002499061
 						  ENDIF	
 
 						  IF SZD->ZD_DEVTOT == 'T'
-						  
 						  	LOOP // NAO DEIXA CONTINUAR O PROGRAMA
-						  
 						  ENDIF	
+						  */
+						  //
+
 				ENDIF		  
 				SZD->(dbCloseArea())		  
 				
 				// ** FINAL SE A VIAGEM JA FOI ALTERADA ** //
 			
-				DBSELECTAREA("SC5")
-				DbOrderNickName("SC5_F") 
-				//achou a nota no sc5          
-				IF DBSEEK(FWFILIAL("SC5")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),.T.) 
-					//inicio criar uma ocorrencia 
-					// ******* ALTERA VALORES DA TABELAS PARA ENTREGUE 
-					DO CASE
-					    // ************************ INICIO DEVOLUCAO TOTAL ****************** //
-						CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO == 1
+				Begin Transaction // @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 
-							IF	RecLock("SC5",.F.)
-							
-									SC5->C5_MOK := '03'
-						
-								MsUnlock()            
+					DBSELECTAREA("SC5")
+					DbOrderNickName("SC5_F") 
+					//achou a nota no sc5          
+					IF DBSEEK(FWFILIAL("SC5")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),.T.) 
+
+						//inicio criar uma ocorrencia 
+						// ******* ALTERA VALORES DA TABELAS PARA ENTREGUE 
+						DO CASE
+
+							////////////////////////////////////////////////////////////////////////
+							// ************************ INICIO DEVOLUCAO TOTAL ****************** //
+							////////////////////////////////////////////////////////////////////////
+							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO == 1
+
+								IF	RecLock("SC5",.F.)
+										SC5->C5_MOK := '03'
+									MsUnlock()            
+								ENDIF
 								
-							ENDIF
-							
-							// *********** INICIO PARA CARREGAR O SZD *********************** // 
-							
-							DBSELECTAREA("ZV4")
-							ZV4->(DBSETORDER(1))
-							IF DBSEEK(xFilial("ZV4")+Alltrim(SC5->C5_PLACA))
-								cCPFM := ZV4_CPF
-								IF !EMPTY(cCPFM)
-									DBSELECTAREA("ZVC")
-									DBSETORDER(1)
-									IF DBSEEK(FWFILIAL("ZVC")+cCPFM)
-										cNomMot := ZVC->ZVC_MOTORI
-										cTelMot := ZVC->ZVC_TELPRI
-										cEmlMot := ZVC->ZVC_EMLMOT
+								// *********** INICIO PARA CARREGAR O SZD *********************** // 
+								
+								DBSELECTAREA("ZV4")
+								ZV4->(DBSETORDER(1))
+								IF DBSEEK(xFilial("ZV4")+Alltrim(SC5->C5_PLACA))
+									cCPFM := ZV4_CPF
+									IF !EMPTY(cCPFM)
+										DBSELECTAREA("ZVC")
+										DBSETORDER(1)
+										IF DBSEEK(FWFILIAL("ZVC")+cCPFM)
+											cNomMot := ZVC->ZVC_MOTORI
+											cTelMot := ZVC->ZVC_TELPRI
+											cEmlMot := ZVC->ZVC_EMLMOT
+										ENDIF  
 									ENDIF  
-								ENDIF  
-							ENDIF     
-							
-							// NOME DO RESPONSAVEL E DESCRICAO DO MOTIVO
-							//Buscar Nome do Responsavel
-							DBSELECTAREA("SZU")
-							DBSETORDER(2)
-							IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CSETOR))
-								cRespNome  := SZU->ZU_DESCRI
-								cCodRespon := SZU->ZU_COD
-							ENDIF
-							
-							//Buscar Motivo
-							DBSELECTAREA("SZS")
-							DBSETORDER(1)
-							IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO))
-								cDescMotiv := SZS->ZS_DESCRI
-							ENDIF
-							
-							cCodCTRL := SUBSTR(FWFILIAL("SC5"),2,1) + ;
-										SUBSTR(SC5->C5_NUM,6,1)     + ;
-										SUBSTR(SC5->C5_NUM,5,1)     + ;
-										SUBSTR(SC5->C5_NUM,4,1)     + ;
-										SUBSTR(SC5->C5_NUM,3,1)     + ;
-										SUBSTR(SC5->C5_NUM,2,1)     + ;
-										SUBSTR(SC5->C5_NUM,2,1)     + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+								ENDIF     
 								
-							DBSELECTAREA("SZD")
-							DBSETORDER(1)
-							DBGOTOP()
-							IF !DBSEEK(FWFILIAL("SZD") + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))  
-										
-								RecLock("SZD",.T.)
-									SZD->ZD_FILIAL	:= FWFILIAL("SZD")
-									SZD->ZD_NUMNF	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-									SZD->ZD_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)
-									SZD->ZD_CODCLI	:= SC5->C5_CLIENTE
-									SZD->ZD_LOJA   	:= SC5->C5_LOJACLI
-									SZD->ZD_NOMECLI	:= SC5->C5_NOMECLI   
-									SZD->ZD_DTDEV	:= DATE()    
-									SZD->ZD_RESPONS	:= cCodRespon
-									SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
-									SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
-									SZD->ZD_RESPNOM	:= cRespNome
-									SZD->ZD_DESCMOT	:= cDescMotiv
-									SZD->ZD_PEDIDO	:= SC5->C5_NUM
-									SZD->ZD_ROTEIRO	:= SC5->C5_ROTEIRO
-									SZD->ZD_PLACA	:= SC5->C5_PLACA
-									SZD->ZD_SEQUENC	:= SC5->C5_SEQUENC
-									SZD->ZD_DEVTOT  := 'T'
-									SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
-									SZD->ZD_VEND	:= SC5->C5_VEND1
-									SZD->ZD_MOTORI  := cNomMot
-									SZD->ZD_TELEFON := cTelMot
-									SZD->ZD_EMLMOT  := cEmlMot
-									SZD->ZD_RESP1   := ''
-									SZD->ZD_PEDPERN := ''
-									SZD->ZD_PERNOIT := .F.
-									SZD->ZD_CODMOTP := ''
-									SZD->ZD_MTVPERN := ''
-									SZD->ZD_XPLACAS	:= SC5->C5_XPLACAS				
-									SZD->ZD_CONTROL := cCodCTRL
-									SZD->ZD_NRDEVOL := '00'   
-									SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
+								// NOME DO RESPONSAVEL E DESCRICAO DO MOTIVO
+								//Buscar Nome do Responsavel
+								DBSELECTAREA("SZU")
+								DBSETORDER(2)
+								IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CSETOR))
+									cRespNome  := SZU->ZU_DESCRI
+									cCodRespon := SZU->ZU_COD
+								ENDIF
+								
+								//Buscar Motivo
+								DBSELECTAREA("SZS")
+								DBSETORDER(1)
+								IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO))
+									cDescMotiv := SZS->ZS_DESCRI
+								ENDIF
+								
+								cCodCTRL := SUBSTR(FWFILIAL("SC5"),2,1) + ;
+											SUBSTR(SC5->C5_NUM,6,1)     + ;
+											SUBSTR(SC5->C5_NUM,5,1)     + ;
+											SUBSTR(SC5->C5_NUM,4,1)     + ;
+											SUBSTR(SC5->C5_NUM,3,1)     + ;
+											SUBSTR(SC5->C5_NUM,2,1)     + ;
+											SUBSTR(SC5->C5_NUM,2,1)     + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
 									
-								MsUnLock()
-							ENDIF
-							SZD->(dbCloseArea())
-							
-							// *********** FINAL PARA CARREGAR O SZD  ***********************  //
-							DBSELECTAREA("SZD")
-							DbSetOrder(1) 
-							IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
-										
-								IF RecLock("SZD",.F.)      
-										
-										
+								DBSELECTAREA("SZD")
+								DBSETORDER(1)
+								DBGOTOP()
+								IF !DBSEEK(FWFILIAL("SZD") + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))  
+											
+									RecLock("SZD",.T.)
+										SZD->ZD_FILIAL	:= FWFILIAL("SZD")
+										SZD->ZD_NUMNF	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+										SZD->ZD_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)
+										SZD->ZD_CODCLI	:= SC5->C5_CLIENTE
+										SZD->ZD_LOJA   	:= SC5->C5_LOJACLI
+										SZD->ZD_NOMECLI	:= SC5->C5_NOMECLI   
+										SZD->ZD_DTDEV	:= DATE()    
 										SZD->ZD_RESPONS	:= cCodRespon
 										SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
 										SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
 										SZD->ZD_RESPNOM	:= cRespNome
 										SZD->ZD_DESCMOT	:= cDescMotiv
+										SZD->ZD_PEDIDO	:= SC5->C5_NUM
+										SZD->ZD_ROTEIRO	:= SC5->C5_ROTEIRO
+										SZD->ZD_PLACA	:= SC5->C5_PLACA
+										SZD->ZD_SEQUENC	:= SC5->C5_SEQUENC
 										SZD->ZD_DEVTOT  := 'T'
-										SZD->ZD_CONTROL := cCodCTRL
 										SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+										SZD->ZD_VEND	:= SC5->C5_VEND1
+										SZD->ZD_MOTORI  := cNomMot
+										SZD->ZD_TELEFON := cTelMot
+										SZD->ZD_EMLMOT  := cEmlMot
+										SZD->ZD_RESP1   := ''
+										SZD->ZD_PEDPERN := ''
+										SZD->ZD_PERNOIT := .F.
+										SZD->ZD_CODMOTP := ''
+										SZD->ZD_MTVPERN := ''
+										SZD->ZD_XPLACAS	:= SC5->C5_XPLACAS				
+										SZD->ZD_CONTROL := cCodCTRL
+										SZD->ZD_NRDEVOL := '00'   
 										SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
 										
-									MsUnlock()
-									
+									MsUnLock()
+								ENDIF
+								SZD->(dbCloseArea())
+								
+								// *********** FINAL PARA CARREGAR O SZD  ***********************  //
+								DBSELECTAREA("SZD")
+								DbSetOrder(1) 
+								IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
+											
+									IF RecLock("SZD",.F.)      
+											
+											
+											SZD->ZD_RESPONS	:= cCodRespon
+											SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
+											SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
+											SZD->ZD_RESPNOM	:= cRespNome
+											SZD->ZD_DESCMOT	:= cDescMotiv
+											SZD->ZD_DEVTOT  := 'T'
+											SZD->ZD_CONTROL := cCodCTRL
+											SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+											SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
+											
+										MsUnlock()
+										
+									ENDIF	
+												
 								ENDIF	
+								SZD->(dbCloseArea()) 
+								
+								For nCont2:= 1 To Len(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA)
+								
+									SQLITEM(FWFILIAL("SC5"),                                                ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),  ;
+											SC5->C5_CLIENTE,                                     ;
+											SC5->C5_LOJACLI,                                     ;
+											oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											
-							ENDIF	
-							SZD->(dbCloseArea()) 
-							
-							For nCont2:= 1 To Len(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA)
-							
-								SQLITEM(FWFILIAL("SC5"),                                                ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),  ;
-										SC5->C5_CLIENTE,                                     ;
-										SC5->C5_LOJACLI,                                     ;
-										oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										
-								While TRB->(!EOF())
-					
-									DBSELECTAREA("SZX")
-									DBSETORDER(2)
-									IF !DBSEEK(FWFILIAL("SC5") + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-												oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
-										
-										nConversao := 1
-										nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										cTipoConv  := ''
-										cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										RecLock("SZX",.T.)
-										
-											SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-											SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-											SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-											SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-											SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-											SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-											SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
-											SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
-											SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-											SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-											SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-											SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-											SZX->ZX_OBSER	:= ''  // Observacao
-											SZX->ZX_TOTAL	:= TRB->D2_TOTAL        // Valor total da devolução
-											SZX->ZX_QUEBRA  := 0  // QUEBRA
-											SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
 											
-										MsUnLock()                                  
-									ENDIF	
-									SZX->(dbCloseArea())
-													
-									DBSELECTAREA("SZX")
-									DBSETORDER(2)
-									IF DBSEEK(FWFILIAL("SZX") + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-												oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
-									
-										nConversao := 1
-										nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										cTipoConv  := ''
-										cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										RecLock("SZX",.F.)
-										
-											SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-											SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-											SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-											SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-											SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-											SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-											SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA // Quantidade Devolvida
-											SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)  // Quantidade Devolvida
-											SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-											SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-											SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-											SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-											SZX->ZX_OBSER	:= ''  // Observacao
-											SZX->ZX_TOTAL	:= TRB->D2_TOTAL        // Valor total da devolução
-											SZX->ZX_QUEBRA  := 0  // QUEBRA
-											SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+									While TRB->(!EOF())
+						
+										DBSELECTAREA("SZX")
+										DBSETORDER(2)
+										IF !DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 											
-										MsUnLock()                                  
-									ENDIF	
-									SZX->(dbCloseArea())
-										
-									TRB->(dbSkip())
-								ENDDO
-								TRB->(dbCloseArea())
+											nConversao := 1
+											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											cTipoConv  := ''
+											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											
+											// @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+											lExistSZX := ChkDupSZX(FWFILIAL("SZX"), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2), oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 
-							NEXT
-							
-							// **************** INICIO VERIFICA APROVACAO ******************** //		
-					
-							VerificaAprovacao(FWFILIAL("SC5"),STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))
-					
-							// **************** FINAL VERIFICA APROVACAO ******************** //
-							
-							cMetodo := 'Devolver'
-							nId     := 1
-							aDev  := {}
-							Aadd(aDev,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
-							Aadd(aDevolucoes,aDev)
-							
-						// **************** FINAL DEVOLUCAO TOTAL    ******************* //
-						
-						// **************** INICIO DEVOLUCAO PARCIAL ******************* //
-						
-						CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
-						     oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO <> '39'
-							
-							IF	RecLock("SC5",.F.)
-							
-									SC5->C5_MOK := '03'
-						
-								MsUnlock()            
+											If !lExistSZX
+
+												RecLock("SZX",.T.)
+													SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+													SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+													SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+													SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+													SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+													SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+													SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
+													SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
+													SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+													SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+													SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+													SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+													SZX->ZX_OBSER	:= ''  // Observacao
+													SZX->ZX_TOTAL	:= TRB->D2_TOTAL        // Valor total da devolução
+													SZX->ZX_QUEBRA  := 0  // QUEBRA
+													SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												MsUnLock()
+											
+											EndIf
+
+										ENDIF	
+										SZX->(dbCloseArea())
+														
+										DBSELECTAREA("SZX")
+										DBSETORDER(2)
+										IF DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
+										
+											nConversao := 1
+											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											cTipoConv  := ''
+											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											
+											RecLock("SZX",.F.)
+											
+												SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+												SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+												SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+												SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+												SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+												SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+												SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA // Quantidade Devolvida
+												SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)  // Quantidade Devolvida
+												SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+												SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+												SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+												SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+												SZX->ZX_OBSER	:= ''  // Observacao
+												SZX->ZX_TOTAL	:= TRB->D2_TOTAL        // Valor total da devolução
+												SZX->ZX_QUEBRA  := 0  // QUEBRA
+												SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												
+											MsUnLock()                                  
+										ENDIF	
+										SZX->(dbCloseArea())
+											
+										TRB->(dbSkip())
+									ENDDO
+									TRB->(dbCloseArea())
+
+								NEXT
 								
-							ENDIF
+								// **************** INICIO VERIFICA APROVACAO ******************** //		
+						
+								VerificaAprovacao(FWFILIAL("SC5"),STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),;
+													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))
+						
+								// **************** FINAL VERIFICA APROVACAO ******************** //
+								
+								cMetodo := 'Devolver'
+								nId     := 1
+								aDev  := {}
+								Aadd(aDev,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
+								Aadd(aDevolucoes,aDev)
+								
+							// **************** FINAL DEVOLUCAO TOTAL    ******************* //
 							
-							// *********** INICIO PARA CARREGAR O SZD *********************** // 
-							
-							DBSELECTAREA("ZV4")
-							ZV4->(DBSETORDER(1))
-							IF DBSEEK(xFilial("ZV4")+Alltrim(SC5->C5_PLACA))
-								cCPFM := ZV4_CPF
-								IF !EMPTY(cCPFM)
-									DBSELECTAREA("ZVC")
-									DBSETORDER(1)
-									IF DBSEEK(FWFILIAL("ZVC")+cCPFM)
-										cNomMot := ZVC->ZVC_MOTORI
-										cTelMot := ZVC->ZVC_TELPRI
-										cEmlMot := ZVC->ZVC_EMLMOT
+
+
+							///////////////////////////////////////////////////////////////////
+							// **************** INICIO DEVOLUCAO PARCIAL ******************* //
+							///////////////////////////////////////////////////////////////////
+							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
+								oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO <> '39'
+								
+								IF	RecLock("SC5",.F.)
+										SC5->C5_MOK := '03'
+									MsUnlock()            
+								ENDIF
+								
+								// *********** INICIO PARA CARREGAR O SZD *********************** // 
+								
+								DBSELECTAREA("ZV4")
+								ZV4->(DBSETORDER(1))
+								IF DBSEEK(xFilial("ZV4")+Alltrim(SC5->C5_PLACA))
+									cCPFM := ZV4_CPF
+									IF !EMPTY(cCPFM)
+										DBSELECTAREA("ZVC")
+										DBSETORDER(1)
+										IF DBSEEK(FWFILIAL("ZVC")+cCPFM)
+											cNomMot := ZVC->ZVC_MOTORI
+											cTelMot := ZVC->ZVC_TELPRI
+											cEmlMot := ZVC->ZVC_EMLMOT
+										ENDIF  
 									ENDIF  
-								ENDIF  
-							ENDIF     
-							
-							// NOME DO RESPONSAVEL E DESCRICAO DO MOTIVO
-							//Buscar Nome do Responsavel
-							DBSELECTAREA("SZU")
-							DBSETORDER(2)
-							IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CSETOR))
-								cRespNome  := SZU->ZU_DESCRI
-								cCodRespon := SZU->ZU_COD
-							ENDIF
-							
-							//Buscar Motivo
-							DBSELECTAREA("SZS")
-							DBSETORDER(1)
-							IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO))
-								cDescMotiv := SZS->ZS_DESCRI
-							ENDIF
-							
-							cCodCTRL := SUBSTR(FWFILIAL("SC5"),2,1) + ;
-										SUBSTR(SC5->C5_NUM,6,1)     + ;
-										SUBSTR(SC5->C5_NUM,5,1)     + ;
-										SUBSTR(SC5->C5_NUM,4,1)     + ;
-										SUBSTR(SC5->C5_NUM,3,1)     + ;
-										SUBSTR(SC5->C5_NUM,2,1)     + ;
-										SUBSTR(SC5->C5_NUM,2,1)     + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+								ENDIF     
 								
-							DBSELECTAREA("SZD")
-							DBSETORDER(1)
-							DBGOTOP()
-							IF !DBSEEK(FWFILIAL("SZD") + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))  
-										
-								RecLock("SZD",.T.)
-									SZD->ZD_FILIAL	:= FWFILIAL("SZD")
-									SZD->ZD_NUMNF	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-									SZD->ZD_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)
-									SZD->ZD_CODCLI	:= SC5->C5_CLIENTE
-									SZD->ZD_LOJA   	:= SC5->C5_LOJACLI
-									SZD->ZD_NOMECLI	:= SC5->C5_NOMECLI   
-									SZD->ZD_DTDEV	:= DATE()    
-									SZD->ZD_RESPONS	:= cCodRespon
-									SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
-									SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
-									SZD->ZD_RESPNOM	:= cRespNome
-									SZD->ZD_DESCMOT	:= cDescMotiv
-									SZD->ZD_PEDIDO	:= SC5->C5_NUM
-									SZD->ZD_ROTEIRO	:= SC5->C5_ROTEIRO
-									SZD->ZD_PLACA	:= SC5->C5_PLACA
-									SZD->ZD_SEQUENC	:= SC5->C5_SEQUENC
-									SZD->ZD_DEVTOT  := 'P'
-									SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
-									SZD->ZD_VEND	:= SC5->C5_VEND1
-									SZD->ZD_MOTORI  := cNomMot
-									SZD->ZD_TELEFON := cTelMot
-									SZD->ZD_EMLMOT  := cEmlMot
-									SZD->ZD_RESP1   := ''
-									SZD->ZD_PEDPERN := ''
-									SZD->ZD_PERNOIT := .F.
-									SZD->ZD_CODMOTP := ''
-									SZD->ZD_MTVPERN := ''
-									SZD->ZD_XPLACAS	:= SC5->C5_XPLACAS				
-									SZD->ZD_CONTROL := cCodCTRL
-									SZD->ZD_NRDEVOL := '00'                                     
-									SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
+								// NOME DO RESPONSAVEL E DESCRICAO DO MOTIVO
+								//Buscar Nome do Responsavel
+								DBSELECTAREA("SZU")
+								DBSETORDER(2)
+								IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CSETOR))
+									cRespNome  := SZU->ZU_DESCRI
+									cCodRespon := SZU->ZU_COD
+								ENDIF
+								
+								//Buscar Motivo
+								DBSELECTAREA("SZS")
+								DBSETORDER(1)
+								IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO))
+									cDescMotiv := SZS->ZS_DESCRI
+								ENDIF
+								
+								cCodCTRL := SUBSTR(FWFILIAL("SC5"),2,1) + ;
+											SUBSTR(SC5->C5_NUM,6,1)     + ;
+											SUBSTR(SC5->C5_NUM,5,1)     + ;
+											SUBSTR(SC5->C5_NUM,4,1)     + ;
+											SUBSTR(SC5->C5_NUM,3,1)     + ;
+											SUBSTR(SC5->C5_NUM,2,1)     + ;
+											SUBSTR(SC5->C5_NUM,2,1)     + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
 									
-								MsUnLock()
-							ENDIF
-							SZD->(dbCloseArea())
-							
-							// *********** FINAL PARA CARREGAR O SZD  ***********************  //
-							DBSELECTAREA("SZD")
-							DbSetOrder(1) 
-							IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
-										
-								IF RecLock("SZD",.F.)      
-										
-										
+								DBSELECTAREA("SZD")
+								DBSETORDER(1)
+								DBGOTOP()
+								IF !DBSEEK(FWFILIAL("SZD") + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))  
+											
+									RecLock("SZD",.T.)
+										SZD->ZD_FILIAL	:= FWFILIAL("SZD")
+										SZD->ZD_NUMNF	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+										SZD->ZD_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)
+										SZD->ZD_CODCLI	:= SC5->C5_CLIENTE
+										SZD->ZD_LOJA   	:= SC5->C5_LOJACLI
+										SZD->ZD_NOMECLI	:= SC5->C5_NOMECLI   
+										SZD->ZD_DTDEV	:= DATE()    
 										SZD->ZD_RESPONS	:= cCodRespon
 										SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
 										SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
 										SZD->ZD_RESPNOM	:= cRespNome
 										SZD->ZD_DESCMOT	:= cDescMotiv
+										SZD->ZD_PEDIDO	:= SC5->C5_NUM
+										SZD->ZD_ROTEIRO	:= SC5->C5_ROTEIRO
+										SZD->ZD_PLACA	:= SC5->C5_PLACA
+										SZD->ZD_SEQUENC	:= SC5->C5_SEQUENC
 										SZD->ZD_DEVTOT  := 'P'
-										SZD->ZD_CONTROL := cCodCTRL
 										SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+										SZD->ZD_VEND	:= SC5->C5_VEND1
+										SZD->ZD_MOTORI  := cNomMot
+										SZD->ZD_TELEFON := cTelMot
+										SZD->ZD_EMLMOT  := cEmlMot
+										SZD->ZD_RESP1   := ''
+										SZD->ZD_PEDPERN := ''
+										SZD->ZD_PERNOIT := .F.
+										SZD->ZD_CODMOTP := ''
+										SZD->ZD_MTVPERN := ''
+										SZD->ZD_XPLACAS	:= SC5->C5_XPLACAS				
+										SZD->ZD_CONTROL := cCodCTRL
+										SZD->ZD_NRDEVOL := '00'                                     
 										SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
 										
-									MsUnlock()
-									
+									MsUnLock()
+								ENDIF
+								SZD->(dbCloseArea())
+								
+								// *********** FINAL PARA CARREGAR O SZD  ***********************  //
+								DBSELECTAREA("SZD")
+								DbSetOrder(1) 
+								IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
+											
+									IF RecLock("SZD",.F.)      
+											
+											
+											SZD->ZD_RESPONS	:= cCodRespon
+											SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
+											SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
+											SZD->ZD_RESPNOM	:= cRespNome
+											SZD->ZD_DESCMOT	:= cDescMotiv
+											SZD->ZD_DEVTOT  := 'P'
+											SZD->ZD_CONTROL := cCodCTRL
+											SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+											SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
+											
+										MsUnlock()
+										
+									ENDIF	
+												
 								ENDIF	
+								SZD->(dbCloseArea()) 
+								
+								For nCont2:= 1 To Len(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA)
+								
+									SQLITEM(FWFILIAL("SC5"),                                                ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),  ;
+											SC5->C5_CLIENTE,                                     ;
+											SC5->C5_LOJACLI,                                     ;
+											oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											
-							ENDIF	
-							SZD->(dbCloseArea()) 
-							
-							For nCont2:= 1 To Len(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA)
-							
-								SQLITEM(FWFILIAL("SC5"),                                                ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),  ;
-										SC5->C5_CLIENTE,                                     ;
-										SC5->C5_LOJACLI,                                     ;
-										oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										
-								While TRB->(!EOF())
-					
-									DBSELECTAREA("SZX")
-									DBSETORDER(2)
-									IF !DBSEEK(FWFILIAL("SZX") + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-												oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
-									
-										nConversao := 1
-										nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										cTipoConv  := ''
-										cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										RecLock("SZX",.T.)
 											
-											nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
-											SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-											SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-											SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-											SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-											SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-											SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-											SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
-											SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
-											SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-											SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-											SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-											SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-											SZX->ZX_OBSER	:= ''  // Observacao
-											SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)         // Valor total da devolução
-											SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA
-											SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-											
-										MsUnLock()                                  
-									ENDIF	
-									SZX->(dbCloseArea())
-									
-									DBSELECTAREA("SZX")
-									DBSETORDER(2)
-									IF DBSEEK(FWFILIAL("SZX") + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + ;
-												oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
-									
-										nConversao := 1
-										nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										cTipoConv  := ''
-										cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+									While TRB->(!EOF())
+						
+										DBSELECTAREA("SZX")
+										DBSETORDER(2)
+										IF !DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
-										RecLock("SZX",.F.)
+											nConversao := 1
+											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											cTipoConv  := ''
+											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											
-											nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
-											SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-											SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-											SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-											SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-											SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-											SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-											SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
-											SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
-											SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-											SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-											SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-											SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-											SZX->ZX_OBSER	:= ''  // Observacao
-											SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)       // Valor total da devolução
-											SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA  // QUEBRA
-											SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-											
-										MsUnLock()                                  
-									ENDIF	
-									SZX->(dbCloseArea())
-										
-									TRB->(dbSkip())
-								ENDDO
-								TRB->(dbCloseArea())
+											// @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+											lExistSZX := ChkDupSZX(FWFILIAL("SZX"), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2), oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 
-							NEXT
-							
-							cMetodo := 'Devolver'
-							nId     := 1
-							aDev  := {}
-							Aadd(aDev,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
-							Aadd(aDevolucoes,aDev)
-							
-						// **************** FINAL DEVOLUCAO PARCIAL ******************** //
-						
-						// **************** INICIO DEVOLUCAO QUEBRA ******************* //
-						
-						CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
-						     oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO == '39'
-							
-							IF	RecLock("SC5",.F.)
-							
-									SC5->C5_MOK := '06'
-						
-								MsUnlock()            
+											If !lExistSZX
+
+												RecLock("SZX",.T.)
+													nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
+													SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+													SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+													SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+													SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+													SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+													SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+													SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
+													SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
+													SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+													SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+													SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+													SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+													SZX->ZX_OBSER	:= ''  // Observacao
+													SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)         // Valor total da devolução
+													SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA
+													SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												MsUnLock()
+
+											EndIf
+
+										ENDIF	
+										SZX->(dbCloseArea())
+										
+										DBSELECTAREA("SZX")
+										DBSETORDER(2)
+										IF DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.)  // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
+										
+											nConversao := 1
+											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											cTipoConv  := ''
+											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											
+											RecLock("SZX",.F.)
+												
+												nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
+												SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+												SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+												SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+												SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+												SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+												SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+												SZX->ZX_QTDE	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA
+												SZX->ZX_QTDEV2U	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao)
+												SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+												SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+												SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+												SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+												SZX->ZX_OBSER	:= ''  // Observacao
+												SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)       // Valor total da devolução
+												SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA  // QUEBRA
+												SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												
+											MsUnLock()                                  
+										ENDIF	
+										SZX->(dbCloseArea())
+											
+										TRB->(dbSkip())
+									ENDDO
+									TRB->(dbCloseArea())
+
+								NEXT
 								
-							ENDIF
+								cMetodo := 'Devolver'
+								nId     := 1
+								aDev  := {}
+								Aadd(aDev,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
+								Aadd(aDevolucoes,aDev)
+								
+							// **************** FINAL DEVOLUCAO PARCIAL ******************** //
 							
-							// *********** INICIO PARA CARREGAR O SZD *********************** // 
 							
-							DBSELECTAREA("ZV4")
-							ZV4->(DBSETORDER(1))
-							IF DBSEEK(xFilial("ZV4")+Alltrim(SC5->C5_PLACA))
-								cCPFM := ZV4_CPF
-								IF !EMPTY(cCPFM)
-									DBSELECTAREA("ZVC")
-									DBSETORDER(1)
-									IF DBSEEK(FWFILIAL("ZVC")+cCPFM)
-										cNomMot := ZVC->ZVC_MOTORI
-										cTelMot := ZVC->ZVC_TELPRI
-										cEmlMot := ZVC->ZVC_EMLMOT
+							//////////////////////////////////////////////////////////////////
+							// **************** INICIO DEVOLUCAO QUEBRA ******************* //
+							//////////////////////////////////////////////////////////////////
+							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
+								oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO == '39'
+								
+								IF	RecLock("SC5",.F.)
+										SC5->C5_MOK := '06'
+									MsUnlock()            
+								ENDIF
+								
+								// *********** INICIO PARA CARREGAR O SZD *********************** // 
+								
+								DBSELECTAREA("ZV4")
+								ZV4->(DBSETORDER(1))
+								IF DBSEEK(xFilial("ZV4")+Alltrim(SC5->C5_PLACA))
+									cCPFM := ZV4_CPF
+									IF !EMPTY(cCPFM)
+										DBSELECTAREA("ZVC")
+										DBSETORDER(1)
+										IF DBSEEK(FWFILIAL("ZVC")+cCPFM)
+											cNomMot := ZVC->ZVC_MOTORI
+											cTelMot := ZVC->ZVC_TELPRI
+											cEmlMot := ZVC->ZVC_EMLMOT
+										ENDIF  
 									ENDIF  
-								ENDIF  
-							ENDIF     
-							
-							// NOME DO RESPONSAVEL E DESCRICAO DO MOTIVO
-							//Buscar Nome do Responsavel
-							DBSELECTAREA("SZU")
-							DBSETORDER(2)
-							IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CSETOR))
-								cRespNome  := SZU->ZU_DESCRI
-								cCodRespon := SZU->ZU_COD
-							ENDIF
-							
-							//Buscar Motivo
-							DBSELECTAREA("SZS")
-							DBSETORDER(1)
-							IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO))
-								cDescMotiv := SZS->ZS_DESCRI
-							ENDIF
-							
-							cCodCTRL := SUBSTR(FWFILIAL("SC5"),2,1) + ;
-										SUBSTR(SC5->C5_NUM,6,1)     + ;
-										SUBSTR(SC5->C5_NUM,5,1)     + ;
-										SUBSTR(SC5->C5_NUM,4,1)     + ;
-										SUBSTR(SC5->C5_NUM,3,1)     + ;
-										SUBSTR(SC5->C5_NUM,2,1)     + ;
-										SUBSTR(SC5->C5_NUM,2,1)     + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+								ENDIF     
 								
-							DBSELECTAREA("SZD")
-							DBSETORDER(1)
-							DBGOTOP()
-							IF !DBSEEK(FWFILIAL("SZD") + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))  
-										
-								RecLock("SZD",.T.)
-									SZD->ZD_FILIAL	:= FWFILIAL("SZD")
-									SZD->ZD_NUMNF	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-									SZD->ZD_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)
-									SZD->ZD_CODCLI	:= SC5->C5_CLIENTE
-									SZD->ZD_LOJA   	:= SC5->C5_LOJACLI
-									SZD->ZD_NOMECLI	:= SC5->C5_NOMECLI   
-									SZD->ZD_DTDEV	:= DATE()    
-									SZD->ZD_RESPONS	:= cCodRespon
-									SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
-									SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
-									SZD->ZD_RESPNOM	:= cRespNome
-									SZD->ZD_DESCMOT	:= cDescMotiv
-									SZD->ZD_PEDIDO	:= SC5->C5_NUM
-									SZD->ZD_ROTEIRO	:= SC5->C5_ROTEIRO
-									SZD->ZD_PLACA	:= SC5->C5_PLACA
-									SZD->ZD_SEQUENC	:= SC5->C5_SEQUENC
-									SZD->ZD_DEVTOT  := 'Q'
-									SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
-									SZD->ZD_VEND	:= SC5->C5_VEND1
-									SZD->ZD_MOTORI  := cNomMot
-									SZD->ZD_TELEFON := cTelMot
-									SZD->ZD_EMLMOT  := cEmlMot
-									SZD->ZD_RESP1   := ''
-									SZD->ZD_PEDPERN := ''
-									SZD->ZD_PERNOIT := .F.
-									SZD->ZD_CODMOTP := ''
-									SZD->ZD_MTVPERN := ''
-									SZD->ZD_XPLACAS	:= SC5->C5_XPLACAS				
-									SZD->ZD_CONTROL := cCodCTRL
-									SZD->ZD_NRDEVOL := '00'                                     
-									SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
+								// NOME DO RESPONSAVEL E DESCRICAO DO MOTIVO
+								//Buscar Nome do Responsavel
+								DBSELECTAREA("SZU")
+								DBSETORDER(2)
+								IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CSETOR))
+									cRespNome  := SZU->ZU_DESCRI
+									cCodRespon := SZU->ZU_COD
+								ENDIF
+								
+								//Buscar Motivo
+								DBSELECTAREA("SZS")
+								DBSETORDER(1)
+								IF DBSEEK(xfilial()+alltrim(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO))
+									cDescMotiv := SZS->ZS_DESCRI
+								ENDIF
+								
+								cCodCTRL := SUBSTR(FWFILIAL("SC5"),2,1) + ;
+											SUBSTR(SC5->C5_NUM,6,1)     + ;
+											SUBSTR(SC5->C5_NUM,5,1)     + ;
+											SUBSTR(SC5->C5_NUM,4,1)     + ;
+											SUBSTR(SC5->C5_NUM,3,1)     + ;
+											SUBSTR(SC5->C5_NUM,2,1)     + ;
+											SUBSTR(SC5->C5_NUM,2,1)     + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
 									
-								MsUnLock()
-							ENDIF
-							SZD->(dbCloseArea())
-							
-							// *********** FINAL PARA CARREGAR O SZD  ***********************  //
-							DBSELECTAREA("SZD")
-							DbSetOrder(1) 
-							IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
-										
-								IF RecLock("SZD",.F.)      
-										
-										
+								DBSELECTAREA("SZD")
+								DBSETORDER(1)
+								DBGOTOP()
+								IF !DBSEEK(FWFILIAL("SZD") + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))  
+											
+									RecLock("SZD",.T.)
+										SZD->ZD_FILIAL	:= FWFILIAL("SZD")
+										SZD->ZD_NUMNF	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+										SZD->ZD_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)
+										SZD->ZD_CODCLI	:= SC5->C5_CLIENTE
+										SZD->ZD_LOJA   	:= SC5->C5_LOJACLI
+										SZD->ZD_NOMECLI	:= SC5->C5_NOMECLI   
+										SZD->ZD_DTDEV	:= DATE()    
 										SZD->ZD_RESPONS	:= cCodRespon
 										SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
 										SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
 										SZD->ZD_RESPNOM	:= cRespNome
 										SZD->ZD_DESCMOT	:= cDescMotiv
+										SZD->ZD_PEDIDO	:= SC5->C5_NUM
+										SZD->ZD_ROTEIRO	:= SC5->C5_ROTEIRO
+										SZD->ZD_PLACA	:= SC5->C5_PLACA
+										SZD->ZD_SEQUENC	:= SC5->C5_SEQUENC
 										SZD->ZD_DEVTOT  := 'Q'
-										SZD->ZD_CONTROL := cCodCTRL
 										SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+										SZD->ZD_VEND	:= SC5->C5_VEND1
+										SZD->ZD_MOTORI  := cNomMot
+										SZD->ZD_TELEFON := cTelMot
+										SZD->ZD_EMLMOT  := cEmlMot
+										SZD->ZD_RESP1   := ''
+										SZD->ZD_PEDPERN := ''
+										SZD->ZD_PERNOIT := .F.
+										SZD->ZD_CODMOTP := ''
+										SZD->ZD_MTVPERN := ''
+										SZD->ZD_XPLACAS	:= SC5->C5_XPLACAS				
+										SZD->ZD_CONTROL := cCodCTRL
+										SZD->ZD_NRDEVOL := '00'                                     
 										SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
 										
-									MsUnlock()
-									
+									MsUnLock()
+								ENDIF
+								SZD->(dbCloseArea())
+								
+								// *********** FINAL PARA CARREGAR O SZD  ***********************  //
+								DBSELECTAREA("SZD")
+								DbSetOrder(1) 
+								IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
+											
+									IF RecLock("SZD",.F.)      
+											
+											
+											SZD->ZD_RESPONS	:= cCodRespon
+											SZD->ZD_MOTIVO	:= oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO
+											SZD->ZD_AUTNOME	:= oResp:OWSANOMALIA[nCont]:COPERADOR
+											SZD->ZD_RESPNOM	:= cRespNome
+											SZD->ZD_DESCMOT	:= cDescMotiv
+											SZD->ZD_DEVTOT  := 'Q'
+											SZD->ZD_CONTROL := cCodCTRL
+											SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+											SZD->ZD_SENHA   := oResp:OWSANOMALIA[nCont]:CSENHACONTROLE
+											
+										MsUnlock()
+										
+									ENDIF	
+												
 								ENDIF	
+								SZD->(dbCloseArea()) 
+								
+								For nCont2:= 1 To Len(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA)
+								
+									SQLITEM(FWFILIAL("SC5"),                                                ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), ;
+											STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),  ;
+											SC5->C5_CLIENTE,                                     ;
+											SC5->C5_LOJACLI,                                     ;
+											oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 											
-							ENDIF	
-							SZD->(dbCloseArea()) 
-							
-							For nCont2:= 1 To Len(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA)
-							
-								SQLITEM(FWFILIAL("SC5"),                                                ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), ;
-										STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),  ;
-										SC5->C5_CLIENTE,                                     ;
-										SC5->C5_LOJACLI,                                     ;
-										oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										
-								While TRB->(!EOF())
-					
-									DBSELECTAREA("SZX")
-									DBSETORDER(2)
-									IF !DBSEEK(FWFILIAL("SZX") + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + SPACE(1) + ; //WILLIAM COSTA 22/10/2019
-												oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
-									
-										nConversao := 1
-										nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										cTipoConv  := ''
-										cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										RecLock("SZX",.T.)
 											
-											nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
-											SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-											SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-											SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-											SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-											SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-											SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-											SZX->ZX_QTDE	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao) // Quantidade Devolvida
-											SZX->ZX_QTDEV2U	:= IIF(nCodMotItem == 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA))  // Quantidade Devolvida
-											SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-											SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-											SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-											SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-											SZX->ZX_OBSER	:= ''  // Observacao
-											SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)        // Valor total da devolução
-											SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO ))  // QUEBRA  // WILLIAM COSTA 22/10/2019
-											SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-											
-										MsUnLock()                                  
-										
-										// ** INICIO SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P **//		
-										IF nCodMotItem <> 39
-										
-											IF	RecLock("SC5",.F.)
-							
-												SC5->C5_MOK := '03'
+									While TRB->(!EOF())
 						
-												MsUnlock()            
+										DBSELECTAREA("SZX")
+										DBSETORDER(2) // ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD, R_E_C_N_O_, D_E_L_E_T_
+										IF !DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1]) + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
 										
-											ENDIF
-												
-											DBSELECTAREA("SZD")
-											DbSetOrder(1) 
-											IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
-													
-												IF RecLock("SZD",.F.)      
-														
-														SZD->ZD_DEVTOT  := 'P'
-														SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
-														
-													MsUnlock()
-												ENDIF	
-											ENDIF	
-											SZD->(dbCloseArea())	
-										ENDIF
-											
-										// ** FINAL SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P ** //		
-									ENDIF	
-									SZX->(dbCloseArea())
-									
-									DBSELECTAREA("SZX")
-									DBSETORDER(2)
-									IF DBSEEK(FWFILIAL("SZX") + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)            + ;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2) + SPACE(01) + ;
-												oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, .T.)
-									
-										nConversao := 1
-										nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										cTipoConv  := ''
-										cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
-										
-										RecLock("SZX",.F.)
-										
-											nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
-											SZX->ZX_FILIAL	:= FWFILIAL("SZX")
-											SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
-											SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
-											SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
-											SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
-											SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
-											SZX->ZX_QTDE	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao) // Quantidade Devolvida
-											SZX->ZX_QTDEV2U	:= IIF(nCodMotItem == 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA))  // Quantidade Devolvida
-											SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
-											SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
-											SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
-											SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
-											SZX->ZX_OBSER	:= ''  // Observacao
-											SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)       // Valor total da devolução
-											SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA  // WILLIAM COSTA 22/10/2019
-											SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
-											
-										MsUnLock()                                  
-										// ** INICIO SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P **//		
-										IF nCodMotItem <> 39
-										
-											IF	RecLock("SC5",.F.)
-							
-												SC5->C5_MOK := '03'
-						
-												MsUnlock()            
-										
-											ENDIF
-												
-											DBSELECTAREA("SZD")
-											DbSetOrder(1) 
-											IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
-													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
-													
-												IF RecLock("SZD",.F.)      
-														
-														SZD->ZD_DEVTOT  := 'P'
-														SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
-														
-													MsUnlock()
-												ENDIF	
-											ENDIF	
-											SZD->(dbCloseArea())	
-										ENDIF
-											
-										// ** FINAL SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P ** //		
-									ENDIF	
-									SZX->(dbCloseArea())
-										
-									TRB->(dbSkip())
-								ENDDO
-								TRB->(dbCloseArea())
+											nConversao := 1
+											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											cTipoConv  := ''
+											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
 
-							NEXT
+											// @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+											lExistSZX := ChkDupSZX(FWFILIAL("SZX"), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9), STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2), oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+
+											If !lExistSZX
+
+												RecLock("SZX",.T.)
+													nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
+													SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+													SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+													SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+													SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+													SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+													SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+													SZX->ZX_QTDE	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao) // Quantidade Devolvida
+													SZX->ZX_QTDEV2U	:= IIF(nCodMotItem == 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA))  // Quantidade Devolvida
+													SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+													SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+													SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+													SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+													SZX->ZX_OBSER	:= ''  // Observacao
+													SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)        // Valor total da devolução
+													SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO ))  // QUEBRA  // WILLIAM COSTA 22/10/2019
+													SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												MsUnLock()
+
+											EndIf
+											
+											// ** INICIO SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P **//		
+											IF nCodMotItem <> 39
+											
+												IF	RecLock("SC5",.F.)
+								
+													SC5->C5_MOK := '03'
 							
-							// **************** INICIO VERIFICA APROVACAO ******************** //		
-					
-							VerificaAprovacao(FWFILIAL("SC5"),STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),;
-												STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))
-					
-							// **************** FINAL VERIFICA APROVACAO ******************** //
+													MsUnlock()            
+											
+												ENDIF
+													
+												DBSELECTAREA("SZD")
+												DbSetOrder(1) 
+												IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+														STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
+														
+													IF RecLock("SZD",.F.)      
+															
+															SZD->ZD_DEVTOT  := 'P'
+															SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+															
+														MsUnlock()
+													ENDIF	
+												ENDIF	
+												SZD->(dbCloseArea())	
+											ENDIF
+												
+											// ** FINAL SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P ** //		
+										ENDIF	
+										SZX->(dbCloseArea())
+										
+										DBSELECTAREA("SZX")
+										DBSETORDER(2)
+										IF DBSEEK(FWFILIAL("SZX") + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),TamSX3("ZX_NF")[1])            + ;
+													PadR(STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),TamSX3("ZX_SERIE")[1]) + ;
+													PadR(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO,TamSX3("ZX_CODPROD")[1]), .T.) // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Inclusão PadR
+										
+											nConversao := 1
+											nConversao := FatorConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											cTipoConv  := ''
+											cTipoConv  := TipoConversao(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO)
+											
+											RecLock("SZX",.F.)
+											
+												nCodMotItem     := VAL(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGOMOTIVOITEM)
+												SZX->ZX_FILIAL	:= FWFILIAL("SZX")
+												SZX->ZX_NF		:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9)
+												SZX->ZX_SERIE	:= STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2)  // Serie
+												SZX->ZX_UNIDADE	:= TRB->D2_UM  // Primeira unidade de medida
+												SZX->ZX_QTSEGUM	:= TRB->D2_QTSEGUM  // Quantidade Devolvida Segunda Unidade
+												SZX->ZX_SEGUM	:= TRB->D2_SEGUM   // Segunda Unidade de medida
+												SZX->ZX_QTDE	:= IIF(cTipoConv == 'D',(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) * nConversao, (oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA) / nConversao) // Quantidade Devolvida
+												SZX->ZX_QTDEV2U	:= IIF(nCodMotItem == 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA))  // Quantidade Devolvida
+												SZX->ZX_QTDEV1U	:= 0  // Quantidade Devolvida
+												SZX->ZX_CODPROD	:= oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO  // Codigo do Produto
+												SZX->ZX_DESCRIC	:= Posicione("SB1",1,xFilial("SB1") + oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:CCODIGO, "B1_DESC")  // Descricao do Produto
+												SZX->ZX_MOTIVO	:= ''  // Motivo da Ocorrencia
+												SZX->ZX_OBSER	:= ''  // Observacao
+												SZX->ZX_TOTAL	:= TRB->D2_PRCVEN * ( oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NQTDEDEVOLVIDA)       // Valor total da devolução
+												SZX->ZX_QUEBRA  := IIF(nCodMotItem <> 39,0,(oResp:OWSANOMALIA[nCont]:OWSITENSDEVOLVIDOS:OWSITEMANOMALIA[nCont2]:NPESOBRUTODEVOLVIDO))  // QUEBRA  // WILLIAM COSTA 22/10/2019
+												SZX->ZX_ITEMNF  := TRB->D2_ITEM  // ITEM NF
+												
+											MsUnLock()                                  
+											// ** INICIO SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P **//		
+											IF nCodMotItem <> 39
+											
+												IF	RecLock("SC5",.F.)
+								
+													SC5->C5_MOK := '03'
 							
-							cMetodo := 'Devolver'
-							nId     := 1
-							aDev    := {}
-							Aadd(aDev,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
-							Aadd(aDevolucoes,aDev)
+													MsUnlock()            
+											
+												ENDIF
+													
+												DBSELECTAREA("SZD")
+												DbSetOrder(1) 
+												IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
+														STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
+														
+													IF RecLock("SZD",.F.)      
+															
+															SZD->ZD_DEVTOT  := 'P'
+															SZD->ZD_OBSER	:= oResp:OWSANOMALIA[nCont]:COBSERVACAO
+															
+														MsUnlock()
+													ENDIF	
+												ENDIF	
+												SZD->(dbCloseArea())	
+											ENDIF
+												
+											// ** FINAL SE TIVER ALGUM ITEM DIFERENTE DE QUEBRA O SZD VIRA P ** //		
+										ENDIF	
+										SZX->(dbCloseArea())
+											
+										TRB->(dbSkip())
+									ENDDO
+									TRB->(dbCloseArea())
+
+								NEXT
+								
+								// **************** INICIO VERIFICA APROVACAO ******************** //		
 						
-						// **************** FINAL DEVOLUCAO QUEBRA ******************** //
+								VerificaAprovacao(FWFILIAL("SC5"),STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9),;
+													STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2))
 						
-	                	OTHERWISE
-							cMetodo := 'Devolver'
-						    nId     := -1
-						    EmailViagem(cMetodo,nId,'000000000 - 1-) ERRO WEBSERVICE NÃO É DEVOLUÇÃO')	
-					ENDCASE
-				ELSE
-				
-					cMetodo := 'Devolver'
-			    	nId     := -1
-	    			EmailViagem(cMetodo,nId,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
-				
+								// **************** FINAL VERIFICA APROVACAO ******************** //
+								
+								cMetodo := 'Devolver'
+								nId     := 1
+								aDev    := {}
+								Aadd(aDev,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
+								Aadd(aDevolucoes,aDev)
+							
+							// **************** FINAL DEVOLUCAO QUEBRA ******************** //
+							
+							OTHERWISE
+								cMetodo := 'Devolver'
+								nId     := -1
+								EmailViagem(cMetodo,nId,'000000000 - 1-) ERRO WEBSERVICE NÃO É DEVOLUÇÃO')	
+						ENDCASE
+					ELSE
 					
-				ENDIF 
-				SC5->(dbCloseArea())
+						cMetodo := 'Devolver'
+						nId     := -1
+						EmailViagem(cMetodo,nId,STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9))
+						
+					ENDIF 
+					SC5->(dbCloseArea())
+
+				End Transaction // @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 		
 			NEXT  
+		
 		ELSE
 		
 			cMetodo := 'Devolver'
 		    nId     := -1
 		    EmailViagem(cMetodo,nId,'000000000 - 1-) Erro WEBSERVICE VAZIO - SEM VIAGENS')
-		
 			
 		ENDIF
+
 	ELSE 
 	
 		//cMetodo := 'Devolver'
@@ -1642,3 +1675,119 @@ STATIC FUNCTION SQLCodProduto(cCodigo)
 				 
 	EndSQl 	  
 RETURN(NIL)
+
+
+/*/{Protheus.doc} User Function DelDupSZX
+    Exclui registros duplicados
+    @type  Function
+    @author FWNM
+    @since 11/03/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados)
+/*/
+User Function DelDupSZX()
+
+    Local cQuery  := ""
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_ITEMNF, ZX_CODPROD, COUNT(1) TT_DUPLICADOS
+    cQuery += " FROM SZX010 SZX (NOLOCK) 
+    cQuery += " INNER JOIN SZD010 SZD (NOLOCK) ON ZD_FILIAL=ZX_FILIAL AND ZD_NUMNF=ZX_NF AND ZD_SERIE=ZX_SERIE AND SZD.D_E_L_E_T_=''
+    cQuery += " WHERE ZD_DTDEV>='20220309'
+    cQuery += " AND ZD_NUMNF<>''
+    cQuery += " AND SZX.D_E_L_E_T_=''
+
+    //cQuery += " AND ZX_NF='002498885'
+    //cQuery += " AND ZX_NF='002498883'
+
+    cQuery += " GROUP BY ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_ITEMNF, ZX_CODPROD
+    cQuery += " HAVING COUNT(1) >= 2
+    cQuery += " ORDER BY 1,2,3,4,5
+
+    tcQuery cQuery New Alias "Work"
+
+    Work->( dbGoTop() )
+    Do While Work->( !EOF() )
+
+        // Exclui duplicados
+        SZX->( dbSetOrder(2) ) // ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD, R_E_C_N_O_, D_E_L_E_T_
+        If SZX->( dbSeek(FWxFilial("SZX")+Work->(ZX_NF+ZX_SERIE+ZX_CODPROD)) )
+            
+            SZX->( dbSkip() ) // Pulo o registro que permanecerá
+
+            Do While SZX->( !EOF() ) .and. SZX->ZX_FILIAL == Work->ZX_FILIAL .and. SZX->ZX_NF == Work->ZX_NF .and. SZX->ZX_SERIE == Work->ZX_SERIE .and. SZX->ZX_ITEMNF == Work->ZX_ITEMNF .and. SZX->ZX_CODPROD == Work->ZX_CODPROD
+
+                RecLock("SZX", .F.)
+                    SZX->( dbDelete() )
+                SZX->( msUnLock() )
+
+                SZX->( dbSkip() )
+
+            EndDo
+        
+        EndIf
+
+        Work->( dbSkip() )
+
+    EndDo
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+Return
+
+/*/{Protheus.doc} ChkDupSZX
+	Checa se o produto devolvido já existe pois mesmo com seek houveram casos da rotina entender que deveria ser incluído
+	@type  Static Function
+	@author FWNM
+	@since 11/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+/*/
+Static Function ChkDupSZX(cFilSZX, cNFSZX, cSerieSZX, cProdSZX)
+
+	Local lRet   := .f.
+	Local cQuery := ""
+	Local aArea  := GetArea()
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	// ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD, R_E_C_N_O_, D_E_L_E_T_
+	cQuery := " SELECT ZX_FILIAL, ZX_NF, ZX_SERIE, ZX_CODPROD
+	cQuery += " FROM " + RetSqlName("SZX") + " (NOLOCK)
+	cQuery += " WHERE ZX_FILIAL='"+cFilSZX+"'
+	cQuery += " AND ZX_NF='"+cNFSZX+"'
+	cQuery += " AND ZX_SERIE='"+cSerieSZX+"'
+	cQuery += " AND ZX_CODPROD='"+cProdSZX+"'
+	cQuery += " AND D_E_L_E_T_=''
+
+	tcQuery cQuery New Alias "Work"
+
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+		lRet := .t.
+	EndIf
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	RestArea( aArea )
+
+Return lRet

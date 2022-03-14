@@ -27,6 +27,7 @@
     @history chamado 057682 - FWNM        - 04/05/2020 - || OS 059176 || FINANCAS || ANA || 8384 || LP - PAS
 	@history Chamado 058823 - Everson - 09/06/2020. Tratamento para envio de e-mail, quando não localizar conta contábil para conta bancária informada.
 	@history ticket 10979   - Leonardo P. Monteiro - 24/03/2021 - Tratativa do error.log na linha 381 quando o campo E2_MOEDA vem com valores preenchidos informando o tipo da moeda. Anteriormente esse campo vinha como 'nil'.
+	@history ticket 67861   - Fernando Macieira    - 18/02/2022 - Lançamentos do financeiro não integrados (PA SAG)
 /*/
 User Function ADFIN053P(cOpc)
 
@@ -39,6 +40,7 @@ User Function ADFIN053P(cOpc)
 	Local lAutoJob := .F.
 	Local cCta := "" // Chamado n. 051689 || OS 053035 || CONTROLADORIA || MONIK_MACEDO || 8956 || LOTES FINANCEIRO - FWNM - 12/09/2019
 	Local cMail := "" // Chamado n. 054307 || OS 055702 || SUPRIMENTOS || RACHEL || 1621063514 || WOKFLOW SOL.PA - fwnm - 18/12/2019
+	Local x
 	
 	//VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	If Select("SX6") == 0
@@ -420,6 +422,12 @@ User Function ADFIN053P(cOpc)
 			endif
 		ELSE
 			
+			// @history ticket 67861   - Fernando Macieira    - 18/02/2022 - Lançamentos do financeiro não integrados
+			cPerg := PadR("FIN050",Len(SX1->X1_GRUPO))
+			Pergunte(cPerg, .f.)
+			MV_PAR04 := 2 // Contabiliza on line ? = 2 = Não
+			//
+
 			dbSelectArea("SE2")
 			MSExecAuto({|x,y,z| FINA050(x,y,z)}, aCampos, 3 )
 			
@@ -676,6 +684,12 @@ User Function ADFIN053P(cOpc)
 				
 				//TcSetConn(_nTcConn1)
 				
+				// @history ticket 67861   - Fernando Macieira    - 18/02/2022 - Lançamentos do financeiro não integrados
+				cPerg := PadR("FIN050",Len(SX1->X1_GRUPO))
+				Pergunte(cPerg, .f.)
+				MV_PAR04 := 2 // Contabiliza on line ? = 2 = Não
+				//
+
 				lMsErroAuto:=.F.
 				
 				Begin Transaction

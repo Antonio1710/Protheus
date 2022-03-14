@@ -572,6 +572,8 @@ return
 	@example
 	(examples)
 	@see (links_or_references)
+
+	@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
 /*/
 Static Function AtuExp()
 	//@history Ticket 8465 	- Leonardo P. Monteiro - 22/05/2021 - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção. 
@@ -586,16 +588,18 @@ Static Function AtuExp()
 	@  05,010 SAY "PEDIDO: " +  _cNum + "   NOTA: " + SF2->F2_DOC
 	@  15,010 TO 120,240 TITLE "Informações de Embarque "
 	@  25,015 SAY " NUMERO DO CONTAINER      : "
-	@  45,015 SAY " NUMERO LACRE CONTAINER: "
-	@  65,015 SAY " NUMERO LACRE OFICIAL(SIF): "             // 15/03/19-Chamado:047943 - Fernando Sigoli
-	@  85,015 SAY " TEMPERATURA DE EMBARQUE: "
-	@ 105,015 SAY " DATA DE PRODUCAO: "
+	//@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
+	//@  45,015 SAY " NUMERO LACRE CONTAINER: "
+	@  45,015 SAY " NUMERO LACRE OFICIAL(SIF): "             // 15/03/19-Chamado:047943 - Fernando Sigoli
+	@  65,015 SAY " TEMPERATURA DE EMBARQUE: "
+	@  85,015 SAY " DATA DE PRODUCAO: "
 
 	@  25,110 GET _cNumContai 	Valid !Vazio()   picture "@!"		Size 080,009
-	@  45,110 GET _cNLacreConta Valid !Vazio()   picture "@!"		Size 080,009
-	@  65,110 GET _cNLacreSIF 	Valid !Vazio()   picture "@!"		Size 080,009
-	@  85,110 GET _cTemp 		Valid !Vazio()   picture "999.99"	Size 080,009
-	@ 105,110 GET _cDtprod 		Valid !Vazio()   picture "@!"		Size 080,009
+	//@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
+	//@  45,110 GET _cNLacreConta Valid !Vazio()   picture "@!"		Size 080,009
+	@  45,110 GET _cNLacreSIF 	Valid !Vazio()   picture "@!"		Size 080,009
+	@  65,110 GET _cTemp 		Valid !Vazio()   picture "999.99"	Size 080,009
+	@  85,110 GET _cDtprod 		Valid !Vazio()   picture "@!"		Size 080,009
 
 	@ 125,100 BMPBUTTON TYPE 01 ACTION GravaSF2()
 	@ 125,130 BMPBUTTON TYPE 02 ACTION Close(oDlg1)
@@ -620,7 +624,7 @@ Static Function GravaSF2()
 
 	Reclock("SF2",.F.)
 		SF2->F2_CONTAIN		:=  _cNumContai
-		SF2->F2_NLACRE1		:=  _cNLacreConta
+		//SF2->F2_NLACRE1		:=  _cNLacreConta
 		SF2->F2_NLACRE2		:=	 _cNLacreSIF
 		SF2->F2_TEMPERA		:=	 _cTemp
 		SF2->F2_DTPROD       := _cDtprod
