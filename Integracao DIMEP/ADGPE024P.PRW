@@ -41,6 +41,7 @@
 	@history Ticket: 66952  - Adriano Savoine - 15/02/2022 - Ajustado a query funcionario para atualizar os status apos a sua efetivação e ajustado novos status no dimep 24 e 25 como multiplos e ajustada a integração dos mesmos
 	@history Ticket: 66952  - Fernando Macieir- 23/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
 	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
+	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1812,7 +1813,7 @@ Return cEmpresa
 /*/
 Static Function Sqlfuncionario(cEmpresa) 
 
-	Local nDias := GetMV("MV_#RMDIAS",,7) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
+	Local nDias := GetMV("MV_#RMDIAS",,30) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
 
 	TRB := GetNextAlias()
 	
@@ -1868,7 +1869,7 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
 	*/
 	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF=''05452774696''
+	//cQuery += " AND PPESSOA.CPF=''47189416870''
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
 	//
 
@@ -2671,39 +2672,62 @@ Static Function SqlCCDIMEP(nMatricula)
 	EndSQl             
 Return Nil 
 
-Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerfilAcesso,nRep,nCredencial)   
+Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerfilAcesso,nRep,nCredencial)
 
-    cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
-	cQuery += "(NU_MATRICULA, " 
-	cQuery += "NM_PESSOA, " 
-	cQuery += "CD_SITUACAO_PESSOA, " 
-	cQuery += "CD_ESTRUTURA_ORGANIZACIONAL, " 
-	cQuery += "CD_ESTRUTURA_ORG_EMPRESA, " 
-	cQuery += "NU_CPF, " 
-	cQuery += "NU_RG, " 
-	cQuery += "NU_PIS, "
-	cQuery += "CD_PERFIL_ACESSO, "
-	cQuery += "CD_CREDENCIAL_REP, " 
-	cQuery += "CD_CREDENCIAL_FACE " 
-	cQuery += ") "
-	cQuery += "VALUES (" + cValToChar(nMat)          + ","  // Matricula
-	cQuery += "'"        + cNome                     + "',"  // Nome Funcionario
-	cQuery += ""         + cValToChar(nSitFol)       + ","  // Situacao da Folha
-	cQuery += "'"        + cValToChar(nGrupo)        + "'," // Grupo Empresa
-	cQuery += "'"        + cValToChar(nEmpresa)      + "'," // Empresa
-	cQuery += "'"        + cCic                      + "'," // Cpf
-	cQuery += "'"        + cRg                       + "'," // Rg  
-	cQuery += "'"        + Alltrim(cPis)             + "'," // Pis  
-	cQuery += "'"        + cValToChar(nPerfilAcesso) + "'," // Perfil de Acesso 
-	cQuery += ""         + cValToChar(nRep)          + ","  // Cod Rep 
-	cQuery += ""         + cValToChar(nCredencial)   + " "  // Cod Face
-	cQuery += ") " 
+	Local cQuery := ""
 
-	If (TCSqlExec(cQuery) < 0)
-    	cIntregou += " TCSQLError() - INTFUNCIONARIO: "
+	// @history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
+	// Checo se o CPF já existe antes de permitir a inclusão
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
 
-	EndIf        
+	cQuery := " SELECT NU_CPF
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
+	cQuery += " WHERE NU_CPF IS NOT NULL
+	cQuery += " AND NU_CPF='"+cCic+"'
+
+	tcQuery cQuery New Alias "Work"
+
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+
+		cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
+		cQuery += "(NU_MATRICULA, " 
+		cQuery += "NM_PESSOA, " 
+		cQuery += "CD_SITUACAO_PESSOA, " 
+		cQuery += "CD_ESTRUTURA_ORGANIZACIONAL, " 
+		cQuery += "CD_ESTRUTURA_ORG_EMPRESA, " 
+		cQuery += "NU_CPF, " 
+		cQuery += "NU_RG, " 
+		cQuery += "NU_PIS, "
+		cQuery += "CD_PERFIL_ACESSO, "
+		cQuery += "CD_CREDENCIAL_REP, " 
+		cQuery += "CD_CREDENCIAL_FACE " 
+		cQuery += ") "
+		cQuery += "VALUES (" + cValToChar(nMat)          + ","  // Matricula
+		cQuery += "'"        + cNome                     + "',"  // Nome Funcionario
+		cQuery += ""         + cValToChar(nSitFol)       + ","  // Situacao da Folha
+		cQuery += "'"        + cValToChar(nGrupo)        + "'," // Grupo Empresa
+		cQuery += "'"        + cValToChar(nEmpresa)      + "'," // Empresa
+		cQuery += "'"        + cCic                      + "'," // Cpf
+		cQuery += "'"        + cRg                       + "'," // Rg  
+		cQuery += "'"        + Alltrim(cPis)             + "'," // Pis  
+		cQuery += "'"        + cValToChar(nPerfilAcesso) + "'," // Perfil de Acesso 
+		cQuery += ""         + cValToChar(nRep)          + ","  // Cod Rep 
+		cQuery += ""         + cValToChar(nCredencial)   + " "  // Cod Face
+		cQuery += ") " 
+
+		If (TCSqlExec(cQuery) < 0)
+			cIntregou += " TCSQLError() - INTFUNCIONARIO: "
+		EndIf
 	
+	EndIf
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
 Return Nil   	      	 	  
 
 Static Function IntCredencial(nCred,nEstrutura,cTipo)   
@@ -4148,3 +4172,115 @@ Static Function carChk2DpCr()
 	DADOS_CK2->(DbCloseArea())
 
 Return oHash
+
+/*/{Protheus.doc} ExcPessoa()
+	Exclui nomes duplicados no DIMEP
+	@type  Static Function
+	@author user
+	@since 14/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
+/*/
+User Function ExcPessoa(cCPF)
+
+	Local cQuery := ""
+
+	Default cCPF := ""
+
+	// Exclui todos os CPF duplicados, caso existam
+	If !Empty(cCPF)
+		RunExcPessoa(cCPF)
+	Else
+
+		If Select("Work") > 0
+			Work->( dbCloseArea() )
+		EndIf
+
+		cQuery := " SELECT NU_CPF, COUNT(1) TT_DUPL
+		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
+		cQuery += " WHERE NU_CPF IS NOT NULL
+		cQuery += " GROUP BY NU_CPF
+		cQuery += " HAVING COUNT(1) >= 2
+
+		tcQuery cQuery New Alias "Work"
+
+		Work->( dbGoTop() )
+		Do While Work->( !EOF() )
+			RunExcPessoa(Work->NU_CPF)
+			Work->( dbSkip() )
+		EndDo
+
+	EndIf
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 14/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
+Static Function RunExcPessoa(cCPF)
+
+	Local cSql := ""
+	Local cQuery := ""
+
+	If Select("Work2") > 0
+		Work2->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT TOP 1 MAX(CD_PESSOA) CD_PESSOA
+	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
+	cQuery += " WHERE NU_MATRICULA='"+cCPF+"'
+
+	tcQuery cQuery New Alias "Work2"
+
+	Work2->( dbGoTop() )
+	If Work2->( !EOF() )
+
+		// AUTORIZACAO EXCEP
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[PESSOA_AUTORIZACAO_EXCEP]
+		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
+		tcSqlExec(cSql)
+
+		// SISTEMA PESSOA
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_PESSOA]
+		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
+		tcSqlExec(cSql)
+
+		// CREDENCIAL
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
+		tcSqlExec(cSql)
+
+		// HISTORICO
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA]
+		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
+
+		// PESSOA
+		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[PESSOA]
+		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
+		tcSqlExec(cSql)
+
+	EndIf
+
+	If Select("Work2") > 0
+		Work2->( dbCloseArea() )
+	EndIf
+	
+Return
