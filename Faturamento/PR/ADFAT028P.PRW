@@ -11,16 +11,18 @@
     @since 10/02/2022
     @version 01
 /*/
-User Function ADFAT028P()                            
+User Function ADFAT028P()                                    
 Return Nil
 
 WsRestFul barramento Description "Serviço REST para inclusão de registros vindos do barramento."
 
-	WsMethod Post Description "Inclusão de registros vindos do barramento."  WsSyntax "/registros"
+	WsMethod Get  Description "Obtém registros não enviados ao barramento."  WsSyntax "/registros"
+	WsMethod Post Description "Inclui de registros vindos do barramento."    WsSyntax "/registros"
+	WsMethod Put  Description "Marca registro como já processado"            WsSyntax "/registros/{uuid}"
 
 End WsRestFul
 /*/{Protheus.doc} User Function Post
-	Método POST
+	Método Post
 	@type  Function
 	@author Everson
 	@since 10/02/2022
@@ -49,8 +51,6 @@ WsMethod Post WsService barramento
 
     EndIf
 
-    ErrorBlock(oError)
-
 Return lRet
 /*/{Protheus.doc} ADFAT28A
     Processa requisições Post.
@@ -76,11 +76,15 @@ User Function ADFAT28A(cBody, aRetErro)
     Local cTopico   := ""
     Local cId       := ""
     Local cDados    := ""
-    Local oJson     := JsonObject():New()
-    Local xRet      := oJson:FromJson(cBody)
+    Local oJson     := Nil
+    Local xRet      := Nil
     Local oError    := ErrorBlock( {|e| cMsgError := e:Description , lRet := .F., Break(e) } )
 
     Begin Sequence
+
+        oJson := JsonObject():New()
+
+        xRet  := oJson:FromJson(cBody)
 
         If ! ValType(xRet) == "U"
             Aadd(aRetErro, {400, "Não foi possível converter a string json para objeto json."})
@@ -103,8 +107,9 @@ User Function ADFAT28A(cBody, aRetErro)
         ZIQ->(DbSetOrder(1))
         If ZIQ->( DbSeek(FWxFilial("ZIQ") + cId) )
             logZBE("ADFAT28A", "Id " + cId + " já recebido.", cBody)
-            Aadd(aRetErro, {400, "Id " + cId + " já recebido."})
+            Aadd(aRetErro, {200, "Id " + cId + " já recebido."}) //Everson - 17/02/2022. Chamado 18465.
             RestArea(aArea)
+            lRet := .T.
             Return lRet
 
         EndIf
@@ -162,11 +167,176 @@ User Function ADFAT28A(cBody, aRetErro)
     Recover
         logZBE("ADFAT28A", cMsgError, cBody)
 		Aadd(aRetErro, {500, cMsgError})
-        RestArea(aArea)
-        Return .F.
 
     End Sequence
         
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} User Function Get
+	Método Get
+	@type  Function
+	@author Everson
+	@since 14/03/2022
+	@version 01
+/*/
+WsMethod Get WsService barramento
+
+    //Variáveis.
+    Local lRet      := .F.
+    Local cJson     := ""
+    Local aRetErro  := {}
+    Local nCodErro  := 0
+    Local cMsgErro  := ""
+
+    logZBE("Início GET", "", "")
+
+    Self:SetContentType("application/json")
+
+    lRet := U_ADFAT28B(@cJson, @aRetErro)
+
+    If ! lRet .Or. Len(aRetErro) > 0
+        nCodErro := aRetErro[1][1]
+        cMsgErro := aRetErro[1][2]
+        SetRestFault(nCodErro,EncodeUtf8(cMsgErro))
+        Return .F.
+
+    EndIf
+
+    Self:SetResponse(EncodeUtf8(cJson))
+
+Return lRet
+/*/{Protheus.doc} ADFAT28B
+    Obtém registros de saída faltantes de processamento.
+    @type  Static Function
+    @author Everson
+    @since 14/03/2022
+    @version 01
+/*/
+User Function ADFAT28B(cJson, aRetErro)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cFilter   := " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "' .And. ZIQ_TIPO = 'S' .And. ZIQ_PROCES = '2' "
+    Local aDados    := {}
+    Local cMsgError := ""
+    Local oJsonLn   := Nil
+    Local oJson     := Nil
+    Local oError    := ErrorBlock( {|e| cMsgError := e:Description , lRet := .F., Break(e) } )
+
+    Begin Sequence
+
+        oJson := JsonObject():New()
+
+        DbSelectArea("ZIQ")
+        ZIQ->(DbSetOrder(1))
+        ZIQ->(DbGoTop())
+        
+        cBloco := "{ || " + cFilter + " }"
+        ZIQ->( DbSetFilter( &cBloco, cFilter ) )
+
+        While ! ZIQ->(Eof())
+
+            oJsonLn := JsonObject():New()
+            oJsonLn:FromJSON( ZIQ->ZIQ_DADOS )
+
+            Aadd(aDados, oJsonLn)
+
+            FreeObj(oJsonLn)
+            oJsonLn := Nil
+
+            ZIQ->(Dbskip())
+
+        End
+
+        oJson["dados"] := aDados
+
+        cJson := oJson:toJSON()
+
+        lRet := .T.
+
+    Recover
+        logZBE("ADFAT28B", cMsgError, "")
+		Aadd(aRetErro, {500, cMsgError})
+
+    End Sequence
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} User Function Get
+	Método Get
+	@type  Function
+	@author Everson
+	@since 14/03/2022
+	@version 01
+/*/
+WsMethod Put WsService barramento
+
+    //Variáveis.
+    Local lRet          := .F.
+    Local aRetErro      := {}
+    Local nCodErro      := 0
+    Local cMsgErro      := ""
+    Local aParametros	:= Self:aURLParms
+
+    logZBE("Início PUT", "", "")
+
+    Self:SetContentType("application/json")
+
+    lRet := U_ADFAT28C(aParametros, @aRetErro)
+
+    If ! lRet .Or. Len(aRetErro) > 0
+        nCodErro := aRetErro[1][1]
+        cMsgErro := aRetErro[1][2]
+        SetRestFault(nCodErro,EncodeUtf8(cMsgErro))
+        Return .F.
+
+    EndIf
+
+Return lRet
+/*/{Protheus.doc} ADFAT28B
+    Marca registro como já processado.
+    @type  Static Function
+    @author Everson
+    @since 14/03/2022
+    @version 01
+/*/
+User Function ADFAT28C(aParametros, aRetErro)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cUuid     := ""
+    Local cMsgError := ""
+    Local oError    := ErrorBlock( {|e| cMsgError := e:Description , lRet := .F., Break(e) } )
+
+    Begin Sequence
+
+        If Len(aParametros) == 0
+            Aadd(aRetErro, {400, EncodeUtf8("Necessário informar o uuid do registro.")})
+            RestArea(aArea)
+            Return .F.
+
+        EndIf
+
+        cUuid := Alltrim(cValToChar(aParametros[2]))
+
+        If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
+            Aadd(aRetErro, {400, cMsgError})
+
+        Else
+            lRet := .T.
+
+        EndIf
+
+    Recover
+        logZBE("ADFAT28C", cMsgError, "")
+		Aadd(aRetErro, {500, cMsgError})
+
+    End Sequence
+
     RestArea(aArea)
 
 Return lRet
