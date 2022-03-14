@@ -2677,6 +2677,7 @@ Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerf
 	Local cQuery := ""
 
 	// @history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
+	
 	// Checo se o CPF já existe antes de permitir a inclusão
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
@@ -2690,7 +2691,7 @@ Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerf
 	tcQuery cQuery New Alias "Work"
 
 	Work->( dbGoTop() )
-	If Work->( !EOF() )
+	If Work->( EOF() )
 
 		cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
 		cQuery += "(NU_MATRICULA, " 
