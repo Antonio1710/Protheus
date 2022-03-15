@@ -25,6 +25,7 @@ Static cRotina  := "ADFIN120P"
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+    @ticket 18141 - Fernando Macieira - 14/03/2022 - RM - Acordos - Integração Protheus - Financeiro com favorecidos que nao foram vinculados na hora do cadastro
 /*/
 User Function ADFIN120P()
 
@@ -103,6 +104,14 @@ User Function ADFIN120P()
 
         WorkRM->( dbGoTop() )
         Do While WorkRM->( !EOF() )
+
+            // @ticket 18141 - Fernando Macieira - 14/03/2022 - RM - Acordos - Integração Protheus - Financeiro com favorecidos que nao foram vinculados na hora do cadastro
+            cZHC_BANCO  := ""
+            cZHC_AGENCI := ""
+            cZHC_CONTA  := ""
+            cZHC_DIGCTA := ""
+            cZHC_FAVORE := ""
+            cZHC_CPFCGC := ""
 
             // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
             ZHC->( dbSetOrder(3) ) // ZHC_FILIAL+ZHC_CODIGO
