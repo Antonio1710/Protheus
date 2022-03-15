@@ -15,6 +15,7 @@
 	@history Everson, 04/11/2020, Chamado 2562. Validação de estudo de projeto vinculado à solicitação de compra.
 	@history ticket  8582 - Fernando Macieira - 08/02/2021 - Replicar OP na próxima linha
 	@history ticket 10573 - Fernando Macieira - 08/03/2021 - Ponto de Correção - Manutenção de Ativos
+	@history ticket 69712 - Fernando Macieira - 15/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 /*/
 User Function MT110LOK()
 
@@ -40,25 +41,15 @@ User Function MT110LOK()
 	Local cProjeto	:= aCols[n,nPProjeto]
 	Local cProduto	:= aCols[n,nPProduto]
 	Local cCodProj	:= aCols[n,nPCodProj]
-	
-	// FWNM - 16/02/2018 - Projetos Investimentos
 	Local lSldAtv  := GetMV("MV_#PRJSLD",,".T.")
 	Local cFasePrj := GetMV("MV_PRJINIC",,"05")
-	
-	// Chamado n. 046284
 	Local cFaseRej := GetMV("MV_#FASREJ",,"01")
 	Local cFaseApr := GetMV("MV_#FASEOK",,"03")
-	//  
-
-	//Everson - 04/11/2020. Chamado 2562.
 	Local cEstPrj  := Alltrim(cValToChar(aCols[n, aScan( aHeader, { |x| AllTrim( x[2] ) == "C1_XITEMST" } ) ]))
-	//
-
-	// @history ticket 8582 - Fernando Macieira - 08/02/2021 - Replicar OP na próxima linha
 	Local cOp  := "" 
 	Local nAux := 0
-	//
-	
+	Local cMVItemCta := ""
+
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Se deixou o centro de custo em branco não permite inclusão                              ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -160,7 +151,13 @@ User Function MT110LOK()
 			cCC    := gdFieldGet("C1_CC", n)
 			
 			dDtDig := msDate()
-			
+
+			// @history ticket 69712 - Fernando Macieira - 15/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+			cMVItemCta := GetMV("MV_#ITM113",,"113")
+			If AllTrim(cCC) $ GetMV("MV_#CC5134",,"5134")
+				gdFieldPut("C1_ITEMCTA", cMVItemCta, n)
+			EndIf
+			//
 			
 			// Consiste exigência ou não do projeto
 			lPrjInv := Left(AllTrim(cCC),1) == "9"
