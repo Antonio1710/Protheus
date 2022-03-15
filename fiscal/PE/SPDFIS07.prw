@@ -25,17 +25,26 @@ User Function SPDFIS07()
 	Local cSituacao := PARAMIXB[2] // Situação do inventario
 	Local cRetorno    := ""
 	
-	If cSituacao == '0'  //0- Item de propriedade do informante e em seu poder // outros tipos de operacao por Adriana em 19/03/19
 	
-	      cRetorno := SB1->B1_CONTA
+	If cSituacao== '0' .and. cFilAnt = "02" .and. (Alltrim(cCodProduto) = "383368" .or. Alltrim(cCodProduto) = "383369")//    1- Item de propriedade do informante em posse de terceiros
+		
+		cRetorno := "111540002"
+
+	ElseIf cSituacao == '0'  //0- Item de propriedade do informante e em seu poder // outros tipos de operacao por Adriana em 19/03/19
+	
+		cRetorno := SB1->B1_CONTA
 	
 	ElseIf cSituacao== '1' .and. Alltrim(cCodProduto) = "383369" //    1- Item de propriedade do informante em posse de terceiros
 	
-	      cRetorno := "111580002"
+		cRetorno := "111580002"
 	
-	ElseIf cSituacao== '1' .and. Alltrim(cCodProduto) <> "383369" //    2- Item de propriedade de terceiros em posse do informante
+	ElseIf cSituacao== '1' .and. Alltrim(cCodProduto) <> "383369" .and. Alltrim(cCodProduto) <> "100252"//    2- Item de propriedade de terceiros em posse do informante
 	
-	      cRetorno := "111580001"
+		cRetorno := "111580001"
+	
+	ElseIf cSituacao== '1' .and. Alltrim(cCodProduto) = "100252" //    1- Item de propriedade do informante em posse de terceiros
+	
+		cRetorno := "111580004"
 	
 	EndIf
 
