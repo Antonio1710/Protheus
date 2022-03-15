@@ -42,6 +42,7 @@
     @history tic 15299 - Fer Macieira    - 09/06/2021 - Compensação Errada PR
 	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
+	@history ticket 69652 - Fer Macieira - 15/03/2022 - COMPENSAÇÃO DE RA - MADRUGADA
 /*/
 
 User Function M460FIM()
@@ -1274,11 +1275,17 @@ Static Function COMPCRAUTO()
 				nRecnoRA   := SE1->( RECNO() )
 				nSaldoComp := SE1->E1_SALDO
 
-				PERGUNTE("AFI340",.F.)
-				MV_PAR09     := 2 // Não mostra lançamentos contábeis
-				lContabiliza := MV_PAR11 == 1
-				lAglutina    := MV_PAR08 == 1
-				lDigita      := MV_PAR09 == 1
+				PERGUNTE(PadR("AFI340",Len(SX1->X1_GRUPO)),.F.) // Commpensação Contas Pagar
+				MV_PAR11 := 2 // Contabiliza On Line ? = NÃO
+
+				// @history ticket 69652 - Fer Macieira - 15/03/2022 - COMPENSAÇÃO DE RA - MADRUGADA
+				PERGUNTE(PadR("FIN330",Len(SX1->X1_GRUPO)),.F.) // Commpensação Contas Receber
+				MV_PAR09 := 2 // Contabiliza On Line ? = NÃO
+
+				lContabiliza := .F.
+				lAglutina    := .F.
+				lDigita      := .F.
+				//
 
 				nTaxaCM := RecMoeda(dDataBase,SE1->E1_MOEDA)
 
