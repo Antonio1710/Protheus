@@ -123,7 +123,7 @@ User Function ADFAT28A(cBody, aRetErro)
     cSisGer     := Alltrim(cValToChar(oJson['sistGera']))
     cTopico     := Alltrim(cValToChar(oJson['topico']))
     cDados      := Alltrim(cValToChar(cBody))
-    cHash       := SHA1(cEmpOrg + cFilOrg + Alltrim(cValToChar(oJson['dados'])))
+    cHash       := SHA1(cEmpOrg + cFilOrg + cDtOrig + cHrOrig + Alltrim(cValToChar(oJson['dados'])))
 
     DbselectArea("ZIQ")
     ZIQ->(DbSetOrder(2))
