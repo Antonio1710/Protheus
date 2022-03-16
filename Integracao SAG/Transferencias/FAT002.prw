@@ -1,21 +1,19 @@
 #INCLUDE "rwmake.ch"
 #INCLUDE "PROTHEUS.CH"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³FAT002    ºAutor  ³Microsiga           º Data ³  02/05/10   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Efetua transferências em lote                              º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ AP                                                         º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function FAT002
+	Efetua transferências em lote
+	@type  Function
+	@author user
+	@since 15/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+/*/
 User Function FAT002()
 
 	LOCAL oSay,oSay2,oSay3
@@ -77,9 +75,14 @@ Static Function E001Proces()
 	Local dDtDigit 		:= _dData   
 	Local cTes			:= SuperGetMV("FS_TESREMI" ,,"702|705|735")  // KF 30/11/15
 	Local cMens			:=  "Log de Processsamento Transferênias Int/Inc" + CRLF + CRLF
+
+	// @history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+	Local cCFOP3    := GetMV("MV_#F45451",,"5451")
+	Local cProd3    := GetMV("MV_#B15451",,"384743")
+
 	Private aItens      := {}      
 	Private lMsErroAuto := .F.
-	
+
 	cQuery := "SELECT D2_FILIAL,D2_EMISSAO, D2_COD,D2_LOCAL,D2_QUANT as QTDE, SD2.R_E_C_N_O_ AS REC "
 	cQuery += "FROM "+RetSqlName("SD2")+" SD2 "
 	cQuery += "WHERE D2_FILIAL = '" + xFilial("SD2") + "' AND SD2.D2_TES IN ('702','705','735') AND "	
@@ -106,6 +109,13 @@ Static Function E001Proces()
 		//posiciona no SD2
 		DbSelectArea("SD2")
 		Dbgoto((cAliasSD2)->REC) 
+
+		//@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+		If Alltrim(SD2->D2_CF) $ cCFOP3 .and. Alltrim(SD2->D2_COD) $ cProd3
+			SD2->( dbSkip() )
+			Loop
+		EndIf
+		//
 
 		//posiciona no SF2
 		SF2->(DbSetOrder(1))

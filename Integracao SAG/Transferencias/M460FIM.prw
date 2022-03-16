@@ -43,8 +43,8 @@
 	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 	@history ticket 69652 - Fer Macieira - 15/03/2022 - COMPENSAÇÃO DE RA - MADRUGADA
+	@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
 /*/
-
 User Function M460FIM()
 
 	Local Area		:= GetArea()
@@ -257,7 +257,7 @@ Return(_lRet)
 	@author 
 	@since 
 	@version 01
-	/*/*
+/*/
 Static Function cM460F2()
 
 	Local aArea		:= GetArea()
@@ -269,6 +269,10 @@ Static Function cM460F2()
 	Local cNumseq   := ""
 	Local cDoc		:= GetSXENum("SD3","D3_DOC")
 	Local aItens	:= {}
+	
+	// @history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+	Local cCFOP3    := GetMV("MV_#F45451",,"5451")
+	Local cProd3    := GetMV("MV_#B15451",,"384743")
 
 	Private lMsErroAuto := .F.  
 
@@ -304,6 +308,13 @@ Static Function cM460F2()
 		While SD2->(!EOF()) .and. xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA == SD2->(D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA)
 
 			If Alltrim(SD2->D2_TES) $ cTesRem // KF 30/11/15
+
+				//@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+				If Alltrim(SD2->D2_CF) $ cCFOP3 .and. Alltrim(SD2->D2_COD) $ cProd3
+					SD2->( dbSkip() )
+					Loop
+				EndIf
+				//
 
 				Begin Transaction
 
