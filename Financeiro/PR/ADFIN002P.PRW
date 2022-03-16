@@ -23,8 +23,6 @@
 	@history Chamado TI    - Leonardo P. Monteiro - 22/02/2022 - Adição de históricos na gravação do valor acumulados.
 	@history Chamado 68815 - Leonardo P. Monteiro - 24/02/2022 - Correção da ordenação dos movimentos quando os movimentos de inclusão de títulos e baixas ocorrem no mesmo dia.
 																 Ajustamos também a regras de baixas relacionadas aos movimentos de juros.
-	@history Chamado 69557 - Leonardo P. Monteiro - 11/03/2022 - Corrige saldos baixados por dação ou qualquer outro tipo de inconsistência.
-																 Caso o pagamento seja maior que o valor do título desconsiderando o abatimento dos títulos.
 /*/
 
 
@@ -66,7 +64,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	//Private cDtCorte	:= dtos(stod("20220221")-1)
 	//Debugar a rotina.
 	Private cDebugCNPJ	:= ""
-	Private lTIDebug	:= .F.
+	Private lCalcPen	:= .T.
+	Private lGeraArq	:= .T.
 	
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -76,7 +75,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
 	
-	If !lTIDebug .and. !LockByName("ADFIN002P", .T., .F.)
+	If !LockByName("ADFIN002P", .T., .F.)
 		ConOut("[ADFIN002P] - Existe outro processamento sendo executado! Verifique...")
 		RPCClearEnv()
 		Return
@@ -111,7 +110,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	
 	CalcDtUltComp() // calcula data da ultima compra da rede 
     
-	if !lTIDebug
+	if lCalcPen
 		CalcDtPenComp() // calcula data da penultima compra da rede 	
 	endif
 
@@ -164,7 +163,7 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 		PutMv("MV_#DTGACU",	DTOS(DATE()))
 		PutMv("MV_#GARQAC",	.F.)
 		
-		if !lTIDebug
+		if lGeraArq
 			U_ADFIN003P() //Programa que gera o txt da cisp na pasta SYSTEM/cisp
 		endif
 	ENDIF	
@@ -278,17 +277,10 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
     
 	SqlReceber()
 	
-	While TRC->(!EOF())
-		// @history Chamado 69557 - Leonardo P. Monteiro - 11/03/2022 - Corrige saldos baixados por dação ou qualquer outro tipo de inconsistência.
-		// Caso o pagamento seja maior que o valor do título desconsiderando o abatimento dos títulos.
-		if TRC->E1_VALOR+TRC->E5_SALDO < 0
-			nValor := TRC->E1_VALOR+TRC->ABATIMENTO
-		else
-			nValor := TRC->E1_VALOR
-		endif
-
+	While TRC->(!EOF()) 
+	
 		AADD(aReceber, TRC->E1_EMISSAO) 
-		AADD(aReceber, nValor )
+		AADD(aReceber, TRC->E1_VALOR)
 		AADD(aReceber, 'SE1')
 		AADD(aReceber, 0) 
 		AADD(aReceber, Alltrim(TRC->E1_TIPO))
@@ -320,6 +312,7 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
 	    
 	    While TRD->(!EOF()) 
 	        
+			
 			AADD(aTitBaixado, TRD->E5_DATA)
 			AADD(aTitBaixado, TRD->E5_VLMOED2) 
 			AADD(aTitBaixado, 'SE5') 
@@ -329,9 +322,7 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
 
             AADD(aAcumulo, aTitBaixado)
 		    aTitBaixado := {}
-
-			nValor := nValor+IIF(Alltrim(TRD->E5_TIPODOC)$"ES,E2,JR,J2",TRD->E5_VLMOED2,TRD->E5_VLMOED2*(-1) )
-
+		    
 		    TRD->(dbSkip())
 		ENDDO
 		TRD->(dbCloseArea())
@@ -366,25 +357,10 @@ Static Function CalculaMaiorAcumulo(cCli,cLoj,cCnpj)
             AADD(aAcumulo, aTitBaixado)
 		    aTitBaixado := {}
 		    
-			nValor := nValor+IIF(Alltrim(TRF->E5_TIPODOC)$"ES,E2,JR,J2",TRF->E5_VLMOED2,TRF->E5_VLMOED2*(-1) )
-
 		    TRF->(dbSkip())
 		ENDDO
 		TRF->(dbCloseArea())
 	    
-		// Corrige saldos baixados por dação ou qualquer outro tipo de inconsistência.
-		IF nValor > 0 .AND. !Empty(TRC->E1_BAIXA) .AND. TRC->E1_SALDO ==0
-			AADD(aTitBaixado, TRC->E1_BAIXA)
-			AADD(aTitBaixado, nValor) 
-			AADD(aTitBaixado, 'SE5') 
-			AADD(aTitBaixado, 0)
-			AADD(aTitBaixado, 'RE')
-			AADD(aTitBaixado, '4')
-
-            AADD(aAcumulo, aTitBaixado)
-		    aTitBaixado := {}
-		ENDIF
-
 	 	TRC->(dbSkip())
 	ENDDO
 	TRC->(dbCloseArea())
@@ -509,7 +485,7 @@ Static Function GravarAcumulo()
 				ENDIF   
 			NEXT	             
 		ENDIF
-
+	
 		// **************************** final verifica datas de maior acumulo ***************** //
 		
 		// **************************** inicio gravar informacao do maior acumulo ************ //
@@ -1026,11 +1002,6 @@ STATIC FUNCTION EmailMaiorAcum(cMetodo,nId,cmensagem)
 	    ENDIF
 	ENDIF
 
-	if lTIDebug
-		cTo := "leonardo.monteiro@adoro.com.br"
-	endif
-
-
 	IF lOk .And. lAutOk     
 	   cSubject := "EMAIL GERACAO MAIOR ACUMULO"          
 	   Send Mail From cFrom To cTo Subject cSubject Body cBody ATTACHMENT cAtach Result lOk                                           
@@ -1192,9 +1163,7 @@ Static Function SqlReceber()
 	BeginSQL Alias "TRC"
 			%NoPARSER%  
 			SELECT SE1.E1_VALOR-ISNULL(ABA.E1_VALOR,0) AS E1_VALOR,
-				   ISNULL(ABA.E1_VALOR,0) ABATIMENTO,
-				   SE1.E1_BAIXA,
-				   SE1.E1_SALDO,
+				   //SE1.E1_VALOR,
 			       SE1.E1_EMISSAO,
 			       SE1.E1_FILIAL,
 			       SE1.E1_PREFIXO,
@@ -1203,17 +1172,8 @@ Static Function SqlReceber()
 			       SE1.E1_TIPO,
 			       SE1.E1_CLIENTE,
 			       SE1.E1_LOJA,
-				   SE1.R_E_C_N_O_ REGISTRO,
-				   SUM(ISNULL(CASE WHEN SE5.E5_TIPODOC IN ('ES','E2','JR','J2') THEN SE5.E5_VLMOED2 ELSE SE5.E5_VLMOED2*(-1) END,0)) E5_SALDO
+				   SE1.R_E_C_N_O_ REGISTRO
 			FROM %Table:SE1% SE1 WITH(NOLOCK) LEFT JOIN %Table:SE1% ABA WITH(NOLOCK) ON ABA.D_E_L_E_T_='' AND SE1.D_E_L_E_T_='' AND ABA.E1_FILIAL=SE1.E1_FILIAL AND ABA.E1_PREFIXO=SE1.E1_PREFIXO AND ABA.E1_NUM=SE1.E1_NUM AND ABA.E1_PARCELA=SE1.E1_PARCELA AND ABA.E1_TIPO='AB-' AND ABA.E1_CLIENTE=SE1.E1_CLIENTE AND ABA.E1_LOJA=SE1.E1_LOJA
-						LEFT JOIN %Table:SE5% SE5 WITH(NOLOCK) ON SE5.D_E_L_E_T_ <> '*'
-							AND SE5.E5_FILIAL   = SE1.E1_FILIAL
-							AND SE5.E5_PREFIXO  = SE1.E1_PREFIXO
-							AND SE5.E5_NUMERO   = SE1.E1_NUM
-							AND SE5.E5_PARCELA  = SE1.E1_PARCELA
-							AND SE5.E5_TIPO     = SE1.E1_TIPO
-							AND SE5.E5_DATA    <= %EXP:cDtCorte%
-							//AND SE5.E5_RECPAG   = 'R'
 			WHERE SE1.E1_CLIENTE  = %EXP:cCliente%
 			   AND SE1.E1_LOJA    = %EXP:cLoja%
 			   AND SE1.E1_EMISSAO > %EXP:cData%
@@ -1222,18 +1182,6 @@ Static Function SqlReceber()
 			   AND SE1.D_E_L_E_T_ <> '*'
 			   //AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14')
 			   AND LEFT(SE1.E1_PORTADO,1) != 'P'
-			GROUP BY SE1.E1_VALOR, ABA.E1_VALOR,
-				SE1.E1_BAIXA,
-				SE1.E1_SALDO,
-				SE1.E1_EMISSAO,
-				SE1.E1_FILIAL,
-				SE1.E1_PREFIXO,
-				SE1.E1_NUM,
-				SE1.E1_PARCELA,
-				SE1.E1_TIPO,
-				SE1.E1_CLIENTE,
-				SE1.E1_LOJA,
-				SE1.R_E_C_N_O_
 			ORDER BY E1_EMISSAO,E1_VALOR
 	EndSQl             
 RETURN(NIL)

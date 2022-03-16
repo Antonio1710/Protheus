@@ -9,6 +9,7 @@
   @since 03/02/2022
   @history Ticket 16833 - Leonardo P. Monteiro - 03/02/2022 - Desenvolvimento.
   @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
+  @history Chamado 16833 - Leonardo P. Monteiro - 15/03/2022- Ajuste de error.log.
 /*/
 
 User Function ADGPE086R()
@@ -246,7 +247,7 @@ Static Function getDadosRel()
 	cQuery += " 								OR ZHJ.ZHJ_TIPO='03' AND ZI1.ZI1_TCALPA=ZHJ.ZHJ_UM "+CEOL
 	cQuery += " 								OR ZHJ.ZHJ_TIPO='04' AND ZI1.ZI1_TCALTE=ZHJ.ZHJ_UM "+CEOL
 	cQuery += " 								OR ZHJ.ZHJ_TIPO='05' AND ZI1.ZI1_TCALCA=ZHJ.ZHJ_UM "+CEOL
-	cQuery += " 								OR ZHJ.ZHJ_TIPO='06' AND ZI1.ZI1_TMEIAS=ZHJ.ZHJ_UM) "+CEOL
+	cQuery += " 								OR ZHJ.ZHJ_TIPO='06' AND ZI1.ZI1_TMEIAS=ZHJ.ZHJ_UM "+CEOL
 	cQuery += " 								OR ZHJ.ZHJ_TIPO='07' AND ZI1.ZI1_TJALEC=ZHJ.ZHJ_UM) "+CEOL
 	cQuery += " 				WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_DEMISS ='' "+CEOL
 	cQuery += " 						AND ZI1.ZI1_CODHOR BETWEEN '"+ ALLTRIM(MV_PAR03) +"' AND '"+ ALLTRIM(MV_PAR04) +"' "+CEOL
