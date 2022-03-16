@@ -1902,16 +1902,11 @@ User Function M410STTS()
 			//u_GeraSC9() // @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
 
 			If lWSBradOn // @history chamado 059415 - FWNM - 13/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
-				IF SuperGetMV("MV_#THRRAP",,.T.)
-					
-					StartJob("U_THRGEPV",getenvserver(),.F., cEmpAnt, SC5->C5_FILIAL, SC5->C5_NUM)
-				else
-					// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alterações de pedidos de vendas com emissões anteriores ao do dia atual e de condições de pagamento normais para antecipado, cenário este não contemplado pelo job
-					//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO" )
-					msAguarde( { || u_GeraRAPV() }, "Gerando boleto de adiantamento PV " + _cNumPed )
-					//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL" )
-				ENDIF
-
+				
+				// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alterações de pedidos de vendas com emissões anteriores ao do dia atual e de condições de pagamento normais para antecipado, cenário este não contemplado pelo job
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO" )
+				msAguarde( { || u_GeraRAPV() }, "Gerando boleto de adiantamento PV " + _cNumPed )
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL" )
 			EndIf
 
 			//U_ADFIN021P(SC5->C5_FILIAL+SC5->C5_NUM) // Gera ZBH // @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
@@ -1926,20 +1921,15 @@ User Function M410STTS()
         If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
 
 			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
-				
-				IF SuperGetMV("MV_#THRCRE",,.T.)
-					StartJob("U_AVLCRED",getenvserver(),.F., cEmpAnt, SC5->C5_FILIAL, SC5->C5_NUM)
-				else
-					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
-					aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
-					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
-					IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
-						//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-						//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
-						fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-						//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
-					ENDIF
-				endif
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
+				aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
+				IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
+					//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
+					fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
+				ENDIF
 
 			EndIf
         Else
@@ -1972,80 +1962,6 @@ User Function M410STTS()
 
 Return 
 
-User Function THRGEPV(cEmpP,cFilP,cPedido)
-	/* Declaração de Variáveis */
-	Local nCurrent := 0
-
-	//Inicia o ambiente.
-	RPCSetType(3)
-	RpcSetEnv(cEmpP,cFilP,,,,GetEnvServer(),{ })
-
-		nCurrent	:= ThreadId()
-
-		ConOut("Processo Iniciado - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))
-
-		DbSelectArea("SC5")
-		SC5->(DbSetOrder(1))
-
-		if SC5->(DbSeek(cFilP+cPedido))
-			ConOut("Pedido encontrado "+cPedido+" - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))
-			u_GeraRAPV()
-		else
-			/* Encerro o processo */
-			ConOut("Pedido não encontrado - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))		
-		endif
-    
-		/* Encerro o processo */
-		ConOut("Processo Encerrado - THRGEPV: "+AllTrim(cValToChar(nCurrent)))
-	//
-    RpcClearEnv()
-
-	
-return Nil
-
-
-User Function AVLCRED(cEmpP,cFilP,cPedido)
-    
-	/* Declaração de Variáveis */
-	Local aVrLbAnt	:= {}
-	Local nCurrent := 0
-	
-	//Inicia o ambiente.
-	RPCSetType(3)
-	RpcSetEnv(cEmpP,cFilP,,,,GetEnvServer(),{ })
-
-		nCurrent	:= ThreadId()
-		
-		ConOut("Processo Iniciado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))
-
-		DbSelectArea("SC5")
-		SC5->(DbSetOrder(1))
-
-		if SC5->(DbSeek(cFilP+cPedido))
-			ConOut("Pedido encontrado "+cPedido+" - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))
-			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
-			aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
-			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
-			IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
-				//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
-				fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
-			ENDIF
-		else
-			/* Encerro o processo */
-			ConOut("Pedido não encontrado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))		
-		endif
-    
-		/* Encerro o processo */
-		ConOut("Processo Encerrado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))
-	
-	//
-    RpcClearEnv()
-
-	
-
-Return Nil
 
 /*/{Protheus.doc} fAtuExp
 	Recria o registro de liberação na SC9.
