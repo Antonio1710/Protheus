@@ -78,13 +78,16 @@ User Function ADFAT28A(cBody, aRetErro)
     Local cDados    := ""
     Local oJson     := Nil
     Local xRet      := Nil
+    Local cHash     := ""
 
     oJson := JsonObject():New()
 
     xRet  := oJson:FromJson(cBody)
 
     If ! ValType(xRet) == "U"
-        Aadd(aRetErro, {400, "Não foi possível converter a string json para objeto json."})
+        cMsgError := "Não foi possível converter a string json para objeto json."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
         RestArea(aArea)
         Return .F.
 
@@ -93,8 +96,9 @@ User Function ADFAT28A(cBody, aRetErro)
     cId := Alltrim(cValToChar(oJson['uuid']))
 
     If Empty(cId)
-        logZBE("ADFAT28A", "Não foi possível obter o uuid.", cBody)
-        Aadd(aRetErro, {400, "Não foi possível obter o uuid."})
+        cMsgError := "Não foi possível obter o uuid."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
         RestArea(aArea)
         Return .F.
 
@@ -103,8 +107,9 @@ User Function ADFAT28A(cBody, aRetErro)
     DbselectArea("ZIQ")
     ZIQ->(DbSetOrder(1))
     If ZIQ->( DbSeek(FWxFilial("ZIQ") + cId) )
-        logZBE("ADFAT28A", "Id " + cId + " já recebido.", cBody)
-        Aadd(aRetErro, {400, "Id " + cId + " já recebido."})
+        cMsgError := "Id " + cId + " já recebido."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
         RestArea(aArea)
         Return .F.
 
@@ -118,6 +123,20 @@ User Function ADFAT28A(cBody, aRetErro)
     cSisGer     := Alltrim(cValToChar(oJson['sistGera']))
     cTopico     := Alltrim(cValToChar(oJson['topico']))
     cDados      := Alltrim(cValToChar(cBody))
+    cHash       := SHA1(cEmpOrg + cFilOrg + Alltrim(cValToChar(oJson['dados'])))
+
+    DbselectArea("ZIQ")
+    ZIQ->(DbSetOrder(2))
+    If ZIQ->( DbSeek(FWxFilial("ZIQ") + cHash) )
+        cMsgError := "Hash " + cHash + " já recebido."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
+        FreeObj(oJson)
+        oJson := Nil
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
 
     oModel := FwLoadModel("ADFAT027P")
     oModel:SetOperation(MODEL_OPERATION_INSERT)
@@ -136,6 +155,7 @@ User Function ADFAT28A(cBody, aRetErro)
     oModel:SetValue("MD_MASTER", "ZIQ_UUID"  , cId)
     oModel:SetValue("MD_MASTER", "ZIQ_DADOS" , cDados)
     oModel:SetValue("MD_MASTER", "ZIQ_PROCES", "2")
+    oModel:SetValue("MD_MASTER", "ZIQ_HASH"  , cHash)
 
     If oModel:VldData()
         oModel:CommitData()
