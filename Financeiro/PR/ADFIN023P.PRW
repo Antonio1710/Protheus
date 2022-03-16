@@ -46,6 +46,7 @@
 	@history ticket 12098 - FWNM - 07/04/2020 - Correção emergencial na rotina de aprovação dos clientes do varejo. A rotina entra em loop infinto.
 	@history Ticket  8      - Abel Babini   - 01/02/2022 - Ajuste de variáveis
   @history Ticket 69699   - Abel Babini   - 14/03/2022 - Correção ErrorLog 
+	@history Ticket 69816   - Abel Babini   - 15/03/2022 - Correção ErrorLog 
 /*/
 User Function ADFIN023P()
 
@@ -614,7 +615,7 @@ User Function ADFIN023P()
 								ZEJ->ZEJ_VLPESP	:= 0											//
 								ZEJ->ZEJ_TTACUM	:= _nTotVenci+_nTotAVenc+_nPedPer
 								ZEJ->ZEJ_LIMCRD	:= _nTotRede							//
-								ZEJ->ZEJ_PERCEN := iif(((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100 > 999, 999, ((_nTotSdRede+(cTbClie)->TOTAL)/_nTotRede)*100) //Ticket 69699   - Abel Babini   - 14/03/2022 - Correção ErrorLog 
+								ZEJ->ZEJ_PERCEN := iif(((_nTotSdRede+SC5->C5_XTOTPED)/_nTotRede)*100 > 999, 999, ((_nTotSdRede+SC5->C5_XTOTPED)/_nTotRede)*100) //Ticket 69699   - Abel Babini   - 14/03/2022 - Correção ErrorLog //Ticket 69816   - Abel Babini   - 15/03/2022 - Correção ErrorLog 
 								ZEJ->ZEJ_VLUTIL := _nTotSdRede
 								ZEJ->ZEJ_QTDPED := _nQtdPed
 								ZEJ->ZEJ_TTUTIL := (_nTotSdRede+SC5->C5_XTOTPED)
