@@ -43,6 +43,7 @@ Static lAuto    := .t.
 	@history ticket 515     - Rodrigo Mello         - 17/01/2022 - Implementação PIX
 	@history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
 	@history ticket TI      - Rodrigo Mello         - 01/03/2022 - Ajuste valor default e tipo do MV_#CTAPIX / MV_#CTALINK
+	@history ticket TI      - Leonardo P. Monteiro  - 16/03/2022 - Retirada da função unlockbyname.
 /*/
 User Function ADFIN087P()
 
@@ -69,12 +70,13 @@ User Function ADFIN087P()
 	EndIf
 
 	// Garanto uma única thread sendo executada
+	/*
 	If !LockByName("ADFIN087P", .T., .F.)
 		ConOut(cRotina + " - Existe outro processamento sendo executado! Verifique...")
 		apMsgStop("Existe outro processamento sendo executado! Verifique...", "Atenção")
 		Return
 	EndIf
-
+	*/
 	PtInternal(1,ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina job para geracao boleto de adiantamento do PV')
@@ -231,7 +233,7 @@ User Function ADFIN087P()
 
     Next i
 
-	UnLockByName("ADFIN087P")
+	//UnLockByName("ADFIN087P")
 
 	//Fecha o ambiente.
 	RpcClearEnv()
