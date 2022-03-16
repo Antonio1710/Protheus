@@ -42,6 +42,7 @@
 	@history Ticket: 66952  - Fernando Macieir- 23/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
 	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
 	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
+    @history TICKET: 69748  - ADRIANO SAVOINE - 16/03/2022 - Ajustado o campo credencial para ajustar igual ao RM no DIMEP com 8 caracteres no leitor de codigo de barra mas deixando que no relogio somente considere 6.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -840,13 +841,13 @@ Static Function DimepFuncionario()
 				EndIf
 
 		    EndIf	                            		
-
+			// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE 
 			// FWNM - 22/070/2021 - TICKET 17021 - Checo se o tipo de tecnologia está diferente entre CREDENCIAL e CREDENCIAL_PESSOA
-			UpdTecno( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) ) 
-
+			UpdTecno( TRC->CD_PESSOA, Val(TRB->CHAPA), Val(TRB->PTOCREDENCIAL) ) 
+			// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
 			// FWNM - 22/07/2021 - AQUI - ticket 17021 - Checo se existem 2 credenciais iguais com tecnologias diferentes
 			If !lFuncCredencial
-				lTpTecno13 := ChkAllCred( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+				lTpTecno13 := ChkAllCred( TRC->CD_PESSOA, Val(TRB->CHAPA), Val(TRB->PTOCREDENCIAL) )
 				If lTpTecno13
 					lFuncCredencial := .t.
 				EndIf
@@ -860,9 +861,9 @@ Static Function DimepFuncionario()
 				If lTpTecno3
 					lFuncCredencial := .t.
 				EndIf
-
+				// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
 				// Checo se existe amarração Credencial x Pessoa - Tecnologia 1 = Codigo Barra = REP
-				lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)))
+				lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(TRB->CHAPA))
 				If lTpTecno1
 					lFuncCredencial := .t.
 				EndIf
@@ -935,8 +936,9 @@ Static Function CargaFuncDimep()
 			If Val(TRB->PTOCREDENCIAL) > 0 // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
 				IntCredencial(Val(TRB->PTOCREDENCIAL),nEstOrgEmpresa,'3') // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
    			EndIf
+			// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
    			If Alltrim(TRB->CHAPA) <> ''
-	    		IntCredencial(Substr(TRB->CHAPA,3,6),nEstOrgEmpresa,'1')
+	    		IntCredencial(TRB->CHAPA,nEstOrgEmpresa,'1')
 	    	EndIf	
    		ELSE
    			nCredencial := TRF->CD_CREDENCIAL   
@@ -953,10 +955,10 @@ Static Function CargaFuncDimep()
     			EndIf
     		TRF->(DbCloseArea())
     	EndIf
-
+		// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
     	// *** INICIO CARREGA CODIGO CREDENCIAL DA MATRICULA*** //
     	If nCredMat == 0 
-    		SqlVCredencialDimep(Val(Substr(TRB->CHAPA,3,6)))
+    		SqlVCredencialDimep(Val(TRB->CHAPA))
 			If TRF->(!EOF()) 
 				nCredMat    := TRF->CD_CREDENCIAL   
 				nRep        := TRF->CD_CREDENCIAL   
@@ -975,8 +977,8 @@ Static Function CargaFuncDimep()
     	
     	// Integra USuario Sistema Credencial
     	IntUsuSisCredencial(nCredencial) 
-    	
-    	If Substr(TRB->CHAPA,3,6) <> ''
+    	// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
+    	If TRB->CHAPA <> ''
     		IntUsuSisCredencial(nCredMat)
     	EndIf	
     	
@@ -1019,10 +1021,10 @@ Static Function CargaFuncDimep()
 				nCredencial := TRF->CD_CREDENCIAL   
 			EndIf
 			TRF->(DbCloseArea())
-
-			SqlVCredencialDimep(Val(Substr(TRB->CHAPA,3,6))) // Chapa = 5 digitos = REP = Tecnologia 1 = Código Barras
+			// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
+			SqlVCredencialDimep(Val(TRB->CHAPA)) // Chapa = 7 digitos = REP = Tecnologia 1 = Código Barras
 			If TRF->( EOF() )
-				IntCredencial(Val(Substr(TRB->CHAPA,3,6)),nEstOrgEmpresa,'1')
+				IntCredencial(Val(TRB->CHAPA),nEstOrgEmpresa,'1')
 			Else
 				nRep        := TRF->CD_CREDENCIAL   
 			EndIf	
@@ -1233,10 +1235,10 @@ Static Function AlterFuncDimep()
 							DelCredencial(cValToChar(TRU->CD_CREDENCIAL))	
 							
 						EndIf   
-		   		             
+		   		         // TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE    
 						// QUANDO A CREDENCIAL DO FUNCIONARIO TA DIFERENTE DA CREDENCIAL DIMEP
 						If Val(TRB->PTOCREDENCIAL)      <> TRU->NU_CREDENCIAL .AND. ;
-							Val(Substr(TRB->CHAPA,3,6)) <> TRU->NU_CREDENCIAL
+							Val(TRB->CHAPA) <> TRU->NU_CREDENCIAL
 
 							DelCredPessoa(cValToChar(TRU->CD_CREDENCIAL))
 							DelUsuSisCredencial(cValToChar(TRU->CD_CREDENCIAL))
@@ -1322,11 +1324,11 @@ Static Function AlterFuncDimep()
 		    	TSA->(dbSkip())	
 			End
 	    	TSA->(DbCloseArea()) 
-	    	    
+	    	// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE    
 	    	// *** INICIO QUANDO VAI ADICIONAR O SEGUNDO CARTAO QUE SO TEM O DA MATRICULA *** //
 	    	If (nCont1 == 0 .OR.; 
 			   nCont1  == 1) .AND. ;
-			   Len(Alltrim(cValToChar(Val(TRB->PTOCREDENCIAL)))) > 6
+			   Len(Alltrim(cValToChar(Val(TRB->PTOCREDENCIAL)))) > 8
 	    	
 	    	    //SIGNIFICA QUE SO TEM A CREDENCIAL DE MATRICULA
 	    	    //ADICIONANDO A CREDENCIAL DE NUMERO DE FABRICACAO
@@ -1370,13 +1372,13 @@ Static Function AlterFuncDimep()
    			nCredencial := TRF->CD_CREDENCIAL   
 		EndIf
 		TRF->(DbCloseArea())
-
-		SqlVCredencialDimep(Val(Substr(TRB->CHAPA,3,6))) // Chapa = 5 digitos = REP = Tecnologia 1 = Código Barras
+		// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
+		SqlVCredencialDimep(Val(TRB->CHAPA)) // Chapa = 7 digitos = REP = Tecnologia 1 = Código Barras
    		If TRF->( EOF() )
-	    	IntCredencial(Val(Substr(TRB->CHAPA,3,6)),nEstOrgEmpresa,'1')
+	    	IntCredencial(Val(TRB->CHAPA),nEstOrgEmpresa,'1')
 			// Após inclusão
 			TRF->(DbCloseArea())
-			SqlVCredencialDimep(Val(Substr(TRB->CHAPA,3,6))) // Chapa = 5 digitos = REP = Tecnologia 1 = Código Barras
+			SqlVCredencialDimep(Val(TRB->CHAPA)) // Chapa = 7 digitos = REP = Tecnologia 1 = Código Barras
 			If TRF->( !EOF() )
 				nRep        := TRF->CD_CREDENCIAL   
 			EndIf
@@ -1392,8 +1394,8 @@ Static Function AlterFuncDimep()
 				IntCrePessoa(TRC->CD_PESSOA,nCredencial,"","") // enviar 3 = tipo tecnologia // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
 				UpdPess1('CD_CREDENCIAL_FACE',nCredencial,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
 			EndIf
-
-			lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)))
+			// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
+			lTpTecno1 := GetCredenc("1", TRC->CD_PESSOA, Val(TRB->CHAPA))
 			If lTpTecno1
 				IntCrePessoa(TRC->CD_PESSOA,nRep,"","") // enviar 1 = tipo tecnologia  // fwnm - 19/07/2021 - @history Ticket  17021  - Fernando Macieir- 19/07/2021 - Integração DImep
 				UpdPess1('CD_CREDENCIAL_REP',nRep,nMatProth,nEstOrganizacional,nEstOrgEmpresa)
@@ -2841,7 +2843,7 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 	
 	Else
 
-		cChapa   := Val(Substr(TRB->CHAPA,3,6)) // TIPO 1
+		cChapa   := Val(TRB->CHAPA) // TIPO 1
 		cPtoCred := Val(TRB->PTOCREDENCIAL)     // TIPO 3
 
 		///////////////////////////////////////
@@ -3470,7 +3472,7 @@ Static Function GetCDCred(nKey, nTpTecno)
 
 Return cRet
 
-/*/{Protheus.doc} Static Function ChkAllCred( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+/*/{Protheus.doc} Static Function ChkAllCred( TRC->CD_PESSOA, Val(TRB->CHAPA), Val(TRB->PTOCREDENCIAL) )
 	Checa se existem 2 credenciais iguais com tipos de tecnologias diferentes.
 	@type  Static Function
 	@author FWNM
@@ -3513,7 +3515,7 @@ Static Function ChkAllCred(nCD_PESSOA, nCHAPA, nPTOCREDENCIAL)
 
 Return lRet
 
-/*/{Protheus.doc} UpdTecno( TRC->CD_PESSOA, Val(Substr(TRB->CHAPA,3,6)), Val(TRB->PTOCREDENCIAL) )
+/*/{Protheus.doc} UpdTecno( TRC->CD_PESSOA, Val(TRB->CHAPA), Val(TRB->PTOCREDENCIAL) )
 	Equalizo tipo tecnologia qdo estão divergentes entre as tabelas CREDENCIAL x CREDENCIAL_PESSOA
 	@type  Static Function
 	@author FWNM
@@ -3545,9 +3547,9 @@ Static Function UpdTecno( nCD_PESSOA, nCHAPA, nPTOCREDENCIAL )
 		If oCdNXC2:Get(Alltrim(cValToChar(Work->CD_CREDENCIAL)), aDdTec2)
 
 			If Alltrim(cValToChar(Work->TP_TECNOLOGIA)) <> Alltrim(cValToChar(aDdTec2[1]))
-
+				// TICKET 69748 - 16/03/2022 - ADRIANO SAVOINE
 				// Codigo Barra
-				If Len(Alltrim(cValToChar(aDdTec2[2]))) == 5
+				If Len(Alltrim(cValToChar(aDdTec2[2]))) == 7
 				
 					cTpTecno := "1"
 				
