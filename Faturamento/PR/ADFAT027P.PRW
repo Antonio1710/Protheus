@@ -17,7 +17,7 @@ Static xPula   := Chr(13) + Chr(10)
     @since 08/02/2022
     @version 01
     /*/
-User Function ADFAT027P() // U_ADFAT027P()  
+User Function ADFAT027P() // U_ADFAT027P()
 
     //Variáveis.
     Local oBrowse := FwLoadBrw("ADFAT027P")
@@ -40,9 +40,13 @@ Static Function BrowseDef()
     oBrowse:SetDescription(cTitulo)
     oBrowse:SetMenuDef("ADFAT027P")
 
-    oBrowse:AddLegend("ZIQ_PROCES = '2'", "BLUE", "Não enviado") 
-    oBrowse:AddLegend("ZIQ_PROCES = '1' .And. ZIQ_STATPR = '2'", "RED", "Enviado com erro") 
-    oBrowse:AddLegend("ZIQ_PROCES = '1' .And. ZIQ_STATPR = '1'", "GREEN", "Enviado") 
+    oBrowse:AddLegend("ZIQ_PROCES = '2'", "BLUE", "Não Processado") 
+
+    oBrowse:AddLegend("ZIQ_TIPO = 'S' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '2'", "RED", "Processado com erro") 
+    oBrowse:AddLegend("ZIQ_TIPO = 'S' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '1'", "GREEN", "Processado") 
+
+    oBrowse:AddLegend("ZIQ_TIPO = 'E' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '2'", "RED", "Processado com erro") 
+    oBrowse:AddLegend("ZIQ_TIPO = 'E' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '1'", "GREEN", "Processado") 
 
 Return oBrowse
 /*/{Protheus.doc} MenuDef
@@ -109,7 +113,7 @@ Static Function ViewDef()
 Return oView
 /*/{Protheus.doc} ADFAT27A
     Processa registros pendentes de integração vindos do barramento.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 10/02/2022
     @version 01
@@ -119,14 +123,14 @@ User Function ADFAT27A()
     //Variáveis.
     Local aArea := GetArea()
 
-    MsAguarde({|| U_ADFAT30A() }, "Aguarde", "Processando...", .F.)
+    MsAguarde({|| U_ADFAT29A() }, "Aguarde", "Processando...", .F.)
 
     RestArea(aArea)
 
 Return Nil
 /*/{Protheus.doc} ADFAT27B
     Gera registro para envio ao barramento.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 11/02/2022
     @version 01
@@ -166,6 +170,7 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
     oModel:SetValue("MD_MASTER", "ZIQ_DTORIG", SToD(cData))
     oModel:SetValue("MD_MASTER", "ZIQ_HRORIG", cHora)
     oModel:SetValue("MD_MASTER", "ZIQ_PROCES", "2")
+    oModel:SetValue("MD_MASTER", "ZIQ_HASH"  , SHA1(cDados))
 
     If oModel:VldData()
         oModel:CommitData()
@@ -191,7 +196,7 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
 Return lRet
 /*/{Protheus.doc} ADFAT27C
     Carrega dados de cadastro sem grid.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 11/02/2022
     @version 01
@@ -285,6 +290,8 @@ Static Function cabecDados(oJson, cData, cHora, cId, cTopico, cOperacao)
     //Variáveis.
 
     oJson['uuid'] := cId
+    oJson['empresa'] := cEmpAnt
+    oJson['filial'] := cFilAnt
     oJson['data'] := cData
     oJson['hora'] := cHora
     oJson['sistGera'] := "PROTHEUS"
@@ -358,7 +365,7 @@ Static Function carDados(cTabela, aCampos, cCmpI, cCmpEx)
 Return oJsonD
 /*/{Protheus.doc} ADFAT27D
     Carrega dados de cadastro com grid.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 11/02/2022
     @version 01
