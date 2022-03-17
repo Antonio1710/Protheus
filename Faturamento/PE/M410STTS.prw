@@ -59,7 +59,7 @@
 	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
 	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusão de Conouts.
 	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferência do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravação da data de entrega nos itens do PV.
-	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket  69520  - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 /*/
 User Function M410STTS()
 
@@ -2022,7 +2022,7 @@ User Function AVLCRED(cEmpP,cFilP,cPedido)
 		SC5->(DbSetOrder(1))
 
 		if SC5->(DbSeek(cFilP+cPedido))
-			ConOut("Pedido encontrado "+cPedido+" - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))
+			ConOut("Pedido encontrado "+cPedido+" - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))
 			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
 			aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
 			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
