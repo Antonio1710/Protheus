@@ -6,6 +6,8 @@
   @since 26/05/2020
   @version 1
   @history 058353 - Abel Babini - 26/05/2020 - Bloquear títulos criados pela rotina de liquidação do contas a receber / renegociação
+  @history TI - Leonardo P. Monteiro - 15/03/2022 - Gravação no campo XCODLOJ a concatenação do código do cliente e loja.
+                                                    Rotina auxiliar para avaliação de crédito na emissão de PVs.
   /*/
 User Function FA040FIN
   Local cTpDivf   := "000004"
@@ -73,4 +75,9 @@ User Function FA040FIN
     ENDIF
 
   ENDIF
+
+  //@history TI - Leonardo P. Monteiro - 15/03/2022 - Gravação no campo XCODLOJ a concatenação do código do cliente e loja.
+  RECLOCK("SE1",.F.)
+    SE1->E1_XCODLOJ := SE1->E1_CLIENTE+SE1->E1_LOJA
+  SE1->(MSUNLOCK())
 Return 
