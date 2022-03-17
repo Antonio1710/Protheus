@@ -14,6 +14,15 @@
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
+/*/{Protheus.doc} User Function ADVEN045P
+  Ponto de entrada executado após a alteração do cadastro do de clientes.
+  @type  Function
+  @author Mauricio
+  @since 26/05/2020
+  @version 1
+  @history TI - Leonardo P. Monteiro - 16/03/2022 - Gravação no campo XCODLOJ a concatenação do código do cliente e loja.
+													Rotina auxiliar para avaliação de crédito na emissão de PVs.
+  /*/
 User Function MALTCLI()
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -27,7 +36,10 @@ User Function MALTCLI()
 	
 	EndIf
 	
-	//
+	RECLOCK("SA1",.F.)
+        SA1->A1_XCODLOJ := SA1->A1_COD+SA1->A1_LOJA
+    SA1->(MSUNLOCK())
+
 	RestArea(aArea)
 	
 Return Nil
