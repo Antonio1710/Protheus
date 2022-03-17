@@ -177,6 +177,11 @@ USER FUNCTION AD0019(nOpc)
 					EndIf
 					//
 					MsUnLock()
+
+					//gera log - // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+					u_GrLogZBE(msDate(),TIME(),cUserName," INCLUSAO","LOGISTICA","AD0019",;
+					"BLOQUEADO MANUALMENTE RECEBER DADOS DO RAVEX - NF/SERIE " + _cNota + "/" + _cSerie,ComputerName(),LogUserName())
+
 				Endif
 			next
 		Else
@@ -289,6 +294,11 @@ USER FUNCTION AD0019(nOpc)
 				//
 
 				MsUnLock()
+
+				//gera log - // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+				u_GrLogZBE(msDate(),TIME(),cUserName," INCLUSAO","LOGISTICA","AD0019",;
+				"BLOQUEADO MANUALMENTE RECEBER DADOS DO RAVEX - NF/SERIE " + _cNota + "/" + _cSerie,ComputerName(),LogUserName())
+
 			Endif
 		next
 		
@@ -682,6 +692,11 @@ USER FUNCTION AD0019(nOpc)
 						//
 
 						MsUnLock()
+
+						//gera log - // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+						u_GrLogZBE(msDate(),TIME(),cUserName," INCLUSAO","LOGISTICA","AD0019",;
+						"BLOQUEADO MANUALMENTE RECEBER DADOS DO RAVEX - NF/SERIE " + _cNota + "/" + _cSerie,ComputerName(),LogUserName())
+
 					Endif
 
 					Do Case
