@@ -14,8 +14,11 @@
 	@history chamado 052977 William Costa 30/10/2019 - Identificado erro para encontrar o produto o fator de conversão e tipo de conversão e alterado os campos de quantidade na devolução total e parcial
 	@history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados) + Function ChkDupSZX (via query pois já existe seek) + Inclusão PadR
+	@history ticket 68820 - Fernando Macieira - 16/03/2022 - Novo campo ZD_BLQRAVE que será utilizado no job ADLOG006P (integrador RAVEX)
 /*/
 User Function ADLOG006P()
+
+	Local nCont3
 
 	Private nCont3 := 0
 
@@ -160,6 +163,14 @@ STATIC FUNCTION IMPORTAXML()
 				IF DBSEEK(FWFILIAL("SZD")+STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CNUMERONF),9) + ;
 						  STRZERO(VAL(oResp:OWSANOMALIA[nCont]:CSERIENF),2),.T.) 
 						  
+					//@history ticket 68820 - Fernando Macieira - 16/03/2022 - Novo campo ZD_BLQRAVE que será utilizado no job ADLOG006P (integrador RAVEX)
+					If SZD->(FieldPos("ZD_BLQRAVE")) > 0
+						If SZD->ZD_BLQRAVE == "S"
+							Loop
+						EndIf
+					EndIf
+					//
+
 						  // @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 						  /*
 						  IF SZD->ZD_DEVTOT == 'P'

@@ -16,6 +16,9 @@
 	@history ticket  9579   - Fernando Macieir- 17/02/2021 - type mismatch on *  on U_AD0019(AD0019.PRW) 29/01/2021 11:47:55 line : 821
 	@history ticket  T.I	- Sigoli	      - 03/11/2021 - removido o email monitor.sistemas@adoro.com.br de receber este workflow 
 	@history Ticket  65889/65927 - Sigoli     - 04/01/2022 - Tratamento de pedido reprogramados com a condiçãp de pagamento antecipado 
+	@history Ticket  T.I    - Sigoli          - 04/01/2022 - Tratamento de pedido reprogramados com a condiçãp de pagamento antecipado 
+	@history ticket 68820   - Fernand Macieira- 16/03/2022 - Novo campo ZD_BLQRAVE que será utilizado no job ADLOG006P (integrador RAVEX)
+	@history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
 /*/
 USER FUNCTION AD0019(nOpc)     
 
@@ -168,7 +171,17 @@ USER FUNCTION AD0019(nOpc)
 						SZD->ZD_CONTROL := _cCodCTRL
 						SZD->ZD_NRDEVOL := _cFlag
 					Endif   
+					// @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+					If SZD->(FieldPos("ZD_BLQRAVE")) > 0
+						SZD->ZD_BLQRAVE := "S"
+					EndIf
+					//
 					MsUnLock()
+
+					//gera log - // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+					u_GrLogZBE(msDate(),TIME(),cUserName," INCLUSAO","LOGISTICA","AD0019",;
+					"BLOQUEADO MANUALMENTE RECEBER DADOS DO RAVEX - NF/SERIE " + _cNota + "/" + _cSerie,ComputerName(),LogUserName())
+
 				Endif
 			next
 		Else
@@ -273,7 +286,19 @@ USER FUNCTION AD0019(nOpc)
 					SZD->ZD_CONTROL := _cCodCTRL
 					SZD->ZD_NRDEVOL := _cFlag
 				Endif
+
+				// @history ticket 68820   - Fernand3 Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+				If SZD->(FieldPos("ZD_BLQRAVE")) > 0
+					SZD->ZD_BLQRAVE := "S"
+				EndIf
+				//
+
 				MsUnLock()
+
+				//gera log - // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+				u_GrLogZBE(msDate(),TIME(),cUserName," INCLUSAO","LOGISTICA","AD0019",;
+				"BLOQUEADO MANUALMENTE RECEBER DADOS DO RAVEX - NF/SERIE " + _cNota + "/" + _cSerie,ComputerName(),LogUserName())
+
 			Endif
 		next
 		
@@ -658,7 +683,20 @@ USER FUNCTION AD0019(nOpc)
 							SZD->ZD_CONTROL := _cCodCTRL
 							SZD->ZD_NRDEVOL := _cFlag
 						Endif				
+
+						//@history ticket 68820   - Fernand Macieira- 16/03/2022 - Novo campo ZD_BLQRAVE que será utilizado no job ADLOG006P (integrador RAVEX)
+						If SZD->(FieldPos("ZD_BLQRAVE")) > 0
+							//SZD->ZD_BLQRAVE := M->ZD_BLQRAVE // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+							SZD->ZD_BLQRAVE := "S"
+						EndIf
+						//
+
 						MsUnLock()
+
+						//gera log - // @history ticket 68820   - Fernand Macieira- 17/03/2022 - Mudança de conceito, para que o campo ZD_BLQRAVE seja preenchido automaticamente (campo ficará apenas visual)
+						u_GrLogZBE(msDate(),TIME(),cUserName," INCLUSAO","LOGISTICA","AD0019",;
+						"BLOQUEADO MANUALMENTE RECEBER DADOS DO RAVEX - NF/SERIE " + _cNota + "/" + _cSerie,ComputerName(),LogUserName())
+
 					Endif
 
 					Do Case
