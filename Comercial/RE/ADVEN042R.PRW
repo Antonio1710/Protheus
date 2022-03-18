@@ -12,6 +12,7 @@
 	@history Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	@history Ticket   15733 - Everson     - 16/06/2021 - Tratamento para errorlog.
 	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+	@history TICKET:  69990 - ADRIANO SAVOINE - 18/03/2022 - Ajustado o parametro quando carrega diversas filiais para quebrar todas como string e não numerico devido ao erro na filial 0A.
 /*/
 User Function ADVEN042R() // U_ADVEN042R()
 	
@@ -2577,6 +2578,7 @@ Static Function toNvGer()
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local nTotCobert	:= 0
+	Local _yy           := 0
 
 	For _yy := 1 to len(_aTotaliz)    
 	    If nLin > 55   //60 
@@ -2692,6 +2694,7 @@ Static Function totNvVend()
 	//³ Declaracao de Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local nTotCobert	:= 0
+	Local _yy           := 0
 
 	For _yy := 1 to len(_aTotaliz)
 	    
@@ -2873,7 +2876,7 @@ User Function FXFIL()
 Local cTitulo:=""
 Local MvPar
 Local MvParDef:=""
-Local nTam := 2 
+Local nTam := 4 // TICKET: 69990 - 18/03/2022 - ADRIANO SAVOINE
 Local nX := 0
 Local nLen := 0
 
@@ -2895,7 +2898,7 @@ DbGotop()
 CursorWait()
 		While !Eof() .And. SM0->M0_CODIGO == cEmpAnt
 			Aadd(aGrupo,SM0->M0_CODFIL + " - " + Alltrim(SM0->M0_FILIAL))
-			MvParDef+=SM0->M0_CODFIL
+			MvParDef+="'"+SM0->M0_CODFIL+"'" // TICKET: 69990 - 18/03/2022 - ADRIANO SAVOINE
 			dbSkip()
 		Enddo
 CursorArrow()
@@ -2909,7 +2912,8 @@ IF f_Opcoes(@MvPar,"Filiais",aGrupo,MvParDef,12,49,.F., nTam, Len(aGrupo))  // C
 	For nX := 0 To nLen Step nTam
 		mvpar := SubStr(mvpar, 1, nX+nTam+Int(nX/nTam))+","+SubStr(mvpar, nX+nTam+Int(nX/nTam)+1, Len(mvpar))
 	Next nX
-	
+
+
 	_nTam := LEN(MVPAR)
 	MVPAR := SUBSTR(MVPAR,1,_nTAM-1)
 	
