@@ -35,7 +35,6 @@ Static cHK				:= "&"
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 @history Chamado T.I  - Leonardo P. Monteiro  - 30/07/2021 - Inclusão do campo de controle GUUID.
 @history Chamado T.I  - Leonardo P. Monteiro  - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
-@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
 */
 User Function ADVEN075P(cServico,cMetodo,cBody,cMsg,aResponse) // U_ADVEN075P()
 
@@ -1384,18 +1383,13 @@ Return Nil
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPedSF, cDtEnt, cCondPag)
+Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPedSF)
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variávies.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArea 		:= GetArea()
-	Local nRecno		:= 0
-	Local dDtInteg		:= Date()
-	Local cHrInteg		:= cValToChar(Time())
-	Local cOrdAd		:= "1"
-	Default cDtEnt		:= ""
-	Default cCondPag	:= ""
+	Local aArea := GetArea()
+	Local nRecno:= 0
 	
 	//
 	cUsuario := Alltrim(cValToChar(cUsuario))
@@ -1407,22 +1401,13 @@ Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPed
 	cMetodo	 := Alltrim(cValToChar(cMetodo)) 
 	cTmProc	 := Alltrim(cValToChar(cTmProc)) 
 	cPedSF   := Alltrim(cValToChar(cPedSF)) 
-	cDtEnt   := Alltrim(cValToChar(cDtEnt)) 
-	cCondPag := Alltrim(cValToChar(cCondPag)) 
 	
-	if !Empty(cCondPag)
-		if AllTrim(Posicione("SE4",1,FWxFilial("SE4")+cCondPag,"E4_CTRADT")) == "1"
-			cOrdAd := "0"
-		else
-			cOrdAd := "1"
-		endif
-	endif
 	
 	DbSelectArea("ZCI")
 	RecLock("ZCI",.T.)
 		ZCI->ZCI_FILIAL:= xFilial("ZCI")
-		ZCI->ZCI_DATA  := dDtInteg
-		ZCI->ZCI_HORA  := cHrInteg
+		ZCI->ZCI_DATA  := Date()
+		ZCI->ZCI_HORA  := cValToChar(Time())
 		ZCI->ZCI_USR   := cUsuario
 		ZCI->ZCI_IDSF  := cIdSF
 		ZCI->ZCI_NUMP  := cNumP
@@ -1432,14 +1417,6 @@ Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPed
 		ZCI->ZCI_METD  := cMetodo
 		ZCI->ZCI_TMPR  := cTmProc
 		ZCI->ZCI_PEDSAL:= cPedSF
-		
-		if !Empty(cDtEnt)
-			ZCI->ZCI_DTENTR:= Stod(cDtEnt)
-		else
-			ZCI->ZCI_DTENTR:= dDtInteg
-		endif
-
-		ZCI->ZCI_ANTECI	:= cOrdAd
 
 		// Grava a data, hora e a quantidade de processamentos do registro.
 		ZCI->ZCI_DTPROC	:= Stod("")
