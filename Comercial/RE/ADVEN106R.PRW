@@ -28,6 +28,7 @@
 	@history Ticket  62249  - Leonardo P. Monteiro  - 29/12/2021 - Ajustes na geração dos arquivos texto.
 	@history Ticket  68727  - Leonardo P. Monteiro  - 02/03/2022 - Correção na impressão dos parâmetros do relatório para a exportação do relatório para PDF.
 	@history Ticket  68727  - Leonardo P. Monteiro  - 03/03/2022 - Correção no limite de linhas impressas por folha para a geração dos arquivos em PDF.
+	@history Ticket  69990  - Adriano Savoine       - 21/03/2022 - Alterado a declaração da Variavel na query estava de forma errada.
 /*/
 User Function ADVEN106R() // U_ADVEN106R()
 
@@ -1077,7 +1078,8 @@ Static Function MontaTra()
 	//DEVOLUCOES
 	cQuery:="select * "+;
 	"from "+retsqlname("SF1")+" (NOLOCK)"+; // Chamado n. TI - FWNM - 23/05/2019
-	"where F1_FILIAL IN ('"+AllTrim(_cFilial)+"') and "+; // Chamado n. TI - FWNM - 23/05/2019 //Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas
+	//Ticket  69990  - Adriano Savoine - 21/03/2022
+	"where F1_FILIAL IN ("+AllTrim(_cFilial)+") and "+; // Chamado n. TI - FWNM - 23/05/2019 //Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas
 	"F1_DTDIGIT between '"+dtos(mv_par01)+"' and '"+dtos(mv_par02)+"' and "+; // Chamado n. TI - FWNM - 23/05/2019
 	"F1_TIPO='D' and "+;
 	"D_E_L_E_T_= '' "+;
