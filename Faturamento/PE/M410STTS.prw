@@ -60,6 +60,7 @@
 	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusão de Conouts.
 	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferência do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravação da data de entrega nos itens do PV.
 	@history Ticket  69520  - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Everson, 18/10/2020, Chamado 18465. Envio de informações ao barramento. 
 /*/
 User Function M410STTS()
 
@@ -1965,6 +1966,14 @@ User Function M410STTS()
 	if _nOper == 5
 		fFunDel()
 	endif
+
+	//Everson - 17/03/2022. Chamado 18465.
+	If ! Empty(Alltrim(cValToChar(SC5->C5_XORDPES)))
+		grvBarr(_nOper, SC5->C5_NUM)
+
+	EndIf
+	//
+
 	//Everson - 10/02/2020. Chamado 054941.
 	RestArea(aArea)
 	
@@ -4672,3 +4681,43 @@ Static function AltPedOr(_cPedAnt,_cNumPed)
 	dbGoto(_SC5cRecno)
 
 Return()
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+	Chamado 18465.
+    @type  User Function
+    @author Everson
+    @since 18/03/2022
+    @version 01
+/*/
+Static Function grvBarr(nOper, cNumero)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+	Local cOperacao	:= ""
+	Local cFilter	:= ""
+
+	If nOper == 3
+		cOperacao := "I"
+
+	ElseIf nOper == 4
+		cOperacao := "A"
+
+	ElseIf nOper == 5
+		cOperacao := "D"
+
+	Else
+		RestArea(aArea)
+		Return Nil
+
+	EndIF
+
+	cFilter := " C6_FILIAL ='" + FWxFilial("SC6") + "' .And. C6_NUM = '" + cNumero + "' "
+	
+    U_ADFAT27D("SC5", 1, FWxFilial("SC5") + cNumero,;
+            "SC6", 1, FWxFilial("SC6") + cNumero, "C6_ITEM",cFilter,;
+            "pedidos_de_saida_protheus", cOperacao,;
+            .T., .T.,.T., Nil)
+
+	RestArea(aArea)
+
+Return Nil

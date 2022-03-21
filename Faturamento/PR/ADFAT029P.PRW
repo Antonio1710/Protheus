@@ -43,6 +43,9 @@ User Function ADFAT29A()
     //Granjada.
     U_ADFAT29E()
 
+    //Pedido de saída entre filiais.
+    U_ADFAT29F()
+
 Return Nil
 /*/{Protheus.doc} ADFAT29B
     Processa registros do cadastro de produtos SAG.
@@ -261,6 +264,7 @@ User Function ADFAT29C()
     Local nCusto    := 0
     Local oModel    := Nil
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    Local cDesPrd   := ""
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -331,6 +335,8 @@ User Function ADFAT29C()
 
         EndIf
 
+        cDesPrd  := Alltrim(cValToChar(ZIM->ZIM_DESSAG))
+
         If ! ZI8->(DbSeek( FWxFilial("ZI8") + cCdLote ))
 
             If (cAliasAux)->ZIQ_OPERAC == "A" .Or. (cAliasAux)->ZIQ_OPERAC == "D"
@@ -400,6 +406,7 @@ User Function ADFAT29C()
             oModel:SetValue("MD_MASTER", "ZI8_PRDSAG", cProdSAG)
             oModel:SetValue("MD_MASTER", "ZI8_STATUS", cStatus)
             oModel:SetValue("MD_MASTER", "ZI8_DTINIC", SToD(cDtIni))
+            oModel:SetValue("MD_MASTER", "ZI8_DESPRD", cDesPrd)
 
             If ! Empty(cDtFim)
                 oModel:SetValue("MD_MASTER", "ZI8_DTFINA", SToD(cDtFim))
@@ -661,6 +668,156 @@ User Function ADFAT29E()
             EndIf
 
         End Transaction
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    (cAliasAux)->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT29F
+    Processa registros de pedidos de saída entre filiais.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 17/03/2022
+    @version 01
+/*/
+User Function ADFAT29F(aPedidos, cUUids)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cAliasAux := GetNextAlias()
+    Local cQuery    := ""
+    Local cMsgError := ""
+    Local cJson     := ""
+    Local oJson     := Nil
+    Local cId       := ""
+    Local cEmpD     := ""
+    Local cFilD     := ""
+    Local cEmpO     := ""
+    Local cFilO     := ""
+    Local cTpPed    := ""
+    Local cFornece  := ""
+    Local cLjForn   := ""
+    Local aCampo    := ""
+    Local cMemNf2   := ""
+    Local cGranja   := ""
+    Local cGranjada := ""
+    Local cTpFrt    := ""
+    Local cPlaca    := ""
+    Local nPesoLiq  := 0
+    Local cProduto  := ""
+    Local nVlrUnit  := 0
+    Local nTotal    := 0
+    Local cTes      := ""
+    Local cNmOrdem  := ""
+    Local cTabGene  := ""
+    Local aRetPed   := {}
+    Local pedPrinc  := ""
+
+    Default aPedidos := {}
+    Default cUUids   := ""
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'pedidos_de_saida_entre_filiais_protheus' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
+    cQuery += " AND ZIQ_EMPRES = '" + cEmpAnt + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + cFilAnt + "' " 
+
+    If ! Empty(cUUids)
+        cQuery += " AND ZIQ_UUID IN (" + cUUids + ")" 
+
+    EndIf
+
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO "
+
+    DbSelectArea("ZIS")
+    ZIS->(DbSetOrder(2))
+    ZIS->(DbGoTop())
+
+    DbSelectArea("SA2")
+    SA2->(DbSetOrder(1))
+    SA2->(DbGoTop())
+
+    DbSelectArea("SA1")
+    SA1->(DbSetOrder(1))
+    SA1->(DbGoTop())
+
+    DbSelectArea("ZIQ")
+    ZIQ->(DbSetOrder(1))
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
+        
+        cMsgError := ""
+        cJson := ZIQ->ZIQ_DADOS
+        oJson := getJson(cJson)
+
+        If ValType(oJson) == "U"
+            cMsgError := "Não foi possível converter a string para objeto json."
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        cId         := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        cEmpD       := oJson['EmpDes']
+        cFilD       := oJson['filDes']
+        cEmpO       := oJson['empOri']
+        cFilO       := oJson['filOr']
+        cTpPed      := oJson['tpPed']
+        cFornece    := oJson['forne']
+        cLjForn     := oJson['loja']
+        aCampo      := oJson['ddForn']
+        cMemNf2     := oJson['msgNota']
+        cGranja     := oJson['granja']
+        cGranjada   := oJson['grjada']
+        cTpFrt      := oJson['tipoFrt']
+        cPlaca      := oJson['placa']
+        nPesoLiq    := Val(cValToChar(oJson['pesLiq']))
+        cProduto    := oJson['produto']
+        nVlrUnit    := Val(cValToChar(oJson['vlrUnit']))
+        nTotal      := Val(cValToChar(oJson['vlrTotal']))
+        cTes        := oJson['tes']
+        cNmOrdem    := oJson['ordPes']
+        cTabGene    := oJson['tabGene']
+        pedPrinc    := oJson['pedPrinc']
+
+        //Pedido gerado em outra filial.
+        aRetPed := StartJob("U_ADFAT17M",getenvserver(),.T.,cEmpD, cFilD, cEmpO, cFilO, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGranja, cGranjada, cTpFrt,;
+                                                            cPlaca, nPesoLiq, cProduto, nVlrUnit, nTotal, cTes, cNmOrdem, cTabGene, .T.)
+
+        cMsgError := aRetPed[3]
+
+        If ! Empty(cMsgError) .Or. ! aRetPed[1]
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, "Erro no processamento de registro de granjada SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        Else
+            Aadd(aPedidos, cValToChar(aRetPed[2]) + " empresa/filial " + cEmpD + "/" + cFilD )
+            U_ADFAT29D(cId, "1", "")
+
+        EndIf
 
         (cAliasAux)->(DbSkip())
 
