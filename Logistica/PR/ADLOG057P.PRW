@@ -3,6 +3,7 @@
 #Include "Topconn.ch"
 #Include "Totvs.ch"
 #Include "ParmType.ch"
+
 /*/{Protheus.doc} User Function ADLOG057P
 	Emissão de CT-e/MDF-e. Chamado 044314.
 	@type  Function
@@ -55,7 +56,8 @@
 	@history 05/05/2021, Everson, Ch:13434  - Limpeza de objeto instanciados.
 	@history 20/09/2021, Everson, Ch:15138  - Tratamento para emissão de CT-e adicional.
 	@history 12/11/2021, Everson, Ch:63590  - Tratamento para emissão de CT-e adicional.
-	/*/
+	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+/*/
 User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 
 	//Variáveis.		
@@ -628,7 +630,8 @@ Static Function carInter1(cOPc)
 			cQuery += " AND F2_DOC = C5_NOTA   " 
 			cQuery += " AND F2_SERIE = C5_SERIE   " 
 			cQuery += " WHERE   " 
-			cQuery += " ZV1_FILIAL = '  '   " 
+			//cQuery += " ZV1_FILIAL = '  '   " 
+			cQuery += " ZV1_FILIAL = '"+FWxFilial("ZV1")+"' " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 			cQuery += " AND F2_FILIAL = '" + FWxFilial("SF2") + "'   " 
 			cQuery += " AND ZFC_NUMERO  BETWEEN'"  + cRotIni  + "' AND '" + cRotFim  + "' " 
 			cQuery += " AND ZFC_DTAPRE  BETWEEN '" + cDataIni + "' AND '" + cDataFim + "' " 
@@ -1331,7 +1334,8 @@ Static Function obtNF(cRoteiro,cDtEntr,cDocFilt,lCliDif,lEstDif,cCTE) //Everson 
 		cQuery += " AND F2_DOC = C5_NOTA   " 
 		cQuery += " AND F2_SERIE = C5_SERIE   " 
 		cQuery += " WHERE   " 
-		cQuery += " ZV1_FILIAL = '  '   " 
+		//cQuery += " ZV1_FILIAL = '  '   " 
+		cQuery += " ZV1_FILIAL = '"+FWxFilial("ZV1")+"' " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 		cQuery += " AND F2_FILIAL = '" + FWxFilial("SF2") + "'   " 
 		cQuery += " AND ZFC_NUMERO  = '" + cValToChar(cRoteiro) + "'   " 
 		cQuery += " AND ZFC_DTAPRE = '" + cValToChar(cDtEntr) + "'   " 

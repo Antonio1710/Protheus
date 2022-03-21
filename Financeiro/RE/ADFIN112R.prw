@@ -2,7 +2,7 @@
 #INCLUDE "TOPCONN.CH"
 #Include "Colors.ch"
 
-/*/{Protheus.doc} User Function ADLFV020R
+/*/{Protheus.doc} User Function ADFIN112R
   (long_description)
   @type  Function
   @author user

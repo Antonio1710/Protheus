@@ -9,9 +9,10 @@
   @since 20/05/2021
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
   @history Ticket 13294 - Leonardo P. Monteiro - 20/08/2021 - Correção na coluna de tempo de espera.
+  @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
-
 User Function ADLFV018R()
+
 	local cTitulo         := "RELAÇÃO DIARIA ORDEM CARREGAMENTO FRANGO VIVO"
 
 	private cPerg         := "ADLFV018R"//"AD0143"
@@ -545,8 +546,9 @@ Static Function getDadosRel()
 	cQuery+=" ZV1_LOJFOR, ZV1_CODFOR,ZV1_TARAPD,ZV1_AJUSPS, ZV1_SERIE , "
 	cQuery+=" ZV1_PGRANJ, ZV1_FORREC,ZV1_LOJREC,ZV1_RHVP,ZV1_RHABAT , ZV2_DATA1 , ZV1_CLIVOL,ZV1_RHESPE,ZV1_CLIBAL, "
 	cQuery+= "ZV1_MORTAL, ZV1_QTDCAQ "
-	cQuery+=" FROM " + retsqlname("ZV1")+ " , " + retsqlname("ZV2")+" "
-	cQuery+=" WHERE (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDataIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDataFim) +"') "
+	cQuery+=" FROM " + retsqlname("ZV1")+ " (NOLOCK), " + retsqlname("ZV2")+" (NOLOCK) "
+	cQuery+=" WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL " // @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	cQuery+=" AND (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDataIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDataFim) +"') "
 	cQuery+=" AND ZV1_NUMNFS<>'      ' "
 	cQuery+=" AND ZV2_TIPOPE='F'"
 	//Filtro por Granja
@@ -974,22 +976,23 @@ Return(xLin)
   @example
   (examples)
   @see (links_or_references)
-  /*/
+  Verifica se tem Apanha para trazer o Peso do apanhe e separa-lo do Outro Peso.
+ /*/
 Static function Apanha1()
-// Verifica se tem Apanha para trazer o Peso do apanhe e separa-lo do Outro Peso.
+
 	DbSelectArea("ZV5")
 	DbSetOrder(1)
 	_nSomaPeso := 0
 	If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
-		Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+		//Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC 
+		Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL==FWxFilial("ZV5") // @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 			_nSomaPeso += ZV5->ZV5_PESOAP
 			DbSelectArea("ZV5")
 			Dbskip()
 		enddo
 	endif
+
 return(_nSomaPeso)
-
-
 
 /*/{Protheus.doc} Apanha2
   (long_description)
@@ -1009,7 +1012,8 @@ Static Function Apanha2()
 	DbSetOrder(1)
 	_nSomaQtd := 0
 	If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
-		Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+		//Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+		Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL==FWxFilial("ZV5") // @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 			_nSomaQtd += ZV5->ZV5_QTDAVE
 			DbSelectArea("ZV5")
 			Dbskip()
@@ -1230,7 +1234,8 @@ Static function Apanha(cNumOrdCarregamento,oReport,oSection)
 
 		oSection:init()
 
-		Do While ZV5->(!Eof()) .AND. cNumOrdCarregamento == ZV5->ZV5_NUMOC
+		//Do While ZV5->(!Eof()) .AND. cNumOrdCarregamento == ZV5->ZV5_NUMOC
+		Do While ZV5->(!Eof()) .AND. cNumOrdCarregamento == ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL==FWxFilial("ZV5") // @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 
 			_cNumOc   	:= ZV5->ZV5_NUMOC
 			_cForcod  	:= ZV5->ZV5_FORCOD

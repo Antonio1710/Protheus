@@ -448,7 +448,7 @@ Static Function QrySzk()
 	cQuery+=" ZK_NUMOC, "
 	cQuery+=" ZK_GUIA, "
 	cQuery+=" ZK_ROTEIRO "
-	cQuery+=" FROM "+RETSQLNAME("SZK")+" "
+	cQuery+=" FROM "+RETSQLNAME("SZK")+" (NOLOCK) "
 	cQuery+=" WHERE "
 	cQuery+=" 	(ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND "
 	cQuery+=" 	(ZK_FORNEC BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"') AND "
@@ -481,7 +481,7 @@ Static Function QrySZI(cPlaca,xLin,cDataSZK,cCodGuia,cRoteiro)
 	IF ALLTRIM(MV_PAR05) = 'FV' //FRANGO VIVO
 	
 		cQuery1 := 	" SELECT ZI_GUIA, ZI_PLACA, ZI_DATALAN,ZI_TIPO, ZI_VALOR,ZI_DESCRIC,ZI_OBS "
-		cQuery1 +=	" FROM "+RETSQLNAME("SZI")+", "+RETSQLNAME("SZK")+" "
+		cQuery1 +=	" FROM "+RETSQLNAME("SZI")+" (NOLOCK) , "+RETSQLNAME("SZK")+" (NOLOCK) "
 		cQuery1 +=	" WHERE "
 		cQuery1 +=	" ZK_GUIA='" + Alltrim(cCodGuia) + "' "
 		cQuery1 +=	" AND ZK_TIPFRT='"+MV_PAR05+"' "
@@ -498,7 +498,7 @@ Static Function QrySZI(cPlaca,xLin,cDataSZK,cCodGuia,cRoteiro)
 	ELSE  // FRETE NORMAL
 	
 		cQuery1 := 	" SELECT ZI_GUIA, ZI_PLACA, ZI_DATALAN,ZI_TIPO, ZI_VALOR,ZI_DESCRIC,ZI_OBS "
-		cQuery1 +=	" FROM "+RETSQLNAME("SZI")+", "+RETSQLNAME("SZK")+" "
+		cQuery1 +=	" FROM "+RETSQLNAME("SZI")+" (NOLOCK) , "+RETSQLNAME("SZK")+" (NOLOCK) "
 		cQuery1 +=	" WHERE "
 		cQuery1 +=	" ZK_GUIA='" + Alltrim(cCodGuia) + "' "
 		cQuery1 +=	" AND ZK_TIPFRT='"+MV_PAR05+"' "

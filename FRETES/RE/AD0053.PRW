@@ -1,114 +1,103 @@
 #INCLUDE "rwmake.ch"
 #include 'topconn.ch'
 
-//
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-//±±ºPrograma  ³ AD0053   º Autor ³ Gustavo e Werner   º Data ³  22/08/03   º±±
-//±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-//±±ºDescricao ³ Fechamento por Tipo de Frete ( A1, A2 e etc...)            º±±
-//±±º          ³                                                            º±±
-//±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-//±±ºUso       ³ Logistica                                                  º±±
-//±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-//±±º 15/12/06 ³ Alterado por Wellington                                    º±±
-//±±º          ³ - Uso de Query para agilizar processamento e Array (Vetor) º±±
-//±±º          ³   para controlar os totais.                                º±±
-//±±º          ³ * Nao foi alterado o conceito do relatorio.                º±±
-//±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-//
+/*/{Protheus.doc} User Function AD0053
+	Fechamento por Tipo de Frete ( A1, A2 e etc...)
+	@type  Function
+	@author Gustavo e Werner
+	@since 22/08/03
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+/*/
+User Function AD0053()
 
-User Function AD0053
+	cPerg   := "AD0053"
+	Pergunte(cPerg,.F.)
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Declaracao de Variaveis                                             ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
-cPerg   := "AD0053"
-Pergunte(cPerg,.F.)
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Variaveis utilizadas para parametros                         ³
-//³ mv_par01             // Data de                              |
-//³ mv_par02             // Data ate                             ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Variaveis utilizadas para parametros                         ³
+	//³ mv_par01             // Data de                              |
+	//³ mv_par02             // Data ate                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
 
-cDesc1         := "Este programa tem como objetivo imprimir relatorio "
-cDesc2         := "de acordo com os parametros informados pelo usuario."
-cDesc3         := "Fechamento por Tipo de Frete"
-cPict          := ""
-titulo         := "Fechamento por Tipo de Frete"
-nLin           := 80
-Cabec1         := ""
-Cabec2         := ""
-imprime        := .T.
-aOrd := {}
-Private lEnd         := .F.
-Private lAbortPrint  := .F.
-Private CbTxt        := ""
-Private limite       := 220
-Private tamanho      := "G"
-Private nomeprog     := "AD0053" // Coloque aqui o nome do programa para impressao no cabecalho
-Private nTipo        := 18
-Private aReturn      := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
-Private nLastKey     := 0
-Private cbtxt        := Space(10)
-Private cbcont       := 00
-Private CONTFL       := 01
-Private m_pag        := 01
-Private wnrel        := "AD0053" // Coloque aqui o nome do arquivo usado para impressao em disco     
-Private _lPrim       := .T.
+	cDesc1         := "Este programa tem como objetivo imprimir relatorio "
+	cDesc2         := "de acordo com os parametros informados pelo usuario."
+	cDesc3         := "Fechamento por Tipo de Frete"
+	cPict          := ""
+	titulo         := "Fechamento por Tipo de Frete"
+	nLin           := 80
+	Cabec1         := ""
+	Cabec2         := ""
+	imprime        := .T.
+	aOrd := {}
+	Private lEnd         := .F.
+	Private lAbortPrint  := .F.
+	Private CbTxt        := ""
+	Private limite       := 220
+	Private tamanho      := "G"
+	Private nomeprog     := "AD0053" // Coloque aqui o nome do programa para impressao no cabecalho
+	Private nTipo        := 18
+	Private aReturn      := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
+	Private nLastKey     := 0
+	Private cbtxt        := Space(10)
+	Private cbcont       := 00
+	Private CONTFL       := 01
+	Private m_pag        := 01
+	Private wnrel        := "AD0053" // Coloque aqui o nome do arquivo usado para impressao em disco     
+	Private _lPrim       := .T.
 
-Private cString := "SZK"
+	Private cString := "SZK"
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Fechamento por Tipo de Frete ( A1, A2 e etc...)')
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Fechamento por Tipo de Frete ( A1, A2 e etc...)')
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Monta a interface padrao com o usuario...                           ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta a interface padrao com o usuario...                           ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+	wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
 
-If nLastKey == 27
-	Return
-Endif
+	If nLastKey == 27
+		Return
+	Endif
 
-SetDefault(aReturn,cString)
+	SetDefault(aReturn,cString)
 
-If nLastKey == 27
-	Return
-Endif
+	If nLastKey == 27
+		Return
+	Endif
 
-nTipo := If(aReturn[4]==1,15,18)
+	nTipo := If(aReturn[4]==1,15,18)
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
+	RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Finaliza a execucao do relatorio...                                 ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Finaliza a execucao do relatorio...                                 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-SET DEVICE TO SCREEN
+	SET DEVICE TO SCREEN
 
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Se impressao em disco, chama o gerenciador de impressao...          ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se impressao em disco, chama o gerenciador de impressao...          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-If aReturn[5]==1
-	dbCommitAll()
-	SET PRINTER TO
-	OurSpool(wnrel)
-Endif
+	If aReturn[5]==1
+		dbCommitAll()
+		SET PRINTER TO
+		OurSpool(wnrel)
+	Endif
 
-MS_FLUSH()
+	MS_FLUSH()
 
 Return
 
@@ -233,8 +222,9 @@ While !EOF()
 								      
 					//INCLUIDO EM 010208 PARA COMPATIBILIZAR COM OS RELATORIOS AD0170 E AD0143
 
-				   _qry := "SELECT ZV1_QTDQBR FROM "+RetSQLName("ZV1")+" WHERE ZV1_GUIAPE = '"+ZK1->ZK_GUIA+"' AND D_E_L_E_T_ <> '*'"
-					TCQUERY _qry new alias "XZV1"
+				   //_qry := "SELECT ZV1_QTDQBR FROM "+RetSQLName("ZV1")+" WHERE ZV1_GUIAPE = '"+ZK1->ZK_GUIA+"' AND D_E_L_E_T_ <> '*'"
+				   _qry := "SELECT ZV1_QTDQBR FROM "+RetSQLName("ZV1")+" (NOLOCK) WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_GUIAPE = '"+ZK1->ZK_GUIA+"' AND D_E_L_E_T_ <> '*' " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+				   TCQUERY _qry new alias "XZV1"
 								                  
     
 // Alterado em 13/12/13 Luciano Mafra - Retirada a rotina que calcula a quebra, relatório não batia com a planilha da Fernanda - Chamado 				    

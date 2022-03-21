@@ -13,12 +13,13 @@
   @type tkt -  13294
   @author Rodrigo Romão
   @since 18/05/2021
-  @history Chamado T.I - Leonardo P. Monteiro    - 16/07/2021 - Correção na função de upload dos registros no grid ZEH.
+  @history Chamado T.I - Leonardo P. Monteiro  - 16/07/2021 - Correção na função de upload dos registros no grid ZEH.
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo. 
-  @history Ticket 41586 - Everson = 05/10/2021 - Tratamento para validação de inclusão de nf.
+  @history Ticket 41586 - Everson              - 05/10/2021 - Tratamento para validação de inclusão de nf.
+  @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
-
 User Function ADLFV017P() // U_ADLFV017P()
+
 	local cPerg   := PadR("ADLFV017P",10)
 	Local oBrowse := nil
 	local cFiltro := ""
@@ -458,6 +459,7 @@ Static Function checkOp(cOrdem, cNF, cSerie, cCliNF, cCliSr)
 	cQuery += " FROM " 
 		cQuery += " " + RetSqlName("ZV1") + " (NOLOCK) AS ZV1 " 
 	cQuery += " WHERE "
+		cQuery += " ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND " // @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 		cQuery += " RTRIM(LTRIM(ZV1_NUMNFS)) = '" + Alltrim(cNF) + "' AND "
 		cQuery += " RTRIM(LTRIM(ZV1_SERIE)) = '" + Alltrim(cSerie) + "' AND "
 		cQuery += " ZV1_FORREC = '" + cCliNF + "' AND "

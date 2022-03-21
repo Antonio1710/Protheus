@@ -1677,7 +1677,7 @@ Static Function GeraXLS()
 	
 Return
 
-/*/{Protheus.doc} Static Function ADLFV010P
+/*/{Protheus.doc} Static Function EmailFVL
 	(Envia email com dados do PV Complemento Frango Vivo)
 	@type  Function
 	@author Fernando Macieira

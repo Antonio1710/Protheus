@@ -171,7 +171,7 @@ Endif
 If _cTipo = 'E'
 	
 	cQuery:="select * "+;
-	"from "+retsqlname("ZV2")+" "+;
+	"from "+retsqlname("ZV2")+" (NOLOCK) "+;
 	"where ZV2_FILIAL='"+XFILIAL("ZV2")+"' and "+;
 	"ZV2_TIPOPE='"+ _cTipo +"' and "+;
 	"ZV2_DTENTR between '"+dtos(mv_par02)+"' and '"+ dtos(mv_par03)+"' and "+;
@@ -183,7 +183,7 @@ If _cTipo = 'E'
 Else
 	
 	cQuery:="select * "+;
-	"from "+retsqlname("ZV2")+" "+;
+	"from "+retsqlname("ZV2")+" (NOLOCK) "+;
 	"where ZV2_FILIAL='"+XFILIAL("ZV2")+"' and "+;
 	"ZV2_TIPOPE='"+ _cTipo +"' and "+;
 	"ZV2_DATA1 between '"+dtos(mv_par02)+"' and '"+ dtos(mv_par03)+"' and "+;

@@ -455,7 +455,7 @@ Static Function AtuListBox( _aPedido,_nOp)
 		DbSelectArea("TSC6")
 		DbGoTop()
 		While TSC6->(!Eof())
-			&&Para cada item, preciso apurar o valor total do pedido original para trazer em tela...
+			//&&Para cada item, preciso apurar o valor total do pedido original para trazer em tela...
 			_nTpedvl  := 0
 			DbSelectArea("SC6")
 			DbSetOrder(1)

@@ -23,7 +23,8 @@
 	@history Chamado 050729 - FWNM - 07/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Somente esta rotina não estava sendo compilada no R27
 	@history Chamado 050729 - FWNM - 15/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Tratativa na função U_TAKECHAR que é utilizada também no X3_VLDUSER mas retorna string, dando error log
 	@history Chamado 326334 - Everson - 15/09/2021 - Correção de erro variable does not exist _I on U_VALVEICB
-	@history TICKET: 62797  - ADRIANO SAVOINE - 26/10/2021 - Alteração no campo para novo modelo de checagem.
+	@history TICKET: 62797  - ADRIANO SAVOINE   - 26/10/2021 - Alteração no campo para novo modelo de checagem.
+	@history ticket 69945   - Fernando Macieira - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
 User Function ADLFV009P()  //u_ADLFV009P()
 	
@@ -719,32 +720,34 @@ Static Function PROGRAMACAO(COPC)
 							
 							//incluir registro no na tabela ZV1
 							DbSelectArea("ZV1")
+
 							RecLock("ZV1", .T.)
-							ZV1_NUMOC  := cOrdemCarr 
-							ZV1_NUMNFS := '1'
-							ZV1_SERIE  := '02' 
-							ZV1_DATA   := dDataBase
-							ZV1_DTABAT := aCols[_I,nPosDtPr]
-							ZV1_DTAREA := aCols[_I,nPosDtPr]
-							ZV1_PCIDAD := AllTrim( Posicione( 'SA2',1, xFilial( 'SA2' ) + cForCod + cForLoj , 'A2_MUN' ) ) 
-							ZV1_TURMA  := Alltrim(aCols[_I,nPosEqui])
-							ZV1_PPLACA := aCols[_I,nPosVeic]
-							ZV1_RPLACA := aCols[_I,nPosVeic]
-							ZV1_PESOME := (aCols[_I,nPosPsPr]/aCols[_I,nPosTota])
-							ZV1_RGRANJ := cGranja
-							ZV1_PAVES  := aCols[_I,nPosTota]
-							ZV1_FORREC := '000217'  //adoro
-							ZV1_LOJREC := '01'      //loja adoro
-							ZV1_CODPRO := cForCod
-							ZV1_LOJPRO := cForLoj
-							ZV1_CODFOR := cForCod 
-							ZV1_LOJFOR := cForLoj
-							ZV1_PGRANJ := cForCod
-							ZV1_PHCARR := STRTRAN(aCols[_I,nPosHrPr],'.',':')
-							ZV1_PRLOTE := cNumLote                           //Chamado T.I -Fernando sigoli 24/06/2019
-							ZFC_NF     := aCols[_I,nPosNF]  //Everson - 10/12/2019 - Chamado 029058.
-							ZFC_SERIE  := aCols[_I,nPosSer] //Everson - 10/12/2019 - Chamado 029058.
-							MsUnlock()
+								ZV1->ZV1_FILIAL := FWxFilial("ZV1") // @history ticket 69945   - Fernando Macieira - Projeto FAI - Ordens Carregamento - Frango vivo
+								ZV1_NUMOC  := cOrdemCarr 
+								ZV1_NUMNFS := '1'
+								ZV1_SERIE  := '02' 
+								ZV1_DATA   := dDataBase
+								ZV1_DTABAT := aCols[_I,nPosDtPr]
+								ZV1_DTAREA := aCols[_I,nPosDtPr]
+								ZV1_PCIDAD := AllTrim( Posicione( 'SA2',1, xFilial( 'SA2' ) + cForCod + cForLoj , 'A2_MUN' ) ) 
+								ZV1_TURMA  := Alltrim(aCols[_I,nPosEqui])
+								ZV1_PPLACA := aCols[_I,nPosVeic]
+								ZV1_RPLACA := aCols[_I,nPosVeic]
+								ZV1_PESOME := (aCols[_I,nPosPsPr]/aCols[_I,nPosTota])
+								ZV1_RGRANJ := cGranja
+								ZV1_PAVES  := aCols[_I,nPosTota]
+								ZV1_FORREC := '000217'  //adoro
+								ZV1_LOJREC := '01'      //loja adoro
+								ZV1_CODPRO := cForCod
+								ZV1_LOJPRO := cForLoj
+								ZV1_CODFOR := cForCod 
+								ZV1_LOJFOR := cForLoj
+								ZV1_PGRANJ := cForCod
+								ZV1_PHCARR := STRTRAN(aCols[_I,nPosHrPr],'.',':')
+								ZV1_PRLOTE := cNumLote                           //Chamado T.I -Fernando sigoli 24/06/2019
+								ZFC_NF     := aCols[_I,nPosNF]  //Everson - 10/12/2019 - Chamado 029058.
+								ZFC_SERIE  := aCols[_I,nPosSer] //Everson - 10/12/2019 - Chamado 029058.
+							ZV1->( MsUnlock() )
 						
 						Else
 							MsgAlert("Não foi possível gravar a ordem de carregamento do veículo "+ cValToChar(aCols[_I,nPosVeic])+", pois não foi informado o horário de carregamento!")

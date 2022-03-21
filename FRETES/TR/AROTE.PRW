@@ -370,7 +370,7 @@ Static Function RotePeso()
 	SC5->(DBORDERNICKNAME("SC5_9"))
 	
 	//If dbSeek( xFilial("SC5")+_cRote ,.T. ) 
-	If dbSeek( xFilial("SC5")+Dtos(_dtEntr)+_cRote ,.T. )     && Incluido data de entrega Mauricio HC Consys - 22/02/10.
+	If dbSeek( xFilial("SC5")+Dtos(_dtEntr)+_cRote ,.T. )     //&& Incluido data de entrega Mauricio HC Consys - 22/02/10.
 		Do While !Eof() .and. SC5->C5_FILIAL==xFilial("SC5") .and. SC5->C5_ROTEIRO == _cRote .and. SC5->C5_DTENTR == _dtEntr  && Incluido data de entrega Mauricio HC Consys - 22/02/10.
 			_RotPeso := _RotPeso + C5_PBRUTO
 			_PLiqTot := _PLiqTot + C5_PESOL

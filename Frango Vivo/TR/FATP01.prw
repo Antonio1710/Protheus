@@ -5,24 +5,19 @@
 #Include "TbiCode.ch"
 #include "FiveWin.ch"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³FATP01    ºAutor  ³Daniel              º Data ³  11/29/06   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Cadastro de Apanha                                         º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteracao ³ Mauricio-HC Consys-para incluir campo peso do apanhe-004675º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteracao ³ Chamado 046955 William Costa 13/02/2019                    º±±
-±±º          ³ Validação do Tudo OK para garantir que a nota não esteja   º±±
-±±º          ³ sendo usada em nenhuma outra ordem                         º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function FATP01
+	Cadastro de Apanha
+	@type  Function
+	@author Daniel
+	@since 29/11/2006
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+/*/
 User Function FATP01(nOpc,_QtdApn)
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de Apanha')
@@ -145,7 +140,8 @@ User Function FATP01(nOpc,_QtdApn)
 	DBSETORDER(1)                                
 	IF nOpcx=3 
 		IF DBSEEK(_cFilial+NUMOC,.T.)
-			WHILE ZV5_NUMOC=NUMOC
+			//WHILE ZV5_NUMOC=NUMOC
+			WHILE ZV5_NUMOC=NUMOC .and. ZV5-ZV5_FILIAL==FWxFilial("ZV5") //@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 				AADD(aCOLS,{   ;
 								ZV5_RGRANJ,;
 								ZV5_FORCOD,;
@@ -180,7 +176,8 @@ User Function FATP01(nOpc,_QtdApn)
 		ENDIF
 	ELSE
 		IF DBSEEK(_cFilial+NUMOC)
-		  	WHILE ZV5_NUMOC=NUMOC
+		  	//WHILE ZV5_NUMOC=NUMOC
+			WHILE ZV5_NUMOC=NUMOC .and. ZV5-ZV5_FILIAL==FWxFilial("ZV5") //@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 				AADD(aCOLS,{   ;
 								ZV5_RGRANJ,;
 								ZV5_FORCOD,;
@@ -346,7 +343,7 @@ Static Function Md2Inclu(_cAliasD)
 		ELSE
 			If !aCOLS[i,12] 		//11									//Verifico se a Linha NAO esta DELETADA (.T.)
 				RecLock(_cAliasD,.T.)   
-					
+					ZV5->ZV5_FILIAL := FWxFilial("ZV5") // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 					REPLACE ZV5_NUMOC	WITH NUMOC
 					REPLACE	ZV5_RGRANJ	WITH aCOLS[I][1]
 					REPLACE ZV5_FORCOD	WITH aCOLS[I][2]
@@ -359,7 +356,6 @@ Static Function Md2Inclu(_cAliasD)
 					REPLACE ZV5_DTABAT	WITH aCOLS[I][9] 
 					REPLACE ZV5_NUMNFS	WITH aCOLS[I][10] // Chamado 040118 - Fernando Sigoli
 					REPLACE ZV5_SERIE	WITH aCOLS[I][11] // Chamado 040118 - Fernando Sigoli
-					       
 				MsUnLock()
 			Endif
 		ENDIF	
@@ -414,18 +410,20 @@ USER FUNCTION FATP01TOK()
 			_cPlac   := ZV1->ZV1_PPLACA
 			_ORDEM   := ZV1->ZV1_NUMOC 
 			
-			_cQuery := "SELECT ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
-			_cQuery += "FROM "+retsqlname("ZV1") +" WHERE RTRIM(LTRIM(ZV1_NUMNFS)) = '"+ALLTRIM(_nNumNF)+"' and "
-			_cQuery += "RTRIM(LTRIM(ZV1_SERIE)) = '"+ALLTRIM(_cSerie)+"' and "
-			_cQuery += "ZV1_FORREC = '"+_nCODFNF+"' and ZV1_LOJREC = '"+_nLojNF+"' and "
-			_cQuery += ""+RetSqlName("ZV1")+ ".D_E_L_E_T_ <> '*' ORDER BY ZV1_NUMOC"
+			_cQuery := " SELECT ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
+			_cQuery += " FROM "+retsqlname("ZV1") +" (NOLOCK) " 
+			_cQuery += " WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+			_cQuery += " RTRIM(LTRIM(ZV1_NUMNFS)) = '"+ALLTRIM(_nNumNF)+"' and "
+			_cQuery += " RTRIM(LTRIM(ZV1_SERIE)) = '"+ALLTRIM(_cSerie)+"' and "
+			_cQuery += " ZV1_FORREC = '"+_nCODFNF+"' and ZV1_LOJREC = '"+_nLojNF+"' and "
+			_cQuery += " D_E_L_E_T_ <> '*' ORDER BY ZV1_NUMOC"
 			
 			TcQuery _cQuery New Alias "VZV1"
 			 
 			DbSelectArea("VZV1")
 			VZV1->(dbGoTop())
 			While !VZV1->(eof())
-			   If VZV1->ZV1_NUMOC <> _ORDEM      && Verifica se nao esta alterando uma OC.
+			   If VZV1->ZV1_NUMOC <> _ORDEM      //&& Verifica se nao esta alterando uma OC.
 			   
 			      MsgInfo("A NF/SERIE "+_nNumNf+" / "+_cSerie+" informada ja foi utilizada na OC: "+VZV1->ZV1_NUMOC+" para o Fornecedor/loja: "+_nCODFNF+" / "+_nLojNF+" .Favor Verificar!!!")
 			      VZV1->(DbCloseArea())
