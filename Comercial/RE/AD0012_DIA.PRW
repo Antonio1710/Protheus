@@ -22,6 +22,7 @@
 	@history Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Direcionamento do relatório atual para o ADVEN106R.
+	@history Ticket  69990  - Adriano Savoine       - 21/03/2022 - Alterado a declaração da Variavel na query estava de forma errada.
 	
 	/*/
 User Function AD0012_DIA // U_AD0012_DIA()
@@ -919,7 +920,8 @@ Static Function MontaTra()
 	//DEVOLUCOES
 	cQuery:="select * "+;
 	"from "+retsqlname("SF1")+" (NOLOCK)"+; // Chamado n. TI - FWNM - 23/05/2019
-	"where F1_FILIAL IN ('"+AllTrim(_cFilial)+"') and "+; // Chamado n. TI - FWNM - 23/05/2019 //Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas
+	 //Ticket  69990  - Adriano Savoine - 21/03/2022 
+	"where F1_FILIAL IN ("+AllTrim(_cFilial)+") and "+; // Chamado n. TI - FWNM - 23/05/2019 //Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas
 	"F1_DTDIGIT between '"+dtos(mv_par01)+"' and '"+dtos(mv_par02)+"' and "+; // Chamado n. TI - FWNM - 23/05/2019
 	"F1_TIPO='D' and "+;
 	"D_E_L_E_T_= '' "+;
