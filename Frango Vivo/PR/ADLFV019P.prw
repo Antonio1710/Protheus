@@ -4,15 +4,14 @@
 
 #DEFINE STR0001 "Preenchimento Parada"
 
-
 /*/{Protheus.doc} User Function ADLFV019P()
   Cadastro de paradas
   @type tkt -  13294
   @author Rodrigo Romão
   @since 18/05/2021
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
+  @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
-
 User Function ADLFV019P()
 	
 	Local oBrowse := FwLoadBrw("ADLFV019P")
@@ -25,6 +24,7 @@ Return
 
 // BROWSEDEF() SERÝ ÚTIL PARA FUTURAS HERANÇAS: FWLOADBRW()
 Static Function BrowseDef()
+
 	Local oBrowse := FwMBrowse():New()
 
 	oBrowse:SetAlias("ZEI")
@@ -105,10 +105,23 @@ User Function fillCampo(cTabela,cNomeCampo)
 	endif
 
 	restArea(xArea)
+
 Return cRet
 
-
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 21/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function fillItem()
+
 	local cRet    := "0001"
 	local cQuery  := ""
 	local cAlias 	:= getNextAlias()
@@ -142,11 +155,12 @@ Static Function validaOdCarregamento()
 	local oView		:= FwViewActive()
 	local cNumOc	:= FwFldGet("ZEI_NUMOC")
 
-	cQuery := "SELECT " + CRLF
-	cQuery += "	 COUNT(*) REGISTRO " + CRLF
-	cQuery += "FROM " + RetSqlTab("ZV1") + " " + CRLF
-	cQuery += "WHERE ZV1.D_E_L_E_T_ <> '*'" + CRLF
+	cQuery := " SELECT " + CRLF
+	cQuery += "	COUNT(*) REGISTRO " + CRLF
+	cQuery += " FROM " + RetSqlTab("ZV1") + " (NOLOCK) " + CRLF
+	cQuery += " WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' " + CRLF // @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	cQuery += " AND ZV1.ZV1_NUMOC = '" + cNumOc + "'" + CRLF
+	cQuery += " AND ZV1.D_E_L_E_T_ <> '*'" + CRLF
 
 	TCQUERY cQuery NEW ALIAS (cAlias)
 	DbSelectArea(cAlias)
@@ -218,7 +232,20 @@ static function fVldForm()
 
 return lRet
 
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 21/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function fAfterTTS(oModel)
+
 	Local lRet 		:= .T.
 	Local cQuery	:= ""
 	
@@ -237,4 +264,5 @@ Static Function fAfterTTS(oModel)
 	endif
 
 	QZEI->(DbCloseArea())
+
 return lRet

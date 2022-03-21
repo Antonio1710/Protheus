@@ -4,388 +4,350 @@
  
 static lAuto
 
+/*/{Protheus.doc} User Function nomeFunction
+	Relatorio que mostra NF por Recebimento Do Frango Vivo
+	@type  Function
+	@author Daniel Pitthan Silveira
+	@since 09/09/2005
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³AD0143    º Autor ³Daniel P. Silveira  º Data ³  09/09/05   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³ Relatorio que mostra NF por Recebimento Do Frango Vivo     º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±º          ³Chamado:049564 - Fernando Sigoli 09/07/2019                 º±±
-±±º          ³conforme Solicitaççao do Rafael Silva, remover as colunas   º±±
-±±º          ³PORC e PESO AJUST e acrescentar Qtd Aves por Gaiola e Turno º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-+-------------------------------------------------------------------------------+
-|								MANUTENCAO								  		|
-+-------------------------------------------------------------------------------+
-| SEQ |			        	ACAO						|	DATA  |  AUTOR      |
-+===============================================================================+
-|[1]  |CORRECAO DA GRAVACAO DA DATA E HORA ATUAL		| 01/03/06| DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[2]  |CORRECAO DA QUEBRA DO RELATORIO POR DATA	    	| 01/03/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[3]  |CORRECAO DO TOTAL GERAL DO RELATORIO             | 01/03/06| DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[4]  |TRANSFORMADOS PROCESSOS EM FUNCAO				| 01/03/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[4]  |TEMPO MEDIO										| 01/03/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[5]  |APANHA											| 01/03/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[6] |TEMPO DE ESPERA  									| 24/07/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[7] |FILTRO        									| 24/07/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[8] |CALCULO DO COMPLEMENTO DA NF  					| 25/10/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[10]|QUEBRA DE PAGINA				  					| 30/10/06|	DANIEL P. S.|
-+-------------------------------------------------------------------------------+
-|[11]|CORREÇÃO DO SINTÉTICO ( APANHA DUPLICADA )		| 05/09/2014| MAFRA     |
-+-------------------------------------------------------------------------------+
-|[12]|CORREÇÃO DO ARREDONDAMENTO DO PESO LIQUIDO REC    | 12/09/2014| MAFRA     |
-+-------------------------------------------------------------------------------+
-|[13]|CORREÇÃO DO ARREDONDAMENTO DO PESO LIQUIDO REC    | 29/09/2014| MAFRA     |
-+-------------------------------------------------------------------------------+
-|[14]|CORREÇÃO DO ARREDONDAMENTO DO PESO DA MORTALIDADE | 30/07/2015| MAFRA     |
-+===============================================================================+
-
-/*/
-
 User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 
-// FWNM - 16/04/2018 - CHAMADO 037729
-Default cNFNot  := ""
-Default nTtPLO  := 0
-Default cSql    := ""
-Default nTtPLP  := 0
-Default lAuto   := .F.
-//
+	// FWNM - 16/04/2018 - CHAMADO 037729
+	Default cNFNot  := ""
+	Default nTtPLO  := 0
+	Default cSql    := ""
+	Default nTtPLP  := 0
+	Default lAuto   := .F.
+	//
 
-// Define lAuto
-/*
-nArea := Select()
-If nArea > 0
-	lAuto := .f.
-EndIf
-*/
-
-Private cDesc1       	:= "Este programa tem como objetivo imprimir relatorio "
-Private cDesc2       	:= "de acordo com os parametros informados pelo usuario."
-Private cDesc3       	:= "RELAÇÃO DIARIA ORDEM CARREGAMENTO FRANGO VIVO"
-Private cPict      		:= ""
-Private titulo    		:= "RELAÇÃO DIARIA ORDEM CARREGAMENTO FRANGO VIVO"
-Private nLin       		:= 80
-
-Private Cabec1    		:= ""
-Private Cabec2      	:= ""
-Private imprime     	:= .T.
-Private  aOrd := {}
-Private lEnd             := .F.
-Private lAbortPrint      := .F.
-Private CbTxt            := ""
-Private limite           := 220
-Private tamanho          := "G"
-Private nomeprog         := "AD0143" // Coloque aqui o nome do programa para impressao no cabecalho
-Private nTipo            := 15
-Private aReturn          := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1}
-Private nLastKey       	 := 0
-Private cbtxt     		 := Space(10)
-Private cbcont    		 := 00
-Private CONTFL    		 := 01
-Private m_pag     		 := 01
-Private wnrel     		 := "AD0143" // Coloque aqui o nome do arquivo usado para impressao em disco
-Private cString          := ""
-Public dLin	//transporte de linha
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ-ÄÄÄÄÄÔ
-//³VARIAVEIS CRIADAS PELO DANIEL³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ-ÄÄÄÄÔ
-
-Private _nDifRPaves         //DIFERENCA DE AVES DA ORIGEM PELA RECEBIDA
-Private _nMulPemRav	        //PESO LIQUIDO DA ORIGEM
-Private _nDif1Pe2Pe		    //DIFERENCA DO PESO 1 PELO PESO 2
-Private _nQuebra  		    //PESO LIQUIDO DA QUEBRA
-Private _nMulMrtPe		    //PESO DA MORTALIDADE
-Private _nSMPesPorc		    //SOMATORIA DAS PORCENTAGEM DE QUEBRA
-Private _nTotFgvOri		    //TOTAL AVES ORIGEM
-Private _nTotFgvRec		    //TOTAL AVES RECEBIMENTO
-Private _nTotFgvDif		    //TOTAL DIFERENCA AVES ORIGEM x RECEBIMENTO
-Private _nTotPesOri		    //TOTAL PESO ORIGEM
-Private _nTotPesRec		    //TOTAL PESO RECEBIMENTO
-Private _nTotPesQbr		    //TOTAL PESO QUEBRA
-Private _nTotPesPrc		    //TOTAL PESO PORCENTAGEM
-Private _nTotMrtQtd		    //TOTAL MORTALIDADE
-Private _nTotMrtPes		    //TOTAL PESO MORTALIDADE
-Private _nTotPesNf		    //TOTAL PESO NF
-Private _nTotValtNf		    //TOTAL VALOR TOTAL NF
-Private _nTotValuNf		    //TOTAL VALOR UNITARIO NF
-Private _nTotDifPeNF        //TOTAL DIFERENCA PESO NF PELO PESO REAL
-Private _nTotDifVNF         //TOTAL COMPLEMENTO
-Private _nNFCompl			//complemento da NF
-Private	_nNfVunit 			//Valor unitario da NF
-Private _nNfTotal 			//Valor Total da NF
-Private _cPGRANJ 			//Integrado
-Private _lReduz:=0          //reduz relatorio
-Private _nVrealNF           //Valor da nf RECEBIDO REAL
-Private _cPar1  := Space(3) //Paramettro da porcentagem de quebra dos integrados da Adoro
-Private _cPar2  := Space(3) //Parametro do codigo de integrado da Adoro
-Private _cNumoc 			//Ordem de Carregamento
-Private _cRGRANJ 			//Integrado programado
-Private _cPplaca 			//placa do veiculo
-Private _nPaves 			//Qtd aves recebidas, programado
-Private _nRaves 			//qtd de aves do contador, realizado
-Private _nPesome 			//peso medio
-Private _n1Peso  			//primeiro peso
-Private _n2peso  			//segundo peso
-Private _nMortal 			//Qtd de mortos
-Private _nPesoNF 			//Peso da NF
-Private _NUMNFS 			//numero da nf
-Private _nlojfor  			//loja
-Private _ncodfor    		//fonecedor
-Private _nNfVunit  			//unitario da Nf
-Private _nNfTotal 			//total da Nf
-Private _cPgranj 			//integrado
-Private _lCalqbr 			//Identifica qual tipo de porcentagem de quebra devo utilisar
-Private _nDifPerPeNf  		//Diferenca de peso da NF pelo peso Real
-Private _nVrealNF 			//Valor real da NF Recebida
-Private _nVDNFREC 			//complemento da NF
-Private _nTotVRec 		:=0 //Valor total Recebido
-Private _nTotVNfRec   		//complemento do valor rec
-Private _nTotVUNFM 			//Unitario atual
-Private _nTotPeCpm          //total peso complemento
-Private _nContFor		    //Parametro do codigo de fornecedor da adoro integrados
-Private _cForRec			//Fornecedor Recebido
-Private _hEntPort			//hora de chegada em vp
-Private _hAbtPla			//hoara de início de abate
-Private _dHresp				//tempo de espera
-Private _dAbtPla  			//DATA DE ABATE EFETIVAMENTE REALIZADA
-Private _dEntPort  			//DATA DE ABATE DA PORTARIA
-Private _dDtaBat  			//DATA DE ABATE
-Private _nPDifNFRec			//complemento da NF
-Private PerMort:=0			//Percentual de Perda
-Private _nTotPmo:=0			//total de Perda
-Private TGPMOT  :=0			//total geral de percentual
-Private _nSomaPeso := 0
-Private _nSomaQtd := 0
-
-/*CALCULO DE HORAS*/
-Private _cHr1	            //fracao hora 1 ABATE
-Private _cMin1              //fracao minuto	1   ABATE
-Private _nHr1				//Fracao hora numerico 1 ABATE
-Private _nMin1			    //Fracao minuto numerico 1ABATE
-Private _nTotT1				//total do tempo em minuto 1ABATE
-Private _cHr2	            //fracao hora 2 ABATE EFETIVAMENTE REALIZXADO
-Private _cMin2              //fracao minuto	2 ABATE EFETIVAMENTE REALIZXADO
-Private _nHr2				//Fracao hora numerico 2 ABATE EFETIVAMENTE REALIZXADO
-Private _nMin2			    //Fracao minuto numerico 2 ABATE EFETIVAMENTE REALIZXADO
-Private _nTotT2				//total do tempo em minuto 2  ABATE EFETIVAMENTE REALIZXADO
-private _dView 				//hora a visualizar
-Private _nTotDTHR			//valor em minutos dos dias parados
-Private	_nDifDat			//difereca entre as data de abate e abate realizado
-Private	_dHresp 			//calculo do tempo de espera
-Private	_dHMTM				//calculo do minuto de espera
-Private _dRhVp              //Hora de chegada em VP
-Private _dRHAbt             //hora de abate
-Private _dDtaRea            //Data Real de abate
-Private _cSerie:=''         //sERIE DA NF
-Private _cCliVol:=''        //cLIMA NA VOLTA
-Private _nCliqbr        	//QUEBRA DE CLIMA
-Private _TgH:=0             //total de horas
-Private _TgM:=0             //total de Minutos
-Private _RecP:=0            //total de registrios
-private _dhr:=0
-private _dm3:=0
-Private _nMedi_Hr  :=  0
-Private _nCount_Hr := 0
-Private _cMarkS_M  := SPACE(1)
-/*FIM*/
-
-Private Xlin                //Número de linha
-Private _n2PesoOC           //Segundo Peso, utilizado para vericicar a existencia de segunda pesagem
-Private _cMarkX             //Marca das oc sem segunda pesagem
-Private _nQtdRec			//Quantidade de Registros
-Private _nAjusPS            //Peso ajustado
-Private _nTotMePon          //Total da Media ponderada
-Private _nMepon             //Media Ponderada
-Private _lPriVez			//Verifica se é a primeira vez, utilizado no calculo da media de peso medio
-Private _dEntPort			//Proximo registro data de abate
-Private _dDatEntr 			//Data convertida
-Private _cTexto 			//Texto da data, para quebra de data
-Private _lPriVezD	  		//primeira vez  data
-pRIVATE _nTotPespcT         //MEDIA ARITIMETICA DA PORCENTAGEM
-Public  _nD:=0              //contador de dias
-Private _nNUMNFS:=0         //Numero da Nf
-PRivate _nTURMA := space(02)//Turma
-pRIVATE _cPEDXML:= space(06)//Pedido XML
-Private _lQbrP:=0           //Verifica se houve quebra de pagina
-Private _nCoutD:=1          //conta dias
-Private _nC                 //Posicao da marca em caso de nao existir segunda pesagem
-Private _dRhVp              //Hora de chegada em VP
-Private _nPesNF :=0
-
-Private cNroFiscal    :=  ""        //numero Nota Fiscal de Apanha  Chamado: 040118 //Fernando Sigoli 05/03/2018
-Private cSerFiscal    :=  ""        //Serie Nota Fiscal de Apanha Chamado: 040118 //Fernando Sigoli 05/03/2018
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³GRAVANDO TOTAIS PARA O TOTAL GERAL                     ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-Private TGAC         //Aves Carregadas
-Private TGAR         //Aves Recebidas
-Private TGDACAR      //Diferenca de aves Carregad e Recebidas
-Private TGPO         //Peso Origem
-Private TGPR         //Peso Recebido
-Private TGPNF        //Peso Nota Fiscal
-Private TGPQ         //quebra de peso
-Private TGPQNF       //quebra NF
-Private TGPP         //Porcentagem de quebra
-Private TGPM         //Peso medio
-Private TGMQ         //Mortalidade
-Private TGMP         //Peso da Mortalidade
-Private TGNFU        //Unitario NF
-Private TGNFV:=0     //Valor da NOTA
-Private TGNFC        //complemento da NF
-Private TGNFA        //Unitario atual
-Private TGNVT		 //TOTAL DO VALOR RECEBIDO
-Private TGCP		 //total do complemento do peso
-Private TGCV		 //total do complemento do valor
-Private nQtdApanha
-
-Private _nAvesGa     //Aves por gaiola // Chamado:049564 - Fernando Sigoli 09/07/2019  
-Private _cTurAbt     //Turno de abate  // Chamado:049564 - Fernando Sigoli 09/07/2019  
-
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio que mostra NF por Recebimento Do Frango Vivo')
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Monta a interface padrao com o usuario...                           ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-//³PROCURANDO A S PERGUNTAS³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-
-cPerg:="AD0143"      
-
-If lAuto
-	nDiasAnt   := GetMV("MV_#LFVDI2",,0)
-	
-	_dDataini	:=msdate()-nDiasAnt    //GRAVA DATA INICIAL DE ABATE
-	_dDataFim	:=msDate()-nDiasAnt  //GRAVA DATA FINAL DE ABATE
-
-	//debug
-	//_dDataini	:= CtoD("25/05/18")
-	//_dDataFim	:= CtoD("25/05/18")
-	//debug
-
-	_lReduz		:=3	  //GRAVA O TIPO DE REALTORIO
-	_nUnitAt    :=0    //VALOR UNITARIO AGORA DA NF
-	_LTarPadr   :=1    //Usa tara padrao? Sim ou Nao
-	_LAjusPe    :=1    //Pergunta se usa ou nao o ajuste do peso
-	_lQAvCar    :=1    //Pergunta se usa no calculo do peso medio Qtd aves carregadas ou Recebidas(Contador)
-	_nTurno     :=0    //Turno
-	_nOrdem     :=2    //Ordem
-	_lSint		:=2    //Relatorio/Sintetico-Analítico
-	_cGranjF	:=""	  //Filtra granja
-	_cPlacF		:=""	  //Filtra Placa
-	_cForc		:=""	  //Filtra por fonecedor
-
-Else
-	IF 	pergunte(cPerg,.T.)=.F.
-		RETURN
-	ENDIF
-
-	_dDataini	:=mv_par01    //GRAVA DATA INICIAL DE ABATE
-	_dDataFim	:=mv_par02    //GRAVA DATA FINAL DE ABATE
-	_lReduz		:=mv_par03	  //GRAVA O TIPO DE REALTORIO
-	_nUnitAt    :=mv_par04    //VALOR UNITARIO AGORA DA NF
-	_LTarPadr   :=mv_par05    //Usa tara padrao? Sim ou Nao
-	_LAjusPe    :=mv_par06    //Pergunta se usa ou nao o ajuste do peso
-	_lQAvCar    :=mv_par07    //Pergunta se usa no calculo do peso medio Qtd aves carregadas ou Recebidas(Contador)
-	_nTurno     :=mv_par08    //Turno
-	_nOrdem     :=mv_par09    //Ordem
-	_lSint		:=mv_par10    //Relatorio/Sintetico-Analítico
-	_cGranjF	:=mv_par11	  //Filtra granja
-	_cPlacF		:=mv_par12	  //Filtra Placa
-	_cForc		:=mv_par13	  //Filtra por fonecedor
-
-EndIf
-	
-
-//--------------------------------------------
-//-   _lReduz==1 ; MODELO FISCAL PCP  - MODELO 01
-//-   _lReduz==2 ; MODELO GERAL, TOTAL -MODELO 02
-//-   _lReduz==3 ; MODELO FGV          -MODELO 03
-//-	  _lReduz==3 ; MODELO 04 relatorio de apanha
-//--------------------------------------------
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-//³Mudando o formato do relatorio.                            ³
-//³                                                           ³
-//³Altero o formato para retrato, onde somente as informacoes ³
-//³fiscais sao impressas.                                     ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-
-NOMEEMP:=''
-DBSELECTAREA("SM0")
-NOMEEMP:=M0_NOMECOM
-
-DO CASE
-	CASE _lReduz==1
-		limite           := 80
-		tamanho          := "M"
-		Cabec1			 := NOMEEMP+" -MODELO 01"
-		Cabec2 			 := "RELACAO DIARIA DO CARREGAMENTO"
-	CASE _lReduz==2
-		limite 			 :=220
-		tamanho			 :="G"
-		Cabec1			 := NOMEEMP+" -MODELO 02"
-	CASE _lReduz==3
-		limite			 :=220
-		tamanho			 :="G"
-		Cabec1			 := NOMEEMP+" -MODELO 03"
-	CASE _lReduz==4
-		limite			 :=80
-		tamanho			 :="P"
-		Cabec1			 := NOMEEMP+" -MODELO 04"
-	OTHERWISE
-ENDCASE
-
-Private cString := "ZV1"
-
-dbSelectArea("ZV1")
-dbSetOrder(1)
-
-If !lAuto
-	If AllTrim(FunName()) <> "AD0130" .and. AllTrim(FunName()) <> "ADLFV010P"// FWNM - 16/04/2018 - CHAMADO 037729
-		
-		wnrel := SetPrint(cString,NomeProg,"",@titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,.F.,Tamanho,,.F.)
-		
-		If nLastKey == 27
-			Return
-		Endif
-		
-		SetDefault(aReturn,cString)
-		
-		If nLastKey == 27
-			Return
-		Endif
-		
+	// Define lAuto
+	/*
+	nArea := Select()
+	If nArea > 0
+		lAuto := .f.
 	EndIf
-EndIf	
+	*/
 
-nTipo := If(aReturn[4]==1,15,18)
+	Private cDesc1       	:= "Este programa tem como objetivo imprimir relatorio "
+	Private cDesc2       	:= "de acordo com os parametros informados pelo usuario."
+	Private cDesc3       	:= "RELAÇÃO DIARIA ORDEM CARREGAMENTO FRANGO VIVO"
+	Private cPict      		:= ""
+	Private titulo    		:= "RELAÇÃO DIARIA ORDEM CARREGAMENTO FRANGO VIVO"
+	Private nLin       		:= 80
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Private Cabec1    		:= ""
+	Private Cabec2      	:= ""
+	Private imprime     	:= .T.
+	Private  aOrd := {}
+	Private lEnd             := .F.
+	Private lAbortPrint      := .F.
+	Private CbTxt            := ""
+	Private limite           := 220
+	Private tamanho          := "G"
+	Private nomeprog         := "AD0143" // Coloque aqui o nome do programa para impressao no cabecalho
+	Private nTipo            := 15
+	Private aReturn          := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1}
+	Private nLastKey       	 := 0
+	Private cbtxt     		 := Space(10)
+	Private cbcont    		 := 00
+	Private CONTFL    		 := 01
+	Private m_pag     		 := 01
+	Private wnrel     		 := "AD0143" // Coloque aqui o nome do arquivo usado para impressao em disco
+	Private cString          := ""
+	Public dLin	//transporte de linha
 
-If lAuto
-	RunReport(Cabec1,Cabec2,Titulo,nLin,lAuto)
-Else
-	RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin,lAuto) },Titulo)
-EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ-ÄÄÄÄÄÔ
+	//³VARIAVEIS CRIADAS PELO DANIEL³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ-ÄÄÄÄÔ
+
+	Private _nDifRPaves         //DIFERENCA DE AVES DA ORIGEM PELA RECEBIDA
+	Private _nMulPemRav	        //PESO LIQUIDO DA ORIGEM
+	Private _nDif1Pe2Pe		    //DIFERENCA DO PESO 1 PELO PESO 2
+	Private _nQuebra  		    //PESO LIQUIDO DA QUEBRA
+	Private _nMulMrtPe		    //PESO DA MORTALIDADE
+	Private _nSMPesPorc		    //SOMATORIA DAS PORCENTAGEM DE QUEBRA
+	Private _nTotFgvOri		    //TOTAL AVES ORIGEM
+	Private _nTotFgvRec		    //TOTAL AVES RECEBIMENTO
+	Private _nTotFgvDif		    //TOTAL DIFERENCA AVES ORIGEM x RECEBIMENTO
+	Private _nTotPesOri		    //TOTAL PESO ORIGEM
+	Private _nTotPesRec		    //TOTAL PESO RECEBIMENTO
+	Private _nTotPesQbr		    //TOTAL PESO QUEBRA
+	Private _nTotPesPrc		    //TOTAL PESO PORCENTAGEM
+	Private _nTotMrtQtd		    //TOTAL MORTALIDADE
+	Private _nTotMrtPes		    //TOTAL PESO MORTALIDADE
+	Private _nTotPesNf		    //TOTAL PESO NF
+	Private _nTotValtNf		    //TOTAL VALOR TOTAL NF
+	Private _nTotValuNf		    //TOTAL VALOR UNITARIO NF
+	Private _nTotDifPeNF        //TOTAL DIFERENCA PESO NF PELO PESO REAL
+	Private _nTotDifVNF         //TOTAL COMPLEMENTO
+	Private _nNFCompl			//complemento da NF
+	Private	_nNfVunit 			//Valor unitario da NF
+	Private _nNfTotal 			//Valor Total da NF
+	Private _cPGRANJ 			//Integrado
+	Private _lReduz:=0          //reduz relatorio
+	Private _nVrealNF           //Valor da nf RECEBIDO REAL
+	Private _cPar1  := Space(3) //Paramettro da porcentagem de quebra dos integrados da Adoro
+	Private _cPar2  := Space(3) //Parametro do codigo de integrado da Adoro
+	Private _cNumoc 			//Ordem de Carregamento
+	Private _cRGRANJ 			//Integrado programado
+	Private _cPplaca 			//placa do veiculo
+	Private _nPaves 			//Qtd aves recebidas, programado
+	Private _nRaves 			//qtd de aves do contador, realizado
+	Private _nPesome 			//peso medio
+	Private _n1Peso  			//primeiro peso
+	Private _n2peso  			//segundo peso
+	Private _nMortal 			//Qtd de mortos
+	Private _nPesoNF 			//Peso da NF
+	Private _NUMNFS 			//numero da nf
+	Private _nlojfor  			//loja
+	Private _ncodfor    		//fonecedor
+	Private _nNfVunit  			//unitario da Nf
+	Private _nNfTotal 			//total da Nf
+	Private _cPgranj 			//integrado
+	Private _lCalqbr 			//Identifica qual tipo de porcentagem de quebra devo utilisar
+	Private _nDifPerPeNf  		//Diferenca de peso da NF pelo peso Real
+	Private _nVrealNF 			//Valor real da NF Recebida
+	Private _nVDNFREC 			//complemento da NF
+	Private _nTotVRec 		:=0 //Valor total Recebido
+	Private _nTotVNfRec   		//complemento do valor rec
+	Private _nTotVUNFM 			//Unitario atual
+	Private _nTotPeCpm          //total peso complemento
+	Private _nContFor		    //Parametro do codigo de fornecedor da adoro integrados
+	Private _cForRec			//Fornecedor Recebido
+	Private _hEntPort			//hora de chegada em vp
+	Private _hAbtPla			//hoara de início de abate
+	Private _dHresp				//tempo de espera
+	Private _dAbtPla  			//DATA DE ABATE EFETIVAMENTE REALIZADA
+	Private _dEntPort  			//DATA DE ABATE DA PORTARIA
+	Private _dDtaBat  			//DATA DE ABATE
+	Private _nPDifNFRec			//complemento da NF
+	Private PerMort:=0			//Percentual de Perda
+	Private _nTotPmo:=0			//total de Perda
+	Private TGPMOT  :=0			//total geral de percentual
+	Private _nSomaPeso := 0
+	Private _nSomaQtd := 0
+
+	/*CALCULO DE HORAS*/
+	Private _cHr1	            //fracao hora 1 ABATE
+	Private _cMin1              //fracao minuto	1   ABATE
+	Private _nHr1				//Fracao hora numerico 1 ABATE
+	Private _nMin1			    //Fracao minuto numerico 1ABATE
+	Private _nTotT1				//total do tempo em minuto 1ABATE
+	Private _cHr2	            //fracao hora 2 ABATE EFETIVAMENTE REALIZXADO
+	Private _cMin2              //fracao minuto	2 ABATE EFETIVAMENTE REALIZXADO
+	Private _nHr2				//Fracao hora numerico 2 ABATE EFETIVAMENTE REALIZXADO
+	Private _nMin2			    //Fracao minuto numerico 2 ABATE EFETIVAMENTE REALIZXADO
+	Private _nTotT2				//total do tempo em minuto 2  ABATE EFETIVAMENTE REALIZXADO
+	private _dView 				//hora a visualizar
+	Private _nTotDTHR			//valor em minutos dos dias parados
+	Private	_nDifDat			//difereca entre as data de abate e abate realizado
+	Private	_dHresp 			//calculo do tempo de espera
+	Private	_dHMTM				//calculo do minuto de espera
+	Private _dRhVp              //Hora de chegada em VP
+	Private _dRHAbt             //hora de abate
+	Private _dDtaRea            //Data Real de abate
+	Private _cSerie:=''         //sERIE DA NF
+	Private _cCliVol:=''        //cLIMA NA VOLTA
+	Private _nCliqbr        	//QUEBRA DE CLIMA
+	Private _TgH:=0             //total de horas
+	Private _TgM:=0             //total de Minutos
+	Private _RecP:=0            //total de registrios
+	private _dhr:=0
+	private _dm3:=0
+	Private _nMedi_Hr  :=  0
+	Private _nCount_Hr := 0
+	Private _cMarkS_M  := SPACE(1)
+	/*FIM*/
+
+	Private Xlin                //Número de linha
+	Private _n2PesoOC           //Segundo Peso, utilizado para vericicar a existencia de segunda pesagem
+	Private _cMarkX             //Marca das oc sem segunda pesagem
+	Private _nQtdRec			//Quantidade de Registros
+	Private _nAjusPS            //Peso ajustado
+	Private _nTotMePon          //Total da Media ponderada
+	Private _nMepon             //Media Ponderada
+	Private _lPriVez			//Verifica se é a primeira vez, utilizado no calculo da media de peso medio
+	Private _dEntPort			//Proximo registro data de abate
+	Private _dDatEntr 			//Data convertida
+	Private _cTexto 			//Texto da data, para quebra de data
+	Private _lPriVezD	  		//primeira vez  data
+	pRIVATE _nTotPespcT         //MEDIA ARITIMETICA DA PORCENTAGEM
+	Public  _nD:=0              //contador de dias
+	Private _nNUMNFS:=0         //Numero da Nf
+	PRivate _nTURMA := space(02)//Turma
+	pRIVATE _cPEDXML:= space(06)//Pedido XML
+	Private _lQbrP:=0           //Verifica se houve quebra de pagina
+	Private _nCoutD:=1          //conta dias
+	Private _nC                 //Posicao da marca em caso de nao existir segunda pesagem
+	Private _dRhVp              //Hora de chegada em VP
+	Private _nPesNF :=0
+
+	Private cNroFiscal    :=  ""        //numero Nota Fiscal de Apanha  Chamado: 040118 //Fernando Sigoli 05/03/2018
+	Private cSerFiscal    :=  ""        //Serie Nota Fiscal de Apanha Chamado: 040118 //Fernando Sigoli 05/03/2018
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³GRAVANDO TOTAIS PARA O TOTAL GERAL                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Private TGAC         //Aves Carregadas
+	Private TGAR         //Aves Recebidas
+	Private TGDACAR      //Diferenca de aves Carregad e Recebidas
+	Private TGPO         //Peso Origem
+	Private TGPR         //Peso Recebido
+	Private TGPNF        //Peso Nota Fiscal
+	Private TGPQ         //quebra de peso
+	Private TGPQNF       //quebra NF
+	Private TGPP         //Porcentagem de quebra
+	Private TGPM         //Peso medio
+	Private TGMQ         //Mortalidade
+	Private TGMP         //Peso da Mortalidade
+	Private TGNFU        //Unitario NF
+	Private TGNFV:=0     //Valor da NOTA
+	Private TGNFC        //complemento da NF
+	Private TGNFA        //Unitario atual
+	Private TGNVT		 //TOTAL DO VALOR RECEBIDO
+	Private TGCP		 //total do complemento do peso
+	Private TGCV		 //total do complemento do valor
+	Private nQtdApanha
+
+	Private _nAvesGa     //Aves por gaiola // Chamado:049564 - Fernando Sigoli 09/07/2019  
+	Private _cTurAbt     //Turno de abate  // Chamado:049564 - Fernando Sigoli 09/07/2019  
+
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio que mostra NF por Recebimento Do Frango Vivo')
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta a interface padrao com o usuario...                           ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+	//³PROCURANDO A S PERGUNTAS³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+
+	cPerg:="AD0143"      
+
+	If lAuto
+		nDiasAnt   := GetMV("MV_#LFVDI2",,0)
+		
+		_dDataini	:=msdate()-nDiasAnt    //GRAVA DATA INICIAL DE ABATE
+		_dDataFim	:=msDate()-nDiasAnt  //GRAVA DATA FINAL DE ABATE
+
+		//debug
+		//_dDataini	:= CtoD("25/05/18")
+		//_dDataFim	:= CtoD("25/05/18")
+		//debug
+
+		_lReduz		:=3	  //GRAVA O TIPO DE REALTORIO
+		_nUnitAt    :=0    //VALOR UNITARIO AGORA DA NF
+		_LTarPadr   :=1    //Usa tara padrao? Sim ou Nao
+		_LAjusPe    :=1    //Pergunta se usa ou nao o ajuste do peso
+		_lQAvCar    :=1    //Pergunta se usa no calculo do peso medio Qtd aves carregadas ou Recebidas(Contador)
+		_nTurno     :=0    //Turno
+		_nOrdem     :=2    //Ordem
+		_lSint		:=2    //Relatorio/Sintetico-Analítico
+		_cGranjF	:=""	  //Filtra granja
+		_cPlacF		:=""	  //Filtra Placa
+		_cForc		:=""	  //Filtra por fonecedor
+
+	Else
+		IF 	pergunte(cPerg,.T.)=.F.
+			RETURN
+		ENDIF
+
+		_dDataini	:=mv_par01    //GRAVA DATA INICIAL DE ABATE
+		_dDataFim	:=mv_par02    //GRAVA DATA FINAL DE ABATE
+		_lReduz		:=mv_par03	  //GRAVA O TIPO DE REALTORIO
+		_nUnitAt    :=mv_par04    //VALOR UNITARIO AGORA DA NF
+		_LTarPadr   :=mv_par05    //Usa tara padrao? Sim ou Nao
+		_LAjusPe    :=mv_par06    //Pergunta se usa ou nao o ajuste do peso
+		_lQAvCar    :=mv_par07    //Pergunta se usa no calculo do peso medio Qtd aves carregadas ou Recebidas(Contador)
+		_nTurno     :=mv_par08    //Turno
+		_nOrdem     :=mv_par09    //Ordem
+		_lSint		:=mv_par10    //Relatorio/Sintetico-Analítico
+		_cGranjF	:=mv_par11	  //Filtra granja
+		_cPlacF		:=mv_par12	  //Filtra Placa
+		_cForc		:=mv_par13	  //Filtra por fonecedor
+
+	EndIf
+		
+
+	//--------------------------------------------
+	//-   _lReduz==1 ; MODELO FISCAL PCP  - MODELO 01
+	//-   _lReduz==2 ; MODELO GERAL, TOTAL -MODELO 02
+	//-   _lReduz==3 ; MODELO FGV          -MODELO 03
+	//-	  _lReduz==3 ; MODELO 04 relatorio de apanha
+	//--------------------------------------------
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+	//³Mudando o formato do relatorio.                            ³
+	//³                                                           ³
+	//³Altero o formato para retrato, onde somente as informacoes ³
+	//³fiscais sao impressas.                                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+
+	NOMEEMP:=''
+	DBSELECTAREA("SM0")
+	NOMEEMP:=M0_NOMECOM
+
+	DO CASE
+		CASE _lReduz==1
+			limite           := 80
+			tamanho          := "M"
+			Cabec1			 := NOMEEMP+" -MODELO 01"
+			Cabec2 			 := "RELACAO DIARIA DO CARREGAMENTO"
+		CASE _lReduz==2
+			limite 			 :=220
+			tamanho			 :="G"
+			Cabec1			 := NOMEEMP+" -MODELO 02"
+		CASE _lReduz==3
+			limite			 :=220
+			tamanho			 :="G"
+			Cabec1			 := NOMEEMP+" -MODELO 03"
+		CASE _lReduz==4
+			limite			 :=80
+			tamanho			 :="P"
+			Cabec1			 := NOMEEMP+" -MODELO 04"
+		OTHERWISE
+	ENDCASE
+
+	Private cString := "ZV1"
+
+	dbSelectArea("ZV1")
+	dbSetOrder(1)
+
+	If !lAuto
+		If AllTrim(FunName()) <> "AD0130" .and. AllTrim(FunName()) <> "ADLFV010P"// FWNM - 16/04/2018 - CHAMADO 037729
+			
+			wnrel := SetPrint(cString,NomeProg,"",@titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,.F.,Tamanho,,.F.)
+			
+			If nLastKey == 27
+				Return
+			Endif
+			
+			SetDefault(aReturn,cString)
+			
+			If nLastKey == 27
+				Return
+			Endif
+			
+		EndIf
+	EndIf	
+
+	nTipo := If(aReturn[4]==1,15,18)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	If lAuto
+		RunReport(Cabec1,Cabec2,Titulo,nLin,lAuto)
+	Else
+		RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin,lAuto) },Titulo)
+	EndIf
 
 Return
 
@@ -588,8 +550,9 @@ cQuery+=" ZV2_1PESO, ZV2_2PESO, ZV1_RPLACA , ZV1_PESONF,  "
 cQuery+=" ZV1_VALTNF,ZV1_VALUNF,ZV1_DTABAT , ZV1_DTAREA,  "
 cQuery+=" ZV1_LOJFOR, ZV1_CODFOR,ZV1_TARAPD,ZV1_AJUSPS, ZV1_SERIE , "
 cQuery+=" ZV1_PGRANJ, ZV1_FORREC,ZV1_LOJREC,ZV1_RHVP,ZV1_RHABAT , ZV2_DATA1 , ZV1_CLIVOL,ZV1_RHESPE,ZV1_CLIBAL "
-cQuery+=" FROM " + retsqlname("ZV1")+ " , " + retsqlname("ZV2")+" "
-cQuery+=" WHERE (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDataIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDataFim) +"') "
+cQuery+=" FROM " + retsqlname("ZV1")+ " (NOLOCK), " + retsqlname("ZV2")+" (NOLOCK) "
+cQuery+=" WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+cQuery+=" AND (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDataIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDataFim) +"') "
 cQuery+=" AND ZV1_NUMNFS<>'      ' "
 cQuery+=" AND ZV2_TIPOPE='F'"
 //Filtro por Granja
@@ -644,8 +607,8 @@ Dbgotop()
 //USO PARA FAZER QUEBRA DO RELATORIO POR DATA
 _dDTBatF:=ROC->ZV1_DTABAT
 
-While !EOF() .and. !EMPTY(_dDTBatF)       && Chamado 004885 - Efetuada correcao para data em branco no final do arquivo
-	&& Qdo parametrizado por ordem = DATA DE ABATE e SINTETICO.
+While !EOF() .and. !EMPTY(_dDTBatF)       //&& Chamado 004885 - Efetuada correcao para data em branco no final do arquivo
+	//&& Qdo parametrizado por ordem = DATA DE ABATE e SINTETICO.
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Verifica o cancelamento pelo usuario...                             ³
@@ -1662,8 +1625,8 @@ DbSelectArea("ZV5")
 DbSetOrder(1)
 
 If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
-	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
-		
+	//Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL == FWxFilial("ZV5") // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo	
 		
 		_cNumOc   	:= ZV5_NUMOC
 		_cForcod  	:= ZV5_FORCOD
@@ -1778,7 +1741,8 @@ DbSelectArea("ZV5")
 DbSetOrder(1)
 
 If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
-	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+	//Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC 
+	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL == FWxFilial("ZV5") // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo	
 		
 		_cNumOc   := ZV5_NUMOC
 		_cForcod  := ZV5_FORCOD
@@ -1799,62 +1763,72 @@ If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
 	Enddo
 Endif
 DbSelectArea("ROC")
-Return ()
 
+Return
 
-
-
-
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 21/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static function ApnFV5 () //Monta em ZV5 Apanhas do Periodo
 
-NLIN:=80
-cQuery3:=" SELECT ZV5_NUMOC,ZV5_RGRANJ,ZV5_QTDAVE,ZV5_DTABAT,ZV5_PESOAP"
-cQuery3+=" FROM "+retsqlname("ZV5")+" "
-cQuery3+=" WHERE "
-cQuery3+=" (ZV5_DTABAT BETWEEN '"+ DTOS(_dDataIni) +"' AND  '"+ DTOS(_dDataFim) +"') "
-cQuery3+=" AND "+RetSqlName("ZV5")+ ".D_E_L_E_T_='' "
-TCQUERY cQuery3 new alias "TMP1"
-DbSelectArea("TMP1")
-Dbgotop()
+	NLIN:=80
+	cQuery3:=" SELECT ZV5_NUMOC,ZV5_RGRANJ,ZV5_QTDAVE,ZV5_DTABAT,ZV5_PESOAP"
+	cQuery3+=" FROM "+retsqlname("ZV5")+" (NOLOCK) "
+	cQuery3+=" WHERE ZV5_FILIAL='"+FWxFilial("ZV5")+"' " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	cQuery3+=" AND (ZV5_DTABAT BETWEEN '"+ DTOS(_dDataIni) +"' AND  '"+ DTOS(_dDataFim) +"') "
+	cQuery3+=" AND "+RetSqlName("ZV5")+ ".D_E_L_E_T_='' "
+	TCQUERY cQuery3 new alias "TMP1"
 
-_TOTAP:=0 //TOTAL DA APANHA
-_TOTPS:=0
-
-WHILE !EOF()
-	
-	If nLin > 60 //.or. (_dDTBatF<>_dDtaBat) // Salto de Página. Neste caso o formulario tem 60 linhas...
-		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
-		nLin := 8
-		nLin:=nLin+2
-		CABEC7()
-	ENDIF
-	
-	_dDatEntr:=  SUBSTR (TMP1->ZV5_DTABAT,7,2)+ "/" + SUBSTR (TMP1->ZV5_DTABAT,5,2) +"/"+ SUBSTR (TMP1->ZV5_DTABAT,1,4)
-	
-	@ NLIN,002 PSAY TMP1->ZV5_NUMOC
-	@ NLIN,012 PSAY TMP1->ZV5_RGRANJ
-	@ NLIN,022 PSAY TMP1->ZV5_QTDAVE
-	@ NLIN,038 PSAY TMP1->ZV5_PESOAP
-	@ NLIN,050 PSAY (TMP1->ZV5_PESOAP/TMP1->ZV5_QTDAVE) PICTURE "9999.999"
-	@ NLIN,065 PSAY _dDatEntr
-	NLIN++
-	_TOTAP+=TMP1->ZV5_QTDAVE
-	_TOTPS+=TMP1->ZV5_PESOAP
 	DbSelectArea("TMP1")
-	DBSKIP()
-ENDDO
-NLIN++          //123456789012345678901234567890123456789012345678901234567890123456789012345678901
-@ nlin,000	PSAY "+-----------------------------------------------------------------------------+"
-NLIN++
-@ nlin,000	PSAY "|TOTAL:   "+STR(_TOTAP)
-@ nlin,038  PSAY _TOTPS
-@ nlin,050  PSAY (_TOTPS/_TOTAP ) PICTURE "9999.999"
-@ nlin,078	PSAY "|"
-NLIN++
-@ nlin,000	PSAY "+-----------------------------------------------------------------------------+"
-NLIN++
+	Dbgotop()
 
-DBCLOSEAREA("TMP1")
+	_TOTAP:=0 //TOTAL DA APANHA
+	_TOTPS:=0
+
+	WHILE !EOF()
+		
+		If nLin > 60 //.or. (_dDTBatF<>_dDtaBat) // Salto de Página. Neste caso o formulario tem 60 linhas...
+			Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
+			nLin := 8
+			nLin:=nLin+2
+			CABEC7()
+		ENDIF
+		
+		_dDatEntr:=  SUBSTR (TMP1->ZV5_DTABAT,7,2)+ "/" + SUBSTR (TMP1->ZV5_DTABAT,5,2) +"/"+ SUBSTR (TMP1->ZV5_DTABAT,1,4)
+		
+		@ NLIN,002 PSAY TMP1->ZV5_NUMOC
+		@ NLIN,012 PSAY TMP1->ZV5_RGRANJ
+		@ NLIN,022 PSAY TMP1->ZV5_QTDAVE
+		@ NLIN,038 PSAY TMP1->ZV5_PESOAP
+		@ NLIN,050 PSAY (TMP1->ZV5_PESOAP/TMP1->ZV5_QTDAVE) PICTURE "9999.999"
+		@ NLIN,065 PSAY _dDatEntr
+		NLIN++
+		_TOTAP+=TMP1->ZV5_QTDAVE
+		_TOTPS+=TMP1->ZV5_PESOAP
+		DbSelectArea("TMP1")
+		DBSKIP()
+	ENDDO
+	NLIN++          //123456789012345678901234567890123456789012345678901234567890123456789012345678901
+	@ nlin,000	PSAY "+-----------------------------------------------------------------------------+"
+	NLIN++
+	@ nlin,000	PSAY "|TOTAL:   "+STR(_TOTAP)
+	@ nlin,038  PSAY _TOTPS
+	@ nlin,050  PSAY (_TOTPS/_TOTAP ) PICTURE "9999.999"
+	@ nlin,078	PSAY "|"
+	NLIN++
+	@ nlin,000	PSAY "+-----------------------------------------------------------------------------+"
+	NLIN++
+
+	DBCLOSEAREA("TMP1")
 
 Return
 
@@ -1894,7 +1868,8 @@ DbSelectArea("ZV5")
 DbSetOrder(1)
 _nSomaPeso := 0
 If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
-	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+	//Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC 
+	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL == FWxFilial("ZV5") // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo	
 		_nSomaPeso += ZV5->ZV5_PESOAP
 		DbSelectArea("ZV5")
 		Dbskip()
@@ -1911,7 +1886,8 @@ DbSelectArea("ZV5")
 DbSetOrder(1)
 _nSomaQtd := 0
 If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
-	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+	//Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC
+	Do While !Eof() .AND. _cNUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL == FWxFilial("ZV5") // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo	
 		_nSomaQtd += ZV5->ZV5_QTDAVE
 		DbSelectArea("ZV5")
 		Dbskip()
@@ -2034,6 +2010,3 @@ cTurno := QTRN->TURNO
 DbcloseArea("QTRN")
 
 Return cTurno
-
-
-

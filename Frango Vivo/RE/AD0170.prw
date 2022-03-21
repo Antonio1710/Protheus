@@ -1,7 +1,7 @@
 #INCLUDE "rwmake.ch"
 #include "Topconn.ch"
 
-/*{Protheus.doc} User Function AD0170
+/*/{Protheus.doc} User Function AD0170
 	Relatoriode frete do Frango Vivo
 	@type  Function
 	@author DANIEL
@@ -13,8 +13,8 @@
 	@history Chamado T.I    - LUCIANO MAFRA - 23/01/2014 - INCLUIDO TOTALIZADOR GERAL PESO LIQUIDO
 	@history Chamado 019051 - LUCIANO MAFRA - 26/03/2014 - ORDEM DE IMPRESSÃO
 	@history Chamado 056283 - William Costa - 03/03/2020 - Ajustado o tamanho do campo de KM de Saida de 7 para 8, pois os ODOMETROS dos KM começaram a ficar muito alto.
-*/
-
+	@history ticket 69945   - Fern Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+/*/
 User Function AD0170
 
 	Local cDesc1        := "Este programa tem como objetivo imprimir relatorio "
@@ -251,8 +251,9 @@ Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 	CQuery+=" ZV2_2PESO, ZV1_TARAPD, "
 	CQuery+=" ZV1_AJUSPS, ZV1_QTDAPN ,ZV1_KMODM, "
 	CQuery+=" ZV1_PCIDAD, ZV1_CAVES, ZV1_MORTAL, ZV1_QTDAPN "
-	CQuery+=" FROM " + retsqlname("ZV1")+ " , " + retsqlname("ZV2")+" "
-	CQuery+=" WHERE (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDtaIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDtaFim) +"') " 
+	CQuery+=" FROM " + retsqlname("ZV1")+ " (NOLOCK), " + retsqlname("ZV2")+" (NOLOCK) "
+	CQuery+=" WHERE Z1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL " // @history ticket 69945   - Fern Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	CQuery+=" AND (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDtaIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDtaFim) +"') " 
 	CQuery+=" AND ZV1_GUIAPE<>'      ' "
 	CQuery+=" AND ZV1_NUMNFS<>'      ' "    
 	cQuery+=" AND ZV2_TIPOPE='F'"          

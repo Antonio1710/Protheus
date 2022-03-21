@@ -97,8 +97,8 @@ Static Function PrintReport(oReport)
 	cQuery += "	 ZEI.ZEI_NUMOC, ZEI.ZEI_ITEM, ZEI.ZEI_NUMMP, ZEI.ZEI_MINUTO, ZEI.ZEI_OBS, " + CRLF
 	cQuery += "	 ZV1.ZV1_PGRANJ, ZV1.ZV1_DTABAT, ZV1.ZV1_RPLACA, " + CRLF
 	cQuery += "	 ZEE.ZEE_DESCRI,ZEE.ZEE_DEPTO,ZGC.ZGC_NOME " + CRLF
-  	cQuery += "FROM " + RetSqlTab("ZEI") + " " + CRLF
-  	cQuery += " INNER JOIN " + RetSqlTab("ZV1") + " " + CRLF
+  	cQuery += "FROM " + RetSqlTab("ZEI") + " (NOLOCK) " + CRLF
+  	cQuery += " INNER JOIN " + RetSqlTab("ZV1") + " (NOLOCK) " + CRLF
 	cQuery += "  ON  ZEI.ZEI_NUMOC  = ZV1.ZV1_NUMOC" + CRLF
 	cQuery += "  AND ZV1.ZV1_FILIAL = '" + xFilial("ZV1") + "'" + CRLF
 	cQuery += "  AND ZV1.D_E_L_E_T_ <> '*' " + CRLF

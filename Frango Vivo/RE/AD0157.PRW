@@ -1,141 +1,139 @@
 #INCLUDE "rwmake.ch"
 #INCLUDE "TOPCONN.CH"
 
+/*/{Protheus.doc} User Function nomeFunction
+	Programado X Realizado
+	@type  Function
+	@author Daniel Pitthan
+	@since 22/12/2005
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³AD0157     º Autor Daniel Pitthan³ AP6 IDE       Data ³  22/12/05   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³ ProgramadoX Realizado                º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Produção; logístca; PCP                                    º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-/*/
+User Function AD0157()
 
-User Function AD0157
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracao de Variaveis                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Local cDesc1         := "Este programa tem como objetivo imprimir relatorio "
+	Local cDesc2         := "de acordo com os parametros informados pelo usuario."
+	Local cDesc3         := "Programado X Realizado"
+	Local cPict          := ""
+	Local titulo       := "Programado X Realizado"
+	Local nLin         := 80
+	Local Cabec1       := "Relatório por Periodo"
+	Local Cabec2       := "ADORO S/A"
+	Local imprime      := .T.
+	Local aOrd := {} 
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Declaracao de Variaveis                                             ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'ProgramadoX Realizado')
 
-Local cDesc1         := "Este programa tem como objetivo imprimir relatorio "
-Local cDesc2         := "de acordo com os parametros informados pelo usuario."
-Local cDesc3         := "Programado X Realizado"
-Local cPict          := ""
-Local titulo       := "Programado X Realizado"
-Local nLin         := 80
-Local Cabec1       := "Relatório por Periodo"
-Local Cabec2       := "ADORO S/A"
-Local imprime      := .T.
-Local aOrd := {} 
+	Private lEnd         := .F.
+	Private lAbortPrint  := .F.
+	Private CbTxt        := ""
+	Private limite           := 220
+	Private tamanho          := "G"
+	Private nomeprog         := "AD0157" // Coloque aqui o nome do programa para impressao no cabecalho
+	Private nTipo            := 15
+	Private aReturn          := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1}
+	Private nLastKey        := 0
+	Private cbtxt      := Space(10)
+	Private cbcont     := 00
+	Private CONTFL     := 01
+	Private m_pag      := 01
+	Private wnrel      := "AD0157" // Coloque aqui o nome do arquivo usado para impressao em disco
+	Private _nSomaQTD
+	Private cString := ""
+	Private _nZV1PAVES //aves programadas
+	Private _nZV1RAVES //aves recebidas
+	Private _nZV1PESLIQ//peso liq
+	Private _nZV1PESOME//peso medio
+	Private _nZV1PGRANJ//integrado
+	Private _nPrxGranj //gRANJA FUTURA
+	Private _nPprog//peso programado
+	Private _nTotAveP//total de aves programadas
+	Private _nTotAveR//total de aves recebidas
+	Private _nTotPLiq//total de peso liquido
+	Private _nTotPMed//total de peso medio
+	Private _nTotPpro//total do peso programado
+	Private _nTotDifA//dife total aves rec e realiz
+	Private _nTotDifP //dife pes liq e peso prog
+	Private _dDtaIni //data de abate inicial
+	Private _dDtaFim //data final de abate
+	Private _nTotPMP//total do peso medio programado
+	Private _nTotPMR//total peso medio recebido
+	Private _ZV4Peso//peso padrao em ZV4
+	Private _nTotPesP//Total peso padrao
+	Private _ZV21PESO//Primeira pesagem
+	Private  _ZV22PESO//SEGUNDA PESAGEM
+	Private _nQtdV //numero de viagens
+	Private _ZV1NUMOC := ' '  // Numero Ordem
+	Private _DIFPme:=0 //DIFERENCA PESO MEDIO
+	Private _ntotM:=0//acumula motalidade
+	Private _ZV1Peso //Peso 1
+	Private _ZV1MORTAL //Mortalidade
+	Private _nDifA	//diferenca de aves recebida/programado
+	Private  _nDifP  //diferenca do peso programado/recebido
+	Private _nPMP	//TOTAL PESO MEDIO PROGRAMADO
+	Private _nPMR //TOTAL PESO MEDIO REALIZADO
+	Private _TDIFPme //DIFERENCA DE PESO MEDIO - total
+	Private _ADIFPme //DIFERENCA DE PESO MEDIO - analitico
+	Private _xLinha:= "__________________________________________________________________________________________________________________________________________________________"
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'ProgramadoX Realizado')
+	//total geral
 
-Private lEnd         := .F.
-Private lAbortPrint  := .F.
-Private CbTxt        := ""
-Private limite           := 220
-Private tamanho          := "G"
-Private nomeprog         := "AD0157" // Coloque aqui o nome do programa para impressao no cabecalho
-Private nTipo            := 15
-Private aReturn          := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1}
-Private nLastKey        := 0
-Private cbtxt      := Space(10)
-Private cbcont     := 00
-Private CONTFL     := 01
-Private m_pag      := 01
-Private wnrel      := "AD0157" // Coloque aqui o nome do arquivo usado para impressao em disco
-Private _nSomaQTD
-Private cString := ""
-Private _nZV1PAVES //aves programadas
-Private _nZV1RAVES //aves recebidas
-Private _nZV1PESLIQ//peso liq
-Private _nZV1PESOME//peso medio
-Private _nZV1PGRANJ//integrado
-Private _nPrxGranj //gRANJA FUTURA
-Private _nPprog//peso programado
-Private _nTotAveP//total de aves programadas
-Private _nTotAveR//total de aves recebidas
-Private _nTotPLiq//total de peso liquido
-Private _nTotPMed//total de peso medio
-Private _nTotPpro//total do peso programado
-Private _nTotDifA//dife total aves rec e realiz
-Private _nTotDifP //dife pes liq e peso prog
-Private _dDtaIni //data de abate inicial
-Private _dDtaFim //data final de abate
-Private _nTotPMP//total do peso medio programado
-Private _nTotPMR//total peso medio recebido
-Private _ZV4Peso//peso padrao em ZV4
-Private _nTotPesP//Total peso padrao
-Private _ZV21PESO//Primeira pesagem
-Private  _ZV22PESO//SEGUNDA PESAGEM
-Private _nQtdV //numero de viagens
-Private _ZV1NUMOC := ' '  // Numero Ordem
-Private _DIFPme:=0 //DIFERENCA PESO MEDIO
-Private _ntotM:=0//acumula motalidade
-Private _ZV1Peso //Peso 1
-Private _ZV1MORTAL //Mortalidade
-Private _nDifA	//diferenca de aves recebida/programado
-Private  _nDifP  //diferenca do peso programado/recebido
-Private _nPMP	//TOTAL PESO MEDIO PROGRAMADO
-Private _nPMR //TOTAL PESO MEDIO REALIZADO
-Private _TDIFPme //DIFERENCA DE PESO MEDIO - total
-Private _ADIFPme //DIFERENCA DE PESO MEDIO - analitico
-Private _xLinha:= "__________________________________________________________________________________________________________________________________________________________"
+	Private	TGAVP:=0//TOTAL GERAL AVES PROGRAMADAS
+	Private	TGVIA:=0//TOTAL GERAL DE VIAGENS
+	Private	TGAVR:=0//TOTAL GERAL DE AVES RECEBIDAS
+	Private	TGAVM:=0//TOTAL GERAL DE MORTOS
+	Private	TGDAV:=0//TOTAL GERAL DA DIFERENCA DE AVES REC. PROG.
+	Private	TGPPR:=0//TOTAL GERAL DE PESO PROGRAMADO
+	Private	TGPRC:=0//TOTAL GERAL DO PESO LIQUIDO
+	Private	TGDPP:=0//TOTAL GERAL DA DIFERENCA DO PESO LIQUIDO PROGRAMADO COM O RECEBIDO
+	Private	TGPMP:=0//TOTAL GERAL DO PESO MEDIO PROGRAMADO
+	Private	TGPMR:=0//TOTAL GERAL DO PESO MEDIO REALIZADO
+	Private	TGPMD:=0//TOTAL GERAL DA DIFERENCA DO PESO MEDIO
 
-//total geral
+	cPerg:="AD0157"
+	pergunte (cPerg,.T.)
 
-Private	TGAVP:=0//TOTAL GERAL AVES PROGRAMADAS
-Private	TGVIA:=0//TOTAL GERAL DE VIAGENS
-Private	TGAVR:=0//TOTAL GERAL DE AVES RECEBIDAS
-Private	TGAVM:=0//TOTAL GERAL DE MORTOS
-Private	TGDAV:=0//TOTAL GERAL DA DIFERENCA DE AVES REC. PROG.
-Private	TGPPR:=0//TOTAL GERAL DE PESO PROGRAMADO
-Private	TGPRC:=0//TOTAL GERAL DO PESO LIQUIDO
-Private	TGDPP:=0//TOTAL GERAL DA DIFERENCA DO PESO LIQUIDO PROGRAMADO COM O RECEBIDO
-Private	TGPMP:=0//TOTAL GERAL DO PESO MEDIO PROGRAMADO
-Private	TGPMR:=0//TOTAL GERAL DO PESO MEDIO REALIZADO
-Private	TGPMD:=0//TOTAL GERAL DA DIFERENCA DO PESO MEDIO
+	_dDtaIni:=MV_PAR01 //data inicial
+	_dDtaFim:=MV_PAR02 //data final
+	_lTarPad:=MV_PAR03 //Usa Tara padrao, sim|nao
+	//_lPrtPAr:=MV_PAR04 //PARAMETROS
+	_lAnlStc:=MV_PAR04 //Analitico  ou Sintetico
 
-cPerg:="AD0157"
-pergunte (cPerg,.T.)
+	//Forço mostrar o parametro da data
+	_lPrtPAr := 1
 
-_dDtaIni:=MV_PAR01 //data inicial
-_dDtaFim:=MV_PAR02 //data final
-_lTarPad:=MV_PAR03 //Usa Tara padrao, sim|nao
-//_lPrtPAr:=MV_PAR04 //PARAMETROS
-_lAnlStc:=MV_PAR04 //Analitico  ou Sintetico
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta a interface padrao com o usuario...                           ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-//Forço mostrar o parametro da data
-_lPrtPAr := 1
+	wnrel := SetPrint(cString,NomeProg,"",@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Monta a interface padrao com o usuario...                           ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If nLastKey == 27
+		Return
+	Endif
 
-wnrel := SetPrint(cString,NomeProg,"",@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+	SetDefault(aReturn,cString)
 
-If nLastKey == 27
-	Return
-Endif
+	If nLastKey == 27
+		Return
+	Endif
 
-SetDefault(aReturn,cString)
+	nTipo := If(aReturn[4]==1,15,18)
 
-If nLastKey == 27
-	Return
-Endif
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-nTipo := If(aReturn[4]==1,15,18)
+	RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-
-RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
 Return
 
 /*/
@@ -243,8 +241,9 @@ Cquery := " SELECT "+;
 " ZV1_MORTAL "+;
 " , CASE WHEN ZV1_FORREC = '000217' THEN  ((ZV2_1PESO - ZV1_QTDQBR)-ZV1_TARAPD)+((((ZV2_1PESO - ZV1_QTDQBR)-ZV1_TARAPD)*0.7)/100) ELSE ZK_PBRUTO END CALCULO1, "+;
 " CASE WHEN ZV1_FORREC = '000217' THEN  ((ZV2_1PESO - ZV1_QTDQBR)-ZV2_2PESO)+((((ZV2_1PESO - ZV1_QTDQBR)-ZV2_2PESO)*0.7)/100) ELSE ZK_PBRUTO END CALCULO2 "+;
-" FROM "+retsqlname("ZV1")+","+retsqlname("ZV2")+" "+","+retsqlname("SZK")+" "+;
-" WHERE ZK_NUMOC = ZV1_NUMOC AND (ZV1_DTABAT>='"+DTOS(_dDtaIni)+"' AND ZV1_DTABAT<='"+DTOS(_dDtaFim)+"') "+;
+" FROM "+retsqlname("ZV1")+" (NOLOCK),"+retsqlname("ZV2")+" (NOLOCK)"+","+retsqlname("SZK")+" (NOLOCK)"+;
+" WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+" AND ZK_NUMOC = ZV1_NUMOC AND (ZV1_DTABAT>='"+DTOS(_dDtaIni)+"' AND ZV1_DTABAT<='"+DTOS(_dDtaFim)+"') "+;
 " AND ZV1_GUIAPE=ZV2_GUIA  "+;
 " AND ZV2_TIPOPE='F' "+;   
 " AND "+retsqlname("ZV1")+".D_E_L_E_T_ <>'*' "+;
@@ -596,47 +595,56 @@ xlin++
 
 Return (xLin)
 
-
-
-
-
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 21/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function PrintOpp (YLIN)
 
-//VARIAVEIS LOCAIS
-//CAL per //nome da pergunta
+	//VARIAVEIS LOCAIS
+	//CAL per //nome da pergunta
 
-Ylin++
-@ Ylin,000 PSAY "+-------------------------------------------------------------------+"
-YLIN++
-@ Ylin,000 PSAY "|                          PARAMETROS                               |"
-YLIN++
-/*
-//ABRO SX1 E IMPRIMO OS PARAMETROS DESSE GRUPO
-DBSELECTAREA("SX1")
-IF DBSEEK (cPerg,.T.)
-	while SX1->X1_GRUPO=cPerg
-		PER:=X1_CNT01
-		@ yLin,000 PSAY PER
-		ylin++
-		DBSKIP()
-	ENDDO
-ENDIF
-@ ylin,000 PSAY "+-------------------------------------------------------------------+"
-DBSELECTAREA("CMP")
-*/
-YLIN++
+	Ylin++
+	@ Ylin,000 PSAY "+-------------------------------------------------------------------+"
+	YLIN++
+	@ Ylin,000 PSAY "|                          PARAMETROS                               |"
+	YLIN++
+	YLIN++
+
 Return(XLIN)
             
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 21/03/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static function Apanha()
-&&Verifica se tem Apanha para trazer a quantidade do apanhe.
-DbSelectArea("ZV5")
-DbSetOrder(1)
-_nSomaQtd := 0
-If DbSeek(xFilial("ZV5")+CMP->ZV1_NUMOC ,.T.)
-	Do While !Eof() .AND. CMP->ZV1_NUMOC=ZV5->ZV5_NUMOC 
-      _nSomaQtd += ZV5->ZV5_QTDAVE
-      DbSelectArea("ZV5")
-      Dbskip()
-   enddo
-endif      
+
+	//&&Verifica se tem Apanha para trazer a quantidade do apanhe.
+	DbSelectArea("ZV5")
+	DbSetOrder(1)
+	_nSomaQtd := 0
+	If DbSeek(xFilial("ZV5")+CMP->ZV1_NUMOC ,.T.)
+		//Do While !Eof() .AND. CMP->ZV1_NUMOC=ZV5->ZV5_NUMOC
+		Do While !Eof() .AND. CMP->ZV1_NUMOC=ZV5->ZV5_NUMOC .and. ZV5->ZV5_FILIAL==FWxFilial("ZV5") // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+		_nSomaQtd += ZV5->ZV5_QTDAVE
+		DbSelectArea("ZV5")
+		Dbskip()
+	enddo
+	endif      
 return(_nSomaQtd)

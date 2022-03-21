@@ -5,23 +5,19 @@
 #Include "TbiCode.ch"
 #include "FiveWin.ch"
 
+/*/{Protheus.doc} User Function VALNFFV1
+	Validacao chamada pelo campo ZV1_NUMNFS (SX3)
+	@type  Function
+	@author Mauricio da Silva
+	@since 13/05/2010
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 /*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Fun‡…o    ³ VALNFFV1 ³ Autor ³Mauricio da Silva      ³ Data ³ 13/05/10 ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡…o ³ Validacao chamada pelo campo ZV1_NUMNFS (SX3)              ³±±
-±±³          ³ Chamado 006731.                                            ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Sintaxe   ³ 										                      ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Uso      ³ Especifico Ad'oro Alimenticia                              ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-/*/
-
 User Function VALNFFV1()  
 
 	Local _lRet    := .T.
@@ -50,18 +46,20 @@ User Function VALNFFV1()
 	_cPlac		:= ZV1->ZV1_PPLACA
 	_ORDEM		:= ZV1->ZV1_NUMOC 
 	
-	_cQuery := "SELECT ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
-	_cQuery += "FROM "+retsqlname("ZV1") +" WHERE RTRIM(LTRIM(ZV1_NUMNFS)) = '"+ALLTRIM(_nNumNF)+"' and "
-	_cQuery += "RTRIM(LTRIM(ZV1_SERIE)) = '"+ALLTRIM(_cSerie)+"' and "
-	_cQuery += "ZV1_FORREC = '"+_nCODFNF+"' and ZV1_LOJREC = '"+_nLojNF+"' and "
-	_cQuery += ""+RetSqlName("ZV1")+ ".D_E_L_E_T_ <> '*' ORDER BY ZV1_NUMOC"
+	_cQuery := " SELECT ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
+	_cQuery += " FROM "+retsqlname("ZV1") + " (NOLOCK) " 
+	_cQuery += " WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	_cQuery += " RTRIM(LTRIM(ZV1_NUMNFS)) = '"+ALLTRIM(_nNumNF)+"' and "
+	_cQuery += " RTRIM(LTRIM(ZV1_SERIE)) = '"+ALLTRIM(_cSerie)+"' and "
+	_cQuery += " ZV1_FORREC = '"+_nCODFNF+"' and ZV1_LOJREC = '"+_nLojNF+"' and "
+	_cQuery += " D_E_L_E_T_ <> '*' ORDER BY ZV1_NUMOC"
 	
 	TcQuery _cQuery New Alias "VZV1"
 	 
 	DbSelectArea("VZV1")
 	VZV1->(dbGoTop())
 	While !VZV1->(eof())
-	   If VZV1->ZV1_NUMOC <> _ORDEM      && Verifica se nao esta alterando uma OC.
+	   If VZV1->ZV1_NUMOC <> _ORDEM      //&& Verifica se nao esta alterando uma OC.
 	      MsgInfo("A NF/SERIE "+_nNumNf+" / "+_cSerie+" informada ja foi utilizada na OC: "+VZV1->ZV1_NUMOC+" para o Fornecedor/loja: "+_nCODFNF+" / "+_nLojNF+" .Favor Verificar!!!")
 	      VZV1->(DbCloseArea())
 	      dbSelectArea(cAliasZV1)
@@ -151,7 +149,7 @@ User Function VALNFFV1()
 	EndIf
 	
 	cQuery := " SELECT ZV5_NUMNFS, ZV5_NUMOC "
-	cQuery += " FROM " + RetSqlName("ZV5")
+	cQuery += " FROM " + RetSqlName("ZV5") + " (NOLOCK) "
 	cQuery += " WHERE ZV5_FILIAL='"+xFilial("ZV5")+"' "
 	cQuery += " AND ZV5_NUMNFS='"+PADL(_nNumNf,9,"0")+"' "
 	cQuery += " AND D_E_L_E_T_='' "                                      
