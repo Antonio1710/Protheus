@@ -917,10 +917,10 @@ Static Function MontaTra()
 
 	dbclosearea("XF2")
 	
+	//Ticket  69990  - Adriano Savoine - 21/03/2022 
 	//DEVOLUCOES
 	cQuery:="select * "+;
 	"from "+retsqlname("SF1")+" (NOLOCK)"+; // Chamado n. TI - FWNM - 23/05/2019
-	 //Ticket  69990  - Adriano Savoine - 21/03/2022 
 	"where F1_FILIAL IN ("+AllTrim(_cFilial)+") and "+; // Chamado n. TI - FWNM - 23/05/2019 //Ticket  15291  - Abel Babini  - 08/06/2021 - Correção de Error.log com a filial sem aspas
 	"F1_DTDIGIT between '"+dtos(mv_par01)+"' and '"+dtos(mv_par02)+"' and "+; // Chamado n. TI - FWNM - 23/05/2019
 	"F1_TIPO='D' and "+;
