@@ -28,6 +28,8 @@ Static cFil := "02"
 	@history Chamado 66524 - Leonardo P. Monteiro  - 11/01/2022 - Correção na função comparaCab responsável pela comparação do cabeçalho dos PVs. Tratamento dos campos de mensagens C5_MENNOTA para a correta decodificação.
 	@history Chamado T.I  - Leonardo P. Monteiro   - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
 	@history Chamado T.I  - Leonardo P. Monteiro   - 27/01/2022 - Correção na rotina comparacab e comparaitem e reformulação das rotinas de reprocessamento.
+	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
+	
 	/*/
 User Function ADVEN090P() // U_ADVEN090P()
 
@@ -113,9 +115,9 @@ Static Function sqlTScript(nRePThe, nTotThe)
 	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( "
 
 	cQuery += " SELECT " 
-	cQuery += " ZCI_NUMP, MAX(R_E_C_N_O_) AS REC " 
+	cQuery += " ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC " 
 	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) " 
+	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) ZCI " 
 	cQuery += " WHERE " 
 	cQuery += " ZCI_TMPR = 'PENDPROC' " 
 	cQuery += " AND ZCI_METD = 'POST' " 
@@ -126,7 +128,7 @@ Static Function sqlTScript(nRePThe, nTotThe)
 
 	//Exclusão de pedido de venda.
 	cQuery += " SELECT   " 
-	cQuery += " ZCI.ZCI_NUMP, MAX(R_E_C_N_O_) AS REC   " 
+	cQuery += " ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   " 
 	cQuery += " FROM   " 
 	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI " 
 	cQuery += " INNER JOIN " 
@@ -142,7 +144,7 @@ Static Function sqlTScript(nRePThe, nTotThe)
 
 	//Alteração de pedido de venda.
 	cQuery += " SELECT   " 
-	cQuery += " ZCI.ZCI_NUMP, MAX(R_E_C_N_O_) AS REC   " 
+	cQuery += " ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   " 
 	cQuery += " FROM   " 
 	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI " 
 	cQuery += " INNER JOIN " 
@@ -156,7 +158,7 @@ Static Function sqlTScript(nRePThe, nTotThe)
 
 	//
 	cQuery += " ) AS FONTE "
-	cQuery += " ORDER BY FONTE.ZCI_NUMP, FONTE.REC " 
+	cQuery += " ORDER BY FONTE.ANTECI, FONTE.DTENTR, FONTE.ZCI_NUMP, FONTE.REC " 
 
 Return cQuery
 

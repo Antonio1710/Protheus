@@ -10,6 +10,7 @@
     @since 24/01/2022
     @version 01
     @history Chamado 16833 - Leonardo P. Monteiro - 14/02/2022- Desenvolvimento inicial.
+    @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
     
 /*/
 user function ADGPE082P(aEmpFil)
@@ -137,7 +138,8 @@ Static Function execWF(lEnd, lAutom, cFilIni, cFilFim, cMatDe, cMatAte)
                                     QCOL->TAM_CALCA,;
                                     QCOL->TAM_CALCATERMICA,;
                                     QCOL->TAM_CALCADO,;
-                                    QCOL->TAM_MEIA)
+                                    QCOL->TAM_MEIA,;
+                                    QCOL->SEXO)
 
                     QCOL->(Dbskip())
 

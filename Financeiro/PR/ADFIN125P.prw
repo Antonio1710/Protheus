@@ -35,11 +35,6 @@ oMark:AddFilter( "Pix/Link Cielo", 'alltrim(E1_TIPO) == "PR" .AND. ( !empty(E1_X
 
 oMark:Activate()
 
-
-//
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'cobrancao via PIX e Super Link Cielo')
-//
-
 Return NIL
 
 //-------------------------------------------------------------------

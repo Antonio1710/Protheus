@@ -11,6 +11,7 @@
     @version 01
     @history Chamado 8465 - Leonardo P. Monteiro - 15/03/2021 - Desenvolvimento inicial do workflow.
     @history Chamado 8465 - Leonardo P. Monteiro - 16/04/2021 - Adequação do workflow as necessidades do Depto. Comex.
+    @history Chamado 69624 - Leonardo P. Monteiro - 11/03/2021 - Correção nos filtros de datas para o envio correto da programação para a semana seguinte.
 /*/
 user function ADEEC008P(aEmpFil, cPedExp, dDtDe, dDtAte, lAutom)
 	//local aEmpIni := {}
@@ -55,7 +56,7 @@ Static Function execWF(lAutom)
     //Local cTo           := "leonardo.monteiro@adoro.com.br"
     Local nDias         := Supergetmv("MV_XEC008B",,7)
     Local cBody         := ""
-    Local cSubject      := "Previsão de Embarque (Semana "+ RetSem(Date()+7) +")"
+    Local cSubject      := ""
     Local cAttach       := ""
     Local cQuery        := ""
     Local cObsTec       := ""
@@ -67,9 +68,11 @@ Static Function execWF(lAutom)
     Default cCodEmp     := ""
     Default cCodFil     := "" 
     Default cPedExp     := ""
-    Default dDtDe       := dDatabase
-    Default dDtAte      := dDatabase+nDias
+    Default dDtDe       := fGetSeg(Date())
+    Default dDtAte      := dDtDe+nDias
     Default lAutom      := .F.
+
+    cSubject      := "Previsão de Embarque (Semana "+ RetSem(dDtDe) +")"
 
     cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, EE7.EE7_XBOOKI, EE7.EE7_ESTUFA, EE7.EE7_XWFEMD, EE7.EE7_CODOBP, "
     cQuery += "   C5_DTENTR, C5.C5_NOMECLI, C5.C5_CLIENTE, C5.C5_LOJACLI, C5.C5_PLACA, C5.C5_TRANSP, "
@@ -274,4 +277,26 @@ Static Function execWF(lAutom)
     
     QEXP->(DbCloseArea())
 Return .T.
+
+Static Function fGetSeg(dData)
+    Local nDiaSem := dow(dData)
+    Local dRet    := dData
+
+    if nDiaSem == 1
+        dRet := dRet + 1
+    Elseif nDiaSem == 2
+        dRet := dRet + 7
+    Elseif nDiaSem == 3
+        dRet := dRet + 6
+    Elseif nDiaSem == 4
+        dRet := dRet + 5
+    Elseif nDiaSem == 5
+        dRet := dRet + 4
+    Elseif nDiaSem == 6
+        dRet := dRet + 3
+    Elseif nDiaSem == 7
+        dRet := dRet + 2
+    endif
+
+return dRet
 

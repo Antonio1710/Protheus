@@ -395,7 +395,7 @@ Return aRet
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 
-User Function ExTelaMen(cTitulo,cTexto,cFonte,nTamFonte,lFocoFec,lFocoCanc,lOkCanc,cAcaoTimer)
+User Function ExTelaMen(cTitulo,cTexto,cFonte,nTamFonte,lFocoFec,lFocoCanc,lOkCanc,cAcaoTimer, nParSeg)
 
 Local lRet				:= .T.
 Local aCoord			:= FWGetDialogSize(oMainWnd)
@@ -417,6 +417,8 @@ Local oTimerTE
 Private oMemo
 Private oBot01
 Private oBot02
+
+Default nParSeg			:= 3000
 
 PARAMTYPE 0 VAR cTitulo		AS Character	OPTIONAL	DEFAULT ""
 PARAMTYPE 1 VAR cTexto		AS Character	OPTIONAL	DEFAULT ""
@@ -465,7 +467,7 @@ oBot01 := tButton():New(aTamObj[1],aTamObj[2],cHK + cTAG01,oTela,bAcao01,aTamObj
 aTamObj[2] := ((oBot01:nLeft + oBot01:nWidth) / 2) + nDistAPad
 oBot02 := tButton():New(aTamObj[1],aTamObj[2],cHK + cTAG02,oTela,bAcao02,aTamObj[3],aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
 If !Empty(cAcaoTimer)
-	oTimerTE := tTimer():New(3000,&("{|| " + cAcaoTimer + "}"),oTela)
+	oTimerTE := tTimer():New(nParSeg,&("{|| " + cAcaoTimer + "}"),oTela)
 	oTimerTE:Activate() 
 Endif
 

@@ -5,14 +5,16 @@
 /*/{Protheus.doc} User Function ADLFV021R()
   Relatorio de paradas
   @type tkt -  63014
-  @author Rodrigo Romão
+  @author Rodrigo RomÃ£o
   @since 04/11/2021
   @history Ticket 63014 - Leonardo P. Monteiro - 04/11/2021 - Desenvolvimento.
+  @history Ticket 68482 - Adriano Savoine      - 28/02/2022 - Aterado a coluna ZV1_PGRANJ por ZV1_RGRANJ a pedido dos analistas frango vivo. 
   @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+
 /*/
 User Function ADLFV021R()
   
-    Local cTitulo       := "Relatório Frango Vivo"
+    Local cTitulo       := "RelatÃ³rio Frango Vivo"
   
     private cPerg       := "ADLFV021R"
     private dDtAbatDe   := ctod("")
@@ -23,7 +25,7 @@ User Function ADLFV021R()
     private lAnalitc    := .F.
     //private CRLF        := Chr(13)+Chr(10)
 	
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório Frango Vivo')
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'RelatÃ³rio Frango Vivo')
 
 
 	DbSelectArea("ZV2")
@@ -37,7 +39,7 @@ User Function ADLFV021R()
 
 		oReport:SetPortrait(.T.)
 
-		//Define as seções do relatório
+		//Define as seÃ§Ãµes do relatÃ³rio
 		ReportDef(oReport)
 
 		//Dialogo do TReport
@@ -60,25 +62,25 @@ Return
   /*/
 Static Function ReportDef(oReport)
 
-	oSection1   := TRSection():New(oReport,"Dados Sintéticos")
+	oSection1   := TRSection():New(oReport,"Dados SintÃ©ticos")
     
 
 	TRCell():New(oSection1,"GRANJA"  	            ,"","Granja"        ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
 	TRCell():New(oSection1,"GRANOM"  	            ,"","Nome Granja"   ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
     TRCell():New(oSection1,"QTD_AVES"  	            ,"","Qtd. Aves"     ,"@E 9,999,999"        	    ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //02
 	TRCell():New(oSection1,"MORT_AVES"     	        ,"","Mort. Aves"    ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //03
-	TRCell():New(oSection1,"MEDIA_MORT" 	        ,"","Méd % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
+	TRCell():New(oSection1,"MEDIA_MORT" 	        ,"","MÃ©d % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
 	TRCell():New(oSection1,"PESO_MED_REAL"          ,"","Peso Med Real" ,"@E 9,999,999.999"         ,030,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //05
 	TRCell():New(oSection1,"PESO_MED_PROG"          ,"","Peso Med Prog" ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //06
 	
 
-    oSection2   := TRSection():New(oSection1,"Dados Analíticos")
+    oSection2   := TRSection():New(oSection1,"Dados AnalÃ­ticos")
 
 
-	TRCell():New(oSection2,"PLACA"  	            ,"","Placa Veículo" ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
+	TRCell():New(oSection2,"PLACA"  	            ,"","Placa VeÃ­culo" ,"@!"               	    ,010,  ,,"LEFT" ,,"LEFT"  ,,,,,,,) //01
     TRCell():New(oSection2,"QTD_AVES"  	            ,"","Qtd. Aves"     ,"@E 9,999,999"        	    ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //02
 	TRCell():New(oSection2,"MORT_AVES"     	        ,"","Mort. Aves"    ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //03
-	TRCell():New(oSection2,"MEDIA_MORT" 	        ,"","Méd % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
+	TRCell():New(oSection2,"MEDIA_MORT" 	        ,"","MÃ©d % Mort"    ,"@E 999.99"               	,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //04
 	TRCell():New(oSection2,"PESO_MED_REAL"          ,"","Peso Med Real" ,"@E 9,999,999.999"         ,030,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //05
 	TRCell():New(oSection2,"PESO_MED_PROG"          ,"","Peso Med Prog" ,"@E 9,999,999.999"         ,010,  ,,"RIGHT" ,,"RIGHT"  ,,,,,,,) //06
 	
@@ -129,7 +131,7 @@ Static Function PrintReport(oReport)
 		oReport:IncMeter()
 
         
-		oSection1:Cell("GRANJA"   	    ):SetValue((cAlias)->ZV1_PGRANJ)
+		oSection1:Cell("GRANJA"   	    ):SetValue((cAlias)->ZV1_RGRANJ) //Ticket 68482 - Adriano Savoine - 28/02/2022
         oSection1:Cell("GRANJA"   	    ):SetSize(10)
         oSection1:Cell("GRANOM"   	    ):SetValue((cAlias)->A2_NOME)
         oSection1:Cell("GRANOM"   	    ):SetSize(40)
@@ -219,6 +221,7 @@ Static function fSQLSint()
 
     cQuery := " SELECT ZV1.ZV1_PGRANJ, " + CRLF
     cQuery += "    ISNULL(A2.A2_NOME,'') A2_NOME,  "
+    cQuery += "    ZV1.ZV1_RGRANJ,  " //Ticket 68482 - Adriano Savoine - 28/02/2022
     cQuery += "    SUM(ZV1.ZV1_PAVES) TOTAL_AVES, " + CRLF
     cQuery += "    SUM(ZV1_MORTAL) MORTALIDADE, " + CRLF
     cQuery += "    ROUND(SUM(CASE WHEN ZV1.ZV1_PAVES > 0 THEN ZV1.ZV1_MORTAL/ZV1.ZV1_PAVES*100 ELSE 0 END)/COUNT(*),2) MORTAL_MED, " + CRLF
@@ -231,8 +234,10 @@ Static function fSQLSint()
     if cStatus != "T" .AND. !Empty(cStatus)
         cQuery += " AND ZV1.ZV1_STATUS ='"+ cStatus +"' "
     endif
+    
     cQuery += "  AND ZV1.D_E_L_E_T_ <> '*' " + CRLF
-  	cQuery += " GROUP BY ZV1.ZV1_PGRANJ, A2.A2_NOME" + CRLF
+  	//cQuery += " GROUP BY ZV1.ZV1_PGRANJ, A2.A2_NOME" + CRLF
+  	cQuery += " GROUP BY ZV1.ZV1_PGRANJ, ZV1.ZV1_RGRANJ,A2.A2_NOME" + CRLF
     cQuery += " ORDER BY ZV1.ZV1_PGRANJ, A2.A2_NOME;"
 
 	TCQUERY cQuery NEW ALIAS (cAlias)

@@ -56,7 +56,8 @@
 	@history ticket   63028 - Wagner Moro		- 15/12/2021 - Permite a inclusão do armazém quando for transferencia de ração entre filiais do Projeto Granja HH - Filial "0A"
 	@history ticket   63028 - Wagner Moro		- 22/12/2021 - Filtra o fornecedor para trazer a filial de transferencia.
 	@history ticket   66892 - Jonathan.Carvalho - 25/01/2022 - Ordenação pelo CODIGENE quando a opção for 7 
-	@history ticket   68144  - Wagner Moro 		- 11/02/2022 - Tratamento notas com especie NFS para não consultar central XML
+	@history ticket   68144 - Wagner Moro 		- 11/02/2022 - Tratamento notas com especie NFS para não consultar central XML
+	@history ticket   69741 - Jonathan Carvalho - 16/03/2022 - Condição para localizar a NF de origem para produtor rural
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -681,6 +682,7 @@ User Function InteNfeB()
 	Private cProdCod        := ""//fernando sigoli - 01/03/2018
 	Private _CONTA          := ""//fernando sigoli - 01/03/2018
 	Private _ITEMCC         := ""//fernando sigoli - 01/03/2018
+	Private cCheckRu2		:= ""//Jonathan Carvalho - 16/03/2022
 	//
 	Private cEstOri         := ''//fernando sigoli - 10/04/2018
 	Private cMunOri         := ''//fernando sigoli - 10/04/2018
@@ -758,9 +760,14 @@ While ! (cAliasNFE)->(Eof())
 	cCheckRur  := (cAliasNFE)->(D1_SRRURAL+D1_NFRURAL)
 	cCheckTG   := ALLTRIM((cAliasNFE)->TABEGENE)
 	cCheckTP   := ALLTRIM((cAliasNFE)->D1_IDENTB6)
+	cCheckRu2  := ALLTRIM((cAliasNFE)->F1_FORMUL)//Jonathan Carvalho - 16/03/2022
 	If Alltrim(cValToChar((cAliasNFE)->D1_TIPO)) == 'X'
 		//////TCSetConn(_conProthe)
-		cQryS:="SELECT F1_DOC FROM " + RetSqlName("SF1") + " WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_DOC = '" + Padl(cCheckOr,9,"0") + "' AND F1_FORNECE = '" + cCheckFoOr + "' AND F1_LOJA = '" + cCheckLoOr + "' AND D_E_L_E_T_ = '' "
+		If cCheckRu2 == 'S'//Jonathan Carvalho - 16/03/2022 - tkt 69741
+			cQryS:="SELECT DISTINCT F1_DOC FROM " + RetSqlName("SF1") + " SF1 INNER JOIN " + RetSqlName("SD1") + " SD1 ON SF1.F1_DOC = SD1.D1_DOC  WHERE F1_FILIAL = '" + cFilAnt + "' AND D1_NFRURAL = '" + Padl(cCheckOr,9,"0") + "' AND F1_FORNECE = '" + cCheckFoOr + "' AND F1_LOJA = '" + cCheckLoOr + "' AND SF1.D_E_L_E_T_ = '' "
+		else
+			cQryS:="SELECT DISTINCT F1_DOC FROM " + RetSqlName("SF1") + " WHERE F1_FILIAL = '" + cFilAnt + "' AND F1_DOC = '" + Padl(cCheckOr,9,"0") + "' AND F1_FORNECE = '" + cCheckFoOr + "' AND F1_LOJA = '" + cCheckLoOr + "' AND D_E_L_E_T_ = '' "
+		EndIf
 		If Select("ChecRess") > 0
 			ChecRess->(DbCloseArea())
 		EndIf

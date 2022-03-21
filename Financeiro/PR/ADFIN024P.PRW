@@ -12,6 +12,8 @@
    @history Chamado 057170 - Everson       - 23/04/2020 - Tratamento para otimizar a rotina.
    @history Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados. 
    @history Ticket  8      - Abel Babini   - 01/02/2022 - Ajuste de variáveis
+   @history Ticket 69699   - Abel Babini   - 14/03/2022 - Correção ErrorLog 
+   @history Ticket 69816   - Abel Babini   - 15/03/2022 - Correção ErrorLog 
 */   
 User Function ADFIN024P()
 
@@ -414,10 +416,15 @@ User Function ADFIN024P()
                               ZEJ->ZEJ_VLAVEN	:= _nTotAvenc	//
                               ZEJ->ZEJ_VLVENC	:= _nTotVenci							//
                               ZEJ->ZEJ_VLPESP	:= 0											//
-                              ZEJ->ZEJ_TTACUM	:= 0											//	
+                              ZEJ->ZEJ_TTACUM	:= _nTotVenci+_nTotAVenc+_nPedPer
                               ZEJ->ZEJ_LIMCRD	:= _nTotRede							//
+                              ZEJ->ZEJ_PERCEN :=   iif(((_nTotSdRede+SC5->C5_XTOTPED)/_nTotRede)*100 > 999, 999, ((_nTotSdRede+SC5->C5_XTOTPED)/_nTotRede)*100) //Ticket 69699   - Abel Babini   - 14/03/2022 - Correção ErrorLog //Ticket 69816   - Abel Babini   - 15/03/2022 - Correção ErrorLog 
+                              ZEJ->ZEJ_VLUTIL := _nTotSdRede
+                              ZEJ->ZEJ_QTDPED := _nQtdPed
+                              ZEJ->ZEJ_TTUTIL := (_nTotSdRede+SC5->C5_XTOTPED)
                               ZEJ->(MsUnlock())
                            Endif
+                           
                            //FIM Ticket  8      - Abel Babini   - 31/01/2022 - Gravação da liberação na tabela de pedidos liberados.
                            /*
                            if Reclock("SC5",.F.)

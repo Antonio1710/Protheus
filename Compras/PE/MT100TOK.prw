@@ -942,7 +942,8 @@ Return lRetorno
 	@example
 	(examples)
 	@see (links_or_references)
-	@history ticket 14352   - Fernando Macieir- 21/05/2021 - Saldo Negativo (identificamos que a solução do ticket 6652 não foi publicada!)
+	@history ticket 14352   - Fernando Macieir		- 21/05/2021 - Saldo Negativo (identificamos que a solução do ticket 6652 não foi publicada!)
+	@history ticket 68736   - Leonardo P. Monteiro 	- 23/02/2022 - Correção de error.log na consulta work.
 /*/
 Static Function ChkPrjPCNF(cPCPrj, cPCItem)
 
@@ -973,7 +974,8 @@ Static Function ChkPrjPCNF(cPCPrj, cPCItem)
 					nTtVlr := gdFieldGet("D1_TOTAL",i)
 			
 					// base dados
-					If Select("Work")
+					// Ticket 68736 - Correção de error.log 
+					If Select("Work") > 0
 						Work->( dbCloseArea() )
 					EndIf
 
@@ -1082,7 +1084,7 @@ Static Function ChkPrjPCNF(cPCPrj, cPCItem)
 
 	Next i
 
-	If Select("Work")
+	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
 

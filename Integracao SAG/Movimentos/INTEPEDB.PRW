@@ -31,6 +31,7 @@
 	@history Everson,  22/09/2021, Ticket TI    - Removido lockbyname.
 	@history Jonathan  14/12/2021, Ticket 64214 - Incluir validação de conexão ao banco do SAG.
 	@history Everson   06/01/2022, Ticket 66328 - Tratamento para error log.
+	@history Wagner    21/02/2022, Ticket 63028 - Permite integrar pedidos C5_TIPO igual a B ou N
 /*/
 User Function PED001B()
 
@@ -2402,7 +2403,7 @@ Static Function sqlPedidos(nRadio,lAut)
 		cQry := " SELECT '1' AS TP, * FROM SGPED010 A WHERE TABEGENE = 'PO02MVES' AND ((C5_MSEXP='' AND OPERACAO_INT IN ('I','E','A')) OR (C5_MSEXP <> ' ' AND MENSAGEM_INT <> ' ' AND STATUS_INT='E')) AND C5_FILIAL = '"+FWxFilial("SC5")+"' AND C5_TIPO = 'D' " 
 	
 	ElseIf nRadio == 2 // SAIDA POR TRANS. FILIAL		SGPED010	PO03MVES	SEQ UNICO	Menu\PROTHEUS
-		cQry := " SELECT '2' AS TP, * FROM SGPED010 A WHERE TABEGENE = 'PO03MVES' AND ((C5_MSEXP='' AND OPERACAO_INT IN ('I','E','A')) OR (C5_MSEXP <> ' ' AND MENSAGEM_INT <> ' ' AND STATUS_INT='E')) AND C5_FILIAL = '"+FWxFilial("SC5")+"' AND C5_TIPO = 'N' "
+		cQry := " SELECT '2' AS TP, * FROM SGPED010 A WHERE TABEGENE = 'PO03MVES' AND ((C5_MSEXP='' AND OPERACAO_INT IN ('I','E','A')) OR (C5_MSEXP <> ' ' AND MENSAGEM_INT <> ' ' AND STATUS_INT='E')) AND C5_FILIAL = '"+FWxFilial("SC5")+"' AND C5_TIPO IN ('N','B') " //Wagner Moro - 63028
 	
 	ElseIf nRadio == 3 // SAIDA POR TRANS. INTEGRADO	SGPED010	POCAMVTP	SEQ UNICO	Menu\PROTHEUS
 		cQry := " SELECT '3' AS TP, * FROM SGPED010 A WHERE TABEGENE = 'POCAMVTP' AND ((C5_MSEXP='' AND OPERACAO_INT IN ('I','E','A')) OR (C5_MSEXP <> ' ' AND MENSAGEM_INT <> ' ' AND STATUS_INT='E')) AND C5_FILIAL = '"+FWxFilial("SC5")+"' "

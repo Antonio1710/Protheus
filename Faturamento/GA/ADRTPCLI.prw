@@ -13,13 +13,14 @@
 ±±³Uso       ³ Comercial                                                  ³±±
 ±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 */
 User Function ADRTPCLI()
 
 	Local cRet	:= M->C5_TIPOCLI
 	Local aArea	:= GetArea()
 	Local nProd	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_PRODUTO" })
-	Local nTES	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_TES" })
+	//Local nTES	:= aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_TES" })
 	Local cUF	:= ""      
 	Local _lConsFinal	:= .F.
 	Local _CFST 		:= GetMV("MV_XCFST") //CFOP Venda de embutidos com ICMS ST    5401/5910/5118   - incluido por Adriana em 05/06/2017 - chamado 035483
@@ -33,6 +34,8 @@ User Function ADRTPCLI()
 
 	If M->C5_TIPO $ "D/B"
 		RestArea(aArea)
+
+		//Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> FINAL PE" )
 		Return(cRet)
 	Else
 		dbSelectArea("SA1")
@@ -48,7 +51,7 @@ User Function ADRTPCLI()
 		endif
 		
 		If cUF == "SP"
-	//		If Alltrim(SF4->F4_CF) $ '5401/5910' .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$GETMV("MV_XTESDOA")))	//Por Adriana em 05/06/17 - chamado 035483
+			//		If Alltrim(SF4->F4_CF) $ '5401/5910' .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$GETMV("MV_XTESDOA")))	//Por Adriana em 05/06/17 - chamado 035483
 			If Alltrim(SF4->F4_CF) $ _CFST .and. ;
 				SB1->B1_PICMRET > 0 .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$(Alltrim(GETMV("MV_XTESDOA"))+Alltrim(GETMV("MV_XTESBOQ"))))) //Por Adriana em 05/06/17 - chamado 035483
 				//CFOP Venda de embutidos com ICMS ST    5401/5910/5118   - incluido por Adriana em 12/04/2017 - chamado 034546
@@ -61,8 +64,9 @@ User Function ADRTPCLI()
 				M->C5_TIPOCLI	:= SA1->A1_TIPO
 			Endif
 		EndIf
+
 		If cUF == "MG" .Or. cUF == "RS"
-	//		If Alltrim(SF4->F4_CF) $ '5401/5910' .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$GETMV("MV_XTESDOA")))	//Por Adriana em 05/06/17 - chamado 035483
+			//		If Alltrim(SF4->F4_CF) $ '5401/5910' .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$GETMV("MV_XTESDOA")))	//Por Adriana em 05/06/17 - chamado 035483
 			If Alltrim(SF4->F4_CF) $ _CFST .and. ;
 				SB1->B1_PICMRET > 0 .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$(Alltrim(GETMV("MV_XTESDOA"))+Alltrim(GETMV("MV_XTESBOQ"))))) //Por Adriana em 05/06/17 - chamado 035483
 				//CFOP Venda de embutidos com ICMS ST    5401/5910/5118   - incluido por Adriana em 12/04/2017 - chamado 034546
@@ -74,10 +78,13 @@ User Function ADRTPCLI()
 				cRet			:= SA1->A1_TIPO
 				M->C5_TIPOCLI	:= SA1->A1_TIPO
 			Endif
-		EndIf			
-		RestArea(aArea)
+		EndIf
 
-	//Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> INICIO PE" )
+	EndIf
+
+	RestArea(aArea)
+
+	//Conout( DToC(Date()) + " " + Time() + " ADRTPCLI >>> FINAL PE" )
 	
-	Return(cRet)
-EndIf
+Return(cRet)
+
