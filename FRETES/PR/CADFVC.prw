@@ -23,6 +23,7 @@
 	@since 26/06/13
 	@version 01
 	@history ticket 69517 - Leonardo P. Monteiro - 09/03/2022 - Cadastro de motorista Bolivianos. Validação na exclusão de motoristas.
+	@history Everson, 18/10/2020, Chamado 18465. Envio de informações ao barramento.     
 /*/
 
 User Function CADFVC() 
@@ -33,7 +34,7 @@ User Function CADFVC()
 	     
 	aadd(aRotAdic,{ "* LOGS","u_FVCLOG()", 0 , 6 })
 	 
-	AXCADASTRO("ZVC","Cadastro de Motoristas ","U_CADFVA()","U_COKMOTO()",aRotAdic,)
+	AXCADASTRO("ZVC","Cadastro de Motoristas ","U_CADFVA()","U_COKMOTO()",aRotAdic,,,,{|| grvBarr() }) //Everson, 18/10/2020, Chamado 18465.
 	
 Return()
 
@@ -244,3 +245,34 @@ User Function FVCLOG()
 	RestArea( aArea )
 
 Return Nil 
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 18/03/2022
+    @version 01
+/*/
+Static Function grvBarr()
+
+	//Variáveis.
+	Local aArea		:= GetArea()
+	Local cOperacao	:= ""
+	Local cNumero	:= ZVC->ZVC_CPF
+
+	If INCLUI
+		cOperacao := "I"
+		
+	ElseIf ALTERA
+		cOperacao := "A"
+
+	Else
+		RestArea(aArea)	
+		Return .T.
+		
+	EndIf
+	
+	U_ADFAT27C("ZVC", 1, "cadastro_de_motoristas_protheus", cOperacao, FWxFilial("ZVC") + cNumero)
+
+	RestArea(aArea)
+
+Return .T.

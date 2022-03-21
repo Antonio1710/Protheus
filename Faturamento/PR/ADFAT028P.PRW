@@ -201,7 +201,7 @@ WsMethod Get WsService barramento
 
     lRet := U_ADFAT28B(@cJson)
 
-    Self:SetResponse(EncodeUtf8(cJson))
+    Self:SetResponse(cJson)
 
 Return lRet
 /*/{Protheus.doc} ADFAT28B

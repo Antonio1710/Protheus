@@ -1,5 +1,6 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "PARMTYPE.CH"
+#Include "FWMVCDef.ch"
 STATIC nCont       := 0
 STATIC cCodStatic  := ''    
 STATIC cLojaStatic := ''
@@ -16,7 +17,8 @@ STATIC lRetAnexo   := .T.
 	@since 17/01/2019
 	@version 01
 	@history Everson, 13/10/2020, Chamado 2607. Tratamento para atualizar as informações de nome e nome reduzido no cadastro de transportadora.                                                  
-	/*/
+	@history Everson, 18/10/2020, Chamado 18465. Envio de informações ao barramento.                                                  
+/*/
 User Function CUSTOMERVENDOR()
 
     Local aParam     := PARAMIXB
@@ -25,11 +27,12 @@ User Function CUSTOMERVENDOR()
     Local cIdPonto   := ""
     Local cIdModel   := ""
     Local lIsGrid    := .F.
-    Local nLinha     := 0
-    Local nQtdLinhas := 0
-    Local cMsg       := ""
     Local cCod       := ''    
     Local cLoja      := ''
+	Local oModel     := FwModelActive()
+	Local cNumero	 := ""
+	Local cOperacao	 := ""
+	Local nOperation := 0	
     
     If aParam <> NIL
     
@@ -37,6 +40,7 @@ User Function CUSTOMERVENDOR()
         cIdPonto := aParam[2]
         cIdModel := aParam[3]
         lIsGrid  := (Len(aParam) > 3)
+		nOperation  := oObj:GetOperation()
 
         IF cIdPonto   == "FORMPRE"     .AND. ;
 			cIdModel  == "SA2MASTER"   .AND. ;
@@ -105,6 +109,29 @@ User Function CUSTOMERVENDOR()
 		//Everson - 13/10/2020. Chamado 2607.
 		If cIdPonto == "MODELCOMMITNTTS"
 			autSA4(SA2->A2_CGC,Alltrim(SA2->A2_NOME),Alltrim(SA2->A2_NREDUZ))
+
+			//Everson, 18/10/2020, Chamado 18465.
+			If oModel <> NIL
+
+				cNumero := oModel:GetModel("SA2MASTER"):GetValue("A2_COD")
+
+				If nOperation == MODEL_OPERATION_INSERT
+					cOperacao := "I"
+
+				ElseIf nOperation == MODEL_OPERATION_UPDATE
+					cOperacao := "A"
+
+				ElseIf nOperation == MODEL_OPERATION_DELETE
+					cOperacao := "D"
+
+				EndIf
+
+				If ! Empty(cOperacao) .And. ! Empty(cNumero)
+					grvBarr(cOperacao, cNumero)
+
+				EndIf
+
+			EndIf
 			
 		EndIf
 		//
@@ -201,5 +228,22 @@ Static Function autSA4(cCGC,cNome,cNmRdz)
 
 	//
 	RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 18/03/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+	U_ADFAT27C("SA2", 1, "cadastro_de_fornecedores_protheus", cOperacao, FWxFilial("SA2") + cNumero)
+
+    RestArea(aArea)
 
 Return Nil
