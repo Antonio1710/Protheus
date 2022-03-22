@@ -1,35 +1,25 @@
 #Include "Protheus.ch"
 #Include "Topconn.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³SF2520E   º Autor ³ Everson            º Data ³  11/12/17   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³Ponto de entrada de exclusão de nota fiscal de saída.       º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Chamado 038133.                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteração ³Ricardo Lima-17/10/18|CH:037647, exclui integração RNX2     º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteração ³Ricardo Lima-19/11/18|CH:044314|Controle de Frete, exclui   º±±
-±±º          ³frete na exclusão da nota                                   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteração ³Everson-09/04/2019|CH:044314| Alterada a opção para excluir º±±
-±±º          ³frete na exclusão da nota.                                  º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteração ³Everson-14/05/2019|CH:044314| Removido estorno do frete.    º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
+
+/*/{Protheus.doc} User Function nomeFunction
+	Ponto de entrada de exclusão de nota fiscal de saída. 
+	Chamado 038133.
+	@type  Function
+	@author Everson
+	@since 11/12/17
+	@version 01
+	@history Ricardo Lima-17/10/18|CH:037647, exclui integração RNX2
+	@history Ricardo Lima-19/11/18|CH:044314|Controle de Frete, exclui frete na exclusão da nota.
+	@history Everson-09/04/2019|CH:044314| Alterada a opção para excluir frete na exclusão da nota.
+	@history Everson-14/05/2019|CH:044314| Removido estorno do frete.
+	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
+/*/
 User Function SF2520E()
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea	    := GetArea()
-	Local nRecnoSF2 := 0
 	                                                                         
 	// Filial Frango Vivo
 	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
@@ -47,6 +37,8 @@ User Function SF2520E()
 	
 	//
 	If cEmpAnt == "01"
+
+		grvBarr("D", SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA, SF2->F2_DOC, SF2->F2_SERIE) //Everson, 22/03/2022, Chamado 18465.
 	
 		updSAG()
 
@@ -128,8 +120,11 @@ User Function SF2520E()
 				StartJob( "U_ADLOG042P" , GetEnvServer() , .F. , cEmpAnt , cFilAnt , SF2->F2_DOC , SF2->F2_SERIE , SF2->F2_CLIENTE , SF2->F2_LOJA , SC5->C5_NUM , '3' ) //Everson - 09/04/2019. Alterada opção de 2 para 3.
 			ConOut('Fim StartJob para Estorno de Frete')
 		Endif*/
+
 	EndIf
+
 	RestArea(aArea)
+
 Return Nil
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -244,6 +239,7 @@ Local cCtaCtb   := GetMV("MV_#LFVCTA",,"111520005")
 Local cItemCtb  := GetMV("MV_#LFVITC",,"121")
 Local cLocal    := GetMV("MV_#LFVALM",,"16")
 Local cEspLFV   := GetMV("MV_#LFVESP",,"SPED")
+Local nX		:= 1
 
 
 // Posiciona CLIENTE
@@ -736,3 +732,43 @@ User Function INTNFEX1(cEpEntNF,cFlEntNF,aCabec,aItens)
 		Endif
 	RpcClearEnv()
 Return(.T.)
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+	Chamado 18465.
+    @type  User Function
+    @author Everson
+    @since 18/03/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero, cDoc, cSerie)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+	Local cFilter	:= ""
+
+	If ! (cFilAnt $"03/05")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	DbSelectArea("SC5")
+	SC5->(DbSetOrder(15))
+	SC5->(DbGoTop())
+	If ! SC5->( DbSeek( FWxFilial("SC5") + cDoc ) )
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+	
+	cFilter := " D2_FILIAL ='" + FWxFilial("SD2") + "' .And. D2_DOC = '" + SF2->F2_DOC + "' .And. D2_SERIE = '" + SF2->F2_SERIE + "' .And. D2_CLIENTE = '" + SF2->F2_CLIENTE + "' .And. D2_LOJA = '" + SF2->F2_LOJA  + "' "
+	
+	U_ADFAT27D(;
+			   "SF2", 1, FWxFilial("SF2") + cNumero,;
+			   "SD2", 3, FWxFilial("SD2") + cNumero, "D2_COD+D2_ITEM",cFilter,;
+			   "documentos_de_saida_protheus", cOperacao,;
+			   .T., .T.,.T., Nil)
+
+	RestArea(aArea)
+
+Return Nil

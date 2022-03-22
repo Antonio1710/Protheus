@@ -11,6 +11,7 @@ Static xPula :=  Chr(13) + Chr(10)
     @author Everson
     @since 08/02/2022
     @version 01
+    @history Everson, 21/03/2022, Chamado 18465. Adicionado validação para geração de pedido de saída entre filiais e inclusão de item de roteiro de pesagem.
 /*/
 User Function ADFAT029P(cEmp, cFil) // U_ADFAT029P("01", "03") U_ADFAT029P("01", "05")
 
@@ -74,6 +75,9 @@ User Function ADFAT29B()
     Local cSGrpSAG  := ""
     Local oModel    := Nil
     Local cAtivo    := ""
+    Local cRoteiro  := ""
+    Local nToleran  := 0
+    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -87,6 +91,8 @@ User Function ADFAT29B()
     cQuery += " AND ZIQ_TOPICO = 'cadastro_de_produtos_sag' " 
     cQuery += " AND ZIQ_SISGER = 'SAG' " 
     cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
     cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY RECNO " 
 
@@ -129,6 +135,8 @@ User Function ADFAT29B()
         cGrpSAG   := Alltrim(cValToChar(oJson['dados']['grupoSag']))
         cSGrpSAG  := Alltrim(cValToChar(oJson['dados']['SGrupoSag']))
         cAtivo    := Alltrim(cValToChar(oJson['dados']['ativSag']))
+        cRoteiro  := Alltrim(cValToChar(oJson['dados']['roteiro']))
+        nToleran  := Val(cValToChar(oJson['dados']['tolerancia']))
 
         If cAtivo == "0"
             cAtivo := "2"
@@ -199,18 +207,28 @@ User Function ADFAT29B()
 
         EndIf
 
-        If oModel:VldData()
-            oModel:CommitData()
+        Begin Transaction
 
-        Else
-            aError := oModel:GetErrorMessage()
-            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+            If oModel:VldData()
+                oModel:CommitData()
 
-        EndIf
+            Else
+                aError := oModel:GetErrorMessage()
+                cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
 
-        oModel:DeActivate()
-        oModel:Destroy()
-        oModel := Nil
+            EndIf
+
+            oModel:DeActivate()
+            oModel:Destroy()
+            oModel := Nil
+
+            If ! Empty(cRoteiro) .And. ! U_ADFAT29G((cAliasAux)->ZIQ_OPERAC, cRoteiro, cProdSAG, nToleran, "PC", @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+        End Transaction
 
         If ! Empty(cMsgError)
             U_ADFAT29D(cId, "2", cMsgError)
@@ -757,6 +775,10 @@ User Function ADFAT29F(aPedidos, cUUids)
     SA1->(DbSetOrder(1))
     SA1->(DbGoTop())
 
+    DbSelectArea("SC5")
+    SC5->(DbSetOrder(1))
+    SC5->(DbGoTop())
+
     DbSelectArea("ZIQ")
     ZIQ->(DbSetOrder(1))
 
@@ -803,6 +825,33 @@ User Function ADFAT29F(aPedidos, cUUids)
         cTabGene    := oJson['tabGene']
         pedPrinc    := oJson['pedPrinc']
 
+        If ! SC5->( DbSeek( FWxFilial("SC5") + pedPrinc ))
+            cMsgError := "Pedido principal não localizado - " + pedPrinc
+            U_ADFAT29D(cId, "2", cMsgError)
+            Conout("ADFAT029P - ADFAT29F - " + cMsgError)
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        Else
+
+            If SC5->C5_NOTA == "XXXXXXXXX"
+                cMsgError := "Pedido principal eliminado - " + pedPrinc
+                U_ADFAT29D(cId, "2", cMsgError)
+                Conout("ADFAT029P - ADFAT29F - Pedido não faturado " + pedPrinc)
+                (cAliasAux)->(DbSkip())
+                Loop
+
+            EndIf
+
+            If Empty(SC5->C5_NOTA)
+                Conout("ADFAT029P - ADFAT29F - Pedido não faturado " + pedPrinc)
+                (cAliasAux)->(DbSkip())
+                Loop
+
+            EndIf
+
+        EndIf
+
         //Pedido gerado em outra filial.
         aRetPed := StartJob("U_ADFAT17M",getenvserver(),.T.,cEmpD, cFilD, cEmpO, cFilO, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGranja, cGranjada, cTpFrt,;
                                                             cPlaca, nPesoLiq, cProduto, nVlrUnit, nTotal, cTes, cNmOrdem, cTabGene, .T.)
@@ -828,6 +877,35 @@ User Function ADFAT29F(aPedidos, cUUids)
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ADFAT29G
+    Adiciona produto ao cadastro de item do roteiro.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 21/03/2022
+    @version 01
+/*/
+            //ADFAT29G(cRoteiro, cProdSAG, nToleran, "PC", @cMsgError)
+User Function ADFAT29G(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+    Default cMsgError := ""
+
+    DbSelectArea("ZIM")
+    ZIM->(DbSetOrder(1))
+    If ! ZIM->(DbSeek( FWxFilial("ZIM") + cProduto))
+        cMsgError := "Produto " + cProduto + " não localizado(tabela ZIM)."
+        Help(Nil, Nil, "Função ADFAT29G(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    EndIf
+
+    U_ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, @cMsgError)
+
+    RestArea(aArea)
+
+Return .T.
 /*/{Protheus.doc} getJson
     Converte string json para objeto json.
     Chamado 18465.
