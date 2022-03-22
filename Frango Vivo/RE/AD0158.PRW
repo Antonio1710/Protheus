@@ -23,13 +23,11 @@ User Function AD0158
 	Local cPict        := ""
 	Local titulo       := "CONTROLE DE TARAS X PESO PADRAO"
 	Local nLin         := 80
-
 	Local Cabec1       := "LOGISTICA"
 	Local Cabec2       := "ADORO S/A"
 	Local imprime      := .T.
-	Local aOrd := {}   
-
-	Local _cRet := ""
+	Local aOrd         := {}   
+	Local _cRet        := ""
 
 	Private lEnd         := .F.
 	Private lAbortPrint  := .F.

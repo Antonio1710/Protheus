@@ -27,7 +27,7 @@ User Function AD0170
 	Local Cabec1       	:= "FRETE FRANGO VIVO"
 	Local Cabec2       	:= ""
 	Local imprime      	:= .T.
-	Local aOrd := {}  
+	Local aOrd          := {}  
 	Private lEnd        := .F.
 	Private lAbortPrint := .F.
 	Private CbTxt       := ""
