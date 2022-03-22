@@ -13,6 +13,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket 69945 - Fernando Macieira - 22/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo - Z1_FILIAL onde o correto é ZV1_FILIAL
 /*/
 User Function AD0158
 
@@ -126,7 +127,7 @@ Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 	" ZV1_TARAPD "+;
 	" FROM " + RetSqlName("ZV1") + " (NOLOCK), " + RetSqlName("ZV2") + "(NOLOCK)" +;
 	" WHERE "+;
-	" Z1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL AND "+; // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	" ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL AND "+; // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo // @history ticket 69945 - Fernando Macieira - 22/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo - Z1_FILIAL onde o correto é ZV1_FILIAL
 	" (ZV1_DTABAT >='" + DTOS(_dDtaIni) + "' AND ZV1_DTABAT  <='" + DTOS(_dDtaFim) + "') "+;
 	" AND ZV1_GUIAPE  = ZV2_GUIA  "+;//" AND ZV1_RPLACA  = ZV4_PLACA "+;
 	" AND "+RetSqlName("ZV1")+ ".D_E_L_E_T_ = '' AND "+RetSqlName("ZV2")+ ".D_E_L_E_T_ = '' "
