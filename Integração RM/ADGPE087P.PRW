@@ -11,7 +11,7 @@
     @history Ticket: TI - 06/02/2022 - LEONARDO PINHEIRO MONTEIRO - Desenvolvimento.
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
-    
+    @history Chamado 16833 - Leonardo P. Monteiro - 22/03/2022- Ajustes e correções na rotina no decorrer dos testes reais.
     U_ADGPE087P()
 /*/
 
@@ -739,7 +739,7 @@ Static Function layList(nRow, nCol, nHeight, nWidth)
     oBUnEnt:bGotFocus := {|| nBrwFocused := CONSULTA_UNIF_ENTREGA}
     oBUnEnt:addMarkColumns({|oBmark| fMark(oBMark, CONSULTA_UNIF_ENTREGA)},; 
                            {|oBMark| fDblClk(oBmark, CONSULTA_UNIF_ENTREGA) /*Função DoubleClick*/ },; 
-                           {|oBmark| /* fHeaClk(oBmark, CONSULTA_UNIF_ENTREGA) Função de HEADERCLICK*/})
+                           {|oBmark| fHeaClk(oBmark, CONSULTA_UNIF_ENTREGA) /*Função de HEADERCLICK*/})
     
     oBUnEnt:setColumns(aUnEnCab)
 	oBUnEnt:setDataArray()
@@ -1124,7 +1124,7 @@ Static Function fGetDados(lAlerta, lPesquisa, lCabec)
             lPesq := .F.
         endif
 
-        cQuery := " SELECT ZI1_FILIAL, ZI1_MAT, ZI1_CREDEN, ZI1_NOME, ZI1_TCAMPA, ZI1_TBLUTE, ZI1_TCALPA, ZI1_TCALTE, ZI1_TCALCA, ZI1_TMEIAS, ZI1_CODZHL, LTRIM(RTRIM(ZI1.ZI1_SECAO))+'-'+ZI5.ZI5_DESCRI ZI1_SECAO, ZI1.R_E_C_N_O_ REGISTRO "
+        cQuery := " SELECT ZI1_FILIAL, ZI1_MAT, ZI1_CREDEN, ZI1_NOME, ZI1_TCAMPA, ZI1_TBLUTE, ZI1_TCALPA, ZI1_TJALEC, ZI1_TCALTE, ZI1_TCALCA, ZI1_TMEIAS, ZI1_CODZHL, LTRIM(RTRIM(ZI1.ZI1_SECAO))+'-'+ZI5.ZI5_DESCRI ZI1_SECAO, ZI1.R_E_C_N_O_ REGISTRO "
         cQuery += " FROM "+ RetSqlName("ZI1") +" (nolock) ZI1 INNER JOIN "+ retsqlname("ZI5") +" (nolock) ZI5 ON ZI1.D_E_L_E_T_='' AND ZI5.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+ xFilial("ZI1") +"' AND ZI5_FILIAL='"+ xfilial("ZI5") +"' AND ZI1.ZI1_SECAO=ZI5.ZI5_CODIGO "
         cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1_MSBLQL !='1' AND ( (ZI1_MAT ='' AND ZI1_CREDEN !='') OR (ZI1_MAT !='' AND ZI1_CREDEN ='') OR (ZI1_MAT !='' AND ZI1_CREDEN !='')) "
         
@@ -1157,6 +1157,7 @@ Static Function fGetDados(lAlerta, lPesquisa, lCabec)
             cZI1CREDEN   := QZI1->ZI1_CREDEN
             cZI1NOME     := QZI1->ZI1_NOME
             cZI1TCAMPA   := QZI1->ZI1_TCAMPA
+            cZI1TJALEC   := QZI1->ZI1_TJALEC
             cZI1TBLUTE   := QZI1->ZI1_TBLUTE
             cZI1TCALPA   := QZI1->ZI1_TCALPA
             cZI1TCALTE   := QZI1->ZI1_TCALTE
@@ -1171,6 +1172,7 @@ Static Function fGetDados(lAlerta, lPesquisa, lCabec)
             cZI1CREDEN      := Space(100)
             cZI1NOME        := Space(100)
             cZI1TCAMPA      := Space(003)
+            cZI1TJALEC      := Space(003)
             cZI1TBLUTE      := Space(003)
             cZI1TCALPA      := Space(003)
             cZI1TCALTE      := Space(003)
@@ -1348,10 +1350,10 @@ return cRet
 
 Static Function fDblClk(oBMark, nMarkID, nLin)
     Local lRet      := .T.
-    Local cNumKit   := ""
-    Local nA        := 0
+    //Local cNumKit   := ""
+    //Local nA        := 0
     Local nMaxArr   := 0
-    Local nPosKit   := aScan(aUnEnCam,"ZHK_NUMKIT")
+    //Local nPosKit   := aScan(aUnEnCam,"ZHK_NUMKIT")
     Default nLin    := 0
     
     IF nMarkID == CONSULTA_UNIF_ENTREGA
@@ -1362,8 +1364,9 @@ Static Function fDblClk(oBMark, nMarkID, nLin)
         aUnEnDad[nLin, nUnEnCam]    := lRet
 
         
-        cNumKit := Alltrim(aUnEnDad[nLin, nPosKit])
-
+        //cNumKit := Alltrim(aUnEnDad[nLin, nPosKit])
+        
+        /*
         for nA := 1 to nMaxArr
             
             if nA != nLin
@@ -1378,7 +1381,8 @@ Static Function fDblClk(oBMark, nMarkID, nLin)
                 endif
             endif
         next nA
-    
+        */
+
     ElseIF nMarkID == CONSULTA_UNIF_DEVOLUCAO
         nLin := iif(nLin > 0, nLin, oBUnDev:At())
 
@@ -1399,13 +1403,25 @@ Static Function fHeaClk(oBMark, nMarkID)
     Local lRet      := .T.
     Local nA        := 1
     Local nTotal    := 0
+    Local nPosAtu   := 0
+    Local cNumKit   := ""
+    Local nPosKit   := aScan(aUnEnCam,"ZHK_NUMKIT")
     
     IF nMarkID == CONSULTA_UNIF_ENTREGA
         
         nTotal := Len(aUnEnDad)
+        
+        For nA := 1 TO nTotal
+            if aUnEnDad[nA, nUnEnCam] .AND. !Empty(aUnEnDad[nA, nPosKit])
+                cNumKit := Alltrim(aUnEnDad[nA, nPosKit])
+                nPosAtu := nA
+            endif
+        next nA
 
         For nA := 1 TO nTotal
-            fDblClk(oBMark, CONSULTA_UNIF_ENTREGA, nA)
+            if cNumKit == Alltrim(aUnEnDad[nA, nPosKit]) .and. !Empty(cNumKit) .and. nPosAtu != nA
+                fDblClk(oBMark, CONSULTA_UNIF_ENTREGA, nA)
+            endif
         next nA
 
         oBUnEnt:refresh()
