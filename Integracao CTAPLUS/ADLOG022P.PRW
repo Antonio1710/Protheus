@@ -25,8 +25,8 @@
 	@history Chamado T.I.   - Everson 23/07/2020. Tratamento para rotina baixar abastecimentos do dia anterior.
 	@history Chamado 060424 - Everson 10/08/2020. Tratamento para vincular código de projeto na requisição ao armazém. 
 	@history Chamado 060424 - Everson 11/08/2020. Tratamento para obter o sequencial da solicitação ao armazém pela função U_SXESXF. 
-	/*/
-
+	@history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
+/*/
 User Function ADLOG022P() // U_ADLOG022P()
 
 	//Variáveis.
@@ -1252,7 +1252,7 @@ Static Function logZBE(cMensagem,cMemo)
 	DbSelectArea("ZBE")
 	RecLock("ZBE",.T.)
 		Replace ZBE_FILIAL 	   	With xFilial("ZBE")
-		Replace ZBE_DATA 	   	With dDataBase
+		Replace ZBE_DATA 	   	With msDate() //dDataBase // @history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
 		Replace ZBE_HORA 	   	With Time()
 		Replace ZBE_USUARI	    With Upper(Alltrim(cUserName))
 		Replace ZBE_LOG	        With cMensagem

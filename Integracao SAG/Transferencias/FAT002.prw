@@ -13,6 +13,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+	@history ticket TI    - Fernando Macieira - 22/03/2022 - Forçar publicação
 /*/
 User Function FAT002()
 

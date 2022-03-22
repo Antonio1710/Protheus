@@ -43,6 +43,7 @@
 	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
+	@history ticket TI    - Fernando Macieira - 22/03/2022 - Forçar publicação
 /*/
 
 User Function M460FIM()
