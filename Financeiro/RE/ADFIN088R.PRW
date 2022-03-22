@@ -1,3 +1,5 @@
+#INCLUDE "PROTHEUS.CH"
+
 /*/{Protheus.doc} User Function ADFIN088R
   Relatório de Pedidos de Venda Liberados
   @type  Function
@@ -50,6 +52,7 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
   cQuery1:=GetNextAlias()
 
   BeginSql Alias cQuery1
+    COLUMN DTLIB AS DATE
     SELECT
       SC5.C5_CLIENTE              AS CODCLI,
       SC5.C5_LOJACLI              AS LOJACLI,
@@ -59,7 +62,7 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       SC5.C5_NUM                  AS NUMPEDIDO,
       ISNULL(ZEJ.ZEJ_PERFPG,'')   AS PERFILPAGTO,
       ISNULL(ZEJ.ZEJ_RATCIS,'')   AS RCISP,
-      ISNULL((SELECT TOP 1 ZBH.ZBH_MOTIVO
+      ISNULL((SELECT TRIM(STRING_AGG(TRIM(ZBH.ZBH_MOTIVO), ','))
         FROM %TABLE:ZBH% ZBH  (NOLOCK)
         WHERE 
           ZBH.ZBH_FILIAL = SC5.C5_FILIAL
@@ -74,8 +77,15 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       ISNULL(ZEJ.ZEJ_VLAVEN,'')   AS TIT_AVENCER,
       ISNULL(ZEJ.ZEJ_VLVENC,'')   AS TIT_VENCIDO,
       ISNULL(ZEJ.ZEJ_LIMCRD,'')   AS LIMITE,
+      ISNULL(ZEJ.ZEJ_PERCEN,'')   AS PERCENTUAL,
+      ISNULL(ZEJ.ZEJ_VLUTIL,'')   AS VLUTIL,
+      ISNULL(ZEJ.ZEJ_QTDPED,'')   AS QTDPED,
+      ISNULL(ZEJ.ZEJ_TTUTIL,'')   AS TTUTIL,
       ISNULL(ZEJ.ZEJ_USRLIB,'')   AS LIBERADOR,
-      ISNULL(ZEJ.ZEJ_PARECE,'')   AS TXT_LIBERACAO
+      ISNULL(ZEJ.ZEJ_PARECE,'')   AS TXT_LIBERACAO,
+      ISNULL(ZEJ.ZEJ_DTLIB,'')    AS DTLIB,
+      ISNULL(ZEJ.ZEJ_HRLIB,'')    AS HRLIB,
+      ISNULL(ZEJ.ZEJ_VLLIB,'')    AS VLLIB
     FROM %TABLE:SC5% SC5 (NOLOCK)
     LEFT JOIN %TABLE:SA1% SA1 ON
 	    SA1.A1_COD = SC5.C5_CLIENTE
@@ -95,6 +105,7 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
     AND SC5.C5_DTENTR BETWEEN %EXP:DTOS(MVPAR01)% AND %EXP:DTOS(MVPAR02)%
     AND SC5.C5_TIPO NOT IN ('D','B')
     AND SC5.%notDel%
+    AND ZEJ.ZEJ_DTLIB IS NOT NULL
   EndSql
 
   // Cria estrutura do Excel
@@ -141,13 +152,19 @@ Static Function ExlCab01()
 	oExcel:AddColumn(cWorksht,cPlan01,"Vl.Pedido"				      ,2,2,.T.)
 	oExcel:AddColumn(cWorksht,cPlan01,"Tit.A Vencer"			    ,2,3,.T.)
 	oExcel:AddColumn(cWorksht,cPlan01,"Tit.Vencidos"			    ,2,3,.T.)
-	oExcel:AddColumn(cWorksht,cPlan01,"Tit.Port.Especial"		  ,2,3,.T.)
+	// oExcel:AddColumn(cWorksht,cPlan01,"Tit.Port.Especial"		  ,2,3,.T.)
 	oExcel:AddColumn(cWorksht,cPlan01,"Tot. Acumulado"			  ,2,3,.T.)
 	oExcel:AddColumn(cWorksht,cPlan01,"Limite Crédito"			  ,2,3,.T.)
+	oExcel:AddColumn(cWorksht,cPlan01,"Percentual"			      ,2,2)
+	oExcel:AddColumn(cWorksht,cPlan01,"Valor Utilizado"			  ,2,3,.T.)
+	oExcel:AddColumn(cWorksht,cPlan01,"Total Utilizado"			  ,2,3,.T.)
+	oExcel:AddColumn(cWorksht,cPlan01,"Qtd Pedido"			      ,2,2,.T.)
   oExcel:AddColumn(cWorksht,cPlan01,"Login Liberador"			  ,1,1)
 	oExcel:AddColumn(cWorksht,cPlan01,"Texto Liberação"			  ,1,1)
+	oExcel:AddColumn(cWorksht,cPlan01,"Data Liberação"			  ,1,1)
+	oExcel:AddColumn(cWorksht,cPlan01,"Hora Liberação"			  ,1,1)
+	oExcel:AddColumn(cWorksht,cPlan01,"Valor Liberação"			  ,2,3,.T.)
 
-	
 Return 
 
 /*/{Protheus.doc} Static Function ExlDet01
@@ -173,22 +190,30 @@ Static Function ExlDet01()
                                       (cQuery1)->NUMPEDIDO,;
                                       (cQuery1)->PERFILPAGTO,;
                                       (cQuery1)->RCISP,;
-                                      (cQuery1)->MOT_RETENCAO,;
+                                      substring((cQuery1)->MOT_RETENCAO,1,250),;
                                       (cQuery1)->MED_ATRASO,;
                                       (cQuery1)->TOT_PEDIDO,;
                                       (cQuery1)->TIT_AVENCER,;
                                       (cQuery1)->TIT_VENCIDO,;
-                                      nTtAcum,; //Tot Port Especial //Everson - 18/06/2020. Chamado 059049. Removido (cQuery1)->
                                       nTtAcum,; //Everson - 18/06/2020. Chamado 059049. Removido (cQuery1)->
                                       (cQuery1)->LIMITE,;
+                                      (cQuery1)->PERCENTUAL,;
+                                      (cQuery1)->VLUTIL,;
+                                      (cQuery1)->TTUTIL,;
+                                      (cQuery1)->QTDPED,;
                                       (cQuery1)->LIBERADOR,;
-                                      (cQuery1)->TXT_LIBERACAO})
+                                      (cQuery1)->TXT_LIBERACAO,;
+                                      DTOC((cQuery1)->DTLIB),;
+                                      (cQuery1)->HRLIB,;
+                                      (cQuery1)->VLLIB})
     ENDIF 
+    // IIF(alltrim(DTOS((cQuery1)->DTLIB)) == '','',DTOC((cQuery1)->DTLIB)),;
+                                      // nTtAcum,; //Tot Port Especial //Everson - 18/06/2020. Chamado 059049. Removido (cQuery1)->
 
     (cQuery1)->(DbSkip())
   EndDo
   
-  oExcel:AddRow(cWorksht,cPlan01,{"","","","","","","","","","","","","","","","","","",""})
+  oExcel:AddRow(cWorksht,cPlan01,{"","","","","","","","","","","","","","","","","","","","","","","","",""})
 
 Return 
 

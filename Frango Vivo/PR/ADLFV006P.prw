@@ -16,6 +16,7 @@ Static cEst	  := Nil
     @history Everson, 17/02/2020, Ch: 054941 tratamento para informar km rodado quando a tabela for por região ou região x produto.
     @history Everson, 01/02/2022. Chamado 65860.  Adicionado novo cálculo de frete.
     @history Everson, 02/02/2022. Chamado 66403.  Adicionado para exportar dados em XLS.
+    @history Adriano Savoine, 14/03/2022. Ticket: 68841 Adicionado bloquei as ações de Inclusão, Alterar e excluir.
     /*/
 User Function ADLFV006P()
 
@@ -49,14 +50,18 @@ Static Function MenuDef()
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Declaração de variáveis.                                            |
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-    Local aRot := {}
+    Local aRot    := {}
+    Local cCodUsr := RetCodUsr()
      
     //Adicionando opções
     ADD OPTION aRot TITLE 'Visualizar' ACTION 'U_ADLF6_8()'       OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
-    ADD OPTION aRot TITLE 'Incluir'    ACTION 'U_ADLF6_1()'       OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
-    ADD OPTION aRot TITLE 'Alterar'    ACTION 'U_ADLF6_6()'		  OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
-    ADD OPTION aRot TITLE 'Excluir'    ACTION 'U_ADLF6_7()'		  OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
- 
+    //Adriano Savoine, 14/03/2022. Ticket: 68841 
+    IF cCodUsr $ SuperGetMV("MV_#USUFRT",.F.,"000000")
+        ADD OPTION aRot TITLE 'Incluir'    ACTION 'U_ADLF6_1()'       OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
+        ADD OPTION aRot TITLE 'Alterar'    ACTION 'U_ADLF6_6()'		  OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
+        ADD OPTION aRot TITLE 'Excluir'    ACTION 'U_ADLF6_7()'		  OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
+    ENDIF
+
 Return aRot
 /*/{Protheus.doc} User Function ADLF6_1
     Inclusão de registro. Chamado 044314.

@@ -16,6 +16,9 @@
     U_ADGPE084P()
 /*/
 
+#define ZHLEXCLUS  '|ZHL_FILIAL|' // Registro de produtos.
+#define ZHPEXCLUS  '|ZHP_FILIAL|ZHP_CODZHL|' // Embalagens.
+
 Static cTitulo := "..:: Cadastro Armários ::.."
 
 User Function ADGPE084P()
@@ -58,37 +61,56 @@ Return aRotina
 // InÃ­cio da ViewDef e ModelDef.
 // --------------------------------------------------------------------------------------------------------
 Static Function ModelDef()
- Local oModel		:= MPFormModel():New("mdlADGPE084P",, {|| .T.})
- Local oStrutZHL	:= FWFormStruct(1,"ZHL")
- 
- oModel:SetDescription(cTitulo)
- 
- oModel:addFields("CABEC_ZHL",nil,oStrutZHL)
+    Local oModel		:= MPFormModel():New("mdlADGPE084P",, {|| .T.})
+    Local oStrutZHL	:= FWFormStruct(1,"ZHL")
+    Local oStrutZHP	:= FWFormStruct(1,"ZHP")
+    Local aZHLZHP   := {}
+    
+    oModel:SetDescription(cTitulo)
+    
+    oModel:addFields("CABECZHL",nil,oStrutZHL)
+    oModel:addGrid("DETAIZHP","CABECZHL", oStrutZHP)
 
- oModel:setPrimaryKey({"ZHL_FILIAL","ZHL_CODIGO"})
+    oModel:GetModel("DETAIZHP"):SetDescription("Historico de Limpeza")
+    oModel:GetModel("DETAIZHP"):SetOptional(.T.)
+    oModel:GetModel("DETAIZHP"):SetOnlyQuery(.T.)
+    oModel:GetModel("DETAIZHP"):SetNoInsertLine(.T.)
+    oModel:GetModel("DETAIZHP"):SetNoUpdateLine(.T.)
+    oModel:GetModel("DETAIZHP"):SetNoDeleteLine(.T.)
+
+    aAdd( aZHLZHP, {"ZHP_FILIAL", "ZHL_FILIAL"} )
+    aAdd( aZHLZHP, {"ZHP_CODZHL", "ZHL_CODIGO"} )
+
+    oModel:SetRelation("DETAIZHP", aZHLZHP, ZHP->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
+
+    oModel:setPrimaryKey({"ZHL_FILIAL","ZHL_CODIGO"})
 
 return oModel
 
 
 Static Function viewDef()
- Local oView		:= Nil
- Local oModel		:= FWLoadModel("ADGPE084P")
- Local oStrutZHL	:= FWFormStruct(2,"ZHL")
-  
- DbSelectArea("ZHL")
- 
- ZHL->(DbSetOrder(1))
-  
- oView	:= FWFormView():New()
- oView:setModel(oModel)
- 
- oView:GetProgressBar(.T.)
- 
- oView:addField("V_CABEC_ZHL",oStrutZHL,"CABEC_ZHL")
-   
- oView:createHorizontalBox("H_CABEC",100)
- oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
- 
- oView:setOwnerView("V_CABEC_ZHL","V_CABEC")
+    Local oView		:= Nil
+    Local oModel		:= FWLoadModel("ADGPE084P")
+    Local oStrutZHL	:= FWFormStruct(2,"ZHL",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHLEXCLUS)  })
+    Local oStrutZHP	:= FWFormStruct(2,"ZHP",{| cCampo | !(AllTrim( cCampo ) + '|' $ ZHPEXCLUS)  })
+    
+    DbSelectArea("ZHL")
+    
+    ZHL->(DbSetOrder(1))
+    
+    oView	:= FWFormView():New()
+    oView:setModel(oModel)
+    
+    oView:GetProgressBar(.T.)
+    
+    oView:addField("V_CABECZHL",oStrutZHL,"CABECZHL")
+    oView:AddGrid("DETAIL_ZHP",oStrutZHP, "DETAIZHP")
+
+    
+    oView:createHorizontalBox("H_CABEC",30)
+    oView:createHorizontalBox("H_DETAI",70)
+
+    oView:setOwnerView("V_CABECZHL","H_CABEC")
+    oView:setOwnerView("DETAIL_ZHP","H_DETAI")
   
 Return oView

@@ -10,7 +10,7 @@
     @version version
     @history Ticket: 16835 - 06/10/2021 - ADRIANO SAVOINE - Tratado o Metodo de entrada na inserção manual da chapa, Leitura do Codigo de barras do cracha ou leitura de aproximação.
     @history Ticket: 16835 - 28/10/2021 - ADRIANO SAVOINE - Tratado a entrada de dados sem precisar clicar em Pesquisar, apos a leitura o mesmo carrega os dados, tratado tambem a mensagem apos confirmar.
-
+    @history Ticket: 69748 - 17/03/2022 - ADRIANO SAVOINE - Tratado para Leitura dos cracha com filial no codigo de barras.
     U_ADGPE076P()
 /*/
 
@@ -225,7 +225,11 @@ Static Function fGetDado(nAlerta)
 
         // Ticket: 16835 - 06/10/2021 - ADRIANO SAVOINE - INICIO
         IF len(Alltrim(cPesq)) = 8
-         cPesq := sUBSTRING(cPesq,2,6)
+         cPesq := SUBSTRING(cPesq,2,6)
+        ENDIF 
+        // Ticket: 69748 - 17/03/2022 - ADRIANO SAVOINE 
+        IF len(Alltrim(cPesq)) = 10
+         cPesq := SUBSTRING(cPesq,4,6)
         ENDIF 
 
         IF len(Alltrim(cPesq)) = 14

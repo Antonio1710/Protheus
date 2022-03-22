@@ -14,6 +14,7 @@
     @history Everson, 05/03/2020, Chamado 053926 Removido o carregamento do número da solicitação ao armazém.
     @history Everson, 12/03/2020, Tratamento para selecionar registros de abastecimento que estejam liberados.
     @history Fernando,03/04/2020, Chamado 056980 - Tratamento para validação da placa
+    @history Wagner , 25/02/2022 - Ticket - 68095 - Comentário do FlockByName/UnlockByName
 /*/
 User Function ADEST043P() // U_ADEST043P()
 
@@ -23,11 +24,12 @@ User Function ADEST043P() // U_ADEST043P()
 	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-	If !LockByName("ADEST043P", .T., .F.)
-		ConOut("[ADEST043P] - Existe outro processamento sendo executado! Verifique...")
-		RPCClearEnv()
-		Return
-	EndIf
+    // Comentado trecho // Adoro - Ticket 68905 - Wagner - 25/02/2022
+	//If !LockByName("ADEST043P", .T., .F.)
+	//	ConOut("[ADEST043P] - Existe outro processamento sendo executado! Verifique...")
+	//	RPCClearEnv()
+	//	Return
+	//EndIf
 
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - Início" )
     logZBN("1")
@@ -57,7 +59,7 @@ User Function ADEST043P() // U_ADEST043P()
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 	//³Destrava a rotina para o usuário	    ?
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-	UnLockByName("ADEST043P")
+	//UnLockByName("ADEST043P")
 
     RpcClearEnv()
     //

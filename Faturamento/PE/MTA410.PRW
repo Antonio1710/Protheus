@@ -8,6 +8,7 @@
 	@version 01
 	@history Chamado 052170 - Adriana       - 04/10/2019 - NF EXPORTACAO SAFEGG 
 	@history Chamado 056368 - William Costa - 06/03/2020 - Colocado GetArea e Adicioando DBSELECTAREA para as tabelas SA1,SA2,SA4 estavamos com erro na cópia de pedido que não estava posicionado nessas tabelas corretamente.
+	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 */
 
 User Function MTA410
@@ -20,8 +21,12 @@ User Function MTA410
 	Local aAreaSA1  := SA1->(GetArea())
 	Local aAreaSA2  := SA2->(GetArea())
 	Local aAreaSA4  := SA4->(GetArea())
+	Local i			:= 1
+	Local _i		:= 1
+	Local nTotLin	:= Len(aCols)
 
 	Private _lEECFat	:= GetMv("MV_EECFAT") //por Adriana em 04/10/2019-chamado 052170
+	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	Public _lVldRot := Space(03)
 	//Conout( DToC(Date()) + " " + Time() + " MTA410 >>> INICIO PE" )
@@ -50,7 +55,7 @@ User Function MTA410
 			'Veículo com cadastro incompleto! Preencha o Estado (UF) da Placa do Veículo!' , ;
 			cVendedor}) 
 
-		ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+		ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 			Aadd(aPedidos,{'Veículo com cadastro incompleto! Preencha o Estado (UF) da Placa do Veículo!'})
 
 		ELSE
@@ -65,7 +70,8 @@ User Function MTA410
 	elseIf !Empty(M->C5_TRANSP)
 		_lRet := Transp_OK()
 	else
-		For i:=1 To Len(aCols)
+
+		For i:=1 To nTotLin
 
 			if !acols[i][len(aheader)+1] //verifica se esta deletado
 				_nTotalCx   := _nTotalCx   + aCols[i][_nPCaixas] // Soma qtd caixas (2a. UM)
@@ -110,7 +116,7 @@ User Function MTA410
 
 	Endif
 	//Tratamento para validar TES utilizada e Classificacao Fiscal - Mauricio Chamado 008687 - Inicio
-	For _i:=1 To Len(aCols)
+	For _i:=1 To nTotLin
 
 		if !acols[_i][len(aheader)+1] //verifica se esta deletado
 			_cTES  := aCols[_i][_nPTES] 
@@ -129,13 +135,11 @@ User Function MTA410
 						'A Situacao tributaria do item '+aCols[_i][_nPITEM]+' deste pedido esta diferente da classificacao cadastrada na TES.Tecle enter no campo TES para atualizar!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'A Situacao tributaria do item '+aCols[_i][_nPITEM]+' deste pedido esta diferente da classificacao cadastrada na TES.'})
 
 					ELSE
-
-						MsgInfo("A Situacao tributaria do item "+aCols[_i][_nPITEM]+" deste pedido esta diferente da classificacao cadastrada na TES."+chr(13)+chr(13)+"Tecle enter no campo TES para atualizar!")
-
+						MsgInfo("A Situacao tributaria do item "+aCols[_i][_nPITEM]+" deste pedido esta diferente da classificacao cadastrada na TES."+chr(13)+chr(13)+"Tecle enter no campo TES para atualizar!","Alerta")
 					ENDIF
 
 					_lRet := .F.
@@ -146,7 +150,7 @@ User Function MTA410
 
 	// ** INICIO CHAMADO 031176 - LOGISTICA ADICIONAR PEDIDO DE VENDA DE UNIFORME - WILLIAM COSTA ** //
 
-	If ! IsInCallStack('RESTEXECUTE')
+	If !lSfInt
 
 		cVend := Posicione("SA1",1,xFilial("SA1")+M->C5_CLIENTE+M->C5_LOJACLI,"A1_VEND")
 
@@ -196,7 +200,7 @@ Static Function CliFor_OK()
 
 	IF (xFilial("SC5") $ "02/06/07") .and. ALLTRIM(CEMPANT)=="01" //ALTERADO LEONARDO (HC) PARA CONTEMPLAR FILIAL 06 - ITUPEVA //incluida filial 07 em 13/08/14
 
-		IF ! IsInCallStack('RESTEXECUTE') .And. M->C5_TIPO $ "DB"
+		IF !lSfInt .And. M->C5_TIPO $ "DB"
 
 			DBSELECTAREA("SA2")
 			DBGOTOP()
@@ -212,7 +216,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro incompleto!!! Preencha o bairro!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro incompleto!!! Preencha o bairro!'})
 
 					ELSE
@@ -231,7 +235,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro incompleto!!! Preencha o Endereco!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro incompleto!!! Preencha o Endereco!'})
 
 					ELSE
@@ -250,7 +254,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro incompleto!!! Preencha o CEP!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro incompleto!!! Preencha o CEP!'})
 
 					ELSE
@@ -269,7 +273,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro inconsistente!!! CEP com caracter - inválido!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro inconsistente!!! CEP com caracter - inválido!'})
 
 					ELSE
@@ -288,7 +292,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro inconsistente!!! CEP inválido!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro inconsistente!!! CEP inválido!'})
 
 					ELSE
@@ -307,7 +311,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro incompleto!!! Preencha o Código de Município!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro incompleto!!! Preencha o Código de Município!'})
 
 					ELSE
@@ -326,7 +330,7 @@ Static Function CliFor_OK()
 						'Fornecedor com inconsistente!!! Código de Município inválido!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com inconsistente!!! Código de Município inválido!'})
 
 					ELSE
@@ -345,7 +349,7 @@ Static Function CliFor_OK()
 						'Fornecedor com cadastro inconsistente!!! DDD+Telefone > 10 posições!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Fornecedor com cadastro inconsistente!!! DDD+Telefone > 10 posições!'})
 
 					ELSE
@@ -364,7 +368,7 @@ Static Function CliFor_OK()
 						'Inscricao Estadual do Fornecedor Invalida!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Inscricao Estadual do Fornecedor Invalida!'})
 
 					ELSE
@@ -392,7 +396,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro incompleto!!! Preencha o bairro!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro incompleto!!! Preencha o bairro!'})
 
 					ELSE
@@ -411,7 +415,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro incompleto!!! Preencha o Endereco!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro incompleto!!! Preencha o Endereco!'})
 
 					ELSE
@@ -430,7 +434,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro incompleto!!! Preencha o CEP!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro incompleto!!! Preencha o CEP!'})
 
 					ELSE
@@ -449,7 +453,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro inconsistente!!! CEP com caracter - inválido!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro inconsistente!!! CEP com caracter - inválido!'})
 
 					ELSE
@@ -467,7 +471,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro inconsistente!!! CEP inválido!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro inconsistente!!! CEP inválido!'})
 
 					ELSE
@@ -486,7 +490,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro incompleto!!! Preencha o Código de Município!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro incompleto!!! Preencha o Código de Município!'})
 
 					ELSE
@@ -505,7 +509,7 @@ Static Function CliFor_OK()
 						'Cliente com inconsistente!!! Código de Município inválido!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com inconsistente!!! Código de Município inválido!'})
 
 					ELSE
@@ -524,7 +528,7 @@ Static Function CliFor_OK()
 						'Cliente com cadastro inconsistente!!! DDD+Telefone > 10 posições! ' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Cliente com cadastro inconsistente!!! DDD+Telefone > 10 posições! '})
 
 					ELSE
@@ -543,7 +547,7 @@ Static Function CliFor_OK()
 						'Inscricao Estadual do Cliente Invalida!' , ;
 						cVendedor}) 
 
-					ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Inscricao Estadual do Cliente Invalida!'})
 
 					ELSE
@@ -581,7 +585,7 @@ Static Function Transp_OK()
 					'Transportadora com cadastro incompleto!!! Preencha Inscricao Estadual!' , ;
 					cVendedor}) 
 
-				ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Transportadora com cadastro incompleto!!! Preencha Inscricao Estadual!'})	
 
 				ELSE
@@ -600,7 +604,7 @@ Static Function Transp_OK()
 					'Transportadora com cadastro incosistente!!! Inscricao Estadual Inválida!' , ;
 					cVendedor}) 
 
-				ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Transportadora com cadastro incosistente!!! Inscricao Estadual Inválida!'})
 
 				ELSE

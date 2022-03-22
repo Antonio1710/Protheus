@@ -8,6 +8,7 @@
 	@version 01
 	@history chamado 048038 - William Costa - 26/03/2019 - Adicionado Num da SC na na busca de saldos dos pedidos de compra
 	@history chamado TI     - William Costa - 15/07/2020 - Alterado alias para criação da variavel do produto
+	@history chamado TI     - Leonardo P. Monteiro - 08/03/2022 - Correção do msunlock para prevenir lock na tabela SB2.
 /*/
 
 Static lMensagem := .F.
@@ -69,7 +70,7 @@ USER FUNCTION MT170SB1( )
 					
 						SB2->B2_SALPEDI := nSaldoPcAbert
 						
-		            MsUnLock()
+		            SB2->(MsUnLock())
 		        ENDIF
 		        
 		    SB2->( DBCLOSEAREA() )

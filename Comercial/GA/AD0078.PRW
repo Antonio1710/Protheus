@@ -1,5 +1,17 @@
 #INCLUDE "RWMAKE.CH"
+
+/*/{Protheus.doc} User Function AD0078
+	
+	@type  Function
+	@author 
+	@since 28/02/2022
+	@version 01
+	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+/*/
+
 USER FUNCTION AD0078(_ori)
+
+	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	//Conout( DToC(Date()) + " " + Time() + " AD0078 >>> INICIO PE" )
 
@@ -36,30 +48,27 @@ USER FUNCTION AD0078(_ori)
 				DBSELECTAREA("DA1")
 				DBSETORDER(1)          		
 				IF !DBSEEK( XFILIAL("DA1") + _CTABELA + _CPRODUTO )  .OR. EMPTY(_CTABELA)
-				DBSELECTAREA("SA3")
-				DBSETORDER(7)
-				IF DBSEEK (XFILIAL()+__CUSERID) .AND. cfilant $ "02/06"
-						_lRet   := .F. &&Mauricio - 02/03/11 - Solicitdo por Alex bloqueio quando nao tem tabela no cadastro do Cliente.
-						IF IsInCallStack('U_ADVEN002P')  == .T.
-								Aadd(aPedidos,{cchave, ;
-											''    , ;
-											''    , ;
-											''    , ;
-											'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!' , ;
-											cVendedor}) 
-							
-							ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
-								Aadd(aPedidos,{"Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!"})
+					DBSELECTAREA("SA3")
+					DBSETORDER(7)
+					IF DBSEEK (XFILIAL()+__CUSERID) .AND. cfilant $ "02/06"
+							_lRet   := .F. &&Mauricio - 02/03/11 - Solicitdo por Alex bloqueio quando nao tem tabela no cadastro do Cliente.
+							IF IsInCallStack('U_ADVEN002P')  == .T.
+									Aadd(aPedidos,{cchave, ;
+												''    , ;
+												''    , ;
+												''    , ;
+												'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!' , ;
+												cVendedor}) 
 								
-							ELSE
+								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+									Aadd(aPedidos,{"Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!"})								
+								ELSE							
+									MsgInfo("Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!","Cliente sem Tabela")									
+								ENDIF
 							
-								MsgInfo("Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!")
-								
-							ENDIF
-						
-				Else  
-						_lRet   := .T. 
-				Endif     
+					Else  
+							_lRet   := .T. 
+					Endif     
 				ELSE
 					
 					DBSELECTAREA("SA3")
@@ -92,7 +101,7 @@ USER FUNCTION AD0078(_ori)
 										'PRECO MÍNIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' É DE R$ '+ALLTRIM(STR(_NPRECOUNIT)) , ;
 										cVendedor}) 
 						
-						ELSEIF IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 								Aadd(aPedidos,{'PRECO MÍNIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' É DE R$ '+ALLTRIM(STR(_NPRECOUNIT))})
 								
 						ELSE

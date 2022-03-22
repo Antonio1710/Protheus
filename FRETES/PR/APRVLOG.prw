@@ -12,6 +12,8 @@
 	@history Everson, 28/07/2020, Chamado 059891. Tratamento para error log array out of bounds.
 	@history Macieir, 16/02/2021, ticket 9574  - Error Log - APRVLOG.PRW) 28/07/2020 16:58:10 line : 608
 	@history Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+	@history Leonardo P. Monteiro, 17/03/2022, ticket 69859 - array out of bounds ( 779 of 778 )  on U_REJC(APRVLOG.PRW).
+
 /*/
 User Function AprvTran(cAlias,nReg,nOpc)
 
@@ -297,29 +299,33 @@ Return ( Nil )
 User function Aprovt(_nPos)
 
 	Local _nPos
-	Private _cProcess := _aPedido[_nPos][1]    
+	Private _cProcess := ""
 
-	U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
 
-	If MsgYesNo("Aprova desconto ao transportador do pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
-			Begin transaction
-			DbSelectArea("ZZE")
-			ZZE->(DbSetOrder(3))
-			if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-			If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVTPT == "S" &&Valida o pedido por segurança
-				RecLock("ZZE",.F.)
-				ZZE->ZZE_AP_REP := "A"   &&Aprovado
-				ZZE->ZZE_DTAPRV := Date()
-				ZZE->ZZE_HRAPRV := Time()
-				ZZE->ZZE_UAPROV := __cUserID
-				ZZE->(MsUnlock())			  			  			  
-			Endif	  
-			Endif	  
-					
-			Atutp(@_aPedido,@_aSupervisor)
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Aprova desconto ao transportador do pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
+				Begin transaction
+					DbSelectArea("ZZE")
+					ZZE->(DbSetOrder(3))
+					if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+						If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVTPT == "S" &&Valida o pedido por segurança
+							RecLock("ZZE",.F.)
+							ZZE->ZZE_AP_REP := "A"   &&Aprovado
+							ZZE->ZZE_DTAPRV := Date()
+							ZZE->ZZE_HRAPRV := Time()
+							ZZE->ZZE_UAPROV := __cUserID
+							ZZE->(MsUnlock())			  			  			  
+						Endif	  
+					Endif	  
+
+					Atutp(@_aPedido,@_aSupervisor)
+										
+					if oPedido != Nil
 								
-			if oPedido != Nil
-						
 						oPedido:SetArray( _aPedido )
 						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -336,10 +342,13 @@ User function Aprovt(_nPos)
 							oPedido:AARRAY[oPedido:nAt][12],;				   
 							oPedido:AARRAY[oPedido:nAt][13]}}
 						
-						oPedido:Refresh()
-			EndIf
-			if oItemped != Nil
 						
+					EndIf
+
+					oPedido:Refresh()
+
+					if oItemped != Nil
+								
 						oItemped:SetArray( _aSupervisor )
 						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
@@ -358,80 +367,98 @@ User function Aprovt(_nPos)
 							oItemped:AARRAY[oItemped:nAt][14],;													
 							oItemped:AARRAY[oItemped:nAt][15]}}
 						oItemped:Refresh()
-						
-			EndIf
-			End transaction								
-	Endif
+								
+					EndIf
+				
+				End transaction								
+		Endif
+
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
+
 Return()
 
 User function REJT(_nPos)
 
 	Local _nPos
-	Private _cProcess := _aPedido[_nPos][1]
+	Private _cProcess := ""
 
-	U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
-		
-	If MsgYesNo("Confirma rejeição ao desconto para o transportador do pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Confirma rejeição ao desconto para o transportador do pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
 			Begin transaction
-			DbSelectArea("ZZE")
-			ZZE->(DbSetOrder(3))
-			if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-			If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVTPT == "S" &&Valida o pedido por segurança
-				RecLock("ZZE",.F.)
-				ZZE->ZZE_AP_REP := "R"   &&Aprovado
-				ZZE->ZZE_DTAPRV := Date()
-				ZZE->ZZE_HRAPRV := Time()
-				ZZE->ZZE_UAPROV := __cUserID
-				ZZE->(MsUnlock())			  			  			  
-			Endif	  
-			Endif	  
+				DbSelectArea("ZZE")
+				ZZE->(DbSetOrder(3))
+				if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+					If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVTPT == "S" &&Valida o pedido por segurança
+						RecLock("ZZE",.F.)
+						ZZE->ZZE_AP_REP := "R"   &&Aprovado
+						ZZE->ZZE_DTAPRV := Date()
+						ZZE->ZZE_HRAPRV := Time()
+						ZZE->ZZE_UAPROV := __cUserID
+						ZZE->(MsUnlock())			  			  			  
+					Endif	  
+				Endif	  
+				
+				Atutp(@_aPedido,@_aSupervisor)
+									
+				if oPedido != Nil
+							
+					oPedido:SetArray( _aPedido )
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+						oPedido:AARRAY[oPedido:nAt][02],;
+						oPedido:AARRAY[oPedido:nAt][03],;
+						oPedido:AARRAY[oPedido:nAt][04],;
+						oPedido:AARRAY[oPedido:nAt][05],;
+						oPedido:AARRAY[oPedido:nAt][06],;
+						oPedido:AARRAY[oPedido:nAt][07],;
+						oPedido:AARRAY[oPedido:nAt][08],;
+						oPedido:AARRAY[oPedido:nAt][09],;
+						oPedido:AARRAY[oPedido:nAt][10],;
+						oPedido:AARRAY[oPedido:nAt][11],;
+						oPedido:AARRAY[oPedido:nAt][12],;
+						oPedido:AARRAY[oPedido:nAt][13]}}
 					
-			Atutp(@_aPedido,@_aSupervisor)
-								
-			if oPedido != Nil
-						
-						oPedido:SetArray( _aPedido )
-						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-							oPedido:AARRAY[oPedido:nAt][02],;
-							oPedido:AARRAY[oPedido:nAt][03],;
-							oPedido:AARRAY[oPedido:nAt][04],;
-							oPedido:AARRAY[oPedido:nAt][05],;
-							oPedido:AARRAY[oPedido:nAt][06],;
-							oPedido:AARRAY[oPedido:nAt][07],;
-							oPedido:AARRAY[oPedido:nAt][08],;
-							oPedido:AARRAY[oPedido:nAt][09],;
-							oPedido:AARRAY[oPedido:nAt][10],;
-							oPedido:AARRAY[oPedido:nAt][11],;
-							oPedido:AARRAY[oPedido:nAt][12],;				   
-							oPedido:AARRAY[oPedido:nAt][13]}}
-						
-						oPedido:Refresh()
-			EndIf
-			if oItemped != Nil
-						
-						oItemped:SetArray( _aSupervisor )
-						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-							oItemped:AARRAY[oItemped:nAt][02],;
-							oItemped:AARRAY[oItemped:nAt][03],;
-							oItemped:AARRAY[oItemped:nAt][04],;
-							oItemped:AARRAY[oItemped:nAt][05],;
-							oItemped:AARRAY[oItemped:nAt][06],;
-							oItemped:AARRAY[oItemped:nAt][07],;
-							oItemped:AARRAY[oItemped:nAt][08],;
-							oItemped:AARRAY[oItemped:nAt][09],;
-							oItemped:AARRAY[oItemped:nAt][10],;
-							oItemped:AARRAY[oItemped:nAt][11],;
-							oItemped:AARRAY[oItemped:nAt][12],;
-							oItemped:AARRAY[oItemped:nAt][13],;
-							oItemped:AARRAY[oItemped:nAt][14],;													
-							oItemped:AARRAY[oItemped:nAt][15]}}
-						oItemped:Refresh()
-						
-			EndIf
+				EndIf
+
+				oPedido:Refresh()
+				
+				if oItemped != Nil
+							
+					oItemped:SetArray( _aSupervisor )
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+						oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
+					oItemped:Refresh()
+							
+				EndIf
+
 			End transaction								
-	Endif
+		Endif
+
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
+
 Return()
 
 Static function AtuTp(_aPedido,_aSupervisor)
@@ -871,45 +898,97 @@ Return ( Nil )
 User function Aprovc(_nPos)
 
 	Local _nPos
-	Private _cProcess  := _aPedido[_nPos][1] 
+	Private _cProcess  := "" 
 
-	U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
-		
-	If MsgYesNo("Aprova desconto ao Cliente do "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Aprova desconto ao Cliente do "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
 			Begin transaction
-			DbSelectArea("ZZE")
-			ZZE->(DbSetOrder(4))	
-			if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-			If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVNCC == "S" &&Valida o pedido por segurança
-				RecLock("ZZE",.F.)
-				ZZE->ZZE_AP_RPC := "A"   &&Aprovado
-				ZZE->ZZE_DTAPRC := Date()
-				ZZE->ZZE_HRAPRC := Time()
-				ZZE->ZZE_UAPRVC := __cUserID
-				ZZE->(MsUnlock())			  			  			  
-			Endif	  
-			Endif
-			
-			_cEst := Posicione("SA1",1,xfilial("SA1")+_aPedido[_nPos][4]+_aPedido[_nPos][5],"A1_EST")
-			if _cEst == "SP" .Or. _cEst == "RJ"
-			_cCC := "6110"
-			else
-			_cCC := "6210"
-			Endif   
-			
-			&&gerando NCC ao Cliente.....		
-			&&Gravo SE1 
-			// ******** INICIO ALTERACAO WILLIAM COSTA CHAMADO 024468 *******************//
-			// verifica se ja existe o titulo se sim somente altera se nao ai grava o registro
-			DBSELECTAREA("SE1")
-			DBSETORDER(1)
-			DBGOTOP()
-			IF DBSEEK(xFilial("SE1")+"MAN"+_aPedido[_nPos][2]+"A  "+"NCC",.T.)
-				If MsgYesNo("Já existe um titulo com o valor: " + STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".") + chr(10) + chr(13) + ;
-							"Deseja alterá-lo?")
-							
-							
-					RecLock("SE1",.F.)
+				DbSelectArea("ZZE")
+				ZZE->(DbSetOrder(4))	
+				if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+					If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVNCC == "S" &&Valida o pedido por segurança
+						RecLock("ZZE",.F.)
+						ZZE->ZZE_AP_RPC := "A"   &&Aprovado
+						ZZE->ZZE_DTAPRC := Date()
+						ZZE->ZZE_HRAPRC := Time()
+						ZZE->ZZE_UAPRVC := __cUserID
+						ZZE->(MsUnlock())			  			  			  
+					Endif	  
+				Endif
+				
+				_cEst := Posicione("SA1",1,xfilial("SA1")+_aPedido[_nPos][4]+_aPedido[_nPos][5],"A1_EST")
+				if _cEst == "SP" .Or. _cEst == "RJ"
+					_cCC := "6110"
+				else
+					_cCC := "6210"
+				Endif   
+				
+				&&gerando NCC ao Cliente.....		
+				&&Gravo SE1 
+				// ******** INICIO ALTERACAO WILLIAM COSTA CHAMADO 024468 *******************//
+				// verifica se ja existe o titulo se sim somente altera se nao ai grava o registro
+				DBSELECTAREA("SE1")
+				DBSETORDER(1)
+				DBGOTOP()
+				IF DBSEEK(xFilial("SE1")+"MAN"+_aPedido[_nPos][2]+"A  "+"NCC",.T.)
+					If MsgYesNo("Já existe um titulo com o valor: " + STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".") + chr(10) + chr(13) + ;
+								"Deseja alterá-lo?")
+		
+						RecLock("SE1",.F.)
+							SE1->E1_FILIAL  := xFilial("SE1")
+							SE1->E1_PREFIXO := "MAN"
+							SE1->E1_NUM     := _aPedido[_nPos][2]                                       
+							SE1->E1_PARCELA := "A"
+							SE1->E1_TIPO    := "NCC"
+							SE1->E1_NATUREZ := "24001"
+							SE1->E1_CLIENTE := _aPedido[_nPos][4]
+							SE1->E1_LOJA    := _aPedido[_nPos][5]
+							SE1->E1_NOMCLI  := _aPedido[_nPos][6]
+							SE1->E1_VENCTO  := dDatabase
+							SE1->E1_VENCREA := DataValida(dDatabase)
+							SE1->E1_VALOR   := Val(STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".")) //Val(STRTRAN(_aPedido[_nPos][10],".",""))
+							SE1->E1_EMIS1   := dDatabase
+							SE1->E1_EMISSAO := dDatabase
+							SE1->E1_SITUACA := "0"
+							SE1->E1_SALDO   := Val(STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".")) //VAL(_aPedido[_nPos][10])
+							SE1->E1_VENCORI := dDatabase
+							SE1->E1_OCORREN := "01"
+							SE1->E1_VLCRUZ  := Val(STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".")) //VAL(STRTRAN(_aPedido[_nPos][10],".",""))
+							SE1->E1_STATUS  := "A"
+							SE1->E1_ORIGEM  := "FINA040"
+							SE1->E1_FLUXO   := "S"
+							SE1->E1_CCD     := _cCC
+							SE1->E1_TIPODES := "1"
+							SE1->E1_FILORIG := xFilial("SE1")
+							SE1->E1_MULTNAT := "2"
+							SE1->E1_MSFIL   := xFilial("SE1")
+							SE1->E1_MSEMP   := cEmpAnt	
+							SE1->E1_PROJPMS := "2"
+							SE1->E1_DESDOBR := "2"
+							SE1->E1_MODSPB  := "1"
+							SE1->E1_DEBITO  := "311220005"
+							SE1->E1_ITEMD   := "121"
+							SE1->E1_CREDIT  := "191110011"
+							SE1->E1_ITEMC   := "121"
+							SE1->E1_PEDIDO  := ""
+							SE1->E1_SCORGP  := "2"
+							SE1->E1_APLVLMN := "1"
+							SE1->E1_MOEDA   := 1
+							SE1->E1_RELATO  := "2"
+							&&SE1->E1_USERLGI
+							&&SE1->E1_USERLGA		
+						SE1->(MsUnlock())
+					
+					ENDIF
+				
+				ELSE
+
+					RecLock("SE1",.T.)
 						SE1->E1_FILIAL  := xFilial("SE1")
 						SE1->E1_PREFIXO := "MAN"
 						SE1->E1_NUM     := _aPedido[_nPos][2]                                       
@@ -953,176 +1032,158 @@ User function Aprovc(_nPos)
 						&&SE1->E1_USERLGI
 						&&SE1->E1_USERLGA		
 					SE1->(MsUnlock())
-				
+					
 				ENDIF
-			
-			ELSE
-			
+				// ******** FINAL ALTERACAO WILLIAM COSTA CHAMADO 024468 *******************//	
 				
-				RecLock("SE1",.T.)
-					SE1->E1_FILIAL  := xFilial("SE1")
-					SE1->E1_PREFIXO := "MAN"
-					SE1->E1_NUM     := _aPedido[_nPos][2]                                       
-					SE1->E1_PARCELA := "A"
-					SE1->E1_TIPO    := "NCC"
-					SE1->E1_NATUREZ := "24001"
-					SE1->E1_CLIENTE := _aPedido[_nPos][4]
-					SE1->E1_LOJA    := _aPedido[_nPos][5]
-					SE1->E1_NOMCLI  := _aPedido[_nPos][6]
-					SE1->E1_VENCTO  := dDatabase
-					SE1->E1_VENCREA := DataValida(dDatabase)
-					SE1->E1_VALOR   := Val(STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".")) //Val(STRTRAN(_aPedido[_nPos][10],".",""))
-					SE1->E1_EMIS1   := dDatabase
-					SE1->E1_EMISSAO := dDatabase
-					SE1->E1_SITUACA := "0"
-					SE1->E1_SALDO   := Val(STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".")) //VAL(_aPedido[_nPos][10])
-					SE1->E1_VENCORI := dDatabase
-					SE1->E1_OCORREN := "01"
-					SE1->E1_VLCRUZ  := Val(STRTRAN(STRTRAN(_aPedido[_nPos][10],".",""),",",".")) //VAL(STRTRAN(_aPedido[_nPos][10],".",""))
-					SE1->E1_STATUS  := "A"
-					SE1->E1_ORIGEM  := "FINA040"
-					SE1->E1_FLUXO   := "S"
-					SE1->E1_CCD     := _cCC
-					SE1->E1_TIPODES := "1"
-					SE1->E1_FILORIG := xFilial("SE1")
-					SE1->E1_MULTNAT := "2"
-					SE1->E1_MSFIL   := xFilial("SE1")
-					SE1->E1_MSEMP   := cEmpAnt	
-					SE1->E1_PROJPMS := "2"
-					SE1->E1_DESDOBR := "2"
-					SE1->E1_MODSPB  := "1"
-					SE1->E1_DEBITO  := "311220005"
-					SE1->E1_ITEMD   := "121"
-					SE1->E1_CREDIT  := "191110011"
-					SE1->E1_ITEMC   := "121"
-					SE1->E1_PEDIDO  := ""
-					SE1->E1_SCORGP  := "2"
-					SE1->E1_APLVLMN := "1"
-					SE1->E1_MOEDA   := 1
-					SE1->E1_RELATO  := "2"
-					&&SE1->E1_USERLGI
-					&&SE1->E1_USERLGA		
-				SE1->(MsUnlock())
-				
-			ENDIF
-			// ******** FINAL ALTERACAO WILLIAM COSTA CHAMADO 024468 *******************//	
-			Atucl(@_aPedido,@_aSupervisor)
-								
-			if oPedido != Nil .and. len(_aPedido) >= oPedido:nAt //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
-						
-						oPedido:SetArray( _aPedido )
-						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-							oPedido:AARRAY[oPedido:nAt][02],;
-							oPedido:AARRAY[oPedido:nAt][03],;
-							oPedido:AARRAY[oPedido:nAt][04],;
-							oPedido:AARRAY[oPedido:nAt][05],;
-							oPedido:AARRAY[oPedido:nAt][06],;
-							oPedido:AARRAY[oPedido:nAt][07],;
-							oPedido:AARRAY[oPedido:nAt][08],;
-							oPedido:AARRAY[oPedido:nAt][09],;
-							oPedido:AARRAY[oPedido:nAt][10],;
-							oPedido:AARRAY[oPedido:nAt][11],;
-							oPedido:AARRAY[oPedido:nAt][12],;				   
-							oPedido:AARRAY[oPedido:nAt][13]}}
-						
-						oPedido:Refresh()
-			EndIf
+				Atucl(@_aPedido,@_aSupervisor)
+									
+				if oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
+							
+					oPedido:SetArray( _aPedido )
+					
+					/*
+					if len(_aPedido) > oPedido:nAt
+						oPedido:nAt := len(_aPedido)
+					endif
+					*/
 
-			if oItemped != Nil .and. len(_aSupervisor) >= oItemped:nAt//alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
-						
-						oItemped:SetArray( _aSupervisor )
-						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-							oItemped:AARRAY[oItemped:nAt][02],;
-							oItemped:AARRAY[oItemped:nAt][03],;
-							oItemped:AARRAY[oItemped:nAt][04],;
-							oItemped:AARRAY[oItemped:nAt][05],;
-							oItemped:AARRAY[oItemped:nAt][06],;
-							oItemped:AARRAY[oItemped:nAt][07],;
-							oItemped:AARRAY[oItemped:nAt][08],;
-							oItemped:AARRAY[oItemped:nAt][09],;
-							oItemped:AARRAY[oItemped:nAt][10],;
-							oItemped:AARRAY[oItemped:nAt][11],;
-							oItemped:AARRAY[oItemped:nAt][12],;
-							oItemped:AARRAY[oItemped:nAt][13],;
-							oItemped:AARRAY[oItemped:nAt][14],;													
-							oItemped:AARRAY[oItemped:nAt][15]}}
-						oItemped:Refresh()
-						
-			EndIf
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+						oPedido:AARRAY[oPedido:nAt][02],;
+						oPedido:AARRAY[oPedido:nAt][03],;
+						oPedido:AARRAY[oPedido:nAt][04],;
+						oPedido:AARRAY[oPedido:nAt][05],;
+						oPedido:AARRAY[oPedido:nAt][06],;
+						oPedido:AARRAY[oPedido:nAt][07],;
+						oPedido:AARRAY[oPedido:nAt][08],;
+						oPedido:AARRAY[oPedido:nAt][09],;
+						oPedido:AARRAY[oPedido:nAt][10],;
+						oPedido:AARRAY[oPedido:nAt][11],;
+						oPedido:AARRAY[oPedido:nAt][12],;				   
+						oPedido:AARRAY[oPedido:nAt][13]}}
+							
+				EndIf
+
+				oPedido:Refresh()
+
+				if oItemped != Nil .and. len(_aSupervisor) >= oItemped:nAt//alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
+							
+					oItemped:SetArray( _aSupervisor )
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+						oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
+					oItemped:Refresh()
+							
+				EndIf
+				
 			End transaction								
-	Endif
+		Endif
+
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
+
 Return()
 
 User function REJC(_nPos)
 
 	Local _nPos
-	Private _cProcess := _aPedido[_nPos][1]
+	Private _cProcess := ""
 
-	U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
-		
-	If MsgYesNo("Confirma rejeição ao desconto para o Cliente do "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Confirma rejeição ao desconto para o Cliente do "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
 			Begin transaction
-			DbSelectArea("ZZE")
-			ZZE->(DbSetOrder(4))
-			if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-			If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVNCC == "S"  &&Valida o pedido por segurança
-				RecLock("ZZE",.F.)
-				ZZE->ZZE_AP_RPC := "R"   &&Aprovado
-				ZZE->ZZE_DTAPRC := Date()
-				ZZE->ZZE_HRAPRC := Time()
-				ZZE->ZZE_UAPRVC := __cUserID
-				ZZE->(MsUnlock())			  			  			  
-			Endif	  
-			Endif	  
+				DbSelectArea("ZZE")
+				ZZE->(DbSetOrder(4))
+				if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+					If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVNCC == "S"  &&Valida o pedido por segurança
+						RecLock("ZZE",.F.)
+						ZZE->ZZE_AP_RPC := "R"   &&Aprovado
+						ZZE->ZZE_DTAPRC := Date()
+						ZZE->ZZE_HRAPRC := Time()
+						ZZE->ZZE_UAPRVC := __cUserID
+						ZZE->(MsUnlock())			  			  			  
+					Endif	  
+				Endif	  
+
+				Atucl(@_aPedido,@_aSupervisor)
+									
+				if oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
+							
+					oPedido:SetArray( _aPedido )
+
+					/*
+					if len(_aPedido) > oPedido:nAt
+						oPedido:nAt := len(_aPedido)
+					endif
+					*/
+
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+						oPedido:AARRAY[oPedido:nAt][02],;
+						oPedido:AARRAY[oPedido:nAt][03],;
+						oPedido:AARRAY[oPedido:nAt][04],;
+						oPedido:AARRAY[oPedido:nAt][05],;
+						oPedido:AARRAY[oPedido:nAt][06],;
+						oPedido:AARRAY[oPedido:nAt][07],;
+						oPedido:AARRAY[oPedido:nAt][08],;
+						oPedido:AARRAY[oPedido:nAt][09],;
+						oPedido:AARRAY[oPedido:nAt][10],;
+						oPedido:AARRAY[oPedido:nAt][11],;
+						oPedido:AARRAY[oPedido:nAt][12],;				   
+						oPedido:AARRAY[oPedido:nAt][13]}}
 					
-			Atucl(@_aPedido,@_aSupervisor)
-								
-			if oPedido != Nil .and. len(_aPedido) >= oPedido:nAt //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
-						
-						oPedido:SetArray( _aPedido )
-						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-							oPedido:AARRAY[oPedido:nAt][02],;
-							oPedido:AARRAY[oPedido:nAt][03],;
-							oPedido:AARRAY[oPedido:nAt][04],;
-							oPedido:AARRAY[oPedido:nAt][05],;
-							oPedido:AARRAY[oPedido:nAt][06],;
-							oPedido:AARRAY[oPedido:nAt][07],;
-							oPedido:AARRAY[oPedido:nAt][08],;
-							oPedido:AARRAY[oPedido:nAt][09],;
-							oPedido:AARRAY[oPedido:nAt][10],;
-							oPedido:AARRAY[oPedido:nAt][11],;
-							oPedido:AARRAY[oPedido:nAt][12],;				   
-							oPedido:AARRAY[oPedido:nAt][13]}}
-						
-						oPedido:Refresh()
-			EndIf
-			if oItemped != Nil
-						
-						oItemped:SetArray( _aSupervisor )
-						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-							oItemped:AARRAY[oItemped:nAt][02],;
-							oItemped:AARRAY[oItemped:nAt][03],;
-							oItemped:AARRAY[oItemped:nAt][04],;
-							oItemped:AARRAY[oItemped:nAt][05],;
-							oItemped:AARRAY[oItemped:nAt][06],;
-							oItemped:AARRAY[oItemped:nAt][07],;
-							oItemped:AARRAY[oItemped:nAt][08],;
-							oItemped:AARRAY[oItemped:nAt][09],;
-							oItemped:AARRAY[oItemped:nAt][10],;
-							oItemped:AARRAY[oItemped:nAt][11],;
-							oItemped:AARRAY[oItemped:nAt][12],;
-							oItemped:AARRAY[oItemped:nAt][13],;
-							oItemped:AARRAY[oItemped:nAt][14],;													
-							oItemped:AARRAY[oItemped:nAt][15]}}
-						oItemped:Refresh()
-						
-			EndIf
+					//oPedido:Refresh()
+				EndIf
+
+				oPedido:Refresh()
+
+				if oItemped != Nil
+							
+					oItemped:SetArray( _aSupervisor )
+					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+						oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][03],;
+						oItemped:AARRAY[oItemped:nAt][04],;
+						oItemped:AARRAY[oItemped:nAt][05],;
+						oItemped:AARRAY[oItemped:nAt][06],;
+						oItemped:AARRAY[oItemped:nAt][07],;
+						oItemped:AARRAY[oItemped:nAt][08],;
+						oItemped:AARRAY[oItemped:nAt][09],;
+						oItemped:AARRAY[oItemped:nAt][10],;
+						oItemped:AARRAY[oItemped:nAt][11],;
+						oItemped:AARRAY[oItemped:nAt][12],;
+						oItemped:AARRAY[oItemped:nAt][13],;
+						oItemped:AARRAY[oItemped:nAt][14],;													
+						oItemped:AARRAY[oItemped:nAt][15]}}
+					oItemped:Refresh()
+							
+				EndIf
+
 			End transaction								
-	Endif
+		Endif
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
 Return()
 
 Static function AtuCl(_aPedido,_aSupervisor)
@@ -1493,58 +1554,72 @@ Return ( Nil )
 
 User function Concord(_nPos)
 
-Local _nPos
-Private _cProcess := _aPedido[_nPos][1]    
+	Local _nPos
+	Private _cProcess := ""
 
-U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
 
-If MsgYesNo("Concordo com o desconto relativo ao pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
-        Begin transaction
-		DbSelectArea("ZZE")
-		ZZE->(DbSetOrder(5))
-		if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-		   If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S" &&Valida o pedido por segurança
-		      RecLock("ZZE",.F.)
-			  ZZE->ZZE_AP_REP := "A"   &&Aprovado
-			  ZZE->ZZE_DTAPRV := Date()
-			  ZZE->ZZE_HRAPRV := Time()
-			  ZZE->ZZE_UAPROV := "888888"    &&numero de usuario inexistente. Ficara como aprovação por concordancia do vendedor.
-			  ZZE->ZZE_DTJSTS := Date()
-			  ZZE->ZZE_HRJSTS := Time()
-			  ZZE->ZZE_UJUSTS := __cUserID
-		      ZZE->ZZE_JUSTSP := Alltrim(cGet2)
-			  ZZE->(MsUnlock())			  			  			  
-		   Endif	  
-		Endif	  
-			  	  
-		Atuvd(@_aPedido,@_aSupervisor)
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Concordo com o desconto relativo ao pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+".")
+			Begin transaction
+				DbSelectArea("ZZE")
+				ZZE->(DbSetOrder(5))
+				if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+					If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S" &&Valida o pedido por segurança
+						RecLock("ZZE",.F.)
+						ZZE->ZZE_AP_REP := "A"   &&Aprovado
+						ZZE->ZZE_DTAPRV := Date()
+						ZZE->ZZE_HRAPRV := Time()
+						ZZE->ZZE_UAPROV := "888888"    &&numero de usuario inexistente. Ficara como aprovação por concordancia do vendedor.
+						ZZE->ZZE_DTJSTS := Date()
+						ZZE->ZZE_HRJSTS := Time()
+						ZZE->ZZE_UJUSTS := __cUserID
+						ZZE->ZZE_JUSTSP := Alltrim(cGet2)
+						ZZE->(MsUnlock())			  			  			  
+					Endif	  
+				Endif	  
+
+				Atuvd(@_aPedido,@_aSupervisor)
+									
+				if oPedido != Nil
 							
-		if oPedido != Nil
-					
 					oPedido:SetArray( _aPedido )
+
+					/*
+					if len(_aPedido) > oPedido:nAt
+						oPedido:nAt := len(_aPedido)
+					endif
+					*/
+					
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-                           oPedido:AARRAY[oPedido:nAt][02],;
-						   oPedido:AARRAY[oPedido:nAt][03],;
-						   oPedido:AARRAY[oPedido:nAt][04],;
-						   oPedido:AARRAY[oPedido:nAt][05],;
-						   oPedido:AARRAY[oPedido:nAt][06],;
-						   oPedido:AARRAY[oPedido:nAt][07],;
-						   oPedido:AARRAY[oPedido:nAt][08],;
-						   oPedido:AARRAY[oPedido:nAt][09],;
-						   oPedido:AARRAY[oPedido:nAt][10],;
-						   oPedido:AARRAY[oPedido:nAt][11],;
-						   oPedido:AARRAY[oPedido:nAt][12],;				   
-						   oPedido:AARRAY[oPedido:nAt][13]}}
-					
-					oPedido:Refresh()
-		EndIf
-		if oItemped != Nil
-					
+						oPedido:AARRAY[oPedido:nAt][02],;
+						oPedido:AARRAY[oPedido:nAt][03],;
+						oPedido:AARRAY[oPedido:nAt][04],;
+						oPedido:AARRAY[oPedido:nAt][05],;
+						oPedido:AARRAY[oPedido:nAt][06],;
+						oPedido:AARRAY[oPedido:nAt][07],;
+						oPedido:AARRAY[oPedido:nAt][08],;
+						oPedido:AARRAY[oPedido:nAt][09],;
+						oPedido:AARRAY[oPedido:nAt][10],;
+						oPedido:AARRAY[oPedido:nAt][11],;
+						oPedido:AARRAY[oPedido:nAt][12],;				   
+						oPedido:AARRAY[oPedido:nAt][13]}}
+							
+							
+				EndIf
+				
+				oPedido:Refresh()
+				
+				if oItemped != Nil
+							
 					oItemped:SetArray( _aSupervisor )
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][02],;
 						oItemped:AARRAY[oItemped:nAt][03],;
 						oItemped:AARRAY[oItemped:nAt][04],;
 						oItemped:AARRAY[oItemped:nAt][05],;
@@ -1559,95 +1634,122 @@ If MsgYesNo("Concordo com o desconto relativo ao pedido "+_aPedido[_nPos][1]+" n
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
 					oItemped:Refresh()
-					
-		EndIf
-		End transaction								
-Endif
-cGet2 := Space(230)
-oSay4:Refresh()
+							
+				EndIf
+				
+			End transaction								
+		Endif
+
+		cGet2 := Space(230)
+		oSay4:Refresh()
+
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
 
 Return()
 
 User function discord(_nPos)
 
-Local _nPos
-Private _cProcess := _aPedido[_nPos][1]
+	Local _nPos
+	Private _cProcess := ""
 
-U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
-     
-If MsgYesNo("Discordo do desconto(Justificativa deve estar preenchida!) no valor de R$ "+_aPedido[_nPos][10]+".")
-        _lJust := .T.
-        if Empty(cGet2) .Or. Len(cGet2) < 15
-           MsgAlert("Justificativa não preenchida ou muito curta!")
-           _lJust := .F.
-        Endif
-        If _lJust   
-        Begin transaction
-		DbSelectArea("ZZE")
-		ZZE->(DbSetOrder(5))
-		if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-		   If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S" &&Valida o pedido por segurança
-		      RecLock("ZZE",.F.)
-			  ZZE->ZZE_DTJSTS := Date()
-			  ZZE->ZZE_HRJSTS := Time()
-			  ZZE->ZZE_UJUSTS := __cUserID
-		      ZZE->ZZE_JUSTSP := Alltrim(cGet2)
-			  ZZE->(MsUnlock())			  			  			  
-		   Endif	  
-		Endif
-		
-		&&envia email ao sr. jAMES
-		mandaemail(__cUserID,_aPedido[_nPos][1],_aPedido[_nPos][2],_aPedido[_nPos][1],Alltrim(cGet2))	  
-			  	  
-		Atuvd(@_aPedido,@_aSupervisor)
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Discordo do desconto(Justificativa deve estar preenchida!) no valor de R$ "+_aPedido[_nPos][10]+".")
+				_lJust := .T.
+				if Empty(cGet2) .Or. Len(cGet2) < 15
+				MsgAlert("Justificativa não preenchida ou muito curta!")
+				_lJust := .F.
+				Endif
+				If _lJust   
+					Begin transaction
+						DbSelectArea("ZZE")
+						ZZE->(DbSetOrder(5))
+						if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+							If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S" &&Valida o pedido por segurança
+								RecLock("ZZE",.F.)
+								ZZE->ZZE_DTJSTS := Date()
+								ZZE->ZZE_HRJSTS := Time()
+								ZZE->ZZE_UJUSTS := __cUserID
+								ZZE->ZZE_JUSTSP := Alltrim(cGet2)
+								ZZE->(MsUnlock())			  			  			  
+							Endif	  
+						Endif
+						
+						&&envia email ao sr. jAMES
+						mandaemail(__cUserID,_aPedido[_nPos][1],_aPedido[_nPos][2],_aPedido[_nPos][1],Alltrim(cGet2))	  
+
+						Atuvd(@_aPedido,@_aSupervisor)
+											
+						if oPedido != Nil
+									
+							oPedido:SetArray( _aPedido )
+
+							/*
+							if len(_aPedido) > oPedido:nAt
+								oPedido:nAt := len(_aPedido)
+							endif
+							*/
+
+							//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+							oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+								oPedido:AARRAY[oPedido:nAt][02],;
+								oPedido:AARRAY[oPedido:nAt][03],;
+								oPedido:AARRAY[oPedido:nAt][04],;
+								oPedido:AARRAY[oPedido:nAt][05],;
+								oPedido:AARRAY[oPedido:nAt][06],;
+								oPedido:AARRAY[oPedido:nAt][07],;
+								oPedido:AARRAY[oPedido:nAt][08],;
+								oPedido:AARRAY[oPedido:nAt][09],;
+								oPedido:AARRAY[oPedido:nAt][10],;
+								oPedido:AARRAY[oPedido:nAt][11],;
+								oPedido:AARRAY[oPedido:nAt][12],;				   
+								oPedido:AARRAY[oPedido:nAt][13]}}
 							
-		if oPedido != Nil
-					
-					oPedido:SetArray( _aPedido )
-					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-                           oPedido:AARRAY[oPedido:nAt][02],;
-						   oPedido:AARRAY[oPedido:nAt][03],;
-						   oPedido:AARRAY[oPedido:nAt][04],;
-						   oPedido:AARRAY[oPedido:nAt][05],;
-						   oPedido:AARRAY[oPedido:nAt][06],;
-						   oPedido:AARRAY[oPedido:nAt][07],;
-						   oPedido:AARRAY[oPedido:nAt][08],;
-						   oPedido:AARRAY[oPedido:nAt][09],;
-						   oPedido:AARRAY[oPedido:nAt][10],;
-						   oPedido:AARRAY[oPedido:nAt][11],;
-						   oPedido:AARRAY[oPedido:nAt][12],;				   
-						   oPedido:AARRAY[oPedido:nAt][13]}}
-					
-					oPedido:Refresh()
-		EndIf
-		if oItemped != Nil
-					
-					oItemped:SetArray( _aSupervisor )
-					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-			  			oItemped:AARRAY[oItemped:nAt][02],;
-						oItemped:AARRAY[oItemped:nAt][03],;
-						oItemped:AARRAY[oItemped:nAt][04],;
-						oItemped:AARRAY[oItemped:nAt][05],;
-						oItemped:AARRAY[oItemped:nAt][06],;
-						oItemped:AARRAY[oItemped:nAt][07],;
-						oItemped:AARRAY[oItemped:nAt][08],;
-						oItemped:AARRAY[oItemped:nAt][09],;
-						oItemped:AARRAY[oItemped:nAt][10],;
-						oItemped:AARRAY[oItemped:nAt][11],;
-						oItemped:AARRAY[oItemped:nAt][12],;
-						oItemped:AARRAY[oItemped:nAt][13],;
-						oItemped:AARRAY[oItemped:nAt][14],;													
-						oItemped:AARRAY[oItemped:nAt][15]}}
-					oItemped:Refresh()
-					
-		EndIf
-		End transaction
-		Endif								
-Endif
-cGet2 := Space(230)
-oSay4:Refresh()
+							
+						EndIf
+
+						oPedido:Refresh()
+
+						if oItemped != Nil
+									
+							oItemped:SetArray( _aSupervisor )
+							//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+							oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+								oItemped:AARRAY[oItemped:nAt][02],;
+								oItemped:AARRAY[oItemped:nAt][03],;
+								oItemped:AARRAY[oItemped:nAt][04],;
+								oItemped:AARRAY[oItemped:nAt][05],;
+								oItemped:AARRAY[oItemped:nAt][06],;
+								oItemped:AARRAY[oItemped:nAt][07],;
+								oItemped:AARRAY[oItemped:nAt][08],;
+								oItemped:AARRAY[oItemped:nAt][09],;
+								oItemped:AARRAY[oItemped:nAt][10],;
+								oItemped:AARRAY[oItemped:nAt][11],;
+								oItemped:AARRAY[oItemped:nAt][12],;
+								oItemped:AARRAY[oItemped:nAt][13],;
+								oItemped:AARRAY[oItemped:nAt][14],;													
+								oItemped:AARRAY[oItemped:nAt][15]}}
+							oItemped:Refresh()
+									
+						EndIf
+
+					End transaction
+
+				Endif								
+		Endif
+
+		cGet2 := Space(230)
+		oSay4:Refresh()
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
+
 Return()
 
 Static function AtuVd(_aPedido,_aSupervisor)
@@ -2138,55 +2240,69 @@ Return ( Nil )
 
 User function APRVVDD(_nPos)
 
-Local _nPos
-Private _cProcess := _aPedido[_nPos][1]    
+	Local _nPos
+	Private _cProcess := ""
 
-U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
 
-If MsgYesNo("Aprova desconto relativo ao pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+" para o vendedor.")
-        Begin transaction
-		DbSelectArea("ZZE")
-		ZZE->(DbSetOrder(5))
-		if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-		   If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S" &&Valida o pedido por segurança
-		      RecLock("ZZE",.F.)
-			  ZZE->ZZE_AP_REP := "A"   &&Aprovado
-			  ZZE->ZZE_DTAPRV := Date()
-			  ZZE->ZZE_HRAPRV := Time()
-			  ZZE->ZZE_UAPROV := __cUserID			  
-			  ZZE->(MsUnlock())			  			  			  
-		   Endif	  
-		Endif	  
-			  	  
-		Atud(@_aPedido,@_aSupervisor)
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Aprova desconto relativo ao pedido "+_aPedido[_nPos][1]+" no valor de R$ "+_aPedido[_nPos][10]+" para o vendedor.")
+			Begin transaction
+				DbSelectArea("ZZE")
+				ZZE->(DbSetOrder(5))
+				if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+					If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S" &&Valida o pedido por segurança
+						RecLock("ZZE",.F.)
+						ZZE->ZZE_AP_REP := "A"   &&Aprovado
+						ZZE->ZZE_DTAPRV := Date()
+						ZZE->ZZE_HRAPRV := Time()
+						ZZE->ZZE_UAPROV := __cUserID			  
+						ZZE->(MsUnlock())			  			  			  
+					Endif	  
+				ENDIF
+
+				Atud(@_aPedido,@_aSupervisor)
+									
+				if oPedido != Nil
 							
-		if oPedido != Nil
-					
 					oPedido:SetArray( _aPedido )
+					
+					/*
+					if len(_aPedido) > oPedido:nAt
+						oPedido:nAt := len(_aPedido)
+					endif
+					*/
+					
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-                           oPedido:AARRAY[oPedido:nAt][02],;
-						   oPedido:AARRAY[oPedido:nAt][03],;
-						   oPedido:AARRAY[oPedido:nAt][04],;
-						   oPedido:AARRAY[oPedido:nAt][05],;
-						   oPedido:AARRAY[oPedido:nAt][06],;
-						   oPedido:AARRAY[oPedido:nAt][07],;
-						   oPedido:AARRAY[oPedido:nAt][08],;
-						   oPedido:AARRAY[oPedido:nAt][09],;
-						   oPedido:AARRAY[oPedido:nAt][10],;
-						   oPedido:AARRAY[oPedido:nAt][11],;
-						   oPedido:AARRAY[oPedido:nAt][12],;
-						   oPedido:AARRAY[oPedido:nAt][13],;				   
-						   oPedido:AARRAY[oPedido:nAt][14]}}
-					
-					oPedido:Refresh()
-		EndIf
-		if oItemped != Nil
-					
+						oPedido:AARRAY[oPedido:nAt][02],;
+						oPedido:AARRAY[oPedido:nAt][03],;
+						oPedido:AARRAY[oPedido:nAt][04],;
+						oPedido:AARRAY[oPedido:nAt][05],;
+						oPedido:AARRAY[oPedido:nAt][06],;
+						oPedido:AARRAY[oPedido:nAt][07],;
+						oPedido:AARRAY[oPedido:nAt][08],;
+						oPedido:AARRAY[oPedido:nAt][09],;
+						oPedido:AARRAY[oPedido:nAt][10],;
+						oPedido:AARRAY[oPedido:nAt][11],;
+						oPedido:AARRAY[oPedido:nAt][12],;
+						oPedido:AARRAY[oPedido:nAt][13],;				   
+						oPedido:AARRAY[oPedido:nAt][14]}}
+							
+							
+				EndIf
+
+				oPedido:Refresh()
+
+				if oItemped != Nil
+							
 					oItemped:SetArray( _aSupervisor )
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-			  			oItemped:AARRAY[oItemped:nAt][02],;
+						oItemped:AARRAY[oItemped:nAt][02],;
 						oItemped:AARRAY[oItemped:nAt][03],;
 						oItemped:AARRAY[oItemped:nAt][04],;
 						oItemped:AARRAY[oItemped:nAt][05],;
@@ -2201,82 +2317,107 @@ If MsgYesNo("Aprova desconto relativo ao pedido "+_aPedido[_nPos][1]+" no valor 
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
 					oItemped:Refresh()
-					
-		EndIf
-		End transaction								
-Endif
+							
+				EndIf
+				
+			End transaction								
+		Endif
+
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
+
 Return()
 
 User function REJVDD(_nPos)
 
-Local _nPos
-Private _cProcess := _aPedido[_nPos][1]
+	Local _nPos
+	Private _cProcess := ""
 
-U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
-     
-If MsgYesNo("Rejeita desconto ao vendedor no valor de R$ "+_aPedido[_nPos][10]+".")        
-        Begin transaction
-		DbSelectArea("ZZE")
-		ZZE->(DbSetOrder(5))
-		if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
-		   If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S"  &&Valida o pedido por segurança
-		      RecLock("ZZE",.F.)
-			  ZZE->ZZE_AP_REP := "R"   &&Rejeitado
-			  ZZE->ZZE_DTAPRV := Date()
-			  ZZE->ZZE_HRAPRV := Time()
-			  ZZE->ZZE_UAPROV := __cUserID	
-			  ZZE->(MsUnlock())			  			  			  
-		   Endif	  
-		Endif
+	//U_ADINF009P('APRVLOG' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela aprovação para descontos clientes/transportadores')
+
+	if len(_aPedido) >= oPedido:nAt	
+
+		_cProcess := _aPedido[_nPos][1]
+
+		If MsgYesNo("Rejeita desconto ao vendedor no valor de R$ "+_aPedido[_nPos][10]+".")        
+				Begin transaction
+					DbSelectArea("ZZE")
+					ZZE->(DbSetOrder(5))
+					if dbseek(xFilial("ZZE")+_aPedido[_nPos][2]+_aPedido[_nPos][3]+"S")  &&posiciona no registro pelo numero da NF e serie.
+						If ZZE->ZZE_PEDIDO == _aPedido[_nPos][1] .AND. ZZE->ZZE_APVVDD == "S"  &&Valida o pedido por segurança
+							RecLock("ZZE",.F.)
+							ZZE->ZZE_AP_REP := "R"   &&Rejeitado
+							ZZE->ZZE_DTAPRV := Date()
+							ZZE->ZZE_HRAPRV := Time()
+							ZZE->ZZE_UAPROV := __cUserID	
+							ZZE->(MsUnlock())			  			  			  
+						Endif	  
+					Endif
 			
-		Atud(@_aPedido,@_aSupervisor)
-							
-		if oPedido != Nil
 					
-					oPedido:SetArray( _aPedido )
-					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
-                           oPedido:AARRAY[oPedido:nAt][02],;
-						   oPedido:AARRAY[oPedido:nAt][03],;
-						   oPedido:AARRAY[oPedido:nAt][04],;
-						   oPedido:AARRAY[oPedido:nAt][05],;
-						   oPedido:AARRAY[oPedido:nAt][06],;
-						   oPedido:AARRAY[oPedido:nAt][07],;
-						   oPedido:AARRAY[oPedido:nAt][08],;
-						   oPedido:AARRAY[oPedido:nAt][09],;
-						   oPedido:AARRAY[oPedido:nAt][10],;
-						   oPedido:AARRAY[oPedido:nAt][11],;
-						   oPedido:AARRAY[oPedido:nAt][12],;
-						   oPedido:AARRAY[oPedido:nAt][13],;				   
-						   oPedido:AARRAY[oPedido:nAt][14]}}
-					
+					Atud(@_aPedido,@_aSupervisor)
+										
+					if oPedido != Nil
+								
+						oPedido:SetArray( _aPedido )
+						/*
+						if len(_aPedido) > oPedido:nAt
+							oPedido:nAt := len(_aPedido)
+						endif
+						*/
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
+							oPedido:AARRAY[oPedido:nAt][02],;
+							oPedido:AARRAY[oPedido:nAt][03],;
+							oPedido:AARRAY[oPedido:nAt][04],;
+							oPedido:AARRAY[oPedido:nAt][05],;
+							oPedido:AARRAY[oPedido:nAt][06],;
+							oPedido:AARRAY[oPedido:nAt][07],;
+							oPedido:AARRAY[oPedido:nAt][08],;
+							oPedido:AARRAY[oPedido:nAt][09],;
+							oPedido:AARRAY[oPedido:nAt][10],;
+							oPedido:AARRAY[oPedido:nAt][11],;
+							oPedido:AARRAY[oPedido:nAt][12],;
+							oPedido:AARRAY[oPedido:nAt][13],;				   
+							oPedido:AARRAY[oPedido:nAt][14]}}
+						
+					EndIf
+
 					oPedido:Refresh()
-		EndIf
-		if oItemped != Nil
+
+					if oItemped != Nil
+								
+						oItemped:SetArray( _aSupervisor )
+						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
+						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
+							oItemped:AARRAY[oItemped:nAt][02],;
+							oItemped:AARRAY[oItemped:nAt][03],;
+							oItemped:AARRAY[oItemped:nAt][04],;
+							oItemped:AARRAY[oItemped:nAt][05],;
+							oItemped:AARRAY[oItemped:nAt][06],;
+							oItemped:AARRAY[oItemped:nAt][07],;
+							oItemped:AARRAY[oItemped:nAt][08],;
+							oItemped:AARRAY[oItemped:nAt][09],;
+							oItemped:AARRAY[oItemped:nAt][10],;
+							oItemped:AARRAY[oItemped:nAt][11],;
+							oItemped:AARRAY[oItemped:nAt][12],;
+							oItemped:AARRAY[oItemped:nAt][13],;
+							oItemped:AARRAY[oItemped:nAt][14],;													
+							oItemped:AARRAY[oItemped:nAt][15]}}
+						oItemped:Refresh()
+								
+					EndIf
 					
-					oItemped:SetArray( _aSupervisor )
-					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
-					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
-			  			oItemped:AARRAY[oItemped:nAt][02],;
-						oItemped:AARRAY[oItemped:nAt][03],;
-						oItemped:AARRAY[oItemped:nAt][04],;
-						oItemped:AARRAY[oItemped:nAt][05],;
-						oItemped:AARRAY[oItemped:nAt][06],;
-						oItemped:AARRAY[oItemped:nAt][07],;
-						oItemped:AARRAY[oItemped:nAt][08],;
-						oItemped:AARRAY[oItemped:nAt][09],;
-						oItemped:AARRAY[oItemped:nAt][10],;
-						oItemped:AARRAY[oItemped:nAt][11],;
-						oItemped:AARRAY[oItemped:nAt][12],;
-						oItemped:AARRAY[oItemped:nAt][13],;
-						oItemped:AARRAY[oItemped:nAt][14],;													
-						oItemped:AARRAY[oItemped:nAt][15]}}
-					oItemped:Refresh()
-					
-		EndIf
-		End transaction								
-Endif
+				End transaction								
+		
+		Endif
+
+	else
+		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
+	endif
 Return()
+
 
 Static function Atud(_aPedido,_aSupervisor)
 	If Select("Processo") > 0

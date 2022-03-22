@@ -84,7 +84,9 @@ User Function AD0055()
 		@ (085),(095) MsGet o_cCCDiesel Var cCCDiesel Valid (Empty(Alltrim(cCCDiesel)) .Or. ExistCpo("CTT" ,cCCDiesel)) F3 "CTT"  							Size (050),(009) COLOR CLR_BLACK PIXEL OF _oDlg	
 		//
 		
-		bBlock := {|| lRegGrv := GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel), Iif(lRegGrv, zeraKm(SC5->C5_NUM,SC5->C5_EST), Nil) } ////Everson - 12/11/2021. Chamado 63536.
+		//bBlock := {|| lRegGrv := GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel), Iif(lRegGrv, zeraKm(SC5->C5_NUM,SC5->C5_EST), Nil) } ////Everson - 12/11/2021. Chamado 63536.
+		bBlock := {|| lRegGrv := GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,.T.,.F.,cPlcCvMec,cCCDiesel)} ////Fernando Sigoli - 01/03/2022. Chamado T.I.
+		
 		DEFINE SBUTTON FROM (100),(150) TYPE 1 ENABLE OF _oDlg ACTION (Eval(bBlock)) //Everson - 10/07/2019. //Everson - 01/07/2020. Chamado 059245. //Everson - 12/11/2021. Chamado 63536.
 		DEFINE SBUTTON FROM (100),(185) TYPE 2 ENABLE OF _oDlg ACTION ( _oDlg:END())
 		ACTIVATE MSDIALOG _oDlg CENTERED

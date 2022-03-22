@@ -19,6 +19,8 @@
 //|         |              |                  |                                                 |
 //|         |              |                  |                                                 |
 //À---------Á--------------Á------------------Á-------------------------------------------------Ù
+// @history chamado TI     - Leonardo P. Monteiro - 08/03/2022 - Correção do msunlock para prevenir lock na tabela SB2.
+
 USER FUNCTION LEMP01   
 
 U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Limpa a quantidade empenhada dos produtos selecionados e permite a impressao dos da listagem empenhada')
@@ -154,13 +156,13 @@ While !eof()
 					//+------------------------------------+				
 			   	If MntScr(SB1->B1_COD,SB1->B1_DESC,SB2->B2_QEMPSA,SB2->B2_LOCAL,SB2->B2_QATU)  		   	 	
 				     RecLock("SB2",.F.)
-				     Replace B2_QEMPSA With 0
-				     Msunlock()
+				     	Replace B2_QEMPSA With 0
+				     SB2->(Msunlock())
 				   EndIf 
 				Else
 					RecLock("SB2",.F.)
-				   Replace B2_QEMPSA With 0
-				   Msunlock()			    
+				   		Replace B2_QEMPSA With 0
+				   	SB2->(Msunlock())
 			   EndIf  
 			Else
 				MsgInfo("Produto "+SB2->B2_COD+" Sem empenho.")
@@ -314,13 +316,13 @@ USER Function GrvMark()
 	DbSelectArea('SB1')
 	If IsMark( 'B1_OK', cMarca )  
 	    RecLock( 'SB1', .F. )
-		Replace B1_OK With Space(2)		
-		MsUnLock()                 
+			Replace B1_OK With Space(2)		
+		SB1->(MsUnLock())
 		lInvert	:=.F.	
 	Else
 		RecLock( 'SB1', .F. )
-		Replace B1_OK With cMarca
-		MsUnLock()   
+			Replace B1_OK With cMarca
+		SB1->(MsUnLock())
 		lInvert	:=.T.	
 	EndIf 
 	MarkBRefresh()
@@ -358,12 +360,12 @@ USER Function MarkAll()
 	While !Eof()
 		If IsMark( 'B1_OK', cMarca )
 			RecLock( 'SB1', .F. )
-			Replace B1_OK With Space(2)
-			MsUnLock()
+				Replace B1_OK With Space(2)
+			SB1->(MsUnLock())
 		Else
 			RecLock( 'SB1', .F. )
-			Replace B1_OK With cMarca
-			MsUnLock()
+				Replace B1_OK With cMarca
+			SB1->(MsUnLock())
 		EndIf 
 		dbSkip()		
 	End

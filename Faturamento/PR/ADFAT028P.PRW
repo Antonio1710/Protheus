@@ -11,16 +11,18 @@
     @since 10/02/2022
     @version 01
 /*/
-User Function ADFAT028P()                            
+User Function ADFAT028P()                                    
 Return Nil
 
 WsRestFul barramento Description "Serviço REST para inclusão de registros vindos do barramento."
 
-	WsMethod Post Description "Inclusão de registros vindos do barramento."  WsSyntax "/registros"
+	WsMethod Post Description "Inclui de registros vindos do barramento."    WsSyntax "/registros"
+	WsMethod Get  Description "Obtém registros não enviados ao barramento."  WsSyntax "/registros"
+	WsMethod Put  Description "Marca registro como já processado"            WsSyntax "/registros/{uuid}"
 
 End WsRestFul
 /*/{Protheus.doc} User Function Post
-	Método POST
+	Método Post
 	@type  Function
 	@author Everson
 	@since 10/02/2022
@@ -49,8 +51,6 @@ WsMethod Post WsService barramento
 
     EndIf
 
-    ErrorBlock(oError)
-
 Return lRet
 /*/{Protheus.doc} ADFAT28A
     Processa requisições Post.
@@ -76,97 +76,265 @@ User Function ADFAT28A(cBody, aRetErro)
     Local cTopico   := ""
     Local cId       := ""
     Local cDados    := ""
-    Local oJson     := JsonObject():New()
-    Local xRet      := oJson:FromJson(cBody)
-    Local oError    := ErrorBlock( {|e| cMsgError := e:Description , lRet := .F., Break(e) } )
+    Local oJson     := Nil
+    Local xRet      := Nil
+    Local cHash     := ""
 
-    Begin Sequence
+    oJson := JsonObject():New()
 
-        If ! ValType(xRet) == "U"
-            Aadd(aRetErro, {400, "Não foi possível converter a string json para objeto json."})
-            RestArea(aArea)
-            Return lRet
+    xRet  := oJson:FromJson(cBody)
 
-        EndIf
-
-        cId := Alltrim(cValToChar(oJson['uuid']))
-
-        If Empty(cId)
-            logZBE("ADFAT28A", "Não foi possível obter o uuid.", cBody)
-            Aadd(aRetErro, {400, "Não foi possível obter o uuid."})
-            RestArea(aArea)
-            Return lRet
-
-        EndIf
-
-        DbselectArea("ZIQ")
-        ZIQ->(DbSetOrder(1))
-        If ZIQ->( DbSeek(FWxFilial("ZIQ") + cId) )
-            logZBE("ADFAT28A", "Id " + cId + " já recebido.", cBody)
-            Aadd(aRetErro, {400, "Id " + cId + " já recebido."})
-            RestArea(aArea)
-            Return lRet
-
-        EndIf
-
-        cEmpOrg     := Alltrim(cValToChar(oJson['empresa']))
-        cFilOrg     := Alltrim(cValToChar(oJson['filial']))
-        cDtOrig     := Alltrim(cValToChar(oJson['data']))
-        cHrOrig     := Alltrim(cValToChar(oJson['hora']))
-        cOperacao   := Alltrim(cValToChar(oJson['operacao']))
-        cSisGer     := Alltrim(cValToChar(oJson['sistGera']))
-        cTopico     := Alltrim(cValToChar(oJson['topico']))
-        cDados      := Alltrim(cValToChar(cBody))
-
-        oModel := FwLoadModel("ADFAT027P")
-        oModel:SetOperation(MODEL_OPERATION_INSERT)
-        oModel:Activate()
-
-        oModel:SetValue("MD_MASTER", "ZIQ_TIPO"  , "E")
-        oModel:SetValue("MD_MASTER", "ZIQ_EMPRES", cEmpOrg)
-        oModel:SetValue("MD_MASTER", "ZIQ_FILINT", cFilOrg)
-        oModel:SetValue("MD_MASTER", "ZIQ_OPERAC", cOperacao)
-        oModel:SetValue("MD_MASTER", "ZIQ_DTORIG", SToD(cDtOrig))
-        oModel:SetValue("MD_MASTER", "ZIQ_HRORIG", cHrOrig)
-        oModel:SetValue("MD_MASTER", "ZIQ_DTGRV" , Date())
-        oModel:SetValue("MD_MASTER", "ZIQ_HRGRV" , Time())
-        oModel:SetValue("MD_MASTER", "ZIQ_SISGER", cSisGer)
-        oModel:SetValue("MD_MASTER", "ZIQ_TOPICO", cTopico)
-        oModel:SetValue("MD_MASTER", "ZIQ_UUID"  , cId)
-        oModel:SetValue("MD_MASTER", "ZIQ_DADOS" , cDados)
-        oModel:SetValue("MD_MASTER", "ZIQ_PROCES", "2")
-
-        If oModel:VldData()
-            oModel:CommitData()
-            lRet := .T.
-
-        Else
-            lRet := .F.
-            aError := oModel:GetErrorMessage()
-            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
-
-        EndIf
-
-        oModel:DeActivate()
-        oModel:Destroy()
-        oModel := Nil
-
-        If ! Empty(cMsgError)
-            Aadd(aRetErro, {400, cMsgError})
-
-        EndIf
-
-        FreeObj(oJson)
-        oJson := Nil
-
-    Recover
+    If ! ValType(xRet) == "U"
+        cMsgError := "Não foi possível converter a string json para objeto json."
         logZBE("ADFAT28A", cMsgError, cBody)
-		Aadd(aRetErro, {500, cMsgError})
+        Aadd(aRetErro, {400, cMsgError})
         RestArea(aArea)
         Return .F.
 
-    End Sequence
+    EndIf
+
+    cId := Alltrim(cValToChar(oJson['uuid']))
+
+    If Empty(cId)
+        cMsgError := "Não foi possível obter o uuid."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    DbselectArea("ZIQ")
+    ZIQ->(DbSetOrder(1))
+    If ZIQ->( DbSeek(FWxFilial("ZIQ") + cId) )
+        cMsgError := "Id " + cId + " já recebido."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cEmpOrg     := Alltrim(cValToChar(oJson['empresa']))
+    cFilOrg     := Alltrim(cValToChar(oJson['filial']))
+    cDtOrig     := Alltrim(cValToChar(oJson['data']))
+    cHrOrig     := Alltrim(cValToChar(oJson['hora']))
+    cOperacao   := Alltrim(cValToChar(oJson['operacao']))
+    cSisGer     := Alltrim(cValToChar(oJson['sistGera']))
+    cTopico     := Alltrim(cValToChar(oJson['topico']))
+    cDados      := Alltrim(cValToChar(cBody))
+    cHash       := SHA1(cEmpOrg + cFilOrg + cDtOrig + cHrOrig + Alltrim(cValToChar(oJson['dados'])))
+
+    DbselectArea("ZIQ")
+    ZIQ->(DbSetOrder(2))
+    If ZIQ->( DbSeek(FWxFilial("ZIQ") + cHash) )
+        cMsgError := "Hash " + cHash + " já recebido."
+        logZBE("ADFAT28A", cMsgError, cBody)
+        Aadd(aRetErro, {400, cMsgError})
+        FreeObj(oJson)
+        oJson := Nil
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    oModel := FwLoadModel("ADFAT027P")
+    oModel:SetOperation(MODEL_OPERATION_INSERT)
+    oModel:Activate()
+
+    oModel:SetValue("MD_MASTER", "ZIQ_TIPO"  , "E")
+    oModel:SetValue("MD_MASTER", "ZIQ_EMPRES", cEmpOrg)
+    oModel:SetValue("MD_MASTER", "ZIQ_FILINT", cFilOrg)
+    oModel:SetValue("MD_MASTER", "ZIQ_OPERAC", cOperacao)
+    oModel:SetValue("MD_MASTER", "ZIQ_DTORIG", SToD(cDtOrig))
+    oModel:SetValue("MD_MASTER", "ZIQ_HRORIG", cHrOrig)
+    oModel:SetValue("MD_MASTER", "ZIQ_DTGRV" , Date())
+    oModel:SetValue("MD_MASTER", "ZIQ_HRGRV" , Time())
+    oModel:SetValue("MD_MASTER", "ZIQ_SISGER", cSisGer)
+    oModel:SetValue("MD_MASTER", "ZIQ_TOPICO", cTopico)
+    oModel:SetValue("MD_MASTER", "ZIQ_UUID"  , cId)
+    oModel:SetValue("MD_MASTER", "ZIQ_DADOS" , cDados)
+    oModel:SetValue("MD_MASTER", "ZIQ_PROCES", "2")
+    oModel:SetValue("MD_MASTER", "ZIQ_HASH"  , cHash)
+
+    If oModel:VldData()
+        oModel:CommitData()
+        lRet := .T.
+
+    Else
+        aError := oModel:GetErrorMessage()
+        cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+
+    EndIf
+
+    oModel:DeActivate()
+    oModel:Destroy()
+    oModel := Nil
+
+    If ! Empty(cMsgError)
+        Aadd(aRetErro, {400, cMsgError})
+
+    EndIf
+
+    FreeObj(oJson)
+    oJson := Nil
         
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} User Function Get
+	Método Get
+	@type  Function
+	@author Everson
+	@since 14/03/2022
+	@version 01
+/*/
+WsMethod Get WsService barramento
+
+    //Variáveis.
+    Local lRet      := .F.
+    Local cJson     := ""
+
+    logZBE("Início GET", "", "")
+
+    Self:SetContentType("application/json")
+
+    lRet := U_ADFAT28B(@cJson)
+
+    Self:SetResponse(cJson)
+
+Return lRet
+/*/{Protheus.doc} ADFAT28B
+    Obtém registros de saída faltantes de processamento.
+    @type  Static Function
+    @author Everson
+    @since 14/03/2022
+    @version 01
+/*/
+User Function ADFAT28B(cJson)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local aDados    := {}
+    Local oJsonLn   := Nil
+    Local oJson     := Nil
+    Local cQuery    := " SELECT R_E_C_N_O_ AS RECNO FROM " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ WHERE ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "' AND ZIQ_TIPO = 'S' AND ZIQ_PROCES = '2' AND ZIQ.D_E_L_E_T_ = '' ORDER BY ZIQ_DTGRV, ZIQ_HRGRV "
+
+    If Select("D_ZIQS") > 0
+        D_ZIQS->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_ZIQS"
+    DbSelectArea("D_ZIQS")
+    D_ZIQS->(DbGoTop())
+    If D_ZIQS->(Eof())
+        cJson := "[]"
+        D_ZIQS->(DbCloseArea())
+        RestArea(aArea)
+        Return .T.
+    EndIf
+
+    oJson := JsonObject():New()
+
+    DbSelectArea("ZIQ")
+    ZIQ->(DbSetOrder(1))
+    ZIQ->(DbGoTop())
+
+    While ! D_ZIQS->(Eof())
+
+        ZIQ->(DbGoTo(D_ZIQS->RECNO))
+
+        oJsonLn := JsonObject():New()
+        oJsonLn:FromJSON( ZIQ->ZIQ_DADOS )
+
+        Aadd(aDados, oJsonLn)
+
+        FreeObj(oJsonLn)
+        oJsonLn := Nil
+
+        D_ZIQS->(Dbskip())
+
+    End
+
+    oJson["dados"] := aDados
+
+    cJson := oJson:toJSON()
+
+    FreeObj(oJson)
+    oJson := Nil
+
+    lRet := .T.
+
+    D_ZIQS->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} User Function Get
+	Método Get
+	@type  Function
+	@author Everson
+	@since 14/03/2022
+	@version 01
+/*/
+WsMethod Put WsService barramento
+
+    //Variáveis.
+    Local lRet          := .F.
+    Local aRetErro      := {}
+    Local nCodErro      := 0
+    Local cMsgErro      := ""
+    Local aParametros	:= Self:aURLParms
+
+    logZBE("Início PUT", "", "")
+
+    Self:SetContentType("application/json")
+
+    lRet := U_ADFAT28C(aParametros, @aRetErro)
+
+    If ! lRet .Or. Len(aRetErro) > 0
+        nCodErro := aRetErro[1][1]
+        cMsgErro := aRetErro[1][2]
+        SetRestFault(nCodErro,EncodeUtf8(cMsgErro))
+        Return .F.
+
+    EndIf
+
+Return lRet
+/*/{Protheus.doc} ADFAT28B
+    Marca registro como já processado.
+    @type  Static Function
+    @author Everson
+    @since 14/03/2022
+    @version 01
+/*/
+User Function ADFAT28C(aParametros, aRetErro)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cUuid     := ""
+    Local cMsgError := ""
+
+    If Len(aParametros) == 0
+        Aadd(aRetErro, {400, EncodeUtf8("Necessário informar o uuid do registro.")})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cUuid := Alltrim(cValToChar(aParametros[2]))
+
+    If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
+        Aadd(aRetErro, {400, cMsgError})
+
+    Else
+        lRet := .T.
+
+    EndIf
+
     RestArea(aArea)
 
 Return lRet

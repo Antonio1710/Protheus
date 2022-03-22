@@ -23,6 +23,7 @@
 	@history Tkt.64415 - JONATHAN CARVALHO - 26/11/2021 - Alteração no calculo do IPIC para somar o valor do frete junto.
 	@history Tkt.64992 - JONATHAN CARVALHO - 08/12/2021 - Incluido tratamento para não entrar na integração caso o PC for gerado pela integração com o SAG
 	@history Tkt.65032 - JONATHAN CARVALHO - 14/01/2021 - Retirado a comparação de quando for devolução a quantidade for igual somente se for maior
+	@history Tkt.68816 - ABEL BABINI - 28/02/2022 - Ajuste na fórmula do calculo do IPI para utilizar sempre o maior valor entre C7_FRETE e C7_VALFRE
 /*/
 User Function MT103PN     
 Local lRet := .T. // ABEL BABINI 23/04/2019 CHAMADO 047564 | FISCAL | ALLAN SANTOS | Impede a classificação de documentos com Recusa Adoro.
@@ -108,7 +109,11 @@ If l103Class .and. nCodigen = 0 //Tkt.63294 e Tkt.64992 - Ser for pedido integra
 			//Atendendo o ticket 63068 JONATHAN.CARVALHO 28/10/2021	
 			//CASE WHEN C7_FRETE > 0 THEN ROUND(((SC7.C7_TOTAL+SC7.C7_FRETE) * C7_IPI)/100,2) ELSE ROUND(((SC7.C7_TOTAL+SC7.C7_VALFRE) * C7_IPI)/100,2) END AS IPIPC,
 			//Atendendo o ticket 64415 valor do IPIC + Frete 
-			(((SC7.C7_TOTAL+SC7.C7_FRETE)*(SC7.C7_IPI/100))/SC7.C7_QUANT) AS IPIPC,
+			//Tkt.68816 - ABEL BABINI - 28/02/2022 - Ajuste na fórmula do calculo do IPI para utilizar sempre o maior valor entre C7_FRETE e C7_VALFRE
+			CASE 
+				WHEN SC7.C7_FRETE > SC7.C7_VALFRE THEN (((SC7.C7_TOTAL+SC7.C7_FRETE)*(SC7.C7_IPI/100))/SC7.C7_QUANT)
+				ELSE (((SC7.C7_TOTAL+SC7.C7_VALFRE)*(SC7.C7_IPI/100))/SC7.C7_QUANT)
+			END AS IPIPC,
 			(SC7.C7_FRETE) AS FRETEPC,
 			//Tkt.62460 - ABEL BABINI - 01/11/2021 - Valor da despesa causando erro. O Valor da despesa é rateado por item e deve ser totalizado para a comparação.
 			ISNULL((SELECT 

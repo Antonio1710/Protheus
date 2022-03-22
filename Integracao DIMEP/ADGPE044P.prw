@@ -18,6 +18,7 @@
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket  T.I    - Adriano Savoine - 02/09/2021 - Catraca sala dos motoristas para todos os perfis.
 	@history Ticket  65655  - Leonardo P. Monteiro - 22/12/2021 - Correção na obtenção do último número cadastrado.
+	@history Ticket  TI     - ADRIANO SAVOINE  - 11/03/2022 - Alterada a query para conseguir criar perfil de acesso 99999 para novos colaboradores.
 
 /*/
 USER FUNCTION ADGPE044P()
@@ -1091,7 +1092,7 @@ Static Function SqlFuncRM(cEmpresa,cCPF)
 	cQuery += "			INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] AS PFCOMPL WITH (NOLOCK)
 	cQuery += "				 ON PFCOMPL.CODCOLIGADA                                 = PFUNC.CODCOLIGADA
 	cQuery += "				AND PFCOMPL.CHAPA                                       = PFUNC.CHAPA
-	cQuery += "				AND CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,''0''))  > 0
+	//cQuery += "				AND CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,''0''))  > 0  Ticket TI - 11/03/2022 - ADRIANO SAVOINE
 	cQuery += "			  WHERE PFUNC.CODCOLIGADA                                   = ''"+cEmpresa+"''
 	cQuery += "			    AND CODTIPO                                            <> ''A''
 	cQuery += "				AND (PFUNC.DATADEMISSAO                                >= GETDATE() - 7

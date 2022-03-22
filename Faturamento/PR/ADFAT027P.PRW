@@ -17,7 +17,7 @@ Static xPula   := Chr(13) + Chr(10)
     @since 08/02/2022
     @version 01
     /*/
-User Function ADFAT027P() // U_ADFAT027P()  
+User Function ADFAT027P() // U_ADFAT027P()
 
     //Variáveis.
     Local oBrowse := FwLoadBrw("ADFAT027P")
@@ -40,9 +40,13 @@ Static Function BrowseDef()
     oBrowse:SetDescription(cTitulo)
     oBrowse:SetMenuDef("ADFAT027P")
 
-    oBrowse:AddLegend("ZIQ_PROCES = '2'", "BLUE", "Não enviado") 
-    oBrowse:AddLegend("ZIQ_PROCES = '1' .And. ZIQ_STATPR = '2'", "RED", "Enviado com erro") 
-    oBrowse:AddLegend("ZIQ_PROCES = '1' .And. ZIQ_STATPR = '1'", "GREEN", "Enviado") 
+    oBrowse:AddLegend("ZIQ_PROCES = '2'", "BLUE", "Não Processado") 
+
+    oBrowse:AddLegend("ZIQ_TIPO = 'S' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '2'", "RED", "Processado com erro") 
+    oBrowse:AddLegend("ZIQ_TIPO = 'S' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '1'", "GREEN", "Processado") 
+
+    oBrowse:AddLegend("ZIQ_TIPO = 'E' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '2'", "RED", "Processado com erro") 
+    oBrowse:AddLegend("ZIQ_TIPO = 'E' .And. ZIQ_PROCES = '1' .And. ZIQ_STATPR = '1'", "GREEN", "Processado") 
 
 Return oBrowse
 /*/{Protheus.doc} MenuDef
@@ -109,7 +113,7 @@ Static Function ViewDef()
 Return oView
 /*/{Protheus.doc} ADFAT27A
     Processa registros pendentes de integração vindos do barramento.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 10/02/2022
     @version 01
@@ -119,19 +123,19 @@ User Function ADFAT27A()
     //Variáveis.
     Local aArea := GetArea()
 
-    MsAguarde({|| U_ADFAT30A() }, "Aguarde", "Processando...", .F.)
+    MsAguarde({|| U_ADFAT29A() }, "Aguarde", "Processando...", .F.)
 
     RestArea(aArea)
 
 Return Nil
 /*/{Protheus.doc} ADFAT27B
     Gera registro para envio ao barramento.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 11/02/2022
     @version 01
 /*/
-User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
+User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora, cTipo, cChave, cEmpD, cFilD)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -139,9 +143,11 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
     Local oModel    := Nil 
     Local aError    := {} 
     Local cMsgError := ""
-    
-    Default lCabec  := .T.
-    Default lConvStr:= .T.
+
+    Default cChave  := ""
+    Default cTipo   := "S"
+    Default cEmpD   := cEmpAnt
+    Default cFilD   := cFilAnt
 
     If Empty(cDados)
         RestArea(aArea)
@@ -153,9 +159,9 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
     oModel:SetOperation(MODEL_OPERATION_INSERT)
     oModel:Activate()
 
-    oModel:SetValue("MD_MASTER", "ZIQ_TIPO", "S")
-    oModel:SetValue("MD_MASTER", "ZIQ_EMPRES", cEmpAnt)
-    oModel:SetValue("MD_MASTER", "ZIQ_FILINT", cFilAnt)
+    oModel:SetValue("MD_MASTER", "ZIQ_TIPO", cTipo)
+    oModel:SetValue("MD_MASTER", "ZIQ_EMPRES", cEmpD)
+    oModel:SetValue("MD_MASTER", "ZIQ_FILINT", cFilD)
     oModel:SetValue("MD_MASTER", "ZIQ_OPERAC", cOperacao)
     oModel:SetValue("MD_MASTER", "ZIQ_DTGRV", Date())
     oModel:SetValue("MD_MASTER", "ZIQ_HRGRV", Time())
@@ -166,6 +172,8 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
     oModel:SetValue("MD_MASTER", "ZIQ_DTORIG", SToD(cData))
     oModel:SetValue("MD_MASTER", "ZIQ_HRORIG", cHora)
     oModel:SetValue("MD_MASTER", "ZIQ_PROCES", "2")
+    oModel:SetValue("MD_MASTER", "ZIQ_HASH"  , SHA1(cDados))
+    oModel:SetValue("MD_MASTER", "ZIQ_CHAVE" , cChave)
 
     If oModel:VldData()
         oModel:CommitData()
@@ -191,12 +199,12 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora)
 Return lRet
 /*/{Protheus.doc} ADFAT27C
     Carrega dados de cadastro sem grid.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 11/02/2022
     @version 01
 /*/
-User Function ADFAT27C(cTabela, nIndex, cTopico, cOperacao, cChave, lCabec, lConvStr, lGerEnv, cId, cCmpI, cCmpEx)
+User Function ADFAT27C(cTabela, nIndex, cTopico, cOperacao, cChave, lCabec, lConvStr, lGerEnv, cId, cCmpI, cCmpEx, lDelOn)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -211,61 +219,54 @@ User Function ADFAT27C(cTabela, nIndex, cTopico, cOperacao, cChave, lCabec, lCon
     Default lConvStr:= .T.
     Default lGerEnv := .T.
     Default cId     := FWUUIDV1(.T.)
+    Default lDelOn  := .F.
 
-    If lCabec
+    If lCabec 
         cabecDados(@oJson, cData, cHora, cId, cTopico, cOperacao)
 
     EndIf
 
-    If cOperacao == "D"
+    If cOperacao == "D" .And. ! lDelOn
         SET DELETED off
 
     EndIf
 
-    DbSelectArea(cTabela)
-    (cTabela)->(DbSetOrder(nIndex))
-    If ! (cTabela)->( DbSeek( cChave ) )
+        DbSelectArea(cTabela)
+        (cTabela)->(DbSetOrder(nIndex))
+        If (cTabela)->( DbSeek( cChave ) )
 
-        If cOperacao == "D"
-            SET DELETED on
+            oJsonD := carDados(cTabela, aCampos, cCmpI, cCmpEx)
+
+            If lCabec
+                oJson['dados'] := oJsonD
+
+            Else
+                oJson := oJsonD
+
+            EndIf
+
+            If lConvStr
+                xDados := oJson:toJson() //Converte para string json.
+
+                If lGerEnv
+                    U_ADFAT27B(cOperacao, cTopico, cId, xDados, cData, cHora) //Gera registro para ser enviado ao barramento.
+
+                EndIf
+
+            Else
+                xDados := oJson
+
+            EndIf
+
+            FreeObj(oJson)
+            oJson := Nil
+
+            FreeObj(oJsonD)
+            oJsonD := Nil
 
         EndIf
 
-        RestArea(aArea)
-        Return xDados
-        
-    EndIf
-
-    oJsonD := carDados(cTabela, aCampos, cCmpI, cCmpEx)
-
-    If lCabec
-        oJson['dados'] := oJsonD
-
-    Else
-        oJson := oJsonD
-
-    EndIf
-
-    If lConvStr
-        xDados := oJson:toJson() //Converte para string json.
-
-        If lGerEnv
-            U_ADFAT27B(cOperacao, cTopico, cId, xDados, cData, cHora) //Gera registro para ser enviado ao barramento.
-
-        EndIf
-
-    Else
-        xDados := oJson
-
-    EndIf
-
-    FreeObj(oJson)
-    oJson := Nil
-
-    FreeObj(oJsonD)
-    oJsonD := Nil
-
-    If cOperacao == "D"
+    If cOperacao == "D" .And. ! lDelOn
         SET DELETED on
 
     EndIf
@@ -285,6 +286,8 @@ Static Function cabecDados(oJson, cData, cHora, cId, cTopico, cOperacao)
     //Variáveis.
 
     oJson['uuid'] := cId
+    oJson['empresa'] := cEmpAnt
+    oJson['filial'] := cFilAnt
     oJson['data'] := cData
     oJson['hora'] := cHora
     oJson['sistGera'] := "PROTHEUS"
@@ -317,7 +320,9 @@ Static Function carDados(cTabela, aCampos, cCmpI, cCmpEx)
 
         cCampo := Alltrim(cValToChar(aCampos[nAux][1]))
 
-        If cCampo == "D_E_L_E_T_" .Or. cCampo == "R_E_C_N_O_" .Or. cCampo == "R_E_C_D_E_L_" .Or. Empty(cCampo) .Or. cCampo == Nil
+        If cCampo == "D_E_L_E_T_" .Or. cCampo == "R_E_C_N_O_" .Or. cCampo == "R_E_C_D_E_L_" .Or.; 
+           Empty(cCampo) .Or. cCampo == Nil .Or. "USERGI" $cCampo .Or. "USERGA" $cCampo .Or.;
+           "USERLGA" $cCampo .Or. "USERLGI" $cCampo
             Loop
             
         EndIf
@@ -358,16 +363,17 @@ Static Function carDados(cTabela, aCampos, cCmpI, cCmpEx)
 Return oJsonD
 /*/{Protheus.doc} ADFAT27D
     Carrega dados de cadastro com grid.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 11/02/2022
     @version 01
 /*/
 User Function ADFAT27D(cTab1, nInd1, cChav1,;
-                       cTab2, nInd2, cChav2, cFilter,;
+                       cTab2, nInd2, cChav2, cCmpItem, cFilter,;
                        cTopico, cOperacao,;
                        lCabec, lConvStr, lGerEnv,;
-                       cCabModel2)
+                       cCabModel2,;
+                       cNomeItem)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -381,11 +387,13 @@ User Function ADFAT27D(cTab1, nInd1, cChav1,;
     Local aCamCab   := Nil
     Local aCamItem  := Nil
     Local nAux1     := 1
+    Local cChave2E  := ""
 
     Default lCabec      := .T.
     Default lConvStr    := .T.
     Default lGerEnv     := .T.
     Default cCabModel2  := ""
+    Default cNomeItem   := "items"
     
     oCabec := U_ADFAT27C(cTab1, nInd1, cTopico, cOperacao, cChav1, .T., .F., .F., cId, cCabModel2, Nil)
 
@@ -400,45 +408,42 @@ User Function ADFAT27D(cTab1, nInd1, cChav1,;
 
     EndIf
 
-    DbSelectArea(cTab2)
-    (cTab2)->(DbSetOrder(nInd2))
-    If ! (cTab2)->( DbSeek( cChav2 ) )
-        If cOperacao == "D"
-            SET DELETED on
+        DbSelectArea(cTab2)
+        (cTab2)->(DbSetOrder(nInd2))
+        If (cTab2)->( DbSeek( cChav2 ) )
+
+            (cTab2)->(DbSetFilter({|| &cFilter}, cFilter))
+            (cTab2)->( DbGoTop() )
+
+            While ! (cTab2)->(Eof())
+
+                cChave2E := cChav2 + (cTab2)->&(cCmpItem)
+
+                oItem := U_ADFAT27C(cTab2, nInd2, cTopico, cOperacao, cChave2E, .F., .F., .F., Nil, Nil, cCabModel2, .T.)
+                Aadd(aItens, oItem)
+
+                (cTab2)->(DbSkip())
+
+            End
+
+            (cTab2)->(DBClearFilter())
 
         EndIf
-
-        RestArea(aArea)
-        Return xDados
         
-    EndIf
-    
-	(cTab2)->(DbSetFilter({|| &cFilter}, cFilter))
-    (cTab2)->( DbGoTop() )
+        oCabec['dados'][cNomeItem] := aItens
 
-    While ! (cTab2)->(Eof())
+        If lConvStr
+            xDados := oCabec:toJson() //Converte para string json.
 
-        oItem := U_ADFAT27C(cTab2, nInd2, cTopico, cOperacao, cChav2, .F., .F., .F., Nil, Nil, cCabModel2)
-        Aadd(aItens, oItem)
+            If lGerEnv
+                U_ADFAT27B(cOperacao, cTopico, cId, xDados, cData, cHora) //Gera registro para ser enviado ao barramento.
 
-        (cTab2)->(DbSkip())
+            EndIf
 
-    End
-
-    oCabec['dados']['items'] := aItens
-
-    If lConvStr
-        xDados := oCabec:toJson() //Converte para string json.
-
-        If lGerEnv
-            U_ADFAT27B(cOperacao, cTopico, cId, xDados, cData, cHora) //Gera registro para ser enviado ao barramento.
+        Else
+            xDados := oCabec
 
         EndIf
-
-    Else
-        xDados := oCabec
-
-    EndIf
 
     If cOperacao == "D"
         SET DELETED on
