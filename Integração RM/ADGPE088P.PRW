@@ -12,6 +12,7 @@
 	@history Chamado T.I. - Leonardo P. Monteiro - 30/08/2021 - monitores.
 	@history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
 	@history Chamado 16833 - Leonardo P. Monteiro - 22/03/2022- Ajuste de error.log.
+	@history Chamado 16833 - Leonardo P. Monteiro - 22/03/2022- Ajustes e correções na rotina no decorrer dos testes reais.
 /*/
 
 Static cRetParam := Space(06)
@@ -290,7 +291,7 @@ STATIC FUNCTION MontDados(cZEDCod)
 	cQry += " CAST( (CASE ISNUMERIC(REPLACE(REPLACE(ZHL_CODIGO,'VM-',''),'VF-','')) WHEN 1 THEN REPLACE(REPLACE(ZHL_CODIGO,'VM-',''),'VF-','') ELSE '0' END) AS INT) ORDEM " + cEOL
 	cQry += " FROM "+ RetSqlName("ZHL") +" (NOLOCK) ZHL " + cEOL
 	cQry += " WHERE ZHL.D_E_L_E_T_='' AND ZHL.ZHL_MSBLQL !='1' AND ZHL_VESTIA='"+ ZI1->ZI1_SEXO +"' " + cEOL
-	cQry += " AND NOT EXISTS(SELECT * FROM "+ Retsqlname("ZI1") +" (NOLOCK) ZI1 WHERE ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO ) " + cEOL
+	cQry += " AND NOT EXISTS(SELECT * FROM "+ Retsqlname("ZI1") +" (NOLOCK) ZI1 WHERE D_E_L_E_T_='' AND ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO ) " + cEOL
 	cQry += " ORDER BY ZHL.ZHL_FILIAL, ORDEM; " + cEOL
 
 	TcQuery cQry alias "QRY" new
