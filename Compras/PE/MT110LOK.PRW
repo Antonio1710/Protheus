@@ -16,12 +16,10 @@
 	@history ticket  8582 - Fernando Macieira - 08/02/2021 - Replicar OP na próxima linha
 	@history ticket 10573 - Fernando Macieira - 08/03/2021 - Ponto de Correção - Manutenção de Ativos
 	@history ticket 69712 - Fernando Macieira - 15/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+	@history ticket TI    - Fernando Macieira - 22/03/2022 - Forçar publicação
 /*/
 User Function MT110LOK()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Define as variáveis utilizadas na rotina                                                ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aAreaAtu1	:= GetArea()
 	Local lRetorno	:= .T.
 	Local aAprov	:= {}
