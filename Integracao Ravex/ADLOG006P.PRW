@@ -15,10 +15,11 @@
 	@history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados) + Function ChkDupSZX (via query pois já existe seek) + Inclusão PadR
 	@history ticket 68820 - Fernando Macieira - 16/03/2022 - Novo campo ZD_BLQRAVE que será utilizado no job ADLOG006P (integrador RAVEX)
+	@history ticket TI    - Fernando Macieira - 23/03/2022 - Aumento tempo consulta retroativa e inibição da variável nCont3
 /*/
 User Function ADLOG006P()
 
-	Local nCont3
+	//Local nCont3 // @history ticket TI    - Fernando Macieira - 23/03/2022 - Aumento tempo consulta retroativa e inibição da variável nCont3
 
 	Private nCont3 := 0
 
@@ -93,7 +94,7 @@ STATIC FUNCTION RETORNAVIAGEM()
 	oWs:CCNPJEMISSOR       := '60037058000301'
 	oWs:LVIAGEMFECHADAS    := IIF(nCont3 == 1,.F.,.T.) 
 	oWs:LVIAGENSCANCELADAS := .F.
-	oWs:NPERIODOHORAS      := 24 // debug - voltar!
+	oWs:NPERIODOHORAS      := 72 // 24 // debug - voltar! // @history ticket TI    - Fernando Macieira - 23/03/2022 - Aumento tempo consulta retroativa e inibição da variável nCont3
 
 	If oWs:RetornarAnomalias()
 	    // autenticação ok
@@ -142,7 +143,8 @@ STATIC FUNCTION IMPORTAXML()
 				// @history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 				// debug - inibir
 				/*
-				If AllTrim(oResp:OWSANOMALIA[nCont]:CNUMERONF) == "2492557"
+				If AllTrim(oResp:OWSANOMALIA[nCont]:CNUMERONF) == "2510865" .OR.;
+				   AllTrim(oResp:OWSANOMALIA[nCont]:CNUMERONF) == "2510451"
 					lDebug := .t.
 				Else
 					Loop
