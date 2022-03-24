@@ -44,7 +44,7 @@
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
-	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento.
+	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 /*/
 
 User Function M460FIM()
