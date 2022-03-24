@@ -12,7 +12,7 @@
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
     @history Chamado 16833 - Leonardo P. Monteiro - 22/03/2022- Ajustes e correções na rotina no decorrer dos testes reais.
-    U_ADGPE087P()
+    @history Chamado 16833 - Leonardo P. Monteiro - 23/03/2022- Correção de error.log seleção em bloco de um grid vazio.
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
@@ -1357,43 +1357,58 @@ Static Function fDblClk(oBMark, nMarkID, nLin)
     Default nLin    := 0
     
     IF nMarkID == CONSULTA_UNIF_ENTREGA
-        nMaxArr := Len(aUnEnDad)
-        nLin    := iif(nLin > 0, nLin, oBUnEnt:At())
-        
-        lRet := IIf(aUnEnDad[nLin, nUnEnCam], .F., .T.)
-        aUnEnDad[nLin, nUnEnCam]    := lRet
-
-        
-        //cNumKit := Alltrim(aUnEnDad[nLin, nPosKit])
-        
-        /*
-        for nA := 1 to nMaxArr
-            
-            if nA != nLin
-                if lRet
-                    if aLLTRIM(aUnEnDad[nA, nPosKit]) == cNumKit
-                        aUnEnDad[nA, nUnEnCam]    := lRet
-                    else
-                        aUnEnDad[nA, nUnEnCam]    := !lRet
-                    endif
-                else
-                    aUnEnDad[nA, nUnEnCam]    := lRet    
-                endif
-            endif
-        next nA
-        */
-
-    ElseIF nMarkID == CONSULTA_UNIF_DEVOLUCAO
-        nLin := iif(nLin > 0, nLin, oBUnDev:At())
-
-        lRet := IIf(aUnDeDad[nLin, nUnDeCam], .F., .T.)
-        aUnDeDad[nLin, nUnDeCam]    := lRet
     
-    ElseIF nMarkID == CONSULTA_ARMA_DEVOLUCAO
-        nLin := iif(nLin > 0, nLin, oBArDev:At())
+        nMaxArr := Len(aUnEnDad)
+        
+        if nMaxArr > 0
+            
+            nLin    := iif(nLin > 0, nLin, oBUnEnt:At())
+            
+            lRet := IIf(aUnEnDad[nLin, nUnEnCam], .F., .T.)
+            aUnEnDad[nLin, nUnEnCam]    := lRet
 
-        lRet := IIf(aArDeDad[nLin, nArDeCam], .F., .T.)
-        aArDeDad[nLin, nArDeCam]    := lRet
+            
+            //cNumKit := Alltrim(aUnEnDad[nLin, nPosKit])
+            
+            /*
+            for nA := 1 to nMaxArr
+                
+                if nA != nLin
+                    if lRet
+                        if aLLTRIM(aUnEnDad[nA, nPosKit]) == cNumKit
+                            aUnEnDad[nA, nUnEnCam]    := lRet
+                        else
+                            aUnEnDad[nA, nUnEnCam]    := !lRet
+                        endif
+                    else
+                        aUnEnDad[nA, nUnEnCam]    := lRet    
+                    endif
+                endif
+            next nA
+            */
+        endif
+    ElseIF nMarkID == CONSULTA_UNIF_DEVOLUCAO
+        nMaxArr := Len(aUnDeDad)
+        
+        if nMaxArr > 0
+
+            nLin := iif(nLin > 0, nLin, oBUnDev:At())
+
+            lRet := IIf(aUnDeDad[nLin, nUnDeCam], .F., .T.)
+            aUnDeDad[nLin, nUnDeCam]    := lRet
+
+        endif
+    ElseIF nMarkID == CONSULTA_ARMA_DEVOLUCAO
+        nMaxArr := Len(aArDeDad)
+        
+        if nMaxArr > 0
+
+            nLin := iif(nLin > 0, nLin, oBArDev:At())
+
+            lRet := IIf(aArDeDad[nLin, nArDeCam], .F., .T.)
+            aArDeDad[nLin, nArDeCam]    := lRet
+
+        endif
     ENDIF
 
     oBUnEnt:refresh()
