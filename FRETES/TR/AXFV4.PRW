@@ -20,12 +20,14 @@
 	@history ticket 18125  - 10/08/2021 - ADRIANO SAVOINE - Bloqueio de Exclusão e Bloqueio do campo em modo de edição.
 	@history ticket 61154  - 05/10/2021 - SIGOLI - Feito tratamento para mostrar o erro na tela de usuario, para quando ocorrer erro do lado do edata, apreentar na tela. 
 	@history ticket 65889  	- Leonardo P. Monteiro - 05/01/2022 - Adição de variável para indicar o LinkedServer.
+	@history Everson, 18/03/2022, Chamado 18465. Envio de informações ao barramento.
+	@history Everson, 24/03/2022, Chamado 18465. Nova rotina para cadastro de caixas de transporte.
 /*/
 
 User Function AXFV4() 
 
 	Local aRotAdic   :={}
-	Local cUsrSAG    := Alltrim(GetMv("MV_#VEISAG",,""))
+// Local cUsrSAG    := Alltrim(GetMv("MV_#VEISAG",,""))
 	Local aButtons   := {}
 	Local bNoTTs	 := {|| fInteDa()}
 	Private cLinkSe  := Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Alltrim(SuperGetMv("MV_#IEDATA",,"[LNKMIMS].[SMART].[dbo]"))
@@ -38,7 +40,7 @@ User Function AXFV4()
 	//aadd(aRotAdic,{ "* Env.Edata"   ,"u_FV4EDATA()", 0 , 7 }) 
 
 	//Everson - 21/02/2020. Chamado 053926.
-	If cEmpAnt == "01" .And. cFilAnt == "03" .And. __cUserId $cUsrSAG //Everson - 26/02/2020. Chamado 053926.
+	If cEmpAnt == "01" .And. cFilAnt  $"03/05" //Everson - 26/02/2020. Chamado 053926. //Everson, 18/10/2020, Chamado 18465.
 
 		Aadd(aButtons,{"Cad Caixas","U_FV4Caixas()","Cad Caixas","Cad Caixas"})
 		Aadd(aButtons,{"Tag Fixa"  ,"U_FV4TGSG()"  ,"Tag Fixa","Tag Fixa"})
@@ -63,6 +65,9 @@ Static Function fInteDa()
 
 	IF INCLUI .OR. ALTERA
 		MsAguarde({|| u_FV4EDATA() },"Aguarde","Integrando registro no eData, aguarde...")
+
+		grvBarr(Iif(INCLUI, "I", "A"), ZV4->ZV4_PLACA) //Everson, 18/10/2020, Chamado 18465.
+
 	ENDIF
 
 return .T.
@@ -678,38 +683,48 @@ Return Nil
 
 User Function FV4Caixas()
 
-	Local aArea 	:= GetArea()
-	Local oCadCx	:= Nil
-	Local cTitulo	:= "Cadastro de Caixas"
-	Local aHCaixas	:= {}
-	Local oCaixas	:= Nil
-	Local aColsCx	:= {}
-	Local aAltCx	:= {"NCX","CAP","CAPC"}
-	Local oFechar	:= Nil
+	//Variáveis.
+	Local aArea := GetArea()
 
-	oCadCx		     := MsDialog():Create()
-	oCadCx:cName     := "oCadCx"
-	oCadCx:cCaption  := cTitulo
-	oCadCx:nLeft     := 34
-	oCadCx:nTop      := 222
-	oCadCx:nWidth    := 530
-	oCadCx:nHeight   := 450
-	oCadCx:lShowHint := .F.
-	oCadCx:lCentered := .T.
-	
-	aAdd(aHCaixas,{"Num Cx"    ,"NCX" ,"@E 99"     ,02,0,"","","N","",""})
-	aAdd(aHCaixas,{"Capacidade","CAPC","@E 999999" ,06,0,"","","N","",""})	
-	
-	oCaixas := MsNewGetDados():New(000,000,180,265,GD_INSERT+GD_UPDATE+GD_DELETE,"Allwaystrue()","Allwaystrue()","",aAltCx,,15,Nil,Nil,Nil,oCadCx,aHCaixas,@aColsCx)
+	//Everson, 24/03/2022, Chamado 18465.
+	If ALTERA
+		U_ADFAT37A(M->ZV4_PLACA)
 
-	TButton():New(190,170,"Ok",oCadCx,{|| MsAguarde({|| grvComp(oCaixas,aHCaixas,oCadCx) },"Aguarde","Salvando dados...") },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
-	
-	oFechar	 := TButton():New(190,215,"Fechar",oCadCx,{|| oCadCx:End() },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
-	oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
-
-	oCadCx:Activate(,,,.T.,{||.T.},,{|| MsAguarde({|| carrDados(oCaixas,aHCaixas) },"Aguarde","Carregando dados...")  })
+	EndIf
 
 	RestArea(aArea)
+	
+	// Local oCadCx	:= Nil
+	// Local cTitulo	:= "Cadastro de Caixas"
+	// Local aHCaixas	:= {}
+	// Local oCaixas	:= Nil
+	// Local aColsCx	:= {}
+	// Local aAltCx	:= {"NCX","CAP","CAPC"}
+	// Local oFechar	:= Nil
+
+	// oCadCx		     := MsDialog():Create()
+	// oCadCx:cName     := "oCadCx"
+	// oCadCx:cCaption  := cTitulo
+	// oCadCx:nLeft     := 34
+	// oCadCx:nTop      := 222
+	// oCadCx:nWidth    := 530
+	// oCadCx:nHeight   := 450
+	// oCadCx:lShowHint := .F.
+	// oCadCx:lCentered := .T.
+	
+	// aAdd(aHCaixas,{"Num Cx"    ,"NCX" ,"@E 99"     ,02,0,"","","N","",""})
+	// aAdd(aHCaixas,{"Capacidade","CAPC","@E 999999" ,06,0,"","","N","",""})	
+	
+	// oCaixas := MsNewGetDados():New(000,000,180,265,GD_INSERT+GD_UPDATE+GD_DELETE,"Allwaystrue()","Allwaystrue()","",aAltCx,,15,Nil,Nil,Nil,oCadCx,aHCaixas,@aColsCx)
+
+	// TButton():New(190,170,"Ok",oCadCx,{|| MsAguarde({|| grvComp(oCaixas,aHCaixas,oCadCx) },"Aguarde","Salvando dados...") },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
+	
+	// oFechar	 := TButton():New(190,215,"Fechar",oCadCx,{|| oCadCx:End() },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
+	// oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
+
+	// oCadCx:Activate(,,,.T.,{||.T.},,{|| MsAguarde({|| carrDados(oCaixas,aHCaixas) },"Aguarde","Carregando dados...")  })
+
+	// RestArea(aArea)
 
 Return Nil
 
@@ -925,3 +940,24 @@ STATIC FUNCTION SqlMotorista(cDoc)
 	TRC->(DbCloseArea())
 
 RETURN lRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 18/03/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local cFilter  := " ZIX_FILIAL ='" + FWxFilial("ZIX") + "' .And. ZIX_PLACA = '" + cNumero + "' "
+
+	U_ADFAT27D("ZV4", 1, FWxFilial("ZV4") + cNumero,;
+			   "ZIX", 1, FWxFilial("ZIX") + cNumero, "ZIX_NUMERO",cFilter,;
+			   "cadastro_de_veiculos_protheus", cOperacao,;
+			   .T., .T.,.T., Nil, "caixas")
+
+    RestArea(aArea)
+
+Return Nil

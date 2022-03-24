@@ -78,6 +78,7 @@ User Function ADFAT29B()
     Local cRoteiro  := ""
     Local nToleran  := 0
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    Local cOperac   := ""
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -114,9 +115,10 @@ User Function ADFAT29B()
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
         
+        cOperac   := (cAliasAux)->ZIQ_OPERAC 
         cMsgError := ""
-        cJson := ZIQ->ZIQ_DADOS
-        oJson := getJson(cJson)
+        cJson     := ZIQ->ZIQ_DADOS
+        oJson     := getJson(cJson)
 
         If ValType(oJson) == "U"
             cMsgError := "Não foi possível converter a string para objeto json."
@@ -145,7 +147,7 @@ User Function ADFAT29B()
 
         If ! ZIM->(DbSeek( FWxFilial("ZIM") + cProdSAG ))
 
-            If (cAliasAux)->ZIQ_OPERAC == "A" .Or. (cAliasAux)->ZIQ_OPERAC == "D"
+            If cOperac == "D"
                 cMsgError := "Não foi possível localizar o produto " + cProdSAG + "."
                 U_ADFAT29D(cId, "2", cMsgError)
                 Help(Nil, Nil, "Função ADFAT29B(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -154,14 +156,15 @@ User Function ADFAT29B()
 
             EndIf
 
+            If cOperac == "A"
+                cOperac := "I"
+
+            EndIf
+
         Else
 
-            If (cAliasAux)->ZIQ_OPERAC == "I"
-                cMsgError := "Produto já existe no protheus " + cProdSAG + "."
-                U_ADFAT29D(cId, "2", cMsgError)
-                Help(Nil, Nil, "Função ADFAT29B(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-                (cAliasAux)->(DbSkip())
-                Loop
+            If cOperac == "I"
+                cOperac := "A"
 
             EndIf
 
@@ -178,13 +181,13 @@ User Function ADFAT29B()
 
         oModel := FwLoadModel("ADFAT020P")
 
-        If (cAliasAux)->ZIQ_OPERAC == "I"
+        If cOperac == "I"
             oModel:SetOperation(MODEL_OPERATION_INSERT)
 
-        ElseIf (cAliasAux)->ZIQ_OPERAC == "A"
+        ElseIf cOperac == "A"
             oModel:SetOperation(MODEL_OPERATION_UPDATE)
 
-        ElseIf (cAliasAux)->ZIQ_OPERAC == "D"
+        ElseIf cOperac == "D"
             oModel:SetOperation(MODEL_OPERATION_DELETE)
 
         Else
@@ -196,7 +199,7 @@ User Function ADFAT29B()
 
         oModel:Activate()
 
-        If (cAliasAux)->ZIQ_OPERAC == "I" .Or. (cAliasAux)->ZIQ_OPERAC == "A"
+        If cOperac == "I" .Or. cOperac == "A"
             oModel:SetValue("MD_MASTER", "ZIM_PRDSAG", cProdSAG)
             oModel:SetValue("MD_MASTER", "ZIM_DESSAG", cDescSAG)
             oModel:SetValue("MD_MASTER", "ZIM_PRDPRO", cProdProt)
@@ -222,7 +225,7 @@ User Function ADFAT29B()
             oModel:Destroy()
             oModel := Nil
 
-            If ! Empty(cRoteiro) .And. ! U_ADFAT29G((cAliasAux)->ZIQ_OPERAC, cRoteiro, cProdSAG, nToleran, "PC", @cMsgError)
+            If ! Empty(cRoteiro) .And. ! U_ADFAT29G(cOperac, cRoteiro, cProdSAG, nToleran, "PC", @cMsgError)
                 DisarmTransaction()
                 Break
 
@@ -283,6 +286,7 @@ User Function ADFAT29C()
     Local oModel    := Nil
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
     Local cDesPrd   := ""
+    Local cOperac   := ""
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -319,6 +323,7 @@ User Function ADFAT29C()
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
         
+        cOperac   := (cAliasAux)->ZIQ_OPERAC 
         cMsgError := ""
         cJson := ZIQ->ZIQ_DADOS
         oJson := getJson(cJson)
@@ -357,7 +362,7 @@ User Function ADFAT29C()
 
         If ! ZI8->(DbSeek( FWxFilial("ZI8") + cCdLote ))
 
-            If (cAliasAux)->ZIQ_OPERAC == "A" .Or. (cAliasAux)->ZIQ_OPERAC == "D"
+            If cOperac == "D"
                 cMsgError := "Não foi possível localizar o lote " + cDesLote + "."
                 U_ADFAT29D(cId, "2", cMsgError)
                 Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -366,14 +371,15 @@ User Function ADFAT29C()
 
             EndIf
 
+            If cOperac == "A"
+                cOperac := "I"
+
+            EndIf
+
         Else
 
-            If (cAliasAux)->ZIQ_OPERAC == "I"
-                cMsgError := "Lote já existe no protheus " + cDesLote + "."
-                U_ADFAT29D(cId, "2", cMsgError)
-                Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-                (cAliasAux)->(DbSkip())
-                Loop
+            If cOperac == "I"
+                cOperac := "A"
 
             EndIf
 
@@ -398,13 +404,13 @@ User Function ADFAT29C()
 
         oModel := FwLoadModel("ADFAT018P")
 
-        If (cAliasAux)->ZIQ_OPERAC == "I"
+        If cOperac == "I"
             oModel:SetOperation(MODEL_OPERATION_INSERT)
 
-        ElseIf (cAliasAux)->ZIQ_OPERAC == "A"
+        ElseIf cOperac == "A"
             oModel:SetOperation(MODEL_OPERATION_UPDATE)
 
-        ElseIf (cAliasAux)->ZIQ_OPERAC == "D"
+        ElseIf cOperac == "D"
             oModel:SetOperation(MODEL_OPERATION_DELETE)
 
         Else
@@ -416,7 +422,7 @@ User Function ADFAT29C()
 
         oModel:Activate()
 
-        If (cAliasAux)->ZIQ_OPERAC == "I" .Or. (cAliasAux)->ZIQ_OPERAC == "A"
+        If cOperac == "I" .Or. cOperac == "A"
             oModel:SetValue("MD_MASTER", "ZI8_FILIAL", FWxFilial("ZI8"))
             oModel:SetValue("MD_MASTER", "ZI8_CDLOTE", cCdLote)
             oModel:SetValue("MD_MASTER", "ZI8_DESLOT", cDesLote)
@@ -502,6 +508,7 @@ User Function ADFAT29E()
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
     Local cTipo     := ""
     Local cCliForn  := ""
+    lOCAL cOperac   := ""
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -542,6 +549,7 @@ User Function ADFAT29E()
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
         
+        cOperac   := (cAliasAux)->ZIQ_OPERAC
         cCliForn  := ""
         cMsgError := ""
         cJson := ZIQ->ZIQ_DADOS
@@ -577,7 +585,7 @@ User Function ADFAT29E()
 
         If ! ZIS->(DbSeek( FWxFilial("ZIS") + cCodGrj ))
 
-            If (cAliasAux)->ZIQ_OPERAC == "A" .Or. (cAliasAux)->ZIQ_OPERAC == "D"
+            If cOperac == "D"
                 cMsgError := "Não foi possível localizar o lote " + cDCodGrj + "."
                 U_ADFAT29D(cId, "2", cMsgError)
                 Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -586,14 +594,15 @@ User Function ADFAT29E()
 
             EndIf
 
+            If cOperac == "A"
+                cOperac := "I"
+
+            EndIf
+
         Else
 
-            If (cAliasAux)->ZIQ_OPERAC == "I"
-                cMsgError := "Lote já existe no protheus " + cDCodGrj + "."
-                U_ADFAT29D(cId, "2", cMsgError)
-                Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-                (cAliasAux)->(DbSkip())
-                Loop
+            If cOperac == "I"
+                cOperac := "A"
 
             EndIf
 
@@ -622,13 +631,13 @@ User Function ADFAT29E()
 
             oModel := FwLoadModel("ADLFV022P")
 
-            If (cAliasAux)->ZIQ_OPERAC == "I"
+            If cOperac == "I"
                 oModel:SetOperation(MODEL_OPERATION_INSERT)
 
-            ElseIf (cAliasAux)->ZIQ_OPERAC == "A"
+            ElseIf cOperac == "A"
                 oModel:SetOperation(MODEL_OPERATION_UPDATE)
 
-            ElseIf (cAliasAux)->ZIQ_OPERAC == "D"
+            ElseIf cOperac == "D"
                 oModel:SetOperation(MODEL_OPERATION_DELETE)
 
             Else
@@ -640,7 +649,7 @@ User Function ADFAT29E()
 
             oModel:Activate()
 
-            If (cAliasAux)->ZIQ_OPERAC == "I" .Or. (cAliasAux)->ZIQ_OPERAC == "A"
+            If cOperac == "I" .Or. cOperac == "A"
                 oModel:SetValue("MD_MASTER", "ZIS_FILIAL" , FWxFilial("ZIS"))
                 oModel:SetValue("MD_MASTER", "ZIS_NUMSAG" , cCodGrj)
                 oModel:SetValue("MD_MASTER", "ZIS_DESC"   , cDCodGrj)
