@@ -1993,7 +1993,7 @@ User Function M410STTS()
 	endif
 
 	//Everson - 17/03/2022. Chamado 18465. //Everson - 24/03/2022. Chamado 18465.
-	If ! Empty(Alltrim(cValToChar(SC5->C5_XORDPES))) .Or. chkOrdSC6(SC5->C5_NUM)
+	If ! Empty(Alltrim(cValToChar(SC5->C5_XORDPES))) .Or. chkOrdSC6(_nOper, SC5->C5_NUM)
 		grvBarr(_nOper, SC5->C5_NUM)
 
 	EndIf
@@ -4638,7 +4638,7 @@ Return()
     @since 24/03/2022
     @version 01
 /*/
-Static Function chkOrdSC6(cNumPed)
+Static Function chkOrdSC6(_nOper, cNumPed)
 
 	//Variáveis.
 	Local aArea := GetArea()
@@ -4653,7 +4653,11 @@ Static Function chkOrdSC6(cNumPed)
 	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "' " 
 	cQuery += " AND C6_NUM = '" + cNumPed + "' " 
 	cQuery += " AND C6_XORDPES <> '' " 
-	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+
+	If _nOper <> 5
+		cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+
+	EndIf
 
 	If Select("D_VLDORD") > 0
 		D_VLDORD->(DbCloseArea())
