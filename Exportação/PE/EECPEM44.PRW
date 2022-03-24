@@ -79,7 +79,7 @@ User Function EECPEM44()
     if nMsnEtq <= 10
         for nA := 1 to nMsnEtq
             if Len(Alltrim(aMsnEtq[nA])) > 35
-                MsgAlert("[EECPEM44-05] - O campo de emissão da etiqueta contém uma linha ("+ Cvaltochar(nA) +") como mais de 30 caracteres.")
+                MsgAlert("[EECPEM44-05] - O campo de emissão da etiqueta contém uma linha ("+ Cvaltochar(nA) +") como mais de 35 caracteres.")
                 lRet := .F.
             endif
         next nA
