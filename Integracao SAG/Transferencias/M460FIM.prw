@@ -43,6 +43,8 @@
 	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
+	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
+	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento.
 /*/
 
 User Function M460FIM()
@@ -127,7 +129,7 @@ User Function M460FIM()
 	//
 	If Alltrim(cEmpAnt) == "01"
 
-		grvBarr("I", SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA, SF2->F2_DOC,SF2->F2_SERIE) //Everson, 22/03/2022, Chamado 18465.
+		grvBarr("I", SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA, SF2->F2_DOC,SF2->F2_SERIE) //Everson, 22/03/2022, Chamado 18465. //Everson, 24/03/2022, Chamado 18465.
 	
 		fGrvVend2()  //19/10/16 - preenche campo vendedor 2 
 
