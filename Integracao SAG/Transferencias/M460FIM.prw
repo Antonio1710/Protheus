@@ -1601,6 +1601,7 @@ Static Function chkOrd(cNF, cSerie)
 	cQuery += " F2_FILIAL = '" + FWxFilial("SF2") + "' " 
 	cQuery += " AND F2_DOC = '" + cNF + "' " 
 	cQuery += " AND F2_SERIE = '" + cSerie + "' " 
+	cQuery += " AND C5_XORDPES <> '' " 
 	cQuery += " AND SF2.D_E_L_E_T_ = '' " 
 	cQuery += " AND SD2.D_E_L_E_T_ = '' " 
 	cQuery += " AND SC5.D_E_L_E_T_ = '' " 
