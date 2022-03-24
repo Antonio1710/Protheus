@@ -101,6 +101,7 @@ Static nTipoFrt	:= 0
 	@history 21/09/2021, Everson, Ch:40420  - Tratamento para quando houver deadlock no fechamento de registros.
 	@history 04/11/2021, Everson, Ch:63137  - Tratamento para não permitir alteração e exclusão de registro por usuário diferente que inseriu o registro.
 	@history 05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
+	@history 24/03/2022  Sigoli Tkt 70153   - Declaração de variavel OK na função principal
 /*/
 User Function ADLOG040P()
 
@@ -108,8 +109,11 @@ User Function ADLOG040P()
 	Local oBrowse	:= Nil
 	Local cFilSec	:= Alltrim(cValToChar(FWxFilial("ZFA")))
 	Local cTpFrtSec	:= ""
+	PRIVATE OK := ""
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Realiza manutenção em movimento de frete gerado.')
+
+
 
 	//Everson - 05/11/2019. Chamado 029058.
 	If ! Pergunte("ADLOG040P",.T.)
