@@ -28,7 +28,7 @@
 	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
 	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validação de quantidade liberada para cópia de pedido.
 	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validação de quantidade liberada para cópia de pedido. 
-	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.. 
 /*/
 
 User Function MT410TOK()
@@ -140,10 +140,16 @@ User Function MT410TOK()
 	Private nUM	        := aScan(aHeader, {|x| ALLTRIM(x[2]) == "C6_UM" })
 	Private _nLocaliz	:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCALIZ"  })
 	Private _nLocal		:= ASCAN(aHeader, {|x| ALLTRIM(x[2]) =="C6_LOCAL"  })
-	
-	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
-	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
+	Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
+
+	//Everson - 24/03/2022. Chamado 018465. Pesagem.
+	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA .And. ! StaticCall(A410EXC, vldOrdSa, SC5->C5_NUM)
+		RestArea(aArea)
+		Return .F.
+
+	EndIf 
+	//
 
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
@@ -152,7 +158,7 @@ User Function MT410TOK()
 	// Consulta tipo cliente do cadastro de clientes       //quando venda - acrescentado por Adriana em 07/04/2017
 	if M->C5_TIPO = "N"
 		cQuery :="SELECT A1_TIPO, A1_SIMPNAC "
-		cQuery +="FROM  "+RetSqlName("SA1")+ " WITH (NOLOCK)  "
+		cQuery +="FROM  "+RetSqlName("SA1")+ "  "
 		cQuery +="WHERE "
 		cQuery +=" A1_COD = '"+M->C5_CLIENTE+"' AND A1_LOJA = '"+M->C5_LOJACLI+"' "
 		cQuery +=" AND D_E_L_E_T_ = '' "
@@ -169,7 +175,7 @@ User Function MT410TOK()
 	//
 
 	if _nOpc = 1 // Exclusão
-		//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+		Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 		return .t.
 	endif
 
@@ -198,7 +204,7 @@ User Function MT410TOK()
 	
 	//Mauricio - 06/10/2017 - Chamado 037330
 	//Inicio
-	if !lSfInt .And. Alltrim(cEmpAnt) $ "01/02" .AND. (INCLUI .OR. ALTERA)
+	if !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. Alltrim(cEmpAnt) $ "01/02" .AND. (INCLUI .OR. ALTERA)
 		_cPedAt   := _cNumPed
 		_lrfat    := .F.
 		_lTresPed := .F.
@@ -222,7 +228,7 @@ User Function MT410TOK()
 							''    , ;
 							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'})
 
 						ELSE
@@ -241,7 +247,7 @@ User Function MT410TOK()
 							''    , ;
 							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'})
 						ELSE
 							ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'))
@@ -280,7 +286,7 @@ User Function MT410TOK()
 							''    , ;
 							'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
 							ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -296,7 +302,7 @@ User Function MT410TOK()
 							''    , ;
 							'Refaturamento!! Ja existem o maximo de 3 pedidos vinculados ao pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Refaturamento!! Ja existem o maximo de 3 pedidos vinculados ao pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
 							ApMsgInfo(OemToAnsi('Refaturamento!! Ja existem o maximo de 3 pedidos vinculados ao pedido original '+_PedRefDe+'. Verifique!!'))
@@ -320,7 +326,7 @@ User Function MT410TOK()
 									''    , ;
 									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
 									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -335,7 +341,7 @@ User Function MT410TOK()
 										''    , ;
 										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
-									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+									ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
 										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -357,7 +363,7 @@ User Function MT410TOK()
 									''    , ;
 									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
 									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -372,7 +378,7 @@ User Function MT410TOK()
 										''    , ;
 										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
-									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+									ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
 										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -416,7 +422,7 @@ User Function MT410TOK()
 							''    , ;
 							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'})
 
 						ELSE
@@ -435,7 +441,7 @@ User Function MT410TOK()
 							''    , ;
 							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'})
 						ELSE
 							ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'))
@@ -475,7 +481,7 @@ User Function MT410TOK()
 							''    , ;
 							'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
 							ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -496,7 +502,7 @@ User Function MT410TOK()
 									''    , ;
 									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
 									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -511,7 +517,7 @@ User Function MT410TOK()
 										''    , ;
 										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
-									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+									ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
 										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -533,7 +539,7 @@ User Function MT410TOK()
 									''    , ;
 									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
 									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -548,7 +554,7 @@ User Function MT410TOK()
 										''    , ;
 										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
-									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+									ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
 										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -578,7 +584,7 @@ User Function MT410TOK()
 						''    , ;
 						'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!' ,;
 						cVendedor})
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'})
 					ELSE
 						ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'))
@@ -616,7 +622,7 @@ User Function MT410TOK()
 						''    , ;
 						'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 						cVendedor})
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
 					ELSE
 						ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -633,7 +639,7 @@ User Function MT410TOK()
 						''    , ;
 						'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é menor do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 						cVendedor})
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é menor do que no pedido original '+_PedRefDe+'. Verifique!!'})
 					ELSE
 						ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é menor do que no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -652,7 +658,7 @@ User Function MT410TOK()
 						''    , ;
 						'Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'é menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!' ,;
 						cVendedor})
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'é menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!'})
 					ELSE
 						ApMsgInfo(OemToAnsi('Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'é menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!'))
@@ -679,7 +685,7 @@ User Function MT410TOK()
 				''    , ;
 				'Refaturamento!! Ha produtos do pedido original que não constam nos pedidos de refaturamento. Verifique!!' ,;
 				cVendedor})
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE'). Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 				Aadd(aPedidos,{'Refaturamento!! Ha produtos do pedido original que não constam nos pedidos de refaturamento. Verifique!!'})
 				ELSE
 				ApMsgInfo(OemToAnsi('Refaturamento!! Ha produtos do pedido original que não constam nos pedidos de refaturamento. Verifique!!'))
@@ -700,7 +706,7 @@ User Function MT410TOK()
 							''    , ;
 							'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
 							ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -715,7 +721,7 @@ User Function MT410TOK()
 								''    , ;
 								'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 								cVendedor})
-							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+							ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 								Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 							ELSE
 								ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
@@ -732,7 +738,7 @@ User Function MT410TOK()
 	nTotItem	:= Len(aCols)
 
 	//Inicio - Sigoli 10/03/2017 Chamado: 034029
-	If !lSfInt .And. Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02"
+	If IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02"
 		If nTotItem > 0
 			For _T1 := 1 to nTotItem
 
@@ -824,7 +830,7 @@ User Function MT410TOK()
 			'Atencao !! Cliente de entrega divergente ' + M->C5_CLIENT + '. Verifique!!' ,;
 			cVendedor})
 
-		ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+		ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 			Aadd(aPedidos,{'Atencao !! Cliente de entrega divergente ' + M->C5_CLIENT + '. Verifique!!'})
 
 		ELSE
@@ -836,7 +842,7 @@ User Function MT410TOK()
 	EndIf
 	//
 
-	If !lSfInt .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista.  //incluida filial 07 em 13/08/14
+	If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista.  //incluida filial 07 em 13/08/14
 		// Mauricio 14/08/15 - tratamento para que pedidos de venda FOB
 		// nao entrem na validação de pedido minimo.
 		If M->C5_TIPO == 'N' .AND. M->C5_TPFRETE <> "F"  // somente para pedido de venda
@@ -852,7 +858,7 @@ User Function MT410TOK()
 						'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + '. Verifique!!' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + '. Verifique!!'})
 
 					ELSE
@@ -904,7 +910,7 @@ User Function MT410TOK()
 								'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!' ,;
 								cVendedor})
 
-							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+							ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 								Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!'})
 
 							ELSE
@@ -933,7 +939,7 @@ User Function MT410TOK()
 							'Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo não pode ser validado! Verifique!!',;
 							cVendedor})
 
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo não pode ser validado! Verifique!!'})
 
 						ELSE
@@ -961,7 +967,7 @@ User Function MT410TOK()
 								'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!' ,;
 								cVendedor})
 
-							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+							ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 								Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!'})
 
 							ELSE
@@ -986,7 +992,7 @@ User Function MT410TOK()
 	//Usuarios do parametro nao podem copiar pedido com data fora do limite do parametro.
 	//Mauricio - 16/02/11 - Conforme informado pela Ana, deve-se tambem validar a data de entrega atual no pedido que nao pode ultrapassar o parametro.
 
-	If !lSfInt .And. _lCOPIA   //Rotina é chamada por copia
+	If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lCOPIA   //Rotina é chamada por copia
 		If _lUSUCOPIA  //Se o usuario esta no parametro
 			_lRetUsuC := .T.
 			If     _dData < dDataBase  //Se a data é permitida para efetuar a copia
@@ -999,7 +1005,7 @@ User Function MT410TOK()
 					'Data entrega limite para copia do pedido ultrapassada. Copia não permitida!' ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Data entrega limite para copia do pedido ultrapassada. Copia não permitida!'})
 
 				ELSE
@@ -1018,7 +1024,7 @@ User Function MT410TOK()
 					'Data entrega do pedido é maior que a data limite permitida. Copia não permitida!' ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Data entrega do pedido é maior que a data limite permitida. Copia não permitida!'})
 
 				ELSE
@@ -1031,7 +1037,7 @@ User Function MT410TOK()
 	EndIf
 
 	//Mauricio - 01/10/15 - verificacao para nao Alterar pedido de venda ja excluido...
-	IF !lSfInt .And. ALTERA
+	IF !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA
 		DbSelectArea("SC5")
 		If Deleted()
 			lRet := .F.
@@ -1043,7 +1049,7 @@ User Function MT410TOK()
 				'Pedido de venda ja excluido nao pode ser alterado' ,;
 				cVendedor})
 
-			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 				Aadd(aPedidos,{'Pedido de venda ja excluido nao pode ser alterado'})
 
 			ELSE
@@ -1060,15 +1066,15 @@ User Function MT410TOK()
 	//segunda parte valida qualquer pedido com maximo data entrega futura até limite contido em parametro.
 	//Em 20/07/2011 conforme reunião com Srs. Alex e Vagner ficou definido que Interestadual e Supervisores não terão horario limite para inclusao de PV.
 	//porem os PV´s incluidos após o horario limite terão data de entrega D + 2.
-	IF !lSfInt .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista. //motivo erro no Grupo 06 William Costa chamado 021253
+	IF !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista. //motivo erro no Grupo 06 William Costa chamado 021253
 		IF M->C5_REFATUR <> 'S' //ajuste william costa pois o refaturamento não entra nessa regra
 			dbSelectArea("SA3")
 			dbSetOrder(7)
 			If dbSeek(xFilial("SA3")+__cUserID)
 				// Ricardo Lima - 13/06/18
-				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. CEMPANT = '01' .and. !lSfInt
+				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. CEMPANT = '01' .and. !IsInCallStack('RESTEXECUTE')
 					ApMsgInfo('Vendedor sem PERMISSÃO para Incluir Pedido, verifique com a Supervisão!','Permissões de Vendedores')
-					//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+					Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 					Return(.F.)
 				Endif
 
@@ -1084,7 +1090,7 @@ User Function MT410TOK()
 							'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido',;
 							cVendedor})
 
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido'})
 
 						ELSE
@@ -1105,7 +1111,7 @@ User Function MT410TOK()
 							'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido' ,;
 							cVendedor})
 
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido'})
 
 						ELSE
@@ -1125,7 +1131,7 @@ User Function MT410TOK()
 						'Data de entrega no cabecalho do pedido de venda é maior que o permitido!' ,;
 						cVendedor}) 
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Data de entrega no cabecalho do pedido de venda é maior que o permitido!'})
 
 					ELSE
@@ -1173,7 +1179,7 @@ User Function MT410TOK()
 					'Para esta Rede, é obrigatório preencher Código do Operador Logístico !!!' ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Para esta Rede, é obrigatório preencher Código do Operador Logístico !!!'})
 
 				ELSE
@@ -1213,7 +1219,7 @@ User Function MT410TOK()
 	//Mauricio - 01/03/11 - Incluida validação de preco minimo do produto para todos os itens (trazido do fonte AD0078 aonde é feito apenas por linha).
 	If Len(aCols) > 0
 	
-		If !lSfInt
+		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
 
 			For _x1 := 1 to Len(aCols)
 	
@@ -1247,7 +1253,7 @@ User Function MT410TOK()
 									'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!' ,;
 									cVendedor})
 	
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									Aadd(aPedidos,{'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!'})
 	
 								ELSE
@@ -1291,7 +1297,7 @@ User Function MT410TOK()
 										'PRECO MÍNIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' É DE R$ '+ALLTRIM(STR(_NPRECOUNIT)) ,;
 										cVendedor})
 	
-									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+									ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 										Aadd(aPedidos,{'PRECO MÍNIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' É DE R$ '+ALLTRIM(STR(_NPRECOUNIT))})
 	
 									ELSE
@@ -1326,7 +1332,7 @@ User Function MT410TOK()
 
 	//Mauricio - MDS TECNOLOGIA - 14/10/13 - Validações para TES de DOACOES e BONIFICACOES
 
-	IF !lSfInt .And. (INCLUI .OR. ALTERA) .and. cEmpAnt == "01" //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
+	IF !IsInCallStack('U_RESTEXECUTE') .And. !IsInCallStack('RESTEXECUTE') .And. (INCLUI .OR. ALTERA) .and. cEmpAnt == "01" //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
 		_lUsuDoa  := .F.
 		_lUsuADMV := .F.
 		_lUsuBON  := .F.
@@ -1375,7 +1381,7 @@ User Function MT410TOK()
 						'Seu usuario não pode incluir pedido com esta TES de doação para este produto!' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doação para este produto!'})
 
 					ELSE
@@ -1396,7 +1402,7 @@ User Function MT410TOK()
 						'Seu usuario não pode incluir pedido com esta TES de doação!' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doação!'})
 
 					ELSE
@@ -1418,7 +1424,7 @@ User Function MT410TOK()
 					'Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao' ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao'})
 
 				ELSE
@@ -1440,7 +1446,7 @@ User Function MT410TOK()
 					'Seu usuario só pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ")) ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Seu usuario só pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ"))})
 
 				ELSE
@@ -1459,7 +1465,7 @@ User Function MT410TOK()
 	dbSelectArea("SA1")
 	SA1->(dbSeek(xFilial("SA1")+M->C5_CLIENTE+M->C5_LOJACLI))
 	cUF	:= SA1->A1_EST
-	If !lSfInt .And. !((M->C5_TIPO $ "N" .and. Alltrim(cUF) == "EX") .OR. M->C5_TIPO $ "D") // por William Costa em 30/10/14 - chamado 20854
+	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. !((M->C5_TIPO $ "N" .and. Alltrim(cUF) == "EX") .OR. M->C5_TIPO $ "D") // por William Costa em 30/10/14 - chamado 20854
 		If Len(aCols) > 0
 			For _x1 := 1 to Len(aCols)
 
@@ -1483,7 +1489,7 @@ User Function MT410TOK()
 									'Quantidade dos produtos CMS só podem ser incluidos com 1 KG' ,;
 									cVendedor})
 
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									Aadd(aPedidos,{'Quantidade dos produtos CMS só podem ser incluidos com 1 KG'})
 
 								ELSE
@@ -1507,7 +1513,7 @@ User Function MT410TOK()
 									cVendedor})
 									//'Quantidade dos produtos CMS devem ser multiplos de ' +  CVALTOCHAR(GETMV("MV_#QTDCMS")) +  ' CX' ,;
 
-								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+								ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 									//Aadd(aPedidos,{'Quantidade dos produtos CMS devem ser multiplos de ' +  CVALTOCHAR(GETMV("MV_#QTDCMS")) +  ' CX'})
 									Aadd(aPedidos,{'Quantidade dos produtos CMS devem ser multiplos de ' +  CVALTOCHAR(nQtdPlt) +  ' CX'})
 
@@ -1531,7 +1537,7 @@ User Function MT410TOK()
 	//Mauricio - MDS Tecnologia - 05/02/14 - tratamento para não permitir alterar data de entrega para PV com C5_XINT == "3"
 	//Solicitado por Ana TI.
 	//inicio
-	If !lSfInt .And. ALTERA
+	If !IsInCallStack('U_RESTEXECUTE') .And. !IsInCallStack('RESTEXECUTE') .And. ALTERA
 		_aAreaSC5 := SC5->(GetArea())
 		_aAreaSC6 := SC6->(GetArea())
 		IF cEmpAnt == "01" .And. _cPermAlt == "3" .And. cFilAnt == "02"    //Empresa 01, filial 02 e xint == 3
@@ -1549,7 +1555,7 @@ User Function MT410TOK()
 						'Este pedido de venda ja foi integrado ao EDATA e não pode ter a Data de Entrega alterada!' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Este pedido de venda ja foi integrado ao EDATA e não pode ter a Data de Entrega alterada!'})
 
 					ELSE
@@ -1666,7 +1672,7 @@ User Function MT410TOK()
 							'"Produto '+Alltrim(_cProd)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!' ,;
 							cVendedor})
 
-						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+						ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 							Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!'})
 
 						ELSE
@@ -1690,7 +1696,7 @@ User Function MT410TOK()
 						'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Segunda Unidade de Medida] ' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					
 						Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Segunda Unidade de Medida] '})
 
@@ -1717,7 +1723,7 @@ User Function MT410TOK()
 						'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Fator de Conversao] ' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					
 						Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Fator de Conversao] '})
 
@@ -1766,7 +1772,7 @@ User Function MT410TOK()
 								'Erro no processo de cadastro do Item, Existem valores no campo F4_XTIPO diferentes entre os itens.' ,;
 								cVendedor})
 
-							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+							ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 								Aadd(aPedidos,{'Erro no processo de cadastro do Item, Existem valores no campo F4_XTIPO diferentes entre os itens.'})
 
 							ELSE
@@ -1817,7 +1823,7 @@ User Function MT410TOK()
 						_cProduto := ACOLS[_x1,nProd]
 						
 						//Everson - 08/03/2018. Chamado 037261. SalesForce.
-						If !lSfInt
+						If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
 							_cTipoOper := iif(_dDTENTR >= ctod("01/04/2017"),"02","01") // por Adriana em 24/03/17  //FM_TIPO = 01 (antes de 01/04/2017) // FM_TIPO = 02 (depois de 01/04/2017)
 						
 						Else
@@ -1863,7 +1869,7 @@ User Function MT410TOK()
 							Enddo
 							
 						ElseIf _cTipoOper $("04|X|Y") //Bonificação, venda à ordem e remessa de venda à ordem, respectivamente.
-							//Conout("ENTROU EM 04|X|Y ")
+							CONOUT("ENTROU EM 04|X|Y ")
 							//
 							lItemSF := Nil
 							If ! SFM->(dbSeek(xFilial("SFM") + Padr(_cTipoOper,2," ") + Alltrim(_cProduto)))
@@ -1875,7 +1881,7 @@ User Function MT410TOK()
 									RestArea(_aAreaSF4)
 									RestArea(_aAreaSB1)
 								 	RestArea(aArea)
-									//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+									 Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 								 	Return .F.
 								 	
 								 Else
@@ -1961,7 +1967,7 @@ User Function MT410TOK()
 	// 	_cProduto := ACOLS[_x1,nProd] //Ticket 8190 	  - Abel Babini      - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laço FOR
 
 	// 	//INICIO Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
-	// 	If !lSfInt
+	// 	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
 	// 		_cTipoOper := iif(_dDTENTR >= ctod("01/04/2017"),"02","01") 
 	// 	Else
 	// 		_cTipoOper := Alltrim(cValToChar(ACOLS[_x1,nTpOpC6]))
@@ -2013,7 +2019,7 @@ User Function MT410TOK()
 		IF M->C5_XTIPO = '2'
 			if !Empty(M->C5_ROTEIRO)
 				cQueryP := " SELECT C5_FILIAL, C5_NUM, C5_DTENTR, C5_ROTEIRO "
-				cQueryP += " FROM "+RetSqlName("SC5")+" WITH (NOLOCK) "
+				cQueryP += " FROM "+RetSqlName("SC5")+" "
 				cQueryP += " WHERE C5_FILIAL = '"+FWxFilial("SC5")+"' AND C5_XTIPO = '2' "
 				cQueryP += " AND C5_NOTA = '' AND C5_NUM <> '"+M->C5_NUM+"' "
 				cQueryP += " AND C5_ROTEIRO = '"+M->C5_ROTEIRO+"' AND C5_DTENTR = '"+DtoS(M->C5_DTENTR)+"' "
@@ -2033,7 +2039,7 @@ User Function MT410TOK()
 	ENDIF
 
 	RestArea(aArea)
-	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
+	Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 Return(lRet)
 
 //--------------------------------------------------
@@ -2054,7 +2060,7 @@ Static Function fVldProd()
 					'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!' ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!'})
 
 				ELSE
@@ -2078,7 +2084,7 @@ Static Function fVldProd()
 				'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Segunda Unidade de Medida] ' ,;
 				cVendedor})
 
-			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 			
 				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Segunda Unidade de Medida] '})
 
@@ -2103,7 +2109,7 @@ Static Function fVldProd()
 				'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Fator de Conversao] ' ,;
 				cVendedor})
 
-			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+			ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 			
 				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Fator de Conversao] '})
 
@@ -2139,7 +2145,7 @@ Static function fVldUM()
 			"Unidade de medida do produto "+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar" ,;
 			cVendedor})
 
-		ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+		ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 			Aadd(aPedidos,{"Unidade de medida do produto "+ALLTRIM(_CPRODUTO)+" nao existe. Favor verificar"})
 
 		ELSE
@@ -2160,7 +2166,7 @@ Static Function fVldLocaliz()
 	IF SF4->F4_ESTOQUE == "S" .AND. _cLocaliz == "S"
 		if Empty(ACOLS[_nX, _nLocaliz])
 
-			cQuery := " SELECT BF_LOCALIZ FROM "+ RetSqlName("SBF") +" WITH (NOLOCK) WHERE D_E_L_E_T_='' AND BF_FILIAL='"+ xFilial("SBF") +"' AND BF_PRODUTO='"+ _cProduto +"' AND BF_LOCAL='"+ ACOLS[_nX, _nLocal] +"' AND BF_QUANT > 0; "
+			cQuery := " SELECT BF_LOCALIZ FROM "+ RetSqlName("SBF") +" WHERE D_E_L_E_T_='' AND BF_FILIAL='"+ xFilial("SBF") +"' AND BF_PRODUTO='"+ _cProduto +"' AND BF_LOCAL='"+ ACOLS[_nX, _nLocal] +"' AND BF_QUANT > 0; "
 		
 			TcQuery cQuery ALIAS "QBF" NEW
 
@@ -2176,7 +2182,7 @@ Static Function fVldLocaliz()
 					'Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!' ,;
 					cVendedor})
 
-				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+				ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 					Aadd(aPedidos,{'Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!'})
 				else
 					ApMsgInfo('Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!')
@@ -2217,7 +2223,7 @@ Static Function fVldDat()
 						'Erro no processo de cadastro do Item, Existem valores no campo F4_XTIPO diferentes entre os itens.' ,;
 						cVendedor})
 
-					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
+					ELSEIF IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') //Everson - 25/09/2017. Chamado 037261.
 						Aadd(aPedidos,{'Erro no processo de cadastro do Item, Existem valores no campo F4_XTIPO diferentes entre os itens.'})
 
 					ELSE
@@ -2796,8 +2802,8 @@ Static Function ValQtdEst (cPedido)
 	cQrty += " GROUP BY A1_EST " */
 
 	cQrty := " SELECT SUM(C6_UNSVEN) AS CXTOTAL, A1_EST AS ESTADO " 
-	cQrty += " FROM "+RetSqlName("SC6")+" SC6 WITH (NOLOCK) "
-	cQrty += " INNER JOIN "+RetSqlName("SA1")+" SA1 WITH (NOLOCK) ON A1_FILIAL = ' ' AND SC6.C6_CLI = SA1.A1_COD AND SC6.C6_LOJA  = SA1.A1_LOJA "
+	cQrty += " FROM "+RetSqlName("SC6")+" SC6 "
+	cQrty += " INNER JOIN "+RetSqlName("SA1")+" SA1 ON A1_FILIAL = ' ' AND SC6.C6_CLI = SA1.A1_COD AND SC6.C6_LOJA  = SA1.A1_LOJA "
 	cQrty += " WHERE SC6.C6_FILIAL = '"+cfilAnt+"' "
 	cQrty += " AND  SC6.C6_NUM = '"+cPedido+"' "
 	cQrty += " AND SC6.D_E_L_E_T_ = ' ' "
