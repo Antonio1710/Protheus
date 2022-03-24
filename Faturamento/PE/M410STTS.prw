@@ -4,11 +4,11 @@
 #Include "AP5MAIL.CH"      
 #Include "Rwmake.ch" 
 
-// BIBLIOTECAS NECESSÁRIAS
+// BIBLIOTECAS NECESSï¿½RIAS
 #Include "TOTVS.ch"
 #INCLUDE "XMLXFUN.CH"
 
-// BARRA DE SEPARAÇÃO DE DIRETÓRIOS
+// BARRA DE SEPARAï¿½ï¿½O DE DIRETï¿½RIOS
 //#Define BAR IIf(IsSrvUnix(), "/", "\")
 
 /*/{Protheus.doc} User Function M410STTS
@@ -22,44 +22,46 @@
 	de vendas e faz-se necessario para calculo do peso bruto e
 	peso liquido do pedido. Principalmente que ha um filtro no
 	pedidos de vendas (set filter) que inibe  o indice.
-	@history                - Ricardo L- 12/05/2011 - Recriação dos calculos para desconto, pois, o desconto é em PERCENTUAL. 
+	@history                - Ricardo L- 12/05/2011 - Recriaï¿½ï¿½o dos calculos para desconto, pois, o desconto ï¿½ em PERCENTUAL. 
 	@history chamdo 047506  - Ricardo L- 28/02/2019 - Informa novo Roteiro.
 	@history Chamado TI     - Adriana  - 24/05/2019 - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM  
 	@history Chamado 051044 - Adriana  - 27/08/2019 - SAFEGG.                       
 	@history Chamado 052170 - Adriana  - 04/10/2019 - NF EXPORTACAO SAFEGG.
 	@history Chamado 052898 - Everson  - 29/10/2019 - Adicionado log.
-	@history                - Everson  - 11/11/2019 - Adicionado cálculo de valor de frete para toda inclusão e alteração de pedido de venda.
+	@history                - Everson  - 11/11/2019 - Adicionado cï¿½lculo de valor de frete para toda inclusï¿½o e alteraï¿½ï¿½o de pedido de venda.
 	@history                - Everson  - 10/02/2020 - Adicionado tratamento para obter o peso liquido e bruto do cadastro de produto, quando preenchido.
-	@history Chamado 057312 - Abel     - 13/04/2020 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+	@history Chamado 057312 - Abel     - 13/04/2020 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 	@history chamado 056247 - FWNM     - 04/03/2020 - OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
-	@history Chamado 059127 - Everson  - 26/06/2020 - Tratamento para definição do número do roteiro por faixa.
+	@history Chamado 059127 - Everson  - 26/06/2020 - Tratamento para definiï¿½ï¿½o do nï¿½mero do roteiro por faixa.
 	@history chamado 059655 - FWNM     - 21/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
 	@history chamado 059655 - FWNM     - 23/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
 	@history chamado 059415 - FWNM     - 29/07/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
-	@history chamado 059415 - FWNM     - 11/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Garantir a geração de tabela SC9 com bloqueio de crédito
-	@history chamado TI     - FWNM     - 14/08/2020 - Desativação devido impactos de block no SF
+	@history chamado 059415 - FWNM     - 11/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Garantir a geraï¿½ï¿½o de tabela SC9 com bloqueio de crï¿½dito
+	@history chamado TI     - FWNM     - 14/08/2020 - Desativaï¿½ï¿½o devido impactos de block no SF
 	@history ticket 102     - FWNM     - 26/08/2020 - WS BRADESCO 
 	@history ticket 102     - FWNM     - 27/08/2020 - WS BRADESCO 
-	@history ticket 102     - FWNM     - 31/08/2020 - WS BRADESCO - contemplar alterações de pedidos de vendas com emissões anteriores ao do dia atual e de condições de pagamento normais para antecipado, cenário este não contemplado pelo job
-	@history ticket 745     - FWNM     - 18/09/2020 - Implementação título PR
-	@history Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
-	@history Ticket  8      - Abel B.  - 15/02/2021 - Alteração na regra de pré liberação de crédito para considerar pedidos com data de entrega futura
-	@history Ticket  8      - Abel B.  - 01/03/2021 - Alteração na regra de pré liberação de crédito para desconsiderar o pedido que será excluído durante a avaliação na exclusão do mesmo
+	@history ticket 102     - FWNM     - 31/08/2020 - WS BRADESCO - contemplar alteraï¿½ï¿½es de pedidos de vendas com emissï¿½es anteriores ao do dia atual e de condiï¿½ï¿½es de pagamento normais para antecipado, cenï¿½rio este nï¿½o contemplado pelo job
+	@history ticket 745     - FWNM     - 18/09/2020 - Implementaï¿½ï¿½o tï¿½tulo PR
+	@history Ticket  8      - Abel B.  - 15/02/2021 - Prï¿½-liberaï¿½ï¿½o de crï¿½dito para inclusï¿½o e alteraï¿½ï¿½o de pedidos.
+	@history Ticket  8      - Abel B.  - 15/02/2021 - Alteraï¿½ï¿½o na regra de prï¿½ liberaï¿½ï¿½o de crï¿½dito para considerar pedidos com data de entrega futura
+	@history Ticket  8      - Abel B.  - 01/03/2021 - Alteraï¿½ï¿½o na regra de prï¿½ liberaï¿½ï¿½o de crï¿½dito para desconsiderar o pedido que serï¿½ excluï¿½do durante a avaliaï¿½ï¿½o na exclusï¿½o do mesmo
 	@history Ticket  8      - Abel B.  - 02/03/2021 - Limpar bloqueios anteriores do Pedido.
-	@history Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberação de crédito.
-	@history Ticket  10915  - Abel B.  - 12/03/2021 - Ajustes na rotina de liberação de crédito.
-	@history Ticket  10775  - LPM  	   - 15/03/2021 - Correção no ponto de entrada para refazer a alçada dos processos de exportação quando os itens foram alterados após todo o processo ter sido aprovado.
-	@history Ticket   8465  - LPM  	   - 23/03/2021 - Correção na alçada de aprovação dos pedidos de venda de exportação na condição específica em que ele é aprovado, alterado e ajustado os valores ficando abaixo do IPTAB. Quando ocorre isso, os registros SC9 não são recriados.
-	@history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
-	@history Ticket  13155  - Everson  - 04/05/2021 - Tratamento para liberação de pedido de venda por integração SAG (movimento de saída).
-	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histórico de liberação
-	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
+	@history Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito.
+	@history Ticket  10915  - Abel B.  - 12/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito.
+	@history Ticket  10775  - LPM  	   - 15/03/2021 - Correï¿½ï¿½o no ponto de entrada para refazer a alï¿½ada dos processos de exportaï¿½ï¿½o quando os itens foram alterados apï¿½s todo o processo ter sido aprovado.
+	@history Ticket   8465  - LPM  	   - 23/03/2021 - Correï¿½ï¿½o na alï¿½ada de aprovaï¿½ï¿½o dos pedidos de venda de exportaï¿½ï¿½o na condiï¿½ï¿½o especï¿½fica em que ele ï¿½ aprovado, alterado e ajustado os valores ficando abaixo do IPTAB. Quando ocorre isso, os registros SC9 nï¿½o sï¿½o recriados.
+	@history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAï¿½ï¿½O
+	@history Ticket  13155  - Everson  - 04/05/2021 - Tratamento para liberaï¿½ï¿½o de pedido de venda por integraï¿½ï¿½o SAG (movimento de saï¿½da).
+	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histï¿½rico de liberaï¿½ï¿½o
+	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parï¿½metro liga/desliga nova funï¿½ï¿½o anï¿½lise crï¿½dito
 	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
-	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
-	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
-	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusão de Conouts.
-	@history Everson, 18/03/2022, Chamado 18465. Envio de informações ao barramento. 
-	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento. 
+	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correï¿½ï¿½o na gravaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
+	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correï¿½ï¿½o de error.log na gravaï¿½ï¿½o de PVs na filial 07.
+	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusï¿½o de Conouts.
+	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferï¿½ncia do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravaï¿½ï¿½o da data de entrega nos itens do PV.
+	@history Ticket  69520  - Leonardo P. Monteiro - 26/02/2022 - Inclusï¿½o de conouts no fonte. 
+	@history Everson, 18/03/2022, Chamado 18465. Envio de informaï¿½ï¿½es ao barramento. 
+	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 /*/
 User Function M410STTS()
 
@@ -70,6 +72,8 @@ User Function M410STTS()
 	Local cRotSA1   := "" //26/06/2020, Everson, Chamado 059127.
 
 	Local lWSBradOn := GetMV("MV_#WSRAON",,.T.) // @history chamado 059415 - FWNM - 13/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
+
+	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	If Alltrim(cEmpAnt) <> "01"  ;  //Incluido por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
 		.and. Alltrim(cEmpAnt) <> "09"; //Alterado por Adriana chamado 051044 em 27/08/2019 SAFEGG
@@ -126,11 +130,11 @@ User Function M410STTS()
 	Private lCfop 		:= .F.  								//fernando chamado 036388 - fernando 20/07/2017 
 	Private cMVCfop     := strtran(GETMV("MV_#CFOPRD"),",","/") //fernando chamado 036388 - fernando 20/07/2017 
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Posicionamento original dos arquivos envolvidos ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½ Posicionamento original dos arquivos envolvidos ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO PE" )
 
 	_cAlias := Alias()
 	_cOrder := IndexOrd()
@@ -142,9 +146,9 @@ User Function M410STTS()
 	_SC6cRecnoSC6 := Recno()
 	dbSetOrder(1)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Guarda o Pedido Posicionado (imediatamente apos a gravacao) ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½ Guarda o Pedido Posicionado (imediatamente apos a gravacao) ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	dbSelectArea("SC5")
 	_cNumPed  := M->C5_NUM
 	_cCliente := M->C5_CLIENTE
@@ -168,7 +172,7 @@ User Function M410STTS()
 	//
 
 	//Everson - 11/11/2019. Chamado 052898.
-	If (INCLUI .Or. ALTERA) .And. ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
+	If (INCLUI .Or. ALTERA) .And. !lSfInt
 
 		//
 		_nFrete := obtFrt(_cCliente,_cLoja,_cTpFret)
@@ -180,18 +184,18 @@ User Function M410STTS()
 
 	EndIf
 
-	// Separado em duas partes: uma para INCLUSÃO e outra para ALTERAÇÃO - Paulo - TDS - 23/05/2011
+	// Separado em duas partes: uma para INCLUSï¿½O e outra para ALTERAï¿½ï¿½O - Paulo - TDS - 23/05/2011
 	If INCLUI
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO INLCUI" )
-		// Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
-		// Função comentada para não fazer mais a chamada à rotina
-		// IF ALLTRIM(cEmpAnt) == '01' .AND. ALLTRIM(xFilial("SC5")) == '02' // chamado 031739 William Costa, adicionado esse if pois causava lentidão devido ao alta quantidade de pedidos referente ao cliente 60037058
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO INCLUI 1" )
+		// Ticket  8      - Abel B.  - 15/02/2021 - Prï¿½-liberaï¿½ï¿½o de crï¿½dito para inclusï¿½o e alteraï¿½ï¿½o de pedidos.
+		// Funï¿½ï¿½o comentada para nï¿½o fazer mais a chamada ï¿½ rotina
+		// IF ALLTRIM(cEmpAnt) == '01' .AND. ALLTRIM(xFilial("SC5")) == '02' // chamado 031739 William Costa, adicionado esse if pois causava lentidï¿½o devido ao alta quantidade de pedidos referente ao cliente 60037058
 			//21/10/16 Novo tratamento para pre aprovacao do credito
 		// 	fPreAprv(xFilial("SC5"),_cNumped,_cCliente,_cLoja)  //funcao pra limpeza de flag de pre aprovacao de pedidos de venda.    	
 		// ENDIF
 
 		//Mauricio - Chamado 037330 - 
-		IF !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. !Empty(M->C5_XREFATD) .And. Alltrim(cEmpAnt) $ "01/02"
+		IF !lSfInt .And. !Empty(M->C5_XREFATD) .And. Alltrim(cEmpAnt) $ "01/02"
 			DbSelectArea("SC5")
 			if dbseek(xFilial("SC5")+M->C5_XREFATD)
 				If Empty(SC5->C5_XPEDGER)
@@ -212,7 +216,7 @@ User Function M410STTS()
 			Endif   
 		ENDIF 
 		
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO AVALIA CREDITO" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO AVALIA CREDITO" )
 		_nLimCred 	:= 0
 		_nLimCred 	:= Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
 		_lBloq 		:= .F. 
@@ -242,67 +246,24 @@ User Function M410STTS()
 				//Everson - 10/02/2020. Chamado 054941.
 				SB1->( DbSeek( FWxFilial("SB1") + SC6->C6_PRODUTO ) )
 				
-				/*
-				if SC6->C6_QTDENT < SC6->C6_QTDVEN  //qtd total pendente
-					_nVlrItem := ((SC6->C6_QTDVEN - SC6->C6_QTDENT) * SC6->C6_PRCVEN)   //valor pendente no pedido (inclusive parcial)
-				endif
-
-				if SF4->(dbseek(xFilial("SF4")+SC6->C6_TES))
-					
-					if SC9->(dbseek(xFilial("SC9")+_cNumPed+SC6->C6_ITEM))
-						cBlCred := SC9->C9_BLCRED
-
-						// If (ALLTRIM(SF4->F4_DUPLIC) = 'S') // Alex Borges 01/12/11
-						If ((ALLTRIM(SF4->F4_DUPLIC) = 'S') .and. (ALLTRIM(_Tipo) $ "N/C") .and. (ALLTRIM(_estado)<> "EX"))
-							if (_nVlrItem + _nSldAb) > _nLimCred   //limite excedido deve bloquear
-								
-									If empty(SC9->C9_BLCRED)    //somente se ja não houver bloqueio
-										If !(SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
-												cBlCred 	:= "01"  //bloqueio por limite de valor
-										Endif
-									Else
-										If (SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
-												cBlCred := ""  //bloqueio por limite de valor
-										Endif		                  		
-									Endif
-							Endif
-						
-						// Não ajuste as liberações de crédito para pedidos de exportação.
-						ElseIF ALLTRIM(_estado)<> "EX"
-							cBlCred := ""  // libera crédito
-						End If
-
-						if Reclock("SC9",.F.)
-							SC9->C9_BLCRED 	:= cBlCred
-							SC9->C9_ROTEIRO := SC6->C6_ROTEIRO
-							SC9->C9_DTENTR  := SC6->C6_ENTREG
-							SC9->C9_VEND1   := SC5->C5_VEND1
-							SC9->(MsUnlock())
-						endif
-					ENDIF
-				EndIf
-
-				_nLimCred -= _nVlrItem  //deduzo o valor do item ja validado do limite utilizado.
-
-				*/
 
 				_nTotalPedi += SC6->C6_VALOR
 				_nTotalCx   += SC6->C6_UNSVEN   // Soma qtd caixas (2a. UM)
 				//_nTotalKg   += SC6->C6_QTDVEN   // Soma qtd peso   (1a. UM)
 
-				//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+				//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 				_nTIteKg := 0
 				_nTIteBr := 0
 
 				//Everson - 10/02/2020. Chamado 054941.
 				If Alltrim(cValToChar(SB1->B1_COD)) == Alltrim(cValToChar(SC6->C6_PRODUTO)) .And. SB1->B1_PESO > 0
-					//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+					//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 					_nTIteKg := SC6->C6_UNSVEN * SB1->B1_PESO
 					_nTotalKg += _nTIteKg
 					//_nTotalKg += SC6->C6_UNSVEN * SB1->B1_PESO
 
 				Else
-					//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+					//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 					_nTIteKg := iif(SC6->C6_SEGUM="BS",0,SC6->C6_QTDVEN)   // Soma qtd peso   (1a. UM) //alterado por Adriana, se bolsa nao soma 1a unidade como peso
 					_nTotalKg += _nTIteKg
 					//_nTotalKg += iif(SC6->C6_SEGUM="BS",0,SC6->C6_QTDVEN)   // Soma qtd peso   (1a. UM) //alterado por Adriana, se bolsa nao soma 1a unidade como peso
@@ -311,7 +272,7 @@ User Function M410STTS()
 
 				//Everson - 10/02/2020. Chamado 054941.
 				If Alltrim(cValToChar(SB1->B1_COD)) == Alltrim(cValToChar(SC6->C6_PRODUTO)) .And. SB1->B1_PESBRU > 0
-					//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+					//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 					_nTIteBr := SC6->C6_UNSVEN * SB1->B1_PESBRU
 					_nTotalBr += _nTIteBr - _nTIteKg
 					//_nTotalBr += SC6->C6_UNSVEN * SB1->B1_PESBRU
@@ -319,19 +280,19 @@ User Function M410STTS()
 
 				Else
 
-					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-					//³ Posiciona Cadastro de Tara ³
-					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+					//ï¿½ Posiciona Cadastro de Tara ï¿½
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					dbSelectArea("SZC")
 					dbSetOrder(1)
 					If dbSeek(xFilial("SZC") + SC6->C6_SEGUM)
-						//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+						//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 						_nTIteBr := (SC6->C6_UNSVEN * SZC->ZC_TARA) // PESO BRUTO
 						_nTotalBr += _nTIteBr
 						//_nTotalBr += (SC6->C6_UNSVEN * SZC->ZC_TARA) // PESO BRUTO
 					
 					Else
-						//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+						//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 						_nTIteBr := 0 //(SC6->C6_UNSVEN  * 1) // PESO BRUTO //WILLIAM COSTA 06/12/2018 CHAMADO 045531 || OS 046701 || PCP || KAREN || 8466 || COPIA DE PEDIDO
 						_nTotalBr += _nTIteBr
 						//_nTotalBr += 0 //(SC6->C6_UNSVEN  * 1) // PESO BRUTO //WILLIAM COSTA 06/12/2018 CHAMADO 045531 || OS 046701 || PCP || KAREN || 8466 || COPIA DE PEDIDO
@@ -357,15 +318,15 @@ User Function M410STTS()
 
 		EndIf
 
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL AVALIA CREDITO" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL AVALIA CREDITO" )
 
-		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-		//³ Grava Informacoes em SC5 ³
-		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+		//ï¿½ Grava Informacoes em SC5 ï¿½
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 		dbSelectArea("SC5")
 
-		If SC5->C5_EST <> "EX" .or. (SC5->C5_EST = "EX" .and. _lEECFat) //por Adriana em 04/10/2019-chamado 052170(Mantem peso digitado, se exportação e módulo SIGAEEC desabilitado) 
+		If SC5->C5_EST <> "EX" .or. (SC5->C5_EST = "EX" .and. _lEECFat) //por Adriana em 04/10/2019-chamado 052170(Mantem peso digitado, se exportaï¿½ï¿½o e mï¿½dulo SIGAEEC desabilitado) 
 
 			RecLock("SC5",.F.)
 			
@@ -377,22 +338,22 @@ User Function M410STTS()
 		
 		Endif
 		
-		IF ALLTRIM(FUNNAME()) == "TELEATD"  //Mauricio 19/02/14 para atender customização do teleatendimento
+		IF ALLTRIM(FUNNAME()) == "TELEATD"  //Mauricio 19/02/14 para atender customizaï¿½ï¿½o do teleatendimento
 			SC5->C5_TELEATD := ZUA_NUM     
 		Endif
 
 		SC5->(MsUnlock())
 
-		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lDoa      //Mauricio Doacao
+		If !lSfInt .And. _lDoa      //Mauricio Doacao
 
 			lAprov2 := VerifAprovDoacao() //Inicio William TI chamado 040917 
 
 			RecLock("SC5",.F.)
-			SC5->C5_BLQ     := "1"        //forço bloqueio padrão do pedido de venda.... 
+			SC5->C5_BLQ     := "1"        //forï¿½o bloqueio padrï¿½o do pedido de venda.... 
 			SC5->C5_STATDOA := "B"
-			SC5->C5_APRVDOA := IIF(lAprov2 == .F.,_cAprDoa,_cAprDoa2)   //"000559"  Alterado por Adriana para alterar o aprovador //"001002"  //"000559"   //Conforme email do Sr. Evandro usuario é CAIO	   
+			SC5->C5_APRVDOA := IIF(lAprov2 == .F.,_cAprDoa,_cAprDoa2)   //"000559"  Alterado por Adriana para alterar o aprovador //"001002"  //"000559"   //Conforme email do Sr. Evandro usuario ï¿½ CAIO	   
 			SC5->(MsUnlock())	   
-			femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio	   		
+			femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui funï¿½ï¿½o para envio de email ao Caio	   		
 		Endif
 				// *** INICIO CHAMADO WILLIAM 11/06/2018 036887 || TECNOLOGIA || MARCEL_BIANCHI || 8451 || VALID.ROT.REPROGR. ***  //
 		
@@ -411,8 +372,8 @@ User Function M410STTS()
 
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("099")
 			endif
 			
@@ -428,15 +389,15 @@ User Function M410STTS()
 					cRotSA1 := getRot(Alltrim(cValToChar(SA1->A1_ROTEIRO)))
 
 					IF SC5->C5_XTIPO <> '2'
-						// LPM - Reformulação na regravação/Alteração dos roteiros.
-						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+						// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 						fAtuRot(cRotSA1)
 					endif
 				Else
 
 					IF SC5->C5_XTIPO <> '2'
-						// LPM - Reformulação na regravação/Alteração dos roteiros.
-						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+						// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 						fAtuRot("200")
 					endif
 
@@ -446,25 +407,25 @@ User Function M410STTS()
 		Endif
 		//Fim
 
-		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lBon .and. __cuserid$_cUsuBon  // Incluido por Adriana para tratar bonificacao qualidade em 20/05/2015
+		If !lSfInt .And. _lBon .and. __cuserid$_cUsuBon  // Incluido por Adriana para tratar bonificacao qualidade em 20/05/2015
 			
 			if RecLock("SC5",.F.)
 				SC5->C5_APRVDOA := _cAprBon   // Aprovador bonificacao qualidade
 
 				SC5->(MsUnlock())
 			endif	   
-			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio	
+			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui funï¿½ï¿½o para envio de email ao Caio	
 			
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("099")
 			endif
 
-		ElseIf 	(IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE')) .And. _lBon
+		ElseIf 	lSfInt .And. _lBon
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("099")
 			endif
 			
@@ -485,16 +446,16 @@ User Function M410STTS()
 		lLocUsr := SA3->(dbSeek(xFilial("SA3")+__cUserID))
 
 		//Everson - 29/10/2019. Chamado 052898.
-		/* Temporário
+		/* Temporï¿½rio
 		u_GrLogZBE (Date(), Time(), cUserName, "PEDIDO DE VENDA", "COMERCIAL", "M410STTS",;
-		"Pedido/!Rest/SA3/!Doação " + cValToChar(SC5->C5_NUM) + " " +;
+		"Pedido/!Rest/SA3/!Doaï¿½ï¿½o " + cValToChar(SC5->C5_NUM) + " " +;
 		cValToChar(! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')) + " " +;
 		cValToChar( lLocUsr )+ " " +;
 		cValToChar( !_lDoa )+ " ",;
 		ComputerName(), LogUserName())
 		*/
 
-		If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. lLocUsr .And. !(_lDoa) // Só executa se usuario incluindo pedido for vendedor (primeira condição) e não for doação.
+		If !lSfInt .And. lLocUsr .And. !(_lDoa) // Sï¿½ executa se usuario incluindo pedido for vendedor (primeira condiï¿½ï¿½o) e nï¿½o for doaï¿½ï¿½o.
 
 			dbSelectArea("SA1")
 			dbSetOrder(1)
@@ -502,11 +463,11 @@ User Function M410STTS()
 			If SA1->(dbSeek(xFilial("SA1")+_cCliente+_cLoja))
 
 				_cRepresent := SA1->A1_VEND
-				_cSuperv    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_SUPER")        // supervisor para aprovação
+				_cSuperv    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_SUPER")        // supervisor para aprovaï¿½ï¿½o
 				_cSupervi   := Posicione("SA3",1,xFilial("SA3")+_cSuperv,"A3_CODUSR")
-				_cGerent    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_GEREN")        // gerente para aprovação
+				_cGerent    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_GEREN")        // gerente para aprovaï¿½ï¿½o
 				_cGerente   := Posicione("SA3",1,xFilial("SA3")+_cGerent,"A3_CODUSR")
-				_cDireto    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_XDIRET")       // diretor para aprovação
+				_cDireto    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_XDIRET")       // diretor para aprovaï¿½ï¿½o
 				_cDiretor   := Posicione("SA3",1,xFilial("SA3")+_cDireto,"A3_CODUSR")
 
 				DbSelectArea("SA3")
@@ -527,7 +488,7 @@ User Function M410STTS()
 					RecLock("SC5",.F.)
 					SC5->C5_XREDE := "S"
 					SC5->C5_BLQ   := "1"
-					SC5->C5_LIBEROK := " "                 // Quando o pedido for de cliente rede, entra já bloqueado
+					SC5->C5_LIBEROK := " "                 // Quando o pedido for de cliente rede, entra jï¿½ bloqueado
 					SC5->C5_CODRED  := _cRede          // Grava codigo da rede utilizado na rotina ANALISPED.
 					SC5->(MsUnLock())
 
@@ -535,13 +496,13 @@ User Function M410STTS()
 			EndIf
 
 			If _lLoja
-				// Busco desconto para Cliente. O desconto aqui informado é em PERCENTUAL - PAULO - TDS - 12/05/2011
+				// Busco desconto para Cliente. O desconto aqui informado ï¿½ em PERCENTUAL - PAULO - TDS - 12/05/2011
 				_nDesconto := SA1->A1_DESC
 
 				// Busco frete para Cliente
 				_cEst	:= SA1->A1_EST
 				_cMunic := SA1->A1_COD_MUN
-				_ctabela := ""  // M->C5_TABELA  - Mauricio 07/12/11 - tabela vira por faixa de peso e não mais do pedido.
+				_ctabela := ""  // M->C5_TABELA  - Mauricio 07/12/11 - tabela vira por faixa de peso e nï¿½o mais do pedido.
 				// Localizo o municipio do cliente, se este for loja
 
 				//Mauricio 07/12/11 - Retirado tratamento para tabela vinda do pedido. Tabela sera assumida pela faixa de Qtd. caixas que o pedido se
@@ -563,10 +524,10 @@ User Function M410STTS()
 
 				//EndIf
 
-				//Mauricio - 07/12/11 - tratamento para caso não haver tabela cadastrada ou faixa de peso
-				//precisa ser analisado a posterior, para encontrar melhor alternativa de ação a ser tomada.
+				//Mauricio - 07/12/11 - tratamento para caso nï¿½o haver tabela cadastrada ou faixa de peso
+				//precisa ser analisado a posterior, para encontrar melhor alternativa de aï¿½ï¿½o a ser tomada.
 				If Empty(_cTabela)
-					Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 					return()
 				Else
 					//atualizo campo tabela no SC5
@@ -580,7 +541,7 @@ User Function M410STTS()
 
 				If dbSeek(xFilial("DA0")+_cTabela)
 
-					// Condição para achar percentual baseado em um unico usuario(ou vendedor ou supervisor ou gerente ou diretor)
+					// Condiï¿½ï¿½o para achar percentual baseado em um unico usuario(ou vendedor ou supervisor ou gerente ou diretor)
 					If     SA3->A3_NIVETAB == "2" // supervisor
 						_nValMax := 1-(DA0->DA0_XSUPER/100)         // percentual supervisor
 					ElseIf SA3->A3_NIVETAB == "3" // Gerente
@@ -591,8 +552,8 @@ User Function M410STTS()
 						_nValMax := 1-(DA0->DA0_XVENDE/100)		 // percentual vendedor
 					EndIf
 
-					// Condição para achar um percentual para cada usuario sempre(vendedor,supervisor,gerente, diretor)
-					// Destinado a geracao de alçada separadamente.(Mauricio 11/05/11.)
+					// Condiï¿½ï¿½o para achar um percentual para cada usuario sempre(vendedor,supervisor,gerente, diretor)
+					// Destinado a geracao de alï¿½ada separadamente.(Mauricio 11/05/11.)
 
 					_nValMaxV := 1-(DA0->DA0_XVENDE/100)
 					_nValMaxS := 1-(DA0->DA0_XSUPER/100)
@@ -601,8 +562,8 @@ User Function M410STTS()
 
 				EndIf
 
-				//Mauricio - MDS TEC - 21/05/14 - Inclusão de tratamento para pedido com moeda 2 e calculo dos indices pelo valor convertido pela
-				//cotação do dia.
+				//Mauricio - MDS TEC - 21/05/14 - Inclusï¿½o de tratamento para pedido com moeda 2 e calculo dos indices pelo valor convertido pela
+				//cotaï¿½ï¿½o do dia.
 
 				dbSelectArea("SC6")
 				dbSetOrder(1)
@@ -613,7 +574,7 @@ User Function M410STTS()
 
 						If _nMoeda == 1   
 
-							_nPrcDig := SC6->C6_PRCVEN * (_nDesconto / 100) // Preço digitado no produto, incluído o desconto
+							_nPrcDig := SC6->C6_PRCVEN * (_nDesconto / 100) // Preï¿½o digitado no produto, incluï¿½do o desconto
 							_nPrDigL := SC6->C6_PRCVEN - _nPrcDig - _nFrete // Preco digitado no pedido menos o desconto e frete
 							_nVlTotD := SC6->C6_QTDVEN * _nPrDigL
 
@@ -624,25 +585,25 @@ User Function M410STTS()
 								_nPrcTab := DA1->DA1_XPRLIQ									// Preco da tabela de precos
 								_nPrPerm := _nPrcTab * _nValMax 	                        // Preco minimo permitido para o usuario
 
-								// Preco minimo permitido para todas as alçadas.(tera de verificar todas as alçadas de uma unica vez conforme Alex - 11/05/11.)
+								// Preco minimo permitido para todas as alï¿½adas.(tera de verificar todas as alï¿½adas de uma unica vez conforme Alex - 11/05/11.)
 								_nPrPermV := _nPrcTab * _nValMaxV
 								_nPrPermS := _nPrcTab * _nValMaxS
 								_nPrPermG := _nPrcTab * _nValMaxG
 								_nPrPermD := _nPrcTab * _nValMaxD
 
 								_nVlTotT  := SC6->C6_QTDVEN * _nPrPerm
-								_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+								_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 
 								_nVlTotTV := SC6->C6_QTDVEN * _nPrPermV
 								_nVlTotTS := SC6->C6_QTDVEN * _nPrPermS
 								_nVlTotTG := SC6->C6_QTDVEN * _nPrPermG
 								_nVlTotTD := SC6->C6_QTDVEN * _nPrPermD
 
-								//Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+								//Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 								//_nIpProd := _nVlTotD/_nVlTotT
 								_nIpProd := _nVlTotD/_nVlTotT2
 
-								//Mauricio 10/08/11 - implementando sistematica de alteraçoes solicitadas em 10/08/11 - email Sr. Alex.
+								//Mauricio 10/08/11 - implementando sistematica de alteraï¿½oes solicitadas em 10/08/11 - email Sr. Alex.
 
 								_nPBTTV  := SC6->C6_PRCVEN    //preco digitado
 								_nPLTTV  := _nPrDigL          //preco liquido
@@ -653,7 +614,7 @@ User Function M410STTS()
 								RecLock("SC6",.F.)
 								SC6->C6_XIPTAB := Round(_nIpProd,3)
 								SC6->C6_TOTDIG := _nVlTotD
-								SC6->C6_TOTTAB := _nVlTotT2     //_nVlTotT //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+								SC6->C6_TOTTAB := _nVlTotT2     //_nVlTotT //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 								SC6->C6_PRTABV := _nPrPerm + _nFrete // Mauricio 26/07/11 - Solicitacao Vagner incluir preco tabela vendedor(tabela - Margem + frete)
 								SC6->C6_PBTTV  := _nPBTTV
 								SC6->C6_PLTTV  := _nPLTTV
@@ -662,20 +623,20 @@ User Function M410STTS()
 								SC6->C6_PLTAB  := _nPrcTab
 								MsUnLock()
 
-								_nPrDigT  += _nVlTotD	 // Soma dos preços líquidos digitados
-								_nPrPerT  += _nVlTotT    // Soma dos preços das tabelas
-								_nPrTabT  += _nVlTotT2     //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
-								_nPrPerTV += _nVltotTV   // Soma preço das tabelas para alçada
+								_nPrDigT  += _nVlTotD	 // Soma dos preï¿½os lï¿½quidos digitados
+								_nPrPerT  += _nVlTotT    // Soma dos preï¿½os das tabelas
+								_nPrTabT  += _nVlTotT2     //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
+								_nPrPerTV += _nVltotTV   // Soma preï¿½o das tabelas para alï¿½ada
 								_nPrPerTS += _nVltotTS
 								_nPrPerTG += _nVltotTG
 								_nPrPerTD += _nVltotTD
 
-								_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e não unitario conf. Sr. Alex
-								_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e não unitario conf. Sr. Alex
+								_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e nï¿½o unitario conf. Sr. Alex
+								_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e nï¿½o unitario conf. Sr. Alex
 								_nValorNF += SC6->C6_VALOR
 							EndIf
 						Else   
-							//Se não tiver data cadastrada ou o valor for zero assume o valor de 1(para não dar erro na rotina).
+							//Se nï¿½o tiver data cadastrada ou o valor for zero assume o valor de 1(para nï¿½o dar erro na rotina).
 							_nCota := 0
 							DbSelectArea("SM2")
 							DbSetOrder(1)
@@ -694,7 +655,7 @@ User Function M410STTS()
 							_nC6PRCVEN := SC6->C6_PRCVEN * _nCota  //transformo valor em dolar do pedido para real.
 
 
-							_nPrcDig := _nC6PRCVEN * (_nDesconto / 100) // Preço digitado no produto, incluído o desconto
+							_nPrcDig := _nC6PRCVEN * (_nDesconto / 100) // Preï¿½o digitado no produto, incluï¿½do o desconto
 							_nPrDigL := _nC6PRCVEN - _nPrcDig - _nFrete // Preco digitado no pedido menos o desconto e frete
 							_nVlTotD := SC6->C6_QTDVEN * _nPrDigL
 
@@ -705,25 +666,25 @@ User Function M410STTS()
 								_nPrcTab := DA1->DA1_XPRLIQ									// Preco da tabela de precos
 								_nPrPerm := _nPrcTab * _nValMax 	                        // Preco minimo permitido para o usuario
 
-								// Preco minimo permitido para todas as alçadas.(tera de verificar todas as alçadas de uma unica vez conforme Alex - 11/05/11.)
+								// Preco minimo permitido para todas as alï¿½adas.(tera de verificar todas as alï¿½adas de uma unica vez conforme Alex - 11/05/11.)
 								_nPrPermV := _nPrcTab * _nValMaxV
 								_nPrPermS := _nPrcTab * _nValMaxS
 								_nPrPermG := _nPrcTab * _nValMaxG
 								_nPrPermD := _nPrcTab * _nValMaxD
 
 								_nVlTotT  := SC6->C6_QTDVEN * _nPrPerm
-								_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+								_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 
 								_nVlTotTV := SC6->C6_QTDVEN * _nPrPermV
 								_nVlTotTS := SC6->C6_QTDVEN * _nPrPermS
 								_nVlTotTG := SC6->C6_QTDVEN * _nPrPermG
 								_nVlTotTD := SC6->C6_QTDVEN * _nPrPermD
 
-								//Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+								//Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 								//_nIpProd := _nVlTotD/_nVlTotT
 								_nIpProd := _nVlTotD/_nVlTotT2
 
-								//Mauricio 10/08/11 - implementando sistematica de alteraçoes solicitadas em 10/08/11 - email Sr. Alex.
+								//Mauricio 10/08/11 - implementando sistematica de alteraï¿½oes solicitadas em 10/08/11 - email Sr. Alex.
 
 								_nPBTTV  := _nC6PRCVEN    ///SC6->C6_PRCVEN    //preco digitado em dolar convertido
 								_nPLTTV  := _nPrDigL          //preco liquido
@@ -734,7 +695,7 @@ User Function M410STTS()
 								RecLock("SC6",.F.)
 								SC6->C6_XIPTAB := Round(_nIpProd,3)
 								SC6->C6_TOTDIG := _nVlTotD
-								SC6->C6_TOTTAB := _nVlTotT2     //_nVlTotT //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+								SC6->C6_TOTTAB := _nVlTotT2     //_nVlTotT //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 								SC6->C6_PRTABV := _nPrPerm + _nFrete // Mauricio 26/07/11 - Solicitacao Vagner incluir preco tabela vendedor(tabela - Margem + frete)
 								SC6->C6_PBTTV  := _nPBTTV
 								SC6->C6_PLTTV  := _nPLTTV
@@ -743,16 +704,16 @@ User Function M410STTS()
 								SC6->C6_PLTAB  := _nPrcTab
 								MsUnLock()
 
-								_nPrDigT  += _nVlTotD	 // Soma dos preços líquidos digitados
-								_nPrPerT  += _nVlTotT    // Soma dos preços das tabelas
-								_nPrTabT  += _nVlTotT2     //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
-								_nPrPerTV += _nVltotTV   // Soma preço das tabelas para alçada
+								_nPrDigT  += _nVlTotD	 // Soma dos preï¿½os lï¿½quidos digitados
+								_nPrPerT  += _nVlTotT    // Soma dos preï¿½os das tabelas
+								_nPrTabT  += _nVlTotT2     //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
+								_nPrPerTV += _nVltotTV   // Soma preï¿½o das tabelas para alï¿½ada
 								_nPrPerTS += _nVltotTS
 								_nPrPerTG += _nVltotTG
 								_nPrPerTD += _nVltotTD
 
-								_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e não unitario conf. Sr. Alex
-								_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e não unitario conf. Sr. Alex
+								_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e nï¿½o unitario conf. Sr. Alex
+								_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e nï¿½o unitario conf. Sr. Alex
 								_nValorNF += (SC6->C6_VALOR * _nCota)
 							EndIf										
 						Endif
@@ -761,49 +722,49 @@ User Function M410STTS()
 						dbSkip()
 					EndDo
 
-					_nVlIP := _nPrDigT/_nPrTabT     //_nPrPerT //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+					_nVlIP := _nPrDigT/_nPrTabT     //_nPrPerT //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 					_nVlIP := noRound(_nVlIP,3)
 
 					if _nVlIP < 1	
 						RecLock("SC5",.F.)
 						_bloqueia := .F.
-						// Antiga forma de alçada ja substituida Mauricio 11/05/11.
+						// Antiga forma de alï¿½ada ja substituida Mauricio 11/05/11.
 
 						//_cSupervi   := Posicione("SA3",1,xFilial("SA3")+SA3->A3_SUPER,"A3_CODUSR")
 						//_cGerente   := Posicione("SA3",1,xFilial("SA3")+SA3->A3_GEREN,"A3_CODUSR")
 						//_cDiretor   := Posicione("SA3",1,xFilial("SA3")+SA3->A3_XDIRET,"A3_CODUSR")
 
 						If    SA3->A3_NIVETAB == "1"                  // Se for um vendedor
-							//Verifico a alçada do vendedor - Alex Borges 30/09/11
+							//Verifico a alï¿½ada do vendedor - Alex Borges 30/09/11
 							If _nPrDigT < _nPrPerTV   
 								SC5->C5_APROV1 := _cSupervi
 								_bloqueia := .T.
 							EndIF
-							If _nPrDigT < _nPrPerTS                   // verifico alçada supervisor para o vendedor
+							If _nPrDigT < _nPrPerTS                   // verifico alï¿½ada supervisor para o vendedor
 								SC5->C5_APROV2 := _cGerente
 								_bloqueia := .T.
 							EndIf
 
-							If _nPrDigT < _nPrPerTG                   // verifico alçada gerente para o vendedor
+							If _nPrDigT < _nPrPerTG                   // verifico alï¿½ada gerente para o vendedor
 								SC5->C5_APROV3 := _cDiretor
 								_bloqueia := .T.
 							EndIf
 
 
 						ElseIf SA3->A3_NIVETAB == "2"				     // Se for um supervisor
-							If _nPrDigT < _nPrPerTS                   // verifico alçada supervisor para o vendedor
+							If _nPrDigT < _nPrPerTS                   // verifico alï¿½ada supervisor para o vendedor
 								SC5->C5_APROV2 := _cGerente
 								_bloqueia := .T.
 							EndIf
 
-							If _nPrDigT < _nPrPerTG                   // verifico alçada gerente para o vendedor
+							If _nPrDigT < _nPrPerTG                   // verifico alï¿½ada gerente para o vendedor
 								SC5->C5_APROV3 := _cDiretor
 								_bloqueia := .T.
 							EndIf
 
 						ElseIf SA3->A3_NIVETAB == "3"					// Se for um gerente
 
-							If _nPrDigT < _nPrPerTG                   // verifico alçada gerente para o vendedor
+							If _nPrDigT < _nPrPerTG                   // verifico alï¿½ada gerente para o vendedor
 								SC5->C5_APROV3 := _cDiretor
 								_bloqueia := .T.
 							EndIf
@@ -820,7 +781,7 @@ User Function M410STTS()
 					SC5->C5_FRETAPV := _nFrete   //Mauricio 16/11/11.
 					SC5->C5_XIPTAB  := _nVlIP  
 					SC5->C5_TOTDIG  := _nPrDigT
-					SC5->C5_TOTTAB  := _nPrTabT   //_nPrPerT  //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+					SC5->C5_TOTTAB  := _nPrTabT   //_nPrPerT  //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 					SC5->C5_DESCTBP := _nPreTabS - _nPreLiqS
 					SC5->C5_VALORNF := _nValorNF
 					SC5->(MsUnLock())
@@ -841,7 +802,7 @@ User Function M410STTS()
 				SC5->C5_LIBEROK := " "
 				MsUnlock()
 
-				dbSelectArea("SC9")   // Mauricio 25/03/11 Projeto tabela de preço: como é customizado verifico se gerou liberação e havendo deleto todos os registros.
+				dbSelectArea("SC9")   // Mauricio 25/03/11 Projeto tabela de preï¿½o: como ï¿½ customizado verifico se gerou liberaï¿½ï¿½o e havendo deleto todos os registros.
 				dbSetOrder(1)
 
 				If dbSeek(xFilial("SC9")+_cNumPed)
@@ -865,7 +826,7 @@ User Function M410STTS()
 				EndIf
 			EndIf
 		EndIf
-		If ! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lDoa .or. __cuserid$_cUsuBon   //Se foi pedido de doação preciso verificar se gerou SC9 e deletaer registros para não liberar para faturamento
+		If !lSfInt .And. _lDoa .or. __cuserid$_cUsuBon   //Se foi pedido de doaï¿½ï¿½o preciso verificar se gerou SC9 e deletaer registros para nï¿½o liberar para faturamento
 			//Incluida verificacao para usuario de bonificacao qualidade
 			DbSelectArea("SC5")
 			RecLock("SC5",.F.)
@@ -895,19 +856,19 @@ User Function M410STTS()
 			EndIf				
 		Endif	
 
-		Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL INLCUI" )
-		// Logica para alteração
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL INLCUI" )
+		// Logica para alteraï¿½ï¿½o
 	ElseIf ALTERA
 
-		// Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
-		// Função comentada para não fazer mais a chamada à rotina
-		// IF ALLTRIM(cEmpAnt) == '01' .AND. ALLTRIM(xFilial("SC5")) == '02' // chamado 031739 William Costa, adicionado esse if pois causava lentidão devido ao alta quantidade de pedidos referente ao cliente 60037058
+		// Ticket  8      - Abel B.  - 15/02/2021 - Prï¿½-liberaï¿½ï¿½o de crï¿½dito para inclusï¿½o e alteraï¿½ï¿½o de pedidos.
+		// Funï¿½ï¿½o comentada para nï¿½o fazer mais a chamada ï¿½ rotina
+		// IF ALLTRIM(cEmpAnt) == '01' .AND. ALLTRIM(xFilial("SC5")) == '02' // chamado 031739 William Costa, adicionado esse if pois causava lentidï¿½o devido ao alta quantidade de pedidos referente ao cliente 60037058
 			// 21/10/16 Novo tratamento para pre aprovacao do credito
 		// 	fPreAprv(xFilial("SC5"),_cNumped,_cCliente,_cLoja)  //funcao pra limpeza de flag de pre aprovacao de pedidos de venda.
 		// ENDIF
 
 		//Mauricio - Chamado 037330 - 
-		IF !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. !Empty(M->C5_XREFATD) .And. Alltrim(cEmpAnt) $ "01/02" 
+		IF !lSfInt .And. !Empty(M->C5_XREFATD) .And. Alltrim(cEmpAnt) $ "01/02" 
 			DbSelectArea("SC5")
 			if dbseek(xFilial("SC5")+M->C5_XREFATD)
 				If Empty(SC5->C5_XPEDGER)
@@ -928,7 +889,7 @@ User Function M410STTS()
 			Endif   
 		ENDIF
 
-		//Mauricio 09/08/11 - Incluido tratamento para recalculo do peso liquido e bruto tambem na alteração.
+		//Mauricio 09/08/11 - Incluido tratamento para recalculo do peso liquido e bruto tambem na alteraï¿½ï¿½o.
 		dbSelectArea("SC6")	
 		If dbSeek(xFilial("SC6")+_cNumPed )
 
@@ -950,20 +911,20 @@ User Function M410STTS()
 				_nTotalCx   += SC6->C6_UNSVEN   // Soma qtd caixas (2a. UM)
 				//			_nTotalKg   += SC6->C6_QTDVEN   // Soma qtd peso   (1a. UM)
 				
-				//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+				//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 				_nTIteKg := 0
 				_nTIteBr := 0
 
 				//Everson - 10/02/2020. Chamado 054941.
 				If Alltrim(cValToChar(SB1->B1_COD)) == Alltrim(cValToChar(SC6->C6_PRODUTO)) .And. SB1->B1_PESO > 0
 
-					//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+					//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 					_nTIteKg := SC6->C6_UNSVEN * SB1->B1_PESO
 					_nTotalKg += _nTIteKg
 					//_nTotalKg += SC6->C6_UNSVEN * SB1->B1_PESO
 
 				Else
-					//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+					//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 					_nTIteKg := iif(SC6->C6_SEGUM="BS",0,SC6->C6_QTDVEN)   // Soma qtd peso   (1a. UM) //alterado por Adriana, se bolsa nao soma 1a unidade como peso
 					_nTotalKg += _nTIteKg
 					//_nTotalKg += iif(SC6->C6_SEGUM="BS",0,SC6->C6_QTDVEN)   // Soma qtd peso   (1a. UM) //alterado por Adriana, se bolsa nao soma 1a unidade como peso
@@ -972,7 +933,7 @@ User Function M410STTS()
 
 				//Everson - 10/02/2020. Chamado 054941.
 				If Alltrim(cValToChar(SB1->B1_COD)) == Alltrim(cValToChar(SC6->C6_PRODUTO)) .And. SB1->B1_PESBRU > 0
-					//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+					//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 					_nTIteBr := SC6->C6_UNSVEN * SB1->B1_PESBRU
 					_nTotalBr += _nTIteBr - _nTIteKg
 					//_nTotalBr += SC6->C6_UNSVEN * SB1->B1_PESBRU
@@ -980,19 +941,19 @@ User Function M410STTS()
 
 				Else
 
-					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-					//³ Posiciona Cadastro de Tara ³
-					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+					//ï¿½ Posiciona Cadastro de Tara ï¿½
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					dbSelectArea("SZC")
 					dbSetOrder(1)
 					If dbSeek(xFilial("SZC") + SC6->C6_SEGUM)
-						//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+						//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 						_nTIteBr := (SC6->C6_UNSVEN * SZC->ZC_TARA) // PESO BRUTO
 						_nTotalBr += _nTIteBr
 						//_nTotalBr += (SC6->C6_UNSVEN * SZC->ZC_TARA) // PESO BRUTO
 					
 					Else
-						//13/04/2020, Abel   , Chamado 057312 - Correção no cálculo de Peso Bruto no Pedido de Venda quando mais de um item
+						//13/04/2020, Abel   , Chamado 057312 - Correï¿½ï¿½o no cï¿½lculo de Peso Bruto no Pedido de Venda quando mais de um item
 						_nTIteBr := 0 //(SC6->C6_UNSVEN  * 1) // PESO BRUTO //WILLIAM COSTA 06/12/2018 CHAMADO 045531 || OS 046701 || PCP || KAREN || 8466 || COPIA DE PEDIDO
 						_nTotalBr += _nTIteBr
 						//_nTotalBr += 0 //(SC6->C6_UNSVEN  * 1) // PESO BRUTO //WILLIAM COSTA 06/12/2018 CHAMADO 045531 || OS 046701 || PCP || KAREN || 8466 || COPIA DE PEDIDO
@@ -1018,12 +979,12 @@ User Function M410STTS()
 
 		EndIf
 
-		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-		//³ Grava Informacoes em SC5 ³
-		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+		//ï¿½ Grava Informacoes em SC5 ï¿½
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	
 		dbSelectArea("SC5")
 
-		If SC5->C5_EST <> "EX" .or. (SC5->C5_EST = "EX" .and. _lEECFat) //por Adriana em 04/10/2019-chamado 052170(Mantem peso digitado, se exportação e módulo SIGAEEC desabilitado) 
+		If SC5->C5_EST <> "EX" .or. (SC5->C5_EST = "EX" .and. _lEECFat) //por Adriana em 04/10/2019-chamado 052170(Mantem peso digitado, se exportaï¿½ï¿½o e mï¿½dulo SIGAEEC desabilitado) 
 
 			RecLock("SC5",.F.)
 			
@@ -1037,17 +998,17 @@ User Function M410STTS()
 
 		Endif
 		
-		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lDoa      //Mauricio Doacao
+		If !lSfInt .And. _lDoa      //Mauricio Doacao
 
 			lAprov2 := VerifAprovDoacao() //Inicio William TI chamado 040917
 
 			RecLock("SC5",.F.)
-			SC5->C5_BLQ     := "1"        //forço bloqueio padrão do pedido de venda....
+			SC5->C5_BLQ     := "1"        //forï¿½o bloqueio padrï¿½o do pedido de venda....
 			SC5->C5_STATDOA := "B"
 			SC5->C5_APRVDOA := IIF(lAprov2 == .F.,_cAprDoa,_cAprDoa2)   //"000559"  Alterado por Adriana para alterar o aprovador    
 			SC5->(MsUnlock())
 
-			femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"2") //Incluir aqui função para envio de email ao Caio
+			femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"2") //Incluir aqui funï¿½ï¿½o para envio de email ao Caio
 
 		Endif
 
@@ -1058,8 +1019,8 @@ User Function M410STTS()
 		IF SC5->C5_DTENTR == DATE()
 
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("197")
 			endif
 
@@ -1102,8 +1063,8 @@ User Function M410STTS()
 		ElseIf SC5->C5_TPFRETE == "F"    //fob
 
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("099")
 			endif
 
@@ -1156,8 +1117,8 @@ User Function M410STTS()
 					cRotSA1 := getRot(Alltrim(cValToChar(SA1->A1_ROTEIRO)))
 					
 					IF SC5->C5_XTIPO <> '2'
-						// LPM - Reformulação na regravação/Alteração dos roteiros.
-						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+						// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 						fAtuRot(cRotSA1)
 					endif
 					
@@ -1198,8 +1159,8 @@ User Function M410STTS()
 				Else
 
 					IF SC5->C5_XTIPO <> '2'
-						// LPM - Reformulação na regravação/Alteração dos roteiros.
-						// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+						// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+						// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 						fAtuRot("200")
 					endif
 
@@ -1243,11 +1204,11 @@ User Function M410STTS()
 		Endif
 		//Fim
 
-		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lBon .and. __cuserid$_cUsuBon  // Incluido por Adriana para tratar bonificacao qualidade
+		If !lSfInt .And. _lBon .and. __cuserid$_cUsuBon  // Incluido por Adriana para tratar bonificacao qualidade
 			
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("099")
 			endif
 			
@@ -1256,18 +1217,18 @@ User Function M410STTS()
 			SC5->C5_APRVDOA := _cAprBon   // Aprovador bonificacao qualidade
 			// Ricardo Lima-28/02/2019
 			IF SC5->C5_XTIPO <> '2'
-				SC5->C5_ROTEIRO := "099"      // Roteiro não utilizado pela logistica - incluido por Adriana em 20/07/2016
+				SC5->C5_ROTEIRO := "099"      // Roteiro nï¿½o utilizado pela logistica - incluido por Adriana em 20/07/2016
 			ENDIF
 			SC5->(MsUnlock())
 			*/	   
-			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio	   		
+			//	   		femailf(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui funï¿½ï¿½o para envio de email ao Caio	   		
 		Endif
 
-		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lBon 
+		If !lSfInt .And. _lBon 
 			
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("099")
 			endif
 			
@@ -1281,8 +1242,8 @@ User Function M410STTS()
 			*/	   	   		
 		Endif
 
-		if !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. !(__cUserID $ _cUsuExcPV) .And. !(_lDoa) .And. !(__cuserid $ _cUsuBon)      //Adriana em 05/11/2015 - incluido parametro para validar exclusao de pedido de venda liberado
-			//Mauricio 05/01/12 - retirado usuario Vagner pois ele não pode ter acesso a exclusão
+		if !lSfInt .And. !(__cUserID $ _cUsuExcPV) .And. !(_lDoa) .And. !(__cuserid $ _cUsuBon)      //Adriana em 05/11/2015 - incluido parametro para validar exclusao de pedido de venda liberado
+			//Mauricio 05/01/12 - retirado usuario Vagner pois ele nï¿½o pode ter acesso a exclusï¿½o
 			//por essa rotina - Criado rotina EXCPEDCOM.prw
 			////Mauricio Doacao 25/09/13 - adicionado somente para pedido diferente de doacao.	 
 			// Incluido por Adriana para tratar bonificacao qualidade  !(__cuserid$_cUsuBon)                                                             		
@@ -1294,13 +1255,13 @@ User Function M410STTS()
 
 			//Everson - 29/10/2019. Chamado 052898.
 			u_GrLogZBE (Date(), Time(), cUserName, "PEDIDO DE VENDA", "COMERCIAL", "M410STTS",;
-			"Pedido/!Rest/SA3/!Doação " + cValToChar(SC5->C5_NUM) + " " +;
-			cValToChar(! IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')) + " " +;
+			"Pedido/!Rest/SA3/!Doaï¿½ï¿½o " + cValToChar(SC5->C5_NUM) + " " +;
+			cValToChar(!lSfInt) + " " +;
 			cValToChar( lLocUsr )+ " " +;
 			cValToChar( ! _lDoa )+ " ",;
 			ComputerName(), LogUserName())
 
-			If lLocUsr  // Só executa se usuario incluindo pedido for vendedor (primeira condição) e pedido diferente de doaçao //Everson - 29/10/2019. Chamado 052898.
+			If lLocUsr  // Sï¿½ executa se usuario incluindo pedido for vendedor (primeira condiï¿½ï¿½o) e pedido diferente de doaï¿½ao //Everson - 29/10/2019. Chamado 052898.
 
 				dbSelectArea("SA1")
 				dbSetOrder(1)
@@ -1308,11 +1269,11 @@ User Function M410STTS()
 				If SA1->(dbSeek(xFilial("SA1")+_cCliente+_cLoja))
 
 					_cRepresent := SA1->A1_VEND
-					_cSuperv    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_SUPER")        // supervisor para aprovação
+					_cSuperv    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_SUPER")        // supervisor para aprovaï¿½ï¿½o
 					_cSupervi   := Posicione("SA3",1,xFilial("SA3")+_cSuperv,"A3_CODUSR")
-					_cGerent    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_GEREN")        // gerente para aprovação
+					_cGerent    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_GEREN")        // gerente para aprovaï¿½ï¿½o
 					_cGerente   := Posicione("SA3",1,xFilial("SA3")+_cGerent,"A3_CODUSR")
-					_cDireto    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_XDIRET")       // diretor para aprovação
+					_cDireto    := Posicione("SA3",1,xFilial("SA3")+_cRepresent,"A3_XDIRET")       // diretor para aprovaï¿½ï¿½o
 					_cDiretor   := Posicione("SA3",1,xFilial("SA3")+_cDireto,"A3_CODUSR")
 
 					DbSelectArea("SA3")
@@ -1332,7 +1293,7 @@ User Function M410STTS()
 
 						RecLock("SC5",.F.)
 						SC5->C5_XREDE := "S"
-						SC5->C5_BLQ   := "1"                 // Quando o pedido for de cliente rede, entra já bloqueado
+						SC5->C5_BLQ   := "1"                 // Quando o pedido for de cliente rede, entra jï¿½ bloqueado
 						SC5->C5_CODRED  := _cRede          // Grava codigo da rede utilizado na rotina ANALISPED.
 						SC5->C5_LIBEROK := " "
 						SC5->(MsUnLock())
@@ -1342,7 +1303,7 @@ User Function M410STTS()
 				EndIf
 
 				If _lLoja
-					// Busco desconto para Cliente. O desconto aqui informado é em PERCENTUAL - PAULO - TDS - 12/05/2011
+					// Busco desconto para Cliente. O desconto aqui informado ï¿½ em PERCENTUAL - PAULO - TDS - 12/05/2011
 					_nDesconto := SA1->A1_DESC
 
 					// Busco frete para Cliente
@@ -1351,7 +1312,7 @@ User Function M410STTS()
 					_cRegiao := ""
 					_cTabela := ""   //M->C5_TABELA
 
-					// Se não contiver a tabela cadastrada no cliente, o código da tabela será de acordo com o peso, inserido na tabela por faixa de pesos
+					// Se nï¿½o contiver a tabela cadastrada no cliente, o cï¿½digo da tabela serï¿½ de acordo com o peso, inserido na tabela por faixa de pesos
 					// Paulo - TDS - 18/05/2011
 					//Mauricio 07/12/11 - Retirado tratamento para tabela vinda do pedido. Tabela sera assumida pela faixa de Qtd. caixas que o pedido se
 					//encaixa (Usando tabela ZZP criada).
@@ -1372,10 +1333,10 @@ User Function M410STTS()
 
 					//EndIf
 
-					//Mauricio - 07/12/11 - tratamento para caso não haver tabela cadastrada ou faixa de peso
-					//precisa ser analisado a posterior, para encontrar melhor alternativa de ação a ser tomada.
+					//Mauricio - 07/12/11 - tratamento para caso nï¿½o haver tabela cadastrada ou faixa de peso
+					//precisa ser analisado a posterior, para encontrar melhor alternativa de aï¿½ï¿½o a ser tomada.
 					If Empty(_cTabela)
-						Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
+						//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 						return()
 					Else
 						//atualizo campo tabela no SC5
@@ -1389,7 +1350,7 @@ User Function M410STTS()
 
 					If dbSeek(xFilial("DA0")+_cTabela)
 
-						// Condição para achar percentual baseado em um unico usuario(ou vendedor ou supervisor ou gerente ou diretor)
+						// Condiï¿½ï¿½o para achar percentual baseado em um unico usuario(ou vendedor ou supervisor ou gerente ou diretor)
 						If     SA3->A3_NIVETAB == "2" // supervisor
 							_nValMax := 1-(DA0->DA0_XSUPER/100)         // percentual supervisor
 						ElseIf SA3->A3_NIVETAB == "3" // Gerente
@@ -1400,8 +1361,8 @@ User Function M410STTS()
 							_nValMax := 1-(DA0->DA0_XVENDE/100)		 // percentual vendedor
 						EndIf
 
-						// Condição para achar um percentual para cada usuario sempre(vendedor,supervisor,gerente, diretor)
-						// Destinado a geracao de alçada separadamente.(Mauricio 11/05/11.)
+						// Condiï¿½ï¿½o para achar um percentual para cada usuario sempre(vendedor,supervisor,gerente, diretor)
+						// Destinado a geracao de alï¿½ada separadamente.(Mauricio 11/05/11.)
 						_nValMaxV := 1-(DA0->DA0_XVENDE/100)
 						_nValMaxS := 1-(DA0->DA0_XSUPER/100)
 						_nValMaxG := 1-(DA0->DA0_XGEREN/100)
@@ -1413,15 +1374,15 @@ User Function M410STTS()
 					dbSetOrder(1)
 
 					If dbSeek(xFilial("SC6")+_cNumPed)
-						// A variável _nDesconto, oriunda de A1_DESC é PERCENTUAL.
-						// Então, é necessário efetuar o calculo do desconto no preço de venda, para atualizar o preço liquido digitado
-						// As instruções abaixo efetuam este processo 
+						// A variï¿½vel _nDesconto, oriunda de A1_DESC ï¿½ PERCENTUAL.
+						// Entï¿½o, ï¿½ necessï¿½rio efetuar o calculo do desconto no preï¿½o de venda, para atualizar o preï¿½o liquido digitado
+						// As instruï¿½ï¿½es abaixo efetuam este processo 
 
 						While !Eof() .And. SC6->C6_NUM == _cNumped
 
 							If _nMoeda == 1
 
-								_nPrcDig := SC6->C6_PRCVEN * (_nDesconto / 100) // Preço digitado no produto, incluído o desconto
+								_nPrcDig := SC6->C6_PRCVEN * (_nDesconto / 100) // Preï¿½o digitado no produto, incluï¿½do o desconto
 								_nPrDigL := SC6->C6_PRCVEN - _nPrcDig - _nFrete // Preco digitado no pedido menos o desconto e frete
 								_nVlTotD := SC6->C6_QTDVEN * _nPrDigL
 
@@ -1432,14 +1393,14 @@ User Function M410STTS()
 									_nPrcTab := DA1->DA1_XPRLIQ									// Preco da tabela de precos
 									_nPrPerm := _nPrcTab * _nValMax 	                        // Preco minimo permitido para o usuario
 
-									// Preco minimo permitido para todas as alçadas.(tera de verificar todas as alçadas de uma unica vez conforme Alex - 11/05/11.)
+									// Preco minimo permitido para todas as alï¿½adas.(tera de verificar todas as alï¿½adas de uma unica vez conforme Alex - 11/05/11.)
 									_nPrPermV := _nPrcTab * _nValMaxV
 									_nPrPermS := _nPrcTab * _nValMaxS
 									_nPrPermG := _nPrcTab * _nValMaxG
 									_nPrPermD := _nPrcTab * _nValMaxD
 
 									_nVlTotT  := SC6->C6_QTDVEN * _nPrPerm
-									_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+									_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 
 									_nVlTotTV := SC6->C6_QTDVEN * _nPrPermV
 									_nVlTotTS := SC6->C6_QTDVEN * _nPrPermS
@@ -1447,9 +1408,9 @@ User Function M410STTS()
 									_nVlTotTD := SC6->C6_QTDVEN * _nPrPermD
 
 									//_nIpProd := _nVlTotD/_nVlTotT
-									_nIpProd := _nVlTotD/_nVlTotT2      //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+									_nIpProd := _nVlTotD/_nVlTotT2      //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 
-									//Mauricio 10/08/11 - implementando sistematica de alteraçoes solicitadas em 10/08/11 - email Sr. Alex.												
+									//Mauricio 10/08/11 - implementando sistematica de alteraï¿½oes solicitadas em 10/08/11 - email Sr. Alex.												
 									_nPBTTV  := SC6->C6_PRCVEN    //preco digitado
 									_nPLTTV  := _nPrDigL          //preco liquido
 									_nPLTVD  := _nPrPermV         //preco minimo vendedor
@@ -1459,7 +1420,7 @@ User Function M410STTS()
 									RecLock("SC6",.F.)
 									SC6->C6_XIPTAB := Round(_nIpProd,3)
 									SC6->C6_TOTDIG := _nVlTotD
-									SC6->C6_TOTTAB := _nVlTotT2 //_nVlTotT //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+									SC6->C6_TOTTAB := _nVlTotT2 //_nVlTotT //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 									SC6->C6_PRTABV := _nPrPerm + _nFrete // Mauricio 26/07/11 - Solicitacao Vagner incluir preco tabela vendedor(tabela - Margem + frete)
 									SC6->C6_PBTTV  := _nPBTTV
 									SC6->C6_PLTTV  := _nPLTTV
@@ -1468,20 +1429,20 @@ User Function M410STTS()
 									SC6->C6_PLTAB  := _nPrcTab
 									MsUnLock()
 
-									_nPrDigT  += _nVlTotD	 // Soma dos preços líquidos digitados
-									_nPrPerT  += _nVlTotT    // Soma dos preços das tabelas
-									_nPrTabT  += _nVlTotT2   //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
-									_nPrPerTV += _nVltotTV   // Soma preço das tabelas para alçada
+									_nPrDigT  += _nVlTotD	 // Soma dos preï¿½os lï¿½quidos digitados
+									_nPrPerT  += _nVlTotT    // Soma dos preï¿½os das tabelas
+									_nPrTabT  += _nVlTotT2   //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
+									_nPrPerTV += _nVltotTV   // Soma preï¿½o das tabelas para alï¿½ada
 									_nPrPerTS += _nVltotTS
 									_nPrPerTG += _nVltotTG
 									_nPrPerTD += _nVltotTD
 
-									_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e não unitario conf. Sr. Alex
-									_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e não unitario conf. Sr. Alex
+									_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e nï¿½o unitario conf. Sr. Alex
+									_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e nï¿½o unitario conf. Sr. Alex
 									_nValorNf += SC6->C6_VALOR
 								EndIf
 							Else
-								//Se não tiver data cadastrada ou o valor for zero assume o valor de 1(para não dar erro na rotina).
+								//Se nï¿½o tiver data cadastrada ou o valor for zero assume o valor de 1(para nï¿½o dar erro na rotina).
 								_nCota := 0
 								DbSelectArea("SM2")
 								DbSetOrder(1)
@@ -1499,7 +1460,7 @@ User Function M410STTS()
 
 								_nC6PRCVEN := SC6->C6_PRCVEN * _nCota  //transformo valor em dolar do pedido para real.
 
-								_nPrcDig := _nC6PRCVEN * (_nDesconto / 100) // Preço digitado no produto, incluído o desconto
+								_nPrcDig := _nC6PRCVEN * (_nDesconto / 100) // Preï¿½o digitado no produto, incluï¿½do o desconto
 								_nPrDigL := _nC6PRCVEN - _nPrcDig - _nFrete // Preco digitado no pedido menos o desconto e frete
 								_nVlTotD := SC6->C6_QTDVEN * _nPrDigL
 
@@ -1510,14 +1471,14 @@ User Function M410STTS()
 									_nPrcTab := DA1->DA1_XPRLIQ									// Preco da tabela de precos
 									_nPrPerm := _nPrcTab * _nValMax 	                        // Preco minimo permitido para o usuario
 
-									// Preco minimo permitido para todas as alçadas.(tera de verificar todas as alçadas de uma unica vez conforme Alex - 11/05/11.)
+									// Preco minimo permitido para todas as alï¿½adas.(tera de verificar todas as alï¿½adas de uma unica vez conforme Alex - 11/05/11.)
 									_nPrPermV := _nPrcTab * _nValMaxV
 									_nPrPermS := _nPrcTab * _nValMaxS
 									_nPrPermG := _nPrcTab * _nValMaxG
 									_nPrPermD := _nPrcTab * _nValMaxD
 
 									_nVlTotT  := SC6->C6_QTDVEN * _nPrPerm
-									_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+									_nVlTotT2 := SC6->C6_QTDVEN * _nPrcTab  //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 
 									_nVlTotTV := SC6->C6_QTDVEN * _nPrPermV
 									_nVlTotTS := SC6->C6_QTDVEN * _nPrPermS
@@ -1525,9 +1486,9 @@ User Function M410STTS()
 									_nVlTotTD := SC6->C6_QTDVEN * _nPrPermD
 
 									//_nIpProd := _nVlTotD/_nVlTotT
-									_nIpProd := _nVlTotD/_nVlTotT2      //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+									_nIpProd := _nVlTotD/_nVlTotT2      //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 
-									//Mauricio 10/08/11 - implementando sistematica de alteraçoes solicitadas em 10/08/11 - email Sr. Alex.												
+									//Mauricio 10/08/11 - implementando sistematica de alteraï¿½oes solicitadas em 10/08/11 - email Sr. Alex.												
 									_nPBTTV  := _nC6PRCVEN    //SC6->C6_PRCVEN    //preco digitado convertido de dolar para real...
 									_nPLTTV  := _nPrDigL          //preco liquido
 									_nPLTVD  := _nPrPermV         //preco minimo vendedor
@@ -1537,7 +1498,7 @@ User Function M410STTS()
 									RecLock("SC6",.F.)
 									SC6->C6_XIPTAB := Round(_nIpProd,3)
 									SC6->C6_TOTDIG := _nVlTotD
-									SC6->C6_TOTTAB := _nVlTotT2 //_nVlTotT //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+									SC6->C6_TOTTAB := _nVlTotT2 //_nVlTotT //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 									SC6->C6_PRTABV := _nPrPerm + _nFrete // Mauricio 26/07/11 - Solicitacao Vagner incluir preco tabela vendedor(tabela - Margem + frete)
 									SC6->C6_PBTTV  := _nPBTTV
 									SC6->C6_PLTTV  := _nPLTTV
@@ -1546,16 +1507,16 @@ User Function M410STTS()
 									SC6->C6_PLTAB  := _nPrcTab
 									MsUnLock()
 
-									_nPrDigT  += _nVlTotD	 // Soma dos preços líquidos digitados
-									_nPrPerT  += _nVlTotT    // Soma dos preços das tabelas
-									_nPrTabT  += _nVlTotT2   //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
-									_nPrPerTV += _nVltotTV   // Soma preço das tabelas para alçada
+									_nPrDigT  += _nVlTotD	 // Soma dos preï¿½os lï¿½quidos digitados
+									_nPrPerT  += _nVlTotT    // Soma dos preï¿½os das tabelas
+									_nPrTabT  += _nVlTotT2   //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
+									_nPrPerTV += _nVltotTV   // Soma preï¿½o das tabelas para alï¿½ada
 									_nPrPerTS += _nVltotTS
 									_nPrPerTG += _nVltotTG
 									_nPrPerTD += _nVltotTD
 
-									_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e não unitario conf. Sr. Alex
-									_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e não unitario conf. Sr. Alex
+									_nPreTabS += (_nPrcTab * SC6->C6_QTDVEN)   //Soma dos precos de tabela para gravar no SC5 Valor Desconto. Pelo total e nï¿½o unitario conf. Sr. Alex
+									_nPreLiqS += (_nPrDigL * SC6->C6_QTDVEN)   //Soma dos precos liquidos para gravar no SC5 Valor Desconto.  Pelo total e nï¿½o unitario conf. Sr. Alex
 									_nValorNf += (SC6->C6_VALOR * _nCota)
 								EndIf
 							Endif
@@ -1564,7 +1525,7 @@ User Function M410STTS()
 						EndDo
 
 						//_nVlIP := _nPrDigT/_nPrPerT
-						_nVlIP := _nPrDigT/_nPrTabT    //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+						_nVlIP := _nPrDigT/_nPrTabT    //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 						_nVlIP := NoRound(_nVlIP,3)
 
 						//If _nPrDigT < _nPrPerT
@@ -1577,7 +1538,7 @@ User Function M410STTS()
 							_bloqueia := .F.
 
 							If    SA3->A3_NIVETAB == "1"                  // Se for um vendedor
-								// Verifio alçada do vendedor 30/09/11 - Alex Borges
+								// Verifio alï¿½ada do vendedor 30/09/11 - Alex Borges
 								If _nPrDigT < _nPrPerTV
 									SC5->C5_APROV1 := _cSupervi
 									IF SC5->C5_EST == "EX"
@@ -1588,7 +1549,7 @@ User Function M410STTS()
 									_bloqueia := .T.
 								End IF	
 
-								IF _nPrDigT < _nPrPerTS                   // verifico alçada supervisor 
+								IF _nPrDigT < _nPrPerTS                   // verifico alï¿½ada supervisor 
 									SC5->C5_APROV2 := _cGerente  
 									IF SC5->C5_EST == "EX"
 										SC5->C5_LIBER2 := ""
@@ -1598,7 +1559,7 @@ User Function M410STTS()
 									_bloqueia := .T.
 								EndIf
 
-								If _nPrDigT < _nPrPerTG                   // verifico alçada gerente
+								If _nPrDigT < _nPrPerTG                   // verifico alï¿½ada gerente
 									SC5->C5_APROV3 := _cDiretor
 									IF SC5->C5_EST == "EX"
 										SC5->C5_LIBER3 := ""
@@ -1609,7 +1570,7 @@ User Function M410STTS()
 								EndIf
 
 							ElseIf SA3->A3_NIVETAB == "2"				     // Se for um supervisor
-								IF _nPrDigT < _nPrPerTS                   // verifico alçada supervisor 
+								IF _nPrDigT < _nPrPerTS                   // verifico alï¿½ada supervisor 
 									SC5->C5_APROV2 := _cGerente
 									IF SC5->C5_EST == "EX"
 										SC5->C5_LIBER2 := ""
@@ -1619,7 +1580,7 @@ User Function M410STTS()
 									_bloqueia := .T.
 								EndIf
 
-								If _nPrDigT < _nPrPerTG                   // verifico alçada gerente para o supervisor
+								If _nPrDigT < _nPrPerTG                   // verifico alï¿½ada gerente para o supervisor
 									SC5->C5_APROV3 := _cDiretor
 									IF SC5->C5_EST == "EX"
 										SC5->C5_LIBER3 := ""
@@ -1630,7 +1591,7 @@ User Function M410STTS()
 								EndIf
 
 							ElseIf SA3->A3_NIVETAB == "3"					// Se for um gerente
-								If _nPrDigT < _nPrPerTG                   // verifico alçada gerente para o supervisor
+								If _nPrDigT < _nPrPerTG                   // verifico alï¿½ada gerente para o supervisor
 									SC5->C5_APROV3 := _cDiretor
 									IF SC5->C5_EST == "EX"
 										SC5->C5_LIBER3 := ""
@@ -1659,7 +1620,7 @@ User Function M410STTS()
 						SC5->C5_FRETAPV := _nFrete   //Mauricio 16/11/11.
 						SC5->C5_XIPTAB  := _nVlIP
 						SC5->C5_TOTDIG  := _nPrDigT
-						SC5->C5_TOTTAB  := _nPrTabT   //_nPrPerT //Alterado em 28/09/11 conforme informações Sr. Alex no que se refere ao valor do IPTAB.
+						SC5->C5_TOTTAB  := _nPrTabT   //_nPrPerT //Alterado em 28/09/11 conforme informaï¿½ï¿½es Sr. Alex no que se refere ao valor do IPTAB.
 						SC5->C5_DESCTBP := _nPreTabS - _nPreLiqS
 						SC5->C5_VALORNF := _nValorNF
 						SC5->(MsUnLock())
@@ -1683,7 +1644,7 @@ User Function M410STTS()
 					//Msgalert(SC5->C5_LIBEROK)
 					MsUnlock()
 
-					dbSelectArea("SC9")   // Mauricio 25/03/11 Projeto tabela de preço: como é customizado verifico se gerou liberação e havendo deleto todos os registros.
+					dbSelectArea("SC9")   // Mauricio 25/03/11 Projeto tabela de preï¿½o: como ï¿½ customizado verifico se gerou liberaï¿½ï¿½o e havendo deleto todos os registros.
 					dbSetOrder(1)
 
 					If dbSeek(xFilial("SC9")+_cNumPed)
@@ -1711,7 +1672,7 @@ User Function M410STTS()
 			EndIf
 		Else
 
-			If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
+			If !lSfInt
 
 				dbSelectArea("SC5")
 				dbSetOrder(1)				
@@ -1744,9 +1705,9 @@ User Function M410STTS()
 
 			EndIf
 		Endif
-		// Não elimina o SC9 caso seja um pedido de exportação acima do índice IPTAB.
+		// Nï¿½o elimina o SC9 caso seja um pedido de exportaï¿½ï¿½o acima do ï¿½ndice IPTAB.
 		IF !(SC5->C5_EST='EX' .AND. Empty(SC5->C5_BLQ))
-			If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. _lDoa .or. !(__cuserid$_cUsuBon)   //Mauricio 25/09/13 Se foi pedido de doação preciso verificar se gerou SC9 e deletaer registros para não liberar para faturamento
+			If !lSfInt .And. _lDoa .or. !(__cuserid$_cUsuBon)   //Mauricio 25/09/13 Se foi pedido de doaï¿½ï¿½o preciso verificar se gerou SC9 e deletaer registros para nï¿½o liberar para faturamento
 				DbSelectArea("SC5")
 				RecLock("SC5",.F.)
 				SC5->C5_LIBEROK := " "
@@ -1779,8 +1740,8 @@ User Function M410STTS()
 	EndIf
 
 
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO BSCSLD" )
-	//Mauricio 16/11/11 - Tratamento para forçar bloqueio por limite de credito(Padrao Protheus estava falhando)
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> INICIO BSCSLD" )
+	//Mauricio 16/11/11 - Tratamento para forï¿½ar bloqueio por limite de credito(Padrao Protheus estava falhando)
 	_nLimCred := 0
 	_nLimCred := Posicione("SA1",1,xFilial("SA1")+_cCliente+_cLoja,"A1_LC")
 	_lBloq := .F. 
@@ -1790,6 +1751,12 @@ User Function M410STTS()
 	SC6->(DbSetOrder(1))
 	If SC6->(DbSeek(xFilial("SC6")+_cNumPed))
 		While SC6->(!Eof()) .And. SC6->C6_NUM == _cNumPed
+			
+			//@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferï¿½ncia do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravaï¿½ï¿½o da data de entrega nos itens do PV.
+			if Reclock("SC6",.F.)
+				SC6->C6_ENTREG := SC5->C5_DTENTR
+				SC6->(MsUnlock())
+			ENDIF
 
 			if SC6->C6_QTDENT < SC6->C6_QTDVEN  //qtd total pendente
 				_nVlrItem := ((SC6->C6_QTDVEN - SC6->C6_QTDENT) * SC6->C6_PRCVEN)   //valor pendente no pedido (inclusive parcial)
@@ -1814,7 +1781,7 @@ User Function M410STTS()
 					If ((ALLTRIM(SF4->F4_DUPLIC) = 'S') .and. (ALLTRIM(_Tipo) $ "N/C") .and. (ALLTRIM(_estado)<> "EX"))
 						if (_nVlrItem + _nSldAb) > _nLimCred   //limite excedido deve bloquear
 							
-								If empty(SC9->C9_BLCRED)    //somente se ja não houver bloqueio
+								If empty(SC9->C9_BLCRED)    //somente se ja nï¿½o houver bloqueio
 									If !(SC9->C9_FILIAL == "05" .AND. Alltrim(SC9->C9_CLIENTE) $ '031017/030545')
 											cBlCred 	:= "01"  //bloqueio por limite de valor
 									Endif
@@ -1825,9 +1792,9 @@ User Function M410STTS()
 								Endif
 						Endif
 					
-					// Não ajuste as liberações de crédito para pedidos de exportação.
+					// Nï¿½o ajuste as liberaï¿½ï¿½es de crï¿½dito para pedidos de exportaï¿½ï¿½o.
 					ElseIF ALLTRIM(_estado)<> "EX"
-						cBlCred := ""  // libera crédito
+						cBlCred := ""  // libera crï¿½dito
 					End If
 
 					if Reclock("SC9",.F.)
@@ -1849,17 +1816,17 @@ User Function M410STTS()
 	If lCfop
 		If SC5->(dbseek(xFilial("SC5")+Alltrim(_cNumPed)))
 			IF SC5->C5_XTIPO <> '2'
-				// LPM - Reformulação na regravação/Alteração dos roteiros.
-				// Função responsável pela atualização dos roteiros na SC5, SC6 e SC9.
+				// LPM - Reformulaï¿½ï¿½o na regravaï¿½ï¿½o/Alteraï¿½ï¿½o dos roteiros.
+				// Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
 				fAtuRot("189")
 			endif
 		endif
 	EndIf
 
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL BSCSLD" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL BSCSLD" )
 	//Fim - fernando chamado 036388 - fernando 20/07/2017
 
-	// Chamado 008402 - Mauricio - Correção de problema com programa AD0078.
+	// Chamado 008402 - Mauricio - Correï¿½ï¿½o de problema com programa AD0078.
 	// Limpa a variavel criada no ponto MT410CPY.
 
 	If Type("VAR_IXB") <> "A"
@@ -1884,9 +1851,9 @@ User Function M410STTS()
 	// *********** INICIO CHAMADO 025859 - POR WILLIAM COSTA **************** //
 	DBSELECTAREA("SC6")
 
-	IF !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. DBSEEK(xFilial("SC6")+_cNumPed, .T. )
+	IF !lSfInt .And. DBSEEK(xFilial("SC6")+_cNumPed, .T. )
 
-		WHILE !EOF() .And. SC6->C6_NUM == _cNumPed
+		WHILE SC6->(!EOF()) .And. SC6->C6_NUM == _cNumPed
 
 			IF ALLTRIM(__cUserId) $ GETMV("MV_#USUPET") .AND. ; 
 			ALLTRIM(SC5->C5_NOTA) == ""              .AND. ;
@@ -1909,7 +1876,7 @@ User Function M410STTS()
 				SC5->(dbCloseArea()) 
 
 				memowrite("\LOGREFAT\"+_cNumPed+STRTRAN(Dtoc(date()),"/","")+SUBSTR(STRTRAN(time(),":",""),1,4)+".LOG",alltrim(__cUserId)+" - "+_cNumPed)
-				femailRefatur(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui função para envio de email ao Caio			   
+				femailRefatur(_cNumPed,cFilAnt,M->C5_EMISSAO,_nTotalPedi,"1") //Incluir aqui funï¿½ï¿½o para envio de email ao Caio			   
 			ENDIF
 
 			SC6->(dbSkip()) 
@@ -1927,63 +1894,72 @@ User Function M410STTS()
 
 	//EndIf
 
-	// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alterações de pedidos de vendas com emissões anteriores ao do dia atual e de condições de pagamento normais para antecipado, cenário este não contemplado pelo job
-	// @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
+	// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alteraï¿½ï¿½es de pedidos de vendas com emissï¿½es anteriores ao do dia atual e de condiï¿½ï¿½es de pagamento normais para antecipado, cenï¿½rio este nï¿½o contemplado pelo job
+	// @history chamado TI     - FWNM - 14/08/2020 - Desativaï¿½ï¿½o devido impactos de block no SF
 	// chamado 059415 - FWNM - 29/07/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
-	If INCLUI .or. ALTERA .or. IsInCallStack("A410Inclui") // Copia tb usa variável INCLUI
+	If INCLUI .or. ALTERA .or. IsInCallStack("A410Inclui") // Copia tb usa variï¿½vel INCLUI
 
 		If AllTrim(Posicione("SE4",1,FWxFilial("SE4")+SC5->C5_CONDPAG,"E4_CTRADT")) == "1" // Cond Adiantamento = SIM
 
-			//u_GeraSC9() // @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
+			//u_GeraSC9() // @history chamado TI     - FWNM - 14/08/2020 - Desativaï¿½ï¿½o devido impactos de block no SF
 
 			If lWSBradOn // @history chamado 059415 - FWNM - 13/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO
-				
-				// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alterações de pedidos de vendas com emissões anteriores ao do dia atual e de condições de pagamento normais para antecipado, cenário este não contemplado pelo job
-				Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO" )
-				msAguarde( { || u_GeraRAPV() }, "Gerando boleto de adiantamento PV " + _cNumPed )
-				Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL" )
-			EndIf
-
-			//U_ADFIN021P(SC5->C5_FILIAL+SC5->C5_NUM) // Gera ZBH // @history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
-			
-		EndIf
-
-		//Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
-		//Executa Pre liberação Financeira do Pedido
-		//fPreLibF()
-		
-		Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 1" )
-        If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
-
-			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parâmetro liga/desliga nova função análise crédito
-
-				aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
-				IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
-					//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-					Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
-					fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
-					Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
+				IF SuperGetMV("MV_#THRRAP",,.F.)
+					
+					StartJob("U_THRGEPV",getenvserver(),.F., cEmpAnt, SC5->C5_FILIAL, SC5->C5_NUM)
+				else
+					// @history ticket 102 - FWNM - 31/08/2020 - WS BRADESCO - contemplar alteraï¿½ï¿½es de pedidos de vendas com emissï¿½es anteriores ao do dia atual e de condiï¿½ï¿½es de pagamento normais para antecipado, cenï¿½rio este nï¿½o contemplado pelo job
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - INICIO" )
+					msAguarde( { || u_GeraRAPV() }, "Gerando boleto de adiantamento PV " + _cNumPed )
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - u_GeraRAPV - FINAL" )
 				ENDIF
 
 			EndIf
 
+			//U_ADFIN021P(SC5->C5_FILIAL+SC5->C5_NUM) // Gera ZBH // @history chamado TI     - FWNM - 14/08/2020 - Desativaï¿½ï¿½o devido impactos de block no SF
 			
+		EndIf
+
+		//Ticket  8      - Abel B.  - 15/02/2021 - Prï¿½-liberaï¿½ï¿½o de crï¿½dito para inclusï¿½o e alteraï¿½ï¿½o de pedidos.
+		//Executa Pre liberaï¿½ï¿½o Financeira do Pedido
+		//fPreLibF()
+		
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 1" )
+        If !u_fInterCo("C", SC5->C5_CLIENTE, SC5->C5_LOJACLI) // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAï¿½ï¿½O
+
+			If GetMV("MV_#LIBCRE",,.T.) // @history Ticket  TI     - F.Maciei - 02/09/2021 - Parï¿½metro liga/desliga nova funï¿½ï¿½o anï¿½lise crï¿½dito
+				
+				IF SuperGetMV("MV_#THRCRE",,.T.)
+					StartJob("U_AVLCRED",getenvserver(),.F., cEmpAnt, SC5->C5_FILIAL, SC5->C5_NUM)
+				else
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
+					aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
+					//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
+					IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
+						//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Prï¿½-liberaï¿½ï¿½o de crï¿½dito levando-se em consideraï¿½ï¿½o a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+						//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
+						fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+						//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
+					ENDIF
+				endif
+
+			EndIf
         Else
 
-            // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
+            // @history Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAï¿½ï¿½O
         	IF RecLock("SC5",.F.)
                 SC5->C5_XPREAPR := 'L'
 			    SC5->( MsUnLock() ) 
 		    ENDIF
 
         EndIf
-		Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 1" )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 1" )
 
 	EndIf
 	//
 
 	//Everson - 04/05/2021. Chamado 
-	If (INCLUI .Or. ALTERA) .And. !IsInCallStack('U_RESTEXECUTE')
+	If (INCLUI .Or. ALTERA) .And. !lSfInt
 		libPedSAG()
 	EndIf
 	//
@@ -1992,7 +1968,7 @@ User Function M410STTS()
 		fFunDel()
 	endif
 
-	//Everson - 17/03/2022. Chamado 18465. //Everson - 24/03/2022. Chamado 18465.
+	//Everson - 18/03/2022. Chamado 18465. //Everson - 24/03/2022. Chamado 18465.
 	If ! Empty(Alltrim(cValToChar(SC5->C5_XORDPES))) .Or. chkOrdSC6(_nOper, SC5->C5_NUM)
 		grvBarr(_nOper, SC5->C5_NUM)
 
@@ -2002,13 +1978,87 @@ User Function M410STTS()
 	//Everson - 10/02/2020. Chamado 054941.
 	RestArea(aArea)
 	
-	Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS >>> FINAL PE" )
 
 Return 
 
+User Function THRGEPV(cEmpP,cFilP,cPedido)
+	/* Declaraï¿½ï¿½o de Variï¿½veis */
+	Local nCurrent := 0
+
+	//Inicia o ambiente.
+	RPCSetType(3)
+	RpcSetEnv(cEmpP,cFilP,,,,GetEnvServer(),{ })
+
+		nCurrent	:= ThreadId()
+
+		ConOut("Processo Iniciado - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))
+
+		DbSelectArea("SC5")
+		SC5->(DbSetOrder(1))
+
+		if SC5->(DbSeek(cFilP+cPedido))
+			ConOut("Pedido encontrado "+cPedido+" - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))
+			u_GeraRAPV()
+		else
+			/* Encerro o processo */
+			ConOut("Pedido nï¿½o encontrado - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))		
+		endif
+    
+		/* Encerro o processo */
+		ConOut("Processo Encerrado - THRGEPV: "+AllTrim(cValToChar(nCurrent)))
+	//
+    RpcClearEnv()
+
+	
+return Nil
+
+
+User Function AVLCRED(cEmpP,cFilP,cPedido)
+    
+	/* Declaraï¿½ï¿½o de Variï¿½veis */
+	Local aVrLbAnt	:= {}
+	Local nCurrent := 0
+	
+	//Inicia o ambiente.
+	RPCSetType(3)
+	RpcSetEnv(cEmpP,cFilP,,,,GetEnvServer(),{ })
+
+		nCurrent	:= ThreadId()
+		
+		ConOut("Processo Iniciado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))
+
+		DbSelectArea("SC5")
+		SC5->(DbSetOrder(1))
+
+		if SC5->(DbSeek(cFilP+cPedido))
+			ConOut("Pedido encontrado "+cPedido+" - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))
+			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - INICIO 1" )
+			aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
+			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
+			IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
+				//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Prï¿½-liberaï¿½ï¿½o de crï¿½dito levando-se em consideraï¿½ï¿½o a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
+				fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
+			ENDIF
+		else
+			/* Encerro o processo */
+			ConOut("Pedido nï¿½o encontrado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))		
+		endif
+    
+		/* Encerro o processo */
+		ConOut("Processo Encerrado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))
+	
+	//
+    RpcClearEnv()
+
+	
+
+Return Nil
 
 /*/{Protheus.doc} fAtuExp
-	Recria o registro de liberação na SC9.
+	Recria o registro de liberaï¿½ï¿½o na SC9.
 	@type  Static Function
 	@author Leonardo P. Monteiro
 	@since 23/03/2021
@@ -2025,7 +2075,7 @@ Static function fAtuExp(_cNumPed)
 	Local _cVend	:= ""
 	Local _cRote	:= ""
 
-	cMensagem := "FATUEXP - Refazendo os arquivos de liberação SC9 para pedidos de exportação "+_cNumPed+"."
+	cMensagem := "FATUEXP - Refazendo os arquivos de liberaï¿½ï¿½o SC9 para pedidos de exportaï¿½ï¿½o "+_cNumPed+"."
 	logZBE(cMensagem)
 	RecLock("SC5",.F.)
 		SC5->C5_APROV1	:= ""
@@ -2062,7 +2112,7 @@ Static function fAtuExp(_cNumPed)
 				_nQtdLiber := SC6->C6_QTDVEN
 				
 				RecLock("SC6")
-				// Efetua a liberação item a item de cada pedido
+				// Efetua a liberaï¿½ï¿½o item a item de cada pedido
 				Begin transaction
 					MaLibDoFat( SC6->( Recno() ), @_nQtdLiber, @lCredito, @lEstoque, lAvCred, lAvEst, lLiber, lTrans )
 				End transaction
@@ -2108,9 +2158,9 @@ static function femailRefatur(_cP,_cFl,_cDt,_nVl,_cTp)
 	Private _cFilD := ""
 
 	If _cTp =="1"
-		_cMov := "Inclusão"
+		_cMov := "Inclusï¿½o"
 	Elseif _cTp == "2"
-		_cMov := "Alteração"
+		_cMov := "Alteraï¿½ï¿½o"
 	Endif
 
 	If _cFl == "01"
@@ -2118,7 +2168,7 @@ static function femailRefatur(_cP,_cFl,_cDt,_nVl,_cTp)
 	Elseif _cFl == "02"
 		_cFilD := "Varzea"
 	ElseIf _cFl == "03"
-		_cFilD := "São Carlos"
+		_cFilD := "Sï¿½o Carlos"
 	Elseif _cFl == "04"
 		_cFilD := "Rio Claro"
 	Elseif _cFl == "06"
@@ -2158,7 +2208,7 @@ static function femailRefatur(_cP,_cFl,_cDt,_nVl,_cTp)
 	'  </style>									' + CRLF +;
 	'</head>									' + CRLF +;
 	'<body>										' + CRLF +;       
-	'<h5 align="right">[ Mensagem automática Sistema ]</h5>' + CRLF +;       
+	'<h5 align="right">[ Mensagem automï¿½tica Sistema ]</h5>' + CRLF +;       
 	'<table id="tabela">						' + CRLF +; 
 	'  <tbody>									' 
 
@@ -2198,7 +2248,7 @@ static function femailRefatur(_cP,_cFl,_cDt,_nVl,_cTp)
 	'</html>	                                '                             
 
 	_cAssunto := " Pedido Venda Pet-food: Ped."+Alltrim(_cP)+" Filial: "+_cFILD
-	_cCorpo   := " Realizado a Liberação Automatica de Refaturamento Manual para Pedidos Pet-Food Nº Ped."+Alltrim(_cP)+" Filial: "+_cFILD   
+	_cCorpo   := " Realizado a Liberaï¿½ï¿½o Automatica de Refaturamento Manual para Pedidos Pet-Food Nï¿½ Ped."+Alltrim(_cP)+" Filial: "+_cFILD   
 	_cEnv     := 'rosangela@adoro.com.br'
 
 	MandaEmail( _cAssunto,_cEnv,_cCorpo)
@@ -2260,9 +2310,9 @@ static function femailF(_cP,_cFl,_cDt,_nVl,_cTp)
 	Private _cFilD := ""
 
 	If _cTp =="1"
-		_cMov := "Inclusão"
+		_cMov := "Inclusï¿½o"
 	Elseif _cTp == "2"
-		_cMov := "Alteração"
+		_cMov := "Alteraï¿½ï¿½o"
 	Endif
 
 	If _cFl == "01"
@@ -2270,7 +2320,7 @@ static function femailF(_cP,_cFl,_cDt,_nVl,_cTp)
 	Elseif _cFl == "02"
 		_cFilD := "Varzea"
 	ElseIf _cFl == "03"
-		_cFilD := "São Carlos"
+		_cFilD := "Sï¿½o Carlos"
 	Elseif _cFl == "04"
 		_cFilD := "Rio Claro"
 	Elseif _cFl == "06"
@@ -2310,7 +2360,7 @@ static function femailF(_cP,_cFl,_cDt,_nVl,_cTp)
 	'  </style>									' + CRLF +;
 	'</head>									' + CRLF +;
 	'<body>										' + CRLF +;       
-	'<h5 align="right">[ Mensagem automática Sistema ]</h5>' + CRLF +;       
+	'<h5 align="right">[ Mensagem automï¿½tica Sistema ]</h5>' + CRLF +;       
 	'<table id="tabela">						' + CRLF +; 
 	'  <tbody>									' 
 
@@ -2349,8 +2399,8 @@ static function femailF(_cP,_cFl,_cDt,_nVl,_cTp)
 	'</body>									' + CRLF +;
 	'</html>	                                '                             
 
-	_cAssunto := _cMov+" pedido Doação aguardando sua Aprovação: Ped."+Alltrim(_cP)+" Filial: "+_cFILD
-	_cCorpo   := _cMov+" de pedido de Doação, o qual aguarda sua aprovação: Ped."+Alltrim(_cP)+" Filial: "+_cFILD   
+	_cAssunto := _cMov+" pedido Doaï¿½ï¿½o aguardando sua Aprovaï¿½ï¿½o: Ped."+Alltrim(_cP)+" Filial: "+_cFILD
+	_cCorpo   := _cMov+" de pedido de Doaï¿½ï¿½o, o qual aguarda sua aprovaï¿½ï¿½o: Ped."+Alltrim(_cP)+" Filial: "+_cFILD   
 	_cEnv     := IIF(lAprov2 == .F.,alltrim(UsrRetMail(_cAprDoa)),alltrim(UsrRetMail(_cAprDoa2))) // Alterado William 07/05/2018 chamado 041490 || FISCAL || ROSANGELA || WORKFLOW //"000559"  Alterado por Adriana para alterar o aprovador    
 
 	MandaEmail( _cAssunto,_cEnv,_cCorpo)
@@ -2406,12 +2456,13 @@ Static Function MandaEmail( _cAssunto,_cEnv,_cCorpo)
 return()
 
 /*/{Protheus.doc} fPreAprv
-	Função para pré-aprovacao.
+	Funï¿½ï¿½o para prï¿½-aprovacao.
 	@type  Static Function
 	@author 21/10/2016
 	@since 
 	@version 01
 	/*/
+/*
 Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja) 
 	
 	DbSelectArea("SC5")
@@ -2419,7 +2470,7 @@ Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)
 	_cOSC5 := IndexOrd()
 	_cRSC5 := Recno()
 
-	//Everson - 08/05/2018. Já libera o pedido posicionado.
+	//Everson - 08/05/2018. Jï¿½ libera o pedido posicionado.
 	RecLock("SC5",.F.)
 		SC5->C5_XPREAPR := " "
 	SC5->(MsUnlock())
@@ -2433,20 +2484,12 @@ Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)
 		dbSetOrder(1)
 		dbGoTop()
 		If dbSeek(xFilial("SZF")+SUBSTR(SA1->A1_CGC,1,8))  //REDE
-			//Limpo flag de pedidos relativos a Rede....aonde no caso não ha como filtrar data de entrega, cliente e pedidos utilizados...limpo todos.
+			//Limpo flag de pedidos relativos a Rede....aonde no caso nï¿½o ha como filtrar data de entrega, cliente e pedidos utilizados...limpo todos.
 
 			If Select("LSC5") > 0
 				DbSelectArea("LSC5")
 				LSC5->(DbCloseArea())
 			Endif
-			/*
-			_cQuery := "SELECT C5.C5_FILIAL, C5.C5_NUM FROM "+RetSqlName("SC5")+" C5, "+RetSqlName("SZF")+" ZF, "+RetSqlName("SA1")+" A1 "
-			_cQuery += " WHERE  C5_NOTA = ''  AND C5_CLIENTE NOT IN ('031017','030545')"  
-			_cQuery += " AND C5.C5_CLIENTE = A1.A1_COD AND C5.C5_LOJACLI = A1.A1_LOJA"
-			_cQuery += " AND ZF_CGCMAT = '"+SZF->ZF_CGCMAT+"' AND LEFT(A1_CGC,8) = ZF_CGCMAT "      
-			_cQuery += " AND C5.D_E_L_E_T_='' AND ZF.D_E_L_E_T_='' AND A1.D_E_L_E_T_='' "
-			_cQuery += " AND LEFT(A1_CGC,8) <> '60037058' "// Sigoli Chamado 031909 Adicionado os clientes adoro, para nao entrar nessa regra 10/01/2016 
-			*/
 
 			// Inicio Solicitacao Eduardo SantaMaria refeito esse select acima - William Costa 15/01/2018 //
 
@@ -2460,7 +2503,7 @@ Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)
 			_cQuery += " AND C5_NOTA = ''  "
 			_cQuery += " AND C5_CLIENTE NOT IN ('031017','030545') "  
 			_cQuery += " AND LEFT(A1_CGC,8) <> '60037058' " // Sigoli Chamado 031909 Adicionado os clientes adoro, para nao entrar nessa regra 10/01/2016
-			_cQuery += " AND C5_XPREAPR <> '' " //Everson - 08/05/2018. Pega os pedidos apenas que estão com o flag.
+			_cQuery += " AND C5_XPREAPR <> '' " //Everson - 08/05/2018. Pega os pedidos apenas que estï¿½o com o flag.
 			_cQuery += " AND C5.D_E_L_E_T_='' "
 			_cQuery += " AND ZF.D_E_L_E_T_='' "
 			_cQuery += " AND A1.D_E_L_E_T_='' "
@@ -2508,26 +2551,28 @@ Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)
 	dbSetOrder(_cOSC5)
 	dbGoto(_cRSC5)
 Return()
+*/
 
-/*/{Protheus.doc} ³envSF
+/*/{Protheus.doc} ï¿½envSF
 	Envio de pedido para o SalesForce. Chamado 037261.
 	@type  Static Function
 	@author Everson
 	@since 08/03/2018
 	@version 01
 	/*/
+/*
 Static Function envSF(_lBon,_lDoa,cExpSql)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³Declaração de variáveis.                                                   ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½Declaraï¿½ï¿½o de variï¿½veis.                                                   ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	
 	Local aArea		:= GetArea()
 	Default _lBon	:= .F.
 	Default _lDoa	:= .F.
 	Default cExpSql	:= ""
 
 	//Somente para empresa 01 e filial 02.
-	If IsInCallStack('U_RESTEXECUTE') .Or. IsInCallStack('RESTEXECUTE') .Or. Alltrim(cEmpAnt) <> "01" .Or.;
+	If lSfInt .Or. Alltrim(cEmpAnt) <> "01" .Or.;
 	Alltrim(cFilAnt) <> "02"
 		RestArea(aArea)
 		Return Nil
@@ -2547,8 +2592,10 @@ Static Function envSF(_lBon,_lDoa,cExpSql)
 	RestArea(aArea)
 
 Return Nil
+*/
+
 /*/{Protheus.doc} VerifAprovDoacao
-	Verifica aprovação de doação.
+	Verifica aprovaï¿½ï¿½o de doaï¿½ï¿½o.
 	@type  Static Function
 	@author 
 	@since 
@@ -2616,7 +2663,7 @@ Static Function DelZC1PV(_cNumPed)
 Return
 
 /*/{Protheus.doc} obtFrt
-	Retorna o valor do frete por região. Chamado 052898.
+	Retorna o valor do frete por regiï¿½o. Chamado 052898.
 	@type  Static Function
 	@author Everson
 	@since 11/11/2019
@@ -2624,9 +2671,9 @@ Return
 	/*/
 Static Function obtFrt(cCliente,cLoja,cTpFret)
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½ Declaracao de Variaveis                                             ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	
 	Local aArea 	:= GetArea()
 	Local cEst		:= ""
 	Local cMunic	:= ""
@@ -2634,7 +2681,7 @@ Static Function obtFrt(cCliente,cLoja,cTpFret)
 	Local VlrFrt	:= 0
 
 	//
-	Conout( DToC(Date()) + " " + Time() + " M410STTS - obtFrt - cCliente/cLoja/cTpFret " + cValToChar(cCliente) + "/" + cValToChar(cLoja) + "/" + cValToChar(cTpFret) )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS - obtFrt - cCliente/cLoja/cTpFret " + cValToChar(cCliente) + "/" + cValToChar(cLoja) + "/" + cValToChar(cTpFret) )
 
 	//
 	IF cTpFret == "C" .And. ! Empty(cCliente) .And. ! Empty(cLoja)
@@ -2644,7 +2691,7 @@ Static Function obtFrt(cCliente,cLoja,cTpFret)
 		cMunic:= Posicione("SA1",1, FWxFilial("SA1") + cCliente + cLoja,"A1_COD_MUN")
 
 		//
-		Conout( DToC(Date()) + " " + Time() + " M410STTS - obtFrt - cEst/cMunic " + cValToChar(cEst) + "/" + cValToChar(cMunic) )
+		//Conout( DToC(Date()) + " " + Time() + " M410STTS - obtFrt - cEst/cMunic " + cValToChar(cEst) + "/" + cValToChar(cMunic) )
 
 		//
 		If ! Empty(cEst) .And. ! Empty(cMunic)
@@ -2680,7 +2727,7 @@ Static Function obtFrt(cCliente,cLoja,cTpFret)
 	EndIf
 
 	//
-	Conout( DToC(Date()) + " " + Time() + " M410STTS - obtFrt - VlrFrt " + cValToChar(VlrFrt) )
+	//Conout( DToC(Date()) + " " + Time() + " M410STTS - obtFrt - VlrFrt " + cValToChar(VlrFrt) )
 
 	//
 	RestArea(aArea)
@@ -2719,7 +2766,7 @@ Return
 	/*/
 Static Function getRot(cRotSA1)
 
-	//Variáveis.
+	//Variï¿½veis.
 	Local aArea := GetArea()
 
 	//
@@ -2740,7 +2787,7 @@ Static Function getRot(cRotSA1)
 Return cRotSA1
 
 /*/{Protheus.doc} Static Function DelRAFIE(_cNumPed)
-	Apaga adiantamento e amarrações, referente boletos bradesco WS
+	Apaga adiantamento e amarraï¿½ï¿½es, referente boletos bradesco WS
 	@type  Function
 	@author FWNM
 	@since 21/07/2020
@@ -2756,7 +2803,7 @@ Static Function DelRAFIE(cNum)
 
 	Local aDadRA := {}
 	Local dDtBaseBkp := dDataBase // chamado 059655 - FWNM - 23/07/2020 - || OS 061193 || FINANCAS || MARILIA || 8353 || CANCELAMENTO RA
-	Local cTipoE1 := GetMV("MV_#WSTIPO",,"PR") // ticket 745 - FWNM - Implementação título PR - 18/09/2020
+	Local cTipoE1 := GetMV("MV_#WSTIPO",,"PR") // ticket 745 - FWNM - Implementaï¿½ï¿½o tï¿½tulo PR - 18/09/2020
 
 	//@history ticket 102 - FWNM - 26/08/2020 - WS BRADESCO 
 	SC5->( dbSetOrder(1) ) // C5_FILIAL, C5_NUM, R_E_C_N_O_, D_E_L_E_T_
@@ -2764,7 +2811,7 @@ Static Function DelRAFIE(cNum)
 
 		LogZBE(cNum + " FIE - CHECANDO SE O PV EXCLUIDO POSSUI FIE - M410STTS") //@history ticket 102 - FWNM - 27/08/2020 - WS BRADESCO 
 
-		// Checo amarração RA x PV para excluir após exclusão do PV no Protheus
+		// Checo amarraï¿½ï¿½o RA x PV para excluir apï¿½s exclusï¿½o do PV no Protheus
 		FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
 		If FIE->( dbSeek(FWxFilial("FIE")+"R"+cNum) )
 			
@@ -2780,7 +2827,7 @@ Static Function DelRAFIE(cNum)
 		
 		EndIf
 
-		// Checo adiantamento (RA) para excluir após exclusão do PV no Sales Force
+		// Checo adiantamento (RA) para excluir apï¿½s exclusï¿½o do PV no Sales Force
 		SE1->( dbSetOrder(1) ) // E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, R_E_C_N_O_, D_E_L_E_T_
 		If SE1->( dbSeek(FWxFilial("SE1")+PadR(cTipoE1,Len(SE1->E1_PREFIXO))+PadR(cNum,Len(SE1->E1_NUM))+PadR("",Len(SE1->E1_PARCELA))+PadR(cTipoE1,Len(SE1->E1_TIPO)) ) )
 
@@ -2804,7 +2851,7 @@ Static Function DelRAFIE(cNum)
 						{ "E1_VALOR"  , SE1->E1_VALOR    , NIL }}
 
 			lMsErroAuto := .f.
-			msExecAuto( { |x,y| FINA040(x,y) }, aDadRA, 5 )  // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
+			msExecAuto( { |x,y| FINA040(x,y) }, aDadRA, 5 )  // 3 - Inclusao, 4 - Alteraï¿½ï¿½o, 5 - Exclusï¿½o
 
 			If lMsErroAuto
 				MostraErro()
@@ -2823,7 +2870,7 @@ Static Function DelRAFIE(cNum)
 Return
 
 /*/{Protheus.doc} Static Function GeraSC9()
-	Processa liberação do PV para gerar SC9 via rotina padrão - Padrão não gera quando C5_BLQ = 1
+	Processa liberaï¿½ï¿½o do PV para gerar SC9 via rotina padrï¿½o - Padrï¿½o nï¿½o gera quando C5_BLQ = 1
 	@type  Function
 	@author FWNM
 	@since 10/08/2020
@@ -2887,17 +2934,18 @@ User Function GeraSC9()
 
 Return
 
-//INICIO Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
+//INICIO Ticket  8      - Abel B.  - 15/02/2021 - Prï¿½-liberaï¿½ï¿½o de crï¿½dito para inclusï¿½o e alteraï¿½ï¿½o de pedidos.
 /*/{Protheus.doc} Static Function fPreLibF
-	Efetua a pré liberação financeira
+	Efetua a prï¿½ liberaï¿½ï¿½o financeira
 	@type  Function
 	@author Abel Babini
 	@since 09/02/2021
 	/*/
+/*
 Static Function fPreLibF()
 	Local aArea := GetArea()
 
-	Local lAvDtLm  		:= GetMv("MV_#AVDTLM",,.F.) //Habilita a avaliação de data de limite de crédito do cliente
+	Local lAvDtLm  		:= GetMv("MV_#AVDTLM",,.F.) //Habilita a avaliaï¿½ï¿½o de data de limite de crï¿½dito do cliente
 
 	Local cAls000 := GetNextAlias()
 	Local cAls001 := GetNextAlias()
@@ -2937,7 +2985,7 @@ Static Function fPreLibF()
 	Local _nSldTPor := 0
 	Local _lDiasAtras := .F.
 
-	//Ticket  8      - Abel B.  - 15/02/2021 - Alteração na regra de pré liberação de crédito para considerar pedidos com data de entrega futura
+	//Ticket  8      - Abel B.  - 15/02/2021 - Alteraï¿½ï¿½o na regra de prï¿½ liberaï¿½ï¿½o de crï¿½dito para considerar pedidos com data de entrega futura
 	Local _dDtEntr := DTOS(MsDate())
 
 	Local _cCdClRd := ""
@@ -2993,7 +3041,7 @@ Static Function fPreLibF()
 	ENDDO
 	(cAls001)->(dbCloseArea())
 
-	//Verifica se é Rede ou Varejo
+	//Verifica se ï¿½ Rede ou Varejo
 	dbSelectArea("SZF")
 	dbSetOrder(1)
 	dbGoTop()
@@ -3018,7 +3066,7 @@ Static Function fPreLibF()
 
 		(cAls000)->(dbCloseArea())
 		
-		//Ticket  8      - Abel B.  - 15/02/2021 - Alteração na regra de pré liberação de crédito para considerar pedidos com data de entrega futura
+		//Ticket  8      - Abel B.  - 15/02/2021 - Alteraï¿½ï¿½o na regra de prï¿½ liberaï¿½ï¿½o de crï¿½dito para considerar pedidos com data de entrega futura
 		BeginSQL Alias cAls002
 			SELECT 
 				SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) AS C6_PRCTOT, 
@@ -3064,7 +3112,7 @@ Static Function fPreLibF()
 			_nValLim -= (cAls003)->E1_SALDO
 			_nSldTit += (cAls003)->E1_SALDO
 			
-			//+ Soma do saldo dos titulos com portadores especiais - ZAD_PORTAD (poe de volta saldo para portadores especiais, porque não pode ser abatido do limite)
+			//+ Soma do saldo dos titulos com portadores especiais - ZAD_PORTAD (poe de volta saldo para portadores especiais, porque nï¿½o pode ser abatido do limite)
 			If (cAls003)->E1_PORTADO $ Alltrim(cPortador)
 				_nValLim  += (cAls003)->E1_SALDO
 				_nSldTPor += (cAls003)->E1_SALDO
@@ -3142,7 +3190,7 @@ Static Function fPreLibF()
 				
 				_cCdClRd := (cAls008)->A1_COD
 
-				//Ticket  8      - Abel B.  - 15/02/2021 - Alteração na regra de pré liberação de crédito para considerar pedidos com data de entrega futura				
+				//Ticket  8      - Abel B.  - 15/02/2021 - Alteraï¿½ï¿½o na regra de prï¿½ liberaï¿½ï¿½o de crï¿½dito para considerar pedidos com data de entrega futura				
 				BeginSQL alias cAls009
 					SELECT 
 						SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) AS C6_PRCTOT,
@@ -3184,7 +3232,7 @@ Static Function fPreLibF()
 					_nValLim -= (cAls009)->E1_SALDO
 					_nSldTit += (cAls009)->E1_SALDO
 					//+ Soma do saldo dos titulos com portadores especiais - ZAD_PORTAD
-					//portador especial é retornado o saldo, pois não deve abater...
+					//portador especial ï¿½ retornado o saldo, pois nï¿½o deve abater...
 					If (cAls009)->E1_PORTADO $ Alltrim(cPortador)
 						_nValLim  += (cAls009)->E1_SALDO
 						_nSldTPor += (cAls009)->E1_SALDO
@@ -3234,7 +3282,7 @@ Static Function fPreLibF()
 	Endif
 	
 
-	//Verifica se o saldo do pedido e se os itens possuem cobrança
+	//Verifica se o saldo do pedido e se os itens possuem cobranï¿½a
 	BeginSQL Alias cAls005
 		SELECT 
 			C5_NUM, 
@@ -3265,25 +3313,25 @@ Static Function fPreLibF()
 	ENDIF
 	(cAls005)->(dbCloseArea())
 
-	//Média da condição de pagto do pedido é maior do que media do cliente, bloqueia, só passa se for igual ou menor.
+	//Mï¿½dia da condiï¿½ï¿½o de pagto do pedido ï¿½ maior do que media do cliente, bloqueia, sï¿½ passa se for igual ou menor.
 	_nMedPGPd := Posicione("SE4",1,FWxFilial("SE4") + SC5->C5_CONDPAG,"E4_DMEDI")
 	_nMedPGA1 := Posicione("SE4",1,FWxFilial("SE4") + POSICIONE("SA1",1,FWxFilial("SA1")+SC5->C5_CLIENTE+SC5->C5_LOJACLI,"A1_COND") ,"E4_DMEDI")
 	If _nMedPGPd > _nMedPGA1
 		lBlqPed := .T.
 		If Alltrim(_cTipoCli) == "Rede"
-			Aadd(aTpBloq,{"Prazo medio da condição de pagamento do pedido maior que o prazo medio na condição do Cliente - REDE "+Alltrim(_cRede)+" - "+_cNmRede})
+			Aadd(aTpBloq,{"Prazo medio da condiï¿½ï¿½o de pagamento do pedido maior que o prazo medio na condiï¿½ï¿½o do Cliente - REDE "+Alltrim(_cRede)+" - "+_cNmRede})
 		
 		Else
-			Aadd(aTpBloq,{"Prazo medio da condição de pagamento do pedido maior que o prazo medio na condição do Cliente"})
+			Aadd(aTpBloq,{"Prazo medio da condiï¿½ï¿½o de pagamento do pedido maior que o prazo medio na condiï¿½ï¿½o do Cliente"})
 		
 		EndIf 
 
 	EndIf
 
-	//Valida se o crédito do cliente expirou. Everson - 22/04/2020. Chamado 057436.
+	//Valida se o crï¿½dito do cliente expirou. Everson - 22/04/2020. Chamado 057436.
 	If lAvDtLm .And. SA1->A1_VENCLC < Date()
 		lBlqPed := .T.
-		Aadd(aTpBloq,{"Limite de crédito do cliente está expirado (" + DToC(SA1->A1_VENCLC) + ")"})
+		Aadd(aTpBloq,{"Limite de crï¿½dito do cliente estï¿½ expirado (" + DToC(SA1->A1_VENCLC) + ")"})
 	EndIf
 	//
 
@@ -3352,7 +3400,7 @@ Static Function fPreLibF()
 				AND SE1.%notDel%
 			ORDER BY E1_CLIENTE
 		EndSQL
-		//Inclusão de tratamento para avaliar percentual para saldo de titulos(somente atrasados)
+		//Inclusï¿½o de tratamento para avaliar percentual para saldo de titulos(somente atrasados)
 		(cAls006)->(dbgotop())
 		While ! (cAls006)->(eof())
 			If !((cAls006)->E1_PORTADO $ Alltrim(cPortador))
@@ -3398,12 +3446,12 @@ Static Function fPreLibF()
 	// _eMailSup := Alltrim(UsrRetMail(SZR->ZR_USER))
 
 	IF lBlqPed
-		IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da função uptSC5
+		IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da funï¿½ï¿½o uptSC5
 			SC5->C5_XPREAPR := 'B'
 			SC5->( MsUnLock() ) 
 		ENDIF
 	ELSE
-		IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da função uptSC5
+		IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da funï¿½ï¿½o uptSC5
 			SC5->C5_XPREAPR := 'L'
 			SC5->( MsUnLock() ) 
 		ENDIF
@@ -3425,13 +3473,13 @@ Static Function fPreLibF()
 
 	RestArea(aArea)
 Return 
+*/
+//fim Ticket  8      - Abel B.  - 15/02/2021 - Prï¿½-liberaï¿½ï¿½o de crï¿½dito para inclusï¿½o e alteraï¿½ï¿½o de pedidos.
 
-//fim Ticket  8      - Abel B.  - 15/02/2021 - Pré-liberação de crédito para inclusão e alteração de pedidos.
 
-
-//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Prï¿½-liberaï¿½ï¿½o de crï¿½dito levando-se em consideraï¿½ï¿½o a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 /*/{Protheus.doc} Static Function fLibCred
-	Efetua a pré liberação financeira
+	Efetua a prï¿½ liberaï¿½ï¿½o financeira
 	@type  Function
 	@author Abel Babini
 	@since 09/02/2021
@@ -3460,7 +3508,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	Local _nVlMnParc := 0
 	Local _nDiasAtras := 0
 	Local cPortador := ''
-	//@Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
+	//@Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correï¿½ï¿½o de error.log na gravaï¿½ï¿½o de PVs na filial 07.
 	Local cPortadIn := "%('')%"
 	Local nPercen := 0
 
@@ -3486,17 +3534,17 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	Default cNumPVEx 	:= ''
 	Default cNumPVIn 	:= ''
 
-	//Utiliza sempre a menor data entre a data de entrega e a data do servidor para avaliação de crédito.
+	//Utiliza sempre a menor data entre a data de entrega e a data do servidor para avaliaï¿½ï¿½o de crï¿½dito.
 	If dDtEntr > MsDate()
 		dDtEntr := MsDate()
 	Endif
 	
-	//Ticket  8      - Abel B.  - 01/03/2021 - Alteração na regra de pré liberação de crédito para desconsiderar o pedido que será excluído durante a avaliação na exclusão do mesmo
+	//Ticket  8      - Abel B.  - 01/03/2021 - Alteraï¿½ï¿½o na regra de prï¿½ liberaï¿½ï¿½o de crï¿½dito para desconsiderar o pedido que serï¿½ excluï¿½do durante a avaliaï¿½ï¿½o na exclusï¿½o do mesmo
 	If lExcPedV .AND. !Empty(Alltrim(cNumPVEx))
 		cFilPVEx :=  '%'+" AND SC5.C5_FILIAL+SC5.C5_NUM <> '"+cNumPVEx+"' "+'%'
 	Endif
 
-	//CARREGA DEFINIÇÕES DE REGRAS DE TABELAS E VALORES DE PEDIDOS
+	//CARREGA DEFINIï¿½ï¿½ES DE REGRAS DE TABELAS E VALORES DE PEDIDOS
 	BeginSQL Alias cAls001
 		SELECT 
 			ZAD_TABELA,
@@ -3505,7 +3553,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 			ZAD_DIAS,
 			ZAD_PORTAD,
 			ZAD_PERCEN
-		FROM %TABLE:ZAD% ZAD (NOLOCK) 
+		FROM %TABLE:ZAD% (NOLOCK) ZAD 
 		WHERE ZAD.%notDel%
 		ORDER BY ZAD_TABELA ASC, ZAD_DATA DESC
 	ENDSQL
@@ -3566,7 +3614,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 			CASE WHEN SE1.E1_PORTADO IN %Exp:cPortadIn% THEN SUM(SE1.E1_SALDO) ELSE 0 END AS PORT_ESP,
 			CASE WHEN SE1.E1_PORTADO NOT IN %Exp:cPortadIn% THEN SUM(SE1.E1_SALDO) ELSE 0 END AS E1_SALDO,
 			CASE WHEN CONVERT(CHAR(10), GETDATE(),112) > E1_VENCREA THEN SUM(SE1.E1_SALDO) ELSE 0 END AS TIT_VENCIDO
-		FROM %TABLE:SE1% SE1 (NOLOCK)
+		FROM %TABLE:SE1% (NOLOCK) SE1
 		WHERE 
 			SE1.E1_CLIENTE+SE1.E1_LOJA IN %Exp:_cCdClIn%
 			AND SE1.E1_SALDO > 0
@@ -3576,7 +3624,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 	EndSQL
 	(cAls003)->(dbGoTop())
 
-	////Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberação de crédito - acrescentado loop WHILE
+	////Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito - acrescentado loop WHILE
 	WHILE ! (cAls003)->(eof())
 		_nValLim -= (cAls003)->E1_SALDO
 		// _nSldTit += (cAls003)->E1_SALDO+(cAls003)->PORT_ESP
@@ -3591,7 +3639,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 
 	(cAls003)->(dbCloseArea())
 	
-	//@history Ticket  8      - Abel B.  - 12/03/2021 - Ajustes na rotina de liberação de crédito
+	//@history Ticket  8      - Abel B.  - 12/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito
 	IF _lDiasAtras
 		BeginSQL alias cAls006
 			SELECT 
@@ -3602,7 +3650,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 				SE1.E1_CLIENTE,
 				SE1.E1_PARCELA,
 				SE1.E1_PORTADO 
-			FROM %TABLE:SE1% SE1 (NOLOCK)
+			FROM %TABLE:SE1% (NOLOCK) SE1
 			WHERE
 				SE1.E1_CLIENTE+SE1.E1_LOJA IN %Exp:_cCdClIn%
 				AND SE1.E1_SALDO > 0
@@ -3612,8 +3660,9 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 				AND SE1.%notDel%
 			ORDER BY E1_CLIENTE
 		EndSQL
-		//Inclusão de tratamento para avaliar percentual para saldo de titulos(somente atrasados)
+		//Inclusï¿½o de tratamento para avaliar percentual para saldo de titulos(somente atrasados)
 		(cAls006)->(dbgotop())
+
 		While ! (cAls006)->(eof())
 			If !((cAls006)->E1_PORTADO $ Alltrim(cPortador))
 				lBlqAtr := .T.
@@ -3637,7 +3686,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 
 	ENDIF
 
-	//PEDIDOS QUE PRECISAM DE ANÁLISE DE CRÉDITO
+	//PEDIDOS QUE PRECISAM DE ANï¿½LISE DE CRï¿½DITO
 
 	if !Empty(Alltrim(cNumPVIn))
 		cParam := StrTran(cNumPVIn,"%","")
@@ -3663,14 +3712,14 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 			SC5.C5_EMISSAO,
 			SC5.C5_XTOTPED,
 			CASE WHEN (SF4.F4_DUPLIC = 'S' AND SC5.C5_TIPO IN ('N','C') AND SC5.C5_EST <> 'EX') THEN SUM((C6_QTDVEN - C6_QTDENT) * C6_PRCVEN) ELSE 0 END AS C6_PRCTOT
-		FROM %TABLE:SC5% SC5 (NOLOCK)
-		INNER JOIN %TABLE:SC6% SC6 (NOLOCK) ON
+		FROM %TABLE:SC5% (NOLOCK) SC5
+		INNER JOIN %TABLE:SC6% (NOLOCK) SC6 ON
 			SC6.C6_FILIAL = SC5.C5_FILIAL
 			AND SC6.C6_NUM = SC5.C5_NUM
 			AND SC6.C6_CLI = SC5.C5_CLIENTE
 			AND SC6.C6_LOJA = SC5.C5_LOJACLI
 			AND SC6.%notDel%
-		INNER JOIN %TABLE:SF4% SF4 (NOLOCK) ON
+		INNER JOIN %TABLE:SF4% (NOLOCK) SF4 ON
 			SF4.F4_FILIAL = %xFilial:SF4%
 			AND SF4.F4_CODIGO = SC6.C6_TES
 			AND SF4.%notDel%
@@ -3695,18 +3744,21 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 			SC5.C5_EST
 		ORDER BY SC5.C5_FILIAL ASC, SC5.C5_DTENTR ASC, SC5.C5_NUM ASC
 	EndSQL
+
 	(cAls002)->(dbgotop())
 	WHILE ! (cAls002)->(eof())
 	
 		_nValLim -= (cAls002)->C6_PRCTOT
 		_nVlPed  += (cAls002)->C6_PRCTOT
 
-		//INICIO Ticket  8      - Abel B.  - 05/07/2021 - Adiciona validação para apenas refazer a liberação caso o pedido não tenha sido liberado ainda.
+		//INICIO Ticket  8      - Abel B.  - 05/07/2021 - Adiciona validaï¿½ï¿½o para apenas refazer a liberaï¿½ï¿½o caso o pedido nï¿½o tenha sido liberado ainda.
 		aVrLbAnt := fVrLbAnt((cAls002)->C5_FILIAL, (cAls002)->C5_NUM)
 		IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < (cAls002)->C5_XTOTPED)
 			
-			//VALIDA CRÉDITO DO PEDIDO
-			fVldCrd(_cTipoCli, (cAls002)->C5_CLIENTE, (cAls002)->C5_LOJACLI, _cCdClIn, (cAls002)->C5_FILIAL, (cAls002)->C5_NUM, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, (cAls002)->C6_PRCTOT, (cAls002)->C5_CONDPAG, (cAls002)->C5_EMISSAO, _lDiasAtras, _nValLim, (cAls002)->C5_VEND1, lBlqAtr, aTpBlqAt)
+			//VALIDA CRï¿½DITO DO PEDIDO
+			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVldCrd - INICIO 1" )
+				fVldCrd(_cTipoCli, (cAls002)->C5_CLIENTE, (cAls002)->C5_LOJACLI, _cCdClIn, (cAls002)->C5_FILIAL, (cAls002)->C5_NUM, _dValidLC, _cRede, _cNmRede, _nVlMnPed, _nVlMnPSC, _nVlMnParc, _nDiasAtras, cPortadIn, cPortador, nPercen, (cAls002)->C6_PRCTOT, (cAls002)->C5_CONDPAG, (cAls002)->C5_EMISSAO, _lDiasAtras, _nValLim, (cAls002)->C5_VEND1, lBlqAtr, aTpBlqAt)
+			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVldCrd - FINAL 2" )
 
 		ENDIF
 
@@ -3726,7 +3778,7 @@ Static Function fLibCred(cCliente, cLojaCli, dDtEntr, lExcPedV, cNumPVEx, cNumPV
 Return
 
 /*/{Protheus.doc} Static Function fVldCrd
-	Função que valida crédito do pedido
+	Funï¿½ï¿½o que valida crï¿½dito do pedido
 	@type  Function
 	@author Abel Babini
 	@since 09/02/2021
@@ -3735,27 +3787,27 @@ Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumP
 
 	Local lBlqPed := .F.
 	Local aTpBloq := {}
-	Local lAvDtLm  		:= GetMv("MV_#AVDTLM",,.F.) //Habilita a avaliação de data de limite de crédito do cliente
+	Local lAvDtLm  		:= GetMv("MV_#AVDTLM",,.F.) //Habilita a avaliaï¿½ï¿½o de data de limite de crï¿½dito do cliente
 	Local aCondPgto := {}
 	Local nValParc := 0
 	Local nAux := 0
 
-	//Média da condição de pagto do pedido é maior do que media do cliente, bloqueia, só passa se for igual ou menor.
+	//Mï¿½dia da condiï¿½ï¿½o de pagto do pedido ï¿½ maior do que media do cliente, bloqueia, sï¿½ passa se for igual ou menor.
 	_nMedPGPd := Posicione("SE4",1,FWxFilial("SE4") + cNumPedV,"E4_DMEDI")
 	_nMedPGA1 := Posicione("SE4",1,FWxFilial("SE4") + POSICIONE("SA1",1,FWxFilial("SA1")+cCliente+cLojaCli,"A1_COND") ,"E4_DMEDI")
 	If _nMedPGPd > _nMedPGA1
 		lBlqPed := .T.
 		If Alltrim(_cTipoCli) == "Rede"
-			Aadd(aTpBloq,{"Prazo medio da condição de pagamento do pedido maior que o prazo medio na condição do Cliente - REDE "+Alltrim(_cRede)+" - "+_cNmRede})
+			Aadd(aTpBloq,{"Prazo medio da condiï¿½ï¿½o de pagamento do pedido maior que o prazo medio na condiï¿½ï¿½o do Cliente - REDE "+Alltrim(_cRede)+" - "+_cNmRede})
 		Else
-			Aadd(aTpBloq,{"Prazo medio da condição de pagamento do pedido maior que o prazo medio na condição do Cliente"})
+			Aadd(aTpBloq,{"Prazo medio da condiï¿½ï¿½o de pagamento do pedido maior que o prazo medio na condiï¿½ï¿½o do Cliente"})
 		EndIf 
 	EndIf
 
-	//Valida se o crédito do cliente expirou. Everson - 22/04/2020. Chamado 057436.
+	//Valida se o crï¿½dito do cliente expirou. Everson - 22/04/2020. Chamado 057436.
 	If lAvDtLm .And. _dValidLC < Date()
 		lBlqPed := .T.
-		Aadd(aTpBloq,{"Limite de crédito do cliente está expirado (" + DToC(_dValidLC) + ")"})
+		Aadd(aTpBloq,{"Limite de crï¿½dito do cliente estï¿½ expirado (" + DToC(_dValidLC) + ")"})
 	EndIf
 	//
 
@@ -3801,7 +3853,7 @@ Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumP
 		EndIf
 	EndIf
 
-	//Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberação de crédito - Ajustada query acrescentado E1_LOJA na clausula WHERE
+	//Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito - Ajustada query acrescentado E1_LOJA na clausula WHERE
 	//Bloqueio por saldo maior que percentual para titulos em atraso
 	//Bloqueio - Titulos em Atraso
 	If _lDiasAtras
@@ -3841,12 +3893,12 @@ Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumP
 	IF SC5->(dbSeek(cFilPedV+cNumPedV))
 
 		IF lBlqPed
-			IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da função uptSC5
+			IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da funï¿½ï¿½o uptSC5
 				SC5->C5_XPREAPR := 'B'
 				SC5->( MsUnLock() ) 
 			ENDIF
 		ELSE
-			IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da função uptSC5
+			IF RecLock("SC5",.F.) //Ticket  8      - Abel B.  - 09/02/2021 - Retirar chamadas da funï¿½ï¿½o uptSC5
 				SC5->C5_XPREAPR := 'L'
 				SC5->( MsUnLock() ) 
 			ENDIF
@@ -3882,8 +3934,8 @@ Static Function fVldCrd(_cTipoCli, cCliente, cLojaCli, _cCdClIn, cFilPedV, cNumP
 Return
 
 /*/{Protheus.doc} Static Function fRetClRd
-	Retorna relação de códigos de cliente e loja de uma rede, Limite de Crédito, Vencimento do Limite de Crédito, Nome da Rede e o Tipo do Cliente (Rede / Varejo)
-	Função Utilizada também no cálculo da média de atraso e perfil de pagamento dos clientes (ADFIN103P)
+	Retorna relaï¿½ï¿½o de cï¿½digos de cliente e loja de uma rede, Limite de Crï¿½dito, Vencimento do Limite de Crï¿½dito, Nome da Rede e o Tipo do Cliente (Rede / Varejo)
+	Funï¿½ï¿½o Utilizada tambï¿½m no cï¿½lculo da mï¿½dia de atraso e perfil de pagamento dos clientes (ADFIN103P)
 	@type  Function
 	@author Abel Babini
 	@since 09/02/2021
@@ -3899,7 +3951,7 @@ Static Function fRetClRd(cCliente,cLojaCli)
 	Local cRede := ''
 	Local cTpCli := ''
 
-	//Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberação de crédito - Retirado filtro AND SA1.A1_MSBLQL <> '1'
+	//Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito - Retirado filtro AND SA1.A1_MSBLQL <> '1'
 	BeginSQL Alias cAlsRtCl
 		column A1_VENCLC as Date
 		SELECT 
@@ -3914,18 +3966,18 @@ Static Function fRetClRd(cCliente,cLojaCli)
 			ISNULL(SZF2.ZF_REDE,'') AS ZF_REDE, 
 			ISNULL(SZF2.ZF_NOMERED,'') AS ZF_NOMERED, 
 			CASE WHEN SZF2.ZF_REDE IS NULL THEN 'Varejo' ELSE 'Rede' END AS TIPO_CLI
-		FROM %TABLE:SA1% SA1 (NOLOCK)
-		LEFT JOIN %TABLE:SZF% SZF2 (NOLOCK) ON
+		FROM %TABLE:SA1% (NOLOCK) SA1 
+		LEFT JOIN %TABLE:SZF% (NOLOCK) SZF2 ON
 			SZF2.ZF_CGCMAT = SUBSTRING(SA1.A1_CGC,1,8) 
 					AND SZF2.%notDel%
 		WHERE
 			SA1.%notDel%
 			AND ( SZF2.ZF_REDE IN (
 						SELECT SZF.ZF_REDE
-						FROM %TABLE:SZF% SZF (NOLOCK)
+						FROM %TABLE:SZF% (NOLOCK) SZF
 						WHERE SZF.%notDel%
 						AND SZF.ZF_CGCMAT = ( SELECT SUBSTRING(SA12.A1_CGC,1,8) 
-											  FROM %TABLE:SA1% SA12 (NOLOCK) 
+											  FROM %TABLE:SA1% (NOLOCK) SA12 
 											  WHERE 
 													SA12.A1_COD = %Exp:cCliente% 
 												AND SA12.A1_LOJA = %Exp:cLojaCli% 
@@ -3946,7 +3998,7 @@ Static Function fRetClRd(cCliente,cLojaCli)
 			nLimCred += (cAlsRtCl)->A1_LC
 		ENDIF
 		
-		//Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberação de crédito
+		//Ticket  8      - Abel B.  - 03/03/2021 - Ajustes na rotina de liberaï¿½ï¿½o de crï¿½dito
 		IF !Empty(Alltrim(DTOS((cAlsRtCl)->A1_VENCLC))) .and. (cAlsRtCl)->A1_VENCLC < dDtLimCr .AND. (cAlsRtCl)->A1_MSBLQL <> '1'
 			dDtLimCr := (cAlsRtCl)->A1_VENCLC
 		ENDIF
@@ -3969,7 +4021,7 @@ Static Function fRetClRd(cCliente,cLojaCli)
 Return aRet
 
 /*/{Protheus.doc} User Function fInterCo
-	Função para determinar se a operação é intercompany
+	Funï¿½ï¿½o para determinar se a operaï¿½ï¿½o ï¿½ intercompany
 	@type  Static Function
 	@author Fernando Macieira
 	@since 13/04/2021
@@ -3979,7 +4031,7 @@ Return aRet
 	@example
 	(examples)
 	@see (links_or_references)
-	@Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAÇÃO
+	@Ticket   11277 - F.Maciei - 13/04/2021 - DEMORA AO IMPORTAR PEDIDO DE RAï¿½ï¿½O
 /*/
 User Function fInterCo(cEntidade, cCod, cLoj)
 
@@ -4007,7 +4059,7 @@ User Function fInterCo(cEntidade, cCod, cLoj)
 
 Return lInterCo
 /*/{Protheus.doc} libPedSAG
-	Função realiza a liberação de pedido de venda por movimento de saída no SAG.
+	Funï¿½ï¿½o realiza a liberaï¿½ï¿½o de pedido de venda por movimento de saï¿½da no SAG.
 	@type  Static Function
 	@author Everson
 	@since 04/05/2021
@@ -4015,7 +4067,7 @@ Return lInterCo
 	/*/
 Static Function libPedSAG()
 	
-	//Variáveis.
+	//Variï¿½veis.
 	Local aArea := GetArea()
 
 	If ! Empty(Alltrim(cValToChar(SC5->C5_PEDSAG)))
@@ -4028,9 +4080,9 @@ Static Function libPedSAG()
 
 Return Nil
 
-//INICIO Ticket  8      - Abel B.  - 15/06/2021 - Considerar histórico de liberação
+//INICIO Ticket  8      - Abel B.  - 15/06/2021 - Considerar histï¿½rico de liberaï¿½ï¿½o
 /*/{Protheus.doc} Static Function fVrLbAnt
-	Verifica se pedido já foi liberado pelo crédito e se é necessário nova liberação.
+	Verifica se pedido jï¿½ foi liberado pelo crï¿½dito e se ï¿½ necessï¿½rio nova liberaï¿½ï¿½o.
 	@type  Function
 	@author Abel Babini
 	@since 15/06/2021
@@ -4043,7 +4095,7 @@ Static Function fVrLbAnt(cSC5Fil, cSC5Num)
 	BeginSQL alias cQryZEJ
 		SELECT TOP 1
 			ZEJ_VLLIB AS VALOR
-		FROM %TABLE:ZEJ% ZEJ (NOLOCK)
+		FROM %TABLE:ZEJ% (NOLOCK) ZEJ
 		WHERE 
 			ZEJ.ZEJ_FILIAL = %Exp:cSC5Fil%
 			AND ZEJ.ZEJ_NUM = %Exp:cSC5Num%
@@ -4060,7 +4112,7 @@ Static Function fVrLbAnt(cSC5Fil, cSC5Num)
 Return aRet
 
 /*/{Protheus.doc} fAtuRot
-Função responsável pela atualização dos roteiro no Pedido de Venda.
+Funï¿½ï¿½o responsï¿½vel pela atualizaï¿½ï¿½o dos roteiro no Pedido de Venda.
 @type  Function
 @author Leonardo P. Monteiro
 @since 10/11/2021
@@ -4124,10 +4176,10 @@ Return lRet
 	@author HCCONSYS
 	@since 16/01/09
 	@history chamato TI    -              - 24/05/2019 - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
-	@history ticket 8      - Abel Babini  - 01/03/2021 - Não limpar flag dos registros e chamar a rotina de liberação de crédtio.
-	@history ticket 8      - Abel Babini  - 03/03/2021 - Nova versao - Não limpar flag dos registros e chamar a rotina de liberação de crédtio.
-	@history 17537         - Everson      - 14/09/2021 - Tratamento para exclusão de pedido pela rotina de importação Protheus x SAG.
-	@history TI            - Leonardo P. Monteiro      - 01/02/2022 - Desativação do ponto de entrada e transferência para o M410STTS.
+	@history ticket 8      - Abel Babini  - 01/03/2021 - Nï¿½o limpar flag dos registros e chamar a rotina de liberaï¿½ï¿½o de crï¿½dtio.
+	@history ticket 8      - Abel Babini  - 03/03/2021 - Nova versao - Nï¿½o limpar flag dos registros e chamar a rotina de liberaï¿½ï¿½o de crï¿½dtio.
+	@history 17537         - Everson      - 14/09/2021 - Tratamento para exclusï¿½o de pedido pela rotina de importaï¿½ï¿½o Protheus x SAG.
+	@history TI            - Leonardo P. Monteiro      - 01/02/2022 - Desativaï¿½ï¿½o do ponto de entrada e transferï¿½ncia para o M410STTS.
 	/*/
 Static Function fFunDel()
 	
@@ -4159,18 +4211,18 @@ Static Function fFunDel()
 
 		EndIf     
 
-		//ticket 8      - Abel Babini  - 01/03/2021 - Não limpar flag dos registros e chamar a rotina de liberação de crédtio.
+		//ticket 8      - Abel Babini  - 01/03/2021 - Nï¿½o limpar flag dos registros e chamar a rotina de liberaï¿½ï¿½o de crï¿½dtio.
 		//fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)  //&&funcao pra limpeza de flag de pre aprovacao de pedidos de venda.
 		//StaticCall(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR, .T., SC5->C5_FILIAL+SC5->C5_NUM)
 		fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR, .T., SC5->C5_FILIAL+SC5->C5_NUM)
-		//&&Mauricio - Chamado 037330 - 07/10/17 - limpo nr pedido na exclusão de um pedido
+		//&&Mauricio - Chamado 037330 - 07/10/17 - limpo nr pedido na exclusï¿½o de um pedido
 		IF !Empty(_cPedAnt)
 			AltPedOr(_cPedAnt,cPedido)
 		Endif   
 
-		If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. SC5->C5_UFPLACA <> "99" //&&12/10/16 - Flag para pedido excluido por rotina ADFIN006P/ADFIN018P
+		If !lSfInt .And. SC5->C5_UFPLACA <> "99" //&&12/10/16 - Flag para pedido excluido por rotina ADFIN006P/ADFIN018P
 
-			DEFINE MSDIALOG oDlg FROM	18,1 TO 80,550 TITLE "ADORO S/A Crédito -  Motivo do Bloqueio" PIXEL
+			DEFINE MSDIALOG oDlg FROM	18,1 TO 80,550 TITLE "ADORO S/A Crï¿½dito -  Motivo do Bloqueio" PIXEL
 			@  1, 3 	TO 28, 242 OF oDlg  PIXEL
 			If File("adoro.bmp")
 				@ 3,5 BITMAP oBmp FILE "adoro.bmp" OF oDlg NOBORDER SIZE 25,25 PIXEL
@@ -4194,7 +4246,7 @@ Static Function fFunDel()
 			lRet := .T.	
 		Endif
 
-		If _lMail .Or. IsInCallStack('RESTEXECUTE') .Or. IsInCallStack('U_RESTEXECUTE')
+		If _lMail .Or. lSfInt
 
 			_cMens1 := '<html>'
 			_cMens1 += '<head>'
@@ -4244,7 +4296,7 @@ Static Function fFunDel()
 			_cMens1 += '</table>'
 			_cMens1 += '<table border="1" width="982">'
 			_cMens1 += '<tr>'
-			_cMens1 += '<td width="8%" bgcolor="#FAA21B"><font face="Arial" size="1">Endereço:</font></td>'
+			_cMens1 += '<td width="8%" bgcolor="#FAA21B"><font face="Arial" size="1">Endereï¿½o:</font></td>'
 			_cMens1 += '<td width="41%" bgcolor="#FFFFFF"><font face="Arial" size="1">'+SC5->C5_ENDERE+'</font></td>'
 			_cMens1 += '<td width="4%" bgcolor="#FAA21B"><font face="Arial" size="1">Bairro:</font></td>'
 			_cMens1 += '<td width="17%" bgcolor="#FFFFFF"><font face="Arial" size="1">'+SC5->C5_BAIRRO+'</font></td>'
@@ -4258,17 +4310,17 @@ Static Function fFunDel()
 			_cMens1 += '<tr>'
 			_cMens1 += '<td width="6%" bgcolor="#FAA21B" align="center"><font face="Arial" size="1">Roteiro:</font></td>'
 			_cMens1 += '<td width="44%" bgcolor="#FFFFFF"><font face="Arial" size="1">'+SC5->C5_ROTEIRO+'</font></td>'
-			_cMens1 += '<td width="7%" bgcolor="#FAA21B" align="center"><font face="Arial" size="1">Sequência:</font></td>'
+			_cMens1 += '<td width="7%" bgcolor="#FAA21B" align="center"><font face="Arial" size="1">Sequï¿½ncia:</font></td>'
 			_cMens1 += '<td width="43%" bgcolor="#FFFFFF"><font face="Arial" size="1">'+SC5->C5_SEQUENC+'</font></td>'
 			_cMens1 += '</tr>'
 			_cMens1 += '</table>'
 			_cMens1 += '<table border="1" width="982">'
 			_cMens1 += '<tr>'
-			_cMens1 += '<td width="170" bgcolor="#FAA21B"><font face="Arial" size="1">Condição de Pagamento:</font></td>'
+			_cMens1 += '<td width="170" bgcolor="#FAA21B"><font face="Arial" size="1">Condiï¿½ï¿½o de Pagamento:</font></td>'
 			_cMens1 += '<td width="81" bgcolor="#FFFFFF"><font face="Arial" size="1">'+SC5->C5_CONDPAG+'</font></td>'
 			_cMens1 += '<td width="84" bgcolor="#FAA21B"><font face="Arial" size="1">Vencimento:</font></td>'
 			_cMens1 += '<td width="168" bgcolor="#FFFFFF"><font face="Arial" size="1">'+DTOC(SC5->C5_DATA1)+'</font></td>'
-			_cMens1 += '<td width="46" bgcolor="#FAA21B" align="center"><font face="Arial" size="1">Emissão:</font></td>'
+			_cMens1 += '<td width="46" bgcolor="#FAA21B" align="center"><font face="Arial" size="1">Emissï¿½o:</font></td>'
 			_cMens1 += '<td width="393" bgcolor="#FFFFFF"><font face="Arial" size="1">'+DTOC(SC5->C5_DTENTR)+'</font></td>'
 			_cMens1 += '</tr>'
 			_cMens1 += '</table>'
@@ -4305,12 +4357,12 @@ Static Function fFunDel()
 			_cMens1 += '<tr>'
 			_cMens1 += '<td width="14" bgcolor="#386079" align="center"><p align="center"><font face="Arial" size="1"  color="#FFFFFF"><b>Item</b></font></td>'
 			_cMens1 += '<td width="50" bgcolor="#386079" align="center"><p align="center"><font face="Arial" size="1"  color="#FFFFFF"><b>Produto</b></font></td>'
-			_cMens1 += '<td width="544" bgcolor="#386079" align="center"><p align="center"><font face="Arial" size="1" color="#FFFFFF"><b>Descrição</b></font></td>'
+			_cMens1 += '<td width="544" bgcolor="#386079" align="center"><p align="center"><font face="Arial" size="1" color="#FFFFFF"><b>Descriï¿½ï¿½o</b></font></td>'
 			_cMens1 += '<td width="57" bgcolor="#386079" align="center"><p align="center"><font size="1" face="Arial"  color="#FFFFFF"><b>TES</b></font></p></td>'
-			_cMens1 += '<td width="283" bgcolor="#386079" align="center"><p align="center"><font size="1" face="Arial" color="#FFFFFF"><b>Operação</b></font></p></td>'
+			_cMens1 += '<td width="283" bgcolor="#386079" align="center"><p align="center"><font size="1" face="Arial" color="#FFFFFF"><b>Operaï¿½ï¿½o</b></font></p></td>'
 			_cMens1 += '<td width="42" bgcolor="#386079" align="center"><p align="center"><font face="Arial" size="1"  color="#FFFFFF"><b>UM</b></font></td>'
 			_cMens1 += '<td width="91" bgcolor="#386079" align="center"><p align="center"><font face="Arial" size="1"  color="#FFFFFF"><b>Quantidade</b></font></td>'
-			_cMens1 += '<td width="244" bgcolor="#386079" align="center"><p align="center"><font size="1" face="Arial" color="#FFFFFF"><b>Valor Unitário</b></font></td>'
+			_cMens1 += '<td width="244" bgcolor="#386079" align="center"><p align="center"><font size="1" face="Arial" color="#FFFFFF"><b>Valor Unitï¿½rio</b></font></td>'
 			_cMens1 += '<td width="263" bgcolor="#386079" align="center"><p align="center"><font size="1" face="Arial" color="#FFFFFF"><b>Valor</b></font></td>'
 			_cMens1 += '</tr>'
 
@@ -4334,7 +4386,7 @@ Static Function fFunDel()
 			DBSKIP()
 			END
 			*/
-			If Len(aCols) > 0 .And. ! IsInCallStack('RESTEXECUTE') .And. ! IsInCallStack('U_RESTEXECUTE')
+			If Len(aCols) > 0 .And. !lSfInt
 
 				nItem 	:= ASCAN( AHEADER, { |X| ALLTRIM(X[2]) == "C6_ITEM" } )
 				nProduto := ASCAN( AHEADER, { |X| ALLTRIM(X[2]) == "C6_PRODUTO" } )
@@ -4373,7 +4425,7 @@ Static Function fFunDel()
 			_cMens3	+= '<tr>'
 			_cMens3	+= '<td width="100%" bgcolor="#386079" bordercolorlight="#FAA21B" bordercolordark="#FAA21B">'
 			_cMens3	+= '<p align="center">'
-			_cMens3	+= '<font face="Arial" size="1" color="#FFFFFF"><b>Email Enviado Automaticamente pelo Sistema Protheus by Adoro Informática</b></font>'
+			_cMens3	+= '<font face="Arial" size="1" color="#FFFFFF"><b>Email Enviado Automaticamente pelo Sistema Protheus by Adoro Informï¿½tica</b></font>'
 			_cMens3	+= '</p>'
 			_cMens3	+= '</td>'
 			_cMens3	+= '</tr>'
@@ -4411,7 +4463,7 @@ Static Function fFunDel()
 			IF !Empty(Getmv("mv_mailtst"))
 				cEmail := Alltrim(Getmv("mv_mailtst"))
 			ELSE
-				cEmail :=_eMailVend+';'+_eMailSup+';'+Alltrim(GetMv("mv_emails1"))+';'+Alltrim(GetMv("mv_emails2"))	// Em 23/02/2016 incluido o parâmetro MV_EMAILS2 - CHAMADO 026668 - WILLIAM COSTA
+				cEmail :=_eMailVend+';'+_eMailSup+';'+Alltrim(GetMv("mv_emails1"))+';'+Alltrim(GetMv("mv_emails2"))	// Em 23/02/2016 incluido o parï¿½metro MV_EMAILS2 - CHAMADO 026668 - WILLIAM COSTA
 			ENDIF
 
 
@@ -4419,8 +4471,8 @@ Static Function fFunDel()
 			_cData := transform(MsDate(),"@!")
 			_cHora := transform(Time(),"@!")  
 			
-			If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE')
-				lRet := U_ENVIAEMAIL(GetMv("MV_RELFROM"),cEmail,_cMens,"PEDIDO No."+SC5->C5_NUM+" ,PEDIDO EXCLUÍDO - "+_cData+" - "+_cHora,"")	//Por Adriana em 24/05/2019 substituido MV_RELACNT por MV_RELFROM		
+			If !lSfInt
+				lRet := U_ENVIAEMAIL(GetMv("MV_RELFROM"),cEmail,_cMens,"PEDIDO No."+SC5->C5_NUM+" ,PEDIDO EXCLUï¿½DO - "+_cData+" - "+_cHora,"")	//Por Adriana em 24/05/2019 substituido MV_RELACNT por MV_RELFROM		
 			
 				If Alltrim(cValToChar(SC5->C5_XGERSF)) == "2" .And. Alltrim(cValToChar(SC5->C5_XPEDSAL)) <> ""
 					U_ADVEN050P("",.F.,.T., " AND C5_NUM IN ('" + Alltrim(cValToChar(SC5->C5_NUM)) + "') AND C5_XPEDSAL <> '' " , .F. )
@@ -4441,10 +4493,10 @@ Static Function fFunDel()
 		//|o resultado em tela                      |
 		//+-----------------------------------------+                                                                                                          
 		If !lRet 
-			ApMsgInfo("Nao foi possível o Envio do E-mail.O E-mail será impresso em "+;
-			"Tela e o registro será processado. "+;
-			"Possíveis causas podem ser:  Problemas com E-mail do destinatário "+;
-			"ou  no serviço interno de E-mail da empresa.","Erro de Envio")
+			ApMsgInfo("Nao foi possï¿½vel o Envio do E-mail.O E-mail serï¿½ impresso em "+;
+			"Tela e o registro serï¿½ processado. "+;
+			"Possï¿½veis causas podem ser:  Problemas com E-mail do destinatï¿½rio "+;
+			"ou  no serviï¿½o interno de E-mail da empresa.","Erro de Envio")
 			//+---------------------------------+
 			//|Montando arquivo de Trabalho     |
 			//+---------------------------------+	
@@ -4458,14 +4510,14 @@ Static Function fFunDel()
 			//|Montando o Texto em TRB           |
 			//+----------------------------------+	
 
-			TxtNew:=ALLTRIM(STRTRAN(_cMens,CHR(13),"ª"))+"ª"  
+			TxtNew:=ALLTRIM(STRTRAN(_cMens,CHR(13),"ï¿½"))+"ï¿½"  
 			TEXTO :=''
 			For I:=0 to LEN(TxtNew)
 				// Pego o proximo bloco
 				TEXTO+=SUBSTR(TxtNew,1,1)	
 				// Exclui o caracter posicionado
 				TxtNew:=STUFF(TxtNew,1,1,"")	
-				If 	LEN(TEXTO)>=200 	//txt=="ª" .or. _nTamLin > limite			
+				If 	LEN(TEXTO)>=200 	//txt=="ï¿½" .or. _nTamLin > limite			
 					TEXTO:=SUBSTR(TEXTO,1,LEN(TEXTO)-1)
 					RecLock("TRB",.t.)
 					Replace TRB->LINHA With TEXTO 
@@ -4491,9 +4543,9 @@ Static Function fFunDel()
 		Endif
 
 
-		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄA¿
-		//³INICIO TRATAMENTO PEDIDO TRANSPORTADOR CCSKF³
-		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄAÙ
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½
+		//ï¿½INICIO TRATAMENTO PEDIDO TRANSPORTADOR CCSKFï¿½
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½
 
 		//cQuery := " SELECT SD1.R_E_C_N_O_ AS REC "
 		//cQuery += " FROM "+ RetSqlName("SD1") +" SD1, "+ RetSqlName("SC6") +" SC6 " 
@@ -4501,8 +4553,8 @@ Static Function fFunDel()
 		//cQuery += " AND SD1.R_E_C_N_O_ = SC6.C6_XRECSD1 AND SC6.C6_XRECSD1<> 0 AND SD1.D_E_L_E_T_ = ' ' "
 		// RICARDO LIMA - 16/01/18
 		cQuery := " SELECT SD1.R_E_C_N_O_ AS REC " 
-		cQuery += " FROM "+ RetSqlName("SD1") +" SD1 WITH (NOLOCK) "
-		cQuery += " INNER JOIN "+ RetSqlName("SC6") +" SC6 WITH (NOLOCK) ON SD1.R_E_C_N_O_ = SC6.C6_XRECSD1 AND SC6.C6_XRECSD1<> 0 AND SC6.D_E_L_E_T_ = '*' "
+		cQuery += " FROM "+ RetSqlName("SD1") +" (NOLOCK) SD1 "
+		cQuery += " INNER JOIN "+ RetSqlName("SC6") +" (NOLOCK) SC6 ON SD1.R_E_C_N_O_ = SC6.C6_XRECSD1 AND SC6.C6_XRECSD1<> 0 AND SC6.D_E_L_E_T_ = '*' "
 		cQuery += " WHERE SC6.C6_FILIAL = '" + xFilial( "SC6" ) + "' "
 		cQuery += " AND SC6.C6_NUM = '" + cPedido + "' "
 		cQuery += " AND SD1.D_E_L_E_T_ = ' ' "
@@ -4528,9 +4580,9 @@ Static Function fFunDel()
 
 		(cAliasSD1)->(dbCloseArea())     
 
-		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄA¿
-		//³FIM TRATAMENTO PEDIDO TRANSPORTADOR - CCSKF³
-		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄAÙ
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½
+		//ï¿½FIM TRATAMENTO PEDIDO TRANSPORTADOR - CCSKFï¿½
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½
 		RestArea(aArea) //Everson - 14/09/2021. Chamado 17537. 
 	ENDIF
 
@@ -4552,7 +4604,7 @@ Return(.t.)
 // 		dbSetOrder(1)
 // 		dbGoTop()
 // 		If dbSeek(xFilial("SZF")+SUBSTR(SA1->A1_CGC,1,8))  //&&REDE
-// 			//Limpo flag de pedidos relativos a Rede....aonde no caso não ha como filtrar data de entrega, cliente e pedidos utilizados...limpo todos.
+// 			//Limpo flag de pedidos relativos a Rede....aonde no caso nï¿½o ha como filtrar data de entrega, cliente e pedidos utilizados...limpo todos.
 
 // 			If Select("LSC5") > 0
 // 				DbSelectArea("LSC5")
@@ -4685,7 +4737,7 @@ Return lRet
 /*/
 Static Function grvBarr(nOper, cNumero)
 
-    //Variáveis.
+    //Variï¿½veis.
     Local aArea     := GetArea()
 	Local cOperacao	:= ""
 	Local cFilter	:= ""
