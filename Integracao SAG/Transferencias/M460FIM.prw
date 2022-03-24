@@ -44,6 +44,7 @@
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
+	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 /*/
 
 User Function M460FIM()
@@ -128,7 +129,7 @@ User Function M460FIM()
 	//
 	If Alltrim(cEmpAnt) == "01"
 
-		grvBarr("I", SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA) //Everson, 22/03/2022, Chamado 18465.
+		grvBarr("I", SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA, SF2->F2_DOC,SF2->F2_SERIE) //Everson, 22/03/2022, Chamado 18465. //Everson, 24/03/2022, Chamado 18465.
 	
 		fGrvVend2()  //19/10/16 - preenche campo vendedor 2 
 
@@ -1545,16 +1546,16 @@ Return Nil
     @since 22/03/2022
     @version 01
 /*/
-Static Function grvBarr(cOperacao, cNumero)
+Static Function grvBarr(cOperacao, cNumero, cNF, cSerie)
 
     //Variáveis.
     Local aArea     := GetArea()
 	Local cFilter	:= ""
 
-	If ! (cFilAnt $"03/05")
+	If ! chkOrd(cNF, cSerie)
 		RestArea(aArea)
 		Return Nil
-
+		
 	EndIf
 	
 	cFilter := " D2_FILIAL ='" + FWxFilial("SD2") + "' .And. D2_DOC = '" + SF2->F2_DOC + "' .And. D2_SERIE = '" + SF2->F2_SERIE + "' .And. D2_CLIENTE = '" + SF2->F2_CLIENTE + "' .And. D2_LOJA = '" + SF2->F2_LOJA  + "' "
@@ -1568,3 +1569,55 @@ Static Function grvBarr(cOperacao, cNumero)
 	RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} chkOrd
+    Valida se há ordem de pesagem vinculada.
+	Chamado 18465.
+    @type  User Function
+    @author Everson
+    @since 24/03/2022
+    @version 01
+/*/
+Static Function chkOrd(cNF, cSerie)
+
+	//Variáveis
+	Local aArea 	:= GetArea()
+	Local lRet  	:= .F.
+	Local cQuery    := ""
+
+	cQuery += " SELECT " 
+	cQuery += " C5_XORDPES " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("SF2") + " (NOLOCK) AS SF2 " 
+	cQuery += " INNER JOIN " 
+	cQuery += " " + RetSqlName("SD2") + " (NOLOCK) AS SD2 ON " 
+	cQuery += " F2_FILIAL = D2_FILIAL " 
+	cQuery += " AND F2_DOC = D2_DOC " 
+	cQuery += " AND F2_SERIE = D2_SERIE " 
+	cQuery += " INNER JOIN  " 
+	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 ON " 
+	cQuery += " D2_FILIAL = C5_FILIAL " 
+	cQuery += " AND D2_PEDIDO = C5_NUM " 
+	cQuery += " WHERE " 
+	cQuery += " F2_FILIAL = '" + FWxFilial("SF2") + "' " 
+	cQuery += " AND F2_DOC = '" + cNF + "' " 
+	cQuery += " AND F2_SERIE = '" + cSerie + "' " 
+	cQuery += " AND C5_XORDPES <> '' " 
+	cQuery += " AND SF2.D_E_L_E_T_ = '' " 
+	cQuery += " AND SD2.D_E_L_E_T_ = '' " 
+	cQuery += " AND SC5.D_E_L_E_T_ = '' " 
+
+	If Select("D_VLDORD") > 0
+		D_VLDORD->(DbCloseArea())
+
+	EndIf
+
+	TcQuery cQuery New Alias "D_VLDORD"
+	DbSelectArea("D_VLDORD")
+	
+	lRet := ! D_VLDORD->(Eof())
+	
+	D_VLDORD->(DbCloseArea())
+
+	RestArea(aArea)
+
+Return lRet

@@ -1,16 +1,16 @@
-#Include 'Protheus.ch'
+#Include "Protheus.ch"
+#Include "Topconn.ch"
 
-
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Programa  ?A410EXC   ?Autor  ?William Costa       		?Data ? 25/11/2014 ³±?±±?		 ?Desc.     ?Criação da regra para ajustar o ZB1 liberado para poder	 ³±?±±?		  		     ?utilizar o refaturamento de novo 						 ³±?±±?---------------------------------------------------------------------------------³±?±±?				     ?Autor  ?Leonardo Rios - KF System 	?Data ? 13/04/2016 ³±?±±?		 ?Desc.     ?Criação da função ValPED010()					 		 ³±?±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Uso		 ?SIGAFAT                                                    	 		³±?±±?		 ?MATA410 - Pedido de Vendas								     		 ³±?±±?		 ?Ponto de Entrada para validar a exclusão do pedido de vendas  		 ³±?±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-*/
+/*/{Protheus.doc} User Function A410EXC
+    Ponto de Entrada para validar a exclusão do pedido de vendas.
+	Criação da regra para ajustar o ZB1 liberado para poder utilizar o refaturamento de novo 						 
+    @type  Function
+    @author William Costa 
+    @since 25/11/2014
+    @version 01
+	@history Leonardo Rios - KF System 	?Data ? 13/04/2016 ³±?±±?		 ?Desc.     ?Criação da função ValPED010()
+	@history Everson, 23/03/2022. Chamado 18465. Validação de exclusão de pedido de saída com ordem de pesagem vinculada.
+    /*/
 User Function A410EXC()
 
 	Local lRet := .T.
@@ -51,6 +51,9 @@ User Function A410EXC()
 		
 		//Everson - 01/03/2018. Chamado 037261.
 		lRet := lRet .AND. valSalesForce()
+
+		//Everson - 23/03/2022. Chamado 018465.
+		lRet := lRet .And. vldOrdSa(SC5->C5_NUM)
 
 	EndIf	
 
@@ -99,3 +102,59 @@ Static Function valSalesForce()
 	EndIf*/
 
 Return lRetAux
+/*/{Protheus.doc} vldOrdSa
+	Validação de exclusão de pedido de saída com ordem de pesagem vinculada.
+	Chamado 18465.
+	@type  Static Function
+	@author user
+	@since 23/03/2022
+	@version 01
+/*/
+Static Function vldOrdSa(cNumPed)
+
+	//Variáveis.
+	Local aArea  := GetArea()
+	Local lRet	 := .T.
+	Local cQuery := ""
+
+	cQuery += " SELECT  " 
+	cQuery += " C6_XORDPES " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 " 
+	cQuery += " WHERE " 
+	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "' " 
+	cQuery += " AND C6_NUM = '" + cNumPed + "' " 
+	cQuery += " AND C6_XORDPES <> '' " 
+	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+	cQuery += " ORDER BY C6_XORDPES "
+
+	If Select("D_VLDORD") > 0
+		D_VLDORD->(DbCloseArea())
+
+	EndIf 
+
+	TcQuery cQuery New Alias "D_VLDORD"
+	DbSelectArea("D_VLDORD")
+	D_VLDORD->(DbGoTop())
+
+	DbSelectArea("ZIG")
+	ZIG->(DbSetOrder(2))
+	ZIG->(DbGoTop())
+
+	While ! D_VLDORD->(Eof())
+
+		If ZIG->( DbSeek( FWxFilial("ZIG") + D_VLDORD->C6_XORDPES ) ) .And. ZIG->ZIG_INICIA <> "1"
+			lRet := .F.
+			MsgStop("Pedido está vinculado a ticket de pesagem com pesagem já iniciada.","Função vldOrdSa(A410EXC)")
+
+		EndIf
+
+		D_VLDORD->(DbSkip())
+
+	End
+
+	D_VLDORD->(DbCloseArea())
+
+	RestArea(aArea)
+	
+Return lRet

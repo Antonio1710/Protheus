@@ -8,10 +8,11 @@
 	@type  Function
 	@author Mauricio da Silva
 	@since 14/06/11
-	@history Ticket 8     - Abel Babini - 05/02/2020 - Log de execução da rotina na tabela ZBE e manter o status de pré aprovação do pedido.
-	@history ticket  8    - Abel Babini - 19/02/2021 - Não limpar flag de pré liberação quando altera data de entrega
-	@history Ticket  8    - Abel B.     - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-	@history Ticket  8    - Abel B.     - 03/03/2021 - Nova versão - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+	@history Ticket 8     	- Abel Babini - 05/02/2020 - Log de execução da rotina na tabela ZBE e manter o status de pré aprovação do pedido.
+	@history ticket  8    	- Abel Babini - 19/02/2021 - Não limpar flag de pré liberação quando altera data de entrega
+	@history Ticket  8    	- Abel B.     - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+	@history Ticket  8    	- Abel B.     - 03/03/2021 - Nova versão - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+	@history Ticket 018465  - Everson     - 24/03/2022 - Tratamento para pedidos com pesagem já iniciada.
 
 	/*/
 User Function ALTDTENT() 
@@ -44,18 +45,19 @@ User function ALTPVFAT()
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Define Variaveis                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	Local aArray  	 := {}
-	Local aOrdProd   := {}
+	// Local aArray  	 := {}
+	// Local aOrdProd   := {}
 	Local aChave     := {}
 	Local cRegLog    := ""  
-	Local cIndex1, cChave, cFiltro, nIndex
+	// Local cIndex1, cChave, cFiltro, nIndex
 	Local nLinGetD, cTitulo, aC, aR, aCGD, cLinhaOK, cTudoOk, nOpcx, aAlter, lRetMod2
-	Local nPosPed, nPosIt, nPosEnt, nPosPri, nPosCor, nPosPig, nX
+	// Local nPosPed, nPosIt, nPosEnt, nPosPri, nPosCor, nPosPig, nX
 
 	Private aHeader, aCols
 	Private Altera := .f.
 	Private _cCampo := ""
 	Private _nTot := 0 
+	Private _ni := 1
 
 	U_ADINF009P('ALTDTENT' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'tela customizada do pedido de venda para alterar somente a Data de entrega(solicitada por Vagner durante validação tabela de preço')
 
@@ -98,6 +100,12 @@ User function ALTPVFAT()
 	//Everson - 05/04/2018. Chamado 037261. SalesForce.
 	If Alltrim(cValToChar(SC5->C5_XGERSF)) == "2"
 		MsgStop("Pedido gerado pela integração Protheus x SalesForce, não poderá ser alterado.","Função ALTDTENT")
+		Return Nil
+
+	EndIf  
+
+	//Everson - 24/03/2022. Chamado 018465. Pesagem.
+	If ! StaticCall(A410EXC, vldOrdSa, SC5->C5_NUM)
 		Return Nil
 
 	EndIf  

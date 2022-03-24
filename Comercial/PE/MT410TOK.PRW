@@ -12,23 +12,24 @@
 	@history Ticket 047354 	- Ricardo Lima 		   - 19/02/2019 - NAO PERMITE MAIS DE 1 PEDIDO COM MESMO ROTEIRO E DATA DE ENTREGA
 	@history Ticket 047506 	- Ricardo Lima 		   - 27/02/2019 - Informa novo Roteiro
 	@history Ticket 048015 	- Fernando Sigoli  	   - 21/03/2019 - Informa novo Roteiro nao validar,pedidos integrador pelo sag 
-	@history Ticket 047506 	- William Costa 	   - 21/06/2019 - Validação Adicionado regra para não deixar salvar o pedido se não tiver a segunda unidade de medida preenchida se for P.A e o Local igual 10     	@history Ticket 051864 	- Abel Babini 	- 20/09/2019 - Cria parametros de produtos CMS e validação de quantidade 
-	@history Ticket 692 	  - Adriana Oliveira   - 03/09/2020 - gravar TES especifico quando cliente estiver enquadrado no regime especial 57608/11 (ZG4_NUMERO<>””)
+	@history Ticket 047506 	- William Costa 	   - 21/06/2019 - Validaï¿½ï¿½o Adicionado regra para nï¿½o deixar salvar o pedido se nï¿½o tiver a segunda unidade de medida preenchida se for P.A e o Local igual 10     	@history Ticket 051864 	- Abel Babini 	- 20/09/2019 - Cria parametros de produtos CMS e validaï¿½ï¿½o de quantidade 
+	@history Ticket 692 	  - Adriana Oliveira   - 03/09/2020 - gravar TES especifico quando cliente estiver enquadrado no regime especial 57608/11 (ZG4_NUMERO<>ï¿½ï¿½)
 	@history Ticket 8190 	  - Abel Babini        - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
-	@history Ticket 8190 	  - Abel Babini        - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laço FOR
-	@history Ticket 8569 	  - Abel Babini        - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
-	@history Ticket 9231 	  - Abel Babini        - 08/02/2021 - Alterado o tratamento de Bonificação para clientes Simples Nacional, considerando os parâmetros MV_XTESBON, MV_XTESBOQ, MV_XTESDOA
-	@history Ticket 9765 	  - Abel Babini        - 19/02/2021 - Adicionada regra para que a alteração de TES não seja executada quando o tipo do cliente for consumidor final
-	@history Ticket 11223   - Abel Babini      	   - 23/03/2021 - Não mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
-	@history Ticket  63537  - Leonardo P. Monteiro - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
-	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Início da estruturação das validações em funções.
-	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validação do item que controla endereço para tornar obrigatório o preenchimento do campo 'Localização'.
-	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Preenchimento do endereçamento dos produtos que controlam localização.
-	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificação se o ponto de entrada interferiu na integração com SalesForce.
-	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automático da localização.
-	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validação de quantidade liberada para cópia de pedido.
-	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validação de quantidade liberada para cópia de pedido. 
-	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket 8190 	  - Abel Babini        - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laï¿½o FOR
+	@history Ticket 8569 	  - Abel Babini        - 25/01/2021 - Acrescentado tratamento para somente Operï¿½ï¿½es 01 e 02 Venda tratarem a mudanï¿½a de TES para Clientes Simples Nacional
+	@history Ticket 9231 	  - Abel Babini        - 08/02/2021 - Alterado o tratamento de Bonificaï¿½ï¿½o para clientes Simples Nacional, considerando os parï¿½metros MV_XTESBON, MV_XTESBOQ, MV_XTESDOA
+	@history Ticket 9765 	  - Abel Babini        - 19/02/2021 - Adicionada regra para que a alteraï¿½ï¿½o de TES nï¿½o seja executada quando o tipo do cliente for consumidor final
+	@history Ticket 11223   - Abel Babini      	   - 23/03/2021 - Nï¿½o mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
+	@history Ticket  63537  - Leonardo P. Monteiro - 10/11/2021 - Correï¿½ï¿½o na gravaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
+	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Inï¿½cio da estruturaï¿½ï¿½o das validaï¿½ï¿½es em funï¿½ï¿½es.
+	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validaï¿½ï¿½o do item que controla endereï¿½o para tornar obrigatï¿½rio o preenchimento do campo 'Localizaï¿½ï¿½o'.
+	@history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Preenchimento do endereï¿½amento dos produtos que controlam localizaï¿½ï¿½o.
+	@history Ticket  63807  - Leonardo P. Monteiro - 18/11/2021 - Aguardo verificaï¿½ï¿½o se o ponto de entrada interferiu na integraï¿½ï¿½o com SalesForce.
+	@history Ticket  64569  - Leonardo P. Monteiro - 03/12/2021 - Preenchimento automï¿½tico da localizaï¿½ï¿½o.
+	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validaï¿½ï¿½o de quantidade liberada para cï¿½pia de pedido.
+	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validaï¿½ï¿½o de quantidade liberada para cï¿½pia de pedido. 
+	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusï¿½o de conouts no fonte. 
+	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.. 
 /*/
 
 User Function MT410TOK()
@@ -53,9 +54,9 @@ User Function MT410TOK()
 	Local _dDTENTR      := M->C5_DTENTR
 	Local _cEstCli      := M->C5_EST
 	Local _cPermAlt     := ""
-	Local _cNumPed      := M->C5_NUM         //Mauricio 05/02/14 - Solicitado por Ana Barreta para não permitir alterar data de entrega de PV com C5_XINT = "3"
+	Local _cNumPed      := M->C5_NUM         //Mauricio 05/02/14 - Solicitado por Ana Barreta para nï¿½o permitir alterar data de entrega de PV com C5_XINT = "3"
 	Local _lRetUsuC     := .F.
-	//Local _nDiasDtE     := IF(IsInCallStack('U_ADVEN002P') == .T.,5,GetMV("MV_XDIASEN")) //Chamado se vier do Edi vira 5 - William Costa //GetMV("MV_XDIASEN") //Mauricio 14/06/11 - Solicitado por vagner email de 13/06/11 - Nova Tabela de Preço.
+	//Local _nDiasDtE     := IF(IsInCallStack('U_ADVEN002P') == .T.,5,GetMV("MV_XDIASEN")) //Chamado se vier do Edi vira 5 - William Costa //GetMV("MV_XDIASEN") //Mauricio 14/06/11 - Solicitado por vagner email de 13/06/11 - Nova Tabela de Preï¿½o.
 
 	Local _nDiasDtE     := IF(IsInCallStack('U_ADVEN002P') == .T.,5, diasEntrega() ) //Everson - 19/12/2017. Chamado 037426.
 	
@@ -79,7 +80,7 @@ User Function MT410TOK()
 	Local n2,_x2
 	Local _lConsFinal	:= .F.
 	Local _nOpc 		:= paramixb[1]
-	Local cRedeOP		:= GetMV("MV_#REDEOP") //Redes as quais é obrigatorio preencher Operador Logistico, ou Filial, e numero do pedido do cliente, em nosso Pedido de Venda (SAPORE / MASSIMA)- por Adriana chamado 031238 em novembro/2016
+	Local cRedeOP		:= GetMV("MV_#REDEOP") //Redes as quais ï¿½ obrigatorio preencher Operador Logistico, ou Filial, e numero do pedido do cliente, em nosso Pedido de Venda (SAPORE / MASSIMA)- por Adriana chamado 031238 em novembro/2016
 	Local _CFST 		:= GetMV("MV_XCFST") //CFOP Venda de embutidos com ICMS ST    5401/5910/5118   - incluido por Adriana em 12/04/2017 - chamado 034546
 	Local cCodTes       := "" // sigoli 09/03/2017
 	Local cCodProd      := "" // sigoli 09/03/2017
@@ -95,7 +96,7 @@ User Function MT410TOK()
 	//Ricardo Lima-19/02/2019-047354
 	Local cQueryP       := ""
 	
-	//051864 - Abel Babini-20/09/2019, Cria parametros de produtos CMS e validação de quantidade
+	//051864 - Abel Babini-20/09/2019, Cria parametros de produtos CMS e validaï¿½ï¿½o de quantidade
 	Local nQtdPlt		:= 0
 	Local cGrpPCMS		:= GETMV("MV_#GRPCMS",,"0341,0342,0343,0344,0345,0346,0347,0361,0362,0363,0371") //Grupo dos produtos CMS
 
@@ -109,7 +110,7 @@ User Function MT410TOK()
 	//Local _cCliTrb := ''
 	//Local _cDPr65255	:= 'N'
 
-	//Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
+	//Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operï¿½ï¿½es 01 e 02 Venda tratarem a mudanï¿½a de TES para Clientes Simples Nacional
 	//Local _cMT410A		:= GETMV("MV_#MT410A",,"01,") //Quais operacoes devem trocar a TES quando o cliente for de SP e Optante pelo Simples nacional. Ver MV_#T65255
 	
 	Local nT			:= 0
@@ -144,6 +145,14 @@ User Function MT410TOK()
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
+	
+	//Everson - 24/03/2022. Chamado 018465. Pesagem.
+	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA .And. ! StaticCall(A410EXC, vldOrdSa, SC5->C5_NUM)
+		RestArea(aArea)
+		Return .F.
+
+	EndIf 
+	//
 
 	_cTipoOper 			:= "02" // por Adriana em 24/03/17
 	_cTipoCli 			:= M->C5_TIPOCLI //" "  // por Adriana em 05/04/17
@@ -168,7 +177,7 @@ User Function MT410TOK()
 	Endif
 	//
 
-	if _nOpc = 1 // Exclusão
+	if _nOpc = 1 // Exclusï¿½o
 		//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 		return .t.
 	endif
@@ -191,7 +200,7 @@ User Function MT410TOK()
 	//
 
 	If Alltrim(cEmpAnt) == "01"
-		_cPermAlt     := M->C5_XINT        //Mauricio 05/02/14 - Solicitado por Ana Barreta para não permitir alterar data de entrega de PV com C5_XINT = "3"
+		_cPermAlt     := M->C5_XINT        //Mauricio 05/02/14 - Solicitado por Ana Barreta para nï¿½o permitir alterar data de entrega de PV com C5_XINT = "3"
 	Else
 		_cPermAlt     := ""
 	Endif
@@ -203,7 +212,7 @@ User Function MT410TOK()
 		_lrfat    := .F.
 		_lTresPed := .F.
 		_lquatro  := .F.
-		IF M->C5_REFATUR <> "S"  //Inclusao do pedido pelo comercial pois nunca é o comercial que preenche esse campo
+		IF M->C5_REFATUR <> "S"  //Inclusao do pedido pelo comercial pois nunca ï¿½ o comercial que preenche esse campo
 			IF INCLUI
 				_lTresPed := .F.
 				_lrfat := .F.
@@ -220,13 +229,13 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!' ,;
+							'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'})
+							Aadd(aPedidos,{'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'})
 
 						ELSE
-							ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'))
 						Endif
 						lRet := .F.
 					EndIf
@@ -239,12 +248,12 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!' ,;
+							'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'})
+							Aadd(aPedidos,{'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!'})
 						ELSE
-							ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!'))
 						Endif
 						lRet := .F.
 					EndIf
@@ -278,12 +287,12 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
+							'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
+							Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
-							ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
 						Endif
 						lRet := .F.
 					Endif
@@ -304,7 +313,7 @@ User Function MT410TOK()
 						lRet := .F.
 					Endif
 
-					//20/10/2017 - incluindo validação de produto e quantidade
+					//20/10/2017 - incluindo validaï¿½ï¿½o de produto e quantidade
 					If _lTresPed   //Ja foram colocados os 3 pedidos do comercial, validacao completa
 						//valido produtos e quantidades
 
@@ -312,70 +321,70 @@ User Function MT410TOK()
 
 						For _nz := 1 to _nCompRF  //refaturados
 							_nAscan := Ascan( _aCompOR, { |x|x[ 01 ] == _aCompRF[_nz][1] } )
-							If _nAscan <= 00    //produto não existe no pedido original
+							If _nAscan <= 00    //produto nï¿½o existe no pedido original
 								IF IsInCallStack('U_ADVEN002P')  == .T.
 									Aadd(aPedidos,{cchave, ;
 									''    , ;
 									''    , ;
 									''    , ;
-									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
+									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
 								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
+									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
-									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
+									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'))
 								Endif
 								lRet := .F.
 							Else
-								IF _aCompOR[_nAscan][2] <> _aCompRF[_nz][2]  //como é terceiro pedido a quantidade precisa bater
+								IF _aCompOR[_nAscan][2] <> _aCompRF[_nz][2]  //como ï¿½ terceiro pedido a quantidade precisa bater
 									IF IsInCallStack('U_ADVEN002P')  == .T.
 										Aadd(aPedidos,{cchave, ;
 										''    , ;
 										''    , ;
 										''    , ;
-										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
+										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
 									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
+										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
-										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
+										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
 									Endif
 									lRet := .F.				       
 								Endif
 							Endif
 						Next _nZ
 
-					else  //naõ foram colocados 3 pedidos do comercial, validação parcial.
+					else  //naï¿½ foram colocados 3 pedidos do comercial, validaï¿½ï¿½o parcial.
 						//valido produtos e quantidades a maior
 						For _nz := 1 to len(_aCompRF)  //refaturados
 							_nAscan := Ascan( _aCompOR, { |x|x[ 01 ] == _aCompRF[_nz][1] } )
-							If _nAscan <= 00    //produto não existe no pedido original
+							If _nAscan <= 00    //produto nï¿½o existe no pedido original
 								IF IsInCallStack('U_ADVEN002P')  == .T.
 									Aadd(aPedidos,{cchave, ;
 									''    , ;
 									''    , ;
 									''    , ;
-									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
+									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
 								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
+									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
-									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
+									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'))
 								Endif
 								lRet := .F.
 							Else
-								IF _aCompOR[_nAscan][2] < _aCompRF[_nz][2]  //como não eh o terceiro pedido valido quantida a maior somente
+								IF _aCompOR[_nAscan][2] < _aCompRF[_nz][2]  //como nï¿½o eh o terceiro pedido valido quantida a maior somente
 									IF IsInCallStack('U_ADVEN002P')  == .T.
 										Aadd(aPedidos,{cchave, ;
 										''    , ;
 										''    , ;
 										''    , ;
-										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
+										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
 									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
+										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
-										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
+										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
 									Endif
 									lRet := .F.				       
 								Endif
@@ -385,10 +394,10 @@ User Function MT410TOK()
 					Endif
 				Endif
 			Else
-				//Tratamento alteração comercial..
+				//Tratamento alteraï¿½ï¿½o comercial..
 				_lrfat := .F.
 				_lTresPed := .F.
-				//checo se na alteraçao do pedido, anteriormente havia o campo C5_XREFATD estava preenchido, se estava e o conteudo pode ser diferente do atual, preciso limpar este do campo C5_XPEDGER
+				//checo se na alteraï¿½ao do pedido, anteriormente havia o campo C5_XREFATD estava preenchido, se estava e o conteudo pode ser diferente do atual, preciso limpar este do campo C5_XPEDGER
 				//_lmudou := .F.
 				_cPedAnt := bscPedAlt(_cNumPed)
 
@@ -414,13 +423,13 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!' ,;
+							'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'})
+							Aadd(aPedidos,{'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'})
 
 						ELSE
-							ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nao esta liberado para refaturamento devido a quantidade de caixas menor que '+cvaltochar(GetMV("MV_#QTDREF"))+' caixas. Verifique!!'))
 						Endif
 						lRet := .F.
 					EndIf
@@ -433,12 +442,12 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!' ,;
+							'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'})
+							Aadd(aPedidos,{'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!'})
 						ELSE
-							ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!'))
 						Endif
 						lRet := .F.
 						//AjsAlt(_cPedAnt,_cPedold)
@@ -473,85 +482,85 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
+							'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
+							Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
-							ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
 						Endif
 						lRet := .F.					
 					Endif
 
-					//20/10/2017 - incluindo validação de produto e quantidade
+					//20/10/2017 - incluindo validaï¿½ï¿½o de produto e quantidade
 					If _lTresPed   //Ja foram colocados os 3 pedidos do comercial, validacao completa
 						//valido produtos e quantidades
 						For _nz := 1 to len(_aCompRF)  //refaturados
 							_nAscan := Ascan( _aCompOR, { |x|x[ 01 ] == _aCompRF[_nz][1] } )
-							If _nAscan <= 00    //produto não existe no pedido original
+							If _nAscan <= 00    //produto nï¿½o existe no pedido original
 								IF IsInCallStack('U_ADVEN002P')  == .T.
 									Aadd(aPedidos,{cchave, ;
 									''    , ;
 									''    , ;
 									''    , ;
-									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
+									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
 								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
+									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
-									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
+									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'))
 								Endif
 								lRet := .F.
 							Else
-								IF _aCompOR[_nAscan][2] <> _aCompRF[_nz][2]  //como é terceiro pedido a quantidade precisa bater
+								IF _aCompOR[_nAscan][2] <> _aCompRF[_nz][2]  //como ï¿½ terceiro pedido a quantidade precisa bater
 									IF IsInCallStack('U_ADVEN002P')  == .T.
 										Aadd(aPedidos,{cchave, ;
 										''    , ;
 										''    , ;
 										''    , ;
-										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
+										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
 									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
+										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
-										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
+										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
 									Endif
 									lRet := .F.				       
 								Endif
 							Endif
 						Next _nZ
 
-					else  //naõ foram colocados 3 pedidos do comercial, validação parcial.
+					else  //naï¿½ foram colocados 3 pedidos do comercial, validaï¿½ï¿½o parcial.
 						//valido produtos e quantidades a maior
 						For _nz := 1 to len(_aCompRF)  //refaturados
 							_nAscan := Ascan( _aCompOR, { |x|x[ 01 ] == _aCompRF[_nz][1] } )
-							If _nAscan <= 00    //produto não existe no pedido original
+							If _nAscan <= 00    //produto nï¿½o existe no pedido original
 								IF IsInCallStack('U_ADVEN002P')  == .T.
 									Aadd(aPedidos,{cchave, ;
 									''    , ;
 									''    , ;
 									''    , ;
-									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
+									'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 									cVendedor})
 								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
+									Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'})
 								ELSE
-									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
+									ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'))
 								Endif
 								lRet := .F.
 							Else
-								IF _aCompOR[_nAscan][2] < _aCompRF[_nz][2]  //como não eh o terceiro pedido valido quantida a maior somente
+								IF _aCompOR[_nAscan][2] < _aCompRF[_nz][2]  //como nï¿½o eh o terceiro pedido valido quantida a maior somente
 									IF IsInCallStack('U_ADVEN002P')  == .T.
 										Aadd(aPedidos,{cchave, ;
 										''    , ;
 										''    , ;
 										''    , ;
-										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
+										'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 										cVendedor})
 									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
+										Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 									ELSE
-										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
+										ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
 									Endif
 									lRet := .F.				       
 								Endif
@@ -576,12 +585,12 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!' ,;
+						'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!' ,;
 						cVendedor})
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'})
+						Aadd(aPedidos,{'Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!'})
 					ELSE
-						ApMsgInfo(OemToAnsi('Atencão!! Pedido Original do refaturamento '+_PedRefDe+' não encontrado ou incorreto. Verifique!!'))
+						ApMsgInfo(OemToAnsi('Atencï¿½o!! Pedido Original do refaturamento '+_PedRefDe+' nï¿½o encontrado ou incorreto. Verifique!!'))
 					Endif
 					lRet := .F.
 				EndIf
@@ -614,12 +623,12 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
+						'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 						cVendedor})
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
+						Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!'})
 					ELSE
-						ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
+						ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ maior do que no pedido original '+_PedRefDe+'. Verifique!!'))
 					Endif
 					lRet := .F.
 				Endif
@@ -631,12 +640,12 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é menor do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
+						'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ menor do que no pedido original '+_PedRefDe+'. Verifique!!' ,;
 						cVendedor})
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é menor do que no pedido original '+_PedRefDe+'. Verifique!!'})
+						Aadd(aPedidos,{'Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ menor do que no pedido original '+_PedRefDe+'. Verifique!!'})
 					ELSE
-						ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'é menor do que no pedido original '+_PedRefDe+'. Verifique!!'))
+						ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade no(s) pedido(s)'+_cPDFATS +'ï¿½ menor do que no pedido original '+_PedRefDe+'. Verifique!!'))
 					Endif
 					lRet := .F.
 				Endif
@@ -650,18 +659,18 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'é menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!' ,;
+						'Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'ï¿½ menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!' ,;
 						cVendedor})
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'é menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!'})
+						Aadd(aPedidos,{'Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'ï¿½ menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!'})
 					ELSE
-						ApMsgInfo(OemToAnsi('Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'é menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!'))
+						ApMsgInfo(OemToAnsi('Refaturamento!! O valor total no(s) pedido(s)'+_cPDFATS +'ï¿½ menor do que o permitido no refaturamento do '+_PedRefDe+'. Verifique!!'))
 					Endif
 					lRet := .F.
 				Endif
 
 				/*
-				//valido se todos os produtos do pedido original estão nos pedidos de refaturamento(maximo 3)
+				//valido se todos os produtos do pedido original estï¿½o nos pedidos de refaturamento(maximo 3)
 				_lErrPrd := .F.
 				For _xx := 1 to len(_aProdOR)
 				_nAscan := Ascan( _aProdRFT, { |x| x[ 01 ] == _aProdOR[_xx][1] } )
@@ -677,48 +686,48 @@ User Function MT410TOK()
 				''    , ;
 				''    , ;
 				''    , ;
-				'Refaturamento!! Ha produtos do pedido original que não constam nos pedidos de refaturamento. Verifique!!' ,;
+				'Refaturamento!! Ha produtos do pedido original que nï¿½o constam nos pedidos de refaturamento. Verifique!!' ,;
 				cVendedor})
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-				Aadd(aPedidos,{'Refaturamento!! Ha produtos do pedido original que não constam nos pedidos de refaturamento. Verifique!!'})
+				Aadd(aPedidos,{'Refaturamento!! Ha produtos do pedido original que nï¿½o constam nos pedidos de refaturamento. Verifique!!'})
 				ELSE
-				ApMsgInfo(OemToAnsi('Refaturamento!! Ha produtos do pedido original que não constam nos pedidos de refaturamento. Verifique!!'))
+				ApMsgInfo(OemToAnsi('Refaturamento!! Ha produtos do pedido original que nï¿½o constam nos pedidos de refaturamento. Verifique!!'))
 				Endif
 				lRet := .F.
 				Endif
 				*/
-				//20/10/2017 - incluindo validação de produto e quantidade
+				//20/10/2017 - incluindo validaï¿½ï¿½o de produto e quantidade
 				//Quando muda o refaturamento o numero maximo de pedidos(3)ja  foram colocados, validacao completa
 				//valido produtos e quantidades
 				For _nz := 1 to len(_aCompRF)  //refaturados
 					_nAscan := Ascan( _aCompOR, { |x|x[ 01 ] == _aCompRF[_nz][1] } )
-					If _nAscan <= 00    //produto não existe no pedido original
+					If _nAscan <= 00    //produto nï¿½o existe no pedido original
 						IF IsInCallStack('U_ADVEN002P')  == .T.
 							Aadd(aPedidos,{cchave, ;
 							''    , ;
 							''    , ;
 							''    , ;
-							'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
+							'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!' ,;
 							cVendedor})
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'})
+							Aadd(aPedidos,{'Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'})
 						ELSE
-							ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'não existe no pedido original '+_PedRefDe+'. Verifique!!'))
+							ApMsgInfo(OemToAnsi('Refaturamento!! O produto'+_aCompRF[_nz][1] +'nï¿½o existe no pedido original '+_PedRefDe+'. Verifique!!'))
 						Endif
 						lRet := .F.
 					Else
-						IF _aCompOR[_nAscan][2] <> _aCompRF[_nz][2]  //como é terceiro pedido a quantidade precisa bater
+						IF _aCompOR[_nAscan][2] <> _aCompRF[_nz][2]  //como ï¿½ terceiro pedido a quantidade precisa bater
 							IF IsInCallStack('U_ADVEN002P')  == .T.
 								Aadd(aPedidos,{cchave, ;
 								''    , ;
 								''    , ;
 								''    , ;
-								'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
+								'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!' ,;
 								cVendedor})
 							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-								Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
+								Aadd(aPedidos,{'Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'})
 							ELSE
-								ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'não bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
+								ApMsgInfo(OemToAnsi('Refaturamento!! A quantidade do produto'+_aCompRF[_nz][1] +'nï¿½o bate com a quantidade no pedido original '+_PedRefDe+'. Verifique!!'))
 							Endif
 							lRet := .F.				       
 						Endif
@@ -743,12 +752,12 @@ User Function MT410TOK()
 
 					If Empty(M->C5_XPEDORD) .and. Alltrim(cCodProd) $ GETMV("MV_PRDREAL") .and. Alltrim(cCodTes) $ GETMV("MV_TESREM")
 
-						ApMsgInfo(OemToAnsi("Atencão!! Para pedidos de remessa com as TES de venda à ordem, é obrigatório informar o número do pedido. Verifique!!"))
+						ApMsgInfo(OemToAnsi("Atencï¿½o!! Para pedidos de remessa com as TES de venda ï¿½ ordem, ï¿½ obrigatï¿½rio informar o nï¿½mero do pedido. Verifique!!"))
 						lRet := .F.
 
 					ElseIf Empty(M->C5_XPEDORD) .and. Alltrim(cCodTes) $ GETMV("MV_TESREM") .and. Empty(cFlag)
 
-						If ApMsgYesNo(OemToAnsi("Para pedidos de remessa com as TES de venda à ordem, o sistema disponibiliza a amarração entre eles atraves do campo 'Pedido Venda á ordem." + Chr(13) + Chr(13) + "Deseja Informar ?"),OemToAnsi("A T E N Ç Ã O"))
+						If ApMsgYesNo(OemToAnsi("Para pedidos de remessa com as TES de venda ï¿½ ordem, o sistema disponibiliza a amarraï¿½ï¿½o entre eles atraves do campo 'Pedido Venda ï¿½ ordem." + Chr(13) + Chr(13) + "Deseja Informar ?"),OemToAnsi("A T E N ï¿½ ï¿½ O"))
 							lRet := .F.
 						Else
 							lRet := .T.
@@ -759,7 +768,7 @@ User Function MT410TOK()
 						//If !Empty(M->C5_XPEDORD) .and. (!Alltrim(cCodProd) $ GETMV("MV_PRDREAL") .or. !Alltrim(cCodTes) $ GETMV("MV_TESREM"))
 						If !Empty(M->C5_XPEDORD) .and. !Alltrim(cCodTes) $ GETMV("MV_TESREM")
 
-							ApMsgInfo(OemToAnsi("Atencão!! Para pedidos de remessa com as TES sem vinculo de venda à ordem, é obrigatório deixar em branco número do pedido de venda. Verifique!!"))
+							ApMsgInfo(OemToAnsi("Atencï¿½o!! Para pedidos de remessa com as TES sem vinculo de venda ï¿½ ordem, ï¿½ obrigatï¿½rio deixar em branco nï¿½mero do pedido de venda. Verifique!!"))
 							lRet := .F.
 
 						Elseif !Empty(M->C5_XPEDORD)
@@ -771,14 +780,14 @@ User Function MT410TOK()
 							If dbseek(xFilial("SC5")+M->C5_XPEDORD)
 
 								If !Empty(SC5->C5_NOTA)
-									ApMsgInfo(OemToAnsi("Atencão!! Pedido "+M->C5_XPEDORD+" informado, encontra-se faturado. Verifique!!"))
+									ApMsgInfo(OemToAnsi("Atencï¿½o!! Pedido "+M->C5_XPEDORD+" informado, encontra-se faturado. Verifique!!"))
 									lRet := .F.
 								EndIf
 
 								cRetPedi := verificarpedido(M->C5_XPEDORD) //verificar se o pedido ja foi usado
 
 								If !Empty(cRetPedi) .and. cRetPedi <> M->C5_NUM
-									ApMsgInfo(OemToAnsi("Atencão!! Pedido "+M->C5_XPEDORD+" ja utilizado no Pedido de Remessa '"+cRetPedi+"'. Verifique!!"))
+									ApMsgInfo(OemToAnsi("Atencï¿½o!! Pedido "+M->C5_XPEDORD+" ja utilizado no Pedido de Remessa '"+cRetPedi+"'. Verifique!!"))
 									lRet := .F.
 								EndIf
 
@@ -788,7 +797,7 @@ User Function MT410TOK()
 										If Alltrim(SC6->C6_TES) $ GETMV("MV_TESVORD")
 											lRet := .T.
 										Else
-											ApMsgInfo(OemToAnsi("Atencão!! Pedido "+M->C5_XPEDORD+" informado, não refere-se a pedido de venda à ordem. Verifique!!"))
+											ApMsgInfo(OemToAnsi("Atencï¿½o!! Pedido "+M->C5_XPEDORD+" informado, nï¿½o refere-se a pedido de venda ï¿½ ordem. Verifique!!"))
 											lRet := .F.
 										EndIf
 										SC6->(DBSKIP())
@@ -796,7 +805,7 @@ User Function MT410TOK()
 								Endif
 
 							Else
-								MsgAlert("Pedido "+M->C5_XPEDORD+" de de venda à ordem informado, não localizado!","Atenção")
+								MsgAlert("Pedido "+M->C5_XPEDORD+" de de venda ï¿½ ordem informado, nï¿½o localizado!","Atenï¿½ï¿½o")
 								lRet := .F.
 							EndIf
 
@@ -838,7 +847,7 @@ User Function MT410TOK()
 
 	If !lSfInt .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista.  //incluida filial 07 em 13/08/14
 		// Mauricio 14/08/15 - tratamento para que pedidos de venda FOB
-		// nao entrem na validação de pedido minimo.
+		// nao entrem na validaï¿½ï¿½o de pedido minimo.
 		If M->C5_TIPO == 'N' .AND. M->C5_TPFRETE <> "F"  // somente para pedido de venda
 
 			If !Alltrim(Upper(__cUserID)) $ cUsuVal //Alterado por Wesley 07/07/16, de nome de usuario para ID usuario para caber mais usuarios autorizados no parametro ZZ_AUTORPV.
@@ -849,27 +858,27 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + '. Verifique!!' ,;
+						'Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ ' + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + '. Verifique!!' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + '. Verifique!!'})
+						Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ ' + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + '. Verifique!!'})
 
 					ELSE
 
-						ApMsgInfo(OemToAnsi("Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ " + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + ". Verifique!!"))
+						ApMsgInfo(OemToAnsi("Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ " + Alltrim(Transform(nLimite,"@E 999,999,999.99") ) + ". Verifique!!"))
 
 					ENDIF
 					lRet := .F.
 				EndIf
 
-				//Mauricio - 22/04/15 - novo tratamento relativo ao valor minimo do pedido por faixa/vendedor. O tratamento acima não ira mais funcionar(mas foi mantido) pois no parametro foi colocado ZERO como valor minimo.
+				//Mauricio - 22/04/15 - novo tratamento relativo ao valor minimo do pedido por faixa/vendedor. O tratamento acima nï¿½o ira mais funcionar(mas foi mantido) pois no parametro foi colocado ZERO como valor minimo.
 				_cVDPED := M->C5_VEND1
 
 				DbSelectArea("SA3")
 				DbSetOrder(1)
 				if dbseek(xFilial("SA3")+_cVDPED)
-					//Mauricio - 05/04/17 - a validacao por faixa/vendedor sera substituida pelo validação por segmento
+					//Mauricio - 05/04/17 - a validacao por faixa/vendedor sera substituida pelo validaï¿½ï¿½o por segmento
 					//Assim sendo nao faz sentido manter o bloqueio especifico abaixo em caso de falta de cadastro da faixa
 					_cFaixa := SA3->A3_FXPDMIN
 					/*
@@ -879,12 +888,12 @@ User Function MT410TOK()
 					''    , ;
 					''    , ;
 					''    , ;
-					'Atencao !! Vendedor no pedido sem faixa alocada em seu cadastro. O pedido não pode ser validado! Verifique!!',;
+					'Atencao !! Vendedor no pedido sem faixa alocada em seu cadastro. O pedido nï¿½o pode ser validado! Verifique!!',;
 					cVendedor})
 
 					ELSE
 
-					ApMsgInfo(OemToAnsi("Atencao !! Vendedor no pedido sem faixa alocada em seu cadastro. O pedido não pode ser validado! Verifique!!"))
+					ApMsgInfo(OemToAnsi("Atencao !! Vendedor no pedido sem faixa alocada em seu cadastro. O pedido nï¿½o pode ser validado! Verifique!!"))
 
 					ENDIF
 
@@ -901,22 +910,22 @@ User Function MT410TOK()
 								''    , ;
 								''    , ;
 								''    , ;
-								'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!' ,;
+								'Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!' ,;
 								cVendedor})
 
 							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-								Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!'})
+								Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!'})
 
 							ELSE
 
-								ApMsgInfo(OemToAnsi("Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ " + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + ". Verifique!!"))
+								ApMsgInfo(OemToAnsi("Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ " + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + ". Verifique!!"))
 
 							ENDIF
 							lRet := .F.
 						EndIf
 					Endif
 				endif
-				//Mauricio - 05/04/17 - validação do valor minimo do pedido de venda por segmento
+				//Mauricio - 05/04/17 - validaï¿½ï¿½o do valor minimo do pedido de venda por segmento
 				_cCLIe := M->C5_CLIENTE
 				_cLoje := M->C5_LOJACLI
 
@@ -930,15 +939,15 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo não pode ser validado! Verifique!!',;
+							'Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo nï¿½o pode ser validado! Verifique!!',;
 							cVendedor})
 
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo não pode ser validado! Verifique!!'})
+							Aadd(aPedidos,{'Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo nï¿½o pode ser validado! Verifique!!'})
 
 						ELSE
 
-							ApMsgInfo(OemToAnsi("Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo não pode ser validado! Verifique!!"))
+							ApMsgInfo(OemToAnsi("Atencao !! Cliente do pedido sem segmento alocado em seu cadastro. O pedido minimo nï¿½o pode ser validado! Verifique!!"))
 
 						ENDIF
 
@@ -947,7 +956,7 @@ User Function MT410TOK()
 					Else
 						DbSelectArea("ZBP")
 						DbSetOrder(1)
-						If dbseek("02"+_cSegto)  //O cadastro dessa forma só eh feito em VArzea e vale para todas(definicao Sr. Vagner).
+						If dbseek("02"+_cSegto)  //O cadastro dessa forma sï¿½ eh feito em VArzea e vale para todas(definicao Sr. Vagner).
 							_nValmin := ZBP->ZBP_VALMIN
 						Else
 							_nValmin := 0
@@ -958,15 +967,15 @@ User Function MT410TOK()
 								''    , ;
 								''    , ;
 								''    , ;
-								'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!' ,;
+								'Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!' ,;
 								cVendedor})
 
 							ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-								Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!'})
+								Aadd(aPedidos,{'Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ ' + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + '. Verifique!!'})
 
 							ELSE
 
-								ApMsgInfo(OemToAnsi("Atencao !! O Valor Minimo para os Pedidos de Vendas é de R$ " + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + ". Verifique!!"))
+								ApMsgInfo(OemToAnsi("Atencao !! O Valor Minimo para os Pedidos de Vendas ï¿½ de R$ " + Alltrim(Transform(_nValmin,"@E 999,999,999.99") ) + ". Verifique!!"))
 
 							ENDIF
 							lRet := .F.
@@ -986,25 +995,25 @@ User Function MT410TOK()
 	//Usuarios do parametro nao podem copiar pedido com data fora do limite do parametro.
 	//Mauricio - 16/02/11 - Conforme informado pela Ana, deve-se tambem validar a data de entrega atual no pedido que nao pode ultrapassar o parametro.
 
-	If !lSfInt .And. _lCOPIA   //Rotina é chamada por copia
+	If !lSfInt .And. _lCOPIA   //Rotina ï¿½ chamada por copia
 		If _lUSUCOPIA  //Se o usuario esta no parametro
 			_lRetUsuC := .T.
-			If     _dData < dDataBase  //Se a data é permitida para efetuar a copia
+			If     _dData < dDataBase  //Se a data ï¿½ permitida para efetuar a copia
 				lRet := .F.
 				IF IsInCallStack('U_ADVEN002P')  == .T.
 					Aadd(aPedidos,{cchave, ;
 					''    , ;
 					''    , ;
 					''    , ;
-					'Data entrega limite para copia do pedido ultrapassada. Copia não permitida!' ,;
+					'Data entrega limite para copia do pedido ultrapassada. Copia nï¿½o permitida!' ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Data entrega limite para copia do pedido ultrapassada. Copia não permitida!'})
+					Aadd(aPedidos,{'Data entrega limite para copia do pedido ultrapassada. Copia nï¿½o permitida!'})
 
 				ELSE
 
-					ApMsgInfo("Data entrega limite para copia do pedido ultrapassada. Copia não permitida!")
+					ApMsgInfo("Data entrega limite para copia do pedido ultrapassada. Copia nï¿½o permitida!")
 
 				ENDIF
 
@@ -1015,15 +1024,15 @@ User Function MT410TOK()
 					''    , ;
 					''    , ;
 					''    , ;
-					'Data entrega do pedido é maior que a data limite permitida. Copia não permitida!' ,;
+					'Data entrega do pedido ï¿½ maior que a data limite permitida. Copia nï¿½o permitida!' ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Data entrega do pedido é maior que a data limite permitida. Copia não permitida!'})
+					Aadd(aPedidos,{'Data entrega do pedido ï¿½ maior que a data limite permitida. Copia nï¿½o permitida!'})
 
 				ELSE
 
-					ApMsgInfo("Data entrega do pedido é maior que a data limite permitida. Copia não permitida!")
+					ApMsgInfo("Data entrega do pedido ï¿½ maior que a data limite permitida. Copia nï¿½o permitida!")
 
 				ENDIF
 			EndIf
@@ -1054,20 +1063,20 @@ User Function MT410TOK()
 		Endif
 	Endif
 
-	//Mauricio 14/06/11 - solicitado por Vagner email de 13/06/11 - Nova tabela de preço.
+	//Mauricio 14/06/11 - solicitado por Vagner email de 13/06/11 - Nova tabela de preï¿½o.
 	//incluida primeira parte para permitir vendedores interestaduais incluirme pedido depois da hora limite com D+2 dias ou ate parametro limite maximo de dias futuro.
 	//esta primeira parte complementa tratamento no fonte MBRWBTN.prw.
-	//segunda parte valida qualquer pedido com maximo data entrega futura até limite contido em parametro.
-	//Em 20/07/2011 conforme reunião com Srs. Alex e Vagner ficou definido que Interestadual e Supervisores não terão horario limite para inclusao de PV.
-	//porem os PV´s incluidos após o horario limite terão data de entrega D + 2.
+	//segunda parte valida qualquer pedido com maximo data entrega futura atï¿½ limite contido em parametro.
+	//Em 20/07/2011 conforme reuniï¿½o com Srs. Alex e Vagner ficou definido que Interestadual e Supervisores nï¿½o terï¿½o horario limite para inclusao de PV.
+	//porem os PVï¿½s incluidos apï¿½s o horario limite terï¿½o data de entrega D + 2.
 	IF !lSfInt .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista. //motivo erro no Grupo 06 William Costa chamado 021253
-		IF M->C5_REFATUR <> 'S' //ajuste william costa pois o refaturamento não entra nessa regra
+		IF M->C5_REFATUR <> 'S' //ajuste william costa pois o refaturamento nï¿½o entra nessa regra
 			dbSelectArea("SA3")
 			dbSetOrder(7)
 			If dbSeek(xFilial("SA3")+__cUserID)
 				// Ricardo Lima - 13/06/18
 				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. CEMPANT = '01' .and. !lSfInt
-					ApMsgInfo('Vendedor sem PERMISSÃO para Incluir Pedido, verifique com a Supervisão!','Permissões de Vendedores')
+					ApMsgInfo('Vendedor sem PERMISSï¿½O para Incluir Pedido, verifique com a Supervisï¿½o!','Permissï¿½es de Vendedores')
 					//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 					Return(.F.)
 				Endif
@@ -1081,15 +1090,15 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido',;
+							'Data de entrega do pedido de venda ï¿½ maior que o permitido ou passado do horario limite somente D+2 permitido',;
 							cVendedor})
 
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido'})
+							Aadd(aPedidos,{'Data de entrega do pedido de venda ï¿½ maior que o permitido ou passado do horario limite somente D+2 permitido'})
 
 						ELSE
 
-							MSgInfo("Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido","Atenção")
+							MSgInfo("Data de entrega do pedido de venda ï¿½ maior que o permitido ou passado do horario limite somente D+2 permitido","Atenï¿½ï¿½o")
 
 						ENDIF
 
@@ -1102,15 +1111,15 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido' ,;
+							'Data de entrega do pedido de venda ï¿½ maior que o permitido ou passado do horario limite somente D+2 permitido' ,;
 							cVendedor})
 
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido'})
+							Aadd(aPedidos,{'Data de entrega do pedido de venda ï¿½ maior que o permitido ou passado do horario limite somente D+2 permitido'})
 
 						ELSE
 
-							MSgInfo("Data de entrega do pedido de venda é maior que o permitido ou passado do horario limite somente D+2 permitido","Atenção")
+							MSgInfo("Data de entrega do pedido de venda ï¿½ maior que o permitido ou passado do horario limite somente D+2 permitido","Atenï¿½ï¿½o")
 
 						ENDIF
 
@@ -1122,15 +1131,15 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Data de entrega no cabecalho do pedido de venda é maior que o permitido!' ,;
+						'Data de entrega no cabecalho do pedido de venda ï¿½ maior que o permitido!' ,;
 						cVendedor}) 
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Data de entrega no cabecalho do pedido de venda é maior que o permitido!'})
+						Aadd(aPedidos,{'Data de entrega no cabecalho do pedido de venda ï¿½ maior que o permitido!'})
 
 					ELSE
 
-						MSgInfo("Data de entrega no cabecalho do pedido de venda é maior que o permitido!","Atenção")
+						MSgInfo("Data de entrega no cabecalho do pedido de venda ï¿½ maior que o permitido!","Atenï¿½ï¿½o")
 
 					ENDIF
 
@@ -1140,7 +1149,7 @@ User Function MT410TOK()
 				For _y1 := 1 to Len(aCols) 
 				If aCols[_y1,Len(aHeader)+1] == .F.
 				IF ACOLS[_y1,_NPOSDTENTR] > (_nDiasDte+ddatabase)
-				MSgInfo("Item "+ACOLS[_y1,_NPOSITEM]+" do pedido com data de entrega maior que o permitido!","Atenção")
+				MSgInfo("Item "+ACOLS[_y1,_NPOSITEM]+" do pedido com data de entrega maior que o permitido!","Atenï¿½ï¿½o")
 				lRet := .F.
 				endif   
 				EndIf   
@@ -1149,7 +1158,7 @@ User Function MT410TOK()
 			Endif
 		ENDIF //fecha if do refaturamento william costa
 	ENDIF //FECHA IF DO GRUPO DA EMPRESA
-	//Alterado para novo procedimento para São Paulo. Mauricio 10/12/09.
+	//Alterado para novo procedimento para Sï¿½o Paulo. Mauricio 10/12/09.
 
 	If !(M->C5_TIPO $ "D")    //Retirada condicao de restricao para TIPO B(Utiliza fornecedor). Chamado 005396 - Mauricio HC
 		If M->C5_TIPO $ "B"
@@ -1170,15 +1179,15 @@ User Function MT410TOK()
 					''    , ;
 					''    , ;
 					''    , ;
-					'Para esta Rede, é obrigatório preencher Código do Operador Logístico !!!' ,;
+					'Para esta Rede, ï¿½ obrigatï¿½rio preencher Cï¿½digo do Operador Logï¿½stico !!!' ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Para esta Rede, é obrigatório preencher Código do Operador Logístico !!!'})
+					Aadd(aPedidos,{'Para esta Rede, ï¿½ obrigatï¿½rio preencher Cï¿½digo do Operador Logï¿½stico !!!'})
 
 				ELSE
 
-					MsgInfo("Para esta Rede, é obrigatório preencher Código do Operador Logístico !!!","MV_#REDEOP")
+					MsgInfo("Para esta Rede, ï¿½ obrigatï¿½rio preencher Cï¿½digo do Operador Logï¿½stico !!!","MV_#REDEOP")
 
 				ENDIF
 
@@ -1197,7 +1206,7 @@ User Function MT410TOK()
 						SB1->(dbSeek(xFilial("SB1")+aCols[n2,nProd]))
 						//					If SB1->B1_PICMRET > 0 .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$GETMV("MV_XTESDOA")))
 						If SB1->B1_PICMRET > 0 .and. (!_lConsFinal .or. (_lConsFinal .and. !SF4->F4_CODIGO$(Alltrim(GETMV("MV_XTESDOA"))+Alltrim(GETMV("MV_XTESBOQ")))))
-							//Incluido parametro MV_XTESBOQ, para não calcular ST para consumidor final de bonificacao qualidade por Adriana em 02/12/2016 chamado 031656
+							//Incluido parametro MV_XTESBOQ, para nï¿½o calcular ST para consumidor final de bonificacao qualidade por Adriana em 02/12/2016 chamado 031656
 							//Incluida verificacao de Consumidor final com TES Doacao nao calcula - por Adriana conforme chamado 020192 de 02/09/2014
 							M->C5_TIPOCLI	:= "S"
 						EndIf
@@ -1208,9 +1217,9 @@ User Function MT410TOK()
 		Next n2
 
 	EndIf
-	// Paulo - TDS - 20/05/2011 - EM TESTE = Inibindo a condição abaixo, para os testes com as tabelas de preços
+	// Paulo - TDS - 20/05/2011 - EM TESTE = Inibindo a condiï¿½ï¿½o abaixo, para os testes com as tabelas de preï¿½os
 
-	//Mauricio - 01/03/11 - Incluida validação de preco minimo do produto para todos os itens (trazido do fonte AD0078 aonde é feito apenas por linha).
+	//Mauricio - 01/03/11 - Incluida validaï¿½ï¿½o de preco minimo do produto para todos os itens (trazido do fonte AD0078 aonde ï¿½ feito apenas por linha).
 	If Len(aCols) > 0
 	
 		If !lSfInt
@@ -1244,15 +1253,15 @@ User Function MT410TOK()
 									''    , ;
 									''    , ;
 									''    , ;
-									'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!' ,;
+									'Cliente sem tabela de preï¿½o em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!' ,;
 									cVendedor})
 	
 								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-									Aadd(aPedidos,{'Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!'})
+									Aadd(aPedidos,{'Cliente sem tabela de preï¿½o em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!'})
 	
 								ELSE
 	
-									ApMsgInfo(OemToAnsi("Cliente sem tabela de preço em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!"))
+									ApMsgInfo(OemToAnsi("Cliente sem tabela de preï¿½o em seu cadastro.Contate Depto. Comercial.O pedido nao podera ser incluido!"))
 	
 								ENDIF
 	
@@ -1266,17 +1275,17 @@ User Function MT410TOK()
 							If dbSeek (xFilial()+__CUSERID)
 								If     A3_NIVETAB = '3' .OR. A3_NIVETAB = '4'
 									_PRECO  := "DA1_PRCGER"
-									_TABELA := "GERÊNCIA"
+									_TABELA := "GERï¿½NCIA"
 								ElseIf A3_NIVETAB = '2'
 									_PRECO  := "DA1_PRCSUP"
-									_TABELA := "SUPERVISÃO"
+									_TABELA := "SUPERVISï¿½O"
 								ElseIf A3_NIVETAB = '1'
 									_PRECO  := "DA1_PRCVEN"
 									_TABELA := "VENDEDOR"
 								EndIf
 							Else
 								_PRECO  := "DA1_PRCVEN"
-								_TABELA := "USUÁRIO NAO CADASTRADO"
+								_TABELA := "USUï¿½RIO NAO CADASTRADO"
 							EndIf
 	
 							_NPRECOUNIT := DA1->&(_PRECO)
@@ -1288,15 +1297,15 @@ User Function MT410TOK()
 										''    , ;
 										''    , ;
 										''    , ;
-										'PRECO MÍNIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' É DE R$ '+ALLTRIM(STR(_NPRECOUNIT)) ,;
+										'PRECO Mï¿½NIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' ï¿½ DE R$ '+ALLTRIM(STR(_NPRECOUNIT)) ,;
 										cVendedor})
 	
 									ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-										Aadd(aPedidos,{'PRECO MÍNIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' É DE R$ '+ALLTRIM(STR(_NPRECOUNIT))})
+										Aadd(aPedidos,{'PRECO Mï¿½NIMO DO PRODUTO '+ALLTRIM(_CPRODUTO)+' PARA '+_TABELA+' ï¿½ DE R$ '+ALLTRIM(STR(_NPRECOUNIT))})
 	
 									ELSE
 	
-										ApMsgBox(OemToAnsi("PRECO MÍNIMO DO PRODUTO ")+ALLTRIM(_CPRODUTO)+" PARA "+_TABELA+" É DE R$ "+ALLTRIM(STR(_NPRECOUNIT)),OemToAnsi("ATENCAO","INFO"))
+										ApMsgBox(OemToAnsi("PRECO Mï¿½NIMO DO PRODUTO ")+ALLTRIM(_CPRODUTO)+" PARA "+_TABELA+" ï¿½ DE R$ "+ALLTRIM(STR(_NPRECOUNIT)),OemToAnsi("ATENCAO","INFO"))
 	
 									ENDIF
 	
@@ -1315,16 +1324,16 @@ User Function MT410TOK()
 		
 		EndIf
 
-		For _x2 := 1 to Len(aCols) //Mauricio - 02/03/11 - Correção problema copia pedido apontado por Renato Santos.
+		For _x2 := 1 to Len(aCols) //Mauricio - 02/03/11 - Correï¿½ï¿½o problema copia pedido apontado por Renato Santos.
 			If aCols[_x2,Len(aHeader)+1] == .F.
 				ACOLS[_x2,_NPOSDTENTR] 	:= _dDTENTR
-				aCols[_x2,_nPosVend] 	:= M->C5_VEND1 //Incluido por Adriana para gravar corretamente o código do vendedor
+				aCols[_x2,_nPosVend] 	:= M->C5_VEND1 //Incluido por Adriana para gravar corretamente o cï¿½digo do vendedor
 			EndIf
 		Next _x2
 
 	EndIf
 
-	//Mauricio - MDS TECNOLOGIA - 14/10/13 - Validações para TES de DOACOES e BONIFICACOES
+	//Mauricio - MDS TECNOLOGIA - 14/10/13 - Validaï¿½ï¿½es para TES de DOACOES e BONIFICACOES
 
 	IF !lSfInt .And. (INCLUI .OR. ALTERA) .and. cEmpAnt == "01" //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
 		_lUsuDoa  := .F.
@@ -1372,15 +1381,15 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Seu usuario não pode incluir pedido com esta TES de doação para este produto!' ,;
+						'Seu usuario nï¿½o pode incluir pedido com esta TES de doaï¿½ï¿½o para este produto!' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doação para este produto!'})
+						Aadd(aPedidos,{'Seu usuario nï¿½o pode incluir pedido com esta TES de doaï¿½ï¿½o para este produto!'})
 
 					ELSE
 
-						MsgInfo("Seu usuario não pode incluir pedido com esta TES de doação para este produto!","Atenção")
+						MsgInfo("Seu usuario nï¿½o pode incluir pedido com esta TES de doaï¿½ï¿½o para este produto!","Atenï¿½ï¿½o")
 
 					ENDIF
 
@@ -1393,15 +1402,15 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Seu usuario não pode incluir pedido com esta TES de doação!' ,;
+						'Seu usuario nï¿½o pode incluir pedido com esta TES de doaï¿½ï¿½o!' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doação!'})
+						Aadd(aPedidos,{'Seu usuario nï¿½o pode incluir pedido com esta TES de doaï¿½ï¿½o!'})
 
 					ELSE
 
-						MsgInfo("Seu usuario não pode incluir pedido com esta TES de doação!","Atenção")
+						MsgInfo("Seu usuario nï¿½o pode incluir pedido com esta TES de doaï¿½ï¿½o!","Atenï¿½ï¿½o")
 
 					ENDIF
 
@@ -1409,43 +1418,43 @@ User Function MT410TOK()
 				Endif
 			Endif
 
-			If _lTESBON .And. !_lUsuADMV .And. !_lUsuBON //Alterado por Adriana para tratar bonificação da qualidade em 20/05/15
+			If _lTESBON .And. !_lUsuADMV .And. !_lUsuBON //Alterado por Adriana para tratar bonificaï¿½ï¿½o da qualidade em 20/05/15
 				IF IsInCallStack('U_ADVEN002P')  == .T.
 					Aadd(aPedidos,{cchave, ;
 					''    , ;
 					''    , ;
 					''    , ;
-					'Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao' ,;
+					'Seu usuario nï¿½o pode incluir pedido com esta TES de bonificacao/doacao' ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao'})
+					Aadd(aPedidos,{'Seu usuario nï¿½o pode incluir pedido com esta TES de bonificacao/doacao'})
 
 				ELSE
 
-					MsgInfo("Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao!","Atenção")
+					MsgInfo("Seu usuario nï¿½o pode incluir pedido com esta TES de bonificacao/doacao!","Atenï¿½ï¿½o")
 
 				ENDIF
 
 				lRet := .F.
 			Endif
 
-			//		  If !_lTESBON .And. _lUsuBON //Alterado por Adriana para tratar bonificação da qualidade em 20/05/15
-			If !_lTESBOQ .And. _lUsuBON //Alterado por Adriana para tratar bonificação da qualidade em 20/05/15 //modificado por Adriana em 20/07/16 - chamado 029611
+			//		  If !_lTESBON .And. _lUsuBON //Alterado por Adriana para tratar bonificaï¿½ï¿½o da qualidade em 20/05/15
+			If !_lTESBOQ .And. _lUsuBON //Alterado por Adriana para tratar bonificaï¿½ï¿½o da qualidade em 20/05/15 //modificado por Adriana em 20/07/16 - chamado 029611
 				IF IsInCallStack('U_ADVEN002P')  == .T.
 					Aadd(aPedidos,{cchave, ;
 					''    , ;
 					''    , ;
 					''    , ;
-					'Seu usuario só pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ")) ,;
+					'Seu usuario sï¿½ pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ")) ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Seu usuario só pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ"))})
+					Aadd(aPedidos,{'Seu usuario sï¿½ pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ"))})
 
 				ELSE
 
-					MsgInfo("Seu usuario só pode incluir pedido com TES de bonificacao: "+Alltrim(GETMV("MV_XTESBOQ")),"Atenção")
+					MsgInfo("Seu usuario sï¿½ pode incluir pedido com TES de bonificacao: "+Alltrim(GETMV("MV_XTESBOQ")),"Atenï¿½ï¿½o")
 
 				ENDIF
 
@@ -1455,7 +1464,7 @@ User Function MT410TOK()
 		EndIf
 	Endif
 
-	//Tratamento para CMS - só permite multiplos de 50 caixas
+	//Tratamento para CMS - sï¿½ permite multiplos de 50 caixas
 	dbSelectArea("SA1")
 	SA1->(dbSeek(xFilial("SA1")+M->C5_CLIENTE+M->C5_LOJACLI))
 	cUF	:= SA1->A1_EST
@@ -1471,7 +1480,7 @@ User Function MT410TOK()
 					SB1->(dbSeek(xFilial("SB1")+aCols[_x1,nProd]))
 					//If  SUBSTR(Alltrim(SB1->B1_DESC),1,16) $ "CARNE MEC SEPARADA/CARNE MEC. SEPARADA/CARNE MECANICAMENTE";
 					//.OR. SUBSTR(Alltrim(SB1->B1_DESC),1,3) $ "CMS" .OR. SUBSTR(Alltrim(SB1->B1_DESC),1,5) $ "C M S"
-					If Alltrim(SB1->B1_GRUPO) $ cGrpPCMS //051864 - Abel Babini-20/09/2019, Cria parametros de produtos CMS e validação de quantidade
+					If Alltrim(SB1->B1_GRUPO) $ cGrpPCMS //051864 - Abel Babini-20/09/2019, Cria parametros de produtos CMS e validaï¿½ï¿½o de quantidade
 						If Alltrim(_cPRODUTO) == "198294" //Produto utilizado para pedidos de remessa laboratorial, liberar para faturamento 1 bloco - chamado 019120
 							lRet := .T.
 							If _nqtdQtdV <> 1
@@ -1480,15 +1489,15 @@ User Function MT410TOK()
 									''    , ;
 									''    , ;
 									''    , ;
-									'Quantidade dos produtos CMS só podem ser incluidos com 1 KG' ,;
+									'Quantidade dos produtos CMS sï¿½ podem ser incluidos com 1 KG' ,;
 									cVendedor})
 
 								ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-									Aadd(aPedidos,{'Quantidade dos produtos CMS só podem ser incluidos com 1 KG'})
+									Aadd(aPedidos,{'Quantidade dos produtos CMS sï¿½ podem ser incluidos com 1 KG'})
 
 								ELSE
 
-									Alert("Quantidade dos produtos CMS só podem ser incluidos com 1 KG")
+									Alert("Quantidade dos produtos CMS sï¿½ podem ser incluidos com 1 KG")
 
 								ENDIF
 
@@ -1497,7 +1506,7 @@ User Function MT410TOK()
 						Else
 							nQtdPlt	:= SB1->B1_XALTUR * SB1->B1_XALTLAS 
 							//If MOD(_nqtdUnsV,GETMV("MV_#QTDCMS")) <> 0
-							If MOD(_nqtdUnsV,nQtdPlt) <> 0 //051864 - Abel Babini-20/09/2019, Cria parametros de produtos CMS e validação de quantidade
+							If MOD(_nqtdUnsV,nQtdPlt) <> 0 //051864 - Abel Babini-20/09/2019, Cria parametros de produtos CMS e validaï¿½ï¿½o de quantidade
 								IF IsInCallStack('U_ADVEN002P')  == .T.
 									Aadd(aPedidos,{cchave, ;
 									''    , ;
@@ -1528,7 +1537,7 @@ User Function MT410TOK()
 	Endif
 
 
-	//Mauricio - MDS Tecnologia - 05/02/14 - tratamento para não permitir alterar data de entrega para PV com C5_XINT == "3"
+	//Mauricio - MDS Tecnologia - 05/02/14 - tratamento para nï¿½o permitir alterar data de entrega para PV com C5_XINT == "3"
 	//Solicitado por Ana TI.
 	//inicio
 	If !lSfInt .And. ALTERA
@@ -1546,15 +1555,15 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Este pedido de venda ja foi integrado ao EDATA e não pode ter a Data de Entrega alterada!' ,;
+						'Este pedido de venda ja foi integrado ao EDATA e nï¿½o pode ter a Data de Entrega alterada!' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Este pedido de venda ja foi integrado ao EDATA e não pode ter a Data de Entrega alterada!'})
+						Aadd(aPedidos,{'Este pedido de venda ja foi integrado ao EDATA e nï¿½o pode ter a Data de Entrega alterada!'})
 
 					ELSE
 
-						MsgInfo("Este pedido de venda ja foi integrado ao EDATA e não pode ter a Data de Entrega alterada!","Atenção")
+						MsgInfo("Este pedido de venda ja foi integrado ao EDATA e nï¿½o pode ter a Data de Entrega alterada!","Atenï¿½ï¿½o")
 
 					ENDIF
 				Endif
@@ -1567,7 +1576,7 @@ User Function MT410TOK()
 
 
 	// ---------------------------------------------------
-	// Execução das validações da aCols unificadas.
+	// Execuï¿½ï¿½o das validaï¿½ï¿½es da aCols unificadas.
 	// ---------------------------------------------------
 
 	nCols	:= Len(aCols)
@@ -1606,7 +1615,7 @@ User Function MT410TOK()
 				SF4->(dbGoTop())
 				SF4->(dbSeek(xFilial("SF4")+ aCols[_nX,nTES]))
 
-				// Não executa as validações nos casos em que a rotina for executada através de execauto, rest.
+				// Nï¿½o executa as validaï¿½ï¿½es nos casos em que a rotina for executada atravï¿½s de execauto, rest.
 				
 					// 1. Valida o cadastro de produtos.
 					fVldProd()
@@ -1614,10 +1623,10 @@ User Function MT410TOK()
 					// 2. Valida unidade de medida dos itens.
 					fVldUM()
 
-					// 3. Valida se o item controla localização.
+					// 3. Valida se o item controla localizaï¿½ï¿½o.
 					fVldLocaliz()
 
-					// 4. Tratamento integração eData
+					// 4. Tratamento integraï¿½ï¿½o eData
 					fVldDat()
 
 					If FWIsInCallStack("A410COPIA") //Everson - 03/02/2022. Chamado 67573.
@@ -1640,11 +1649,11 @@ User Function MT410TOK()
 	If nTemQt > 0 .And. nNTemQt > 0 //Everson - 07/02/2022. Chamado 67573.
 
 		lRet := .F.
-		Aviso("Atenção","Há itens com e sem liberação de quantidade.",{"OK"})
+		Aviso("Atenï¿½ï¿½o","Hï¿½ itens com e sem liberaï¿½ï¿½o de quantidade.",{"OK"})
 			
 	EndIf
 
-	// Trecho do código descontinuado.
+	// Trecho do cï¿½digo descontinuado.
 	//Mauricio - Chamado 0035716 - 04/08/17 - Nao permitir produto sem local com tes que atualiza estoque
 	/*
 	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"
@@ -1652,7 +1661,7 @@ User Function MT410TOK()
 			_cProd  := ACOLS[nX,nProd]
 			_cLoc1 := Posicione("SB1",1,xFilial("SB1")+_cProd,"B1_LOCPAD")  //Mauricio - Chamado 035716 - 04/08/17
 			_cLoc2 := Posicione("SBZ",1,xFilial("SBZ")+_cProd,"BZ_LOCPAD")  //Mauricio - Chamado 035716 - 04/08/17
-			If !aCols[nX,nPDel] .and. !Empty(_cProd)  // Se não tiver deletado e nao for branco
+			If !aCols[nX,nPDel] .and. !Empty(_cProd)  // Se nï¿½o tiver deletado e nao for branco
 				dbSelectArea("SF4")
 				SF4->(dbSetOrder(1))
 				SF4->(dbSeek(xFilial("SF4")+ aCols[nX,nTES]))
@@ -1663,14 +1672,14 @@ User Function MT410TOK()
 							''    , ;
 							''    , ;
 							''    , ;
-							'"Produto '+Alltrim(_cProd)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!' ,;
+							'"Produto '+Alltrim(_cProd)+' sem LOCAL no cadastro de produtos. Produto nï¿½o pode ser utilizado!' ,;
 							cVendedor})
 
 						ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-							Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!'})
+							Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' sem LOCAL no cadastro de produtos. Produto nï¿½o pode ser utilizado!'})
 
 						ELSE
-							MsgInfo("Produto "+Alltrim(_cProd)+" sem LOCAL no cadastro de produtos."+chr(13)+chr(13)+" Produto não pode ser utilizado!")
+							MsgInfo("Produto "+Alltrim(_cProd)+" sem LOCAL no cadastro de produtos."+chr(13)+chr(13)+" Produto nï¿½o pode ser utilizado!")
 						Endif
 						lRet := .F.
 					Endif
@@ -1687,16 +1696,16 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Segunda Unidade de Medida] ' ,;
+						'"Produto '+Alltrim(_cProd)+' Obrigatï¿½rio informar [Segunda Unidade de Medida] ' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 					
-						Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Segunda Unidade de Medida] '})
+						Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' Obrigatï¿½rio informar [Segunda Unidade de Medida] '})
 
 					ELSE
 					
-						MsgInfo("Produto "+Alltrim(_cProd)+" Obrigatório informar [Segunda Unidade de Medida] "+chr(13)+chr(13)+" Produto não pode ser utilizado!")
+						MsgInfo("Produto "+Alltrim(_cProd)+" Obrigatï¿½rio informar [Segunda Unidade de Medida] "+chr(13)+chr(13)+" Produto nï¿½o pode ser utilizado!")
 						
 					Endif                      
 				    
@@ -1714,16 +1723,16 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Fator de Conversao] ' ,;
+						'"Produto '+Alltrim(_cProd)+' Obrigatï¿½rio informar [Fator de Conversao] ' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 					
-						Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' Obrigatório informar [Fator de Conversao] '})
+						Aadd(aPedidos,{'"Produto '+Alltrim(_cProd)+' Obrigatï¿½rio informar [Fator de Conversao] '})
 
 					ELSE
 					
-						MsgInfo("Produto "+Alltrim(_cProd)+" Obrigatório informar [Fator de Conversao] "+chr(13)+chr(13)+" Produto não pode ser utilizado!")
+						MsgInfo("Produto "+Alltrim(_cProd)+" Obrigatï¿½rio informar [Fator de Conversao] "+chr(13)+chr(13)+" Produto nï¿½o pode ser utilizado!")
 						
 					Endif                      
 				    
@@ -1738,14 +1747,14 @@ User Function MT410TOK()
 	Endif
 	*/
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³TRATAMENTO INTEGRAÇÃO EDATA - INICIO³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½TRATAMENTO INTEGRAï¿½ï¿½O EDATA - INICIOï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	/*
-	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // Integração CERES
+	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // Integraï¿½ï¿½o CERES
 		If lRet
 			For nX:=1 To Len(aCols)
-				If !aCols[nX,nPDel]  // Se não tiver deletado
+				If !aCols[nX,nPDel]  // Se nï¿½o tiver deletado
 
 					dbSelectArea("SF4")
 					SF4->(dbSetOrder(1))
@@ -1754,10 +1763,10 @@ User Function MT410TOK()
 					cTipo := SF4->F4_XTIPO
 
 					If(!Empty(cTipo))
-						cLendo := cTipo // cLendo = variável que recebera o valor do campo F4_XTIPO atual que esta lendo
+						cLendo := cTipo // cLendo = variï¿½vel que recebera o valor do campo F4_XTIPO atual que esta lendo
 
 						// Caso o tipo anterior lido seja diferente da que estiver lendo
-						If ((nCount > 0) .AND. (cLendo <> cLido))// verifica se a variável cLido que contem o valor do item anterior é igual ao atual cLendo
+						If ((nCount > 0) .AND. (cLendo <> cLido))// verifica se a variï¿½vel cLido que contem o valor do item anterior ï¿½ igual ao atual cLendo
 							IF IsInCallStack('U_ADVEN002P')  == .T.
 								Aadd(aPedidos,{cchave, ;
 								''    , ;
@@ -1791,9 +1800,9 @@ User Function MT410TOK()
 	EndIf
 	*/
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³TRATAMENTO INTEGRAÇÃO EDATA - FIM   ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½TRATAMENTO INTEGRAï¿½ï¿½O EDATA - FIM   ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 	//Verifica pelo cadastro da Tes Inteligente (SFM) qual a tes de venda deve ser utilizada
 	If Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02/07"
@@ -1862,14 +1871,14 @@ User Function MT410TOK()
 								SFM->(dbSkip())
 							Enddo
 							
-						ElseIf _cTipoOper $("04|X|Y") //Bonificação, venda à ordem e remessa de venda à ordem, respectivamente.
+						ElseIf _cTipoOper $("04|X|Y") //Bonificaï¿½ï¿½o, venda ï¿½ ordem e remessa de venda ï¿½ ordem, respectivamente.
 							//Conout("ENTROU EM 04|X|Y ")
 							//
 							lItemSF := Nil
 							If ! SFM->(dbSeek(xFilial("SFM") + Padr(_cTipoOper,2," ") + Alltrim(_cProduto)))
 								 
 								 If ! SFM->(dbSeek(xFilial("SFM") + Padr(_cTipoOper,2," ") + Space(15) ))
-								 	Aadd(aPedidos,{"Erro de TES produto " + Alltrim(_cProduto) + ". Não foi possível localizar a operação " + Padr(_cTipoOper,2," ") + " (SFM)."})
+								 	Aadd(aPedidos,{"Erro de TES produto " + Alltrim(_cProduto) + ". Nï¿½o foi possï¿½vel localizar a operaï¿½ï¿½o " + Padr(_cTipoOper,2," ") + " (SFM)."})
 								 	RestArea(_aAreaSC5)
 									RestArea(_aAreaSC6)
 									RestArea(_aAreaSF4)
@@ -1948,19 +1957,19 @@ User Function MT410TOK()
 		EndIf
 	Endif
 
-	//INICIO Ticket 11223   - Abel Babini      - 23/03/2021 - Não mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
+	//INICIO Ticket 11223   - Abel Babini      - 23/03/2021 - Nï¿½o mais alterar a TES para clientes Simples Nacional a partir de 01/04/2021
 	//INICIO Ticket 8190 	  - Abel Babini      - 18/01/2021 - Alterar TES para cliente Simples Nacional para produtos carne 
 	//Clientes de SP
 	//Clientes Optante pelo Simples Nacional
-	//Parâmetro MV_#T65255 Preenchido com a TES da legislação 65.255
+	//Parï¿½metro MV_#T65255 Preenchido com a TES da legislaï¿½ï¿½o 65.255
 	//Produtos cujo campo SB1->B1_XD65255 = 'S'
 
 	// _aAreaSF4 := SF4->(GetArea())
 	// _aAreaSB1 := SB1->(GetArea())
 	// For _x1 := 1 to Len(aCols)
-	// 	_cProduto := ACOLS[_x1,nProd] //Ticket 8190 	  - Abel Babini      - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laço FOR
+	// 	_cProduto := ACOLS[_x1,nProd] //Ticket 8190 	  - Abel Babini      - 19/01/2021 - Ajuste na regra para atualizar o produto dentro do Laï¿½o FOR
 
-	// 	//INICIO Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
+	// 	//INICIO Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operï¿½ï¿½es 01 e 02 Venda tratarem a mudanï¿½a de TES para Clientes Simples Nacional
 	// 	If !lSfInt
 	// 		_cTipoOper := iif(_dDTENTR >= ctod("01/04/2017"),"02","01") 
 	// 	Else
@@ -1969,10 +1978,10 @@ User Function MT410TOK()
 	// 			_cTipoOper := iif(_dDTENTR >= ctod("01/04/2017"),"02","01")
 	// 		EndIf
 	// 	EndIf
-		//FIM Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
-		//Ver parâmetro _cMT410A	=> MV_#MT410A
-		//If _cTipoOper $ _cMT410A //Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operções 01 e 02 Venda tratarem a mudança de TES para Clientes Simples Nacional
-		//Ticket 9231 	  - Abel Babini      - 08/02/2021 - Alterado o tratamento de Bonificação para clientes Simples Nacional, considerando os parâmetros MV_XTESBON, MV_XTESBOQ, MV_XTESDOA
+		//FIM Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operï¿½ï¿½es 01 e 02 Venda tratarem a mudanï¿½a de TES para Clientes Simples Nacional
+		//Ver parï¿½metro _cMT410A	=> MV_#MT410A
+		//If _cTipoOper $ _cMT410A //Ticket 8569 	  - Abel Babini      - 25/01/2021 - Acrescentado tratamento para somente Operï¿½ï¿½es 01 e 02 Venda tratarem a mudanï¿½a de TES para Clientes Simples Nacional
+		//Ticket 9231 	  - Abel Babini      - 08/02/2021 - Alterado o tratamento de Bonificaï¿½ï¿½o para clientes Simples Nacional, considerando os parï¿½metros MV_XTESBON, MV_XTESBOQ, MV_XTESDOA
 	// 	IF !aCols[_x1,nTES]$(Alltrim(GETMV("MV_XTESDOA"))+'/'+Alltrim(GETMV("MV_XTESBOQ")))+'/'+Alltrim(GETMV("MV_XTESBON")) 
 	// 		dbSelectArea("SB1")
 	// 		dbSetOrder(1)
@@ -1981,7 +1990,7 @@ User Function MT410TOK()
 	// 			_cDPr65255 := SB1->B1_XD65255
 	// 		Endif
 
-	// 		//Ticket 9765 	  - Abel Babini      - 19/02/2021 - Adicionada regra para que a alteração de TES não seja executada quando o tipo do cliente for consumidor final
+	// 		//Ticket 9765 	  - Abel Babini      - 19/02/2021 - Adicionada regra para que a alteraï¿½ï¿½o de TES nï¿½o seja executada quando o tipo do cliente for consumidor final
 	// 		If Alltrim(_cEstCli) == "SP" .AND. Alltrim(_cCliTrb) == '1' .AND. !Empty(Alltrim(_cT65255)) .AND. Alltrim(_cDPr65255) == 'S' .AND. !_lConsFinal
 	// 			dbSelectAreA("SF4")
 	// 			dbSetOrder(1)
@@ -2025,7 +2034,7 @@ User Function MT410TOK()
 				TCQUERY cQueryP NEW ALIAS "tSC5p"
 				
 				If !Empty(tSC5p->C5_NUM)
-					ApMsgInfo('Para Pedido do Tipo Diversos não Pode Existir mais de um Pedido com o mesmo Roteiro e Data de Entrega, Altere a data de entrega ou o Roteiro','Pedido de Venda Diversos')
+					ApMsgInfo('Para Pedido do Tipo Diversos nï¿½o Pode Existir mais de um Pedido com o mesmo Roteiro e Data de Entrega, Altere a data de entrega ou o Roteiro','Pedido de Venda Diversos')
 					lRet := .F.
 				EndIf
 			Endif
@@ -2041,7 +2050,7 @@ Return(lRet)
 //--------------------------------------------------
 Static Function fVldProd()
 
-	// Validações feitas somente para a empresa 01 e 02.
+	// Validaï¿½ï¿½es feitas somente para a empresa 01 e 02.
 	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"
 		
 		If SF4->F4_ESTOQUE == "S"
@@ -2051,14 +2060,14 @@ Static Function fVldProd()
 					''    , ;
 					''    , ;
 					''    , ;
-					'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!' ,;
+					'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto nï¿½o pode ser utilizado!' ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto não pode ser utilizado!'})
+					Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' sem LOCAL no cadastro de produtos. Produto nï¿½o pode ser utilizado!'})
 
 				ELSE
-					MsgInfo("Produto "+Alltrim(_cProduto)+" sem LOCAL no cadastro de produtos."+chr(13)+chr(13)+" Produto não pode ser utilizado!")
+					MsgInfo("Produto "+Alltrim(_cProduto)+" sem LOCAL no cadastro de produtos."+chr(13)+chr(13)+" Produto nï¿½o pode ser utilizado!")
 				Endif
 
 				lRet := .F.
@@ -2075,16 +2084,16 @@ Static Function fVldProd()
 				''    , ;
 				''    , ;
 				''    , ;
-				'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Segunda Unidade de Medida] ' ,;
+				'"Produto '+Alltrim(_cProduto)+' Obrigatï¿½rio informar [Segunda Unidade de Medida] ' ,;
 				cVendedor})
 
 			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 			
-				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Segunda Unidade de Medida] '})
+				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' Obrigatï¿½rio informar [Segunda Unidade de Medida] '})
 
 			ELSE
 			
-				MsgInfo("Produto "+Alltrim(_cProduto)+" Obrigatório informar [Segunda Unidade de Medida] "+chr(13)+chr(13)+" Produto não pode ser utilizado!")
+				MsgInfo("Produto "+Alltrim(_cProduto)+" Obrigatï¿½rio informar [Segunda Unidade de Medida] "+chr(13)+chr(13)+" Produto nï¿½o pode ser utilizado!")
 				
 			Endif                      
 			
@@ -2100,16 +2109,16 @@ Static Function fVldProd()
 				''    , ;
 				''    , ;
 				''    , ;
-				'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Fator de Conversao] ' ,;
+				'"Produto '+Alltrim(_cProduto)+' Obrigatï¿½rio informar [Fator de Conversao] ' ,;
 				cVendedor})
 
 			ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
 			
-				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' Obrigatório informar [Fator de Conversao] '})
+				Aadd(aPedidos,{'"Produto '+Alltrim(_cProduto)+' Obrigatï¿½rio informar [Fator de Conversao] '})
 
 			ELSE
 			
-				MsgInfo("Produto "+Alltrim(_cProduto)+" Obrigatório informar [Fator de Conversao] "+chr(13)+chr(13)+" Produto não pode ser utilizado!")
+				MsgInfo("Produto "+Alltrim(_cProduto)+" Obrigatï¿½rio informar [Fator de Conversao] "+chr(13)+chr(13)+" Produto nï¿½o pode ser utilizado!")
 				
 			Endif                      
 			
@@ -2153,8 +2162,8 @@ Static function fVldUM()
 return
 
 //--------------------------------------------------
-// 3. Valida se o item controla localização.
-// @history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validação do item que controla endereço para tornar obrigatório o preenchimento do campo 'Localização'.
+// 3. Valida se o item controla localizaï¿½ï¿½o.
+// @history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validaï¿½ï¿½o do item que controla endereï¿½o para tornar obrigatï¿½rio o preenchimento do campo 'Localizaï¿½ï¿½o'.
 //--------------------------------------------------
 Static Function fVldLocaliz()
 	IF SF4->F4_ESTOQUE == "S" .AND. _cLocaliz == "S"
@@ -2173,13 +2182,13 @@ Static Function fVldLocaliz()
 					''    , ;
 					''    , ;
 					''    , ;
-					'Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!' ,;
+					'Produto '+Alltrim(_cProduto)+' nï¿½o tem a localizaï¿½ï¿½o informada na linha do item. Produto nï¿½o pode ser utilizado!' ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!'})
+					Aadd(aPedidos,{'Produto '+Alltrim(_cProduto)+' nï¿½o tem a localizaï¿½ï¿½o informada na linha do item. Produto nï¿½o pode ser utilizado!'})
 				else
-					ApMsgInfo('Produto '+Alltrim(_cProduto)+' não tem a localização informada na linha do item. Produto não pode ser utilizado!')
+					ApMsgInfo('Produto '+Alltrim(_cProduto)+' nï¿½o tem a localizaï¿½ï¿½o informada na linha do item. Produto nï¿½o pode ser utilizado!')
 				endif
 
 				lRet := .F.
@@ -2194,21 +2203,21 @@ Static Function fVldLocaliz()
 return
 
 //--------------------------------------------------
-// 4. Tratamento integração eData
+// 4. Tratamento integraï¿½ï¿½o eData
 //--------------------------------------------------
 Static Function fVldDat()
 
-	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // Integração CERES
+	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // Integraï¿½ï¿½o CERES
 		
 		If lRet
 			
 			//cTipo := SF4->F4_XTIPO
 
 			If(!Empty(SF4->F4_XTIPO))
-				//cLendo := cTipo // cLendo = variável que recebera o valor do campo F4_XTIPO atual que esta lendo
+				//cLendo := cTipo // cLendo = variï¿½vel que recebera o valor do campo F4_XTIPO atual que esta lendo
 
 				// Caso o tipo anterior lido seja diferente da que estiver lendo
-				If ((nCount > 0) .AND. (SF4->F4_XTIPO <> cLido))// verifica se a variável cLido que contem o valor do item anterior é igual ao atual cLendo
+				If ((nCount > 0) .AND. (SF4->F4_XTIPO <> cLido))// verifica se a variï¿½vel cLido que contem o valor do item anterior ï¿½ igual ao atual cLendo
 					IF IsInCallStack('U_ADVEN002P')  == .T.
 						Aadd(aPedidos,{cchave, ;
 						''    , ;
@@ -2244,18 +2253,18 @@ Static Function fVldDat()
 return
 
 /*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºFunção    ³ FTOTPV   º Autor ³ HCCONSYS           º Data ³  21/05/09   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Função para calculo de total de pedido de vendas e valida- º±±
-±±º          ³ ções posteriores                                           º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Específico A'DORO                                          º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½
+ï¿½ï¿½ï¿½Funï¿½ï¿½o    ï¿½ FTOTPV   ï¿½ Autor ï¿½ HCCONSYS           ï¿½ Data ï¿½  21/05/09   ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¹ï¿½ï¿½
+ï¿½ï¿½ï¿½Desc.     ï¿½ Funï¿½ï¿½o para calculo de total de pedido de vendas e valida- ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½          ï¿½ ï¿½ï¿½es posteriores                                           ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¹ï¿½ï¿½
+ï¿½ï¿½ï¿½Uso       ï¿½ Especï¿½fico A'DORO                                          ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 */
 
 Static Function fTotPV()
@@ -2328,7 +2337,7 @@ Static Function fTotPV()
 Return(nRet)
 
 //-----------------------------------------------------------|
-//Verifica se o pedido de venda à ordem , ja foi utilizado   | 
+//Verifica se o pedido de venda ï¿½ ordem , ja foi utilizado   | 
 //Sigoli 10/03/2017 Chamado: 034029                          |
 //-----------------------------------------------------------|
 Static Function verificarpedido(cPedido)
@@ -2391,7 +2400,7 @@ Static function fbscPed(cPedido,_lrfat)
 		_cPed3 := ""
 
 		IF Len(Alltrim(_cPDFATS)) > 6  //tem mais de um pedido
-			for _nx := 1 to len(Alltrim(_cPDFATS))   // maximo são 3 pedidos
+			for _nx := 1 to len(Alltrim(_cPDFATS))   // maximo sï¿½o 3 pedidos
 				If _nx == 1
 					_cPed1 := Substr(Alltrim(_cPDFATS),1,6)
 					_nx := 7
@@ -2426,7 +2435,7 @@ Static function fbscPed(cPedido,_lrfat)
 			_cPed3 := ""
 
 			IF Len(Alltrim(_cPDFATS)) > 6  //tem mais de um pedido
-				for _nx := 1 to len(Alltrim(_cPDFATS))   // maximo são 3 pedidos
+				for _nx := 1 to len(Alltrim(_cPDFATS))   // maximo sï¿½o 3 pedidos
 					If _nx == 1
 						_cPed1 := Substr(Alltrim(_cPDFATS),1,6)
 						_nx := 7
@@ -2450,7 +2459,7 @@ Static function fbscPed(cPedido,_lrfat)
 			_cPed3 := ""
 
 			IF Len(Alltrim(_cPedold)) > 6  //tem mais de um pedido
-				for _nx := 1 to len(Alltrim(_cPedold))   // maximo são 3 pedidos
+				for _nx := 1 to len(Alltrim(_cPedold))   // maximo sï¿½o 3 pedidos
 					If _nx == 1
 						_cPed1 := Substr(Alltrim(_cPedold),1,6)
 						_nx := 7
@@ -2769,7 +2778,7 @@ Static function AjsAlt(_cPedAnt,_cPedold)
 	DbSetOrder(1)
 	if dbseek(xFilial("SC5")+_cPedAnt)   
 		RecLock("SC5",.F.)
-		SC5->C5_XPEDGER := _cPedold  //como não confirmou alteração volto condição anterior
+		SC5->C5_XPEDGER := _cPedold  //como nï¿½o confirmou alteraï¿½ï¿½o volto condiï¿½ï¿½o anterior
 		SC5->(MsUnlock())   
 	endif
 
@@ -2818,7 +2827,7 @@ Static Function ValQtdEst (cPedido)
 Return lRet
 
 /*{Protheus.doc} User Function diasEntrega
-	Função para retornar o dias de entrega - Chamado 037426
+	Funï¿½ï¿½o para retornar o dias de entrega - Chamado 037426
 	@type  Static Function
 	@author Everson
 	@since 19/12/2017 
@@ -2827,9 +2836,9 @@ Return lRet
 
 Static Function diasEntrega() // U_diasEntrega()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+	//ï¿½ Declaracao de Variaveis                                             ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	
 	Local aArea	:= GetArea()
 	Local nDias := 0
 	Local nDSem := DoW(dDataBase)
