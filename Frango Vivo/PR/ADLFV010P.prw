@@ -2,6 +2,20 @@
 #include "topconn.ch"
 #Include "Tbiconn.ch"
 
+// Facility
+#define FAC_FRAME_ 22
+#define FAC_SEGMENTS_ 23
+
+// Severity
+#define SEV_EMG_ 0
+#define SEV_ALERT_ 1
+#define SEV_CRITICAL_ 2
+#define SEV_ERROR_ 3
+#define SEV_WARN_ 4
+#define SEV_NOTICE_ 5
+#define SEV_INFORM_ 6
+#define SEV_DEBUG_ 7
+
 /*/{Protheus.doc} User Function ADLFV010P
 	Gera PV de complemento de frango vivo.
 	Chamado 037729
@@ -16,9 +30,10 @@
 	@history Ticket: 62540 - 18/10/2021 - Adriano Savoine - Ajustado a entrada da Variavel e alterada a mesma apos entrar no IF devido que por padrão estava dando erro pois o TIPO é C e está entrando String.
 	@history Ticket: 62540 - 20/10/2021 - Fernando Sigoli - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	@history Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
+	@history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 /*/
-
-User Function ADLFV010P(lAuto)
+//User Function ADLFV010P(lAuto)
+User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 	Local lOk		:= .F.
 	Local alSay		:= {}
@@ -29,13 +44,13 @@ User Function ADLFV010P(lAuto)
 	Local clDesc3   := ''
 	Local clDesc4   := ''
 	Local clDesc5   := ''
-
-	Local cEmpAut   := "01"
+	//Local cEmpAut   := "01" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 	Private cRootPath
 
-	
 	Default lAuto	:= .F.
+	Default cEmpAut := "01" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+	Default cFilAut := "02" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 	//Ticket: 62540 - 20/10/2021 - Fernando Sigoli  - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	If Select("SX6") == 0
@@ -47,12 +62,10 @@ User Function ADLFV010P(lAuto)
 		// Inicializa ambiente
 		RpcClearEnv()
 		RpcSetType(3)
-		
-		rpcSetEnv("01", "03",,,,,{"SM0"})
-		
-		If !RpcSetEnv( "01", "03" )
-			ApMsgStop( '[ADLFV010P] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE 01/03 !!! ' )
-			ConOut(	"[ADLFV010P] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE 01/03 !!! ")
+		//If rpcSetEnv("01", "03",,,,,{"SM0"})
+		If !rpcSetEnv(cEmpAut, cFilAut,,,,,{"SM0"}) // // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+			//ConOut(	"[ADLFV010P] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE 01/03 !!! ")
+			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE') // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 			Return .F.
 		EndIf
 
@@ -66,6 +79,7 @@ User Function ADLFV010P(lAuto)
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Complemento Frango Vivo')
 		
 		PtInternal(1,ALLTRIM(PROCNAME()))
+		//FWMonitorMsg( ALLTRIM(PROCNAME()) ) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 		// Inicia processamento
 		cEmpAut := GetMV("MV_#LFVEMP",,"01")
@@ -73,8 +87,9 @@ User Function ADLFV010P(lAuto)
 		If cEmpAnt $ cEmpAut
 			GeraPV(lAuto)
 		Else
-			ApMsgStop( '[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!! ' )
-			ConOut(	"[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!!" )
+			//ApMsgStop( '[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!! ' )
+			//ConOut(	"[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!!" )
+			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA') // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 		EndIf
 
 		
@@ -172,8 +187,9 @@ Static Function GeraPV(lAuto)
 		
 		// Aviso ao usuario
 		If lAuto
-			ApMsgStop( '[ADLFV010P] - JOB - Não existem dados com os filtros utilizados para a geração do PV !!! ' )
-			ConOut(	"[ADLFV010P] - JOB - Não existem dados com os filtros utilizados para a geração do PV !!! ")
+			//ApMsgStop( '[ADLFV010P] - JOB - Não existem dados com os filtros utilizados para a geração do PV !!! ' )
+			//ConOut(	"[ADLFV010P] - JOB - Não existem dados com os filtros utilizados para a geração do PV !!! ")
+			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - NAO existem dados com os filtros utilizados para a geracao do PV') // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 		Else
 			Aviso(	"ADLFV010P-02",;
@@ -303,8 +319,9 @@ Static Function GeraPV(lAuto)
 
 		// Aviso ao usuario
 		If lAuto
-			ApMsgStop( "[ADLFV010P] - JOB - PV n. " + AllTrim(cNumPV) + " incluído com sucesso! ")
-			ConOut(	"[ADLFV010P] - JOB - PV n. " + AllTrim(cNumPV) + " incluído com sucesso! " )
+			//ApMsgStop( "[ADLFV010P] - JOB - PV n. " + AllTrim(cNumPV) + " incluído com sucesso! ")
+			//ConOut(	"[ADLFV010P] - JOB - PV n. " + AllTrim(cNumPV) + " incluído com sucesso! " )
+			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - PV n. " + AllTrim(cNumPV) + " incluido com sucesso') // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 		Else
 		
@@ -607,15 +624,18 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email,lAuto)
 		//Tratamento de erro no envio do e-mail.
 		If !lOk
 			Get Mail Error cErrorMsg
-			ConOut("3 - " + cErrorMsg)
+			//ConOut("3 - " + cErrorMsg)
+			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - ' + cErrorMsg) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 		
 		Else
 
 			// Aviso ao usuario
 			If lAuto
-			
+				/*
 				ApMsgStop( "[ADLFV010P] - JOB - Email enviado com sucesso!"  + cMails )
 				ConOut(	"[ADLFV010P] - JOB - Email enviado com sucesso!"  + cMails )
+				*/
+				LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - Email enviado com sucesso'  + cMails) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 			
 			Else
 				Aviso(	"ADLFV010P-03",;
@@ -630,7 +650,8 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email,lAuto)
 		
 	Else
 		Get Mail Error cErrorMsg
-		ConOut("4 - " + cErrorMsg)
+		//ConOut("4 - " + cErrorMsg)
+		LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - ' + cErrorMsg) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 		
 	EndIf
 
@@ -731,7 +752,8 @@ Static Function GeraXLS()
 	dbSelectArea(cArquivo)
 	(cArquivo)->(DbGoTop())
 	While ! (cArquivo)->(Eof())
-		conout( (cArquivo)->PEDIDO + " " + (cArquivo)->NF )
+		//conout( (cArquivo)->PEDIDO + " " + (cArquivo)->NF )
+		LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - ' + (cArquivo)->PEDIDO + " " + (cArquivo)->NF) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 		//
 		oExcel:AddRow("LFV","LFV - FATURAMENTO",{(cArquivo)->PEDIDO,;
 												 (cArquivo)->ORDEMCARGA,;
@@ -804,6 +826,5 @@ Static Function GrvPV()
 	EndDo
 
 	RestArea( aAreaAtu )
-
 
 Return
