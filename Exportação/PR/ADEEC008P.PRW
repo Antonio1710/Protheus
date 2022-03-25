@@ -12,6 +12,7 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 15/03/2021 - Desenvolvimento inicial do workflow.
     @history Chamado 8465 - Leonardo P. Monteiro - 16/04/2021 - Adequação do workflow as necessidades do Depto. Comex.
     @history Chamado 69624 - Leonardo P. Monteiro - 11/03/2021 - Correção nos filtros de datas para o envio correto da programação para a semana seguinte.
+    @history Chamado 70332 - Leonardo P. Monteiro - 25/03/2022 - ERRO ENVIO WORKFLOW - PREVISÃO DE EMBARQUE. Ajuste na data estimada de estufagem.
 /*/
 user function ADEEC008P(aEmpFil, cPedExp, dDtDe, dDtAte, lAutom)
 	//local aEmpIni := {}
@@ -75,7 +76,7 @@ Static Function execWF(lAutom)
     cSubject      := "Previsão de Embarque (Semana "+ RetSem(dDtDe) +")"
 
     cQuery := " SELECT EE7.EE7_PEDIDO, EE7.EE7_PEDFAT, EE7.EE7_XBOOKI, EE7.EE7_ESTUFA, EE7.EE7_XWFEMD, EE7.EE7_CODOBP, "
-    cQuery += "   C5_DTENTR, C5.C5_NOMECLI, C5.C5_CLIENTE, C5.C5_LOJACLI, C5.C5_PLACA, C5.C5_TRANSP, "
+    cQuery += "   EE8_DTENTR C5_DTENTR, C5.C5_NOMECLI, C5.C5_CLIENTE, C5.C5_LOJACLI, C5.C5_PLACA, C5.C5_TRANSP, "
     cQuery += "   C9.C9_QTDLIB, C9.C9_QTDLIB2, C9.C9_ITEM,"
     cQuery += "   B1.B1_COD, B1.B1_DESCOMP, B1.B1_UM, "
     cQuery += "   YA.YA_DESCR, A4.A4_NOME "
