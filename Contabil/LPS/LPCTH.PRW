@@ -27,6 +27,10 @@ User Function LPCTH(cTab, cEntidade)
 
     Local cClasse := ""
     Local cCCusto := ""
+    Local aAreaAtu := GetArea()
+    Local aAreaSD2 := SD2->( GetArea() )
+    Local aAreaSCP := SCP->( GetArea() )
+    Local aAreaSN1 := SN1->( GetArea() )
 
     Default cTab := cEntidade := ""
 
@@ -99,6 +103,11 @@ User Function LPCTH(cTab, cEntidade)
         EndIf
 
     EndIf
+
+    RestArea( aAreaAtu )
+    RestArea( aAreaSD2 )
+    RestArea( aAreaSCP )
+    RestArea( aAreaSN1 )
     
 Return cClasse
 
@@ -128,6 +137,10 @@ User Function LPCTHCC(cTab, cEntidade)
 
     Local cCCusto := ""
     Local cConta  := ""
+    Local aAreaAtu := GetArea()
+    Local aAreaSD2 := SD2->( GetArea() )
+    Local aAreaSCP := SCP->( GetArea() )
+    Local aAreaSN1 := SN1->( GetArea() )
 
     Default cTab := cEntidade := ""
 
@@ -186,5 +199,10 @@ User Function LPCTHCC(cTab, cEntidade)
             EndIf
         EndIf
     EndIf
+
+    RestArea( aAreaAtu )
+    RestArea( aAreaSD2 )
+    RestArea( aAreaSCP )
+    RestArea( aAreaSN1 )
 
 Return cCCusto
