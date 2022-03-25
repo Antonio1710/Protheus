@@ -13,6 +13,7 @@
     @history Chamado 8465  - Leonardo P. Monteiro - 04/03/2021 - Alteração do campo chave do roteiro para a placa.
     @history Chamado 8465  - Leonardo P. Monteiro - 18/03/2021 - Valida se o campo Modelo Certificado foi incluso.
     @history Chamado 64964 - Leonardo P. Monteiro - 08/12/2021 - Torna obrigatório o modelo de certificado somente para a filial de Várzea Paulista.
+    @history Chamado 64964 - Leonardo P. Monteiro - 08/12/2021 - Ajustado o tamanho da linha para 35 caracteres.
 /*/
 
 User Function EECPEM44()
@@ -77,8 +78,8 @@ User Function EECPEM44()
 
     if nMsnEtq <= 10
         for nA := 1 to nMsnEtq
-            if Len(Alltrim(aMsnEtq[nA])) > 30
-                MsgAlert("[EECPEM44-05] - O campo de emissão da etiqueta contém uma linha ("+ Cvaltochar(nA) +") como mais de 30 caracteres.")
+            if Len(Alltrim(aMsnEtq[nA])) > 35
+                MsgAlert("[EECPEM44-05] - O campo de emissão da etiqueta contém uma linha ("+ Cvaltochar(nA) +") como mais de 35 caracteres.")
                 lRet := .F.
             endif
         next nA

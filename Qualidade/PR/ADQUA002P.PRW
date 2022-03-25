@@ -26,7 +26,7 @@ user function ADQUA002(aEmpFil)
     Local aRet          := {}
     Local aParamBox     := {}
 
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para obter dados de cargas da api appqualidade.adoro.com.br ')
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para obter dados de cargas da api appqualidade.adoro.com.br ')
 
 	if valType(aEmpFil) == "A"
 		if len(aEmpFil) >= 2

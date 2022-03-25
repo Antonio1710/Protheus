@@ -16,6 +16,7 @@ Static xPula   := Chr(13) + Chr(10)
     @author Everson
     @since 08/02/2022
     @version 01
+    @history Everson, 25/03/2022. Criado parâmetro para gravar ou não dados na tabela ZIQ.
     /*/
 User Function ADFAT027P() // U_ADFAT027P()
 
@@ -143,11 +144,18 @@ User Function ADFAT27B(cOperacao, cTopico, cId, cDados, cData, cHora, cTipo, cCh
     Local oModel    := Nil 
     Local aError    := {} 
     Local cMsgError := ""
+    Local lGrvZIQ   := GetMv("MV_#GRVZIQ",,.F.) //Everson - 25/03/2022. Chamado 18465.
 
     Default cChave  := ""
     Default cTipo   := "S"
     Default cEmpD   := cEmpAnt
     Default cFilD   := cFilAnt
+
+    If ! lGrvZIQ
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
 
     If Empty(cDados)
         RestArea(aArea)

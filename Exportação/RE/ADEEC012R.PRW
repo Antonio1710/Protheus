@@ -16,8 +16,8 @@
     @history Chamado 8465  - Leonardo P. Monteiro - 01/08/2021 - Inclusão de novos recuros e rastreabilidades no relatório.
     @history Chamado 8465  - Leonardo P. Monteiro - 09/08/2021 - Melhorias e ajustes solicitadas pelos usuários e SIF.
     @history Chamado 18816 - Leonardo P. Monteiro - 09/08/2021 - Inclusão de espaço entre os campos de observação. E quebra do nome do importador.
-    @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
-    
+    @history Chamado 63954 - Leonardo P. Monteiro - 29/11/2021 - Correções e melhorias no processo de exportação.
+    @history Chamado 70304 - Leonardo P. Monteiro - 24/03/2022 - Valida e ajuste na data prevista de estufagem na emissão do relatório de respaldo.
 /*/
 #Define IMP_SPOOL  2
 #Define IMP_PDF    1
@@ -188,154 +188,155 @@ Static function fProcessa()
             // Obtêm informações dos registros retornados pelo App da Qualidade
             // para compor as informações do cabeçalho.
             fGetInfo()
-            fGetAler()
+            
+            if fGetAler()
 
-            //----------------------------------------------------------------------------------------
-            // Impressão dos itens do pedido de exportação e 
-            // também os dados de carregamento enviados pelo App da qualidade.
-            //----------------------------------------------------------------------------------------
-            aItens  := fSqlItem()
-            nItens  := Len(aItens)
-            //-----------------------------------------------------
-            // Impressão da sessão da Declaração de Exportação.
-            //-----------------------------------------------------
-            if MV_PAR02 == 1
+                //----------------------------------------------------------------------------------------
+                // Impressão dos itens do pedido de exportação e 
+                // também os dados de carregamento enviados pelo App da qualidade.
+                //----------------------------------------------------------------------------------------
+                aItens  := fSqlItem()
+                nItens  := Len(aItens)
+                //-----------------------------------------------------
+                // Impressão da sessão da Declaração de Exportação.
+                //-----------------------------------------------------
+                if MV_PAR02 == 1
+                    
+                    //aItens  := fSqlItDe()
+                    //nItens  := Len(aItens)
+                    nLinha      := 0
+                    nQuantReg   := 1
+                    nLimite     := nBottom*0.95
+
+                    for nA := 1 to nItens
+                        
+                        nQuantReg := 1
+
+                        if aItens[nA][01] == "05"
+                            fImpCabec(3)
+                            // Imprime as linhas dos produtos.
+                            fImpDec()
+                            
+                            nQuantReg += 1
+                        endif
+                    next nA
+
+                    //QITEM->(DbcloseArea())
+                endif
                 
-                //aItens  := fSqlItDe()
-                //nItens  := Len(aItens)
                 nLinha      := 0
                 nQuantReg   := 1
                 nLimite     := nBottom*0.95
 
                 for nA := 1 to nItens
                     
-                    nQuantReg := 1
+                    if aItens[nA][01] == "01"
+                        if nLinha >= nLimite .or. nLinha == 0                        
+                            fImpCabec(1)
+                        endif
 
-                    if aItens[nA][01] == "05"
-                        fImpCabec(3)
                         // Imprime as linhas dos produtos.
-                        fImpDec()
-                        
+                        if aItens[nA][01] == "01"
+                            fImpItens()
+                        // Imprime as linhas de rastreabilidade (App)
+                        //elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
+                            //fImpRast()
+                        endif
+
                         nQuantReg += 1
                     endif
                 next nA
 
                 //QITEM->(DbcloseArea())
-            endif
-            
-            nLinha      := 0
-            nQuantReg   := 1
-            nLimite     := nBottom*0.95
 
-            for nA := 1 to nItens
-                
-                if aItens[nA][01] == "01"
-                    if nLinha >= nLimite .or. nLinha == 0                        
-                        fImpCabec(1)
-                    endif
-
-                    // Imprime as linhas dos produtos.
-                    if aItens[nA][01] == "01"
-                        fImpItens()
-                    // Imprime as linhas de rastreabilidade (App)
-                    //elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
-                        //fImpRast()
-                    endif
-
-                    nQuantReg += 1
-                endif
-            next nA
-
-            //QITEM->(DbcloseArea())
-
-            //-----------------------------------------------------
-            // Impressão da sessão de imagens.
-            //-----------------------------------------------------
-            if MV_PAR03 == 1
-                //aItens  := fSqlImg()
-                //nItens  := Len(aItens)
-                
-                // Reinicia a página para a sessão de imagens.
-                nLinha      := 0
-                nQuantReg   := 1
-                nLimite     := nBottom*0.80
-
-                for nA := 1 to nItens
-                    if aItens[nA][01] == "04"
-                        //if nQuantReg > 9 .OR. nQuantReg == 1
-                        if nLinha >= nLimite .or. nLinha == 0
-                            fImpCabec(2)
-                            nRowImg     := (nBottom-nLinha)
-                        endif
-
-                        fImpImg()
-
-                        nQuantReg += 1
-                    endif
-                next nA
-
-            endif
-
-            //----------------------------------------------------------------------------------------
-            // Impressão dos dados de embarque Ad'oro.
-            //----------------------------------------------------------------------------------------
-            if MV_PAR04 == 1
-                nLinha      := 0
-                nQuantReg   := 1
-                nLimite     := nBottom*0.95
-                
-                for nA := 1 to nItens
-                    if aItens[nA][01] == "01" .or. aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
-                        //if nQuantReg > 9 .OR. nQuantReg == 1
-                        if nLinha >= nLimite .or. nLinha == 0
-                            fImpCabec(4)
-                        endif
-
-                        // Imprime as linhas dos produtos.
-                        if aItens[nA][01] == "01"
-                            fImpItens()
-                        // Imprime as linhas de rastreabilidade (App)
-                        elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
-                            fImpRast()
-                        endif
-
-                        nQuantReg += 1
-                    endif
-                next nA
-
-            endif
-            
-            //----------------------------------------------------------------------------------------
-            // Impressão dos itens de rastreabilidade Ad'oro.
-            //----------------------------------------------------------------------------------------
-            if MV_PAR05 == 1
-                nLinha      := 0
-                nQuantReg   := 1
-                nLimite     := nBottom*0.95
-                nPageAct    := oPrinter:nPagecount
-                
-                for nA := 1 to nItens
-                    if aItens[nA][01] == "01" .or. aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
+                //-----------------------------------------------------
+                // Impressão da sessão de imagens.
+                //-----------------------------------------------------
+                if MV_PAR03 == 1
+                    //aItens  := fSqlImg()
+                    //nItens  := Len(aItens)
                     
-                        if nLinha >= nLimite .or. nLinha == 0
-                            fImpCabec(5)
-                        endif
+                    // Reinicia a página para a sessão de imagens.
+                    nLinha      := 0
+                    nQuantReg   := 1
+                    nLimite     := nBottom*0.80
 
-                        // Imprime as linhas dos produtos.
-                        if aItens[nA][01] == "01"
-                            fImpItens()
-                        // Imprime as linhas de rastreabilidade (App)
-                        elseif aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
-                            fImpEmba()
+                    for nA := 1 to nItens
+                        if aItens[nA][01] == "04"
+                            //if nQuantReg > 9 .OR. nQuantReg == 1
+                            if nLinha >= nLimite .or. nLinha == 0
+                                fImpCabec(2)
+                                nRowImg     := (nBottom-nLinha)
+                            endif
+
+                            fImpImg()
+
+                            nQuantReg += 1
                         endif
+                    next nA
+
+                endif
+
+                //----------------------------------------------------------------------------------------
+                // Impressão dos dados de embarque Ad'oro.
+                //----------------------------------------------------------------------------------------
+                if MV_PAR04 == 1
+                    nLinha      := 0
+                    nQuantReg   := 1
+                    nLimite     := nBottom*0.95
+                    
+                    for nA := 1 to nItens
+                        if aItens[nA][01] == "01" .or. aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
+                            //if nQuantReg > 9 .OR. nQuantReg == 1
+                            if nLinha >= nLimite .or. nLinha == 0
+                                fImpCabec(4)
+                            endif
+
+                            // Imprime as linhas dos produtos.
+                            if aItens[nA][01] == "01"
+                                fImpItens()
+                            // Imprime as linhas de rastreabilidade (App)
+                            elseif aItens[nA][01] == "02" .or. aItens[nA][01] == "03"
+                                fImpRast()
+                            endif
+
+                            nQuantReg += 1
+                        endif
+                    next nA
+
+                endif
+                
+                //----------------------------------------------------------------------------------------
+                // Impressão dos itens de rastreabilidade Ad'oro.
+                //----------------------------------------------------------------------------------------
+                if MV_PAR05 == 1
+                    nLinha      := 0
+                    nQuantReg   := 1
+                    nLimite     := nBottom*0.95
+                    nPageAct    := oPrinter:nPagecount
+                    
+                    for nA := 1 to nItens
+                        if aItens[nA][01] == "01" .or. aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
                         
-                        nPageAct    := oPrinter:nPagecount
-                        nQuantReg += 1
-                    endif
-                next nA
+                            if nLinha >= nLimite .or. nLinha == 0
+                                fImpCabec(5)
+                            endif
 
+                            // Imprime as linhas dos produtos.
+                            if aItens[nA][01] == "01"
+                                fImpItens()
+                            // Imprime as linhas de rastreabilidade (App)
+                            elseif aItens[nA][01] == "06" .or. aItens[nA][01] == "07"
+                                fImpEmba()
+                            endif
+                            
+                            nPageAct    := oPrinter:nPagecount
+                            nQuantReg += 1
+                        endif
+                    next nA
+
+                endif
             endif
-            
             TRB->(DbSkip())
         EndDo
         
@@ -367,6 +368,7 @@ Static function fProcessa()
 Return
 
 Static Function fGetAler()
+    Local lRet := .T.
 
     if Alltrim(cContain) != ALLTRIM(TRB->EE7_CONTAI )
         cMensagem += "- Container: Ped. Export ("+ iif(Empty(TRB->EE7_CONTAI),"Vazio", ALLTRIM(TRB->EE7_CONTAI )) +") e Embarque ("+ iif(Empty(cContain),"Vazio", ALLTRIM(cContain) ) +") " +cEOL
@@ -405,11 +407,18 @@ Static Function fGetAler()
     if Empty(TRB->C5_NOTA)
         cMensagem += "- Pedido de exportação ainda não faturado. A NFe/Serie não inclusa no relatório." +cEOL
     endif
-    
+
+    if Stod(TRB->C5_DTENTR) != dDtTCar .AND. !EMPTY(dDtTCar)
+        cMensagem := "A data prevista de embarque "+ Dtoc(Stod(TRB->C5_DTENTR)) +" é diferente da data real de embarque "+Dtoc(dDtTCar) +"." +cEOL
+        cMensagem += "Será considerada a data de embarque como data de estufagem. Deseja continuar?" +cEOL
+        lRet := MsgYesNo(cMensagem, "..:: Data de Estufagem ::..")
+    ENDIF
+
     if !Empty(cMensagem)
         MsgAlert("Encontramos informações divergentes entre o embarque e o pedido de exportação listadas abaixo."+cEOL+cEOL+cMensagem, "Alerta")
     endif
-RETURN
+
+RETURN lRet
 
 /* Impressão da sessão da declaração da importação. */
 Static Function fImpDec()
@@ -806,7 +815,8 @@ Static Function fModelo01()
 
         oPrinter:Box(nLinha, aPerc[01], nLinha+nAltura, aPerc[02])
         oPrinter:Say( nLinha+007, aPerc[01]+002 , "Data de Estufagem:", oFOARNE09)
-        oPrinter:Say(nLinha+0017, aPerc[01]+010 , DTOC(STOD(TRB->C5_DTENTR)) , oFOARNO09)
+        //oPrinter:Say(nLinha+0017, aPerc[01]+010 , DTOC(STOD(TRB->C5_DTENTR)) , oFOARNO09)
+        oPrinter:Say(nLinha+0017, aPerc[01]+010 , iif(Stod(TRB->C5_DTENTR) != dDtTCar .AND. !EMPTY(dDtTCar), DTOC(dDtTCar), DTOC(STOD(TRB->C5_DTENTR))) , oFOARNO09)
 
         oPrinter:Box(nLinha, aPerc[02], nLinha+nAltura, aPerc[03])
         oPrinter:Say( nLinha+007, aPerc[02]+002 , "Pedido:", oFOARNE09)
