@@ -16,8 +16,9 @@
     @see (links_or_references)
     /*/
 User Function ADVEN107P(aEmpFil)
-	Local cCodEmp := ""
-	Local cCodFil := ""
+	Local cCodEmp 	:= ""
+	Local cCodFil 	:= ""
+	Private cEOL	:= chr(13)+chr(10)
 
     // Execução por schedule.
 	if valType(aEmpFil) == "A"
@@ -87,6 +88,8 @@ return
 
 Static Function fProcOrq(cUUID, nQtMThe, nTotThe, nRePThe)
 	Local cQuery := ""
+	//Cancela registros em duplicidade.
+	fCanDup()
 
 	cQuery := fSqlZCI(nTotThe)
 
@@ -94,59 +97,26 @@ Static Function fProcOrq(cUUID, nQtMThe, nTotThe, nRePThe)
 
 return lRet
 
-Static Function sqlTScript(nTotReg)
+Static Function fSqlZCI(nTotReg)
 
 	//Variáveis.
-	Local cQuery := ""
+	Local cQuery 	:= ""
+	Default nTotReg	:= 1000
 
 	//Inclusão de pedido de venda.
-	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( "
-
-	cQuery += " SELECT " 
-	cQuery += " ZCI_NUMP, MAX(R_E_C_N_O_) AS REC " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) " 
-	cQuery += " WHERE " 
-	cQuery += " ZCI_TMPR = 'PENDPROC' " 
-	cQuery += " AND ZCI_METD = 'POST' " 
-	cQuery += " AND D_E_L_E_T_ = '' "
-	cQuery += " GROUP BY ZCI_NUMP " 
-
-	cQuery += " UNION ALL "
-
-	//Exclusão de pedido de venda.
-	cQuery += " SELECT   " 
-	cQuery += " ZCI.ZCI_NUMP, MAX(R_E_C_N_O_) AS REC   " 
-	cQuery += " FROM   " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI " 
-	cQuery += " INNER JOIN " 
-	cQuery += " (SELECT ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST " 
-	cQuery += " ON ZCI.ZCI_NUMP = POST.ZCI_NUMP " 
-	cQuery += " WHERE   " 
-	cQuery += " ZCI.ZCI_TMPR = 'PENDPROC'   " 
-	cQuery += " AND ZCI.ZCI_METD = 'DELETE'   " 
-	cQuery += " AND ZCI.D_E_L_E_T_ = ''  " 
-	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
-
-	cQuery += " UNION ALL "
-
-	//Alteração de pedido de venda.
-	cQuery += " SELECT   " 
-	cQuery += " ZCI.ZCI_NUMP, MAX(R_E_C_N_O_) AS REC   " 
-	cQuery += " FROM   " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI " 
-	cQuery += " INNER JOIN " 
-	cQuery += " (SELECT ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST " 
-	cQuery += " ON ZCI.ZCI_NUMP = POST.ZCI_NUMP " 
-	cQuery += " WHERE   " 
-	cQuery += " ZCI.ZCI_TMPR = 'PENDPROC'   " 
-	cQuery += " AND ZCI.ZCI_METD = 'PUT'   " 
-	cQuery += " AND ZCI.D_E_L_E_T_ = ''  " 
-	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
-
-	//
-	cQuery += " ) AS FONTE "
-	cQuery += " ORDER BY FONTE.ZCI_NUMP, FONTE.REC " 
+	cQuery := " SELECT top "+ cValtochar(nTotReg) +" ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, ZCI.ZCI_DATA, ZCI_DTENTR, ZCI.ZCI_METD, ZCI.ZCI_HORA, ZCI.ZCI_ANTECI, ZIA.REGISTRO, ZIA.CONTADOR "+cEOL
+	cQuery += " FROM "+cEOL
+	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP, COUNT(*) CONTADOR, MAX(R_E_C_N_O_) REGISTRO "+cEOL
+	cQuery += "  FROM "+ retsqlname("ZCI") +" (NOLOCK) "+cEOL
+	cQuery += "  WHERE D_E_L_E_T_='' "+cEOL
+	cQuery += " 	AND ZCI_METD IN ('POST','PUT','DELETE') "+cEOL
+	//cQuery += " 	AND ZCI_DATA  ='20220324' "+cEOL
+	cQuery += " 	AND LEFT(ZCI_URL,15) ='/pedidosdevenda' "+cEOL
+	cQuery += " 	AND ZCI_TMPR = 'PENDPROC' "+cEOL
+	cQuery += " 	AND ZCI_NUMP !='' "+cEOL
+	cQuery += " GROUP BY ZCI_FILIAL, ZCI_NUMP) ZIA "+cEOL
+	cQuery += "  INNER JOIN "+ retsqlname("ZCI") +" (NOLOCK) ZCI ON ZIA.REGISTRO =ZCI.R_E_C_N_O_ "+cEOL
+	cQuery += " ORDER BY ZCI.ZCI_FILIAL, ZCI.ZCI_ANTECI, ZCI.ZCI_DTENTR, ZCI.ZCI_NUMP; "
 
 Return cQuery
 
