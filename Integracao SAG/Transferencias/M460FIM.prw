@@ -46,30 +46,20 @@
 	@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
-	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
+	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento..
 /*/
 User Function M460FIM()
 
 	Local Area		:= GetArea()
-
-	// Filial Frango Vivo
 	Local cFilPV  	:= GetMV("MV_#LFVFIL",,"03")
-
-	// Dados do PV
 	Local _aCabec 	:= {}
 	Local _aItens 	:= {}
-
 	Local cCliCod 	:= GetMV("MV_#LFVCLI",,"027601")
 	Local cCliLoj 	:= GetMV("MV_#LFVLOJ",,"00")
-	//	Local cProdPV := GetMV("MV_#LFVPRD",,"100253")	// APENAS DEBUG
 	Local cProdPV 	:= GetMV("MV_#LFVPRD",,"300042")  	//  publicar este em producao
 	Local cTESPV  	:= GetMV("MV_#LFVTES",,"701")       
-
-	//Local sFilEmit := SuperGetMv( "MV_#M46F1" , .F. , '' ,  ) 		// Ricardo Lima-CH:037647-17/10/18
-	//Local sCliEmit := SuperGetMv( "MV_#M46F2" , .F. , '' ,  ) 		// Ricardo Lima-CH:037647-17/10/18
 	Local cFilGFrt	:= Alltrim(SuperGetMv( "MV_#M46F5" , .F. , '' ,  )) // Ricardo Lima-CH:044314-19/11/18
 	Local cEmpFrt	:= Alltrim(SuperGetMv( "MV_#M46F6" , .F. , '' ,  )) //Everson-CH:044314-06/08/19.
-
 	Local nVlr 		:= 0 //Everson - 03/09/2020. Chamado 744.
 	
 	Private cMostraErro     
