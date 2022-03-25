@@ -42,11 +42,12 @@
     @history tic 15299 - Fer Macieira    - 09/06/2021 - Compensação Errada PR
 	@history tic 17937 - Jonathan        - 02/09/2021 - Gravar data de emissao da nota no retorno para o SAG
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
+	@history ticket 69652 - Fer Macieira - 15/03/2022 - COMPENSAÇÃO DE RA - MADRUGADA
+	@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 /*/
-
 User Function M460FIM()
 
 	Local Area		:= GetArea()
@@ -261,7 +262,7 @@ Return(_lRet)
 	@author 
 	@since 
 	@version 01
-	/*/*
+/*/
 Static Function cM460F2()
 
 	Local aArea		:= GetArea()
@@ -273,6 +274,10 @@ Static Function cM460F2()
 	Local cNumseq   := ""
 	Local cDoc		:= GetSXENum("SD3","D3_DOC")
 	Local aItens	:= {}
+
+	// @history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+	Local cCFOP3    := GetMV("MV_#F45451",,"5451")
+	Local cProd3    := GetMV("MV_#B15451",,"384743")
 
 	Private lMsErroAuto := .F.  
 
@@ -308,6 +313,13 @@ Static Function cM460F2()
 		While SD2->(!EOF()) .and. xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA == SD2->(D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA)
 
 			If Alltrim(SD2->D2_TES) $ cTesRem // KF 30/11/15
+
+				//@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+				If Alltrim(SD2->D2_CF) $ cCFOP3 .and. Alltrim(SD2->D2_COD) $ cProd3
+					SD2->( dbSkip() )
+					Loop
+				EndIf
+				//
 
 				Begin Transaction
 
@@ -1279,11 +1291,17 @@ Static Function COMPCRAUTO()
 				nRecnoRA   := SE1->( RECNO() )
 				nSaldoComp := SE1->E1_SALDO
 
-				PERGUNTE("AFI340",.F.)
-				MV_PAR09     := 2 // Não mostra lançamentos contábeis
-				lContabiliza := MV_PAR11 == 1
-				lAglutina    := MV_PAR08 == 1
-				lDigita      := MV_PAR09 == 1
+				PERGUNTE(PadR("AFI340",Len(SX1->X1_GRUPO)),.F.) // Commpensação Contas Pagar
+				MV_PAR11 := 2 // Contabiliza On Line ? = NÃO
+
+				// @history ticket 69652 - Fer Macieira - 15/03/2022 - COMPENSAÇÃO DE RA - MADRUGADA
+				PERGUNTE(PadR("FIN330",Len(SX1->X1_GRUPO)),.F.) // Commpensação Contas Receber
+				MV_PAR09 := 2 // Contabiliza On Line ? = NÃO
+
+				lContabiliza := .F.
+				lAglutina    := .F.
+				lDigita      := .F.
+				//
 
 				nTaxaCM := RecMoeda(dDataBase,SE1->E1_MOEDA)
 
