@@ -45,7 +45,7 @@
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
-	@history Leonardo P. Monteiro, 25/03/2022, Teste.
+	@history Leonardo P. Monteiro, 25/03/2022, Teste!
 /*/
 
 User Function M460FIM()
