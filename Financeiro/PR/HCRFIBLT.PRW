@@ -30,6 +30,7 @@
 	@history Ticket  7075   - Sigoli              - 06/01/2010 - Alteração da instrução de protesto
 	@history Proj.PIX/LNK   - Rodrigo Mello       - 04/02/2022 - Adicionadas condicoes quando a condicao de pagamento e PIX/LNK, enviando apenas o lgo quando ocorreu erro.
 	@history ticket 68450   - Fernando Macieira   - 18/02/2022 - Email em duplicidade para o cliente/vendedor
+	@history TICKET: 69826  - ADRIANO SAVOINE     - 25/03/2022 - Alterado Ndevice para imprimir Spool.
 /*/
 User Function HCRFIBLT(aParamIXB)
 
@@ -169,7 +170,7 @@ User Function HCRFIBLT(aParamIXB)
 
 	EndIf                                                                     
 
-	oPrint			:= TReport():New("HCRFIBLT","Emissao de Boletos",,{|oPrint|fBoletaOk(aParamIXB)})  
+	oPrint:= TReport():New("HCRFIBLT","Emissao de Boletos",,{|oPrint|fBoletaOk(aParamIXB)})  
 	oPrint:lHeaderVisible 	:= .F.
 
 	If IsInCallStack("u_GeraRAPV") .or. IsInCallStack("u_GeraBlPV") .or. Len(aParamIXB) > 0
@@ -201,8 +202,10 @@ User Function HCRFIBLT(aParamIXB)
 		logZBE(SC5->C5_NUM + " gravou C5_XWSBOLG = 'S'")  // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 21/05/2020
 
 	Else
+		
 		oPrint:oPage:nPaperSize 	:= 9	//// Definido tamanho do Papel Default: 	A4
-		oPrint:nDevice				:= 1	//// Definido Impressao Default: 			1= ARQUIVO  / 2=SPOOL
+		oPrint:nDevice				:= 2	//// Definido Impressao Default: 			1= ARQUIVO  / 2=SPOOL   
+		// TICKET: 69826 - ADRIANO SAVOINE - 25/03/2022
 		oPrint:PrintDialog()
 	
 	EndIf
@@ -725,6 +728,7 @@ Static Function fBoletaOK(aParamIXB)
 				_cCodBarras += _RE_Campo                                               
 			
 		EndCase
+
 			
 		IMPBOLETO(aParamIXB) 		////  Rotina de impressao do Boleto com codigo de Barras 
 			
@@ -1189,6 +1193,8 @@ Return
 */
 Static Function DV_LINHA()
 
+	Local i := 0
+
 	Do Case
 		// Banco do Brasil
 		Case cE1PORTADO == "001"
@@ -1483,6 +1489,8 @@ Return
 Função de Calculo do Digito de Verificação do Codigo de Barras utilizado para os bancos 
 */
 Static Function BarraDV()
+
+	Local i := 0
 
 	Do Case
 		
