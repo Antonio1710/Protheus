@@ -87,16 +87,28 @@ Static Function execWF(lAutom)
 return
 
 Static Function fProcOrq(cUUID, nQtMThe, nTotThe, nRePThe)
-	Local cQuery := ""
+	
+	
 	//Cancela registros em duplicidade.
 	fCanDup()
 
-	cQuery := fSqlZCI(nTotThe)
-
-
-
+	//Processa registros importados na ZCI.
+	fGeraPV(cUUID, nQtMThe, nTotThe, nRePThe)
+	
 return lRet
 
+
+Static Function fGeraPV(cUUID, nQtMThe, nTotThe, nRePThe)
+
+	cQuery := fSqlZCI(nTotThe)
+
+	Tcquery cQuery ALIAS "QZCI" NEW
+
+
+
+return
+
+/* Consulta os registros para processamento na ZCI. */
 Static Function fSqlZCI(nTotReg)
 
 	//Variáveis.
@@ -104,7 +116,7 @@ Static Function fSqlZCI(nTotReg)
 	Default nTotReg	:= 1000
 
 	//Inclusão de pedido de venda.
-	cQuery := " SELECT top "+ cValtochar(nTotReg) +" ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, ZCI.ZCI_DATA, ZCI_DTENTR, ZCI.ZCI_METD, ZCI.ZCI_HORA, ZCI.ZCI_ANTECI, ZIA.REGISTRO, ZIA.CONTADOR "+cEOL
+	cQuery := " SELECT TOP "+ cValtochar(nTotReg) +" ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, ZCI.ZCI_DATA, ZCI_DTENTR, ZCI.ZCI_METD, ZCI.ZCI_HORA, ZCI.ZCI_ANTECI, ZIA.REGISTRO, ZIA.CONTADOR "+cEOL
 	cQuery += " FROM "+cEOL
 	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP, COUNT(*) CONTADOR, MAX(R_E_C_N_O_) REGISTRO "+cEOL
 	cQuery += "  FROM "+ retsqlname("ZCI") +" (NOLOCK) "+cEOL
@@ -119,6 +131,33 @@ Static Function fSqlZCI(nTotReg)
 	cQuery += " ORDER BY ZCI.ZCI_FILIAL, ZCI.ZCI_ANTECI, ZCI.ZCI_DTENTR, ZCI.ZCI_NUMP; "
 
 Return cQuery
+
+/* Processa ou anula registros em duplicidade. */
+Static function fCanDup()
+	Local cQuery := ""
+
+	cQuery := " UPDATE ZCI SET ZCI.ZCI_TMPR='DESCARTADO', ZCI.ZCI_DTPROC='"+ Dtos(Date()) +"', ZCI.ZCI_HRPROC='"+ left(Time(),8) +"', "
+	cQuery += "  	ZCI.ZCI_ERRO=CONVERT(VARBINARY(2000), 'Movimentos descartado devido a duplicidade com o recno '+CONVERT(VARCHAR(10), ZIA.REGISTRO) ) "+cEOL
+	cQuery += " FROM "+ RetSqlName("ZCI") +" ZCI INNER JOIN "+cEOL
+	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP, COUNT(*) CONTADOR, MAX(R_E_C_N_O_) REGISTRO "+cEOL
+ 	cQuery += "  FROM "+ RetSqlName("ZCI") +" "+cEOL
+ 	cQuery += "  WHERE D_E_L_E_T_='' "+cEOL
+	cQuery += " 	AND ZCI_METD IN ('POST','PUT') "+cEOL
+	cQuery += " 	AND LEFT(ZCI_URL,15) ='/pedidosdevenda' "+cEOL
+	cQuery += "  GROUP BY ZCI_FILIAL, ZCI_NUMP) ZIA "+cEOL
+ 	cQuery += "	ON ZCI.ZCI_FILIAL=ZIA.ZCI_FILIAL AND ZCI.ZCI_NUMP=ZIA.ZCI_NUMP AND ZCI.R_E_C_N_O_ < ZIA.REGISTRO "+cEOL
+	cQuery += "WHERE LEFT(ZCI.ZCI_URL,15) ='/pedidosdevenda' "+cEOL
+	cQuery += " AND ZCI_METD IN ('POST','PUT') "+cEOL
+	cQuery += " AND ZCI_TMPR = 'PENDPROC' "+cEOL
+	cQuery += " AND ZCI.ZCI_NUMP !='' "+cEOL
+	cQuery += "ORDER BY ZCI.ZCI_FILIAL, ZCI.ZCI_ANTECI,ZCI.ZCI_NUMP "+cEOL
+
+	If TCSqlExec(cQuery) < 0
+		Conout("ADVEN107P - "+ Dtoc(Date()) +"-"+ Time() +" - " + TCSQLError())
+	else
+		Conout("ADVEN107P - "+ Dtoc(Date()) +"-"+ Time() +" - Eliminar registros em duplicidade.")
+	EndIf
+return
 
 Static Function logZBE(cLog, cParam, cMemo)
 
