@@ -8,6 +8,7 @@
 	@history Chamado 047912  - Adriana Oliveira  - 14/03/2019 - ajuste conforme documentacao Portal Totvs (tdn.totvs.com/pages/releaseview.action?pageId=60771763)
 	@history Chamado 047912  - Adriana Oliveira  - 19/03/2019 - ajuste para outros tipos de operacao
 	@history Ticket 69236    - Abel Babini       - 15/03/2022 - criação de novas regras
+	@history Ticket 69236    - Abel Babini       - 28/03/2022 - Ajuste dos códigos de produtos
 	/*/
 User Function SPDFIS07()
 
@@ -16,7 +17,8 @@ User Function SPDFIS07()
 	Local cRetorno    := ""
 	
 	//Ticket 69236    - Abel Babini       - 15/03/2022 - criação de novas regras
-	If cSituacao== '0' .and. cFilAnt = "02" .and. (Alltrim(cCodProduto) = "383368" .or. Alltrim(cCodProduto) = "383369")//    1- Item de propriedade do informante em posse de terceiros
+	//Ticket 69236    - Abel Babini       - 28/03/2022 - Ajuste dos códigos de produtos
+	If cSituacao== '0' .and. cFilAnt = "02" .and. (Alltrim(cCodProduto) = "349368" .or. Alltrim(cCodProduto) = "349369")//    1- Item de propriedade do informante em posse de terceiros
 		
 		cRetorno := "111540002"
 
