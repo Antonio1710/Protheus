@@ -102,6 +102,7 @@ Static nTipoFrt	:= 0
 	@history 04/11/2021, Everson, Ch:63137  - Tratamento para não permitir alteração e exclusão de registro por usuário diferente que inseriu o registro.
 	@history 05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
 	@history 24/03/2022  Sigoli Tkt 70153   - Declaração de variavel OK na função principal
+	@history 28/03/2022 - ADRIANO SAVOINE - Criado o bloqueio para o tipo de ocorrencia 012 e 014 somente para pessoas especificas.
 /*/
 User Function ADLOG040P()
 
@@ -287,6 +288,7 @@ Static Function vldPre(oModel)
 	//Variáveis.
 	Local aArea			:= GetArea()
 	Local lRet 			:= .T.
+	Local cCodUsr       := RetCodUsr()
 	Local nOperation	:= oModel:GetOperation()
 	Local cCod	     	:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_COD"    )))
 	Local cStatus   	:= Alltrim(GetMv("MV_#STSEMI",,"0/1/4/7"))
@@ -304,6 +306,14 @@ Static Function vldPre(oModel)
 	Local cUsuario		:= oModel:GetValue("ZFAMASTER","ZFA_USUARI" )
 	Local cTpFrg		:= oModel:GetValue("ZFAMASTER","ZFA_VA" ) //Tipo de frete.
 	Local cFilVlUsr		:= Alltrim(cValToChar(GetMv("MV_#FTVLUS",,""))) //Tipo de frete com validação por filial de usuário para alteração e exclusão.
+
+	//Validações para Inclusão e alteração.
+	//Ticket: 68841 - ADRIANO SAVOINE - 28/03/2022.
+	If ( nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE ) .AND. !(cCodUsr $ SuperGetMV("MV_#USUFRT",.F.,"000000")) .AND.(cCodOcorr $ '012/014')
+		//lRet := .F.
+		MsgAlert("Seu usuario não pode inserir ou alterar Ocorrencia para ocorrencia do Tipo 012 ou 014, solicite autorização!!!", "Ocorrencia")
+		cCodOcorr:= oModel:LoadValue("ZFAMASTER","ZFA_OCORRE", " ")
+	ENDIF	
 
 	//Validações para alteração e exclusão.
 	If lRet .And. ( nOperation == MODEL_OPERATION_UPDATE .Or. nOperation == MODEL_OPERATION_DELETE )
