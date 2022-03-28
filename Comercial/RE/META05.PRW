@@ -15,6 +15,7 @@
 	@history Ticket   049194 - William Costa - Incluido exceção para impressao dos produtos 384413 e 342977 Ovos Ferteis 
 	que não são P.A e querem gerar no relatório 
 	@history Ticket   15553  - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
+	@history Ticket   70435  - Adriano Savoine - 28/03/2022 - Ajustado o tratamento devido ao mesmo não ser mais necessario para este parametro.
 /*/
 
 User Function META05()
@@ -128,8 +129,9 @@ Endif
 
 SetDefault(aReturn,cString)
 
-MV_PAR10 := formatIn(ALLTRIM(MV_PAR10),',')
-MV_PAR10 := substring(MV_PAR10, 2, len(alltrim(MV_PAR10))-2)
+//Ticket   70435  - Adriano Savoine - 28/03/2022
+//MV_PAR10 := formatIn(ALLTRIM(MV_PAR10),',')
+//MV_PAR10 := substring(MV_PAR10, 2, len(alltrim(MV_PAR10))-2)
 
 If nLastKey == 27
 	Return
