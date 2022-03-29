@@ -22,7 +22,6 @@
     @history 17/08/2021 - Chamado  18514 Leonardo P. Monteiro - Gravação das mensagens nos pedidos de venda.
     @history 06/01/2022 - Chamado  18301 Leonardo P. Monteiro - Grava o flag da inspeção da Qualidade.
     @history 19/01/2022 - Chamado  18301 Leonardo P. Monteiro - Na cópia dos pedidos de exportação o campo de inspeção da qualidade vir como "2-Não" e gravar a temperatura como '-18.0'.
-    @history 29/03/2022 - Chamado  70523 Leonardo P. Monteiro - PEDIDO COM DATA DE CORREGAMENTO DIVERGENTE. Posiciona no PVs no faturamento para a correta validação e bloqueio dos campos habilitados para edição.
 /*/
 
 User Function EECAP100
@@ -107,11 +106,11 @@ User Function EECAP100
                     //@Ticket  8465 Leonardo P. Monteiro - Gravação da etiqueta de exportação.
                     SC5->C5_XETQUET := EE7XETQ
                     //Data 25/03/2021 - Chamado   8465 Leonardo P. Monteiro - Tratamento da data de entrega do pedido de venda no módulo de faturamento e tipo de frete.
-                    //if Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
+                    if Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
                         IF !Empty(dDtEntr)
                             SC5->C5_DTENTR  := dDtEntr
                         endif
-                    //endif
+                    endif
                     //@Ticket  11022 Leonardo P. Monteiro - Validação e integração do campo.
                     if !EMPTY(EE7XTPF)
                         SC5->C5_TPFRETE := EE7XTPF
@@ -143,11 +142,11 @@ User Function EECAP100
                         SC6->C6_LOCAL := cLocal
                         
                         //Data 25/03/2021 - Chamado   8465 Leonardo P. Monteiro - Tratamento da data de entrega do pedido de venda no módulo de faturamento e tipo de frete.
-                        //if Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
+                        if Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
                             if !Empty(dDtEntr)
                                 SC6->C6_ENTREG := dDtEntr
                             endif
-                        //endif
+                        endif
 
                         SC6->(MsUnlock())
                         SC6->(DbSkip())
@@ -166,9 +165,9 @@ User Function EECAP100
                             RecLock("SC9",.F.)
                                 SC9->C9_LOCAL   := cLocal
                                 // @history 22/05/2021 - Chamado   8465 Leonardo P. Monteiro - Implementação dos campos de container, temperatura, lacres SIF, lacres armador, e datas de produção.
-                                //if Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
+                                if Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
                                     SC9->C9_DATENT	:= dDtentr
-                                //endif
+                                endif
                             SC9->(MsUnlock())
                         endif
                         

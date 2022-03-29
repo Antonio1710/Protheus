@@ -29,7 +29,6 @@
 	@history Chamado 8465  - Leonardo P. Monteiro    - 02/07/2021 - Adição de novos campos retornados do aplicativo da Qualidade.
 	@history Chamado 19284 - Leonardo P. Monteiro    - 12/09/2021 - Ajustado o campo DL/Draft para edição, mesmo após roterização do pedido de exportação.
 	@history Chamado TI    - Leonardo P. Monteiro    - 16/02/2022 - Habilitar o campo de inspeção da qualidade para liberação manual.
-	@history Chamado 70523 - Leonardo P. Monteiro    - 29/03/2022 - PEDIDO COM DATA DE CORREGAMENTO DIVERGENTE. Posiciona no PVs no faturamento para a correta validação e bloqueio dos campos habilitados para edição.
 /*/
 // --------------------------------------------------------------------------------------------------------------
 Static Function Modeldef()
@@ -92,22 +91,19 @@ Static Function Modeldef()
 	
 	//@history Chamado 19284 - Leonardo P. Monteiro    - 12/09/2021 - Ajustado o campo DL/Draft para edição, mesmo após roterização.
 	oStruCab:SetProperty( "EE7_XDLDRA"   , MODEL_FIELD_WHEN, {|| .T. } )
-	DbSelectArea("SC5")
-    SC5->(DbsetOrder(1))
 
-    if SC5->(DbSeek(xFilial("SC5")+EE7->EE7_PEDFAT))
-		if Empty(SC5->C5_NOTA) .AND. Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
-			oStruCab:SetProperty( "EE7_XETQUE"   , MODEL_FIELD_WHEN, {|| .T. } )
-			oStruCab:SetProperty( "EE7_XESPEM"   , MODEL_FIELD_WHEN, {|| .T. } )
-			oStruCab:SetProperty( "EE7_CONSIG"   , MODEL_FIELD_WHEN, {|| .T. } )
-			oStruCab:SetProperty( "EE7_COLOJA"   , MODEL_FIELD_WHEN, {|| .T. } )
-			oStruCab:SetProperty( "EE7_XTPFRE"   , MODEL_FIELD_WHEN, {|| .T. } )
-			
-			
-			oStruEE8:SetProperty( "EE8_DTENTR"   , MODEL_FIELD_WHEN, {|| .T. } )
-			oStruEE8:SetProperty( "EE8_DTENTR"   , MODEL_FIELD_VALID, {|| oModel:GetModel("EE8DETAIL"):getValue("EE8_DTENTR") >= Date() } )
-		endif
+	if Empty(SC5->C5_NOTA) .AND. Empty(SC5->C5_PLACA).AND. Empty(SC5->C5_X_SQED)
+		oStruCab:SetProperty( "EE7_XETQUE"   , MODEL_FIELD_WHEN, {|| .T. } )
+		oStruCab:SetProperty( "EE7_XESPEM"   , MODEL_FIELD_WHEN, {|| .T. } )
+		oStruCab:SetProperty( "EE7_CONSIG"   , MODEL_FIELD_WHEN, {|| .T. } )
+		oStruCab:SetProperty( "EE7_COLOJA"   , MODEL_FIELD_WHEN, {|| .T. } )
+		oStruCab:SetProperty( "EE7_XTPFRE"   , MODEL_FIELD_WHEN, {|| .T. } )
+		
+		
+		oStruEE8:SetProperty( "EE8_DTENTR"   , MODEL_FIELD_WHEN, {|| .T. } )
+		oStruEE8:SetProperty( "EE8_DTENTR"   , MODEL_FIELD_VALID, {|| oModel:GetModel("EE8DETAIL"):getValue("EE8_DTENTR") >= Date() } )
 	endif
+
 	/*
 	oStruEE8:SetProperty( "D1_ZCHQLD"   , MODEL_FIELD_WHEN, {|| .T. } )
 	oStruEE8:SetProperty( "D1_ZCHQTD"   , MODEL_FIELD_WHEN, {|| .T. } )
