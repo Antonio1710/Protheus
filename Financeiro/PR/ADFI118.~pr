@@ -100,29 +100,31 @@ Return aRot
 /*/
 Static Function ModelDef()
 
-    //Na montagem da estrutura do Modelo de dados, o cabeçalho filtrará e exibirá somente 3 campos, já a grid irá carregar a estrutura inteira conforme função fModStruct
-    Local oModel    := NIL
-    Local oStruCab  := FWFormStruct(1, 'ZHB', {|cCampo| AllTRim(cCampo) $ "ZHB_PROCES;"})
-    Local oStruGrid := fModStruct()
-    //Local bCommit   := {|oModel| FWMsgRun(, {|| u_ADFIN120P(oModel) }, "Aguarde", "Checando acordos trabalhistas no RM ["+Time()+"] ...")}
- 
-    //Monta o modelo de dados, e na Pós Validação, informa a função fValidGrid
-    oModel := MPFormModel():New('ADFI118M', /*bPreValidacao*/, {|oModel| fValidGrid(oModel)}, /*bCommit*/, /*bCancel*/ )
- 
-    //Agora, define no modelo de dados, que terá um Cabeçalho e uma Grid apontando para estruturas acima
-    oModel:AddFields('MdFieldZHB', NIL, oStruCab)
-    oModel:AddGrid('MdGridZHB', 'MdFieldZHB', oStruGrid, , )
- 
-    //Monta o relacionamento entre Grid e Cabeçalho, as expressões da Esquerda representam o campo da Grid e da direita do Cabeçalho
-    oModel:SetRelation('MdGridZHB', {;
-            {'ZHB_FILIAL', 'FWxFilial("ZHB")'},;
-            {"ZHB_PROCES",  "ZHB_PROCES"};
-        }, ZHB->(IndexKey(2)))
-     
-    //Definindo outras informações do Modelo e da Grid
-    oModel:GetModel("MdGridZHB"):SetMaxLine(9999)
-    oModel:SetDescription("Despesas dos processos")
-    oModel:SetPrimaryKey({"ZHB_FILIAL", "ZHB_PROCES"})
+    // Criacao do objeto do modelo de dados
+    Local oModel  := Nil                   
+    Local aZHCRel := {}
+
+    // Criacao da estrutura de dados utilizada na interface
+    Local oStPai   := FWFormStruct(1, "ZHC")
+    Local oStFilho := FWFormStruct(1, "ZHD")
+
+    // Criando o modelo e os relacionamentos
+    oModel := MPFormModel():New("ADFI118")
+    oModel:AddFields("ZHCMASTER", /*cOwner*/, oStPai)
+    oModel:AddGrid("ZHDDETAIL", "ZHCMASTER", oStFilho, /*bLinePre*/, /*bLinePost*/, /*bPre - Grid Inteiro*/, /*bPos - Grid Inteiro*/, /*bLoad - Carga Modelo*/)
+
+    // Fazendo relacionamento entre pai e filho
+    aAdd( aZHCRel, {"ZHC_FILIAL", "ZHD_FILIAL"} )
+    aAdd( aZHCRel, {"ZHC_CODIGO", "ZHD_CODIGO"} )
+    
+    oModel:SetRelation("ZHDDETAIL", aZHCRel, ZHD->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
+    oModel:GetModel("ZHDDETAIL"):SetUniqueLine({"ZHD_PROCES"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
+    oModel:SetPrimaryKey({"ZHC_CPFCGC"})
+
+    // Setando as descricoes
+    oModel:SetDescription("Favorecidos - RM Acordos Trabalhistas")
+    oModel:GetModel("ZHCMASTER"):SetDescription("Dados bancários")
+    oModel:GetModel("ZHDDETAIL"):SetDescription("Processos RM")
  
 Return oModel
  
