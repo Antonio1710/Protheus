@@ -16,6 +16,7 @@
     @history ticket   8382 - Leonardo P. Monteiro - 21/01/2021 - Documentação e correção do error.log 'Alias already in use: COBTOT'.
 	@history ticket   8382 - Andre Mendes (Obify) - 24/02/2021 - Documentação e correção do error.log 'Alias already in use: COBTOT'.
 	@history ticket  11311 - Andre Mendes (Obify) - 06/05/2021 - Erro log: Alias already in use: COBTOT  on RUNCONT(AD0027W.PRW) 25/02/2021 12:39:19 line : 415
+	@history Ticket  70540 - ADRIANO SAVOINE      - 30/03/2022 - Ajuste para o parametro de filiais.
  /*/
 
 User Function AD0027W()
@@ -211,7 +212,21 @@ User Function AD0027W()
 	cDesc3  := " By Desenvolvimento ADORO"
 	nomerel := "AD0027W"
 
-	nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+	// Ticket 70540 - ADRIANO SAVOINE - 30/03/2022
+
+    IF TYPE(MV_PAR05) == "N" .OR. TYPE(MV_PAR05) == "U"
+
+        MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+        U_AD0027W()
+
+        ELSE
+
+        nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+    ENDIF
 
 	If nLastKey == 27
 		Return
@@ -2831,6 +2846,8 @@ Return(_nFrete)
 
 Static Function Impttlzd()
 
+	Local _yy := 0
+
 For _yy := 1 to len(_aTotaliz)    
     If nLin > 55   //55 
 		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
@@ -2928,6 +2945,8 @@ _aTotaliz := {}
 Return()
 
 Static Function Impttlzd2()
+
+	Local _yy := 0
 
 For _yy := 1 to len(_aTotaliz)
     
@@ -3029,6 +3048,8 @@ Return()
  
 &&Mauricio 21/12/11 - filtra os vendedores conforme os usuarios que emitem o relatorio
 Static function fFilVend()
+
+	Local _ni := 0
 
 If _lSuperv
    _cCodUs := __cUserID
