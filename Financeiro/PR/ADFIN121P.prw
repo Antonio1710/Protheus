@@ -36,6 +36,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
     @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
+    @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -253,7 +254,7 @@ User Function ADFIN121P(lAuto)
                                         { "E2_NATUREZ", SE2->E2_NATUREZ	         , NIL },;
                                         { "E2_FORNECE", SE2->E2_FORNECE          , NIL },;
                                         { "E2_LOJA"   , SE2->E2_LOJA             , NIL },;
-                                        { "E2_EMISSAO", msDate()                 , NIL },;
+                                        { "E2_EMISSAO", dDataBase /*msDate()*/                 , NIL },;
                                         { "E2_VENCTO" , dVencto                  , NIL },;
                                         { "E2_VENCREA", DataValida(dVencto)      , NIL },;
                                         { "E2_VALOR"  , nVlrParcelas+nDifParcelas, NIL },;
