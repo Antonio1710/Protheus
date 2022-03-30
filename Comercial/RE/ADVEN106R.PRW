@@ -505,8 +505,20 @@ User Function ADVEN106R() // U_ADVEN106R()
 	Private _nTotcDSR	:= 0
 
 	Private aDSR	:= {}
+
+	// Ticket 70540 - ADRIANO SAVOINE - 30/03/2022
+	IF TYPE(_cFilial) == "N" .OR. TYPE(_cFilial) == "U"
+
+		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		U_ADVEN106R()
+
+		ELSE
+
+		nomerel := SetPrint(cString,Nomerel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho,.T.)
+
+	ENDIF
 	
-	nomerel := SetPrint(cString,Nomerel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho,.T.)
 	
 	If nLastKey == 27
 		Return
