@@ -34,6 +34,8 @@ Static cRotina  := "ADFIN121P"
     @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
     @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
+    @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
+    @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -305,7 +307,7 @@ User Function ADFIN121P(lAuto)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
 
-                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
+                        //u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
 
                     EndIf
 
@@ -572,6 +574,7 @@ Return
 User Function FixParcNDI(cNumNDI)
 
     Local nDias      := 0
+    Local nSumDias   := 0
     Local dNewVencto := CtoD("//")
     Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
     Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
@@ -606,7 +609,17 @@ User Function FixParcNDI(cNumNDI)
                                 SE2->( msUnLock() )
                             EndIf
                         
-                            nDias := nDias + 30
+                            // @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
+                            nSumDias := 30
+                            If Month(ZHB->ZHB_VENCTO) == 2 .and. ZHB->ZHB_PARCEL > 1 .and. SE2->E2_PARCELA == "001"
+                                nSumDias := 28
+                                If LastDay(ZHB->ZHB_VENCTO) == 29
+                                    nSumDias := 29
+                                EndIf
+                            EndIf
+                            //
+
+                            nDias := nDias + nSumDias
                         
                         EndIf
 
@@ -644,6 +657,7 @@ Return
 User Function FixAllNDI()
 
     Local nDias      := 0
+    Local nSumDias   := 0
     Local dNewVencto := CtoD("//")
     Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
     Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
@@ -651,7 +665,7 @@ User Function FixAllNDI()
     ZHB->( dbGoTop() )
     Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB")
 
-        If !Empty(ZHB->ZHB_NUM) /*.and. ZHB->ZHB_PARCEL>1*/ .and. ZHB->ZHB_GERPAR
+        If !Empty(ZHB->ZHB_NUM) .and. ZHB->ZHB_PARCEL>1 .and. ZHB->ZHB_GERPAR
 
             SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
             If SE2->( dbSeek(FWxFilial("SE2")+PadR(cPrefixo,TamSX3("E2_PREFIXO")[1])+ZHB->ZHB_NUM) )
@@ -660,7 +674,7 @@ User Function FixAllNDI()
 
                 Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. AllTrim(SE2->E2_PREFIXO)==cPrefixo .and. SE2->E2_NUM==ZHB->ZHB_NUM
 
-                    If AllTrim(SE2->E2_TIPO) == cTipoNDI .and. Empty(SE2->E2_BAIXA)
+                    If AllTrim(SE2->E2_TIPO) == cTipoNDI
 
                         dNewVencto := ZHB->ZHB_VENCTO + nDias
 
@@ -671,7 +685,17 @@ User Function FixAllNDI()
                             SE2->( msUnLock() )
                         EndIf
                     
-                        nDias := nDias + 30
+                        // @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
+                        nSumDias := 30
+                        If Month(ZHB->ZHB_VENCTO) == 2 .and. ZHB->ZHB_PARCEL > 1 .and. SE2->E2_PARCELA == "001"
+                            nSumDias := 28
+                            If LastDay(ZHB->ZHB_VENCTO) == 29
+                                nSumDias := 29
+                            EndIf
+                        EndIf
+                        //
+                        
+                        nDias := nDias + nSumDias
                     
                     EndIf
 
