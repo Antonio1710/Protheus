@@ -7,7 +7,8 @@
 	@since 03/07/2013
 	@version 01
 	@history Everson - 16/05/2019. Chamado 049064. IncluÌda a opÁ„o de atualizaÁ„o de pedido mÌnimo do cliente. 
-	@history Everson - 19/01/2021. Chamado TI. CorreÁ„o nas nomenclaturas dos descontos. 
+	@history Everson - 19/01/2021. Chamado TI. CorreÁ„o nas nomenclaturas dos descontos.
+	@history Tkt 16833 - Leonardo P. Monteiro - 31/03/2022 - AdiÁ„o da nova opÁ„o para atualizaÁ„o do Local de ExpediÁ„o.
 	/*/
 User Function ALTCPSA1() // U_ALTCPSA1()
 
@@ -49,6 +50,7 @@ User Function ALTCPSA1() // U_ALTCPSA1()
 	aAdd( aCombo1, "16-Contato")
 	aAdd( aCombo1, "17-Tel2,Tel3,Tel4")
 	aAdd( aCombo1, "18-Pedido MÌnimo")
+	aAdd( aCombo1, "19-Filial de ExpediÁ„o")
 
 	nTamLin  := 23 
 	_cArq    := space(40)      
@@ -178,6 +180,11 @@ Static Function ProcArq(lEnd)
 
 		nTamLin  := 100
 		_cNomCpo := "pedMinimo"
+	
+	ElseIf nCombo1 == 19
+
+		nTamLin  := 14
+		_cNomCpo := "LocalExpedicao"
 
 	EndIf
 
@@ -891,6 +898,27 @@ Static Function ProcArq(lEnd)
 						EndIf                
 
 					EndIf		
+				ElseIf _cNomCpo== "LocalExpedicao"
+					aLocExp 	:= SEPARA(Alltrim(cValToChar(cBuffer)),";",.T.)	
+					
+					if Len(aLocExp) >=3
+
+						cLocExp  	:= left(Alltrim(aLocExp[3]),4)
+						cLocExp 	:= fLocPad(cLocExp)
+
+						if !Empty(cLocExp)
+							
+							If Reclock("SA1",.F.)
+								SA1->A1_XLOCEXP := cLocExp	
+								Msunlock()
+
+								AutoGrLog("Linha "+strzero(nlin,5)+" Cliente "+_cCod+_cLoja+" "+SA1->A1_NOME+" Loja ExpediÁ„o PARA: " + cLocExp )
+								logZBE("Linha "+strzero(nlin,5)+" Cliente "+_cCod+_cLoja+" "+SA1->A1_NOME+" PED MIN PARA: " +  cLocExp ,"CLIENTE:" + Alltrim(cValToChar(SA1->A1_COD)) + "-" + Alltrim(cValToChar(SA1->A1_LOJA)))	
+
+							EndIf
+						endif
+
+					endif
 
 				EndIf
 				//
@@ -940,6 +968,71 @@ Static Function ProcArq(lEnd)
 	EndIf // Fechar nHdl == -1
 
 Return Nil
+
+/* Busca as informaùùes do cabeùalho. */
+Static Function fgetSX3(cCampos)
+    Local aRet      := {}
+    Local cCampo    := ""
+    Local nX        := 0
+    Local nCampos   := 0
+    Local bValid
+    Local aCampos   := Separa(cCampos,",")
+    
+    dbselectarea("SX3")
+    sx3->(dbsetorder(2)) // Campo
+    nCampos := len(aCampos)
+    
+    for nx := 1 to nCampos
+
+        cCampo := Alltrim(aCampos[nX])
+        cUsado := GetSX3Cache(cCampo, "X3_USADO")
+        
+        if !Empty(GetSX3Cache(cCampo, "X3_CAMPO"))
+
+            bValid := Alltrim(GetSX3Cache(cCampo, "X3_VALID"))
+
+            if Empty(bValid)
+                bValid := {|| .T. }
+            ELSE
+                bValid := &("{|| "+Alltrim(GetSX3Cache(cCampo, "X3_VALID")) +" }")
+            endif
+
+            aadd(aRet,{ alltrim(GetSX3Cache(cCampo, "X3_TITULO")),;
+            GetSX3Cache(cCampo, "X3_CAMPO")	,;
+            GetSX3Cache(cCampo, "X3_PICTURE"),;
+            GetSX3Cache(cCampo, "X3_TAMANHO"),;
+            GetSX3Cache(cCampo, "X3_DECIMAL"),;
+            bValid,;
+            GetSX3Cache(cCampo, "X3_USADO"),;
+            GetSX3Cache(cCampo, "X3_TIPO"),;
+            GetSX3Cache(cCampo, "X3_F3"),;
+            GetSX3Cache(cCampo, "X3_CONTEXT"),;
+            GetSX3Cache(cCampo, "X3_CBOX"),;
+            GetSX3Cache(cCampo, "X3_RELACAO")})
+        endif
+    next nx
+
+return aRet
+
+Static Function fLocPad(cLocPad)
+	Local cRet 	:= ""
+	Local aRet 	:= fgetSX3("A1_XLOCEXP")
+	Local nA	:= 0
+
+	aXBOX	:= Separa(aRet[1][11],";")
+	nXBOX	:= Len(aXBOX)
+
+	cLocPad := Alltrim(cLocPad)
+
+	for nA := 1 to nXBOX
+		if cLocPad$Left(aXBOX[nA],4)
+			cRet := Alltrim(aXBOX[nA])
+		endif
+	next nA
+
+
+return cRet
+
 /*
 ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
