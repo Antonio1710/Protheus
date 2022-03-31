@@ -19,6 +19,7 @@
     @history Ticket   65396 - Adriano Savoine      - 17/12/2021 - ADEQUANDO O RELATORIO AOS DADOS EXISTENTES NAS REGRAS DE INFRAESTRUTURA ADORO.
     @history Ticket   69148 - Leonardo P. Monteiro - 03/03/2022 - Correção de error.log no tratamento da varíavel cSexo.
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
+    @history Chamado 16833 - Leonardo P. Monteiro - 31/03/2022- Correção na gravação dos campos de medidas para os uniformes e armários. Quando alterado o cadastro os valores estavam sendo zerados.
 /*/
 
 Class ADOGPE
@@ -71,12 +72,20 @@ METHOD fCadEleg(cFilPro,;
                 cSexo) CLASS ADOGPE
     Local cQuery        := ""
 
-    Private cIncAlt       := "N"
-    Private cCodSitT      := ""
-    Private cCodFunT      := ""
-    Private cCodSecT      := ""
-    Private cCodHorT      := ""
-    Private dDemissT      := Stod("")
+    Private cIncAlt     := "N"
+    Private cCodSitT    := ""
+    Private cCodFunT    := ""
+    Private cCodSecT    := ""
+    Private cCodHorT    := ""
+    Private dDemissT    := Stod("")
+    Private cCamisa1T   := ""
+    Private cBlusaT1T   := ""
+    Private cCalca1T    := ""
+    Private cCalcT1T    := ""
+    Private cCalcado1T  := ""
+    Private cMeia1T     := ""
+    Private cJalecoT    := ""
+    Private cCodZHLT    := ""
 
     Default cCamisa1    := ""
     Default cBlusaT1    := ""
@@ -127,6 +136,17 @@ METHOD fCadEleg(cFilPro,;
                 cCodSecT    := ZI1->ZI1_SECAO
                 cCodHorT    := ZI1->ZI1_CODHOR
                 dDemissT    := ZI1->ZI1_DEMISS
+
+                cCamisa1T   := ZI1->ZI1_TCAMPA
+                cBlusaT1T   := ZI1->ZI1_TBLUTE
+                cCalca1T    := ZI1->ZI1_TCALPA
+                cCalcT1T    := ZI1->ZI1_TCALTE
+                cCalcado1T  := ZI1->ZI1_TCALCA
+                cMeia1T     := ZI1->ZI1_TMEIAS
+                cJalecoT    := ZI1->ZI1_TJALEC
+
+                cCodZHLT    := ZI1->ZI1_CODZHL
+            
 
                 if Reclock("ZI1",.F.)
                     Dbdelete()
@@ -199,6 +219,27 @@ METHOD fCadEleg(cFilPro,;
             ZI1_CODHOR  := cCodHorar
             ZI1_ADMISS  := dAdmissao
             ZI1_DEMISS  := dDemissao
+
+            // Regrava as informações na alteração do registro.
+            if cIncAlt == "A"
+                ZI1->ZI1_CODSIT := cCodSitT
+                ZI1->ZI1_FUNCAO := cCodFunT
+                ZI1->ZI1_SECAO  := cCodSecT
+                ZI1->ZI1_CODHOR := cCodHorT
+                ZI1->ZI1_DEMISS := dDemissT
+
+                ZI1->ZI1_TCALCA := cCalcado1T
+                ZI1->ZI1_TBLUTE := cBlusaT1T
+                ZI1->ZI1_TCALPA := cCalca1T
+                ZI1->ZI1_TCALTE := cCalcT1T
+                ZI1->ZI1_TCAMPA := cCamisa1T
+                ZI1->ZI1_TJALEC := cJalecoT
+                ZI1->ZI1_TMEIAS := cMeia1T
+                
+                ZI1->ZI1_CODZHL := cCodZHLT
+            endif
+
+
 
             if !Empty(cCamisa1) .AND. Empty(ZI1->ZI1_TCAMPA)
                 ZI1->ZI1_TCAMPA := Alltrim(cCamisa1)
