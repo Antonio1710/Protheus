@@ -2,6 +2,19 @@
 #include "Protheus.ch"
 #include "topconn.ch"
 
+/*/{Protheus.doc} User Function AD0027Y
+	(Relatorio Meta de Vendas Supervisor( COMERCIAL  ))
+	@type  Function
+	@author  Heraldo C. Hebling 
+	@since 20/02/2003
+	@version 01
+	@history 03/10/2003 Conforme solicitado por Decio, os dias que tem  valor  ZERO , nao devem ser consideradas nos calculos de media do Supervisor. Heraldo.                               ³±±
+    @history 10/02/2009 - HC CONSYS - Incluido funcao para criar automaticamente perguntas no SX1.
+    @history 10/02/2009 - HC CONSYS - Incluido parametro para quebra de mais um grupo Totalizador e alterado numero de sub-grupos de 10 para 20 conforme chamado nro 003194                  ³±±
+    @history 21/11/11 - Ajustes de colunas e calculos conforme solicitação do Sr. Fernando.
+	@history Ticket 70540 - ADRIANO SAVOINE - 30/03/2022 - Ajuste no parametro de filiais.  
+	/*/
+
 User Function AD0027Y()
 
 U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio Meta de Vendas Supervisor( COMERCIAL  )')
@@ -22,30 +35,6 @@ Private cLin6 := ""
 Private cLin7 := ""
 Private cLin8 := ""
 
-                    
-/*  ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Programa  ³  Meta    ³ Autor ³  Heraldo C. Hebling   ³ Data ³ 20/02/03 ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡…o ³ Relatorio Meta de Vendas Supervisor( COMERCIAL  )          ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Uso      ³ Adoro Alimenticia                                          ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Alteracao³ 03/10/2003 Conforme solicitado por Decio, os dias que tem  ³±±
-±±³          ³ valor  ZERO , nao devem ser consideradas nos calculos de   ³±±
-±±³          ³ media do Supervisor. Heraldo                               ³±±
-±±³          ³ 10/02/2009 - HC CONSYS - Incluido funcao para criar        ³±±
-±±³          ³ automaticamente perguntas no SX1.                          ³±±
-±±³            10/02/2009 - HC CONSYS - Incluido parametro para quebra de ³±±
-±±³            mais um grupo Totalizador e alterado numero de sub-grupos  ³±±
-±±³            de 10 para 20 conforme chamado nro 003194                  ³±±
-               21/11/11 - Ajustes de colunas e calculos conforme solicita ³±±
-               ção do Sr. Fernando                                        ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-/*/
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Define Variaveis                                             ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -180,6 +169,7 @@ imprime    := .T.
 //cPerg   := "AD0027"
 //cPerg		:="AD0N27"   && Utilizando outro grupo de perguntas por motivo das alteracoes chamado 003194
 //cPerg		:=PADR("AD0N27",10," ")   && Utilizando outro grupo de perguntas por motivo das alteracoes chamado 003194
+
 cPerg		:=PADR("AD027Y",10," ")
 ValidPerg()
 Pergunte(cPerg,.F.)
@@ -195,7 +185,22 @@ cDesc2  := "por Supervisor participacao de vendas e volumes"
 cDesc3  := " By Desenvolvimento ADORO"
 nomerel := "AD0027Y"
 
-nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+// Ticket 70540 - ADRIANO SAVOINE - 30/03/2022
+
+IF TYPE(MV_PAR05) == "N" .OR. TYPE(MV_PAR05) == "U"
+
+	MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+	nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+	U_AD0027Y()
+
+	ELSE
+
+	nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+ENDIF
+
 
 If nLastKey == 27
 	Return
@@ -2708,6 +2713,8 @@ Return(_nFrete)
 
 Static Function Impttlzd()
 
+	Local _yy := 0
+
 For _yy := 1 to len(_aTotaliz)    
     If nLin > 55   //60 
 		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
@@ -2805,6 +2812,8 @@ _aTotaliz := {}
 Return()
 
 Static Function Impttlzd2()
+
+	Local _yy:= 0
 
 For _yy := 1 to len(_aTotaliz)
     
