@@ -37,6 +37,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
+    @ticket 18141 - Fernando Macieira - 31/03/2022 - RM - Acordos - Integração Protheus - Reativação função fix - Visa garantir a integridade das regras
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -308,7 +309,7 @@ User Function ADFIN121P(lAuto)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
 
-                        //u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
+                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 31/03/2022 - RM - Acordos - Integração Protheus - Reativação função fix - Visa garantir a integridade das regras
 
                     EndIf
 
