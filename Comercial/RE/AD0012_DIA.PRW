@@ -23,6 +23,7 @@
 	@history Ticket  64069  - Leonardo P. Monteiro  - 23/11/2021 - Inclusão de alerta referente a problemas na geração do relatório na Cloud.
 	@history Ticket  64069  - Leonardo P. Monteiro  - 06/12/2021 - Direcionamento do relatório atual para o ADVEN106R.
 	@history Ticket  69990  - Adriano Savoine       - 21/03/2022 - Alterado a declaração da Variavel na query estava de forma errada.
+	@history Ticket  70540  - ADRIANO SAVOINE       - 30/03/2022 - Tratada a variavel e retirados erros de variaveis do fonte e apagado a função sem uso.
 	
 	/*/
 User Function AD0012_DIA // U_AD0012_DIA()
@@ -429,8 +430,20 @@ User Function AD0012_DIA // U_AD0012_DIA()
 	Private _nTotF1	:= 0
 	Private _nTotF2	:= 0
 	Private _nTotF3	:= 0
+
+	// Ticket 70540 - ADRIANO SAVOINE - 30/03/2022
+	IF TYPE(_cFilial) == "N" .OR. TYPE(_cFilial) == "U"
+
+		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		U_AD0012_DIA()
+
+		ELSE
+
+		nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
+
+	ENDIF
 	
-	nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
 	
 	If nLastKey == 27
 		Return
@@ -3095,7 +3108,12 @@ Return
 /*/
 Static Function RunRep()
 
-	Local nOrdem
+	
+	Local _nCi  := 0
+	Local _nI   := 0
+
+
+
 	nLin:=8
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -3267,6 +3285,9 @@ Return
 
 Static Function ImpCabec()
 
+	Local _nXi := 0
+	
+
 	nLin++
 	_nCol		:= 2
 	Cabec10		:=	"|"
@@ -3296,6 +3317,9 @@ Static Function ImpCabec()
 Return
 
 Static Function Totaliz
+
+	Local _nXi := 0
+
 
 	nLin++
 	_nIx	:=	_nI - 1
@@ -4125,60 +4149,6 @@ static function _atualizaSX1()
 	//
 
 return
-
-User Function FXFIL_DIA()
-
-	Local MvPar
-	Local MvParDef:=""
-	Local nTam := 2
-	Local nX := 0
-	Local nLen := 0
-	
-	Private aGrupo:={}
-
-	U_ADINF009P('AD0012_DIA' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de geracao de realizado de vendas das regioes')
-	
-	//cAlias := Alias() 					 // Salva Alias Anterior
-	
-	MvPar:=&(Alltrim(ReadVar()))		 // Carrega Nome da Variavel do Get em Questao
-	mvRet:=Alltrim(ReadVar())			 // Iguala Nome da Variavel ao Nome variavel de Retorno
-	
-	dbSelectArea("SM0")
-	_SM0cAlias := Alias()
-	_SM0cOrder := IndexOrd()
-	_SM0cRecno := Recno()
-	
-	DbGotop()
-	CursorWait()
-	While !Eof() .And. SM0->M0_CODIGO == cEmpAnt
-		Aadd(aGrupo,SM0->M0_CODFIL + " - " + Alltrim(SM0->M0_FILIAL))
-		MvParDef+=SM0->M0_CODFIL
-		dbSkip()
-	Enddo
-
-	CursorArrow()
-	IF f_Opcoes(@MvPar,"Filiais",aGrupo,MvParDef,12,49,.F., nTam, Len(aGrupo))  // Chama funcao f_Opcoes
-		
-		mvpar := StrTran(mvpar, "*", "")
-		nLen := Len(mvpar)-1
-		
-		For nX := 0 To nLen Step nTam
-			mvpar := SubStr(mvpar, 1, nX+nTam+Int(nX/nTam))+","+SubStr(mvpar, nX+nTam+Int(nX/nTam)+1, Len(mvpar))
-		Next nX
-		
-		_nTam := LEN(MVPAR)
-		MVPAR := SUBSTR(MVPAR,1,_nTAM-1)
-		
-		&MvRet := mvpar                                                                          // Devolve Resultado
-		
-	EndIF
-	
-	dbSelectArea(_SM0cAlias)
-	dbSetOrder(_SM0cOrder)
-	dbGoto(_SM0cRecno)
-	// Retorna Alias
-
-Return MvParDef
 
 
 /*/

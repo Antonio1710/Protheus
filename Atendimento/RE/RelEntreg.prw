@@ -1,30 +1,24 @@
 #Include "Rwmake.ch"
 #Include "Topconn.ch"
-/*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณRelEntrg  บ Autor ณ Mauricio da Silva  บ Data ณ  24/05/10   บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDescricao ณ Relatorio de Entrega realizadas.Chamado 006200.            บฑฑ
-ฑฑบ          ณ                                                            บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณ Ad'oro                                                     บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-/*/
+
+/*/{Protheus.doc} User Function RelEntrg
+	(Relatorio de Entrega realizadas.Chamado 006200.)
+	@type  Function
+	@author Mauricio da Silva 
+	@since 24/05/2010
+	@version 01
+	@history TICKET: 70540 - 30/03/2022 - ADRIANO SAVOINE - Tratado o parametro filial para gerar o relatorio de forma correta.
+	/*/
+
 User Function RelEntreg() // U_RelEntreg()
 
 	Local cDesc1         := "Este programa tem como objetivo imprimir relatorio "
 	Local cDesc2         := "de entregues realizadas por periodo."
 	Local cDesc3         := ""
-	Local cPict          := ""
 	Local titulo         := "Relatorio de Entregas Realizadas"
 	Local nLin           := 80
 	Local Cabec1         := ""
 	Local Cabec2         := ""
-	Local imprime        := .T.
 	Local aOrd           := {}
 	
 	Private cPerg 		:= "RELENT"
@@ -58,8 +52,23 @@ User Function RelEntreg() // U_RelEntreg()
 	
 	dbSelectArea("SZD")
 	dbSetOrder(1)
+
+//TICKET: 70540 - 30/03/2022 - ADRIANO SAVOINE
+IF TYPE(mv_par05) == "N" .OR. mv_par05 == "                                                  "
+
+    MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+  	wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+
+  	U_RelEntreg()
+
+   ELSE
+
+   wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+
+ENDIF
 	
-	wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+	
 	
 	If nLastKey == 27
 		Return
