@@ -1,26 +1,15 @@
 #INCLUDE "rwmake.ch"
 #INCLUDE "TOPCONN.CH"
-/*                         
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Programa  ³ PERFORCLI³ Autor ³ Mauricio - MDS TEC      ³ Data ³ 03/09/2014 ³±±               
-±±³          ³          ³       ³ 						  ³      ³            ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descricao ³ Relatorio de Performance dos Clientes(Varejo ou Rede) em       ³±±
-±±³          ³ periodo maximo de 12 meses                                     ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Uso       ³ ADORO                                                           ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³             ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL              ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Programador   ³  Data  ³              Motivo da Alteracao                  ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³              ³        ³                                                   ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
+
+/*/{Protheus.doc} User Function PERFORCLI
+   ( Relatorio de Performance dos Clientes(Varejo ou Rede) em periodo maximo de 12 meses )
+   @type  Function
+   @author Mauricio - MDS TEC
+   @since 03/09/2014
+   @version 01
+   @history TICKET: 70540 - ADRIANO SAVOINE - 29/03/2022 - Criado uma recurção para forçar o usuario a digitar a filial, de forma correta.
+   /*/
+
 User Function PERFORCLI()
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -36,7 +25,7 @@ Local nLin         	 := 80
 Local Cabec1       	 := ""
 Local Cabec2       	 := ""
 Local imprime      	 := .T.
-Local aOrd 			 := {}
+Local aOrd 			    := {}
 
 Private lEnd         := .F.
 Private lAbortPrint  := .F.
@@ -82,7 +71,14 @@ Pergunte(cPerg,.F.)
 dbSelectArea(cString)
 dbSetOrder(1)
 
-wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,,.T.,Tamanho,,.T.)
+//TICKET: 70540 - ADRIANO SAVOINE - 29/03/2022
+IF TYPE(mv_par08) == "N" .OR. mv_par08 == ""
+   MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+   wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,,.T.,Tamanho,,.T.) 
+   U_PERFORCLI()
+   ELSE
+   wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,,.T.,Tamanho,,.T.)
+ENDIF
 
 If nLastKey == 27
 	Return
@@ -98,6 +94,8 @@ nTipo := If(aReturn[4]==1,15,18)
 nOrdem:= aReturn[8]
 
 RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
+
+
 Return
 
 
@@ -105,6 +103,8 @@ Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 
 Local lFlag		:= .T.
 Local cAliasMP  := ""
+Local _nPer := 0
+Local _ni   := 0
 
 _dDTCORTE := MV_PAR02
 

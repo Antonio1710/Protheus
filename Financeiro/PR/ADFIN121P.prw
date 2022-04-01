@@ -35,6 +35,8 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
     @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
+    @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
+    @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -252,7 +254,7 @@ User Function ADFIN121P(lAuto)
                                         { "E2_NATUREZ", SE2->E2_NATUREZ	         , NIL },;
                                         { "E2_FORNECE", SE2->E2_FORNECE          , NIL },;
                                         { "E2_LOJA"   , SE2->E2_LOJA             , NIL },;
-                                        { "E2_EMISSAO", msDate()                 , NIL },;
+                                        { "E2_EMISSAO", dDataBase /*msDate()*/                 , NIL },;
                                         { "E2_VENCTO" , dVencto                  , NIL },;
                                         { "E2_VENCREA", DataValida(dVencto)      , NIL },;
                                         { "E2_VALOR"  , nVlrParcelas+nDifParcelas, NIL },;
@@ -306,7 +308,7 @@ User Function ADFIN121P(lAuto)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
 
-                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
+                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
 
                     EndIf
 
@@ -673,7 +675,7 @@ User Function FixAllNDI()
 
                 Do While SE2->( !EOF() ) .and. SE2->E2_FILIAL==FWxFilial("SE2") .and. AllTrim(SE2->E2_PREFIXO)==cPrefixo .and. SE2->E2_NUM==ZHB->ZHB_NUM
 
-                    If AllTrim(SE2->E2_TIPO) == cTipoNDI .and. Empty(SE2->E2_BAIXA)
+                    If AllTrim(SE2->E2_TIPO) == cTipoNDI
 
                         dNewVencto := ZHB->ZHB_VENCTO + nDias
 

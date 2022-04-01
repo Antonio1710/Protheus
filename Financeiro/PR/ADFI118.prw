@@ -23,6 +23,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento das parcelas que não estiverem em borderô ou baixados quando algum deles estiver
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+    @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Execauto de alteração não retornou erro mas também não efetivou a alteração
 /*/
 User Function ADFI118()
 
@@ -880,11 +881,12 @@ Static Function fEfetiva()
                                         { "E2_FORNECE", SE2->E2_FORNECE    , NIL },;
                                         { "E2_LOJA"   , SE2->E2_LOJA       , NIL },;
                                         { "E2_VENCTO" , aColsGrid[i,9]        , NIL },;
-                                        { "E2_VENCREA", aColsGrid[i,9]        , NIL },;
+                                        { "E2_VENCREA", DataValida(aColsGrid[i,9])        , NIL },;
                                         { "E2_VALOR"  , aColsGrid[i,10]       , NIL }}
 
                             // Altero no Contas a Pagar
                             lMsErroAuto := .f.
+                            dbSelectArea("SE2")
                             msExecAuto( { |x,y,z| FINA050(x,y,z)},aDadNDI,, 4) // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
 
                             If lMsErroAuto
@@ -900,6 +902,16 @@ Static Function fEfetiva()
                                 RecLock("SE2", .F.)
                                     SE2->E2_ORIGEM  := "GPEM670" // Em função das customizações existentes
                                     SE2->E2_XDIVERG := "N" // Pois já foi aprovado anteriormente e esta nova aprovação pode gerar multas por atrasos de pagamentos dos processos trabalhistas
+                                    
+                                    // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Execauto de alteração não retornou erro mas também não efetivou a alteração
+                                    If SE2->E2_VENCTO <> aColsGrid[i,9]
+                                        SE2->E2_VENCTO  := aColsGrid[i,9]
+                                        SE2->E2_VENCREA := DataValida(aColsGrid[i,9])
+                                    EndIf
+                                    If SE2->E2_VALOR <> aColsGrid[i,10]
+                                        SE2->E2_VALOR := aColsGrid[i,10]
+                                    EndIf
+                                    //
                                 SE2->( msUnLock() )
 
                                 // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação

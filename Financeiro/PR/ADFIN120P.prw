@@ -27,6 +27,7 @@ Static cRotina  := "ADFIN120P"
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
     @ticket 18141 - Fernando Macieira - 14/03/2022 - RM - Acordos - Integração Protheus - Financeiro com favorecidos que nao foram vinculados na hora do cadastro
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+    @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
 /*/
 User Function ADFIN120P()
 
@@ -274,7 +275,7 @@ Static Function GeraZC7RM(aDadRM)
                     { "E2_NATUREZ", cNaturez		 , NIL },;
                     { "E2_FORNECE", cFornece 		 , NIL },;
                     { "E2_LOJA"   , cLoja 	    	 , NIL },;
-                    { "E2_EMISSAO", msDate()         , NIL },;
+                    { "E2_EMISSAO", dDataBase /*msDate()*/         , NIL },;
                     { "E2_VENCTO" , dVenctoP1        , NIL },;
                     { "E2_VENCREA", dVenctoP1        , NIL },;
                     { "E2_VALOR"  , nValor           , NIL },;
