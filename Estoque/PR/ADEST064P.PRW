@@ -38,6 +38,7 @@
     @history Chamado 14613 - Leonardo P. Monteiro - 23/06/2021 - Busca o cadastro da granja em casos em que não o fornecedor não estiver cadastrado corretamente.
     @history Chamado 00000 - Leonardo P. Monteiro - 12/09/2021 - Ajuste na query do browser para eliminar a duplicidade de fornecedores.
     @history ticket 69945  - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+    @history ticket 70613  - Fernando Sigoli      - 01/04/2022 - Adicionamos filial nas consultas das tabelas sx5
 /*/
 User Function ADEST064P()
 	
@@ -163,7 +164,7 @@ Static Function fGetDados()
         elseIF QZV1->ZV1_TURNO == 2
             (cAliEmb)->ZV1_TURNO    := "2-2º Turno"
         else
-            (cAliEmb)->ZV1_TURNO    := Alltrim(QZV1->ZV1_TURNO)+"-N/A"
+            (cAliEmb)->ZV1_TURNO    := Alltrim(QZV1->ZV1_TURNO)+"0-N/A"
         ENDIF
 
         (cAliEmb)->ZV1_CAVES    := QZV1->ZV1_CAVES
@@ -570,6 +571,7 @@ return nil
 Static Function fAddtur()
     Local cTurRat   := iif(left(cTURNO,1)=="1","2-2º Turno","1-1º Turno")
     Local aDadRat   := {}
+    Local nZ        := 0
 
     if cRATEIO == "N"
         if !fExTurn(cTurRat)
@@ -977,11 +979,7 @@ static function getDadosBrw(nTypeBrowse)
 	local aDado		:= {}
 	local aCampos	:= {}
 	local nX		:= 1
-    Local nReg      := 0
-    Local nTurTmp   := 0
-    Local cProd     := ""
-	local cTipoCp	:= ""
-    Local cCargo    := ""
+    local cTipoCp	:= ""
 
     aCampos := strToKarr(CAMPOS_CAUSA_DESTINO, ",")
 
@@ -1006,6 +1004,7 @@ static function getDadosBrw(nTypeBrowse)
             cQuery := " SELECT X5_CHAVE ZEF_CODITE, X5_DESCRI ZEF_DESCRI, "+ left((cAliEmb)->ZV1_TURNO,1) +" ZEF_TURNO,0 ZEF_CONTOT,0 ZEF_CODPAR,0 ZEF_APRCON " 
             cQuery += " FROM "+ RetSqlName("SX5") +" (NOLOCK) X5 "
             cQuery += " WHERE X5.D_E_L_E_T_='' AND X5.X5_TABELA='_G' "
+            cQuery += " AND X5.X5_FILIAL = '"+ xFilial("SX5") +"'
             cQuery += " ORDER BY ZEF_TURNO, ZEF_CODITE; "
 
             tcQuery cQuery alias &cAlias new
@@ -1021,6 +1020,7 @@ static function getDadosBrw(nTypeBrowse)
             cQuery := " SELECT X5_CHAVE ZEF_CODITE, X5_DESCRI ZEF_DESCRI, "+ left(cTurRat,1) +" ZEF_TURNO,0 ZEF_CONTOT,0 ZEF_CODPAR,0 ZEF_APRCON " 
             cQuery += " FROM "+ RetSqlName("SX5") +" (NOLOCK) X5 "
             cQuery += " WHERE X5.D_E_L_E_T_='' AND X5.X5_TABELA='_G' "
+            cQuery += " AND X5.X5_FILIAL = '"+ xFilial("SX5") +"'
             cQuery += " ORDER BY ZEF_TURNO, ZEF_CODITE; "
 
             tcQuery cQuery alias &cAlias new
