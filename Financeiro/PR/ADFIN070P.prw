@@ -19,7 +19,6 @@ Static cTitulo      := "Conciliação PB3 X SA1"
 	@since 08/11/2018
 	@version 01
 	@history Ticket 8190 	  - Abel Babini      - 19/01/2021 - Ajuste campo A1_SIMPLES para A1_SIMPNAC 
-	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 /*/
 
 User Function ADFIN070P()
@@ -381,8 +380,7 @@ Static Function FileTRC()
 	aAdd(aCampos,{"","A1_SALPEDB",BuscaNome("A1_SALPEDB"),"PB3_SALPEB",BuscaNome("PB3_SALPEB"),BuscaDiferenca("A1_SALPEDB","PB3_SALPEB",1),BuscaDiferenca("A1_SALPEDB","PB3_SALPEB",2),BuscaDiferenca("A1_SALPEDB","PB3_SALPEB",3)})
 	aAdd(aCampos,{"","A1_RAZENT" ,BuscaNome("A1_RAZENT") ,"PB3_NOMEEN",BuscaNome("PB3_NOMEEN"),BuscaDiferenca("A1_RAZENT","PB3_NOMEEN",1 ),BuscaDiferenca("A1_RAZENT","PB3_NOMEEN",2 ),BuscaDiferenca("A1_RAZENT","PB3_NOMEEN",3 )})
 	aAdd(aCampos,{"","A1_REGIMST",BuscaNome("A1_REGIMST"),"PB3_REGIST",BuscaNome("PB3_REGIST"),BuscaDiferenca("A1_REGIMST","PB3_REGIST",1),BuscaDiferenca("A1_REGIMST","PB3_REGIST",2),BuscaDiferenca("A1_REGIMST","PB3_REGIST",3)})
-	aAdd(aCampos,{"","A1_MSBLQL" ,BuscaNome("A1_MSBLQL")  ,"PB3_BLOQUE",BuscaNome("PB3_BLOQUE"),BuscaDiferenca("A1_MSBLQL","PB3_BLOQUE",1 ),BuscaDiferenca("A1_MSBLQL","PB3_BLOQUE",2 ),BuscaDiferenca("A1_MSBLQL","PB3_BLOQUE",3 )})
-	aAdd(aCampos,{"","A1_XLOCEXP",BuscaNome("A1_XLOCEXP"),"PB3_XLOCPA" ,BuscaNome("PB3_XLOCPA"),BuscaDiferenca("A1_XLOCEXP","PB3_XLOCPA",1),BuscaDiferenca("A1_XLOCEXP","PB3_XLOCPA",2),BuscaDiferenca("A1_XLOCEXP","PB3_XLOCPA",3)})
+	aAdd(aCampos,{"","A1_MSBLQL" ,BuscaNome("A1_MSBLQL") ,"PB3_BLOQUE",BuscaNome("PB3_BLOQUE"),BuscaDiferenca("A1_MSBLQL","PB3_BLOQUE",1 ),BuscaDiferenca("A1_MSBLQL","PB3_BLOQUE",2 ),BuscaDiferenca("A1_MSBLQL","PB3_BLOQUE",3 )})
 	
 	For nCont :=1 to Len(aCampos)
 	

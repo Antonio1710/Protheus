@@ -14,7 +14,6 @@
 	@history Everson 18/01/2021. Chamado TI. Adiconada marcação de clientes optantes pelo Simples Nacional.
 	@history Everson 19/01/2021. Chamado TI. Alterado campo do simples nacional.
 	@history Everson 21/01/2021. Chamado TI. Adicionado tratamento para envio de marcação de Simples Nacional para as demais opções de envio.
-	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 	/*/
 User Function ADVEN076P(cDe,cAte,lAut,cExpSql,cTpAlt,lParecer,cTexto) // U_ADVEN076("","",.T.) U_ADVEN076("","",.F.," AND A1_VEND = '000028' ","",.T.,"")
 	Local aArea      := GetArea()
@@ -27,7 +26,7 @@ User Function ADVEN076P(cDe,cAte,lAut,cExpSql,cTpAlt,lParecer,cTexto) // U_ADVEN
 	Default lParecer := .F.
 	Default cTexto	 := ""
 
-	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para envio de cadastro de clientes ao SalesForce')
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para envio de cadastro de clientes ao SalesForce')
 
 	//
 	If ! lAut
@@ -394,25 +393,57 @@ Static Function montJson(cMetodo,cChvExt,cNmAlias)
 				
 				
 				//Promotor.
-				If ! Empty(Alltrim(cValToChar((cNmAlias)->A1_XPROMOT)))
-					cCodPrmt := Posicione("ZC4",1,xFilial("ZC4") + Alltrim(cValToChar((cNmAlias)->A1_XPROMOT)), "ZC4_CODUSR")
-					cJson += '"Promotor__r": {"Code__c": "' + cCodPrmt + '"},'
-					
-				Else
-					cJson += '"Promotor__c":null,'
-					
-				EndIf
+					If ! Empty(Alltrim(cValToChar((cNmAlias)->A1_XPROMOT)))
+						cCodPrmt := Posicione("ZC4",1,xFilial("ZC4") + Alltrim(cValToChar((cNmAlias)->A1_XPROMOT)), "ZC4_CODUSR")
+						cJson += '"Promotor__r": {"Code__c": "' + cCodPrmt + '"},'
+						
+					Else
+						cJson += '"Promotor__c":null,'
+						
+					EndIf
+				//
 				
+					/*cDiasPrm := Iif( Alltrim(cValToChar((cNmAlias)->PRMSEG)) == "S" ,"2;","")
+					cDiasPrm += Iif( Alltrim(cValToChar((cNmAlias)->PRMTER)) == "S" ,"3;","")
+					cDiasPrm += Iif( Alltrim(cValToChar((cNmAlias)->PRMQUA)) == "S" ,"4;","")
+					cDiasPrm += Iif( Alltrim(cValToChar((cNmAlias)->PRMQUI)) == "S" ,"5;","")
+					cDiasPrm += Iif( Alltrim(cValToChar((cNmAlias)->PRMSEX)) == "S" ,"6;","")
+					cDiasPrm += Iif( Alltrim(cValToChar((cNmAlias)->PRMSAB)) == "S" ,"7;","")
+					Iif( !Empty(cDiasPrm) .And. Substr(cDiasPrm,Len(cDiasPrm),Len(cDiasPrm)) <> ";" ,Nil, cDiasPrm := Substr(cDiasPrm,1,Len(cDiasPrm) - 1) )
+					cJson += '"Dias_da_Semana_Visita_Promotor__c":"' + cDiasPrm + '",'
+					cJson += '"Frequencia_Visita_Promotor__c":"' + Iif(Empty(Alltrim(cValToChar((cNmAlias)->PRMFRE))),"",Iif(Alltrim(cValToChar((cNmAlias)->PRMFRE)) == "S","Semanal",Iif(Alltrim(cValToChar((cNmAlias)->PRMFRE)) == "Q","Quinzenal","Mensal"))) + '",'	
+					cJson += '"Semana_Visita_Promotor__c":"' + Alltrim(cValToChar((cNmAlias)->PRMSEM)) + '",'
+					cJson += '"Horario_Visita_Promotor__c":"' + Alltrim(cValToChar((cNmAlias)->PRMHORA)) + '",'*/
+				//
 				
-				//Local de Expedição.
-				If !Empty(Alltrim(cValToChar((cNmAlias)->A1_XLOCEXP)))
-					cLocPad := fLocPad((cNmAlias)->A1_XLOCEXP)
-
-					cJson += '"Expedition__c":"' + Alltrim(cLocPad) + '",'
-				Else
-					cJson += '"Expedition__c":null,'
-				EndIf
-
+				/*
+				//Ligação vendedor.
+					cDiasLV := Iif( Alltrim(cValToChar((cNmAlias)->ZBC_SEG)) == "S" ,"2;","")
+					cDiasLV += Iif( Alltrim(cValToChar((cNmAlias)->ZBC_TER)) == "S" ,"3;","")
+					cDiasLV += Iif( Alltrim(cValToChar((cNmAlias)->ZBC_QUA)) == "S" ,"4;","")
+					cDiasLV += Iif( Alltrim(cValToChar((cNmAlias)->ZBC_QUI)) == "S" ,"5;","")
+					cDiasLV += Iif( Alltrim(cValToChar((cNmAlias)->ZBC_SEX)) == "S" ,"6;","")
+					Iif( !Empty(cDiasLV) .And. Substr(cDiasLV,Len(cDiasLV), Len(cDiasLV)) <> ";" ,Nil, cDiasLV := Substr(cDiasLV,1,Len(cDiasLV) - 1) )
+					cJson += '"Dias_da_Semana_Ligacao_Vendedor__c":"' + cDiasLV + '",'
+					cJson += '"Frequencia_Ligacao_Vendedor__c":"' + Iif(Empty(Alltrim(cValToChar((cNmAlias)->ZBC_FREQUE))),"",Iif(Alltrim(cValToChar((cNmAlias)->ZBC_FREQUE)) == "S","Semanal",Iif(Alltrim(cValToChar((cNmAlias)->ZBC_FREQUE)) == "Q","Quinzenal","Mensal"))) + '",'	
+					cJson += '"Semana_Ligacao_Vendedor__c":"' + Alltrim(cValToChar((cNmAlias)->ZBC_SEMANA)) + '",'
+					cJson += '"Horario_Ligacao_Vendedor__c":"' + Alltrim(cValToChar((cNmAlias)->ZBC_HORARI)) + '",'
+				*/
+				
+				/*
+				//Visita vendedor.
+					cDiasVnd := Iif( Alltrim(cValToChar((cNmAlias)->VEDSEG)) == "S" ,"2;","")
+					cDiasVnd += Iif( Alltrim(cValToChar((cNmAlias)->VEDTER)) == "S" ,"3;","")
+					cDiasVnd += Iif( Alltrim(cValToChar((cNmAlias)->VEDQUA)) == "S" ,"4;","")
+					cDiasVnd += Iif( Alltrim(cValToChar((cNmAlias)->VEDQUI)) == "S" ,"5;","")
+					cDiasVnd += Iif( Alltrim(cValToChar((cNmAlias)->VEDSEX)) == "S" ,"6;","")
+					cJson += '"Frequencia_Visita_Vendedor__c":"' + Iif(Empty(Alltrim(cValToChar((cNmAlias)->VEDFRE))),"",Iif(Alltrim(cValToChar((cNmAlias)->VEDFRE)) == "S","Semanal",Iif(Alltrim(cValToChar((cNmAlias)->VEDFRE)) == "Q","Quinzenal","Mensal"))) + '",'	
+					cJson += '"Semana_Visita_Vendedor__c":"' + Alltrim(cValToChar((cNmAlias)->VEDSEM)) + '",'
+					Iif( !Empty(cDiasVnd) .And. Substr(cDiasVnd,Len(cDiasVnd),Len(cDiasVnd)) <> ";" ,Nil, cDiasVnd := Substr(cDiasVnd,1,Len(cDiasVnd) - 1) )
+					cJson += '"Dias_da_Semana_Visita_Vendedor__c":"' + cDiasVnd + '",'
+					cJson += '"Horario_Visita_Vendedor__c":"' + Alltrim(cValToChar((cNmAlias)->VEDHORA)) + '",'*/
+				//
+				
 				cJson += '"Nome_do_Socio_1__c":"'         + Alltrim(cValToChar((cNmAlias)->PB3_NOMSO1)) + '",'
 				cJson += '"Tipo_de_Pessoa_Socio_1__c":"'  + Iif(Empty(Alltrim(cValToChar((cNmAlias)->PB3_PESSOC))),"",Iif(Alltrim(cValToChar((cNmAlias)->PB3_PESSOC)) == "F",'Física','Jurídica')) + '",'
 				cJson += '"CPF_CNPJ_Socio_1__c":"'        + Alltrim(cValToChar((cNmAlias)->PB3_CGCSOC)) + '",'
@@ -465,6 +496,39 @@ Static Function montJson(cMetodo,cChvExt,cNmAlias)
 				cJson += '"CPF_CNPJ_Socio_10__c":"'       + Alltrim(cValToChar((cNmAlias)->PB3_CGCS10)) + '",'
 				cJson += '"Complemento_Socio_10__c":"'    + Alltrim(cValToChar((cNmAlias)->PB3_COMS10)) + '",'
 				
+				/*cJson += '"Janelas_de_Recebimento__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNLREC)) + '",'
+				cJson += '"Janela_de_Recebimento_1_De__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNLRE1)) + '",'
+				cJson += '"Janela_de_Recebimento_1_Ate__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNRE1A)) + '",'
+				cJson += '"Janela_de_Recebimento_2_De__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNLRE2)) + '",'
+				cJson += '"Janela_de_Recebimento_2_Ate__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNRE2A)) + '",'*/
+			
+				/*//cJson += '"Janela_de_Compras__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNLCMP)) + '",'	
+				cJson += '"Janela_de_Compras_1_De__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNCMP1)) + '",'	
+				cJson += '"Janela_de_Compras_1_Ate__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNCP1A)) + '",'	
+				cJson += '"Janela_de_Compras_2_De__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNCMP2)) + '",'	
+				cJson += '"Janela_de_Compras_2_Ate__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_JNCP2A)) + '",'
+			
+				//Específico
+				cJson += '"Telefone_Logistica__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XTELLO)) +'",'
+				cJson += '"Telefone_Financeiro__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XTELFI)) +'",'
+				cJson += '"Origem_Lead__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XORILE)) +'",'
+				cJson += '"Canal_Origem_Lead__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XCNLOR)) +'",'
+				cJson += '"Score_de_Rentabilidade__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XSCRRE)) +'",'
+				cJson += '"Renda_Familiar__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XRENFA)) +'",'
+				cJson += '"Populacao_Total__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_XPOPTO)) +'",'
+				cJson += '"Quantidade_de_Trabalhadores__c":"'+ Alltrim(cValToChar((cNmAlias)->ZCG_TFUNC)) +'",'
+				cJson += '"Performace_de_Pagamento__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_PERFPG)) + '",'
+				cJson += '"Principal_Fornecedor__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_PRFORN)) + '",'
+				cJson += '"Principais_Fornecedores__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_PRSFOR)) + '",'
+				cJson += '"Cortes__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_CORTES)) + '",'
+				cJson += '"Ticket_Medio__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_TCKMED)) + '",'
+				cJson += '"Periodicidade_de_Compras__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_PERCMP)) + '",'
+				cJson += '"Volume_de_Compras_Kg__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_VOLCMP)) + '",'
+				cJson += '"Quantidade_de_Refeicoes__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_QTDREF)) + '",'	
+				cJson += '"Quantidade_Funcionarios__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_TFUNC)) + '",'
+				
+				cJson += '"Codigo_Cliente__c":"' + Alltrim(cValToChar((cNmAlias)->ZCG_CODCLI)) + '"'*/
+				
 				cJson += '"Codigo_Grupo__c":"' + Alltrim(cValToChar((cNmAlias)->A1_XGRPCOM)) + '"'
 			
 			EndIf
@@ -502,7 +566,7 @@ Static Function scriptSql(cDe,cAte,aResponse,cExpSql,cTpAlt,lParecer)
 
 	//
 	cQuery += " SELECT  "
-	cQuery += " '" + cTpAlt + "' AS TP_ATU, '" + Iif(lParecer,"S","N") + "' AS PARECER, A1_XIDSF AS IDSALES, A1_XLOCEXP, "
+	cQuery += " '" + cTpAlt + "' AS TP_ATU, '" + Iif(lParecer,"S","N") + "' AS PARECER, A1_XIDSF AS IDSALES,"
 	cQuery += " RTRIM(LTRIM(A1_COD)) + RTRIM(LTRIM(A1_LOJA)) AS CHVSF, A1_COD, A1_LOJA,  "
 	cQuery += " CASE WHEN (RTRIM(LTRIM(A1_COD)) + RTRIM(LTRIM(A1_LOJA))) = (RTRIM(LTRIM(A1_REDE)) + '00') THEN '1' ELSE '0' END AS MATRIZ, "
 	
@@ -896,67 +960,3 @@ Static Function mrkReg(cCodLj,lAut,cId,cMetodo,aResponse,cAliasS)
 	RestArea(aArea)
 	
 Return Nil
-
-/* Busca as informações do cabeçalho. */
-Static Function fgetSX3(cCampos)
-    Local aRet      := {}
-    Local cCampo    := ""
-    Local nX        := 0
-    Local nCampos   := 0
-    Local bValid
-    Local aCampos   := Separa(cCampos,",")
-    
-    dbselectarea("SX3")
-    sx3->(dbsetorder(2)) // Campo
-    nCampos := len(aCampos)
-    
-    for nx := 1 to nCampos
-
-        cCampo := Alltrim(aCampos[nX])
-        cUsado := GetSX3Cache(cCampo, "X3_USADO")
-        
-        if !Empty(GetSX3Cache(cCampo, "X3_CAMPO"))
-
-            bValid := Alltrim(GetSX3Cache(cCampo, "X3_VALID"))
-
-            if Empty(bValid)
-                bValid := {|| .T. }
-            ELSE
-                bValid := &("{|| "+Alltrim(GetSX3Cache(cCampo, "X3_VALID")) +" }")
-            endif
-
-            aadd(aRet,{ alltrim(GetSX3Cache(cCampo, "X3_TITULO")),;
-            GetSX3Cache(cCampo, "X3_CAMPO")	,;
-            GetSX3Cache(cCampo, "X3_PICTURE"),;
-            GetSX3Cache(cCampo, "X3_TAMANHO"),;
-            GetSX3Cache(cCampo, "X3_DECIMAL"),;
-            bValid,;
-            GetSX3Cache(cCampo, "X3_USADO"),;
-            GetSX3Cache(cCampo, "X3_TIPO"),;
-            GetSX3Cache(cCampo, "X3_F3"),;
-            GetSX3Cache(cCampo, "X3_CONTEXT"),;
-            GetSX3Cache(cCampo, "X3_CBOX"),;
-            GetSX3Cache(cCampo, "X3_RELACAO")})
-        endif
-    next nx
-
-return aRet
-
-Static Function fLocPad(cLocPad)
-	Local cRet 	:= Alltrim(cLocPad)
-	Local aRet 	:= fgetSX3("A1_XLOCEXP")
-	Local nA	:= 0
-
-	aXBOX	:= Separa(aRet[1][11],";")
-	nXBOX	:= Len(aXBOX)
-
-	cLocPad := Alltrim(cLocPad)
-
-	for nA := 1 to nXBOX
-		if cLocPad$aXBOX[nA]
-			cRet := replace(aXBOX[nA],"="," - ")
-		endif
-	next nA
-
-
-return cRet

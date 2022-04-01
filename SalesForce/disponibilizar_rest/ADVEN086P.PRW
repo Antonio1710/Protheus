@@ -22,7 +22,7 @@
 	@history 07/10/2021, Everson, Chamado T.I. Corrigido nome do campo.
 	@history 17/03/2022, Leonardo P. Monteiro, Chamado 69520 - Adicionado o campo de data de entrega.
 	@history 17/03/2022 - Leonardo P. Monteiro, Chamado 69520 -  Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
-	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+	
 	/*/
 
 User Function ADVEN086P()
@@ -55,7 +55,7 @@ WsMethod Post WsService pedidosdevenda
 	Local cErro			:= ""
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
 	Local cContentType	:= Self:GetHeader("Content-Type")
-	Local cPath			:= ""
+	Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
 	Local cNumPed		:= ""
 	Local oParseJSON
 	Local cJsonResp		:= ""
@@ -70,13 +70,10 @@ WsMethod Post WsService pedidosdevenda
 	Local cSintegra		:= "" //Everson - 30/10/2019,. Chamado 052760. 
 	Local cDtEntreg		:= ""
 	Local cCondPag		:= ""
-	Local cTagFil		:= ""
-	Local cEmpJson		:= cEmpAnt
-	Local cFilJson		:= cFilAnt
 
 	Private aPedidos	:= {}
 
-	//U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
+	U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
 
 	//
 	Self:SetContentType(cFormatAceito)
@@ -85,7 +82,6 @@ WsMethod Post WsService pedidosdevenda
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 1"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
@@ -99,32 +95,6 @@ WsMethod Post WsService pedidosdevenda
 
 	EndIf
 
-	//*******************************************************//
-	// Define a filial de inclusão da requisição.
-	//*******************************************************//
-	//conout("tYPE: "+ Type("oParseJSON:cabecalho:C5_EXPEDITION"))
-	// Ativar, caso necessário.
-	if "C5_EXPEDITION"$cBody
-        if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
-
-			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
-			
-			if Len(cTagFil) >=4
-				cEmpJson := left(cTagFil,2)
-				cFilJson := Substring(cTagFil,3,2)
-			endif
-		endif	
-	endif
-	
-	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
-		RpcClearEnv() 
-		RPCSetType(3) 
-		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
-		conout("cEmpAnt  cFilAnt: "+ cEmpAnt+"/"+cFilAnt)
-	endif
-
-	cPath	:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
-
 	//
 	cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
 	cNumSF   	:= oParseJSON:cabecalho:C5_XSFPED
@@ -135,7 +105,6 @@ WsMethod Post WsService pedidosdevenda
 	If Empty(cCodUsuario)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 2"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
@@ -150,7 +119,6 @@ WsMethod Post WsService pedidosdevenda
 	EndIf
 
 	//
-	//CONOUT("ADVEN075P,grvLog 3"+cBody)
 	nRecno := StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 	//Atribui usuário.
@@ -160,7 +128,6 @@ WsMethod Post WsService pedidosdevenda
 	If cFormato <> cFormatAceito
 
 		//
-		//CONOUT("ADVEN075P,grvLog 4"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
@@ -170,7 +137,6 @@ WsMethod Post WsService pedidosdevenda
 	ElseIf cContentType <> cFormatAceito
 
 		//
-		//CONOUT("ADVEN075P,grvLog 5"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
@@ -184,7 +150,6 @@ WsMethod Post WsService pedidosdevenda
 	ElseIf Empty(cBody)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 6"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
@@ -204,7 +169,6 @@ WsMethod Post WsService pedidosdevenda
 		If Empty(Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)))
 
 			//
-			//CONOUT("ADVEN075P,grvLog 7"+cBody)
 			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Número do pedido do SalesForce não informado.",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 			SetRestFault(400, EncodeUtf8("Número do pedido do SalesForce não informado." ) )
@@ -331,7 +295,6 @@ WsMethod Post WsService pedidosdevenda
 	Else
 
 		//
-		//CONOUT("ADVEN075P,grvLog 9"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Json inválido.",cUrlServ,"POST",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400, EncodeUtf8("Json inválido.") )
@@ -351,8 +314,6 @@ WsMethod Post WsService pedidosdevenda
 
 	//
 	MSUnlockAll()
-
-	//RpcClearEnv()
 
 Return .T.
 /*/{Protheus.doc} User Function Put
@@ -374,7 +335,7 @@ WsMethod Put WsService pedidosdevenda
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
 	//Local aProp			:= {}
 	Local cContentType	:= Self:GetHeader("Content-Type")
-	Local cPath			:= ""
+	//Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
 	Local cNumPed		:= ""
 	Local oParseJSON
 	Local aParametros	:= Self:aURLParms
@@ -390,20 +351,16 @@ WsMethod Put WsService pedidosdevenda
 	Local cNumSF		:= ""
 	Local cDtEntreg		:= ""
 	Local cCondPag		:= ""
-	Local cTagFil		:= ""
-	Local cEmpJson		:= cEmpAnt
-	Local cFilJson		:= cFilAnt
 
 	Private aPedidos	:= {}
 	Private cHoraExec	:= Time()
 
-	//U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
+	U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
 
 	//
 	If Len(aParametros) == 0
 
 		//
-		//CONOUT("ADVEN075P,grvLog 10"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Obrigatório informar o número do pedido de venda na URL.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Obrigatório informar o número do pedido de venda na URL."))
@@ -421,7 +378,6 @@ WsMethod Put WsService pedidosdevenda
 	If Empty(cCodUsuario)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 12"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
@@ -442,7 +398,6 @@ WsMethod Put WsService pedidosdevenda
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 13"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
@@ -455,30 +410,6 @@ WsMethod Put WsService pedidosdevenda
 		Return .F.
 
 	EndIf
-
-	//*******************************************************//
-	// Define a filial de inclusão da requisição.
-	//*******************************************************//
-	// Ativar, caso necessário.
-	if "C5_EXPEDITION"$cBody
-        if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
-			
-			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
-			
-			if Len(cTagFil) >=4
-				cEmpJson := left(cTagFil,2)
-				cFilJson := Substring(cTagFil,3,2)
-			endif
-		endif
-	endif
-
-	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
-		RpcClearEnv() 
-		RPCSetType(3) 
-		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
-	endif
-
-	cPath	:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
 
 	//
 	cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
@@ -496,7 +427,6 @@ WsMethod Put WsService pedidosdevenda
 		If ! Empty(Alltrim(cValToChar(SC5->C5_PLACA)))
 	
 			//
-			//CONOUT("ADVEN075P,grvLog 14"+cBody)
 			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido de venda número " + cNumPed + " já está com veículo associado (placa).",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 	
 			SetRestFault(400,EncodeUtf8("Pedido de venda número " + cNumPed + " já está com veículo associado (placa)."))
@@ -515,7 +445,6 @@ WsMethod Put WsService pedidosdevenda
 		If ! Empty(Alltrim(cValToChar(SC5->C5_NOTA)))
 	
 			//
-			//CONOUT("ADVEN075P,grvLog 16"+cBody)
 			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido de venda número " + cNumPed + " já está com nota fiscal.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 	
 			SetRestFault(400,EncodeUtf8("Pedido de venda número " + cNumPed + " já está com nota fiscal."))
@@ -560,7 +489,6 @@ WsMethod Put WsService pedidosdevenda
 	If CHK_ZCI->(Eof())
 
 		//
-		//CONOUT("ADVEN075P,grvLog 17"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido " + cNumPed + " não encontrado.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(404,EncodeUtf8("Pedido " + cNumPed + " não encontrado."))
@@ -579,7 +507,6 @@ WsMethod Put WsService pedidosdevenda
 	If Empty(Alltrim(cValToChar(CHK_ZCI->ZCIPOST)))
 	
 		//
-		//CONOUT("ADVEN075P,grvLog 18"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido " + cNumPed + " não encontrado.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(404,EncodeUtf8("Pedido " + cNumPed + " não encontrado."))
@@ -598,7 +525,6 @@ WsMethod Put WsService pedidosdevenda
 	If ! Empty(Alltrim(cValToChar(CHK_ZCI->ZCIDEL)))
 	
 		//
-		//CONOUT("ADVEN075P,grvLog 19"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido não encontrado (excluído).",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(404,EncodeUtf8("Pedido " + cNumPed + " não encontrado (requisição de exclusão)."))
@@ -616,7 +542,6 @@ WsMethod Put WsService pedidosdevenda
 	CHK_ZCI->(DbCloseArea())
 
 	//
-	//CONOUT("ADVEN075P,grvLog 20"+cBody)
 	nRecno := StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 	//
@@ -629,7 +554,6 @@ WsMethod Put WsService pedidosdevenda
 	If cFormato <> cFormatAceito
 
 		//
-		//CONOUT("ADVEN075P,grvLog 21"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
@@ -658,7 +582,6 @@ WsMethod Put WsService pedidosdevenda
 	ElseIf Empty(cBody)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 22"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
@@ -710,7 +633,6 @@ WsMethod Put WsService pedidosdevenda
 
 				//
 				cHoraExec := ELAPTIME(cHoraExec, Time())
-				//CONOUT("ADVEN075P,grvLog 23"+cBody)
 				StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Alteração enviada em duplicidade, pedido " + cNumPed,cUrlServ,"PUT",cHoraExec,cNumSF, cDtEntreg, cCondPag)
 
 				Self:SetResponse("")
@@ -752,7 +674,6 @@ WsMethod Put WsService pedidosdevenda
 				Next i
 
 				//
-				//CONOUT("ADVEN075P,grvLog 24"+cBody)
 				StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 				SetRestFault(400,EncodeUtf8("Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
@@ -782,7 +703,6 @@ WsMethod Put WsService pedidosdevenda
 			If exclPedVend(@cErro,@cNumPed,0,cCodUsuario,cUrlServ)
 
 				//
-				//CONOUT("ADVEN075P,grvLog 25"+cBody)
 				StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 				Self:SetResponse("")
@@ -797,7 +717,6 @@ WsMethod Put WsService pedidosdevenda
 				Next i
 
 				//
-				//CONOUT("ADVEN075P,grvLog 26"+cBody)
 				StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF, cDtEntreg, cCondPag)
 
 				SetRestFault(400,EncodeUtf8("Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
@@ -848,8 +767,6 @@ WsMethod Put WsService pedidosdevenda
 	//
 	MSUnlockAll()
 
-	//RpcClearEnv()
-
 Return .T.
 /*/{Protheus.doc} User Function Delete
 	Método DELETE. Chamado 037261.
@@ -865,9 +782,7 @@ WsMethod Delete WsService pedidosdevenda
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea			:= GetArea()
 	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
 	Local cErro			:= ""
-	Local oParseJSON
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
 	//Local aProp			:= {}
 	Local cNumPed		:= ""
@@ -879,13 +794,9 @@ WsMethod Delete WsService pedidosdevenda
 	Local nRecno		:= 0
 	Local i				:= 1
 
-	Local cTagFil		:= ""
-	Local cEmpJson		:= cEmpAnt
-	Local cFilJson		:= cFilAnt
-	
 	Private aPedidos	:= {}
 
-	//U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
+	U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
 
 	//
 	Self:SetContentType(cFormatAceito)
@@ -894,8 +805,7 @@ WsMethod Delete WsService pedidosdevenda
 	If Len(aParametros) == 0
 
 		//
-		//CONOUT("ADVEN075P,grvLog 27"+cBody)
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Obrigatório informar o número do pedido de venda.",cUrlServ,"DELETE")
+		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Obrigatório informar o número do pedido de venda.",cUrlServ,"DELETE")
 
 		SetRestFault(400,EncodeUtf8("Obrigatório informar o número do pedido de venda."))
 
@@ -916,7 +826,6 @@ WsMethod Delete WsService pedidosdevenda
 	If Empty(cCodUsuario)
 
 		//
-		//CONOUT("ADVEN075P,grvLog 28"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Código de usuário não informado (UsrVend).",cUrlServ,"DELETE")
 
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
@@ -930,52 +839,8 @@ WsMethod Delete WsService pedidosdevenda
 
 	EndIf
 
-	//*******************************************************//
-	// Define a filial de inclusão da requisição.
-	//*******************************************************//
-	If ! FWJsonDeserialize(cBody, @oParseJSON)
-
-		//
-		//CONOUT("ADVEN075P,grvLog 13"+cBody)
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"DELETE")
-
-		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
-
-		RestArea(aArea)
-
-		MSUnlockAll()
-
-		Return .F.
-
-	EndIf
-
-	//*******************************************************//
-	// Define a filial de inclusão da requisição.
-	//*******************************************************//
-	// Ativar, caso necessário.
-	if "C5_EXPEDITION"$cBody
-		if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
-			
-			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
-			
-			if Len(cTagFil) >=4
-				cEmpJson := left(cTagFil,2)
-				cFilJson := Substring(cTagFil,3,2)
-			endif
-		endif
-	endif
-
-	cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
-
-	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
-		RpcClearEnv() 
-		RPCSetType(3) 
-		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
-	endif
-
 	//
-	//CONOUT("ADVEN075P,grvLog 29"+cBody)
-	nRecno := StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"DELETE")
+	nRecno := StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
 
 
 	//Atribui usuário.
@@ -985,8 +850,7 @@ WsMethod Delete WsService pedidosdevenda
 	If cFormato <> cFormatAceito
 
 		//
-		//CONOUT("ADVEN075P,grvLog 30"+cBody)
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
+		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
 
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 
@@ -1029,8 +893,7 @@ WsMethod Delete WsService pedidosdevenda
 		Next i
 
 		//
-		//CONOUT("ADVEN075P,grvLog 31"+cBody)
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"DELETE")
+		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"DELETE")
 
 		SetRestFault(400,EncodeUtf8("Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
 
@@ -1048,8 +911,6 @@ WsMethod Delete WsService pedidosdevenda
 
 	//
 	MSUnlockAll()
-
-	//RpcClearEnv()
 
 Return .T.
 
@@ -1392,8 +1253,7 @@ Static Function getSC5()
 	Do While .t.
 
 		cPedido 	:= GetSxeNum("SC5","C5_NUM") 
-		//CONOUT("cPedido"+ cPedido)
-		//CONOUT("cEmpAnt,cFilAnt"+ cEmpAnt +"-"+cFilAnt)
+	
 		// SC5
 		DbSelectArea("SC5")
 		SC5->( DbSetOrder( 01 ) )
@@ -1423,7 +1283,6 @@ Static Function getSC5()
 	DbSelectArea("SC5")
 	ConfirmSX8()
 
-	//CONOUT("cRet "+ cPedido)
 	//
 	RestArea(aArea)
                          
@@ -1496,7 +1355,6 @@ Static Function exclPedVend(cErro,cNumPed,nRecno,cCodUsuario,cUrlServ)
 	If nRecno == 0
 	
 		//
-		//CONOUT("ADVEN075P,grvLog 32"+cBody)
 		nRecno := StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
 	
 	EndIf
