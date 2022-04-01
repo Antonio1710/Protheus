@@ -19,6 +19,8 @@
 	@history Ticket 423 	- Adriana Oliveira 	  - 01/10/2020 - Habilita rotina para demais empresas
 	@history Ticket 8118    - Abel Babini         - 19/01/2021 - Alteração do campo A1_SIMPLES para A1_SIMPNAC
 	@history Ticket 13526   - Everson             - 11/10/2021 - Adicionada relação A1_XTPDESC x PB3_XTPDES.
+	@history Ticket 69520   - Leonardo P. Monteiro- 21/03/2022 - Projeto FAI - Importação PV x SalesForce.
+	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 /*/
 
 /*
@@ -652,34 +654,7 @@ User Function Ado002CRUD( cAlias, nReg, nOpc )
 	
 	If INCLUI //nOpc == 3 //Inclusao
 		RegToMemory('PB3', .T. )
-
-		/* Retirado por conta de novo tratamento chamado 034381 e incluido no fonte ADOA02_3
-		&&Mauricio - 07/12/16 - tratamento para validar a inclusão solicitado por vagner chamado 031657
-		IF M->PB3_CENTRA == "N"
-		_nCont := 0 
-		IF M->PB3_TELSEG == "S"
-		_nCont ++
-		Endif 
-		IF M->PB3_TELTER == "S"
-		_nCont ++
-		Endif 
-		IF M->PB3_TELQUA == "S"
-		_nCont ++
-		Endif 
-		IF M->PB3_TELQUI == "S"
-		_nCont ++
-		Endif
-		IF M->PB3_TELSEX == "S"
-		_nCont ++
-		Endif
-		IF _nCont < 2
-		MsgInfo("Dois dias da semana de ligação como sim é obrigatorio. Refaça o cadastro!")
-		//oDlg2:End()
-		RestArea(aArea)
-		Return Nil
-		Endif
-		Endif
-		*/      
+     
 	Else
 		PB3->( DbGoTo(TRB->PB3_RECNO))
 		RegToMemory('PB3', .F. )
@@ -701,6 +676,10 @@ User Function Ado002CRUD( cAlias, nReg, nOpc )
 		M->PB3_VACUM  := SA1->A1_VACUM
 		M->PB3_ATR    := SA1->A1_ATR
 		M->PB3_SALPEL := SA1->A1_SALPEDL
+
+		if !Empty(SA1->A1_XLOCEXP)
+			M->PB3_XLOCPA := SA1->A1_XLOCEXP
+		endif
 	endif
 
 	/*
@@ -957,58 +936,7 @@ Static Function grvPromotor(oDlg2)
 	EndIf
 
 	&&Mauricio - 25/04/17 - chamado 034381					
-	/*
-	IF M->PB3_CENTRA == "N" .Or. M->PB3_CENTRA == " "
-
-		_nCont := 0
-
-		IF M->PB3_PRMSEG == "S"
-			_nCont ++
-
-		Endif
-		IF M->PB3_PRMTER == "S"
-			_nCont ++
-
-		Endif
-		IF M->PB3_PRMQUA == "S"
-			_nCont ++
-
-		Endif
-		IF M->PB3_PRMQUI == "S"
-			_nCont ++
-
-		Endif
-		IF M->PB3_PRMSEX == "S"
-			_nCont ++
-
-		Endif
-
-		IF _nCont < 1
-
-			Disarmtransaction()
-			MsUnlockAll() 
-			MsgStop("Pelo menos um dia da semana é obrigatório!","Função grvPromotor(ADOA002)")
-			RestArea(aArea)
-			Return Nil		
-
-		Endif
-
-	Endif
-
-	//Grava dados.
-	RecLock("PB3",.F.)
-		Replace PB3_PRMSEG	With M->PB3_PRMSEG
-		Replace PB3_PRMTER	With M->PB3_PRMTER
-		Replace PB3_PRMQUA	With M->PB3_PRMQUA
-		Replace PB3_PRMQUI	With M->PB3_PRMQUI
-		Replace PB3_PRMSEX	With M->PB3_PRMSEX
-		Replace PB3_PRMSAB	With M->PB3_PRMSAB
-		Replace PB3_PRMFRQ	With M->PB3_PRMFRQ
-		Replace PB3_PRMSEM	With M->PB3_PRMSEM
-		Replace PB3_PRMHOR	With M->PB3_PRMHOR
-		//
-	MsUnlock()
-	*/
+	
 	//Grava dados SA1.
 	DbSelectArea("SA1")
 	DbSetOrder(1)
@@ -1787,7 +1715,8 @@ User Function ArrayCli(cCodSa1, cLoja, cAcx, nVlrDes)
 				Aadd(aVetor, {"A1_LC",PB3->PB3_LIMAPR,NIL}) //chamado 022064 - WILL
 			elseif "A1_EMAIL" == Alltrim(aCampSa1[nCntFor, 1])
 				Aadd(aVetor, {"A1_EMAIL",STRTRAN(PB3->PB3_EMAIL,'	',''),NIL}) //chamado  - ADRIANA
-
+			elseif "A1_XLOCEXP" == Alltrim(aCampSa1[nCntFor, 1])
+				Aadd(aVetor, {"A1_XLOCEXP",STRTRAN(PB3->PB3_XLOCPA,'	',''),NIL})
 			elseif "A1_BAIRROE" == Alltrim(aCampSa1[nCntFor, 1])
 				Aadd(aVetor, {"A1_BAIRROE", PB3->PB3_BAIREN, NIL})				
 
@@ -2065,9 +1994,10 @@ User Function DFPB3SA1()
 	{"PB3_XTELCO","A1_XTELCON"},; //chamado 030795 - por Adriana em 05/10/2016
 	{"PB3_REGIST","A1_REGIMST"},; //chamado 038349 - por Fernando Sigoli 28/11/2017
 	{"PB3_BLOQUE","A1_MSBLQL"},;
-	{"PB3_PROMOT","A1_XPROMOT"}} //Everson - 07/03/2018. Chamado 037261. SalesForce.
+	{"PB3_PROMOT","A1_XPROMOT"},; //Everson - 07/03/2018. Chamado 037261. SalesForce.
+	{"PB3_XLOCPA","A1_XLOCEXP"}} //Leonardo P. Monteiro - 21/03/2018. Chamado 69520. Projeto FAI - Importação PV x SalesForce.
 
-	U_ADINF009P('ADOA002' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro Espelho de Clientes')
+	//U_ADINF009P('ADOA002' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro Espelho de Clientes')
 
 Return aDif
 
