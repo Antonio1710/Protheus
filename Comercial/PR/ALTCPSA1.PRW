@@ -1,7 +1,7 @@
 #INCLUDE "Protheus.ch"
 
 /*/{Protheus.doc} ALTCPSA1
-	Efetua leitura de arquivo TXT e altera campos na SA1 e PB3
+	Efetua leitura de arquivo TXT e altera campos na SA1 e PB3..
 	@type  ALTCPSA1
 	@author Mauricio - MDS TEC
 	@since 03/07/2013
