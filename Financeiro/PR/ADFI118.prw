@@ -331,7 +331,7 @@ Static Function fValidGrid(oModel)
                     // Cod Favorecido - checo se existe o código informado no cadastro ZHC
                     cCodFav := oModelGRID:GetValue("ZHB_FAVORE")
                     If !Empty(cCodFav)
-                        ZHC->( dbSetOrder(2) ) // ZHC_FILIAL, ZHC_CODIGO, R_E_C_N_O_, D_E_L_E_T_ // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+                        ZHC->( dbSetOrder(1) ) // ZHC_FILIAL, ZHC_CODIGO, R_E_C_N_O_, D_E_L_E_T_ // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
                         If ZHC->( !dbSeek(FWxFilial("ZHC")+cCodFav) )
                             lRet := .f.
                             Alert("Favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não existe! Verifique...")
