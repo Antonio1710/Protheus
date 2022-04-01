@@ -7,27 +7,28 @@
 	@author Microsiga
 	@since 03/26/2010
 	@history Ticket 49882 || OS 051171 || FINANCAS || ANDREA || 8319 || PB3 X SZF - WILLIAM COSTA 18/06/2019 - Campo PB3_CODRED Salvando errado onde salvava o campo A1_REDE o correto e o A1_CODRED.
-	@history Ticket T.I - Fernando Sigoli - 04/05/2019 Adicionado novos campos 'A1_XSFLFDS' ,'A1_XPALETE'.
-	@history Ticket T.I - Leonardo P. Monteiro - 10/02/2021 - Correção na gravação do campo A1_DESC para A1_ZZDESCB.
+	@history Ticket T.I   - Fernando Sigoli        - 04/05/2019 Adicionado novos campos 'A1_XSFLFDS' ,'A1_XPALETE'.
+	@history Ticket T.I   - Leonardo P. Monteiro   - 10/02/2021 - Correção na gravação do campo A1_DESC para A1_ZZDESCB.
     @history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+    @history Ticket 69520 - Fernando Macieira      - 01/04/2022 - Error log array out of bounds ( 3 of 2 )  on FWMBROWSE:ACTIVATE(FWMBROWSE.PRW) 18/05/2020 17:21:58 line : 399
 /*/
 
 User Function ADOA06()
 
-Local aArea			:= GetArea()
-Private cCadastro	:= "Cadastro de Clientes"
-Private cString		:= "SA1"
-Private aRotina		:= {{"Pesquisar"	,"AxPesqui"		,0,1} ,;
-				        {"Visualizar"	,"U_AD06CLI"	,0,2} ,;
-						{"Alterar"		,"U_AD06CLI"	,0,4} ,;
-						{"Enviar SF"	,"StaticCall(AD0080,intEnvSF, 1)"}}
-                                                                                                                                                         
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Interface de alteração de dados do cliente ')
+    Local aArea			:= GetArea()
+    Private cCadastro	:= "Cadastro de Clientes"
+    Private cString		:= "SA1"
+    Private aRotina		:= { {"Pesquisar"	,"AxPesqui"		,0,1},;
+                             {"Visualizar"	,"U_AD06CLI"	,0,2},;
+                             {"Alterar"		,"U_AD06CLI"	,0,4},;
+                             {"Enviar SF"	,"StaticCall(AD0080,intEnvSF, 1)",0,2} } // @history Ticket 69520 - Fernando Macieira      - 01/04/2022 - Error log array out of bounds ( 3 of 2 )  on FWMBROWSE:ACTIVATE(FWMBROWSE.PRW) 18/05/2020 17:21:58 line : 399
+                                                                                                                                                            
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Interface de alteração de dados do cliente ')
 
-DbSelectArea(cString)
-DbSetOrder(1)
-mBrowse( 6,1,22,75,cString)
-RestArea( aArea )
+    DbSelectArea(cString)
+    DbSetOrder(1)
+    mBrowse( 6,1,22,75,cString)
+    RestArea( aArea )
 
 Return Nil       
 
