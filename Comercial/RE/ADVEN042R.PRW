@@ -89,7 +89,7 @@ User Function ADVEN042R() // U_ADVEN042R()
 
 		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
 
-		U_ADVEN041R()
+		U_ADVEN042R()
 
 		ELSE
 
