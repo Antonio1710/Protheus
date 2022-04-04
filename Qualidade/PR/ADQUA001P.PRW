@@ -561,6 +561,7 @@ Static Function wsEdata(cErro,cPallete)
     
     //    
     oWsdl := TWsdlManager():New()
+    oWsdl:bNoCheckPeerCert := .T. 
 
     //
     oWsdl:nTimeout := 120
