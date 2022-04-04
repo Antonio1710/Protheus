@@ -21,6 +21,8 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Data vencimento não ignorou despesa com título
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento antes da geração das parcelas (TIPO PR)
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Permitir alterar vencimento das parcelas que não estiverem em borderô ou baixados quando algum deles estiver
+    @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
+    @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Execauto de alteração não retornou erro mas também não efetivou a alteração
 /*/
 User Function ADFI118()
@@ -268,15 +270,6 @@ Static Function fValidGrid(oModel)
             If WorkRM->(EOF())
                 lRet := .f.
                 Alert("N. do Processo informado não existe no RM! Verifique...")
-            Else
-                // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirada do campo ZHC_TIPDES
-                /*
-                ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
-                If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso) )
-                    lRet := .f.
-                    Alert("Processo não possui nenhum favorecido! Verifique...")
-                EndIf
-                */
             EndIf
 
             If Select("WorkRM") > 0
@@ -339,7 +332,7 @@ Static Function fValidGrid(oModel)
                     // Cod Favorecido - checo se existe o código informado no cadastro ZHC
                     cCodFav := oModelGRID:GetValue("ZHB_FAVORE")
                     If !Empty(cCodFav)
-                        ZHC->( dbSetOrder(3) ) // ZHC_FILIAL, ZHC_CODIGO, R_E_C_N_O_, D_E_L_E_T_
+                        ZHC->( dbSetOrder(1) ) // ZHC_FILIAL, ZHC_CODIGO, R_E_C_N_O_, D_E_L_E_T_ // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
                         If ZHC->( !dbSeek(FWxFilial("ZHC")+cCodFav) )
                             lRet := .f.
                             Alert("Favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não existe! Verifique...")
@@ -347,9 +340,8 @@ Static Function fValidGrid(oModel)
                         Else
                             // Checo se o favorecido está amarrado a este processo
                             cZHCCPFCGC := ZHC->ZHC_CPFCGC
-                            ZHC->( dbSetOrder(1) ) // ZHC_FILIAL + ZHC_CPFCGC + ZHC_PROCES
-                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cZHCCPFCGC+cProcesso) )
-                            //If AllTrim(cProcesso) <> AllTrim(ZHC->ZHC_PROCES) // @ticket 18141 - Fernando Macieira - 16/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+                            ZHD->( dbSetOrder(1) ) // ZHD_FILIAL+ZHD_CODIGO+ZHD_PROCES // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+                            If ZHD->( !dbSeek(FWxFilial("ZHD")+cCodFav+cProcesso) ) // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
                                 lRet := .f.
                                 Alert("Este favorecido informado na linha " + AllTrim(Str(nLinAtual)) + " não está autorizado para este processo! Verifique...")
                                 Exit
@@ -368,17 +360,6 @@ Static Function fValidGrid(oModel)
                     Else
                         // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
                         If AllTrim(cTipDes) $ AllTrim(cDespFavor)
-                            
-                            // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirada do campo ZHC_TIPDES
-                            /*
-                            ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
-                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso+cTipDes) )
-                                lRet := .f.
-                                Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique...")
-                                Exit
-                            EndIf
-                            */
-
                             // Cod Favorecido
                             If Empty(cCodFav)
                                 lRet := .f.
@@ -404,17 +385,6 @@ Static Function fValidGrid(oModel)
                     If AllTrim(cTipDes) $ AllTrim(cDespFavor)
                         
                         If oModel:nOperation <> 5
-
-                            // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirada do campo ZHC_TIPDES
-                            /*
-                            ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_PROCES+ZHC_TIPDES
-                            If ZHC->( !dbSeek(FWxFilial("ZHC")+cProcesso+cTipDes) )
-                                lRet := .f.
-                                Alert("O processo/despesa contido na linha " + AllTrim(Str(nLinAtual)) + " não possui nenhum favorecido! Verifique parâmetro MV_#RMFAVO...")
-                                Exit
-                            EndIf
-                            */
-
                             // Cod Favorecido
                             If Empty(cCodFav)
                                 lRet := .f.
@@ -422,7 +392,6 @@ Static Function fValidGrid(oModel)
                                 Exit
                             EndIf
                             //
-
                         EndIf
 
                     EndIf

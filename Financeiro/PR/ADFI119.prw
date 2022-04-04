@@ -16,6 +16,8 @@ Static cTitulo := "RM Acordos Trabalhistas - Favorecidos"
     @ticket 18141 - Fernando Macieira - 17/12/2021 - RM - Acordos - Integração Protheus
     @ticket 18141 - Fernando Macieira - 26/01/2022 - RM - Acordos - Integração Protheus - Parâmetro Linked Server
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+    @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
 /*/
 User Function ADFI119()
 
@@ -80,35 +82,35 @@ Return aRot
 /*/
 Static Function ModelDef()
 
-    //Na montagem da estrutura do Modelo de dados, o cabeçalho filtrará e exibirá somente 3 campos, já a grid irá carregar a estrutura inteira conforme função fModStruct
-    Local oModel    := NIL
-    //Local oStruCab  := FWFormStruct(1, 'ZHC', {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local oStruCab  := FWFormStruct(1, 'ZHC', {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local oStruGrid := fModStruct()
- 
-    //Monta o modelo de dados, e na Pós Validação, informa a função fValidGrid
-    oModel := MPFormModel():New('ADFI119M', /*bPreValidacao*/, {|oModel| fValidGrid(oModel)}, /*bCommit*/, /*bCancel*/ )
- 
-    //Agora, define no modelo de dados, que terá um Cabeçalho e uma Grid apontando para estruturas acima
-    oModel:AddFields('MdFieldZHC', NIL, oStruCab)
-    oModel:AddGrid('MdGridZHC', 'MdFieldZHC', oStruGrid, , )
- 
-    //Monta o relacionamento entre Grid e Cabeçalho, as expressões da Esquerda representam o campo da Grid e da direita do Cabeçalho
-    oModel:SetRelation('MdGridZHC', {;
-            {'ZHC_FILIAL',  'FWxFilial("ZHC")'},;
-            {"ZHC_CODIGO",  "ZHC_CODIGO"},;
-            {"ZHC_CPFCGC",  "ZHC_CPFCGC"},;
-            {"ZHC_FAVORE",  "ZHC_FAVORE"},;
-            {"ZHC_BANCO" ,  "ZHC_BANCO"},;
-            {"ZHC_AGENCI",  "ZHC_AGENCI"},;
-            {"ZHC_CONTA" ,  "ZHC_CONTA"},;
-            {"ZHC_DIGCTA",  "ZHC_DIGCTA"};
-        }, ZHC->(IndexKey(3)))
-     
-    //Definindo outras informações do Modelo e da Grid
-    oModel:GetModel("MdGridZHC"):SetMaxLine(9999)
-    oModel:SetDescription("Processos do favorecido")
-    oModel:SetPrimaryKey({"ZHC_FILIAL", "ZHC_CPFCGC"})
+    // Criacao do objeto do modelo de dados
+    Local oModel     := Nil                   
+    Local aPaiFilRel := {}
+
+    // Criacao da estrutura de dados utilizada na interface
+    Local oStPai   := FWFormStruct(1, "ZHC")
+    Local oStFilho := FWFormStruct(1, "ZHD")
+
+    Local bPosVld  := {|oModel| fValid(oModel)}
+
+    oStPai:SetProperty("ZHC_CODIGO", MODEL_FIELD_INIT,  FWBuildFeature(STRUCT_FEATURE_INIPAD, 'u_SXESXF("ZHC")')) // INI PADRAO
+
+    // Criando o modelo e os relacionamentos
+    oModel := MPFormModel():New("MVCFI119", /*bPreVld*/ , bPosVld, /*bCommit*/, /*bCancel*/ )
+    oModel:AddFields("ZHCMASTER", /*cOwner*/, oStPai)
+    oModel:AddGrid("ZHDDETAIL", "ZHCMASTER", oStFilho, /*bLinePre*/, /*bLinePost*/, /*bPre - Grid Inteiro*/, /*bPos - Grid Inteiro*/, /*bLoad - Carga Modelo*/)
+
+    // Fazendo relacionamento entre pai e filho
+    aAdd( aPaiFilRel, {"ZHD_FILIAL", "ZHC_FILIAL"} )
+    aAdd( aPaiFilRel, {"ZHD_CODIGO", "ZHC_CODIGO"} )
+
+    oModel:SetRelation("ZHDDETAIL", aPaiFilRel, ZHD->(IndexKey(1)) ) // IndexKey -> quero a ordenacao e depois filtrado
+    oModel:GetModel("ZHDDETAIL"):SetUniqueLine({"ZHD_PROCES"}) // Nao repetir informacoes ou combinacoes {"CAMPO1", "CAMPO2", "CAMPON"}
+    oModel:SetPrimaryKey({"ZHC_CODIGO"})
+
+    // Setando as descricoes
+    oModel:SetDescription("Favorecidos - RM Acordos Trabalhistas")
+    oModel:GetModel("ZHCMASTER"):SetDescription("Dados Bancários")
+    oModel:GetModel("ZHDDETAIL"):SetDescription("Processos RM")
  
 Return oModel
  
@@ -126,79 +128,47 @@ Return oModel
 /*/
 Static Function ViewDef()
 
-    //Na montagem da estrutura da visualização de dados, vamos chamar o modelo criado anteriormente, no cabeçalho vamos mostrar somente 3 campos, e na grid vamos carregar conforme a função fViewStruct
-    Local oView     := NIL
-    Local oModel    := FWLoadModel('ADFI119')
-    //Local oStruCab  := FWFormStruct(2, "ZHC", {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local oStruCab  := FWFormStruct(2, "ZHC", {|cCampo| AllTRim(cCampo) $ "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_CODIGO;"}) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local oStruGRID := fViewStruct()
- 
-    //Define que no cabeçalho não terá separação de abas (SXA)
-    oStruCab:SetNoFolder()
- 
-    //Cria o View
-    oView:= FWFormView():New() 
-    oView:SetModel(oModel)              
- 
-    //Cria uma área de Field vinculando a estrutura do cabeçalho com MDFieldZHC, e uma Grid vinculando com MdGridZHC
-    oView:AddField('VIEW_ZHC', oStruCab, 'MdFieldZHC')
-    oView:AddGrid ('GRID_ZHC', oStruGRID, 'MdGridZHC' )
- 
-    //O cabeçalho (MAIN) terá 25% de tamanho, e o restante de 75% irá para a GRID
-    oView:CreateHorizontalBox("MAIN", 35)
-    oView:CreateHorizontalBox("GRID", 65)
- 
-    //Vincula o MAIN com a VIEW_ZHC e a GRID com a GRID_ZHC
-    oView:SetOwnerView('VIEW_ZHC', 'MAIN')
-    oView:SetOwnerView('GRID_ZHC', 'GRID')
-    oView:EnableControlBar(.T.)
- 
+    // Criacao do objeto do modelo de dados da interface do cadastro
+    Local oModel := FWLoadModel("ADFI119")
+
+    // Criacao da estrutura de dados utilizada na interface do cadastro
+    Local oStPai   := FWFormStruct(2, "ZHC") 
+    Local oStFilho := FWFormStruct(2, "ZHD") 
+
+    // Criando oView como nulo
+    Local oView := Nil
+
+    // Criando a VIEW que sera o retorno da funcao e setando o modelo da rotina
+    oView := FWFormView():New()
+    oView:SetModel(oModel)
+                        
+    // Adicionando os campos do cabecalho e o grid dos filhos
+    oView:AddField("VIEW_ZHC", oStPai, "ZHCMASTER")
+    oView:AddGrid("VIEW_ZHD", oStFilho, "ZHDDETAIL")
+
+    // Criando container com nome tela 100%
+    oView:CreateHorizontalBox("CABEC", 40)
+    oView:CreateHorizontalBox("GRID", 60)
+                                    
+    // Amarrando a VIEW com as BOX
+    oView:SetOwnerView("VIEW_ZHC", "CABEC")
+    oView:SetOwnerView("VIEW_ZHD", "GRID")
+
+    // Habilitando titulo
+    oView:EnableTitleView("VIEW_ZHC", "Dados Bancários")
+    oView:EnableTitleView("VIEW_ZHD", "Processos RM")
+
+    // Forca o fechamento da janela na confirmacao
+    oView:SetCloseOnOK( {|| .t.} )
+                            
+    // Remove os campos de codigo 
+    //oStFilho:RemoveField("ZHD_FILIAL")
+    oStFilho:RemoveField("ZHD_CODIGO")
+
     //Define o campo incremental da grid como o ZHC_ITEM
-    oView:AddIncrementField('GRID_ZHC', 'ZHC_ITEM')
+    oView:AddIncrementField('VIEW_ZHD', 'ZHD_ITEM')
 
 Return oView
- 
-/*/{Protheus.doc} nomeStaticFunction
-    //Função chamada para montar o modelo de dados da Grid
-    @type  Static Function
-    @author FWNM
-    @since 17/12/2021
-    @version version
-    @param param_name, param_type, param_descr
-    @return return_var, return_type, return_description
-    @example
-    (examples)
-    @see (links_or_references)
-/*/
-Static Function fModStruct()
-    
-    Local oStruct
-    oStruct := FWFormStruct(1, 'ZHC')
-
-Return oStruct
- 
-/*/{Protheus.doc} nomeStaticFunction
-    //Função chamada para montar a visualização de dados da Grid
-    @type  Static Function
-    @author FWNM
-    @since 17/12/2021
-    @version version
-    @param param_name, param_type, param_descr
-    @return return_var, return_type, return_description
-    @example
-    (examples)
-    @see (links_or_references)
-/*/
-Static Function fViewStruct()
-
-    //Local cCampoCom := "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_TIPDES;ZHC_NOMDES;ZHC_CODIGO;" // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local cCampoCom := "ZHC_FAVORE;ZHC_CPFCGC;ZHC_BANCO;ZHC_AGENCI;ZHC_CONTA;ZHC_DIGCTA;ZHC_CODIGO;" // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local oStruct
- 
-    //Irá filtrar, e trazer todos os campos, menos os que tiverem na variável cCampoCom
-    oStruct := FWFormStruct(2, "ZHC", {|cCampo| !(Alltrim(cCampo) $ cCampoCom)})
-
-Return oStruct
  
 /*/{Protheus.doc} nomeStaticFunction
     //Função que faz a validação da grid
@@ -212,162 +182,169 @@ Return oStruct
     (examples)
     @see (links_or_references)
 /*/
-Static Function fValidGrid(oModel)
+Static Function fValid(oModel)
 
     Local lRet       := .T.
     Local nDeletados := 0
     Local nLinAtual  := 0
-    Local oModelGRID := oModel:GetModel('MdGridZHC')
-    Local oModelMain := oModel:GetModel('MdFieldZHC')
-    Local cCPFCGC    := oModelMain:GetValue("ZHC_CPFCGC")
-    Local cFavorec   := oModelMain:GetValue("ZHC_FAVORE")
-    Local cBanco     := oModelMain:GetValue("ZHC_BANCO")
-    Local cAgencia   := oModelMain:GetValue("ZHC_AGENCI")
-    Local cConta     := oModelMain:GetValue("ZHC_CONTA")
-    Local cDigCta    := oModelMain:GetValue("ZHC_DIGCTA")
-    //Local cTipDes    := oModelMain:GetValue("ZHC_TIPDES") // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    Local cCodFavor  := oModelMain:GetValue("ZHC_CODIGO")
+
+    //Local nOperation := oModel:GetOperation()
+    Local oModelMain := oModel:GetModel('ZHCMASTER')
+    Local oModelGRID := oModel:GetModel("ZHDDETAIL")
+
+    Local cCPFCGC    := ""
+    Local cFavorec   := ""
+    Local cBanco     := ""
+    Local cAgencia   := ""
+    Local cConta     := ""
+    Local cDigCta    := ""
+    Local cCodFavor  := ""
     Local cProcesso  := ""
 
-    If Empty(cCodFavor)
-        lRet := .f.
-        Alert("Código do Favorecido não preenchido! Verifique...")
-    Else
-        If oModel:nOperation == 3
-            ZHC->( dbSetOrder(3) ) // ZHC_FILIAL+ZHC_CODIGO
-            If ZHC->( dbSeek(FWxFilial("ZHC")+cCodFavor) )
-                lRet := .f.
-                Alert("Código Favorecido já cadastrado! Verifique...")
-            EndIf
-        EndIf
-    EndIf
+    If oModel:nOperation == 3 .or.;
+       oModel:nOperation == 4 .or.;
+       oModel:nOperation == 5
 
-    If lRet
-        If Empty(cCPFCGC)
+        cCPFCGC    := oModelMain:GetValue("ZHC_CPFCGC")
+        cFavorec   := oModelMain:GetValue("ZHC_FAVORE")
+        cBanco     := oModelMain:GetValue("ZHC_BANCO")
+        cAgencia   := oModelMain:GetValue("ZHC_AGENCI")
+        cConta     := oModelMain:GetValue("ZHC_CONTA")
+        cDigCta    := oModelMain:GetValue("ZHC_DIGCTA")
+        cCodFavor  := oModelMain:GetValue("ZHC_CODIGO")
+    
+        If Empty(cCodFavor)
             lRet := .f.
-            Alert("CPF/CNPJ não preenchido! Verifique...")
+            Alert("Código do Favorecido não preenchido! Verifique...")
         Else
-            If oModel:nOperation == 3 .or. oModel:nOperation == 4
-                ZHC->( dbSetOrder(1) ) // ZHC_FILIAL+ZHC_CPFCGC+ZHC_PROCES
-                If ZHC->( dbSeek(FWxFilial("ZHC")+cCPFCGC) ) .and. AllTrim(cCodFavor) <> AllTrim(ZHC->ZHC_CODIGO)
+            If oModel:nOperation == 3
+                ZHC->( dbSetOrder(1) ) // ZHC_FILIAL+ZHC_CODIGO // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+                If ZHC->( dbSeek(FWxFilial("ZHC")+cCodFavor) )
                     lRet := .f.
-                    Alert("CPF/CNPJ já cadastrado! Verifique...")
+                    Alert("Código Favorecido já cadastrado! Verifique...")
                 EndIf
             EndIf
         EndIf
 
         If lRet
-            If Empty(cFavorec)
+            If Empty(cCPFCGC)
                 lRet := .f.
-                Alert("Nome do favorecido não preenchido! Verifique...")
-            EndIf
-        EndIf
-    EndIf
-
-    If lRet
-        If Empty(cBanco)
-            lRet := .f.
-            Alert("Código do banco não preenchido! Verifique...")
-        EndIf
-    EndIf
-
-    If lRet
-        If Empty(cAgencia)
-            lRet := .f.
-            Alert("Agência não preenchida! Verifique...")
-        EndIf
-    EndIf
-
-    If lRet
-        If Empty(cConta)
-            lRet := .f.
-            Alert("Conta não preenchida! Verifique...")
-        EndIf
-    EndIf
-
-    If lRet
-        If Empty(cDigCta)
-            lRet := .f.
-            Alert("Dígito da conta não preenchida! Verifique...")
-        EndIf
-    EndIf
-
-    // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-    /*
-    If lRet
-        If Empty(cTipDes)
-            lRet := .f.
-            Alert("Tipo da Despesa não preenchido! Verifique...")
-        Else
-            SX5->( dbSetOrder(1) )
-            If SX5->( !dbSeek(FWxFilial("SX5")+"_R"+cTipDes) )
-                lRet := .f.
-                Alert("Tipo de despesa informado não existe! Verifique...")
-            EndIf
-        EndIf
-    EndIf
-    */
-
-    If lRet
-
-        //Percorrendo todos os itens da grid
-        For nLinAtual := 1 To oModelGRID:Length()
-
-            //Posiciona na linha
-            oModelGRID:GoLine(nLinAtual)
-            
-            //Se a linha for excluida, incrementa a variável de deletados, senão irá incrementar o valor digitado em um campo na grid
-            If oModelGRID:IsDeleted()
-                nDeletados++
+                Alert("CPF/CNPJ não preenchido! Verifique...")
             Else
+                If oModel:nOperation == 3 .or. oModel:nOperation == 4
+                    ZHC->( dbSetOrder(2) ) // ZHC_FILIAL+ZHC_CPFCGC // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+                    If ZHC->( dbSeek(FWxFilial("ZHC")+cCPFCGC) ) .and. AllTrim(cCodFavor) <> AllTrim(ZHC->ZHC_CODIGO)
+                        lRet := .f.
+                        Alert("CPF/CNPJ já cadastrado! Verifique...")
+                    EndIf
+                EndIf
+            EndIf
 
-                cProcesso := oModelGRID:GetValue("ZHC_PROCES")
-
-                If Empty(cProcesso)
-
+            If lRet
+                If Empty(cFavorec)
                     lRet := .f.
-                    Alert("N. do processo na linha " + AllTrim(Str(nLinAtual)) + " não preenchido! Verifique...")
-                    Exit
+                    Alert("Nome do favorecido não preenchido! Verifique...")
+                EndIf
+            EndIf
+        EndIf
 
+        If lRet
+            If Empty(cBanco)
+                lRet := .f.
+                Alert("Código do banco não preenchido! Verifique...")
+            EndIf
+        EndIf
+
+        If lRet
+            If Empty(cAgencia)
+                lRet := .f.
+                Alert("Agência não preenchida! Verifique...")
+            EndIf
+        EndIf
+
+        If lRet
+            If Empty(cConta)
+                lRet := .f.
+                Alert("Conta não preenchida! Verifique...")
+            EndIf
+        EndIf
+
+        If lRet
+            If Empty(cDigCta)
+                lRet := .f.
+                Alert("Dígito da conta não preenchida! Verifique...")
+            EndIf
+        EndIf
+
+        If lRet .and. !Empty(cBanco) .and. !Empty(cConta) .and. !Empty(cDigCta)
+            lRet := ChkDadBco(cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
+            If !lRet
+                Alert("Dados bancários já cadastrados para outro favorecido! Verifique...")
+            EndIf
+        EndIf
+
+        If lRet
+
+            //Percorrendo todos os itens da grid
+            For nLinAtual := 1 To oModelGRID:Length()
+
+                //Posiciona na linha
+                oModelGRID:GoLine(nLinAtual)
+                
+                //Se a linha for excluida, incrementa a variável de deletados, senão irá incrementar o valor digitado em um campo na grid
+                If oModelGRID:IsDeleted()
+                    nDeletados++
                 Else
 
-                    // Checo se o n. do processo existe no RM
-                    If Select("WorkRM") > 0
-                        WorkRM->( dbCloseArea() )
-                    EndIf
+                    cProcesso := oModelGRID:GetValue("ZHD_PROCES")
 
-                    cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
-                    cQuery += "	    SELECT NUMPROCESSO
-                    cQuery += "		FROM [" + cSGBD + "].[DBO].[VPROCESSOS] (NOLOCK)
-                    cQuery += "		WHERE NUMPROCESSO=''"+cProcesso+"''
-                    cQuery += " ')
+                    If Empty(cProcesso)
 
-                    tcQuery cQuery New Alias "WorkRM"
-
-                    WorkRM->( dbGoTop() )
-                    If WorkRM->(EOF())
                         lRet := .f.
-                        Alert("N. do processo na linha " + AllTrim(Str(nLinAtual)) + " não existe no RM! Verifique...")
+                        Alert("N. do processo na linha " + AllTrim(Str(nLinAtual)) + " não preenchido! Verifique...")
                         Exit
+
+                    Else
+
+                        // Checo se o n. do processo existe no RM
+                        If Select("WorkRM") > 0
+                            WorkRM->( dbCloseArea() )
+                        EndIf
+
+                        cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
+                        cQuery += "	    SELECT NUMPROCESSO
+                        cQuery += "		FROM [" + cSGBD + "].[DBO].[VPROCESSOS] (NOLOCK)
+                        cQuery += "		WHERE NUMPROCESSO=''"+cProcesso+"''
+                        cQuery += " ')
+
+                        tcQuery cQuery New Alias "WorkRM"
+
+                        WorkRM->( dbGoTop() )
+                        If WorkRM->(EOF())
+                            lRet := .f.
+                            Alert("N. do processo na linha " + AllTrim(Str(nLinAtual)) + " não existe no RM! Verifique...")
+                            Exit
+                        EndIf
+
                     EndIf
 
                 EndIf
 
-            EndIf
-
-            If oModel:nOperation == 5
-                ZHB->( dbSetOrder(1) ) // ZHB_FILIAL, ZHB_PROCES, ZHB_TIPDES, R_E_C_N_O_, D_E_L_E_T_
-                //If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso+cTipDes)) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-                If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso)) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
-                    If ZHB->ZHB_GERSE2 .or. !Empty(ZHB->ZHB_NUM)
-                        lRet := .f.
-                        Alert("Exclusão não permitida pois favorecido possui título integrado no financeiro! Verifique as despesas do processo referente linha " + AllTrim(Str(nLinAtual)) + " ...")
-                        Exit
+                If oModel:nOperation == 5
+                    ZHB->( dbSetOrder(1) ) // ZHB_FILIAL, ZHB_PROCES, ZHB_TIPDES, R_E_C_N_O_, D_E_L_E_T_
+                    //If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso+cTipDes)) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+                    If ZHB->( dbSeek(FWxFilial("ZHB")+cProcesso)) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
+                        If ZHB->ZHB_GERSE2 .or. !Empty(ZHB->ZHB_NUM)
+                            lRet := .f.
+                            Alert("Exclusão não permitida pois favorecido possui título integrado no financeiro! Verifique as despesas do processo referente linha " + AllTrim(Str(nLinAtual)) + " ...")
+                            Exit
+                        EndIf
                     EndIf
                 EndIf
-            EndIf
 
-        Next nLinAtual
+            Next nLinAtual
+
+        EndIf
 
     EndIf
  
@@ -390,3 +367,109 @@ Static Function fValidGrid(oModel)
     */
  
 Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+    (long_description)
+    @type  Static Function
+    @author user
+    @since 31/03/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function ChkDadBco(cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
+
+    Local lRet   := .t.
+    Local cQuery := ""
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+    cQuery := " SELECT TOP 1 *
+    cQuery += " FROM " + RetSqlName("ZHC") + " ZHC (NOLOCK)
+    cQuery += " WHERE ZHC_FILIAL='"+FWxFilial("ZHC")+"'
+    cQuery += " AND ZHC_BANCO='"+cBanco+"'
+    cQuery += " AND ZHC_AGENCI='"+cAgencia+"'
+    cQuery += " AND ZHC_CONTA='"+cConta+"'
+    cQuery += " AND ZHC_DIGCTA='"+cDigCta+"'
+    cQuery += " AND ZHC_CPFCGC<>'"+cCPFCGC+"'
+    cQuery += " AND D_E_L_E_T_=''
+
+    tcQuery cQuery New Alias "Work"
+
+    Work->( dbGoTop() )
+    If Work->( !EOF() )
+        lRet := .f.
+    EndIf
+    
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+Return lRet
+
+/*/{Protheus.doc} User Function FixZHCZHD
+    Saneia registros existentes na tabela ZHC para a ZHD - Rotina descartável
+    @type  Function
+    @author user
+    @since 01/04/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    @ticket 18141 - Fernando Macieira - 01/04/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
+/*/
+User Function FixZHCZHD()
+
+    Local lLock := .t.
+    Local cStartPath := GetSrvProfString("Startpath","")
+
+    dbUseArea(.T., __LocalDriver, cStartPath+"ZHC010_ORI"+GetDbExtension(), "ZHCORI", .T., .F.)
+
+    ZHCORI->( dbGoTop() )
+    Do While ZHCORI->( !EOF() )
+
+        // ZHC - Cabeçalho
+        lLock := .t.
+        ZHC->( dbSetOrder(1) ) // ZHC_FILIAL, ZHC_CODIGO, R_E_C_N_O_, D_E_L_E_T_ 
+        If ZHC->( dbSeek(FWxFilial("ZHC")+ZHCORI->ZHC_CODIGO) )
+            lLock := .f.
+        EndIf
+
+        RecLock("ZHC", lLock)
+            ZHC->ZHC_FILIAL := FWxFilial("ZHC")
+            ZHC->ZHC_CODIGO := ZHCORI->ZHC_CODIGO
+            ZHC->ZHC_CPFCGC := ZHCORI->ZHC_CPFCGC
+            ZHC->ZHC_FAVORE := ZHCORI->ZHC_FAVORE
+            ZHC->ZHC_BANCO  := ZHCORI->ZHC_BANCO
+            ZHC->ZHC_AGENCI := ZHCORI->ZHC_AGENCI
+            ZHC->ZHC_CONTA  := ZHCORI->ZHC_CONTA
+            ZHC->ZHC_DIGCTA := ZHCORI->ZHC_DIGCTA
+        ZHC->( msUnLock() )
+
+
+        // ZHD - Itens
+        lLock := .t.
+        ZHD->( dbSetOrder(1) ) // ZHD_FILIAL+ZHD_CODIGO+ZHD_PROCES
+        If ZHD->( dbSeek(FWxFilial("ZHD")+ZHCORI->ZHC_CODIGO+ZHCORI->ZHC_PROCES) )
+            lLock := .f.
+        EndIf
+
+        RecLock("ZHD", lLock)
+            ZHD->ZHD_FILIAL := FWxFilial("ZHD")
+            ZHD->ZHD_CODIGO := ZHCORI->ZHC_CODIGO
+            ZHD->ZHD_ITEM   := ZHCORI->ZHC_ITEM
+            ZHD->ZHD_PROCES := ZHCORI->ZHC_PROCES
+        ZHD->( msUnLock() )
+
+        ZHCORI->( dbSkip() )
+
+    EndDo
+    
+Return 

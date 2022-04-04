@@ -309,7 +309,7 @@ User Function ADFIN121P(lAuto)
                             SE2->E2_ORIGEM := "GPEM670"
                         SE2->( msUnLock() )
 
-                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 31/03/2022 - RM - Acordos - Integração Protheus - Reativação função fix - Visa garantir a integridade das regras
+                        u_FixParcNDI(SE2->E2_NUM) // @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
 
                     EndIf
 
