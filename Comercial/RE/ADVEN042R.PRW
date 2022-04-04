@@ -13,6 +13,7 @@
 	@history Ticket   15733 - Everson     - 16/06/2021 - Tratamento para errorlog.
 	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	@history TICKET:  69990 - ADRIANO SAVOINE - 18/03/2022 - Ajustado o parametro quando carrega diversas filiais para quebrar todas como string e não numerico devido ao erro na filial 0A.
+	@history Ticket:  70851 - ADRIANO SAVOINE - 04/04/2022 - TRATADO O PARAMETRO MV_PAR05 PARA NÃO CARREGAR VAZIU E NUMERICO
 /*/
 User Function ADVEN042R() // U_ADVEN042R()
 	
@@ -81,7 +82,21 @@ User Function ADVEN042R() // U_ADVEN042R()
 	ValidPerg(cPerg)
 	Pergunte(cPerg,.F.)
 	
-	nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+	//Ticket:  70851 - ADRIANO SAVOINE - 04/04/2022
+	IF TYPE(MV_PAR05) == "N" .OR. TYPE(MV_PAR05) == "U"
+
+		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+		U_ADVEN042R()
+
+		ELSE
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+	ENDIF  
+	
 	
 	If nLastKey == 27
 		Return Nil
@@ -89,9 +104,9 @@ User Function ADVEN042R() // U_ADVEN042R()
 	EndIf
 
 	//Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
-	MV_PAR05 := formatIn(ALLTRIM(MV_PAR05),',') //Everson - 16/06/2021 - Correção do errorlog 15733.
+	//MV_PAR05 := formatIn(ALLTRIM(MV_PAR05),',') //Everson - 16/06/2021 - Correção do errorlog 15733.
 	//MV_PAR05 := substring(MV_PAR05, 2, len(alltrim(MV_PAR05))-1)
-	SetDefault(aReturn,cString)
+	//SetDefault(aReturn,cString)
 	
 	If nLastKey == 27
 		Return Nil
@@ -1727,7 +1742,7 @@ Static Function scriptBase()
 	cQuery += " AND SA31.A3_CODSUP = META_NCONST.ZZT_SUPERV " 
 	cQuery += " AND BM_GRUPO = META_NCONST.ZZT_GRUPO " 
 	cQuery += " WHERE    " 
-	cQuery += " F2_FILIAL IN " + Alltrim(MV_PAR05) + " "  //Everson - 16/06/2021 - Correção do errorlog 15733.
+	cQuery += " F2_FILIAL IN (" + Alltrim(MV_PAR05) + ") "  //Everson - 16/06/2021 - Correção do errorlog 15733.
 	cQuery += " AND F2_TIPO ='N'    " 
 	cQuery += " AND D2_TP   ='PA'   " 
 	cQuery += " AND F2_EMISSAO BETWEEN '" + DToS(MV_PAR01) + "' and '" + DToS(MV_PAR02) + "' " 

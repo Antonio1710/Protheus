@@ -12,6 +12,7 @@
 	@history Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	@history Ticket   15718 - Everson     - 16/06/2021 - Tratamento para errorlog.
 	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
+	@history Ticket   70851 - ADRIANO SAVOINE - 04/04/2022 - Ajuste para filiais 0A
 /*/
 User Function ADVEN041R() // U_ADVEN041R()
 	
@@ -45,17 +46,29 @@ User Function ADVEN041R() // U_ADVEN041R()
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	ValidPerg(cPerg)
 	Pergunte(cPerg,.F.)
-	
-	nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+	//Ticket   70851 - ADRIANO SAVOINE - 04/04/2022
+	IF TYPE(MV_PAR05) == "N" .OR. TYPE(MV_PAR05) == "U"
+
+		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+		U_ADVEN041R()
+
+		ELSE
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+	ENDIF  
 	
 	If nLastKey == 27
 		Return Nil
 	EndIf
 	
 	//Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
-	MV_PAR05 := formatIn(Alltrim(MV_PAR05),',') //15718 - Everson     - 16/06/2021.
+	//MV_PAR05 := formatIn(Alltrim(MV_PAR05),',') //15718 - Everson     - 16/06/2021.
 
-	SetDefault(aReturn,cString)
+	//SetDefault(aReturn,cString)
 
 	If nLastKey == 27
 		Return Nil
@@ -1611,7 +1624,7 @@ Static Function scriptBase()
 	//Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	//cQuery += " (CHARINDEX(CONVERT(CHAR(2),(F2_FILIAL)),('" + Alltrim(_cFilIn) + "'))>0) " //15718 - Everson     - 16/06/2021.
 
-	cQuery += " F2_FILIAL IN " + MV_PAR05 + " " //15718 - Everson     - 16/06/2021.
+	cQuery += " F2_FILIAL IN (" + Alltrim(MV_PAR05) + ") " //15718 - Everson     - 16/06/2021.
 	
 	cQuery += " AND F2_TIPO ='N' " 
 	cQuery += " AND D2_TP   ='PA' " 
