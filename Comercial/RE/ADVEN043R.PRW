@@ -11,6 +11,7 @@
 	@history Chamado 045773 - Everson     - 12/12/2018 - Alterado o order by da consulta de totalizador geral.
 	@history Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	@history Ticket   15733 - Everson     - 16/06/2021 - Tratamento para errorlog.
+	@history Ticket   70851 - ADRIANO SAVOINE - 04/04/2022 - Tratado o Parametro de filiais.
 	/*/
 User Function ADVEN043R() // U_ADVEN043R()
 	
@@ -79,16 +80,31 @@ User Function ADVEN043R() // U_ADVEN043R()
 	ValidPerg(cPerg)
 	Pergunte(cPerg,.F.)
 	
-	nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+	//Ticket   70851 - ADRIANO SAVOINE - 04/04/2022
+	IF TYPE(MV_PAR05) == "N" .OR. TYPE(MV_PAR05) == "U"
+
+		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+		U_ADVEN043R()
+
+		ELSE
+
+		nomerel := SetPrint(cString,nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
+
+	ENDIF
+
+	
 	
 	If nLastKey == 27
 		Return Nil
 	EndIf
 	
 	//Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
-	MV_PAR05 := formatIn(Alltrim(MV_PAR05),',')
+	//MV_PAR05 := formatIn(Alltrim(MV_PAR05),',')
 	//_cFilIn := substring(_cFilIn, 2, len(Alltrim(_cFilIn))-1)
-	SetDefault(aReturn,cString)
+	//SetDefault(aReturn,cString)
 	
 	If nLastKey == 27
 		Return Nil
@@ -1252,7 +1268,7 @@ Static Function scriptBase()
 	cQuery += " AND SA31.A3_CODSUP = META_NCONST.ZZT_SUPERV " 
 	cQuery += " AND BM_GRUPO = META_NCONST.ZZT_GRUPO " 
 	cQuery += " WHERE    " 
-	cQuery += " F2_FILIAL IN " + Alltrim(MV_PAR05) + " " 
+	cQuery += " F2_FILIAL IN (" + Alltrim(MV_PAR05) + ") " 
 	cQuery += " AND F2_TIPO ='N'    " 
 	cQuery += " AND D2_TP   ='PA'   " 
 	cQuery += " AND F2_EMISSAO BETWEEN '" + DToS(MV_PAR01) + "' and '" + DToS(MV_PAR02) + "' " 
