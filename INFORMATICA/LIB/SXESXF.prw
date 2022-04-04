@@ -23,6 +23,7 @@
     @history ticket  6608   - Abel Babini       - 14/12/2020 - Correção de numeração da tabela ZAM - Inventário
     @history ticket 11556   - Fernando Macieira - 10/05/2021 - Processo Trabalhista - Títulos
     @history ticket 15111   - Abel Babini       - 07/06/2021 - Ajuste para considerar quando não existem registros na tabela
+    @history ticket 68607   - Fernando Macieira - 31/03/2022 - Acordos trabalhistas
 /*/
 User Function SXESXF(cSX2)
 
@@ -113,16 +114,34 @@ User Function SXESXF(cSX2)
         cQuery += " WHERE RC1_FILIAL='"+FWxFilial("RC1")+"' 
         cQuery += " AND D_E_L_E_T_='' 
 
+    ElseIf AllTrim(cSX2) == "ZHC" // @history ticket 68607   - Fernando Macieira - 31/03/2022 - Acordos trabalhistas
+        
+        cQuery := " SELECT MAX(ZHC_CODIGO) AS NEXT_COD
+        cQuery += " FROM " + RetSqlName("ZHC") + " (NOLOCK)
+        cQuery += " WHERE ZHC_FILIAL='"+FWxFilial("ZHC")+"'
+        cQuery += " AND D_E_L_E_T_='' "
+
     EndIf                                          
 
     tcQuery cQuery New Alias "Work"
 
+    // @history ticket 68607   - Fernando Macieira - 31/03/2022 - Acordos trabalhistas
+    If Empty(AllTrim(Work->NEXT_COD))
+        cNextCod := Soma1(Work->NEXT_COD)
+    Else
+        cNextCod := Soma1(AllTrim(Work->NEXT_COD))
+    EndIf
+
+    /*
     //ticket 15111   - Abel Babini       - 07/06/2021 - Ajuste para considerar quando não existem registros na tabela
     IF AllTrim(Work->NEXT_COD) == ''
         cNextCod := '1'
     ELSE
         cNextCod := Soma1(AllTrim(Work->NEXT_COD))
     ENDIF
+    */
+
+    //
 
     // Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - FWNM - 01/07/2020
     If AllTrim(cSX2) == "SB1"
