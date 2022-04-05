@@ -384,9 +384,7 @@ Static Function getSituacao(cNmOrdem, aSituCarr)
     Local nStatLC   := 0
     Local cStatLC   := ""
 
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(2))
-    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem) )
+    If ! U_ADFAT16A(cNmOrdem)
         MsgInfo("Ordem de pesagem " + cNmOrdem + " não localizada", "Função getSituacao(ADFAT035P)")
         RestArea(aArea)
         Return .F.
@@ -546,10 +544,7 @@ Static Function altLtPrd(lCarrega)
 
     EndIf
 
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(2))
-    ZIF->(DbGoTop())
-    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cOrdSlc))
+    If ! U_ADFAT16A(cOrdSlc)
         MsgInfo("Ordem de pesagem não localizada.","Função altLtPrd(ADFAT035P)")
         RestArea(aArea)
         Return .F.
@@ -717,10 +712,7 @@ Static Function dupliMv(lCarrega)
 
     EndIf
 
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(2))
-    ZIF->(DbGoTop())
-    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cOrdSlc))
+    If ! U_ADFAT16A(cOrdSlc)
         MsgInfo("Ordem de pesagem não localizada.","Função dupliMv(ADFAT035P)")
         RestArea(aArea)
         Return .F.
@@ -912,10 +904,7 @@ Static Function iniCar(lCarrega)
 
     EndIf
     
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(2))
-    ZIF->(DbGoTop())
-    If ! ZIF->(DbSeek( FWxFilial("ZIF") + cOrdSlc ))
+    If ! U_ADFAT16A(cOrdSlc)
         MsgInfo("Ordem de carregamento " + cOrdSlc + " não encontrada.","Função iniCar(ADFAT035P)")
         RestArea(aArea)
         Return .F.
@@ -986,25 +975,25 @@ Static Function iniCar(lCarrega)
 
     EndIf
 
-    DbSelectArea("ZIG")
-    ZIG->(DbSetOrder(5))
-    ZIG->(DbGoTop())
-    If ZIG->(DbSeek( FWxFilial("ZIG") + cCP ))
+    // DbSelectArea("ZIG")
+    // ZIG->(DbSetOrder(5))
+    // ZIG->(DbGoTop())
+    // If ZIG->(DbSeek( FWxFilial("ZIG") + cCP ))
 
-        While ! ZIG->(Eof()) .And. ZIG->ZIG_FILIAL == FWxFilial("ZIG") .And. ZIG->ZIG_CTPATI == cCP
+    //     While ! ZIG->(Eof()) .And. ZIG->ZIG_FILIAL == FWxFilial("ZIG") .And. ZIG->ZIG_CTPATI == cCP
 
-            If ZIG->ZIG_ORDEM <> cOrdSlc .And. ZIG->ZIG_INICIA $"4/5"
-                MsgInfo("Há ordem de pesagem em processo de sequestro (" + ZIG->ZIG_ORDEM + ").","Função iniCar(ADFAT035P)")
-                RestArea(aArea)
-                Return .F.
+    //         If ZIG->ZIG_ORDEM <> cOrdSlc .And. ZIG->ZIG_INICIA $"4/5"
+    //             MsgInfo("Há ordem de pesagem em processo de sequestro (" + ZIG->ZIG_ORDEM + ").","Função iniCar(ADFAT035P)")
+    //             RestArea(aArea)
+    //             Return .F.
 
-            EndIf
+    //         EndIf
 
-            ZIG->(DbSkip())
+    //         ZIG->(DbSkip())
 
-        End
+    //     End
 
-    EndIf
+    // EndIf
 
     Begin Transaction
 
@@ -1172,10 +1161,7 @@ Static Function fimCar(lCarrega)
 
     EndIf
 
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(2))
-    ZIF->(DbGoTop())
-    If ! ZIF->(DbSeek( FWxFilial("ZIF") + cOrdSlc ))
+    If ! U_ADFAT16A(cOrdSlc)
         MsgInfo("Ordem de carregamento " + cOrdSlc + " não encontrada.","Função fimCar(ADFAT035P)")
         RestArea(aArea)
         Return .F.
@@ -1278,7 +1264,7 @@ Static Function getSeqP(cCP, cRoteiro)
     cQuery += " ZIG_FILIAL = '" + FWxFilial("ZIG") + "'  " 
     cQuery += " AND ZIG_CTPATI = '" + cCP + "'  " 
     cQuery += " AND ZIR_ORAGRP = '" + cRoteiro + "' " 
-    cQuery += " AND ZIG_INICIA IN ('2') " //Peso inicial.
+    cQuery += " AND ZIG_INICIA IN ('2','4') " //Peso inicial, pesagem sequestrada.
     cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
     cQuery += " AND ZIR.D_E_L_E_T_ = '' " 
 
@@ -1308,7 +1294,7 @@ Static Function getSeqP(cCP, cRoteiro)
     cQuery += " ZIG_FILIAL = '" + FWxFilial("ZIG") + "'  " 
     cQuery += " AND ZIG_CTPATI = '" + cCP + "'  " 
     cQuery += " AND ZIR_ORAGRP = '" + cRoteiro + "' " 
-    cQuery += " AND ZIG_INICIA IN ('1', '2') " //Pesagem não iniciada, Peso inicial.
+    cQuery += " AND ZIG_INICIA IN ('1', '2', '4') " //Pesagem não iniciada, Peso inicial, sequestrada.
     cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
     cQuery += " AND ZIR.D_E_L_E_T_ = '' " 
 
@@ -1541,7 +1527,7 @@ User Function ADFAT35C(cOpc)
     RestArea(aArea)
 
 Return .T.
-/*/{Protheus.doc} ADFAT35C
+/*/{Protheus.doc} ADFAT35E
     Consulta padrão específica.
     @type  User Function
     @author Everson
