@@ -1,6 +1,7 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
 
+Static xPula   := Chr(13) + Chr(10)
 Static cTbMast := "ZI9"
 Static cTbDeta := "ZIA"
 Static cTbDet2 := "ZIU"
@@ -121,7 +122,7 @@ Static Function vldPos(oModel)
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
 
-        If ExistCpo("ZIB", cCodRot, 2)
+        If lRet .And. ExistCpo("ZIB", cCodRot, 2)
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT015P)", Nil, "Há registro de controle de pátio vinculado ao roteiro de pesagem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
@@ -191,7 +192,7 @@ Return oView
     @since 21/03/2022
     @version 01
 /*/
-User Function ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
+User Function ADFAT15A(cOper, cRotPesa, cProduto, nToleran, cUNTole, envBar, cMsgError)
 
     //Variáveis.
     Local aArea         := GetArea()
@@ -203,12 +204,16 @@ User Function ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
 
     Default nToleran    := 0
     Default cUNTole     := "PC"
+    Default envBar      := "2"
     Default cMsgError   := ""
 
-    DbSelectArea("ZI9")
-    ZI9->(DbSetOrder(1))
-    If ! ZI9->(DbSeek( FWxFilial("ZI9") + cRoteiro ))
-        cMsgError := "ADFAT15A-Roteiro " + cRoteiro + " não localizado(tabela ZI9)."
+    If Empty(envBar)
+        envBar := "2"
+        
+    EndIf
+
+    If ! U_ADFAT15B(cRotPesa)
+        cMsgError := "ADFAT15A-Roteiro " + cRotPesa + " não localizado(tabela ZI9)."
         Help(Nil, Nil, "Função ADFAT15A(ADFAT015P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -227,7 +232,7 @@ User Function ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
 
     EndIf
 
-    lAchou := oGrid:SeekLine( { {"ZIA_FILIAL",FWxFilial("ZIA")}, {"ZIA_CODROT", cRoteiro}, {"ZIA_PRDPRT", cProduto} }, .F./*lDeleted*/, .T. /*lLocate*/ )
+    lAchou := oGrid:SeekLine( { {"ZIA_FILIAL",FWxFilial("ZIA")}, {"ZIA_CODROT", cRotPesa}, {"ZIA_PRDPRT", cProduto} }, .F./*lDeleted*/, .T. /*lLocate*/ )
         
     If cOper == "D"
 
@@ -254,6 +259,7 @@ User Function ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
 
         oGrid:SetValue("ZIA_QTTOLE",  nToleran)
         oGrid:SetValue("ZIA_UNTOLE",  cUNTole)
+        oGrid:SetValue("ZIA_MVESTO",  envBar)
 
     EndIf
 
@@ -279,3 +285,20 @@ User Function ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} ADFAT15B
+    Posiciona no registro de roteiro de pesagem.
+    @type  User Function
+    @author Everson
+    @since 31/03/2022
+    @version 01
+/*/
+User Function ADFAT15B(cRotPesa)
+
+    DbSelectArea("ZI9")
+    ZI9->(DbSetOrder(1))
+    If ! ZI9->(DbSeek( FWxFilial("ZI9") + cRotPesa ))
+        Return .F.
+
+    EndIf
+
+Return .T.
