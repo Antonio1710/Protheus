@@ -16,6 +16,7 @@
 	que não são P.A e querem gerar no relatório 
 	@history Ticket   15553  - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	@history Ticket   70435  - Adriano Savoine - 28/03/2022 - Ajustado o tratamento devido ao mesmo não ser mais necessario para este parametro.
+	@history Ticket   70851  - ADRIANO SAVOINE - 05/04/2022 - Realizado ajuste para o usuario não deixar de preencher as filiais.
 /*/
 
 User Function META05()
@@ -121,7 +122,24 @@ cDesc2  := "de produtos "
 cDesc3  := "Equipe Protheus"
 NomeRel := "META05"
 
-nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
+
+	//Ticket:70851 - 05/04/2022 - ADRIANO SAVOINE
+	IF TYPE(MV_PAR10) == "N" .OR. TYPE(MV_PAR10) == "U"
+
+		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
+
+		nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
+
+		U_META05()
+
+		ELSE
+
+		nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
+
+	ENDIF  
+
+
+
 
 If nLastKey == 27
 	Return
