@@ -122,3 +122,116 @@ User Function ADFAT18A()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ADFAT18B
+    Gatilho do lote aberto ou em uso.
+    @type  User Function
+    @author Everson
+    @since 03/03/2022
+    @version 01
+/*/
+User Function ADFAT18B(cProSAg, cPrdPro)
+
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local cLotUs := ""
+    Local cLotAb := ""
+    Local cLote  := ""
+
+    Default cProSAg := ""
+    Default cPrdPro := ""
+
+    If Empty(cProSAg) .And. ! Empty(cPrdPro)
+        cProSAg := Posicione("ZIM", 2, FWxFilial("ZIM") + cPrdPro, "ZIM_PRDSAG")
+
+    EndIf
+
+    DbSelectArea("ZI8")
+    ZI8->(DbSetOrder(3))
+    ZI8->(DbGoTop())
+    If ZI8->(DbSeek( FWxFilial("ZI8") + cProSAg))
+
+        While ! ZI8->(Eof()) .And. ZI8->ZI8_FILIAL == FWxFilial("ZI8") .And. ZI8->ZI8_PRDSAG == cProSAg
+
+            If ZI8->ZI8_STATUS == "1" //Aberto.
+                cLotAb := ZI8->ZI8_CDLOTE
+
+            ElseIf ZI8->ZI8_STATUS == "2" //Em uso.
+                cLotUs := ZI8->ZI8_CDLOTE
+
+            EndIf
+
+            ZI8->(DbSkip())
+
+        End
+
+    EndIf
+
+    cLote := Iif(Empty(cLotUs), cLotAb, cLotUs)
+
+    RestArea(aArea)
+
+Return cLote
+/*/{Protheus.doc} ADFAT18C
+    Valida o lote.
+    @type  User Function
+    @author Everson
+    @since 28/03/2022
+    @version 01
+/*/
+User Function ADFAT18C(cProSAg, cPrdPro, Lote)
+
+    //Variáveis.
+    Local aArea  := GetArea()
+
+    Default cProSAg := ""
+    Default cProSAg := ""
+    Default Lote    := ""
+
+    If Empty(Lote)
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    If Empty(cProSAg) .And. ! Empty(cPrdPro)
+        cProSAg := Posicione("ZIM", 2, FWxFilial("ZIM") + cPrdPro, "ZIM_PRDSAG")
+
+    ElseIf ! Empty(cProSAg)
+        cPrdPro := Posicione("ZIM", 1, FWxFilial("ZIM") + cPrdPro, "ZIM_PRDPRO")
+
+    EndIf
+
+    DbSelectArea("ZI8")
+    ZI8->(DbSetOrder(1))
+    ZI8->(DbGoTop())
+    If ! ZI8->(DbSeek( FWxFilial("ZI8") + Lote))
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If Alltrim(cProSAg) <> Alltrim(ZI8->ZI8_PRDSAG)
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " inválido para o produto " + cProSAg + " | " +  cPrdPro + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZI8->ZI8_LAUTO == "1"
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZI8->ZI8_STATUS == "4"
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.

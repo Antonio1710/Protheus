@@ -26,6 +26,8 @@ User Function ADFAT032P() // U_ADFAT032P()
 
     oBrowse:Activate()
 
+    (cTbMast)->(DBClearFilter())
+
 Return Nil
 /*/{Protheus.doc} BrowseDef
     @type  Static Function
@@ -37,6 +39,9 @@ Static Function BrowseDef()
 
     //Variáveis.
     Local oBrowse := FwMBrowse():New()
+    Local cFilter := " ZIR_FILIAL = '" + FWxFilial("ZIR") + "' "
+
+    (cTbMast)->(DbSetFilter( {|| &cFilter }, cFilter ))
 
     oBrowse:SetAlias(cTbMast)
     oBrowse:SetDescription(cTitulo)
@@ -235,9 +240,7 @@ User Function ADFAT32A(cOrdemC, cStatus)
     Local cMsgError := ""
     Local oOrdRac   := FwLoadModel("ADFAT032P")
 
-    DbSelectArea("ZIR")
-    ZIR->(DbSetOrder(1))
-    If ! ZIR->(DbSeek( FWxFilial("ZIR") + cOrdemC ))
+    If ! U_ADFAT32G(cOrdemC)
         Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, "Ordem de carregamento " + cOrdemC + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
@@ -293,9 +296,7 @@ User Function ADFAT32C(cOrdemC, cCarga, cPlaca, dData)
     Local cLoja     := ""
     Local cNmTrans  := ""
 
-    DbSelectArea("ZIR")
-    ZIR->(DbSetOrder(1))
-    If ! ZIR->(DbSeek( FWxFilial("ZIR") + cOrdemC ))
+    If ! U_ADFAT32G(cOrdemC)
         Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, "Ordem de carregamento " + cOrdemC + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
@@ -359,7 +360,7 @@ Return lRet
     @since 24/02/2022
     @version 01
 /*/
-User Function ADFAT32D(cNmOrdem, aDados, cMsgError)
+User Function ADFAT32D(cOrdemC, aDados, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -369,10 +370,8 @@ User Function ADFAT32D(cNmOrdem, aDados, cMsgError)
     
     Default cMsgError := ""
     
-    DbSelectArea("ZIR")
-    ZIR->(DbSetOrder(1))
-    If ! ZIR->(DbSeek( FWxFilial("ZIR") + cNmOrdem ))
-        Help(Nil, Nil, "Função ADFAT32D(ADFAT032P)", Nil, "Ordem de carregamento de ração " + cNmOrdem + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    If ! U_ADFAT32G(cOrdemC)
+        Help(Nil, Nil, "Função ADFAT32D(ADFAT032P)", Nil, "Ordem de carregamento de ração " + cOrdemC + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return lRet
 
@@ -402,7 +401,7 @@ User Function ADFAT32D(cNmOrdem, aDados, cMsgError)
     oModel := Nil
 
     If ! Empty(cMsgError)
-        Help(Nil, Nil, "Função ADFAT32D(ADFAT032P)", Nil, "Erro na atualização de registro da ordem de carregamento de ração " + cNmOrdem + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT32D(ADFAT032P)", Nil, "Erro na atualização de registro da ordem de carregamento de ração " + cOrdemC + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     EndIf
 
@@ -410,7 +409,7 @@ User Function ADFAT32D(cNmOrdem, aDados, cMsgError)
 
 Return lRet
 /*/{Protheus.doc} ADFAT32E
-    Validação de ticket de pesagem.
+    Valida se há ticket de pesagem vinculado.
     @type  User Function
     @author Everson
     @since 24/02/2022
@@ -458,48 +457,7 @@ User Function ADFAT32E(cOrdemP, cTicket, cOrdemC)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} ADAFT32F
-    Gatilho do lote.
-    @type  User Function
-    @author Everson
-    @since 03/03/2022
-    @version 01
-/*/
-User Function ADAFT32F(cProSAg)
-
-    //Variáveis.
-    Local aArea  := GetArea()
-    Local cLotUs := ""
-    Local cLotAb := ""
-    Local cLote  := ""
-
-    DbSelectArea("ZI8")
-    ZI8->(DbSetOrder(3))
-    ZI8->(DbGoTop())
-    If ZI8->(DbSeek( FWxFilial("ZI8") + cProSAg))
-
-        While ! ZI8->(Eof()) .And. ZI8->ZI8_FILIAL == FWxFilial("ZI8") .And. ZI8->ZI8_PRDSAG == cProSAg
-
-            If ZI8->ZI8_STATUS == "1" //Aberto.
-                cLotAb := ZI8->ZI8_CDLOTE
-
-            ElseIf ZI8->ZI8_STATUS == "2" //Em uso.
-                cLotUs := ZI8->ZI8_CDLOTE
-
-            EndIf
-
-            ZI8->(DbSkip())
-
-        End
-
-    EndIf
-
-    cLote := Iif(Empty(cLotUs), cLotAb, cLotUs)
-
-    RestArea(aArea)
-
-Return cLote
-/*/{Protheus.doc} ADAFT32F
+/*/{Protheus.doc} ADFAT32F
     Copia ordem de carregamento.
     @type  User Function
     @author Everson
@@ -523,9 +481,7 @@ User Function ADFAT32F(cOrdemC, cPrdSAG, cLote, nQtd, cNvOrdC, cMsgError)
     Default cNvOrdC   := ""
     Default cMsgError := ""
 
-    DbSelectArea("ZIR")
-    ZIR->(DbSetOrder(1))
-    If ! ZIR->(DbSeek( FWxFilial("ZIR") + cOrdemC ))
+    If ! U_ADFAT32G(cOrdemC)
         Help(Nil, Nil, "Função ADFAT32F(ADFAT032P)", Nil, "Ordem de carregamento de ração " + cOrdemC + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return lRet
@@ -615,6 +571,7 @@ User Function ADFAT32()
 	Local oObj 		:= ""
 	Local cIdPonto 	:= ""
 	Local cIdModel 	:= ""
+    Local oModelx   := Nil
     Local nOperation:= 0
     Local cNumero   := ""
 
@@ -670,3 +627,20 @@ Static Function grvBarr(cOperacao, cNumero)
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ADFAT32G
+    Posiciona no registro de ordem de carregamento de ração.
+    @type  User Function
+    @author Everson
+    @since 31/03/2022
+    @version 01
+/*/
+User Function ADFAT32G(cOrdemC)
+
+    DbSelectArea("ZIR")
+    ZIR->(DbSetOrder(1))
+    If ! ZIR->(DbSeek( FWxFilial("ZIR") + cOrdemC ))
+        Return .F.
+        
+    EndIf
+
+Return .T.
