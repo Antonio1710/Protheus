@@ -1,722 +1,386 @@
-#Include "Totvs.ch"
-#Include "Topconn.ch"
+#Include "rwmake.ch"
+#Include "protheus.ch"
+#Include "topconn.ch"
 
 /*/{Protheus.doc} User Function ADEST069P
-    Liberação de sequestro de pesagem.
-    Lib sequestro pesagem
-    Chamado 18465.
+    Rotina para seleção de cliente.
+    Chamado 8465
     @type  Function
-    @author Everson
-    @since 22/12/2021
+    @author Leonardo P. Monteiro
+    @since 07/07/2021
     @version 01
-/*/
-User Function ADEST069P() // U_ADEST069P()
+	@history Chamado 8465 - Leonardo P. Monteiro - 07/07/2021 - Desenvolvimento inicial.
+	
+    /*/
 
-    //Variáveis.
-    Local oLibSeq   := Nil
-    Local oFechar   := Nil
-    Local oPnMaster := Nil
-    Local oPesagens := Nil
-    Local aPesagens := {}
-    Local oDtIni    := Nil
-    Local dDtIni    := Date()-30
-    Local oDtFim    := Nil
-    Local dDtFim    := Date()
-    Local cObservao := Space(100)
-    Local aRadio    := {}
-    Local oFilDest  := Nil
-    Local cFilDest  := ""
-    Local aFilDest  := getFiliais(cEmpAnt)
-    
-    Private oConfirm  := Nil
-    Private oRadio    := Nil
-    Private nRadio    := 1
-    Private nQtdOrd   := 0
-    Private nQtdBal   := 0
-    Private nQtdDif   := 0
-    Private nPerTot   := 0
-    Private nPerDif   := 0
+User Function ADEST069P(cZEDCod)
 
-    oLibSeq			  := MsDialog():Create()
-	oLibSeq:cName     := "oLibSeq"
-	oLibSeq:cCaption  := "Liberação de Pesagens Sequestradas"
-	oLibSeq:nLeft     := 34
-	oLibSeq:nTop      := 222
-	oLibSeq:nWidth    := 1200
-	oLibSeq:nHeight   := 600
-	oLibSeq:lShowHint := .F.
-	oLibSeq:lCentered := .T.
+	//Define quais colunas (campos da TTRB) serao exibidas na MsSelect
+	Local cCampos			:= "ZEL_COD, ZEL_DESCRI,ZEL_OBSERV"
+	
+	Private oGetPesq
+	Private oGroup1
+	Private oGet
+	Private oDlg
+	Private oOrdem
+	Private oButton
+	Private aCampos 		:= {}
+	Private aColsBco		:= {}
+	Private aHeaderBco		:= {}
+	Private aItens			:= {"Código","Descrição"}
+	Private cPesquisa		:= space(60)
+	Private cOrdem			:= ""
+	Private aButtons		:= {}
+	Private nCont			:= 0
+	Private nRetorno		:= 1
 
-        oDtIni := TGet():New(003,005,{|u|If(PCount() == 0,dDtIni,dDtIni := u)}, oLibSeq,070,010,"@D",,0,16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"dDtIni",,,,.T.,,,"Data Inicial",1) 
+	Private cFOpen			:= ""
+	Private oOk 			:=	LoadBitmap( GetResources(), "LBOK")
+	Private oNo 			:=	LoadBitmap( GetResources(), "LBNO")
+	Private bOk				:= {|| nRetorno := fOk(cZEDCod),odlg:End()}
+	
+	Default cZEDCod			:= ""
+	//Default cZE2Reg			:= ""
 
-        oDtFim := TGet():New(003,080,{|u|If(PCount() == 0,dDtFim,dDtFim := u)}, oLibSeq,070,010,"@D",,0,16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"dDtFim",,,,.T.,,,"Data Final",1) 
+	aHeaderBco 	:= MontCabec(cCampos, , 1)
+	aColsBco	:= MontDados(cZEDCod)
 
-        TButton():New(010,155,"Filtrar", oLibSeq,{||;
-            MsAguarde({|| carPesagens(dDtIni, dDtFim, oPesagens, @aPesagens) }, "Aguarde", "Carregando registros...");
-        },035,011,,,.F.,.T.,.F.,,.F.,,,.F. )
+	if !Empty(aColsBco[1][2])
+		@ 050,001 TO 600, 600 DIALOG oDlg TITLE "..:: Seleção de Modelos CSI ::.."
 
-        TGet():New(003,195,{|u|If(PCount() == 0,nQtdOrd,nQtdOrd := u)}, oLibSeq, 070,015,"@E 999,999,999.999",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nQtdOrd",,,,.T.,,,"Qtde. Ordem",1)  
-        TGet():New(003,270,{|u|If(PCount() == 0,nQtdBal,nQtdBal := u)}, oLibSeq, 070,015,"@E 999,999,999.999",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nQtdBal",,,,.T.,,,"Qtde. Balança",1)  
-        TGet():New(003,345,{|u|If(PCount() == 0,nQtdDif,nQtdDif := u)}, oLibSeq, 070,015,"@E 999,999,999.999",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nQtdDif",,,,.T.,,,"Qtde. Diferença",1)  
-        TGet():New(003,420,{|u|If(PCount() == 0,nPerTot,nPerTot := u)}, oLibSeq, 070,015,"@E 999,999,999.999",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nPerTot",,,,.T.,,,"%Tot",1)  
-        TGet():New(003,495,{|u|If(PCount() == 0,nPerDif,nPerDif := u)}, oLibSeq, 070,015,"@E 999,999,999.999",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"nPerDif",,,,.T.,,,"%Dif",1)  
+		oGroup1 	:= tGroup():New(033,002,75,300,'Pesquisar',oDlg,,,.T.)
+		oOrdem 		:= tComboBox():New(43,10,{|u|if(PCount()>0,cOrdem:=u,cOrdem)},aItens,80,20,oGroup1,,{|| fOrdena()},,,,.T.,,,,,,,,,'nOrdem')
+		oGetPesq	:= TGet():New(43,90,{|u| if(PCount()>0,cPesquisa:=u,cPesquisa)}, oGroup1,133,14,'',,,,,,,.T.,,,,,,,,,,'cPesquisa')
+		oButton		:=tButton():New(43,227,'Pesquisa',oDlg,{||fPesquisa(1)},70,14,,,,.T.)
+		oGet		:= MsNewGetDados():New(077,003,260,300, 2,"AllwaysTrue","AllwaysTrue",,{"ZEL_COD"},,nCont,"AllwaysTrue", "AllwaysTrue","", oDlg, aHeaderBco, aColsBco, "AllwaysTrue")	
+		oGet:oBrowse:BldBlclick := {|| fSeleciona()}
+		
+		ACTIVATE DIALOG oDlg On Init (EnchoiceBar(oDlg,{|| MsAguarde(bOk,"Processando, aguarde...","Aguarde..." )},{|| cRetorno := "", oDlg:End()},,aButtons)) CENTER
+	else
+		msginfo("Não existe itens disponíveis para inclusão.")
+	endif
 
-        oPnMaster := TPanel():New(030,005,,oLibSeq,,,,,,590,200)
+	IF Select("Query1") > 1
+	    DbCloseArea("Query1")
+	EndIF
+
+Return nRetorno
+
+Static Function fOk(cZEDCod)
+	Local nRet := 0
+
+	Local nPosOk		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"  })
+	Local nPosCod		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "ZEL_COD" })
+	local nA			:= 0
+	
+	DbSelectArea("ZFZ")
+	ZFZ->(DbsetOrder(1))
+
+	DbSelectArea("ZEL")
+	ZEL->(DbsetOrder(1))
+
+	For nA := 1 TO Len(oGet:aCols)  
+		If oGet:aCols[nA][nPosOk] == oOk
+			
+			if (ZEL->(Dbseek(xFilial("ZEL")+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
+				if !(ZFZ->(Dbseek(xFilial("ZFZ")+cZEDCod+ALLTRIM(oGet:aCols[nA][nPosCod])) ))
+					if Reclock("ZFZ",.T.)
+						ZFZ->ZFZ_FILIAL := xFilial("ZFZ")
+						ZFZ->ZFZ_CODZCO	:= cZEDCod
+						ZFZ->ZFZ_COD	:= ZEL->ZEL_COD
+						ZFZ->ZFZ_DESCRI	:= ZEL->ZEL_DESCRI
+						ZFZ->ZFZ_OBSERV	:= ZEL->ZEL_OBSERV
+						ZFZ->(MsUnlock())
+					endif
+				endif
+			Endif
+		EndIf
+	Next nA
+
+return nRet
+
+Static Function fSeleciona()
+	Local nPosOk			:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"	})
+	//Local lRet 			:= .T.
+
+	If oGet:aCols[oGet:oBrowse:nAt][nPosOk] == oNo
+		oGet:aCols[oGet:oBrowse:nAt][nPosOk] := oOk
+	Else 
+		oGet:aCols[oGet:oBrowse:nAt][nPosOk] := oNo
+	EndIf
+
+
+Return
+
+//Função responsável pela criação dos arquivos de trabalho.
+Static Function fCriaTrab(cAlias)
+
+	Local cArqTrab 	:= NIL  
+
+	cArqTrab			:= FWTemporaryTable():New(cAlias, aStrut)
+	cArqTrab:AddIndex("01",{"ZEL_COD"})
+    cArqTrab:AddIndex("02",{"ZEL_DESCRI"})
+	
+	cArqTrab:Create()
  
-        oPesagens := FwBrowse():New()
-        oPesagens:setOwner(oPnMaster)
-        oPesagens:setDataArray()
-        oPesagens:setArray(aPesagens)
-        oPesagens:disableConfig()
-        oPesagens:disableReport()
-    
-        oPesagens:AddMarkColumns({|| Iif(aPesagens[oPesagens:nAt,01], "LBOK", "LBNO")},;
-                                  {|| selecReg(oPesagens, @aPesagens)})
-    
-        oPesagens:addColumn({"Data"              , {||aPesagens[oPesagens:nAt,02]}, "D", ""                  , 1, 010    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,02]",, .F., .T., , "ID2" })
-        oPesagens:addColumn({"Hora"              , {||aPesagens[oPesagens:nAt,03]}, "C", ""                  , 1, 008    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,03]",, .F., .T., , "ID3" })
-        oPesagens:addColumn({"Produto"           , {||aPesagens[oPesagens:nAt,04]}, "C", ""                  , 1, 060    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,04]",, .F., .T., , "ID4" })
-        oPesagens:addColumn({"Ordem/Agrup."      , {||aPesagens[oPesagens:nAt,05]}, "C", ""                  , 1, 010    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,05]",, .F., .T., , "ID5" })
-        oPesagens:addColumn({"Tipo"              , {||aPesagens[oPesagens:nAt,15]}, "C", ""                  , 1, 005    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,15]",, .F., .T., , "ID15"})
-        oPesagens:addColumn({"Operação"          , {||aPesagens[oPesagens:nAt,06]}, "C", ""                  , 1, 020    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,06]",, .F., .T., , "ID6" })
-        oPesagens:addColumn({"Veículo"           , {||aPesagens[oPesagens:nAt,07]}, "C", ""                  , 1, 007    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,07]",, .F., .T., , "ID7" })
-        oPesagens:addColumn({"Peso Inicial"      , {||aPesagens[oPesagens:nAt,08]}, "N", "@E 999,999,999.999", 2, 015    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,08]",, .F., .T., , "ID8" })
-        oPesagens:addColumn({"Peso Final"        , {||aPesagens[oPesagens:nAt,09]}, "N", "@E 999,999,999.999", 2, 015    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,09]",, .F., .T., , "ID9" })
-        oPesagens:addColumn({"Peso Liquido"      , {||aPesagens[oPesagens:nAt,10]}, "N", "@E 999,999,999.999", 2, 015    ,   , .T. , , .F.,, "aPesagens[oPesagens:nAt,10]",, .F., .T., , "ID10"})
-
-        oPesagens:Activate()
-        
-        aRadio := {"Desconto Financeiro","Quebra de Estoque",;
-                   "Devolução Fornecedor","Transferência Filial",;
-                   "Liberação Fábrica", "Complemento Fornecedor"}
-
-        oRadio := TRadMenu():New (235,005,aRadio,,oLibSeq,,,,,,,,500,15,,,,.T.)
-        oRadio:bSetGet := {|u| Iif(PCount() == 0, nRadio, nRadio := u)}
-        oRadio:lHoriz := .T.
-        oRadio:bChange := {|| Iif(nRadio <> 4 , oFilDest:disable(), oFilDest:enable()) }
-        oRadio:disable()
-
-        TGet():New(250,005,{|u|If(PCount() == 0,cObservao,cObservao := u)}, oLibSeq, 255,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .T. },.F.,.F.,,.F.,.F. ,,"cObservao",,,,.T.,,,"Obs.:",1)  
-
-	    oFilDest := TComboBox():New(250,265,{|u|if(PCount() > 0 ,cFilDest := u,cFilDest)},;
-	    aFilDest,100,15, oLibSeq,,{|| },,,,.T.,,,,/*{|| nRadio == 4 }*/,,,,,"cFilDest","Filial Destino",1)
-
-        oFechar := TButton():New(270,510,"Fechar", oLibSeq,{|| oLibSeq:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
-
-        oConfirm := TButton():New(270,555,"Confirmar", oLibSeq,{|| Iif( ! confirmar(oPesagens, aPesagens, nRadio, cObservao), Nil, Eval({||carPesagens(dDtIni, dDtFim, oPesagens, @aPesagens), zeraDados()}) ) },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oConfirm:disable()
-
-    oLibSeq:Activate(,,,.T.,{||.T.},, {|| carPesagens(dDtIni, dDtFim, oPesagens, @aPesagens) })
-
-Return Nil
-/*/{Protheus.doc} getFiliais
-    Retorna filiais.
-    @type  Static Function
-    @author Everson
-    @since 23/12/2021
-    @version 01
-/*/
-Static Function getFiliais(cEmp)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local aFiliais  := {}
-    Local aFilAux   := FWAllFilial()
-    Local nAux      := 1
-    Local aSM0Data2 := {}
-
-    For nAux := 1 To Len(aFilAux)
-
-        aSM0Data2 := FWSM0Util():GetSM0Data(cEmp, aFilAux[nAux])
-
-        Aadd(aFiliais, Alltrim(cValToChar(aSM0Data2[2][2])) + "=" + Alltrim(cValToChar(aSM0Data2[3][2])))
-
-    Next nAux
-
-    RestArea(aArea)
-
-Return aFiliais
-/*/{Protheus.doc} carPesagens
-    Carrega registros de pesagens s equestradas.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function carPesagens(dDtIni, dDtFim, oPesagens, aPesagens)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local cQuery    := " SELECT * FROM " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG WHERE ZIG_FILIAL = '" + FWxFilial("ZIG") + "' AND ZIG_DTPES2 >= '" + DToS(dDtIni) + "' AND ZIG_DTPES2 <= '" + DToS(dDtFim) + "' AND ZIG_INICIA = '4' AND ZIG_TPSEQU = '1' AND ZIG.D_E_L_E_T_ = '' ORDER BY ZIG_ORDEM "
-    Local cProduto  := ""
-    Local cRoteiro  := ""
-    Local cOperacao := ""
-    Local nIndex    := 0
-
-    aPesagens := {}
-
-    If Select("D_PES") > 0 
-        D_PES->(DbCloseArea())
-
-    EndIf
-
-    TcQuery cQuery New Alias "D_PES"
-    DbSelectArea("D_PES")
-    While ! D_PES->(Eof())
-
-        nIndex := Iif(D_PES->ZIG_AGRUPA == "1", 3, 2)
-        cProduto := getDes(D_PES->ZIG_ORDEM, nIndex)
-
-        cRoteiro  := Posicione("ZIB", 1, FWxFilial("ZIB") + D_PES->ZIG_CTPATI,"ZIB_CODROT")
-        cOperacao := Alltrim(cValToChar(Posicione("ZI9", 1, FWxFilial("ZI9") + cRoteiro,"ZI9_ROTEIR")))
-
-        Aadd(aPesagens,{;
-            .F.,;                       //01 - Marcação.
-            SToD(D_PES->ZIG_DTPES2),;   //02 - Data da última pesagem.
-            D_PES->ZIG_HRPES2,;         //03 - Hora da última pesagem.
-            cProduto,;                  //04 - Produtos.
-            D_PES->ZIG_ORDEM,;          //05 - Ordem de pesagem.
-            cOperacao,;                 //06 - Operação.
-            D_PES->ZIG_PLACA,;          //07 - Placa.
-            D_PES->ZIG_PESINI,;         //08 - Pesagem inicial.
-            D_PES->ZIG_PESFIM,;         //09 - Pesagem final.
-            D_PES->ZIG_PESOLI,;         //10 - Peso liquido.
-            D_PES->ZIG_PESORD,;         //11 - Peso da ordem.
-            D_PES->ZIG_UNTOLE,;         //12 - Unidade de medida da tolerância.
-            D_PES->ZIG_QTTOLE,;         //13 - Tolerância.
-            D_PES->ZIG_QUEBRA,;         //14 - Quebra.
-            D_PES->ZIG_TPMOV,;          //15 - Tipo movimento.
-            D_PES->ZIG_AGRUPA,;         //16 - Agrupada.
-            D_PES->ZIG_NUMERO;          //17 - Número do ticket de pesagem.
-        })
-
-        D_PES->(DbSkip())
-
-    End
-    D_PES->(DbCloseArea())
-
-    oPesagens:setArray(aPesagens)
-    oPesagens:Refresh()
-
-    RestArea(aArea)
-
-Return Nil
-/*/{Protheus.doc} getDes
-    Carrega produtos.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function getDes(cNmOrdem, nIndex)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local cProduto  := ""
-
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(nIndex))
-    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem ) )
-        MsgInfo("Ordem/agrupador " + cNmOrdem + " não localizada(o).", "Função getDes(ADEST069P)")
-        RestArea(aArea)
-        RestArea(aArea)
-
-    EndIf
-
-    If nIndex == 2
-
-         cProduto := U_ADFAT176(ZIF->ZIF_PRDSAG, ZIF->ZIF_PRDPRO)
-
-    ElseIf nIndex == 3
-
-        While ! ZIF->(Eof()) .And. FWxFilial("ZIF") == ZIF->ZIF_FILIAL .And. ZIF->ZIF_AGRUPA == cNmOrdem
-
-            cProduto += U_ADFAT176(ZIF->ZIF_PRDSAG, ZIF->ZIF_PRDPRO) + Space(1)
-
-            ZIF->(DbSkip())
-
-        End
-
-    EndIf
-
-    RestArea(aArea)
-
-Return cProduto
-/*/{Protheus.doc} selecReg
-    Marca registro.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function selecReg(oBrowse, aArquivo)
-
-    //Variáveis.
-    Local nAux      := 1
-    Local nLinha    := oBrowse:nAt
-    Local lMarca    := !aArquivo[oBrowse:nAt,1]
-    Local nPerCTol  := 0
-    Local nPerCDif  := 0
-    Local cTpMovi   := Alltrim(cValToChar(aArquivo[oBrowse:nAt,15]))
-
-    aArquivo[oBrowse:nAt,01] := lMarca
-    
-    For nAux := 1 To Len(aArquivo)
-
-        If nAux <> nLinha
-            aArquivo[nAux, 01] := .F.
-
-        EndIf
-
-    Next nAux
-
-    If !lMarca
-        
-        zeraDados()
-        oRadio:setOption(1)
-        oRadio:disable()
-        oConfirm:disable()
-
-    Else
-
-        If aArquivo[oBrowse:nAt,12] == "PC"
-            nPerCTol := aArquivo[oBrowse:nAt,13]
-
-        Else
-            nPerCTol := Iif(aArquivo[oBrowse:nAt,11] == 0, 0, Round(aArquivo[oBrowse:nAt,13]/aArquivo[oBrowse:nAt,11] * 100,2))
-
-        EndIf
-
-        nPerCDif := Iif(aArquivo[oBrowse:nAt,11] == 0, 0, Round(aArquivo[oBrowse:nAt,14]/aArquivo[oBrowse:nAt,11] * 100,2))
-
-        nQtdOrd   := aArquivo[oBrowse:nAt,11]
-        nQtdBal   := aArquivo[oBrowse:nAt,10]
-        nQtdDif   := aArquivo[oBrowse:nAt,14]
-        nPerTot   := nPerCTol
-        nPerDif   := nPerCDif
-
-        oRadio:enable()
-
-        If cTpMovi == "E"
-            oRadio:setOption(1)
-            oRadio:enableItem(5, .F.)
-
-            oConfirm:enable()
-
-        ElseIf cTpMovi == "O"
-            oRadio:setOption(1)
-            oRadio:enableItem(5, .T.)
-
-            oConfirm:enable()
-
-        ElseIf cTpMovi == "R"
-            oRadio:enableItem(1, .F.)
-            oRadio:enableItem(2, .F.)
-            oRadio:enableItem(3, .F.)
-            oRadio:enableItem(4, .F.)
-            oRadio:enableItem(5, .T.)
-            oRadio:enableItem(6, .F.)
-            oRadio:setOption(5)
-            
-            oConfirm:enable()
-
-        ElseIf cTpMovi == "S"
-            oRadio:disable()
-            oConfirm:disable()
-
-        EndIf
-
-    EndIf
-
-    oBrowse:Refresh()
-
-Return Nil
-/*/{Protheus.doc} zeraDados
-    Zera variáveis do cabeçalho da interface.
-    @type  Static Function
-    @author Everson
-    @since 23/12/2021
-    @version 01
-/*/
-Static Function zeraDados()
-
-    nQtdOrd   := 0
-    nQtdBal   := 0
-    nQtdDif   := 0
-    nPerTot   := 0
-    nPerDif   := 0
-
-Return Nil
-/*/{Protheus.doc} confirmar
-    Processa a ação da liberação do sequestro da pesagem.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function confirmar(oPesagens, aPesagens, nRadio, cObservao)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local lRet      := .F.
-    Local cTicket   := ""
-    Local aDados    := ""
-    Local nAux      := 1
-    Local cNmOrdem  := ""
-
-    If nRadio == Nil .Or. nRadio <= 0
-        MsgInfo("Selecione uma opção.", "Função confirmar(ADEST069P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    For nAux := 1 To Len(aPesagens)
-        If aPesagens[nAux,01]
-            aDados := AClone(aPesagens[nAux])
-
-        EndIf
-
-    Next nAux
-
-    If Len(aDados) <= 0
-        MsgInfo("Selecione uma pesagem sequestrada.", "Função confirmar(ADEST069P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    cNmOrdem := aDados[5]
-
-    If ! MsgYesNo("Deseja liberar a ordem de pesagem " + cNmOrdem + ".", "Função confirmar(ADEST069P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    If nRadio == 1 //Desconto financeiro.
-        lRet := descFin(oPesagens, aPesagens, @cTicket)
-
-    ElseIf nRadio == 2 //Quebra de estoque.
-        lRet := lancQbr()
-
-    ElseIf nRadio == 3 //Devolução Fornecedor.
-        lRet := devFor()
-
-    ElseIf nRadio == 4 //Transferência Filial.
-        lRet := transFil()
-
-    ElseIf nRadio == 5 //Liberaçãõ Fábrica.
-        lRet := libFabr(cNmOrdem, aDados, nRadio, cObservao)
-
-    ElseIf nRadio == 6 //Complemento Fornecedor.
-        lRet := compForn()
-
-    EndIf
-
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} descFin
-    Efetua desconto financeiro.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function descFin(oPesagens, aPesagens, cTicket)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local lRet      := .F.
-    Local nAux      := 1
-    Local cNmOrdem  := ""
-    Local nIndex    := 0
-    Local cTitulo   := ""
-    Local cFornec   := ""
-    Local cLoja     := ""
-    Local cCond     := ""
-    Local nTotLiq   := 0
-    Local cHist     := ""
-    Local cNaturez  := ""
-    Local cItemC    := ""
-    Local cCTADeb   := ""
-    Local cCTACre   := ""
-    Local cCCC      := ""
-    Local cStatOrd  := ""
-
-    For nAux := 1 To Len(aPesagens)
-
-        If aPesagens[nAux][1]
-
-            cNmOrdem := Alltrim(cValToChar(aPesagens[nAux][5]))
-            nIndex   := Iif(aPesagens[nAux][16] == "1", 3, 2)
-            cTicket  := Alltrim(cValToChar(aPesagens[nAux][17]))
-
-        EndIf
-
-    Next nAux
-
-    If nAux > 2
-        MsgInfo("Há mais de um registro selecionado.","Função descFin(ADEST069P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    If Empty(cNmOrdem)
-        MsgInfo("Ordem de pesagem não selecionada.","Função descFin(ADEST069P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(nIndex))
-    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem ) )
-        MsgInfo("Ordem de pesagem " + cNmOrdem + " não localizada.","Função descFin(ADEST069P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    If ZIF->ZIF_TPMOVI == "O"
-        cStatOrd := "7"
-
-    ElseIf ZIF->ZIF_TPMOVI == "E"
-        cStatOrd := "13"
-
-    ElseIf ZIF->ZIF_TPMOVI == "S"
-        cStatOrd := ""
-
-    ElseIf ZIF->ZIF_TPMOVI == "R"
-        cStatOrd := ""
-
-    EndIf
-
-    Begin Transaction
-
-        If nIndex == 2
-            cFornec   := ZIF->ZIF_FORNEC
-            cLoja     := ZIF->ZIF_LJFORN
-
-            lRet := pDescFin(cTitulo, cFornec, cLoja, cCond, nTotLiq, cHist, cNaturez, cItemC, cCTADeb, cCTACre, cCCC)
-
-            If ! lRet
-                DisarmTransaction()
-                Break
-
-            EndIf
-
-        ElseIf nIndex == 3
-
-            While ! ZIF->(Eof()) .And. FWxFilial("ZIF") == ZIF->ZIF_FILIAL .And. ZIF->ZIF_AGRUPA == cNmOrdem
-
-                cFornec := ZIF->ZIF_FORNEC
-                cLoja   := ZIF->ZIF_LJFORN
-
-                lRet := pDescFin(cTitulo, cFornec, cLoja, cCond, nTotLiq, cHist, cNaturez, cItemC, cCTADeb, cCTACre, cCCC)
-
-                If ! lRet
-                    DisarmTransaction()
-                    Break
-                    
-                EndIf
-
-                If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_STATUS", cStatOrd, "") //Atualiza status da ordem de pesagem.
-                    DisarmTransaction()
-                    Break
-
-                EndIf
-
-                ZIF->(DbSkip())
-
-            End
-
-        EndIf
-
-        If ! U_ADFAT191(cTicket, "ZIG_INICIA", "5") //Atualiza status do ticket de pesagem.
-            DisarmTransaction()
-            Break
-
-        EndIf
-
-    End Transaction
-
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} pDescFin
-    Processa desconto financeiro.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function pDescFin(cTitulo, cFornec, cLoja, cCond, nTotLiq, cHist, cNaturez, cItemC, cCTADeb, cCTACre, cCCC)
-
-	//Variáveis.
-	Local aArea	 	:= GetArea()
-	Local lRet		:= .F.
-	Local aArray 	:= {}
-	Local dData		:= Nil
-	Local aRet		:= {}
-	Local cParcela	:= Padl("1",TamSX3("E2_PARCELA")[1],"0")
-	Local cQuery	:= ""
+	cAlias 		:= cArqTrab:GetAlias()
+	cTableName 	:= cArqTrab:GetRealName()
+  
+	DbSelectArea(cAlias)
 	
-	Private lMsErroAuto := .F.
+	(cAlias)->(DbSetOrder(1))
+Return cArqTrab
 
-    return .T.
-	
-	If Empty(cNaturez) .Or. Empty(cItemC) .Or. Empty(cCTADeb) .Or. Empty(cCTACre) .Or. Empty(cCCC)
-		MsgInfo("Há parâmetro(s), para lançamento de NDF, não parametrizados.","Função pDescFin(ADEST069P)")
-		RestArea(aArea)
-		Return .F.
+/* fOrdena */
+Static Function fOrdena()
+	//alert("Ordena")
+	//Código
+	If oOrdem:Nat == 1
+		aSort(oGet:aCols,,,{|x,y| x[1]<y[1]})
+	ElseIf oOrdem:Nat == 2
+		aSort(oGet:aCols,,,{|x,y| x[3]<y[3]})
+	EndIf
+
+	oGet:oBrowse:refresh()
+Return
+
+/* fPesquisa */
+Static Function fPesquisa(nTipo, cAlias)
+	Local nPos	:= 0
+	Local cPesq := Alltrim(cPesquisa)
+
+	If nTipo == 1
+		If !Empty(cPesq)
+
+			If oOrdem:Nat == 1
+				nPos := aScanX( oGet:aCols, { |X,Y| UPPER(cPesq) == Left( UPPER(Alltrim(X[2]))+UPPER(Alltrim(X[3])),Len(cPesq) ) })
+			ElseIf oOrdem:Nat == 2
+				nPos := aScanX( oGet:aCols, { |X,Y| UPPER(cPesq) == Left( UPPER(Alltrim(X[4])),Len(cPesq) ) })
+			EndIf                                                                               
+
+			oGet:goTo(nPos)
+			oGet:oBrowse:refresh()
+		EndIf
+
+	EndIf
+
+Return .T.
+
+//*** Função MontCabec - Monta o cabeçalho.
+Static Function MontCabec(cCampos, cAlias,nTipoArray)
+	Local aArea 	:= GetArea()
+	Local X			:= 0
+	Local aHeaderA	:= {}
+	Local aCampo	:= {}
+	Local nX		:= 0
+	Local aHeaderA	:= {}
+
+	IF nTipoArray == 1
+		AADD( aHeaderA,{"",;
+		"OK",;
+		"@BMP",;
+		2,;
+		0,;
+		/*X3_VALID*/,;
+		"",;
+		"C",;
+		"",;
+		"V"})
+	ElseIF nTipoArray == 2
+		AADD(aHeaderA,{ "OK",,"Mark","@!"})
+	ElseIf nTipoArray == 3
+		AADD(aHeaderA,{"OK"     ,"L"	,1		,0		})
+	ElseIf nTipoArray == 4
+		AADD(aHeaderA,{""     ,{||IIF((cAlias)->OK,oOK,oNO)}	,"@!"	,"CENTER"	,02		,.T.})
+	EndIF
+
+	aCampos := Separa(cCampos,",",.F.)
+
+	For nX	:= 1 TO Len(aCampos)
+		aCampo	:= Separa(aCampos[nX]," AS ",.F.)
+		IF LEN(aCampo) > 1
+			aCampos[nX]	:= Alltrim(aCampo[2])
+		ElseIf LEN(aCampo) == 1
+			aCampos[nX]	:= allTrim(aCampo[1])
+		EndIF
+
+		aCampo	:= Separa(aCampos[nX],".",.F.)
+		IF LEN(aCampo) > 1
+			aCampos[nX]	:= AllTrim(aCampo[2])
+		ElseIf LEN(aCampo) == 1
+			aCampos[nX]	:= allTrim(aCampo[1])
+		EndIF
+
+	NExt nX
+
+
+	dbselectArea("SX3")
+	DbSetOrder(2)
+	//WHILE !EOF() .AND. X3_ARQUIVO == cAlias
+	For X := 1 TO LEN(aCampos)
+		cCampos := Alltrim(aCampos[X])
 		
-	EndIf
+		IF dbSeek(cCampos,.T.) 
+			IF cNivel >= GetSX3Cache(cCampos, "X3_NIVEL")
+				// Objetos normais que utilizam os dados completo do dicionário.
+				If nTipoArray = 1
+					AADD(aHeaderA, { TRIM(X3Titulo()),;
+					GetSX3Cache(cCampos, "X3_CAMPO"),;
+					GetSX3Cache(cCampos, "X3_PICTURE"),;
+					IIF(GetSX3Cache(cCampos, "X3_TAMANHO") > 40 .AND. Alltrim(GetSX3Cache(cCampos, "X3_CAMPO")) != "ZM2_CHAVE",40, GetSX3Cache(cCampos, "X3_TAMANHO")),;
+					GetSX3Cache(cCampos, "X3_DECIMAL"),;
+					GetSX3Cache(cCampos, "X3_VALID"),;
+					GetSX3Cache(cCampos, "X3_USADO"),;
+					GetSX3Cache(cCampos, "X3_TIPO"),;
+					GetSX3Cache(cCampos, "X3_F3"),;
+					GetSX3Cache(cCampos, "X3_CONTEXT")}) 
+					// Utilizado somente MsSelect
+				ElseIf nTipoArray == 2
+					AADD( aHeaderA, { GetSX3Cache(cCampos, "X3_CAMPO"),;
+					,;
+					TRIM(X3Titulo()),;
+					GetSX3Cache(cCampos, "X3_PICTURE"),})
+					// Utilizado Para crição de arquivos de trabalho.
+				ElseIF nTipoArray == 3
+					AADD( aHeaderA, { GetSX3Cache(cCampos, "X3_CAMPO"),;
+					GetSX3Cache(cCampos, "X3_TIPO"),;
+					GetSX3Cache(cCampos, "X3_TAMANHO"),;
+					GetSX3Cache(cCampos, "X3_DECIMAL")})			   
+				ElseIF nTipoArray == 4
+					AADD( aHeaderA, { TRIM(X3Titulo()),;
+					&("{| | "+ Alltrim(cAlias) +"->"+Alltrim(GetSX3Cache(cCampos, "X3_CAMPO"))+" }"),;
+					Alltrim(GetSX3Cache(cCampos, "X3_PICTURE")),;
+					IIF(GetSX3Cache(cCampos, "X3_TAMANHO") > 40 .AND. Alltrim(GetSX3Cache(cCampos, "X3_CAMPO")) != "ZM2_CHAVE",40, GetSX3Cache(cCampos, "X3_TAMANHO")),;
+					IIF(GetSX3Cache(cCampos, "X3_TIPO") == "N", "RIGHT","CENTER"),;
+					.F.})			   
+					// AADD(aHeaderA,{"ST"     ,{|| GetStatus() 		}	,"@!"	,"CENTER"	,02		,.T.})			        				        	
+				EndIF
+			ENDIF
+		Endif
+	Next nI
+
+
+	RestArea(aArea)
+return aHeaderA
+
+
+
+Static Function PosCampo(cCampo)
+	Local nPos	:= 0
+
+	nPos := Ascan(aCampos,Alltrim(cCampo))
+
+	//RestArea(aArea)
+Return nPos
+
+
+//LPM 2012-04-16 - Função para montagem do Cabeçalho. 
+//*** Função MontDados - Monta a consulta e preenche a array.
+STATIC FUNCTION MontDados(cZEDCod)
+	Local cEOL			:= chr(13) + chr(10)
+	Local cQry			:= ""
+	Local cWhere		:= ""
+	Local aColsA		:= {}
+	Local nI			:= 0
+	Private aParamBox   := {}
+    Private aRet        := {}
+
+	// Eetua a consulta 
+
+	If Select("QRY") > 0 
+		QRY->(DBCLOSEAREA())
+	EndIF
+
+	cQry := " SELECT ZEL.ZEL_COD, ZEL.ZEL_DESCRI, ZEL.ZEL_OBSERV " + cEOL
+	cQry += " FROM "+ RetSqlName("ZEL") +" (NOLOCK) ZEL LEFT JOIN "+ RetSqlName("ZFZ") +" (NOLOCK) ZFZ ON ZEL.D_E_L_E_T_='' AND ZFZ.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL='"+ xFilial("ZEL") +"' AND ZFZ.ZFZ_FILIAL='"+ xFilial("ZFZ") +"' AND ZEL.ZEL_COD=ZFZ.ZFZ_COD AND ZFZ.ZFZ_CODZCO='"+ cZEDCod +"' " + cEOL
+	cQry += " WHERE ZEL.D_E_L_E_T_='' AND ZEL.ZEL_FILIAL = '"+ xFilial("ZEL") +"' AND ZEL.ZEL_COD !='' " + cEOL
+	cQry += " 		AND ISNULL(ZFZ.ZFZ_CODZCO,'') ='' " + cEOL
+	cQry += " ORDER BY ZEL.ZEL_COD; " + cEOL
+
+	TcQuery cQry alias "QRY" new
 	
-	cQuery += " SELECT  " 
-	cQuery += " MAX(E2_PARCELA) AS E2_PARCELA  " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("SE2") + " (NOLOCK) AS SE2 " 
-	cQuery += " WHERE " 
-	cQuery += " E2_FILIAL = '" + FWxFilial("SE2") + "' " 
-	cQuery += " AND E2_PREFIXO = 'MAN' " 
-	cQuery += " AND E2_NUM = '" + cTitulo + "' " 
-	cQuery += " AND E2_TIPO = 'NDF' " 
-	cQuery += " AND E2_FORNECE = '" + cFornec + "' " 
-	cQuery += " AND E2_LOJA    = '" + cLoja + "' " 
-	cQuery += " AND SE2.D_E_L_E_T_ = '' " 
-	
-	If Select("D_PARCSE2") > 0
-		D_PARCSE2->(DbCloseArea())
-		
-	EndIf
-	
-	TcQuery cQuery New Alias "D_PARCSE2"
-	DbSelectArea("D_PARCSE2")
-	D_PARCSE2->(DbGoTop())
-		cParcela := Soma1( Iif( Empty(Alltrim(cValToChar(D_PARCSE2->E2_PARCELA))),"0",Alltrim(cValToChar(D_PARCSE2->E2_PARCELA)) ) )
-		cParcela := Padl(cParcela,TamSX3("E2_PARCELA")[1],"0")
-	D_PARCSE2->(DbCloseArea())
+	Count TO nCont
 
-    aRet := Condicao(nTotLiq,cCond,,Date())
-	
-	dData := aRet[1][1]
-	
-	aArray := { { "E2_PREFIXO"  , "MAN"     , Nil },;
-	            { "E2_NUM"      , cTitulo   , Nil },;
-	            { "E2_PARCELA"  , cParcela  , Nil },;
-	            { "E2_TIPO"     , "NDF"     , Nil },;
-	            { "E2_NATUREZ"  , cNaturez  , Nil },;
-	            { "E2_FORNECE"  , cFornec   , Nil },;
-	            { "E2_LOJA"     , cLoja     , Nil },;
-	            { "E2_EMISSAO"  , Date()    , Nil },;
-	            { "E2_HIST"     , cHist     , Nil },;
-	            { "E2_VENCTO"   , dData     , Nil },;
-	            { "E2_VENCREA"  , dData     , Nil },;
-	            { "E2_VALOR"    , nTotLiq   , Nil },;		                        
-	            { "E2_ITEMD"    , cItemC    , Nil },;
-	            { "E2_ITEMC"    , cItemC    , Nil },;
-	            { "E2_DEBITO"   , cCTADeb   , Nil },;
-	            { "E2_CREDIT"   , cCTACre   , Nil },;
-	            { "E2_CCC"      , cCCC      , Nil }}
-	
-	// aArray := FWVetByDic(aArray ,"SE2", .F., 1)
-	// SetFunName("FINA050")
-	// MsExecAuto( {|x,y,z| FINA050(x,y,z)}, aArray,, 3)
-	 
-	If lMsErroAuto
-	    MostraErro()
-	
-    Else
-        lRet := .T.
-	    
-	EndIf
+	QRY->(DBGOTOP())
 
-Return lRet
-/*/{Protheus.doc} lancQbr
-    Lança quebra de estoque.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function lancQbr()
+	IF nCont != 0
+		WHILE qry->(!EOF())
+			AADD( aColsA, Array(LEN(aHeaderBco) + 1 ) )	
+			FOR nI := 1 TO LEN(aHeaderBco)
 
-    //Variáveis.
+				If nI == 1
+					/*
+					if QRY->RE3REG != 0
+						aColsA[LEN(aColsA),nI] := oOk
+					else
+					*/
+					aColsA[LEN(aColsA),nI] := oNO
+					//endif
+				Else
+					aColsA[LEN(aColsA),nI] := &("QRY->"+alltrim(aHeaderBco[nI,2])) 	
+				EndIf
+			Next nI
 
-Return .T.
-/*/{Protheus.doc} lancQbr
-    Processa devolução para o fornecedor.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function devFor()
+			aColsA[Len(aColsA), Len(aHeaderBco) +1 ] := .F.
+			QRY->(dbSkip())
+		END		
 
-    //Variáveis.
+	ELSE
+		AADD(aColsA, Array(LEN(aHeaderBco)+1))
+		FOR nI := 1 TO LEN(aHeaderBco)
+			If !"OK"$aHeaderBco[nI,2]
+				aColsA[1, nI] := CriaVar(aHeaderBco[nI,2], .F.)
+			Else
+				aColsA[LEN(aColsA),nI] := oNO
+			EndIf
+		NEXT nI                                       
 
-Return .T.
-/*/{Protheus.doc} transFil
-    Processa transferência entre filiais.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function transFil()
+		aColsA[1, LEN(aHeaderBco)+1] := .F.
+	ENDIF
 
-    //Variáveis.
+	If Select("QRY") > 0 
+		DBCLOSEAREA("QRY")
+	EndIF
 
-Return .T.
-/*/{Protheus.doc} libFabr
-    Processa liberação fábrica.
-    Processo de liberação utilizado apenas para o tipo de pesagem R - Ração.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function libFabr(cNmOrdem, aDados, nRadio, cObservao)
+RETURN aColsA
 
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local lRet      := .F.
-    Local cTicket   := aDados[17]
 
-    Begin Transaction
+// --------------------------------------------------------------------------------------------------------
+// InÃ­cio da ViewDef e ModelDef.
+// --------------------------------------------------------------------------------------------------------
+Static Function ModelDef()
+ Local oModel		:= MPFormModel():New("mdlADEST069P",, {|| .T.})
+ Local oStrutZFZ	:= FWFormStruct(1,"ZFZ")
+ 
+ oModel:SetDescription("..:: Modelos CSI ::..")
+ 
+ // CabeÃ§alho ZT3 (Pedidos)
+ oModel:addFields("CABEC_ZFZ",nil,oStrutZFZ)
 
-        If ! U_ADFAT194(cTicket, cValToChar(nRadio), cObservao) //Atualiza o status do ticket de pesagem.
-            DisarmTransaction()
-            Break
+ oModel:setPrimaryKey({"ZFZ_FILIAL","ZFZ_CODZCO","ZFZ_COD"})
 
-        EndIf
+return oModel
 
-        If ! U_ADFAT164(cNmOrdem, "7", 1) //Atualiza status da ordem de pesagem.
-            DisarmTransaction()
-            Break
 
-        EndIf
-
-        lRet := .T.
-
-    End Transaction
-
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} compForn
-    Processa complemento fornecedor.
-    @type  Static Function
-    @author Everson
-    @since 22/12/2021
-    @version 01
-/*/
-Static Function compForn()
-
-    //Variáveis.
-
-Return .T.
+Static Function viewDef()
+ Local oView		:= Nil
+ Local oModel		:= FWLoadModel("ADEST069P")
+ Local oStrutZFZ	:= FWFormStruct(2,"ZFZ")
+  
+ DbSelectArea("ZFZ")
+ 
+ ZFZ->(DbSetOrder(1))
+  
+ oView	:= FWFormView():New()
+ oView:setModel(oModel)
+ 
+ oView:GetProgressBar(.T.)
+ 
+ oView:addField("V_CABEC_ZFZ",oStrutZFZ,"CABEC_ZFZ")
+   
+ oView:createHorizontalBox("H_CABEC",100)
+ oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
+ 
+ oView:setOwnerView("V_CABEC_ZFZ","V_CABEC")
+  
+Return oView

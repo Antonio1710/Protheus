@@ -1,951 +1,374 @@
-#Include "Totvs.ch"
-#Include "FWMVCDef.ch"
-#Include "Topconn.ch"
+#Include "rwmake.ch"
+#Include "protheus.ch"
+#Include "topconn.ch"
 
-Static cTbMast := "ZIL"
-Static cTitulo := "Conferência de Produtos Ensacados"
-Static cTiMast := "Dados da conferência de produtos ensacados"
-Static xPula   := Chr(13) + Chr(10)
-
-/*/{Protheus.doc} User Function ADEST067P
-    Conferência de Produtos Ensacados
-    Cad Conf Prd Ensacados
-    Chamado 18465.
+/*/{Protheus.doc} User Function ADEST065P
+    Rotina para seleção de países.
+    Chamado 8465
     @type  Function
-    @author Everson
-    @since 16/12/2021
+    @author Leonardo P. Monteiro
+    @since 07/07/2021
     @version 01
-/*/
-User Function ADEST067P() // U_ADEST067P()
+	@history Chamado 8465 - Leonardo P. Monteiro - 12/07/2021 - Desenvolvimento inicial.
+	
+    /*/
 
-    //Variáveis.
-    Local oBrowse := FwLoadBrw("ADEST067P")
+User Function ADEST067P(cZEDCod)
 
-    oBrowse:Activate()
+	//Define quais colunas (campos da TTRB) serao exibidas na MsSelect
+	Local cCampos			:= "YA_CODGI, YA_DESCR"
+	
+	Private oGetPesq
+	Private oGroup1
+	Private oGet
+	Private oDlg
+	Private oOrdem
+	Private oButton
+	Private aCampos 		:= {}
+	Private aColsBco		:= {}
+	Private aHeaderBco		:= {}
+	Private aItens			:= {"Código","Nome"}
+	Private cPesquisa		:= space(60)
+	Private cOrdem			:= ""
+	Private aButtons		:= {}
+	Private nCont			:= 0
+	Private nRetorno		:= 1
 
-Return Nil
-/*/{Protheus.doc} BrowseDef
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function BrowseDef()
+	Private cFOpen			:= ""
+	Private oOk 			:=	LoadBitmap( GetResources(), "LBOK")
+	Private oNo 			:=	LoadBitmap( GetResources(), "LBNO")
+	Private bOk				:= {|| nRetorno := fOk(cZEDCod),odlg:End()}
+	
+	Default cZEDCod			:= ""
+	//Default cZE2Reg			:= ""
 
-    //Variáveis.
-    Local oBrowse := FwMBrowse():New()
+	aHeaderBco 	:= MontCabec(cCampos, , 1)
+	aColsBco	:= MontDados(cZEDCod)
 
-    oBrowse:SetAlias(cTbMast)
-    oBrowse:SetDescription(cTitulo)
+	if !Empty(aColsBco[1][2])
+		@ 050,001 TO 600, 600 DIALOG oDlg TITLE "..:: Seleção de Países ::.."
 
-Return oBrowse
-/*/{Protheus.doc} MenuDef
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function MenuDef()
+		oGroup1 	:= tGroup():New(033,002,75,300,'Pesquisar',oDlg,,,.T.)
+		oOrdem 		:= tComboBox():New(43,10,{|u|if(PCount()>0,cOrdem:=u,cOrdem)},aItens,80,20,oGroup1,,{|| fOrdena()},,,,.T.,,,,,,,,,'nOrdem')
+		oGetPesq	:= TGet():New(43,90,{|u| if(PCount()>0,cPesquisa:=u,cPesquisa)}, oGroup1,133,14,'',,,,,,,.T.,,,,,,,,,,'cPesquisa')
+		oButton		:=tButton():New(43,227,'Pesquisa',oDlg,{||fPesquisa(1)},70,14,,,,.T.)
+		oGet		:= MsNewGetDados():New(077,003,260,300, 2,"AllwaysTrue","AllwaysTrue",,{"YA_DESCR"},,nCont,"AllwaysTrue", "AllwaysTrue","", oDlg, aHeaderBco, aColsBco, "AllwaysTrue")	
+		oGet:oBrowse:BldBlclick := {|| fSeleciona()}
+		
+		ACTIVATE DIALOG oDlg On Init (EnchoiceBar(oDlg,{|| MsAguarde(bOk,"Processando, aguarde...","Aguarde..." )},{|| cRetorno := "", oDlg:End()},,aButtons)) CENTER
+	else
+		msginfo("Não existe itens disponíveis para inclusão.")
+	endif
 
-    //Variáveis.
-	Local aRotina 	:= {}
+	IF Select("Query1") > 1
+	    DbCloseArea("Query1")
+	EndIF
 
-	ADD OPTION aRotina TITLE "Pesquisar"    ACTION "PesqBrw"          	OPERATION 1   ACCESS 0
-	ADD OPTION aRotina TITLE "Visualizar" 	ACTION "VIEWDEF.ADEST067P" 	OPERATION MODEL_OPERATION_VIEW   ACCESS 0
-	ADD OPTION aRotina TITLE "Incluir" 	    ACTION "VIEWDEF.ADEST067P" 	OPERATION MODEL_OPERATION_INSERT   ACCESS 0
-	ADD OPTION aRotina TITLE "Alterar"      ACTION "U_ADEST674(4)" 	    OPERATION MODEL_OPERATION_UPDATE ACCESS 0
-	ADD OPTION aRotina TITLE "Excluir" 	    ACTION "U_ADEST674(5)" 	    OPERATION MODEL_OPERATION_DELETE   ACCESS 0
+Return nRetorno
 
-Return aRotina
-/*/{Protheus.doc} ADEST674
-    Validação para alteração e exclusão de registro.
-    @type  User Function
-    @author Everson
-    @since 20/12/2021
-    @version 01
-/*/
-User Function ADEST674(nOpc)
+Static Function fOk(cZEDCod)
+	Local nRet := 0
 
-    //Variáveis.
-    Local aArea     := GetArea()
+	Local nPosOk		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"  })
+	Local nPosChave		:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "YA_CODGI" })
+	local nA			:= 0
+	
+	DbSelectArea("SYA")
+	SYA->(DbsetOrder(1))
 
-    If ZIL->ZIL_PESADO == "1"
-        MsgInfo("Ordem com peso final. Operação não permitida.","Função ADEST674(ADEST067P)")
-        RestArea(aArea)
-        Return Nil
+	For nA := 1 TO Len(oGet:aCols)  
+		If oGet:aCols[nA][nPosOk] == oOk
+			
+			if (SYA->(Dbseek(xFilial("SYA")+ALLTRIM(oGet:aCols[nA][nPosChave])) ))
+				if Reclock("SYA",.F.)
+					SYA->YA_XGRPINS := cZEDCod
+					SYA->(MsUnlock())
+				endif
+			Endif
+		EndIf
+	Next nA
 
-    EndIf
+return nRet
 
-    FWExecView("", "ADEST067P", nOpc)
+Static Function fSeleciona()
+	Local nPosOk			:= Ascan( oGet:aHeader, { |x| Alltrim(x[2]) == "OK"	})
+	//Local lRet 			:= .T.
 
-    RestArea(aArea)
+	If oGet:aCols[oGet:oBrowse:nAt][nPosOk] == oNo
+		oGet:aCols[oGet:oBrowse:nAt][nPosOk] := oOk
+	Else 
+		oGet:aCols[oGet:oBrowse:nAt][nPosOk] := oNo
+	EndIf
 
-Return Nil
-/*/{Protheus.doc} ModelDef
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function ModelDef()
-    
-    //Variáveis.
-    Local oModel    := Nil
-    Local oStrMast  := FWFormStruct(1, cTbMast, {|cCampo| AllTRim(cCampo) $ "ZIL_FILIAL;ZIL_PLACA;ZIL_ORDEM;ZIL_CTPATI;ZIL_TPENSA;ZIL_PESADO;ZIL_SEQUEN;"})
-    Local oStrGrid  := FWFormStruct(1, cTbMast)
-    Local bPost     := Nil
 
-    bPost := {|oModel| vldPos(oModel)}
+Return
 
-    oModel := MPFormModel():New("ADEST67", /*bPreValidacao*/, bPost, /*bCommit*/, /*bCancel*/ )
-    
-    //AddFields(<cId >, <cOwner >, <oModelStruct >, <bPre >, <bPost >, <bLoad >)
-    oModel:AddFields("MD_MASTER", Nil, oStrMast)
-    oModel:AddGrid("MD_GRID", "MD_MASTER", oStrGrid,,,,,)
-    oModel:GetModel("MD_GRID"):SetNoDeleteLine(.T.)
-    oModel:GetModel("MD_GRID"):SetNoInsertLine(.T.)
+//Função responsável pela criação dos arquivos de trabalho.
+Static Function fCriaTrab(cAlias)
+
+	Local cArqTrab 	:= NIL  
+
+	cArqTrab			:= FWTemporaryTable():New(cAlias, aStrut)
+	cArqTrab:AddIndex("01",{"YA_CODGI"})
+    cArqTrab:AddIndex("02",{"YA_DESCR"})
+	
+	cArqTrab:Create()
  
-    oModel:SetRelation("MD_GRID", {;
-            {"ZIL_FILIAL", 'FWxFilial("' + cTbMast + '")'},;
-            {"ZIL_ORDEM", "ZIL_ORDEM"};
-        }, (cTbMast)->(IndexKey(1)))
-
-    oModel:GetModel("MD_GRID")
-    oModel:SetDescription(cTiMast)
-    oModel:SetPrimaryKey({})
-
-Return oModel
-/*/{Protheus.doc} vldPos
-    Pós validação.
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function vldPos(oModel)
-
-    //Variáveis.
-    Local aArea      := GetArea()
-    Local lRet       := .T.
-    Local nOperation := oModel:GetOperation()
-    Local cCP        := oModel:GetValue("MD_MASTER", "ZIL_CTPATI")
-    Local cNmOrdem   := oModel:GetValue("MD_MASTER", "ZIL_ORDEM")
-    Local cPlaca     := oModel:GetValue("MD_MASTER", "ZIL_PLACA")
-    Local cPesado    := oModel:GetValue("MD_MASTER", "ZIL_PESADO")
-    Local cSeqAtu    := oModel:GetValue("MD_MASTER", "ZIL_SEQUEN")
-    Local nPesoLiq   := 0
-    Local nPLiqT     := 0
-    Local cPrdPro    := ""
-    Local cPrdSag    := ""
-    Local cProduto   := ""
-    Local aDdSeq     := {}
-    Local cEntSai    := ""
-    Local oGrid      := oModel:GetModel("MD_GRID")
-    Local nLength    := oGrid:length()
-    Local nAux       := 1
-    Local nQtdOrd    := 0
-    Local cQtdOrd    := ""
-
-    If lRet .And. cPesado == "2" .And. ( nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE )
-        
-        If lRet .And. Empty(cSeqAtu) .And. nOperation == MODEL_OPERATION_INSERT
-
-            cSeqAtu := getSeqP(cCP, cNmOrdem)
-
-            lRet := U_ADFAT192(cCP, cNmOrdem, cSeqAtu)
-            
-            If lRet
-                oModel:SetValue("MD_MASTER","ZIL_SEQUEN", cSeqAtu)
-
-            EndIf
-
-        EndIf
-
-        If lRet
-
-            For nAux := 1 To nLength
-                
-                oGrid:GoLine(nAux)
-
-                nPesoLiq    := oGrid:GetValue("ZIL_PESLIQ", nAux)
-                nPLiqT      += nPesoLiq
-                cPrdPro     := oGrid:GetValue("ZIL_PRDPRO", nAux) 
-                cPrdSag     := oGrid:GetValue("ZIL_PRDSAG", nAux) 
-                cProduto    +=  Alltrim(cValToChar(cPrdPro)) + Space(1) + Alltrim(cValToChar(U_ADFAT176(cPrdSag,""))) + Space(1)
-
-                If nLength > 1
-                    nQtdOrd  := Posicione("ZIF", 6, FWxFilial("ZIF") + cNmOrdem + cPrdPro,"ZIF_QUANT")
-                    cQtdOrd  := Alltrim(cValToChar(Transform(nQtdOrd, "999,999,999.999")))
-                    cProduto += "Qtd.: " + Alltrim(cValToChar(Transform(nPesoLiq, "999,999,999.999"))) + " Ordem:" + cQtdOrd + " Dif: " + Alltrim(cValToChar(Transform(nPesoLiq - nQtdOrd, "999,999,999.999"))) + xPula
-
-                EndIf
-
-            Next nAux
-            
-            lRet := vldPeso(cNmOrdem, nPLiqT, @aDdSeq, @cEntSai)
-
-            If ! lRet
-                lRet := U_ADEST673(aDdSeq, cEntSai, nPLiqT, cNmOrdem, cPlaca, cProduto)
-
-            EndIf
-
-        EndIf
-
-    EndIf
-
-    If lRet .And. nOperation == MODEL_OPERATION_DELETE
-        
-        lRet := U_ADEST683(cNmOrdem, cMsgError)
-
-    EndIf
-    
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} getSeqP
-    Obtém sequência de pesagem. 
-    de produtos ensacados.
-    @type  Static Function
-    @author Everson
-    @since 27/12/2021
-    @version 01
-/*/
-Static Function getSeqP(cCP, cNmOrdem)
-
-    //Variáveis.
-    Local cSeq  := ""
-    Local cQuery:= " SELECT ISNULL(MAX(ZIL_SEQUEN),0)+1 AS ZIL_SEQUEN FROM " + RetSqlName("ZIL") + " (NOLOCK) AS ZIL WHERE ZIL_FILIAL = '" + FWxFilial("ZIL") + "' AND ZIL_CTPATI = '" + cCP + "' AND ZIL_ORDEM <> '" + cNmOrdem + "' AND D_E_L_E_T_ = '' "
-
-    If Select("D_SEQ") > 0
-        D_SEQ->(DbCloseArea())
-
-    EndIf
-
-    TcQuery cQuery New Alias "D_SEQ"
-    DbSelectArea("D_SEQ")
-        cSeq := cValToChar(D_SEQ->ZIL_SEQUEN)
-    D_SEQ->(DbCloseArea())
-
-Return cSeq
-/*/{Protheus.doc} vldPeso
-    Valida peso informado na conferência 
-    de produtos ensacados.
-    @type  Static Function
-    @author Everson
-    @since 17/12/2021
-    @version 01
-/*/
-Static Function vldPeso(cNmOrdem, nPesoLiq, aDdSeq, cEntSai)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local nZIFIndex := 2
-    // Local cRoteiro  := ""
-    // Local cProdSAG  := ""
-    Local lRet      := .F.
-    Local lLib      := .F.
-
-    DbSelectArea("ZIG")
-    ZIG->(DbSetOrder(2))
-    ZIG->(DbGoTop())
-    If ! ZIG->( DbSeek( FWxFilial("ZIG") + cNmOrdem ) )
-        Help(,,"Função vldPeso(ADEST067P)",,"Ordem de pesagem " + cNmOrdem + " não localizada.", 1, 0 )
-        RestArea(aArea)
-        Return .F.
-        
-    EndIf
-
-    If ZIG->ZIG_AGRUPA == "1"
-        nZIFIndex := 3
-
-    EndIf
-
-    // DbSelectArea("ZIF")
-    // ZIF->(DbSetOrder(nZIFIndex))
-    // ZIF->(DbGoTop())
-    // If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem ) )
-    //     Help(,,"Função vldPeso(ADEST067P)",,"Ordem de pesagem " + cNmOrdem + " não localizada.", 1, 0 )
-    //     RestArea(aArea)
-    //     Return .F.
-        
-    // EndIf
-
-    // cRoteiro := Posicione("ZIB", 1, FWxFilial("ZIB") + ZIF->ZIF_CTPATI, "ZIB_CODROT")
-    // cProdSAG := ZIF->ZIF_PRDSAG   
-    // cEntSai  := ZIF->ZIF_TPMOVI
-
-    //U_ADFAT177(cRoteiro, ZIF->ZIF_CTPATI, cProdSAG, ZIG->ZIG_PESORD, nPesoLiq, @aDdSeq)
-
-    lLib := ZIG->ZIG_PESORD == nPesoLiq
-
-    Aadd(aDdSeq, { lLib, "R", "KG", 0, (nPesoLiq - ZIG->ZIG_PESORD), Iif(ZIG->ZIG_PESORD <= 0, 0, ((nPesoLiq - ZIG->ZIG_PESORD)/ZIG->ZIG_PESORD)) * 100, "", ZIG->ZIG_PESORD })
-
-    If Len(aDdSeq) > 0
-        lRet := aDdSeq[1][1]
-
-    Else
-        Help(,,"Função vldPeso(ADEST067P)",,"Não foi possível validar a quebra de peso.", 1, 0)
-
-    EndIf
-
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} ViewDef
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function ViewDef()
-    
-    //Variáveis.
-    Local oModel    := FWLoadModel("ADEST067P")
-    Local oView     := Nil
-    Local cCampos   := "ZIL_FILIAL;ZIL_PLACA;ZIL_ORDEM;ZIL_CTPATI;ZIL_TPENSA;ZIL_PESADO;ZIL_SEQUEN;"
-    Local oStrMast  := FWFormStruct(2, cTbMast, {|cCampo| AllTRim(cCampo) $ cCampos})
-    Local oStrGrid  := FWFormStruct(2, cTbMast, {|cCampo| !(Alltrim(cCampo) $ cCampos)})
-
-    oView:= FWFormView():New() 
-    oView:SetModel(oModel)              
- 
-    oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
-    oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID")
- 
-    oView:CreateHorizontalBox("MAIN", 25)
-    oView:CreateHorizontalBox("GRID", 75)
-
-    oView:SetOwnerView("VW_MASTER", 'MAIN')
-    oView:SetOwnerView("VW_GRID", 'GRID')
-    oView:EnableControlBar(.T.)
-
-    oView:AddUserButton("Carregar Ordens","",{|oView| U_ADEST671(oView) } ,"",, {MODEL_OPERATION_INSERT} , .T. )   
- 
-    oView:AddIncrementField("VW_GRID", "ZIL_ITEM")
-
-Return oView
-/*/{Protheus.doc} ADEST671
-    Consulta padrão customizada.
-    @type  User Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-User Function ADEST671(oView)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local oModal    := Nil
-    Local aButtons  := {}
-    Local oContainer:= Nil
-    Local oOrdens   := Nil
-    Local aOrdens   := {}
-    Local oCabec    := oView:GetModel("MD_MASTER")
-    Local cPlaca    := Alltrim(cValToChar(oCabec:GetValue("ZIL_PLACA")))
-
-    If Empty(cPlaca)
-        Help(,,"Função ADEST671(ADEST067P)",,"Informe a placa do veículo.", 1, 0 )
-        RestArea(aArea)
-        Return Nil
-
-    EndIf
-
-    carOrdEn(@aOrdens, cPlaca)
-
-    If Len(aOrdens) <= 0
-        Help(,,"Função ADEST671(ADEST067P)",,"Não há ordens de pesagem de ensacados para o veículo " + cPlaca + ".", 1, 0 )
-        RestArea(aArea)
-        Return Nil
-
-    EndIf
-
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
-	oModal:setTitle("Ordens de Carregamento - " + cPlaca)
-	oModal:setSize(150, 350)
-	oModal:createDialog()
-	oModal:addCloseButton(Nil, "Fechar")
-    Aadd(aButtons,{Nil,"Confimar",{|| Iif(! prcOrd(aOrdens, cPlaca), Nil, oModal:DeActivate()) },"","",.T.,.F.})
-	oModal:addButtons(aButtons)
-
-        oContainer := TPanel():New(025,,, oModal:getPanelMain())
-        oContainer:Align := CONTROL_ALIGN_ALLCLIENT
-
-        oOrdens := FwBrowse():New()
-        oOrdens:setOwner(oContainer)
-        oOrdens:setDataArray()
-        oOrdens:setArray(aOrdens)
-        oOrdens:disableConfig()
-        oOrdens:disableReport()
-    
-        oOrdens:AddMarkColumns({|| Iif(aOrdens[oOrdens:nAt,01], "LBOK", "LBNO")},;
-                                {|| selecOrd(oOrdens, @aOrdens)},;
-                                {|| /*selecTAgr(oOrdens, @aOrdens, @lMarker)*/ })
-    
-        oOrdens:addColumn({"Número"          , {||aOrdens[oOrdens:nAt,02]}, "C", "", 1, 015 , , .T. , , .F.,, "aOrdens[oOrdPes:nAt,02]",, .F., .T., , "ID02" })
-        oOrdens:addColumn({"Ordem/Agrupador" , {||aOrdens[oOrdens:nAt,05]}, "C", "", 1, 015 , , .T. , , .F.,, "aOrdens[oOrdPes:nAt,05]",, .F., .T., , "ID05" })
-        oOrdens:addColumn({"Tp Ordem"        , {||aOrdens[oOrdens:nAt,03]}, "C", "", 1, 010 , , .T. , , .F.,, "aOrdens[oOrdPes:nAt,03]",, .F., .T., , "ID03" })
-        oOrdens:addColumn({"Produto"         , {||aOrdens[oOrdens:nAt,04]}, "C", "", 1, 060 , , .T. , , .F.,, "aOrdens[oOrdPes:nAt,04]",, .F., .T., , "ID04" })
-       
-        oOrdens:Activate()
-
-	oModal:Activate()
-
-    RestArea(aArea)
-
-Return Nil
-/*/{Protheus.doc} selecOrd
-    Marca registro.
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function selecOrd(oBrowse, aArquivo)
-
-    //Variáveis.
-    Local nLinha    := oBrowse:nAt
-    Local cNmOrdem  := aArquivo[nLinha,02]
-    Local nAux      := 1
-
-    For nAux := 1 To Len(aArquivo)
-
-        If aArquivo[nAux,02] == cNmOrdem
-            aArquivo[nAux,01] := .T.
-
-        Else
-            aArquivo[nAux,01] := .F.
-
-        EndIf
-
-    Next nAux
-
-    oBrowse:Refresh()
-
-Return Nil
-/*/{Protheus.doc} carOrdEn
-    Carrega dados das ordens de pesagem.
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function carOrdEn(aOrdens, cPlaca)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local cQuery    := ""
-    Local cDescProd := ""
-    Local cRotPesa  := ""
-
-    cQuery += " SELECT  DISTINCT " 
-        cQuery += " CASE WHEN ZIF_AGRUPA <> '' THEN ZIF_AGRUPA ELSE ZIF_NUMERO END AS ORDEM, " 
-        cQuery += " CASE WHEN ZIF_TPMOVI = 'E' THEN 'Entrada' ELSE 'Saída' END AS ENT_SAI, " 
-        cQuery += " ZIF_TPMOVI, " 
-        cQuery += " ZIF_PRDPRO, " 
-        cQuery += " ZIF_PRDSAG, " 
-        cQuery += " ZIF_STATUS, " 
-        cQuery += " ZIF_STATLA, " 
-        cQuery += " ZIF_CTPATI, " 
-        cQuery += " CASE WHEN ZIF_AGRUPA <> '' THEN 'Agrupador' ELSE 'Ordem' END AS AGR_ORD " 
-    cQuery += " FROM  " 
-        cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF  " 
-    cQuery += " WHERE  " 
-        cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "'  " 
-        cQuery += " AND ZIF_PLACA = '" + cPlaca + "'  " 
-        cQuery += " AND ZIF_TPMOVI IN ('E','S') " 
-        cQuery += " AND ZIF_STATUS NOT IN ('E','S') " 
-        cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
-    cQuery += " ORDER BY ORDEM " 
-
-    If Select("D_DORD") > 0
-        D_DORD->(DbCloseArea())
-
-    EndIf
-
-    DbSelectArea("ZIB")
-    ZIB->(DbSetOrder(1))
-    ZIB->(DbGoTop())
-
-    DbSelectArea("ZIL")
-    ZIL->(DbSetOrder(3))
-    ZIL->(DbGoTop())
-
-    DbSelectArea("ZIG")
-    ZIG->(DbSetOrder(2))
-    ZIG->(DbGoTop())
-
-    TcQuery cQuery New Alias "D_DORD"
-    DbSelectArea("D_DORD")
-    While ! D_DORD->(Eof())
-
-        If ZIB->( DbSeek( FWxFilial("ZIB") + D_DORD->ZIF_CTPATI ))
-            If ZIB->ZIB_STATUS == "5" .Or. ZIB->ZIB_STATUS == "6"
-                D_DORD->(Dbskip())
-                Loop
-
-            EndIf
-
-        EndIf
-
-        If ZIL->( DbSeek( FWxFilial("ZIL") + D_DORD->ORDEM ) )
-            D_DORD->(Dbskip())
-            Loop
-
-        EndIf
-
-        cRotPesa := Posicione("ZIB", 1, FWxFilial("ZIB") + D_DORD->ZIF_CTPATI, "ZIB_CODROT")
-
-        If ! U_ADFAT15B(cRotPesa)
-            D_DORD->(Dbskip())
-            Loop
-
-        EndIf
-
-        If ZI9->ZI9_ENSACA <> "1"
-            D_DORD->(Dbskip())
-            Loop
-            
-        EndIf
-
-        If ! ZIG->( DbSeek( FWxFilial("ZIG") + D_DORD->ORDEM ) )
-            D_DORD->(Dbskip())
-            Loop
-
-        EndIf
-
-        If ZIG->ZIG_INICIA <> "2"
-            D_DORD->(Dbskip())
-            Loop
-
-        EndIf
-
-        cDescProd := Alltrim(Posicione("ZIM",1, FWxFilial("ZIM") + D_DORD->ZIF_PRDSAG, "ZIM_DESSAG"))
-        Aadd(aOrdens,{.F., D_DORD->ORDEM, D_DORD->ENT_SAI, cDescProd, D_DORD->AGR_ORD, D_DORD->ZIF_TPMOVI, D_DORD->ZIF_CTPATI, D_DORD->ZIF_PRDSAG, D_DORD->ZIF_PRDPRO})
-        
-        D_DORD->(Dbskip())
-
-    End
-
-    D_DORD->(DbCloseArea())
-
-    RestArea(aArea)
-
-Return Nil
-/*/{Protheus.doc} prcOrd
-    Processa ordens selecionadas.
-    @type  Static Function
-    @author Everson
-    @since 16/12/2021
-    @version 01
-/*/
-Static Function prcOrd(aOrdens, cPlaca)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local nAux      := 1
-    Local oView     := FWViewActive()
-    Local oGrid     := oView:GetModel("MD_GRID")
-    Local cNmOrdem  := ""
-    Local cCP       := ""
-    Local cEntSai   := ""
-    Local cPrdPro   := ""
-    Local cPrdSAG   := ""
-    Local cDesProd  := ""
-
-    oGrid:setNoInsertLine(.F.)
-    oGrid:setNoDeleteLine(.F.)
-
-    U_ADEST672() //Apaga grid.
-
-    For nAux := 1 To Len(aOrdens)
-
-        If ! aOrdens[nAux][1]
-            Loop
-
-        EndIf
-
-        If Empty(cNmOrdem)
-            cNmOrdem := aOrdens[nAux,2]
-            cCP      := aOrdens[nAux,7]
-            cEntSai  := aOrdens[nAux,6]
-            FWFldPut("ZIL_ORDEM",cNmOrdem)
-            FWFldPut("ZIL_CTPATI",cCP)
-            FWFldPut("ZIL_TPENSA",cEntSai)
-            FWFldPut("ZIL_PESADO","2")
-
-        EndIf
-
-        If nAux > 1
-            oGrid:addLine()
-
-        EndIf
-        
-        cPrdPro   := aOrdens[nAux,9]  
-        cPrdSAG   := aOrdens[nAux,8]
-        cDesProd  := aOrdens[nAux,4]
-
-        oGrid:loadValue("ZIL_PLACA",  cPlaca)
-        oGrid:loadValue("ZIL_ORDEM",  cNmOrdem)
-        oGrid:loadValue("ZIL_CTPATI", cCP)
-        oGrid:loadValue("ZIL_TPENSA", cEntSai)
-        oGrid:loadValue("ZIL_PRDPRO", cPrdPro)
-        oGrid:loadValue("ZIL_PRDSAG", cPrdSAG)
-        oGrid:loadValue("ZIL_DESPRO", cDesProd)
-        oGrid:loadValue("ZIL_PESADO", "2")
-
-    Next nAux
-
-    oGrid:setNoInsertLine(.T.)
-    oGrid:setNoDeleteLine(.T.)
-
-    oGrid:goLine(1)
-
-    oView:refresh()
-
-    RestArea(aArea)
+	cAlias 		:= cArqTrab:GetAlias()
+	cTableName 	:= cArqTrab:GetRealName()
+  
+	DbSelectArea(cAlias)
+	
+	(cAlias)->(DbSetOrder(1))
+Return cArqTrab
+
+/* fOrdena */
+Static Function fOrdena()
+	//alert("Ordena")
+	//Código
+	If oOrdem:Nat == 1
+		aSort(oGet:aCols,,,{|x,y| x[1]+x[2]<y[1]+y[2]})
+	ElseIf oOrdem:Nat == 2
+		aSort(oGet:aCols,,,{|x,y| x[3]<y[3]})
+	EndIf
+
+	oGet:oBrowse:refresh()
+Return
+
+/* fPesquisa */
+Static Function fPesquisa(nTipo, cAlias)
+	Local nPos	:= 0
+	Local cPesq := Alltrim(cPesquisa)
+
+	If nTipo == 1
+		If !Empty(cPesq)
+
+			If oOrdem:Nat == 1
+				nPos := aScanX( oGet:aCols, { |X,Y| UPPER(cPesq) == Left( UPPER(Alltrim(X[2])),Len(cPesq) ) })
+			ElseIf oOrdem:Nat == 2
+				nPos := aScanX( oGet:aCols, { |X,Y| UPPER(cPesq) == Left( UPPER(Alltrim(X[3])),Len(cPesq) ) })
+			EndIf                                                                               
+
+			oGet:goTo(nPos)
+			oGet:oBrowse:refresh()
+		EndIf
+
+	EndIf
 
 Return .T.
-/*/{Protheus.doc} ADEST672
-    Apaga dados da grid.
-    @type  User Function
-    @author Everson
-    @since 17/12/2021
-    @version 01
-/*/
-User Function ADEST672() // U_ADEST672()
-
-    //Variáveis.
-    Local oView  := FWViewActive()
-    Local oGrid  := Nil
-
-    oGrid := oView:GetModel("MD_GRID")
-    oGrid:ClearData(.F.,.T.)
-
-    oGrid:goLine(1)
-
-    oView:refresh()
-
-Return oGrid:length() == 1
-/*/{Protheus.doc} ADEST673
-    Interface de contrassenha.
-    @type  User Function
-    @author Everson
-    @since 17/12/2021
-    @version 01
-/*/
-User Function ADEST673(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local lRet      := .F.
-    Local oModal    := Nil
-    Local aButtons  := {}
-    Local oContainer:= Nil
-    Local cCodSol   := Alltrim(cValToChar(__cUserID))
-    Local cSolic    := UsrFullName(__cUserID)
-    Local cMotivo   := Space(100)
-    Local nValor    := nPesoLiq
-    Local nLimite   := aDdSeq[1][8]
-    Local nDife     := aDdSeq[1][5]
-    Local cNumLib   := ""
-    Local cMsg      := ""
-
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
-	oModal:setTitle("Autorização - Quebra fora da tolerância permitida")
-	oModal:setSize(150, 275)
-	oModal:createDialog()
-	oModal:addCloseButton(Nil, "Cancelar")
-
-    Aadd(aButtons,{Nil,"Solicitar",{|| solicLib("", cNmOrdem, nValor, nLimite, nDife, @cNumLib, cPlaca, cProduto, cMotivo) },"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Confirmar",{|| Iif(! verifLib(@lRet, cNumLib), Nil, oModal:DeActivate()) },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
-
-        oContainer := TPanel():New(025,,, oModal:getPanelMain())
-        oContainer:Align := CONTROL_ALIGN_ALLCLIENT
-        TGet():New(010,010,{|u|If(PCount() == 0,cCodSol,cCodSol := u)}  ,oContainer,125,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cCodSol",,,,.T.,,,"Cod. Solicitante",1)
-        TGet():New(010,140,{|u|If(PCount() == 0,cSolic,cSolic := u)}    ,oContainer,125,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cSolic",,,,.T.,,,"Solicitante",1) 
-
-        TGet():New(040,010,{|u|If(PCount() == 0,cMotivo,cMotivo := u)}  ,oContainer,255,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| Empty(cNumLib) },.F.,.F.,,.F.,.F. ,,"cMotivo",,,,.T.,,,"Motivo",1)  
-        
-        TGet():New(070,010,{|u|If(PCount() == 0,cNumLib,cNumLib := u)}  ,oContainer,125,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cNumLib",,,,.T.,,,"Solicitação",1)  
-
-    oModal:Activate()
-    
-    cMsg := "A conferênca de ensacados não pôde ser salva, pois a quebra de peso necessita de aprovação."
-    If ! Empty(cNumLib) 
-    
-        If excLib("", cNumLib)
-            Help(Nil, Nil, "Função ADEST673(ADEST067P)", Nil, cMsg, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-        EndIf
-
-    ElseIf Empty(cNumLib)
-        Help(Nil, Nil, "Função ADEST673(ADEST067P)", Nil, cMsg, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-    
-    EndIf
-
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} solicLib
-    Solicitação de aprovação de liberação de produtos ensacados.
-    @type  Static Function
-    @author Everson
-    @since 20/12/2021
-    @version 01
-/*/
-Static Function solicLib(cMsgError, cNmOrdem, nValor, nLimite, nDife, cNumLib, cPlaca, cProduto, cMotivo)
-
-    //Variáveis.
-    Local aArea := GetArea()
-    Local oSolic:= Nil
-
-    Default cMsgError := ""
-
-    If ! Empty(cNumLib)
-        MsgInfo("Já há a solicitação " + cNumLib + ".", "Função solicLib(ADEST067P)")
-        RestArea(aArea)
-        Return Nil  
 
-    EndIf
-
-    If Empty(cMotivo)
-        MsgInfo("Necessário informar o motivo.", "Função solicLib(ADEST067P)")
-        RestArea(aArea)
-        Return Nil  
-
-    EndIf
-
-    DbSelectArea("ZID")
-    ZID->(DbSetOrder(2))
-    If ZID->(DbSeek( FWxFilial("ZID") + cNmOrdem ))
-        If ZID->ZID_STATUS == "1"
-            cNumLib := ZID->ZID_NUMERO
-            //Help(Nil, Nil, "Função solicLib(ADEST067P)", Nil, "Já há a solicitação " + ZID->ZID_NUMERO + " para ordem " + cNmOrdem + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-            RestArea(aArea)
-            Return Nil
-
-        EndIf
-
-    EndIf
-
-    oSolic := FwLoadModel("ADEST068P")
-
-    oSolic:SetOperation(MODEL_OPERATION_INSERT)
-    oSolic:Activate() 
-
-    oSolic:SetValue("MD_MASTER","ZID_DATA"  ,Date())
-    oSolic:SetValue("MD_MASTER","ZID_HORA"  ,Time())
-    oSolic:SetValue("MD_MASTER","ZID_PLACA" ,cPlaca)
-    oSolic:SetValue("MD_MASTER","ZID_ORDEM" ,cNmOrdem)
-    oSolic:SetValue("MD_MASTER","ZID_MEMPRO",cProduto)
-    oSolic:SetValue("MD_MASTER","ZID_VALOR" ,nValor)
-    oSolic:SetValue("MD_MASTER","ZID_LIMITE",nLimite)
-    oSolic:SetValue("MD_MASTER","ZID_DIFERE",nDife)
-    oSolic:SetValue("MD_MASTER","ZID_MOTIVO",cMotivo)
-    oSolic:SetValue("MD_MASTER","ZID_SOLIC" ,__cUserID)
-    oSolic:SetValue("MD_MASTER","ZID_NMSOLI",cUserName)
-
-    Begin Transaction
-
-        If oSolic:VldData()
-            oSolic:CommitData()
-
-            cNumLib := ZID->ZID_NUMERO
-            Help(Nil, Nil, "Função solicLib(ADEST067P)", Nil, "Solicitação gerada " + cNumLib + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-        Else
-            aError := oSolic:GetErrorMessage()
-            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
-
-        EndIf
-
-    End Transaction
-
-    oSolic:DeActivate()
-    oSolic:Destroy()
-    oSolic := Nil
-
-    If ! Empty(cMsgError)
-        MsgStop("Erro na geração de registro de solicitação de liberação." + xPula + cMsgError, "Função solicLib(ADEST067P)")
-
-    EndIf
-
-    RestArea(aArea)
-
-Return Nil
-/*/{Protheus.doc} excLib
-    Exclui a solicitação de aprovação de liberação de produtos ensacados.
-    @type  Static Function
-    @author Everson
-    @since 20/12/2021
-    @version 01
-/*/
-Static Function excLib(cMsgError, cNumLib)
-
-    //Variáveis.
-    Local aArea := GetArea()
-    Local lRet  := .F.
-    Local oSolic:= Nil
-
-    Default cMsgError := ""
-
-    DbSelectArea("ZID")
-    ZID->(DbSetOrder(1))
-    If ! ZID->(DbSeek( FWxFilial("ZID") + cNumLib ))
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    If ZID->ZID_STATUS <> "1"
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    oSolic := FwLoadModel("ADEST068P")
-
-    oSolic:SetOperation(MODEL_OPERATION_DELETE)
-    oSolic:Activate() 
-
-    Begin Transaction
-
-        If oSolic:VldData()
-            oSolic:CommitData()
-            lRet := .T.
-
-        Else
-            aError := oSolic:GetErrorMessage()
-            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
-
-        EndIf
-
-    End Transaction
-
-    oSolic:DeActivate()
-    oSolic:Destroy()
-    oSolic := Nil
-
-    If ! Empty(cMsgError)
-        Help(Nil, Nil, "Função excLib(ADEST067P)", Nil, "Erro na exclusão do registro de solicitação de liberação." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-    EndIf
-
-    RestArea(aArea)
-
-Return lRet
-/*/{Protheus.doc} verifLib
-    Verifica a solicitação de aprovação de liberação de produtos ensacados.
-    @type  Static Function
-    @author Everson
-    @since 20/12/2021
-    @version 01
-/*/
-Static Function verifLib(lRet, cNumLib)
-
-    //Variáveis.
-    Local aArea := GetArea()
-
-    lRet := .F.
-
-    If Empty(cNumLib)
-        MsgInfo("Necessário gerar a solicitação de liberação.","Função verifLib(ADEST067P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIF
-
-    DbSelectArea("ZID")
-    ZID->(DbSetOrder(1))
-    If  ! ZID->(DbSeek( FWxFilial("ZID") + cNumLib ))
-        MsgInfo("Solicitação de liberação " + cNumLib + " não localizada.","Função verifLib(ADEST067P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    If ZID->ZID_STATUS == "1"
-        MsgInfo("Solicitação de liberação " + cNumLib + " não passou pelo processo de aprovação.","Função verifLib(ADEST067P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    If ZID->ZID_STATUS == "2"
-        lRet := .T.
-        MsgInfo("Solicitação de liberação " + cNumLib + " aprovada.","Função verifLib(ADEST067P)")
-        RestArea(aArea)
-        Return .T.
-
-    EndIf
-
-    If ZID->ZID_STATUS == "3"
-        lRet := .F.
-        MsgInfo("Solicitação de liberação " + cNumLib + " reprovada.","Função verifLib(ADEST067P)")
-        RestArea(aArea)
-        Return .T.
-
-    EndIf
-
-    RestArea(aArea)
-
-Return .F.
-/*/{Protheus.doc} ADEST675
-    Atualiza.
-    @type  User Function
-    @author Everson
-    @since 13/12/2021
-    @version 01
-/*/
-User Function ADEST675(cNmOrdem, nIndex, cCampo, xValor, cMsgError)
-
-    //Variáveis.
-    Local aArea     := GetArea()
-    Local lRet      := .F.
-    Local oModel    := Nil
-    
-    Default cMsgError := ""
-    
-    DbSelectArea("ZIL")
-    ZIL->(DbSetOrder(nIndex))
-    If ! ZIL->(DbSeek( FWxFilial("ZIL") + cNmOrdem ))
-        cMsgError := "Registro " + cNmOrdem + " não encontrado. Não há apontamento de ensacados."
-        Help(Nil, Nil, "Função ADEST675(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return lRet
-
-    EndIf
-
-    oModel := FwLoadModel("ADEST067P")
-    oModel:SetOperation(MODEL_OPERATION_UPDATE)
-    oModel:Activate()
-    oModel:SetValue("MD_MASTER", cCampo, xValor)
-    oModel:SetValue("MD_GRID", cCampo, xValor)
-
-    If oModel:VldData()
-        oModel:CommitData()
-        lRet := .T.
-
-    Else
-        aError := oModel:GetErrorMessage()
-        cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
-
-    EndIf
-
-    oModel:DeActivate()
-    oModel:Destroy()
-    oModel := Nil
-
-    If ! Empty(cMsgError)
-        Help(Nil, Nil, "Função ADEST675(ADFAT016P)", Nil, "Erro na atualização de registro de conferência de ensacado " + cNmOrdem + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-    EndIf
-
-    RestArea(aArea)
-
-Return lRet
-
+//*** Função MontCabec - Monta o cabeçalho.
+Static Function MontCabec(cCampos, cAlias,nTipoArray)
+	Local aArea 	:= GetArea()
+	Local X			:= 0
+	Local aHeaderA	:= {}
+	Local aCampo	:= {}
+	Local nX		:= 0
+	Local aHeaderA	:= {}
+
+	IF nTipoArray == 1
+		AADD( aHeaderA,{"",;
+		"OK",;
+		"@BMP",;
+		2,;
+		0,;
+		/*X3_VALID*/,;
+		"",;
+		"C",;
+		"",;
+		"V"})
+	ElseIF nTipoArray == 2
+		AADD(aHeaderA,{ "OK",,"Mark","@!"})
+	ElseIf nTipoArray == 3
+		AADD(aHeaderA,{"OK"     ,"L"	,1		,0		})
+	ElseIf nTipoArray == 4
+		AADD(aHeaderA,{""     ,{||IIF((cAlias)->OK,oOK,oNO)}	,"@!"	,"CENTER"	,02		,.T.})
+	EndIF
+
+	aCampos := Separa(cCampos,",",.F.)
+
+	For nX	:= 1 TO Len(aCampos)
+		aCampo	:= Separa(aCampos[nX]," AS ",.F.)
+		IF LEN(aCampo) > 1
+			aCampos[nX]	:= Alltrim(aCampo[2])
+		ElseIf LEN(aCampo) == 1
+			aCampos[nX]	:= allTrim(aCampo[1])
+		EndIF
+
+		aCampo	:= Separa(aCampos[nX],".",.F.)
+		IF LEN(aCampo) > 1
+			aCampos[nX]	:= AllTrim(aCampo[2])
+		ElseIf LEN(aCampo) == 1
+			aCampos[nX]	:= allTrim(aCampo[1])
+		EndIF
+
+	NExt nX
+
+
+	dbselectArea("SX3")
+	DbSetOrder(2)
+	//WHILE !EOF() .AND. X3_ARQUIVO == cAlias
+	For X := 1 TO LEN(aCampos)
+		cCampos := Alltrim(aCampos[X])
+		
+		IF dbSeek(cCampos,.T.) 
+			IF cNivel >= GetSX3Cache(cCampos, "X3_NIVEL")
+				// Objetos normais que utilizam os dados completo do dicionário.
+				If nTipoArray = 1
+					AADD(aHeaderA, { TRIM(X3Titulo()),;
+					GetSX3Cache(cCampos, "X3_CAMPO"),;
+					GetSX3Cache(cCampos, "X3_PICTURE"),;
+					IIF(GetSX3Cache(cCampos, "X3_TAMANHO") > 40 .AND. Alltrim(GetSX3Cache(cCampos, "X3_CAMPO")) != "ZM2_CHAVE",40, GetSX3Cache(cCampos, "X3_TAMANHO")),;
+					GetSX3Cache(cCampos, "X3_DECIMAL"),;
+					GetSX3Cache(cCampos, "X3_VALID"),;
+					GetSX3Cache(cCampos, "X3_USADO"),;
+					GetSX3Cache(cCampos, "X3_TIPO"),;
+					GetSX3Cache(cCampos, "X3_F3"),;
+					GetSX3Cache(cCampos, "X3_CONTEXT")}) 
+					// Utilizado somente MsSelect
+				ElseIf nTipoArray == 2
+					AADD( aHeaderA, { GetSX3Cache(cCampos, "X3_CAMPO"),;
+					,;
+					TRIM(X3Titulo()),;
+					GetSX3Cache(cCampos, "X3_PICTURE"),})
+					// Utilizado Para crição de arquivos de trabalho.
+				ElseIF nTipoArray == 3
+					AADD( aHeaderA, { GetSX3Cache(cCampos, "X3_CAMPO"),;
+					GetSX3Cache(cCampos, "X3_TIPO"),;
+					GetSX3Cache(cCampos, "X3_TAMANHO"),;
+					GetSX3Cache(cCampos, "X3_DECIMAL")})			   
+				ElseIF nTipoArray == 4
+					AADD( aHeaderA, { TRIM(X3Titulo()),;
+					&("{| | "+ Alltrim(cAlias) +"->"+Alltrim(GetSX3Cache(cCampos, "X3_CAMPO"))+" }"),;
+					Alltrim(GetSX3Cache(cCampos, "X3_PICTURE")),;
+					IIF(GetSX3Cache(cCampos, "X3_TAMANHO") > 40 .AND. Alltrim(GetSX3Cache(cCampos, "X3_CAMPO")) != "ZM2_CHAVE",40, GetSX3Cache(cCampos, "X3_TAMANHO")),;
+					IIF(GetSX3Cache(cCampos, "X3_TIPO") == "N", "RIGHT","CENTER"),;
+					.F.})			   
+					// AADD(aHeaderA,{"ST"     ,{|| GetStatus() 		}	,"@!"	,"CENTER"	,02		,.T.})			        				        	
+				EndIF
+			ENDIF
+		Endif
+	Next nI
+
+
+	RestArea(aArea)
+return aHeaderA
+
+
+
+Static Function PosCampo(cCampo)
+	Local nPos	:= 0
+
+	nPos := Ascan(aCampos,Alltrim(cCampo))
+
+	//RestArea(aArea)
+Return nPos
+
+
+//LPM 2012-04-16 - Função para montagem do Cabeçalho. 
+//*** Função MontDados - Monta a consulta e preenche a array.
+STATIC FUNCTION MontDados(cZEDCod)
+	Local cEOL		:= chr(13) + chr(10)
+	Local aColsA	:= {}
+	Local nI		:= 0
+
+	// Eetua a consulta 
+
+	If Select("QRY") > 0 
+		QRY->(DBCLOSEAREA())
+	EndIF
+
+	cQry := " SELECT DISTINCT YA.YA_CODGI, YA.YA_DESCR " + cEOL
+	cQry += " FROM "+ RetSqlName("SYA") +" (NOLOCK) YA " + cEOL
+	cQry += " WHERE YA.D_E_L_E_T_='' AND YA.YA_FILIAL = '"+ xFilial("SYA") +"' AND YA.YA_CODGI !='' " + cEOL
+	cQry += " 		AND YA.YA_XGRPINS !='"+cZEDCod+"' " + cEOL
+	cQry += " ORDER BY YA.YA_CODGI, YA.YA_DESCR; " + cEOL
+
+	TcQuery cQry alias "QRY" new
+	//TCSETFIELD("QRY","YA_CODGI","C")
+
+	Count TO nCont
+
+	QRY->(DBGOTOP())
+
+	IF nCont != 0
+		WHILE qry->(!EOF())
+			AADD( aColsA, Array(LEN(aHeaderBco) + 1 ) )	
+			FOR nI := 1 TO LEN(aHeaderBco)
+
+				If nI == 1
+					/*
+					if QRY->RE3REG != 0
+						aColsA[LEN(aColsA),nI] := oOk
+					else
+					*/
+					aColsA[LEN(aColsA),nI] := oNO
+					//endif
+				Else
+					aColsA[LEN(aColsA),nI] := &("QRY->"+alltrim(aHeaderBco[nI,2])) 	
+				EndIf
+			Next nI
+
+			aColsA[Len(aColsA), Len(aHeaderBco) +1 ] := .F.
+			QRY->(dbSkip())
+		END		
+
+	ELSE
+		AADD(aColsA, Array(LEN(aHeaderBco)+1))
+		FOR nI := 1 TO LEN(aHeaderBco)
+			If !"OK"$aHeaderBco[nI,2]
+				aColsA[1, nI] := CriaVar(aHeaderBco[nI,2], .F.)
+			Else
+				aColsA[LEN(aColsA),nI] := oNO
+			EndIf
+		NEXT nI                                       
+
+		aColsA[1, LEN(aHeaderBco)+1] := .F.
+	ENDIF
+
+	If Select("QRY") > 0 
+		DBCLOSEAREA("QRY")
+	EndIF
+
+RETURN aColsA
+
+
+// --------------------------------------------------------------------------------------------------------
+// InÃ­cio da ViewDef e ModelDef.
+// --------------------------------------------------------------------------------------------------------
+Static Function ModelDef()
+ Local oModel		:= MPFormModel():New("mdlADEST067P",, {|| .T.})
+ Local oStrutSYA	:= FWFormStruct(1,"SYA")
+ 
+ oModel:SetDescription("..:: Cadastro de Países ::..")
+ 
+ // CabeÃ§alho ZT3 (Pedidos)
+ oModel:addFields("CABEC_SYA",nil,oStrutSYA)
+
+ oModel:setPrimaryKey({"SYA_FILIAL","SYA_CODGI"})
+
+return oModel
+
+
+Static Function viewDef()
+ Local oView		:= Nil
+ Local oModel		:= FWLoadModel("ADEST067P")
+ Local oStrutSYA	:= FWFormStruct(2,"SYA")
+  
+ DbSelectArea("SYA")
+ 
+ SYA->(DbSetOrder(1))
+  
+ oView	:= FWFormView():New()
+ oView:setModel(oModel)
+ 
+ oView:GetProgressBar(.T.)
+ 
+ oView:addField("V_CABEC_SYA",oStrutSYA,"CABEC_SYA")
+   
+ oView:createHorizontalBox("H_CABEC",100)
+ oView:createVerticalBox("V_CABEC",100	,"H_CABEC")
+ 
+ oView:setOwnerView("V_CABEC_SYA","V_CABEC")
+  
+Return oView

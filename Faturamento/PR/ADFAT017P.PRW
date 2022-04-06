@@ -4288,7 +4288,7 @@ Static function grvPesagem(cBalanca,;
 
             EndIf
 
-            If nTpPesa == 2 .And. lEnsacado .And. ! U_ADEST675(cNmOrdem, 3, "ZIL_PESADO", "1", @cMsgError) //Marca conferência de ensacado como pesada.
+            If nTpPesa == 2 .And. lEnsacado .And. ! U_ADEST735(cNmOrdem, 3, "ZIL_PESADO", "1", @cMsgError) //Marca conferência de ensacado como pesada.
                 DisarmTransaction()
                 Break
 
