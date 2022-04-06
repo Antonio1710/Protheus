@@ -9,9 +9,9 @@
     @author Leonardo P. Monteiro
     @since 07/07/2021
     @version 01
-	@history Chamado 8465 - Leonardo P. Monteiro - 07/07/2021 - Desenvolvimento inicial.
-	
-    /*/
+	@history Chamado 8465  - Leonardo P. Monteiro - 07/07/2021 - Desenvolvimento inicial.
+	@history Chamado 70911 - Fernando Sigoli      - 06/04/2022 - Roolback da rotina em produção
+/*/
 
 User Function ADEST069P(cZEDCod)
 
