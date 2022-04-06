@@ -43,6 +43,7 @@
 	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
 	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
     @history TICKET: 69748  - ADRIANO SAVOINE - 16/03/2022 - Ajustado o campo credencial para ajustar igual ao RM no DIMEP com 8 caracteres no leitor de codigo de barra mas deixando que no relogio somente considere 6.
+	@history Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022 - Criado o parametro no configurador com 1 dia e alterada a query pois estava ocorrendo erro na hora de montar a mesma e transformado o dado.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1814,8 +1815,8 @@ Return cEmpresa
 	@see (links_or_references)
 /*/
 Static Function Sqlfuncionario(cEmpresa) 
-
-	Local nDias := GetMV("MV_#RMDIAS",,30) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
+	//Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022
+	Local nDias := AllTrim(Str(GetMV("MV_#RMDIAS",,30))) // @history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás
 
 	TRB := GetNextAlias()
 	
@@ -1859,7 +1860,7 @@ Static Function Sqlfuncionario(cEmpresa)
 
 	//Ticket: TI - 03/02/2022 - Adriano Savoine
 	//cQuery += "				AND PFUNC.DATADEMISSAO                             <= GETDATE() " // debug - inibir 
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()-"+Str(nDias)+" " // debug - voltar 
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()-"+nDias+" "  //Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL) " // debug - voltar 
 	
 	// @history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
@@ -1871,7 +1872,7 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
 	*/
 	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF=''47189416870''
+	//cQuery += " AND PPESSOA.CPF= ''50199207895'' "
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
 	//
 
