@@ -58,6 +58,7 @@
 	@history ticket   66892 - Jonathan.Carvalho - 25/01/2022 - Ordenação pelo CODIGENE quando a opção for 7 
 	@history ticket   68144 - Wagner Moro 		- 11/02/2022 - Tratamento notas com especie NFS para não consultar central XML
 	@history ticket   69741 - Jonathan Carvalho - 16/03/2022 - Condição para localizar a NF de origem para produtor rural
+	@history ticket   70424 - Jonathan Carvalho - 05/04/2022 - Alterado pesquisa de localização do numero de Chave das NF de Saida.
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -1199,9 +1200,11 @@ While ! (cAliasNFE)->(Eof())
 		EndIf
 		// se o tipo for frango apanha pegar a chave da nota de saida
 		If ALLTRIM((cAliasNFE)->TABEGENE) == 'FCCAMVAP'
-			cCHVNFE := ''
+
+			cCHVNFE := (cAliasNFE)->F1_CHVNFE //Puxar o numero da Chave direto do Registro da Tabela SGNFE010 tkt 70424
+			///cCHVNFE := ''
 			////TCSetConn(_conProthe)
-			cCHVNFE  := Posicione("SF2",1,'03'+cDoc+cSerie,"F2_CHVNFE")
+			///cCHVNFE  := Posicione("SF2",1,'03'+cDoc+cSerie,"F2_CHVNFE")
 			////TCSetConn(_conSAG)
 		EndIf
 		//
