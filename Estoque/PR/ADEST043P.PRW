@@ -3,7 +3,6 @@
 #Include 'Totvs.ch'
 #Include 'Restful.ch'
 #Include 'Topconn.ch' 
-
 /*/{Protheus.doc} Everson Function ADEST043P
     Rotina para lançamento automático de solicitação ao armazém referente ao consumo de combustível em São Carlos.
     Chamado 053926.
@@ -15,57 +14,56 @@
     @history Everson, 12/03/2020, Tratamento para selecionar registros de abastecimento que estejam liberados.
     @history Fernando,03/04/2020, Chamado 056980 - Tratamento para validação da placa
     @history Wagner , 25/02/2022 - Ticket - 68095 - Comentário do FlockByName/UnlockByName
+    @history Everson, 06/04/2022 - Ticket - 70330 - Tratamento para verificar se já há SA vinculada ao registro de abastecimento.
 /*/
 User Function ADEST043P() // U_ADEST043P()
 
-    // 
     RpcClearEnv()
     RPCSetType(3)
 	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
 
-	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-    // Comentado trecho // Adoro - Ticket 68905 - Wagner - 25/02/2022
-	//If !LockByName("ADEST043P", .T., .F.)
-	//	ConOut("[ADEST043P] - Existe outro processamento sendo executado! Verifique...")
-	//	RPCClearEnv()
-	//	Return
-	//EndIf
-
-    Conout( DToC(Date()) + " " + Time() + " ADEST043P - Início" )
-    logZBN("1")
-    logZBE("ADEST043P - Início")
 
     PtInternal(1,ALLTRIM(PROCNAME()))
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Requisição de abastecimento')
 
-    //Importa os dados do WinFleet.
-    impDados()
+    Sleep(Random(0, 7)*1000)
 
-    //Gera solicitação ao armazém.
-    gerSolic()
+    DbSelectArea("ZBN") 
+	ZBN->(DbSetOrder(1))
+	ZBN->(DbGoTop()) 
+	If ZBN->(DbSeek(xFilial("ZBN") + 'ADEST043P'))
 
-    //Gera pré-requisição ao armazém.
-    gerPreReq()
+        If ZBN->ZBN_STATUS == "2" .Or. ( ZBN->ZBN_STATUS == "1" .And. ( ZBN->ZBN_DATA < Date() .Or. ElapTime(ZBN->ZBN_HORA, Time()) > "00:10:00" ))
 
-    //Baixa solicitação ao armazém.
-    baxSolic() 
+            Conout( DToC(Date()) + " " + Time() + " ADEST043P - Início - " )
+            logZBN("1")
+            logZBE("ADEST043P - Início")
 
-    logZBE("ADEST043P - Fim")
+            //Importa os dados do WinFleet.
+            impDados()
 
-    logZBN("2")
-    Conout( DToC(Date()) + " " + Time() + " ADEST043P - Fim" )
+            //Gera solicitação ao armazém.
+            gerSolic()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-	//³Destrava a rotina para o usuário	    ?
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-	//UnLockByName("ADEST043P")
+            //Gera pré-requisição ao armazém.
+            gerPreReq()
+
+            //Baixa solicitação ao armazém.
+            baxSolic() 
+
+            logZBE("ADEST043P - Fim")
+
+            logZBN("2")
+            Conout( DToC(Date()) + " " + Time() + " ADEST043P - Fim" )
+
+        EndIf
+
+    EndIf
 
     RpcClearEnv()
-    //
 
 Return Nil
-
 /*/{Protheus.doc} impDados
     Importa dados de abastecimento para o Protheus.
     @type  Static Function
@@ -75,76 +73,38 @@ Return Nil
     /*/
 Static Function impDados()
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea     := GetArea()
     Local cQuery    := ""
     Local cNumReg   := ""
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - impDados - Início importação de dados." )
     logZBE("ADEST043P - impDados - Início importação de dados.")
 
-    //
     cQuery := scriptWinFl()
 
-    //
     If Select("D_DADOS") > 0
         D_DADOS->(DbCloseArea())
 
     EndIf
 
-    //
     TcQuery cQuery New Alias "D_DADOS"
     DbSelectArea("D_DADOS")
     D_DADOS->(DbGoTop())
 
-    //
-    Begin Transaction
+    While ! D_DADOS->(Eof())
 
-        //
-        While ! D_DADOS->(Eof())
+        cNumReg := Alltrim(cValToChar(D_DADOS->ABASEQ))
 
-            //
-            cNumReg := Alltrim(cValToChar(D_DADOS->ABASEQ))
+        DbSelectArea("ZBB")
+        ZBB->(DbSetOrder(3))
+        ZBB->(DbGoTop())
+        If ZBB->(DbSeek( FWxFilial("ZBB") + "B" + cNumReg ))
 
-            //
-            DbSelectArea("ZBB")
-            ZBB->(DbSetOrder(3))
-            ZBB->(DbGoTop())
-            If ZBB->(DbSeek( FWxFilial("ZBB") + "B" + cNumReg ))
+            If ZBB->ZBB_ESTOQU == .F.
 
-                //
-                If ZBB->ZBB_ESTOQU == .F.
-
-                    //
-                    Reclock("ZBB",.F.)
-                    
-                        ZBB->ZBB_DTINI  := SToD(StrTran(Alltrim(D_DADOS->DATALIB),"-",""))
-                        ZBB->ZBB_HRINI  := D_DADOS->HRLB
-                        ZBB->ZBB_DTFIM  := SToD(StrTran(Alltrim(D_DADOS->DATA),"-",""))
-                        ZBB->ZBB_HRFIM  := D_DADOS->HR
-                        ZBB->ZBB_VOLUME := D_DADOS->QTD
-                        ZBB->ZBB_PLACA  := D_DADOS->VEICULO
-                        ZBB->ZBB_PLAORI := D_DADOS->VEICULO
-                        ZBB->ZBB_SISTEM := "B" 
-                        ZBB->ZBB_CCWINF := Alltrim(cValToChar(D_DADOS->EMPRESA))
-
-                    ZBB->(MsUnlock())
-
-                EndIf
-
-                //
-                logZBE("Alterou ZBB " + cNumReg)
-
-            Else
-                CONOUT(StrTran(Alltrim(D_DADOS->DATALIB),"-",""))
-                CONOUT(StrTran(Alltrim(D_DADOS->DATA),"-",""))
-                //
-                Reclock("ZBB",.T.)
+                Reclock("ZBB",.F.)
                 
-                    ZBB->ZBB_IDABAS := cNumReg
                     ZBB->ZBB_DTINI  := SToD(StrTran(Alltrim(D_DADOS->DATALIB),"-",""))
                     ZBB->ZBB_HRINI  := D_DADOS->HRLB
                     ZBB->ZBB_DTFIM  := SToD(StrTran(Alltrim(D_DADOS->DATA),"-",""))
@@ -154,31 +114,47 @@ Static Function impDados()
                     ZBB->ZBB_PLAORI := D_DADOS->VEICULO
                     ZBB->ZBB_SISTEM := "B" 
                     ZBB->ZBB_CCWINF := Alltrim(cValToChar(D_DADOS->EMPRESA))
-                    ZBB->ZBB_BOMBA  := "S500"
-                    ZBB->ZBB_ESTOQU := .F.
-                    ZBB->ZBB_LOGIST := .F.
-                    ZBB->ZBB_CTAPLU := .F.
-                                        
-                ZBB->(MsUnlock()) 
 
-                //
-                logZBE("Incluiu ZBB " + cNumReg)
+                ZBB->(MsUnlock())
 
             EndIf
 
-            //
-            D_DADOS->(DbSkip())
+            logZBE("Alterou ZBB " + cNumReg)
 
-        End
+        Else
+            CONOUT(StrTran(Alltrim(D_DADOS->DATALIB),"-",""))
+            CONOUT(StrTran(Alltrim(D_DADOS->DATA),"-",""))
+       
+            Reclock("ZBB",.T.)
+            
+                ZBB->ZBB_IDABAS := cNumReg
+                ZBB->ZBB_DTINI  := SToD(StrTran(Alltrim(D_DADOS->DATALIB),"-",""))
+                ZBB->ZBB_HRINI  := D_DADOS->HRLB
+                ZBB->ZBB_DTFIM  := SToD(StrTran(Alltrim(D_DADOS->DATA),"-",""))
+                ZBB->ZBB_HRFIM  := D_DADOS->HR
+                ZBB->ZBB_VOLUME := D_DADOS->QTD
+                ZBB->ZBB_PLACA  := D_DADOS->VEICULO
+                ZBB->ZBB_PLAORI := D_DADOS->VEICULO
+                ZBB->ZBB_SISTEM := "B" 
+                ZBB->ZBB_CCWINF := Alltrim(cValToChar(D_DADOS->EMPRESA))
+                ZBB->ZBB_BOMBA  := "S500"
+                ZBB->ZBB_ESTOQU := .F.
+                ZBB->ZBB_LOGIST := .F.
+                ZBB->ZBB_CTAPLU := .F.
+                                    
+            ZBB->(MsUnlock()) 
 
-    //
-    End Transaction
+            logZBE("Incluiu ZBB " + cNumReg)
 
-    //
+        EndIf
+
+        D_DADOS->(DbSkip())
+
+    End
+
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - impDados - Fim importação de dados." )
     logZBE("ADEST043P - impDados - Fim importação de dados.")
 
-    //
     RestArea(aArea)
 
 Return Nil
@@ -191,21 +167,16 @@ Return Nil
     /*/
 Static Function scriptWinFl()
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea     := GetArea()
     Local cQuery    := ""
     Local nMaxProt  := getMaxPro()
     
-    //
     cQuery := " SELECT EMPRESA, CAST(DATALIB AS VARCHAR) AS DATALIB, CAST(HORALIB AS VARCHAR) AS HRLB, CAST(DATA AS VARCHAR) AS DATA, CAST(HORA AS VARCHAR) AS HR, VEICULO, ABASEQ, QTD, ENCERRANTE FROM "
     cQuery += " OPENQUERY(WINFLEET,'SELECT EMPRESA, DATALIB, DATA, HORALIB, HORA, VEICULO, ABASEQ, QTD, ENCERRANTE FROM ABASTECIMENTOS WHERE  ABASEQ > " + cValToChar(nMaxProt) + " ORDER BY ABASEQ ') "
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - scriptWinFl - cQuery " + cQuery )
 
-    //
     RestArea(aArea)
 
 Return cQuery
@@ -248,9 +219,7 @@ Return nMax
     /*/
 Static Function gerSolic()
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea     := GetArea()
     Local aAreaMS   := {}
     Local cNumReg   := ""
@@ -259,7 +228,6 @@ Static Function gerSolic()
     Local aCC       := Separa(Alltrim(GetMv("MV_#CDIESE")),"/",.T.)
     Local cCC       := ""
     Local cObs      := ""
-    Local lRet      := .T.
     Local aCab      := {}
     Local aItens    := {}
     Local cNumero   := ""
@@ -267,53 +235,60 @@ Static Function gerSolic()
     Local nRecZBB   := 0
     Local cErro     := ""
     Local aErroLog  := {}
+    Local cMsgErro  := ""
 
     Private lMsErroAuto := .F.
     Private lMsHelpAuto := .T.
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - gerSolic - Início geração de solicitação ao armazém." )
     logZBE("ADEST043P - gerSolic - Início geração de solicitação ao armazém.")
 
-    //
     cQuery := scriptSolic()
 
-    //
     If Select("D_DADOS") > 0
         D_DADOS->(DbCloseArea())
 
     EndIf
 
-    //
     TcQuery cQuery New Alias "D_DADOS"
     DbSelectArea("D_DADOS")
     D_DADOS->(DbGoTop())
 
-
-    //
     While ! D_DADOS->(Eof())
 
-        //
+        cNumero := ""
+        cMsgErro:= ""
+        aCab    := {}
+        aItens  := {}
         nRecZBB := Val(cValToChar(D_DADOS->REC))
         cNumReg := Alltrim(cValToChar(D_DADOS->ZBB_IDABAS))
+
+        Sleep(Random(0, 10)*1000)
+
+        cNumero := getNumSA(cNumReg)
+
+        If ! Empty(cNumero) //Everson, 06/04/2022 - Ticket - 70330.
+            D_DADOS->(DbSkip())
+            Loop
+
+        EndIf
+
+        cNumero := ""
         cCC     := aCC[Val(cValToChar(D_DADOS->ZBB_CCWINF))]
         nQtd    := Val(cValToChar(D_DADOS->ZBB_VOLUME))
         cObs    := cNumReg + " " + Alltrim(cValToChar(D_DADOS->ZBB_PLACA)) + " " + Alltrim(D_DADOS->ZBB_DTFIM) + " " + Alltrim(cValToChar(D_DADOS->ZBB_HRFIM))
 
-        //
         Conout( DToC(Date()) + " " + Time() + " ADEST043P - cCC " + cCC )
         Conout( DToC(Date()) + " " + Time() + " ADEST043P - ADEST043P " + cObs )
 
-        //
         DbSelectArea( "SB1" )
         SB1->( DbSetOrder( 1 ) )
         ddatabase := SToD(Alltrim(D_DADOS->ZBB_DTFIM))
-        //
+
         aCab := {}
         //Aadd( aCab, { "CP_NUM"     ,cNumero  , Nil }) //Everson - 05/03/2020. Chamado 053926.
         Aadd( aCab, { "CP_EMISSAO" ,SToD(Alltrim(D_DADOS->ZBB_DTFIM)), Nil })
 
-        //
         aItens := {}
         Aadd( aItens, {} )
         Aadd( aItens[ Len( aItens ) ],{"CP_ITEM"    ,"01"     , Nil } )
@@ -324,80 +299,86 @@ Static Function gerSolic()
         Aadd( aItens[ Len( aItens ) ],{"CP_XCOMBUS" ,cNumReg  , Nil } )
         Aadd( aItens[ Len( aItens ) ],{"CP_XSISCOM" ,"B"      , Nil } )
 
-        //
         SB1->( DbSetOrder( 1 ) )
         SCP->( DbSetOrder( 1 ) )
 
-        //
         VarInfo("aCab"  ,aCab)
         VarInfo("aItens",aItens)
 
-        //
         lMsErroAuto := .F.
         lMsHelpAuto	:= .T.
 
-        //
         Private n := 1
-        aAreaMS := GetArea()
-        MsExecAuto( { | x, y, z | Mata105( x, y , z ) }, aCab, aItens , 3 )
-        RestArea(aAreaMS)
 
-        //
-        cErro    := ""
-        aErroLog := {}
-        If lMsErroAuto
-            
-            //
-            aErroLog := GetAutoGrLog()
+        Sleep(Random(0, 5)*1000)
 
-            //
-            If Len(aErroLog) > 0
+        Begin Transaction 
 
-                //
-                cErro += EncodeUtf8(StrTran(StrTran(Alltrim(cValToChar(aErroLog[1])),Chr(13),""),Chr(10),""))
+            aAreaMS := GetArea()
+            MsExecAuto( { | x, y, z | Mata105( x, y , z ) }, aCab, aItens , 3 )
+            RestArea(aAreaMS)
+
+            cErro    := ""
+            aErroLog := {}
+            If lMsErroAuto
+                
+                aErroLog := GetAutoGrLog()
+
+                If Len(aErroLog) > 0
+
+                    cErro += EncodeUtf8(StrTran(StrTran(Alltrim(cValToChar(aErroLog[1])),Chr(13),""),Chr(10),""))
+
+                EndIf
+
+                logZBE("gerSolic - Erro geração solicitação " + cValToChar(cNumReg) + " " + cErro)
+
+            Else
+
+                cNumero := getNumSA(cNumReg) //Everson - 05/03/2020. Chamado 053926.
+
+                If ! Empty(cNumero) //Everson - 05/03/2020. Chamado 053926.
+                    DbSelectArea("ZBB")
+                    ZBB->(DbGoTo(nRecZBB))
+
+                    If ! Empty(Alltrim(cValToChar(ZBB->ZBB_NUMSA))) //Everson, 06/04/2022 - Ticket - 70330 .
+                        cMsgErro := "O Id " + cNumReg + " já possui a ordem " + ZBB->ZBB_NUMSA + " vinculada "
+                        DisarmTransaction()
+                        Break
+
+                    EndIf
+
+                    RecLock("ZBB",.F.)
+                        ZBB->ZBB_ESTOQU := .T.
+                        ZBB->ZBB_NUMSA  := cNumero
+                    ZBB->(MsUnlock())
+
+                    logZBE("Incluiu SCP / ID ABAST" + cNumero + " / " + cNumReg)
+
+                Else
+                    cMsgErro := "Não houve retorno da consulta com a SA"
+                    DisarmTransaction()
+                    Break
+
+                EndIf
 
             EndIf
 
-            //
-            logZBE("gerSolic - Erro geração solicitação " + cValToChar(cNumReg) + " " + cErro)
-            VarInfo("aErroLog",aErroLog)
-            DisarmTransaction()
-            Break
+        End Transaction 
 
-        Else
-
-            //
-            cNumero := getNumSA(cNumReg) //Everson - 05/03/2020. Chamado 053926.
-
-            //
-            If ! Empty(cNumero) //Everson - 05/03/2020. Chamado 053926.
-                DbSelectArea("ZBB")
-                ZBB->(DbGoTo(nRecZBB))
-                RecLock("ZBB",.F.)
-                    ZBB->ZBB_ESTOQU := .T.
-                    ZBB->ZBB_NUMSA  := cNumero
-                ZBB->(MsUnlock())
-
-                //
-                logZBE("Incluiu SCP / ID ABAST" + cNumero + " / " + cNumReg)
-
-            EndIf
+        If ! Empty(cMsgErro)
+            logZBE("Incluiu SCP / ID ABAST" + cNumero + " / " + cNumReg)
 
         EndIf
 
-        //
         D_DADOS->(DbSkip())
 
     End
 
-    //
     ddatabase := Date()
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - gerSolic - Fim geração de solicitação ao armazém.")
     logZBE("ADEST043P - gerSolic - Fim geração de solicitação ao armazém.")
 
-    //
     RestArea(aArea)
 
 Return Nil
@@ -408,15 +389,15 @@ Return Nil
     @since 05/03/2020
     @version 01
     /*/
-Static Function getNumSA(cNumAba)
+Static Function getNumSA(cNumReg)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variávies.
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
 	Local aArea	 := GetArea()
+    Local cNum   := ""
     Local cQuery := ""
 
-    //
+    cNumReg := Alltrim(cValToChar(cNumReg))
+
     cQuery := ""
     cQuery += " SELECT  " 
     cQuery += " CP_NUM  " 
@@ -424,19 +405,16 @@ Static Function getNumSA(cNumAba)
     cQuery += " " + RetSqlName("SCP") + " (NOLOCK) AS SCP " 
     cQuery += " WHERE " 
     cQuery += " CP_FILIAL = '" + FWxFilial("SCP") +  "' " 
-    cQuery += " AND CP_XCOMBUS = '" + cNumAba + "' " 
+    cQuery += " AND CP_XCOMBUS = '" + cNumReg + "' " 
     cQuery += " AND SCP.D_E_L_E_T_ = '' " 
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - getNumSA - cQuery " + cQuery )
 
-    //
     If Select("D_NUMSA") > 0
         D_NUMSA->(DbCloseArea())
 
     EndIf
 
-    //
     TcQuery cQuery New Alias "D_NUMSA"
     DbSelectArea("D_NUMSA")
     D_NUMSA->(DbGoTop())
@@ -446,7 +424,6 @@ Static Function getNumSA(cNumAba)
     EndIf
     D_NUMSA->(DbCloseArea())
 
-    //
     RestArea(aArea)
 
 Return cNum
@@ -459,15 +436,12 @@ Return cNum
     /*/
 Static Function scriptSolic()
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variávies.
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
 	Local aArea	 := GetArea()
     Local cQuery := ""
 
-    //
     cQuery := ""
-    cQuery += " SELECT  " 
+    cQuery += " SELECT  DISTINCT " 
     cQuery += " ZBB_IDABAS, " 
     cQuery += " ZBB_CCWINF, " 
     cQuery += " ZBB_PLACA, " 
@@ -487,10 +461,8 @@ Static Function scriptSolic()
     cQuery += " ORDER BY  " 
     cQuery += " ZBB_IDABAS " 
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - scriptSolic - cQuery " + cQuery )
 
-    //
     RestArea(aArea)
     
 Return cQuery
@@ -503,16 +475,12 @@ Return cQuery
     /*/
 Static Function gerPreReq()
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea         := GetArea()
     Local cFiltraSCP    := " CP_XSISCOM = 'B' "
 
-    //
     Pergunte("MTA106",.F.)
 
-    //
     PARAMIXB1   := .F.
     PARAMIXB2   := MV_PAR01==1
     PARAMIXB3   := If(Empty(cFiltraSCP), {|| .T.}, {|| &cFiltraSCP})
@@ -527,7 +495,6 @@ Static Function gerPreReq()
     PARAMIXB12  := .T.
     MaSAPreReq(PARAMIXB1,PARAMIXB2,PARAMIXB3,PARAMIXB4,PARAMIXB5,PARAMIXB6,PARAMIXB7,PARAMIXB8,PARAMIXB9,PARAMIXB10,PARAMIXB11,PARAMIXB12)   
 
-    //
     RestArea(aArea)
 
 Return Nil
@@ -540,9 +507,7 @@ Return Nil
     /*/
 Static Function baxSolic() 
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea         := GetArea()
     Local aAreaMS       := {}
     Local cQuery        := scriptBaix()
@@ -554,17 +519,14 @@ Static Function baxSolic()
     Private lMsErroAuto := .F.
     Private lMsHelpAuto	:= .T.
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - baxSolic - Início baixa geração de solicitação ao armazém." )
     logZBE("ADEST043P - gerSolic - Início baixa de solicitação ao armazém.")
 
-    //
     If Select("D_BAIXAS") > 0
         D_BAIXAS->(DbCloseArea())
 
     EndIf
 
-    //
     TcQuery cQuery New Alias "D_BAIXAS"
     DbSelectArea("D_BAIXAS")
     D_BAIXAS->(DbGoTop())
@@ -575,22 +537,17 @@ Static Function baxSolic()
 
     EndIf 
 
-    //
     DbSelectArea("SCP")
     SCP->(DbSetOrder(1))
 
-    //
     While ! D_BAIXAS->(Eof())
 
-        //
         ddatabase := SToD(D_BAIXAS->CP_EMISSAO)
 
-        //
         aCamposSCP := {{"CP_NUM"  ,D_BAIXAS->CP_NUM   ,Nil},;
                        {"CP_ITEM" ,D_BAIXAS->CP_ITEM  ,Nil},;
                        {"CP_QUANT",D_BAIXAS->CP_QUANT ,Nil}}
 
-        //
         aCamposSD3 := {{"D3_TM"      ,cTpMov              ,Nil},; // Tipo do Mov.
                        {"D3_COD"     ,D_BAIXAS->CP_PRODUTO,Nil},;
                        {"D3_LOCAL"   ,D_BAIXAS->CP_LOCAL  ,Nil},;
@@ -598,62 +555,48 @@ Static Function baxSolic()
                        {"D3_NUMSA"   ,D_BAIXAS->CP_NUM    ,Nil},; // No.do solicitação.
                        {"D3_EMISSAO" ,SToD(D_BAIXAS->CP_EMISSAO),Nil}}
         
-        //
         lMsHelpAuto	:= .T.
         lMsErroAuto := .F.
 
-        //
         VarInfo("aCamposSCP",aCamposSCP)
         VarInfo("aCamposSD3",aCamposSD3)
 
-        //
         aAreaMS := GetArea()
         MSExecAuto({|v,x,y| MATA185(v,x,y)},aCamposSCP,aCamposSD3,1)
         RestArea(aAreaMS)
 
-        //
         cErro    := ""
         aErroLog := {}
         If lMsErroAuto
         
-            //
             aErroLog := GetAutoGrLog()
 
-            //
             If Len(aErroLog) > 0
 
-                //
                 cErro += EncodeUtf8(StrTran(StrTran(Alltrim(cValToChar(aErroLog[1])),Chr(13),""),Chr(10),""))
 
             EndIf
 
-            //
             logZBE("baxSolic - Erro baixa " + cValToChar(D_BAIXAS->CP_NUM ) + " " + cErro)
             VarInfo("aErroLog",aErroLog)
 
         Else
 
-            //
             logZBE("baxSolic - baixa " + cValToChar(D_BAIXAS->CP_NUM ) )
 
         EndIf
 
-        //
         D_BAIXAS->(DbSkip())
 
     End
 
-    //
     D_BAIXAS->(DbCloseArea())
 
-    //
     ddatabase := Date()
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - baxSolic - Fim baixa geração de solicitação ao armazém." )
     logZBE("ADEST043P - gerSolic - Fim baixa de solicitação ao armazém.")
 
-    //
     RestArea(aArea)
 
 Return Nil
@@ -666,13 +609,10 @@ Return Nil
     /*/
 Static Function scriptBaix()
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea := GetArea()
     Local cQuery:= ""
     
-    //
     cQuery := " SELECT CP_NUM, CP_ITEM, CP_QUANT, CP_PRODUTO, CP_LOCAL, CP_EMISSAO "
     cQuery += " FROM " 
     cQuery += " " + RetSqlName("SCP") + " "
@@ -684,10 +624,8 @@ Static Function scriptBaix()
     cQuery += " AND SCP.D_E_L_E_T_ = '' "
     cQuery += " ORDER BY CP_NUM "
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - scriptBaix - cQuery " + cQuery )
 
-    //
     RestArea(aArea)
 
 Return cQuery
@@ -700,20 +638,15 @@ Return cQuery
     /*/
 Static Function fechReg(cNumReg,lFecha)
 
-    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    //³ Declaracao de Variaveis                                             ³
-    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
     Local aArea := GetArea()
     Local lRet  := .T.
     Local cUpdt := ""
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - fechReg - cNumReg " + cNumReg )
 
-    //
     cNumReg := Alltrim(cValToChar(cNumReg))
 
-    //
     If lFecha
         cUpdt := " UPDATE OPENQUERY(WINFLEET,'SELECT USUARIO, ABASEQ, FLAG FROM ABASTECIMENTOS WHERE FLAG = ''N'' AND ABASEQ = ''" + cNumReg + "'' ') "
         cUpdt += " SET FLAG = 'S' WHERE ABASEQ = '" + cNumReg + "'; "
@@ -724,20 +657,16 @@ Static Function fechReg(cNumReg,lFecha)
 
     EndIf
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - fechReg - cUpdt - lFecha " + cValToChar(lFecha) + " " + cUpdt )
 
-    //
     If TCSqlExec(cUpdt) < 0
         lRet  := .F.
         Conout( DToC(Date()) + " " + Time() + " ADEST043P - fechReg - " + TCSqlError() )
 
     EndIf
 
-    //
     Conout( DToC(Date()) + " " + Time() + " ADEST043P - fechReg - lRet " + cValToChar(lRet) )
 
-    //
     RestArea(aArea)
 
 Return lRet
@@ -750,9 +679,7 @@ Return lRet
     /*/
 Static Function logZBN(cStatus)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variávies.
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    //Variáveis.
 	Local aArea	:= GetArea()
 
 	DbSelectArea("ZBN") 
@@ -786,7 +713,6 @@ Static Function logZBN(cStatus)
 
 	ZBN->(dbCloseArea())
 
-    //
 	RestArea(aArea)
 
 Return Nil
@@ -799,12 +725,9 @@ Return Nil
     /*/
 Static Function logZBE(cMensagem)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variáveis.                                            |
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+    //Variáveis.
 	Local aArea	:= GetArea()
 
-	//
 	DbSelectArea("ZBE")
 	RecLock("ZBE",.T.)
 		Replace ZBE_FILIAL 	   	With xFilial("ZBE")
@@ -816,7 +739,6 @@ Static Function logZBE(cMensagem)
 		Replace ZBE_ROTINA	    With "ADEST043P" 
 	MsUnlock()
 
-	//
 	RestArea(aArea)
 
 Return Nil
