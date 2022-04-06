@@ -366,7 +366,7 @@ Static Function gerSolic()
         End Transaction 
 
         If ! Empty(cMsgErro)
-            logZBE("Incluiu SCP / ID ABAST" + cNumero + " / " + cNumReg)
+            logZBE(cMsgErro)
 
         EndIf
 
