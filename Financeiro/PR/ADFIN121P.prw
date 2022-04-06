@@ -38,6 +38,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
     @ticket 18141 - Fernando Macieira - 31/03/2022 - RM - Acordos - Integração Protheus - Reativação função fix - Visa garantir a integridade das regras
+    @ticket 70924 - Fernando Macieira - 06/04/2022 - RM - Acordos - verificar os acordos em meses que tem 31 dias, não podemos ter duas parcelas dentro do mesmo mês, exemplos os titulos final 3081 e 3087
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -575,6 +576,8 @@ Return
 /*/
 User Function FixParcNDI(cNumNDI)
 
+    Local nMes       := 0
+    Local nMesAnt    := 0
     Local nDias      := 0
     Local nSumDias   := 0
     Local dNewVencto := CtoD("//")
@@ -604,12 +607,25 @@ User Function FixParcNDI(cNumNDI)
 
                             dNewVencto := ZHB->ZHB_VENCTO + nDias
 
+                            // @ticket 70924 - Fernando Macieira - 06/04/2022 - RM - Acordos - verificar os acordos em meses que tem 31 dias, não podemos ter duas parcelas dentro do mesmo mês, exemplos os titulos final 3081 e 3087
+                            nMes := Month(dNewVencto)
+
+                            If nMes > 0 .and. nMesAnt > 0 .and. ZHB->ZHB_PARCEL > 1 .and. SE2->E2_PARCELA > "001"
+                                Do While nMes == nMesAnt
+                                    dNewVencto := dNewVencto + 1
+                                    nMes := Month(dNewVencto)
+                                EndDo
+                            EndIf
+                            //
+
                             If SE2->E2_VENCTO <> dNewVencto
                                 RecLock("SE2", .F.)
                                     SE2->E2_VENCTO  := dNewVencto
                                     SE2->E2_VENCREA := DataValida(dNewVencto)
                                 SE2->( msUnLock() )
                             EndIf
+                            
+                            nMesAnt := Month(dNewVencto) // // @ticket 70924 - Fernando Macieira - 06/04/2022 - RM - Acordos - verificar os acordos em meses que tem 31 dias, não podemos ter duas parcelas dentro do mesmo mês, exemplos os titulos final 3081 e 3087
                         
                             // @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
                             nSumDias := 30
