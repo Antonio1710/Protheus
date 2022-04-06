@@ -19,6 +19,7 @@
 	@history Ticket  T.I    - Adriano Savoine - 02/09/2021 - Catraca sala dos motoristas para todos os perfis.
 	@history Ticket  65655  - Leonardo P. Monteiro - 22/12/2021 - Correção na obtenção do último número cadastrado.
 	@history Ticket  TI     - ADRIANO SAVOINE  - 11/03/2022 - Alterada a query para conseguir criar perfil de acesso 99999 para novos colaboradores.
+	@history Ticket: 70906  - ADRIANO SAVOINE  - 06/04/2022 - Ajuste realizado para não verificar demitido a mais do que o parametrizado.
 
 /*/
 USER FUNCTION ADGPE044P()
@@ -108,6 +109,7 @@ RETURN(NIL)
 STATIC FUNCTION CARREGAPERFIL(cFilAtu,cCPF)
 
 	Local nUlTurno   := 0
+	Local nCont1     := 0
 	Local lRetTurno  := .F.
 	Local lRetPerfil := .F.
 	Local aAllUser   := FWSFALLUSERS()
@@ -1021,48 +1023,8 @@ RETURN(lRet)
 
 Static Function SqlFuncRM(cEmpresa,cCPF)
 
-	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
-	
-	/*
-
-	BeginSQL Alias "TRB"
-			%NoPARSER%  
-			 SELECT PFUNC.CODCOLIGADA,
-					PFUNC.CODFILIAL,
-					PFUNC.CODSITUACAO,
-					PFUNC.CHAPA,
-					PFUNC.NOME,
-					PFUNC.DATAADMISSAO,
-					PPESSOA.DTNASCIMENTO,
-					PPESSOA.SEXO,
-					PPESSOA.CPF,
-					PPESSOA.CARTIDENTIDADE,
-					PFUNC.PISPASEP,
-					PFUNC.CODHORARIO,
-					PFUNC.DATADEMISSAO,
-					PSECAO.NROCENCUSTOCONT,
-				 	CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,'0')) AS PTOCREDENCIAL
-				FROM [VPSRV16].[CORPORERM].[DBO].[PFUNC] WITH (NOLOCK)
-				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PPESSOA] WITH (NOLOCK)
-						ON PPESSOA.CODIGO                                   = PFUNC.CODPESSOA
-				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PSECAO] WITH (NOLOCK)
-						ON PSECAO.CODCOLIGADA                               = PFUNC.CODCOLIGADA
-					   AND PSECAO.CODIGO                                    = PFUNC.CODSECAO
-				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PFCOMPL] WITH (NOLOCK)
-					 ON PFCOMPL.CODCOLIGADA                                 = PFUNC.CODCOLIGADA
-					AND PFCOMPL.CHAPA                                       = PFUNC.CHAPA
-					AND CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,'0'))  > 0
-				  WHERE PFUNC.CODCOLIGADA                                   = %EXP:cEmpresa%
-				    AND CODTIPO                                            <> 'A'
-					AND (PFUNC.DATADEMISSAO                                >= GETDATE() - 7
-					OR  PFUNC.DATADEMISSAO                                 IS NULL)
-					AND PFUNC.PISPASEP                                     NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [VPSRV16].[CORPORERM].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> 'D')
-					AND PPESSOA.CPF                                         = %EXP:cCPF% //retirar will
-				ORDER BY PPESSOA.CPF
-
-	EndSQl 			
-	
-	*/
+	//Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022
+	Local nDias := AllTrim(Str(GetMV("MV_#RMDIAS",,30)))
 
 	TRB := GetNextAlias()
 
@@ -1092,13 +1054,12 @@ Static Function SqlFuncRM(cEmpresa,cCPF)
 	cQuery += "			INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] AS PFCOMPL WITH (NOLOCK)
 	cQuery += "				 ON PFCOMPL.CODCOLIGADA                                 = PFUNC.CODCOLIGADA
 	cQuery += "				AND PFCOMPL.CHAPA                                       = PFUNC.CHAPA
-	//cQuery += "				AND CONVERT(NUMERIC,ISNULL(PFCOMPL.PTOCREDENCIAL,''0''))  > 0  Ticket TI - 11/03/2022 - ADRIANO SAVOINE
 	cQuery += "			  WHERE PFUNC.CODCOLIGADA                                   = ''"+cEmpresa+"''
 	cQuery += "			    AND CODTIPO                                            <> ''A''
-	cQuery += "				AND (PFUNC.DATADEMISSAO                                >= GETDATE() - 7
+	cQuery += "				AND (PFUNC.DATADEMISSAO                                >= GETDATE()-"+nDias+" "  //Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022
 	cQuery += "				OR  PFUNC.DATADEMISSAO                                 IS NULL)
 	cQuery += "				AND PFUNC.PISPASEP                                     NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
-	cQuery += "				AND PPESSOA.CPF                                         = ''"+cCPF+"'' " //retirar will
+	cQuery += "				AND PPESSOA.CPF                                         = ''"+cCPF+"'' " 
 	cQuery += "			ORDER BY PPESSOA.CPF
 
 	cQuery += " ')
