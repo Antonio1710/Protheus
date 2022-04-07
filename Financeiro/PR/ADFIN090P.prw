@@ -24,6 +24,7 @@ Static cTitulo := "Painel Gerencial WS - Pedidos de Vendas com Adiantamentos"
     @history ticket 745 - FWNM - 30/09/2020 - C5_XWSPAGO com identificação para liberação manual
     @history ticket 745 - FWNM - 06/10/2020 - TI
     @history ticket 7709 - LEONARDO P. MONTEIRO - 11/01/2021 - Desenvolvimento de correções de tela e melhorias no processo de aprovação.
+    @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 /*/
 User Function ADFIN090P(cNumPV)
 
@@ -102,11 +103,11 @@ User Function ADFIN090P(cNumPV)
                         "BLUE",; 
                         "Boleto/Depósito Recebido e PV Faturado" )
 
-	oBrowse:AddLegend(  "Empty(AllTrim(C5_XWSPAGO)) .and. Empty(C5_NOTA) .and. Empty(DEL_PV) .and. Empty(AllTrim(C5_BLQ)) .and. !Empty(E1_NUM)",;
+	oBrowse:AddLegend(  "Empty(AllTrim(C5_XWSPAGO)) .and. Empty(C5_NOTA) .and. Empty(DEL_PV) .and. Empty(E1_NUM) .and. AllTrim(F4_DUPLIC)<>'N'",;
                         "BLACK",;
                         "Boleto/Depósito não realizado" )
 
-	oBrowse:AddLegend(  "!Empty(AllTrim(E1_XWSBRAC)) .and. AllTrim(E1_XWSBRAC)<>'0' .and. AllTrim(E1_XWSBRAC)<>'69' .and. Empty(DEL_PV)",;
+	oBrowse:AddLegend(  "!Empty(E1_NUM) .and. !Empty(AllTrim(E1_XWSBRAC)) .and. AllTrim(E1_XWSBRAC)<>'0' .and. AllTrim(E1_XWSBRAC)<>'69' .and. Empty(DEL_PV)",;
                         "YELLOW",;
                         "Boleto não registrado" )
 
@@ -118,7 +119,8 @@ User Function ADFIN090P(cNumPV)
                         "WHITE",;
                         "Boleto registrado e não enviado ao cliente/vendedor" )
 
-	oBrowse:AddLegend(  "Empty(E1_NUM) .and. (AllTrim(DEL_PV)<>'*' .and. AllTrim(DEL_RA)<>'*' .and. AllTrim(DEL_A1)<>'*')",;
+	//oBrowse:AddLegend(  "Empty(E1_NUM) .and. (AllTrim(DEL_PV)<>'*' .and. AllTrim(DEL_RA)<>'*' .and. AllTrim(DEL_A1)<>'*')",; // @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+    oBrowse:AddLegend(  "AllTrim(F4_DUPLIC)=='N'",;
                         "PINK",;
                         "PV com TES que não gera financeiro" )
 
@@ -148,6 +150,7 @@ Return Nil
     @see (links_or_references)
 /*/
 Static Function fCmpBrw()
+
     Local aBrowse := {}
     
     //Definindo as colunas que serão usadas no browse
@@ -190,6 +193,8 @@ Static Function fCmpBrw()
     aAdd(aBrowse, {"Rede"           ,  "A1_REDE"     , TamSX3("A1_REDE")[3]   , TamSX3("A1_REDE")[1]   , 0, "@!"})
     aAdd(aBrowse, {"Email Cliente"  ,  "A1_EMAIL"    , TamSX3("A1_EMAIL")[3]  , TamSX3("A1_EMAIL")[1]  , 0, "@!"})
 
+    aAdd(aBrowse, {"TES Gera Financeiro"  ,  "F4_DUPLIC"    , TamSX3("F4_DUPLIC")[3]  , TamSX3("F4_DUPLIC")[1]  , 0, "@!"}) // @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+
 return aBrowse
 
 /*/{Protheus.doc} Static Function Static Function fMkStru.
@@ -205,13 +210,14 @@ return aBrowse
     @see (links_or_references)
 /*/
 Static Function fMkStru()
+
     Local aStrut    := {}
     
     // https://tdn.totvs.com.br/display/framework/FWTemporaryTable
 	oTempTable := FWTemporaryTable():New("TABTMP")
 	
     //Criando a estrutura que terá na tabela
-    aAdd(aStrut, {"TMP_OK"    , "C", 02, 0} )
+    aAdd( aStrut, {"TMP_OK"    , "C", 02, 0} )
 	aAdd( aStrut, {'DEL_PV'     ,"C"     ,1     , 0} )
 	aAdd( aStrut, {'C5_FILIAL'  ,TamSX3("C5_FILIAL")[3]  ,TamSX3("C5_FILIAL")[1]  , 0} )
 	aAdd( aStrut, {'C5_NUM'     ,TamSX3("C5_NUM")[3]     ,TamSX3("C5_NUM")[1]     , 0} )
@@ -251,9 +257,12 @@ Static Function fMkStru()
 	aAdd( aStrut, {'A1_REDE'    ,TamSX3("A1_REDE")[3]    ,TamSX3("A1_REDE")[1]    , 0} )
 	aAdd( aStrut, {'A1_EMAIL'   ,TamSX3("A1_EMAIL")[3]   ,TamSX3("A1_EMAIL")[1]   , 0} )
 
+    aAdd( aStrut, {'F4_DUPLIC'  ,TamSX3("F4_DUPLIC")[3]  ,TamSX3("F4_DUPLIC")[1]   , 0} ) // history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+
 	oTempTable:SetFields(aStrut)
 	oTempTable:AddIndex("01", {"A1_NREDUZ","C5_XWSPAGO"} )
 	oTempTable:Create()
+
 return
 
 /*/{Protheus.doc} Static Function fMark
@@ -269,6 +278,7 @@ return
     @see (links_or_references)
 /*/
 Static Function fMark()
+
     Local lRet := .T.
     
     lRet := fVldChk()
@@ -276,6 +286,7 @@ Static Function fMark()
 return lRet
 
 Static Function fVldChk()
+
     Local lRet := .T.
     
     if Empty(AllTrim(TABTMP->C5_XWSPAGO)) .and. Empty(TABTMP->C5_NOTA) .and. Empty(TABTMP->DEL_PV) .and. Empty(AllTrim(TABTMP->C5_BLQ)) .and. !Empty(TABTMP->E1_NUM)
@@ -283,6 +294,7 @@ Static Function fVldChk()
     else
         lRet := .F.
     endif
+
 return lRet
 
 /*/{Protheus.doc} Static Function fLDblCk
@@ -298,6 +310,7 @@ return lRet
     @see (links_or_references)
 /*/
 Static Function fLDblCk()
+
     Local lRet := .T.
     
     lRet := fVldChk()
@@ -317,7 +330,9 @@ return lRet
     @see (links_or_references)
 /*/
 Static Function fHeaClk()
+
     Local lRet := .T.
+
     oBrowse:AllMark()
     //lRet := fVldChk()
     
@@ -379,7 +394,7 @@ Static Function ModelDef()
     //Criação da estrutura de dados utilizada na interface
     Local oStTMP := FWFormModelStruct():New()
      
-    oStTMP:AddTable(TABTMP, {'DEL_PV', 'C5_FILIAL', 'C5_NUM', 'C5_VALORNF', 'C5_CLIENTE', 'C5_LOJAENT', 'C5_CONDPAG', 'C5_BLQ', 'C5_XWSBOLG', 'C5_XWSPAGO', 'C5_DTENTR', 'C5_VEND1', 'A3_SUPER', 'A3_NOME', 'A3_EMAIL', 'C5_NOTA', 'DEL_RA', 'E1_TIPO', 'E1_NUM', 'E1_PORTADO', 'E1_VALOR', 'E1_SALDO', 'E5_DTDISPO', 'E1_XWSBRAC', 'E1_XWSBRAD', 'DEL_A1', 'A1_NOME', 'A1_NREDUZ', 'A1_BCO1', 'A1_COND', 'A1_SATIV1', 'X5DESCRI_S', 'A1_SATIV2', 'X5DESCRI_T', 'A1_REDE', 'A1_EMAIL'}, cTitulo)
+    oStTMP:AddTable(TABTMP, {'DEL_PV', 'C5_FILIAL', 'C5_NUM', 'C5_VALORNF', 'C5_CLIENTE', 'C5_LOJAENT', 'C5_CONDPAG', 'C5_BLQ', 'C5_XWSBOLG', 'C5_XWSPAGO', 'C5_DTENTR', 'C5_VEND1', 'A3_SUPER', 'A3_NOME', 'A3_EMAIL', 'C5_NOTA', 'DEL_RA', 'E1_TIPO', 'E1_NUM', 'E1_PORTADO', 'E1_VALOR', 'E1_SALDO', 'E5_DTDISPO', 'E1_XWSBRAC', 'E1_XWSBRAD', 'DEL_A1', 'A1_NOME', 'A1_NREDUZ', 'A1_BCO1', 'A1_COND', 'A1_SATIV1', 'X5DESCRI_S', 'A1_SATIV2', 'X5DESCRI_T', 'A1_REDE', 'A1_EMAIL', 'F4_DUPLIC'}, cTitulo)
      
     //Adiciona os campos da estrutura
     oStTmp:AddField(;
@@ -954,6 +969,22 @@ Static Function ModelDef()
         {},;                                                                                        // [09]  A   Lista de valores permitido do campo
         .T.,;                                                                                       // [10]  L   Indica se o campo tem preenchimento obrigatório
         FwBuildFeature( STRUCT_FEATURE_INIPAD, "Iif(!INCLUI,"+TABTMP+"->A1_EMAIL,'')" ),;          // [11]  B   Code-block de inicializacao do campo
+        .T.,;                                                                                       // [12]  L   Indica se trata-se de um campo chave
+        .F.,;                                                                                       // [13]  L   Indica se o campo pode receber valor em uma operação de update.
+        .F.)                                                                                        // [14]  L   Indica se o campo é virtual
+
+    oStTmp:AddField(;
+        "TES Gera Duplicata",;                                                                                  // [01]  C   Titulo do campo
+        "TES Gera Duplicata",;                                                                                  // [02]  C   ToolTip do campo
+        "F4_DUPLIC",;                                                                                  // [03]  C   Id do Field
+        TamSX3("F4_DUPLIC")[3],;                                                                       // [04]  C   Tipo do campo
+        TamSX3("F4_DUPLIC")[1],;                                                                       // [05]  N   Tamanho do campo
+        TamSX3("F4_DUPLIC")[2],;                                                                                         // [06]  N   Decimal do campo
+        Nil,;                                                                                       // [07]  B   Code-block de validação do campo
+        Nil,;                                                                                       // [08]  B   Code-block de validação When do campo
+        {},;                                                                                        // [09]  A   Lista de valores permitido do campo
+        .T.,;                                                                                       // [10]  L   Indica se o campo tem preenchimento obrigatório
+        FwBuildFeature( STRUCT_FEATURE_INIPAD, "Iif(!INCLUI,"+TABTMP+"->F4_DUPLIC,'')" ),;          // [11]  B   Code-block de inicializacao do campo
         .T.,;                                                                                       // [12]  L   Indica se trata-se de um campo chave
         .F.,;                                                                                       // [13]  L   Indica se o campo pode receber valor em uma operação de update.
         .F.)                                                                                        // [14]  L   Indica se o campo é virtual
@@ -1715,6 +1746,26 @@ Static Function ViewDef()
         Nil,;                       // [17]  C   Picture Variavel
         Nil)                        // [18]  L   Indica pulo de linha após o campo
 
+    oStTmp:AddField(;
+        "TES Gera Financeiro",;                 // [01]  C   Nome do Campo
+        "37",;                      // [02]  C   Ordem
+        "TES Gera Financeiro",;                    // [03]  C   Titulo do campo
+        "TES Gera Financeiro",;                    // [04]  C   Descricao do campo
+        Nil,;                       // [05]  A   Array com Help
+        TamSX3("F4_DUPLIC")[3],;                       // [06]  C   Tipo do campo
+        "@!",;                      // [07]  C   Picture
+        Nil,;                       // [08]  B   Bloco de PictTre Var
+        Nil,;                       // [09]  C   Consulta F3
+        .T.,;                       // [10]  L   Indica se o campo é alteravel
+        Nil,;                       // [11]  C   Pasta do campo
+        Nil,;                       // [12]  C   Agrupamento do campo
+        Nil,;                       // [13]  A   Lista de valores permitido do campo (Combo)
+        Nil,;                       // [14]  N   Tamanho maximo da maior opção do combo
+        Nil,;                       // [15]  C   Inicializador de Browse
+        Nil,;                       // [16]  L   Indica se o campo é virtual
+        Nil,;                       // [17]  C   Picture Variavel
+        Nil)                        // [18]  L   Indica pulo de linha após o campo
+
     //Criando a view que será o retorno da função e setando o modelo da rotina
     oView := FWFormView():New()
     oView:SetModel(oModel)
@@ -1755,7 +1806,6 @@ Static Function PopulaTMP(cNumPV)
     Local dDataAPI1	:= dDatabase
 	Local dDataAPI2	:= dDatabase + iif(DOW(dDatabase)==6, 3, 1)
     Local nFiltro   := 0
-
 
     //Local dDataAPI1	:= StoD("")    
 	//Local dDataAPI2	:= StoD("")    
@@ -1840,6 +1890,8 @@ User Function RunTMP(dDataAPI1,dDataAPI2,cNumPV, nFiltro)
     Local cA1_REDE    := ""
     Local cA1_EMAIL   := ""
     
+    Private cAllTESFin  := "" // @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+    
     //Ticket 7709 - LEONARDO P. MONTEIRO - 08/01/2021 - Desenvolvimento de correções de tela e melhorias no processo de aprovação.
     Private cE1_NUM     := ""
     Private cDel_RA     := ""
@@ -1914,6 +1966,8 @@ User Function RunTMP(dDataAPI1,dDataAPI2,cNumPV, nFiltro)
         X5DESCRI_T  := ""
         cA1_REDE    := ""
         cA1_EMAIL   := ""
+
+        cAllTESFin := ChkTESPV(Work->C5_FILIAL, Work->C5_NUM) // @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 
         SA3->( dbSetOrder(1) )
         If SA3->( dbSeek(FWxFilial("SA3")+Work->C5_VEND1) )
@@ -2119,6 +2173,7 @@ User Function RunTMP(dDataAPI1,dDataAPI2,cNumPV, nFiltro)
         EndIf
 
         if fGetFiltro(nFiltro)
+
             RecLock( "TABTMP", .t. )
 
                 TABTMP->DEL_PV     := Work->DEL_PV
@@ -2160,8 +2215,12 @@ User Function RunTMP(dDataAPI1,dDataAPI2,cNumPV, nFiltro)
                 TABTMP->A1_REDE    := cA1_REDE
                 TABTMP->A1_EMAIL   := cA1_EMAIL
 
+                TABTMP->F4_DUPLIC  := cAllTESFin // @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+
             TABTMP->( msUnLock() )
+
         endif
+
         Work->( dbSkip() )
 
     EndDo
@@ -2169,6 +2228,7 @@ User Function RunTMP(dDataAPI1,dDataAPI2,cNumPV, nFiltro)
 Return Nil
 
 Static Function fGetFiltro(nFiltro)
+
     Local lRet := .T.
 
     if nFiltro != 0
@@ -2216,7 +2276,8 @@ Static Function fGetFiltro(nFiltro)
             endif
         //Empty(E1_NUM) .and. (AllTrim(DEL_PV)<>'*' .and. AllTrim(DEL_RA)<>'*' .and. AllTrim(DEL_A1)<>'*')
         elseif nFiltro == 7
-            if (Empty(cE1_NUM) .and. (AllTrim(Work->DEL_PV)<>'*' .and. AllTrim(cDEL_RA)<>'*' .and. AllTrim(cDEL_A1)<>'*')) .AND. AllTrim(Work->C5_BLQ)!='1'
+            //if (Empty(cE1_NUM) .and. (AllTrim(Work->DEL_PV)<>'*' .and. AllTrim(cDEL_RA)<>'*' .and. AllTrim(cDEL_A1)<>'*')) .AND. AllTrim(Work->C5_BLQ)!='1'
+            if AllTrim(cAllTESFin)=='N' // @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
                 lRet := .T.
             else
                 lRet := .F.
@@ -2770,3 +2831,47 @@ User Function AdMc090Visual()
     RestArea( aAreaSC5 )
     
 Return lRet
+
+/*/{Protheus.doc} Static Function ChkTESPV(SC5->C5_FILIAL, SC5->C5_NUM)
+	Checa se todas as TES geram financeiro
+	@type  Static Function
+	@author FWNM
+	@since 08/05/2020
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+    @history ticket 71027 - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+/*/
+Static Function ChkTESPV(cC5_FILIAL, cC5_NUM)
+
+	Local lRet   := .t.
+    Local cRet   := "S"
+	Local cQuery := ""
+
+	If Select("WorkTES") > 0
+		WorkTES->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT ISNULL(COUNT(DISTINCT C6_TES),0) TT_TES
+	cQuery += " FROM " + RetSqlName("SC6") + " SC6 (NOLOCK)
+	cQuery += " INNER JOIN " + RetSqlName("SF4") + " SF4 (NOLOCK) ON F4_FILIAL='"+FWxFilial("SF4")+"' AND F4_CODIGO=C6_TES AND F4_DUPLIC='N' AND SF4.D_E_L_E_T_=''
+	cQuery += " WHERE C6_FILIAL='"+cC5_FILIAL+"'
+	cQuery += " AND C6_NUM='"+cC5_NUM+"'
+	cQuery += " AND SC6.D_E_L_E_T_=''
+
+	tcQuery cQuery New Alias WorkTES
+
+	// Se tiver TES que não gera financeiro 
+	If WorkTES->TT_TES >= 1
+		lRet := .f.
+        cRet := "N"
+	EndIf
+
+	If Select("WorkTES") > 0
+		WorkTES->( dbCloseArea() )
+	EndIf
+
+Return cRet

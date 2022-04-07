@@ -11,6 +11,7 @@
 	@history Chamado T.I    - William Costa - 11/03/2020 - Retirado codigo do chamado anterior para trocar a data de entrega conforme solicitação do fernando.
 	@history Chamado 056247 - FWNM          - 09/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history Tkt -   T.I    - SIGOLI        - 24/09/2021 - Alterado para validar se o pedido antecipadp foi liberado manualmente C5_XWSPAGO  "S|M" 
+	@history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 /*/	
 User Function M410PVNF()
                                   
@@ -30,6 +31,18 @@ User Function M410PVNF()
 			lRet := .f.
 			msgAlert("Pedido de Adiantamento " + SC5->C5_NUM + " não foi pago! Faturamento não permitido...","[M410PVNF-01] - Bradesco WS")
 			Return lRet
+		EndIf
+	EndIf
+	//
+
+	// @history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+	If lRet
+		If Posicione("SE4",1,FWxFilial("SE4")+SC5->C5_CONDPAG,"E4_CTRADT") == '1' // Condição Pagto Adiantamento
+			If Empty(SC5->C5_XWSPAGO)
+				lRet := .f.
+				msgAlert("Pedido de Adiantamento " + SC5->C5_NUM + " não foi pago! Faturamento não permitido...","[M410PVNF-02] - Bradesco WS")
+				Return lRet
+			EndIf
 		EndIf
 	EndIf
 	//

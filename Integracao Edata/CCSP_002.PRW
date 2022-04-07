@@ -34,6 +34,7 @@ Static cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 	@history chamado  TI 	- Leonardo P. Monteiro      - 29/12/2021 - Tratamento de error.log quando não existem dados na aCols.
 	@history chamado  18301 - Leonardo P. Monteiro      - 06/01/2022 - Grava o flag da inspeção da Qualidade.
 	@history chamado  18301 - Leonardo P. Monteiro      - 17/01/2022 - Correção de error.log na chamada da função CCSP_003.
+	@history ticket   71027 - Fernando Macieira         - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 /*/
 User Function CCSP_002() // U_CCSP_002()
 
@@ -441,6 +442,20 @@ Static Function CCS_002P(Par1,Par2,Par3,Par4)
 				
 			EndIf
 
+			// history ticket   71027 - Fernando Macieira          - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+			If lPVRAOK
+				SC5->( dbSetOrder(1) ) // C5_FILIAL, C5_NUM, R_E_C_N_O_, D_E_L_E_T_
+				If SC5->( dbSeek(FWxFilial("SC5")+cNumPVRA) )
+					If Posicione("SE4",1,FWxFilial("SE4")+SC5->C5_CONDPAG,"E4_CTRADT") == '1' // Condição Pagto Adiantamento
+						If Empty(SC5->C5_XWSPAGO)
+							lPVRAOK := .f.
+							Exit
+						EndIf
+					EndIf
+				EndIf
+			EndIf
+			//
+			
 		EndIf
 		
 	Next i
