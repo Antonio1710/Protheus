@@ -14,6 +14,7 @@
 	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	@history TICKET:  69990 - ADRIANO SAVOINE - 18/03/2022 - Ajustado o parametro quando carrega diversas filiais para quebrar todas como string e não numerico devido ao erro na filial 0A.
 	@history Ticket:  70851 - ADRIANO SAVOINE - 04/04/2022 - TRATADO O PARAMETRO MV_PAR05 PARA NÃO CARREGAR VAZIU E NUMERICO
+	@history Ticket   70972 - ADRIANO SAVOINE - 07/04/2022 - Declarada variaveis que impediam o relatorio de ser apresentado na tela antes da impressão.
 /*/
 User Function ADVEN042R() // U_ADVEN042R()
 	
@@ -106,7 +107,8 @@ User Function ADVEN042R() // U_ADVEN042R()
 	//Ticket   15553 - Abel Babini - 14/06/2021 - Correção de error log no retorno das filiais selecionadas.
 	//MV_PAR05 := formatIn(ALLTRIM(MV_PAR05),',') //Everson - 16/06/2021 - Correção do errorlog 15733.
 	//MV_PAR05 := substring(MV_PAR05, 2, len(alltrim(MV_PAR05))-1)
-	//SetDefault(aReturn,cString)
+
+	SetDefault(aReturn,cString)
 	
 	If nLastKey == 27
 		Return Nil
