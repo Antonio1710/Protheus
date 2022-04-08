@@ -13,6 +13,7 @@
 	@version 01
 	@history Everson, 22/04/2020, Chamado 057436 - Tratamento para bloqueio de pedidos de clientes com crédito expirado.
 	@history Everson, 07/07/2020, Chamado T.I. - Tratamento para não bloquear pedido com flag Bradesco.
+	@history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 	/*/ 
 User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 
@@ -681,7 +682,8 @@ User Function AtuLCPed(_cPedido)
 	If DbSeek(_cPedido)
 
 		//Everson - 07/07/2020. Chamado T.I.
-		If Alltrim(cValToChar(SC5->C5_XWSPAGO)) == "S"
+		//If Alltrim(cValToChar(SC5->C5_XWSPAGO)) == "S"
+		If !Empty(Alltrim(cValToChar(SC5->C5_XWSPAGO))) // @history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 			lBCEntrou := .F.
 			_aTipoBloq := {}
 			StaticCall(F200AVL,limpZBH,cValToChar(SC5->C5_NUM))
