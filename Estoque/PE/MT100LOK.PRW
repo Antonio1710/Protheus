@@ -50,6 +50,7 @@
 	@history Chamdo T.I.    - Everson         - 31/03/2021 - Alterada trava de complemento de preço e quantidade.
 	@history Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL.
 	@history Ticket 68971   - Fer Macieira	  - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+	@history ticket 71057   - Fer Macieira    - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/ 
 User Function MT100LOK
 
@@ -1581,6 +1582,14 @@ Static Function UpItemCta()
 	cMVItemCta := GetMV("MV_#ITM113",,"113")
 	If AllTrim(cCusto) $ GetMV("MV_#CC5134",,"5134")
 		cItemCta := cMVItemCta
+	EndIf
+	//
+
+	// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	If AllTrim(cEmpAnt) == "01"
+		If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+			cItemCta := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+		EndIf
 	EndIf
 	//
 

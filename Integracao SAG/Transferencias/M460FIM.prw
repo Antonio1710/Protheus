@@ -48,7 +48,7 @@
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento..
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
-	@history Leonardo P. Monteiro, 25/03/2022, Teste!
+	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function M460FIM()
 
@@ -879,6 +879,14 @@ Static Function GeraPreNFE()
 	Local cTESPre   := ''//GetMV("MV_#LFVTEE",,"031") //Ch:055979 - Abel Babini			- 28/02/20 - COMPLEMENTO FRANGO VIVO - Retirada da TES para não gerar erro nos filtros das outras rotinas do processo (INTNFEB)
 
 	Local cF1Origem := GetMV("MV_#LFVSF1",,"FRANGOVI") // Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 13/05/2019
+
+	// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	If AllTrim(cEmpAnt) == "01"
+		If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+			cItemCtb := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+		EndIf
+	EndIf
+	//
 
 	dbSelectArea("SD2")
 	dbSetOrder(3)
