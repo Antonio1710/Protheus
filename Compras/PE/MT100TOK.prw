@@ -26,10 +26,11 @@
 	@history chamado 058358 - WILLIAM COSTA   - 02/06/2020 - Feito a trava no sistema que busca todos os centro de custos dos itens da nota e compara com o centro de custos do pedido de compra quando eles estão diferentes o Centro de Custo da Nota com o Centro de Custo do Pedido de Compra, o sistema trava mostrando uma mensagem de erro e não deixa salvar a nota
 	@history Ticket 10404   - ADRIANO SAVOINE - 05/03/2021 - Ajuste no IF para desconsiderar os pedidos de compra que tiverem TES no parametro MV_TESPCNF.
 	@history Chamado 8566 	- André Mendes 	  - 29/04/2021 - Transferência entre Filiais
-	@history ticket  6652   - Fernando Macieir- 18/01/2021 - Projeto 0022003001 - Revitalização Posto de Combustível, o pedido 401511 consumiu o valor do projeto e o fiscal não esta conseguindo lançar Nota fiscal  (Mensagem projeto com saldo insuficiente)
-	@history ticket 14352   - Fernando Macieir- 21/05/2021 - Saldo Negativo (identificamos que a solução do ticket 6652 não foi publicada!)
-	@history ticket 16401   - Fernando Macieir- 12/07/2021 - Saldo Negativo (PC com qtd parcial, porém, valor unitário muito diferente do PC e também com valor total muito próximo do PC)
-	@history ticket  11639 	- Fernando Maciei - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+	@history ticket  6652   - Fernan Macieira - 18/01/2021 - Projeto 0022003001 - Revitalização Posto de Combustível, o pedido 401511 consumiu o valor do projeto e o fiscal não esta conseguindo lançar Nota fiscal  (Mensagem projeto com saldo insuficiente)
+	@history ticket 14352   - Fernan Macieira - 21/05/2021 - Saldo Negativo (identificamos que a solução do ticket 6652 não foi publicada!)
+	@history ticket 16401   - Fernan Macieira - 12/07/2021 - Saldo Negativo (PC com qtd parcial, porém, valor unitário muito diferente do PC e também com valor total muito próximo do PC)
+	@history ticket  11639 	- Fernan Macieira - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+	@history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function MT100TOK()
 
@@ -138,6 +139,13 @@ User Function MT100TOK()
 					EndIf
 
 					gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
+
+				// @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+				ElseIf AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+					cItemCta := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+					gdFieldPut("C1_ITEMCTA", cItemCta, nCont)
+				//
+
 				EndIf
 
 				/////////////////////////////////

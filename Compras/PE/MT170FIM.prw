@@ -1,46 +1,49 @@
 #INCLUDE "Protheus.ch"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³MT170SC1  ºAutor  ³WILLIAM COSTA       º Data ³  23/02/2018 º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Ponto de entrada executado na rotina Solicitação de compra º±±
-±±º          ³ por ponto de pedido. Faz a atualização do item contabil    º±±
-±±º          ³ centro de custo e observacao                               º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ AP                                                         º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function MT170SC1
+	Ponto de entrada executado na rotina Solicitação de compra por ponto de pedido. Faz a atualização do item contabil centro de custo e observacao
+	@type  Function
+	@author WILLIAM COSTA
+	@since 23/02/2018
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+/*/
 USER FUNCTION MT170FIM()
 
 	LOCAL _aArea := GetArea()   
 	LOCAL aScs   := PARAMIXB[1]
 	LOCAL nCont  := 0
+	Local cMVItemCta := GetMV("MV_#ITAFIL",,"0B")
 	
 	For nCont:= 1 To LEN(aScs)    
 	
 		DBSELECTAREA('SC1')    
 		DBGOTOP()
 		DBSETORDER(2)
-		IF DBSEEK(XFILIAL('SC1')+aScs[nCont,1]+aScs[nCont,2])        
+		IF DBSEEK(XFILIAL('SC1')+aScs[nCont,1]+aScs[nCont,2])
 		
 			RECLOCK('SC1',.F.)        
 			
-				IF cFilant == "02"
-		
-					SC1->C1_ITEMCTA := "121"
-					
-				ELSEIF cFilant == "03"
-				
-					SC1->C1_ITEMCTA := "114"
-					
-				ENDIF
-				
+				If AllTrim(cEmpAnt) == "01"
+					// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+					If AllTrim(cFilAnt) == AllTrim(cMVItemCta)
+						SC1->C1_ITEMCTA := cMVItemCta
+					// 
+					Else
+						IF cFilant == "02"
+							SC1->C1_ITEMCTA := "121"
+						ELSEIF cFilant == "03"
+							SC1->C1_ITEMCTA := "114"
+						ENDIF
+					EndIf
+				EndIf
+				//
+
 				SC1->C1_CC      := '8001'
 				SC1->C1_OBS     := 'SC gerada por ponto de pedido'
 				SC1->C1_XHORASC := TIME()

@@ -12,6 +12,7 @@
 	@version 01
 	@history Chamado 057846 - William Costa - 06/05/2020 - Retirado toda a referencia ao campo B1_ATIVO ou B1_ATIVO1
 	@history chamado 050729  - FWNM         - 25/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
+	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function GeraP3() 
 
@@ -135,6 +136,14 @@ Static Function fgerap3()
 		Else
 		_cITemcc    := "114"
 		Endif
+
+		// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+		If AllTrim(cEmpAnt) == "01"
+			If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+				_cITemcc := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+			EndIf
+		EndIf
+		//
 		
 		dbSelectArea("P3")
 		//--------------------------------------------------------

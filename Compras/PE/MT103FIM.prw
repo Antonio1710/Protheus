@@ -50,6 +50,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 67570   - Everson         - 02/02/2022 - Tratamento error log.
   @history Ticket 67570   - Everson         - 04/02/2022 - Tratamento error log.
   @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+  @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function MT103FIM()
 
@@ -2443,6 +2444,14 @@ Static Function UpItemCta()
   Local aAreaSD1   := SD1->( GetArea() )
   Local cMVItemCta := GetMV("MV_#ITM113",,"113")
   Local cCC5134    := GetMV("MV_#CC5134",,"5134")
+
+  // @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+  If AllTrim(cEmpAnt) == "01"
+    If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+      cMVItemCta := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+    EndIf
+	EndIf
+  //
 
   SD1->( dbsetorder(1) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_COD, D1_ITEM, R_E_C_N_O_, D_E_L_E_T_
   If SD1->( dbseek(SF1->F1_FILIAL + SF1->F1_DOC + SF1->F1_SERIE + SF1->F1_FORNECE + SF1->F1_LOJA) )
