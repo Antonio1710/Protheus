@@ -10,10 +10,12 @@
 	@history Ticket 64881 - Fernando Sigoli - 04/01/2022 - Adicionado Função LIMPAZCI, para quando limpar placa , liberar a msg do ZCI, com isso liberar a intergação novamente do pedido
 	@history Ticket 64881 - Fernando Sigoli - 14/01/2022 - Adicionado tratamento da LIMPAZCI, apenas para a empresa 01/02 que em salesforce
 	@history Ticket 66691 - Leonardo P. Monteiro - 19/01/2022 - Correção de error.log.
-
+	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 /*/
 
 USER FUNCTION UNROTE() 
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Remove placa do pedido de vendas para exclusao do pedido')
 
@@ -41,14 +43,15 @@ USER FUNCTION UNROTE()
 
 			//Ticket 64881 - Fernando Sigoli - 04/01/2022.
 			//Ticket 66691 - Leonardo P. Monteiro - 19/01/2022.
-			IF cEmpAnt == "01" .And. cFilAnt == "02"
+			//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+			IF Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 				IF 	SC5->C5_XSFPED <> ''
 					LIMPAZCI(SC5->C5_NUM)
 				ENDIF
 			Endif
 
 			//Everson - 02/04/2018. Chamado 037261.
-			IF FindFunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt == "02"
+			IF FindFunction("U_ADVEN050P") .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 
 				IF Upper(Alltrim(cValToChar(GetMv("MV_#SFATUL")))) == "S"
 				

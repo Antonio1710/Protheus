@@ -11,6 +11,7 @@
 	@history Chamado 4992 - William Costa           - 24/11/2020 - Adicionado no Filtro para ver notas que estão com 'XXXXXX' que são notas denegadas ou Canceladas, e conseguir limpar a Placa delas.
 	@history Chamado 5657 - William Costa           - 26/11/2020 - Voltado versão de limpa placa, pq não deu certo o jeito que foi pensado será feito na tela de Ocorrências de Devoluções.
 	@history Chamado TI   - Leonardo P. Monteiro    - 21/01/2022 - Gravação de log de acesso a rotina.
+	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 /*/
 
 User Function ALTEROTE()
@@ -191,6 +192,8 @@ RETURN
 User Function placaSFexp()
 
 	Local aArea	   	:= GetArea()
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	U_ADINF009P('ALTEROTE' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Alteracao do Roteiro e Sequencia de Entrega de Produtos')
 
@@ -201,7 +204,8 @@ User Function placaSFexp()
 
 	ENDIF
 
-	IF FindFunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt == "02"
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	IF FindFunction("U_ADVEN050P") .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 
 		IF Upper(Alltrim(cValToChar(GetMv("MV_#SFATUL")))) == "S"
 
