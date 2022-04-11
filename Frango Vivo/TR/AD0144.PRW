@@ -14,6 +14,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history Ticket 71147 - Adriano Savoine - 08/04/2022 - Correção para o Error Log Alias already in use: VZV1
 /*/
 User Function AD0144()  
 
@@ -694,6 +695,11 @@ static function NumNfs(_nNumNF)
 
 	Local _lRet := .T.
 	Local _cQuery := ""
+
+	//Ticket 71147 - Adriano Savoine - 08/04/2022
+	IF SELECT ("VZV1") > 0
+		VZV1->(DbCloseArea())
+	ENDIF	
 
 	_cQuery := " SELECT ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
 	_cQuery += " FROM "+retsqlname("ZV1") +" (NOLOCK)
