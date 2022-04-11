@@ -9,11 +9,12 @@
 	@history Everson - 16/05/2019. Chamado 049064. Incluída a opção de atualização de pedido mínimo do cliente. 
 	@history Everson - 19/01/2021. Chamado TI. Correção nas nomenclaturas dos descontos.
 	@history Tkt 16833 - Leonardo P. Monteiro - 31/03/2022 - Adição da nova opção para atualização do Local de Expedição.
+	@history Tkt 71144 - Everson - 11/04/2022 - Adição da nova opção para atualização do Local de Expedição na tabela PB3.
 	/*/
 User Function ALTCPSA1() // U_ALTCPSA1()
 
 	//Variáveis.
-	Local i := 1
+	//Local i := 1
 	Private aCombo1  := {}
 	Private cCombo1  := Space(2)
 	Private oCombo1  := Nil
@@ -907,15 +908,26 @@ Static Function ProcArq(lEnd)
 						cLocExp 	:= fLocPad(cLocExp)
 
 						if !Empty(cLocExp)
+
+							//Everson - 11/04/2022. Chamado 71144.
+							dbselectarea("PB3")
+							dbsetorder(11)
+							If dbseek (xFilial("PB3")+_cCod+_cLoja)
+								Reclock("PB3",.F.)
+								PB3->PB3_XLOCPA   := cLocExp
+								Msunlock()	
+
+							Endif
 							
 							If Reclock("SA1",.F.)
 								SA1->A1_XLOCEXP := cLocExp	
 								Msunlock()
 
 								AutoGrLog("Linha "+strzero(nlin,5)+" Cliente "+_cCod+_cLoja+" "+SA1->A1_NOME+" Loja Expedição PARA: " + cLocExp )
-								logZBE("Linha "+strzero(nlin,5)+" Cliente "+_cCod+_cLoja+" "+SA1->A1_NOME+" PED MIN PARA: " +  cLocExp ,"CLIENTE:" + Alltrim(cValToChar(SA1->A1_COD)) + "-" + Alltrim(cValToChar(SA1->A1_LOJA)))	
+								logZBE("Linha "+strzero(nlin,5)+" Cliente "+_cCod+_cLoja+" "+SA1->A1_NOME+" Loja Expedição PARA: " +  cLocExp ,"CLIENTE:" + Alltrim(cValToChar(SA1->A1_COD)) + "-" + Alltrim(cValToChar(SA1->A1_LOJA)))	
 
 							EndIf
+
 						endif
 
 					endif
