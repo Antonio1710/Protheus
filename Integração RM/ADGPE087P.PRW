@@ -329,53 +329,61 @@ return
 Static Function fConfArm()
 
     Local   cQuery  := ""
-    Local   nPosCod := aScan(aArDeCam,"ZHL_CODIGO")
-    Local   nRegist := nPosCod
+    Local    nRegist := 0
+    
+    DbSelectArea("ZHL")
+    cQuery := " SELECT R_E_C_N_O_ REGISTRO "
+    cQuery += " FROM "+ RetSqlName("ZHL") +" "
+    cQuery += " WHERE D_E_L_E_T_='' AND ZHL_CODIGO ='"+ ZI1->ZI1_CODZHL +"'; "
+
+    TcQuery cQuery ALIAS "QZHL" NEW
+    
+    nRegist := QZHL->REGISTRO
   
     //Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 
-    if nArDeCam > 0
-        if nRegist > 0
-            DbSelectArea("ZHL")
-            ZHL->(Dbgoto(nRegist))
+   
+    IF nRegist > 0
+        DbSelectArea("ZHL")
+        ZHL->(Dbgoto(nRegist))
 
-            if ZHL->(Recno()) == nRegist
+        if ZHL->(Recno()) == nRegist
 
-                cQuery := " SELECT R_E_C_N_O_ REGISTRO "
-                cQuery += " FROM "+ RetSqlName("ZI1") +" "
-                cQuery += " WHERE D_E_L_E_T_='' AND ZI1_CODZHL='"+ ZHL->ZHL_CODIGO +"'; "
+            cQuery := " SELECT R_E_C_N_O_ REGISTRO "
+            cQuery += " FROM "+ RetSqlName("ZI1") +" "
+            cQuery += " WHERE D_E_L_E_T_='' AND ZI1_CODZHL='"+ ZHL->ZHL_CODIGO +"'; "
 
-                TcQuery cQuery ALIAS "QZI1" NEW
+            TcQuery cQuery ALIAS "QZI1" NEW
 
-                if QZI1->(!EOF())
-                    DbSelectArea("ZI1")
-                    ZI1->(DBGOTO(QZI1->REGISTRO))
+            if QZI1->(!EOF())
+                DbSelectArea("ZI1")
+                ZI1->(DBGOTO(QZI1->REGISTRO))
 
-                    if ZI1->(Recno()) == QZI1->REGISTRO
+                if ZI1->(Recno()) == QZI1->REGISTRO
 
-                        DbSelectArea("ZHP")
+                    DbSelectArea("ZHP")
 
-                        // Registra no histórico.
-                        RecLock("ZHP", .T.)
-                            ZHP_FILIAL  := xFilial("ZHP")
-                            ZHP_CODZHL  := ZHL->ZHL_CODIGO
-                            ZHP_MAT     := ZI1->ZI1_MAT
-                            ZHP_NOME    := ZI1->ZI1_NOME
-                            ZHP_DATINC  := Date()
-                            ZHP_HORINC  := Time()
-                            ZHP_USUARI  := AllTrim( __cUserID )
-                            ZHP_NOMUSU  := AllTrim(UsrRetName(__cUserID))
-                        ZHP->(MsUnlock())
-                    endif
-
-                    ZHP->(Dbclosearea())
-                    ZI1->(Dbclosearea())
+                    // Registra no histórico.
+                    RecLock("ZHP", .T.)
+                        ZHP_FILIAL  := xFilial("ZHP")
+                        ZHP_CODZHL  := ZHL->ZHL_CODIGO
+                        ZHP_MAT     := ZI1->ZI1_MAT
+                        ZHP_NOME    := ZI1->ZI1_NOME
+                        ZHP_DATINC  := Date()
+                        ZHP_HORINC  := Time()
+                        ZHP_USUARI  := AllTrim( __cUserID )
+                        ZHP_NOMUSU  := AllTrim(UsrRetName(__cUserID))
+                    ZHP->(MsUnlock())
                 endif
 
-                QZI1->(Dbclosearea())
-
+                ZHP->(Dbclosearea())
+                ZI1->(Dbclosearea())
             endif
+
+            QZI1->(Dbclosearea())
+
         endif
     endif
+    QZHL->(Dbclosearea())
 return 
 
 Static Function layPesq(nRow, nCol, nHeight, nWidth)
