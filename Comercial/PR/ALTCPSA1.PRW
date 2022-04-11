@@ -918,6 +918,7 @@ Static Function ProcArq(lEnd)
 								Msunlock()	
 
 							Endif
+							//
 							
 							If Reclock("SA1",.F.)
 								SA1->A1_XLOCEXP := cLocExp	
