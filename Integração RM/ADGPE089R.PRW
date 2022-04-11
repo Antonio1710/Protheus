@@ -245,13 +245,13 @@ Static Function PrintReport(oReport)
 
 				QREL->(Dbskip())	
 			enddo
-
+			QREL->(DBCLOSEAREA())
 		endif
 
 		oSection3:Finish()
 	ENDIF
 
-	QREL->(DBCLOSEAREA())
+	//QREL->(DBCLOSEAREA())
 
 Return
 
