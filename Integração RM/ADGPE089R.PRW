@@ -8,6 +8,7 @@
   @author Leonardo P. Monteiro
   @since 03/02/2022
   @history Ticket 16833 - Leonardo P. Monteiro - 03/02/2022 - Desenvolvimento.
+  @history Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 - Ajuste na Variavel para gerar relatorio.
 /*/
 
 User Function ADGPE089R()
