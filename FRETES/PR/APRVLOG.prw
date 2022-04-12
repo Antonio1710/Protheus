@@ -13,6 +13,7 @@
 	@history Macieir, 16/02/2021, ticket 9574  - Error Log - APRVLOG.PRW) 28/07/2020 16:58:10 line : 608
 	@history Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 	@history Leonardo P. Monteiro, 17/03/2022, ticket 69859 - array out of bounds ( 779 of 778 )  on U_REJC(APRVLOG.PRW).
+	@history Everson , 12/04/2022, ticket 71249 - tratamento para errorlog.
 
 /*/
 User Function AprvTran(cAlias,nReg,nOpc)
@@ -273,6 +274,8 @@ Static Function fSelSupervisor( _cNF,_cSer, _aSupervisor, _cTipo )
 	If oItemped != Nil
 
 		oItemped:SetArray( _aSupervisor )
+		oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 							oItemped:AARRAY[oItemped:nAt][02],;
@@ -327,6 +330,8 @@ User function Aprovt(_nPos)
 					if oPedido != Nil
 								
 						oPedido:SetArray( _aPedido )
+						oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
 							oPedido:AARRAY[oPedido:nAt][02],;
@@ -350,6 +355,8 @@ User function Aprovt(_nPos)
 					if oItemped != Nil
 								
 						oItemped:SetArray( _aSupervisor )
+						oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 							oItemped:AARRAY[oItemped:nAt][02],;
@@ -366,6 +373,7 @@ User function Aprovt(_nPos)
 							oItemped:AARRAY[oItemped:nAt][13],;
 							oItemped:AARRAY[oItemped:nAt][14],;													
 							oItemped:AARRAY[oItemped:nAt][15]}}
+
 						oItemped:Refresh()
 								
 					EndIf
@@ -410,6 +418,8 @@ User function REJT(_nPos)
 				if oPedido != Nil
 							
 					oPedido:SetArray( _aPedido )
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
 						oPedido:AARRAY[oPedido:nAt][02],;
@@ -432,6 +442,8 @@ User function REJT(_nPos)
 				if oItemped != Nil
 							
 					oItemped:SetArray( _aSupervisor )
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 						oItemped:AARRAY[oItemped:nAt][02],;
@@ -448,6 +460,7 @@ User function REJT(_nPos)
 						oItemped:AARRAY[oItemped:nAt][13],;
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
+
 					oItemped:Refresh()
 							
 				EndIf
@@ -689,7 +702,6 @@ User Function AprvCli(cAlias,nReg,nOpc)
 	@ _aPosObj1[02][01]+155,_aPosObj2[01][02]+450 BUTTON "Sair"      SIZE 040,020 PIXEL OF oDlg ACTION oDlg:End()             //105
 
 	oItemped:SetArray( _aSupervisor )
-
 	//Everson - 28/07/2020. Chamado 059891.
 	If Len(oItemped:AARRAY[oItemped:nAt]) >= 15
 		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
@@ -759,6 +771,8 @@ STATIC FUNCTION PesqCli()
 	    fSupervisor( _aPedido[ oPedido:nAt ][ 02 ],_aPedido[ oPedido:nAt ][ 03 ] ,@_aSupervisor, "S" )
 	    
 	    oItemped:SetArray( _aSupervisor )
+		oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 					  			oItemped:AARRAY[oItemped:nAt][02],;
@@ -873,6 +887,8 @@ Static Function fSupervisor( _cNF,_cSer, _aSupervisor, _cTipo )
 	If oItemped != Nil
 
 		oItemped:SetArray( _aSupervisor )
+		oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 		//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 		oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 							oItemped:AARRAY[oItemped:nAt][02],;
@@ -889,6 +905,7 @@ Static Function fSupervisor( _cNF,_cSer, _aSupervisor, _cTipo )
 							oItemped:AARRAY[oItemped:nAt][13],;
 							oItemped:AARRAY[oItemped:nAt][14],;													
 							oItemped:AARRAY[oItemped:nAt][15]}}
+
 		oItemped:Refresh()
 
 	EndIf
@@ -1041,13 +1058,8 @@ User function Aprovc(_nPos)
 				if oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 							
 					oPedido:SetArray( _aPedido )
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 					
-					/*
-					if len(_aPedido) > oPedido:nAt
-						oPedido:nAt := len(_aPedido)
-					endif
-					*/
-
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
 						oPedido:AARRAY[oPedido:nAt][02],;
@@ -1070,6 +1082,8 @@ User function Aprovc(_nPos)
 				if oItemped != Nil .and. len(_aSupervisor) >= oItemped:nAt//alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 							
 					oItemped:SetArray( _aSupervisor )
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 						oItemped:AARRAY[oItemped:nAt][02],;
@@ -1086,6 +1100,7 @@ User function Aprovc(_nPos)
 						oItemped:AARRAY[oItemped:nAt][13],;
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
+
 					oItemped:Refresh()
 							
 				EndIf
@@ -1129,12 +1144,7 @@ User function REJC(_nPos)
 				if oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 							
 					oPedido:SetArray( _aPedido )
-
-					/*
-					if len(_aPedido) > oPedido:nAt
-						oPedido:nAt := len(_aPedido)
-					endif
-					*/
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -1151,7 +1161,6 @@ User function REJC(_nPos)
 						oPedido:AARRAY[oPedido:nAt][12],;				   
 						oPedido:AARRAY[oPedido:nAt][13]}}
 					
-					//oPedido:Refresh()
 				EndIf
 
 				oPedido:Refresh()
@@ -1159,6 +1168,8 @@ User function REJC(_nPos)
 				if oItemped != Nil
 							
 					oItemped:SetArray( _aSupervisor )
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 						oItemped:AARRAY[oItemped:nAt][02],;
@@ -1175,6 +1186,7 @@ User function REJC(_nPos)
 						oItemped:AARRAY[oItemped:nAt][13],;
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
+
 					oItemped:Refresh()
 							
 				EndIf
@@ -1530,6 +1542,8 @@ EndIf
 If oItemped != Nil
 
 	oItemped:SetArray( _aSupervisor )
+	oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 	//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
     oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 			  			oItemped:AARRAY[oItemped:nAt][02],;
@@ -1546,6 +1560,7 @@ If oItemped != Nil
 						oItemped:AARRAY[oItemped:nAt][13],;
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
+
 	oItemped:Refresh()
 
 EndIf
@@ -1587,12 +1602,7 @@ User function Concord(_nPos)
 				if oPedido != Nil
 							
 					oPedido:SetArray( _aPedido )
-
-					/*
-					if len(_aPedido) > oPedido:nAt
-						oPedido:nAt := len(_aPedido)
-					endif
-					*/
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 					
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -1617,6 +1627,8 @@ User function Concord(_nPos)
 				if oItemped != Nil
 							
 					oItemped:SetArray( _aSupervisor )
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 						oItemped:AARRAY[oItemped:nAt][02],;
@@ -1633,6 +1645,7 @@ User function Concord(_nPos)
 						oItemped:AARRAY[oItemped:nAt][13],;
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
+
 					oItemped:Refresh()
 							
 				EndIf
@@ -1689,12 +1702,7 @@ User function discord(_nPos)
 						if oPedido != Nil
 									
 							oPedido:SetArray( _aPedido )
-
-							/*
-							if len(_aPedido) > oPedido:nAt
-								oPedido:nAt := len(_aPedido)
-							endif
-							*/
+							oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 
 							//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 							oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -1719,6 +1727,8 @@ User function discord(_nPos)
 						if oItemped != Nil
 									
 							oItemped:SetArray( _aSupervisor )
+							oItemped:Refresh() //Everson - 12/04/2022. Chamado 7124.
+
 							//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 							oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 								oItemped:AARRAY[oItemped:nAt][02],;
@@ -1735,6 +1745,7 @@ User function discord(_nPos)
 								oItemped:AARRAY[oItemped:nAt][13],;
 								oItemped:AARRAY[oItemped:nAt][14],;													
 								oItemped:AARRAY[oItemped:nAt][15]}}
+
 							oItemped:Refresh()
 									
 						EndIf
@@ -2269,12 +2280,7 @@ User function APRVVDD(_nPos)
 				if oPedido != Nil
 							
 					oPedido:SetArray( _aPedido )
-					
-					/*
-					if len(_aPedido) > oPedido:nAt
-						oPedido:nAt := len(_aPedido)
-					endif
-					*/
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 					
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -2300,6 +2306,8 @@ User function APRVVDD(_nPos)
 				if oItemped != Nil
 							
 					oItemped:SetArray( _aSupervisor )
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 						oItemped:AARRAY[oItemped:nAt][02],;
@@ -2316,6 +2324,7 @@ User function APRVVDD(_nPos)
 						oItemped:AARRAY[oItemped:nAt][13],;
 						oItemped:AARRAY[oItemped:nAt][14],;													
 						oItemped:AARRAY[oItemped:nAt][15]}}
+
 					oItemped:Refresh()
 							
 				EndIf
@@ -2361,11 +2370,8 @@ User function REJVDD(_nPos)
 					if oPedido != Nil
 								
 						oPedido:SetArray( _aPedido )
-						/*
-						if len(_aPedido) > oPedido:nAt
-							oPedido:nAt := len(_aPedido)
-						endif
-						*/
+						oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 						oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
 							oPedido:AARRAY[oPedido:nAt][02],;
@@ -2389,6 +2395,8 @@ User function REJVDD(_nPos)
 					if oItemped != Nil
 								
 						oItemped:SetArray( _aSupervisor )
+						oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
+
 						//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 						oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
 							oItemped:AARRAY[oItemped:nAt][02],;
@@ -2405,6 +2413,7 @@ User function REJVDD(_nPos)
 							oItemped:AARRAY[oItemped:nAt][13],;
 							oItemped:AARRAY[oItemped:nAt][14],;													
 							oItemped:AARRAY[oItemped:nAt][15]}}
+
 						oItemped:Refresh()
 								
 					EndIf
