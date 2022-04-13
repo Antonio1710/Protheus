@@ -44,6 +44,7 @@
     @history ticket 745     - Fernando Macieira - 21/09/2020 - Implementação título PR
     @history ticket 745     - Fernando Macieira - 08/10/2020 - Retorno CNAB Cobrança - Título não encontrado
     @history ticket 70929   - Fernando Macieira - 08/04/2022 - Baixa retorno CNAB, TIPO PR, mesmo após baixado por STP
+    @history ticket 71284   - Fernando Macieira - 12/04/2022 - Baixa Retorno CNAB - Tratar msg
 /*/
 User Function F200AVL()
 
@@ -84,14 +85,15 @@ User Function F200AVL()
     //
 
     // @history ticket 70929   - Fernando Macieira - 08/04/2022 - Baixa retorno CNAB, TIPO PR, mesmo após baixado por STP
-    lProcessa := ChkBxSTP(cIDCNAB)
+    If !Empty(AllTrim(cIDCNAB)) // @history ticket 71284   - Fernando Macieira - 12/04/2022 - Baixa Retorno CNAB - Tratar msg
+        lProcessa := ChkBxSTP(cIDCNAB)
 
-    If !lProcessa
-        logZBE("E1_IDCNAB n. " + cIdCnab + " , tipo PR, já possui baixa por substituição E5_MOTBX = STP! Título " + SE1->E1_NUM + " não será baixado por segurança...")
-        Alert("[F200AVL] - E1_IDCNAB n. " + cIDCNAB + " , tipo PR, já possui baixa por substituição E5_MOTBX = STP! Este título não será baixado! Anote e verifique depois...")
-        Return lProcessa
+        If !lProcessa
+            logZBE("E1_IDCNAB n. " + cIdCnab + " , tipo PR, já possui baixa por substituição E5_MOTBX = STP! Título " + SE1->E1_NUM + " não será baixado por segurança...")
+            //Alert("[F200AVL] - E1_IDCNAB n. " + cIDCNAB + " , tipo PR, já possui baixa por substituição E5_MOTBX = STP! Este título não será baixado! Anote e verifique depois...") // @history ticket 71284   - Fernando Macieira - 12/04/2022 - Baixa Retorno CNAB - Tratar msg
+            Return lProcessa
+        EndIf
     EndIf
-    //
 
     If AllTrim(cBanco) == "237" .and. cOcorre == "06" // Bradesco WS
 
@@ -516,6 +518,7 @@ Static Function ChkBxSTP(cIDCNAB)
     cQuery += " FROM " + RetSqlName("SE5") + " SE5 (NOLOCK)
     cQuery += " INNER JOIN " + RetSqlName("SE1") + " SE1 (NOLOCK) ON E1_FILIAL=E5_FILIAL AND E1_PREFIXO=E5_PREFIXO AND E1_NUM=E5_NUMERO AND E1_PARCELA=E5_PARCELA AND E1_TIPO=E5_TIPO AND E1_CLIENTE=E5_CLIFOR AND E1_LOJA=E5_LOJA AND SE5.D_E_L_E_T_=''
     cQuery += " WHERE E1_IDCNAB='"+cIDCNAB+"'
+    cQuery += " AND E1_IDCNAB<>''
     cQuery += " AND E5_MOTBX='STP'
     cQuery += " AND E1_TIPO='PR'
     cQuery += " AND SE5.D_E_L_E_T_=''
