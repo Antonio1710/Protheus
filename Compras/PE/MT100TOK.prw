@@ -141,9 +141,9 @@ User Function MT100TOK()
 					gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
 
 				// @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
-				ElseIf AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
-					cItemCta := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
-					gdFieldPut("C1_ITEMCTA", cItemCta, nCont)
+				ElseIf AllTrim(cFilAnt) == "0B"
+					cItemCta := AllTrim(GetMV("MV_#ITAFIL",,"125"))
+					gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
 				//
 
 				EndIf
