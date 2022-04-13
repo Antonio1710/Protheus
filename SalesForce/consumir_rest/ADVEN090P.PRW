@@ -29,15 +29,19 @@ Static cFil := "02"
 	@history Chamado T.I  - Leonardo P. Monteiro   - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
 	@history Chamado T.I  - Leonardo P. Monteiro   - 27/01/2022 - Correção na rotina comparacab e comparaitem e reformulação das rotinas de reprocessamento.
 	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
+	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 	
 	/*/
-User Function ADVEN090P() // U_ADVEN090P()
+User Function ADVEN090P(cEmp, cFil) // U_ADVEN090P()
 
 	//Declaração de variávies
 	Local cDiaS		:= ""
 	Local cHDe		:= ""
 	Local cHAt		:= ""
 	Local lAutoJob  := .T.
+	Default cEmp	:= "01"
+	Default cFil	:= "02"
+
 
 	//Inicia o ambiente.
 	If Select("SX6") == 0
@@ -45,6 +49,7 @@ User Function ADVEN090P() // U_ADVEN090P()
 	else
 		lAutoJob  := .F.
 	endif
+
 
 	if lAutoJob
 		RPCClearEnv()
@@ -54,20 +59,14 @@ User Function ADVEN090P() // U_ADVEN090P()
 		MsgInfo("Modo debug Início", "Modo Debug")
 	endif
 
-	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-	// If !LockByName("ADVEN090P", .T., .F.)
-	// 	ConOut("[ADVEN090P] - Existe outro processamento sendo executado! Verifique...")
-	// 	RPCClearEnv()
-	// 	Return
-	// EndIf
-		//
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
-	
-	If !LockByName("ADVEN090P", .T., .F.) .AND. SuperGetMV("MV_XVEN090",,.T.)
-	    u_GrLogZBE(Date(),TIME(),cUserName,"Rotina ADVEN090P em execução.","ADVEN090P",;
-			    "Não foi possível executar a rotina por já ter outra execução em andamento. ",ComputerName(),LogUserName())
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
+	/*
+	If !LockByName("ADVEN090P", .T., .T.) .AND. SuperGetMV("MV_XVEN090",,.T.)
+		u_GrLogZBE(Date(),TIME(),cUserName,"Rotina ADVEN090P em execução.","ADVEN090P",;
+				"Não foi possível executar a rotina por já ter outra execução em andamento. ",ComputerName(),LogUserName())
 		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Rotina sendo executada por outro usuário ou agendamento. Aguarde o término da execução.")
-    else
+	else
+	*/
 		//
 		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Início inclusão/atualização/exclusão de pedido de venda SalesForce.")
 		
@@ -86,10 +85,11 @@ User Function ADVEN090P() // U_ADVEN090P()
 		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Fim inclusão/atualização/exclusão de pedido de venda SalesForce.")
 
 		UnLockByName("ADVEN090P")
-	ENDIF
-	
-	//Fecha o ambiente.
-	
+	//ENDIF
+
+	RpcClearEnv()
+
+
 
 	if lAutoJob
 		RpcClearEnv()
@@ -108,57 +108,52 @@ Return Nil
 Static Function sqlTScript(nRePThe, nTotThe)
 
 	//Variáveis.
-	Local cQuery := ""
-	Local nTotReg:= nRePThe * nTotThe
+	Local cQuery 	:= ""
+	Local cEOL		:= Chr(13)+chr(10)
+	Local nTotReg	:= nRePThe * nTotThe
 
 	//Inclusão de pedido de venda.
-	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( "
+	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( " +cEOL
 
-	cQuery += " SELECT " 
-	cQuery += " ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) ZCI " 
-	cQuery += " WHERE " 
-	cQuery += " ZCI_TMPR = 'PENDPROC' " 
-	cQuery += " AND ZCI_METD = 'POST' " 
-	cQuery += " AND D_E_L_E_T_ = '' "
-	cQuery += " GROUP BY ZCI_NUMP " 
+	cQuery += " SELECT ZCI_FILIAL, ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC "  +cEOL
+	cQuery += " FROM " + RetSqlName("ZCI") + " (NOLOCK) ZCI "  +cEOL
+	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
+	cQuery += " AND ZCI_TMPR = 'PENDPROC' "  +cEOL
+	cQuery += " AND ZCI_METD = 'POST' "  +cEOL
+	cQuery += " GROUP BY ZCI_FILIAL, ZCI_NUMP "  +cEOL
 
-	cQuery += " UNION ALL "
+	cQuery += " UNION ALL " +cEOL
 
 	//Exclusão de pedido de venda.
-	cQuery += " SELECT   " 
-	cQuery += " ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   " 
-	cQuery += " FROM   " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI " 
-	cQuery += " INNER JOIN " 
-	cQuery += " (SELECT ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST " 
-	cQuery += " ON ZCI.ZCI_NUMP = POST.ZCI_NUMP " 
-	cQuery += " WHERE   " 
-	cQuery += " ZCI.ZCI_TMPR = 'PENDPROC'   " 
-	cQuery += " AND ZCI.ZCI_METD = 'DELETE'   " 
-	cQuery += " AND ZCI.D_E_L_E_T_ = ''  " 
-	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
+	cQuery += " SELECT ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   "  +cEOL
+	cQuery += " FROM  " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI "  +cEOL
+	cQuery += " INNER JOIN "  +cEOL
+	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST "  +cEOL
+	cQuery += " ON ZCI.ZCI_FILIAL=POST.ZCI_FILIAL AND ZCI.ZCI_NUMP = POST.ZCI_NUMP "  +cEOL
+	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI.ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
+	cQuery += " AND ZCI.ZCI_TMPR = 'PENDPROC'   "  +cEOL
+	cQuery += " AND ZCI.ZCI_METD = 'DELETE'   "  +cEOL
+	
+	cQuery += " GROUP BY ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP "  +cEOL
 
-	cQuery += " UNION ALL "
+	cQuery += " UNION ALL " +cEOL
 
 	//Alteração de pedido de venda.
-	cQuery += " SELECT   " 
-	cQuery += " ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   " 
-	cQuery += " FROM   " 
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI " 
-	cQuery += " INNER JOIN " 
-	cQuery += " (SELECT ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST " 
-	cQuery += " ON ZCI.ZCI_NUMP = POST.ZCI_NUMP " 
-	cQuery += " WHERE   " 
-	cQuery += " ZCI.ZCI_TMPR = 'PENDPROC'   " 
-	cQuery += " AND ZCI.ZCI_METD = 'PUT'   " 
-	cQuery += " AND ZCI.D_E_L_E_T_ = ''  " 
-	cQuery += " GROUP BY ZCI.ZCI_NUMP " 
+	cQuery += " SELECT ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   "  +cEOL
+	cQuery += " FROM   "  +cEOL
+	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI "  +cEOL
+	cQuery += " INNER JOIN "  +cEOL
+	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST "  +cEOL
+	cQuery += " ON ZCI.ZCI_FILIAL=POST.ZCI_FILIAL AND ZCI.ZCI_NUMP = POST.ZCI_NUMP "  +cEOL
+	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI.ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
+	cQuery += " AND ZCI.ZCI_TMPR = 'PENDPROC'   "  +cEOL
+	cQuery += " AND ZCI.ZCI_METD = 'PUT'   "  +cEOL
+	
+	cQuery += " GROUP BY ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP "  +cEOL
 
 	//
-	cQuery += " ) AS FONTE "
-	cQuery += " ORDER BY FONTE.ANTECI, FONTE.DTENTR, FONTE.ZCI_NUMP, FONTE.REC " 
+	cQuery += " ) AS FONTE " +cEOL
+	cQuery += " ORDER BY FONTE.ANTECI, FONTE.DTENTR, FONTE.ZCI_NUMP, FONTE.REC "
 
 Return cQuery
 
@@ -233,7 +228,7 @@ Static Function obterReg()
 			cGrvErro := ""
 			lCont := execProc(cRecnos,@nRecErro,@cGrvErro)
 			If nRecErro > 0
-				StartJob("U_ADVEN901",getenvserver(),.F.,nRecErro,cGrvErro)
+				StartJob("U_ADVEN901",getenvserver(),.F., cEmpAnt, cFilAnt, nRecErro,cGrvErro)
 				Sleep(5000)
 				nRecErro := 0
 			EndIf
@@ -249,20 +244,7 @@ Static Function obterReg()
 
 		A_REG->(DbSkip())
 	EndDo
-	
-	//Checa duplicidade na SC9
-	//checkSC9()
 
-	//Checa se o job foi inicializado.
-	/*For i := 1 To Len(aJobs)
-		//Valida status do processamento.
-		While cValToChar(GetGlbValue(aJobs[i])) == "0"
-
-		EndDo
-
-		//Limpara variável global.
-		ClearGlbValue(aJobs[i])
-	Next i*/
 Return Nil
 
 /*/{Protheus.doc} User Function ADVEN901
@@ -273,13 +255,13 @@ Return Nil
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 /*/
-User Function ADVEN901(nRecErro,cGrvErro)
+User Function ADVEN901(cEmpAtu, cFilAtu, nRecErro, cGrvErro)
 	//Declaração de variávies
 	Default cGrvErro := ""
 
 	RPCClearEnv()
 	RPCSetType(3)
-	RpcSetEnv("01","02",,,,GetEnvServer(),{ })
+	RpcSetEnv(cEmpAtu,cFilAtu,,,,GetEnvServer(),{ })
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
 	// If !LockByName("ADVEN901", .T., .F.)
@@ -335,36 +317,15 @@ User Function ProcAltSF(cRecnos,cJobAux)
 	//U_ADINF009P('ADVEN090P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
 
 	//Gera log na tabela ZBE.
-	DbSelectArea("ZBE")
-	RecLock("ZBE",.T.)
-	Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-	Replace ZBE_DATA 	   	WITH dDataBase
-	Replace ZBE_HORA 	   	WITH Time()
-	Replace ZBE_USUARI	    WITH "JOB PROC"
-	Replace ZBE_LOG	        WITH "Início Processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux))
-	Replace ZBE_MODULO	    WITH "COMERCIAL"
-	Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-	Replace ZBE_PARAME      WITH "RECNOS " + cValToChar(cRecnos)
-	ZBE->( MsUnLock())
-
+	logZBE("Início Processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux)),"RECNOS " + cValToChar(cRecnos))
 	//Executa a alteração dos pedidos.
 	If ! Empty(cRecnos) .And. ! Empty(cJobAux)
 		execProc(cRecnos)
 	EndIf
 
 	//Gera log na tabela ZBE.
-	DbSelectArea("ZBE")
-	RecLock("ZBE",.T.)
-	Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
-	Replace ZBE_DATA 	   	WITH dDataBase
-	Replace ZBE_HORA 	   	WITH Time()
-	Replace ZBE_USUARI	    WITH "JOB PROC"
-	Replace ZBE_LOG	        WITH "Fim processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux))
-	Replace ZBE_MODULO	    WITH "COMERCIAL"
-	Replace ZBE_ROTINA	    WITH "ADVEN090P" 
-	Replace ZBE_PARAME      WITH "RECNOS " + cValToChar(cRecnos)
-	ZBE->( MsUnLock())
-
+	logZBE("Fim processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux)), "RECNOS " + cValToChar(cRecnos))
+	
 	//Se a rotina foi executa em multithread, a variável pública é alterada.
 	If !Empty(cJobAux)
 		PutGlbValue(cJobAux,"1")
@@ -391,12 +352,13 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 	Local cQuery 	 := ""
 	Local oParseJSON := Nil
 	Local cErro		 := ""
-	Local cNumPed	 := ""
+	//Local cNumPed	 := ""
 	Local cFlagApr	 := ""
-	Local nRecno	 := 0
+	//Local nRecno	 := 0
 	Local cErroPE	 := ""
 	Local cHoraExec	 := Time()
 	Local cPed		 := ""
+	Local cFil		 := ""
 	Local nTpOp		 := 0
 	Local lPedBloq	 := .F.
 	Local lProcess	 := .F.
@@ -404,6 +366,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 	Local cHoraAnt	 := ""
 	Local lErro		 := .T.
 	Local nAux		 := 0
+	Local i			 := 0
 	
 	Local cCliente   := ""
 	Local cLoja	     := ""
@@ -467,17 +430,19 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 			If Alltrim(cValToChar(A_PROC->ZCI_METD)) <> "DELETE"
 				cFlagApr := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))
 				cPed     := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_NUM))
-
+				cFil	 := xFilial("SC5")
 			EndIf
 
 			//Executa a inclusão do pedido de venda.
 			If Alltrim(cValToChar(A_PROC->ZCI_METD)) == "POST"
+				cFil := xFilial("SC5")
 				cPed := Alltrim(cValToChar(ZCI->ZCI_NUMP))
+				
 				Conout(DToC(Date()) + " " + Time() + " ADVEN090P - execProc - ENTROU POST ADVEN090P " + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
 
 				DbSelectArea("SC5")
 				SC5->(DbSetOrder(1))
-				If SC5->( DbSeek( xFilial("SC5") + cPed ) )
+				If SC5->( DbSeek( cFil + cPed ) )
 					cHoraExec := ELAPTIME(cHoraAnt, Time())
 					DbSelectArea("ZCI")
 					//CI->(DbGoTo(Val(cValToChar(A_PROC->REC)))) //chamado: TI - Fernado Sigoli 06/02/2019
@@ -499,15 +464,15 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 				Begin transaction
 					lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
 
-					If RESTEXECUTE(oParseJSON,@cErro,Alltrim(cValToChar(ZCI->ZCI_NUMP)),cFlagApr,Val(cValToChar(A_PROC->REC)),3,Alltrim(cValToChar(A_PROC->ZCI_CONSIN)))
-						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - OK - POST " + Alltrim(cValToChar(ZCI->ZCI_NUMP)))
+					If RESTEXECUTE(oParseJSON,@cErro, Alltrim(cValToChar(ZCI->ZCI_NUMP)),cFlagApr,Val(cValToChar(A_PROC->REC)),3,Alltrim(cValToChar(A_PROC->ZCI_CONSIN)))
+						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - OK - POST " + Alltrim(cValToChar(ZCI->ZCI_FILIAL)) +"-" + Alltrim(cValToChar(ZCI->ZCI_NUMP)))
 						//
 						lRetCheck := .F.
 						lProcess  := .F.
 						cErro := ""
-						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - INICIO LIBERACAO " + cPed + " lPedBloq " + cValToChar(lPedBloq) )
+						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - INICIO LIBERACAO "+ cFil +"-" + cPed + " lPedBloq " + cValToChar(lPedBloq) )
 						lRetCheck := chkLiber(cPed,lPedBloq,,@lProcess,@cErro)
-						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - FIM LIBERACAO " + cPed)
+						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - FIM LIBERACAO "+ cFil +"-" + cPed)
 
 						//Desarma transação se houve erro na liberação/bloqueio do pedido de venda.
 						If !lRetCheck .Or. !lProcess
@@ -524,7 +489,10 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						ZCI->(MsUnlock())
 					Else
 						cErroPE := ""
-						For i := 1 To Len(aPedidos)
+						
+						nPedidos := Len(aPedidos)
+						
+						For i := 1 To nPedidos
 							cErroPE += aPedidos[i][1] + " / "
 						Next i
 						
@@ -534,7 +502,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 							ZCI->ZCI_ERRO := Iif(Empty(cErroPE),cErro,cErroPE)
 						ZCI->(MsUnlock())
 						//
-						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - POST - ERRO " + Alltrim(cValToChar(ZCI->ZCI_NUMP)) + " " + Iif(Empty(cErroPE),cErro,cErroPE) )
+						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - POST - ERRO " + Alltrim(cValToChar(ZCI->ZCI_FILIAL)) + " " + Alltrim(cValToChar(ZCI->ZCI_NUMP)) + " " + Iif(Empty(cErroPE),cErro,cErroPE) )
 					EndIf
 
 					//Valida transação.
@@ -550,9 +518,13 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 				Conout(DToC(Date()) + " " + Time() + " ADVEN090P - execProc - SAINDO POST ADVEN090P " + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
 				//Executa a inclusão do pedido de venda.
 			ElseIf Alltrim(cValToChar(A_PROC->ZCI_METD)) == "DELETE"
-				Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - DELETE - " + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
+
+				Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - DELETE - "+ Alltrim(cValToChar(A_PROC->ZCI_FILIAL)) +"-" + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
+				
 				lErro := .T.
 				cPed  := Alltrim(cValToChar(A_PROC->ZCI_NUMP))
+				cFil  := xFilial("SC5")
+
 				//
 				DbSelectArea("SC5")
 				SC5->(DbSetOrder(1))
@@ -573,7 +545,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 				
 				Begin transaction
 					If RESTEXECUTE(oParseJSON,@cErro,Alltrim(cValToChar(ZCI->ZCI_NUMP)),cFlagApr,Val(cValToChar(A_PROC->REC)),5)
-						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - OK - DELETE " + Alltrim(cValToChar(ZCI->ZCI_NUMP)))
+						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - OK - DELETE " + Alltrim(cValToChar(A_PROC->ZCI_FILIAL)) + "-" + Alltrim(cValToChar(ZCI->ZCI_NUMP)))
 						//
 						DbSelectArea("ZCI")
 						ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
@@ -589,7 +561,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 							cErroPE += aPedidos[i][1] + " / "
 						Next i
 						//
-						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - DELETE - ERRO " + Alltrim(cValToChar(ZCI->ZCI_NUMP)) + " " + Iif(Empty(cErroPE),cErro,cErroPE))
+						Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - DELETE - ERRO " +  Alltrim(cValToChar(A_PROC->ZCI_FILIAL)) +"-" + Alltrim(cValToChar(ZCI->ZCI_NUMP)) + " " + Iif(Empty(cErroPE),cErro,cErroPE))
 		
 						RecLock("ZCI",.F.)
 							ZCI->ZCI_ERRO := Iif(Empty(cErroPE),cErro,cErroPE)
@@ -612,7 +584,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 
 			//Alteração pedido de venda.
 			ElseIf Alltrim(cValToChar(A_PROC->ZCI_METD)) == "PUT"
-				Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PUT - " + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
+				Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PUT - " +  Alltrim(cValToChar(A_PROC->ZCI_FILIAL)) +"-" + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
 				
 				DbSelectArea("SC5")
 				SC5->(DbSetOrder(1))
@@ -643,7 +615,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 
 				//
 				If nTpOp == 1 //Executa MsExecauto.
-					Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PUT 1 -INICIO - " + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
+					Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PUT 1 -INICIO - " + Alltrim(cValToChar(A_PROC->ZCI_FILIAL)) + "-" + Alltrim(cValToChar(A_PROC->ZCI_NUMP)))
 					lErro    := .T.
 
 					//
@@ -651,7 +623,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 						lPedBloq := Iif(Upper(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))) == "S",.T.,.F.)
 
 						If RESTEXECUTE(oParseJSON,@cErro,cPed,cFlagApr,Val(cValToChar(A_PROC->REC)),4)
-							Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc  - OK - PUT - nTpOp 1 " + Alltrim(cValToChar(cPed)))
+							Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc  - OK - PUT - nTpOp 1 " + Alltrim(cValToChar(cFil)) + "-" + Alltrim(cValToChar(cPed)))
 							//
 							lRetCheck := .F.
 							lProcess  := .F.
@@ -659,14 +631,14 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 							lRetCheck := chkLiber(cPed,lPedBloq,,@lProcess,@cErro)
 							//Desarma transação se houve erro na liberação/bloqueio do pedido de venda.
 							If !lRetCheck .Or. !lProcess
-								Conout("ADVEN090P - DisarmTransaction alteração 1 " + cPed)
+								Conout("ADVEN090P - DisarmTransaction alteração 1 " + cFil + "-" + cPed)
 								DisarmTransaction()
 								Break
 							EndIf
 							//
 							DbSelectArea("ZCI")
 							ZCI->(DbGoTo(Val(cValToChar(A_PROC->REC))))
-							Conout("ADVEN090P - Atualiza alteração 1 sucesso " + cPed + " RECNO " + cValToChar(ZCI->( Recno())) )
+							Conout("ADVEN090P - Atualiza alteração 1 sucesso "+ cFil +"-" + cPed + " RECNO " + cValToChar(ZCI->( Recno())) )
 							RecLock("ZCI",.F.)
 								ZCI->ZCI_TMPR  := ELAPTIME(cHoraAnt, Time())
 								ZCI->ZCI_TPALT := cValToChar(nTpOp) 
@@ -680,7 +652,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 								cErroPE += aPedidos[i][1] + " / "
 							Next i
 							//
-							Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PUT - ERRO - nTpOp 1 " + Alltrim(cValToChar(cPed)) + " " + Iif(Empty(cErroPE),cErro,cErroPE))
+							Conout( DToC(Date()) + " " + Time() + " ADVEN090P - execProc - PUT - ERRO - nTpOp 1 " + Alltrim(cValToChar(cFil)) + " "+ Alltrim(cValToChar(cPed)) + " " + Iif(Empty(cErroPE),cErro,cErroPE))
 
 							RecLock("ZCI",.F.)
 								ZCI->ZCI_ERRO := Iif(Empty(cErroPE),cErro,cErroPE)
@@ -2081,7 +2053,7 @@ Static Function cSqlScript(cRecnos)
 	Local cQuery := ""
 
 	//
-	cQuery += " SELECT ZCI_NUMP, R_E_C_N_O_ AS REC, ZCI_METD, ZCI_TPALT, ZCI_CONSIN "
+	cQuery += " SELECT ZCI_FILIAL, ZCI_NUMP, R_E_C_N_O_ AS REC, ZCI_METD, ZCI_TPALT, ZCI_CONSIN "
 	cQuery += " FROM "
 	cQuery += " " + RetSqlName("ZCI") + " AS ZCI "
 	cQuery += " WHERE "
@@ -2283,155 +2255,6 @@ Static Function exclPedVend(cErro,cNumPed)
 	RestArea(aArea)
 
 Return lRet
-
-/*/{Protheus.doc} checkSC9
-	Checa duplicidade na SC9. Chamado 037261.
-	@type  Static Function
-	@author Everson
-	@since 15/06/2018
-	@version 01
-/*/
-Static Function checkSC9()
-
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaracao de Variaveis                                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-	Local aArea		:= GetArea()
-	Local cQuery	:= ""
-	Local cUpdt 	:= ""
-	Local cMsg		:= ""
-	
-	//
-	Conout( DToC(Date()) + " " + Time() + " ADVEN090P - checkSC9")
-	
-	cQuery := ""
-	cQuery += " SELECT FONTE.REC FROM  " 
-	cQuery += " ( " 
-	cQuery += " SELECT ZCI_NUMP, MAX(R_E_C_N_O_) AS REC FROM " + RetSqlName("ZCI") + " (NOLOCK) WHERE ZCI_METD = 'PUT' AND ZCI_NUMP <> '' AND ZCI_NUMP IN ( " 
-	cQuery += " ( " 
-	cQuery += " SELECT  " 
-	cQuery += " RTRIM(LTRIM(FONTE.C5_NUM)) AS PED " 
-	cQuery += " FROM " 
-	cQuery += " ( " 
-	cQuery += " SELECT " 
-	cQuery += " C5_NUM, SC6.C6_PRODUTO AS PRODSC6, SC9.C9_PRODUTO AS PRODSC9, " 
-	cQuery += " CASE WHEN SC6.C6_PRODUTO <> SC9.C9_PRODUTO  THEN 'ERRO' ELSE 'OK' END LOG, " 
-	cQuery += " 'DIVERGÊNCIA Nº SC6 e SC9' AS 'Divergência - Qtd produtos SC6 e SC9' " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
-	cQuery += " LEFT OUTER JOIN " 
-	cQuery += " (SELECT C6_FILIAL, C6_NUM, COUNT(C6_PRODUTO) AS C6_PRODUTO FROM " + RetSqlName("SC6") + " (NOLOCK) AS SC6 WHERE SC6.D_E_L_E_T_ = ''  " 
-	cQuery += " AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()+1 AS DATE) " 
-	cQuery += " AND CAST(C6_ENTREG AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
-	cQuery += " GROUP BY C6_FILIAL, C6_NUM) AS SC6 " 
-	cQuery += " ON C5_FILIAL = C6_FILIAL " 
-	cQuery += " AND C5_NUM = C6_NUM  " 
-	cQuery += " LEFT OUTER JOIN " 
-	cQuery += " (SELECT C9_FILIAL, C9_PEDIDO, COUNT(C9_PRODUTO) AS C9_PRODUTO FROM " + RetSqlName("SC9") + " (NOLOCK) AS SC9 WHERE SC9.D_E_L_E_T_ = ''  " 
-	cQuery += " AND CAST(C9_DTENTR AS DATE) > = CAST(GETDATE()+1 AS DATE) " 
-	cQuery += " AND CAST(C9_DTENTR AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
-	cQuery += " GROUP BY C9_FILIAL, C9_PEDIDO) AS SC9 " 
-	cQuery += " ON SC6.C6_FILIAL = SC9.C9_FILIAL " 
-	cQuery += " AND SC6.C6_NUM = SC9.C9_PEDIDO " 
-	cQuery += " WHERE " 
-	cQuery += " C5_FILIAL = '" + xFilial("SC5") + "' " 
-	cQuery += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()+1 AS DATE) " 
-	cQuery += " AND CAST(C5_DTENTR AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
-	cQuery += " AND C5_XGERSF = '2' " 
-	cQuery += " AND SC5.D_E_L_E_T_ = '' " 
-	
-	cQuery += " AND SC5.C5_PLACA = '' AND SC5.C5_NOTA = '' AND SC5.C5_XINT <> '3' " 
-	
-	cQuery += " ) AS FONTE " 
-	cQuery += " WHERE FONTE.LOG = 'ERRO' " 
-	cQuery += " ) " 
-	cQuery += " ) " 
-	cQuery += " GROUP BY ZCI_NUMP " 
-	cQuery += " ) AS FONTE " 
-	
-	//
-	If Select("CHK_UPD") > 0
-		CHK_UPD->(DbCloseArea())
-		
-	EndIf
-	
-	//
-	TcQuery cQuery New Alias "CHK_UPD"
-	DbSelectArea("CHK_UPD")
-	CHK_UPD->(DbGoTop())
-	
-	//
-	If CHK_UPD->(Eof())
-	Conout( DToC(Date()) + " " + Time() + " ADVEN090P - checkSC9: Não há regitros a serem reprocessados.")
-		CHK_UPD->(DbCloseArea())
-		RestArea(aArea)
-		Return Nil
-		
-	EndIf
-	
-	CHK_UPD->(DbCloseArea())
-	
-	Conout( DToC(Date()) + " " + Time() + " ADVEN090P - checkSC9: Início reprocessamento de pedidos.")
-	
-	//
-	cUpdt := ""
-	cUpdt += " UPDATE " + RetSqlName("ZCI") + " SET ZCI_TMPR = 'PENDPROC', ZCI_TPALT = 'R'  WHERE ZCI_FILIAL = '" + xFilial("ZCI") + "' AND R_E_C_N_O_ > 0 AND R_E_C_N_O_ IN " 
-	cUpdt += " ( " 
-	cUpdt += " SELECT FONTE.REC FROM  " 
-	cUpdt += " ( " 
-	cUpdt += " SELECT ZCI_NUMP, MAX(R_E_C_N_O_) AS REC FROM " + RetSqlName("ZCI") + " (NOLOCK) WHERE ZCI_METD = 'PUT' AND ZCI_NUMP <> '' AND ZCI_NUMP IN ( " 
-	cUpdt += " ( " 
-	cUpdt += " SELECT  " 
-	cUpdt += " RTRIM(LTRIM(FONTE.C5_NUM)) AS PED " 
-	cUpdt += " FROM " 
-	cUpdt += " ( " 
-	cUpdt += " SELECT " 
-	cUpdt += " C5_NUM, SC6.C6_PRODUTO AS PRODSC6, SC9.C9_PRODUTO AS PRODSC9, " 
-	cUpdt += " CASE WHEN SC6.C6_PRODUTO <> SC9.C9_PRODUTO  THEN 'ERRO' ELSE 'OK' END LOG, " 
-	cUpdt += " 'DIVERGÊNCIA Nº SC6 e SC9' AS 'Divergência - Qtd produtos SC6 e SC9' " 
-	cUpdt += " FROM " 
-	cUpdt += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
-	cUpdt += " LEFT OUTER JOIN " 
-	cUpdt += " (SELECT C6_FILIAL, C6_NUM, COUNT(C6_PRODUTO) AS C6_PRODUTO FROM " + RetSqlName("SC6") + " (NOLOCK) AS SC6 WHERE SC6.D_E_L_E_T_ = ''  " 
-	cUpdt += " AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()+1 AS DATE) " 
-	cUpdt += " AND CAST(C6_ENTREG AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
-	cUpdt += " GROUP BY C6_FILIAL, C6_NUM) AS SC6 " 
-	cUpdt += " ON C5_FILIAL = C6_FILIAL " 
-	cUpdt += " AND C5_NUM = C6_NUM  " 
-	cUpdt += " LEFT OUTER JOIN " 
-	cUpdt += " (SELECT C9_FILIAL, C9_PEDIDO, COUNT(C9_PRODUTO) AS C9_PRODUTO FROM " + RetSqlName("SC9") + " (NOLOCK) AS SC9 WHERE SC9.D_E_L_E_T_ = ''  " 
-	cUpdt += " AND CAST(C9_DTENTR AS DATE) > = CAST(GETDATE()+1 AS DATE) " 
-	cUpdt += " AND CAST(C9_DTENTR AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
-	cUpdt += " GROUP BY C9_FILIAL, C9_PEDIDO) AS SC9 " 
-	cUpdt += " ON SC6.C6_FILIAL = SC9.C9_FILIAL " 
-	cUpdt += " AND SC6.C6_NUM = SC9.C9_PEDIDO " 
-	cUpdt += " WHERE " 
-	cUpdt += " C5_FILIAL = '" + xFilial("SC5") + "' " 
-	cUpdt += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()+1 AS DATE) " 
-	cUpdt += " AND CAST(C5_DTENTR AS DATE) <= CAST(GETDATE()+30 AS DATE) " 
-	cUpdt += " AND C5_XGERSF = '2' " 
-	cUpdt += " AND SC5.D_E_L_E_T_ = '' " 
-	
-	cUpdt += " AND SC5.C5_PLACA = '' AND SC5.C5_NOTA = '' AND SC5.C5_XINT <> '3' " 
-	
-	cUpdt += " ) AS FONTE " 
-	cUpdt += " WHERE FONTE.LOG = 'ERRO' " 
-	cUpdt += " ) " 
-	cUpdt += " ) " 
-	cUpdt += " GROUP BY ZCI_NUMP " 
-	cUpdt += " ) AS FONTE " 
-	cUpdt += " ) " 
-	
-	//
-	If TCSqlExec(cUpdt) < 0
-		cMsg := "Erro update registros duplicados SC9 " + Chr(13) + Chr(10) + "TCSQLError() " + TCSQLError()
-		Conout( DToC(Date()) + " " + Time() + " ADVEN090P - checkSC9 [ERRO] - TCSqlExec " + Chr(13) + Chr(10) + cMsg )
-	EndIf
-	
-	//
-	RestArea(aArea)
-	
-Return Nil
 
 
 Static Function logZBE(cLog, cParam, cMemo)
