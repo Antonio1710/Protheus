@@ -13,6 +13,7 @@
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
     @history Chamado 16833 - Leonardo P. Monteiro - 22/03/2022- Ajustes e correções na rotina no decorrer dos testes reais.
     @history Chamado 16833 - Leonardo P. Monteiro - 23/03/2022- Correção de error.log seleção em bloco de um grid vazio.
+    @history Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 - Corrigida a Rotina para que na hora que alterar o Armario Grave quem fez a alteração.
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
@@ -326,73 +327,63 @@ Static Function fGetArma()
 return
 
 Static Function fConfArm()
-    Local nA        := 1
-    Local nRegist   := 0
-    Local cQuery    := ""
-    Local nPosCod := aScan(aArDeCam,"ZHL_CODIGO")
-    Local nPosReg   := aScan(aArDeCam,"REGISTRO")
 
-    nArDeCam    := len(aArDeCam)
-    nArDeDad    := Len(aArDeDad)
+    Local   cQuery  := ""
+    Local    nRegist := 0
+    
+    DbSelectArea("ZHL")
+    cQuery := " SELECT R_E_C_N_O_ REGISTRO "
+    cQuery += " FROM "+ RetSqlName("ZHL") +" "
+    cQuery += " WHERE D_E_L_E_T_='' AND ZHL_CODIGO ='"+ ZI1->ZI1_CODZHL +"'; "
 
-    if nArDeDad > 0 
-        
-        nColuna     := Len(aArDeDad[1])-1
+    TcQuery cQuery ALIAS "QZHL" NEW
+    
+    nRegist := QZHL->REGISTRO
+  
+    //Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 
+   
+    IF nRegist > 0
+        DbSelectArea("ZHL")
+        ZHL->(Dbgoto(nRegist))
 
-        for nA := 1 To nArDeDad
-            if aArDeDad[nA, nColuna]
-                cProd       := aArDeDad[nA, nPosCod]
-                nRegist     := aArDeDad[nA, nPosReg]
+        if ZHL->(Recno()) == nRegist
 
-                if nRegist > 0
-                    DbSelectArea("ZHL")
-                    ZHL->(Dbgoto(nRegist))
+            cQuery := " SELECT R_E_C_N_O_ REGISTRO "
+            cQuery += " FROM "+ RetSqlName("ZI1") +" "
+            cQuery += " WHERE D_E_L_E_T_='' AND ZI1_CODZHL='"+ ZHL->ZHL_CODIGO +"'; "
 
-                    if ZHL->(Recno()) == nRegist
+            TcQuery cQuery ALIAS "QZI1" NEW
 
-                        cQuery := " SELECT R_E_C_N_O_ REGISTRO "
-                        cQuery += " FROM "+ RetSqlName("ZI1") +" "
-                        cQuery += " WHERE D_E_L_E_T_='' AND ZI1_CODZHL='"+ ZHL->ZHL_CODIGO +"'; "
+            if QZI1->(!EOF())
+                DbSelectArea("ZI1")
+                ZI1->(DBGOTO(QZI1->REGISTRO))
 
-                        TcQuery cQuery ALIAS "QZI1" NEW
+                if ZI1->(Recno()) == QZI1->REGISTRO
 
-                        if QZI1->(!EOF())
-                            DbSelectArea("ZI1")
-                            ZI1->(DBGOTO(QZI1->REGISTRO))
+                    DbSelectArea("ZHP")
 
-                            if ZI1->(Recno()) == QZI1->REGISTRO
-
-                                // Limpa o registro do armário.
-                                RecLock("ZI1", .F.)
-                                    ZI1_CODZHL  := ""
-                                ZI1->(MsUnlock())
-
-                                DbSelectArea("ZHP")
-
-                                // Registra no histórico.
-                                RecLock("ZHP", .T.)
-                                    ZHP_FILIAL  := xFilial("ZHP")
-                                    ZHP_CODZHL  := ZHL->ZHL_CODIGO
-                                    ZHP_MAT     := ZI1->ZI1_MAT
-                                    ZHP_NOME    := ZI1->ZI1_NOME
-                                    ZHP_DATINC  := Date()
-                                    ZHP_HORINC  := Time()
-                                    ZHP_USUARI  := AllTrim( __cUserID )
-                                    ZHP_NOMUSU  := AllTrim(UsrRetName(__cUserID))
-                                ZHP->(MsUnlock())
-                            endif
-
-                            ZHP->(Dbclosearea())
-                            ZI1->(Dbclosearea())
-                        endif
-
-                        QZI1->(Dbclosearea())
-
-                    endif
+                    // Registra no histórico.
+                    RecLock("ZHP", .T.)
+                        ZHP_FILIAL  := xFilial("ZHP")
+                        ZHP_CODZHL  := ZHL->ZHL_CODIGO
+                        ZHP_MAT     := ZI1->ZI1_MAT
+                        ZHP_NOME    := ZI1->ZI1_NOME
+                        ZHP_DATINC  := Date()
+                        ZHP_HORINC  := Time()
+                        ZHP_USUARI  := AllTrim( __cUserID )
+                        ZHP_NOMUSU  := AllTrim(UsrRetName(__cUserID))
+                    ZHP->(MsUnlock())
                 endif
+
+                ZHP->(Dbclosearea())
+                ZI1->(Dbclosearea())
             endif
-        next nA
+
+            QZI1->(Dbclosearea())
+
+        endif
     endif
+    QZHL->(Dbclosearea())
 return 
 
 Static Function layPesq(nRow, nCol, nHeight, nWidth)
@@ -491,7 +482,7 @@ STATIC FUNCTION fValida(cCampo)
             if fVldArm()
                 fGrvZI1(cZI1MAT, cField, cValor)
             endif
-        
+            fConfArm()
         endif
 
     endif
@@ -1285,7 +1276,7 @@ Static function getDadoBRW(nTypeBrowse)
         cQuery := " SELECT ZHL.*, ZHL.R_E_C_N_O_ REGISTRO"+cQebra
         cQuery += " FROM "+ retsqlname("ZI1") +" ZI1  "+cQebra
         cQuery += "   INNER JOIN "+ retsqlname("ZHL") +" ZHL ON ZI1.D_E_L_E_T_='' AND ZHL.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+xFilial("ZI1")+"' AND ZHL.ZHL_FILIAL='"+xFilial("ZHL")+"' AND ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO "+cQebra
-        cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL = '"+ xFilial("ZI1") +"' AND ZI1.ZI1_DEMISS !='' "+cQebra
+        cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL = '"+ xFilial("ZI1") +"' AND ZI1.ZI1_DEMISS ='' "+cQebra
         cQuery += " ORDER BY ZHL.ZHL_CODIGO; "
     
     endif
