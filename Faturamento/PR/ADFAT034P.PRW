@@ -22,6 +22,8 @@ User Function ADFAT034P() // U_ADFAT034P()
 
     oBrowse:Activate()
 
+    (cTbMast)->(DBClearFilter())
+
 Return Nil
 /*/{Protheus.doc} BrowseDef
     @type  Static Function
@@ -33,7 +35,7 @@ Static Function BrowseDef()
 
     //Variáveis.
     Local oBrowse := FwMBrowse():New()
-    Local cFilter := " ZIR_ORAGRP <> '' "
+    Local cFilter := " ZIR_ORAGRP <> '' .And. ZIR_FILIAL = '" + FWxFilial("ZIR") + "' "
 
     (cTbMast)->(DbSetFilter( {|| &cFilter }, cFilter ))
 
@@ -44,6 +46,9 @@ Static Function BrowseDef()
     oBrowse:AddLegend("ZIR->ZIR_STATUS = '2'", "Green", "Aprovada")
     oBrowse:AddLegend("ZIR->ZIR_STATUS = '3'", "Black", "Não aprovada")
     oBrowse:AddLegend("ZIR->ZIR_STATUS = '4'", "Red",   "Pesada")
+
+    oBrowse:SetMenuDef("ADFAT034P")
+
     oBrowse:SetSeeAll(.F.)
 
 Return oBrowse
@@ -120,7 +125,7 @@ User Function ADFAT34A(nOpc)
         oRoteiro := TGet():New(005,005,{|u| if( PCount() > 0, cCarga := u, cCarga ) } ,oJanela,50,010,,,,,,,,.T.,,,,,,,,,,"cCarga",,,,,,,"Roteiro",1)
         oRoteiro:bWhen := {|| .F. }
 
-        oPlaca := TGet():New(005,060,{|u| if( PCount() > 0, cPlaca := u, cPlaca ) } ,oJanela,050,010,,,,,,,,.T.,,,,,,,,,,"cPlaca",,,,,,,"Placa",1)
+        oPlaca := TGet():New(005,060,{|u| if( PCount() > 0, cPlaca := u, cPlaca ) } ,oJanela,050,010,"@!",,,,,,,.T.,,,,,,,,,,"cPlaca",,,,,,,"Placa",1)
         oPlaca:cF3 := "ZV4"
         oPlaca:bWhen := {|| lEditTg }
         oPlaca:bValid := {|| Iif(Empty(cPlaca), .T., vldCaixa(cPlaca) ) }
@@ -300,6 +305,9 @@ User Function ADFAT34B(nOpc, oVecPt, aHVcPt, cCarga, cPlaca, dData)
     Local nTotReg   := 0
     Local lTicket   := .F.
     Local cOrdInC   := ""
+    Local aDOrdR    := {}
+
+    Aadd(aDOrdR,{"ZIR_STATUS", "2"})
     
     If Len(oVecPt:aCols) <= 0
         MsgInfo("Não há registros a serem processados.","Função ADFAT34B(ADFAT034P)")
@@ -366,7 +374,14 @@ User Function ADFAT34B(nOpc, oVecPt, aHVcPt, cCarga, cPlaca, dData)
 
                 EndIf
                 
-                If !Empty(cOrdemP) .And. ! U_ADFAT166(cOrdemP) //Exclusão de ordem de pesagem.
+                If ! Empty(cOrdemP) .And. ! U_ADFAT166(cOrdemP) //Exclusão de ordem de pesagem.
+                    DisarmTransaction()
+                    lRet := .F.
+                    Break
+
+                EndIf
+
+                If ! Empty(cOrdemP) .And. ! U_ADFAT32D(cOrdemC, aDOrdR) //Altera Status da ordem de carregamento de ração para aprovada.
                     DisarmTransaction()
                     lRet := .F.
                     Break
@@ -401,7 +416,7 @@ User Function ADFAT34B(nOpc, oVecPt, aHVcPt, cCarga, cPlaca, dData)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} chkInt
+/*/{Protheus.doc} vldOdAb
     Verifica se há ordens de carregamento não pesadas em roteiros anteriores.
     @type  Static Function
     @author Everson
@@ -485,6 +500,9 @@ Static Function chkInt(cCarga, cOrdInC)
     //Variáveis.
     Local aArea := GetArea()
     Local lRet  := .T.
+    Local aDOrdR:= {}
+
+    Aadd(aDOrdR,{"ZIR_STATUS", "2"})
 
     DbSelectArea("ZIR")
     ZIR->(DbSetOrder(2))
@@ -496,7 +514,8 @@ Static Function chkInt(cCarga, cOrdInC)
             
             While ! ZIR->(Eof()) .And. ZIR->ZIR_FILIAL == FWxFilial("ZIR") .And. ZIR->ZIR_ORAGRP == cCarga
 
-                If !( ZIR->ZIR_NUMERO $cOrdInC) .And. U_ADFAT32E(ZIR->ZIR_ORDEM, "", ZIR->ZIR_NUMERO)
+                If !( ZIR->ZIR_NUMERO $cOrdInC) .And.;
+                   U_ADFAT32E(ZIR->ZIR_ORDEM, "", ZIR->ZIR_NUMERO) //Valida se há ticket de pesagem vinculado.
 
                     If ! U_ADFAT32C(ZIR->ZIR_NUMERO, "", "", SToD(" / / "))
                         DisarmTransaction()
@@ -505,7 +524,10 @@ Static Function chkInt(cCarga, cOrdInC)
 
                     EndIf
 
-                    If ! Empty(ZIR->ZIR_ORDEM) .And. ! U_ADFAT166(ZIR->ZIR_ORDEM) //Exclusão de ordem de pesagem.
+                    //Exclusão de ordem de pesagem.
+                    If ! Empty(ZIR->ZIR_ORDEM) .And.;
+                       ! U_ADFAT166(ZIR->ZIR_ORDEM) .And.; //Exclui ordem de pesagem.
+                       ! U_ADFAT32D(ZIR->ZIR_NUMERO, aDOrdR) //Altera Status da ordem de carregamento de ração para aprovada.
                         DisarmTransaction()
                         lRet := .F.
                         Break
@@ -544,13 +566,21 @@ Return cOrdSelec
 User Function ADFAT34E()
 
     //Variáveis.
-    Local lRet  := .T.
-    Local cNumero := oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "NUMER" })]
+    Local lRet    := .T.
+    Local cNumero := ""
+    Local nAux    := 1
 
-    If ! cNumero $cOrdSelec
-        cOrdSelec += cNumero + "/"
+    cOrdSelec := "XXXXXX"
+    For nAux := 1 To Len(oVecPt:aCols)
 
-    EndIf
+        cNumero := oVecPt:aCols[nAux, Ascan(aHVcPt,{|x| AllTrim(x[2]) == "NUMER" })]
+
+        If ! Empty(cNumero)
+            cOrdSelec += cNumero + "/"
+
+        EndIf
+
+    Next nAux
 
 Return lRet
 /*/{Protheus.doc} ADFAT34F
@@ -563,6 +593,7 @@ Return lRet
 User Function ADFAT34F()
 
     //Variáveis.
+    Local aArea    := GetArea()
     Local lRet     := .T.
     Local cOrdemC  := oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "NUMER" })]
     Local cOrdemP  := oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "ORDPES" })]
@@ -586,6 +617,18 @@ User Function ADFAT34F()
         MsgInfo("Há ticket de pesagem vinculado à ordem de pesagem.", "Função ADFAT34F(ADFAT034P)")
 
     EndIf
+
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "GRJDA" })] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_CODGRJ")
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "DGRJDA"})] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_DESGRJ")
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "GRANJ" })] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_INTCOD")
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "PRDS"  })] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_PRDSAG")
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "PRDT"  })] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_PRDPRO")
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "DEST"  })] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_DESC")
+    // oVecPt:aCols[oVecPt:nAt,Ascan(aHVcPt,{|x| AllTrim(x[2]) == "QTD"   })] := Posicione("ZIR", 1, FWxFilial("ZIR") + cOrdemC, "ZIR_QUANT")
+
+    lRet := lRet .And. U_ADFAT34E()
+
+    RestArea(aArea)
 
 Return lRet
 /*/{Protheus.doc} ADFAT34G

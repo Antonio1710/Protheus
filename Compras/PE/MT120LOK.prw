@@ -24,6 +24,7 @@
 	@history ticket   10573 - Fernando Mac - 08/03/2021 - Ponto de Correção - Manutenção de Ativos
 	@history ticket   63516 - Fer Macieira - 09/11/2021 - Reforço para gravar campo C7_XTXMOEDA utilizado para montar o consumo/saldo do projeto de investimento
 	@history ticket   68971 - Fer Macieira - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+	@history ticket   71057 - Fer Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function MT120LOK()
 
@@ -244,6 +245,15 @@ User Function MT120LOK()
 	cMVItemCta := GetMV("MV_#ITM113",,"113")
 	If AllTrim(cCC) $ GetMV("MV_#CC5134",,"5134")
 		gdFieldPut("C7_ITEMCTA", cMVItemCta, n)
+	EndIf
+	//
+
+	// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	If AllTrim(cEmpAnt) == "01"
+		If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+			cMVItemCta := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+			gdFieldPut("C1_ITEMCTA", cMVItemCta, n)
+		EndIf
 	EndIf
 	//
 

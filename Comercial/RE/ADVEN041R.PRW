@@ -13,6 +13,7 @@
 	@history Ticket   15718 - Everson     - 16/06/2021 - Tratamento para errorlog.
 	@history Ticket      ti - F. Macieira - 06/09/2021 - Performance Cloud OPTION(QUERYTRACEON 9481)
 	@history Ticket   70851 - ADRIANO SAVOINE - 04/04/2022 - Ajuste para filiais 0A
+	@history Ticket   70972 - ADRIANO SAVOINE - 07/04/2022 - Declarada variaveis que impediam o relatorio de ser apresentado na tela antes da impressЦo.
 /*/
 User Function ADVEN041R() // U_ADVEN041R()
 	
@@ -67,8 +68,8 @@ User Function ADVEN041R() // U_ADVEN041R()
 	
 	//Ticket   15553 - Abel Babini - 14/06/2021 - CorreГЦo de error log no retorno das filiais selecionadas.
 	//MV_PAR05 := formatIn(Alltrim(MV_PAR05),',') //15718 - Everson     - 16/06/2021.
-
-	//SetDefault(aReturn,cString)
+	//Ticket   70972 - ADRIANO SAVOINE - 07/04/2022
+	SetDefault(aReturn,cString)
 
 	If nLastKey == 27
 		Return Nil
@@ -1857,7 +1858,6 @@ Static Function totQbrNv(cNvQbr,nOpc)
 	//зддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд©
 	//Ё Declaracao de Variaveis                                             Ё
 	//юддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
-	Local nValorCob	:= 0
 
 	@nLin,000 Psay "|"
 	@nLin,032 Psay "|"     
@@ -2466,6 +2466,7 @@ Static Function totNvGer()
 	//Ё Declaracao de Variaveis                                             Ё
 	//юддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
 	Local nTotCobert	:= 0
+	Local _yy           := 0 //Ticket   70972 - ADRIANO SAVOINE - 07/04/2022
 
 	For _yy := 1 to len(_aTotaliz)    
 	    If nLin > 55   //60 
@@ -2580,7 +2581,7 @@ Static Function totNvSup()
 	//зддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд©
 	//Ё Declaracao de Variaveis                                             Ё
 	//юддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
-	Local nTotCobert	:= 0
+	Local _yy           := 0   //Ticket   70972 - ADRIANO SAVOINE - 07/04/2022
 
 	For _yy := 1 to len(_aTotaliz)
 	    

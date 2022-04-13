@@ -23,7 +23,7 @@
 	@history ticket  T.I.   - Tiago Stoco	- 26/02/2021 - Correção de fontes.
     @history ticket   15402 - Fernando Maci	- 10/06/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5131 FILIAL 03
 	@history ticket   19122 - Sigoli	    - 21/09/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5318 - item contabil 111 - FILIAL 03
-
+	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function MTA105LIN()
 
@@ -517,7 +517,15 @@ User Function MTA105LIN()
 					
 					EndIf
                     //
-					
+
+					// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+					If AllTrim(cEmpAnt) == "01"
+						If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+							gdFieldPut("CP_ITEMCTA", AllTrim(GetMV("MV_#ITAFIL",,"0B")), i)
+						EndIf
+					EndIf
+					//
+
 					If !Empty(cPrj)
 						
 						// Projeto Investimento

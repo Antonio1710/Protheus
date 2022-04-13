@@ -32,10 +32,7 @@ User Function ADFAT033P()
 	oJanela:lShowHint := .F.
 	oJanela:lCentered := .T.
 
-        TButton():New(005, 520,"Reprovar" , oJanela, {|| U_ADFAT33A(aOrdens, "3"), oJanela:End() },035,011,,,.F.,.T.,.F.,,.F.,,,.F. )
-        TButton():New(005, 560,"Aprovar"  , oJanela, {|| U_ADFAT33A(aOrdens, "2"), oJanela:End() },035,011,,,.F.,.T.,.F.,,.F.,,,.F. )
-
-        oPnMaster := TPanel():New(020,0,,oJanela,,,,,,600,260)
+        oPnMaster := TPanel():New(005,0,,oJanela,,,,,,600,260)
 
         oOrdens := FwBrowse():New()
         oOrdens:SetOwner(oPnMaster)
@@ -56,6 +53,9 @@ User Function ADFAT033P()
         oOrdens:setEditCell( .T. , { || .T. } )
     
         oOrdens:Activate(.T.)
+
+        TButton():New(270, 520,"Reprovar" , oJanela, {|| U_ADFAT33A(aOrdens, "3"), oJanela:End() },035,011,,,.F.,.T.,.F.,,.F.,,,.F. )
+        TButton():New(270, 560,"Aprovar"  , oJanela, {|| U_ADFAT33A(aOrdens, "2"), oJanela:End() },035,011,,,.F.,.T.,.F.,,.F.,,,.F. )
 
     oJanela:Activate(,,,.T.,{||.T.},, {|| })
 

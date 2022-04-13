@@ -12,6 +12,7 @@
 	@history Ticket   15553 - Abel Babini - 14/06/2021 - CorreГЦo de error log no retorno das filiais selecionadas.
 	@history Ticket   15733 - Everson     - 16/06/2021 - Tratamento para errorlog.
 	@history Ticket   70851 - ADRIANO SAVOINE - 04/04/2022 - Tratado o Parametro de filiais.
+	@history Ticket   70972 - ADRIANO SAVOINE - 07/04/2022 - Tratado o fonte para imprimir em Tela.
 	/*/
 User Function ADVEN043R() // U_ADVEN043R()
 	
@@ -104,7 +105,8 @@ User Function ADVEN043R() // U_ADVEN043R()
 	//Ticket   15553 - Abel Babini - 14/06/2021 - CorreГЦo de error log no retorno das filiais selecionadas.
 	//MV_PAR05 := formatIn(Alltrim(MV_PAR05),',')
 	//_cFilIn := substring(_cFilIn, 2, len(Alltrim(_cFilIn))-1)
-	//SetDefault(aReturn,cString)
+
+	SetDefault(aReturn,cString)
 	
 	If nLastKey == 27
 		Return Nil
@@ -2186,7 +2188,7 @@ Static Function toNvGer()
 	//зддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд©
 	//Ё Declaracao de Variaveis                                             Ё
 	//юддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
-	Local nTotCobert	:= 0
+	Local _yy           := 0 //Ticket   70972 - ADRIANO SAVOINE - 07/04/2022
 
 	For _yy := 1 to len(_aTotaliz)    
 	    If nLin > 55   //60 
@@ -2296,7 +2298,7 @@ Static Function totNvVend()
 	//зддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддд©
 	//Ё Declaracao de Variaveis                                             Ё
 	//юддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
-	Local nTotCobert	:= 0
+	Local _yy           := 0 //Ticket   70972 - ADRIANO SAVOINE - 07/04/2022
 
 	For _yy := 1 to len(_aTotaliz)
 	    

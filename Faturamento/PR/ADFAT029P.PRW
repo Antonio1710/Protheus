@@ -12,13 +12,14 @@ Static xPula :=  Chr(13) + Chr(10)
     @since 08/02/2022
     @version 01
     @history Everson, 21/03/2022, Chamado 18465. Adicionado validação para geração de pedido de saída entre filiais e inclusão de item de roteiro de pesagem.
+    @history Everson, 25/03/2022, Chamado 18465. Removido o RPCSetType.
 /*/
-User Function ADFAT029P(cEmp, cFil) // U_ADFAT029P("01", "03") U_ADFAT029P("01", "05")
+User Function ADFAT029P() // U_ADFAT029P()
 
     //Variáveis.
 
-	RPCSetType(3)
-	RpcSetEnv(cEmp, cFil,,,,GetEnvServer(),{ })
+	// RPCSetType(3)
+	RpcSetEnv("01", "03",,,,GetEnvServer(),{ })
 
         U_ADFAT29A()
 
@@ -46,6 +47,12 @@ User Function ADFAT29A()
 
     //Pedido de saída entre filiais.
     U_ADFAT29F()
+
+    // //Processar ticket de pesagem.
+    // U_ADFAT29H()
+
+    // //Consumo de ração.
+    // U_ADFAT29I()
 
 Return Nil
 /*/{Protheus.doc} ADFAT29B
@@ -79,6 +86,7 @@ User Function ADFAT29B()
     Local nToleran  := 0
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
     Local cOperac   := ""
+    Local envBar    := ""
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -139,6 +147,7 @@ User Function ADFAT29B()
         cAtivo    := Alltrim(cValToChar(oJson['dados']['ativSag']))
         cRoteiro  := Alltrim(cValToChar(oJson['dados']['roteiro']))
         nToleran  := Val(cValToChar(oJson['dados']['tolerancia']))
+        envBar    := Alltrim(cValToChar(oJson['dados']['envBarra']))
 
         If cAtivo == "0"
             cAtivo := "2"
@@ -225,7 +234,7 @@ User Function ADFAT29B()
             oModel:Destroy()
             oModel := Nil
 
-            If ! Empty(cRoteiro) .And. ! U_ADFAT29G(cOperac, cRoteiro, cProdSAG, nToleran, "PC", @cMsgError)
+            If ! Empty(cRoteiro) .And. ! U_ADFAT29G(cOperac, cRoteiro, cProdSAG, nToleran, "PC", envBar, @cMsgError)
                 DisarmTransaction()
                 Break
 
@@ -385,10 +394,10 @@ User Function ADFAT29C()
 
         EndIf
 
-        If cStatus == "EUSO"
+        If cStatus == "ABER"
             cStatus := "1"
 
-        ElseIf cStatus == "ABER"
+        ElseIf cStatus == "EUSO"
             cStatus := "2"
         
         ElseIf cStatus == "AGEN"
@@ -508,7 +517,8 @@ User Function ADFAT29E()
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
     Local cTipo     := ""
     Local cCliForn  := ""
-    lOCAL cOperac   := ""
+    Local cOperac   := ""
+    Local cTbcons   := ""
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -577,6 +587,16 @@ User Function ADFAT29E()
         cAtivo   := Alltrim(cValToChar(oJson['dados']['atiGranj']))
         cGranjada:= Alltrim(cValToChar(oJson['dados']['granjada']))
         cTipo    := Alltrim(cValToChar(oJson['dados']['tipo']))
+        cTbcons  := Alltrim(cValToChar(oJson['dados']['tbConsumo']))
+
+        If ! Empty(cTbcons) .And. ! U_ADFAT43B(cTbcons)
+            cMsgError := "Tabela de consumo não localizada " + cTbcons + "."
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
  
         If cAtivo == "0"
             cAtivo := "2"
@@ -588,7 +608,7 @@ User Function ADFAT29E()
             If cOperac == "D"
                 cMsgError := "Não foi possível localizar o lote " + cDCodGrj + "."
                 U_ADFAT29D(cId, "2", cMsgError)
-                Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+                Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
                 (cAliasAux)->(DbSkip())
                 Loop
 
@@ -613,7 +633,7 @@ User Function ADFAT29E()
             If ! SA1->( DbSeek( FWxFilial("SA1") + cFornece + cLoja ) )
                 cMsgError := "Fornecedor/Cliente " + cFornece + cLoja + " não localizado."
                 U_ADFAT29D(cId, "2", cMsgError)
-                Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+                Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
                 (cAliasAux)->(DbSkip())
                 Loop
             
@@ -669,6 +689,11 @@ User Function ADFAT29E()
                 oModel:SetValue("MD_MASTER", "ZIS_GRAJDA" , cGranjada)
                 oModel:SetValue("MD_MASTER", "ZIS_CLIFOR" , cCliForn)
                 oModel:SetValue("MD_MASTER", "ZIS_ATIVO"  , cAtivo)
+
+                If ! Empty(cTbcons)
+                    oModel:SetValue("MD_MASTER", "ZIS_TPCONS" , ZIV->ZIV_NUMERO)
+
+                EndIf
 
             EndIf
 
@@ -895,7 +920,7 @@ Return Nil
     @version 01
 /*/
             //ADFAT29G(cRoteiro, cProdSAG, nToleran, "PC", @cMsgError)
-User Function ADFAT29G(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
+User Function ADFAT29G(cOper, cRoteiro, cProduto, nToleran, cUNTole, envBar, cMsgError)
 
     //Variáveis.
     Local aArea := GetArea()
@@ -910,7 +935,7 @@ User Function ADFAT29G(cOper, cRoteiro, cProduto, nToleran, cUNTole, cMsgError)
 
     EndIf
 
-    U_ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, @cMsgError)
+    U_ADFAT15A(cOper, cRoteiro, cProduto, nToleran, cUNTole, envBar, @cMsgError)
 
     RestArea(aArea)
 
@@ -1036,3 +1061,308 @@ Static Function deParaSAG(cEmp, cFil)
     EndIf
 
 Return aRet
+/*/{Protheus.doc} ADFAT29H
+    Processa registros de ticket de pesagem.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 29/03/2022
+    @version 01
+/*/
+User Function ADFAT29H() // U_ADFAT029P("01", "03")
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cAliasAux := GetNextAlias()
+    Local cQuery    := ""
+    Local cMsgError := ""
+    Local cJson     := ""
+    Local oJson     := Nil
+    Local cId       := ""
+    Local cTickProth:= ""
+    Local cTktGuad  := ""
+    Local cTag      := ""
+    Local cFluxo    := ""
+    Local cDTPesa   := ""
+    Local cHrPesa   := ""
+    Local cCodigo   := ""
+    Local cTpOp     := ""
+    Local cPlaca    := ""
+    Local cCodSitu  := ""
+    Local nPeso     := 0
+    Local nPesoLiq  := 0
+    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    Local aDados    := {}
+    Local lSlvReg   := .F.
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'pesagens_guardian' " 
+    cQuery += " AND ZIQ_SISGER = 'SAG' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO " 
+
+    DbSelectArea("ZIM")
+    ZIM->(DbSetOrder(1))
+    ZIM->(DbGoTop())
+
+    DbSelectArea("SB1")
+    SB1->(DbSetOrder(1))
+    SB1->(DbGoTop())
+
+    DbSelectArea("ZIQ")
+    ZIQ->(DbSetOrder(1))
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
+        
+        aDados    := {}
+        cMsgError := ""
+        cJson     := ZIQ->ZIQ_DADOS
+        oJson     := getJson(cJson)
+
+        If ValType(oJson) == "U"
+            cMsgError := "Não foi possível converter a string para objeto json."
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        cId         := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        cTickProth  := Alltrim(cValToChar(oJson['dados']['coinTkgd']))
+        cTktGuad    := Alltrim(cValToChar(oJson['dados']['cogdtkgd']))
+        cTag        := Alltrim(cValToChar(oJson['dados']['tag']))
+        cFluxo      := Alltrim(cValToChar(oJson['dados']['fluxtkgd']))
+        cDTPesa     := Alltrim(cValToChar(oJson['dados']['dtpeOptg']))
+        cHrPesa     := Alltrim(cValToChar(oJson['dados']['hopeOptg']))
+        cCodigo     := Alltrim(cValToChar(oJson['dados']['cdgdOptg']))
+        cTpOp       := Alltrim(cValToChar(oJson['dados']['opcdOptg']))
+        cPlaca      := StrTran(Alltrim(cValToChar(oJson['dados']['plactkgd'])),"-","")
+        cCodSitu    := Alltrim(cValToChar(oJson['dados']['situOptg']))
+        nPeso       := Val(cValToChar(oJson['dados']['pesoOptg']))
+        nPesoLiq    := Val(cValToChar(oJson['dados']['peliOptg']))
+
+        If U_ADFAT195(cTickProth)
+
+            Aadd(aDados,{cTickProth, cTktGuad, cTag, cFluxo, cDTPesa, cHrPesa, cCodigo, cTpOp, cPlaca, cCodSitu, nPeso, nPesoLiq})
+
+            lSlvReg := U_ADFAT24G(aDados, @cMsgError)
+
+        Else
+
+            lSlvReg := .T.
+
+        EndIf
+
+        If ! lSlvReg
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, "Erro no processamento de registro de pesagem Guardian " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        Else
+            U_ADFAT29D(cId, "1", "")
+
+        EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    (cAliasAux)->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT29I
+    Processa registros de consumo de ração.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 04/04/2022
+    @version 01
+/*/
+User Function ADFAT29I()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cAliasAux := GetNextAlias()
+    Local cQuery    := ""
+    Local aError    := {}
+    Local cMsgError := ""
+    Local cJson     := ""
+    Local oJson     := Nil
+    Local cId       := ""
+    Local cNmTab    := ""
+    Local cGrpSAG   := ""
+    Local cSGrpSAG  := ""
+    Local nInicial  := 0
+    Local nFinal    := 0
+    Local oModel    := Nil
+    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    Local cOperac   := ""
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'cadastro_de_consumo_de_racao_sag' " 
+    cQuery += " AND ZIQ_SISGER = 'SAG' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO " 
+
+    DbSelectArea("ZIV")
+    ZIV->(DbSetOrder(1))
+    ZIV->(DbGoTop())
+
+    DbSelectArea("ZIQ")
+    ZIQ->(DbSetOrder(1))
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
+        
+        cOperac   := (cAliasAux)->ZIQ_OPERAC 
+        cMsgError := ""
+        cJson     := ZIQ->ZIQ_DADOS
+        oJson     := getJson(cJson)
+
+        If ValType(oJson) == "U"
+            cMsgError := "Não foi possível converter a string para objeto json."
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29I(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        cNmTab    := Alltrim(cValToChar(oJson['dados']['nomeTab']))
+        cGrpSAG   := Alltrim(cValToChar(oJson['dados']['grupoSag']))
+        cSGrpSAG  := Alltrim(cValToChar(oJson['dados']['SGrupoSag']))
+        nInicial  := Val(cValToChar(oJson['dados']['inicial']))
+        nFinal    := Val(cValToChar(oJson['dados']['final']))
+
+        cGrpSAG   := cGrpSAG  + Space(TamSX3("ZIV_GRUPO")[1]  - Len(cGrpSAG))
+        cSGrpSAG  := cSGrpSAG + Space(TamSX3("ZIV_SGRUPO")[1] - Len(cSGrpSAG))
+
+        If ! ZIV->(DbSeek( FWxFilial("ZIV") + cGrpSAG + cSGrpSAG ))
+
+            If cOperac == "D"
+                cMsgError := "Não foi possível localizar o grupo/subgrupo " + cGrpSAG + cSGrpSAG + "."
+                U_ADFAT29D(cId, "2", cMsgError)
+                Help(Nil, Nil, "Função ADFAT29I(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+                (cAliasAux)->(DbSkip())
+                Loop
+
+            EndIf
+
+            If cOperac == "A"
+                cOperac := "I"
+
+            EndIf
+
+        Else
+
+            If cOperac == "I"
+                cOperac := "A"
+
+            EndIf
+
+        EndIf
+
+        oModel := FwLoadModel("ADFAT043P")
+
+        If cOperac == "I"
+            oModel:SetOperation(MODEL_OPERATION_INSERT)
+
+        ElseIf cOperac == "A"
+            oModel:SetOperation(MODEL_OPERATION_UPDATE)
+
+        ElseIf cOperac == "D"
+            oModel:SetOperation(MODEL_OPERATION_DELETE)
+
+        Else
+            cMsgError := "Operação não definida"
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        oModel:Activate()
+
+        If cOperac == "I" .Or. cOperac == "A"
+            oModel:SetValue("MD_MASTER", "ZIV_TPTAB" , cNmTab)
+            oModel:SetValue("MD_MASTER", "ZIV_GRUPO" , cGrpSAG)
+            oModel:SetValue("MD_MASTER", "ZIV_SGRUPO", cSGrpSAG)
+            oModel:SetValue("MD_MASTER", "ZIV_INICIA", nInicial)
+            oModel:SetValue("MD_MASTER", "ZIV_FINAL" , nFinal)
+
+        EndIf
+
+        Begin Transaction
+
+            If oModel:VldData()
+                oModel:CommitData()
+
+            Else
+                aError := oModel:GetErrorMessage()
+                cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+
+            EndIf
+
+            oModel:DeActivate()
+            oModel:Destroy()
+            oModel := Nil
+
+        End Transaction
+
+        If ! Empty(cMsgError)
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29I(ADFAT029P)", Nil, "Erro no processamento de registro de consumo de ração " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        Else
+            U_ADFAT29D(cId, "1", "")
+
+        EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    (cAliasAux)->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return Nil

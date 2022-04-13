@@ -14,6 +14,7 @@
 	@history chamado TI - Fernando Sigoli - 06/07/2017
 	@historico chamado 056247 - FWNM     - 24/03/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@historico chamado 056247 - FWNM     - 21/07/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+	@historico chamado 18465  - Everson  - 28/03/2022 - Validação de pesagem.
 /*/
 User Function MA455MNU()
 
@@ -61,6 +62,7 @@ User Function AdCorte(cAlias,nReg,nOpcx)
 	Local oRadio
 	Local oBtn
 	Local _nTotSC6  := 0  
+	Local cTktStat	:= ""
 
 	//- Status dos Bloqueios do pedido de venda. Se .T. DCF gerado, tem que estornar.
 	Private lbloqDCF := !Empty(SC9->C9_BLCRED)
@@ -133,6 +135,20 @@ User Function AdCorte(cAlias,nReg,nOpcx)
 		EndIf
 	EndIf
 	*/
+	//
+
+	//Everson - 28/03/2022. Chamado 18465.
+	dbSelectArea("SC6")
+	dbSetOrder(1)
+	dbSeek(cFilial+SC9->C9_PEDIDO+SC9->C9_ITEM+SC9->C9_PRODUTO)
+	If cEmpAnt = "01" .And. ! Empty(SC6->C6_XORDPES)
+		cTktStat := Alltrim(cValToChar(Posicione("ZIG", 2, FWxFilial("ZIG") + SC6->C6_XORDPES, "ZIG_INICIA")))
+		If cTktStat <> "3"
+			lContinua := .f.
+			MsgAlert("Pesagem pendente.", "[MA455MNU-02]")
+		EndIf
+
+	EndIf
 	//
 
 	If ( lContinua )

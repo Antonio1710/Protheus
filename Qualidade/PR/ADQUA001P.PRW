@@ -19,6 +19,7 @@ Static cFormatRet := "application/json"
     @history Chamado 63954 - Leonardo P. Monteiro    - 29/11/2021 - Correções e melhorias no processo de exportação.
     @history Chamado 63954 - Leonardo P. Monteiro    - 06/12/2021 - Ajustado o campo de lote para considerar o ShiftNo ao invés PrintedShiftNo.
     @history Chamado 63954 - Leonardo P. Monteiro    - 07/12/2021 - Tratamento de error.log na importação de um pallet com apenas uma caixa. O retorno, quando nessas condições é de um objeto ao invés de uma array.
+    @history Chamado T.I   - Everson Silva           - 04/04/2022 - Adicionado a Tag - oWsdl:bNoCheckPeerCert := .T. // Desabilita o check de CAs
 
 /*/
 User Function ADQUA001P
@@ -561,7 +562,7 @@ Static Function wsEdata(cErro,cPallete)
     
     //    
     oWsdl := TWsdlManager():New()
-    oWsdl:bNoCheckPeerCert := .T. 
+    oWsdl:bNoCheckPeerCert := .T.  //Chamado T.I   - Everson Silva - 04/04/2022
 
     //
     oWsdl:nTimeout := 120

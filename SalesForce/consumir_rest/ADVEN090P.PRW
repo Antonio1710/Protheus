@@ -1085,6 +1085,14 @@ Static Function RESTEXECUTE(oParseJSON,cErro,cNumPed,cFlagApr,nRecno,nOpc,cSinte
 			cContaC     := Posicione("SB1",1,xFilial("SB1") + Alltrim(cValToChar(cProduto)),"B1_CONTA" )		
 			cItemContaC := Posicione("SB1",1,xFilial("SB1") + Alltrim(cValToChar(cProduto)),"B1_ITEMCC" )
 
+			// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+			If AllTrim(cEmpAnt) == "01"
+				If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+					cItemContaC := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
+				EndIf
+			EndIf
+			//
+
 			Aadd(aItem,{"C6_CONTA"   , cContaC     ,0 , Nil })
 			Aadd(aItem,{"C6_ITEMCTA" , cItemContaC ,0 , Nil })
 

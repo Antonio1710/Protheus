@@ -66,7 +66,7 @@ Static cHK				:= "&"
 	@history ticket 63303   - Leonardo P. Monteiro - 24/11/2021 - Correção na declaração da variável In utilizada na função FENCECARG.
 	@history ticket TI   	- Leonardo P. Monteiro - 28/12/2021 - Correção de error.log.
 	@history ticket 65889  	- Leonardo P. Monteiro - 05/01/2022 - Validação adicional na integração de cargas no eData para bloquear PVs com adiantamentos vinculados ao PV e que não foram aprovados pelo Financeiro.
-
+	@history ticket 71027   - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 /*/
 User Function CCSP_001()
 
@@ -580,8 +580,6 @@ Static Function CCS_001P(oTela)
 	Private cFilia         	:= ""
 	Private ni				:= 0
 	Private _nx				:= 0
-	
-
 
 	// @history ticket 63303   - Leonardo P. Monteiro - 08/11/2021 - Melhoria na validação do estorno de cargas para não permitir a exclusão de cargas que já tenham pallets vinculados ao mesmo.
 	If !LockByName("CCS_001P", .T., .F.) .AND. lVldEnv
@@ -808,11 +806,23 @@ Static Function CCS_001P(oTela)
 
 Return lRet
 
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 07/04/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function fVerFin(cData, cRoteiro, cPlaca)
+
 	Local cQuery 	:= ""
 	Local lRet		:= .T.
 
-	// FIE_FILIAL+FIE_CLIENT+FIE_LOJA+FIE_PREFIX+FIE_NUM+FIE_PARCEL+FIE_TIPO
 	cQuery := " SELECT DISTINCT C5_NUM, C5_XWSPAGO, E1.E1_SALDO, C5.R_E_C_N_O_ REGSC5  "
 	cQuery += " FROM  "+ Retsqlname("SC5") +" C5 WITH(NOLOCK) "
 	cQuery += " 	INNER JOIN "+ RetsqlName("FIE") +" FIE WITH(NOLOCK) ON FIE.D_E_L_E_T_='' AND C5.C5_FILIAL=FIE.FIE_FILIAL AND C5.C5_NUM=FIE.FIE_PEDIDO AND FIE.FIE_CART='R' "
@@ -823,6 +833,7 @@ Static Function fVerFin(cData, cRoteiro, cPlaca)
 
 	While QSC5->(!eof())
 		if empty(QSC5->C5_XWSPAGO)
+			lRet := .f.
 			cErro += "Roteiro ["+ cRoteiro +"] não pôde ser integrado devido ao PV ["+ QSC5->C5_NUM +"] ter adiantamentos pendentes de aprovação."
 		endif
 
@@ -830,6 +841,35 @@ Static Function fVerFin(cData, cRoteiro, cPlaca)
 	Enddo
 
 	QSC5->(DBCLOSEAREA())
+
+	// @history ticket 71027   - Fernando Macieira    - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+	If lRet 
+		
+		If Select("QSC5") > 0
+			QSC5->( dbCloseArea() )
+		EndIf
+		
+		cQuery := " SELECT DISTINCT C5_NUM, C5_XWSPAGO, C5.R_E_C_N_O_ REGSC5
+		cQuery += " FROM  "+ Retsqlname("SC5") +" C5 WITH (NOLOCK)
+		cQuery += " INNER JOIN " + RetSqlName("SE4") + " SE4 (NOLOCK) ON E4_FILIAL='"+FWxFilial("SE4")+"' AND E4_CODIGO=C5_CONDPAG AND E4_CTRADT='1' AND SE4.D_E_L_E_T_=''
+		cQuery += " WHERE C5.D_E_L_E_T_='' AND C5.C5_FILIAL='"+ xFilial("SC5") +"' AND C5.C5_DTENTR='"+ cData +"' AND C5.C5_ROTEIRO='"+ cRoteiro +"' AND C5.C5_PLACA='"+ cPlaca +"'; "
+
+		TcQuery cQuery ALIAS "QSC5" NEW
+
+		While QSC5->(!eof())
+			if empty(QSC5->C5_XWSPAGO)
+				lRet := .f.
+				cErro += "Roteiro ["+ cRoteiro +"] não pôde ser integrado devido ao PV ["+ QSC5->C5_NUM +"] ter adiantamentos pendentes de aprovação."
+			endif
+			QSC5->(Dbskip())
+		Enddo
+
+		If Select("QSC5") > 0
+			QSC5->( dbCloseArea() )
+		EndIf
+
+	EndIf
+	//
 
 return lRet
 
