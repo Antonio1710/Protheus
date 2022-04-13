@@ -20,6 +20,7 @@
 	@history Everson - 12/11/2021. Chamado 63536.  Tratamento para zera km na tabela ZFD.
 	@history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 	@history Fernando Sigoli   - 29/11/2021 - Ticket 64163 - Tratamento para pedidos de exportação, nao zerar KM
+	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 /*/
 User Function AD0055()
 
@@ -116,7 +117,10 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	
 	Local cFilGFrt 		 := Alltrim(SuperGetMv( "MV_#M46F5" , .F. , '' ,  )) //Everson - 31/05/2019. Chamado 044314.
 	Local cTpVeiCavM 	 := Alltrim(cValToChar( GetMv("MV_#TPVCVM",,"") )) //Everson - 10/07/2019.
-	                                     
+
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+                          
 	Private _ctipfrt        // Everson - 12/09/2016, chamado 029242.
 	Private _nTotalCx   := 0
 	Private _nTotalPedi := 0
@@ -684,8 +688,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 
 	EndIf
 	
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	//Everson - 02/04/2018. Chamado 037261.
-	If cEmpAnt == "01" .And. cFilAnt == "02" .And. FindFunction("U_ADVEN050P") .And. ! Empty(cPedSF)
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. FindFunction("U_ADVEN050P") .And. ! Empty(cPedSF)
 		If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUL")))) == "S"
 			cPedSF := Substr(cPedSF,1,Len(cPedSF) -1)
 			U_ADVEN050P("",,," AND C5_NUM IN (" + cPedSF + ") AND C5_XPEDSAL <> '' ",,,,,,.T.)

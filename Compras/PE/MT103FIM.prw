@@ -51,6 +51,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 67570   - Everson         - 04/02/2022 - Tratamento error log.
   @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
   @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+  @history Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
 /*/
 User Function MT103FIM()
 
@@ -1808,7 +1809,8 @@ Static Function fAjustaCDD()
     oModal := FWDialogModal():New()
     oModal:SetTitle("Complemento Bloco C113") 
     oModal:SetFreeArea( 500, 50 )
-    oModal:SetEscClose( .T. )
+    oModal:setCloseButton( .F. ) //Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
+    // oModal:SetEscClose( .T. ) //Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
     oModal:CreateDialog()
 
     @ 10,005	SAY "Cod.Inf.Compl."                                                    SIZE 73, 8	OF oModal:GetPanelMain() PIXEL
@@ -1820,8 +1822,9 @@ Static Function fAjustaCDD()
     @ 30,005	SAY "Desc. Compl."		                                                  SIZE 73, 8	OF oModal:GetPanelMain() PIXEL
     @ 28,050	MSGET cDescComp	PICTURE "@!"																						SIZE 440,10	OF oModal:GetPanelMain() PIXEL
 
-    oModal:AddButton( "Confirmar"	,{|| (nOpca := 1, fConfirma(oModal, cIfComp)) }, "Confirmar"	, , .T., .F., .T., )
-    oModal:AddButton( "Fechar"		,{|| (nOpca := 2, oModal:Deactivate()) }, "Fechar"		, , .T., .F., .T., )
+    oModal:AddButton( "Confirmar"	,{|| (nOpca := fConfirma(oModal, cIfComp)) }, "Confirmar"	, , .T., .F., .T., )
+    //Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
+    //oModal:AddButton( "Fechar"		,{|| (nOpca := 2, oModal:Deactivate()) }, "Fechar"		, , .T., .F., .T., )
 
     oModal:Activate()
 
@@ -1894,6 +1897,7 @@ Return
   /*/
 
 Static Function fConfirma(oModal, cIfComp)
+  Local nRet:= 0 //Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
 	If Empty(cIfComp)
 		HELP(' ',1,"CODINFVAZIO" ,,"O campo Cod.Inf.Compl. é obrigatório.",2,0,,,,,, {"Preencha o campo Cod.Inf.Compl. e tente novamente."})
 	Else
@@ -1903,9 +1907,10 @@ Static Function fConfirma(oModal, cIfComp)
 			HELP(' ',1,"CODINFNOREG" ,,"O Cod.Inf.Compl. não foi localizado.",2,0,,,,,, {"Verifique o Cod.Inf.Compl. digitado e tente novamente."})
 		Else
 			oModal:Deactivate()
+      nRet:= 1 //Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
 		EndIf
 	EndIf
-Return
+Return nRet //Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
 
 /*/{Protheus.doc} atlzCDD
   Atualiza tabela de complemento CDD
