@@ -37,6 +37,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 3873 - Fernando Macieira - 23/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function ADLOG046P
 
@@ -1298,7 +1299,7 @@ Static Function ADLG0464( MVPAR01 , MVPAR02 , cVeicPag )
 
 	cQuery := " SELECT ZBB_PLACA, ZBB_BOMBA, SUM(ZBB_VOLUME) ZBB_VOLUME "
 	cQuery += " FROM "+RetSqlName("ZBB")+" ZBB "
-	cQuery += " WHERE ZBB_DTINI >= '"+DtoS(MVPAR01)+"' AND ZBB_DTFIM <= '"+DtoS(MVPAR02)+"' "
+	cQuery += " WHERE ZBB_FILIAL = '" + FWxFilial("ZBB") + "' AND ZBB_DTINI >= '"+DtoS(MVPAR01)+"' AND ZBB_DTFIM <= '"+DtoS(MVPAR02)+"' " //ticket 70750 - Everson - 07/04/2022.
 	cQuery += " AND ZBB_PLACA = '"+cVeicPag+"' "
 	cQuery += " AND ZBB.D_E_L_E_T_ = ' ' "
 	cQuery += " GROUP BY ZBB_PLACA, ZBB_BOMBA "

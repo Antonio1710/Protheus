@@ -13,6 +13,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function AD0157()
 
@@ -242,7 +243,10 @@ Cquery := " SELECT "+;
 " , CASE WHEN ZV1_FORREC = '000217' THEN  ((ZV2_1PESO - ZV1_QTDQBR)-ZV1_TARAPD)+((((ZV2_1PESO - ZV1_QTDQBR)-ZV1_TARAPD)*0.7)/100) ELSE ZK_PBRUTO END CALCULO1, "+;
 " CASE WHEN ZV1_FORREC = '000217' THEN  ((ZV2_1PESO - ZV1_QTDQBR)-ZV2_2PESO)+((((ZV2_1PESO - ZV1_QTDQBR)-ZV2_2PESO)*0.7)/100) ELSE ZK_PBRUTO END CALCULO2 "+;
 " FROM "+retsqlname("ZV1")+" (NOLOCK),"+retsqlname("ZV2")+" (NOLOCK)"+","+retsqlname("SZK")+" (NOLOCK)"+;
-" WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+" WHERE "+;
+"ZV1_FILIAL='"+FWxFilial("ZV1")+"' "+; // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+"AND ZV1_FILIAL=ZV2_FILIAL "+; 
+" AND ZK_FILIAL='"+FWxFilial("SZK")+"' "+; //Everson - 07/04/2022. Chamado 70750.
 " AND ZK_NUMOC = ZV1_NUMOC AND (ZV1_DTABAT>='"+DTOS(_dDtaIni)+"' AND ZV1_DTABAT<='"+DTOS(_dDtaFim)+"') "+;
 " AND ZV1_GUIAPE=ZV2_GUIA  "+;
 " AND ZV2_TIPOPE='F' "+;   

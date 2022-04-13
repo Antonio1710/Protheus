@@ -16,6 +16,7 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 */
 
 User Function ADLOG009R()
@@ -157,7 +158,9 @@ Static Function SqlGeral()
 			       SC5.C5_XTOTPED,
 			       SZK.ZK_VALFRET
 			  FROM %Table:SC5% SC5, %Table:SZK% SZK
-			  WHERE SC5.C5_FILIAL  >= %EXP:MV_PAR01%
+			  WHERE 
+			  	SC5.C5_FILIAL  >= %EXP:MV_PAR01%
+			  	AND SZK.ZK_FILIAL  >= %EXP:MV_PAR01% //ticket 70750 - Everson - 07/04/2022.
 			    AND SC5.C5_FILIAL  <= %EXP:MV_PAR02%
 			    AND SC5.C5_DTENTR  >= %EXP:cDataIni%
 			    AND SC5.C5_DTENTR  <= %EXP:cDataFin%

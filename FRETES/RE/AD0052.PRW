@@ -26,6 +26,7 @@ Static cTitulo      := "Extrato de Fechamento por Veículo"
 	(examples)
 	@see (links_or_references)
     @history chamado 050729 - FWNM - 26/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function AD0052
 
@@ -214,7 +215,8 @@ Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 			cQuery+=" SELECT * "
 			cQuery+=" FROM "+retsqlname("SZK")+" "
 			cQuery+=" WHERE "
-			cQuery+=" ZK_PLACAPG='"+ZV4->ZV4_PLACA+"' "
+			cQuery+=" ZK_FILIAL='"+FWxFilial("SZK")+"' " //Everson - 07/04/2022. Chamado 70750.
+			cQuery+=" AND ZK_PLACAPG='"+ZV4->ZV4_PLACA+"' "
 			cQuery+=" AND (ZK_DTENTR BETWEEN '"+DTOS(_dDtEntr)+"' AND '"+DTOS(_dDtEntr2)+"') "
 			cQuery+=" AND D_E_L_E_T_='' "
 			cQuery+=" AND ZK_TIPFRT='"+_cTipFrt+"' "

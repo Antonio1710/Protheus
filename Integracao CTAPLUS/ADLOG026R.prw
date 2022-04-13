@@ -19,6 +19,7 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 */
 
 User Function ADLOG026R()
@@ -223,7 +224,9 @@ Static Function SqlGeral()
 				ZBB_PLACA,	
 				ZBB_BOMBA
 		   FROM %Table:ZBB%
-		  WHERE ZBB_DTINI  >= %EXP:cSqlDtini%
+		  WHERE 
+		    ZBB_FILIAL = %EXP:FWFILIAL('ZBB')% //ticket 70750 - Everson - 07/04/2022.
+		  	AND ZBB_DTINI  >= %EXP:cSqlDtini%
 			AND ZBB_DTINI  <= %EXP:cSqlDtFin%
 			AND ZBB_CTAPLU  = 'T'
 			AND D_E_L_E_T_ <> '*'

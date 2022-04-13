@@ -14,6 +14,7 @@
 	@history Chamado 13429 - Leonardo P. Monteiro - 05/05/2021 - Adicionado campo transportadora.
 	@history Chamado 13949 - Denis Guedes Adicionado o campo tipo de frete (ZK_TPFRETE)
 	@history Ticket  65945 - Adriano Savoine - 03/01/2021 - Adicionado o Campo Valor total da NF para a Logistica fazar seguro da Carga apartir do mesmo.
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 
 User Function ADLOG075R() 
@@ -240,7 +241,7 @@ Static Function SqlGeral()
 	cQuery += "			  LEFT JOIN "+ RetSqlName("SA1") +" (NOLOCK) A1 ON A1.D_E_L_E_T_='' AND C5.D_E_L_E_T_='' AND C5.C5_TIPO NOT IN ('D','B') AND A1.A1_COD=C5.C5_CLIENTE AND A1.A1_LOJA=C5.C5_LOJACLI "+cEOL
 	cQuery += "			  LEFT JOIN "+ RetSqlName("SA2") +" (NOLOCK) A2 ON A2.D_E_L_E_T_='' AND C5.D_E_L_E_T_='' AND C5.C5_TIPO IN ('D','B') AND A2.A2_COD=C5.C5_CLIENTE AND A2.A2_LOJA=C5.C5_LOJACLI "+cEOL
 	cQuery += "			  LEFT JOIN "+ RetSqlName("SA4") +" (NOLOCK) A4 ON A4.D_E_L_E_T_='' AND C5.C5_TRANSP=A4.A4_COD "+cEOL
-	cQuery += "			  LEFT JOIN "+ RetSqlName("SZK") +" (NOLOCK) ZK ON ZK.D_E_L_E_T_='' AND C5.C5_ROTEIRO=ZK.ZK_ROTEIRO AND C5.C5_PLACA=ZK.ZK_PLACA AND C5_DTENTR = ZK.ZK_DTENTR"+cEOL 
+	cQuery += "			  LEFT JOIN "+ RetSqlName("SZK") +" (NOLOCK) ZK ON ZK.D_E_L_E_T_='' AND ZK.ZK_FILIAL = '" + FWxFilial("SZK") + "' AND C5.C5_ROTEIRO=ZK.ZK_ROTEIRO AND C5.C5_PLACA=ZK.ZK_PLACA AND C5_DTENTR = ZK.ZK_DTENTR"+cEOL //ticket 70750 - Everson - 07/04/2022.
 	cQuery += "			 WHERE C5.D_E_L_E_T_='' "+cEOL
 	cQuery += "			 	AND C5.C5_FILIAL BETWEEN '"+cFilDe+"' AND '"+ cFilAte +"' "+cEOL
 	cQuery += "			 	AND C5.C5_NUM BETWEEN '"+cNumDe+"' AND '"+ cNumAte +"' "+cEOL

@@ -18,6 +18,7 @@
 ±±º          ³                                                            º±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/                                                                                        
 
 User Function AD0088
@@ -450,7 +451,7 @@ Static Function QrySzk()
 	cQuery+=" ZK_ROTEIRO "
 	cQuery+=" FROM "+RETSQLNAME("SZK")+" (NOLOCK) "
 	cQuery+=" WHERE "
-	cQuery+=" 	(ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND "
+	cQuery+=" 	ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND " //ticket 70750 - Everson - 07/04/2022.
 	cQuery+=" 	(ZK_FORNEC BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"') AND "
 	cQuery+=" 	ZK_TIPFRT='"+MV_PAR05+"' AND "
 	cQuery+=" 	D_E_L_E_T_='' "
@@ -483,7 +484,7 @@ Static Function QrySZI(cPlaca,xLin,cDataSZK,cCodGuia,cRoteiro)
 		cQuery1 := 	" SELECT ZI_GUIA, ZI_PLACA, ZI_DATALAN,ZI_TIPO, ZI_VALOR,ZI_DESCRIC,ZI_OBS "
 		cQuery1 +=	" FROM "+RETSQLNAME("SZI")+" (NOLOCK) , "+RETSQLNAME("SZK")+" (NOLOCK) "
 		cQuery1 +=	" WHERE "
-		cQuery1 +=	" ZK_GUIA='" + Alltrim(cCodGuia) + "' "
+		cQuery1 +=	" ZK_FILIAL = '" + FWxFilial("SZK") + "' AND ZI_FILIAL = '" + FWxFilial("SZI") + "' AND ZK_GUIA='" + Alltrim(cCodGuia) + "' " //ticket 70750 - Everson - 07/04/2022.
 		cQuery1 +=	" AND ZK_TIPFRT='"+MV_PAR05+"' "
 		cQuery1 +=	" AND (ZK_FORNEC BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"') "
 		cQuery1 +=	" AND ( ZK_DTENTR BETWEEN '"+DTOS(cDataSZK) +"' AND '"+DTOS(cDataSZK)+"')"
@@ -500,7 +501,7 @@ Static Function QrySZI(cPlaca,xLin,cDataSZK,cCodGuia,cRoteiro)
 		cQuery1 := 	" SELECT ZI_GUIA, ZI_PLACA, ZI_DATALAN,ZI_TIPO, ZI_VALOR,ZI_DESCRIC,ZI_OBS "
 		cQuery1 +=	" FROM "+RETSQLNAME("SZI")+" (NOLOCK) , "+RETSQLNAME("SZK")+" (NOLOCK) "
 		cQuery1 +=	" WHERE "
-		cQuery1 +=	" ZK_GUIA='" + Alltrim(cCodGuia) + "' "
+		cQuery1 +=	" ZK_FILIAL = '" + FWxFilial("SZK") + "' AND ZI_FILIAL = '" + FWxFilial("SZI") + "' AND ZK_GUIA='" + Alltrim(cCodGuia) + "' " //ticket 70750 - Everson - 07/04/2022.
 		cQuery1 +=	" AND ZK_TIPFRT='"+MV_PAR05+"' "
 		cQuery1 +=	" AND (ZK_FORNEC BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"') "
 		cQuery1 +=	" AND ( ZK_DTENTR BETWEEN '"+DTOS(cDataSZK) +"' AND '"+DTOS(cDataSZK)+"')"

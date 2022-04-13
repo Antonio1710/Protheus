@@ -3,6 +3,7 @@
 #INCLUDE "TOPCONN.ch"  
 #INCLUDE "TBICONN.CH" 
 
+//@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 User Function AD0068()
 
 // Rotina AD0068.PRW para exclusão de Frete
@@ -147,8 +148,8 @@ STATIC FUNCTION SqlVDuplicade(cData,cPlaca,cRoteiro)
 			%NoPARSER%  
 			 SELECT COUNT(*) AS COUNT_SZK 
 			   FROM %TABLE:SZK% WITH(NOLOCK)
-			  WHERE ZK_FILIAL   = ''
-			    AND ZK_DTENTR   = %EXP:cData%
+			  WHERE ZK_FILIAL   = %EXP:FWFILIAL('SZK')% //ticket 70750 - Everson - 07/04/2022.
+			    AND ZK_DTENTR   = %EXP:cData% 
 			    AND ZK_PLACA    = %EXP:cPlaca%
 			    AND ZK_ROTEIRO  = %EXP:cRoteiro%
 			    AND D_E_L_E_T_ <> '*'			    

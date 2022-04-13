@@ -23,6 +23,7 @@
 	@history 17/03/2022, Leonardo P. Monteiro, Chamado 69520 - Adicionado o campo de data de entrega.
 	@history 17/03/2022 - Leonardo P. Monteiro, Chamado 69520 -  Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
 	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+	@history Ticket 69520 - Everson   - 13/04/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 	/*/
 
 User Function ADVEN086P()
@@ -865,7 +866,7 @@ WsMethod Delete WsService pedidosdevenda
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea			:= GetArea()
 	Local cFormatAceito := "application/json"
-	Local cBody 		:= Self:GetContent()
+	Local cBody 		:= Alltrim(cValToChar(Self:GetContent()))
 	Local cErro			:= ""
 	Local oParseJSON
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
@@ -882,64 +883,34 @@ WsMethod Delete WsService pedidosdevenda
 	Local cTagFil		:= ""
 	Local cEmpJson		:= cEmpAnt
 	Local cFilJson		:= cFilAnt
+	Local cIdSFBkp		:= ""
 	
 	Private aPedidos	:= {}
 
-	//U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
-
-	//
 	Self:SetContentType(cFormatAceito)
 
-	//
 	If Len(aParametros) == 0
 
-		//
-		//CONOUT("ADVEN075P,grvLog 27"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Obrigatório informar o número do pedido de venda.",cUrlServ,"DELETE")
 
 		SetRestFault(400,EncodeUtf8("Obrigatório informar o número do pedido de venda."))
 
 		RestArea(aArea)
 
-		//
 		MSUnlockAll()
 
 		Return .F.
 
 	EndIf
 
-	//
 	cNumPed := cValToChar(aParametros[1])
 	cPedBkp := cValToChar(aParametros[1])
 
-	//
 	If Empty(cCodUsuario)
 
-		//
-		//CONOUT("ADVEN075P,grvLog 28"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Código de usuário não informado (UsrVend).",cUrlServ,"DELETE")
 
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
-
-		RestArea(aArea)
-
-		//
-		MSUnlockAll()
-
-		Return .F.
-
-	EndIf
-
-	//*******************************************************//
-	// Define a filial de inclusão da requisição.
-	//*******************************************************//
-	If ! FWJsonDeserialize(cBody, @oParseJSON)
-
-		//
-		//CONOUT("ADVEN075P,grvLog 13"+cBody)
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"DELETE")
-
-		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
 
 		RestArea(aArea)
 
@@ -954,6 +925,26 @@ WsMethod Delete WsService pedidosdevenda
 	//*******************************************************//
 	// Ativar, caso necessário.
 	if "C5_EXPEDITION"$cBody
+
+		//*******************************************************//
+		// Define a filial de inclusão da requisição.
+		//*******************************************************//
+		If ! FWJsonDeserialize(cBody, @oParseJSON) //Everson - 13/04/2022. Chamado 69520.
+
+			//
+			//CONOUT("ADVEN075P,grvLog 13"+cBody)
+			StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"DELETE")
+
+			SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
+
+			RestArea(aArea)
+
+			MSUnlockAll()
+
+			Return .F.
+
+		EndIf
+
 		if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
 			
 			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
@@ -963,9 +954,11 @@ WsMethod Delete WsService pedidosdevenda
 				cFilJson := Substring(cTagFil,3,2)
 			endif
 		endif
+
+		cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
+
 	endif
 
-	cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
 
 	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
 		RpcClearEnv() 
@@ -973,10 +966,7 @@ WsMethod Delete WsService pedidosdevenda
 		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
 	endif
 
-	//
-	//CONOUT("ADVEN075P,grvLog 29"+cBody)
 	nRecno := StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"DELETE")
-
 
 	//Atribui usuário.
 	__cUserId := cCodUsuario
@@ -984,37 +974,30 @@ WsMethod Delete WsService pedidosdevenda
 	//
 	If cFormato <> cFormatAceito
 
-		//
-		//CONOUT("ADVEN075P,grvLog 30"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
 
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 
 		RestArea(aArea)
 
-		//
 		MSUnlockAll()
 
 		Return .F.
 
 	EndIf
 	
-	//
 	If Empty(cNumPed)
 	
-		//
 		Self:SetResponse("")
 
 		RestArea(aArea)
 
-		//
 		MSUnlockAll()
 		
 		Return .T.
 			
 	EndIf
 
-	//
 	If exclPedVend(@cErro,@cNumPed,nRecno,cCodUsuario,cUrlServ) .And. Len(aPedidos) == 0
 
 		Self:SetResponse("")
@@ -1028,25 +1011,20 @@ WsMethod Delete WsService pedidosdevenda
 
 		Next i
 
-		//
-		//CONOUT("ADVEN075P,grvLog 31"+cBody)
 		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"DELETE")
 
 		SetRestFault(400,EncodeUtf8("Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
 
 		RestArea(aArea)
 
-		//
 		MSUnlockAll()
 
 		Return .F.
 
 	EndIf
 
-	//
 	RestArea(aArea)
 
-	//
 	MSUnlockAll()
 
 	//RpcClearEnv()

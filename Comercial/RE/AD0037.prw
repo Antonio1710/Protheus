@@ -42,6 +42,7 @@
 北韧屯屯屯屯拖屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯屯图北
 北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北
 哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌
+@history ticket 70750 - Everson - 07/04/2022 - Adapta玢o do fonte para nova filial.
 /*/
 
 User Function AD0037()
@@ -175,9 +176,9 @@ Else
 // | Limpa os registros marcados como temporarios utilizando comando SQL Truncate |
 // | Forco limpar antes de processar
 // +------------------------------------------------------------------------------+
-	TcSqlExec("DELETE FROM " + RetSqlName("ZBX") + " WHERE ZBX_DTINI = '" + dtos(mv_par01) + "' AND ZBX_DTFIM = '" + dtos(mv_par02) + "' AND ZBX_VERSAO = 'NO'")
-	TcSqlExec("DELETE FROM " + RetSqlName("ZBY") + " WHERE ZBY_DTINI = '" + dtos(mv_par01) + "' AND ZBY_DTFIM = '" + dtos(mv_par02) + "' AND ZBY_VERSAO = 'NO'")
-	TcSqlExec("DELETE FROM " + RetSqlName("ZBZ") + " WHERE ZBZ_DTINI = '" + dtos(mv_par01) + "' AND ZBZ_DTFIM = '" + dtos(mv_par02) + "' AND ZBZ_VERSAO = 'NO'")
+	TcSqlExec("DELETE FROM " + RetSqlName("ZBX") + " WHERE ZBX_FILIAL = '" + FWxFilial("ZBX") + "' AND ZBX_DTINI = '" + dtos(mv_par01) + "' AND ZBX_DTFIM = '" + dtos(mv_par02) + "' AND ZBX_VERSAO = 'NO'") //ticket 70750 - Everson - 07/04/2022.
+	TcSqlExec("DELETE FROM " + RetSqlName("ZBY") + " WHERE ZBY_FILIAL = '" + FWxFilial("ZBY") + "' AND ZBY_DTINI = '" + dtos(mv_par01) + "' AND ZBY_DTFIM = '" + dtos(mv_par02) + "' AND ZBY_VERSAO = 'NO'") //ticket 70750 - Everson - 07/04/2022.
+	TcSqlExec("DELETE FROM " + RetSqlName("ZBZ") + " WHERE ZBZ_FILIAL = '" + FWxFilial("ZBZ") + "' AND ZBZ_DTINI = '" + dtos(mv_par01) + "' AND ZBZ_DTFIM = '" + dtos(mv_par02) + "' AND ZBZ_VERSAO = 'NO'") //ticket 70750 - Everson - 07/04/2022.
 Endif
 
 //MONTA MINHAS MENSAGENS NA TELA COM A REGUA
@@ -872,9 +873,9 @@ EndDo
 // | Limpa os registros marcados como temporarios utilizando comando SQL Truncate |
 // +------------------------------------------------------------------------------+
 If mv_par05 == 2
-	TcSqlExec("DELETE FROM " + RetSqlName("ZBX") + " WHERE ZBX_DTINI = '" + dtos(mv_par01) + "' AND ZBX_DTFIM = '" + dtos(mv_par02) + "' AND ZBX_VERSAO = 'NO'")
-	TcSqlExec("DELETE FROM " + RetSqlName("ZBY") + " WHERE ZBY_DTINI = '" + dtos(mv_par01) + "' AND ZBY_DTFIM = '" + dtos(mv_par02) + "' AND ZBY_VERSAO = 'NO'")
-	TcSqlExec("DELETE FROM " + RetSqlName("ZBZ") + " WHERE ZBZ_DTINI = '" + dtos(mv_par01) + "' AND ZBZ_DTFIM = '" + dtos(mv_par02) + "' AND ZBZ_VERSAO = 'NO'")
+	TcSqlExec("DELETE FROM " + RetSqlName("ZBX") + " WHERE ZBX_FILIAL = '" + FWxFilial("ZBX") + "' AND ZBX_DTINI = '" + dtos(mv_par01) + "' AND ZBX_DTFIM = '" + dtos(mv_par02) + "' AND ZBX_VERSAO = 'NO'")
+	TcSqlExec("DELETE FROM " + RetSqlName("ZBY") + " WHERE ZBY_FILIAL = '" + FWxFilial("ZBY") + "' AND ZBY_DTINI = '" + dtos(mv_par01) + "' AND ZBY_DTFIM = '" + dtos(mv_par02) + "' AND ZBY_VERSAO = 'NO'")
+	TcSqlExec("DELETE FROM " + RetSqlName("ZBZ") + " WHERE ZBZ_FILIAL = '" + FWxFilial("ZBZ") + "' AND ZBZ_DTINI = '" + dtos(mv_par01) + "' AND ZBZ_DTFIM = '" + dtos(mv_par02) + "' AND ZBZ_VERSAO = 'NO'")
 Endif
 
 //谀哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪?
@@ -1304,7 +1305,7 @@ aEstados := {}
 
 cQuery := ""
 
-cQuery := "SELECT DISTINCT ZBX_ESTADO AS ESTADO FROM " + RetSqlName("ZBX") + " WHERE ZBX_DTINI = '" + ;
+cQuery := "SELECT DISTINCT ZBX_ESTADO AS ESTADO FROM " + RetSqlName("ZBX") + " WHERE ZBX_FILIAL = '" + FWxFilial("ZBX") + "' AND  ZBX_DTINI = '" + ; //ticket 70750 - Everson - 07/04/2022.
 DTOS(mv_par01) + "' AND ZBX_DTFIM = '" + DTOS(mv_par02) + "' AND ZBX_VERSAO = '" + _nVersao + "' ORDER BY ZBX_ESTADO"
 TcQuery cQuery New Alias "TMP03"
 
@@ -1368,7 +1369,7 @@ Static Function GrpUtil ()
 
 
 
-cQuery := "SELECT DISTINCT ZBX_CODGRP AS GRUPO, ZBX_DESGRP AS DESCR FROM " + RetSqlName("ZBX") + " WHERE ZBX_DTINI = '" + ;
+cQuery := "SELECT DISTINCT ZBX_CODGRP AS GRUPO, ZBX_DESGRP AS DESCR FROM " + RetSqlName("ZBX") + " WHERE ZBX_FILIAL = '" + FWxFilial("ZBX") + "' AND ZBX_DTINI = '" + ; //ticket 70750 - Everson - 07/04/2022.
 DTOS(mv_par01) + "' AND ZBX_DTFIM = '" + DTOS(mv_par02) + "' AND ZBX_VERSAO = '" + _nVersao + "' ORDER BY ZBX_CODGRP"
 TcQuery cQuery New Alias "TMP04"
 
