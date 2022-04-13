@@ -15,6 +15,7 @@
     @history Fernando,03/04/2020, Chamado 056980 - Tratamento para validação da placa
     @history Wagner , 25/02/2022 - Ticket - 68095 - Comentário do FlockByName/UnlockByName
     @history Everson, 06/04/2022 - Ticket - 70330 - Tratamento para verificar se já há SA vinculada ao registro de abastecimento.
+    @history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function ADEST043P() // U_ADEST043P()
 
@@ -452,7 +453,7 @@ Static Function scriptSolic()
     cQuery += " FROM " 
     cQuery += " " + RetSqlName("ZBB") + " (NOLOCK) AS ZBB " 
     cQuery += " WHERE " 
-    cQuery += " ZBB_FILIAL = '' " 
+    cQuery += " ZBB_FILIAL = '" + FWxFilial("ZBB") + "' " 
     cQuery += " AND ZBB_ESTOQU = 'F' " 
     cQuery += " AND ZBB_SISTEM IN ('B','N') " 
     cQuery += " AND ZBB_APRMOV  = '' "   //Everson - 12/03/2020 . Chamado 053926.

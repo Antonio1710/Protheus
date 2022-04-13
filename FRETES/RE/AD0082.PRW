@@ -4,6 +4,7 @@
 	#DEFINE PSAY SAY
 #ENDIF
 
+//@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 User Function AD0082() 
 
 U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Resumo de Descontos e Acrescimos')
@@ -49,7 +50,7 @@ _nLin:= 680
 cQuery:= 	"SELECT ZV8_COD AS COD, ZV8_EST AS EST, ZV8_CIDADE AS CID, ZV8_KM AS KM,ZV9_DTVAL AS DT, "+;
 			"ZV9_VLTON AS CAR, ZV9_VLTK AS TRK, ZV9_VLTC AS TOC "+;
 			"FROM "+RetSqlName("ZV8")+ ", "+RetSqlName("ZV9")+ " "+;
-			"WHERE ZV8_COD = ZV9_REGIAO "+;
+			"WHERE ZV8_FILIAL = '" + FWxFilial("ZV8") + "' AND ZV9_FILIAL = '" + FWxFilial("ZV9") + "' AND ZV8_COD = ZV9_REGIAO "+; //ticket 70750 - Everson - 07/04/2022
 			"ORDER BY COD, EST, DT DESC"
 TCQUERY cQuery new alias "D2A"
 

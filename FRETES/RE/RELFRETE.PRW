@@ -16,6 +16,7 @@
 ±±ºUso       ³ Adoro                                                      º±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial
 /*/
 
 User Function RELFRETE()
@@ -344,7 +345,7 @@ cQuery+=" 	ZK_KMPAG, "
 cQuery+=" ZK_NOMFOR "
 cQuery+=" FROM "+RETSQLNAME("SZK")+" "
 cQuery+=" WHERE "
-cQuery+=" 	(ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND "
+cQuery+=" ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND " //ticket 70750 - Everson - 07/04/2022.
 cQuery+=" 	ZK_TIPFRT='"+MV_PAR03+"' AND "
 If !Empty(MV_PAR05)
    &&Tratamento para automatizar o maximo possivel a digitação do parametro Mauricio 09/02/11. 
@@ -436,7 +437,7 @@ Endif
 cQueryTF := " SELECT SUM (ZK_VALFRET) AS TOTFRETE, SUM (ZK_PBRUTO) AS TOTPBRUT, SUM (ZK_PESOL) AS TOTPSOL, SUM (ZK_ENTREGA) AS TOTENTR, SUM (ZK_KMPAG) AS TOTKM ,COUNT(*) AS QTDVIAG"
 cQueryTF += " FROM "+RETSQLNAME("SZK")+" "  
 cQueryTF += " WHERE "
-cQueryTF += " (ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND "
+cQueryTF += " ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND " //ticket 70750 - Everson - 07/04/2022.
 
 If !Empty(MV_PAR05)
    &&Tratamento para automatizar o maximo possivel a digitação do parametro Mauricio 09/02/11. 

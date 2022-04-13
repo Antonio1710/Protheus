@@ -13,6 +13,7 @@
 //±±ºUso       ³ SIGAFAT - CHAMADO 033397                                   º±±
 //±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 //ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+//@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 
 USER FUNCTION ADLOG032P() //U_ADLOG032P()
 
@@ -116,7 +117,7 @@ STATIC FUNCTION ProcFile()
 				EndIf 
 	            
 	            //caso achar o registro na SZI, guardo o ultima sequencia : chamado: 043481 11/09/2018 - Fernando Sigoli
-		        cQrySq := " SELECT MAX(ZI_SEQ) ZI_SEQ  FROM " + RetSqlName("SZI")+ "  WHERE D_E_L_E_T_ = '' AND  ZI_PLACA = '"+_cPlaca+"' AND ZI_DATALAN = '"+dtos(_dData)+"' AND ZI_GUIA = '"+_cGuia+"' "
+		        cQrySq := " SELECT MAX(ZI_SEQ) ZI_SEQ  FROM " + RetSqlName("SZI")+ "  WHERE ZI_FILIAL = '" + FWxFilial("SZI") + "' AND D_E_L_E_T_ = '' AND  ZI_PLACA = '"+_cPlaca+"' AND ZI_DATALAN = '"+dtos(_dData)+"' AND ZI_GUIA = '"+_cGuia+"' " //ticket 70750 - Everson - 07/04/2022.
 	            tcQuery cQrySq new alias "Work"
 	            
 	            Work->( dbGoTop() )

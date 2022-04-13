@@ -33,7 +33,7 @@
 //---------------------------------------------------------------------------
 //DANIEL- CONSULTA CONTEMPLANDO O NOVO PARAMETRO DO RELATORIO
 //
-
+@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 
 User Function AD0054
@@ -168,7 +168,7 @@ Cabec7  := "|-------------------------------------------------------------------
 
 _cQuery:="SELECT ZK_PLACAPG,ZK_TPFRETE,ZK_NOMFOR,ZK_ROTEIRO,ZK_ENTREGA,ZK_ENTRDEV,ZK_DESTINO,ZK_PESFATB,ZK_PESOBAL, "
 _cQuery+=" ZK_PESOBAL,ZK_PESFATB,ZK_HORASAI,ZK_KMSAI,ZK_HORAENT,ZK_KMENT,ZK_GUIA,ZK_VALFRET,ZK_PESFATB "
-_cQuery+=" FROM "+RETSQLNAME("SZK")+" WHERE (ZK_DTENTR BETWEEN "+DTOS(_dDtEntr)+" AND "+DTOS(_dDtEntr2)+") AND ZK_TIPFRT='"+ALLTRIM(_cTipFrt)+"' "
+_cQuery+=" FROM "+RETSQLNAME("SZK")+" WHERE ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN "+DTOS(_dDtEntr)+" AND "+DTOS(_dDtEntr2)+") AND ZK_TIPFRT='"+ALLTRIM(_cTipFrt)+"' " //ticket 70750 - Everson - 07/04/2022.
 _cQuery+=" AND D_E_L_E_T_='' "
 _cQuery+=" ORDER BY ZK_ROTEIRO,ZK_TPFRETE,ZK_PLACAPG "
 TCQUERY _cQuery New Alias "TMP"   

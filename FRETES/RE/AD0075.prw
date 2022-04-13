@@ -19,7 +19,7 @@
 +----------------------------------------------------------------------------+
 |[1]   |TROCADO RETORNO DE DADOS POR UMA QUERY |14/03/06 |DANIEL P. SILVEIRA |
 +----------------------------------------------------------------------------+
-
+@history ticket 70750 - Everson - 07/04/2022 - Adapta豫o do fonte para nova filial.
 */
 User Function AD0075
 //旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
@@ -118,7 +118,9 @@ cQuery:=" SELECT  ZJ_CODIGO,ZJ_DESCRIC,ZK_TIPFRT, "+;
 " (CASE WHEN ZI_TIPO='A' THEN SUM(ZI_VALOR) ELSE 0 END) AS ACRESCIMO, " +;
 " (CASE WHEN ZI_TIPO='D' THEN SUM(ZI_VALOR) ELSE 0 END) AS DESCONTO  " +;
 " FROM "+RETSQLNAME("SZJ")+","+RETSQLNAME("SZK")+","+RETSQLNAME("SZI")+" " +;      
-" WHERE ZJ_CODIGO=ZI_CODIGO " +; 
+" WHERE "+;
+" ZK_FILIAL = '" + FWxFilial("SZK") + "' AND ZJ_FILIAL = '" + FWxFilial("SZJ") + "' AND ZI_FILIAL = '" + FWxFilial("SZI") + "' "+; //ticket 70750 - Everson - 07/04/2022.
+" AND ZJ_CODIGO=ZI_CODIGO " +; 
 " AND ZK_GUIA=ZI_GUIA " +; 
 " AND ZK_ROTEIRO = ZI_ROTEIRO " +;  
 " AND ZK_PLACAPG = ZI_PLACA " +;                                                 

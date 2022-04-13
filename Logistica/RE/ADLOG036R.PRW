@@ -25,6 +25,7 @@
 ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
 ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
 ฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+@history ticket 70750 - Everson - 07/04/2022 - Adapta็ใo do fonte para nova filial.
 */
  
 User Function ADLOG036R()
@@ -274,7 +275,7 @@ Static Function SqlGeral()
 				AND C5_NOTA                <> ''
 				AND C5_PLACA               <> ''
 				AND %TABLE:SC5%.D_E_L_E_T_      <> '*'
-				AND (C5_DTENTR+C5_ROTEIRO) NOT IN(SELECT (ZK_DTENTR+ZK_ROTEIRO) FROM %TABLE:SZK% WITH(NOLOCK) WHERE %TABLE:SZK%.D_E_L_E_T_ <> '*')
+				AND (C5_DTENTR+C5_ROTEIRO) NOT IN(SELECT (ZK_DTENTR+ZK_ROTEIRO) FROM %TABLE:SZK% WITH(NOLOCK) WHERE ZK_FILIAL = %EXP:FWXFILIAL('SZK')%  AND %TABLE:SZK%.D_E_L_E_T_ <> '*') //ticket 70750 - Everson - 07/04/2022.
 		
 		GROUP BY C5_FILIAL,C5_DTENTR,C5_ROTEIRO
 		
@@ -285,7 +286,7 @@ RETURN()
 
 Static Function SqlControleFrete()
 
-    Local cFilAtual := FWFILIAL('SZK')
+    Local cFilAtual := FWXFILIAL('SZK')
     Local cDataIni  := DTOS(MV_PAR01)
     Local cDataFin  := DTOS(MV_PAR02)
     
@@ -332,7 +333,6 @@ RETURN()
 
 Static Function SqlPedido()
 
-    Local cFilatual := FWFILIAL('SC5')
     Local cDataIni  := DTOS(MV_PAR01)
     Local cDataFin  := DTOS(MV_PAR02)
     
@@ -340,7 +340,8 @@ Static Function SqlPedido()
 			%NoPARSER% 
 			SELECT ZK_FILIAL,ZK_DTENTR,ZK_ROTEIRO
 			  FROM %TABLE:SZK%  WITH(NOLOCK)
-			  WHERE ZK_DTENTR  >= %EXP:cDataIni%
+			  WHERE ZK_FILIAL   = %EXP:FWXFILIAL('SZK')% //ticket 70750 - Everson - 07/04/2022.
+			  	AND ZK_DTENTR  >= %EXP:cDataIni%
 			    AND ZK_DTENTR  <= %EXP:cDataFin%
 			    AND ZK_ROTEIRO >= %EXP:MV_PAR03%
 			    AND ZK_ROTEIRO <= %EXP:MV_PAR04%

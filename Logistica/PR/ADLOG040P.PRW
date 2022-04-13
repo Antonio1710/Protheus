@@ -103,6 +103,7 @@ Static nTipoFrt	:= 0
 	@history 05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
 	@history 24/03/2022  Sigoli Tkt 70153   - Declaração de variavel OK na função principal
 	@history 28/03/2022 - ADRIANO SAVOINE - Criado o bloqueio para o tipo de ocorrencia 012 e 014 somente para pessoas especificas.
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function ADLOG040P()
 
@@ -3866,10 +3867,10 @@ Static Function scpAbast(nOPc,oObj,aCabec)
 
 	cQuery += " FROM " + RetSqlName("ZBB") + "  AS ZBB " 
 	cQuery += " LEFT OUTER JOIN " 
-	cQuery += " (SELECT ZV4_FILIAL, ZV4_PLACA, ZV4_FORNEC, ZV4_LOJFOR, ZV4_XFRET, ZV4_OLS10, ZV4_OLS500 FROM  " + RetSqlName("ZV4") + "  AS ZV4 WHERE ZV4.D_E_L_E_T_ = '') AS ZV4 ON " 
+	cQuery += " (SELECT ZV4_FILIAL, ZV4_PLACA, ZV4_FORNEC, ZV4_LOJFOR, ZV4_XFRET, ZV4_OLS10, ZV4_OLS500 FROM  " + RetSqlName("ZV4") + "  AS ZV4 WHERE ZV4_FILIAL = '" + FWxFilial("ZV4") + "' AND ZV4.D_E_L_E_T_ = '') AS ZV4 ON " //ticket 70750 - Everson - 07/04/2022.
 	cQuery += " ZBB_PLACA = ZV4_PLACA " 
 	cQuery += " LEFT OUTER JOIN  " 
-	cQuery += " (SELECT A4_COD, A4_LOJTRA, A4_NOME FROM  " + RetSqlName("SA4") + "  AS SA4 WHERE SA4.D_E_L_E_T_ = '') AS SA4 ON " 
+	cQuery += " (SELECT A4_COD, A4_LOJTRA, A4_NOME FROM  " + RetSqlName("SA4") + "  AS SA4 WHERE A4_FILIAL = '" + FWxFilial("SA4") + "' AND SA4.D_E_L_E_T_ = '') AS SA4 ON " //ticket 70750 - Everson - 07/04/2022.
 	cQuery += " ZV4_FORNEC = A4_COD " 
 	cQuery += " AND ZV4_LOJFOR = A4_LOJTRA " 
 
@@ -3883,7 +3884,8 @@ Static Function scpAbast(nOPc,oObj,aCabec)
 	cQuery += " (SELECT ZB9_FILIAL, ZB9_CODTAB, ZB9_VLS500 FROM " + RetSqlName("ZB9") + " AS ZB9 WHERE ZB9_FILIAL = '" + FWxFilial("ZB9") + "' AND ZB9.D_E_L_E_T_ = '') AS ZB9500 ON " 
 	cQuery += " ZV4_OLS10 = ZB9500.ZB9_CODTAB " 
 	cQuery += " WHERE    " 
-	cQuery += " ZBB_DTFIM BETWEEN '" + DToS(MV_PAR01) + "' AND '" + DToS(MV_PAR02) + "' "
+	cQuery += " ZBB_FILIAL = '" + FWxFilial("ZBB") + "' " //ticket 70750 - Everson - 07/04/2022.
+	cQuery += " AND ZBB_DTFIM BETWEEN '" + DToS(MV_PAR01) + "' AND '" + DToS(MV_PAR02) + "' "
 	cQuery += " AND ZV4_FORNEC BETWEEN '" + Alltrim(MV_PAR03) + "' AND '" + Alltrim(MV_PAR05) + "' "
 	cQuery += " AND ZV4_LOJFOR BETWEEN '" + Alltrim(MV_PAR04) + "' AND '" + Alltrim(MV_PAR06) + "' "
 	//cQuery += " AND ZBB_PLACA IN (" + cPlacas + ") "
