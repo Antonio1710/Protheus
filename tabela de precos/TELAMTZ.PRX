@@ -15,6 +15,7 @@
 	@history Chamado 050729 - FWNM          - 14/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Migração Release 27
 	@history Chamado 17381	- Leonardo P. Monteiro - 23/07/2021 - Aumento do limitador do grid de 200 para 100000 registros na aCols.
 	@history Chamado 17420	- Everson 		- 07/10/2021 - Tratamento para não duplicar registro de produto.
+	@history Everson, 14/04/2022. Chamado 71231 - Tratamento para envio de meta apenas pela empresa 01 e filial 02.
 /*/
 User Function TELAMTZ() // U_TELAMTZ()
 
@@ -496,7 +497,8 @@ Static Function processar()
 	End transaction     //fim controle de transacoes
 
 	//Envia produtos para o SalesForce.
-	If FindFunction("U_ADVEN069P") .And. ! Empty(Alltrim(cValToChar(cProdutos)))
+	//Everson - 04/03/2018. Chamado 037261. SalesForce.
+	If cEmpAnt == "01" .And. cFilAnt = "02" .And. FindFunction("U_ADVEN069P") .And. ! Empty(Alltrim(cValToChar(cProdutos))) //Everson, 14/04/2022. Chamado 71231.
 		cProdutos := Substr(cProdutos,1,Len(cProdutos) -1)
 		U_ADVEN069P("",.F.," AND B1_COD IN (" + cProdutos + ") ")
 	
