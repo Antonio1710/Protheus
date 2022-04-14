@@ -520,7 +520,7 @@ User Function MTA105LIN()
 
 					// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 					If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "0B"
-						gdFieldPut("CP_ITEMCTA", AllTrim(GetMV("MV_#ITAFIL",,"125")), i)
+						gdFieldPut("CP_ITEMCTA", AllTrim(GetMV("MV_#ITACTD",,"125")), i)
 					EndIf
 					//
 

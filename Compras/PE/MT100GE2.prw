@@ -6,7 +6,8 @@
 #INCLUDE "FWMVCDEF.CH"         
 #INCLUDE "FWCOMMAND.CH"         
 #INCLUDE "FILEIO.CH"
-/*/{Protheus.doc} User Function MT103FIM
+
+/*/{Protheus.doc} User Function MT100GE2
 	Ponto entrada utilizado apos gravacao do documento de entrada
 	@type  Function
 	@author Cellvla

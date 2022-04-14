@@ -882,7 +882,7 @@ Static Function GeraPreNFE()
 
 	// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 	If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "0B"
-		cItemCtb := AllTrim(GetMV("MV_#ITAFIL",,"125"))
+		cItemCtb := AllTrim(GetMV("MV_#ITACTD",,"125"))
 	EndIf
 	//
 
