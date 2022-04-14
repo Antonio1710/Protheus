@@ -18,7 +18,7 @@ USER FUNCTION MT170FIM()
 	LOCAL _aArea := GetArea()   
 	LOCAL aScs   := PARAMIXB[1]
 	LOCAL nCont  := 0
-	Local cMVItemCta := GetMV("MV_#ITAFIL",,"0B")
+	Local cMVItemCta := AllTrim(GetMV("MV_#ITAFIL",,"125"))
 	
 	For nCont:= 1 To LEN(aScs)    
 	
