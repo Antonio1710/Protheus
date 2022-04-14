@@ -19,7 +19,6 @@
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	@history Ticket 69574   - Sigoli               - 14/04/2022 - Projeto FAI - Ajuste de psosição - cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 
-
 */
  
 User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
