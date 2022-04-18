@@ -9,14 +9,19 @@
     @version 01
     @history, Everson, 09/11/2020, Chamado 4597. Tratamento para a rotina considerar a data de entrega.
     @history, Everson, 10/11/2020, Chamado 4597. Adicionado o status "M" liberação manual.
+    @history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
     /*/
-User Function ADFIN092P() // U_ADFIN092P()
+User Function ADFIN092P(cEmp, cFil) // U_ADFIN092P() 
 
     //Variáveis.
 
+    //Everson, 18/04/2022, Chamado 71231.
+	Default cEmp 	:= "01"
+	Default cFil 	:= "02"
+
 	//Inicia o ambiente. 
 	RPCSetType(3)
-	RpcSetEnv("01","02",,,,GetEnvServer(),{ })
+	RpcSetEnv(cEmp, cFil,,,,GetEnvServer(),{ })
 
         //
         envMsgB()
