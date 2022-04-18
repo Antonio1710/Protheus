@@ -9,51 +9,36 @@
 	@since 21/03/2018
 	@version 1.0
 	@history Leon - 21/07/2020 - Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
-User Function ADVEN083P() //U_ADVEN083P()
+User Function ADVEN083P(cEmp, cFil) //U_ADVEN083P()
 	//Declaração de variávies
-	Local cEmp 		:= "01"
-	Local cFil 		:= "02"
 	Local cDt		:= ""
-	Local aEmpFil	:= {}
-	Local i			:= 1
+
+	//verson, 18/04/2022, Chamado 71231.
+	Default cEmp 	:= "01"
+	Default cFil 	:= "02"
 	
-	//Inicia o ambiente.
 	RPCClearEnv()
 	RPCSetType(3)
 	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
 
-	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-	// If !LockByName("ADVEN083P", .T., .F.)
-	// 	ConOut("[ADVEN083P] - Existe outro processamento sendo executado! Verifique...")
-	// 	RPCClearEnv()
-	// 	Return
-	// EndIf
-	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de notas fiscais de saída ao SalesForce. ')
 
 	PtInternal(1,ALLTRIM(PROCNAME()))
 
 	conout("Início atualização nota fiscal (saída) SalesForce")
-	logZBN("1") //Log início.
+	logZBN("1")
 	cDt := Alltrim( cValToChar( GetMv("MV_#SFDTPD" ) ))
 	
-	Aadd(aEmpFil,{"01","02"})
-	//Aadd(aEmpFil,{"01","03"})
+		U_ADVEN074P(cEmp, cFil,"",.T.," AND F2_EMISSAO >= '" + cDt + "' AND DATEDIFF(DAY,F2_EMISSAO,GETDATE()) <= 2 ")
 	
-	For i := 1 To Len(aEmpFil)
-		U_ADVEN074P(aEmpFil[i][1],aEmpFil[i][2],"",.T.," AND F2_EMISSAO >= '" + cDt + "' AND DATEDIFF(DAY,F2_EMISSAO,GETDATE()) <= 2 ")
-	Next i
-	
-	logZBN("2") //Log fim.
+	logZBN("2")
 
 	conout("Fim atualização nota fiscal (saída) SalesForce")
 	
-	//Destrava a rotina para o usuário
-	// UnLockByName("ADVEN083P")
-
-	//Fecha o ambiente.
 	RpcClearEnv()
+
 Return Nil
 
 /*/{Protheus.doc} logZBN
@@ -64,6 +49,7 @@ Return Nil
 	@version 1.0
 	/*/
 Static Function logZBN(cStatus)
+
 	//Declaração de variávies
 	Local aArea	:= GetArea()
 	
@@ -91,4 +77,5 @@ Static Function logZBN(cStatus)
 	ZBN->(dbCloseArea())
 		
 	RestArea(aArea)
+	
 Return Nil
