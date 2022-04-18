@@ -16,7 +16,9 @@
 //±±ºAdriana     ³24/05/2019³TI-Devido a substituicao email para shared     º±±
 //±±º            ³          ³relay, substituido MV_RELACNT p/ MV_RELFROM    º±±
 //±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+//@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 //ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+//@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 
 USER FUNCTION ADLOG016P() 
 	
@@ -581,7 +583,10 @@ Static Function SqlBuscaCTAPLUS()
 				ZBB_PLAORI,	
 				ZBB_BOMBA
 			FROM %Table:ZBB% , %Table:ZV4%
-			WHERE ZBB_DTINI         >= %EXP:cSqlDtini%
+			WHERE 
+			  ZBB.ZBB_FILIAL = %EXP:FWFILIAL('ZBB')% //ticket 70750 - Everson - 07/04/2022.
+			  AND ZV4.ZV4_FILIAL = %EXP:FWFILIAL('ZV4')% //ticket 70750 - Everson - 07/04/2022.
+			  AND ZBB_DTINI         >= %EXP:cSqlDtini%
 			  AND ZBB_DTINI         <= %EXP:cSqlDtFin%
 			  AND ZBB_LOGIST         = 'F'
 			  AND ZBB_CTAPLU         = 'T'       
@@ -617,7 +622,10 @@ Static Function SqlBuscaFrete()
 						  ZV4_RAS10,
 						  ZV4_RAS500
 					FROM %Table:SZK%, %Table:ZV4%
-			        WHERE ZK_PLACAPG  = %EXP:cPlaca%
+			        WHERE 
+					  ZK_FILIAL  = %EXP:FwxFilial("SZK")% //ticket 70750 - Everson - 07/04/2022.
+					  AND ZV4_FILIAL  = %EXP:FwxFilial("ZV4")% //ticket 70750 - Everson - 07/04/2022.
+					  AND ZK_PLACAPG  = %EXP:cPlaca%
 			          AND ZK_DTENTR  >= %EXP:cDtIni2%
 			          AND ZK_DTENTR  <= %EXP:cDtFin2%
 					  AND ZK_PLACAPG    = ZV4_PLACA 
@@ -651,7 +659,10 @@ Static Function SqlFreteTransp()
 						  ZV4_RAS10,
 						  ZV4_RAS500 
 					 FROM %Table:ZV4%, %Table:SZK%
-					WHERE ZV4_PLACA         = %EXP:cPlaca%
+					WHERE 
+					  ZK_FILIAL  = %EXP:FwxFilial("SZK")% //ticket 70750 - Everson - 07/04/2022.
+					  AND ZV4_FILIAL  = %EXP:FwxFilial("ZV4")% //ticket 70750 - Everson - 07/04/2022.
+					  AND ZV4_PLACA         = %EXP:cPlaca%
 					  AND ZV4_CTAPLU        = 'T'
 					  AND ZK_FORNEC         = ZV4_FORNEC
 					  AND ZK_LOJA           = ZV4_LOJFOR
@@ -713,7 +724,9 @@ Static Function SqlTabSZI(cPlaca,cDtEntrega,cRoteiro)
 			%NoPARSER%
 			SELECT TOP(1) ZI_SEQ 
 			  FROM %Table:SZI%
-			WHERE ZI_PLACA    = %EXP:cPlaca%
+			WHERE 
+			  ZI_FILIAL = %EXP:FWFILIAL('SZI')% //ticket 70750 - Everson - 07/04/2022.
+			  AND ZI_PLACA    = %EXP:cPlaca%
 			  AND ZI_DATALAN  = %EXP:cDtEntrega%
 			  AND (ZI_CODIGO   = '55'
 			   OR  ZI_CODIGO   = '58')

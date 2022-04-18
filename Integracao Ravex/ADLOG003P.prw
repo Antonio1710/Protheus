@@ -18,10 +18,12 @@
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 04/05/2021 - Tratativa no fonte para gerar o fechamento do frete quando não foi gerado no momento do faturamento da NFe.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	@history Ticket 69574   - Sigoli               - 14/04/2022 - Projeto FAI - Ajuste de psosição - cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 
 */
  
 User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	
+	Local cFilSF    	   := "" 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	PRIVATE cRot           := ''    
 	PRIVATE cPlaca         := ''
@@ -55,10 +57,11 @@ User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21
     Private cFil           := ''            
     Private cSeq           := ''
     Private aEnt           := {}
-		Private aEnts          := {}
-		Private lJob           := .F.
-		Default cEmp					:= "01"
-		Default cFili					:= "02"
+	Private aEnts          := {}
+	Private lJob           := .F.
+	
+	Default cEmp					:= "01"
+	Default cFili					:= "02"
 
 	//VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	IF SELECT("SX6") == 0
@@ -95,6 +98,8 @@ User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21
 	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 
 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+
 	IF Alltrim(cFilAnt) $ cFilSF
 		cFilini       := cFilAnt
 		cFilfin       := cFilAnt
@@ -296,7 +301,6 @@ Return(NIL)
 
 Static function fPosiciona( cFil, cRoteir, cDtEntr, cPlaca)
 	Local lRet 		:= .F.
-	Local cQuery	:= ""
 
 	DbSelectArea("SC5")
 	DbSelectArea("SF2")
@@ -349,8 +353,6 @@ Static Function ExportaXML()
                                                                                                           
     Local   nLTRC            := 0
 	Local   nLTRD            := 0
-	Local   nLTRE            := 0
-	Local   nTotL            := 0
 	Private cRotCab          := ''  
 	Private cRotCabOld       := ''  	
 	Private cRotRod          := ''  
@@ -811,8 +813,6 @@ STATIC FUNCTION EmailViagem(cMetodo,nId,cmensagem)
     Local cSubject     := ""  
     Local cBody        := ""
     Local cAtach       := ""               
-    Local _cStatEml    := ""
-    Local _cPedido     := ""
     Local _cStatEml    := ""
     
 	//********************************** INICIO ENVIO DE EMAIL CONFIRMANDO A GERACAO DO PEDIDO DE VENDA **************

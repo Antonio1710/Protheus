@@ -138,10 +138,8 @@ Static Function fgerap3()
 		Endif
 
 		// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
-		If AllTrim(cEmpAnt) == "01"
-			If AllTrim(cFilAnt) == AllTrim(GetMV("MV_#ITAFIL",,"0B"))
-				_cITemcc := AllTrim(GetMV("MV_#ITAFIL",,"0B"))
-			EndIf
+		If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "0B"
+			_cITemcc := AllTrim(GetMV("MV_#ITACTD",,"125"))
 		EndIf
 		//
 		

@@ -13,6 +13,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function AD0053()
 
@@ -191,7 +192,7 @@ ENDDOC*/
 cQuery := 	" SELECT ZK_TIPFRT, ZK_TPFRETE, ZK_DESCRI, ZV4_TIPVEI AS ZK_TABELA, ZK_ENTREGA, ZK_PLACAPG, ZK_PBRUTO, ZK_PESOL, "
 cQuery +=	" ZK_KMPAG, ZK_DTENTR , ZK_VALFRET, ZK_GUIA "
 cQuery +=	" FROM " + RetSQLName("SZK") + " SZK, " +  RetSQLName("ZV4") + " ZV4 " 
-cQuery +=	" WHERE (ZK_DTENTR BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"')"
+cQuery +=	" WHERE ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"')" //ticket 70750 - Everson - 07/04/2022.
 cQuery +=	" AND ZK_TIPFRT ='"+ALLTRIM(_cTipFrt)+"'"
 cQuery +=	" AND SZK.D_E_L_E_T_=' '"  
 cQuery +=	" AND SZK.ZK_FILIAL  = ZV4.ZV4_FILIAL "
@@ -394,6 +395,7 @@ Return
 */
 Static Function PrintTotTab()	
 	// Imprime Total do tipo
+	Local i := 1
 
 	@nLin,000 PSAY "|"+ Replicate ("=",172)+ "|"
 	nLin := nLin + 1
@@ -452,6 +454,8 @@ Return
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function PrintTotTipo()
+
+	Local i := 1
 
 	@nLin,000 PSAY "|"+ Replicate ("=",172)+ "|"
 	nLin := nLin + 1
@@ -562,11 +566,11 @@ Return
 Static Function QrySZI(cGuia)		
 		cQuery1 := 	" SELECT ZI_GUIA, ZI_PLACA, ZI_DATALAN,ZI_TIPO, ZI_VALOR "
 		cQuery1 +=	" FROM "+RetSQLName("SZI")+" "
-		cQuery1 +=	" WHERE (ZI_DATALAN BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"')"
+		cQuery1 +=	" WHERE ZI_FILIAL = '" + FWxFilial("SZI") + "' AND (ZI_DATALAN BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"')" //ticket 70750 - Everson - 07/04/2022.
 		cQuery1 +=	" AND D_E_L_E_T_=' ' AND "	
 		cQuery1 +=	" ZI_GUIA IN( "
 		cQuery1 +=	"	SELECT ZK_GUIA  "
-		cQuery1 +=	"	FROM "+RetSqlName("SZK")+ "  WHERE (ZK_DTENTR BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"') AND ZK_TIPFRT ='"+ALLTRIM(_cTipFrt)+"' AND D_E_L_E_T_=' ' "
+		cQuery1 +=	"	FROM "+RetSqlName("SZK")+ "  WHERE ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"') AND ZK_TIPFRT ='"+ALLTRIM(_cTipFrt)+"' AND D_E_L_E_T_=' ' " //ticket 70750 - Everson - 07/04/2022.
 		cQuery1 +=	"	)
 		cQuery1 +=	"	AND ZI_GUIA='"+cGuia+"' " 
 		cQuery1 +=	" ORDER BY ZI_GUIA "

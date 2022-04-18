@@ -27,6 +27,7 @@
 	@history Chamado 060424 - Everson 10/08/2020. Tratamento para vincular código de projeto na requisição ao armazém. 
 	@history Chamado 060424 - Everson 11/08/2020. Tratamento para obter o sequencial da solicitação ao armazém pela função U_SXESXF. 
 	@history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
+	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
 User Function ADLOG022P() // U_ADLOG022P()
 
@@ -728,7 +729,7 @@ Static Function scriptSolic()
     cQuery += " FROM " 
     cQuery += " " + RetSqlName("ZBB") + " (NOLOCK) AS ZBB " 
     cQuery += " WHERE " 
-    cQuery += " ZBB_FILIAL = '' " 
+    cQuery += " ZBB_FILIAL = '" + FWxFilial("ZBB") + "' " //ticket 70750 - Everson - 07/04/2022.
     cQuery += " AND ZBB_ESTOQU = 'F' " 
     cQuery += " AND ZBB_SISTEM IN ('A','M') " 
     cQuery += " AND ZBB_APRMOV  = '' " 
