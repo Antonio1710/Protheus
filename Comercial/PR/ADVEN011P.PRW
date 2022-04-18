@@ -21,6 +21,7 @@
 ±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Everson, 14/04/2022. Chamado 71231 - Tratamento para envio de meta apenas pela empresa 01 e filial 02.
 /*/
 
 User Function ADVEN011P()
@@ -166,7 +167,7 @@ Static Function ImpCSVJO()
 	End
 	
 	//Everson - 04/03/2018. Chamado 037261. SalesForce.
-	If FindFunction("U_ADVEN073P") .And. !Empty(cDtSF)
+	If cEmpAnt == "01" .And. cFilAnt = "02" .And. FindFunction("U_ADVEN073P") .And. !Empty(cDtSF) //Everson - 14/04/2022. Chamado 71231.
 		
 		cDtSF := Substr(cDtSF,1,Len(cDtSF) -1)
 		U_ADVEN073P("","",.F., " AND ZZS_DATA IN (" + cDtSF + ") " )
