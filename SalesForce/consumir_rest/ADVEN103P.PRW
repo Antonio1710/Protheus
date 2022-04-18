@@ -19,6 +19,7 @@
 	@history Leon	 - 14/01/2020.Chamado TI. Adicionar campo de nome do vendedor para atribuição do objeto Indicadores Diretoria;
 	@history Everson - 20/05/2020.Chamado TI. Tratamento para pedidos de complemento de preço.
 	@history Leon	 - 21/07/2020.Chamato TI. Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
 User Function ADVEN103P() // U_ADVEN103P()
 	
@@ -112,7 +113,6 @@ Return Nil
 	/*/
 Static Function getQuery()
 	//Declaracao de Variaveis
-	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 
 	//
@@ -156,7 +156,8 @@ Static Function getQuery()
 	cQuery += " A3_FILIAL = SUPER.FILSUP "
 	cQuery += " AND A3_CODSUP = SUPER.CODSUP "
 	
-	cQuery += " WHERE C6_FILIAL          = '" + FwxFilial("SC6") + "' " 
+	// cQuery += " WHERE C6_FILIAL = '" + FwxFilial("SC6") + "' " //Everson - 18/04/2022. Chamado 71231.
+	cQuery += " WHERE C6_FILIAL IN ('02','0B') " //Everson - 18/04/2022. Chamado 71231.
 	cQuery += " AND C6_ENTREG >= CONVERT(VARCHAR(8), (GETDATE()), 112) " 
 	cQuery += " AND C6_CF NOT IN ('5949')" //TI - Fernando Sigoli 25/04/2019
 	cQuery += " AND SC6010.D_E_L_E_T_ <> '*' " 
