@@ -11,10 +11,11 @@
 	@history Leon - 21/07/2020 - Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	/*/
 User Function ADVEN087P() // U_ADVEN087P()
-	Local cEmp 		:= "01"
-	Local cFil 		:= "02"
 	Local cScript	:= ""
 	Local cExpSql	:= ""
+	
+	Default cEmp 	:= "01"
+	Default cFil 	:= "02"
 	
 	//Inicia o ambiente.
 	RpcClearEnv()
