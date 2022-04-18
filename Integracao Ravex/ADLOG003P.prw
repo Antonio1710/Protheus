@@ -19,19 +19,17 @@
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	@history Ticket 69574   - Sigoli               - 14/04/2022 - Projeto FAI - Ajuste de psosição - cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 
+	@history Ticket 71516   - Abel Babini          - 18/04/2022 - Erro na Execução do Workflow
 */
  
 User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	
-	Local cFilSF    	   := "" 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-
 	PRIVATE cRot           := ''    
 	PRIVATE cPlaca         := ''
 	PRIVATE cDtEntrega     := ''
 	PRIVATE oWs            := NIL
 	PRIVATE oWsEntrega     := NIL
 	PRIVATE oResp          := ''  
-    Private oWsNotaFiscal  := NIL
+	Private oWsNotaFiscal  := NIL
 	Private oWsItem        := NIL 
 	Private oWSTabelaFrete := NIL
 	Private cMetodo        := ''
@@ -43,20 +41,20 @@ User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21
 	Private nCont          := 0       
 	Private nContVetor     := 0
 	Private cMens          := ''
-    Private cFilini        := ''
-    Private cFilfin        := ''
-    Private dDtEntrini     := ''
-    Private dDtEntrfin     := ''
-    Private cPlacaIni      := ''
-    Private cPlacaFin      := ''
-    Private cRoteiroIni    := ''
-    Private cRoteiroFin    := ''
-    Private aNota          := {} 
-    Private aNotaRavex     := {}
-    Private lRet           := .T.     
-    Private cFil           := ''            
-    Private cSeq           := ''
-    Private aEnt           := {}
+	Private cFilini        := ''
+	Private cFilfin        := ''
+	Private dDtEntrini     := ''
+	Private dDtEntrfin     := ''
+	Private cPlacaIni      := ''
+	Private cPlacaFin      := ''
+	Private cRoteiroIni    := ''
+	Private cRoteiroFin    := ''
+	Private aNota          := {} 
+	Private aNotaRavex     := {}
+	Private lRet           := .T.     
+	Private cFil           := ''            
+	Private cSeq           := ''
+	Private aEnt           := {}
 	Private aEnts          := {}
 	Private lJob           := .F.
 	
@@ -97,18 +95,11 @@ User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21
     logZBN("1") //Log início.
 	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 
-	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	//Ticket 71516   - Abel Babini          - 18/04/2022 - Erro na Execução do Workflow
+	cFilini       := cFilAnt
+	cFilfin       := cFilAnt
 
-	IF Alltrim(cFilAnt) $ cFilSF
-		cFilini       := cFilAnt
-		cFilfin       := cFilAnt
-	ELSE
-		cFilini       := '02'
-		cFilfin       := '02'
-	END
-
-    ConOut("ADLOG003P - Carregamento das variaveis Filial Inicio: " + cFilini + "Filial Fim: "+ cFilfin)  
+	ConOut("ADLOG003P - Carregamento das variaveis Filial Inicio: " + cFilini + "Filial Fim: "+ cFilfin)  
 
 	SqlIntNota() //Integração das notas  
 	
