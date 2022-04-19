@@ -22,7 +22,7 @@
 	@history Ticket 71516   - Abel Babini          - 18/04/2022 - Erro na Execução do Workflow
 */
  
-User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+User Function ADLOG003P(aXEmpFil) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	PRIVATE cRot           := ''    
 	PRIVATE cPlaca         := ''
 	PRIVATE cDtEntrega     := ''
@@ -58,8 +58,17 @@ User Function ADLOG003P(cEmp,cFili) //Ticket 69574   - Abel Babini          - 21
 	Private aEnts          := {}
 	Private lJob           := .F.
 	
-	Default cEmp					:= "01"
-	Default cFili					:= "02"
+	Private cEmp					:= "01"
+	Private cFili					:= "02"
+	Default aXEmpFil				:= {}
+
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	IF Len(aXEmpFil) > 0
+
+		cEmp					:= aEmpFil[1]
+		cFili					:= aEmpFil[2]
+
+	ENDIF
 
 	//VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	IF SELECT("SX6") == 0
