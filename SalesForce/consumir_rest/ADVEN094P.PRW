@@ -11,18 +11,18 @@
 	@version 1.0
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history 18/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
+	@history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
 	/*/
-User Function ADVEN094P(cEmp, cFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
+User Function ADVEN094P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
 	
 	//Declaração de variávies
 	//18/04/2022, Everson, Chamado 71231.
-	Default cEmp := "01"
-	Default cFil := "02"
+	Default aXEmpFil :={ "01", "02" }
 	
 	//Inicia o ambiente.
 	RPCClearEnv()
 	RPCSetType(3)
-	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
+	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
 	// If !LockByName("ADVEN094P", .T., .F.)
