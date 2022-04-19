@@ -265,6 +265,7 @@ IF DbSeek(xFilial("SZH")+ _cTabela ,.T.)
      	            "Filial: "+xFilial("SZK")+" Guia: "+_nZV1GUIAPE+" Data: "+DTOS(_dZV1DTABAT)+" Placa: "+_nZV1PPLACA,ComputerName(),LogUserName())
          	            
 		Reclock("SZK",.T.)
+		Replace ZK_FILIAL  With FWxFilial("SZK")
 		Replace ZK_HORA    with _dHORA				//HORA ATUAL
 		Replace ZK_DTFECH  with _dDATE				//DATA ATUAL                        
 		

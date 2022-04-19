@@ -271,6 +271,7 @@ If lRetMod2
 		Else
 			_cCod := GETSX8NUM("ZV9","ZV9_COD")
 			RecLock("ZV9",.T.)
+			Replace ZV9_FILIAL  With FwxFilial("ZV9")
 		   	Replace ZV9_COD     With _cCod
 			Replace ZV9_REGIAO  With ZV8->ZV8_COD
 			Replace ZV9_DTVAL   With aCols[_I,_nPosDTVAL]
