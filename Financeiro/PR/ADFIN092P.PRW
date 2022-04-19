@@ -24,14 +24,14 @@ User Function ADFIN092P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADF
 	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
 
         //
+        U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de mensagem de boleto pago ao Salesforce')
+
+
+        //
         envMsgB()
 
 	//Fecha o ambiente.
 	RpcClearEnv()
-
-    //
-    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de mensagem de boleto pago ao Salesforce')
-
 
 Return Nil
 /*/{Protheus.doc} envMsgB
