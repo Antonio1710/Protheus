@@ -10,18 +10,18 @@
 	@version 1.0
 	@history Leon - 21/07/2020 - Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
+	@history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
 	/*/
-User Function ADVEN083P(cEmp, cFil) //U_ADVEN083P()
-	//Declaração de variávies
-	Local cDt		:= ""
-
-	//verson, 18/04/2022, Chamado 71231.
-	Default cEmp 	:= "01"
-	Default cFil 	:= "02"
+User Function ADVEN083P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
 	
+	//Declaração de variávies
+	//18/04/2022, Everson, Chamado 71231.
+	Default aXEmpFil :={ "01", "02" }
+	
+	//Inicia o ambiente.
 	RPCClearEnv()
 	RPCSetType(3)
-	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
+	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de notas fiscais de saída ao SalesForce. ')
 
