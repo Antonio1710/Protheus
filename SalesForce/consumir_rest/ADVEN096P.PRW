@@ -35,7 +35,7 @@ User Function ADVEN096P(aXEmpFil)
 	logZBN("1")
 	cDt := Alltrim( cValToChar( GetMv("MV_#SFDTPD" ) ))
 	
-		U_ADVEN077P(cEmp, cFil,"",.T.," AND F1_DTDIGIT >= '" + cDt + "' AND DATEDIFF(DAY,F1_DTDIGIT,GETDATE()) <= 2 AND F1_XSALES = '' ")
+		U_ADVEN077P(aXEmpFil[1], aXEmpFil[2],"",.T.," AND F1_DTDIGIT >= '" + cDt + "' AND DATEDIFF(DAY,F1_DTDIGIT,GETDATE()) <= 2 AND F1_XSALES = '' ")
 	
 	logZBN("2")
 
