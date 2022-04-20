@@ -31,7 +31,7 @@ User Function ADVEN083P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADV
 	logZBN("1")
 	cDt := Alltrim( cValToChar( GetMv("MV_#SFDTPD" ) ))
 	
-		U_ADVEN074P(cEmp, cFil,"",.T.," AND F2_EMISSAO >= '" + cDt + "' AND DATEDIFF(DAY,F2_EMISSAO,GETDATE()) <= 2 ")
+		U_ADVEN074P(aXEmpFil[1], aXEmpFil[2],"",.T.," AND F2_EMISSAO >= '" + cDt + "' AND DATEDIFF(DAY,F2_EMISSAO,GETDATE()) <= 2 ")
 	
 	logZBN("2")
 
