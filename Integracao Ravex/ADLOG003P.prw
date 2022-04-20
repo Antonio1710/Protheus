@@ -17,19 +17,17 @@
 	@history Chamado 1237   - WILLIAM COSTA - 09/09/2020 - Adicionado order by no select do SQLINTNOTA, pois estava gerando varias erros por falta de ordenação.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 04/05/2021 - Tratativa no fonte para gerar o fechamento do frete quando não foi gerado no momento do faturamento da NFe.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
-	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	@history Ticket 69574   - Sigoli               - 14/04/2022 - Projeto FAI - Ajuste de psosição - cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 
-	@history Ticket 71516   - Abel Babini          - 18/04/2022 - Erro na Execução do Workflow
 */
  
-User Function ADLOG003P(aXEmpFil) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+User Function ADLOG003P()
+
 	PRIVATE cRot           := ''    
 	PRIVATE cPlaca         := ''
 	PRIVATE cDtEntrega     := ''
 	PRIVATE oWs            := NIL
 	PRIVATE oWsEntrega     := NIL
 	PRIVATE oResp          := ''  
-	Private oWsNotaFiscal  := NIL
+    Private oWsNotaFiscal  := NIL
 	Private oWsItem        := NIL 
 	Private oWSTabelaFrete := NIL
 	Private cMetodo        := ''
@@ -41,34 +39,22 @@ User Function ADLOG003P(aXEmpFil) //Ticket 69574   - Abel Babini          - 21/0
 	Private nCont          := 0       
 	Private nContVetor     := 0
 	Private cMens          := ''
-	Private cFilini        := ''
-	Private cFilfin        := ''
-	Private dDtEntrini     := ''
-	Private dDtEntrfin     := ''
-	Private cPlacaIni      := ''
-	Private cPlacaFin      := ''
-	Private cRoteiroIni    := ''
-	Private cRoteiroFin    := ''
-	Private aNota          := {} 
-	Private aNotaRavex     := {}
-	Private lRet           := .T.     
-	Private cFil           := ''            
-	Private cSeq           := ''
-	Private aEnt           := {}
+    Private cFilini        := ''
+    Private cFilfin        := ''
+    Private dDtEntrini     := ''
+    Private dDtEntrfin     := ''
+    Private cPlacaIni      := ''
+    Private cPlacaFin      := ''
+    Private cRoteiroIni    := ''
+    Private cRoteiroFin    := ''
+    Private aNota          := {} 
+    Private aNotaRavex     := {}
+    Private lRet           := .T.     
+    Private cFil           := ''            
+    Private cSeq           := ''
+    Private aEnt           := {}
 	Private aEnts          := {}
 	Private lJob           := .F.
-	
-	Private cEmp					:= "01"
-	Private cFili					:= "02"
-	Default aXEmpFil				:= {}
-
-	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	IF Len(aXEmpFil) > 0
-
-		cEmp					:= aEmpFil[1]
-		cFili					:= aEmpFil[2]
-
-	ENDIF
 
 	//VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	IF SELECT("SX6") == 0
@@ -82,7 +68,7 @@ User Function ADLOG003P(aXEmpFil) //Ticket 69574   - Abel Babini          - 21/0
 		// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 		RPCClearEnv()
 		RPCSetType(3)  //Nao consome licensas
-		RpcSetEnv(cEmp,cFili,,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas              
+		RpcSetEnv("01","02",,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas              
 		// ****************************FINAL PARA RODAR COM SCHEDULE**************************************** //	
 
 		// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
@@ -104,11 +90,10 @@ User Function ADLOG003P(aXEmpFil) //Ticket 69574   - Abel Babini          - 21/0
     logZBN("1") //Log início.
 	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 
-	//Ticket 71516   - Abel Babini          - 18/04/2022 - Erro na Execução do Workflow
-	cFilini       := cFilAnt
-	cFilfin       := cFilAnt
+	cFilini       := '02'
+    cFilfin       := '02'
 
-	ConOut("ADLOG003P - Carregamento das variaveis Filial Inicio: " + cFilini + "Filial Fim: "+ cFilfin)  
+    ConOut("ADLOG003P - Carregamento das variaveis Filial Inicio: " + cFilini + "Filial Fim: "+ cFilfin)  
 
 	SqlIntNota() //Integração das notas  
 	
@@ -301,6 +286,7 @@ Return(NIL)
 
 Static function fPosiciona( cFil, cRoteir, cDtEntr, cPlaca)
 	Local lRet 		:= .F.
+	Local cQuery	:= ""
 
 	DbSelectArea("SC5")
 	DbSelectArea("SF2")
@@ -353,6 +339,8 @@ Static Function ExportaXML()
                                                                                                           
     Local   nLTRC            := 0
 	Local   nLTRD            := 0
+	Local   nLTRE            := 0
+	Local   nTotL            := 0
 	Private cRotCab          := ''  
 	Private cRotCabOld       := ''  	
 	Private cRotRod          := ''  
@@ -813,6 +801,8 @@ STATIC FUNCTION EmailViagem(cMetodo,nId,cmensagem)
     Local cSubject     := ""  
     Local cBody        := ""
     Local cAtach       := ""               
+    Local _cStatEml    := ""
+    Local _cPedido     := ""
     Local _cStatEml    := ""
     
 	//********************************** INICIO ENVIO DE EMAIL CONFIRMANDO A GERACAO DO PEDIDO DE VENDA **************
