@@ -9,7 +9,7 @@
 	@version version
 	@history ticket 66832 - Jonathan Carvalho 20/04/2022 - Criação do Relatorio 
 /*/
-User Function ADEST076R()
+User Function ADEST076R() 
 
 	Local oReport := Nil
 	Local cPerg := "ADEST076R"
