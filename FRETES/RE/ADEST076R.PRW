@@ -12,7 +12,7 @@
 User Function ADEST076R() 
 
 	Local oReport := Nil
-	Local cPerg := "ADEST076R"
+	Local cPerg := "ADEST076R" 
 	
 	Pergunte(cPerg,.T.) //SX1 Perguntas cadastradas
 	
