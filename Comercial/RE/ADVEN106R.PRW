@@ -30,6 +30,7 @@
 	@history Ticket  68727  - Leonardo P. Monteiro  - 03/03/2022 - Correção no limite de linhas impressas por folha para a geração dos arquivos em PDF.
 	@history Ticket  69990  - Adriano Savoine       - 21/03/2022 - Alterado a declaração da Variavel na query estava de forma errada.
 	@history Ticket  71654  - Everson               - 19/04/2022 - Tratamento para errorlog.
+	@history Ticket  71654  - Everson               - 20/04/2022 - Tratamento para errorlog.
 /*/
 User Function ADVEN106R() // U_ADVEN106R()
 
@@ -518,10 +519,10 @@ User Function ADVEN106R() // U_ADVEN106R()
 	For nAux := 1 To Len(aFiliais)
 
 		If Empty(_cFilial)
-			_cFilial += "'" + aFiliais[nAux] + "'"
+			_cFilial += "'" + StrTran(aFiliais[nAux],"'","") + "'"
 
 		Else
-			_cFilial += ",'" + aFiliais[nAux] + "'"
+			_cFilial += ",'" + StrTran(aFiliais[nAux],"'","") + "'"
 
 		EndIf
 
