@@ -17,7 +17,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
-	@history Ticket 71370 - Adriano Savoine   - 22/04/2022 - Corrigido a variavel para carregar a filial correta.
+	@history Ticket 71370 - Adriano Savoine   - 22/04/2022 - Corrigido a variavel para carregar a filial correta
 /*/
 User Function VALNFFV1()  
 
