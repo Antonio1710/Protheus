@@ -17,18 +17,17 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history Ticket 71370 - Adriano Savoine   - 22/04/2022 - Corrigido a variavel para carregar a filial correta.
 /*/
 User Function VALNFFV1()  
 
 	Local _lRet    := .T.
 	Local _cQuery  := "" 
 	
-	Local cFilPV   	:= GetMV("MV_#LFVFIL",,"03")
-	Local cSerNFFV 	:= GetMV("MV_#LFVSER",,"01")
+	Local cFilPV   	:= Posicione("ZFC",4,xFilial("ZFC")+ZV1->ZV1_NUMOC ,"ZFC_FILORI") //Ticket 71370 - Adriano Savoine   - 22/04/2022
 	Local cCliCod  	:= GetMV("MV_#LFVCLI",,"027601")
 	Local cCliLoj  	:= GetMV("MV_#LFVLOJ",,"00")
 	Local cProdPV  	:= GetMV("MV_#LFVPRD",,"300042")
-	Local cFilPV  	:= GetMV("MV_#LFVFIL",,"03")
 	Local cQryEXT 	:= " "
 	Local cQryCAN 	:= " "
 	
