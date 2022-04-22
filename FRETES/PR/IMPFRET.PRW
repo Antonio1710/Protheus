@@ -123,7 +123,6 @@ ProcRegua(RecCount())
 		dbselectarea("ZC0")
 		dbsetorder(2)  
 		    RecLock("ZC0",.T.) // .T. - Inclusao / .F. - Alteracao
-			ZC0->ZC0_FILIAL  := FwxFilial("ZC0")
 			ZC0->ZC0_FILIAL  := "" 
 	    	ZC0->ZC0_TIPFRT  := _cCod  
 	    	ZC0->ZC0_DATVAL	 := _datlim 

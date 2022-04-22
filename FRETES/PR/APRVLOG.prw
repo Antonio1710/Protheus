@@ -14,7 +14,7 @@
 	@history Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 	@history Leonardo P. Monteiro, 17/03/2022, ticket 69859 - array out of bounds ( 779 of 778 )  on U_REJC(APRVLOG.PRW).
 	@history Everson , 12/04/2022, ticket 71249 - tratamento para errorlog.
-	@history Everson , 19/04/2022, ticket 71378 - tratamento para errorlog.
+
 /*/
 User Function AprvTran(cAlias,nReg,nOpc)
 
@@ -1053,17 +1053,12 @@ User function Aprovc(_nPos)
 				ENDIF
 				// ******** FINAL ALTERACAO WILLIAM COSTA CHAMADO 024468 *******************//	
 				
-				MsAguarde({|| Atucl(@_aPedido,@_aSupervisor) },"Aguarde","Carregando dados...")
+				Atucl(@_aPedido,@_aSupervisor)
 									
-				If oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
+				if oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 							
 					oPedido:SetArray( _aPedido )
-
-					//Everson - 19/04/2022. Chamado 71378.
-					If oPedido:nAt > Len(_aPedido) .And. Len(_aPedido) > 0
-						oPedido:nAt := Len(_aPedido)
-
-					EndIf
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 					
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -1080,20 +1075,14 @@ User function Aprovc(_nPos)
 						oPedido:AARRAY[oPedido:nAt][12],;				   
 						oPedido:AARRAY[oPedido:nAt][13]}}
 							
-					oPedido:Refresh()
-
 				EndIf
 
+				oPedido:Refresh()
 
-				If oItemped != Nil .and. len(_aSupervisor) >= oItemped:nAt//alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
+				if oItemped != Nil .and. len(_aSupervisor) >= oItemped:nAt//alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 							
 					oItemped:SetArray( _aSupervisor )
-
-					//Everson - 19/04/2022. Chamado 71378.
-					If oItemped:nAt > Len(_aSupervisor) .And. Len(_aSupervisor) > 0
-						oItemped:nAt := Len(_aSupervisor)
-						
-					EndIf
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
 
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
@@ -1116,13 +1105,11 @@ User function Aprovc(_nPos)
 							
 				EndIf
 				
-			End transaction	
-
+			End transaction								
 		Endif
 
 	else
 		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
-
 	endif
 
 Return()
@@ -1157,12 +1144,7 @@ User function REJC(_nPos)
 				if oPedido != Nil //alterado por Adriana para apenas remontar a linha quando len(_aPedido) >= oPedido:nAt - chamado 036826
 							
 					oPedido:SetArray( _aPedido )
-
-					//Everson - 19/04/2022. Chamado 71378.
-					If oPedido:nAt > Len(_aPedido) .And. Len(_aPedido) > 0
-						oPedido:nAt := Len(_aPedido)
-
-					EndIf
+					oPedido:Refresh() //Everson - 12/04/2022. Chamado 71249.
 
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oPedido:bLine := { || { oPedido:AARRAY[oPedido:nAt][01],;
@@ -1179,20 +1161,14 @@ User function REJC(_nPos)
 						oPedido:AARRAY[oPedido:nAt][12],;				   
 						oPedido:AARRAY[oPedido:nAt][13]}}
 					
-						oPedido:Refresh()
-
 				EndIf
 
+				oPedido:Refresh()
 
 				if oItemped != Nil
 							
 					oItemped:SetArray( _aSupervisor )
-
-					//Everson - 19/04/2022. Chamado 71378.
-					If oItemped:nAt > Len(_aSupervisor) .And. Len(_aSupervisor) > 0
-						oItemped:nAt := Len(_aSupervisor)
-						
-					EndIf
+					oItemped:Refresh() //Everson - 12/04/2022. Chamado 71249.
 
 					//Everson, 04/01/2022, ticket 66175 - Tratamento para error log.
 					oItemped:bLine := { || {oItemped:AARRAY[oItemped:nAt][01],;
@@ -1215,16 +1191,11 @@ User function REJC(_nPos)
 							
 				EndIf
 
-			End transaction	
-
+			End transaction								
 		Endif
-
 	else
-
 		MsgAlert("Posicione corretamente no registro.", "Posição do Registro")
-
 	endif
-	
 Return()
 
 Static function AtuCl(_aPedido,_aSupervisor)

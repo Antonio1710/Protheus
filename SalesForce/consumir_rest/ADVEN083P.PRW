@@ -9,36 +9,51 @@
 	@since 21/03/2018
 	@version 1.0
 	@history Leon - 21/07/2020 - Comentar LockByName para contornar falta de execução de rotinas de agendamento;
-	@history Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
-	@history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
 	/*/
-User Function ADVEN083P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
-	
+User Function ADVEN083P() //U_ADVEN083P()
 	//Declaração de variávies
-	//18/04/2022, Everson, Chamado 71231.
-	Default aXEmpFil :={ "01", "02" }
+	Local cEmp 		:= "01"
+	Local cFil 		:= "02"
+	Local cDt		:= ""
+	Local aEmpFil	:= {}
+	Local i			:= 1
 	
 	//Inicia o ambiente.
 	RPCClearEnv()
 	RPCSetType(3)
-	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
+	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
 
+	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
+	// If !LockByName("ADVEN083P", .T., .F.)
+	// 	ConOut("[ADVEN083P] - Existe outro processamento sendo executado! Verifique...")
+	// 	RPCClearEnv()
+	// 	Return
+	// EndIf
+	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de notas fiscais de saída ao SalesForce. ')
 
 	PtInternal(1,ALLTRIM(PROCNAME()))
 
 	conout("Início atualização nota fiscal (saída) SalesForce")
-	logZBN("1")
+	logZBN("1") //Log início.
 	cDt := Alltrim( cValToChar( GetMv("MV_#SFDTPD" ) ))
 	
-		U_ADVEN074P(aXEmpFil[1], aXEmpFil[2],"",.T.," AND F2_EMISSAO >= '" + cDt + "' AND DATEDIFF(DAY,F2_EMISSAO,GETDATE()) <= 2 ")
+	Aadd(aEmpFil,{"01","02"})
+	//Aadd(aEmpFil,{"01","03"})
 	
-	logZBN("2")
+	For i := 1 To Len(aEmpFil)
+		U_ADVEN074P(aEmpFil[i][1],aEmpFil[i][2],"",.T.," AND F2_EMISSAO >= '" + cDt + "' AND DATEDIFF(DAY,F2_EMISSAO,GETDATE()) <= 2 ")
+	Next i
+	
+	logZBN("2") //Log fim.
 
 	conout("Fim atualização nota fiscal (saída) SalesForce")
 	
-	RpcClearEnv()
+	//Destrava a rotina para o usuário
+	// UnLockByName("ADVEN083P")
 
+	//Fecha o ambiente.
+	RpcClearEnv()
 Return Nil
 
 /*/{Protheus.doc} logZBN
@@ -49,7 +64,6 @@ Return Nil
 	@version 1.0
 	/*/
 Static Function logZBN(cStatus)
-
 	//Declaração de variávies
 	Local aArea	:= GetArea()
 	
@@ -77,5 +91,4 @@ Static Function logZBN(cStatus)
 	ZBN->(dbCloseArea())
 		
 	RestArea(aArea)
-	
 Return Nil

@@ -18,7 +18,6 @@ Static cTitulo := "RM Acordos Trabalhistas - Favorecidos"
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
     @ticket 18141 - Fernando Macieira - 10/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos - Retirado campo ZHC_TIPDES e ZHC_NOMDES
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
-    @ticket 71666 - Fernando Macieira - 19/04/2022 - RM - Acordos - Alteração dados FAVORECIDOS
 /*/
 User Function ADFI119()
 
@@ -193,7 +192,6 @@ Static Function fValid(oModel)
     Local oModelMain := oModel:GetModel('ZHCMASTER')
     Local oModelGRID := oModel:GetModel("ZHDDETAIL")
 
-    Local cCodZHC    := ""
     Local cCPFCGC    := ""
     Local cFavorec   := ""
     Local cBanco     := ""
@@ -207,7 +205,6 @@ Static Function fValid(oModel)
        oModel:nOperation == 4 .or.;
        oModel:nOperation == 5
 
-        cCodZHC    := oModelMain:GetValue("ZHC_CODIGO") // @ticket 71666 - Fernando Macieira - 19/04/2022 - RM - Acordos - Alteração dados FAVORECIDOS
         cCPFCGC    := oModelMain:GetValue("ZHC_CPFCGC")
         cFavorec   := oModelMain:GetValue("ZHC_FAVORE")
         cBanco     := oModelMain:GetValue("ZHC_BANCO")
@@ -280,7 +277,7 @@ Static Function fValid(oModel)
         EndIf
 
         If lRet .and. !Empty(cBanco) .and. !Empty(cConta) .and. !Empty(cDigCta)
-            lRet := ChkDadBco(cCodZHC, cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
+            lRet := ChkDadBco(cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
             If !lRet
                 Alert("Dados bancários já cadastrados para outro favorecido! Verifique...")
             EndIf
@@ -383,7 +380,7 @@ Return lRet
     (examples)
     @see (links_or_references)
 /*/
-Static Function ChkDadBco(cCodZHC, cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
+Static Function ChkDadBco(cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
 
     Local lRet   := .t.
     Local cQuery := ""
@@ -395,12 +392,11 @@ Static Function ChkDadBco(cCodZHC, cCPFCGC, cBanco, cAgencia, cConta, cDigCta)
     cQuery := " SELECT TOP 1 *
     cQuery += " FROM " + RetSqlName("ZHC") + " ZHC (NOLOCK)
     cQuery += " WHERE ZHC_FILIAL='"+FWxFilial("ZHC")+"'
-    cQuery += " AND ZHC_CODIGO<>'"+cCodZHC+"'
     cQuery += " AND ZHC_BANCO='"+cBanco+"'
     cQuery += " AND ZHC_AGENCI='"+cAgencia+"'
     cQuery += " AND ZHC_CONTA='"+cConta+"'
     cQuery += " AND ZHC_DIGCTA='"+cDigCta+"'
-    //cQuery += " AND ZHC_CPFCGC<>'"+cCPFCGC+"' // @ticket 71666 - Fernando Macieira - 19/04/2022 - RM - Acordos - Alteração dados FAVORECIDOS
+    cQuery += " AND ZHC_CPFCGC<>'"+cCPFCGC+"'
     cQuery += " AND D_E_L_E_T_=''
 
     tcQuery cQuery New Alias "Work"
