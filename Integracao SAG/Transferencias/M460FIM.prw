@@ -49,6 +49,7 @@
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento..
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 /*/
 User Function M460FIM()
 
@@ -1261,6 +1262,8 @@ Static Function COMPCRAUTO()
     Local nSaldoComp := 0
 	Local aAreaSE1   := SE1->( GetArea() )
 	Local dBkpDtBs   := dDataBase // @history Ch:059415 - FWNM 			 - 13/08/2020 - Contabilizar pela data do RA a Compensação automática para PV Bradesco WS
+	Local dDtNF      := CtoD("//") // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
+	Local dDtRA      := CtoD("//") // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 
     // @history Ticket 1208 – FWNM - 09/09/2020 - Queda no sistema
     Private nRecnoE1  := 0
@@ -1281,6 +1284,7 @@ Static Function COMPCRAUTO()
 			// Busco recno do título da NF
 			If SE1->( dbSeek(FWxFilial("SE1")+SF2->(F2_SERIE+F2_DOC)+PadR("",Len(SE1->E1_PARCELA))+PadR("NF",Len(SE1->E1_TIPO))) )
 				nRecnoE1 := SE1->( RECNO() )
+				dDtNF := SE1->E1_EMISSAO // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 			EndIf
 
 			// Busco recno e valor a compensar do adiantamento do PV
@@ -1288,6 +1292,7 @@ Static Function COMPCRAUTO()
 		
 				nRecnoRA   := SE1->( RECNO() )
 				nSaldoComp := SE1->E1_SALDO
+				dDtRA      := SE1->E1_EMISSAO // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 
 				PERGUNTE(PadR("AFI340",Len(SX1->X1_GRUPO)),.F.) // Commpensação Contas Pagar
 				MV_PAR11 := 2 // Contabiliza On Line ? = NÃO
@@ -1310,7 +1315,17 @@ Static Function COMPCRAUTO()
 				aRecSE1 := { nRecnoE1 }
 		
 				// Efetuo compensação automática (POSICIONADO NO ADIANTAMENTO)
+				
+				// @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 				dDataBase := SE1->E1_EMISSAO // @history Ch:059415 - FWNM 			 - 13/08/2020 - Contabilizar pela data do RA a Compensação automática para PV Bradesco WS
+				If !Empty(dDtNF) .and. !Empty(dDtRA)
+					If dDtNF >= dDtRA
+						dDataBase := dDtNF
+					Else
+						dDataBase := dDtRA
+					EndIf
+				EndIf
+				//
 				
 				If !(SE1->E1_TIPO $ MVPROVIS) // @history tic 15299 - Fer Macieira    - 09/06/2021 - Compensação Errada PR
 
