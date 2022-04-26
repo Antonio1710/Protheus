@@ -40,6 +40,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 31/03/2022 - RM - Acordos - Integração Protheus - Reativação função fix - Visa garantir a integridade das regras
     @ticket 70924 - Fernando Macieira - 06/04/2022 - RM - Acordos - verificar os acordos em meses que tem 31 dias, não podemos ter duas parcelas dentro do mesmo mês, exemplos os titulos final 3081 e 3087
     @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
+    @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - Parcelas não estão gerando com a emissão do tipo PR
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -259,7 +260,7 @@ User Function ADFIN121P(lAuto)
                                         { "E2_NATUREZ", SE2->E2_NATUREZ	         , NIL },;
                                         { "E2_FORNECE", SE2->E2_FORNECE          , NIL },;
                                         { "E2_LOJA"   , SE2->E2_LOJA             , NIL },;
-                                        { "E2_EMISSAO", dDataBase /*msDate()*/                 , NIL },;
+                                        { "E2_EMISSAO", SE2->E2_EMISSAO /*msDate()*/                 , NIL },;
                                         { "E2_VENCTO" , dVencto                  , NIL },;
                                         { "E2_VENCREA", DataValida(dVencto)      , NIL },;
                                         { "E2_VALOR"  , nVlrParcelas+nDifParcelas, NIL },;
