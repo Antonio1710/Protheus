@@ -22,6 +22,7 @@
 	@history Everson-18/03/2020-Chamado 054941. Tratamento para vincular a natureza correta ao CT-e.
 	@history Leon	-22/07/2020-Chamado TI.		Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history Everson-05/08/2020-Chamado TI. Validação Pedido de compra x CT-e.
+	@history Abel   -25/04/2022-Ticket 69574.   Projeto FAI
 	/*/
 User Function ADFIS032P() // U_ADFIS032P()
 	//Declaracao de Variaveis
@@ -616,7 +617,8 @@ Static Function paramFis() //Everson - 21/10/2019. Chamado 029058.
 	//Everson - 06/03/2020. Chamado 054941.
 	If cEmpAnt == "01" //Everson - 18/03/2020. Chamado 054941.
 		//
-		If cFilAnt == "02"
+		//Abel   -25/04/2022-Ticket 69574.   Projeto FAI
+		If Alltrim(cFilAnt) $ "02|0B"
 			Aadd(aDados,{"800922","03E","405","22003"}) //Longo percurso.
 			Aadd(aDados,{"800923","03E","405","22003"}) //Frete varejo.
 			Aadd(aDados,{"808360","03E","405","22003"}) //Frete exportação

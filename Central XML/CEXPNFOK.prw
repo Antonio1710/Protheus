@@ -17,8 +17,8 @@
 	@history Chamado - 050334 12/07/2019 - Abel Babini.     Padronizar Série da NF de Entrada 
 	@history TicKet  - 28 	  04/08/2020 - Richard Fabrietch - Correção do posicionamento de alteração de Serie NFE
 	@history Ticket 10781     17/03/2021 - Abel Babini      Padronização de Séries nas empresasa. Adição dos CNPJ´s da Safegg e Simplify
+	@history Ticket 69574     21/03/2022 - Abel Babini      - Projeto FAI
 /*/
-
 
 User Function CEXPNFOK()
 
@@ -28,12 +28,12 @@ Local cDocSer  	:= ""
 Local cA2CGC   	:= ""
 Local lAlterSD1 := "N"
 Local cPlcVeic  := Alltrim(SF1->F1_PLACA) //chamado: 048464 09/04/2019 - Fernando Sigoli 
-         
+Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- Emissao do Boletim de Entrada ')
 	
 		 
 //Devolução
-If SF1->F1_TIPO == "D" .AND. Alltrim(cFilAnt) $ '02' //devolução com integração com Edata, somente na filial 02
+If SF1->F1_TIPO == "D" .AND. Alltrim(cFilAnt) $ cFilSF //devolução com integração com Edata, somente na filial 02
 
 	SD1->(dbSetOrder(1))
 	SD1->(dbSeek(xFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA))
