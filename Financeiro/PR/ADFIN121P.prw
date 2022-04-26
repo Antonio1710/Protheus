@@ -41,6 +41,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 70924 - Fernando Macieira - 06/04/2022 - RM - Acordos - verificar os acordos em meses que tem 31 dias, não podemos ter duas parcelas dentro do mesmo mês, exemplos os titulos final 3081 e 3087
     @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
     @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - Parcelas não estão gerando com a emissão do tipo PR
+    @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -63,6 +64,12 @@ User Function ADFIN121P(lAuto)
     Local lOnline      := .f.
     Local aDadSE2      := {}
     Local cStatusRM    := ""
+
+    // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+    Local nVlrParc1    := 0
+    Local lPerc1P      := .f.
+    Local nSldParc1    := 0
+    Local nVlrSE2      := 0
 
     // Dados necessários para central aprovação
     Local cPrefixo  := ""
@@ -198,9 +205,29 @@ User Function ADFIN121P(lAuto)
                             {"AUTJUROS"    ,0               ,Nil,.T.}}
                             //{"NVALREC" ,SE1->E1_VALOR,Nil }}
 
-                nQtdParcelas := Val(SE2->E2_PARCELA)
-                nVlrParcelas := Round((SE2->E2_VALOR / nQtdParcelas),TamSX3("E2_VALOR")[2])
-                nDifParcelas := SE2->E2_VALOR - (nQtdParcelas * nVlrParcelas) // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
+                // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+                If ZHB->(FieldPos("ZHB_PERC1P")) > 0
+                    lPerc1P := .f.
+                    ZHB->( dbSetOrder(3) ) // ZHB_FILIAL, ZHB_NUM, R_E_C_N_O_, D_E_L_E_T_
+                    If ZHB->( dbSeek(FWxFilial("ZHB")+SE2->E2_NUM) )
+                        If ZHB->ZHB_PERC1P > 0
+                            lPerc1P := .t.
+                            nVlrParc1 := Round(SE2->E2_VALOR * (ZHB->ZHB_PERC1P / 100),TamSX3("E2_VALOR")[2])
+                            nSldParc1 := SE2->E2_VALOR - nVlrParc1
+                        EndIf
+                    EndIf
+                EndIf
+
+                If lPerc1P
+                    nQtdParcelas := Val(SE2->E2_PARCELA) - 1
+                    nVlrParcelas := Round((nSldParc1 / nQtdParcelas),TamSX3("E2_VALOR")[2])
+                    nDifParcelas := nSldParc1 - (nQtdParcelas * nVlrParcelas)
+                    nQtdParcelas := Val(SE2->E2_PARCELA)
+                Else
+                    nQtdParcelas := Val(SE2->E2_PARCELA)
+                    nVlrParcelas := Round((SE2->E2_VALOR / nQtdParcelas),TamSX3("E2_VALOR")[2])
+                    nDifParcelas := SE2->E2_VALOR - (nQtdParcelas * nVlrParcelas) // @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
+                EndIf
 
                 Begin Transaction
 
@@ -243,13 +270,20 @@ User Function ADFIN121P(lAuto)
                         
                         For ii:=1 to nQtdParcelas
 
+                            // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+                            nVlrSE2 := nVlrParcelas+nDifParcelas
+                            If lPerc1P .and. ii == 1
+                                nVlrSE2 := nVlrParc1
+                            EndIf
+                            //
+
                             SE2->( dbGoTo(nRecnoE2PR) )
                             
                             cParcela := StrZero(ii,TamSX3("E2_PARCELA")[1])
                             If ii == 1
-                                dVencto  := SE2->E2_VENCTO
+                                dVencto := SE2->E2_VENCTO
                             Else
-                                dVencto  := SE2->E2_VENCTO+nDias
+                                dVencto := SE2->E2_VENCTO+nDias
                             EndIf
 
                             aDadNDI := {}
@@ -263,7 +297,7 @@ User Function ADFIN121P(lAuto)
                                         { "E2_EMISSAO", SE2->E2_EMISSAO /*msDate()*/                 , NIL },;
                                         { "E2_VENCTO" , dVencto                  , NIL },;
                                         { "E2_VENCREA", DataValida(dVencto)      , NIL },;
-                                        { "E2_VALOR"  , nVlrParcelas+nDifParcelas, NIL },;
+                                        { "E2_VALOR"  , nVlrSE2 /*nVlrParcelas+nDifParcelas*/, NIL },;
                                         { "E2_HIST"   , cHist                    , NIL }}
 			
                             lMsErroAuto := .f.
@@ -297,7 +331,12 @@ User Function ADFIN121P(lAuto)
                                 SE2->( msUnLock() )
 
                                 nDias += 30
-                                nDifParcelas := 0
+                                
+                                // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+                                If !lPerc1P .or. (lPerc1P .and. ii >= 2)
+                                    nDifParcelas := 0
+                                EndIf
+                                //
 
                                 aAdd( aDadSE2, { SE2->(RecNo()) } )
 
@@ -598,7 +637,7 @@ User Function FixParcNDI(cNumNDI)
     
         Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB") .and. ZHB->ZHB_NUM==cNumNDI
 
-            If !Empty(ZHB->ZHB_NUM) .and. ZHB->ZHB_PARCEL>1 .and. ZHB->ZHB_GERPAR
+            If !Empty(ZHB->ZHB_NUM) .and. ZHB->ZHB_PARCEL>1 //.and. ZHB->ZHB_GERPAR
 
                 SE2->( dbSetOrder(1) ) // E2_FILIAL, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, R_E_C_N_O_, D_E_L_E_T_
                 If SE2->( dbSeek(FWxFilial("SE2")+PadR(cPrefixo,TamSX3("E2_PREFIXO")[1])+ZHB->ZHB_NUM) )
