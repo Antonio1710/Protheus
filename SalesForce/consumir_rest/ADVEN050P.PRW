@@ -11,12 +11,12 @@
 	@version 01
 	@history Everson, 20/04/2020, Chamado 056247 - Tratamento para bloqueio de pedidos de venda vinculados a boletos de pagamentos antecipados.
 	@history Everson, 12/08/2020, Chamado 060229 - Tratamento para envio de mensagem de boleto ao Salesforce.
-	@history Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
 User Function ADVEN050P(cParamBsc,lAut,lCredito,cExpSql,lAprovFin,lItem,lDtE,_lBon,_lDoa,lPlcLog,nOpc,nBolAnt) //Everson - 20/04/2020. Chamado 056247. // U_ADVEN050P("9A2ZJ6",.F.) // U_ADVEN050P("9A2ZG8",.F.,.F.,,.F.,.T.)
 
 	//Variáveis.
 	Local aArea   	:= GetArea()
+	Local nAux		:= 0
 
 	Default cParamBsc := ""
 	Default lAut	  := .F.
@@ -480,7 +480,7 @@ Static Function statipPed(cPed,nOpc)
 	If nOpc == 1     // Status do Pedido.
 	
 		cRet := "Aprovado Financeiro"
-		cQuery := " SELECT C9_PEDIDO, C9_BLCRED  FROM " + RetSqlName("SC9") + " AS SC9 WHERE C9_FILIAL = '" + FwxFilial("SC9") + "' AND C9_PEDIDO = '" + cPed + "' AND SC9.D_E_L_E_T_ = '' " //Everson, 18/04/2022, Chamado 71231.
+		cQuery := " SELECT C9_PEDIDO, C9_BLCRED  FROM " + RetSqlName("SC9") + " AS SC9 WHERE C9_FILIAL = '" + cFilAnt + "' AND C9_PEDIDO = '" + cPed + "' AND SC9.D_E_L_E_T_ = '' "
 		
 		TcQuery cQuery New Alias "BLOQ"
 		DbSelectArea("BLOQ")
@@ -560,6 +560,7 @@ Static Function scriptSql(cParamBsc,aResponse,cExpSql)
 
 	//Variáveis.
 	Local cQuery 	:= ""	
+	Local cCodVend	:= ""
 
 	//
 	cParamBsc := Alltrim(cValToChar(cParamBsc))
@@ -574,7 +575,7 @@ Static Function scriptSql(cParamBsc,aResponse,cExpSql)
 	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
 	cQuery += " WHERE " 
 	
-	cQuery += " C5_FILIAL = '" + FwxFilial("SC5") + "' AND C5_MOEDA = '1' AND C5_APRVDOA = '' AND C5_TABELA <> '' AND C5_TIPO = 'N' " //Everson, 18/04/2022, Chamado 71231.
+	cQuery += " C5_FILIAL = '" + cFilAnt + "' AND C5_MOEDA = '1' AND C5_APRVDOA = '' AND C5_TABELA <> '' AND C5_TIPO = 'N' "
 	
 	If ! lLibFin .And. ! nBoleto > 0 // Se não for rotina de mundança de status de pedidos de venda. //Everson - 20/04/2020. Chamado 056247.
 		
@@ -589,9 +590,9 @@ Static Function scriptSql(cParamBsc,aResponse,cExpSql)
 		cQuery += " SELECT "
 		cQuery += " DISTINCT FONTE1.CODV AS A3_COD "
 		cQuery += " FROM "
-		cQuery += " (SELECT DISTINCT A3_COD AS CODV, CASE WHEN A3_XAGRSF = '' OR A3_XAGRSF IS NULL THEN A3_COD ELSE A3_XAGRSF END AS A3_COD, A3_XAGRSF FROM " + RetSqlName("SA3") + " AS SA3 WHERE SA3.A3_FILIAL = '" + FWxFilial("SA3") + "' AND SA3.D_E_L_E_T_ = '') AS FONTE1 " //Everson, 18/04/2022, Chamado 71231.
+		cQuery += " (SELECT DISTINCT A3_COD AS CODV, CASE WHEN A3_XAGRSF = '' OR A3_XAGRSF IS NULL THEN A3_COD ELSE A3_XAGRSF END AS A3_COD, A3_XAGRSF FROM " + RetSqlName("SA3") + " AS SA3 WHERE SA3.D_E_L_E_T_ = '') AS FONTE1 "
 		cQuery += " INNER JOIN "
-		cQuery += " (SELECT A3_COD, A3_XIDSF FROM " + RetSqlName("SA3") + " AS SA3 WHERE SA3.A3_FILIAL = '" + FwxFilial("SA3") + "' AND SA3.D_E_L_E_T_ = '' AND A3_XSALES = '2') AS FONTE2 " //Everson, 18/04/2022, Chamado 71231.
+		cQuery += " (SELECT A3_COD, A3_XIDSF FROM " + RetSqlName("SA3") + " AS SA3 WHERE SA3.D_E_L_E_T_ = '' AND A3_XSALES = '2') AS FONTE2 "
 		cQuery += " ON FONTE1.A3_COD = FONTE2.A3_COD "
 	
 	cQuery += " )"
@@ -762,29 +763,29 @@ Static Function iscriptSql(cParamBsc)
 		cQuery +=" FROM "
 		cQuery +=" " + RetSqlName("CC2") + " AS CC2 "
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT ZZI_REGIAO,ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI_FILIAL = '" + FWxFilial("ZZI") + "' AND ZZI.D_E_L_E_T_ = '') AS FRTREG "
+		cQuery +=" (SELECT ZZI_REGIAO,ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI.D_E_L_E_T_ = '') AS FRTREG "
 		cQuery +=" ON CC2_XREGIA = FRTREG.ZZI_REGIAO "
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT ZZI_ESTADO, MAX(ZZI_VALOR) AS ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI_FILIAL = '" + FWxFilial("ZZI") + "' AND ZZI.D_E_L_E_T_ = '' GROUP BY ZZI_ESTADO) AS FRTEST "
+		cQuery +=" (SELECT ZZI_ESTADO, MAX(ZZI_VALOR) AS ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI.D_E_L_E_T_ = '' GROUP BY ZZI_ESTADO) AS FRTEST "
 		cQuery +=" ON CC2_EST = FRTEST.ZZI_ESTADO "
 		cQuery +=" WHERE "
-		cQuery +=" CC2_FILIAL = '" + FWxFilial("CC2") + "' AND CC2.D_E_L_E_T_ = '') AS VLRFRT "
+		cQuery +=" CC2.D_E_L_E_T_ = '') AS VLRFRT "
 		cQuery +=" ON A1_EST = VLRFRT.CC2_EST "
 		cQuery +=" AND A1_COD_MUN = VLRFRT.CC2_CODMUN "
 		
 		//Tabela de preço máximo.
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + FwxFilial("DA1") + "' AND DA1_CODTAB IN ('Y00') AND DA1.D_E_L_E_T_ = '') AS MAXI " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + cFilAnt + "' AND DA1_CODTAB IN ('Y00') AND DA1.D_E_L_E_T_ = '') AS MAXI "
 		cQuery +=" ON B1_COD = MAXI.DA1_CODPRO "
 		
 		//Tabela de preço mínimo.
 		cQuery +=" LEFT OUTER JOIN  "
-		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + FwxFilial("DA1") + "' AND DA1_CODTAB IN ('Z01') AND DA1.D_E_L_E_T_ = '') AS MINI " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + cFilAnt + "' AND DA1_CODTAB IN ('Z01') AND DA1.D_E_L_E_T_ = '') AS MINI "
 		cQuery +=" ON B1_COD = MINI.DA1_CODPRO "
 		
 		//Tabela IP.
 		cQuery +=" LEFT OUTER JOIN  "
-		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + FwxFilial("DA1") + "' AND DA1_CODTAB IN ('" + cTabIP + "') AND DA1.D_E_L_E_T_ = '') AS IP " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + cFilAnt + "' AND DA1_CODTAB IN ('" + cTabIP + "') AND DA1.D_E_L_E_T_ = '') AS IP "
 		cQuery +=" ON B1_COD = IP.DA1_CODPRO "
 		
 		//Preço FOB.
@@ -798,7 +799,7 @@ Static Function iscriptSql(cParamBsc)
 		cQuery +=" DA1_FILIAL = DA0_FILIAL "
 		cQuery +=" AND DA1_CODTAB = DA0_CODTAB "
 		cQuery +=" WHERE "
-		cQuery +=" DA1_FILIAL = '" + FWxFilial("DA1") + "' " 
+		cQuery +=" DA1_FILIAL = '" + cFilAnt + "' " 
 		cQuery +=" AND DA1.D_E_L_E_T_ = '' "
 		cQuery +=" AND DA0.D_E_L_E_T_ = '' "
 		cQuery +=" ) AS FOB "
@@ -813,12 +814,12 @@ Static Function iscriptSql(cParamBsc)
 		
 		//Preço custo.
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT ZZS_DATA, ZZS_GRUPO, ZZS_VALOR FROM " + RetSqlName("ZZS") + " AS ZZS WHERE ZZS_FILIAL = '" + FWxFilial("ZZS") + "' AND ZZS.D_E_L_E_T_ = '') AS CUSTO "
+		cQuery +=" (SELECT ZZS_DATA, ZZS_GRUPO, ZZS_VALOR FROM " + RetSqlName("ZZS") + " AS ZZS WHERE ZZS.D_E_L_E_T_ = '') AS CUSTO "
 		cQuery +=" ON SC5.C5_EMISSAO = CUSTO.ZZS_DATA "
 		cQuery +=" AND B1_GRUPO = CUSTO.ZZS_GRUPO "
 	
 		cQuery +=" WHERE "
-		cQuery +=" C6_FILIAL = '" + FWxFilial("SC6") + "' "
+		cQuery +=" C6_FILIAL = '" + cFilAnt + "' "
 		cQuery +=" AND C6_NUM = '" + cParamBsc + "' "
 		cQuery +=" AND C6_UNSVEN > 0 "
 		cQuery +=" AND SC6.D_E_L_E_T_ = '' "
@@ -848,10 +849,10 @@ Static Function iscriptSql(cParamBsc)
 		cQuery +=" FROM "
 		cQuery +=" " + RetSqlName("CC2") + " AS CC2 "
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT ZZI_REGIAO,ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI_FILIAL = '" + FWxFilial("ZZI") + "' AND ZZI.D_E_L_E_T_ = '') AS FRTREG "
+		cQuery +=" (SELECT ZZI_REGIAO,ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI.D_E_L_E_T_ = '') AS FRTREG "
 		cQuery +=" ON CC2_XREGIA = FRTREG.ZZI_REGIAO "
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT ZZI_ESTADO, MAX(ZZI_VALOR) AS ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI_FILIAL = '" + FWxFilial("ZZI") + "' AND ZZI.D_E_L_E_T_ = '' GROUP BY ZZI_ESTADO) AS FRTEST "
+		cQuery +=" (SELECT ZZI_ESTADO, MAX(ZZI_VALOR) AS ZZI_VALOR FROM " + RetSqlName("ZZI") + " AS ZZI WHERE ZZI.D_E_L_E_T_ = '' GROUP BY ZZI_ESTADO) AS FRTEST "
 		cQuery +=" ON CC2_EST = FRTEST.ZZI_ESTADO "
 		cQuery +=" WHERE "
 		cQuery +=" CC2.D_E_L_E_T_ = '') AS VLRFRT "
@@ -860,17 +861,17 @@ Static Function iscriptSql(cParamBsc)
 		
 		//Tabela de preço máximo.
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + FWxFilial("DA1") + "' AND DA1_CODTAB IN ('Y00') AND DA1.D_E_L_E_T_ = '') AS MAXI " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + cFilAnt + "' AND DA1_CODTAB IN ('Y00') AND DA1.D_E_L_E_T_ = '') AS MAXI "
 		cQuery +=" ON B1_COD = MAXI.DA1_CODPRO "
 		
 		//Tabela de preço mínimo.
 		cQuery +=" LEFT OUTER JOIN  "
-		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + FWxFilial("DA1") + "' AND DA1_CODTAB IN ('Z01') AND DA1.D_E_L_E_T_ = '') AS MINI " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + cFilAnt + "' AND DA1_CODTAB IN ('Z01') AND DA1.D_E_L_E_T_ = '') AS MINI "
 		cQuery +=" ON B1_COD = MINI.DA1_CODPRO "
 		
 		//Tabela IP.
 		cQuery +=" LEFT OUTER JOIN  "
-		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + FWxFilial("DA1") + "' AND DA1_CODTAB IN ('" + cTabIP + "') AND DA1.D_E_L_E_T_ = '') AS IP " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" (SELECT DA1_CODPRO, DA1_XPRLIQ FROM " + RetSqlName("DA1") + " AS DA1 WHERE DA1_FILIAL = '" + cFilAnt + "' AND DA1_CODTAB IN ('" + cTabIP + "') AND DA1.D_E_L_E_T_ = '') AS IP "
 		cQuery +=" ON B1_COD = IP.DA1_CODPRO "
 		
 		//Preço FOB.
@@ -884,7 +885,7 @@ Static Function iscriptSql(cParamBsc)
 		cQuery +=" DA1_FILIAL = DA0_FILIAL "
 		cQuery +=" AND DA1_CODTAB = DA0_CODTAB "
 		cQuery +=" WHERE "
-		cQuery +=" DA1_FILIAL = '" + FWxFilial("DA1") + "' " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" DA1_FILIAL = '" + cFilAnt + "' " 
 		cQuery +=" AND DA1.D_E_L_E_T_ = '' "
 		cQuery +=" AND DA0.D_E_L_E_T_ = '' "
 		cQuery +=" ) AS FOB "
@@ -899,12 +900,12 @@ Static Function iscriptSql(cParamBsc)
 		
 		//Preço custo.
 		cQuery +=" LEFT OUTER JOIN "
-		cQuery +=" (SELECT ZZS_DATA, ZZS_GRUPO, ZZS_VALOR FROM " + RetSqlName("ZZS") + " AS ZZS WHERE ZZS_FILIAL = '" + FWxFilial("ZZS") + "' AND ZZS.D_E_L_E_T_ = '') AS CUSTO "
+		cQuery +=" (SELECT ZZS_DATA, ZZS_GRUPO, ZZS_VALOR FROM " + RetSqlName("ZZS") + " AS ZZS WHERE ZZS.D_E_L_E_T_ = '') AS CUSTO "
 		cQuery +=" ON SC5.C5_EMISSAO = CUSTO.ZZS_DATA "
 		cQuery +=" AND B1_GRUPO = CUSTO.ZZS_GRUPO "
 	
 		cQuery +=" WHERE "
-		cQuery +=" SC6.C6_FILIAL = '" + FWxFilial("SC6") + "' " //Everson, 18/04/2022, Chamado 71231.
+		cQuery +=" SC6.C6_FILIAL = '" + cFilAnt + "' "
 		cQuery +=" AND SC6.C6_UNSVEN > 0 "
 		cQuery +=" AND SC5.C5_XGERSF = '1' "
 		cQuery +=" AND SC5.C5_XPEDSAL <> '' "
@@ -932,6 +933,7 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 	Local aArea	  := GetArea()
 	Local cUpdate := ""
 	Local cMsg	  := ""
+	Local cUpSC5  := ""
 	Local nPos	  := .F.
 	
 	//Remove Marca de nota de saída e código da empresa.
@@ -961,7 +963,7 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 					nPos := Ascan(aChkStat,{|x| x[1] ==  cChave})
 					Conout("aChkStat[nPos][2] " + cValToChar(aChkStat[nPos][2]) )
 					If aChkStat[nPos][2]
-						cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '2' WHERE C5_FILIAL = '" + FWxFilial("SC5") + "' AND C5_NUM = '" + cChave + "' AND C5_NOTA NOT IN ('XXXXXXXXX','') AND D_E_L_E_T_ = '' "
+						cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '2' WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM = '" + cChave + "' AND C5_NOTA NOT IN ('XXXXXXXXX','') AND D_E_L_E_T_ = '' "
 					
 					EndIf
 					
@@ -971,12 +973,12 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 				EndIf
 				
 			ElseIf !Empty(cChave) //Pedidos reprovados/excluídos.
-				cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '2' WHERE C5_FILIAL = '" +  FWxFilial("SC5") + "' AND C5_NUM = '" + cChave + "' AND ( C5_FLAGFIN = 'B' OR D_E_L_E_T_ <> '')  "
+				cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '2' WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM = '" + cChave + "' AND ( C5_FLAGFIN = 'B' OR D_E_L_E_T_ <> '')  "
 				
 			EndIf
 			
 		ElseIf nExecStat == 1 .And. !Empty(cChave)
-			cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '3' WHERE C5_FILIAL = '" +  FWxFilial("SC5") + "' AND C5_NUM = '" + cChave + "' "
+			cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '3' WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM = '" + cChave + "' "
 		
 		EndIf
 		
@@ -986,13 +988,13 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 		
 		If Alltrim(cValToChar((cAliasS)->TAB)) == "SC5" .And. !Empty(cId) .And. !Empty(cChave)
 			Conout("ADVEN050P - Envio cabeçalho SC5 " + cChave)
-			cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XPEDSAL = '" + cId + "' WHERE C5_FILIAL = '" +  FWxFilial("SC5") + "' AND C5_NUM = '" + cChave + "' AND D_E_L_E_T_ = '' "
+			cUpdate := "  UPDATE " + RetSqlName("SC5") + " SET C5_XPEDSAL = '" + cId + "' WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_NUM = '" + cChave + "' AND D_E_L_E_T_ = '' "
 		
 		ElseIf Alltrim(cValToChar((cAliasS)->TAB)) == "SC6" .And. !Empty(cId) .And. !Empty(cChave)
 			
 			Conout("ADVEN050P - ADVEN050P - Envio item SC6 " + cChave)
 			//If checkSC6(cId)
-				cUpdate := "  UPDATE " + RetSqlName("SC6") + " SET C6_XIDSF = '" + cId + "' WHERE C6_FILIAL = '" +  FWxFilial("SC6") + "' AND RTRIM(LTRIM(C6_NUM)) + RTRIM(LTRIM(C6_PRODUTO))  = '" + cChave + "' AND D_E_L_E_T_ = '' "
+				cUpdate := "  UPDATE " + RetSqlName("SC6") + " SET C6_XIDSF = '" + cId + "' WHERE C6_FILIAL = '" + cFilAnt + "' AND RTRIM(LTRIM(C6_NUM)) + RTRIM(LTRIM(C6_PRODUTO))  = '" + cChave + "' AND D_E_L_E_T_ = '' "
 				Conout("ADVEN050P - ADVEN050P - Update envio item SC6 " + cChave)
 				Conout("ADVEN050P - UPDATE ITEM >>> " + cUpdate)
 			//EndIf
@@ -1046,7 +1048,7 @@ Static Function checkSC6(cId)
 	cQuery += " FROM " 
 	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 " 
 	cQuery += " WHERE " 
-	cQuery += " C6_FILIAL = '" +  FWxFilial("SC6") + "' " 
+	cQuery += " C6_FILIAL = '" + cFilAnt + "' " 
 	cQuery += " AND C6_XIDSF = '" + cId + "' " 
 	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
 	
@@ -1093,16 +1095,16 @@ Static Function chkDuplic(lAut)
 	cQuery += " COUNT(FONTE.C5_NUM) AS NR_PED " 
 	cQuery += " FROM " 
 	cQuery += " ( " 
-	cQuery += " SELECT C5_NUM FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE SC5.C5_FILIAL = '" +  FWxFilial("SC5") + "' AND CAST(SC5.C5_DTENTR AS DATE) >= CAST(GETDATE()-4 AS DATE) AND SC5.D_E_L_E_T_ = '' AND SC5.C5_XPEDSAL IN ( " 
+	cQuery += " SELECT C5_NUM FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE SC5.C5_FILIAL = '" + cFilAnt + "' AND CAST(SC5.C5_DTENTR AS DATE) >= CAST(GETDATE()-4 AS DATE) AND SC5.D_E_L_E_T_ = '' AND SC5.C5_XPEDSAL IN ( " 
 	cQuery += " SELECT FONTE.C5_XPEDSAL FROM ( " 
-	cQuery += " SELECT C5_XPEDSAL, COUNT(C5_NUM) AS TOT_PED FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE SC5.C5_FILIAL = '" +  FWxFilial("SC5") + "' AND SC5.C5_XPEDSAL <> '' AND SC5.D_E_L_E_T_ = '' AND CAST(SC5.C5_DTENTR AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY SC5.C5_XPEDSAL " 
+	cQuery += " SELECT C5_XPEDSAL, COUNT(C5_NUM) AS TOT_PED FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE SC5.C5_FILIAL = '" + cFilAnt + "' AND SC5.C5_XPEDSAL <> '' AND SC5.D_E_L_E_T_ = '' AND CAST(SC5.C5_DTENTR AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY SC5.C5_XPEDSAL " 
 	cQuery += " ) AS FONTE " 
 	cQuery += " WHERE FONTE.TOT_PED > 1 " 
 	cQuery += " ) " 
 	cQuery += " UNION ALL " 
-	cQuery += " SELECT C6_NUM FROM " + RetSqlName("SC6") + " (NOLOCK) AS SC6 WHERE SC6.C6_FILIAL = '" +  FWxFilial("SC6") + "' AND CAST(SC6.C6_ENTREG AS DATE) >= CAST(GETDATE()-4 AS DATE) AND SC6.D_E_L_E_T_ = '' AND SC6.C6_XIDSF IN( " 
+	cQuery += " SELECT C6_NUM FROM " + RetSqlName("SC6") + " (NOLOCK) AS SC6 WHERE SC6.C6_FILIAL = '" + cFilAnt + "' AND CAST(SC6.C6_ENTREG AS DATE) >= CAST(GETDATE()-4 AS DATE) AND SC6.D_E_L_E_T_ = '' AND SC6.C6_XIDSF IN( " 
 	cQuery += " SELECT FONTE.C6_XIDSF FROM ( " 
-	cQuery += " SELECT C6_XIDSF, COUNT(C6_NUM) AS TOT_PED FROM " + RetSqlName("SC6") + " (NOLOCK) AS SC6 WHERE SC6.C6_FILIAL = '" +  FWxFilial("SC6") + "' AND  SC6.C6_XIDSF <> '' AND SC6.D_E_L_E_T_ = '' AND CAST(SC6.C6_ENTREG AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY SC6.C6_XIDSF " 
+	cQuery += " SELECT C6_XIDSF, COUNT(C6_NUM) AS TOT_PED FROM " + RetSqlName("SC6") + " (NOLOCK) AS SC6 WHERE SC6.C6_FILIAL = '" + cFilAnt + "' AND  SC6.C6_XIDSF <> '' AND SC6.D_E_L_E_T_ = '' AND CAST(SC6.C6_ENTREG AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY SC6.C6_XIDSF " 
 	cQuery += " ) AS FONTE " 
 	cQuery += " WHERE FONTE.TOT_PED > 1 " 
 	cQuery += " ) " 
@@ -1149,10 +1151,10 @@ Static Function rmvDuplic(lAut)
 	Conout("ADVEN050P - >>>>>>>>>>>>>>>>>>>> Checa Duplicidade")
 	
 	cUpSC6 := ""
-	cUpSC6 += " UPDATE " + RetSqlName("SC6") + " SET C6_XIDSF = '' WHERE C6_FILIAL = '" +  FWxFilial("SC6") + "' AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()-4 AS DATE) AND D_E_L_E_T_ = '' AND C6_NUM IN ( " 
-	cUpSC6 += " SELECT C5_NUM FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE SC5.C5_FILIAL = '" +  FWxFilial("SC5") + "' AND SC5.D_E_L_E_T_ = '' AND DATEDIFF(DAY,SC5.C5_DTENTR,GETDATE()) <= 4 AND SC5.C5_XPEDSAL IN ( " 
+	cUpSC6 += " UPDATE " + RetSqlName("SC6") + " SET C6_XIDSF = '' WHERE C6_FILIAL = '" + cFilAnt + "' AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()-4 AS DATE) AND D_E_L_E_T_ = '' AND C6_NUM IN ( " 
+	cUpSC6 += " SELECT C5_NUM FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE SC5.C5_FILIAL = '" + cFilAnt + "' AND SC5.D_E_L_E_T_ = '' AND DATEDIFF(DAY,SC5.C5_DTENTR,GETDATE()) <= 4 AND SC5.C5_XPEDSAL IN ( " 
 	cUpSC6 += " SELECT FONTE.C5_XPEDSAL FROM ( " 
-	cUpSC6 += " SELECT C5_XPEDSAL, COUNT(C5_NUM) AS TOT_PED FROM " + RetSqlName("SC5") + " WHERE C5_FILIAL = '" +  FWxFilial("SC5") + "' AND C5_XPEDSAL <> '' AND D_E_L_E_T_ = '' AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY C5_XPEDSAL " 
+	cUpSC6 += " SELECT C5_XPEDSAL, COUNT(C5_NUM) AS TOT_PED FROM " + RetSqlName("SC5") + " WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_XPEDSAL <> '' AND D_E_L_E_T_ = '' AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY C5_XPEDSAL " 
 	cUpSC6 += " ) AS FONTE " 
 	cUpSC6 += " WHERE FONTE.TOT_PED > 1 " 
 	cUpSC6 += " ) " 
@@ -1174,9 +1176,9 @@ Static Function rmvDuplic(lAut)
 	EndIf	
 	
 	cUpSC6 := ""
-	cUpSC6 += " UPDATE " + RetSqlName("SC6") + " SET C6_XIDSF = '' WHERE C6_FILIAL = '" +  FWxFilial("SC6") + "' AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()-4 AS DATE) AND D_E_L_E_T_ = '' AND C6_XIDSF IN( " 
+	cUpSC6 += " UPDATE " + RetSqlName("SC6") + " SET C6_XIDSF = '' WHERE C6_FILIAL = '" + cFilAnt + "' AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()-4 AS DATE) AND D_E_L_E_T_ = '' AND C6_XIDSF IN( " 
 	cUpSC6 += " SELECT FONTE.C6_XIDSF FROM ( " 
-	cUpSC6 += " SELECT C6_XIDSF, COUNT(C6_NUM) AS TOT_PED FROM " + RetSqlName("SC6") + " WHERE C6_FILIAL = '" +  FWxFilial("SC6") + "' AND C6_XIDSF <> '' AND D_E_L_E_T_ = '' AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY C6_XIDSF " 
+	cUpSC6 += " SELECT C6_XIDSF, COUNT(C6_NUM) AS TOT_PED FROM " + RetSqlName("SC6") + " WHERE C6_FILIAL = '" + cFilAnt + "' AND C6_XIDSF <> '' AND D_E_L_E_T_ = '' AND CAST(C6_ENTREG AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY C6_XIDSF " 
 	cUpSC6 += " ) AS FONTE " 
 	cUpSC6 += " WHERE FONTE.TOT_PED > 1 " 
 	cUpSC6 += " ) " 
@@ -1197,9 +1199,9 @@ Static Function rmvDuplic(lAut)
 	EndIf	
 	
 	cUpSC5 := ""
-	cUpSC5 += " UPDATE " + RetSqlName("SC5") + " SET C5_XPEDSAL ='', C5_XSFSTAT = '' WHERE C5_FILIAL = '" +  FWxFilial("SC5") + "' AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()-4 AS DATE AND D_E_L_E_T_ = '' AND C5_XPEDSAL IN ( " 
+	cUpSC5 += " UPDATE " + RetSqlName("SC5") + " SET C5_XPEDSAL ='', C5_XSFSTAT = '' WHERE C5_FILIAL = '" + cFilAnt + "' AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()-4 AS DATE AND D_E_L_E_T_ = '' AND C5_XPEDSAL IN ( " 
 	cUpSC5 += " SELECT FONTE.C5_XPEDSAL FROM ( " 
-	cUpSC5 += " SELECT C5_XPEDSAL, COUNT(C5_NUM) AS TOT_PED FROM " + RetSqlName("SC5") + " WHERE C5_FILIAL = '" +  FWxFilial("SC5") + "' AND C5_XPEDSAL <> '' AND D_E_L_E_T_ = '' AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY C5_XPEDSAL " 
+	cUpSC5 += " SELECT C5_XPEDSAL, COUNT(C5_NUM) AS TOT_PED FROM " + RetSqlName("SC5") + " WHERE C5_FILIAL = '" + cFilAnt + "' AND C5_XPEDSAL <> '' AND D_E_L_E_T_ = '' AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE()-60 AS DATE) GROUP BY C5_XPEDSAL " 
 	cUpSC5 += " ) AS FONTE " 
 	cUpSC5 += " WHERE FONTE.TOT_PED > 1 " 
 	cUpSC5 += " ) " 

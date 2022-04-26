@@ -39,7 +39,6 @@ Static cRotina  := "ADFIN121P"
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
     @ticket 18141 - Fernando Macieira - 31/03/2022 - RM - Acordos - Integração Protheus - Reativação função fix - Visa garantir a integridade das regras
     @ticket 70924 - Fernando Macieira - 06/04/2022 - RM - Acordos - verificar os acordos em meses que tem 31 dias, não podemos ter duas parcelas dentro do mesmo mês, exemplos os titulos final 3081 e 3087
-    @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -77,8 +76,8 @@ User Function ADFIN121P(lAuto)
     Private cLinked := "RM"
 	Private cSGBD   := "CCZERN_119204_RM_PD"
 
-    //U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM') // @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
-    
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM')
+
 	// Inicializo ambiente
     If lAuto
 
@@ -91,8 +90,6 @@ User Function ADFIN121P(lAuto)
         EndIf
 
     EndIf
-
-    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM') // @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
 
     // Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
     If !LockByName(cRotina, .T., .F.)

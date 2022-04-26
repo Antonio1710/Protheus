@@ -9,29 +9,24 @@
     @version 01
     @history, Everson, 09/11/2020, Chamado 4597. Tratamento para a rotina considerar a data de entrega.
     @history, Everson, 10/11/2020, Chamado 4597. Adicionado o status "M" liberação manual.
-    @history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
-    @history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
     /*/
-User Function ADFIN092P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADFIN092P()
-	
-	//Declaração de variávies
-	//18/04/2022, Everson, Chamado 71231.
-	Default aXEmpFil :={ "01", "02" }
-	
-	//Inicia o ambiente.
-	RPCClearEnv()
+User Function ADFIN092P() // U_ADFIN092P()
+
+    //Variáveis.
+
+	//Inicia o ambiente. 
 	RPCSetType(3)
-	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
-
-        //
-        U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de mensagem de boleto pago ao Salesforce')
-
+	RpcSetEnv("01","02",,,,GetEnvServer(),{ })
 
         //
         envMsgB()
 
 	//Fecha o ambiente.
 	RpcClearEnv()
+
+    //
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de mensagem de boleto pago ao Salesforce')
+
 
 Return Nil
 /*/{Protheus.doc} envMsgB

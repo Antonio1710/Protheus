@@ -10,19 +10,16 @@
 	@since 10/05/2018
 	@version 1.0
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
-	@history 18/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
-	@history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
 	/*/
-User Function ADVEN094P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
-	
+User Function ADVEN094P() //U_ADVEN094P()
 	//Declaração de variávies
-	//18/04/2022, Everson, Chamado 71231.
-	Default aXEmpFil :={ "01", "02" }
+	Local cEmp 		:= "01"
+	Local cFil 		:= "02"
 	
 	//Inicia o ambiente.
 	RPCClearEnv()
 	RPCSetType(3)
-	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
+	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
 	// If !LockByName("ADVEN094P", .T., .F.)
@@ -104,27 +101,27 @@ Static Function procCancNf(cDtDe,cDtAt)
 	Local cExpSql	:= ""
 	
 	//
-	cExpSql += " UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '' WHERE C5_FILIAL = '" + FwxFilial("SC5") + "' "
+	cExpSql += " UPDATE " + RetSqlName("SC5") + " SET C5_XSFSTAT = '' WHERE C5_FILIAL = '" + cFilAnt + "' "
 	cExpSql += " AND C5_NUM IN ( "
 	cExpSql += " SELECT " 
 	cExpSql += " DISTINCT C5_NUM " 
 	cExpSql += " FROM " 
 	cExpSql += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
 	cExpSql += " INNER JOIN " 
-	cExpSql += " (SELECT D2_FILIAL, D2_DOC, D2_SERIE, D2_PEDIDO, D2_CLIENTE, D2_LOJA FROM " + RetSqlName("SD2") + " (NOLOCK) AS SD2 WHERE SD2.D2_FILIAL = '" + FwxFilial("SD2") + "' AND SD2.D_E_L_E_T_ = '*') AS SD2 " 
+	cExpSql += " (SELECT D2_FILIAL, D2_DOC, D2_SERIE, D2_PEDIDO, D2_CLIENTE, D2_LOJA FROM " + RetSqlName("SD2") + " (NOLOCK) AS SD2 WHERE SD2.D2_FILIAL = '" + cFilAnt + "' AND SD2.D_E_L_E_T_ = '*') AS SD2 " 
 	cExpSql += " ON SC5.C5_FILIAL = SD2.D2_FILIAL " 
 	cExpSql += " AND SC5.C5_NUM = SD2.D2_PEDIDO " 
 	cExpSql += " AND SC5.C5_CLIENTE = SD2.D2_CLIENTE " 
 	cExpSql += " AND SC5.C5_LOJACLI = SD2.D2_LOJA " 
 	cExpSql += " INNER JOIN " 
-	cExpSql += " (SELECT * FROM " + RetSqlName("SF3") + " (NOLOCK) AS SF3 WHERE SF3.F3_FILIAL = '" + FwxFilial("SF3") + "' AND SF3.D_E_L_E_T_ = '' AND F3_DTCANC <> '') AS SF3 " 
+	cExpSql += " (SELECT * FROM " + RetSqlName("SF3") + " (NOLOCK) AS SF3 WHERE SF3.F3_FILIAL = '" + cFilAnt + "' AND SF3.D_E_L_E_T_ = '' AND F3_DTCANC <> '') AS SF3 " 
 	cExpSql += " ON SD2.D2_FILIAL = SF3.F3_FILIAL " 
 	cExpSql += " AND SD2.D2_DOC = SF3.F3_NFISCAL " 
 	cExpSql += " AND SD2.D2_SERIE = SF3.F3_SERIE " 
 	cExpSql += " AND SD2.D2_CLIENTE = SF3.F3_CLIEFOR " 
 	cExpSql += " AND SD2.D2_LOJA = SF3.F3_LOJA " 
 	cExpSql += " WHERE " 
-	cExpSql += " SC5.C5_FILIAL = '" + FwxFilial("SC5") + "' " 
+	cExpSql += " SC5.C5_FILIAL = '" + cFilAnt + "' " 
 	cExpSql += " AND SC5.D_E_L_E_T_ = '' " 
 	cExpSql += " AND SC5.C5_XPEDSAL <> '' " 
 	cExpSql += " AND SC5.C5_DTENTR >= '" + cDtDe + "'  AND SC5.C5_DTENTR <= '" + cDtAt + "' "
@@ -157,7 +154,7 @@ Static Function procBlq(cDtDe,cDtAt)
 	cExpSql += " AND ( SC5.C5_FLAGFIN = 'B' OR SC5.D_E_L_E_T_ <> '') "
 	cExpSql += " AND SC5.C5_DTENTR >= '" + cDtDe + "' "
 	cExpSql += " AND SC5.C5_DTENTR <= '" + cDtAt + "' ""
-	cExpSql += " AND C5_NUM NOT IN (SELECT DISTINCT ZCI_NUMP FROM " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI WHERE ZCI_FILIAL = '" + FwxFilial("ZCI") + "' AND ZCI_METD = 'DELETE' AND ZCI.D_E_L_E_T_ = '' AND DATEDIFF(DAY,ZCI_DATA,GETDATE()) <= 5) "
+	cExpSql += " AND C5_NUM NOT IN (SELECT DISTINCT ZCI_NUMP FROM " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI WHERE ZCI_FILIAL = '" + cFilAnt + "' AND ZCI_METD = 'DELETE' AND ZCI.D_E_L_E_T_ = '' AND DATEDIFF(DAY,ZCI_DATA,GETDATE()) <= 5) "
 		
 	U_ADVEN050P("",.T.,.T.,cExpSql,.F.)
 	

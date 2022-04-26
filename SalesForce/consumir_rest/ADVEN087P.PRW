@@ -10,20 +10,12 @@
 	@version 1.0
 	@history Leon - 21/07/2020 - Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	/*/
-User Function ADVEN087P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
-	
-	//Declaração de variávies
+User Function ADVEN087P() // U_ADVEN087P()
+	Local cEmp 		:= "01"
+	Local cFil 		:= "02"
 	Local cScript	:= ""
 	Local cExpSql	:= ""
-
-	//18/04/2022, Everson, Chamado 71231.
-	Default aXEmpFil :={ "01", "02" }
 	
-	//Inicia o ambiente.
-	RPCClearEnv()
-	RPCSetType(3)
-	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
-
 	//Inicia o ambiente.
 	RpcClearEnv()
 	RPCSetType(3)
