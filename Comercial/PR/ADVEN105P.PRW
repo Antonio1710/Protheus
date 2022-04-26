@@ -11,6 +11,7 @@
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history 29/04/2021, Leonardo P. Monteiro, Ajuste na consulta padrão da rotina para restringir somente pedidos do tipo normal. Incluso nas consultas a condição D_E_L_E_T_ para os cadastros SB1 e SBM.
+	@history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
 User Function ADVEN105P()
 	//Declaração de variáveis
@@ -98,8 +99,8 @@ Return Nil
 	@version 01
 	/*/
 Static Function getQuery()
+
 	//Declaracao de Variaveis
-	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 
 	//
@@ -145,7 +146,8 @@ Static Function getQuery()
 	cQuery += " A3_FILIAL = SUPER.FILSUP "
 	cQuery += " AND A3_CODSUP = SUPER.CODSUP "
 	
-	cQuery += " WHERE C6_FILIAL          = '" + FwxFilial("SC6") + "' " 
+	// cQuery += " WHERE C6_FILIAL = '" + FwxFilial("SC6") + "' " //Everson - 18/04/2022. Chamado 71231.
+	cQuery += " WHERE C6_FILIAL IN ('02','0B') " //Everson - 18/04/2022. Chamado 71231.
 	cQuery += " AND C6_ENTREG >= CONVERT(VARCHAR(8), (GETDATE()), 112) " 
 	cQuery += " AND C6_CF NOT IN ('5949')"
 	cQuery += " AND C5.C5_TIPO = 'N' "

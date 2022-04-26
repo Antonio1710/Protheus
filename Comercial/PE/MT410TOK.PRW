@@ -29,7 +29,8 @@
 	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validaï¿½ï¿½o de quantidade liberada para cï¿½pia de pedido.
 	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validaï¿½ï¿½o de quantidade liberada para cï¿½pia de pedido. 
 	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusï¿½o de conouts no fonte. 
-	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.. 
+	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.
+	@history Ticket  TI     - Everson 			   - 20/04/2022 - Tratamento para pedidos gerados pela integração com o módulo de exportação.
 /*/
 
 User Function MT410TOK()
@@ -1102,9 +1103,9 @@ User Function MT410TOK()
 
 						ENDIF
 
-						lRet := .F.
+						lRet := .F. 
 					Endif
-				Elseif (TIME()>GETMV("MV_TEMPED3") .AND. SA3->A3_NIVETAB == "2")  //Mauricio - 15/04/15 - tratamento diferenciado para supervisores solicitados pelo Vagner.
+				Elseif ( Empty(Alltrim(cValToChar(M->C5_PEDEXP))) .And. TIME()>GETMV("MV_TEMPED3") .AND. SA3->A3_NIVETAB == "2")  //Mauricio - 15/04/15 - tratamento diferenciado para supervisores solicitados pelo Vagner. //Everson - 20/04/2022 - Chamado TI.
 					if _dDTENTR > (_nDiasDte+ddatabase) .Or. _dDTENTR < (ddatabase+2)
 						IF IsInCallStack('U_ADVEN002P')  == .T.
 							Aadd(aPedidos,{cchave, ;

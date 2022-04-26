@@ -37,11 +37,11 @@
     @history Ticket     TI  - William Costa     - 27/11/2020 - Ajuste na Função que gera o Codigo do Fornecedor quando o campo RM está marcado pois na RNX2 não tinha nenhum fornecedor ainda cadastrado com F, a variavel de retorno trazia branco, ajustado o IF e adicionado um Else
     @history Ticket    6648 - Adriano Savoine   - 15/12/2020 - Eliminado da Static Function o Metodo FreeChildren pois ele elimina todos os objetos da classe e causava error log ao mudar o combo produtor rural.
     @history Ticket     TI  - Abel Babini       - 28/09/2021 - Para não calcular exclusão do ICMS da base de Pis e Cofins nas entradas. Conteúdo Padrão do campo deve ser 5
+    @history Ticket 71705   - Adriano Savoine   - 26/04/2022 - Corrigido o Campo Pais e Codigo Pais para não permitir inserir informações erradas.
 /*/
 
 User Function ADCOM015P() 
 
-	Local oPanel
     Local oNewPag
     Local cNomeFor  := Space(80)
     Local cNomeFan  := Space(40)
@@ -153,8 +153,7 @@ Return
 Static Function cria_pg1( oPanel , cNomeFor , cNomeFan , cEnd , cBairro, cCodCid , cCidade , cEst , cCep , cCnpj , cIe , cIm , sObs, aItens1, cCombo1, dDataNasc, cNum, cPais, cCodPais, cNaturez, cContato, cTelefone, cTele2, cEmail, cBco, cAge, cCta, cCond, cDigAge, cDigCta, nRG )
 
     Local oSay1
-    
-    Local oFont1 := TFont():New('Courier new',,-18,.T.)
+    LOCAL bP:= {||.F.} //Ticket 71705   - Adriano Savoine   - 26/04/2022
     Local oFont2 := TFont():New('Courier new',,-16,.T.)
     Local oFont4 := TFont():New('Courier new',,-12 ,.T.)
     
@@ -258,12 +257,13 @@ Static Function cria_pg1( oPanel , cNomeFor , cNomeFan , cEnd , cBairro, cCodCid
 
     oSay1	:= TSay():New(105,10,{||'Estado*'},oPanel,,oFont4,,,,.T.,CLR_BLUE,,50,20)
     oTGet1 	:= TGet():New(105,80,{|u| if( PCount() > 0, cEst := u, cEst ) } ,oPanel,60,009,"@!",,0,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F.,'12',"cEst")
-    
+   
+    //Ticket 71705   - Adriano Savoine   - 26/04/2022
     oSay1	:= TSay():New(120,10,{||'Pais*'},oPanel,,oFont4,,,,.T.,CLR_BLUE,,80,20)
     oTGet1 	:= TGet():New(120,80,{|u| if( PCount() > 0, cCodPais := u, cCodPais ) } ,oPanel,30,009,"@!",,0,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F.,'CCHPRE',"cCodPais")
-    oTGet1 	:= TGet():New(120,120,{|u| if( PCount() > 0, cPais := u, cPais ) } ,oPanel,100,009,"@!",,0,,,.F.,,.T.,,.F.,,.F.,.F.,,.T.,.F.,,"cPais")
+    oTGet1 	:= TGet():New(120,120,{|u| if( PCount() > 0, cPais := u, cPais ) } ,oPanel,100,009,"@!",,0,,,.F.,,.T.,,.F.,bP,.F.,.F.,,.T.,.F.,,"cPais")
     
-     //Chamado 055585 - Adriano / Abel / William       - 14/02/2020
+    //Chamado 055585 - Adriano / Abel / William       - 14/02/2020
     oSay1	:= TSay():New(135,10,{||'Tipo Pessoa*'},oPanel,,oFont4,,,,.T.,CLR_BLUE,,50,20)	
     oCombo1 := TComboBox():New(135,80,{|u|if(PCount()>0,cCombo1:=u,cCombo1)},aItens1,50,009,oPanel,,{||PictureCGC(cCombo1, cCombo2, cEst, oPanel)},,,,.T.,,,,,,,,,'cCombo1')
     //Chamado 055585 - Adriano / Abel /William       - 14/02/2020
@@ -271,8 +271,8 @@ Static Function cria_pg1( oPanel , cNomeFor , cNomeFan , cEnd , cBairro, cCodCid
     oSay1	:= TSay():New(135,150,{||'Produtor Rural'},oPanel,,oFont4,,,,.T.,CLR_BLUE,,60,20)
     oCombo2 := TComboBox():New(135,210,{|u|if(PCount()>0,cCombo2:=u,cCombo2)},aItens2,30,009,oPanel,,{||PictureCGC(cCombo1, cCombo2, cEst, oPanel)},,,,.T.,,,,,,,,,'cCombo2')
 
-   oSay1	:= TSay():New(150,10,{||'Cnpj / CPF*'},oPanel,,oFont4,,,,.T.,CLR_BLUE,,50,20)
-   // Chamado n. 049218 || OS 050526 || FINANCAS || ANDREA || 8319 || CAD. FORNECEDOR - fwnm - 27/08/2019
+    oSay1	:= TSay():New(150,10,{||'Cnpj / CPF*'},oPanel,,oFont4,,,,.T.,CLR_BLUE,,50,20)
+    // Chamado n. 049218 || OS 050526 || FINANCAS || ANDREA || 8319 || CAD. FORNECEDOR - fwnm - 27/08/2019
     If cCombo1 == "Fisica" .and. cEST = "SP" .and. cCombo2 = "Sim"
     	If lCNPJ
     		oSay1	:= TSay():New(150,80,{||cCNPJ},oPanel,,oFont4,,,,.T.,CLR_BLACK,,50,20)
@@ -540,16 +540,20 @@ Static Function valida_pg1( cCodFor,cLojFor,cNomeFor , cNomeFan , cEnd , cBairro
     ApMsgInfo('O campo CEP não foi Preenchido, Verifique!','Prospect de Fornecedor')
  ENDIF
 
- /*
- IF EMPTY(cPais)
- 	lVldChk := .F.
-    ApMsgInfo('O campo Pais não foi Preenchido, Verifique!','Prospect de Fornecedor')
- ENDIF
-*/
-
  IF EMPTY(cCodPais)
  	lVldChk := .F.
     ApMsgInfo('O campo Codigo do Pais não foi Preenchido, Verifique!','Prospect de Fornecedor')
+ ENDIF
+
+//  Ticket 71705   - Adriano Savoine   - 26/04/2022
+ DbSelectArea("CCH")
+ IF DbSeek( FWxFilial("CCH") + cCodPais, .T. )
+    
+ ELSE
+ 
+ 	lVldChk := .F.
+    ApMsgInfo('O codigo do Pais não Existe na Base de dados Verifique!')
+    DbCloseArea()       
  ENDIF
 
  IF EMPTY(cNaturez)
@@ -565,8 +569,9 @@ Static Function valida_pg1( cCodFor,cLojFor,cNomeFor , cNomeFan , cEnd , cBairro
  
  	lVldChk := .F.
     ApMsgInfo('O codigo Natureza não Existe na Base de dados Verifique!')
-           
+    DbCloseArea()        
  ENDIF
+ 
  IF EMPTY(cTelefone)
  	lVldChk := .F.
     ApMsgInfo('O campo Telefone não foi Preenchido, Verifique!','Prospect de Fornecedor')

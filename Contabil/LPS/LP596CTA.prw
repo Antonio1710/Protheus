@@ -12,17 +12,18 @@
     (examples)
     @see (links_or_references)
     @chamado 060263 || OS 061758 || CONTROLADORIA || CRISTIANE_MELO || 11986587658 || AJUSTE LP
-    @history Chamado 368 - Adriana Oliveira- 24/08/2020 - Tratar deposito nao identificado
+    @history Chamado 368  - Adriana Oliveira  - 24/08/2020 - Tratar deposito nao identificado
+    @history ticket 71810 - Fernando Macieira - 25/04/2022 - CRIAÇÃO DE LP COMPENSAÇÃO DE ACORDOS PONTUAIS
 /*/
 User Function LP596CTA()
 
-    Local cCta          := ""
-    Local cCtaRA        := "211510001"
-    Local cCtaNCC       := "111210002"
-    Local cCtaDepNId    := "111260001" // Chamado 368 - Adriana Oliveira- 24/08/2020
-    Local cE5_DOCUMEN   := AllTrim(SE5->E5_DOCUMEN)
-    Local cTipo         := Subs(cE5_DOCUMEN,16,3)
-    Local cNaturez      := Alltrim(SE5->E5_NATUREZ) // Chamado 368 - Adriana Oliveira- 24/08/2020
+    Local cCta        := ""
+    Local cCtaRA      := "211510001"
+    Local cCtaNCC     := "111210002"
+    Local cCtaDepNId  := "111260001" // Chamado 368 - Adriana Oliveira- 24/08/2020
+    Local cE5_DOCUMEN := AllTrim(SE5->E5_DOCUMEN)
+    Local cTipo       := Subs(cE5_DOCUMEN,16,3)
+    Local cNaturez    := Alltrim(SE5->E5_NATUREZ) // Chamado 368 - Adriana Oliveira- 24/08/2020
 
     If cTipo == "RA"
         
@@ -37,8 +38,15 @@ User Function LP596CTA()
     // Chamado 368 - Adriana Oliveira- 24/08/2020
     ElseIf cNaturez == "10198" 
 
-       cCta := cCtaDepNId
+        cCta := cCtaDepNId
     //
+    
+    // @history ticket 71810 - Fernando Macieira - 25/04/2022 - CRIAÇÃO DE LP COMPENSAÇÃO DE ACORDOS PONTUAIS
+    ElseIf cTipo == "DSF"
+    
+        cNaturez := GetMV("MV_#DSFNAT",,"10193")
+        cCta := Posicione("SED",1,FWxFilial("SED")+cNaturez,"ED_CONTA")
+    
     Else
         
         // Qdo está posicionado na NF  o E5_DOCUMEN é o NF  e o E1_TIPO e E5_TIPO será a RA ou NCC
@@ -46,6 +54,12 @@ User Function LP596CTA()
             cCta := cCtaRA
         ElseIf AllTrim(SE1->E1_TIPO) == "NCC"
             cCta := cCtaNCC
+
+        // @history ticket 71810 - Fernando Macieira - 25/04/2022 - CRIAÇÃO DE LP COMPENSAÇÃO DE ACORDOS PONTUAIS
+        ElseIf AllTrim(SE1->E1_TIPO) == "DSF"
+            cNaturez := GetMV("MV_#DSFNAT",,"10193")
+            cCta := Posicione("SED",1,FWxFilial("SED")+cNaturez,"ED_CONTA")
+
         EndIf
     
     EndIf

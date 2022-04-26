@@ -16,6 +16,7 @@
 	@history Everson, 18/06/2020, Chamado 059048. Incluído tratamento para quando o Salesforce não retornar
 	todas as tags.  
 	@history Everson, 18/02/2020, Chamado TI. Adicionado campos com informação de vendedores, supervisores e opção para exportar os registro de erros para CSV.                                
+	@history Everson, 18/04/2022, Chamado 71231. Tratamento para nova filial 0B.                                
 	/*/
 User Function ADVEN097P() // U_ADVEN097P()
 
@@ -24,17 +25,21 @@ User Function ADVEN097P() // U_ADVEN097P()
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para comparação Protheus x SalesForce.')
 	
-	//
+	//Everson, 18/04/2022. Chamado TI.
+	If cEmpAnt <> "01" .Or. ! (cFilAnt $"02/0B")
+		MsgInfo("Filial inválida.", "Função ADVEN097P(ADVEN097P)")
+		Return Nil
+
+	EndIf
+
 	If ! Pergunte("SFFECHVEND",.T.)
 		RestArea(aArea)
 		Return Nil
 		
 	EndIf
 	
-	//
 	MsAguarde({|| interface()},"Aguarde","Gerando interface...")
 	
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -90,7 +95,6 @@ Static Function interface()
 	Local oParamSF   := Nil
 	Local oTotErr	 := Nil
 	
-	//
 	Private nTotPT	 := 0
 	Private nTotSF	 := 0
 	Private nTotEr	 := 0
@@ -101,7 +105,6 @@ Static Function interface()
 	Private nTBlqP  := 0
 	Private nTBlqS	:= 0
 	
-	//
 	oInterface			:= MsDialog():Create()
 	oInterface:cName     := "oInterface"
 	oInterface:cCaption  := "Conferência Pedidos de Venda - Protheus x SalesForce"
@@ -112,7 +115,6 @@ Static Function interface()
 	oInterface:lShowHint := .F.
 	oInterface:lCentered := .T.
 	
-		//
 		aTab   := {'Pedidos de venda','Bandeira vermelha','Check Protheus'}
 		oTTabs := TTabs():New(001,001,aTab,Nil,oInterface,Nil,CLR_HRED,Nil,.T.,Nil,595,235,Nil)
 		oTTabs:SetOption(1)
@@ -179,7 +181,6 @@ Static Function interface()
 				TButton():New(190,495,"Rmv. Duplicado",oPnl3,{|| MsAguarde({|| rmvDuplic(aHCK,oCheckPro) },"Aguarde","Excluindo pedidos duplicados") },40,10,,,.F.,.T.,.F.,,.F.,,,.F. ) //Everson-26/08/2019.Chamado T.I.
 				TButton():New(190,540,"Repr. SC9"     ,oPnl3,{|| MsAguarde({|| reprocSC9(aHCK,oCheckPro) },"Aguarde","Voltando registros para reprocessamento (tipo 1)...") },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
 								
-		//
 		oGroup1	 := TGroup():Create(oInterface,239,005,260,595,"",,,.T.)
 		
 			oGerArq	 := TButton():New(245,010,"Ger. Cod."  ,oInterface,{|| MsAguarde({|| Iif( oTTabs:nOption == 1 , gerarReenv(oPedidos,aHPv) , gerarReenv(oBandVer,aHBV) ) },"Aguarde","Carregando rotina...") },40,10,,,.F.,.T.,.F.,,.F.,,,.F. )
@@ -200,13 +201,11 @@ Static Function interface()
 		
 		oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
 	
-		//
 		oTTabs:bAction := bMudaAba
 		Eval(bMudaAba)
 		
 	oInterface:Activate(,,,.T.,{||.T.},,{|| atuaVetor(oPedidos,aHPv,oTotPT,oTotSF,oTotEr,oBandVer,aHBV,oTotBV,oSay1,oSay2,oCheckPro,aHCK,oSay3,oTotErr) })
 
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -232,7 +231,6 @@ Static Function rmvDuplic(aHCK,oCheckPro)
 	Local cErro			:= ""
 	Local cUrlServ		:= "/pedidosdevenda/"
 
-	//
 	If Len(oCheckPro:aCols) <= 0 .Or. Alltrim(cValToChar(oCheckPro:aCols[1][1])) = ""
 		MsgAlert("Não há registros a serem processados.","Função rmvDuplic(ADVEN097P)")
 		RestArea(aArea)
@@ -240,7 +238,6 @@ Static Function rmvDuplic(aHCK,oCheckPro)
 			
 	EndIf
 	
-	//
 	For i := 1 To Len(oCheckPro:aCols)
 	
 		//Everson - 05/08/2019. Chamado TI.
@@ -260,22 +257,18 @@ Static Function rmvDuplic(aHCK,oCheckPro)
 			
 	EndIf
 	
-	//
 	If ! MsgYesNo("Deseja processar a exclusão de duplicidades ?","Função rmvDuplic")
 		RestArea(aArea)
 		Return Nil
 		
 	EndIf
 	
-	//
 	For i := 1 To Len(aDados)
 	
-	 	//
 		oParseJSON := Nil
 		lRetSF := .F.
 		cPedS := Alltrim( aDados[i][1] )
 	
-		//
 		MsAguarde({|| acessaSF(@oParseJSON,@lRetSF,3,.F.,cPedS)},"Aguarde","Obtendo dados do SalesForce...")
 		If ! lRetSF
 			RestArea(aArea)
@@ -283,34 +276,26 @@ Static Function rmvDuplic(aHCK,oCheckPro)
 			
 		EndIf
 		
-		//
 		VarInfo("oParseJSON",oParseJSON)
 		
-		//
 		If oParseJSON:DONE .And. Len(oParseJSON:RECORDS) > 0
 			cPedProth := Alltrim(oParseJSON:RECORDS[1]:CODIGO_PROTHEUS__C)
 			
-			//
 			cQuery := " SELECT C5_NUM FROM " + RetSqlName("SC5") + " (NOLOCK) WHERE C5_FILIAL = '" + FWxFilial("SC5") + "' AND C5_NUM <> '" + cPedProth + "' AND C5_XSFPED = '" + cPedS + "' AND D_E_L_E_T_= '' "
 			
-			//
 			If Select("D_PEDEX") > 0
 				D_PEDEX->(DbCloseArea())
 				
 			EndIf
 			
-			//
 			TcQuery cQuery New Alias "D_PEDEX"
 			DbSelectArea("D_PEDEX")
 			
-			//
 			While ! D_PEDEX->(Eof())
 				
-				//
 				cErro := ""
 				StaticCall(ADVEN086P,exclPedVend,@cErro,D_PEDEX->C5_NUM,0,RetCodUsr( ),cUrlServ + Alltrim(D_PEDEX->C5_NUM) )
 				
-				//
 				If ! Empty(cErro)
 					MsgStop("Ocorreu erro na exclusão do pedido " + Alltrim(D_PEDEX->C5_NUM) + "." + Chr(13) + Chr(10) + DecodeUTF8(cErro),"Função rmvDuplic(ADVEN097P)")
 				
@@ -320,14 +305,12 @@ Static Function rmvDuplic(aHCK,oCheckPro)
 				
 			End
 			
-			//
 			D_PEDEX->(DbCloseArea())
 			
 		EndIf
 	
 	Next i
 	
-	//
 	RestArea(aArea)
 		
 Return Nil
@@ -354,7 +337,6 @@ Static Function pesqPedido(oPedGrid,aHPv)
 	Private cPed		:= Iif(!Empty(cPedido),cPedido + Space(20),Space(20)) // Everson - 24/09/2019. Chamado T.I.
 	Private cCadastro 	:= "Registro ZCI" 
 
-	//
 	aInterPesq			 := MsDialog():Create()
 	aInterPesq:cName     := "aInterPesq"
 	aInterPesq:cCaption  := "Checagem Pedidos de Venda - Protheus x SalesForce"
@@ -386,7 +368,6 @@ Static Function pesqPedido(oPedGrid,aHPv)
 	
 	aInterPesq:Activate(,,,.T.,{||.T.},,{||  })
 	
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -403,12 +384,10 @@ Static Function alPesq(oPedChk,aHeadPesq)
 	Local aArea		:= GetArea()
 	Local nRecno	:= Val(Alltrim(cValToChar(oPedChk:aCols[oPedChk:nAt,Ascan(aHeadPesq,{|x| AllTrim(x[2]) == "REC" })])) )
 	
-	//
 	DbSelectArea("ZCI")
 	ZCI->(DbGoTo(nRecno))
 	MsAguarde({|| AxAltera("ZCI",nRecno,4) },"Aguarde","Selecionando registro...")
 
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -440,7 +419,7 @@ Static Function carrPesq(cPed,oPedidos,aHeadPesq)
 	cQuery += "TOP 1 ZCI_NUMP, ZCI_PEDSAL  " 
 	cQuery += "FROM " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI " 
 	cQuery += "WHERE  " 
-	cQuery += "ZCI_FILIAL = '" + cFilAnt + "' " 
+	cQuery += "ZCI_FILIAL = '" + FWxFilial("ZCI") + "' " 
 	cQuery += "AND ( ZCI_NUMP = '" + cPed + "' OR ZCI_PEDSAL = '" + cPed + "' ) " 
 	cQuery += "AND ZCI.D_E_L_E_T_ = '' " 
 	cQuery += "ORDER BY R_E_C_N_O_ DESC " 
@@ -523,10 +502,8 @@ Static Function carrPesq(cPed,oPedidos,aHeadPesq)
 	
 	INFO_PED->(DbCloseArea())
 	
-	//
 	oPedidos:Refresh()
 	
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -546,7 +523,6 @@ Static Function reprocSC9(aHCK,oCheckPro)
 	Local i		:= 1
 	Local nAux	:= 0
 	
-	//
 	If Len(oCheckPro:aCols) <= 0 .Or. Alltrim(cValToChar(oCheckPro:aCols[1][1])) = ""
 		MsgAlert("Não há registros a serem reprocessados.","Função reprocSC9")
 		RestArea(aArea)
@@ -554,7 +530,6 @@ Static Function reprocSC9(aHCK,oCheckPro)
 			
 	EndIf
 	
-	//
 	For i := 1 To Len(oCheckPro:aCols)
 	
 		//Everson - 05/08/2019. Chamado TI.
@@ -575,22 +550,19 @@ Static Function reprocSC9(aHCK,oCheckPro)
 			
 	EndIf
 	
-	//
 	If ! MsgYesNo("Deseja voltar os registros para reprocessamento?" + Chr(13) + Chr(10) + Chr(13) + Chr(10) + cPed,"Função reprocSC9")
 		RestArea(aArea)
 		Return Nil
 		
 	EndIf
 	
-	//
 	cPed := Substr(cPed,1,Len(cPed) -1)
 	
-	//
 	cUpda += " UPDATE " + RetSqlName("ZCI") + " SET ZCI_TMPR = 'PENDPROC', ZCI_TPALT = 'R'  WHERE R_E_C_N_O_ IN "
 	cUpda += " ( "
 	cUpda += " SELECT FONTE.REC FROM "
 	cUpda += " ( "
-	cUpda += " 	SELECT ZCI_NUMP, MAX(R_E_C_N_O_) AS REC FROM " + RetSqlName("ZCI") + " WHERE ZCI_METD = 'PUT' AND ZCI_NUMP IN ( "
+	cUpda += " 	SELECT ZCI_NUMP, MAX(R_E_C_N_O_) AS REC FROM " + RetSqlName("ZCI") + " WHERE ZCI_FILIAL = '" + FWxFilial("ZCI") + "' AND ZCI_METD = 'PUT' AND ZCI_NUMP IN ( "
 					
 	cUpda +=  cPed
 					
@@ -604,7 +576,6 @@ Static Function reprocSC9(aHCK,oCheckPro)
     
     EndIf
 	
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -624,7 +595,6 @@ Static Function getZCI(oObjeto,aCabec)
 	
 	Private cCadastro := "Registro ZCI" 
 	
-	//
 	If Empty(cIDSF)
 		MsgStop("Não possível obter o Id do SF.","Função getZCI")
 		RestArea(aArea)
@@ -632,7 +602,6 @@ Static Function getZCI(oObjeto,aCabec)
 		
 	EndIf	
 	
-	//
 	cQuery := ""
 	cQuery += " SELECT " 
 	cQuery += " ZCI_IDSF, MAX(ZCI.R_E_C_N_O_) AS REC " 
@@ -645,13 +614,11 @@ Static Function getZCI(oObjeto,aCabec)
 	cQuery += " AND ZCI.D_E_L_E_T_ = '' " 
 	cQuery += " GROUP BY ZCI_IDSF " 
 	
-	//
 	If Select("REG_ZCI") > 0
 		REG_ZCI->(DbCloseArea())
 		
 	EndIf
 	
-	//
 	TcQuery cQuery New Alias "REG_ZCI"
 	DbSelectArea("REG_ZCI")
 	REG_ZCI->(DbGoTop())
@@ -665,10 +632,8 @@ Static Function getZCI(oObjeto,aCabec)
 		
 	EndIf
 	
-	//
 	REG_ZCI->(DbCloseArea())
 	
-	//
 	RestArea(aArea)
 
 Return Nil
@@ -686,17 +651,14 @@ Static Function solicIndPed(cIDSF)
 	Local cJson	:= ""
 	Local aId   := {}
 	
-	//
 	If ! MsgYesNo("Deseja realizar a solicitação de reenvio de pedido?","Função solicIndPed")
 		RestArea(aArea)
 		Return Nil
 		
 	EndIf
 	
-	//
 	cIDSF := Alltrim(cValToChar(cIDSF))
 	
-	//
 	If Empty(cIDSF)
 		MsgStop("Não possível obter o Id do SF.","Função solicIndPed")
 		RestArea(aArea)
@@ -704,13 +666,10 @@ Static Function solicIndPed(cIDSF)
 		
 	EndIf
 	
-	//
 	Aadd(aId,cIDSF)
 	cJson := FWJsonSerialize(aId,.F.,.F.)
 	MsAguarde({|| envSolic(cJson) },"Aguarde","Enviando solicitação...")
 
-	
-	//
 	RestArea(aArea)
 	
 Return Nil
@@ -797,6 +756,12 @@ Static Function getVetorPv(oError,lRetP,oPedidos,aHPv,oTotPT,oTotSF,oTotEr)
 			If ! (Empty(Alltrim(cValToChar(oParseJSON:records[i]:Codigo_Protheus__c)))) .Or.;
 			( Empty(Alltrim(cValToChar(oParseJSON:records[i]:Codigo_Protheus__c))) .And. Upper(Alltrim(cValToChar(DecodeUTF8(oParseJSON:records[i]:Status)))) <> "CANCELADO" .And. Upper(Alltrim(cValToChar(DecodeUTF8(oParseJSON:records[i]:Status)))) <> "COTAÇÃO" )
 
+				//Everson - 18/04/2022. Chamado 71231.
+				If ! Empty(cValToChar(oParseJSON:records[i]:EXPEDITION__C)) .And. Substr(oParseJSON:records[i]:EXPEDITION__C,1,4) <> cEmpAnt+cFilAnt
+					Loop
+
+				EndIf
+
 				//Everson, 18/02/2020. Chamado TI.
 				oVend := oParseJSON:RECORDS[i]:VENDEDOR__R
 				oSup  := oParseJSON:RECORDS[i]:SUPERVISOR__R
@@ -813,7 +778,8 @@ Static Function getVetorPv(oError,lRetP,oPedidos,aHPv,oTotPT,oTotSF,oTotEr)
 							oParseJSON:records[i]:TotalAmount,;
 							oParseJSON:records[i]:Id,;
 							oVend:FIRSTNAME,;//oVend["CODIGO_VENDEDOR_C"];
-							oSup:FIRSTNAME;//oSup["FIRSTNAME"]; //Everson, 18/02/2020. Chamado TI.
+							oSup:FIRSTNAME,;//oSup["FIRSTNAME"]; //Everson, 18/02/2020. Chamado TI.
+							oParseJSON:records[i]:EXPEDITION__C;
 						})
 			
 				//		
@@ -959,23 +925,25 @@ Static Function getVetorPv(oError,lRetP,oPedidos,aHPv,oTotPT,oTotSF,oTotEr)
 		
 		//Preenche o aCols com os pedidos do SalesForce que não foram encontrados no Protheus.
 		For i := 1 To Len(aDadosSF)
+		
 			lEncPed := .F.
 			SET DELETED off //mostra os registros excluidos.
-			DbSelectArea("SC5")
-			SC5->(DbSetOrder(1))
-			SC5->(DbGoTop())
-			If SC5->(DbSeek( xFilial("SC5") + Alltrim(cValToChar(aDadosSF[i][2])) ))
-			If Deleted() 
-				lEncPed := .T.
-				If (Upper(Alltrim(cValToChar(aDadosSF[i][5]))) == "CANCELADO" .Or. Upper(Alltrim(cValToChar(aDadosSF[i][5]))) == "REPROVADO FINANCEIRO" )
+
+				DbSelectArea("SC5")
+				SC5->(DbSetOrder(1))
+				SC5->(DbGoTop())
+				If SC5->(DbSeek( xFilial("SC5") + Alltrim(cValToChar(aDadosSF[i][2])) ))
+				If Deleted() 
 					lEncPed := .T.
-					aDadosSF[i][1] := "X"
-				
+					If (Upper(Alltrim(cValToChar(aDadosSF[i][5]))) == "CANCELADO" .Or. Upper(Alltrim(cValToChar(aDadosSF[i][5]))) == "REPROVADO FINANCEIRO" )
+						lEncPed := .T.
+						aDadosSF[i][1] := "X"
+					
+					EndIf
+					
 				EndIf
 				
-			EndIf
-			
-			EndIf
+				EndIf
 			
 			SET DELETED On
 		
@@ -998,12 +966,12 @@ Static Function getVetorPv(oError,lRetP,oPedidos,aHPv,oTotPT,oTotSF,oTotEr)
 				
 				oPedidos:aCols[Len(oPedidos:aCols),Ascan(aHPv,{|x| AllTrim(x[2]) == "ENTSF" })]    := Alltrim(cValToChar(aDadosSF[i][4])) 
 				
-				If lEncPed
-					//oPedidos:aCols[Len(oPedidos:aCols),Ascan(aHPv,{|x| AllTrim(x[2]) == "ERRO" })]     := "Pedido excluído do Protheus"
-					
+				If Empty(cValToChar(aDadosSF[i][13]))
+					oPedidos:aCols[Len(oPedidos:aCols),Ascan(aHPv,{|x| AllTrim(x[2]) == "ERRO" })]     := "Pedido sem local de expedição"
+
 				Else
 					oPedidos:aCols[Len(oPedidos:aCols),Ascan(aHPv,{|x| AllTrim(x[2]) == "ERRO" })]     := "Pedido não localizado no Protheus"
-				
+
 				EndIf
 
 				oPedidos:aCols[Len(oPedidos:aCols),Ascan(aHPv,{|x| AllTrim(x[2]) == "IDSF" })]     := Alltrim(cValToChar(aDadosSF[i][10]))
@@ -1081,6 +1049,12 @@ Static Function getVetorBV(oError,lRetP,oBandVer,aHBV,oTotBV)
 		
 		//
 		For i := 1 To Len(oParseJSON:records)
+
+			//Everson - 18/04/2022. Chamado 71231.
+			If ! Empty(cValToChar(oParseJSON:records[i]:EXPEDITION__C)) .And. Substr(oParseJSON:records[i]:EXPEDITION__C,1,4) <> cEmpAnt+cFilAnt
+				Loop
+
+			EndIf
 			
 			Aadd(oBandVer:aCols , Array(Len(aHBV) + 1) )
 			oBandVer:aCols[Len(oBandVer:aCols), Len(oBandVer:aCols[1]) ] := .F.
@@ -1124,7 +1098,6 @@ Static Function getCheckPro(oCheckPro,aHCK,oTotErr)
 
 	//Variáveis.
 	Local aArea	   	:= GetArea()
-	Local i		   	:= 1
 	Local cQuery 	:= scriptChkProth()
 
 	//
@@ -1188,8 +1161,7 @@ Static Function acessaSF(oParseJSON,lRetSF,nOpc,lAut,cPedS)
 	Local aResponse	:= {}
 	Local cMsg		:= ""
 	Local lLogin	:= .F.
-	Local cQuery	:= ""
-	Local cqueryPVSF	:= ""
+	Local cqueryPVSF:= ""
 	Local cServTab	:= "/services/data/v45.0/query?q="
 	
 	Default nOpc	:= 1
@@ -1295,7 +1267,7 @@ Static Function queryPVSF()
 	//
 	cQuery := ""
 	cQuery += "Select+Id,+"
-	cQuery += "OrderNumber,+Codigo_Protheus__c,+Data__c,+Status,+Codigo_Cliente__c,+Rede__c,+Volume_total_de_Caixas__c,+TotalAmount,+Vendedor__r.FirstName,+Vendedor__r.Codigo_Vendedor__c,"
+	cQuery += "OrderNumber,+expedition__c,+Codigo_Protheus__c,+Data__c,+Status,+Codigo_Cliente__c,+Rede__c,+Volume_total_de_Caixas__c,+TotalAmount,+Vendedor__r.FirstName,+Vendedor__r.Codigo_Vendedor__c,"
 	cQuery += "+Supervisor__r.FirstName+From+Order+WHERE+Data__c+>=+" + cDtDe + "+AND+Data__c+<=+" + cDtAte
 
 	//
@@ -1325,7 +1297,7 @@ Static Function queryBVSF()
 	//
 	cQuery := ""
 	cQuery += "Select+Id,+"
-	cQuery += "OrderNumber,+Codigo_Protheus__c,+Data__c,+Status,+Codigo_Cliente__c,+Rede__c,+Volume_total_de_Caixas__c,+TotalAmount,+Vendedor__r.FirstName,"
+	cQuery += "OrderNumber,+expedition__c,+Codigo_Protheus__c,+Data__c,+Status,+Codigo_Cliente__c,+Rede__c,+Volume_total_de_Caixas__c,+TotalAmount,+Vendedor__r.FirstName,"
 	cQuery += "+Supervisor__r.FirstName+From+Order+WHERE+Data__c+>=+" + cDtDe + "+AND+Data__c+<=+" + cDtAte + "+AND+Codigo_Protheus__c+<>+''+AND+Integracao_Protheus__c+like+'%25red%25' "
 	
 	
@@ -1351,7 +1323,7 @@ Static Function queryPVDP(cPedS)
 	Local cQuery := ""
 	
 	//
-	cQuery := "SELECT+Codigo_Protheus__c+FROM+Order+WHERE+OrderNumber+=+'" + cPedS + "'"
+	cQuery := "SELECT+Codigo_Protheus__c,+expedition__c+FROM+Order+WHERE+OrderNumber+=+'" + cPedS + "'"
 
 	//
 	RestArea(aArea)
