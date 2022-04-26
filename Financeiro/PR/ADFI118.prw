@@ -24,6 +24,8 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Não gerar central aprovação
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Execauto de alteração não retornou erro mas também não efetivou a alteração
+    @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+    @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - Lembrete de preenchimento do percentual para despesa parcelamento CPC
 /*/
 User Function ADFI118()
 
@@ -241,6 +243,8 @@ Static Function fValidGrid(oModel)
     Local cDespFavor := GetMV("MV_#RMFAVO",,"ACORDO#PERITO") // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
     Local cCodFav    := ""
     Local cZHCCPFCGC := ""
+    Local nPerc1P    := 0 // @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+    Local cDespPer1P := GetMV("MV_#RMPERC",,"CPC") // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - Lembrete de preenchimento do percentual para despesa parcelamento CPC
     //Local cPictVlr   := PesqPict('ZHB', 'ZHB_VALOR')
  
     // N. Processo Trabalhista obrigatório
@@ -419,6 +423,28 @@ Static Function fValidGrid(oModel)
                             lRet := .f.
                             Alert("A data do vencimento da primeira parcela na linha " + AllTrim(Str(nLinAtual)) + " não foi informada ou precisa ser superior que a data de hoje! Verifique...")
                             Exit
+                        EndIf
+                    EndIf
+
+                    // @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+                    If ZHB->(FieldPos("ZHB_PERC1P")) > 0
+                        nPerc1P := oModelGRID:GetValue("ZHB_PERC1P")
+                        If Empty(oModelGrid:GetValue("ZHB_NUM"))
+                            If nPerc1P > 0
+                                If nQtdPar <= 1
+                                    lRet := .f.
+                                    Alert("Campo '% parcela 1' foi preenchido na linha " + AllTrim(Str(nLinAtual)) + " . A quantidade de parcelas precisa ser igual ou superior a 2! Verifique...")
+                                    Exit
+                                EndIf
+                            Else
+                                // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - Lembrete de preenchimento do percentual para despesa parcelamento CPC
+                                If AllTrim(cTipDes) $ AllTrim(cDespPer1P)
+                                    If !MsgYesNo("Deseja realmente continuar sem informar um percentual para este tipo de despesa contido na linha " + AllTrim(Str(nLinAtual)) + " ?", "% Parcela 1")
+                                        lRet := .f.
+                                        Exit
+                                    EndIf
+                                EndIf
+                            EndIf
                         EndIf
                     EndIf
 
