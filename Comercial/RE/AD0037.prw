@@ -43,6 +43,7 @@
 北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北
 哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌
 @history ticket 70750 - Everson - 07/04/2022 - Adapta玢o do fonte para nova filial.
+@history ticket 70750 - Everson - 19/04/2022 - Adapta玢o do fonte para nova filial.
 /*/
 
 User Function AD0037()
@@ -1157,6 +1158,7 @@ While ! TMP01->(Eof())
 	
 	dbSelectArea("ZBX")
 	RecLock("ZBX", .T.)
+	Replace ZBX_FILIAL      With FWxFilial("ZBX") //Everson - 19/04/2022. Chamado 70750.
 	Replace ZBX_VLRFRT      With _nValFrete
 	Replace ZBX_FRTTBL      With _nFrtTbl
 	Replace ZBX_VERSAO      With _nVersao

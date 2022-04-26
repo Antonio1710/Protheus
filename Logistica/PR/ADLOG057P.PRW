@@ -57,6 +57,7 @@
 	@history 20/09/2021, Everson, Ch:15138  - Tratamento para emissão de CT-e adicional.
 	@history 12/11/2021, Everson, Ch:63590  - Tratamento para emissão de CT-e adicional.
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket 71619 - Everson - 20/04/2022 - Tratamento para emissão de MDF-e para transportadoras com CNPJ (SC) mesmo quando há mais de 4 notas na carga.
 /*/
 User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 
@@ -559,6 +560,12 @@ Static Function carInter1(cOPc)
 	Local lNRegCio	:= .T.//Everson - 06/03/2020. Chamado 054941.
 	Local cGerCCT	:= Separa(Alltrim(GetMv("MV_#ESGRCT",,"S/S/S/S/S")),"/",.T.)[Val(cTpVa)] //Everson - 06/03/2020. Chamado 054941.
 	Local lNRegCCT	:= .T.//Everson - 06/03/2020. Chamado 054941.
+
+	//Everson - 20/04/2022 - Chamado 71619.
+	Local cEstTran	:= ""
+	Local cTrapMDF  := GetMv("MV_#UFTCAM",,"SC") 
+	Local lGerMDF   := .F.
+	//
 	
 	//
 	If cOPc == "1" //Dados de CT-e.
@@ -757,8 +764,14 @@ Static Function carInter1(cOPc)
 		cCiot:= "" //Everson  - 06/03/2020. Chamado 054941
 		chkDocEmit("1/2/3",Alltrim(DD_CR->ZFA_ROTEIR),Alltrim(DD_CR->ZFA_DTENTR),.F.,@cCTE,@cMDF,@cCiot,Alltrim(DD_CR->ZFA_VA)) //Everson  - 06/03/2020. Chamado 054941
 
+
+		//Everson - 20/04/2022 - Chamado 71619.
+		cEstTran	:= Posicione("SA4",1,FWxFilial("SA4") + DD_CR->ZFA_TRANPA,"A4_EST")
+		lGerMDF     := cEstTran $cTrapMDF
 		//
-		lNRegMDF := !Empty(cMDF)  .Or. cGerMDF = "N" .Or. ( Val(cValToChar(DD_CR->QTD_NOTA)) >= nTotNf .And. Val(cValToChar(DD_CR->CHKEST)) = 0 ) //Everson  - 06/03/2020. Chamado 054941
+
+		//
+		lNRegMDF := !Empty(cMDF)  .Or. cGerMDF = "N" .Or. ( Val(cValToChar(DD_CR->QTD_NOTA)) >= nTotNf .And. Val(cValToChar(DD_CR->CHKEST)) = 0 .And. !lGerMDF ) //Everson  - 06/03/2020. Chamado 054941
 		lNRegCio := !Empty(cCiot) .Or. cGerCIO = "N" //Everson  - 06/03/2020. Chamado 054941
 		lNRegCCT := !Empty(cCte)  .Or. cGerCCT = "N" //Everson  - 06/03/2020. Chamado 054941
 		

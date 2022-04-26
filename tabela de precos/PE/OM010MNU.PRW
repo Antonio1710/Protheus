@@ -12,6 +12,7 @@
 ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
 ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
 ฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+@history Everson, 14/04/2022. Chamado 71231 - Tratamento para envio de meta apenas pela empresa 01 e filial 02.
 */
 User Function OM010MNU()
 
@@ -21,8 +22,13 @@ User Function OM010MNU()
 	Local aArea	  := GetArea()
 	
 	//
-	Aadd(aRotina,{'SF Exportar'      ,'U_intTabPEnvSF(1)' , 0 , 6,0,NIL}) 
-	Aadd(aRotina,{'SF Exp. Max. Min.','U_intTabPEnvSF(2)' , 0 , 7,0,NIL}) 
+
+	//Everson - 04/03/2018. Chamado 037261. SalesForce.
+	If cEmpAnt == "01" .And. cFilAnt = "02" //Everson, 14/04/2022. Chamado 71231.
+		Aadd(aRotina,{'SF Exportar'      ,'U_intTabPEnvSF(1)' , 0 , 6,0,NIL}) 
+		Aadd(aRotina,{'SF Exp. Max. Min.','U_intTabPEnvSF(2)' , 0 , 7,0,NIL}) 
+
+	EndIf
 	
 	//
 	RestArea(aArea)
