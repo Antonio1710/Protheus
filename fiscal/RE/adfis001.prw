@@ -8,6 +8,7 @@
 	@since 30/05/11
 	@history Chamado 057012 - Abel Babini - 30/03/2020 - Rel. Conferência. Ajustar para permitir geração para empresas 07 e 09
 	@history Ticket  16374  - Abel Babini - 05/07/2021 - Rel. Conferência. Informações faltantes no relatório para a SAFEGG
+	@history Ticket 69574   - Abel Babini - 25/04/2022 - Projeto FAI
 	
 	/*/
 
@@ -50,8 +51,8 @@ USER FUNCTION ADFIS001()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Apresenta STATUS da transmissao de Nota Fiscal Eletronica')
 	
 	If cEmpAnt =  "01" 
-
-		_aEntidade  :={{"01","000011"},{"02","000001"},{"03","000002"},{"04","000005"},{"05","000007"},{"06","000004"},{"07","000013"},{"08","000014"},{"09","000015"},{"0A","000021"}}
+		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+		_aEntidade  :={{"01","000011"},{"02","000001"},{"03","000002"},{"04","000005"},{"05","000007"},{"06","000004"},{"07","000013"},{"08","000014"},{"09","000015"},{"0A","000021"},{"0B","000023"}}
 
 	ElseIf cEmpAnt =  "02"
 
@@ -63,7 +64,7 @@ USER FUNCTION ADFIS001()
 
 	ElseIf cEmpAnt =  "09" //SAFEGG
 
-		_aEntidade  :={{"01","000020"}}
+		_aEntidade  :={{"01","000020"},{"01","000022"}} //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	//FIM Chamado 057012 - Abel Babini - 30/03/2020 - Rel. Conferência. Ajustar para permitir geração para empresas 07 e 09
 	EndIf
 	//+-------------------------------------------------------------------------+

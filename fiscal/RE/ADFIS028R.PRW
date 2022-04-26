@@ -244,7 +244,7 @@ User Function ADFIS028R()
 
 			//Chamado n.040935 - OS n.042015 - Abel Babini - 03/04/2020 - Rel. Resumo Ceres - Entradas e Saidas por produto
 			IF cEmpAnt $ '01/03/04/05/06/08/10'
-				IF cFilAnt $'01/02'
+				IF cFilAnt $'01/02/0B'
 					@ 030,010 BUTTON OemToAnsi('Mod 01 - VP')	SIZE 42,13 FONT oDlgMenu:oFont ACTION (nOpMdl:=1, oDlgMenu:End()) OF oDlgMenu PIXEL //"Exportar Excel"
 				ELSEIF cFilAnt $'08'
 					@ 030,110 BUTTON OemToAnsi('Mod 03 - GO')	SIZE 42,13 FONT oDlgMenu:oFont ACTION (nOpMdl:=3, oDlgMenu:End()) OF oDlgMenu PIXEL //"Sair" //U_FNNAOIMP() OF oDlgMenu PIXEL //"Sair"

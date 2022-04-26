@@ -17,9 +17,10 @@
 	@history Chamado 1237   - WILLIAM COSTA - 09/09/2020 - Adicionado order by no select do SQLINTNOTA, pois estava gerando varias erros por falta de ordenação.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 04/05/2021 - Tratativa no fonte para gerar o fechamento do frete quando não foi gerado no momento do faturamento da NFe.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 */
  
-User Function ADLOG003P()
+User Function ADLOG003P(aXEmpFil)
 
 	PRIVATE cRot           := ''    
 	PRIVATE cPlaca         := ''
@@ -55,6 +56,7 @@ User Function ADLOG003P()
     Private aEnt           := {}
 	Private aEnts          := {}
 	Private lJob           := .F.
+	Default aXEmpFil :={ "01", "02" } //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	//VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	IF SELECT("SX6") == 0
@@ -68,7 +70,8 @@ User Function ADLOG003P()
 		// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 		RPCClearEnv()
 		RPCSetType(3)  //Nao consome licensas
-		RpcSetEnv("01","02",,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas              
+		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+		RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas              
 		// ****************************FINAL PARA RODAR COM SCHEDULE**************************************** //	
 
 		// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
