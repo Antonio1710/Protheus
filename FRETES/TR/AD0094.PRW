@@ -291,6 +291,8 @@ If lRetMod2
 			Else
 				RecLock("SZI",.T.) // Novo Registro
 			Endif
+			
+			Replace ZI_FILIAL   With FwxFilial("SZI")
 			Replace ZI_DOC      With _cFile
 			Replace ZI_SEQ      With STRZERO(_I,2)
 			Replace ZI_DATALAN  With SZK->ZK_DTENTR    //aCols[_I,_nPosDTLAN]

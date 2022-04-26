@@ -175,6 +175,7 @@ Static Function ProcFile()
 			          _nSeq += 1
 			          _cFile := GetSX8NUM("SZI","ZI_DOC")
 	                  Reclock("SZI",.T.)	
+					  SZI->ZI_FILIAL := FWxFilial("SZI")
 	                  SZI->ZI_DOC  := _cFile
 				      SZI->ZI_SEQ  := STRZERO(_nSeq,2)
 			     	  SZI->ZI_DATALAN  := SZK->ZK_DTENTR    
@@ -197,6 +198,7 @@ Static Function ProcFile()
 	               
 	                  _cFile := GetSX8NUM("SZI","ZI_DOC")
 	                  Reclock("SZI",.T.)	
+					  SZI->ZI_FILIAL := FWxFilial("SZI")
 	                  SZI->ZI_DOC  := _cFile
 				      SZI->ZI_SEQ  := STRZERO(1,2)
 			     	  SZI->ZI_DATALAN  := SZK->ZK_DTENTR    

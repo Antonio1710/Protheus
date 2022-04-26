@@ -29,9 +29,12 @@
 	@history Ticket  68727  - Leonardo P. Monteiro  - 02/03/2022 - Correção na impressão dos parâmetros do relatório para a exportação do relatório para PDF.
 	@history Ticket  68727  - Leonardo P. Monteiro  - 03/03/2022 - Correção no limite de linhas impressas por folha para a geração dos arquivos em PDF.
 	@history Ticket  69990  - Adriano Savoine       - 21/03/2022 - Alterado a declaração da Variavel na query estava de forma errada.
-	@history Ticket   TI    - Adriano Savoine       - 21/04/2022 - Retirado espaço da filial gravada na SX1 para os vendedores
+	@history Ticket  71654  - Everson               - 19/04/2022 - Tratamento para errorlog.
+	@history Ticket  71654  - Everson               - 20/04/2022 - Tratamento para errorlog.
 /*/
 User Function ADVEN106R() // U_ADVEN106R()
+
+	Local nAux := 1 //71654  - Everson, 19/04/2022.
 
 	SetPrvt("AORD,TAMANHO,LIMITE,NOMEPROG,MV_TABPR,NTIPO")
 	SetPrvt("ARETURN,NLASTKEY,NLIN,NITEM,LCONTINUA,M_PAG")
@@ -210,7 +213,7 @@ User Function ADVEN106R() // U_ADVEN106R()
 		_PERG6+=X1_CNT01	
 		
 		DBSEEK(cPerg+"16",.T.)
-		_cFilial:=ALLTRIM(X1_CNT01)  //Ticket   TI    - Adriano Savoine       - 21/04/2022
+		_cFilial:=X1_CNT01
 
 		//Everson - 19/05/2021. Chamado 14094.
 		DBSEEK(cPerg+"20",.T.)
@@ -271,8 +274,6 @@ User Function ADVEN106R() // U_ADVEN106R()
 		//
 
 	EndIf
-
-	_cFilial:=ALLTRIM(_cFilial) //Ticket   TI    - Adriano Savoine       - 21/04/2022
 	
 	//---------------------------------------------------------
 	//  mv_par01			   	Nome do Primeiro Grupo
@@ -507,10 +508,29 @@ User Function ADVEN106R() // U_ADVEN106R()
 	Private _nTotsDSR	:= 0
 	Private _nTotcDSR	:= 0
 
-	Private aDSR	:= {}
+	Private aDSR		:= {}
+
+	//71654  - Everson, 19/04/2022.
+	Private aFiliais	:= {}
+	
+	aFiliais := Separa(_cFilial, ",", .F.)
+
+	_cFilial := ""
+	For nAux := 1 To Len(aFiliais)
+
+		If Empty(_cFilial)
+			_cFilial += "'" + StrTran(aFiliais[nAux],"'","") + "'"
+
+		Else
+			_cFilial += ",'" + StrTran(aFiliais[nAux],"'","") + "'"
+
+		EndIf
+
+	Next nAux
+	//
 
 	// Ticket 70540 - ADRIANO SAVOINE - 30/03/2022
-	IF TYPE(_cFilial) == "N" .OR. TYPE(_cFilial) == "U"
+	IF Empty(Alltrim(cValToChar(_cFilial))) .Or. ValType(_cFilial) == "N" .Or. ValType(_cFilial) == "U"
 
 		MsgAlert("SELECIONE NOS PARAMETROS AS FILIAIS, PARA GERAR ESTE RELATORIO.", "ATENCAO!!!")
 
@@ -4694,7 +4714,7 @@ static function _atualizaSX1()
 	DBSELECTAREA("SX1")
 	if dbseek(cPerg+"16")
 		RecLock("SX1",.F.)
-		SX1->X1_CNT01 := ALLTRIM(mv_par16) //Ticket   TI    - Adriano Savoine       - 21/04/2022
+		SX1->X1_CNT01 := mv_par16
 		MsUnlock()
 	endif
 	
