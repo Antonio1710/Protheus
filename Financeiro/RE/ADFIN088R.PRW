@@ -9,6 +9,7 @@
   @history Chamado 057841 - Abel Babini - 26/05/2020 - Re. Pedidos Liberados, Versão inicial
   @history Chamado 059049 - Eveson - 18/06/2020. Removido (cQuery1)-> para carregar o valor da variável, pois não existe o campo NTTACUM 
   no retorno da consulta.
+  @history Ticket 1562    - Abel Babini - 26/04/2022 - Relatório de Pedidos liberados deve trazer todos os pedidos.
   /*/
 User Function ADFIN088R()
 	Local aArea		:= GetArea()
@@ -18,12 +19,10 @@ User Function ADFIN088R()
   aAdd( aPergs ,{1,"Data De "     ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
 	aAdd( aPergs ,{1,"Data Até"     ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
 	aAdd( aPergs ,{6,"Local de Gravação",Space(50),"","","",50,.T.,"Todos os arquivos (*.*) |*.*","C:\TEMP\",GETF_RETDIRECTORY + GETF_LOCALHARD + GETF_NETWORKDRIVE})
-
 	//Executa as perguntas ao usuário e só executa o relatório caso o usuário confirme a tela de parâmetros;
 	If ParamBox(aPergs ,"Parâmetros ",aRet,,,,,,,,.T.,.T.)
 
-
-    MsgRun( "Carregando dados - Pedidos Liberados, aguarde...",,{ || RPEDLIB(aRet[1], aRet[2], aRet[3]) } )
+    MsgRun( "Carregando dados - Apenas Pedidos Liberados, aguarde...",,{ || RPEDLIB(aRet[1], aRet[2], aRet[3]) } )
 
   Endif
 
@@ -81,7 +80,7 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       ISNULL(ZEJ.ZEJ_VLUTIL,'')   AS VLUTIL,
       ISNULL(ZEJ.ZEJ_QTDPED,'')   AS QTDPED,
       ISNULL(ZEJ.ZEJ_TTUTIL,'')   AS TTUTIL,
-      ISNULL(ZEJ.ZEJ_USRLIB,'')   AS LIBERADOR,
+      IIF(ZEJ.ZEJ_USRLIB IS NULL,'LIBERAÇÃO AUTOMÁTICA',ISNULL(ZEJ.ZEJ_USRLIB,''))   AS LIBERADOR,
       ISNULL(ZEJ.ZEJ_PARECE,'')   AS TXT_LIBERACAO,
       ISNULL(ZEJ.ZEJ_DTLIB,'')    AS DTLIB,
       ISNULL(ZEJ.ZEJ_HRLIB,'')    AS HRLIB,
@@ -105,9 +104,10 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
     AND SC5.C5_DTENTR BETWEEN %EXP:DTOS(MVPAR01)% AND %EXP:DTOS(MVPAR02)%
     AND SC5.C5_TIPO NOT IN ('D','B')
     AND SC5.%notDel%
-    AND ZEJ.ZEJ_DTLIB IS NOT NULL
+    
   EndSql
-
+  //Ticket 1562    - Abel Babini - 26/04/2022 - Relatório de Pedidos liberados deve trazer todos os pedidos.
+  //AND ZEJ.ZEJ_DTLIB IS NOT NULL
   // Cria estrutura do Excel
   BEGIN SEQUENCE
     
