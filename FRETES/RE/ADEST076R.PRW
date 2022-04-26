@@ -61,7 +61,7 @@ Static Function RPTStruc(cNome)
 >>>>>>> ffa79a36b01c3e15f7f35e934376dbe43dbb5045
 
 	TRFunction():New(oSection2:Cell("VOLUME"),,"SUM",,,"@E 999999.99",,.T.,.F.,.T.)
-	TRFunction():New(oSection2:Cell("VALOR"),, "SUM",,,"@E 999999.99",,.T.,.F.,.T.)
+	TRFunction():New(oSection2:Cell("VALOR"),, "SUM",,,"@E 999999.99",,.T.,.F.,.T.) 
 
 	oSection2:SetTotalInLine(.F.)	
 	oSection1:SetPageBreak(.T.) //Quebra de seção
