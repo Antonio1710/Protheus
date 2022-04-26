@@ -13,7 +13,7 @@
 	@history Chamado 046860 - WILLIAM COSTA - 13/02/2019 - ALTERA PARA NAO TER MAIS ENTREGA  
 	@history Chamado 046860 - WILLIAM COSTA - 19/05/2020 - Adicionado valor de Roteiro Final
 	@history Chamado 059327 - WILLIAM COSTA - 01/07/2020 - Alterado o roteiro inicial de 201 para 300 para enviar ao ravex
-
+	@history ticket 70750 - Everson - 19/04/2022 - Adaptação do fonte para nova filial.
 */	
 
 User Function ADLOG017P()
@@ -612,6 +612,8 @@ STATIC FUNCTION SqIntPedido()
 					FROM %Table:SC5% SC5, %Table:SZK% SZK
 					WHERE SC5.C5_FILIAL >= '02'
 					AND SC5.C5_FILIAL   <= '07'
+					AND SZK.ZK_FILIAL   >= '02'
+					AND SZK.ZK_FILIAL   <= '07'
 					AND SC5.C5_DTENTR   >= CONVERT(VARCHAR(8), GETDATE(), 112)
 					AND SC5.C5_PLACA    <> ''
 					AND SC5.C5_ROTEIRO  >= '300'
