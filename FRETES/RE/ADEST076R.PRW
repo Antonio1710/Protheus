@@ -5,7 +5,7 @@
 	Relatorio de Abastecimento por Transportadora
 	@type  Function
 	@author Jonathan Carvalho
-	@since 20/04/2022
+	@since 20/04/2022 
 	@version version
 	@history ticket 66832 - Jonathan Carvalho 20/04/2022 - Criação do Relatorio 
 	@history ticket 66832 - Jonathan Carvalho 22/04/2022 - Correção na coluna Hora Fim 
