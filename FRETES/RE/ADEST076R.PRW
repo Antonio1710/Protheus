@@ -5,9 +5,10 @@
 	Relatorio de Abastecimento por Transportadora
 	@type  Function
 	@author Jonathan Carvalho
-	@since 20/04/2022
+	@since 20/04/2022 
 	@version version
 	@history ticket 66832 - Jonathan Carvalho 20/04/2022 - Criação do Relatorio 
+	@history ticket 66832 - Jonathan Carvalho 22/04/2022 - Correção na coluna Hora Fim 
 /*/
 User Function ADEST076R() 
 
@@ -38,15 +39,17 @@ Static Function RPTStruc(cNome)
 	TRCell():New(oSection1,"S500"            ,"TEMP","VALOR S500","@!",20)
 	
 	oSection2 := TRSection():New(oReport, "Abastecimentos",{"ZBB"}, NIL,.F.,.T.)
-	TRCell():New(oSection2,"DATA_HORA_INICIO" ,"TEMP","Hora Inicio"	,"@!"          ,30)
-	TRCell():New(oSection2,"DATA_HORA_FIM"    ,"TEMP","Hora Final"	,"@!"          ,30)
-	TRCell():New(oSection2,"PLACA"	          ,"TEMP","Placa"	    ,"@!"          ,10)
-	TRCell():New(oSection2,"VOLUME"	          ,"TEMP","Quantidade"  ,"@E 999999.99",10)	
-	TRCell():New(oSection2,"VALOR"	          ,"TEMP","Preço"	    ,"@E 999999.99",15)	
-	TRCell():New(oSection2,"BOMBA"	          ,"TEMP","Bomba"	    ,"@!"          ,30)	
+	TRCell():New(oSection2,"DATA_INICIO"      ,"TEMP","Data Inicio"	        ,"@!"          ,10)
+	TRCell():New(oSection2,"HORA_INICIO"      ,"TEMP","Hora Inicio"	        ,"@!"          ,8)
+	TRCell():New(oSection2,"DATA_FIM"         ,"TEMP","Data Fim"	        ,"@!"          ,10)
+	TRCell():New(oSection2,"HORA_FIM"         ,"TEMP","Hora Fim"	        ,"@!"          ,8)
+	TRCell():New(oSection2,"PLACA"	          ,"TEMP","Placa"	    		,"@!"          ,10)
+	TRCell():New(oSection2,"VOLUME"	          ,"TEMP","Quantidade"  		,"@E 999999.99",10)	
+	TRCell():New(oSection2,"VALOR"	          ,"TEMP","Preço"	    		,"@E 999999.99",15)	
+	TRCell():New(oSection2,"BOMBA"	          ,"TEMP","Bomba"	    		,"@!"          ,30)	
 
 	TRFunction():New(oSection2:Cell("VOLUME"),,"SUM",,,"@E 999999.99",,.T.,.F.,.T.)
-	TRFunction():New(oSection2:Cell("VALOR"),, "SUM",,,"@E 999999.99",,.T.,.F.,.T.)
+	TRFunction():New(oSection2:Cell("VALOR"),, "SUM",,,"@E 999999.99",,.T.,.F.,.T.) 
 
 	oSection2:SetTotalInLine(.F.)	
 	oSection1:SetPageBreak(.T.) //Quebra de seção
@@ -60,8 +63,10 @@ Static Function RPTPrint(oReport)
 	Local cQuery    := ""
 	Local cNumCod   := ""
 	
-	cQuery += " SELECT (CONVERT(VARCHAR(30), CONVERT(DATETIME,ZBB_DTINI), 103) +' '+ ZBB_HRINI) AS DATA_HORA_INICIO, " 
-	cQuery += " (CONVERT(VARCHAR(30), CONVERT(DATETIME, ZBB_DTFIM), 103) + ' ' + ZBB_HRFIM) AS DATA_HORA_FIM, "
+	cQuery += " SELECT CONVERT(VARCHAR(30), CONVERT(DATETIME,ZBB_DTINI), 103) AS DATA_INICIO, " 
+	cQuery += " ZBB_HRINI AS HORA_INICIO, "
+	cQuery += " CONVERT(VARCHAR(30), CONVERT(DATETIME, ZBB_DTFIM), 103) AS DATA_FIM, "
+	cQuery += " ZBB_HRFIM AS HORA_FIM, "
 	cQuery += " ZBB_PLACA PLACA, "
 	cQuery += " SA2.A2_COD CODTRANS,  "
 	cQuery += " SA2.A2_NOME TRANSPORTADORA,  "
@@ -76,7 +81,7 @@ Static Function RPTPrint(oReport)
 	cQuery += " WHERE (ZBB.ZBB_DTINI BETWEEN '"+Dtos(MV_PAR01)+"' AND '"+Dtos(MV_PAR02)+"')  "
 	cQuery += " AND (SA2.A2_COD BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"') "
 	cQuery += " AND	ZBB.ZBB_APRMOV <> 'N' AND ZBB.D_E_L_E_T_= '' "
-	cQuery += " ORDER BY ZBB.ZBB_PLACA, ZBB.ZBB_DTINI "
+	cQuery += " ORDER BY PLACA, DATA_INICIO "
 	
 	//Verifica se a tabela ja está aberta criação da tabela temporaria.
 	If Select("TEMP") <> 0
@@ -116,8 +121,10 @@ Static Function RPTPrint(oReport)
 			oReport:IncMeter()
 			
 			IncProc("Imprimindo Abastecimentos..."+ Alltrim(TEMP->PLACA))
-			oSection2:Cell("DATA_HORA_INICIO"):SetValue(TEMP->DATA_HORA_INICIO)
-			oSection2:Cell("DATA_HORA_FIM"):SetValue(TEMP->DATA_HORA_FIM)			
+			oSection2:Cell("DATA_INICIO"):SetValue(TEMP->DATA_INICIO)
+			oSection2:Cell("HORA_INICIO"):SetValue(TEMP->HORA_INICIO)
+			oSection2:Cell("DATA_FIM"):SetValue(TEMP->DATA_FIM)
+			oSection2:Cell("HORA_FIM"):SetValue(TEMP->HORA_FIM)			
 			oSection2:Cell("PLACA"):SetValue(TEMP->PLACA)		
 			oSection2:Cell("VOLUME"):SetValue(TEMP->VOLUME)
 			oSection2:Cell("VALOR"):SetValue(TEMP->VALOR)	
