@@ -1,20 +1,18 @@
 #INCLUDE "PROTHEUS.CH" 
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³LP520212  ³ Autor ³WILLIAM COSTA       º Data ³  19/01/17   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Excblock utilizado para retornar o Valor Contabil debito   º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ AP                                                         º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function LP520212
+	Excblock utilizado para retornar o Valor Contabil debito
+	@type  Function
+	@author WILLIAM COSTA
+	@since 19/01/2017
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 13062 - Fernando Macieira - 27/04/2022 - Lançamento Padrão - Exportação
+/*/
 User Function LP520212()
 
 	Local nValor := 0
@@ -30,15 +28,26 @@ User Function LP520212()
 	            SE1->E1_LOJA)
     
     While TRB->(!EOF())
-                  
     	nValor:= TRB->E5_VALOR
-            
         TRB->(dbSkip())
 	ENDDO
+
 	TRB->(dbCloseArea()) 
 
 RETURN(nValor) 
 
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author user
+	@since 27/04/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+/*/
 Static Function SqlBuscaTit(cFil,cPref,cNum,cPar,cTipo,cCliente,cLoja)
 
 	BeginSQL Alias "TRB"
@@ -55,6 +64,8 @@ Static Function SqlBuscaTit(cFil,cPref,cNum,cPar,cTipo,cCliente,cLoja)
 			   AND E5_TIPODOC  = 'VM'
                AND E5_MOTBX    = 'VM' //fernando sigoli 07/02/2018 Chamado: 039696
 			   //AND E5_MOTBX  = ''
+			   AND E5_SEQ='01' // @history ticket 13062 - Fernando Macieira - 27/04/2022 - Lançamento Padrão - Exportação
 			   AND D_E_L_E_T_ <> '*'
 	EndSQl             
+
 RETURN(NIL)                                          
