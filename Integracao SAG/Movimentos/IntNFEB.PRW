@@ -59,6 +59,7 @@
 	@history ticket   68144 - Wagner Moro 		- 11/02/2022 - Tratamento notas com especie NFS para não consultar central XML
 	@history ticket   69741 - Jonathan Carvalho - 16/03/2022 - Condição para localizar a NF de origem para produtor rural
 	@history ticket   70424 - Jonathan Carvalho - 05/04/2022 - Alterado pesquisa de localização do numero de Chave das NF de Saida.
+	@history ticket   71889 - Jonathan Carvalho - 26/04/2022 - Alteração na consulta para puxar a emissão da HH fonte comentando na linha 1286 a 1298 data de emissão ja incluida corretamente no banco de integração
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -1279,9 +1280,11 @@ While ! (cAliasNFE)->(Eof())
 		dEmissao := iIf((cAliasNFE)->F1_Formul == "S",DDATABASE, (cAliasNFE)->F1_EMISSAO)
 		If nRadio == 6
 			dDataBase := dOrigB
+			dEmissao   := (cAliasNFE)->F1_EMISSAO   //Ticket 71889 Jonathan.Carvalho 26/04/2022
 			////TCSetConn(_conProthe)
+			/*
 			NFSEEK := GetNextAlias()
-			cQryS:="SELECT F2_EMISSAO FROM "+RetSqlName("SF2")+" WHERE D_E_L_E_T_ = ' ' AND F2_FILIAL = '03' AND F2_CLIENTE = '027601' AND F2_DOC = '" + cDoc + "'"
+			cQryS:="SELECT F2_EMISSAO FROM "+RetSqlName("SF2")+" WHERE D_E_L_E_T_ = ' ' AND F2_FILIAL = '03' AND F2_CLIENTE = '027601' AND F2_DOC = '" + cDoc + "'" 
 			DbUseArea(.t., "TOPCONN", TcGenQry(,, cQryS), NFSEEK, .T., .F.)
 			TcSetField( NFSEEK, "F2_EMISSAO", "D", 8, 0)
 			dbGotop()
@@ -1292,6 +1295,7 @@ While ! (cAliasNFE)->(Eof())
 			EndIf
 			////TCSetConn(_conSAG)
 			//dDataBase  := (cAliasNFE)->F1_Emissao //chamado 057922 - || Fernando Sigoli 07/05/2020 - OS 059404 || CONTROLADORIA || THIAGO || 8439
+			*/ //Ticket 71889 Jonathan.Carvalho 26/04/2022
 			dDataBase  := (cAliasNFE)->F1_DTDIGIT  //chamado 057922 - || Fernando Sigoli 07/05/2020 - OS 059404 || CONTROLADORIA || THIAGO || 8439
 		EndIf
 		//cSerie := Iif((cAliasNFE)->F1_Formul == "S","01 ", cSerie) - Everson 06/11/2018.
@@ -1752,7 +1756,7 @@ While ! (cAliasNFE)->(Eof())
 			aErroLog := GetAutoGrLog()
 			If Len(aErrolog) > 0
 				cErro := Alltrim(aErrolog[1])
-				For k:=1 to Len(aErroLog) 
+				For k:=1 to Len(aErroLog)
 					If "INVALIDO" $ UPPER (aErroLog[k])
 						cErro+= Alltrim(aErroLog[k]) + Chr(13)+Chr(10)
 					EndIf
