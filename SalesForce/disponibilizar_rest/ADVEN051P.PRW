@@ -13,6 +13,7 @@
 	@history 26/11/2019, Everson, Chamado 053617 Adicionadas checagem e mensagem de retorno ao Salesforce, quando o CEP informado 
 	no pré-cadastro (Lead) do Salesforce não estiver cadastrado no Protheus.
 	@history 27/11/2019, Everson, Chamado T.I. correção da checagem de CEP de entrega.
+	@history 27/04/2022, Everson, Chamado T.I. não validar crédio sugerido quando a condição de pagamento for antecipada.
 	/*/
 
 User Function ADVEN051P(cParamBsc,lAut) // U_ADVEN051P("15178100")
@@ -69,7 +70,7 @@ Static Function Processar(cParamBsc,lAut)
 	Local cFuncao	:= "ADVEN051P"
 	Local cAliasTab := "PB3"
 	Local cCampo	:= "CHVSF"
-	Local cQuery	:= scriptSql(cParamBsc,cAliasTab,cCampo)
+	Local cQuery	:= scriptSql(cParamBsc)
 	Local cFunJson	:= "montJson"
 	Local cMsgFunc	:= "lead"
 	Local cServico	:= "/services/data/v41.0/sobjects/Lead/"
@@ -379,7 +380,7 @@ WsMethod Post WsService precadastros
 	Local cContentType	:= Self:GetHeader("Content-Type")
 	Local cCodUsuario	:= Self:GetHeader("UsrVend")
 	Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
-	Local cNumPed		:= ""
+	//Local cNumPed		:= ""
 	Local oParseJSON
 	Local cJsonResp		:= ""
 	Local nNivelCred	:= 0
@@ -671,15 +672,15 @@ WsMethod Put WsService precadastros
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
 	Local cContentType	:= Self:GetHeader("Content-Type")
 	Local cCodUsuario	:= Self:GetHeader("UsrVend")
-	Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
-	Local cNumPed		:= ""
+	//Local cPath			:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
+	//Local cNumPed		:= ""
 	Local oParseJSON
-	Local cJsonResp		:= ""
+	//Local cJsonResp		:= ""
 	Local cErro			:= ""
 	Local nErro			:= 400
 	Local cMotivo		:= ""
-	Local cCodPB3		:= ""
-	Local cLojaPB3		:= ""
+	//Local cCodPB3		:= ""
+	//Local cLojaPB3		:= ""
 	Local nNivelCred
 	Local aParametros	:= Self:aURLParms
 	Local cCodLoja		:= ""
@@ -1010,6 +1011,11 @@ Static Function atribVlr(oParseJSON,cMsg)
 	Local cChkCFP1	:= "" //Everson - 26/11/2019. Chamado 053617.
 	Local cChkCFP2	:= "" //Everson - 26/11/2019. Chamado 053617.
 	Local cChkCFP3	:= "" //Everson - 26/11/2019. Chamado 053617.
+
+	//Everson - 27/04/2022. Chamado TI.
+	Local cCondP	:= ""
+	Local lCondAnt	:= .F.
+	//
 	
 	//Valida CEP do endereço.
 	If Empty(cCepCli)
@@ -1219,11 +1225,15 @@ Static Function atribVlr(oParseJSON,cMsg)
 
 	EndIf
 
-	If Empty(Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CONDSO)))))
+	cCondP := Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CONDSO)))) //Everson - 27/04/2022. Chamado TI.
+
+	If Empty(cCondP) //Everson - 27/04/2022. Chamado TI.
 		cMsg += "Condição de pagamento solicitada não informada." + xPula
 		lErrCmp := .T.
 
 	EndIf
+
+	lCondAnt := Alltrim(cValToChar(Posicione("SE4", 1, FwxFilial("SE4") + cCondP, "E4_CTRADT"))) == "1" //Everson - 27/04/2022. Chamado TI.
 
 	If Empty(Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_GRPVEN)))))
 		cMsg += "Grupo de vendas não informado." + xPula
@@ -1237,8 +1247,8 @@ Static Function atribVlr(oParseJSON,cMsg)
 
 	EndIf
 
-	If Val(cValToChar(cValToChar(oParseJSON:PB3_CREDSU))) <= 0
-		cMsg += "Crédio sugerido não informado." + xPula
+	If Val(cValToChar(cValToChar(oParseJSON:PB3_CREDSU))) <= 0 .And. ! lCondAnt //Everson - 27/04/2022. Chamado TI.
+		cMsg += "Crédito sugerido não informado." + xPula
 		lErrCmp := .T.
 	EndIf
 
