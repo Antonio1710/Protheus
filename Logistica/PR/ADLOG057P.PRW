@@ -58,6 +58,7 @@
 	@history 12/11/2021, Everson, Ch:63590  - Tratamento para emissão de CT-e adicional.
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history ticket 71619 - Everson - 20/04/2022 - Tratamento para emissão de MDF-e para transportadoras com CNPJ (SC) mesmo quando há mais de 4 notas na carga.
+	@history ticket 70593 - Everson - 20/04/2022 - Adicionado MVs na interface de configuração.
 /*/
 User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 
@@ -4022,7 +4023,7 @@ Static Function cfgMV()
 		oSBtn01:lReadOnly 	:= .F.
 		oSBtn01:Align 		:= 0
 		oSBtn01:lVisibleControl := .T.
-		oSBtn01:bAction := {|| MsgRun("Gravando Informações...","Aguarde",{|| GravarMV(aCols) }) }
+		oSBtn01:bAction := {|| MsgRun("Gravando Informações...","Aguarde",{|| GravarMV() }) }
 	
 		//Criação de botões.
 		oSBtn02:= SBUTTON():Create(oTelMV)
@@ -4103,6 +4104,10 @@ Static Function prConfigMV()
 	Local cPstXML	:= GetMv("MV_#SLVCTE")	//Pasta para salvar XML de CT-e.
 	Local cUFHab	:= GetMv("MV_#UFLCAT")  //UF habilitada CAT-121.
 	Local cUFHabT	:= GetMv("MV_#UFTCAT")  //UF habilitada CAT-121 transportadora. //Everson - 15/04/2021 - Chamado 12355.
+	Local cEstOMDF  := GetMv("MV_#ESTMDF")  //UF de clientes em que é necessário a emissão de MDF-e, mesmo com CT-e emitido pela CAT-121. //Everson - 28/04/2022 - Chamado 70593.
+	Local cTranOMDF := GetMv("MV_#UFTCAM")  //UF de transportadora em que é necessário a emissão de MDF-e, mesmo com quantidade de notas permitada pela CAT-121. //Everson - 28/04/2022 - Chamado 70593.
+	
+	
 	Local nTmpBlq	:= GetMv("MV_#TMPBLQ")  //Tempo de espera para envio, após ocorrer erro. //Everson - 24/01/2020. Chamado 054941.
 
 	//Everson - 27/01/2020. Chamado 054941.
@@ -4127,58 +4132,61 @@ Static Function prConfigMV()
 	//Consulta empresa.
 	Aadd(aDados,{"MV_#CTECNP","CNPJ Empresa",cCNPJ})
 	Aadd(aDados,{"MV_#CTEIES","I.E. Empresa",cIE  })
-	Aadd(aDados,{"MV_#CONEMP","Consulta Empresa.",cConsEmp})
-	Aadd(aDados,{"MV_#CONSEM","Chave consulta Empresa.",cChvConEm})
-	Aadd(aDados,{"MV_#AMBCEM","Ambiente consulta Empresa.",cAmbConEm})
-	Aadd(aDados,{"MV_#TEMPOP","Prazo da consulta empresa.",cPrazo})
+	Aadd(aDados,{"MV_#CONEMP","Consulta Empresa",cConsEmp})
+	Aadd(aDados,{"MV_#CONSEM","Chave consulta Empresa",cChvConEm})
+	Aadd(aDados,{"MV_#AMBCEM","Ambiente consulta Empresa",cAmbConEm})
+	Aadd(aDados,{"MV_#TEMPOP","Prazo da consulta empresa",cPrazo})
 	
 	//CT-e
 	Aadd(aDados,{"MV_#ESGRCT","Emite CT-e Frt Abatido,Frt Frango Vivo,Frt Ovo,Frt Pintinho,Frt Racao",cEmtCTE}) //Everson - 06/03/2020. Chamado 054941.
-	Aadd(aDados,{"MV_#QTDNFE","Quantidade mínima de notas fiscais para utilização da portaria CAT-121.",cValToChar(nTotNf)})
-	Aadd(aDados,{"MV_#UFLCAT","UF habilitada CAT-121.",cUFHab})
-	Aadd(aDados,{"MV_#UFTCAT","UF habilitada CAT-121 transportadora.",cUFHabT}) //Everson - 15/04/2021 - Chamado 12355.
+	Aadd(aDados,{"MV_#QTDNFE","Quantidade mínima de notas fiscais para utilização da portaria CAT-121",cValToChar(nTotNf)})
+	Aadd(aDados,{"MV_#UFLCAT","UF habilitada CAT-121",cUFHab})
+	Aadd(aDados,{"MV_#UFTCAT","UF habilitada CAT-121 transportadora",cUFHabT}) //Everson - 15/04/2021 - Chamado 12355.
+	Aadd(aDados,{"MV_#ESTMD" ,"UF de clientes em que é necessário a emissão de MDF-e, mesmo com CT-e emitido pela CAT-121",cEstOMDF}) //Everson - 28/04/2022 - Chamado 70593.
+	Aadd(aDados,{"MV_#UFTCAM","UF de transportadora em que é necessário a emissão de MDF-e, mesmo com quantidade de notas permitada pela CAT-121",cTranOMDF}) //Everson - 28/04/2022 - Chamado 70593.
+	
 	Aadd(aDados,{"MV_#CTEPOR","Porc Frt Abatido,Frt Frango Vivo,Frt Ovo,Frt Pintinho,Frt Racao",nPorc})
-	Aadd(aDados,{"MV_#ENVCTE","Envio para Geração de Ct-e.",cGERCTE})
-	Aadd(aDados,{"MV_#CUSCTE","Envio CT-e para lote de notas.",cGERCUS})	
+	Aadd(aDados,{"MV_#ENVCTE","Envio para Geração de Ct-e",cGERCTE})
+	Aadd(aDados,{"MV_#CUSCTE","Envio CT-e para lote de notas",cGERCUS})	
 	Aadd(aDados,{"MV_#TPEMCO","Tipo de emissão de complemento",cTpComp})	
-	Aadd(aDados,{"MV_#CONCTE","Consulta CT-e.",cConsCTE})
-	Aadd(aDados,{"MV_#XMLCTE","Download XML Ct-e.",cXMLCTE })
-	Aadd(aDados,{"MV_#PDFCTE","Download PDF Ct-e.",cPDFCTE })
-	Aadd(aDados,{"MV_#CANCTE","Cancelar CT-e.",cCancCTE})
-	Aadd(aDados,{"MV_#SLVCTE","Pasta para salvar XML de CT-e.",cPstXML})
-	Aadd(aDados,{"MV_#CTELOC","Local Padrão de emissão de CT-e para lote de notas.",cLocais})
+	Aadd(aDados,{"MV_#CONCTE","Consulta CT-e",cConsCTE})
+	Aadd(aDados,{"MV_#XMLCTE","Download XML Ct-e",cXMLCTE })
+	Aadd(aDados,{"MV_#PDFCTE","Download PDF Ct-e",cPDFCTE })
+	Aadd(aDados,{"MV_#CANCTE","Cancelar CT-e",cCancCTE})
+	Aadd(aDados,{"MV_#SLVCTE","Pasta para salvar XML de CT-e",cPstXML})
+	Aadd(aDados,{"MV_#CTELOC","Local Padrão de emissão de CT-e para lote de notas",cLocais})
 
 	//Seguro.
-	Aadd(aDados,{"MV_#CTEAVB","Apólice do seguro.",cApolic})
+	Aadd(aDados,{"MV_#CTEAVB","Apólice do seguro",cApolic})
 	Aadd(aDados,{"MV_#REEAVB","Reenvio de averbação",cReeAvb})
 
 	//Mdf-e
 	Aadd(aDados,{"MV_#ESGRMD","Emite MDF Frt Abatido,Frt Frango Vivo,Frt Ovo,Frt Pintinho,Frt Racao",cEmtMDF}) //Everson - 12/02/2020. Chamado 054941.
-	Aadd(aDados,{"MV_#ENVMDF","Envio geração de MDF-e.",cGERMDF})
-	Aadd(aDados,{"MV_#CONMDF","Consulta MDF-e.",cConsMDF})
-	Aadd(aDados,{"MV_#XMLMDF","Download XML MDF-e.",cXMLMDF})
-	Aadd(aDados,{"MV_#PDFMDF","Download PDF MDF-e.",cPDFMDF})
-	Aadd(aDados,{"MV_#ENCMDF","Encerrar MDF-e.",cEncMDF})
-	Aadd(aDados,{"MV_#CANMDF","Cancelar MDF-e.",cCancMDF})
+	Aadd(aDados,{"MV_#ENVMDF","Envio geração de MDF-e",cGERMDF})
+	Aadd(aDados,{"MV_#CONMDF","Consulta MDF-e",cConsMDF})
+	Aadd(aDados,{"MV_#XMLMDF","Download XML MDF-e",cXMLMDF})
+	Aadd(aDados,{"MV_#PDFMDF","Download PDF MDF-e",cPDFMDF})
+	Aadd(aDados,{"MV_#ENCMDF","Encerrar MDF-e",cEncMDF})
+	Aadd(aDados,{"MV_#CANMDF","Cancelar MDF-e",cCancMDF})
 
 	//Everson - 27/01/2020. Chamado 054941.
 	Aadd(aDados,{"MV_#ESGRCI","Emite CIOT Frt Abatido,Frt Frango Vivo,Frt Ovo,Frt Pintinho,Frt Racao",cEmtCIO}) //Everson - 06/03/2020. Chamado 054941.
-	Aadd(aDados,{"MV_#ENVCIO" ,"Envio geração de CIOT.",cGERCIO})
-	Aadd(aDados,{"MV_#CONCIO","Consulta CIOT.",cConsCIO})
-	Aadd(aDados,{"MV_#XMLCIO","Download XML CIOT.",cXMLCIO})
-	Aadd(aDados,{"MV_#PDFCIO","Download PDF CIOT.",cPDFCIO})
-	Aadd(aDados,{"MV_#ENCCIO","Encerrar CIOT.",cEncCIO})
-	Aadd(aDados,{"MV_#CANCIO","Cancelar CIOT.",cCancCIO})
+	Aadd(aDados,{"MV_#ENVCIO" ,"Envio geração de CIOT",cGERCIO})
+	Aadd(aDados,{"MV_#CONCIO","Consulta CIOT",cConsCIO})
+	Aadd(aDados,{"MV_#XMLCIO","Download XML CIOT",cXMLCIO})
+	Aadd(aDados,{"MV_#PDFCIO","Download PDF CIOT",cPDFCIO})
+	Aadd(aDados,{"MV_#ENCCIO","Encerrar CIOT",cEncCIO})
+	Aadd(aDados,{"MV_#CANCIO","Cancelar CIOT",cCancCIO})
 	Aadd(aDados,{"MV_#DSPCIO","Carga de alto desempenho?",cAlDes})
 
 	//Configurações gerais.
-	Aadd(aDados,{"MV_#GRVTXT","Gerar TXT.",cValToChar(lGravar)})
-	Aadd(aDados,{"MV_#CABNF" ,"Cabeçalho da NF-e.",cCabNFE})
-	Aadd(aDados,{"MV_#RODNF" ,"Rodapé da NF-e.",cRodNFE})
-	Aadd(aDados,{"MV_#ARQCP" ,"Caminho para salvar arquivo PDF e XML.",cCamin})
-	Aadd(aDados,{"MV_#NVPROC","Número de vezes para consulta de status do documento.",nNumProc})
-	Aadd(aDados,{"MV_#DOWARQ","Faz download e abre o documento.",lAbrArq})
-	Aadd(aDados,{"MV_#TMPBLQ","Tempo de espera para envio, após ocorrer erro (minutos).",nTmpBlq}) //Everson - 24/01/2020. Chamado 054941.
+	Aadd(aDados,{"MV_#GRVTXT","Gerar TXT",cValToChar(lGravar)})
+	Aadd(aDados,{"MV_#CABNF" ,"Cabeçalho da NF-e",cCabNFE})
+	Aadd(aDados,{"MV_#RODNF" ,"Rodapé da NF-e",cRodNFE})
+	Aadd(aDados,{"MV_#ARQCP" ,"Caminho para salvar arquivo PDF e XML",cCamin})
+	Aadd(aDados,{"MV_#NVPROC","Número de vezes para consulta de status do documento",nNumProc})
+	Aadd(aDados,{"MV_#DOWARQ","Faz download e abre o documento",lAbrArq})
+	Aadd(aDados,{"MV_#TMPBLQ","Tempo de espera para envio, após ocorrer erro (minutos)",nTmpBlq}) //Everson - 24/01/2020. Chamado 054941.
 	
 	//Apaga registros da aCols.
 	oGetDados:aCols := {}
