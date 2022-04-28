@@ -18,6 +18,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 /*/
 User Function ADLFV012P()
 
@@ -33,6 +34,13 @@ User Function ADLFV012P()
 	Local cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 	Local cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
 	Local cProdPV  := GetMV("MV_#LFVPRD",,"300042")
+
+	// @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH
+	cFilPV := Posicione("ZFC",4,FWxFilial("ZFC")+_ORDEM,"ZFC_FILORI") // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
+	If Empty(cFilPV)
+		cFilPV   := GetMV("MV_#LFVFIL",,"03") 
+	EndIf
+	//
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funcao utilizada no X3_VLDUSER do campo ZV5_NUMNFS')
 

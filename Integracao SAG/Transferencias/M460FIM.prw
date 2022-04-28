@@ -50,11 +50,12 @@
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 	@history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
+	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 /*/
 User Function M460FIM()
 
 	Local Area		:= GetArea()
-	Local cFilPV  	:= GetMV("MV_#LFVFIL",,"03")
+	Local cFilPV    := GetMV("MV_#LFVNEW",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	Local _aCabec 	:= {}
 	Local _aItens 	:= {}
 	Local cCliCod 	:= GetMV("MV_#LFVCLI",,"027601")
@@ -152,16 +153,16 @@ User Function M460FIM()
 		// - Gerar pre-nota de entrada automaticamente na filial 02 a partir da geracao da NF de Complemento FRANGO VIVO da filial 03
 		If SC5->(FieldPos("C5_XLFVCMP")) > 0
 
-			If AllTrim(SC6->C6_FILIAL) == cFilPV .and. AllTrim(SC6->C6_CLI) == AllTrim(cCliCod) .and. AllTrim(SC6->C6_LOJA) == AllTrim(cCliLoj) .and. AllTrim(SC6->C6_PRODUTO) == AllTrim(cProdPV) .and. AllTrim(SC6->C6_TES) == AllTrim(cTESPV) .and. AllTrim(SC5->C5_XLFVCMP) == "S"
+			// If AllTrim(SC6->C6_FILIAL) == cFilPV .and. AllTrim(SC6->C6_CLI) == AllTrim(cCliCod) .and. AllTrim(SC6->C6_LOJA) == AllTrim(cCliLoj) .and. AllTrim(SC6->C6_PRODUTO) == AllTrim(cProdPV) .and. AllTrim(SC6->C6_TES) == AllTrim(cTESPV) .and. AllTrim(SC5->C5_XLFVCMP) == "S" // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+			If AllTrim(SC6->C6_FILIAL) $ cFilPV .and. AllTrim(SC6->C6_CLI) == AllTrim(cCliCod) .and. AllTrim(SC6->C6_LOJA) == AllTrim(cCliLoj) .and. AllTrim(SC6->C6_PRODUTO) == AllTrim(cProdPV) .and. AllTrim(SC6->C6_TES) == AllTrim(cTESPV) .and. AllTrim(SC5->C5_XLFVCMP) == "S"
 				msAguarde( { || GeraPreNFE() }, "Gerando Pré-Nota Entrada Complemento Frango Vivo (M460FIM)" )
-				
 			EndIf
 
 		Else 
 
-			If AllTrim(SC6->C6_FILIAL) == cFilPV .and. AllTrim(SC6->C6_CLI) == AllTrim(cCliCod) .and. AllTrim(SC6->C6_LOJA) == AllTrim(cCliLoj) .and. AllTrim(SC6->C6_PRODUTO) == AllTrim(cProdPV) .and. AllTrim(SC6->C6_TES) == AllTrim(cTESPV)
+			//If AllTrim(SC6->C6_FILIAL) == cFilPV .and. AllTrim(SC6->C6_CLI) == AllTrim(cCliCod) .and. AllTrim(SC6->C6_LOJA) == AllTrim(cCliLoj) .and. AllTrim(SC6->C6_PRODUTO) == AllTrim(cProdPV) .and. AllTrim(SC6->C6_TES) == AllTrim(cTESPV) // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+			If AllTrim(SC6->C6_FILIAL) $ cFilPV .and. AllTrim(SC6->C6_CLI) == AllTrim(cCliCod) .and. AllTrim(SC6->C6_LOJA) == AllTrim(cCliLoj) .and. AllTrim(SC6->C6_PRODUTO) == AllTrim(cProdPV) .and. AllTrim(SC6->C6_TES) == AllTrim(cTESPV)
 				msAguarde( { || GeraPreNFE() }, "Gerando Pré-Nota Entrada Complemento Frango Vivo (M460FIM)" )
-				
 			EndIf
 
 		EndIf

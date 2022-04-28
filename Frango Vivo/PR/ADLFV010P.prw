@@ -31,6 +31,7 @@
 	@history Ticket: 62540 - 20/10/2021 - Fernando Sigoli - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	@history Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
 	@history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 /*/
 //User Function ADLFV010P(lAuto)
 User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
@@ -135,13 +136,13 @@ User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/
 	EndIf
 	
 Return
+
 /*/{Protheus.doc} GeraPV 
-	
 	@type  Static Function
 	@author Microsiga 
 	@since 04/16/2018
 	@version 01
-	/*/
+/*/
 Static Function GeraPV(lAuto)
 
 	Local aAreaAtu := GetArea()
@@ -154,10 +155,8 @@ Static Function GeraPV(lAuto)
 	Local nPrcPV  := GetMV("MV_#LFVPRC",,2)
 	Local cTESPV  := GetMV("MV_#LFVTES",,"701")
 
-
 	Private cNumPV  := ""
 	Private cFilPV  := GetMV("MV_#LFVFIL",,"03")
-
 
 	// Emails
 	Private cMails  := GetMV("MV_#LFVMAI",,"faturamento@adoro.com.br;cleber.santos@adoro.com.br;danielle.meira@adoro.com.br;glean.rocha@adoro.com.br;reinaldo.francischinelli@adoro.com.br") // -------- VOLTAR ESTA LINHA ANTES DE PUBLICAR EM PRD
@@ -171,17 +170,17 @@ Static Function GeraPV(lAuto)
 	Private lMsErroAuto := .F.
 	Private cArquivo
 	Private oFuDimep
+	Private cFilOrig // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 
 	//Cria arq tmp
 	CriaTMP()
 
 	// Chama relatório de relação diária ordem de carregamento do frango vivo
-	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto)
+	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto, @cFilOrig)
 
 	// Efetua cálculo da DIFERENCA para gerar o PV
 	nQtdPV := (nTtPLO - nTtPLP)
 	
-
 	// Aborta processamento pois o PV já foi gerado com os registros selecionados
 	If nQtdPV <= 0
 		
@@ -204,13 +203,12 @@ Static Function GeraPV(lAuto)
 		
 	EndIf
 
-
 	// Backup filial ativa
 	cFilBkp := cFilAnt
 
 	// Seto filial na qual será incluído o PV
+	cFilPV := cFilOrig // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	cFilAnt := cFilPV
-
 
 	// Gera o PV
 	dbSelectArea("SC5")
@@ -223,7 +221,6 @@ Static Function GeraPV(lAuto)
 	SB1->( dbSetOrder(1) ) // B1_FILIAL + B1_COD
 	SB1->( dbSeek(xFilial("SB1")+cProdPV) )
 
-
 	// Cabecalho do PV
 	Aadd(aCabec,{"C5_FILIAL"   ,cFilPV        ,Nil})
 	Aadd(aCabec,{"C5_NUM"      ,cNumPV        ,Nil})
@@ -233,7 +230,6 @@ Static Function GeraPV(lAuto)
 	Aadd(aCabec,{"C5_VEND1"    ,SA1->A1_VEND  ,Nil})
 	Aadd(aCabec,{"C5_DTENTR"   ,(msDate()+1)  ,Nil})
 	Aadd(aCabec,{"C5_MOEDA"    ,1             ,Nil})
-
 
 	// Item do PV
 	aItem  := {}
@@ -316,7 +312,6 @@ Static Function GeraPV(lAuto)
 
 		EndIf		
 
-
 		// Aviso ao usuario
 		If lAuto
 			//ApMsgStop( "[ADLFV010P] - JOB - PV n. " + AllTrim(cNumPV) + " incluído com sucesso! ")
@@ -344,15 +339,12 @@ Static Function GeraPV(lAuto)
 		
 	EndIf
 
-
 	If ValType(oFuDimep) <> "U"
 		oFuDimep:delete()
 	EndIf 
 
-
 	SetFunName(cFunBkp)
 	RestArea(aAreaAtu)
-
 
 Return
 
@@ -362,14 +354,11 @@ Return
 	@author Fernando Macieira 
 	@since 04/18/2018
 	@version 01
-	/*/
-
+/*/
 Static Function EmailFVL(lAuto)
 
 	LogZBN("1")
-
 	ProcRel(lAuto)
-
 	LogZBN("2")
 
 Return
@@ -381,7 +370,6 @@ Return
 	@since 04/18/2018
 	@version 01
 /*/
-
 Static Function logZBN(cStatus)
 
 	Local aArea	:= GetArea()
