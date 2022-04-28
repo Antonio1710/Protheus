@@ -61,6 +61,7 @@ Static Function RPTStruc(cPerg)
 	TRCell():New(oSection1,"DEENTREP"   ,"D_PED","Dt Entrega","@!",10)
 	TRCell():New(oSection1,"PLCREP"     ,"D_PED","Placa","@!",07)
 	TRCell():New(oSection1,"ROTEREP"    ,"D_PED","Roteiro" ,"@!",04)
+	TRCell():New(oSection1,"VENDEDOR"   ,"D_PED","Vendedor" ,"@!",06)
 
 Return (oReport)
 /*/{Protheus.doc} RPTPrint
@@ -78,7 +79,7 @@ Static Function RPTPrint(oReport)
 	
 	cQuery += " SELECT  " 
 
-	cQuery += " PEDRPR.C5_NUM, PEDRPR.C5_EMISSAO, PEDRPR.C5_HRINCLU, PEDRPR.C5_PBRUTO, PEDRPR.C5_VOLUME1, PEDRPR.C5_CLIENTE, PEDRPR.C5_LOJACLI, PEDRPR.C5_NOMECLI, PEDRPR.C5_DTENTR, PEDRPR.C5_PLACA, PEDRPR.C5_ROTEIRO, " 
+	cQuery += " PEDRPR.C5_NUM, PEDRPR.C5_EMISSAO, PEDRPR.C5_HRINCLU, PEDRPR.C5_PBRUTO, PEDRPR.C5_VOLUME1, PEDRPR.C5_CLIENTE, PEDRPR.C5_LOJACLI, PEDRPR.C5_NOMECLI, PEDRPR.C5_DTENTR, PEDRPR.C5_PLACA, PEDRPR.C5_ROTEIRO, PEDRPR.C5_VEND1, " 
 	
 	cQuery += " PEDORG.C5_NUM AS PEDORG, PEDORG.C5_DTENTR AS DTENTORG, PEDORG.C5_PLACA AS PLACAORG, PEDORG.C5_ROTEIRO AS ROTORG " 
 	
@@ -143,6 +144,7 @@ Static Function RPTPrint(oReport)
 
 		oSection1:Cell("ROTEORG"):SetValue(D_PED->ROTORG)	
 		oSection1:Cell("ROTEREP"):SetValue(D_PED->C5_ROTEIRO)	
+		oSection1:Cell("VENDEDOR"):SetValue(D_PED->C5_VEND1)	
 
 		oSection1:Printline()	
 
