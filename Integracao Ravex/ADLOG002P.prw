@@ -13,6 +13,8 @@ User Function _HBOPSYP ; Return  // "dummy" function - Internal Use
 
 /* -------------------------------------------------------------------------------
 WSDL Service WSsivirafullWebService
+
+@history Chamado 67991  - Everson       - 27/04/2022 - Foi necessário gerar uma nova classe para contemplar as atualizações do webservice.
 ------------------------------------------------------------------------------- */
 
 WSCLIENT WSsivirafullWebService
@@ -21,6 +23,7 @@ WSCLIENT WSsivirafullWebService
 	WSMETHOD INIT
 	WSMETHOD RESET
 	WSMETHOD CLONE
+	WSMETHOD CompletarViagem
 	WSMETHOD RetornarColetasRealizadas
 	WSMETHOD Autenticar
 	WSMETHOD ImportarViagem
@@ -41,12 +44,17 @@ WSCLIENT WSsivirafullWebService
 	WSMETHOD RetornarAnomalias
 	WSMETHOD RetornarNFsEntregues
 	WSMETHOD RetornarEntregasRealizadas
+	WSMETHOD ListarCustosAdicionaisAprovadosPorViagem
+	WSMETHOD ListarAlteracaoValorModalidadeCustoAdicionalPorViagem
+	WSMETHOD RetornarQuantidadePernoitesAprovadasPorViagem
 	WSMETHOD RetornarAnomaliasRegistradas
 	WSMETHOD ListarViagensFinalizadas
 	WSMETHOD RetornarStatusVeiculo
 	WSMETHOD ConsultarPlacaDisponivel
 	WSMETHOD ImportarPedidos
 	WSMETHOD RetornarRoteiros
+	WSMETHOD ListarModalidadesDeCustoAdicional
+	WSMETHOD ListarTiposDeCustoAdicional
 	WSMETHOD ImportarViagemFaturada
 	WSMETHOD ImportarViagemPlanejada
 	WSMETHOD CancelarViagemPlanejada
@@ -63,11 +71,12 @@ WSCLIENT WSsivirafullWebService
 	WSDATA   _COOKIES                  AS Array of String
 	WSDATA   cLogin                    AS string
 	WSDATA   cSenha                    AS string
+	WSDATA   oWSViagem                 AS sivirafullWebService_Viagem
+	WSDATA   oWSCompletarViagemResult  AS sivirafullWebService_Retorno
 	WSDATA   nIdViagem                 AS int
 	WSDATA   cIdentificador            AS string
 	WSDATA   oWSRetornarColetasRealizadasResult AS sivirafullWebService_RetornoViagem
 	WSDATA   oWSAutenticarResult       AS sivirafullWebService_Retorno
-	WSDATA   oWSViagem                 AS sivirafullWebService_Viagem
 	WSDATA   oWSImportarViagemResult   AS sivirafullWebService_Retorno
 	WSDATA   oWSVendedor               AS sivirafullWebService_Pessoa
 	WSDATA   oWSImportarVendedorResult AS sivirafullWebService_Retorno
@@ -108,6 +117,9 @@ WSCLIENT WSsivirafullWebService
 	WSDATA   oWSRetornarAnomaliasResult AS sivirafullWebService_ArrayOfAnomalia
 	WSDATA   oWSRetornarNFsEntreguesResult AS sivirafullWebService_ArrayOfNotaEntregue
 	WSDATA   oWSRetornarEntregasRealizadasResult AS sivirafullWebService_ViagemRetorno
+	WSDATA   oWSListarCustosAdicionaisAprovadosPorViagemResult AS sivirafullWebService_ArrayOfRetornoCustoAdicional
+	WSDATA   oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult AS sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade
+	WSDATA   oWSRetornarQuantidadePernoitesAprovadasPorViagemResult AS sivirafullWebService_RetornoPernoiteAprovada
 	WSDATA   oWSRetornarAnomaliasRegistradasResult AS sivirafullWebService_ViagemRetorno
 	WSDATA   nPeriodoMinutos           AS int
 	WSDATA   oWSListarViagensFinalizadasResult AS sivirafullWebService_ArrayOfViagemFinalizada
@@ -118,6 +130,8 @@ WSCLIENT WSsivirafullWebService
 	WSDATA   oWSImportarPedidosResult  AS sivirafullWebService_Retorno
 	WSDATA   oWSFiltro                 AS sivirafullWebService_FiltroRoteiro
 	WSDATA   oWSRetornarRoteirosResult AS sivirafullWebService_ArrayOfRoteiro
+	WSDATA   oWSListarModalidadesDeCustoAdicionalResult AS sivirafullWebService_ArrayOfModalidadeCustoAdicional
+	WSDATA   oWSListarTiposDeCustoAdicionalResult AS sivirafullWebService_ArrayOfTipoCustoAdicional
 	WSDATA   oWSImportarViagemFaturadaResult AS sivirafullWebService_Retorno
 	WSDATA   oWSViagemPlanejada        AS sivirafullWebService_ViagemPlanejada
 	WSDATA   oWSImportarViagemPlanejadaResult AS sivirafullWebService_Retorno
@@ -138,14 +152,15 @@ ENDWSCLIENT
 WSMETHOD NEW WSCLIENT WSsivirafullWebService
 ::Init()
 If !FindFunction("XMLCHILDEX")
-	UserException("O Código-Fonte Client atual requer os executáveis do Protheus Build [7.00.131227A-20171213 NG] ou superior. Atualize o Protheus ou gere o Código-Fonte novamente utilizando o Build atual.")
+	UserException("O Cï¿½digo-Fonte Client atual requer os executï¿½veis do Protheus Build [7.00.191205P-20211019] ou superior. Atualize o Protheus ou gere o Cï¿½digo-Fonte novamente utilizando o Build atual.")
 EndIf
 Return Self
 
 WSMETHOD INIT WSCLIENT WSsivirafullWebService
+	::oWSViagem          := sivirafullWebService_VIAGEM():New()
+	::oWSCompletarViagemResult := sivirafullWebService_RETORNO():New()
 	::oWSRetornarColetasRealizadasResult := sivirafullWebService_RETORNOVIAGEM():New()
 	::oWSAutenticarResult := sivirafullWebService_RETORNO():New()
-	::oWSViagem          := sivirafullWebService_VIAGEM():New()
 	::oWSImportarViagemResult := sivirafullWebService_RETORNO():New()
 	::oWSVendedor        := sivirafullWebService_PESSOA():New()
 	::oWSImportarVendedorResult := sivirafullWebService_RETORNO():New()
@@ -173,6 +188,9 @@ WSMETHOD INIT WSCLIENT WSsivirafullWebService
 	::oWSRetornarAnomaliasResult := sivirafullWebService_ARRAYOFANOMALIA():New()
 	::oWSRetornarNFsEntreguesResult := sivirafullWebService_ARRAYOFNOTAENTREGUE():New()
 	::oWSRetornarEntregasRealizadasResult := sivirafullWebService_VIAGEMRETORNO():New()
+	::oWSListarCustosAdicionaisAprovadosPorViagemResult := sivirafullWebService_ARRAYOFRETORNOCUSTOADICIONAL():New()
+	::oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult := sivirafullWebService_ARRAYOFRETORNOALTERACAOVALORMODALIDADE():New()
+	::oWSRetornarQuantidadePernoitesAprovadasPorViagemResult := sivirafullWebService_RETORNOPERNOITEAPROVADA():New()
 	::oWSRetornarAnomaliasRegistradasResult := sivirafullWebService_VIAGEMRETORNO():New()
 	::oWSListarViagensFinalizadasResult := sivirafullWebService_ARRAYOFVIAGEMFINALIZADA():New()
 	::oWSRetornarStatusVeiculoResult := sivirafullWebService_STATUSVEICULO():New()
@@ -181,6 +199,8 @@ WSMETHOD INIT WSCLIENT WSsivirafullWebService
 	::oWSImportarPedidosResult := sivirafullWebService_RETORNO():New()
 	::oWSFiltro          := sivirafullWebService_FILTROROTEIRO():New()
 	::oWSRetornarRoteirosResult := sivirafullWebService_ARRAYOFROTEIRO():New()
+	::oWSListarModalidadesDeCustoAdicionalResult := sivirafullWebService_ARRAYOFMODALIDADECUSTOADICIONAL():New()
+	::oWSListarTiposDeCustoAdicionalResult := sivirafullWebService_ARRAYOFTIPOCUSTOADICIONAL():New()
 	::oWSImportarViagemFaturadaResult := sivirafullWebService_RETORNO():New()
 	::oWSViagemPlanejada := sivirafullWebService_VIAGEMPLANEJADA():New()
 	::oWSImportarViagemPlanejadaResult := sivirafullWebService_RETORNO():New()
@@ -199,11 +219,12 @@ Return
 WSMETHOD RESET WSCLIENT WSsivirafullWebService
 	::cLogin             := NIL 
 	::cSenha             := NIL 
+	::oWSViagem          := NIL 
+	::oWSCompletarViagemResult := NIL 
 	::nIdViagem          := NIL 
 	::cIdentificador     := NIL 
 	::oWSRetornarColetasRealizadasResult := NIL 
 	::oWSAutenticarResult := NIL 
-	::oWSViagem          := NIL 
 	::oWSImportarViagemResult := NIL 
 	::oWSVendedor        := NIL 
 	::oWSImportarVendedorResult := NIL 
@@ -244,6 +265,9 @@ WSMETHOD RESET WSCLIENT WSsivirafullWebService
 	::oWSRetornarAnomaliasResult := NIL 
 	::oWSRetornarNFsEntreguesResult := NIL 
 	::oWSRetornarEntregasRealizadasResult := NIL 
+	::oWSListarCustosAdicionaisAprovadosPorViagemResult := NIL 
+	::oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult := NIL 
+	::oWSRetornarQuantidadePernoitesAprovadasPorViagemResult := NIL 
 	::oWSRetornarAnomaliasRegistradasResult := NIL 
 	::nPeriodoMinutos    := NIL 
 	::oWSListarViagensFinalizadasResult := NIL 
@@ -254,6 +278,8 @@ WSMETHOD RESET WSCLIENT WSsivirafullWebService
 	::oWSImportarPedidosResult := NIL 
 	::oWSFiltro          := NIL 
 	::oWSRetornarRoteirosResult := NIL 
+	::oWSListarModalidadesDeCustoAdicionalResult := NIL 
+	::oWSListarTiposDeCustoAdicionalResult := NIL 
 	::oWSImportarViagemFaturadaResult := NIL 
 	::oWSViagemPlanejada := NIL 
 	::oWSImportarViagemPlanejadaResult := NIL 
@@ -276,11 +302,12 @@ Local oClone := WSsivirafullWebService():New()
 	oClone:_URL          := ::_URL 
 	oClone:cLogin        := ::cLogin
 	oClone:cSenha        := ::cSenha
+	oClone:oWSViagem     :=  IIF(::oWSViagem = NIL , NIL ,::oWSViagem:Clone() )
+	oClone:oWSCompletarViagemResult :=  IIF(::oWSCompletarViagemResult = NIL , NIL ,::oWSCompletarViagemResult:Clone() )
 	oClone:nIdViagem     := ::nIdViagem
 	oClone:cIdentificador := ::cIdentificador
 	oClone:oWSRetornarColetasRealizadasResult :=  IIF(::oWSRetornarColetasRealizadasResult = NIL , NIL ,::oWSRetornarColetasRealizadasResult:Clone() )
 	oClone:oWSAutenticarResult :=  IIF(::oWSAutenticarResult = NIL , NIL ,::oWSAutenticarResult:Clone() )
-	oClone:oWSViagem     :=  IIF(::oWSViagem = NIL , NIL ,::oWSViagem:Clone() )
 	oClone:oWSImportarViagemResult :=  IIF(::oWSImportarViagemResult = NIL , NIL ,::oWSImportarViagemResult:Clone() )
 	oClone:oWSVendedor   :=  IIF(::oWSVendedor = NIL , NIL ,::oWSVendedor:Clone() )
 	oClone:oWSImportarVendedorResult :=  IIF(::oWSImportarVendedorResult = NIL , NIL ,::oWSImportarVendedorResult:Clone() )
@@ -321,6 +348,9 @@ Local oClone := WSsivirafullWebService():New()
 	oClone:oWSRetornarAnomaliasResult :=  IIF(::oWSRetornarAnomaliasResult = NIL , NIL ,::oWSRetornarAnomaliasResult:Clone() )
 	oClone:oWSRetornarNFsEntreguesResult :=  IIF(::oWSRetornarNFsEntreguesResult = NIL , NIL ,::oWSRetornarNFsEntreguesResult:Clone() )
 	oClone:oWSRetornarEntregasRealizadasResult :=  IIF(::oWSRetornarEntregasRealizadasResult = NIL , NIL ,::oWSRetornarEntregasRealizadasResult:Clone() )
+	oClone:oWSListarCustosAdicionaisAprovadosPorViagemResult :=  IIF(::oWSListarCustosAdicionaisAprovadosPorViagemResult = NIL , NIL ,::oWSListarCustosAdicionaisAprovadosPorViagemResult:Clone() )
+	oClone:oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult :=  IIF(::oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult = NIL , NIL ,::oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult:Clone() )
+	oClone:oWSRetornarQuantidadePernoitesAprovadasPorViagemResult :=  IIF(::oWSRetornarQuantidadePernoitesAprovadasPorViagemResult = NIL , NIL ,::oWSRetornarQuantidadePernoitesAprovadasPorViagemResult:Clone() )
 	oClone:oWSRetornarAnomaliasRegistradasResult :=  IIF(::oWSRetornarAnomaliasRegistradasResult = NIL , NIL ,::oWSRetornarAnomaliasRegistradasResult:Clone() )
 	oClone:nPeriodoMinutos := ::nPeriodoMinutos
 	oClone:oWSListarViagensFinalizadasResult :=  IIF(::oWSListarViagensFinalizadasResult = NIL , NIL ,::oWSListarViagensFinalizadasResult:Clone() )
@@ -331,6 +361,8 @@ Local oClone := WSsivirafullWebService():New()
 	oClone:oWSImportarPedidosResult :=  IIF(::oWSImportarPedidosResult = NIL , NIL ,::oWSImportarPedidosResult:Clone() )
 	oClone:oWSFiltro     :=  IIF(::oWSFiltro = NIL , NIL ,::oWSFiltro:Clone() )
 	oClone:oWSRetornarRoteirosResult :=  IIF(::oWSRetornarRoteirosResult = NIL , NIL ,::oWSRetornarRoteirosResult:Clone() )
+	oClone:oWSListarModalidadesDeCustoAdicionalResult :=  IIF(::oWSListarModalidadesDeCustoAdicionalResult = NIL , NIL ,::oWSListarModalidadesDeCustoAdicionalResult:Clone() )
+	oClone:oWSListarTiposDeCustoAdicionalResult :=  IIF(::oWSListarTiposDeCustoAdicionalResult = NIL , NIL ,::oWSListarTiposDeCustoAdicionalResult:Clone() )
 	oClone:oWSImportarViagemFaturadaResult :=  IIF(::oWSImportarViagemFaturadaResult = NIL , NIL ,::oWSImportarViagemFaturadaResult:Clone() )
 	oClone:oWSViagemPlanejada :=  IIF(::oWSViagemPlanejada = NIL , NIL ,::oWSViagemPlanejada:Clone() )
 	oClone:oWSImportarViagemPlanejadaResult :=  IIF(::oWSImportarViagemPlanejadaResult = NIL , NIL ,::oWSImportarViagemPlanejadaResult:Clone() )
@@ -346,6 +378,32 @@ Local oClone := WSsivirafullWebService():New()
 	oClone:oWSTabelaFrete :=  IIF(::oWSTabelaFrete = NIL , NIL ,::oWSTabelaFrete:Clone() )
 	oClone:oWSIntegrarTabelaFreteResult :=  IIF(::oWSIntegrarTabelaFreteResult = NIL , NIL ,::oWSIntegrarTabelaFreteResult:Clone() )
 Return oClone
+
+// WSDL Method CompletarViagem of Service WSsivirafullWebService
+
+WSMETHOD CompletarViagem WSSEND cLogin,cSenha,oWSViagem WSRECEIVE oWSCompletarViagemResult WSCLIENT WSsivirafullWebService
+Local cSoap := "" , oXmlRet
+
+BEGIN WSMETHOD
+
+cSoap += '<CompletarViagem xmlns="http://app.ravex.com.br/sivirafull/Service.asmx">'
+cSoap += WSSoapValue("Login", ::cLogin, cLogin , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Senha", ::cSenha, cSenha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Viagem", ::oWSViagem, oWSViagem , "Viagem", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += "</CompletarViagem>"
+
+oXmlRet := SvcSoapCall(Self,cSoap,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx/CompletarViagem",; 
+	"DOCUMENT","http://app.ravex.com.br/sivirafull/Service.asmx",,,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx")
+
+::Init()
+::oWSCompletarViagemResult:SoapRecv( WSAdvValue( oXmlRet,"_COMPLETARVIAGEMRESPONSE:_COMPLETARVIAGEMRESULT","Retorno",NIL,NIL,NIL,NIL,NIL,NIL) )
+
+END WSMETHOD
+
+oXmlRet := NIL
+Return .T.
 
 // WSDL Method RetornarColetasRealizadas of Service WSsivirafullWebService
 
@@ -883,6 +941,87 @@ END WSMETHOD
 oXmlRet := NIL
 Return .T.
 
+// WSDL Method ListarCustosAdicionaisAprovadosPorViagem of Service WSsivirafullWebService
+
+WSMETHOD ListarCustosAdicionaisAprovadosPorViagem WSSEND cLogin,cSenha,cIdentificador,nIdViagem WSRECEIVE oWSListarCustosAdicionaisAprovadosPorViagemResult WSCLIENT WSsivirafullWebService
+Local cSoap := "" , oXmlRet
+
+BEGIN WSMETHOD
+
+cSoap += '<ListarCustosAdicionaisAprovadosPorViagem xmlns="http://app.ravex.com.br/sivirafull/Service.asmx">'
+cSoap += WSSoapValue("Login", ::cLogin, cLogin , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Senha", ::cSenha, cSenha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Identificador", ::cIdentificador, cIdentificador , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("IdViagem", ::nIdViagem, nIdViagem , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+cSoap += "</ListarCustosAdicionaisAprovadosPorViagem>"
+
+oXmlRet := SvcSoapCall(Self,cSoap,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx/ListarCustosAdicionaisAprovadosPorViagem",; 
+	"DOCUMENT","http://app.ravex.com.br/sivirafull/Service.asmx",,,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx")
+
+::Init()
+::oWSListarCustosAdicionaisAprovadosPorViagemResult:SoapRecv( WSAdvValue( oXmlRet,"_LISTARCUSTOSADICIONAISAPROVADOSPORVIAGEMRESPONSE:_LISTARCUSTOSADICIONAISAPROVADOSPORVIAGEMRESULT","ArrayOfRetornoCustoAdicional",NIL,NIL,NIL,NIL,NIL,NIL) )
+
+END WSMETHOD
+
+oXmlRet := NIL
+Return .T.
+
+// WSDL Method ListarAlteracaoValorModalidadeCustoAdicionalPorViagem of Service WSsivirafullWebService
+
+WSMETHOD ListarAlteracaoValorModalidadeCustoAdicionalPorViagem WSSEND cLogin,cSenha,cIdentificador,nIdViagem WSRECEIVE oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult WSCLIENT WSsivirafullWebService
+Local cSoap := "" , oXmlRet
+
+BEGIN WSMETHOD
+
+cSoap += '<ListarAlteracaoValorModalidadeCustoAdicionalPorViagem xmlns="http://app.ravex.com.br/sivirafull/Service.asmx">'
+cSoap += WSSoapValue("Login", ::cLogin, cLogin , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Senha", ::cSenha, cSenha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Identificador", ::cIdentificador, cIdentificador , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("IdViagem", ::nIdViagem, nIdViagem , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+cSoap += "</ListarAlteracaoValorModalidadeCustoAdicionalPorViagem>"
+
+oXmlRet := SvcSoapCall(Self,cSoap,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx/ListarAlteracaoValorModalidadeCustoAdicionalPorViagem",; 
+	"DOCUMENT","http://app.ravex.com.br/sivirafull/Service.asmx",,,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx")
+
+::Init()
+::oWSListarAlteracaoValorModalidadeCustoAdicionalPorViagemResult:SoapRecv( WSAdvValue( oXmlRet,"_LISTARALTERACAOVALORMODALIDADECUSTOADICIONALPORVIAGEMRESPONSE:_LISTARALTERACAOVALORMODALIDADECUSTOADICIONALPORVIAGEMRESULT","ArrayOfRetornoAlteracaoValorModalidade",NIL,NIL,NIL,NIL,NIL,NIL) )
+
+END WSMETHOD
+
+oXmlRet := NIL
+Return .T.
+
+// WSDL Method RetornarQuantidadePernoitesAprovadasPorViagem of Service WSsivirafullWebService
+
+WSMETHOD RetornarQuantidadePernoitesAprovadasPorViagem WSSEND cLogin,cSenha,cIdentificador,nIdViagem WSRECEIVE oWSRetornarQuantidadePernoitesAprovadasPorViagemResult WSCLIENT WSsivirafullWebService
+Local cSoap := "" , oXmlRet
+
+BEGIN WSMETHOD
+
+cSoap += '<RetornarQuantidadePernoitesAprovadasPorViagem xmlns="http://app.ravex.com.br/sivirafull/Service.asmx">'
+cSoap += WSSoapValue("Login", ::cLogin, cLogin , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Senha", ::cSenha, cSenha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Identificador", ::cIdentificador, cIdentificador , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("IdViagem", ::nIdViagem, nIdViagem , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+cSoap += "</RetornarQuantidadePernoitesAprovadasPorViagem>"
+
+oXmlRet := SvcSoapCall(Self,cSoap,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx/RetornarQuantidadePernoitesAprovadasPorViagem",; 
+	"DOCUMENT","http://app.ravex.com.br/sivirafull/Service.asmx",,,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx")
+
+::Init()
+::oWSRetornarQuantidadePernoitesAprovadasPorViagemResult:SoapRecv( WSAdvValue( oXmlRet,"_RETORNARQUANTIDADEPERNOITESAPROVADASPORVIAGEMRESPONSE:_RETORNARQUANTIDADEPERNOITESAPROVADASPORVIAGEMRESULT","RetornoPernoiteAprovada",NIL,NIL,NIL,NIL,NIL,NIL) )
+
+END WSMETHOD
+
+oXmlRet := NIL
+Return .T.
+
 // WSDL Method RetornarAnomaliasRegistradas of Service WSsivirafullWebService
 
 WSMETHOD RetornarAnomaliasRegistradas WSSEND cLogin,cSenha,nIdViagem,cIdentificador WSRECEIVE oWSRetornarAnomaliasRegistradasResult WSCLIENT WSsivirafullWebService
@@ -1034,6 +1173,56 @@ oXmlRet := SvcSoapCall(Self,cSoap,;
 
 ::Init()
 ::oWSRetornarRoteirosResult:SoapRecv( WSAdvValue( oXmlRet,"_RETORNARROTEIROSRESPONSE:_RETORNARROTEIROSRESULT","ArrayOfRoteiro",NIL,NIL,NIL,NIL,NIL,NIL) )
+
+END WSMETHOD
+
+oXmlRet := NIL
+Return .T.
+
+// WSDL Method ListarModalidadesDeCustoAdicional of Service WSsivirafullWebService
+
+WSMETHOD ListarModalidadesDeCustoAdicional WSSEND cLogin,cSenha WSRECEIVE oWSListarModalidadesDeCustoAdicionalResult WSCLIENT WSsivirafullWebService
+Local cSoap := "" , oXmlRet
+
+BEGIN WSMETHOD
+
+cSoap += '<ListarModalidadesDeCustoAdicional xmlns="http://app.ravex.com.br/sivirafull/Service.asmx">'
+cSoap += WSSoapValue("Login", ::cLogin, cLogin , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Senha", ::cSenha, cSenha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += "</ListarModalidadesDeCustoAdicional>"
+
+oXmlRet := SvcSoapCall(Self,cSoap,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx/ListarModalidadesDeCustoAdicional",; 
+	"DOCUMENT","http://app.ravex.com.br/sivirafull/Service.asmx",,,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx")
+
+::Init()
+::oWSListarModalidadesDeCustoAdicionalResult:SoapRecv( WSAdvValue( oXmlRet,"_LISTARMODALIDADESDECUSTOADICIONALRESPONSE:_LISTARMODALIDADESDECUSTOADICIONALRESULT","ArrayOfModalidadeCustoAdicional",NIL,NIL,NIL,NIL,NIL,NIL) )
+
+END WSMETHOD
+
+oXmlRet := NIL
+Return .T.
+
+// WSDL Method ListarTiposDeCustoAdicional of Service WSsivirafullWebService
+
+WSMETHOD ListarTiposDeCustoAdicional WSSEND cLogin,cSenha WSRECEIVE oWSListarTiposDeCustoAdicionalResult WSCLIENT WSsivirafullWebService
+Local cSoap := "" , oXmlRet
+
+BEGIN WSMETHOD
+
+cSoap += '<ListarTiposDeCustoAdicional xmlns="http://app.ravex.com.br/sivirafull/Service.asmx">'
+cSoap += WSSoapValue("Login", ::cLogin, cLogin , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += WSSoapValue("Senha", ::cSenha, cSenha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+cSoap += "</ListarTiposDeCustoAdicional>"
+
+oXmlRet := SvcSoapCall(Self,cSoap,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx/ListarTiposDeCustoAdicional",; 
+	"DOCUMENT","http://app.ravex.com.br/sivirafull/Service.asmx",,,; 
+	"http://app.ravex.com.br/sivirafull/Service.asmx")
+
+::Init()
+::oWSListarTiposDeCustoAdicionalResult:SoapRecv( WSAdvValue( oXmlRet,"_LISTARTIPOSDECUSTOADICIONALRESPONSE:_LISTARTIPOSDECUSTOADICIONALRESULT","ArrayOfTipoCustoAdicional",NIL,NIL,NIL,NIL,NIL,NIL) )
 
 END WSMETHOD
 
@@ -1308,125 +1497,6 @@ oXmlRet := NIL
 Return .T.
 
 
-// WSDL Data Structure RetornoViagem
-
-WSSTRUCT sivirafullWebService_RetornoViagem
-	WSDATA   nIdViagem                 AS int
-	WSDATA   cIdentificador            AS string OPTIONAL
-	WSDATA   nIdEmbarcador             AS int
-	WSDATA   cCnpjUnidade              AS string OPTIONAL
-	WSDATA   nIdUnidade                AS int
-	WSDATA   cPlaca                    AS string OPTIONAL
-	WSDATA   cInicio                   AS dateTime
-	WSDATA   cFim                      AS dateTime
-	WSDATA   cInicioDescarga           AS dateTime
-	WSDATA   cFimDescarga              AS dateTime
-	WSDATA   nCodigoStatus             AS int
-	WSDATA   cStatus                   AS string OPTIONAL
-	WSDATA   oWSAnomalias              AS sivirafullWebService_ArrayOfRetornoAnomalia OPTIONAL
-	WSDATA   oWSEntregas               AS sivirafullWebService_ArrayOfRetornoEntrega OPTIONAL
-	WSDATA   oWSColetas                AS sivirafullWebService_ArrayOfRetornoColeta OPTIONAL
-	WSMETHOD NEW
-	WSMETHOD INIT
-	WSMETHOD CLONE
-	WSMETHOD SOAPRECV
-ENDWSSTRUCT
-
-WSMETHOD NEW WSCLIENT sivirafullWebService_RetornoViagem
-	::Init()
-Return Self
-
-WSMETHOD INIT WSCLIENT sivirafullWebService_RetornoViagem
-Return
-
-WSMETHOD CLONE WSCLIENT sivirafullWebService_RetornoViagem
-	Local oClone := sivirafullWebService_RetornoViagem():NEW()
-	oClone:nIdViagem            := ::nIdViagem
-	oClone:cIdentificador       := ::cIdentificador
-	oClone:nIdEmbarcador        := ::nIdEmbarcador
-	oClone:cCnpjUnidade         := ::cCnpjUnidade
-	oClone:nIdUnidade           := ::nIdUnidade
-	oClone:cPlaca               := ::cPlaca
-	oClone:cInicio              := ::cInicio
-	oClone:cFim                 := ::cFim
-	oClone:cInicioDescarga      := ::cInicioDescarga
-	oClone:cFimDescarga         := ::cFimDescarga
-	oClone:nCodigoStatus        := ::nCodigoStatus
-	oClone:cStatus              := ::cStatus
-	oClone:oWSAnomalias         := IIF(::oWSAnomalias = NIL , NIL , ::oWSAnomalias:Clone() )
-	oClone:oWSEntregas          := IIF(::oWSEntregas = NIL , NIL , ::oWSEntregas:Clone() )
-	oClone:oWSColetas           := IIF(::oWSColetas = NIL , NIL , ::oWSColetas:Clone() )
-Return oClone
-
-WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_RetornoViagem
-	Local oNode13
-	Local oNode14
-	Local oNode15
-	::Init()
-	If oResponse = NIL ; Return ; Endif 
-	::nIdViagem          :=  WSAdvValue( oResponse,"_IDVIAGEM","int",NIL,"Property nIdViagem as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
-	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	::nIdEmbarcador      :=  WSAdvValue( oResponse,"_IDEMBARCADOR","int",NIL,"Property nIdEmbarcador as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
-	::cCnpjUnidade       :=  WSAdvValue( oResponse,"_CNPJUNIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	::nIdUnidade         :=  WSAdvValue( oResponse,"_IDUNIDADE","int",NIL,"Property nIdUnidade as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
-	::cPlaca             :=  WSAdvValue( oResponse,"_PLACA","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	::cInicio            :=  WSAdvValue( oResponse,"_INICIO","dateTime",NIL,"Property cInicio as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
-	::cFim               :=  WSAdvValue( oResponse,"_FIM","dateTime",NIL,"Property cFim as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
-	::cInicioDescarga    :=  WSAdvValue( oResponse,"_INICIODESCARGA","dateTime",NIL,"Property cInicioDescarga as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
-	::cFimDescarga       :=  WSAdvValue( oResponse,"_FIMDESCARGA","dateTime",NIL,"Property cFimDescarga as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
-	::nCodigoStatus      :=  WSAdvValue( oResponse,"_CODIGOSTATUS","int",NIL,"Property nCodigoStatus as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
-	::cStatus            :=  WSAdvValue( oResponse,"_STATUS","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	oNode13 :=  WSAdvValue( oResponse,"_ANOMALIAS","ArrayOfRetornoAnomalia",NIL,NIL,NIL,"O",NIL,NIL) 
-	If oNode13 != NIL
-		::oWSAnomalias := sivirafullWebService_ArrayOfRetornoAnomalia():New()
-		::oWSAnomalias:SoapRecv(oNode13)
-	EndIf
-	oNode14 :=  WSAdvValue( oResponse,"_ENTREGAS","ArrayOfRetornoEntrega",NIL,NIL,NIL,"O",NIL,NIL) 
-	If oNode14 != NIL
-		::oWSEntregas := sivirafullWebService_ArrayOfRetornoEntrega():New()
-		::oWSEntregas:SoapRecv(oNode14)
-	EndIf
-	oNode15 :=  WSAdvValue( oResponse,"_COLETAS","ArrayOfRetornoColeta",NIL,NIL,NIL,"O",NIL,NIL) 
-	If oNode15 != NIL
-		::oWSColetas := sivirafullWebService_ArrayOfRetornoColeta():New()
-		::oWSColetas:SoapRecv(oNode15)
-	EndIf
-Return
-
-// WSDL Data Structure Retorno
-
-WSSTRUCT sivirafullWebService_Retorno
-	WSDATA   nId                       AS int
-	WSDATA   cMensagem                 AS string OPTIONAL
-	WSDATA   cIdentificador            AS string OPTIONAL
-	WSMETHOD NEW
-	WSMETHOD INIT
-	WSMETHOD CLONE
-	WSMETHOD SOAPRECV
-ENDWSSTRUCT
-
-WSMETHOD NEW WSCLIENT sivirafullWebService_Retorno
-	::Init()
-Return Self
-
-WSMETHOD INIT WSCLIENT sivirafullWebService_Retorno
-Return
-
-WSMETHOD CLONE WSCLIENT sivirafullWebService_Retorno
-	Local oClone := sivirafullWebService_Retorno():NEW()
-	oClone:nId                  := ::nId
-	oClone:cMensagem            := ::cMensagem
-	oClone:cIdentificador       := ::cIdentificador
-Return oClone
-
-WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_Retorno
-	::Init()
-	If oResponse = NIL ; Return ; Endif 
-	::nId                :=  WSAdvValue( oResponse,"_ID","int",NIL,"Property nId as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
-	::cMensagem          :=  WSAdvValue( oResponse,"_MENSAGEM","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
-Return
-
 // WSDL Data Structure Viagem
 
 WSSTRUCT sivirafullWebService_Viagem
@@ -1576,6 +1646,125 @@ WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_Viagem
 	cSoap += WSSoapValue("DiasEmRota", ::nDiasEmRota, ::nDiasEmRota , "int", .T. , .F., 0 , NIL, .F.,.F.) 
 	cSoap += WSSoapValue("Entregas", ::oWSEntregas, ::oWSEntregas , "ArrayOfEntrega", .F. , .F., 0 , NIL, .F.,.F.) 
 Return cSoap
+
+// WSDL Data Structure Retorno
+
+WSSTRUCT sivirafullWebService_Retorno
+	WSDATA   nId                       AS int
+	WSDATA   cMensagem                 AS string OPTIONAL
+	WSDATA   cIdentificador            AS string OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_Retorno
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_Retorno
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_Retorno
+	Local oClone := sivirafullWebService_Retorno():NEW()
+	oClone:nId                  := ::nId
+	oClone:cMensagem            := ::cMensagem
+	oClone:cIdentificador       := ::cIdentificador
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_Retorno
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::nId                :=  WSAdvValue( oResponse,"_ID","int",NIL,"Property nId as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cMensagem          :=  WSAdvValue( oResponse,"_MENSAGEM","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+Return
+
+// WSDL Data Structure RetornoViagem
+
+WSSTRUCT sivirafullWebService_RetornoViagem
+	WSDATA   nIdViagem                 AS int
+	WSDATA   cIdentificador            AS string OPTIONAL
+	WSDATA   nIdEmbarcador             AS int
+	WSDATA   cCnpjUnidade              AS string OPTIONAL
+	WSDATA   nIdUnidade                AS int
+	WSDATA   cPlaca                    AS string OPTIONAL
+	WSDATA   cInicio                   AS dateTime
+	WSDATA   cFim                      AS dateTime
+	WSDATA   cInicioDescarga           AS dateTime
+	WSDATA   cFimDescarga              AS dateTime
+	WSDATA   nCodigoStatus             AS int
+	WSDATA   cStatus                   AS string OPTIONAL
+	WSDATA   oWSAnomalias              AS sivirafullWebService_ArrayOfRetornoAnomalia OPTIONAL
+	WSDATA   oWSEntregas               AS sivirafullWebService_ArrayOfRetornoEntrega OPTIONAL
+	WSDATA   oWSColetas                AS sivirafullWebService_ArrayOfRetornoColeta OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_RetornoViagem
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_RetornoViagem
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_RetornoViagem
+	Local oClone := sivirafullWebService_RetornoViagem():NEW()
+	oClone:nIdViagem            := ::nIdViagem
+	oClone:cIdentificador       := ::cIdentificador
+	oClone:nIdEmbarcador        := ::nIdEmbarcador
+	oClone:cCnpjUnidade         := ::cCnpjUnidade
+	oClone:nIdUnidade           := ::nIdUnidade
+	oClone:cPlaca               := ::cPlaca
+	oClone:cInicio              := ::cInicio
+	oClone:cFim                 := ::cFim
+	oClone:cInicioDescarga      := ::cInicioDescarga
+	oClone:cFimDescarga         := ::cFimDescarga
+	oClone:nCodigoStatus        := ::nCodigoStatus
+	oClone:cStatus              := ::cStatus
+	oClone:oWSAnomalias         := IIF(::oWSAnomalias = NIL , NIL , ::oWSAnomalias:Clone() )
+	oClone:oWSEntregas          := IIF(::oWSEntregas = NIL , NIL , ::oWSEntregas:Clone() )
+	oClone:oWSColetas           := IIF(::oWSColetas = NIL , NIL , ::oWSColetas:Clone() )
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_RetornoViagem
+	Local oNode13
+	Local oNode14
+	Local oNode15
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::nIdViagem          :=  WSAdvValue( oResponse,"_IDVIAGEM","int",NIL,"Property nIdViagem as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::nIdEmbarcador      :=  WSAdvValue( oResponse,"_IDEMBARCADOR","int",NIL,"Property nIdEmbarcador as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cCnpjUnidade       :=  WSAdvValue( oResponse,"_CNPJUNIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::nIdUnidade         :=  WSAdvValue( oResponse,"_IDUNIDADE","int",NIL,"Property nIdUnidade as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cPlaca             :=  WSAdvValue( oResponse,"_PLACA","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cInicio            :=  WSAdvValue( oResponse,"_INICIO","dateTime",NIL,"Property cInicio as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
+	::cFim               :=  WSAdvValue( oResponse,"_FIM","dateTime",NIL,"Property cFim as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
+	::cInicioDescarga    :=  WSAdvValue( oResponse,"_INICIODESCARGA","dateTime",NIL,"Property cInicioDescarga as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
+	::cFimDescarga       :=  WSAdvValue( oResponse,"_FIMDESCARGA","dateTime",NIL,"Property cFimDescarga as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
+	::nCodigoStatus      :=  WSAdvValue( oResponse,"_CODIGOSTATUS","int",NIL,"Property nCodigoStatus as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cStatus            :=  WSAdvValue( oResponse,"_STATUS","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	oNode13 :=  WSAdvValue( oResponse,"_ANOMALIAS","ArrayOfRetornoAnomalia",NIL,NIL,NIL,"O",NIL,NIL) 
+	If oNode13 != NIL
+		::oWSAnomalias := sivirafullWebService_ArrayOfRetornoAnomalia():New()
+		::oWSAnomalias:SoapRecv(oNode13)
+	EndIf
+	oNode14 :=  WSAdvValue( oResponse,"_ENTREGAS","ArrayOfRetornoEntrega",NIL,NIL,NIL,"O",NIL,NIL) 
+	If oNode14 != NIL
+		::oWSEntregas := sivirafullWebService_ArrayOfRetornoEntrega():New()
+		::oWSEntregas:SoapRecv(oNode14)
+	EndIf
+	oNode15 :=  WSAdvValue( oResponse,"_COLETAS","ArrayOfRetornoColeta",NIL,NIL,NIL,"O",NIL,NIL) 
+	If oNode15 != NIL
+		::oWSColetas := sivirafullWebService_ArrayOfRetornoColeta():New()
+		::oWSColetas:SoapRecv(oNode15)
+	EndIf
+Return
 
 // WSDL Data Structure Pessoa
 
@@ -2226,6 +2415,7 @@ WSSTRUCT sivirafullWebService_ViagemRetorno
 	WSDATA   nQdteTripulantes          AS int
 	WSDATA   cCnpjTransportador        AS string OPTIONAL
 	WSDATA   cTransportador            AS string OPTIONAL
+	WSDATA   cResponsavelUnidade       AS string OPTIONAL
 	WSDATA   oWSAnomalias              AS sivirafullWebService_ArrayOfRetornoAnomalia OPTIONAL
 	WSDATA   oWSEntregas               AS sivirafullWebService_ArrayOfRetornoEntrega OPTIONAL
 	WSMETHOD NEW
@@ -2263,13 +2453,14 @@ WSMETHOD CLONE WSCLIENT sivirafullWebService_ViagemRetorno
 	oClone:nQdteTripulantes     := ::nQdteTripulantes
 	oClone:cCnpjTransportador   := ::cCnpjTransportador
 	oClone:cTransportador       := ::cTransportador
+	oClone:cResponsavelUnidade  := ::cResponsavelUnidade
 	oClone:oWSAnomalias         := IIF(::oWSAnomalias = NIL , NIL , ::oWSAnomalias:Clone() )
 	oClone:oWSEntregas          := IIF(::oWSEntregas = NIL , NIL , ::oWSEntregas:Clone() )
 Return oClone
 
 WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ViagemRetorno
-	Local oNode21
 	Local oNode22
+	Local oNode23
 	::Init()
 	If oResponse = NIL ; Return ; Endif 
 	::nIdViagem          :=  WSAdvValue( oResponse,"_IDVIAGEM","int",NIL,"Property nIdViagem as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
@@ -2292,16 +2483,145 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ViagemRetorno
 	::nQdteTripulantes   :=  WSAdvValue( oResponse,"_QDTETRIPULANTES","int",NIL,"Property nQdteTripulantes as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
 	::cCnpjTransportador :=  WSAdvValue( oResponse,"_CNPJTRANSPORTADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
 	::cTransportador     :=  WSAdvValue( oResponse,"_TRANSPORTADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	oNode21 :=  WSAdvValue( oResponse,"_ANOMALIAS","ArrayOfRetornoAnomalia",NIL,NIL,NIL,"O",NIL,NIL) 
-	If oNode21 != NIL
-		::oWSAnomalias := sivirafullWebService_ArrayOfRetornoAnomalia():New()
-		::oWSAnomalias:SoapRecv(oNode21)
-	EndIf
-	oNode22 :=  WSAdvValue( oResponse,"_ENTREGAS","ArrayOfRetornoEntrega",NIL,NIL,NIL,"O",NIL,NIL) 
+	::cResponsavelUnidade :=  WSAdvValue( oResponse,"_RESPONSAVELUNIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	oNode22 :=  WSAdvValue( oResponse,"_ANOMALIAS","ArrayOfRetornoAnomalia",NIL,NIL,NIL,"O",NIL,NIL) 
 	If oNode22 != NIL
-		::oWSEntregas := sivirafullWebService_ArrayOfRetornoEntrega():New()
-		::oWSEntregas:SoapRecv(oNode22)
+		::oWSAnomalias := sivirafullWebService_ArrayOfRetornoAnomalia():New()
+		::oWSAnomalias:SoapRecv(oNode22)
 	EndIf
+	oNode23 :=  WSAdvValue( oResponse,"_ENTREGAS","ArrayOfRetornoEntrega",NIL,NIL,NIL,"O",NIL,NIL) 
+	If oNode23 != NIL
+		::oWSEntregas := sivirafullWebService_ArrayOfRetornoEntrega():New()
+		::oWSEntregas:SoapRecv(oNode23)
+	EndIf
+Return
+
+// WSDL Data Structure ArrayOfRetornoCustoAdicional
+
+WSSTRUCT sivirafullWebService_ArrayOfRetornoCustoAdicional
+	WSDATA   oWSRetornoCustoAdicional  AS sivirafullWebService_RetornoCustoAdicional OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfRetornoCustoAdicional
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfRetornoCustoAdicional
+	::oWSRetornoCustoAdicional := {} // Array Of  sivirafullWebService_RETORNOCUSTOADICIONAL():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfRetornoCustoAdicional
+	Local oClone := sivirafullWebService_ArrayOfRetornoCustoAdicional():NEW()
+	oClone:oWSRetornoCustoAdicional := NIL
+	If ::oWSRetornoCustoAdicional <> NIL 
+		oClone:oWSRetornoCustoAdicional := {}
+		aEval( ::oWSRetornoCustoAdicional , { |x| aadd( oClone:oWSRetornoCustoAdicional , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfRetornoCustoAdicional
+	Local nRElem1, oNodes1, nTElem1
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	oNodes1 :=  WSAdvValue( oResponse,"_RETORNOCUSTOADICIONAL","RetornoCustoAdicional",{},NIL,.T.,"O",NIL,NIL) 
+	nTElem1 := len(oNodes1)
+	For nRElem1 := 1 to nTElem1 
+		If !WSIsNilNode( oNodes1[nRElem1] )
+			aadd(::oWSRetornoCustoAdicional , sivirafullWebService_RetornoCustoAdicional():New() )
+			::oWSRetornoCustoAdicional[len(::oWSRetornoCustoAdicional)]:SoapRecv(oNodes1[nRElem1])
+		Endif
+	Next
+Return
+
+// WSDL Data Structure ArrayOfRetornoAlteracaoValorModalidade
+
+WSSTRUCT sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade
+	WSDATA   oWSRetornoAlteracaoValorModalidade AS sivirafullWebService_RetornoAlteracaoValorModalidade OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade
+	::oWSRetornoAlteracaoValorModalidade := {} // Array Of  sivirafullWebService_RETORNOALTERACAOVALORMODALIDADE():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade
+	Local oClone := sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade():NEW()
+	oClone:oWSRetornoAlteracaoValorModalidade := NIL
+	If ::oWSRetornoAlteracaoValorModalidade <> NIL 
+		oClone:oWSRetornoAlteracaoValorModalidade := {}
+		aEval( ::oWSRetornoAlteracaoValorModalidade , { |x| aadd( oClone:oWSRetornoAlteracaoValorModalidade , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfRetornoAlteracaoValorModalidade
+	Local nRElem1, oNodes1, nTElem1
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	oNodes1 :=  WSAdvValue( oResponse,"_RETORNOALTERACAOVALORMODALIDADE","RetornoAlteracaoValorModalidade",{},NIL,.T.,"O",NIL,NIL) 
+	nTElem1 := len(oNodes1)
+	For nRElem1 := 1 to nTElem1 
+		If !WSIsNilNode( oNodes1[nRElem1] )
+			aadd(::oWSRetornoAlteracaoValorModalidade , sivirafullWebService_RetornoAlteracaoValorModalidade():New() )
+			::oWSRetornoAlteracaoValorModalidade[len(::oWSRetornoAlteracaoValorModalidade)]:SoapRecv(oNodes1[nRElem1])
+		Endif
+	Next
+Return
+
+// WSDL Data Structure RetornoPernoiteAprovada
+
+WSSTRUCT sivirafullWebService_RetornoPernoiteAprovada
+	WSDATA   cIdentificador            AS string OPTIONAL
+	WSDATA   cCodigoMotivo             AS string OPTIONAL
+	WSDATA   cMotivo                   AS string OPTIONAL
+	WSDATA   nQdtePernoites            AS int
+	WSDATA   nQdteTripulantes          AS int
+	WSDATA   cDataPernoite             AS dateTime
+	WSDATA   cDataAprovacaoPernoite    AS dateTime
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_RetornoPernoiteAprovada
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_RetornoPernoiteAprovada
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_RetornoPernoiteAprovada
+	Local oClone := sivirafullWebService_RetornoPernoiteAprovada():NEW()
+	oClone:cIdentificador       := ::cIdentificador
+	oClone:cCodigoMotivo        := ::cCodigoMotivo
+	oClone:cMotivo              := ::cMotivo
+	oClone:nQdtePernoites       := ::nQdtePernoites
+	oClone:nQdteTripulantes     := ::nQdteTripulantes
+	oClone:cDataPernoite        := ::cDataPernoite
+	oClone:cDataAprovacaoPernoite := ::cDataAprovacaoPernoite
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_RetornoPernoiteAprovada
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cCodigoMotivo      :=  WSAdvValue( oResponse,"_CODIGOMOTIVO","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cMotivo            :=  WSAdvValue( oResponse,"_MOTIVO","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::nQdtePernoites     :=  WSAdvValue( oResponse,"_QDTEPERNOITES","int",NIL,"Property nQdtePernoites as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::nQdteTripulantes   :=  WSAdvValue( oResponse,"_QDTETRIPULANTES","int",NIL,"Property nQdteTripulantes as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cDataPernoite      :=  WSAdvValue( oResponse,"_DATAPERNOITE","dateTime",NIL,"Property cDataPernoite as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
+	::cDataAprovacaoPernoite :=  WSAdvValue( oResponse,"_DATAAPROVACAOPERNOITE","dateTime",NIL,"Property cDataAprovacaoPernoite as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
 Return
 
 // WSDL Data Structure ArrayOfViagemFinalizada
@@ -2490,6 +2810,88 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfRoteiro
 		If !WSIsNilNode( oNodes1[nRElem1] )
 			aadd(::oWSRoteiro , sivirafullWebService_Roteiro():New() )
 			::oWSRoteiro[len(::oWSRoteiro)]:SoapRecv(oNodes1[nRElem1])
+		Endif
+	Next
+Return
+
+// WSDL Data Structure ArrayOfModalidadeCustoAdicional
+
+WSSTRUCT sivirafullWebService_ArrayOfModalidadeCustoAdicional
+	WSDATA   oWSModalidadeCustoAdicional AS sivirafullWebService_ModalidadeCustoAdicional OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfModalidadeCustoAdicional
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfModalidadeCustoAdicional
+	::oWSModalidadeCustoAdicional := {} // Array Of  sivirafullWebService_MODALIDADECUSTOADICIONAL():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfModalidadeCustoAdicional
+	Local oClone := sivirafullWebService_ArrayOfModalidadeCustoAdicional():NEW()
+	oClone:oWSModalidadeCustoAdicional := NIL
+	If ::oWSModalidadeCustoAdicional <> NIL 
+		oClone:oWSModalidadeCustoAdicional := {}
+		aEval( ::oWSModalidadeCustoAdicional , { |x| aadd( oClone:oWSModalidadeCustoAdicional , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfModalidadeCustoAdicional
+	Local nRElem1, oNodes1, nTElem1
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	oNodes1 :=  WSAdvValue( oResponse,"_MODALIDADECUSTOADICIONAL","ModalidadeCustoAdicional",{},NIL,.T.,"O",NIL,NIL) 
+	nTElem1 := len(oNodes1)
+	For nRElem1 := 1 to nTElem1 
+		If !WSIsNilNode( oNodes1[nRElem1] )
+			aadd(::oWSModalidadeCustoAdicional , sivirafullWebService_ModalidadeCustoAdicional():New() )
+			::oWSModalidadeCustoAdicional[len(::oWSModalidadeCustoAdicional)]:SoapRecv(oNodes1[nRElem1])
+		Endif
+	Next
+Return
+
+// WSDL Data Structure ArrayOfTipoCustoAdicional
+
+WSSTRUCT sivirafullWebService_ArrayOfTipoCustoAdicional
+	WSDATA   oWSTipoCustoAdicional     AS sivirafullWebService_TipoCustoAdicional OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfTipoCustoAdicional
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfTipoCustoAdicional
+	::oWSTipoCustoAdicional := {} // Array Of  sivirafullWebService_TIPOCUSTOADICIONAL():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfTipoCustoAdicional
+	Local oClone := sivirafullWebService_ArrayOfTipoCustoAdicional():NEW()
+	oClone:oWSTipoCustoAdicional := NIL
+	If ::oWSTipoCustoAdicional <> NIL 
+		oClone:oWSTipoCustoAdicional := {}
+		aEval( ::oWSTipoCustoAdicional , { |x| aadd( oClone:oWSTipoCustoAdicional , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfTipoCustoAdicional
+	Local nRElem1, oNodes1, nTElem1
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	oNodes1 :=  WSAdvValue( oResponse,"_TIPOCUSTOADICIONAL","TipoCustoAdicional",{},NIL,.T.,"O",NIL,NIL) 
+	nTElem1 := len(oNodes1)
+	For nRElem1 := 1 to nTElem1 
+		If !WSIsNilNode( oNodes1[nRElem1] )
+			aadd(::oWSTipoCustoAdicional , sivirafullWebService_TipoCustoAdicional():New() )
+			::oWSTipoCustoAdicional[len(::oWSTipoCustoAdicional)]:SoapRecv(oNodes1[nRElem1])
 		Endif
 	Next
 Return
@@ -2707,6 +3109,38 @@ WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_Frete
 	cSoap += WSSoapValue("Valor", ::nValor, ::nValor , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
 Return cSoap
 
+// WSDL Data Structure ArrayOfEntrega
+
+WSSTRUCT sivirafullWebService_ArrayOfEntrega
+	WSDATA   oWSEntrega                AS sivirafullWebService_Entrega OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPSEND
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfEntrega
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfEntrega
+	::oWSEntrega           := {} // Array Of  sivirafullWebService_ENTREGA():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfEntrega
+	Local oClone := sivirafullWebService_ArrayOfEntrega():NEW()
+	oClone:oWSEntrega := NIL
+	If ::oWSEntrega <> NIL 
+		oClone:oWSEntrega := {}
+		aEval( ::oWSEntrega , { |x| aadd( oClone:oWSEntrega , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_ArrayOfEntrega
+	Local cSoap := ""
+	aEval( ::oWSEntrega , {|x| cSoap := cSoap  +  WSSoapValue("Entrega", x , x , "Entrega", .F. , .F., 0 , NIL, .F.,.F.)  } ) 
+Return cSoap
+
 // WSDL Data Structure ArrayOfRetornoAnomalia
 
 WSSTRUCT sivirafullWebService_ArrayOfRetornoAnomalia
@@ -2829,38 +3263,6 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfRetornoC
 		Endif
 	Next
 Return
-
-// WSDL Data Structure ArrayOfEntrega
-
-WSSTRUCT sivirafullWebService_ArrayOfEntrega
-	WSDATA   oWSEntrega                AS sivirafullWebService_Entrega OPTIONAL
-	WSMETHOD NEW
-	WSMETHOD INIT
-	WSMETHOD CLONE
-	WSMETHOD SOAPSEND
-ENDWSSTRUCT
-
-WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfEntrega
-	::Init()
-Return Self
-
-WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfEntrega
-	::oWSEntrega           := {} // Array Of  sivirafullWebService_ENTREGA():New()
-Return
-
-WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfEntrega
-	Local oClone := sivirafullWebService_ArrayOfEntrega():NEW()
-	oClone:oWSEntrega := NIL
-	If ::oWSEntrega <> NIL 
-		oClone:oWSEntrega := {}
-		aEval( ::oWSEntrega , { |x| aadd( oClone:oWSEntrega , x:Clone() ) } )
-	Endif 
-Return oClone
-
-WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_ArrayOfEntrega
-	Local cSoap := ""
-	aEval( ::oWSEntrega , {|x| cSoap := cSoap  +  WSSoapValue("Entrega", x , x , "Entrega", .F. , .F., 0 , NIL, .F.,.F.)  } ) 
-Return cSoap
 
 // WSDL Data Structure RetornoDevolucao
 
@@ -3151,12 +3553,129 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_NotaEntregue
 	::cOperador          :=  WSAdvValue( oResponse,"_OPERADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
 Return
 
+// WSDL Data Structure RetornoCustoAdicional
+
+WSSTRUCT sivirafullWebService_RetornoCustoAdicional
+	WSDATA   nId                       AS int
+	WSDATA   lPrevisto                 AS boolean
+	WSDATA   nValorAprovado            AS decimal
+	WSDATA   cUrlImagem                AS string OPTIONAL
+	WSDATA   cTipoCustoAdicional       AS string OPTIONAL
+	WSDATA   nCodigoStatus             AS int
+	WSDATA   cStatus                   AS string OPTIONAL
+	WSDATA   cCodigoModalidade         AS string OPTIONAL
+	WSDATA   cModalidade               AS string OPTIONAL
+	WSDATA   cIdentificador            AS string OPTIONAL
+	WSDATA   cUsuarioAprovador         AS string OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_RetornoCustoAdicional
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_RetornoCustoAdicional
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_RetornoCustoAdicional
+	Local oClone := sivirafullWebService_RetornoCustoAdicional():NEW()
+	oClone:nId                  := ::nId
+	oClone:lPrevisto            := ::lPrevisto
+	oClone:nValorAprovado       := ::nValorAprovado
+	oClone:cUrlImagem           := ::cUrlImagem
+	oClone:cTipoCustoAdicional  := ::cTipoCustoAdicional
+	oClone:nCodigoStatus        := ::nCodigoStatus
+	oClone:cStatus              := ::cStatus
+	oClone:cCodigoModalidade    := ::cCodigoModalidade
+	oClone:cModalidade          := ::cModalidade
+	oClone:cIdentificador       := ::cIdentificador
+	oClone:cUsuarioAprovador    := ::cUsuarioAprovador
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_RetornoCustoAdicional
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::nId                :=  WSAdvValue( oResponse,"_ID","int",NIL,"Property nId as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::lPrevisto          :=  WSAdvValue( oResponse,"_PREVISTO","boolean",NIL,"Property lPrevisto as s:boolean on SOAP Response not found.",NIL,"L",NIL,NIL) 
+	::nValorAprovado     :=  WSAdvValue( oResponse,"_VALORAPROVADO","decimal",NIL,"Property nValorAprovado as s:decimal on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cUrlImagem         :=  WSAdvValue( oResponse,"_URLIMAGEM","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cTipoCustoAdicional :=  WSAdvValue( oResponse,"_TIPOCUSTOADICIONAL","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::nCodigoStatus      :=  WSAdvValue( oResponse,"_CODIGOSTATUS","int",NIL,"Property nCodigoStatus as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cStatus            :=  WSAdvValue( oResponse,"_STATUS","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cCodigoModalidade  :=  WSAdvValue( oResponse,"_CODIGOMODALIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cModalidade        :=  WSAdvValue( oResponse,"_MODALIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cUsuarioAprovador  :=  WSAdvValue( oResponse,"_USUARIOAPROVADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+Return
+
+// WSDL Data Structure RetornoAlteracaoValorModalidade
+
+WSSTRUCT sivirafullWebService_RetornoAlteracaoValorModalidade
+	WSDATA   nId                       AS int
+	WSDATA   cCodigoModalidade         AS string OPTIONAL
+	WSDATA   cModalidade               AS string OPTIONAL
+	WSDATA   nValor                    AS decimal
+	WSDATA   cCodigoEntrega            AS string OPTIONAL
+	WSDATA   cIdentificador            AS string OPTIONAL
+	WSDATA   cUsuarioAprovador         AS string OPTIONAL
+	WSDATA   cUrlImagem                AS string OPTIONAL
+	WSDATA   cPdf                      AS string OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_RetornoAlteracaoValorModalidade
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_RetornoAlteracaoValorModalidade
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_RetornoAlteracaoValorModalidade
+	Local oClone := sivirafullWebService_RetornoAlteracaoValorModalidade():NEW()
+	oClone:nId                  := ::nId
+	oClone:cCodigoModalidade    := ::cCodigoModalidade
+	oClone:cModalidade          := ::cModalidade
+	oClone:nValor               := ::nValor
+	oClone:cCodigoEntrega       := ::cCodigoEntrega
+	oClone:cIdentificador       := ::cIdentificador
+	oClone:cUsuarioAprovador    := ::cUsuarioAprovador
+	oClone:cUrlImagem           := ::cUrlImagem
+	oClone:cPdf                 := ::cPdf
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_RetornoAlteracaoValorModalidade
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::nId                :=  WSAdvValue( oResponse,"_ID","int",NIL,"Property nId as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cCodigoModalidade  :=  WSAdvValue( oResponse,"_CODIGOMODALIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cModalidade        :=  WSAdvValue( oResponse,"_MODALIDADE","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::nValor             :=  WSAdvValue( oResponse,"_VALOR","decimal",NIL,"Property nValor as s:decimal on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cCodigoEntrega     :=  WSAdvValue( oResponse,"_CODIGOENTREGA","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cUsuarioAprovador  :=  WSAdvValue( oResponse,"_USUARIOAPROVADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cUrlImagem         :=  WSAdvValue( oResponse,"_URLIMAGEM","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cPdf               :=  WSAdvValue( oResponse,"_PDF","string",NIL,NIL,NIL,"S",NIL,NIL) 
+Return
+
 // WSDL Data Structure ViagemFinalizada
 
 WSSTRUCT sivirafullWebService_ViagemFinalizada
 	WSDATA   nIdViagem                 AS int
 	WSDATA   cIdentificador            AS string OPTIONAL
 	WSDATA   cDataFinalizacao          AS dateTime
+	WSDATA   cPlaca                    AS string OPTIONAL
+	WSDATA   cCnpjTransportadora       AS string OPTIONAL
+	WSDATA   lPossuiEntregaRealizada   AS boolean
+	WSDATA   lPossuiAnomaliaRegistrada AS boolean
+	WSDATA   lPossuiSolicitacaoPernoiteAprovada AS boolean
+	WSDATA   lPossuiCustoAdicionalAprovado AS boolean
+	WSDATA   lPossuiAlteracaoDeValorPorModalidade AS boolean
 	WSMETHOD NEW
 	WSMETHOD INIT
 	WSMETHOD CLONE
@@ -3175,6 +3694,13 @@ WSMETHOD CLONE WSCLIENT sivirafullWebService_ViagemFinalizada
 	oClone:nIdViagem            := ::nIdViagem
 	oClone:cIdentificador       := ::cIdentificador
 	oClone:cDataFinalizacao     := ::cDataFinalizacao
+	oClone:cPlaca               := ::cPlaca
+	oClone:cCnpjTransportadora  := ::cCnpjTransportadora
+	oClone:lPossuiEntregaRealizada := ::lPossuiEntregaRealizada
+	oClone:lPossuiAnomaliaRegistrada := ::lPossuiAnomaliaRegistrada
+	oClone:lPossuiSolicitacaoPernoiteAprovada := ::lPossuiSolicitacaoPernoiteAprovada
+	oClone:lPossuiCustoAdicionalAprovado := ::lPossuiCustoAdicionalAprovado
+	oClone:lPossuiAlteracaoDeValorPorModalidade := ::lPossuiAlteracaoDeValorPorModalidade
 Return oClone
 
 WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ViagemFinalizada
@@ -3183,6 +3709,13 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ViagemFinalizad
 	::nIdViagem          :=  WSAdvValue( oResponse,"_IDVIAGEM","int",NIL,"Property nIdViagem as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
 	::cIdentificador     :=  WSAdvValue( oResponse,"_IDENTIFICADOR","string",NIL,NIL,NIL,"S",NIL,NIL) 
 	::cDataFinalizacao   :=  WSAdvValue( oResponse,"_DATAFINALIZACAO","dateTime",NIL,"Property cDataFinalizacao as s:dateTime on SOAP Response not found.",NIL,"S",NIL,NIL) 
+	::cPlaca             :=  WSAdvValue( oResponse,"_PLACA","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cCnpjTransportadora :=  WSAdvValue( oResponse,"_CNPJTRANSPORTADORA","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::lPossuiEntregaRealizada :=  WSAdvValue( oResponse,"_POSSUIENTREGAREALIZADA","boolean",NIL,"Property lPossuiEntregaRealizada as s:boolean on SOAP Response not found.",NIL,"L",NIL,NIL) 
+	::lPossuiAnomaliaRegistrada :=  WSAdvValue( oResponse,"_POSSUIANOMALIAREGISTRADA","boolean",NIL,"Property lPossuiAnomaliaRegistrada as s:boolean on SOAP Response not found.",NIL,"L",NIL,NIL) 
+	::lPossuiSolicitacaoPernoiteAprovada :=  WSAdvValue( oResponse,"_POSSUISOLICITACAOPERNOITEAPROVADA","boolean",NIL,"Property lPossuiSolicitacaoPernoiteAprovada as s:boolean on SOAP Response not found.",NIL,"L",NIL,NIL) 
+	::lPossuiCustoAdicionalAprovado :=  WSAdvValue( oResponse,"_POSSUICUSTOADICIONALAPROVADO","boolean",NIL,"Property lPossuiCustoAdicionalAprovado as s:boolean on SOAP Response not found.",NIL,"L",NIL,NIL) 
+	::lPossuiAlteracaoDeValorPorModalidade :=  WSAdvValue( oResponse,"_POSSUIALTERACAODEVALORPORMODALIDADE","boolean",NIL,"Property lPossuiAlteracaoDeValorPorModalidade as s:boolean on SOAP Response not found.",NIL,"L",NIL,NIL) 
 Return
 
 // WSDL Data Structure Pedido
@@ -3215,6 +3748,7 @@ WSSTRUCT sivirafullWebService_Pedido
 	WSDATA   nQtdeVolumes              AS int
 	WSDATA   nQtdeCaixas               AS int
 	WSDATA   cObservacoes              AS string OPTIONAL
+	WSDATA   lReentrega                AS boolean
 	WSDATA   oWSItens                  AS sivirafullWebService_ArrayOfItemPedido OPTIONAL
 	WSMETHOD NEW
 	WSMETHOD INIT
@@ -3258,6 +3792,7 @@ WSMETHOD CLONE WSCLIENT sivirafullWebService_Pedido
 	oClone:nQtdeVolumes         := ::nQtdeVolumes
 	oClone:nQtdeCaixas          := ::nQtdeCaixas
 	oClone:cObservacoes         := ::cObservacoes
+	oClone:lReentrega           := ::lReentrega
 	oClone:oWSItens             := IIF(::oWSItens = NIL , NIL , ::oWSItens:Clone() )
 Return oClone
 
@@ -3290,6 +3825,7 @@ WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_Pedido
 	cSoap += WSSoapValue("QtdeVolumes", ::nQtdeVolumes, ::nQtdeVolumes , "int", .T. , .F., 0 , NIL, .F.,.F.) 
 	cSoap += WSSoapValue("QtdeCaixas", ::nQtdeCaixas, ::nQtdeCaixas , "int", .T. , .F., 0 , NIL, .F.,.F.) 
 	cSoap += WSSoapValue("Observacoes", ::cObservacoes, ::cObservacoes , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Reentrega", ::lReentrega, ::lReentrega , "boolean", .T. , .F., 0 , NIL, .F.,.F.) 
 	cSoap += WSSoapValue("Itens", ::oWSItens, ::oWSItens , "ArrayOfItemPedido", .F. , .F., 0 , NIL, .F.,.F.) 
 Return cSoap
 
@@ -3374,6 +3910,77 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_Roteiro
 	EndIf
 Return
 
+// WSDL Data Structure ModalidadeCustoAdicional
+
+WSSTRUCT sivirafullWebService_ModalidadeCustoAdicional
+	WSDATA   nId                       AS int
+	WSDATA   cCodigo                   AS string OPTIONAL
+	WSDATA   cNome                     AS string OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ModalidadeCustoAdicional
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ModalidadeCustoAdicional
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ModalidadeCustoAdicional
+	Local oClone := sivirafullWebService_ModalidadeCustoAdicional():NEW()
+	oClone:nId                  := ::nId
+	oClone:cCodigo              := ::cCodigo
+	oClone:cNome                := ::cNome
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ModalidadeCustoAdicional
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::nId                :=  WSAdvValue( oResponse,"_ID","int",NIL,"Property nId as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cCodigo            :=  WSAdvValue( oResponse,"_CODIGO","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cNome              :=  WSAdvValue( oResponse,"_NOME","string",NIL,NIL,NIL,"S",NIL,NIL) 
+Return
+
+// WSDL Data Structure TipoCustoAdicional
+
+WSSTRUCT sivirafullWebService_TipoCustoAdicional
+	WSDATA   nId                       AS int
+	WSDATA   cNome                     AS string OPTIONAL
+	WSDATA   cDescricao                AS string OPTIONAL
+	WSDATA   cCodigo                   AS string OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_TipoCustoAdicional
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_TipoCustoAdicional
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_TipoCustoAdicional
+	Local oClone := sivirafullWebService_TipoCustoAdicional():NEW()
+	oClone:nId                  := ::nId
+	oClone:cNome                := ::cNome
+	oClone:cDescricao           := ::cDescricao
+	oClone:cCodigo              := ::cCodigo
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_TipoCustoAdicional
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::nId                :=  WSAdvValue( oResponse,"_ID","int",NIL,"Property nId as s:int on SOAP Response not found.",NIL,"N",NIL,NIL) 
+	::cNome              :=  WSAdvValue( oResponse,"_NOME","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cDescricao         :=  WSAdvValue( oResponse,"_DESCRICAO","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::cCodigo            :=  WSAdvValue( oResponse,"_CODIGO","string",NIL,NIL,NIL,"S",NIL,NIL) 
+Return
+
 // WSDL Data Structure ArrayOfEntregaPlanejada
 
 WSSTRUCT sivirafullWebService_ArrayOfEntregaPlanejada
@@ -3436,6 +4043,111 @@ Return oClone
 WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_ArrayOfGradeDiaria
 	Local cSoap := ""
 	aEval( ::oWSGradeDiaria , {|x| cSoap := cSoap  +  WSSoapValue("GradeDiaria", x , x , "GradeDiaria", .F. , .F., 0 , NIL, .F.,.F.)  } ) 
+Return cSoap
+
+// WSDL Data Structure Entrega
+
+WSSTRUCT sivirafullWebService_Entrega
+	WSDATA   nSequencia                AS short
+	WSDATA   cCodigo                   AS string OPTIONAL
+	WSDATA   cReferencia               AS string OPTIONAL
+	WSDATA   nLatitude                 AS decimal
+	WSDATA   nLongitude                AS decimal
+	WSDATA   cEstimativaInicio         AS dateTime
+	WSDATA   cEstimativaFim            AS dateTime
+	WSDATA   nPeso                     AS decimal
+	WSDATA   nCubagem                  AS decimal
+	WSDATA   nValor                    AS decimal
+	WSDATA   cEndereco                 AS string OPTIONAL
+	WSDATA   cBairro                   AS string OPTIONAL
+	WSDATA   cCidade                   AS string OPTIONAL
+	WSDATA   cTipoCliente              AS string OPTIONAL
+	WSDATA   nQtdCaixas                AS int
+	WSDATA   nTempoEntrega             AS int
+	WSDATA   cIniRecebManha            AS string OPTIONAL
+	WSDATA   cFimRecebManha            AS string OPTIONAL
+	WSDATA   cIniRecebTarde            AS string OPTIONAL
+	WSDATA   cFimRecebTarde            AS string OPTIONAL
+	WSDATA   lColeta                   AS boolean
+	WSDATA   cRegional                 AS string OPTIONAL
+	WSDATA   oWSNotasFiscais           AS sivirafullWebService_ArrayOfNotaFiscal OPTIONAL
+	WSDATA   oWSGradeAtendimento       AS sivirafullWebService_JanelaAtendimento OPTIONAL
+	WSDATA   cCodigoGradeAtendimento   AS string OPTIONAL
+	WSDATA   cRegionalVenda            AS string OPTIONAL
+	WSDATA   oWSCustosAdicionaisPrevistos AS sivirafullWebService_ArrayOfCustoAdicionalPrevisto OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPSEND
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_Entrega
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_Entrega
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_Entrega
+	Local oClone := sivirafullWebService_Entrega():NEW()
+	oClone:nSequencia           := ::nSequencia
+	oClone:cCodigo              := ::cCodigo
+	oClone:cReferencia          := ::cReferencia
+	oClone:nLatitude            := ::nLatitude
+	oClone:nLongitude           := ::nLongitude
+	oClone:cEstimativaInicio    := ::cEstimativaInicio
+	oClone:cEstimativaFim       := ::cEstimativaFim
+	oClone:nPeso                := ::nPeso
+	oClone:nCubagem             := ::nCubagem
+	oClone:nValor               := ::nValor
+	oClone:cEndereco            := ::cEndereco
+	oClone:cBairro              := ::cBairro
+	oClone:cCidade              := ::cCidade
+	oClone:cTipoCliente         := ::cTipoCliente
+	oClone:nQtdCaixas           := ::nQtdCaixas
+	oClone:nTempoEntrega        := ::nTempoEntrega
+	oClone:cIniRecebManha       := ::cIniRecebManha
+	oClone:cFimRecebManha       := ::cFimRecebManha
+	oClone:cIniRecebTarde       := ::cIniRecebTarde
+	oClone:cFimRecebTarde       := ::cFimRecebTarde
+	oClone:lColeta              := ::lColeta
+	oClone:cRegional            := ::cRegional
+	oClone:oWSNotasFiscais      := IIF(::oWSNotasFiscais = NIL , NIL , ::oWSNotasFiscais:Clone() )
+	oClone:oWSGradeAtendimento  := IIF(::oWSGradeAtendimento = NIL , NIL , ::oWSGradeAtendimento:Clone() )
+	oClone:cCodigoGradeAtendimento := ::cCodigoGradeAtendimento
+	oClone:cRegionalVenda       := ::cRegionalVenda
+	oClone:oWSCustosAdicionaisPrevistos := IIF(::oWSCustosAdicionaisPrevistos = NIL , NIL , ::oWSCustosAdicionaisPrevistos:Clone() )
+Return oClone
+
+WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_Entrega
+	Local cSoap := ""
+	cSoap += WSSoapValue("Sequencia", ::nSequencia, ::nSequencia , "short", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Codigo", ::cCodigo, ::cCodigo , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Referencia", ::cReferencia, ::cReferencia , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Latitude", ::nLatitude, ::nLatitude , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Longitude", ::nLongitude, ::nLongitude , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("EstimativaInicio", ::cEstimativaInicio, ::cEstimativaInicio , "dateTime", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("EstimativaFim", ::cEstimativaFim, ::cEstimativaFim , "dateTime", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Peso", ::nPeso, ::nPeso , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Cubagem", ::nCubagem, ::nCubagem , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Valor", ::nValor, ::nValor , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Endereco", ::cEndereco, ::cEndereco , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Bairro", ::cBairro, ::cBairro , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Cidade", ::cCidade, ::cCidade , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("TipoCliente", ::cTipoCliente, ::cTipoCliente , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("QtdCaixas", ::nQtdCaixas, ::nQtdCaixas , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("TempoEntrega", ::nTempoEntrega, ::nTempoEntrega , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("IniRecebManha", ::cIniRecebManha, ::cIniRecebManha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("FimRecebManha", ::cFimRecebManha, ::cFimRecebManha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("IniRecebTarde", ::cIniRecebTarde, ::cIniRecebTarde , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("FimRecebTarde", ::cFimRecebTarde, ::cFimRecebTarde , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Coleta", ::lColeta, ::lColeta , "boolean", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("Regional", ::cRegional, ::cRegional , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("NotasFiscais", ::oWSNotasFiscais, ::oWSNotasFiscais , "ArrayOfNotaFiscal", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("GradeAtendimento", ::oWSGradeAtendimento, ::oWSGradeAtendimento , "JanelaAtendimento", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("CodigoGradeAtendimento", ::cCodigoGradeAtendimento, ::cCodigoGradeAtendimento , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("RegionalVenda", ::cRegionalVenda, ::cRegionalVenda , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("CustosAdicionaisPrevistos", ::oWSCustosAdicionaisPrevistos, ::oWSCustosAdicionaisPrevistos , "ArrayOfCustoAdicionalPrevisto", .F. , .F., 0 , NIL, .F.,.F.) 
 Return cSoap
 
 // WSDL Data Structure RetornoAnomalia
@@ -3663,108 +4375,6 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_RetornoColeta
 		::oWSItensColetados:SoapRecv(oNode16)
 	EndIf
 Return
-
-// WSDL Data Structure Entrega
-
-WSSTRUCT sivirafullWebService_Entrega
-	WSDATA   nSequencia                AS short
-	WSDATA   cCodigo                   AS string OPTIONAL
-	WSDATA   cReferencia               AS string OPTIONAL
-	WSDATA   nLatitude                 AS decimal
-	WSDATA   nLongitude                AS decimal
-	WSDATA   cEstimativaInicio         AS dateTime
-	WSDATA   cEstimativaFim            AS dateTime
-	WSDATA   nPeso                     AS decimal
-	WSDATA   nCubagem                  AS decimal
-	WSDATA   nValor                    AS decimal
-	WSDATA   cEndereco                 AS string OPTIONAL
-	WSDATA   cBairro                   AS string OPTIONAL
-	WSDATA   cCidade                   AS string OPTIONAL
-	WSDATA   cTipoCliente              AS string OPTIONAL
-	WSDATA   nQtdCaixas                AS int
-	WSDATA   nTempoEntrega             AS int
-	WSDATA   cIniRecebManha            AS string OPTIONAL
-	WSDATA   cFimRecebManha            AS string OPTIONAL
-	WSDATA   cIniRecebTarde            AS string OPTIONAL
-	WSDATA   cFimRecebTarde            AS string OPTIONAL
-	WSDATA   lColeta                   AS boolean
-	WSDATA   cRegional                 AS string OPTIONAL
-	WSDATA   oWSNotasFiscais           AS sivirafullWebService_ArrayOfNotaFiscal OPTIONAL
-	WSDATA   oWSGradeAtendimento       AS sivirafullWebService_JanelaAtendimento OPTIONAL
-	WSDATA   cCodigoGradeAtendimento   AS string OPTIONAL
-	WSDATA   cRegionalVenda            AS string OPTIONAL
-	WSMETHOD NEW
-	WSMETHOD INIT
-	WSMETHOD CLONE
-	WSMETHOD SOAPSEND
-ENDWSSTRUCT
-
-WSMETHOD NEW WSCLIENT sivirafullWebService_Entrega
-	::Init()
-Return Self
-
-WSMETHOD INIT WSCLIENT sivirafullWebService_Entrega
-Return
-
-WSMETHOD CLONE WSCLIENT sivirafullWebService_Entrega
-	Local oClone := sivirafullWebService_Entrega():NEW()
-	oClone:nSequencia           := ::nSequencia
-	oClone:cCodigo              := ::cCodigo
-	oClone:cReferencia          := ::cReferencia
-	oClone:nLatitude            := ::nLatitude
-	oClone:nLongitude           := ::nLongitude
-	oClone:cEstimativaInicio    := ::cEstimativaInicio
-	oClone:cEstimativaFim       := ::cEstimativaFim
-	oClone:nPeso                := ::nPeso
-	oClone:nCubagem             := ::nCubagem
-	oClone:nValor               := ::nValor
-	oClone:cEndereco            := ::cEndereco
-	oClone:cBairro              := ::cBairro
-	oClone:cCidade              := ::cCidade
-	oClone:cTipoCliente         := ::cTipoCliente
-	oClone:nQtdCaixas           := ::nQtdCaixas
-	oClone:nTempoEntrega        := ::nTempoEntrega
-	oClone:cIniRecebManha       := ::cIniRecebManha
-	oClone:cFimRecebManha       := ::cFimRecebManha
-	oClone:cIniRecebTarde       := ::cIniRecebTarde
-	oClone:cFimRecebTarde       := ::cFimRecebTarde
-	oClone:lColeta              := ::lColeta
-	oClone:cRegional            := ::cRegional
-	oClone:oWSNotasFiscais      := IIF(::oWSNotasFiscais = NIL , NIL , ::oWSNotasFiscais:Clone() )
-	oClone:oWSGradeAtendimento  := IIF(::oWSGradeAtendimento = NIL , NIL , ::oWSGradeAtendimento:Clone() )
-	oClone:cCodigoGradeAtendimento := ::cCodigoGradeAtendimento
-	oClone:cRegionalVenda       := ::cRegionalVenda
-Return oClone
-
-WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_Entrega
-	Local cSoap := ""
-	cSoap += WSSoapValue("Sequencia", ::nSequencia, ::nSequencia , "short", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Codigo", ::cCodigo, ::cCodigo , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Referencia", ::cReferencia, ::cReferencia , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Latitude", ::nLatitude, ::nLatitude , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Longitude", ::nLongitude, ::nLongitude , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("EstimativaInicio", ::cEstimativaInicio, ::cEstimativaInicio , "dateTime", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("EstimativaFim", ::cEstimativaFim, ::cEstimativaFim , "dateTime", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Peso", ::nPeso, ::nPeso , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Cubagem", ::nCubagem, ::nCubagem , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Valor", ::nValor, ::nValor , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Endereco", ::cEndereco, ::cEndereco , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Bairro", ::cBairro, ::cBairro , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Cidade", ::cCidade, ::cCidade , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("TipoCliente", ::cTipoCliente, ::cTipoCliente , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("QtdCaixas", ::nQtdCaixas, ::nQtdCaixas , "int", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("TempoEntrega", ::nTempoEntrega, ::nTempoEntrega , "int", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("IniRecebManha", ::cIniRecebManha, ::cIniRecebManha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("FimRecebManha", ::cFimRecebManha, ::cFimRecebManha , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("IniRecebTarde", ::cIniRecebTarde, ::cIniRecebTarde , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("FimRecebTarde", ::cFimRecebTarde, ::cFimRecebTarde , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Coleta", ::lColeta, ::lColeta , "boolean", .T. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("Regional", ::cRegional, ::cRegional , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("NotasFiscais", ::oWSNotasFiscais, ::oWSNotasFiscais , "ArrayOfNotaFiscal", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("GradeAtendimento", ::oWSGradeAtendimento, ::oWSGradeAtendimento , "JanelaAtendimento", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("CodigoGradeAtendimento", ::cCodigoGradeAtendimento, ::cCodigoGradeAtendimento , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-	cSoap += WSSoapValue("RegionalVenda", ::cRegionalVenda, ::cRegionalVenda , "string", .F. , .F., 0 , NIL, .F.,.F.) 
-Return cSoap
 
 // WSDL Data Structure ArrayOfItemDevolucao
 
@@ -4059,6 +4669,70 @@ WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_GradeDiaria
 	cSoap += WSSoapValue("Termino", ::cTermino, ::cTermino , "dateTime", .T. , .F., 0 , NIL, .F.,.F.) 
 Return cSoap
 
+// WSDL Data Structure ArrayOfNotaFiscal
+
+WSSTRUCT sivirafullWebService_ArrayOfNotaFiscal
+	WSDATA   oWSNotaFiscal             AS sivirafullWebService_NotaFiscal OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPSEND
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
+	::oWSNotaFiscal        := {} // Array Of  sivirafullWebService_NOTAFISCAL():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
+	Local oClone := sivirafullWebService_ArrayOfNotaFiscal():NEW()
+	oClone:oWSNotaFiscal := NIL
+	If ::oWSNotaFiscal <> NIL 
+		oClone:oWSNotaFiscal := {}
+		aEval( ::oWSNotaFiscal , { |x| aadd( oClone:oWSNotaFiscal , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
+	Local cSoap := ""
+	aEval( ::oWSNotaFiscal , {|x| cSoap := cSoap  +  WSSoapValue("NotaFiscal", x , x , "NotaFiscal", .F. , .F., 0 , NIL, .F.,.F.)  } ) 
+Return cSoap
+
+// WSDL Data Structure ArrayOfCustoAdicionalPrevisto
+
+WSSTRUCT sivirafullWebService_ArrayOfCustoAdicionalPrevisto
+	WSDATA   oWSCustoAdicionalPrevisto AS sivirafullWebService_CustoAdicionalPrevisto OPTIONAL
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPSEND
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfCustoAdicionalPrevisto
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfCustoAdicionalPrevisto
+	::oWSCustoAdicionalPrevisto := {} // Array Of  sivirafullWebService_CUSTOADICIONALPREVISTO():New()
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfCustoAdicionalPrevisto
+	Local oClone := sivirafullWebService_ArrayOfCustoAdicionalPrevisto():NEW()
+	oClone:oWSCustoAdicionalPrevisto := NIL
+	If ::oWSCustoAdicionalPrevisto <> NIL 
+		oClone:oWSCustoAdicionalPrevisto := {}
+		aEval( ::oWSCustoAdicionalPrevisto , { |x| aadd( oClone:oWSCustoAdicionalPrevisto , x:Clone() ) } )
+	Endif 
+Return oClone
+
+WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_ArrayOfCustoAdicionalPrevisto
+	Local cSoap := ""
+	aEval( ::oWSCustoAdicionalPrevisto , {|x| cSoap := cSoap  +  WSSoapValue("CustoAdicionalPrevisto", x , x , "CustoAdicionalPrevisto", .F. , .F., 0 , NIL, .F.,.F.)  } ) 
+Return cSoap
+
 // WSDL Data Structure ArrayOfItemColeta
 
 WSSTRUCT sivirafullWebService_ArrayOfItemColeta
@@ -4099,38 +4773,6 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ArrayOfItemCole
 		Endif
 	Next
 Return
-
-// WSDL Data Structure ArrayOfNotaFiscal
-
-WSSTRUCT sivirafullWebService_ArrayOfNotaFiscal
-	WSDATA   oWSNotaFiscal             AS sivirafullWebService_NotaFiscal OPTIONAL
-	WSMETHOD NEW
-	WSMETHOD INIT
-	WSMETHOD CLONE
-	WSMETHOD SOAPSEND
-ENDWSSTRUCT
-
-WSMETHOD NEW WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
-	::Init()
-Return Self
-
-WSMETHOD INIT WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
-	::oWSNotaFiscal        := {} // Array Of  sivirafullWebService_NOTAFISCAL():New()
-Return
-
-WSMETHOD CLONE WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
-	Local oClone := sivirafullWebService_ArrayOfNotaFiscal():NEW()
-	oClone:oWSNotaFiscal := NIL
-	If ::oWSNotaFiscal <> NIL 
-		oClone:oWSNotaFiscal := {}
-		aEval( ::oWSNotaFiscal , { |x| aadd( oClone:oWSNotaFiscal , x:Clone() ) } )
-	Endif 
-Return oClone
-
-WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_ArrayOfNotaFiscal
-	Local cSoap := ""
-	aEval( ::oWSNotaFiscal , {|x| cSoap := cSoap  +  WSSoapValue("NotaFiscal", x , x , "NotaFiscal", .F. , .F., 0 , NIL, .F.,.F.)  } ) 
-Return cSoap
 
 // WSDL Data Structure ItemDevolucao
 
@@ -4350,37 +4992,6 @@ WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ItemRoteiro
 	EndIf
 Return
 
-// WSDL Data Structure ItemColeta
-
-WSSTRUCT sivirafullWebService_ItemColeta
-	WSDATA   cCodigo                   AS string OPTIONAL
-	WSDATA   nQuantidade               AS decimal
-	WSMETHOD NEW
-	WSMETHOD INIT
-	WSMETHOD CLONE
-	WSMETHOD SOAPRECV
-ENDWSSTRUCT
-
-WSMETHOD NEW WSCLIENT sivirafullWebService_ItemColeta
-	::Init()
-Return Self
-
-WSMETHOD INIT WSCLIENT sivirafullWebService_ItemColeta
-Return
-
-WSMETHOD CLONE WSCLIENT sivirafullWebService_ItemColeta
-	Local oClone := sivirafullWebService_ItemColeta():NEW()
-	oClone:cCodigo              := ::cCodigo
-	oClone:nQuantidade          := ::nQuantidade
-Return oClone
-
-WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ItemColeta
-	::Init()
-	If oResponse = NIL ; Return ; Endif 
-	::cCodigo            :=  WSAdvValue( oResponse,"_CODIGO","string",NIL,NIL,NIL,"S",NIL,NIL) 
-	::nQuantidade        :=  WSAdvValue( oResponse,"_QUANTIDADE","decimal",NIL,"Property nQuantidade as s:decimal on SOAP Response not found.",NIL,"N",NIL,NIL) 
-Return
-
 // WSDL Data Structure NotaFiscal
 
 WSSTRUCT sivirafullWebService_NotaFiscal
@@ -4542,6 +5153,79 @@ WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_NotaFiscal
 	cSoap += WSSoapValue("ValorCTE", ::nValorCTE, ::nValorCTE , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
 	cSoap += WSSoapValue("DataEmissaoCTE", ::cDataEmissaoCTE, ::cDataEmissaoCTE , "dateTime", .T. , .F., 0 , NIL, .F.,.F.) 
 Return cSoap
+
+// WSDL Data Structure CustoAdicionalPrevisto
+
+WSSTRUCT sivirafullWebService_CustoAdicionalPrevisto
+	WSDATA   nValorUnitario            AS decimal
+	WSDATA   nValorTotal               AS decimal
+	WSDATA   cCodigoTipoCustoAdicional AS string OPTIONAL
+	WSDATA   cCodigoModalidadeDeCustoAdicional AS string OPTIONAL
+	WSDATA   nModalidadeDeCustoAdicionalId AS int
+	WSDATA   nTipoCustoAdicionalId     AS int
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPSEND
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_CustoAdicionalPrevisto
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_CustoAdicionalPrevisto
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_CustoAdicionalPrevisto
+	Local oClone := sivirafullWebService_CustoAdicionalPrevisto():NEW()
+	oClone:nValorUnitario       := ::nValorUnitario
+	oClone:nValorTotal          := ::nValorTotal
+	oClone:cCodigoTipoCustoAdicional := ::cCodigoTipoCustoAdicional
+	oClone:cCodigoModalidadeDeCustoAdicional := ::cCodigoModalidadeDeCustoAdicional
+	oClone:nModalidadeDeCustoAdicionalId := ::nModalidadeDeCustoAdicionalId
+	oClone:nTipoCustoAdicionalId := ::nTipoCustoAdicionalId
+Return oClone
+
+WSMETHOD SOAPSEND WSCLIENT sivirafullWebService_CustoAdicionalPrevisto
+	Local cSoap := ""
+	cSoap += WSSoapValue("ValorUnitario", ::nValorUnitario, ::nValorUnitario , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("ValorTotal", ::nValorTotal, ::nValorTotal , "decimal", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("CodigoTipoCustoAdicional", ::cCodigoTipoCustoAdicional, ::cCodigoTipoCustoAdicional , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("CodigoModalidadeDeCustoAdicional", ::cCodigoModalidadeDeCustoAdicional, ::cCodigoModalidadeDeCustoAdicional , "string", .F. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("ModalidadeDeCustoAdicionalId", ::nModalidadeDeCustoAdicionalId, ::nModalidadeDeCustoAdicionalId , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+	cSoap += WSSoapValue("TipoCustoAdicionalId", ::nTipoCustoAdicionalId, ::nTipoCustoAdicionalId , "int", .T. , .F., 0 , NIL, .F.,.F.) 
+Return cSoap
+
+// WSDL Data Structure ItemColeta
+
+WSSTRUCT sivirafullWebService_ItemColeta
+	WSDATA   cCodigo                   AS string OPTIONAL
+	WSDATA   nQuantidade               AS decimal
+	WSMETHOD NEW
+	WSMETHOD INIT
+	WSMETHOD CLONE
+	WSMETHOD SOAPRECV
+ENDWSSTRUCT
+
+WSMETHOD NEW WSCLIENT sivirafullWebService_ItemColeta
+	::Init()
+Return Self
+
+WSMETHOD INIT WSCLIENT sivirafullWebService_ItemColeta
+Return
+
+WSMETHOD CLONE WSCLIENT sivirafullWebService_ItemColeta
+	Local oClone := sivirafullWebService_ItemColeta():NEW()
+	oClone:cCodigo              := ::cCodigo
+	oClone:nQuantidade          := ::nQuantidade
+Return oClone
+
+WSMETHOD SOAPRECV WSSEND oResponse WSCLIENT sivirafullWebService_ItemColeta
+	::Init()
+	If oResponse = NIL ; Return ; Endif 
+	::cCodigo            :=  WSAdvValue( oResponse,"_CODIGO","string",NIL,NIL,NIL,"S",NIL,NIL) 
+	::nQuantidade        :=  WSAdvValue( oResponse,"_QUANTIDADE","decimal",NIL,"Property nQuantidade as s:decimal on SOAP Response not found.",NIL,"N",NIL,NIL) 
+Return
 
 // WSDL Data Structure ArrayOfItemRoteiroCompartimento
 

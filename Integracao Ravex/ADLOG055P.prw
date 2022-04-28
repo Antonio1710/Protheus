@@ -15,6 +15,7 @@
 	@history Chamado 058578 - WILLIAM COSTA - 02/06/2020 - Adicionado a quantidade de Caixas no envio do Ravex para Roteirização.
 	@history Chamado 060513 - Everson       - 17/08/2020 - Criado parâmetro para determinar o tamanho do lote de envio de pedidos ao Ravex.
 	@history Chamado 1892   - WILLIAM COSTA - 24/09/2020 - Refeito logico de Peso Bruto e Peso Liquido do Objeto OWSPEDIDO, capa do pedido, pois as vezes os pesos brutos e liquidos se perder, fazendo a somatoria pelos Itens, sempre funciona, então foi feita a alteração e validado
+	@history Chamado 67991  - Everson       - 27/04/2022 - Tratamento para informar se o pedido foi reprogramado.
 */
 
 User Function ADLOG055P()
@@ -157,6 +158,9 @@ STATIC FUNCTION IMPORTPED()
 		OWSPEDIDO:NVALORPEDIDO         := TRC->C5_XTOTPED
 		OWSPEDIDO:NIDOPERADORLOGISTICO := 0
 		OWSPEDIDO:NQTDECAIXAS          := TRC->C5_VOLUME1
+
+		OWSPEDIDO:lREENTREGA           := Iif(Alltrim(cValToChar(TRC->C5_PRIOR)) == "R", .T., .F.) //Everson - 27/04/2022. Chamado 67991.
+
 		cPedidos                       := cPedidos + IIF(ALLTRIM(cPedidos) == '',TRC->C5_NUM,';' + TRC->C5_NUM)
 					
 		AAdd(oWs:OWSPEDIDOS:OWSPEDIDO, OWSPEDIDO)
@@ -492,6 +496,7 @@ STATIC FUNCTION SqlPedidos()
 					   SC5.C5_SEQUENC,
 					   SC5.C5_XTOTPED,
 					   SC5.C5_VOLUME1,
+					   SC5.C5_PRIOR, //Everson - 27/04/2022. Chamado 67991.
 					   SA1.A1_CGC,
 					   SA1.A1_XLATITU,
 					   SA1.A1_XLONGIT
