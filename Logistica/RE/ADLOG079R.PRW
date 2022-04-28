@@ -76,22 +76,27 @@ Static Function RPTPrint(oReport)
 	Local oSection1 := oReport:Section(1)
 	Local cQuery    := ""
 	
-    cQuery += " SELECT  " 
-    cQuery += " PEDORG.C5_NUM AS PEDORG, " 
-    cQuery += " PEDORG.C5_DTENTR AS DTENTORG, " 
-    cQuery += " PEDORG.C5_PLACA AS PLACAORG, PEDORG.C5_ROTEIRO AS ROTORG, " 
-    cQuery += " SC5.C5_NUM, SC5.C5_EMISSAO, SC5.C5_HRINCLU, SC5.C5_PBRUTO, SC5.C5_VOLUME1, SC5.C5_CLIENTE, SC5.C5_LOJACLI, SC5.C5_NOMECLI, SC5.C5_DTENTR, SC5.C5_PLACA, SC5.C5_ROTEIRO  " 
-    cQuery += " FROM  " 
-    cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
-    cQuery += " INNER JOIN " 
-    cQuery += " (SELECT C5_FILIAL, C5_NUM, C5_XPDEVOR, C5_DTENTR, C5_PLACA, C5_ROTEIRO  FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE C5_FILIAL = '" + FWxFilial("SC5") + "' AND C5_XPDEVOR <> '' AND C5_PRIOR = 'R' AND D_E_L_E_T_ = '') AS PEDORG ON " 
-    cQuery += " SC5.C5_FILIAL = PEDORG.C5_FILIAL " 
-    cQuery += " AND SC5.C5_XPDEVOR = PEDORG.C5_NUM " 
-    cQuery += " WHERE  " 
-    cQuery += " SC5.C5_FILIAL = '" + FWxFilial("SC5") + "'  " 
-    cQuery += " AND SC5.C5_DTENTR BETWEEN '" + DToS(MV_PAR01) + "' AND '" + DToS(MV_PAR02) + "'  " 
-    cQuery += " AND SC5.D_E_L_E_T_ = '' " 
-    cQuery += " ORDER BY PEDORG.C5_NUM " 
+	cQuery += " SELECT  " 
+
+	cQuery += " PEDRPR.C5_NUM, PEDRPR.C5_EMISSAO, PEDRPR.C5_HRINCLU, PEDRPR.C5_PBRUTO, PEDRPR.C5_VOLUME1, PEDRPR.C5_CLIENTE, PEDRPR.C5_LOJACLI, PEDRPR.C5_NOMECLI, PEDRPR.C5_DTENTR, PEDRPR.C5_PLACA, PEDRPR.C5_ROTEIRO, " 
+	
+	cQuery += " PEDORG.C5_NUM AS PEDORG, PEDORG.C5_DTENTR AS DTENTORG, PEDORG.C5_PLACA AS PLACAORG, PEDORG.C5_ROTEIRO AS ROTORG " 
+	
+	cQuery += " FROM  " 
+
+	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS PEDRPR  " 
+	cQuery += " LEFT OUTER JOIN " 
+	cQuery += " ( SELECT * FROM " + RetSqlName("SC5") + " (NOLOCK) AS SC5 WHERE C5_FILIAL = '" + FWxFilial("SC5") + "' AND SC5.D_E_L_E_T_ = '' ) AS PEDORG ON " 
+	
+	cQuery += " PEDRPR.C5_FILIAL = PEDORG.C5_FILIAL " 
+	cQuery += " AND PEDRPR.C5_XPDEVOR = PEDORG.C5_NUM " 
+	cQuery += " WHERE  " 
+	cQuery += " PEDRPR.C5_FILIAL = '" + FWxFilial("SC5") + "'  " 
+	cQuery += " AND PEDRPR.C5_PRIOR = 'R'  " 
+	cQuery += " AND PEDRPR.C5_DTENTR BETWEEN '" + DToS(MV_PAR01) + "' AND '" + DToS(MV_PAR02) + "' " 
+	cQuery += " AND PEDRPR.D_E_L_E_T_ = '' " 
+
+	cQuery += " ORDER BY PEDRPR.C5_NUM  " 
 	
 	If Select("D_PED") > 0
 		D_PED->(DbCloseArea())
@@ -125,6 +130,7 @@ Static Function RPTPrint(oReport)
 		oSection1:Cell("PEDIORG"):SetValue(D_PED->PEDORG)
 		oSection1:Cell("DTENORG"):SetValue(DToC(D_PED->DTENTORG))	
 		oSection1:Cell("PLCORG"):SetValue(D_PED->PLACAORG)	
+		
 		oSection1:Cell("PEDREP"):SetValue(D_PED->C5_NUM)	
 		oSection1:Cell("DTEMIREP"):SetValue(DToC(D_PED->C5_EMISSAO))	
 		oSection1:Cell("HREMISS"):SetValue(D_PED->C5_HRINCLU)	
