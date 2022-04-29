@@ -2,7 +2,7 @@
 #include "topconn.ch"
 #Include "Tbiconn.ch"
 
-/*{Protheus.doc} User Function ADLFV011R
+/*/{Protheus.doc} User Function ADLFV011R
 	WF - Schedule - Acompanhamento Frango Vivo Chamado 038867
 	@type  Function
 	@author Fernando Macieira
@@ -12,8 +12,8 @@
 	@history Chamado TI     - Adriana  				- 24/05/2019 - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
 	@history Chamado 055444 - William  				- 11/02/2020 - Ajustado error log do programa ADINF009P estava na posição errada
 	@history Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se está PENDENTE ou RECEBIDO
-*/
-
+	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+/*/
 User Function ADLFV011R() 
 
 	Local cQuery  := ""
@@ -56,7 +56,7 @@ User Function ADLFV011R()
 	nDias   := GetMV("MV_#LFVDIA",,3)
 	
 	// Filial Frango Vivo
-	cFilPV  := GetMV("MV_#LFVFIL",,"03")
+	cFilPV    := GetMV("MV_#LFVNEW",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	
 	// Dados do PV/NF
 	cCliCod := GetMV("MV_#LFVCLI",,"027601")
@@ -102,7 +102,8 @@ User Function ADLFV011R()
 	
 	cQuery := " SELECT D2_FILIAL, D2_DOC, D2_SERIE, D2_PEDIDO, D2_EMISSAO, D2_COD, D2_TES, D2_QUANT, D2_UM "
 	cQuery += " FROM " + RetSqlName("SD2")
-	cQuery += " WHERE D2_FILIAL='"+cFilPV+"' "
+	//cQuery += " WHERE D2_FILIAL='"+cFilPV+"' " // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	cQuery += " WHERE D2_FILIAL IN " + FormatIn(cFilPV,"|")
 	cQuery += " AND D2_CLIENTE='"+cCliCod+"' "
 	cQuery += " AND D2_LOJA='"+cCliLoj+"' "
 	cQuery += " AND D2_COD='"+cProdPV+"' "

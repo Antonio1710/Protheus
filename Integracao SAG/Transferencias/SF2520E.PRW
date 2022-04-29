@@ -13,6 +13,7 @@
 	@history Everson-09/04/2019|CH:044314| Alterada a opção para excluir frete na exclusão da nota.
 	@history Everson-14/05/2019|CH:044314| Removido estorno do frete.
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
+	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 /*/
 User Function SF2520E()
 
@@ -22,7 +23,7 @@ User Function SF2520E()
 	Local aArea	    := GetArea()
 	                                                                         
 	// Filial Frango Vivo
-	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
+	Local cFilPV  := GetMV("MV_#LFVNEW",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 
 	// Dados do PV
 	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
@@ -52,17 +53,20 @@ User Function SF2520E()
 			If SD2->( dbSeek(SF2->F2_FILIAL+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA) )
 			
 				SC5->( dbSetOrder(1) ) // C5_FILIAL+C5_NUM                                                                                                                                                
-				If SC5->( dbSeek(cFilPV+SD2->D2_PEDIDO) )
+				If SC5->( dbSeek(SD2->D2_FILIAL+SD2->D2_PEDIDO) )
+				//If SC5->( dbSeek(cFilPV+SD2->D2_PEDIDO) ) // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 			
 					If SC5->(FieldPos("C5_XLFVCMP")) > 0
 
-						If AllTrim(SF2->F2_FILIAL) == cFilPV .and. AllTrim(SF2->F2_CLIENTE) == cCliCod .and. AllTrim(SF2->F2_LOJA) == cCliLoj .and. AllTrim(SD2->D2_COD) == cProdPV .and. AllTrim(SD2->D2_TES) == cTESPV  .and. AllTrim(SC5->C5_XLFVCMP) == "S"
+						//If AllTrim(SF2->F2_FILIAL) == cFilPV .and. AllTrim(SF2->F2_CLIENTE) == cCliCod .and. AllTrim(SF2->F2_LOJA) == cCliLoj .and. AllTrim(SD2->D2_COD) == cProdPV .and. AllTrim(SD2->D2_TES) == cTESPV  .and. AllTrim(SC5->C5_XLFVCMP) == "S"  // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+						If AllTrim(SF2->F2_FILIAL) $ cFilPV .and. AllTrim(SF2->F2_CLIENTE) == cCliCod .and. AllTrim(SF2->F2_LOJA) == cCliLoj .and. AllTrim(SD2->D2_COD) == cProdPV .and. AllTrim(SD2->D2_TES) == cTESPV  .and. AllTrim(SC5->C5_XLFVCMP) == "S"
 							msAguarde( { || ExcPreNFE() }, "Excluindo Pré-Nota Entrada Complemento Frango Vivo (SF2520E)" )
 						EndIf
 						
 					Else 
 
-						If AllTrim(SF2->F2_FILIAL) == cFilPV .and. AllTrim(SF2->F2_CLIENTE) == cCliCod .and. AllTrim(SF2->F2_LOJA) == cCliLoj .and. AllTrim(SD2->D2_COD) == cProdPV .and. AllTrim(SD2->D2_TES) == cTESPV
+						//If AllTrim(SF2->F2_FILIAL) == cFilPV .and. AllTrim(SF2->F2_CLIENTE) == cCliCod .and. AllTrim(SF2->F2_LOJA) == cCliLoj .and. AllTrim(SD2->D2_COD) == cProdPV .and. AllTrim(SD2->D2_TES) == cTESPV // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+						If AllTrim(SF2->F2_FILIAL) $ cFilPV .and. AllTrim(SF2->F2_CLIENTE) == cCliCod .and. AllTrim(SF2->F2_LOJA) == cCliLoj .and. AllTrim(SD2->D2_COD) == cProdPV .and. AllTrim(SD2->D2_TES) == cTESPV
 							msAguarde( { || ExcPreNFE() }, "Excluindo Pré-Nota Entrada Complemento Frango Vivo (SF2520E)" )
 						EndIf
 					
