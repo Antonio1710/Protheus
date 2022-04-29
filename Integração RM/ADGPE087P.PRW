@@ -14,6 +14,7 @@
     @history Chamado 16833 - Leonardo P. Monteiro - 22/03/2022- Ajustes e correções na rotina no decorrer dos testes reais.
     @history Chamado 16833 - Leonardo P. Monteiro - 23/03/2022- Correção de error.log seleção em bloco de um grid vazio.
     @history Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 - Corrigida a Rotina para que na hora que alterar o Armario Grave quem fez a alteração.
+    @history Chamado 71363 - Everson - 27/04/2022 - Tratamento para filtrar apenas os armários que estão com funcionários demitidos.
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
@@ -359,6 +360,11 @@ Static Function fConfArm()
                 ZI1->(DBGOTO(QZI1->REGISTRO))
 
                 if ZI1->(Recno()) == QZI1->REGISTRO
+
+                    //Everson - 27/04/2022. Chamado 71636.
+                    RecLock("ZI1", .F.)
+                        ZI1_CODZHL  := ""
+                    ZI1->(MsUnlock())
 
                     DbSelectArea("ZHP")
 
@@ -1276,7 +1282,7 @@ Static function getDadoBRW(nTypeBrowse)
         cQuery := " SELECT ZHL.*, ZHL.R_E_C_N_O_ REGISTRO"+cQebra
         cQuery += " FROM "+ retsqlname("ZI1") +" ZI1  "+cQebra
         cQuery += "   INNER JOIN "+ retsqlname("ZHL") +" ZHL ON ZI1.D_E_L_E_T_='' AND ZHL.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+xFilial("ZI1")+"' AND ZHL.ZHL_FILIAL='"+xFilial("ZHL")+"' AND ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO "+cQebra
-        cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL = '"+ xFilial("ZI1") +"' AND ZI1.ZI1_DEMISS ='' "+cQebra
+        cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL = '"+ xFilial("ZI1") +"' AND ZI1.ZI1_DEMISS <> '' "+cQebra //Everson - 27/04/2022. Chamado 71636.
         cQuery += " ORDER BY ZHL.ZHL_CODIGO; "
     
     endif
