@@ -23,35 +23,18 @@
 	@history Leon	-22/07/2020-Chamado TI.		Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history Everson-05/08/2020-Chamado TI. Validação Pedido de compra x CT-e.
 	@history Abel   -25/04/2022-Ticket 69574.   Projeto FAI
+	@history Everson-29/04/2022-Ticket 70593.   Projeto FAI
 	/*/
-User Function ADFIS032P() // U_ADFIS032P()
-	//Declaracao de Variaveis
-	Local cEmp	:= "01"
-	Local cFil	:= ""
-	Local aFil	:= {}
-	Local nAux	:= 1
+User Function ADFIS032P(aXEmpFil) // U_ADFIS032P() //Everson-29/04/2022-Ticket 70593.
+
+	//Declaracao de Variaveis.
 	Local cEmail:= ""
 
-	//Everson - 12/12/2019 - Chamado 029058.
-	Aadd(aFil,"02")
-	//Aadd(aFil,"03")
-	
-	//Inicia o ambiente.
-	For nAux := 1 To Len(aFil) //Everson - 12/12/2019 - Chamado 029058.
-		//
-		cFil := aFil[nAux] //Everson - 12/12/2019 - Chamado 029058.
+	Default aXEmpFil :={ "01", "02" } //Everson-29/04/2022-Ticket 70593.
 
-		//
-		RpcClearEnv()
-		RPCSetType(3)
-		RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
-
-		// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-		// If !LockByName("ADFIS032P", .T., .F.)
-		// 	ConOut("[ADFIS032P] - Existe outro processamento sendo executado! Verifique...")
-		// 	RPCClearEnv()
-		// 	Return
-		// EndIf
+	RpcClearEnv()
+	RPCSetType(3)
+	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ }) //Everson-29/04/2022-Ticket 70593.
 
 		PtInternal(1,ALLTRIM(PROCNAME()))
 
@@ -59,21 +42,19 @@ User Function ADFIS032P() // U_ADFIS032P()
 		
 		logZBN("1") //Log início.
 
-		//Everson - 11/11/2019. Chamado 029058.
-		cEmail	:= GetMv("MV_#AUTCTE",,"")
-		
-		Conout( DToC(Date()) + " " + Time() + " ADFIS032P - Início " + cFilAnt )
-		processa(cEmail)
-		Conout( DToC(Date()) + " " + Time() + " ADFIS032P - Fim " + cFilAnt )
-		
-		logZBN("2") //Log fim.
-		
-		//Destrava a rotina para o usuário
-		// UnLockByName("ADFIS032P")
+			//Everson - 11/11/2019. Chamado 029058.
+			cEmail	:= GetMv("MV_#AUTCTE",,"")
+			
+			Conout( DToC(Date()) + " " + Time() + " ADFIS032P - Início " + cFilAnt )
 
-		//Fecha o ambiente.
-		RpcClearEnv()
-	Next nAux
+				processa(cEmail)
+
+			Conout( DToC(Date()) + " " + Time() + " ADFIS032P - Fim " + cFilAnt )
+		
+		logZBN("2")
+
+	RpcClearEnv()
+
 Return Nil
 
 /*/{Protheus.doc} processa
@@ -85,8 +66,8 @@ Return Nil
 	/*/
 Static Function processa(cEmail)
 	//Declaracao de Variaveis
-	Local aArea 	:= GetArea()
-	Local cQuery	:= ""
+	//Local aArea 	:= GetArea()
+	//Local cQuery	:= ""
 	Local aParam	:= paramFis() //Everson - 21/10/2019. Chamado 029058.
 
 	//

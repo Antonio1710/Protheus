@@ -15,6 +15,7 @@
     @history Chamado 16833 - Leonardo P. Monteiro - 23/03/2022- Correção de error.log seleção em bloco de um grid vazio.
     @history Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 - Corrigida a Rotina para que na hora que alterar o Armario Grave quem fez a alteração.
     @history Chamado 71363 - Everson - 27/04/2022 - Tratamento para filtrar apenas os armários que estão com funcionários demitidos.
+    @history Chamado 72260 - Everson - 02/05/2022 - Tratamento para apagar os dados do armário da tabela ZI1, apenas quando for devolução de armário.
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
@@ -128,7 +129,7 @@ user function ADGPE087P()
     Private bF9             := {|| oPesq:setFocus()    }
     Private bRelArm         := {|| U_ADGPE089R() }
     Private bF10            := {|| fGetArma() }
-    Private bF11            := {|| fConfArm(), fGetArma() }
+    Private bF11            := {|| fConfArm(.F.), fGetArma() } //Ticket 72260 - Everson - 02/05/2022
     
     Default cTitle   := "..:: Tela de Entrega e Devolução de Uniformes ::.."
 
@@ -327,10 +328,12 @@ Static Function fGetArma()
     oBArDev:refresh()
 return
 
-Static Function fConfArm()
+Static Function fConfArm(lDevolv) //Ticket 72260 - Everson - 02/05/2022.
 
     Local   cQuery  := ""
     Local    nRegist := 0
+
+    Default lDevolv := .F. //Ticket 72260 - Everson - 02/05/2022
     
     DbSelectArea("ZHL")
     cQuery := " SELECT R_E_C_N_O_ REGISTRO "
@@ -362,9 +365,12 @@ Static Function fConfArm()
                 if ZI1->(Recno()) == QZI1->REGISTRO
 
                     //Everson - 27/04/2022. Chamado 71636.
-                    RecLock("ZI1", .F.)
-                        ZI1_CODZHL  := ""
-                    ZI1->(MsUnlock())
+                    If lDevolv //Ticket 72260 - Everson - 02/05/2022
+                        RecLock("ZI1", .F.)
+                            ZI1_CODZHL  := ""
+                        ZI1->(MsUnlock())
+
+                    EndIf
 
                     DbSelectArea("ZHP")
 
@@ -488,7 +494,7 @@ STATIC FUNCTION fValida(cCampo)
             if fVldArm()
                 fGrvZI1(cZI1MAT, cField, cValor)
             endif
-            fConfArm()
+            fConfArm(.F.) //Ticket 72260 - Everson - 02/05/2022
         endif
 
     endif
