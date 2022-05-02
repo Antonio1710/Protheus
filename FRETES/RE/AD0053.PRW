@@ -14,6 +14,7 @@
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
+	@history ticket 72265 - Everson - 02/05/2022 - Removida a amarração por filial entre as tabela SZK e ZV4.
 /*/
 User Function AD0053()
 
@@ -195,7 +196,7 @@ cQuery +=	" FROM " + RetSQLName("SZK") + " SZK, " +  RetSQLName("ZV4") + " ZV4 "
 cQuery +=	" WHERE ZK_FILIAL = '" + FWxFilial("SZK") + "' AND (ZK_DTENTR BETWEEN '"+DTOS(_dDtIni) +"' AND '"+DTOS(_dDtFim)+"')" //ticket 70750 - Everson - 07/04/2022.
 cQuery +=	" AND ZK_TIPFRT ='"+ALLTRIM(_cTipFrt)+"'"
 cQuery +=	" AND SZK.D_E_L_E_T_=' '"  
-cQuery +=	" AND SZK.ZK_FILIAL  = ZV4.ZV4_FILIAL "
+//cQuery +=	" AND SZK.ZK_FILIAL  = ZV4.ZV4_FILIAL " //Everson - 02/05/2022. Chamado 72265.
 cQuery +=	" AND SZK.ZK_PLACAPG = ZV4.ZV4_PLACA "
 cQuery +=	" AND ZV4.D_E_L_E_T_ = ' ' "
 cQuery +=	" ORDER BY ZK_TIPFRT, ZK_TPFRETE, ZK_TABELA, ZK_PLACAPG, ZK_GUIA "
