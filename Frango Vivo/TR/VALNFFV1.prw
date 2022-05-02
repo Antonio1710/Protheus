@@ -18,6 +18,7 @@
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history Ticket 71370 - Adriano Savoine   - 22/04/2022 - Corrigido a variavel para carregar a filial correta
+	@history Ticket TI    - Adriano Savoine   - 29/04/2022 - Corrigido o Error Log Alias already in use: VZV1.
 /*/
 User Function VALNFFV1()  
 
@@ -44,6 +45,11 @@ User Function VALNFFV1()
 	_nNumNf     := M->ZV1_NUMNFS
 	_cPlac		:= ZV1->ZV1_PPLACA
 	_ORDEM		:= ZV1->ZV1_NUMOC 
+
+	//Ticket TI    - Adriano Savoine   - 29/04/2022
+	IF Select("VZV1") > 0
+		VZV1->(DbCloseArea())
+	ENDIF	
 	
 	_cQuery := " SELECT ZV1_NUMOC, ZV1_NUMNFS, ZV1_SERIE, ZV1_CODFOR, ZV1_LOJFOR "
 	_cQuery += " FROM "+retsqlname("ZV1") + " (NOLOCK) " 
