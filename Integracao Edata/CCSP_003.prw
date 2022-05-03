@@ -16,6 +16,7 @@
 	@history  08/10/2021 - Fernando Sigoli Ticket : 61334  - Comentado Begin Tran nao faz sentido essa rotina, desarmar.
 	@history chamado  62436 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
 	@history chamado  TI - Leonardo P. Monteiro - 17/10/2021 - Tratamento de error.log na chamada da função CCSP_002.
+	@history chamado  72284 - Everson - 03/05/2022 - Tratamento para quando o registro não é flagado do lado do Protheus.
 /*/
 
 
@@ -247,24 +248,24 @@ DEFINE MSDIALOG oTela TITLE (Capital(cRotDesc) + " " + cRotNome) FROM aCoord[1],
 oArea:Init(oTela,.F.)
 //Mapeamento da area
 oArea:AddLine("L01",100 * nCoefDif,.T.)
-//ÚÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄ¿
 //³Colunas  ³
-//ÀÄÄÄÄÄÄÄÄÄÙ
+//ÀÄÄÄÄÄÄÄÄÄÙ
 oArea:AddCollumn("L01C01",LRG_COL01,.F.,"L01")
 oArea:AddCollumn("L01C02",LRG_COL02,.F.,"L01")
 oArea:AddCollumn("L01C03",LRG_COL03,.F.,"L01")
-//ÚÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄ¿
 //³Paineis  ³
-//ÀÄÄÄÄÄÄÄÄÄÙ
+//ÀÄÄÄÄÄÄÄÄÄÙ
 oArea:AddWindow("L01C01","L01C01P01","Parâmetros",100,.F.,.F.,/*bAction*/,"L01",/*bGotFocus*/)
 oPainel01 := oArea:GetWinPanel("L01C01","L01C01P01","L01")
 oArea:AddWindow("L01C02","L01C02P01","Dados adicionais",100,.F.,.F.,/*bAction*/,"L01",/*bGotFocus*/)
 oPainel02 := oArea:GetWinPanel("L01C02","L01C02P01","L01")
 oArea:AddWindow("L01C03","L01C03P01","Funções",100,.F.,.F.,/*bAction*/,"L01",/*bGotFocus*/)
 oPainel03 := oArea:GetWinPanel("L01C03","L01C03P01","L01")
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Painel 01 - Filtros  ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 //PERGUNTAS
 U_DefTamObj(@aTamObj,000,000,(oPainel01:nClientHeight / 2) * 0.9,oPainel01:nClientWidth / 2)
 oPainelS01 := tPanel():New(aTamObj[1],aTamObj[2],"",oPainel01,,.F.,.F.,,CLR_WHITE,aTamObj[4],aTamObj[3],.T.,.F.)
@@ -279,18 +280,18 @@ oBot01 := tButton():New(aTamObj[1],aTamObj[2],cHK + "Pesquisar",oPainel01,;
 	{|| IIf(PFATA2VlP(cPerg,@aPergunte),;
 	MsAguarde({|| CursorWait(),CCSP001At(aClone(aHeader01),@_aDados01),Eval(bAtGD,.T.,.T.),CursorArrow()},cRotNome,"Pesquisando",.F.),.F.)},;
 	aTamObj[3],aTamObj[4],,/*Font*/,,.T.,,,,{|| .T.}/*When*/)
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Painel 02 - Lista de dados  ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 oGD01 := TCBrowse():New(000,000,000,000,/*bLine*/,aLstC01,,oPainel02,,,,/*bChange*/,/*bLDblClick*/,/*bRClick*/,/*oFont*/,,,,,,,.T.,/*bWhen*/,,/*bValid*/,.T.,.T.)
 oGD01:bHeaderClick	:= {|oObj,nCol| CCSP001GD(2,@_aDados01,@oGD01,nCol,aClone(aHeader01)),oGD01:Refresh()}
 oGD01:blDblClick	:= {|| CCSP001GD(1,@_aDados01,@oGD01,,aClone(aHeader01)),oGD01:Refresh()}
 oGD01:Align 		:= CONTROL_ALIGN_ALLCLIENT
 Eval(bAtGD,.T.,.F.)
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Painel 03 - Funcoes  ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
 //ENVIO EDATA
 U_DefTamObj(@aTamObj,000,000,(oPainel03:nClientWidth / 2),nAltBot,.T.)
@@ -554,9 +555,9 @@ Else
 		aDados := aSort(aDados,,,{|x,y| x[nColSel] < y[nColSel]})
 	EndIf
 Endif
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Montar a lista de titulos selecionados  ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 aLstPED := Array(0)
 For ni := 1 to Len(aDados)
 	If aDados[ni][1]
@@ -642,9 +643,20 @@ For ni := 1 to Len(aLstPED)
 					// Flag pedido	   
 					CCSP_003F (cData,cPlaca,"3","OK",cSeq)
 				Else
-					// Flag pedido	   
-					cMens += "- Roteiro não processado: [" + AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
-					CCSP_003F (cData,cPlaca,"4",cErro,cSeq)							
+
+					//Everson - 03/05/2022. Chamado 72284.
+					If "já foi enviada para o EDATA" $Alltrim(cValToChar(cErro))
+						TcSQLExec('EXEC ['+cLinkSe+'].[SMART].[dbo].[FD_DEVOCARG_01] ' +Str(Val(cSeq)) )
+						CCSP_003F (cData,cPlaca,"4",cErro,cSeq)	
+						cMens += "- Roteiro não processado: [" + AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [*** Refaça o envio ***]"  + CRLF			
+
+					Else
+				
+						// Flag pedido	   
+						cMens += "- Roteiro não processado: [" + AllTrim(Dtos(aLstPED[ni][1]))+AllTrim(aLstPED[ni][2]) + "]" + CRLF + "- Erro : [" + cErro + "]"  + CRLF			
+						CCSP_003F (cData,cPlaca,"4",cErro,cSeq)				
+
+					EndIf			
 				
 					//DisarmTransaction()
 
@@ -925,7 +937,8 @@ Local lRet   := .F.
 Local lRetD1 := .F.
                              
 
-BeginTran()
+BEGIN TRANSACTION
+//BeginTran()
 
 	_cSQED:= U_NextNum("SF1","F1_X_SQED",.F.)
 	
@@ -949,7 +962,8 @@ BeginTran()
 		EndDo
 	EndIf
 
-EndTran()
+END TRANSACTION
+//EndTran()
 
 Return {lRet,_cSQED} 
 
