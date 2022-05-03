@@ -18,6 +18,7 @@ Static cTitulo      := "Libera Empresas Terceiras para ser visto no Dimep "
 	@history Ticket: 65853  - Adriano Savoine 		- 28/12/2021 - Corrigido o Local da variavel o mesmo estava como Priveate e fora da Static function, Declarei como Local e movi a mesma para a static function correta.
 	@history Ticket: TI     - Leonardo P. Monteiro 	- 07/01/2022 - Correção do versionamento do fonte ADGPE047P colocado em base PLEONARDO.
 	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
+	@history Ticket 72264 - Everson - 03/05/2022. Tratamento para ativar e inativar cadastro de empresa no Dimep.
 /*/
 
 User Function ADGPE047P()
@@ -69,7 +70,9 @@ User Function ADGPE047P()
     oWnd:nHeight    := nAlt
     oWnd:lMaximized := .T.
 
-	Aadd( aButtons, {"Processar Campos Marcados", {|| GPE047Processa()}, "Processando...", "Processando" , {|| .T.}} ) 
+	Aadd( aButtons, {"Processar Campos Marcados", {|| MsAguarde({|| GPE047Processa()}, "Aguarde", "Processando...")  }, "Processando...", "Processar registros marcados" , {|| .T.}} ) 
+	Aadd( aButtons, {"Inativar Registros", {|| MsAguarde({|| GPE047In("X")}, "Aguarde", "Processando...") }, "Processando...", "Inativar registros marcados" , {|| .T.}} ) 
+	Aadd( aButtons, {"Ativar Registros"  , {|| MsAguarde({|| GPE047In("")}, "Aguarde", "Processando...") }, "Processando...", "Ativar registros marcados" , {|| .T.}} ) 
 
 	EnchoiceBar(oWnd,{||lOk:=.T.,oWnd:End()},{||oWnd:End()},,@aButtons)
 
@@ -81,8 +84,8 @@ User Function ADGPE047P()
     aAdd(aMark,fGetCol({"Nome Estrut"   , "TMP_NMESTR","C",100,0,"@!"   }))
     aAdd(aMark,fGetCol({"CNPJ"          , "TMP_CGC"   ,"N",014,0,""		}))
     aAdd(aMark,fGetCol({"Razao Social"  , "TMP_RZSOCI","C",150,0,"@!"   }))
+    aAdd(aMark,fGetCol({"Inativo ?"     , "TMP_INATIV","C",003,0,"@!"   }))
     
-
 	aAdd(aIndex, "TMP_NUESTR" )
 	aAdd(aIndex, "TMP_NMESTR" )
 	aAdd(aIndex, "TMP_CGC" )
@@ -92,9 +95,6 @@ User Function ADGPE047P()
 	aAdd(aSeek,{"Nome Estru" ,{{"","C",100,0,"TMP_NMESTR","@!"            }}})
 	aAdd(aSeek,{"CNPJ"       ,{{"","N",014,0,"TMP_CGC"   ,""			  }}})
     aAdd(aSeek,{"Raz. Social",{{"","C",150,0,"TMP_RZSOCI","@!"            }}})
-
-    
-    
 
     //Criando o browse da temporria
     oMarkBrw := FWBrowse():New(oWnd)
@@ -166,12 +166,13 @@ Static Function FileTRC()
 	Local aStrut   := {}
 	
     //Criando a estrutura que ter na tabela
-	aAdd(aStrut, {"TMP_OK"    ,"C",002,0})
-	aAdd(aStrut, {"TMP_NUESTR","C",010,0})
-    aAdd(aStrut, {"TMP_NMESTR","C",100,0})
-    aAdd(aStrut, {"TMP_CGC"   ,"N",014,0})
-    aAdd(aStrut, {"TMP_RZSOCI","C",150,0})
-    aAdd(aStrut, {"TMP_CDESTR","N",010,0})
+	aAdd(aStrut, {"TMP_OK"     ,"C",002,0})
+	aAdd(aStrut, {"TMP_NUESTR" ,"C",010,0})
+    aAdd(aStrut, {"TMP_NMESTR" ,"C",100,0})
+    aAdd(aStrut, {"TMP_CGC"    ,"N",014,0})
+    aAdd(aStrut, {"TMP_RZSOCI" ,"C",150,0})
+    aAdd(aStrut, {"TMP_CDESTR" ,"N",010,0})
+    aAdd(aStrut, {"TMP_INATIV" ,"C",003,0})
 
 	oArqTmp := FWTemporaryTable():New("TRC")
 
@@ -197,6 +198,7 @@ Static Function FileTRC()
 			TRC->TMP_CGC    := DIMEP->NU_CNPJ
 			TRC->TMP_RZSOCI := ALLTRIM(REPLACE(REPLACE(DIMEP->DS_RAZAO_SOCIAL,CHR(13),""),CHR(10),""))
 			TRC->TMP_CDESTR := DIMEP->CD_ESTRUTURA_ORGANIZACIONAL
+			TRC->TMP_INATIV:= Iif(Alltrim(cValToChar(DIMEP->AD_INATIVO)) == "X", "Sim", "Não")
 			 
 			TRC->(MsUnLock())
 		ENDIF
@@ -212,37 +214,19 @@ Return
 
 Static Function GPE047Processa()
 
-	Local aArea    := GetArea()
-    Local oDlg     := NIL
-
-	U_ADINF009P('ADGPE047' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao Protheus e Dimep Envia os Usuarios que podem ver as empresas Terceiras no DMP')
-    
-    DEFINE MSDIALOG oDlg FROM	18,1 TO 80,300 TITLE "GPE047Processa - Processar" PIXEL
-	  
-		@  1, 3 	TO 28, 140 OF oDlg  PIXEL
-		
-		If File("adoro.bmp")
-		
-			@ 3,5 BITMAP oBmp FILE "adoro.bmp" OF oDlg NOBORDER SIZE 25,25 PIXEL 
-			oBmp:lStretch:=.T.
-			
-		EndIf
-		
-		@ 05, 37 SAY "Processar dados?" SIZE 90, 7 OF oDlg PIXEL 
-		@ 012,036 BUTTON "Processar" SIZE 035, 015 PIXEL OF oDlg ACTION (PROCESSAR(), oDlg:End())
-		
-
-	ACTIVATE MSDIALOG oDlg CENTERED
-
-	RestArea(aArea)
-return
-
-STATIC FUNCTION PROCESSAR()
-
+	//Variáveis
+	Local aArea  := GetArea()
 	Local nCont  := 0
 	Local nCont1 := 0
+	Local lGrv	 := .F.
 
 	Local cIntregou  := '' // Ticket: 65853 - Adriano Savoine - 28/12/2021.
+
+	If ! MsgYesNo("Deseja processar os registros marcados?")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
 	
     //Percorrendo os registros da TRC
     DBSELECTAREA("TRC")
@@ -252,7 +236,7 @@ STATIC FUNCTION PROCESSAR()
     While !TRC->(EoF())
     
         //Caso esteja marcado processa as informacoes.
-        If TRC->TMP_OK == cMark
+        If TRC->TMP_OK == cMark .And. TRC->TMP_INATIV == "Não"
         
         	nCont:= nCont + 1
         	
@@ -279,9 +263,9 @@ STATIC FUNCTION PROCESSAR()
 							
 							IF lIntegra == .T.
 							
-								INSDIM(TRC->TMP_CDESTR,TRE->CD_USUARIO) // Integra Usuario Perfil de Acesso
+								lGrv := INSDIM(TRC->TMP_CDESTR,TRE->CD_USUARIO) // Integra Usuario Perfil de Acesso
 								GERALOG(FWFILIAL("SRA"),aAllUser[nCont1][3] + '||' + CVALTOCHAR(TRC->TMP_CDESTR)  + '||' + CVALTOCHAR(TRE->CD_USUARIO) , 'Integrou: ' + IIF(ALLTRIM(cIntregou)== '', 'OK',cIntregou))
-															
+
 							ENDIF
 							TRE->(dbSkip())
 					    ENDDO
@@ -309,7 +293,7 @@ STATIC FUNCTION PROCESSAR()
     ENDDO
 	    
     //Mostrando a mensagem de registros marcados
-    MsgInfo('Foram Processados <b>' + cValToChar(nCont) + ' Campo(s)</b>.', "Ateno")
+    MsgInfo('Foram Processados ' + cValToChar(nCont) + ' registros.', "Função PROCESSAR")
      
     //Restaurando rea armazenada
     RestArea(aArea)
@@ -317,7 +301,70 @@ STATIC FUNCTION PROCESSAR()
 	oMarkBrw:Refresh(.T.)
 	
 RETURN(.T.)
+/*/{Protheus.doc} GPE047In
+	Marca registro no Dimep como inativo/ativo.
+	@type  Static Function
+	@author Everson
+	@since 03/05/2022
+	@version 01
+/*/
+Static Function GPE047In(cFlag)
 
+	//Variáveis.
+	Local aArea  := GetArea()
+	Local nCount := 0
+	Local cTxt   := Iif(cFlag == "X", "Sim", "Não")
+
+	If ! MsgYesNo("Deseja " + Iif(Empty(cFlag), "ativar", "inativar") + " os registros marcados?")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	DbSelectArea("TRC")
+	TRC->(DbSetOrder(1))
+    
+	TRC->(DbGoTop())
+    While ! TRC->(EoF())
+
+		If TRC->TMP_OK == cMark .And. cTxt <> TRC->TMP_INATIV
+
+			If TCSQLExec("UPDATE [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] SET AD_INATIVO = '" + cFlag + "' WHERE CD_ESTRUTURA_ORGANIZACIONAL = '" + Alltrim(cValToChar(TRC->TMP_CDESTR)) + "'  AND NU_ESTRUTURA = '" + Alltrim(cValToChar(TRC->TMP_NUESTR)) + "' AND CD_ESTRUTURA_RELACIONADA = 1223") < 0
+				MsgInfo("Ocorreu erro na atualização do registro " + Alltrim(cValToChar(TRC->TMP_CDESTR)) + " " + Alltrim(cValToChar(TRC->TMP_NMESTR)) + ". O processo será interrompido." + Chr(13) + Chr(10) + Chr(13) + Chr(10) + TCSQLError(), "Função GPE047In(ADGPE047P)")
+				Exit
+
+			Else
+
+				RecLock("TRC", .F.)
+					TRC->TMP_OK     := ""
+					TRC->TMP_INATIV := cTxt
+				TRC->(MsUnlock())
+
+				nCount++
+
+				If cFlag == "X" .And. TCSQLExec("DELETE FROM [DIMEP].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] WHERE CD_ESTRUTURA_ORGANIZACIONAL = '" + Alltrim(cValToChar(TRC->TMP_CDESTR)) + "'") < 0
+					MsgInfo("Ocorreu erro no processo para desvincular usuários da estrutura " + Alltrim(cValToChar(TRC->TMP_CDESTR)) + " " + Alltrim(cValToChar(TRC->TMP_NMESTR)) + ". O processo será interrompido." + Chr(13) + Chr(10) + Chr(13) + Chr(10) + TCSQLError(), "Função GPE047In(ADGPE047P)")
+					Exit
+
+				EndIf
+
+			EndIf
+
+		EndIf
+
+		TRC->(DbSkip())
+
+	End
+
+	TRC->(DbGoTop())
+
+	RestArea(aArea)
+	
+	oMarkBrw:Refresh(.T.)
+
+	MsgInfo("Foram processados " + cValToChar(nCount) + " registros.", "Função GPE047In(ADGPE047P)")
+
+Return Nil
 
 STATIC FUNCTION GERALOG(cFil,cTexto,cParam)
 
@@ -345,7 +392,8 @@ STATIC FUNCTION SqlEstrutura()
 			       NM_ESTRUTURA,
 				   NU_CNPJ,
 				   DS_RAZAO_SOCIAL,
-				   CD_ESTRUTURA_ORGANIZACIONAL 
+				   CD_ESTRUTURA_ORGANIZACIONAL,
+				   AD_INATIVO
 		     FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL WITH (NOLOCK)
 		    WHERE CD_ESTRUTURA_RELACIONADA = 1223
 						
@@ -397,14 +445,18 @@ RETURN(NIL)
 STATIC FUNCTION INSDIM(nEst,nUsers)   
 
 	Local cQuery1 := ''
+	Local lRet    := .T.
 	
 	cQuery1 := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] " + "(CD_ESTRUTURA_ORGANIZACIONAL, " + "CD_USUARIO " + ") " + "VALUES (" + " '" + CVALTOCHAR(nEst)   + "'," + " '" + CVALTOCHAR(nUsers) + "' )" 
         
     If (TCSQLExec(cQuery1) < 0)
+		lRet := .F.
     	cIntregou += " TCSQLError() - INSDIM: "
+		MsgInfo("Ocorreu erro na criação do registro " + Alltrim(cValToChar(nEst)) + " " + Alltrim(cValToChar(nUsers)) + "." + Chr(13) + Chr(10) + Chr(13) + Chr(10) + TCSQLError(), "Função INSDIM(ADGPE047P)")
+	
 	EndIf        
 	
-RETURN(NIL)
+RETURN lRet
 
 Static Function fMark(oBrowse)
     Local cRet := "LBNO"

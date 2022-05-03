@@ -18,6 +18,7 @@ SetPrvt("CCADASTRO,AROTINA,")
 北滥哪哪哪哪哪哪牧哪哪哪哪哪聊哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪哪馁北
 北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北北
 哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌哌
+@history Everson, 03/05/2022, Chamado 72313. Tratamento do filtro do browse.
 /*/
 
 // Parametro do Filtro
@@ -42,7 +43,7 @@ aRotina := { { "Pesquisar   "  ,"AxPesqui"                 , 0 , 1},;
 // +-----------------------------------+
 Private aIndSZK   := {}
 Private bFiltraBrw := {|| Nil}                          
-cCondicao  := xFilial("SZK") + Alltrim(_nFiltFV) 
+cCondicao  := "ZK_FILIAL = '" + FWxFilial("SZK") + "' .AND. ZK_TIPFRT = 'FV'"//xFilial("SZK") + Alltrim(_nFiltFV) 
 bFiltraBrw := {|| FilBrowse("SZK",@aIndSZK,@cCondicao)}
 Eval(bFiltraBrw)
            
