@@ -1,23 +1,13 @@
 #Include 'Protheus.ch'
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³MA103ATF       ºAutor  ³Abel Babini         ºData  ³  22/07/2019 º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³Ponto de Entrada para o usuário do recebimento identificar se o  º±±
-±±º          ³ativo imobilizado é uma benfeitoria ou não                       º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³Adoro S/A                                                        º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºChamado   ³                                                                 º±±
-±±ºn. 045022 ³ Abel Babini - Identificaçãr de Benfeitoria de Imob. - 22/07/2019º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
-
+/*/{Protheus.doc} User Function MA103ATF
+	Ponto de Entrada para o usuário do recebimento identificar se o ativo imobilizado é uma benfeitoria ou não
+	@type  Function
+	@author Abel Babini
+	@since 22/07/2019
+	@history Chamado 045022 - Abel Babini - 22/07/2019 - Identificaçãr de Benfeitoria de Imob.
+	@history Ticket 71120   - Abel Babini - 02/05/2022 - Ajuste na classificação adicionando regra pelo CST
+	/*/
 User Function MA103ATF()
 	Local aCab 		:= ParamIXB[1] 
 	Local aItens	:= ParamIXB[2] 
@@ -38,6 +28,10 @@ User Function MA103ATF()
 	
 	Local nPAtfTip	:= ASCAN(aItens[1], { |X| ALLTRIM(X[1]) == "N3_TIPO" })
 	
+	//Ticket 71120   - Abel Babini - 02/05/2022 - Ajuste na classificação adicionando regra pelo CST
+	Local nPCSTPis	:= ASCAN(aCab, { |X| ALLTRIM(X[1]) == "N1_CSTPIS" })
+	Local lAtuFrc		:= .F.
+
 	Local cXObsPC	:= Posicione("SC7",1,xFilial("SC7")+SD1->(D1_PEDIDO+D1_ITEMPC),"C7_OBS")
 
 	//Definião de Variáveis de classificação
@@ -104,13 +98,18 @@ User Function MA103ATF()
 		
 		ACTIVATE MSDIALOG oDlgAtB CENTERED
 		
+		//Ticket 71120   - Abel Babini - 02/05/2022 - Ajuste na classificação adicionando regra pelo CST
+		If nPCSTPis > 0 .AND. aCab[nPCSTPis,2] == '56'
+			lAtuFrc := .T.
+		Endif
+
 		//Adição de campos customizados - SN1
-		IF Alltrim(cCbAtfBn) == aCbAtfBn[2] //bens//'1 - Benfeitoria Bens','2 - Benfeitoria Serviços','3 - Ativo Imobilizado'
+		IF Alltrim(cCbAtfBn) == aCbAtfBn[2] .AND. lAtuFrc //bens//'1 - Benfeitoria Bens','2 - Benfeitoria Serviços','3 - Ativo Imobilizado'
 			aAdd(aCab,{"N1_CALCPIS" , "3" })
 			aAdd(aCab,{"N1_MESCPIS" , nXMes })
 			aAdd(aCab,{"N1_CODBCC" , cXBCCBnB })
 			aAdd(aCab,{"N1_UTIPATR" , cXIUtBnB })		
-		ELSEIF Alltrim(cCbAtfBn) == aCbAtfBn[3] //servicos //'1 - Benfeitoria Bens','2 - Benfeitoria Serviços','3 - Ativo Imobilizado'
+		ELSEIF Alltrim(cCbAtfBn) == aCbAtfBn[3] .AND. lAtuFrc //servicos //'1 - Benfeitoria Bens','2 - Benfeitoria Serviços','3 - Ativo Imobilizado'
 			aAdd(aCab,{"N1_CALCPIS" , "3" })
 			aAdd(aCab,{"N1_MESCPIS" , nXMes })
 			aAdd(aCab,{"N1_CODBCC" , cXBCCBnS })
