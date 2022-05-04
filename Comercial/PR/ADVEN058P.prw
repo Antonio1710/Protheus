@@ -8,8 +8,9 @@
 	@author Fernando Sigoli 
 	@since 18/10/17 
 	@version 01
-	@history  tkt 24030  - Sigoli  - 26/11/2021 - Adicionado consistencia para nao validar o tipo de frete quando vem de integração do SF
+	@history  tkt 24030     - Sigoli  - 26/11/2021 - Adicionado consistencia para nao validar o tipo de frete quando vem de integração do SF
 	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket  72383  - Everson - 04/05/2022 - Tratamento para errorlog. 
 */
 
 User Function ADVEN058P()
@@ -24,7 +25,7 @@ User Function ADVEN058P()
 
 	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina de validação de campo C')
 
-	IF !lSfInt
+	IF !lSfInt .And. ValType(aCols) == "A" .And. Len(aCols) > 0 .And. nVlPrc > 0 .And. nVlTot > 0 //Everson - 04/05/2022. Chamado 72383.
 
 		If aCols[1,nVlPrc] > 0 
 			
