@@ -13,8 +13,10 @@
 	@history Chamado 055444 - William  				- 11/02/2020 - Ajustado error log do programa ADINF009P estava na posi็ใo errada
 	@history Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se estแ PENDENTE ou RECEBIDO
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	@history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 /*/
-User Function ADLFV011R() 
+User Function ADLFV011R(cEmpJob, cFilJob)
 
 	Local cQuery  := ""
 	Local nDias   := ""
@@ -24,9 +26,13 @@ User Function ADLFV011R()
 	Local cCliLoj := ""
 	Local cProdPV := ""
 	Local cTESPV  := ""
+
+	// @history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	Default cEmpJob := "01"
+	Default cFilJob := "02"
 	
 	// Filial Frango Vivo
-	Private cFilPV  := ""
+	Private cFilGranjas  := ""
 	
 	Private cArquivo, cPath, cMails, cDescri, cRootPath, cFilPre, cFornCod, cLojaCod, cEspLFV, cProduto, cTESPre
 	
@@ -34,9 +40,7 @@ User Function ADLFV011R()
 	RpcClearEnv()
 	RpcSetType(3)
 
-	If !RpcSetEnv( "01" , "03" )
-		ApMsgStop( '[ADLFV011R] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE 01/03 !!! ', 'Aten็ใo' )
-		ConOut(	"[ADLFV011R] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE 01/03 !!!" )
+	If !RpcSetEnv( cEmpJob, cFilJob )
 		Return .F.
 	EndIf
 	
@@ -52,17 +56,17 @@ User Function ADLFV011R()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'WF - Schedule - Acompanhamento Frango Vivo')
 	
 	// Carrega Variaveis
-	
 	nDias   := GetMV("MV_#LFVDIA",,3)
 	
 	// Filial Frango Vivo
-	cFilPV    := GetMV("MV_#LFVNEW",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	cFilGranjas    := GetMV("MV_#GRANJA",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	
+	cFilGranjas := "0A" // DEBUG - INIBIR
 	
 	// Dados do PV/NF
-	cCliCod := GetMV("MV_#LFVCLI",,"027601")
+	cCliCod := GetMV("MV_#LFVCLI",,"027601|248103") // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	cCliLoj := GetMV("MV_#LFVLOJ",,"00")
-	//	cProdPV := GetMV("MV_#LFVPRD",,"100253")   // APENAS DEBUG
-	cProdPV := GetMV("MV_#LFVPRD",,"300042")  //  publicar este em producao
+	cProdPV := GetMV("MV_#LFVPRD",,"300042") 
 	cTESPV  := GetMV("MV_#LFVTES",,"701")
 	
 	// Dados da Nota Entrada Classificada
@@ -70,19 +74,19 @@ User Function ADLFV011R()
 	cFornCod  := GetMV("MV_#LFVFOR",,"000217")
 	cLojaCod  := GetMV("MV_#LFVLOJ",,"01")
 	cEspLFV   := GetMV("MV_#LFVESP",,"SPED")
-	//cProduto  := GetMV("MV_#LFVPRD",,"100253")  //  APENAS DEBUG
-	cProduto  := GetMV("MV_#LFVPRD",,"300042")  //  publicar este em producao
+	cProduto  := GetMV("MV_#LFVPRD",,"300042")  
 	cTESPre   := GetMV("MV_#LFVTEE",,"031")
-	
+
+	// @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	cFilPre0B   := GetMV("MV_#LFVABA",,"0B")
+	cFornCod0B  := GetMV("MV_#LFVABA",,"030057")
 	
 	// Emails
 	cMails  := GetMV("MV_#LFVMA3",,"danielle.meira@adoro.com.br;reinaldo.francischinelli@adoro.com.br;fwnmacieira@gmail.com") 
 	cDescri := "ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - " + AllTrim(DtoC(msDate()))
 	
-	
 	// Cria arquivo TMP
 	CriaTMP()
-	
 	
 	cDateWFAnt  := ""
 	cDateWF     := DtoS( (msDate()-nDias) )
@@ -95,23 +99,23 @@ User Function ADLFV011R()
 		cDateWFAnt     := AllTrim(Str((Val(Left(AllTrim(DtoS(msDate())),4))-1)))+"1201"
 	EndIf
 	
-	
 	If Select("Work") > 0
 		Work->( dbCloseArea() )
 	EndIf
 	
-	cQuery := " SELECT D2_FILIAL, D2_DOC, D2_SERIE, D2_PEDIDO, D2_EMISSAO, D2_COD, D2_TES, D2_QUANT, D2_UM "
-	cQuery += " FROM " + RetSqlName("SD2")
-	//cQuery += " WHERE D2_FILIAL='"+cFilPV+"' " // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
-	cQuery += " WHERE D2_FILIAL IN " + FormatIn(cFilPV,"|")
-	cQuery += " AND D2_CLIENTE='"+cCliCod+"' "
-	cQuery += " AND D2_LOJA='"+cCliLoj+"' "
-	cQuery += " AND D2_COD='"+cProdPV+"' "
-	cQuery += " AND D2_TES='"+cTESPV+"' "
-	cQuery += " AND D2_EMISSAO BETWEEN '"+cDateWFAnt+"' AND '"+cDateWF+"' "
+	cQuery := " SELECT D2_FILIAL, D2_DOC, D2_SERIE, D2_PEDIDO, D2_EMISSAO, D2_COD, D2_TES, D2_QUANT, D2_UM 
+	cQuery += " FROM " + RetSqlName("SD2") + " (NOLOCK) 
+	//cQuery += " WHERE D2_FILIAL='"+cFilGranjas+"' " // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	cQuery += " WHERE D2_FILIAL IN " + FormatIn(cFilGranjas,"|")
+	//cQuery += " AND D2_CLIENTE='"+cCliCod+"' " // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	cQuery += " AND D2_CLIENTE IN " + FormatIn(cCliCod,"|")
+	cQuery += " AND D2_LOJA='"+cCliLoj+"' 
+	cQuery += " AND D2_COD='"+cProdPV+"'
+	cQuery += " AND D2_TES='"+cTESPV+"' 
+	cQuery += " AND D2_EMISSAO BETWEEN '"+cDateWFAnt+"' AND '"+cDateWF+"' 
 	cQuery += " AND D2_DOC NOT IN (SELECT D1_NFORI FROM " + RetSqlName("SD1") + " WHERE D1_FILIAL = D2_FILIAL AND D1_NFORI = D2_DOC AND D1_SERIORI = D2_SERIE AND D1_ITEMORI = D2_ITEM AND D1_COD = D2_COD AND D_E_L_E_T_ <> '*') " //chamado: 046464 - 15/01/2019 - William
-	cQuery += " AND D_E_L_E_T_='' "
-	cQuery += " ORDER BY 5 "
+	cQuery += " AND D_E_L_E_T_='' 
+	cQuery += " ORDER BY 1,5
 	
 	tcQuery cQuery New Alias "Work"
 	
@@ -211,7 +215,7 @@ Return
 ฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
 */
 
-Static Function GrvArquivo( cD2_FILIAL, cD2_DOC, cD2_SERIE, cD2_PEDIDO, dD2_EMISSAO, nD2_QUANT, cD2_UM )
+Static Function GrvArquivo(cD2_FILIAL, cD2_DOC, cD2_SERIE, cD2_PEDIDO, dD2_EMISSAO, nD2_QUANT, cD2_UM)
 
 	Local cStatus     := "PENDENTE"
 	Local cGranjada   := ""
@@ -222,13 +226,12 @@ Static Function GrvArquivo( cD2_FILIAL, cD2_DOC, cD2_SERIE, cD2_PEDIDO, dD2_EMIS
 	
 	//GRANJADA
 	SC5->( dbSetOrder(1) ) // C5_FILIAL+C5_NUM
-	If SC5->( dbSeek(cFilPV+cD2_PEDIDO) )
+	If SC5->( dbSeek(cD2_FILIAL+cD2_PEDIDO) ) // @history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 		cGranjada := AllTrim(SC5->C5_MENNOT2)
 	EndIf
 	
-	
 	//Granja e Status
-	aZV1_RGRANJ := LoadZV1(cD2_DOC, cD2_SERIE)
+	aZV1_RGRANJ := LoadZV1(cD2_FILIAL, cD2_DOC, cD2_SERIE) // @history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	
 	If !Empty(aZV1_RGRANJ)
 		// Granja
@@ -246,12 +249,43 @@ Static Function GrvArquivo( cD2_FILIAL, cD2_DOC, cD2_SERIE, cD2_PEDIDO, dD2_EMIS
 	EndIf
 	
 	// Dados da Nota Entrada Classificada
-	SD1->( dbSetOrder(1) ) // D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
-	If SD1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod+cLojaCod+cProduto) )		
-		SF1->( dbSetOrder(1) ) // F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
-		If SF1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod+cLojaCod+SD1->D1_TIPO) ) //Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se estแ PENDENTE ou RECEBIDO
-			If !Empty(SD1->D1_TES) .AND. !Empty(SF1->F1_STATUS)
-				cStatus := "RECEBIDO"
+	// @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	If AllTrim(cD2_FILIAL) == "03" // Granja 03
+		SD1->( dbSetOrder(1) ) // D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
+		// Busco abatedouro 02
+		If SD1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod+cLojaCod+cProduto) )		
+			SF1->( dbSetOrder(1) ) // F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
+			If SF1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod+cLojaCod+SD1->D1_TIPO) ) //Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se estแ PENDENTE ou RECEBIDO
+				If !Empty(SD1->D1_TES) .AND. !Empty(SF1->F1_STATUS)
+					cStatus := "RECEBIDO"
+				EndIf
+			EndIf
+		// Busco abatedouro 0B
+		ElseIf SD1->( dbSeek(cFilPre0B+cD2_DOC+cD2_SERIE+cFornCod+cLojaCod+cProduto) )		
+			SF1->( dbSetOrder(1) ) // F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
+			If SF1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod+cLojaCod+SD1->D1_TIPO) ) //Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se estแ PENDENTE ou RECEBIDO
+				If !Empty(SD1->D1_TES) .AND. !Empty(SF1->F1_STATUS)
+					cStatus := "RECEBIDO"
+				EndIf
+			EndIf
+		EndIf
+	ElseIf AllTrim(cD2_FILIAL) == "0A" // Granja HH
+		SD1->( dbSetOrder(1) ) // D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
+		// Busco abatedouro 02
+		If SD1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod0B+cLojaCod+cProduto) )		
+			SF1->( dbSetOrder(1) ) // F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
+			If SF1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod0B+cLojaCod+SD1->D1_TIPO) ) 
+				If !Empty(SD1->D1_TES) .AND. !Empty(SF1->F1_STATUS)
+					cStatus := "RECEBIDO"
+				EndIf
+			EndIf
+		// Busco abatedouro 0B
+		ElseIf SD1->( dbSeek(cFilPre0B+cD2_DOC+cD2_SERIE+cFornCod0B+cLojaCod+cProduto) )		
+			SF1->( dbSetOrder(1) ) // F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA+F1_TIPO
+			If SF1->( dbSeek(cFilPre+cD2_DOC+cD2_SERIE+cFornCod0B+cLojaCod+SD1->D1_TIPO) ) //Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se estแ PENDENTE ou RECEBIDO
+				If !Empty(SD1->D1_TES) .AND. !Empty(SF1->F1_STATUS)
+					cStatus := "RECEBIDO"
+				EndIf
 			EndIf
 		EndIf
 	EndIf
@@ -359,21 +393,24 @@ Return
 ฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
 */
 
-Static Function LoadZV1(cD2_DOC, cD2_SERIE)
+Static Function LoadZV1(cD2_FILIAL, cD2_DOC, cD2_SERIE) 
 
 	Local cQuery := ""
 	Local aZV1_RGRANJ := {}
+	Local cFilAbat    := GetMV("MV_#ABATES",,"02|0B") // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	
 	If Select("WorkZV1")
 		WorkZV1->( dbCloseArea() )
 	EndIf
 	
-	cQuery := " SELECT ZV1_RGRANJ, ZV1_STATUS , CONVERT(VARCHAR(10),CAST(ZV1_DTABAT AS DATE),3) AS ZV1_DTABAT "
-	cQuery += " FROM " + RetSqlName("ZV1")
-	cQuery += " WHERE ZV1_FILIAL='"+xFilial("ZV1")+"' "
-	cQuery += " AND ZV1_NUMNFS LIKE '%"+AllTrim(Str(Val(cD2_DOC)))+"' "
-	cQuery += " AND ZV1_SERIE='"+cD2_SERIE+"' "
-	cQuery += " AND D_E_L_E_T_='' "
+	cQuery := " SELECT ZV1_RGRANJ, ZV1_STATUS , CONVERT(VARCHAR(10),CAST(ZV1_DTABAT AS DATE),3) AS ZV1_DTABAT
+	cQuery += " FROM " + RetSqlName("ZV1") + " ZV1 (NOLOCK) 
+	cQuery += " INNER JOIN ZFC010 ZFC (NOLOCK) ON ZFC_FILIAL=ZV1_FILIAL AND ZFC_NUMERO=ZV1_NUMOC AND ZFC_FILORI='"+cD2_FILIAL+"' AND ZFC.D_E_L_E_T_='' " // @history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	//cQuery += " WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' " // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	cQuery += " WHERE ZV1_FILIAL IN " + FormatIn(cFilAbat,"|")
+	cQuery += " AND ZV1_NUMNFS LIKE '%"+AllTrim(Str(Val(cD2_DOC)))+"' 
+	cQuery += " AND ZV1_SERIE='"+cD2_SERIE+"' 
+	cQuery += " AND ZV1.D_E_L_E_T_='' 
 	
 	tcQuery cQuery New Alias "WorkZV1"
 	
@@ -553,43 +590,6 @@ Static Function procRel()
 	RestArea(aArea)
 
 Return Nil
-
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณscriptSql บAutor  ณFernando Sigoli     บData  ณ  29/03/2018 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณScript sql.                                                 บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณAdoro S/A                                                   บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
-
-Static Function ScriptSQL()
-
-	//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
-	//ณ Declara็ใo de variแvies.
-	//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
-	Local aArea		:= GetArea()
-	Local cQuery	:= ""
-	
-	cQuery := " "
-	cQuery += "  SELECT "
-	cQuery += "  C5_FILIAL, C5_NUM, C5_CLIENTE, C5_LOJACLI, C5_NOMECLI, C6_PRODUTO, C6_DESCRI, C6_UNSVEN, C6_PRCVEN, C6_VALOR, C6_TES, C6_LOCAL, CONVERT(VARCHAR(10),CAST(C6_ENTREG AS DATE),103) AS C6_ENTREG, CONVERT(VARCHAR(10),CAST(C5_EMISSAO AS DATE),103) AS C5_EMISSAO "
-	cQuery += "  FROM " + RetSqlName("SC5") + " SC5 WITH (NOLOCK), " + RetSqlName("SC6") + " SC6 WITH (NOLOCK) "
-	cQuery += "  WHERE C5_FILIAL=C6_FILIAL "
-	cQuery += "  AND C5_NUM=C6_NUM "
-	cQuery += "  AND C5_FILIAL='"+cFilPV+"' "
-	cQuery += "  AND C5_NUM='"+cNumPV+"' "
-	cQuery += "  AND SC5.D_E_L_E_T_ = '' "
-	cQuery += "  AND SC6.D_E_L_E_T_ = '' "
-	
-	RestArea(aArea)
-
-Return cQuery
 
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
