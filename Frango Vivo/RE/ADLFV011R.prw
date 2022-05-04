@@ -61,7 +61,7 @@ User Function ADLFV011R(cEmpJob, cFilJob)
 	// Filial Frango Vivo
 	cFilGranjas    := GetMV("MV_#GRANJA",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	
-	cFilGranjas := "0A" // DEBUG - INIBIR
+	//cFilGranjas := "0A" // DEBUG - INIBIR
 	
 	// Dados do PV/NF
 	cCliCod := GetMV("MV_#LFVCLI",,"027601|248103") // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
