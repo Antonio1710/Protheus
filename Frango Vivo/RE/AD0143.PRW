@@ -17,8 +17,9 @@ static lAuto
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	@history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 /*/
-User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto, cFilOrig)
+User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto, cFilGranjas)
 
 	// FWNM - 16/04/2018 - CHAMADO 037729
 	Default cNFNot  := ""
@@ -27,7 +28,7 @@ User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto, cFilOrig)
 	Default nTtPLP  := 0
 	Default lAuto   := .F.
 	//
-	Default cFilOrig := GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	Default cFilGranjas := "" //GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 
 	// Define lAuto
 	/*
@@ -37,7 +38,7 @@ User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto, cFilOrig)
 	EndIf
 	*/
 
-	Private cFilPV          := GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	Private cFilPV          := cFilGranjas // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	Private cDesc1       	:= "Este programa tem como objetivo imprimir relatorio "
 	Private cDesc2       	:= "de acordo com os parametros informados pelo usuario."
 	Private cDesc3       	:= "RELAÇÃO DIARIA ORDEM CARREGAMENTO FRANGO VIVO"
@@ -553,7 +554,15 @@ cQuery+=" ZV2_1PESO, ZV2_2PESO, ZV1_RPLACA , ZV1_PESONF,  "
 cQuery+=" ZV1_VALTNF,ZV1_VALUNF,ZV1_DTABAT , ZV1_DTAREA,  "
 cQuery+=" ZV1_LOJFOR, ZV1_CODFOR,ZV1_TARAPD,ZV1_AJUSPS, ZV1_SERIE , "
 cQuery+=" ZV1_PGRANJ, ZV1_FORREC,ZV1_LOJREC,ZV1_RHVP,ZV1_RHABAT , ZV2_DATA1 , ZV1_CLIVOL,ZV1_RHESPE,ZV1_CLIBAL "
-cQuery+=" FROM " + retsqlname("ZV1")+ " (NOLOCK), " + retsqlname("ZV2")+" (NOLOCK) "
+cQuery+=" FROM " + retsqlname("ZV1")+ " ZV1 (NOLOCK)
+cQuery+=" INNER JOIN " + retsqlname("ZV2")+ " ZV2 (NOLOCK) ON ZV1_FILIAL=ZV2_FILIAL AND ZV2_GUIA = ZV1_GUIAPE
+
+// @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P"  .or. lAuto
+	cQuery+=" INNER JOIN " + retsqlname("ZFC")+ " ZFC (NOLOCK) ON ZFC_FILIAL=ZV1_FILIAL AND ZFC_NUMERO=ZV1_NUMOC AND ZFC_FILORI='"+cFilPV+"' AND ZFC.D_E_L_E_T_='' 
+EndIf
+//
+
 cQuery+=" WHERE ZV1_FILIAL='"+FWxFilial("ZV1")+"' AND ZV1_FILIAL=ZV2_FILIAL " // @history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 cQuery+=" AND (ZV2_GUIA = ZV1_GUIAPE) AND (ZV1_DTABAT >= '"+ DTOS(_dDataIni) +"' AND ZV1_DTABAT <= '"+ DTOS(_dDataFim) +"') "
 cQuery+=" AND ZV1_NUMNFS<>'      ' "
@@ -574,8 +583,8 @@ EndIf
 If _nTurno<>0
 	cQuery+=" AND ZV1_TURNO="+str(_nTurno)+" "
 EndIf
-cQuery+=" AND "+retsqlname("ZV2")+".D_E_L_E_T_ ='' "
-cQuery+=" AND "+retsqlname("ZV1")+".D_E_L_E_T_ ='' "
+cQuery+=" AND ZV2.D_E_L_E_T_ ='' "
+cQuery+=" AND ZV1.D_E_L_E_T_ ='' "
 
 
 // FWNM - 17/04/2018 - CHAMADO 037729
@@ -1200,11 +1209,10 @@ _cTurAbt  :=BuscaTur(ROC->ZV1_NUMOC)       //Turno de abate  //Chamado:049564 - 
 //_cTurAbt := ROC->ZV1_NUMOC // debug - inibir
 
 // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH
+/*
 cFilPV := Posicione("ZFC",4,FWxFilial("ZFC")+_cNumOC,"ZFC_FILORI") // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
-If Empty(cFilPV)
-	cFilPV   := GetMV("MV_#LFVFIL",,"03") 
-EndIf
-cFilOrig := cFilPV
+cFilGranjas := cFilPV // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+*/
 //
 
 //&&Chamado 006667 - Mauricio - Busco numero do C5_PEDXML.
@@ -1371,12 +1379,12 @@ EndIF
 If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P" .or. lAuto // FWNM - 18/04/2018 - CHAMADO 037729
 	
 	// @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH
+	/*
 	cFilPV := Posicione("ZFC",4,FWxFilial("ZFC")+_cNumOC,"ZFC_FILORI") // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
-	If Empty(cFilPV)
-		cFilPV   := GetMV("MV_#LFVFIL",,"03") 
-	EndIf
-	cFilOrig := cFilPV
+	cFilGranjas := cFilPV // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	*/
 	//
+
 	cSerNFFV := GetMV("MV_#LFVSER",,"01")
 	cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 	cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
@@ -1713,12 +1721,12 @@ If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
 		If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P" .or. lAuto
 			
 			// @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH
+			/*
 			cFilPV := Posicione("ZFC",4,FWxFilial("ZFC")+_cNumOC,"ZFC_FILORI") // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
-			If Empty(cFilPV)
-				cFilPV   := GetMV("MV_#LFVFIL",,"03") 
-			EndIf
-			cFilOrig := cFilPV
+			cFilGranjas := cFilPV // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+			*/
 			//
+
 			cSerNFFV := GetMV("MV_#LFVSER",,"01")
 			cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 			cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
