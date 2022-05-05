@@ -792,13 +792,6 @@ User Function CTBGRV()
 		// Chamado n. 048047 || OS 049306 || CONTROLADORIA || ANA_CAROLINA || 8464 || LP 596 COMP RECEB (RA) - FWNM - 05/06/2019                  		
 		If AllTrim(CT2->CT2_LP) == "596"
 
-			// @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-			cFilSE1 := SE5->E5_FILORIG
-			If Empty(cFilSE1)
-				cFilSE1 := FWxFilial("SE1")
-			EndIf
-			//
-		
 			cCtaDeb := GetMV("MV_#596DEB",,"211510001")
 			cCtaCre := GetMV("MV_#596CRE",,"111210001")
 					
@@ -815,7 +808,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -832,7 +825,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -853,7 +846,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -870,7 +863,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -887,7 +880,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -919,7 +912,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -936,7 +929,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -957,7 +950,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) )
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -974,7 +967,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
@@ -991,7 +984,7 @@ User Function CTBGRV()
 	
 						SE1->( dbSetOrder(1) )
 						//If SE1->( dbSeek(FWxFilial("SE1")+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) // @history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
-						If SE1->( dbSeek(cFilSE1+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
+						If SE1->( dbSeek(SE5->E5_FILIAL+CT2->CT2_PREFIX+CT2->CT2_NUMDOC+CT2->CT2_PARCEL+CT2->CT2_TIPODC) ) 
 							CT2->CT2_CLIFOR := SE1->E1_CLIENTE
 							CT2->CT2_LOJACF := SE1->E1_LOJA
 						Endif
