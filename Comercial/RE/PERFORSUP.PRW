@@ -1,26 +1,14 @@
 #INCLUDE "rwmake.ch"
 #INCLUDE "TOPCONN.CH"
-/*                          
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Programa  ³ PERFORSUP³ Autor ³ Mauricio - MDS TEC      ³ Data ³ 22/10/2014 ³±±               
-±±³          ³          ³       ³ 						  ³      ³            ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descricao ³ Relatorio de Performance dos Supervisores em periodo maximo de ³±±
-±±³          ³ 12 meses.                                                      ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Uso       ³ ADORO                                                           ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³             ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL              ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Programador   ³  Data  ³              Motivo da Alteracao                  ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³              ³        ³                                                   ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
+/*/{Protheus.doc} User Function PERFORSUP
+	Relatorio de Performance dos Supervisores em periodo maximo de ³±±
+	12 meses.
+	@type  Function
+	@author Mauricio - MDS TEC
+	@since 22/10/2014
+	@version 01
+	@history Everson, 06/05/2022, Ticket 72516 - Tratamento para errorlog.
+	/*/
 User Function PERFORSUP()
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -30,17 +18,17 @@ User Function PERFORSUP()
 Local cDesc1         := "Impressao de relatorio de performance de supervisores "
 Local cDesc2         := "com periodo maximo de 12 meses e "
 Local cDesc3         := "conforme parametros."
-Local cPict          := ""
+//Local cPict          := ""
 Local titulo         := "Performance de Supervisores - maximo 12 meses"
 Local nLin         	 := 80
 Local Cabec1       	 := ""
 Local Cabec2       	 := ""
-Local imprime      	 := .T.
-Local aOrd 			 := {}
+//Local imprime      	 := .T.
+//Local aOrd 			 := {}
 
 Private lEnd         := .F.
 Private lAbortPrint  := .F.
-Private CbTxt        := ""
+//Private CbTxt        := ""
 Private limite       := 220
 Private tamanho      := "G"
 Private nomeprog     := "PERFORSUP"
@@ -105,8 +93,10 @@ Return
 
 Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
 
-Local lFlag		:= .T.
-Local cAliasMP  := ""
+//Local lFlag		:= .T.
+//Local cAliasMP  := ""
+Local _ni		:= 1
+Local _nPer	    := 1
 
 _dDTCORTE := MV_PAR02
 
@@ -115,11 +105,17 @@ If (Empty(MV_PAR01) .Or. Empty(MV_PAR02)) .Or. (MV_PAR02 <= MV_PAR01) .OR. ((MV_
 	return()
 Endif
 
+//Everson, 06/05/2022, Ticket 72516 - Tratamento para errorlog.
+If Empty(Alltrim(cValToChar(MV_PAR07)))
+	MsgInfo("Necessário informar filial.","Atenção")
+	Return Nil
+
+EndIf
+
 aCampos := {}
 
 If Select("TEMP") > 0
-	DbSelectArea("TEMP")
-	DbCloseArea("TEMP")
+	TEMP->(DbCloseArea())
 Endif
 
 AADD(aCampos,{"CLIENTE"   , "C", 006,0})
@@ -2379,22 +2375,40 @@ oExcelApp:SetVisible(.T.)
 Return()
 
 Static function fBsc12Mes(_dI,_dF,_nPos,_cVDi,_cVDf)
-_TempMP		:= ""
-_Temp		:= ""
-aProduto 	:= {}
-aQtde		:= {}
-    
-&&query e tratamento abaixo vindo igual dos demais relatorios em uso pela ADoro.
-If Select("XF2") > 0
-   DbSelectArea("XF2")
-   DbCloseArea("XF2")
-Endif
+
+	//Everson, 06/05/2022, Ticket 72516 - Tratamento para errorlog.
+	Local cFiliais		 := ""
+	Local aFiliais		 := {}
+	Local nAux			 := 1
+
+	_TempMP		:= ""
+	_Temp		:= ""
+	aProduto 	:= {}
+	aQtde		:= {}
+		
+	&&query e tratamento abaixo vindo igual dos demais relatorios em uso pela ADoro.
+	If Select("XF2") > 0
+	XF2->(DbCloseArea())
+	Endif
+
+	//Everson, 06/05/2022, Ticket 72516 - Tratamento para errorlog.
+	aFiliais := Separa(Alltrim(cValToChar(MV_PAR07)),",", .F.)
+	For nAux := 1 To Len(aFiliais)
+		If Empty(cFiliais)
+			cFiliais += "'" + StrTran(cValToChar(aFiliais[nAux]),"'","") + "'"
+
+		Else
+			cFiliais += ",'" + StrTran(cValToChar(aFiliais[nAux]),"'","") + "'"
+
+		EndIf
+
+	Next nAux
 
 	cQuery:="select F2_FILIAL, F2_EMISSAO, F2_CLIENTE, F2_DOC, F2_SERIE, F2_LOJA, F2_VALBRUT , A1_NOME , F2_VEND1, A1_DESC, A1_REDE, A1_EST, A1_COD_MUN "+; 			// Query incluida por Heraldo 29/10/02
 	"from "+retsqlname("SF2")+" SF2, "+retsqlname("SA1")+" SA1 "+;
 	"WHERE F2_TIPO='N' and "+;
 	"F2_EMISSAO between '"+dtos(_dI)+"' and '"+dtos(_dF)+"' and "+;
-	"F2_FILIAL IN ("+ALLTRIM(MV_PAR07)+") and  "+;
+	"F2_FILIAL IN ("+ALLTRIM(cFiliais)+") and  "+; //Everson, 06/05/2022, Ticket 72516 - Tratamento para errorlog.
 	"F2_VEND1 IN " + FormatIn(_cVDi,";") +" AND "+;
 	"F2_CLIENTE = A1_COD AND F2_LOJA = A1_LOJA  AND "+;
 	"SF2.D_E_L_E_T_= '' "+;
