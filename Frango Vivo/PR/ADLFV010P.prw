@@ -32,9 +32,9 @@
 	@history Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
 	@history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	@history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 /*/
-//User Function ADLFV010P(lAuto)
-User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+User Function ADLFV010P(lAuto, cEmpAut, cFilAut, cFilGranja) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
 	Local lOk		:= .F.
 	Local alSay		:= {}
@@ -52,6 +52,7 @@ User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/
 	Default lAuto	:= .F.
 	Default cEmpAut := "01" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 	Default cFilAut := "02" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+	Default cFilGranja := "03" // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 
 	//Ticket: 62540 - 20/10/2021 - Fernando Sigoli  - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	If Select("SX6") == 0
@@ -86,7 +87,7 @@ User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/
 		cEmpAut := GetMV("MV_#LFVEMP",,"01")
 		
 		If cEmpAnt $ cEmpAut
-			GeraPV(lAuto)
+			GeraPV(lAuto, cFilGranja)
 		Else
 			//ApMsgStop( '[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!! ' )
 			//ConOut(	"[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!!" )
@@ -115,7 +116,7 @@ User Function ADLFV010P(lAuto, cEmpAut, cFilAut) // @history Ticket: 69945 - 25/
 		
 		If lOk
 			If cEmpAnt $ cEmpAut
-				Processa( { || GeraPV(lAuto) }, "Gerando PV..." )
+				Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV..." )
 			Else
 				msgAlert("Empresa não autorizada! Contate o administrador do sistema...")
 			EndIf
@@ -143,7 +144,7 @@ Return
 	@since 04/16/2018
 	@version 01
 /*/
-Static Function GeraPV(lAuto)
+Static Function GeraPV(lAuto, cFilGranja)
 
 	Local aAreaAtu := GetArea()
 	Local cFunBkp  := FunName()
@@ -156,7 +157,7 @@ Static Function GeraPV(lAuto)
 	Local cTESPV  := GetMV("MV_#LFVTES",,"701")
 
 	Private cNumPV  := ""
-	Private cFilPV  := GetMV("MV_#LFVFIL",,"03")
+	Private cFilPV  := cFilGranja // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 
 	// Emails
 	Private cMails  := GetMV("MV_#LFVMAI",,"faturamento@adoro.com.br;cleber.santos@adoro.com.br;danielle.meira@adoro.com.br;glean.rocha@adoro.com.br;reinaldo.francischinelli@adoro.com.br") // -------- VOLTAR ESTA LINHA ANTES DE PUBLICAR EM PRD
@@ -176,7 +177,7 @@ Static Function GeraPV(lAuto)
 	CriaTMP()
 
 	// Chama relatório de relação diária ordem de carregamento do frango vivo
-	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto, @cFilOrig)
+	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto, cFilGranja)
 
 	// Efetua cálculo da DIFERENCA para gerar o PV
 	nQtdPV := (nTtPLO - nTtPLP)
@@ -207,8 +208,7 @@ Static Function GeraPV(lAuto)
 	cFilBkp := cFilAnt
 
 	// Seto filial na qual será incluído o PV
-	cFilPV := cFilOrig // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
-	cFilAnt := cFilPV
+	cFilAnt := cFilPV 
 
 	// Gera o PV
 	dbSelectArea("SC5")
@@ -265,7 +265,10 @@ Static Function GeraPV(lAuto)
 
 	If lMsErroAuto
 		
-		MostraErro()
+		If !lAuto
+			MostraErro()
+		EndIf
+		
 		DisarmTransaction()
 		RollBackSxe()
 		
