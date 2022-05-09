@@ -5,7 +5,7 @@ Static cTbMast := "ZI8"
 Static cTitulo := "Lote de Produto SAG"
 Static cTiMast := "Dados do lote de produto SAG"
 
-PUBLISH USER MODEL REST NAME lotesdeprodutossag
+// PUBLISH USER MODEL REST NAME lotesdeprodutossag
 
 /*/{Protheus.doc} User Function ADFAT018P
     Cadastro de Lote de Produto SAG.
@@ -15,6 +15,7 @@ PUBLISH USER MODEL REST NAME lotesdeprodutossag
     @author Everson
     @since 17/11/2021
     @version 01
+    @history Everson, 09/05/2022, Chamado TI - Removida a publicação de web service PUBLISH USER MODEL REST.
     /*/
 User Function ADFAT018P() // U_ADFAT018P()
 
