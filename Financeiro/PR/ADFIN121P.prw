@@ -42,6 +42,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
     @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - Parcelas não estão gerando com a emissão do tipo PR
     @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
+    @ticket 72310 - Fernando Macieira - 10/05/2022 - RM - Acordos - Parcelas NDI
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -54,7 +55,6 @@ User Function ADFIN121P(lAuto)
     Local nQtdParcelas := 0
     Local nVlrParcelas := 0
     Local nDifParcelas := 0
-    Local cTipo        := ""
     Local cParcela     := ""
     Local dVencto      := CtoD("//")
     Local nDias        := 0
@@ -73,8 +73,6 @@ User Function ADFIN121P(lAuto)
 
     // Dados necessários para central aprovação
     Local cPrefixo  := ""
-    Local cTipoPR   := ""
-    Local cTipoNDI  := ""
     Local cNaturez  := ""
     Local cFornece  := ""
     Local cLoja     := ""
@@ -84,6 +82,9 @@ User Function ADFIN121P(lAuto)
     Private lSigaOn := .t.
     Private cLinked := "RM"
 	Private cSGBD   := "CCZERN_119204_RM_PD"
+
+    Private cTipoPR  := "PR"
+    Private cTipoNDI := "NDI"
 
     //U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para gerar as parcelas dos acordos trabalhistas oriundos do RM') // @ticket 68607 - Fernando Macieira - 19/04/2022 - RM - Acordos - Desenvolvimento e configuração da rotina ADFIN121P para rodar em job via schedule
     
@@ -124,6 +125,8 @@ User Function ADFIN121P(lAuto)
     cNaturez  := GetMV("MV_#ZC7NAT",,"22326")
     cFornece  := GetMV("MV_#ZC7SA2",,"001901")
     cLoja     := GetMV("MV_#ZC7LOJ",,"01")
+
+    cTipoNDI := GetMV("MV_#ACOTIP",,"NDI")
 
 	// Carrega Empresas para processamentos
 	dbSelectArea("SM0")
@@ -190,7 +193,7 @@ User Function ADFIN121P(lAuto)
                 aBaixa := {}
                 aBaixa := { {"E2_PREFIXO"  ,SE2->E2_PREFIXO ,Nil },;
                             {"E2_NUM"      ,SE2->E2_NUM     ,Nil },;
-                            {"E2_TIPO"     ,"NDI"           ,Nil },;
+                            {"E2_TIPO"     ,cTipoNDI        ,Nil },;
                             {"E2_FORNECE"  ,SE2->E2_FORNECE ,Nil },;
                             {"E2_LOJA"     ,SE2->E2_LOJA    ,Nil },;
                             {"E2_NATUREZ"  ,SE2->E2_NATUREZ ,Nil },;
@@ -231,10 +234,18 @@ User Function ADFIN121P(lAuto)
 
                 Begin Transaction
 
-					RecLock("SE2", .F.)
-						SE2->E2_TIPO   := "NDI"
+                    //gera log
+                    u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO PR (ANTES MUDAR PARA NDI PARA FAZER BAIXA - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
+                    "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+
+                    RecLock("SE2", .F.)
+						SE2->E2_TIPO   := cTipoNDI // Mudo para NDI devido exigência do padrão para efetuar a baixa
                         SE2->E2_ORIGEM := "FINA050"
 					SE2->( msUnLock() )
+
+                    //gera log
+                    u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO PR (DEPOIS DE MUDAR PARA NDI PARA FAZER BAIXA - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
+                    "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
 
                     //Pergunte da rotina
                     AcessaPerg("FINA080", .F.)                  
@@ -244,12 +255,33 @@ User Function ADFIN121P(lAuto)
                     
                     //Em caso de erro na baixa
                     If lMsErroAuto
+
+                        //gera log
+                        u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO PR ESTÁ COMO NDI (EXECAUTO BAIXA FINA080 DEU ERRO - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
+                        "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+
+                    	// @ticket 72310 - Fernando Macieira - 10/05/2022 - RM - Acordos - Parcelas NDI
+                        SE2->( dbGoTo(nRecnoE2PR) )
+                        RecLock("SE2", .F.)
+                            SE2->E2_TIPO   := cTipoPR // Volto para PR devido error log
+                            SE2->E2_ORIGEM := "GPEM670"
+					    SE2->( msUnLock() )
+                        //
+
+                        //gera log
+                        u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO PR VOLTOU PARA PR (EXECAUTO BAIXA FINA080 DEU ERRO - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
+                        "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+                    
                         If !lAuto
                             MostraErro()
-                            DisarmTransaction() 
-                            Break 
                         EndIf
+
+                        DisarmTransaction() 
+                        Break 
+                    
                     Else
+
+                        SE2->( dbGoTo(nRecnoE2PR) )
 
                         RecLock("SE2", .F.)
                             SE2->E2_TIPO    := cTipoPR
@@ -306,11 +338,15 @@ User Function ADFIN121P(lAuto)
 
                             If lMsErroAuto
 
+                                //gera log
+                                u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO NDI - PARCELA (EXECAUTO INCLUSAO FINA050 DEU ERRO - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
+                                "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
+
                                 If !lAuto
                                     MostraErro()
-                                    DisarmTransaction() 
-                                    Break 
                                 EndIf
+                                DisarmTransaction() 
+                                Break 
 
                             Else
 
@@ -430,10 +466,11 @@ User Function GetVenct()
 
     Local cTxt     := ""
     Local cQuery   := ""
-    Local cTipo    := GetMV("MV_#ACOTIP",,"NDI")
     Local cFornece := GetMV("MV_#ZC7SA2",,"001901")
     Local cLoja    := GetMV("MV_#ZC7LOJ",,"01")
     Local aArea    := GetArea()
+
+    cTipoNDI    := GetMV("MV_#ACOTIP",,"NDI")
 
     If Select("WorkSE2") > 0
         WorkSE2->( dbCloseArea() )
@@ -444,7 +481,7 @@ User Function GetVenct()
     cQuery += " WHERE E2_FILIAL='"+SE2->E2_FILIAL+"'
     cQuery += " AND E2_PREFIXO='"+SE2->E2_PREFIXO+"'
     cQuery += " AND E2_NUM='"+SE2->E2_NUM+"'
-    cQuery += " AND E2_TIPO='"+cTipo+"'
+    cQuery += " AND E2_TIPO='"+cTipoNDI+"'
     cQuery += " AND E2_FORNECE='"+cFornece+"'
     cQuery += " AND E2_LOJA='"+cLoja+"'
     cQuery += " AND D_E_L_E_T_=''
@@ -488,12 +525,13 @@ Return cTxt
 Static Function ExcTitPR()
 
     Local cQuery   := ""
-    Local cTipoPR  := GetMV("MV_#ZC7TIP",,"PR")
-    Local cTipoNDI := GetMV("MV_#ACOTIP",,"NDI")
     Local cFornece := GetMV("MV_#ZC7SA2",,"001901")
     Local cLoja    := GetMV("MV_#ZC7LOJ",,"01")
     Local aDadPR   := {}
     Local cStatusRM := "Excluído em " + DtoC(msDate())
+
+    cTipoPR  := GetMV("MV_#ZC7TIP",,"PR")
+    cTipoNDI := GetMV("MV_#ACOTIP",,"NDI")
 
     If lSigaOn
         Return
@@ -625,11 +663,12 @@ User Function FixParcNDI(cNumNDI)
     Local nSumDias   := 0
     Local dNewVencto := CtoD("//")
     Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
-    Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
     Local aAreaSE2   := SE2->( GetArea() )
     Local aAreaZHB   := ZHB->( GetArea() )
 
     Default cNumNDI := ""
+
+    cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
 
     ZHB->( dbGoTop() )
     ZHB->( dbSetOrder(3) ) // ZHB_FILIAL, ZHB_NUM, R_E_C_N_O_, D_E_L_E_T_
@@ -721,7 +760,8 @@ User Function FixAllNDI()
     Local nSumDias   := 0
     Local dNewVencto := CtoD("//")
     Local cPrefixo   := GetMV("MV_#ZC7PRE",,"GPE")
-    Local cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
+    
+    cTipoNDI   := GetMV("MV_#ACOTIP",,"NDI")
 
     ZHB->( dbGoTop() )
     Do While ZHB->( !EOF() ) .and. ZHB->ZHB_FILIAL==FWxFilial("ZHB")

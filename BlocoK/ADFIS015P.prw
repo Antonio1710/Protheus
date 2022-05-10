@@ -2,6 +2,7 @@
 #INCLUDE "TBICONN.ch"
 #INCLUDE "PROTDEF.CH"
 #INCLUDE "rwmake.ch"
+#include "topconn.ch"
 
 /*/{Protheus.doc} User Function ADFIS015P
 	Função principal para integração de OP/Consumo/Produção para Ração e Pinto de 1 dia
@@ -31,11 +32,11 @@
 	@history CHAMADO T.I  - WILLIAM COSTA     - 14/11/2019 - ALTERADO O CAMPO DE C2_FILIAL ERRADO PARA D3_FILIAL CORRETO
 	@history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 	@history ticket 30160 - Fernando Macieira - 29/09/2021 - Lentidão ao processar ordem
-
 	https://tdn.totvs.com/pages/viewpage.action?pageId=271843449#:~:text=A%20abertura%20de%20uma%20transa%C3%A7%C3%A3o,para%20depois%20do%20END%20TRANSACTION%20.
 	https://tdn.totvs.com/pages/viewpage.action?pageId=271843449
 	https://tdn.totvs.com/display/public/PROT/BEGIN+TRANSACTION
 	https://centraldeatendimento.totvs.com/hc/pt-br/articles/360020775851-MP-ADVPL-BEGIN-TRANSACTION
+	@history ticket 72655 - Fernando Macieira - 10/05/2022 - Serviço de Integrado - OP Granja HH
 /*/
 User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 
@@ -484,6 +485,7 @@ Static Function IncOPRa(cAliasOPR, cNumOP, cItem, nQtdeTot, nRecOPR, cFili)
 		dbSeek(xFilial("SC2") + cChaveOP)
 		If !Eof()
 			lMsErroAuto := .F.
+			FixZSERINT(cChaveOP) // @history ticket 72655 - Fernando Macieira - 10/05/2022 - Serviço de Integrado - OP Granja HH
 		EndIf
 		
 		If lMsErroAuto
@@ -1364,3 +1366,108 @@ Static Function ADFIS015PA()
 	EndDo                
 
 Return cMsg
+
+/*/{Protheus.doc} Static Function FixZSERINT()
+	Ao importar as ordens de produção do SAG para o Protheus, função (EXP Bloco K - SAG), precisa criar a seguinte condiçao quando for filial 0A.
+	Ao fazer a importação do Frango Vivo, as OP's não podem gerar no Protheus o TM 700, produto ZSERINT - SERVICOS INTEGRADO.
+	Ressaltando que essa condição vale apenas para as OP's da filial 0A.
+	@type  Static Function
+	@author FWNM
+	@since 10/05/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 72655 - Fernando Macieira - 10/05/2022 - Serviço de Integrado - OP Granja HH
+/*/
+Static Function FixZSERINT(cChaveOP)
+
+	Local aArea     := {}
+	Local aAreaSD4  := {}
+	Local aAreaSC2  := {}
+	Local cQuery    := ""
+	Local cOPSD4    := ""
+	Local cNumOP 	:= Left(AllTrim(cChaveOP),6)
+	Local cSequenOP	:= Right(AllTrim(cChaveOP),3)
+	Local cZSERINT  := GetMV("MV_#SERINT",,"ZSERINT")
+	Local cGranja0A := GetMV("MV_#GRANHH",,"0A")
+	Local lZSERINT  := .f.
+	
+	If SC2->C2_FILIAL == cGranja0A
+
+		lZSERINT := AllTrim(cZSERINT) $ AllTRim(SC2->C2_PRODUTO)
+
+		If lZSERINT
+		
+			aArea     := GetArea()
+			aAreaSD4  := SD4->( GetArea() )
+			aAreaSC2  := SC2->( GetArea() )
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			EndIf
+
+			cQuery := " SELECT C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_PRODUTO, C2_SEQPAI
+			cQuery += " FROM " + RetSqlName("SC2") + " (NOLOCK)
+			cQuery += " WHERE C2_FILIAL='"+FWxFilial("SC2")+"'
+			cQuery += " AND C2_NUM='"+cNumOP+"'
+			cQuery += " AND C2_SEQUEN<>'"+cSequenOP+"'
+			cQuery += " AND C2_SEQPAI='"+cSequenOP+"'
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcQuery cQuery New Alias "Work"
+
+			Work->( dbGoTop() )
+			Do While Work->( !EOF() )
+
+				cOPSD4 := AllTrim(Work->(C2_NUM+C2_ITEM+C2_SEQUEN))
+
+				SD4->( dbSetOrder(2) ) // D4_FILIAL, D4_OP, D4_COD, D4_LOCAL, R_E_C_N_O_, D_E_L_E_T_
+				If SD4->( dbSeek(FWxFilial("SD4")+cOPSD4) )
+				
+					Do While SD4->( !EOF() ) .and. SD4->D4_FILIAL==FWxFilial("SD4") .and. AllTrim(SD4->D4_OP) == cOPSD4
+
+						RecLock("SD4", .F.)
+							SD4->( dbDelete() )
+						SD4->( msUnLock() )
+
+						SD4->( dbSkip() )
+					
+					EndDo
+				
+				EndIf
+
+				// Limpo D4_OPORIG
+				SD4->( dbSetOrder(4) ) // D4_FILIAL, D4_OPORIG, D4_LOTECTL, D4_NUMLOTE, R_E_C_N_O_, D_E_L_E_T_
+				If SD4->( dbSeek(FWxFilial("SD4")+cOPSD4) )
+					RecLock("SD4", .F.)
+						SD4->D4_OPORIG := ""
+					SD4->( msUnLock() )
+				EndIf
+
+				SC2->( dbSetOrder(1) ) // C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD, R_E_C_N_O_, D_E_L_E_T_
+				If SC2->( dbSeek(FWxFilial("SC2")+cOPSD4) )
+					RecLock("SC2", .F.)
+						SC2->( dbDelete() )
+					SC2->( msUnLock() )
+				EndIf
+
+				Work->( dbSkip() )
+			
+			EndDo
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			EndIf
+
+			RestArea( aArea )
+			RestArea( aAreaSD4 )
+			RestArea( aAreaSC2 )
+		
+		EndIf
+
+	EndIf
+
+Return
