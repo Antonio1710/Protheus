@@ -125,13 +125,13 @@ Static Function vldPos(oModel)
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
 
-        If lRet .And. ! Empty(cOrdemP) .And. ! U_ADFAT32E(cOrdemP, "")
+        If lRet .And. ! FwIsAdmin() .And. ! Empty(cOrdemP) .And. ! U_ADFAT32E(cOrdemP, "")
             lRet := .F.
             Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, cMsg2, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         EndIf
         
-        If lRet .And. ! Empty(cAgrupa)
+        If lRet .And. ! Empty(cAgrupa) .And. ! FWIsAdmin()
             lRet := .F.
             Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, cMsg1, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
@@ -142,6 +142,7 @@ Static Function vldPos(oModel)
     If lRet .And. nOperation == MODEL_OPERATION_UPDATE 
 
         If lRet .And.;
+           ! FwIsAdmin() .And.;
            ! FWIsInCallStack("U_ADFAT171") .And.;
            ! FWIsInCallStack("U_ADFAT35F") .And.;
            ! Empty(cOrdemP) .And.;
@@ -152,6 +153,7 @@ Static Function vldPos(oModel)
         EndIf
 
         If lRet .And.;
+            ! FwIsAdmin() .And.;
             ! Empty(cAgrupa) .And.;
             ! FWIsInCallStack("U_ADFAT34B") .And.; //Montagem de carga.
             ! FWIsInCallStack("U_ADFAT35F") .And.; //Atualiza quantidade da ordem de carregamento.
@@ -163,6 +165,7 @@ Static Function vldPos(oModel)
         EndIf
     
         If lRet .And.;
+            ! FwIsAdmin() .And.;
             ! FWIsInCallStack("U_ADFAT33A") .And.; //Aprovação de ordem de carregamento.
             ! FWIsInCallStack("U_ADFAT34B") .And.; //Montagem de carga.
             ! FWIsInCallStack("U_ADFAT17A") .And.;//Criação de ordem de pesagem.
@@ -213,7 +216,7 @@ User Function ADFAT32B(nOpc)
     Local aArea     := GetArea()
     Local cAgrupa   := ZIR->ZIR_ORAGRP
 
-    If ! Empty(cAgrupa)
+    If ! Empty(cAgrupa) .And. ! FWIsAdmin()
         MsgInfo(cMsg1, "Função ADFAT32B(ADFAT032P)")
         RestArea(aArea)
         Return Nil

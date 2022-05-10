@@ -148,7 +148,7 @@ Static Function vldPos(oModel)
 
         //Voltar ao status inicial, com mais de um ticket vinculado.
         If lRet .And. cStatus == "1" .And.;
-           contTkt(cCP) > 0  //Obtém a quantidade de tickets vinculados ao controle de pátio.          
+            U_ADFAT17W(cCP) > 0  //Obtém a quantidade de tickets vinculados ao controle de pátio.          
             oModel:SetValue("MD_MASTER", "ZIB_STATUS", ZIB->ZIB_STATUS)
 
         EndIf
@@ -964,11 +964,10 @@ User Function ADFAT17N(cNvPed, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGran
     Local aCabec := {}
     Local aLinha := {}
     Local aItens := {}
-    Local aLog   := {}
-    Local nAux   := 1
 
     Private lMsErroAuto    := .F.
-    Private lAutoErrNoFile := .T.
+    Private lMsHelpAuto    := .T.
+    Private lAutoErrNoFile := .F.
 
     Default cMsgError := ""
     Default lPedSag   := .F.
@@ -1019,18 +1018,7 @@ User Function ADFAT17N(cNvPed, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGran
     MSExecAuto( { |x, y, z, p| MATA410(x, y, z,,,,,,, p) }, aCabec, aItens, 3 )
 
     If lMsErroAuto
-        aLog := MostraErro() 
-
-        For nAux := 1 To Len(aLog)
-
-            If ! Empty(cMsgError)
-                cMsgError += xPula
-
-            EndIf
-
-            cMsgError += aLog[nAux]
-
-        Next nAux
+        cMsgError := MostraErro() 
 
     Else
         cNvPed := SC5->C5_NUM
@@ -4723,14 +4711,14 @@ User Function ADFAT174(cCP, cCampo, xValor, cMsgError)
     EndIf
 
 Return lRet
-/*/{Protheus.doc} contTkt
+/*/{Protheus.doc} ADFAT17W
     Obtém a quantidade de tickets vinculados ao controle de pátio.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 25/11/2021
     @version 01
 /*/
-Static Function contTkt(cCP)
+User Function ADFAT17W(cCP)
 
     //Variáveis.
     Local nNum   := 0
