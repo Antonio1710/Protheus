@@ -181,7 +181,7 @@ Static Function scriptSql(nOPc)
 		cQuery += " AND C5_XPEDSAL <> '' "
 	EndIf
 
-	cQuery +=" AND SC5.C5_DTENTR >= '" + DToS(Date()-30) + "' AND SC5.C5_DTENTR <= '" + DToS(Date()+2) + "' "
+	cQuery +=" AND SC5.C5_DTENTR >= '" + DToS(Date()-4) + "' AND SC5.C5_DTENTR <= '" + DToS(Date()+2) + "' "
 	cQuery += " AND B1_XSALES = '2' " 
 	cQuery += " AND SC5.D_E_L_E_T_ = '' " 
 	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
