@@ -11,7 +11,7 @@ Static cHrFim   := ""
 Static lOkEST017P := .t.
 //
 
-/*/{Protheus.doc} User Function ADEDA009P2
+/*/{Protheus.doc} User Function ADEDA009
 	Função criada para apresentar uma tela para preenchimento das informações que serão utilizadas 
 	no processamento do projeto de ajuste do consumo de massa de frango
 	@type  Function
@@ -29,6 +29,7 @@ Static lOkEST017P := .t.
 	@history chamado 057910 - FWNM - 18/06/2020 - || OS 059411 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || PROJETO UEP
 	@history ticket   53251 - FWNM - 29/09/2021 - SIG NOVO - Lentidão Rotina Ajuste Cons. Massa Frango
 	@history ticket   62961 - FWNM - 26/10/2021 - URGENTE- Ajuste da massa de frango
+	@history ticket   72639 - FWNM - 10/05/2022 - Alteração da rotina de calculo de Massa de frango
 /*/
 User function ADEDA009P()
 
@@ -251,7 +252,7 @@ User Function ADEST015P(lExterno, lRetorno)
 
 	//U_ADINF009P('ADEDA009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para mostrar o resultrado do Preço Médio de Venda calculado em uma tela e ter a opção de realizar o ajuste de consumo de massa de frango')
 
-	nPrcFrango := ADEDA009E (_cFrangPad)
+	nPrcFrango := ADEDA009E(_cFrangPad)
 	
 	_nPrecoCus 	:= nPrcFrango + nPrcQuebra + nPrcAbate		/*Valor do Preço de Custo calculado */
 	_nFator 	:= IIf(nPrcMedVen > 0, _nPrecoCus / nPrcMedVen, 0) 	/*Valor do Fator calculado para ser usado no processamento*/
@@ -475,22 +476,21 @@ Static Function ADEDA009E(cCod)
 	Local cAliasSD2 := GetNextAlias()   
 	Local cSD3TM	:= ALLTRIM(GetMv('MV_XTMPRD',.F., "010"))
 	Local cFilCurren:= xFilial("SD3")
+	Local cFilGranjas := GetMV("MV_#GRANJA",,"03|0A") // @history ticket   72639 - FWNM - 10/05/2022 - Alteração da rotina de calculo de Massa de frango
 
 	BeginSql Alias cAliasSD2
 		
 		SELECT SUM(D2_CUSTO1) / SUM(D2_QUANT) AS CUSTO
-		
 		FROM %table:SD2% SD2 (NOLOCK), %table:SF4% SF4 (NOLOCK)
-		
 		WHERE D2_COD = %Exp:cCod%
-			AND D2_FILIAL = '03'
+			AND D2_FILIAL IN ('03','0A')
 			AND D2_EMISSAO BETWEEN %Exp:DTOS(FIRSTDATE(mv_par01))% AND %Exp:DTOS(LASTDATE(mv_par01))%
 			AND D2_LOCAL = '26'
 			AND SD2.%notDel%
-			AND SF4.%notDel%
-			AND F4_ESTOQUE = 'S'
 			AND F4_CODIGO = D2_TES
-	
+			AND F4_ESTOQUE = 'S'
+			AND SF4.%notDel%
+
 	EndSql                      
 	
 	DbSelectArea(cAliasSD2)

@@ -26,6 +26,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Execauto de alteração não retornou erro mas também não efetivou a alteração
     @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
     @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - Lembrete de preenchimento do percentual para despesa parcelamento CPC
+    @ticket 72277 - Fernando Macieira - 10/05/2022 - RM - Acordos - Despesa perito
 /*/
 User Function ADFI118()
 
@@ -363,14 +364,22 @@ Static Function fValidGrid(oModel)
                         Exit
                     Else
                         // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
-                        If AllTrim(cTipDes) $ AllTrim(cDespFavor)
-                            // Cod Favorecido
-                            If Empty(cCodFav)
-                                lRet := .f.
-                                Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " exige um favorecido! Verifique...")
-                                Exit
+                        If Empty(oModelGrid:GetValue("ZHB_NUM")) 
+                            If AllTrim(cTipDes) $ AllTrim(cDespFavor)
+                                // Cod Favorecido
+                                If Empty(cCodFav)
+                                    If !msgYesNo("Deseja mesmo confirmar sem informar um favorecido na linha " + AllTrim(Str(nLinAtual)) + " para a despesa " + AllTrim(cTipDes) + " ?") // @ticket 72277 - Fernando Macieira - 10/05/2022 - RM - Acordos - Despesa perito
+                                        lRet := .f.
+                                        Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " exige um favorecido! Verifique...")
+                                        Exit
+                                    Else
+                                        //gera log
+                                        u_GrLogZBE( msDate(), TIME(), cUserName, "USUARIO CONFIRMOU SEM INFORMAR UM FAVORECIDO ","RH-ACORDOS","ADFI118",;
+                                        "PROCESSO/ITEM " + AllTrim(cProcesso) + " / " + oModelGRID:GetValue("ZHB_ITEM"), ComputerName(), LogUserName() )
+                                    EndIf
+                                EndIf
+                                //
                             EndIf
-                            //
                         EndIf
 
                         // Inclusões
@@ -386,18 +395,24 @@ Static Function fValidGrid(oModel)
                     EndIf
 
                     // @ticket 18141 - Fernando Macieira - 27/01/2022 - RM - Acordos - Integração Protheus - Novos tipos de despesas
-                    If AllTrim(cTipDes) $ AllTrim(cDespFavor)
-                        
-                        If oModel:nOperation <> 5
-                            // Cod Favorecido
-                            If Empty(cCodFav)
-                                lRet := .f.
-                                Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " exige um favorecido! Verifique...")
-                                Exit
+                    If Empty(oModelGrid:GetValue("ZHB_NUM")) 
+                        If AllTrim(cTipDes) $ AllTrim(cDespFavor)
+                            If oModel:nOperation <> 5
+                                // Cod Favorecido
+                                If Empty(cCodFav)
+                                    If !msgYesNo("Deseja mesmo confirmar sem informar um favorecido na linha " + AllTrim(Str(nLinAtual)) + " para a despesa " + AllTrim(cTipDes) + " ?") // @ticket 72277 - Fernando Macieira - 10/05/2022 - RM - Acordos - Despesa perito
+                                        lRet := .f.
+                                        Alert("Tipo de despesa informado na linha " + AllTrim(Str(nLinAtual)) + " exige um favorecido! Verifique...")
+                                        Exit
+                                    Else
+                                        //gera log
+                                        u_GrLogZBE( msDate(), TIME(), cUserName, "USUARIO CONFIRMOU SEM INFORMAR UM FAVORECIDO ","RH-ACORDOS","ADFI118",;
+                                        "PROCESSO/ITEM " + AllTrim(cProcesso) + " / " + oModelGRID:GetValue("ZHB_ITEM"), ComputerName(), LogUserName() )
+                                    EndIf
+                                EndIf
+                                //
                             EndIf
-                            //
                         EndIf
-
                     EndIf
                 
                     // Valor
