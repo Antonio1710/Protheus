@@ -1141,11 +1141,8 @@ Static Function fimCar(lCarrega)
     Local aArea     := GetArea()
     Local lRet      := .F.
     Local nLinha    := oOrdPes:nAt
-    Local cCP       := ""
-    Local cSeqNV    := ""
+    Local cStatLC   := ""
     Local aSituCarr := {}
-    Local cTktNv    := ""
-    Local aDSeqP    := {}
 
     If Empty(cOrdSlc) .Or. nLinha <= 0 .Or. Len(aOrdPes) <= 0
         MsgInfo("Selecione uma ordem de carregamento.","Função fimCar(ADFAT035P)")
@@ -1188,13 +1185,52 @@ Static Function fimCar(lCarrega)
 
     EndIf
 
+    lRet := U_ADFAT35G(aOrdPes[nLinha][13], cRoteiro, cOrdSlc)
+
+    If lRet
+        
+        //Obtém o status para atualizar o FwBrowse.
+        If getSituacao(cOrdSlc, @aSituCarr) .And. Len(aSituCarr) > 0
+            cStatLC := aSituCarr[1][2]
+
+        EndIf
+        
+        aOrdPes[nLinha][8] := cStatLC
+        oOrdPes:setArray(aOrdPes)
+        oOrdPes:Refresh()
+
+        lCarrega := .F.
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} ADFAT35G
+    Processa finaliza carregamento.
+    @type  User Function
+    @author Everson
+    @since 01/03/2022
+    @version 01
+/*/
+User Function ADFAT35G(cCP, cRoteiro, cOrdSlc, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local aDSeqP    := {}
+    Local cTktNv    := ""
+    Local cSeqNV    := ""
+
+    Default cMsgError := ""
+
     Begin Transaction
 
         //Ajusta a sequência do ticket de pesagem.
-        cCP    := aOrdPes[nLinha][13]
         aDSeqP := getSeqP(cCP, cRoteiro)
 
         If Len(aDSeqP) <= 0
+            cMsgError := "Não foi possível obter dados para verificação de troca de sequência do ticket"
             DisarmTransaction()
             Break
 
@@ -1203,29 +1239,19 @@ Static Function fimCar(lCarrega)
         cTktNv := aDSeqP[1]
         cSeqNV := aDSeqP[2]
 
-        If ! U_ADFAT192(cCP, cOrdSlc, cTktNv, cSeqNV)
+        //Ajusta sequência de pesagem.
+        If ! U_ADFAT192(cCP, cOrdSlc, cTktNv, cSeqNV, @cMsgError)
             DisarmTransaction()
             Break
 
         EndIf
 
         //Marca o status do lacre como encerrado.
-        If ! U_ADFAT165(cOrdSlc, "ZIF_STATLC", "E")
+        If ! U_ADFAT165(cOrdSlc, "ZIF_STATLC", "E", @cMsgError)
             DisarmTransaction()
             Break
 
         EndIf
-
-        //Obtém o status para atualizar o FwBrowse.
-        If getSituacao(cOrdSlc, @aSituCarr) .And. Len(aSituCarr) > 0
-            cStatLC := aSituCarr[1][2]
-
-        EndIf
-        aOrdPes[nLinha][8] := cStatLC
-        oOrdPes:setArray(aOrdPes)
-        oOrdPes:Refresh()
-
-        lCarrega := .F.
 
         lRet := .T.
 

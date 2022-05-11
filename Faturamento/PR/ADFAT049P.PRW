@@ -29,9 +29,7 @@ Return Nil
 User Function ADFAT491()
 
     //Variáveis.
-    Local lBarramento := Nil
-
-    lBarramento := GetMv("MV_#ADF491",,.T.) //Registros de pesagem vindos do barramento.
+    Local lBarramento := GetMv("MV_#ADF491",,.T.) //Registros de pesagem vindos do barramento.
     
     If lBarramento
         U_ADFAT29J()

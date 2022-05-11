@@ -600,14 +600,15 @@ User Function ADFAT17Y()
         oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 2, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
     
         oOrdPes:Activate()
-
-                   TButton():New(182,515,"Rom. Ped. Venda" ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(202,515,"Cancelar Ticket" ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oAltTag := TButton():New(222,515,"Alterar Tag"     ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oExcTag := TButton():New(242,515,"Excluir Tag"     ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   
+                   TButton():New(187,515,"Transferência Ordem" ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(207,515,"Rom. Ped. Venda"     ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"     ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oAltTag := TButton():New(247,515,"Alterar Tag"         ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oExcTag := TButton():New(267,515,"Excluir Tag"         ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
-        oFechar := TButton():New(270,555,"Fechar",oCtlPatio,{|| oCtlPatio:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
+        // oFechar := TButton():New(270,555,"Fechar",oCtlPatio,{|| oCtlPatio:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
+        // oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
 
         oTimer := TTimer():New(nTmpRef * 1000, {|| Eval(bCarCP),;
                                                    Eval(bLOrd) }, oCtlPatio)
@@ -619,6 +620,303 @@ User Function ADFAT17Y()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} transOrd
+    Interface para transferência de ordem de pesagem.
+    @type  Static Function
+    @author Everson
+    @since 11/05/2022
+    @version 01
+/*/
+Static Function transOrd(oOrdPes, aOrdPes)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local nLinha    := Val(cValToChar(oOrdPes:nAt))
+    Local lRet      := .F.
+    Local oModal    := Nil
+    Local oContainer:= Nil
+    Local aButtons  := {}
+    Local cTpOrdem  := ""
+    Local cCP       := ""
+    Local cNmOrdem  := ""
+    Local cRoteiro  := ""
+    Local cOrdOrg   := Space(TamSX3("ZIF_NUMERO")[1])
+    Local cOrdDes   := Space(TamSX3("ZIF_NUMERO")[1])
+    Local bOO       := Nil
+    Local bOD       := Nil
+    Local lRetC     := .F.
+    Local oGetOO    := Nil
+    Local oGetOD    := Nil
+
+    If nLinha <= 0 .Or. Len(aOrdPes) <= 0
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cTpOrdem := aOrdPes[nLinha,14]
+    If cTpOrdem <> "R"
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Tipo de ordem inválido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cCP := aOrdPes[nLinha,16]
+    If Empty(cCP)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Controle de pátio não selecionado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    //Verifica se o controle de pátio está encerrado.
+    If U_ADFAT17L(cCP)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Controle de pátio " + cCP + " encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cNmOrdem := aOrdPes[nLinha,08]
+    If Empty(cNmOrdem)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+    
+    //Posiciona na ordem de pesagem.
+    If ! U_ADFAT16A(cNmOrdem)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Ordem de pesagem não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cRoteiro := ZIF->ZIF_ROTEIR
+
+    If Empty(cRoteiro)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Roteiro não selecionado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    oModal := FWDialogModal():New()        
+	oModal:SetEscClose(.F.)
+	oModal:setTitle("Transferência Ordem - CP " + cCP)
+	oModal:setSize(100, 200)
+	oModal:createDialog()
+
+    Aadd(aButtons,{Nil,"Confirmar", {|| lRet := confTran(cOrdOrg, cOrdDes), Iif(!lRet, Nil, oModal:DeActivate()) },"","",.T.,.F.})
+    Aadd(aButtons,{Nil,"Cancelar",  {|| oModal:DeActivate() },"","",.T.,.F.})
+
+	oModal:addButtons(aButtons)
+
+        oContainer := TPanel():New(025,,, oModal:getPanelMain())
+        oContainer:Align := CONTROL_ALIGN_ALLCLIENT
+
+        TSay():New(005,010,{||"Roteiro " + cRoteiro}   ,oContainer,,,,,,.T.,CLR_BLACK,CLR_WHITE,200,010)
+
+        bOO := {|| lRetC := pesOrdTr(1, cRoteiro), Iif(!lRetC, Nil, Eval({|| cOrdOrg := ZIF->ZIF_NUMERO, oGetOO:Refresh() }) ) }
+        oGetOO := TGet():New(020,010,{|u|If(PCount() == 0,cOrdOrg,cOrdOrg := u)}, oContainer,060,013,"",{|| .T. },0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cOrdOrg",,,,.T.,,,"Ordem Origem",1) 
+        TButton():New(027,070,"OO", oContainer, bOO,020,15,,,.F.,.T.,.F.,,.F.,,,.F. )	
+        
+        bOD := {|| lRetC := pesOrdTr(2, cRoteiro, cOrdOrg), Iif(!lRetC, Nil, Eval({|| cOrdDes := ZIF->ZIF_NUMERO, oGetOD:Refresh() }) ) }
+        oGetOD := TGet():New(020,115,{|u|If(PCount() == 0,cOrdDes,cOrdDes := u)}, oContainer,060,013,"",{|| .T. },0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cOrdDes",,,,.T.,,,"Ordem Destino",1) 
+        TButton():New(027,175,"OD", oContainer, bOD,020,15,,,.F.,.T.,.F.,,.F.,,,.F. )	
+
+	oModal:Activate()
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} confTran
+    Confirma transferência de ordem de pesagem.
+    @type  Static Function
+    @author Everson
+    @since 10/05/2022
+    @version 01
+/*/
+Static Function confTran(cOrdOrg, cOrdDes)
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local lRet     := .F.
+    Local cTktNv   := ""
+    Local cStatNv  := ""
+    Local cStat2   := ""
+
+    If Empty(cOrdOrg) .Or. Empty(cOrdDes)
+        MsgInfo("É necessário selecionar as ordens de origem e destino.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Ordem de origem.
+    If ! U_ADFAT16A(cOrdOrg)
+        MsgInfo("Ordem de pesagem de origem " + cValToChar(cOrdOrg) + " não localizada.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cStatNv := ZIF->ZIF_STATUS
+
+    //Ticket da ordem de origem.
+    If ! U_ADFAT196(cOrdOrg)
+        MsgInfo("Ticket de pesagem da ordem de pesagem de origem " + cValToChar(cOrdOrg) + " não localizado.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cTktNv := ZIG->ZIG_NUMERO
+
+    //Ordem de destino.
+    If ! U_ADFAT16A(cOrdDes)
+        MsgInfo("Ordem de pesagem de destino " + cValToChar(cOrdDes) + " não localizada.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cStat2 := ZIF->ZIF_STATUS
+
+    Begin Transaction
+
+        //Altera o status da ordem selecionada.
+        If ! U_ADFAT164(cOrdDes, cStatNv, 1)
+            DisarmTransaction()
+            Break
+
+        EndIf
+        
+        //Altera o status da ordem tomada.
+        If ! U_ADFAT164(cOrdOrg, cStat2, 1)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera a ordem do ticket de pesagem selecionado.
+        If ! U_ADFAT191(cTktNv, "ZIG_ORDEM", cOrdDes)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        lRet := .T.
+
+    End transaction
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} pesOrdTr
+    Consulta padrão específica.
+    @type  Static Function
+    @author Everson
+    @since 10/05/2022
+    @version 01
+/*/
+Static Function pesOrdTr(nTipo, cRoteiro, cOrdOrg)
+
+    //Variáveis.
+    Local oDlg, oLbx
+    Local aCpos  := {}
+    Local aRet   := {}
+    Local cQuery := ""
+    Local cAlias := GetNextAlias()
+    Local lRet   := .F.
+
+    Default cOrdOrg := ""
+
+    If nTipo == 2 .And. Empty(cOrdOrg)
+        MsgInfo("Selecione a ordem de origem.", "Função pesOrdTr(ADFAT017P)")
+        Return Nil
+
+    EndIf
+
+    cQuery += ""
+    cQuery += " SELECT  " 
+    cQuery += " ZIF_NUMERO, ZIF_PRDSAG, ZIF_PRDPRO " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
+    cQuery += " WHERE " 
+    cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
+    cQuery += " AND ZIF_ROTEIR = '" + cRoteiro + "' " 
+    cQuery += " AND ZIF_TPMOVI = 'R' " 
+
+    // If nTipo == 2
+    //     cQuery += " AND ZIF_NUMERO <> '" + cOrdOrg + "' " 
+
+    // EndIf
+
+    cQuery += " AND ZIF.D_E_L_E_T_ = '' "
+    cQuery += " AND ZIF_NUMERO NOT IN ( " 
+    cQuery += " SELECT ZIT_ORDEM FROM " + RetSqlName("ZIT") + " (NOLOCK) AS ZIT WHERE ZIT_FILIAL = '" + FWxFilial("ZIT") + "' AND ZIT.D_E_L_E_T_ = '' " 
+    cQuery += " UNION ALL " 
+    cQuery += " SELECT ZIZ_ORDEM FROM " + RetSqlName("ZIZ") + " (NOLOCK) AS ZIZ WHERE ZIZ_FILIAL = '" + FWxFilial("ZIZ") + "' AND ZIZ.D_E_L_E_T_ = '' " 
+    cQuery += " UNION ALL " 
+    cQuery += " SELECT ZIY_ORDEM FROM " + RetSqlName("ZIY") + " (NOLOCK) AS ZIY WHERE ZIY_FILIAL = '" + FWxFilial("ZIY") + "' AND ZIY.D_E_L_E_T_ = '' " 
+    cQuery += " ) " 
+    cQuery += " ORDER BY ZIF_NUMERO " 
+
+    cQuery := ChangeQuery(cQuery)
+
+    DbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAlias,.T.,.T.)
+
+    While (cAlias)->(!Eof())
+
+        If nTipo == 1 .And. ! U_ADFAT196((cAlias)->(ZIF_NUMERO)) //Localiza ticket de pesagem pelo número da ordem de pesagem.
+            (cAlias)->(DbSkip())
+            Loop
+
+        EndIf
+
+        If nTipo == 2 .And.   U_ADFAT196((cAlias)->(ZIF_NUMERO)) //Localiza ticket de pesagem pelo número da ordem de pesagem.
+            (cAlias)->(DbSkip())
+            Loop
+
+        EndIf
+
+        Aadd(aCpos,{(cAlias)->(ZIF_NUMERO), (cAlias)->(ZIF_PRDSAG), (cAlias)->(ZIF_PRDPRO)})
+
+        (cAlias)->(DbSkip())
+
+    End
+    (cAlias)->(DbCloseArea())
+
+    If Len(aCpos) < 1
+        Aadd(aCpos,{" ", " ", ""})
+
+    EndIf
+
+    DEFINE MSDIALOG oDlg TITLE /*STR0083*/ "Ordem de Pesagem" FROM 0,0 TO 240,500 PIXEL
+
+        @ 10,10 LISTBOX oLbx FIELDS HEADER 'Ordem de Pesagem' , 'Produto',  'Produto Protheus' SIZE 230,95 OF oDlg PIXEL
+
+        oLbx:SetArray( aCpos )
+        oLbx:bLine     := {|| {aCpos[oLbx:nAt,1], aCpos[oLbx:nAt,2], aCpos[oLbx:nAt,3] }}
+        oLbx:bLDblClick := {|| {oDlg:End(), lRet:=.T., aRet := {oLbx:aArray[oLbx:nAt,1], oLbx:aArray[oLbx:nAt,2], oLbx:aArray[oLbx:nAt,3] }}}
+
+    DEFINE SBUTTON FROM 107,213 TYPE 1 ACTION (oDlg:End(), lRet:=.T., aRet := {oLbx:aArray[oLbx:nAt,1], oLbx:aArray[oLbx:nAt,2], oLbx:aArray[oLbx:nAt,3] })  ENABLE OF oDlg
+    ACTIVATE MSDIALOG oDlg CENTER
+
+    If Len(aRet) > 0 .And. lRet
+        If Empty(aRet[1])
+            lRet := .F.
+
+        Else
+            ZIF->(DbSetOrder(2))
+            ZIF->(DbSeek( FWxFilial("ZIF") + aRet[1] ) )
+
+        EndIf
+
+    EndIf
+
+Return lRet
 /*/{Protheus.doc} gerPedS
     Gera pedido de saída.
     @type  Static Function
@@ -1638,7 +1936,7 @@ Static Function getPedSa(cNmOrdem)
     SC5->(DbSetOrder(28))
     If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
 
-        While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == cNmOrdem
+        While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == cNmOrdem .And. Empty(SC5->C5_PEDSAG)
 
             cPedidos += SC5->C5_NUM + ", "
 
