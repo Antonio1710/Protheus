@@ -1367,7 +1367,7 @@ User Function ADFAT29I()
 
 Return Nil
 /*/{Protheus.doc} ADFAT29J
-    Processa registros de carregamento do Guemba.
+    Processa registros de carregamento do Gemba.
     Chamado 18465.
     @type  Function
     @author Everson
@@ -1407,7 +1407,7 @@ User Function ADFAT29J() // U_ADFAT29J("01", "03")
     cQuery += " WHERE  " 
     cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
-    cQuery += " AND ZIQ_TOPICO = 'retornos_de_carregamento_guemba' " 
+    cQuery += " AND ZIQ_TOPICO = 'retornos_de_carregamento_gemba' " 
     cQuery += " AND ZIQ_SISGER = 'SAG' " 
     cQuery += " AND ZIQ_PROCES = '2' " 
     cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
@@ -1462,7 +1462,7 @@ User Function ADFAT29J() // U_ADFAT29J("01", "03")
 
         If ! lSlvReg
             U_ADFAT29D(cId, "2", cMsgError)
-            Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, "Erro no processamento de registro de carregamento Guemba " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, "Erro no processamento de registro de carregamento Gemba " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         Else
             U_ADFAT29D(cId, "1", "")

@@ -135,4 +135,21 @@ User Function ADLFV22A()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ADLFV22B
+    Posiciona no registro de granjada.
+    @type  Static Function
+    @author Everson
+    @since 13/05/2022
+    @version 01
+/*/
+User Function ADLFV22B(cGranjada)
+
+    DbSelectArea("ZIS")
+    ZIS->(DbSetOrder(1))
+    If ! ZIS->( DbSeek( FWxFilial("ZIS") + cGranjada) )
+        Return .F.
+
+    EndIf
+
+Return .T.
 

@@ -1,6 +1,6 @@
 
 /*/{Protheus.doc} User Function ADFAT049P
-    Job para obter os registros de carregamento do Guemba.
+    Job para obter os registros de carregamento do Gemba.
     Chamado 18465.
     @type  Function
     @author Everson
@@ -19,7 +19,7 @@ User Function ADFAT049P() // U_ADFAT049P()
 
 Return Nil
 /*/{Protheus.doc} User Function ADFAT491
-    Processa obtenção dos registros de carregamento do Guemba.
+    Processa obtenção dos registros de carregamento do Gemba.
     Chamado 18465.
     @type  Function
     @author Everson
