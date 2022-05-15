@@ -54,7 +54,23 @@ Return oBrowse
     @version 01
 /*/
 Static Function MenuDef()
-Return (FwMVCMenu("ADFAT019P"))
+
+    //Variáveis.
+    Local aRotina := {}
+
+    ADD OPTION aRotina TITLE "Pesquisar"    ACTION "PesqBrw"          	OPERATION 1   ACCESS 0
+	ADD OPTION aRotina TITLE "Visualizar" 	ACTION "VIEWDEF.ADFAT019P" 	OPERATION MODEL_OPERATION_VIEW      ACCESS 0
+
+    If FWIsAdmin()
+        ADD OPTION aRotina TITLE "Incluir" 	ACTION "VIEWDEF.ADFAT019P" 	OPERATION MODEL_OPERATION_INSERT    ACCESS 0
+        ADD OPTION aRotina TITLE "Alterar"  ACTION "VIEWDEF.ADFAT019P" 	OPERATION MODEL_OPERATION_UPDATE    ACCESS 0
+        ADD OPTION aRotina TITLE "Excluir" 	     ACTION "VIEWDEF.ADFAT019P" 	OPERATION MODEL_OPERATION_DELETE    ACCESS 0
+
+    EndIf
+
+    ADD OPTION aRotina TITLE "Abrir Pesagem" ACTION "U_ADFAT19B()"       OPERATION 10  ACCESS 0
+
+Return aRotina
 /*/{Protheus.doc} ModelDef
     @type  Static Function
     @author Everson
@@ -673,5 +689,157 @@ User Function ADFAT196(cNmOrdem)
         Return .F.
 
     EndIf
+
+Return .T.
+/*/{Protheus.doc} User Function ADFAT19B
+    Abrir pesagem.
+    @type  Function
+    @author Everson
+    @since 09/05/2022
+    @version 01
+    /*/
+User Function ADFAT19B()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cTicket   := ZIG->ZIG_NUMERO
+    Local oModal    := Nil
+    Local aButtons  := {}
+
+    If ZIG->ZIG_INICIA == "1"
+        MsgInfo("Ticket não possui pesagem.", "Função ADFAT19B(ADFAT019R)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    oModal := FWDialogModal():New()        
+	oModal:SetEscClose(.F.)
+	oModal:setTitle("Abrir Pesagem - Ticket " + cTicket)
+	oModal:setSize(070, 200)
+	oModal:createDialog()
+
+    Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
+
+	oModal:addButtons(aButtons)
+
+        oContainer := TPanel():New(025,,, oModal:getPanelMain())
+        oContainer:Align := CONTROL_ALIGN_ALLCLIENT
+
+        TButton():New(005,010,"1-Refazer pesagem inicial" , oContainer,{|| Iif(! procAbrP(cTicket, "1"), Nil, oModal:DeActivate()) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        TButton():New(005,110,"2-Refazer pesagem final"   , oContainer,{|| Iif(! procAbrP(cTicket, "2"), Nil, oModal:DeActivate()) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+
+	oModal:Activate()
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} procAbrP
+    Processa a abertura da pesagem.
+    @type  Static Function
+    @author Everson
+    @since 09/05/2022
+    @version 01
+/*/
+Static Function procAbrP(cTicket, cStatus)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .T.
+    Local cCP       := ZIG->ZIG_CTPATI
+    Local cNmOrdem  := ZIG->ZIG_ORDEM
+    Local cTpOrdem  := ZIG->ZIG_TPMOV
+
+    If cStatus == ZIG->ZIG_INICIA
+        MsgInfo("Ticket já está com o status solicitado.", "Função procAbrP(ADFAT019R)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    Begin Transaction
+
+        //Atualiza ticket de pesagem.
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_INICIA", cStatus)
+
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_DTPES2",CToD("//"))
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_HRPES2", "")
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_PESFIM", 0)
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_PESOLI", 0)
+
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_UNTOLE", "")
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_QTTOLE", 0)
+        lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_QUEBRA", 0)
+
+        If cStatus == "1"
+            lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_DTPES1", CToD("//"))
+            lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_HRPES1", "")
+            lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_PESINI", 0)
+
+        EndIf
+        //
+
+        If cTpOrdem $"O/R/S" .And. cStatus == "1" //Liberado/Aguardando pesagem.
+            cStatOrd := "2"
+
+        ElseIf cTpOrdem == "E" .And. cStatus == "1" //Liberado/Aguardando pesagem.
+            cStatOrd := "8"
+        
+        ElseIf cTpOrdem $"O/R/S" .And. cStatus == "2" //Pesagem inicial.
+            cStatOrd := "4"
+
+        ElseIf cTpOrdem == "E" .And. cStatus == "2" //Pesagem inicial.
+            cStatOrd := "10"
+
+        EndIf
+
+        If U_ADFAT17W(cCP) < 2
+            cStatCp  := "3"
+
+        Else
+            cStatCp  := "4"
+
+        EndIf
+
+        lRet := lRet .And. U_ADFAT175(cNmOrdem, cStatOrd, 1) //Atualiza status da ordem.
+
+        lRet := lRet .And. U_ADFAT174(cCP, "ZIB_STATUS", cStatCp) //Atualiza status do controle de pátio.
+
+        lRet := lRet .And. logZBE("Abertura de pesagem do ticket " + cTicket + " para status " + cStatus)
+
+        If ! lRet
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+    End Transaction
+
+    If lRet
+        MsgInfo("Pesagem aberta.", "Função procAbrP(ADFAT019P)")
+        
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} nomeStaticFunction
+    Gera log na tabela ZBE.
+    @type  Static Function
+    @author Everson
+    @since 10/05/2022
+    @version 01
+/*/
+Static Function logZBE(cMsg)
+
+	RecLock("ZBE", .T.)
+		Replace ZBE_FILIAL 	   	With FWxFilial("ZBE")
+		Replace ZBE_DATA 	   	With Date()
+		Replace ZBE_HORA 	   	With Time()
+		Replace ZBE_USUARI	    With Upper(Alltrim(cUserName))
+		Replace ZBE_LOG	        With cMsg
+		Replace ZBE_MODULO	    With "FATURAMENTO"
+		Replace ZBE_ROTINA	    With "ADFAT019P" 
+	ZBE->( msUnlock() )
 
 Return .T.

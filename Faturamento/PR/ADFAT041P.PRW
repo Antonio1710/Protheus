@@ -145,7 +145,7 @@ Static Function pendenciaNF()
             cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
             cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
             cQuery += " AND C5_NOTA = '' " 
-            cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) " 
+            cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) AND C5_PEDSAG = '' " 
             cQuery += " AND SC5.D_E_L_E_T_ = '' " 
             cQuery += " AND SC6.D_E_L_E_T_ ='' " 
 
@@ -413,7 +413,7 @@ Static Function ajtBlPed()
             cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
             cQuery += " AND C5_NOTA = '' " 
 			cQuery += " AND C5_XLIBSAG = '1' " 
-            cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) " 
+            cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) AND C5_PEDSAG = '' " 
             cQuery += " AND SC5.D_E_L_E_T_ = '' " 
             cQuery += " AND SC6.D_E_L_E_T_ ='' " 
 
@@ -760,7 +760,7 @@ Static Function emitNfGrp(cPedProth)
 		cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
 		cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
 		cQuery += " AND C5_NOTA = '' " 
-		cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) " 
+		cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) AND C5_PEDSAG = '' " 
 
 		If ! Empty(cPlaca)
 			cQuery += " AND C5_PLACA = '" + cPlaca + "' " 

@@ -114,3 +114,20 @@ Static Function ViewDef()
     oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
 
 Return oView
+/*/{Protheus.doc} User Function ADFAT20B
+    Posiciona no registro do silo.
+    @type  Function
+    @author Everson
+    @since 13/05/2022
+    @version 01
+    /*/
+User Function ADFAT36A(cSilo)
+
+    DbSelectArea("ZIW")
+    ZIW->(DbSetOrder(1))
+    If ! ZIW->( DbSeek( FWxFilial("ZIW") + cSilo) )
+        Return .F.
+
+    EndIf
+
+Return .T.

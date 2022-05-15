@@ -24,11 +24,6 @@ User Function ADVEN087P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADV
 	RPCSetType(3)
 	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
 
-	//Inicia o ambiente.
-	RpcClearEnv()
-	RPCSetType(3)
-	RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })
-
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
 	// If !LockByName("ADVEN087P", .T., .F.)
 	// 	ConOut("[ADVEN087P] - Existe outro processamento sendo executado! Verifique...")

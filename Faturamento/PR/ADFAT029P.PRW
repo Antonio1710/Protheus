@@ -95,7 +95,7 @@ User Function ADFAT29B()
     cQuery += " FROM  " 
     cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
     cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'cadastro_de_produtos_sag' " 
     cQuery += " AND ZIQ_SISGER = 'SAG' " 
@@ -304,7 +304,7 @@ User Function ADFAT29C()
     cQuery += " FROM  " 
     cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
     cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'cadastro_de_lotes_de_produtos_sag' " 
     cQuery += " AND ZIQ_PROCES = '2' " 
@@ -527,7 +527,7 @@ User Function ADFAT29E()
     cQuery += " FROM  " 
     cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
     cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'cadastro_de_granjadas_sag' " 
     cQuery += " AND ZIQ_PROCES = '2' " 
@@ -781,7 +781,7 @@ User Function ADFAT29F(aPedidos, cUUids)
     cQuery += " FROM  " 
     cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
     cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'pedidos_de_saida_entre_filiais_protheus' " 
     cQuery += " AND ZIQ_PROCES = '2' " 
@@ -1102,7 +1102,7 @@ User Function ADFAT29H() // U_ADFAT029P("01", "03")
     cQuery += " FROM  " 
     cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
     cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'pesagens_guardian' " 
     cQuery += " AND ZIQ_SISGER = 'SAG' " 
@@ -1226,7 +1226,7 @@ User Function ADFAT29I()
     cQuery += " FROM  " 
     cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
     cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIM") + "'  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'cadastro_de_consumo_de_racao_sag' " 
     cQuery += " AND ZIQ_SISGER = 'SAG' " 
@@ -1348,6 +1348,121 @@ User Function ADFAT29I()
         If ! Empty(cMsgError)
             U_ADFAT29D(cId, "2", cMsgError)
             Help(Nil, Nil, "Função ADFAT29I(ADFAT029P)", Nil, "Erro no processamento de registro de consumo de ração " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        Else
+            U_ADFAT29D(cId, "1", "")
+
+        EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    (cAliasAux)->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT29J
+    Processa registros de carregamento do Gemba.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 10/05/2022
+    @version 01
+/*/
+User Function ADFAT29J() // U_ADFAT29J("01", "03")
+
+    //Variáveis.
+    Local aArea       := GetArea()
+    Local cAliasAux   := GetNextAlias()
+    Local cQuery      := ""
+    Local cMsgError   := ""
+    Local cJson       := ""
+    Local oJson       := Nil
+    Local cId         := ""
+    Local cPlaca      := ""
+    Local nPeso       := 0
+    Local aEmpFil     := deParaSAG(cEmpAnt, cFilAnt)
+    Local aDados      := {}
+    Local lSlvReg     := .F.
+    Local cAgrupador  := ""
+    Local cOrdem      := ""
+    Local cIntegrado  := ""
+    Local cGranjada   := ""
+    Local cLacres     := ""
+    Local cProduto    := ""
+    Local cSilos      := ""
+    Local cCaixas     := ""
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'retornos_de_carregamento_gemba' " 
+    cQuery += " AND ZIQ_SISGER = 'SAG' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO " 
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
+        
+        aDados    := {}
+        cMsgError := ""
+        cJson     := ZIQ->ZIQ_DADOS
+        oJson     := getJson(cJson)
+
+        If ValType(oJson) == "U"
+            cMsgError := "Não foi possível converter a string para objeto json."
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        cId         := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        cAgrupador  := Alltrim(cValToChar(oJson['dados']['nr_bill_request'])) //Roteiro.
+        cOrdem      := Alltrim(cValToChar(oJson['dados']['ds_code_order_loading'])) //Número da ordem de carregamento.
+        cPlaca      := StrTran(Alltrim(cValToChar(oJson['dados']['nr_plate'])),"-","") //Placa do veículo.
+        cIntegrado  := Alltrim(cValToChar(oJson['dados']['ds_code_customer'])) //Código do integrado.
+        cGranjada   := Alltrim(cValToChar(oJson['dados']['ds_code_shed'])) //Nome da granjada.
+        cLacres     := Alltrim(cValToChar(oJson['dados']['ds_seal'])) //Lacres.
+        cProduto    := Alltrim(cValToChar(oJson['dados']['ds_code_product'])) //Código do produto.
+        nPeso       := Val(cValToChar(oJson['dados']['ps_slide'])) //Peso carregado.
+        cSilos      := Alltrim(cValToChar(oJson['dados']['nm_silo'])) //Silo.
+        cCaixas     := Alltrim(cValToChar(oJson['dados']['ds_box'])) //Caixas do veículo.
+
+        If U_ADFAT16A(cOrdem)
+
+            Aadd(aDados,{cAgrupador, cOrdem, cPlaca, cIntegrado, cGranjada, cLacres, cProduto, nPeso, cSilos, cCaixas})
+
+            lSlvReg := U_ADFAT50C(aDados, @cMsgError)
+
+        Else
+
+            lSlvReg := .T.
+
+        EndIf
+
+        If ! lSlvReg
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, "Erro no processamento de registro de carregamento Gemba " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         Else
             U_ADFAT29D(cId, "1", "")
