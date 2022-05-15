@@ -28,22 +28,75 @@
     @history ticket 10355   - Leonardo P. Monteiro - 25/03/2021 - Ajuste na data da contabilização para o dia em que a rotina está sendo executada, conforme pedido da Jade.
     @history ticket 13678   - Leonardo P. Monteiro - 12/05/2021 - Tratamento dos cancelamentos de baixas dos títulos AB- para uma nova contabilização.
     @history ticket 15279   - Fernando Macieira    - 02/07/2021 - Mensagem de duplicidade em todos os títulos
+    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
 /*/
 User Function ADFIN108P()
 
-    //if msgYesNo("Deseja contabilizar os títulos do tipo Abatimento(AB-)?")
-        msAguarde( {|| processa() },"Contabilizando","(AB-) e seus indexadores..." )
-        
-        msginfo("Rotina finalizada com sucesso!")
-    /*
-    else
-        msginfo("Operação cancelada pelo operador!")
-    endif
-    */
+    // @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    Local nOpca     := 0
+    Local lOk		:= .F.
+    Local alSay		:= {}
+    Local alButton	:= {}
+    Local clTitulo	:= 'Contabilização AB-'
+    Local clDesc1   := 'Esta rotina oferece 2 funções: '
+    Local clDesc2   := '- Contabilizar AB-'
+    Local clDesc3   := '- Excluir contabilizações AB-'
+    Local clDesc4   := ''
+    Local clDesc5   := ''
+    Local cHoraIni  := Time()
+    Local cTmpTt    := ""
+    Local lRet      := .t.
 
-    //
+    // Mensagens de Tela Inicial
+    aAdd(alSay, clDesc1)
+    aAdd(alSay, clDesc2)
+    aAdd(alSay, clDesc3)
+    aAdd(alSay, clDesc4)
+    aAdd(alSay, clDesc5)
+
+    // Botoes do Formatch
+    AADD(alButton, {15,.T., {|| nOpca:=15, ProcLogView(cFilAnt,"ADFIN108P") }})
+    aAdd(alButton, {1, .T., {|| nOpca:=1, lOk := .T., FechaBatch()}})
+    aAdd(alButton, {3, .T., {|| nOpca:=2, lOk := .T., FechaBatch()}})
+
+    FormBatch(clTitulo, alSay, alButton)
+
+    If lOk
+
+        // Garanto uma única thread sendo executada
+        If !LockByName("ADFIN108P", .T., .F.)
+            Aviso("Atenção", "Existe outro processamento sendo executado! Verifique com seu colega de trabalho...", {"OK"}, 3)
+            Return
+        EndIf
+        
+        cHoraIni := Time()
+    
+        If nOpca == 1
+            msAguarde( {|| RunCtbAB() },"Contabilizando","(AB-) e seus indexadores..." )
+        ElseIf nOpca == 2
+            msAguarde( { || lRet := FixAB() }, "Restaurando contabilizações AB- do período..." )
+        EndIf
+
+        //³Destrava a rotina para o usuário
+    	UnLockByName("ADFIN108P")
+
+        cTmpTt := ElapTime( cHoraIni, Time() )
+
+        If nOpca==2
+            If lRet
+                msgInfo("Restauração finalizada com sucesso - Tempo total: " + cTmpTt)
+            Else
+                Alert("Restauração não realizada! Verifique...")
+            EndIf
+        EndIf
+
+        If nOpca==1
+            msgInfo("Contabilização finalizada - Tempo total: " + cTmpTt)
+        EndIf
+        
+    EndIf
+ 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'ContabilizaÃ§Ã£o das baixas de AB-')
-    //
 
 Return
 
@@ -59,7 +112,7 @@ Return
     (examples)
     @see (links_or_references)
 /*/
-Static Function processa()
+Static Function RunCtbAB()
     
     //Local nHdlImp
     Local aCabec    := {}
@@ -72,7 +125,7 @@ Static Function processa()
     aAdd(aParamBox,{1,"Data Inicial",Ctod(Space(8)),"","","","",50,.F.})
     aAdd(aParamBox,{1,"Data Final"  ,Ctod(Space(8)),"","","","",50,.F.})
 
-    if ParamBox(aParamBox,"Parâmetros",@aRet)
+    if ParamBox(aParamBox,"Contabilização AB-",@aRet)
 
         nDados := fexecSQL(@aDados,@aCabec)
 
@@ -487,6 +540,7 @@ static function fexecSQL(aDados,aCabec)
     Local aItens    := {}
     Local cDtDe     := Dtos(MV_PAR01)
     Local cDtAte    := Dtos(MV_PAR02)
+    Local nA
 
     cQuery := " SELECT DISTINCT E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, E1_CLIENTE, E1_LOJA, E1_NOMCLI, E1_VALOR, SE1.RECNO, SE1.E5_DTDISPO "
     cQuery += " FROM (SELECT E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, E1_CLIENTE, E1_LOJA, E1_NOMCLI, E1_VALOR, E1.R_E_C_N_O_ RECNO, MAX(E5_DTDISPO) E5_DTDISPO  "
@@ -614,3 +668,150 @@ Static Function ABIsDuplic()
 
 Return lDuplic
 
+/*/{Protheus.doc} Static Function FIXAB
+    Exclui contabilizações AB- do período
+    @type  Static Function
+    @author FWNM
+    @since 12/05/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+/*/
+Static Function FIXAB()
+
+    Local lRet      := .f.
+    Local aRet      := {}
+    Local aParamBox := {}
+    Local lOpenCTG  := .t.
+    Local cSql      := ""
+    Local nStatus   := 0
+	Local cUsrAut   := GetMV("MV_#USRAB-",,"001428|002362") // Usuarios autorizados DANIELLE_MEIRA e DYANE
+    
+    Private cDtIni  := ""
+    Private cDtFim  := ""
+
+	// Consisto usuarios autorizados
+    If !(RetCodUsr() $ cUsrAut)
+        lRet := .f.
+        Aviso(	"Exclusão AB- (ADFIN108P-01)",;
+                "Login não autorizado! Verifique...",;
+                { "&Retorna" },,;
+                "Parâmetro MV_#USRAB-" )
+        Return lRet
+    EndIf
+    
+    aAdd(aParamBox,{1,"Data Inicial",Ctod(Space(8)),"","","","",50,.F.})
+    aAdd(aParamBox,{1,"Data Final"  ,Ctod(Space(8)),"","","","",50,.F.})
+
+    If ParamBox(aParamBox,"Exclusão AB-",@aRet)
+
+        cDtIni := MV_PAR01
+        cDtFim := MV_PAR02
+        
+        lOpenCTG := ChkCTG(aRet)
+        If !lOpenCTG
+            Alert("Calendário contábil não está aberto! Os lançamentos contábeis AB- não foram excluídos! Verifique...")
+            Return lRet
+        EndIf
+
+        // Excluo AB- do período e limpo flag SIG
+        cSql := " UPDATE " + RetSqlName("CT2") + " SET CT2_MSEXP='', D_E_L_E_T_='*', R_E_C_D_E_L_=R_E_C_N_O_
+        cSql += " WHERE CT2_FILIAL='"+FWxFilial("CT2")+"'
+        cSql += " AND CT2_DATA BETWEEN '"+DtoS(cDtIni)+"' AND '"+DtoS(cDtFim)+"'
+        cSql += " AND CT2_LOTE='008850'
+        cSql += " AND CT2_SBLOTE='001'
+        cSql += " AND CT2_LP='AB-'
+        cSql += " AND D_E_L_E_T_=''
+
+        nStatus := tcSqlExec(cSql)
+
+        If nStatus < 0
+
+            lRet := .f.
+            Alert("Exclusão das contabilizações AB- não realizadas devido erro " + TCSQLError())
+
+        Else
+
+            //gera log
+            u_GrLogZBE (msDate(),TIME(),cUserName,"CONTABILIZACAO AB-","CONTROLADORIA","ADFIN108P",;
+            "EXCLUSAO CONTABILIZACAO AB- PERIODO " + DtoC(cDtIni) + " ATE " + DtoC(cDtFim),ComputerName(),LogUserName())
+
+            nStatus := 0
+
+            // Excluo AB- do período e limpo flag SIG
+            cSql := " UPDATE " + RetSqlName("SE1") + " SET E1_LA=''
+            cSql += " WHERE E1_FILIAL='"+FWxFilial("SE1")+"'
+            cSql += " AND E1_XDTDISP BETWEEN '"+DtoS(cDtIni)+"' AND '"+DtoS(cDtFim)+"'
+            cSql += " AND E1_TIPO='AB-'
+            cSql += " AND E1_SALDO=0
+            cSql += " AND D_E_L_E_T_=''
+
+            nStatus := tcSqlExec(cSql)
+
+            If nStatus < 0
+                lRet := .f.
+                Alert("Flags de contabilização dos títulos tipo AB- não foram limpados para recontabilização devido erro " + TCSQLError())
+            Else
+                lRet := .t.
+                //gera log
+                u_GrLogZBE (msDate(),TIME(),cUserName,"CONTABILIZACAO AB-","CONTROLADORIA","ADFIN108P",;
+                "LIMPADO FLAG AB- PARA RECONTABILIZACAO - PERIODO " + DtoC(cDtIni) + " ATE " + DtoC(cDtFim),ComputerName(),LogUserName())
+            EndIf
+        
+        EndIf
+    
+    EndIf
+
+Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+    Checa status do calendário contábil
+    @type  Static Function
+    @author FWNM
+    @since 12/05/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+/*/
+Static Function ChkCTG(aRet)
+
+	Local lOpen  := .t.
+	Local cQuery := ""
+
+    If Empty(cDtIni) .and. Empty(cDtFim)
+        cDtIni := DtoS(aRet[1])
+        cDtFim := DtoS(aRet[2])
+    EndIf
+
+	If Select("WorkCTG") > 0
+		WorkCTG->( dbCloseArea() )
+	EndIf
+	
+	cQuery := " SELECT CTG_STATUS "
+	cQuery += " FROM " + RetSqlName("CTG") + " WITH (NOLOCK) "
+	cQuery += " WHERE CTG_FILIAL='"+FWxFilial("CTG")+"' "
+	cQuery += " AND CTG_DTINI LIKE '"+Left(AllTrim(DtoS(cDtIni)),6)+"%' "
+	cQuery += " AND CTG_DTFIM LIKE '"+Left(AllTrim(DtoS(cDtFim)),6)+"%' "
+	cQuery += " AND D_E_L_E_T_='' "
+	
+	tcQuery cQuery New Alias "WorkCTG"
+	
+	WorkCTG->( dbGoTop() )
+	
+	If WorkCTG->CTG_STATUS <> "1" //	- Campo CTG_STATUS (1=Aberto;2=Fechado;3=Transportado;4=Bloqueado)
+		lOpen := .f.
+	EndIf
+	
+	If Select("WorkCTG") > 0
+		WorkCTG->( dbCloseArea() )
+	EndIf
+
+Return lOpen
