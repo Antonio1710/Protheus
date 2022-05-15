@@ -28,11 +28,11 @@
     @history ticket 10355   - Leonardo P. Monteiro - 25/03/2021 - Ajuste na data da contabilização para o dia em que a rotina está sendo executada, conforme pedido da Jade.
     @history ticket 13678   - Leonardo P. Monteiro - 12/05/2021 - Tratamento dos cancelamentos de baixas dos títulos AB- para uma nova contabilização.
     @history ticket 15279   - Fernando Macieira    - 02/07/2021 - Mensagem de duplicidade em todos os títulos
-    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
 /*/
 User Function ADFIN108P()
 
-    // @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    // @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
     Local nOpca     := 0
     Local lOk		:= .F.
     Local alSay		:= {}
@@ -679,7 +679,7 @@ Return lDuplic
     @example
     (examples)
     @see (links_or_references)
-    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
 /*/
 Static Function FIXAB()
 
@@ -779,7 +779,7 @@ Return lRet
     @example
     (examples)
     @see (links_or_references)
-    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
 /*/
 Static Function ChkCTG(aRet)
 
