@@ -694,6 +694,22 @@ Static Function FIXAB()
     Private cDtIni  := ""
     Private cDtFim  := ""
 
+    // reprocessamento dos saldos contábeis
+	Private aResult  	:= {}
+	Private lCusto		:= .t.
+	Private lItem		:= .t.
+	Private lCLVL		:= .t.
+	Private cCTB020     := "CTB020"
+	Private cFilDe      := ""
+	Private cFilAte     := "z"
+	Private cMoedaEsp   := "1"
+	Private cMoeda      := "01"
+	Private cTpSldA     := "1"
+	Private lReproc     := '1'
+	Private nFKinUse    := 0
+	Private lDelFisico	:= .T.
+	Private cTpSald     := "1"
+
 	// Consisto usuarios autorizados
     If !(RetCodUsr() $ cUsrAut)
         lRet := .f.
@@ -764,6 +780,34 @@ Static Function FIXAB()
         
         EndIf
     
+    EndIf
+
+    If lRet
+
+        lCusto		:= CtbMovSaldo("CTT")
+        lItem		:= CtbMovSaldo("CTD")
+        lCLVL		:= CtbMovSaldo("CTH")
+        cCTB020     := IIF(FindFunction("GetSPName"), GetSPName("CTB020","01"), "CTB020")
+        lDelFisico	:= GetNewPar('MV_CTB190D',.T.)
+
+        // Reprocessa saldo contábil com procedure
+        bProc := { ||aResult := TCSPEXEC( xProcedures(cCTB020),;
+                                            Iif(lCusto,'1','0'),;
+                                            Iif(lItem,'1','0'), Iif(lClVl,'1','0'),;
+                                            cFilDe,cFilAte,;
+                                            cDtIni,cDtFim,;
+                                            cMoedaEsp,cMoeda,;
+                                            cTpSald,StrZero(Getmv("MV_SOMA"),1),;
+                                            lReproc,If(nFKInUse > 0,'1','0'),;
+                                            If(lDelFisico,'1','0') ) }
+                            
+        MsgRun( "Reprocessando Saldo Contábeis...","Por favor aguarde...",{ || Eval(bProc) } ) // Saldos Contábeis // com procedure
+
+        If Empty(aResult) .or. aResult[1] = "0"
+            Alert("Não foi possível reprocessar o saldo contábil! Reprocesse manualmente...")
+            MessageBox(tcSqlError(),"",16)
+        Endif
+
     EndIf
 
 Return lRet
