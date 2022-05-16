@@ -27,6 +27,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
     @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - Lembrete de preenchimento do percentual para despesa parcelamento CPC
     @ticket 72277 - Fernando Macieira - 10/05/2022 - RM - Acordos - Despesa perito
+    @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
 /*/
 User Function ADFI118()
 
@@ -462,6 +463,28 @@ Static Function fValidGrid(oModel)
                             EndIf
                         EndIf
                     EndIf
+
+                    // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+                    If ZHB->(FieldPos("ZHB_FILNUM")) > 0
+                        cFilNum := oModelGRID:GetValue("ZHB_FILNUM")
+                        If Empty(oModelGrid:GetValue("ZHB_NUM"))
+                            If Empty(cFilNum)
+                                lRet := .f.
+                                Alert("Informe em qual filial deverá ser gerada a despesa da linha " + AllTrim(Str(nLinAtual)) + " ! Verifique...")
+                                Exit
+                            Else
+                                aAreaSM0 := SM0->( GetArea() )
+                                SM0->( dbSetOrder(1) ) // M0_CODIGO+M0_CODFIL
+                                If SM0->( !dbSeek(cEmpAnt + cFilNum) )
+                                    lRet := .f.
+                                    Alert("Informe uma filial valida na linha " + AllTrim(Str(nLinAtual)) + " ! Verifique...")
+                                    Exit
+                                EndIf
+                                RestArea(aAreaSM0)
+                            EndIf
+                        EndIf
+                    EndIf
+                    //
 
                     // Alterações
                     If oModel:nOperation == 4

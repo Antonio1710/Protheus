@@ -43,6 +43,7 @@ Static cRotina  := "ADFIN121P"
     @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - Parcelas não estão gerando com a emissão do tipo PR
     @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
     @ticket 72310 - Fernando Macieira - 10/05/2022 - RM - Acordos - Parcelas NDI
+    @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -117,7 +118,7 @@ User Function ADFIN121P(lAuto)
     cLinked := GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
 	cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
     cEmpRun := GetMV("MV_#RMAEMP",,"01#02#07#09")
-    cFilRun := GetMV("MV_#RMAFIL",,"02")
+    cFilRun := GetMV("MV_#RMAFIL",,"02|03") // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
     
     // Dados necessários para central aprovação
     cPrefixo  := GetMV("MV_#ZC7PRE",,"GPE")
