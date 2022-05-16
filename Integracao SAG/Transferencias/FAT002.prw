@@ -14,6 +14,7 @@
 	@see (links_or_references)
 	@history ticket 69724 - Fernando Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
 	@history ticket TI    - Fernando Macieira - 22/03/2022 - Forçar publicação
+	@history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 /*/
 User Function FAT002()
 
@@ -79,7 +80,7 @@ Static Function E001Proces()
 
 	// @history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
 	Local cCFOP3    := GetMV("MV_#F45451",,"5451")
-	Local cProd3    := GetMV("MV_#B15451",,"384743")
+	Local cProd3    := GetMV("MV_#B15451",,"384743|384744") // @history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 
 	Private aItens      := {}      
 	Private lMsErroAuto := .F.
