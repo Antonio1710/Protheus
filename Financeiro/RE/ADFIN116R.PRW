@@ -525,7 +525,7 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		*/
 
 		cQuery 	:= " SELECT * "
-		cQuery 	+= " FROM "+ cTabTMP +" "
+		cQuery 	+= " FROM "+ cTabTMP +" WITH(NOLOCK)"
 		cQuery	+= " WHERE D_E_L_E_T_='' AND FORNECE='"+Alltrim((cAliSA2)->A2_COD)+"' AND LOJA='"+Alltrim((cAliSA2)->A2_LOJA)+"' "
 		cQuery	+= " ORDER BY FORNECE, LOJA, FILIAL, NUMERO, PREFIXO, PARCELA, TIPO; "
 
