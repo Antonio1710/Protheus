@@ -13,6 +13,7 @@
 	@history Chamado 058873 - William Costa - 23/06/2020 - Voltado programação de quandoa rede tiver um unico raiz de CNPJ gravar o campo da data e valor do maior acumulo da SA1
 	@history Chamado 18572  - Everson       - 24/09/2021 - Alterada régua de processamento e adicionado conout.
 	@history Chamado 52317  - Fer Macieira  - 21/10/2021 - REVER CÁLCULO DE MAIOR ACÚMULO DA ROTINA
+	@history Ticket  72651  - Abel Babini   - 17/05/2022 - Ajuste na query para não considerar os tipos ('PR','NCC','AB-') e Portadores ('P00','P01','P02','P03','P14')
 */
 
 User Function ADLCRED2() 
@@ -108,7 +109,11 @@ Static Function ProcSql()
 	cQuery += "       (CASE WHEN E1_TIPO <> 'RA' AND (E1_VENCREA BETWEEN '"+DTOS(_dDT)+"' AND '"+DTOS(_dDTA)+"') THEN E1_SALDO ELSE 0  END) AS AVENC2 "
 	cQuery += " FROM "+RetSQLName("SZF")+" AS SZF, "+RetSQLName("SA1")+" AS SA1 LEFT OUTER JOIN "+RetSQLName("SE1")+" AS SE1 "
 	cQuery += " ON A1_COD = E1_CLIENTE AND A1_LOJA = E1_LOJA AND SE1.D_E_L_E_T_='' "
-	//cQuery += " AND E1_TIPO NOT IN ('PR','NCC','AB-') AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14') AND E1_SALDO > 0  
+	
+	//Ticket  72651  - Abel Babini   - 17/05/2022 - Ajuste na query para não considerar os tipos ('PR','NCC','AB-') e Portadores ('P00','P01','P02','P03','P14')
+	//Retirado cometário da Query
+	cQuery += " AND E1_TIPO NOT IN ('PR','NCC','AB-') AND E1_PORTADO NOT IN ('P00','P01','P02','P03','P14') AND E1_SALDO > 0  
+
 	cQuery += " WHERE LEFT(A1_CGC,8) = ZF_CGCMAT AND SZF.D_E_L_E_T_='' AND SA1.D_E_L_E_T_='' "
 	
 	//cQuery += " AND ZF_REDE IN ('14BIS','DEMA') " // DEBUG - INIBIR
