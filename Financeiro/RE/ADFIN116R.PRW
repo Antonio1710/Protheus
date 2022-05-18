@@ -12,7 +12,7 @@
 	@history chamado 8797  - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Correção dos valores em segunda moeda.
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Melhoria e correções após validação.
-
+	@history chamado 72972 - Jonathan Carvalho    - 17/05/2022 - Adicionado With lock
 /*/
 
 User Function ADFIN116R()
