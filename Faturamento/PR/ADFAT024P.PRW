@@ -1190,3 +1190,76 @@ User Function ADFAT24E()
     MsAguarde({|| U_ADFAT24D() },"Aguarde","Processando registros...")
 
 Return Nil
+/*/{Protheus.doc} ADFAT24
+    Ponto de entrada.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+User Function ADFAT24()
+
+    //Variáveis.
+    Local aArea       := GetArea()
+	Local aParam	  := PARAMIXB
+	Local xRet 		  := .T.
+	Local oObj 		  := ""
+	Local cIdPonto 	  := ""
+	Local cIdModel 	  := ""
+    Local oModelx     := Nil
+    Local nOperation  := 0
+    Local cNumero     := ""
+    Local lBarramento := GetMv("MV_#ADF251",,.T.) //Registros de pesagem vindos do barramento.
+    
+	If aParam <> Nil
+
+		oObj 	    := aParam[1]
+		cIdPonto    := aParam[2]
+		cIdModel    := aParam[3]
+        nOperation  := oObj:GetOperation()
+
+		If cIdPonto == "MODELCOMMITNTTS" .And. ! lBarramento
+
+            oModelx := FWModelActive()
+            cNumero := oModelx:GetValue("MD_MASTER", "ZIH_TKTGUA") + oModelx:GetValue("MD_MASTER", "ZIH_CODIGO")
+
+            If nOperation == MODEL_OPERATION_INSERT
+                cOperacao := "I"
+
+            ElseIf nOperation == MODEL_OPERATION_UPDATE
+                cOperacao := "A"
+
+            ElseIf nOperation == MODEL_OPERATION_DELETE
+                cOperacao := "D"
+
+            EndIf
+
+            If ! Empty(cOperacao) .And. ! Empty(cNumero)
+                grvBarr(cOperacao, cNumero)
+
+            EndIf
+
+		EndIf
+
+	EndIf
+
+    RestArea(aArea)
+
+Return xRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+	U_ADFAT27C(cTbMast, 4, "pesagens_guardian", cOperacao, FWxFilial("ZIB") + cNumero)
+
+    RestArea(aArea)
+
+Return Nil
