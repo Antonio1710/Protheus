@@ -15,6 +15,7 @@
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	@history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 /*/
 User Function ADLFV011R(cEmpJob, cFilJob)
 
@@ -191,10 +192,16 @@ Static Function CriaTMP()
 	{"QUANTIDADE" , "N", TamSX3("D2_QUANT")[1]   , TamSX3("D2_QUANT")[2]},;
 	{"UM"         , "C", TamSX3("D2_UM")[1]      , 0},;
 	{"ABATE"	  , "C", 10          			 , 0},;
-	{"STATUS"     , "C", 08                      , 0} }
+	{"STATUS"     , "C", 08                      , 0},;
+	{"FILIAL"     , "C", TamSX3("D2_FILIAL")[1]  , 0} }
 	
 	dbCreate(cArquivo,aStru)
 	dbUseArea(.T.,,cArquivo,cArquivo,.F.,.F.)
+
+	// @history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
+	cNameIdx := FileNoExt(cArquivo)
+	DBCreateIndex(cNameIdx,'FILIAL+NF')
+	//
 	
 	RestArea( aAreaAtu )
 
@@ -245,7 +252,8 @@ Static Function GrvArquivo(cD2_FILIAL, cD2_DOC, cD2_SERIE, cD2_PEDIDO, dD2_EMISS
 			cStatus := "RECEBIDO"
 		EndIf
 		*/
-		
+	Else
+		lDebug := .t.	
 	EndIf
 	
 	// Dados da Nota Entrada Classificada
@@ -301,6 +309,7 @@ Static Function GrvArquivo(cD2_FILIAL, cD2_DOC, cD2_SERIE, cD2_PEDIDO, dD2_EMISS
 	
 		RecLock(cArquivo, .t.)
 		
+		(cArquivo)->FILIAL     := cD2_FILIAL // @history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 		(cArquivo)->EMISSAO    := dD2_EMISSAO
 		(cArquivo)->NF         := cD2_DOC
 		(cArquivo)->SERIE      := cD2_SERIE
@@ -420,7 +429,8 @@ Static Function LoadZV1(cD2_FILIAL, cD2_DOC, cD2_SERIE)
 		aAdd( aZV1_RGRANJ, WorkZV1->ZV1_RGRANJ )
 		aAdd( aZV1_RGRANJ, WorkZV1->ZV1_STATUS )
 		aAdd( aZV1_RGRANJ, WorkZV1->ZV1_DTABAT ) //Chamado:043187 - Fernnado sigoli 20/08/2018
-		
+	Else	
+		lDebug := .t.
 	EndIf
 		
 	If Select("WorkZV1")
@@ -447,9 +457,7 @@ Return aZV1_RGRANJ
 Static Function EmailFVL()
 
 	LogZBN("1")
-	
-	ProcRel()
-	
+		ProcRel()
 	LogZBN("2")
 
 Return
@@ -482,27 +490,23 @@ Static Function logZBN(cStatus)
 	If ZBN->(DbSeek(xFilial("ZBN") + cNomeRotina))
 		
 		RecLock("ZBN",.F.)
-		
-		ZBN_FILIAL  := xFilial("ZBN")
-		ZBN_DATA    := Date()
-		ZBN_HORA    := cValToChar(Time())
-		ZBN_ROTINA	:= cNomeRotina
-		ZBN_DESCRI  := cDescri
-		ZBN_STATUS	:= cStatus
-		
+			ZBN_FILIAL  := xFilial("ZBN")
+			ZBN_DATA    := Date()
+			ZBN_HORA    := cValToChar(Time())
+			ZBN_ROTINA	:= cNomeRotina
+			ZBN_DESCRI  := cDescri
+			ZBN_STATUS	:= cStatus
 		MsUnlock()
 		
 	Else
 		
 		RecLock("ZBN",.T.)
-		
-		ZBN_FILIAL  := xFilial("ZBN")
-		ZBN_DATA    := Date()
-		ZBN_HORA    := cValToChar(Time())
-		ZBN_ROTINA	:= cNomeRotina
-		ZBN_DESCRI  := cDescri
-		ZBN_STATUS	:= cStatus
-		
+			ZBN_FILIAL  := xFilial("ZBN")
+			ZBN_DATA    := Date()
+			ZBN_HORA    := cValToChar(Time())
+			ZBN_ROTINA	:= cNomeRotina
+			ZBN_DESCRI  := cDescri
+			ZBN_STATUS	:= cStatus
 		MsUnlock()
 		
 	EndIf
@@ -535,8 +539,6 @@ Static Function procRel()
 	Local aArea		:= GetArea()
 	Local cAssunto	:= cDescri
 	Local cMensagem	:= ""
-	Local cQuery	:= ""
-	
 	
 	//
 	cMensagem += '<html>'
@@ -545,6 +547,7 @@ Static Function procRel()
 	cMensagem += '<hr>'
 	cMensagem += '<table border="1">'
 	cMensagem += '<tr style="background-color: black;color:white">'
+	cMensagem += '<td>Filial</td>' // @history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 	cMensagem += '<td>Emissao</td>'
 	cMensagem += '<td>Nota Fiscal</td>'
 	cMensagem += '<td>Série</td>'
@@ -556,14 +559,12 @@ Static Function procRel()
 	cMensagem += '<td>Status</td>'
 	cMensagem += '</tr>'
 	
-	
-	
 	dbSelectArea(cArquivo)
 	(cArquivo)->( dbGoTop() )
 	Do While (cArquivo)->( !EOF() )
 		
-		
 		cMensagem += '<tr>'
+		cMensagem += '<td>' + cValToChar((cArquivo)->FILIAL)    								 + '</td>' // @history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 		cMensagem += '<td>' + cValToChar((cArquivo)->EMISSAO)    								 + '</td>'
 		cMensagem += '<td>' + cValToChar((cArquivo)->NF)       									 + '</td>'
 		cMensagem += '<td>' + cValToChar((cArquivo)->SERIE)   									 + '</td>'
@@ -631,20 +632,18 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email)
 	//Conecta ao servidor SMTP.
 	Connect Smtp Server cServer Account cAccount  Password cPassword Result lOk
 	
-	//
 	If !lAutOk
 		If ( lSmtpAuth )
 			lAutOk := MailAuth(cAccount,cPassword)
-			
 		Else
 			lAutOk := .T.
-			
 		EndIf
-		
 	EndIf
 	
-	//
 	If lOk .And. lAutOk
+
+		// debug - inibir
+		//cTo := "fwnmacieira@gmail.com;" + cTo
 		
 		//Envia o e-mail.
 		Send Mail From cFrom To cTo Subject cSubject Body cBody ATTACHMENT cAtach Result lOk
@@ -653,26 +652,19 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email)
 		If !lOk
 			Get Mail Error cErrorMsg
 			ConOut("3 - " + cErrorMsg)
-			
 		Else
-			
-			// Aviso ao usuario
 			ConOut(	"ADLFV011R - Email enviado com sucesso! Emails: " + cMails )
-			
 		EndIf
 		
 	Else
 		Get Mail Error cErrorMsg
 		ConOut("4 - " + cErrorMsg)
-		
 	EndIf
 	
 	If lOk
 		Disconnect Smtp Server
-		
 	EndIf
 	
-	//
 	RestArea(aArea)
 
 Return Nil

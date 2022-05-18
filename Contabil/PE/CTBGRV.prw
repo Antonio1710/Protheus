@@ -31,10 +31,11 @@
 	@history ticket  9307   - Abel Babini       - 15/02/2021 - Acrescentar indesxadores para rotinas do Ativo de Baixas e Transferências
 	@history ticket 65263   - Fernando Macieira - 24/01/2022 - numero/nome da granja na contabilização da depreciação
 	@history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
+	@history ticket 72858   - Fernando Macieira - 18/05/2022 - Lote 008870 - Depreciação deixa alterar o campo lote x cc mas nao assume a alteração
 /*/
 User Function CTBGRV()
 
-	Local cCT2_ORIGEM := GetMV("MV_#RMORIG",,"CTBI102") // @history ticket  5949   - Fernando Macieira - 10/12/2020 - Projeto - RM - CT2_SEQLAN - Razão Contábil concatena históricos
+	//Local cCT2_ORIGEM := "" //GetMV("MV_#RMORIG",,"CTBI102") // @history ticket  5949   - Fernando Macieira - 10/12/2020 - Projeto - RM - CT2_SEQLAN - Razão Contábil concatena históricos
 	
 	//@history ticket 2388 - FWNM - 06/11/2020 - Requisição - Lançamentos que custos da RNX2 e Safegg
 	/*
@@ -79,6 +80,7 @@ User Function CTBGRV()
 	*/
 
 	/*
+	cCT2_ORIGEM := GetMV("MV_#RMORIG",,"CTBI102") 
 	If AllTrim(CT2->CT2_ORIGEM) == AllTrim(cCT2_ORIGEM)
 		
 		If AllTrim(CT2->CT2_LOTE) <> '008810' .and.;
@@ -1593,11 +1595,20 @@ Return nCV3_RECORI
 /*/
 Static Function ATFLoteZCN()
 
-	Local aArea  := GetArea()
-	Local cLP    := GetMV("MV_#LPZCN",,"820")
-	Local cQuery := ""
+	Local aArea      := {}
+	Local cLP        := "820"
+	Local cQuery     := ""
 	Local cCodRecria := ""
 	Local cNomRecria := ""
+
+	// @history ticket 72858   - Fernando Macieira - 18/05/2022 - Lote 008870 - Depreciação deixa alterar o campo lote x cc mas nao assume a alteração
+	If nOpcLct == 4 .and. Upper(AllTrim(nProgra)) == "CTBA102"
+		Return
+	EndIf
+
+	aArea      := GetArea()
+	cLP        := GetMV("MV_#LPZCN",,"820")
+	//
 
 	If AllTrim(CT2->CT2_LP) $ cLP
 

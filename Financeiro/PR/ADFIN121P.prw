@@ -43,6 +43,8 @@ Static cRotina  := "ADFIN121P"
     @ticket 68607 - Fernando Macieira - 25/04/2022 - RM - Acordos - Parcelas não estão gerando com a emissão do tipo PR
     @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
     @ticket 72310 - Fernando Macieira - 10/05/2022 - RM - Acordos - Parcelas NDI
+    @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+    @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
 /*/
 User Function ADFIN121P(lAuto)
 
@@ -64,7 +66,8 @@ User Function ADFIN121P(lAuto)
     Local lOnline      := .f.
     Local aDadSE2      := {}
     Local cStatusRM    := ""
-
+    Local dDtBkp       := dDataBase // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
+    
     // @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - despesa parcelamento CPC - Parcelado, a opção da primeira parcela ser 30% do valor do total e o restante escolher a quantidade de parcelas.
     Local nVlrParc1    := 0
     Local lPerc1P      := .f.
@@ -117,7 +120,7 @@ User Function ADFIN121P(lAuto)
     cLinked := GetMV("MV_#RMLINK",,"RM") // DEBUG - "LKD_PRT_RM" 
 	cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD") // DEBUG - "CCZERN_119205_RM_DE"
     cEmpRun := GetMV("MV_#RMAEMP",,"01#02#07#09")
-    cFilRun := GetMV("MV_#RMAFIL",,"02")
+    cFilRun := GetMV("MV_#RMAFIL",,"02|03") // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
     
     // Dados necessários para central aprovação
     cPrefixo  := GetMV("MV_#ZC7PRE",,"GPE")
@@ -202,8 +205,8 @@ User Function ADFIN121P(lAuto)
                             {"CBANCO"      ,""              ,Nil },;
                             {"CAGENCIA"    ,""              ,Nil },;
                             {"CCONTA"      ,""              ,Nil },;
-                            {"AUTDTBAIXA"  ,msDate()        ,Nil },;
-                            {"AUTDTCREDITO",msDate()        ,Nil },;
+                            {"AUTDTBAIXA"  ,SE2->E2_EMISSAO/*msDate()*/        ,Nil },; // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
+                            {"AUTDTCREDITO",SE2->E2_EMISSAO/*msDate()*/        ,Nil },; // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
                             {"AUTHIST"     ,cHist           ,Nil },;
                             {"AUTJUROS"    ,0               ,Nil,.T.}}
                             //{"NVALREC" ,SE1->E1_VALOR,Nil }}
@@ -250,12 +253,19 @@ User Function ADFIN121P(lAuto)
                     //Pergunte da rotina
                     AcessaPerg("FINA080", .F.)                  
          
+                    // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
+                    dDtBkp    := dDataBase
+                    dDataBase := SE2->E2_EMISSAO 
+                    //
+
                     //Chama a execauto da rotina de baixa manual (FINA080)
                     MsExecauto({|a,b,c,d,e,f,| FINA080(a,b,c,d,e,f)}, aBaixa, 3, .F., nSeqBx, lExibeLanc, lOnline)
                     
                     //Em caso de erro na baixa
                     If lMsErroAuto
 
+                        dDataBase := dDtBkp // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
+                        
                         //gera log
                         u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO PR ESTÁ COMO NDI (EXECAUTO BAIXA FINA080 DEU ERRO - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
                         "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
@@ -337,6 +347,8 @@ User Function ADFIN121P(lAuto)
                             msExecAuto( { |x,y| FINA050(x,y) }, aDadNDI, 3 )  // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
 
                             If lMsErroAuto
+
+                                dDataBase := dDtBkp // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
 
                                 //gera log
                                 u_GrLogZBE( msDate(), TIME(), cUserName, "TITULO NDI - PARCELA (EXECAUTO INCLUSAO FINA050 DEU ERRO - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN121P",;
@@ -437,6 +449,8 @@ User Function ADFIN121P(lAuto)
         EndDo
 
     Next i
+
+    dDataBase := dDtBkp // @ticket 72340 - Fernando Macieira - 16/05/2022 - RM - Acordos - Inclusao de filial - Baixas futuras
 
     If Select("RM") > 0
         RM->( dbCloseArea() )
