@@ -264,15 +264,42 @@ Return lRet
     @since 02/12/2021
     @version 01
 /*/
-User Function ADFAT244()
-    
+User Function ADFAT244(cUrl, oRetSolic, cErro)
+
     //Variáveis.
     Local aArea := GetArea()
+    Local lRet  := .F.
+    // Local oGuardian := WSWS_GUARDIAN():New()
+
+    // Default cErro := ""
+
+    // If Empty(cUrl)
+    //     Help(Nil, Nil, "Função ADFAT24C(ADFAT024P)", Nil, "Balança " + cBalanca + " não possui URL vinculado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     Return .F.
+
+    // EndIf
+
+    // oGuardian:_URL := cUrl
     
+    // If oGuardian:ConfirmaLeituraTicketsMarcados()
+        
+    //     If oGuardian:nErro = 0
+    //         lRet := .T.
+    //         oRetSolic := oGuardian:oWSConfirmaLeituraTicketsMarcadosResult
+
+    //     Else
+    //         cErro := cValToChar(oGuardian:nErro) + " " + Alltrim(cValToChar(oGuardian:cErroMSG))
+
+    //     EndIf
+
+    // Else
+    //     cErro := "GetWSCError " + GetWSCError()
+        
+    // EndIf 
 
     RestArea(aArea)
 
-Return Nil
+Return lRet
 /*/{Protheus.doc} ADFAT245
     Remonta fluxo. 
     @type  User Function
@@ -568,6 +595,10 @@ User Function ADFAT24C()
         nCount++
 
     End
+
+    oRetSolic := Nil
+    cErro := ""
+    // U_ADFAT244(cUrl, @oRetSolic, @cErro)
 
 Return .T.
 /*/{Protheus.doc} ADFAT24F
