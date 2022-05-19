@@ -232,3 +232,78 @@ User Function ADFAT40B(cRoteiro, cPlaca, cOrdem, cSilo, cMsgError)
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} ADFAT40
+    Ponto de entrada.
+    @type  User Function
+    @author Everson
+    @since 19/05/2022
+    @version 01
+/*/
+User Function ADFAT40()
+
+    //Variáveis.
+    Local aArea       := GetArea()
+	Local aParam	  := PARAMIXB
+	Local xRet 		  := .T.
+	Local oObj 		  := ""
+	Local cIdPonto 	  := ""
+	Local cIdModel 	  := ""
+    Local oModelx     := Nil
+    Local nOperation  := 0
+    Local cNumero     := ""
+    
+	If aParam <> Nil
+
+		oObj 	    := aParam[1]
+		cIdPonto    := aParam[2]
+		cIdModel    := aParam[3]
+        nOperation  := oObj:GetOperation()
+
+		If cIdPonto == "MODELCOMMITNTTS"
+
+            oModelx := FWModelActive()
+            cNumero := oModelx:GetValue("MD_MASTER", "ZIY_ROTEIR") +;
+                       oModelx:GetValue("MD_MASTER", "ZIY_PLACA") +;
+                       oModelx:GetValue("MD_MASTER", "ZIY_ORDEM") +;
+                       oModelx:GetValue("MD_MASTER", "ZIY_SILO")
+
+            If nOperation == MODEL_OPERATION_INSERT
+                cOperacao := "I"
+
+            ElseIf nOperation == MODEL_OPERATION_UPDATE
+                cOperacao := "A"
+
+            ElseIf nOperation == MODEL_OPERATION_DELETE
+                cOperacao := "D"
+
+            EndIf
+
+            If ! Empty(cOperacao) .And. ! Empty(cNumero)
+                grvBarr(cOperacao, cNumero)
+
+            EndIf
+
+		EndIf
+
+	EndIf
+
+    RestArea(aArea)
+
+Return xRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 19/05/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+	U_ADFAT27C(cTbMast, 1, "silos_de_racao_protheus", cOperacao, FWxFilial(cTbMast) + cNumero)
+
+    RestArea(aArea)
+
+Return Nil
