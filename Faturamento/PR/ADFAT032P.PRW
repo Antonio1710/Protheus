@@ -113,6 +113,9 @@ Static Function vldPos(oModel)
     Local cAgrupa    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_ORAGRP")))
     Local lAprova    := GetMv("MV_#APRRAC",,.F.)
     Local cOrdemP    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_ORDEM")))
+    Local cLote      := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_LOTPRD")))
+    Local cPrdSag    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_PRDSAG")))
+    Local cPrdPro    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_PRDPRO")))
 
     If lRet .And. nOperation == MODEL_OPERATION_INSERT
     
@@ -120,6 +123,8 @@ Static Function vldPos(oModel)
             oModel:SetValue("MD_MASTER", "ZIR_STATUS", "2")
 
         EndIf
+
+        lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
 
     EndIf
 
@@ -182,6 +187,8 @@ Static Function vldPos(oModel)
                 oModel:SetValue("MD_MASTER","ZIR_OK"     , "")
 
         EndIf
+
+        lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
 
     EndIf
 

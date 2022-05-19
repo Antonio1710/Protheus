@@ -236,3 +236,64 @@ User Function ADFAT18C(cProSAg, cPrdPro, Lote)
     RestArea(aArea)
 
 Return .T.
+/*/{Protheus.doc} prVldLote
+    Valida lote de produto.
+    @type  Static Function
+    @author Everson
+    @since 19/05/2022
+    @version 01
+/*/
+User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+    Default cPrdSag   := ""
+    Default cPrdPro   := ""
+    Default cMsgError := ""
+
+    DbSelectArea("ZI8")
+    ZI8->(DbSetOrder(1))
+    If ! ZI8->( DbSeek( FWxFilial("ZI8") + cLote ) )
+        cMsgError := "Lote " + cLote + " não localizado."
+        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZI8->ZI8_LAUTO == "1"
+        cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(automático)."
+        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZI8->ZI8_STATUS == "4"
+        cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(encerrado)."
+        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! Empty(cPrdSag) .And. Alltrim(cValToChar(cPrdSag)) <> Alltrim(cValToChar(ZI8->ZI8_PRDSAG))
+        cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " - produto externo divergente."
+        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! Empty(cPrdPro) .And. Alltrim(cValToChar(cPrdPro)) <> Alltrim(cValToChar(ZI8->ZI8_PRDPRT))
+        cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " - produto protheus divergente."
+        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
