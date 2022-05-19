@@ -600,7 +600,8 @@ User Function ADFAT17Y()
         oOrdPes:addColumn({"Peso Liquido"      , {||aOrdPes[oOrdPes:nAt,29]}, "N", "@E 999,999,999"    , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,29]",, .F., .T., , "ID29" })
         
         oOrdPes:addColumn({"Sol Pes Manual"    , {||aOrdPes[oOrdPes:nAt,20]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,20]",, .F., .T., , "ID20" })
-        oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 2, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
+        oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 1, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
+        oOrdPes:addColumn({"Notas Fiscais"     , {||aOrdPes[oOrdPes:nAt,30]}, "C", ""                  , 1, 035    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,30]",, .F., .T., , "ID30" })
     
         oOrdPes:Activate()
                    
@@ -1918,6 +1919,7 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     Local nPosTpSeq := 0
     Local cDesTpSe  := ""
     Local cPedSaida := ""
+    Local cNF       := ""
 
     //Verifica se há ordem de pesagem de ração para ser gerada.
     If cTpMovi == "R" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
@@ -2004,6 +2006,8 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
 
         cPedSaida := getPedSa((cQryT3)->ZIF_NUMERO)
 
+        cNF       := getNF(cPedSaida)
+
         Aadd(aOrdPes,{;
             .F.,;                   //01-Marca browse.
             aTpOrdem[nPTpOrd,3],;   //02-Descrição tp Ordem.
@@ -2033,7 +2037,8 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
             cPedSaida,;             //26-Pedido de saída (SC5).
             (cQryT3)->ZIG_PESINI,;  //27-Peso inicial.
             (cQryT3)->ZIG_PESFIM,;  //28-Peso final.
-            (cQryT3)->ZIG_PESOLI;   //29-Peso liquido.
+            (cQryT3)->ZIG_PESOLI,;  //29-Peso liquido.
+            cNF;                    //30-Peso liquido.
         })
     
         (cQryT3)->(dbSkip())
@@ -2135,6 +2140,78 @@ Static Function getPedSa(cNmOrdem)
     RestArea(aArea)
 
 Return cPedidos
+/*/{Protheus.doc} getNF
+    Obtém notas de saída.
+    @type  Static Function
+    @author Everson
+    @since 19/05/2022
+    @version 01
+/*/
+Static Function getNF(cPedSaida)
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local cNF      := ""
+    Local aPedidos := {}
+    Local cPed     := ""
+    Local nAux     := 1
+    Local cQuery   := ""
+
+    If Empty(cPedSaida)
+        Return ""
+
+    EndIf
+
+    aPedidos := Separa(cPedSaida, ",", .F.)
+
+    For nAux := 1 To Len(aPedidos)
+
+        If Empty(aPedidos[nAux])
+            Loop
+
+        EndIf
+
+        If Empty(cPed)
+            cPed += "'" + cValToChar(Alltrim(aPedidos[nAux])) + "'"
+        Else
+            cPed += ",'" + cValToChar(Alltrim(aPedidos[nAux])) + "'"
+
+        EndIf
+
+    Next nAux
+
+    cQuery := ""
+    cQuery += " SELECT " 
+    cQuery += " C5_NOTA + '-' + C5_SERIE AS NOTA " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
+    cQuery += " WHERE " 
+    cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
+    cQuery += " AND C5_NUM IN (" + cPed + ") " 
+    cQuery += " AND C5_NOTA <> '' " 
+    cQuery += " AND SC5.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY C5_NOTA " 
+
+    If Select("D_DNFS")
+        D_DNFS->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_DNFS"
+    DbSelectArea("D_DNFS")
+    D_DNFS->(DbGoTop())
+    While ! D_DNFS->(Eof())
+
+        cNF += Alltrim(cValToChar(D_DNFS->NOTA)) + ", "
+
+        D_DNFS->(DbSkip())
+
+    End
+    D_DNFS->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return cNF
 /*/{Protheus.doc} dfAgpOrd
     Define o agrupamento das ordens de pesagem.
     @type  Static Function

@@ -1289,7 +1289,7 @@ Static Function grvBarr(cOperacao, cNumero)
     //Variáveis.
     Local aArea := GetArea()
 
-	U_ADFAT27C(cTbMast, 4, "pesagens_guardian", cOperacao, FWxFilial("ZIB") + cNumero)
+	U_ADFAT27C(cTbMast, 4, "pesagens_guardian", cOperacao, FWxFilial(cTbMast) + cNumero)
 
     RestArea(aArea)
 
