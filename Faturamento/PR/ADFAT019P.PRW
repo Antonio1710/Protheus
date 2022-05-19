@@ -36,7 +36,7 @@ Static Function BrowseDef()
     Local oBrowse := FwMBrowse():New()
 
     oBrowse:SetAlias(cTbMast)
-    oBrowse:SetDescription(cTitulo)
+    oBrowse:SetDescription(cTitulo) 
 
     oBrowse:SetMenuDef("ADFAT019P")
     
@@ -45,6 +45,8 @@ Static Function BrowseDef()
     oBrowse:AddLegend("ZIG->ZIG_INICIA = '3'", "BR_VERDE_ESCURO", "Peso final")
     oBrowse:AddLegend("ZIG->ZIG_INICIA = '4'", "BR_VERMELHO"    , "Sequestrada")
     oBrowse:AddLegend("ZIG->ZIG_INICIA = '5'", "BR_LARANJA"     , "Sequestro liberado")
+
+    oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
 
 Return oBrowse
 /*/{Protheus.doc} MenuDef

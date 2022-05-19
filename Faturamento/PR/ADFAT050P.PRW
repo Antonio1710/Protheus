@@ -2,6 +2,7 @@
 #Include "FWMVCDef.ch"
 #Include "Topconn.ch"
 #Include "Apwebsrv.ch"
+#Include "FWMVCDef.ch"
 
 Static xPula   := Chr(13) + Chr(10)
 Static cTbMast := "ZHQ"
@@ -59,7 +60,7 @@ Static Function MenuDef()
 	ADD OPTION aRotina TITLE "Incluir"    		ACTION "VIEWDEF.ADFAT050P" 	OPERATION MODEL_OPERATION_INSERT ACCESS 0
 	ADD OPTION aRotina TITLE "Alterar"    		ACTION "VIEWDEF.ADFAT050P" 	OPERATION MODEL_OPERATION_UPDATE ACCESS 0
 	ADD OPTION aRotina TITLE "Excluir"    		ACTION "VIEWDEF.ADFAT050P" 	OPERATION MODEL_OPERATION_DELETE ACCESS 0
-	ADD OPTION aRotina TITLE "Importar Dados"   ACTION "U_ADFAT50A()"       OPERATION 10  ACCESS 0
+	// ADD OPTION aRotina TITLE "Importar Dados"   ACTION "U_ADFAT50A()"       OPERATION 10  ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} ModelDef
@@ -113,6 +114,8 @@ Return oView
     @version 01
 /*/
 User Function ADFAT50A()
+
+    // MsAguarde({|| U_ADFAT50D() }, "Aguarde", "Processando...")
     
 Return Nil
 /*/{Protheus.doc} ADFAT50B
@@ -143,7 +146,7 @@ User Function ADFAT50B()
     cQuery += " SELECT " 
         cQuery += " ZHQ_ORDEM, ZHQ_PLACA, ZHQ_INTEGR, ZHQ_GRJADA, ZHQ_SILOS, ZHQ_LACRES, ZHQ_PRODUT, ZHQ_PESO, ZHQ_CAIXAS, " 
         cQuery += " ZHQ_PROCES, ZHQ_ERRO, ZHQ.R_E_C_N_O_ AS REC, " 
-        cQuery += " ZIF_NUMERO, ZIF_CTPATI, ZIF_PLACA, ZIF_ROTEIR " 
+        cQuery += " ZIF_NUMERO, ZIF_CTPATI, ZIF_PLACA, ZIF_ROTEIR, ZIF_PRDSAG " 
     cQuery += " FROM  " 
         cQuery += " " + RetSqlName("ZHQ") + " (NOLOCK) AS ZHQ " 
         cQuery += " INNER JOIN " 
@@ -172,6 +175,18 @@ User Function ADFAT50B()
         aSilos      := Separa(Alltrim(cValToChar(D_GEMBA->ZHQ_SILOS)) ,"#", .F.)
 
         Begin Transaction
+
+            //Valida se o produto retornado do Gemba é o mesmo da ordem de pesagem.
+            If Alltrim(cValToChar(D_GEMBA->ZHQ_PRODUT)) <> Alltrim(cValToChar(D_GEMBA->ZIF_PRDSAG))
+                
+                If ! ajustProd( D_GEMBA->ZHQ_ORDEM, Alltrim(cValToChar(D_GEMBA->ZHQ_PRODUT)) , Alltrim(cValToChar(D_GEMBA->ZIF_PRDSAG)), @cMsgError )
+                     lRet := .F.
+                    DisarmTransaction()
+                    Break
+
+                EndIf               
+
+            EndIf
 
             //Lança lacres.
             For nAux := 1 To Len(aLacres)
@@ -233,6 +248,155 @@ User Function ADFAT50B()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ajustProd
+    Ajusta o produto na ordem de pesagem e ordem de carregamento de ração.
+    @type  Static Function
+    @author Everson
+    @since 16/05/2022
+    @version 01
+/*/
+Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local lRet     := .F.
+    Local cOrdemC  := ""
+    Local cQuery   := ""
+    Local cCodAb   := ""
+    Local cCodUso  := ""
+    Local cCodMax  := ""
+    Local cDesc    := ""
+    Local oModel   := Nil
+    Local aError   := {}
+    Local nRecMax  := 0
+    Local cCodRet  := ""
+    Local aDados   := {}
+
+    Default cMsgError := ""
+
+    //Posiciona na ordem de pesagem.
+    If ! U_ADFAT16A(cNmOrdem)
+        cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizado(ZIF)(ajuste de lote)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cOrdemC := ZIF->ZIF_ORDRAC
+
+    //Posiciona no produto (ZIM).
+    If ! U_ADFAT20B(cProdGemba)
+        cMsgError := "Produto " + cProdGemba + " não localizado(ZIM)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cQuery += " SELECT  " 
+    cQuery += " ZI8_STATUS, ZI8_CDLOTE, ZI8_DESLOT, R_E_C_N_O_ AS REC " 
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZI8") + " (NOLOCK) AS ZI8 " 
+    cQuery += " WHERE " 
+    cQuery += " ZI8_FILIAL = '" + FWxFilial("ZI8") + "' " 
+    cQuery += " AND ZI8_PRDSAG = '" + cProdGemba + "' " 
+    cQuery += " AND ZI8.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY CASE ZI8_STATUS " 
+    cQuery += " When '2' Then 1 " 
+    cQuery += " When '1' Then 2 " 
+    cQuery += " When '3' Then 3 " 
+    cQuery += " ELSE 4 END, ZI8_DTINIC DESC " 
+
+    If Select("D_LOTES") > 0
+        D_LOTES->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_LOTES"
+    DbSelectArea("D_LOTES")
+    D_LOTES->(DbGoTop())
+    While ! D_LOTES->(Eof())
+
+        If D_LOTES->ZI8_STATUS == "2"
+            cCodUso  := Alltrim(cValToChar(D_LOTES->ZI8_CDLOTE))
+            cDesc    := Alltrim(cValToChar(D_LOTES->ZI8_DESLOT))
+            Exit
+        
+        ElseIf D_LOTES->ZI8_STATUS == "1"
+            cCodAb    := Alltrim(cValToChar(D_LOTES->ZI8_CDLOTE))
+            cDesc     := Alltrim(cValToChar(D_LOTES->ZI8_DESLOT))
+            Exit
+
+        Else
+            cCodMax := Alltrim(cValToChar(D_LOTES->ZI8_CDLOTE))
+            cDesc   := Alltrim(cValToChar(D_LOTES->ZI8_DESLOT))
+            nRecMax := Val(cValToChar(D_LOTES->REC))
+            Exit
+
+        EndIf
+
+         D_LOTES->(DbSkip())
+
+    End
+
+    cCodRet := Iif(Empty(cCodUso), cCodAb, cCodUso)
+
+    Begin Transaction
+
+        If Empty(cCodRet) .And. ! Empty(cCodMax)
+
+            DbSelectArea("ZI8")
+            ZI8->(DbGoTo( nRecMax ))
+
+            oModel := FwLoadModel("ADFAT018P")
+            oModel:SetOperation(MODEL_OPERATION_UPDATE)
+
+            oModel:Activate()
+
+            oModel:SetValue("MD_MASTER", "ZI8_STATUS", "2")
+
+            If oModel:VldData()
+                oModel:CommitData()
+                cCodRet := cCodMax
+
+            Else
+                aError := oModel:GetErrorMessage()
+                cMsgError := "Não foi possível abrir o lote " + cCodMax + " para o produto " + cProdGemba + " " + Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+        ElseIf Empty(cCodRet) .And. Empty(cCodMax)
+            cMsgError := "Produto " + cProdGemba + " não possui lote.(ZI8)"
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera lote na ordem de pesagem.
+        If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_LOTE", cCodRet, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera lote na ordem de carregamento de ração.
+        aDados := {}
+        Aadd(aDados,{"ZIR_LOTPRD", cCodRet})
+        Aadd(aDados,{"ZIR_DESLOT", cDesc})
+        If ! U_ADFAT32D(cOrdemC, aDados, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        lRet := .T.
+
+    End Transaction
+
+    RestArea(aArea)
+
+Return lRet
 /*/{Protheus.doc} atuPeGue
     Atualiza registros de carregamento vindos do Gemba.
     @type  Static Function
@@ -392,16 +556,168 @@ Return lRet
     @since 10/05/2022
     @version 01
 /*/
-User Function ADFAT50D()
+User Function ADFAT50D(cNmOrdem, cMsgError)
 
     //Variáveis.
-    Local aArea := GetArea()
-    Local lRet  := .F.
+    Local aArea     := GetArea()
+    Local cASMX     := "Loading.asmx"
+    Local cUrl      := GetMv("MV_#GEMBA",,"http://186.224.100.105:48884/WsGemba/" + cASMX)
+    Local oWsdl     := WSLoading():New()
+    Local cAgrupador:= ""
+    Local nAux      := 1
+    Local nAux2     := 1
+    Local cPlaca    := ""
+    Local cIntegrado:= ""
+    Local cGranjada := ""
+    Local cLacres   := ""
+    Local cSilos    := ""
+    Local cProduto  := ""
+    Local nPeso     := 0
+    Local cCaixas   := ""
+    Local oDetalhe  := Nil
+    Local aDados    := {}
+    Local cEmilErr  := GetMv("MV_#FAT291",,"everson.silva@adoro.com.br;wagner.moro@adoro.com.br")
+    Local cObserv   := "Ocorreu erro salvar o registro de carregamento do Gemba na tabela ZHQ."
 
+    Default cNmOrdem    := ""
+    Default cMsgError   := ""
+
+    If Empty(cUrl)
+        cMsgError := "URL não definida."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If Empty(cNmOrdem)
+        cMsgError := "Ordem de pesagem não informada."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT16A(cNmOrdem)
+        cMsgError := "Ordem de pesagem não localizada(ZIF)(Get - dados de carregamento do Gemba)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cAgrupador := Alltrim(cValToChar(ZIF->ZIF_ROTEIR))
+
+    oWsdl:_URL                      := cUrl
+    oWsdl:CCD_COMPANY_UNIT          := cCodCop
+    oWsdl:CDS_CODE_ORDER_LOADING    := cNmOrdem //Passando a ordem como agrupador, pois o SAG já está utilizando desta forma.
+    //oWsdl:CDS_CODE_ORDER_LOADING  := cAgrupador
+    oWsdl:CNR_BILL_REQUEST          := cNmOrdem 
+
+    oWsdl:Get()
+
+    If ValType(oWsdl:OWSGETRESULT:OWSLOADING) <> "A" .Or. Len(oWsdl:OWSGETRESULT:OWSLOADING) < 1
+        cMsgError := "WS Gemba não retornou dados do método Get(Ordem de Pesagem). " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    For nAux := 1 To Len(oWsdl:OWSGETRESULT:OWSLOADING)
+
+        aDados     := {}
+        cSilos     := ""
+        nPeso      := 0
+
+        cPlaca     := Alltrim(cValToChar(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:CNR_PLATE))
+        cIntegrado := Alltrim(cValToChar(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:CDS_CODE_CUSTOMER))
+        cGranjada  := Alltrim(cValToChar(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:CDS_CODE_SHED))
+        cLacres    := StrTran(Alltrim(cValToChar(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:CDS_SEAL)), ",", "#")
+        
+        If ValType(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:OWSDETAILS:OWSLOADINGDETAIL) == "A" .And. Len(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:OWSDETAILS:OWSLOADINGDETAIL) > 0
+
+            For nAux2 := 1 To Len(oWsdl:OWSGETRESULT:OWSLOADING[nAux]:OWSDETAILS:OWSLOADINGDETAIL)
+
+                oDetalhe := oWsdl:OWSGETRESULT:OWSLOADING[nAux]:OWSDETAILS:OWSLOADINGDETAIL[nAux2]
+
+                cProduto := oDetalhe:CDS_CODE_PRODUCT
+                
+                nPeso    += Val(cValToChar(oDetalhe:CPS_SLIDE))
+                
+                cSilos   += Iif(Empty(cSilos), "", "#") + Right(Alltrim(cValToChar(oDetalhe:CNM_SILO)), 2)
+
+                cCaixas  += carCaixasGe(cCaixas, oDetalhe:CDS_BOX)
+
+            Next nAux2
+
+        EndIf
+
+        Aadd(aDados,{cAgrupador, cNmOrdem, cPlaca, cIntegrado, cGranjada, cLacres, cProduto, nPeso, cSilos, cCaixas})
+
+        If ! U_ADFAT50C(aDados, @cMsgError)
+            U_EnviaEmail(GetMv("MV_RELFROM"), cEmilErr, cObserv + xPula + cMsgError, "Erro Processamento de Registros Gemba", "")
+
+        EndIf
+
+    Next nAux
+
+    FreeObj(oWsdl)
+    FreeObj(oDetalhe)
 
     RestArea(aArea)
 
-Return lRet
+Return .T.
+/*/{Protheus.doc} Function carCaixasGe
+    Carrega caixas carregadas.
+    @type  Static Function
+    @author Everson
+    @since 16/05/2022
+    @version 01
+    /*/
+Static Function carCaixasGe(cRet, cCaixas)
+
+    //Variáveis.
+    Local nAux      := 1
+    Local nAux2     := 1
+    Local aCxAux    := {}
+    Local aCaixas   := {}
+    Local cCxaux    := ""
+    Local cCxaux2   := ""
+    Local nCount    := 0
+
+    Default cCaixas := ""
+
+    aCxAux := Separa(Alltrim(cValToChar(cCaixas)), ",", .F.) 
+
+    For nAux := 1 To Len(aCxAux)
+        
+        cCxaux  := Alltrim(cValToChar(aCxAux[nAux]))
+
+        If Len(cCxaux) == 1
+            Aadd(aCaixas, Padl(cCxaux, 2, "0"))
+
+        Else
+            
+            For nAux2 := 1 To Len(cCxaux)
+
+                nCount++
+
+                cCxaux2 := Substr(cCxaux, nCount, 1)
+
+                Aadd(aCaixas, Padl(cCxaux2, 2, "0"))
+
+            Next nAux2
+
+            nCount  := 0
+
+        EndIf
+
+    Next nAux
+
+    For nAux := 1 To Len(aCaixas)
+
+        cRet += Iif(Empty(cRet), "", "#") + aCaixas[nAux]
+
+    Next nAux
+
+Return cRet
 /*/{Protheus.doc} User Function ADFAT50E
     Envio de cadastro de veículo para o Gemba.
     @type  Function
@@ -471,7 +787,7 @@ User Function ADFAT50E(cPlaca, lUpdate, cMsgError)
     oWsdl:Exists()
 
     If ValType(oWsdl:OWSEXISTSRESULT:OWSSTATUS) <> "A" .Or. Len(oWsdl:OWSEXISTSRESULT:OWSSTATUS) < 1
-        cMsgError := "WS Gemba não retornou dados do método Exists(Placa)."
+        cMsgError := "WS Gemba não retornou dados do método Exists(Placa). " + GetWSCError()
         RestArea(aArea)
         Return .F.
 
@@ -611,7 +927,7 @@ Return Iif(At("-", cPlaca) == 0, Left(cPlaca, 3) + "-" + Right(cPlaca, 4), cPlac
     @version 01
 /*/
 Static Function formMotorista(cMotorista)
-Return rmvAcento(Substr(Iif(Empty(cMotorista), "MOTORISTA", Alltrim(cMotorista)),1,45))
+Return U_ADFAT50O(Substr(Iif(Empty(cMotorista), "MOTORISTA", Alltrim(cMotorista)),1,45))
 /*/{Protheus.doc} User Function ADFAT50E
     Envio de ordem de pesagem para o Gemba.
     @type  Function
@@ -657,7 +973,7 @@ User Function ADFAT50F(cNmOrdem, cMsgError)
 
     //Posiciona na ordem de pesagem.
     If ! U_ADFAT16A(cNmOrdem)
-        cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada."
+        cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada.(ZIF)(OrderLoading - envio de ordem para o Gemba)"
         RestArea(aArea)
         Return .F.
 
@@ -702,12 +1018,12 @@ User Function ADFAT50F(cNmOrdem, cMsgError)
     EndIf
 
     //Valida se o ticket possui pesagem inicial.
-    If ZIG->ZIG_INICIA <> "2"
-        cMsgError := "Ticket de pesagem " + ZIG->ZIG_NUMERO + " sem pesagem inicial."
-        RestArea(aArea)
-        Return .F.
+    // If ZIG->ZIG_INICIA <> "2"
+    //     cMsgError := "Ticket de pesagem " + ZIG->ZIG_NUMERO + " sem pesagem inicial."
+    //     RestArea(aArea)
+    //     Return .F.
 
-    EndIf
+    // EndIf
 
     cPlaca     := ZIF->ZIF_PLACA
 
@@ -750,9 +1066,9 @@ User Function ADFAT50F(cNmOrdem, cMsgError)
     cDtCarreg  := Month2Str(Date()) + "/" + Day2Str(Date()) + "/" + Year2Str(Date())
 
     oWsdl:_URL                      := cUrl
-    //oWsdl:CNR_BILL_REQUEST          := cAgrupador
-    oWsdl:CNR_BILL_REQUEST          := cNmOrdem //Passando a ordem como agrupador, pois o SAG já está utilizando desta forma.
-    oWsdl:CDS_CODE_ORDER_LOADING    := cNmOrdem
+    //oWsdl:CDS_CODE_ORDER_LOADING         := cAgrupador
+    oWsdl:CDS_CODE_ORDER_LOADING    := cNmOrdem //Passando a ordem como agrupador, pois o SAG já está utilizando desta forma.
+    oWsdl:CNR_BILL_REQUEST          := cNmOrdem
     oWsdl:CNR_PLATE                 := cPlacaFor
 
     oOrdem := OrderLoading_orderLoading():New()
@@ -836,7 +1152,7 @@ User Function ADFAT50G(cNmOrdem, cMsgError)
     EndIf
 
     oWsdl:_URL             := cUrl
-    oWsdl:CNR_BILL_REQUEST   := cNmOrdem
+    oWsdl:CNR_BILL_REQUEST := cNmOrdem
 
     oWsdl:Delete()  
 
@@ -857,7 +1173,7 @@ User Function ADFAT50G(cNmOrdem, cMsgError)
 
     EndIf
 
-    If cCodRet == "0"
+    If cCodRet == "0" .And. ! ("não existe nenhuma viagem vinculada ou já excluído" $cErro)
         cMsgError := "Erro na execução do método Delete para ordem de pesagem " + cNmOrdem + ". " + cErro
         RestArea(aArea)
         Return .F.
@@ -1091,7 +1407,7 @@ User Function ADFAT50L(cCodigo, cLoja, cTpCliFor, cMsgError)
 
         EndIf
 
-        cNome := rmvAcento(Substr(Alltrim(cValToChar(SA1->A1_NOME)),1,45))
+        cNome := U_ADFAT50O(Substr(Alltrim(cValToChar(SA1->A1_NOME)),1,45))
 
     ElseIf cTpCliFor == "F"
 
@@ -1105,7 +1421,7 @@ User Function ADFAT50L(cCodigo, cLoja, cTpCliFor, cMsgError)
 
         EndIf
 
-        cNome := rmvAcento(Substr(Alltrim(cValToChar(SA2->A2_NOME)),1,45))
+        cNome := U_ADFAT50O(Substr(Alltrim(cValToChar(SA2->A2_NOME)),1,45))
 
     EndIf
 
@@ -1246,8 +1562,8 @@ User Function ADFAT50M(cGranjada, cMsgError)
 
         EndIf
 
-        cEnd    := rmvAcento(Substr(Alltrim(cValToChar(SA1->A1_END)) + ", " + Alltrim(cValToChar(SA1->A1_BAIRRO)),1,45))
-        cCidade := rmvAcento(Alltrim(cValToChar(SA1->A1_MUN)))
+        cEnd    := U_ADFAT50O(Substr(Alltrim(cValToChar(SA1->A1_END)) + ", " + Alltrim(cValToChar(SA1->A1_BAIRRO)),1,45))
+        cCidade := U_ADFAT50O(Alltrim(cValToChar(SA1->A1_MUN)))
         cUF     := Alltrim(cValToChar(SA1->A1_EST))
 
     ElseIf cTpCliFor == "F"
@@ -1262,8 +1578,8 @@ User Function ADFAT50M(cGranjada, cMsgError)
 
         EndIf
 
-        cEnd    := rmvAcento(Substr(Alltrim(cValToChar(SA2->A2_END)) + ", " + Alltrim(cValToChar(SA2->A2_BAIRRO)),1,45))
-        cCidade := rmvAcento(Alltrim(cValToChar(SA2->A2_MUN)))
+        cEnd    := U_ADFAT50O(Substr(Alltrim(cValToChar(SA2->A2_END)) + ", " + Alltrim(cValToChar(SA2->A2_BAIRRO)),1,45))
+        cCidade := U_ADFAT50O(Alltrim(cValToChar(SA2->A2_MUN)))
         cUF     := Alltrim(cValToChar(SA2->A2_EST))
 
     EndIf
@@ -1317,14 +1633,176 @@ User Function ADFAT50M(cGranjada, cMsgError)
     RestArea(aArea)
 
 Return .T.
-/*/{Protheus.doc} rmvAcento
+/*/{Protheus.doc} User Function ADFAT50N
+    Envia 
+    @type  Function
+    @author Everson
+    @since 16/05/2022
+    @version 01
+    /*/
+User Function ADFAT50N(cNmOrdem, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cASMX     := "LoadingDelivered.asmx"
+    Local cUrl      := GetMv("MV_#GEMBA",,"http://186.224.100.105:48884/WsGemba/" + cASMX)
+    Local oWsdl     := WSLoadingDelivered():New()
+    Local cPeso     := ""
+    Local cCodRet   := ""
+    Local cErro     := ""
+
+    Default cNmOrdem  := ""
+    Default cMsgError := ""
+
+    If Empty(cUrl)
+        cMsgError := "URL não definida."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If Empty(cNmOrdem)
+        cMsgError := "Ordem de pesagem não informada."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Posiciona na ordem de pesagem.
+    If ! U_ADFAT16A(cNmOrdem)
+        cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada(ZIF)(ADFAT50N - SetDelivered)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Posiciona no ticket de pesagem pela ordem de pesagem.
+    If ! U_ADFAT196(cNmOrdem)
+        cMsgError := "Ticket de pesagem referente à ordem de pesagem " + cNmOrdem + " não localizado(ZIG)(ADFAT50N - SetDelivered)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cAgrupador := Alltrim(cValToChar(ZIF->ZIF_ROTEIR))
+    cPeso      := cValToChar(Round(ZIG->ZIG_PESOLI,2))
+
+    oWsdl:_URL                              := cUrl
+    oWsdl:OWSLOADING:CCD_COMPANY_UNIT       := cCodCop
+    // oWsdl:OWSLOADING:CDS_CODE_ORDER_LOADING := cAgrupador
+    oWsdl:OWSLOADING:CDS_CODE_ORDER_LOADING := cNmOrdem ////Passando a ordem como agrupador, pois o SAG já está utilizando desta forma.
+    oWsdl:OWSLOADING:CNR_BILL_REQUEST       := cNmOrdem
+    oWsdl:OWSLOADING:CPS_DELIVERED          := cPeso
+    oWsdl:OWSLOADING:CTP_STATUS             := "0"
+
+    oWsdl:SetDelivered()
+
+    If ValType(oWsdl:OWSSETDELIVEREDRESULT:OWSSTATUS) <> "A" .Or. Len(oWsdl:OWSSETDELIVEREDRESULT:OWSSTATUS) < 1
+        cMsgError := "WS Gemba não retornou dados do método SetDelivered(Ordem de Pesagem). " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cCodRet := oWsdl:OWSSETDELIVEREDRESULT:OWSSTATUS[1]:CSTATUSCODE
+    cErro   := Alltrim(cValToChar(oWsdl:OWSSETDELIVEREDRESULT:OWSSTATUS[1]:CDESCRIPTION))
+
+    If ! (cCodRet $"0/1")
+        cMsgError := "Gemba retornou código inexistente " + cCodRet + " para a ordem de pesagem " + cNmOrdem + " (método SetDelivered). " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If cCodRet == "0"
+        cMsgError := "Erro na execução do método SetDelivered para a ordem de pesagem " + cNmOrdem + ". " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+Return .T.
+/*/{Protheus.doc} ADFAT50
+    Ponto de entrada.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+User Function ADFAT50()
+
+    //Variáveis.
+    Local aArea       := GetArea()
+	Local aParam	  := PARAMIXB
+	Local xRet 		  := .T.
+	Local oObj 		  := ""
+	Local cIdPonto 	  := ""
+	Local cIdModel 	  := ""
+    Local oModelx     := Nil
+    Local nOperation  := 0
+    Local cNumero     := ""
+    Local lBarramento := GetMv("MV_#ADF491",,.T.) //Registros de pesagem vindos do barramento.
+    
+	If aParam <> Nil
+
+		oObj 	    := aParam[1]
+		cIdPonto    := aParam[2]
+		cIdModel    := aParam[3]
+        nOperation  := oObj:GetOperation()
+
+		If cIdPonto == "MODELCOMMITNTTS" .And. ! lBarramento
+
+            oModelx := FWModelActive()
+            cNumero := oModelx:GetValue("MD_MASTER", "ZHQ_ORDEM")
+
+            If nOperation == MODEL_OPERATION_INSERT
+                cOperacao := "I"
+
+            ElseIf nOperation == MODEL_OPERATION_UPDATE
+                cOperacao := "A"
+
+            ElseIf nOperation == MODEL_OPERATION_DELETE
+                cOperacao := "D"
+
+            EndIf
+
+            If ! Empty(cOperacao) .And. ! Empty(cNumero)
+                grvBarr(cOperacao, cNumero)
+
+            EndIf
+
+		EndIf
+
+	EndIf
+
+    RestArea(aArea)
+
+Return xRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+	U_ADFAT27C(cTbMast, 1, "retornos_de_carregamento_gemba", cOperacao, FWxFilial("ZIB") + cNumero)
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT50O
 	Remove caracteres especiais da string.
-	@type  Static Function
+	@type  User Function
 	@author Everson
 	@since 13/02/2022
 	@version 01
 	/*/
-Static Function rmvAcento(cString)
+User Function ADFAT50O(cString)
 	
 	cString := Alltrim(cValToChar(cString))
 	cString := StrTran(cString,"\" ," ")

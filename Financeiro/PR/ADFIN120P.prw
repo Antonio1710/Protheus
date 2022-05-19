@@ -28,6 +28,7 @@ Static cRotina  := "ADFIN120P"
     @ticket 18141 - Fernando Macieira - 14/03/2022 - RM - Acordos - Integração Protheus - Financeiro com favorecidos que nao foram vinculados na hora do cadastro
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
+    @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
 /*/
 User Function ADFIN120P()
 
@@ -68,13 +69,8 @@ User Function ADFIN120P()
 
         If lSigaOn
 
-            //cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, ZHC_BANCO BANCO_SIGA, ZHC_AGENCI AGENCIA_SIGA, '' DIGAGENCIA_SIGA, ZHC_CONTA CONTA_SIGA, ZHC_DIGCTA DIGCONTA_SIGA, ZHC_FAVORE BENEFICIARIO_SIGA, ZHC_CPFCGC CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES
-            //cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, ISNULL(ZHC_BANCO,'') BANCO_SIGA, ISNULL(ZHC_AGENCI,'') AGENCIA_SIGA, '' DIGAGENCIA_SIGA, ISNULL(ZHC_CONTA,'') CONTA_SIGA, ISNULL(ZHC_DIGCTA,'') DIGCONTA_SIGA, ISNULL(ZHC_FAVORE,'') BENEFICIARIO_SIGA, ISNULL(ZHC_CPFCGC,'') CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES " // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
-            cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, '' BANCO_SIGA, '' AGENCIA_SIGA, '' DIGAGENCIA_SIGA, '' CONTA_SIGA, '' DIGCONTA_SIGA, '' BENEFICIARIO_SIGA, '' CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES, ZHB_FAVORE " // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
+            cQuery := " SELECT ZHB_GERSE2 FLAG_SIGA, ZHB_FILIAL FILIAL_SIGA, '' PREFIXO_SIGA, '' NUM_SIGA, ZHB_PARCEL PARCELAS_SIGA, '' BANCO_SIGA, '' AGENCIA_SIGA, '' DIGAGENCIA_SIGA, '' CONTA_SIGA, '' DIGCONTA_SIGA, '' BENEFICIARIO_SIGA, '' CPF_CNPJ_SIGA, ZHB_VALOR VALOR, ZHB_VENCTO VENCTO_PARCELA1, 0 CODCOLIGADA, '' CODFORUM, ZHB_PROCES NUMPROCESSO, ZHB_ITEM, ZHB_TIPDES, ZHB_NOMDES, ZHB_FAVORE, ZHB_FILNUM " 
             cQuery += " FROM " + RetSqlName("ZHB") + " ZHB (NOLOCK)
-            //cQuery += " INNER JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_=''
-            //cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_TIPDES=ZHB_TIPDES AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 28/01/2022 - RM - Acordos - Tratativa para gerar central aprovação (ZC7) para despesas sem favorecido
-            //cQuery += " LEFT JOIN " + RetSqlName("ZHC") + " ZHC (NOLOCK) ON ZHC_FILIAL=ZHB_FILIAL AND ZHC_PROCES=ZHB_PROCES AND ZHC_CODIGO=ZHB_FAVORE AND ZHC.D_E_L_E_T_='' " // @ticket 18141 - Fernando Macieira - 08/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
             cQuery += " WHERE ZHB_FILIAL='"+FWxFilial("ZHB")+"' 
             cQuery += " AND ZHB_APROVA='F'
             cQuery += " AND ZHB_GERSE2='F'
@@ -83,7 +79,7 @@ User Function ADFIN120P()
         Else
 
             cQuery := " SELECT * FROM OPENQUERY ( " + cLinked + ", '
-            cQuery += "	    SELECT FLAG_SIGA, FILIAL_SIGA, PREFIXO_SIGA, NUM_SIGA, PARCELAS_SIGA, BANCO_SIGA, AGENCIA_SIGA, DIGAGENCIA_SIGA, CONTA_SIGA, DIGCONTA_SIGA, BENEFICIARIO_SIGA, CPF_CNPJ_SIGA, VALOR, VENCTO_PARCELA1, A.CODCOLIGADA, A.CODFORUM, A.NUMPROCESSO, '' ZHB_ITEM, '' ZHB_TIPDES, '' ZHB_NOMDES, '' ZHB_FAVORE
+            cQuery += "	    SELECT FLAG_SIGA, FILIAL_SIGA, PREFIXO_SIGA, NUM_SIGA, PARCELAS_SIGA, BANCO_SIGA, AGENCIA_SIGA, DIGAGENCIA_SIGA, CONTA_SIGA, DIGCONTA_SIGA, BENEFICIARIO_SIGA, CPF_CNPJ_SIGA, VALOR, VENCTO_PARCELA1, A.CODCOLIGADA, A.CODFORUM, A.NUMPROCESSO, '' ZHB_ITEM, '' ZHB_TIPDES, '' ZHB_NOMDES, '' ZHB_FAVORE, '' ZHB_FILNUM
             cQuery += "		FROM [" + cSGBD + "].[DBO].[VPROCESSOCOMPL] A (NOLOCK)
             cQuery += "		INNER JOIN [" + cSGBD + "].[DBO].[VPROCESSOS] B (NOLOCK) ON A.CODCOLIGADA=B.CODCOLIGADA AND A.CODFORUM=B.CODFORUM AND A.NUMPROCESSO=B.NUMPROCESSO
             cQuery += "		INNER JOIN [" + cSGBD + "].[DBO].[VDESPESAPROCESSOS] C (NOLOCK) ON A.CODCOLIGADA=C.CODCOLIGADA AND A.CODFORUM=C.CODFORUM AND A.NUMPROCESSO=C.NUMPROCESSO AND C.CODTIPODESPESAS=''"+cTpDespesa+"''
@@ -143,7 +139,8 @@ User Function ADFIN120P()
                             WorkRM->ZHB_TIPDES,;
                             WorkRM->ZHB_NOMDES,; 
                             cZHC_FAVORE,; 
-                            cZHC_CPFCGC } )
+                            cZHC_CPFCGC,;
+                            WorkRM->ZHB_FILNUM } )
 
             GeraZC7RM(aDadRM)
 
@@ -217,6 +214,7 @@ Static Function GeraZC7RM(aDadRM)
 
     Local cFavore   := aDadRM[1,15]
     Local cCPFCGC   := aDadRM[1,16]
+    Local cFilNum   := aDadRM[1,17] // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
 
     Local aDadPR    := {}
     Local cHist     := cAssunto + " - Processo " + AllTrim(cProcesso) + ", " + AllTrim(cZHBItem) + ", " + AllTrim(cZHBTip) + ", " + AllTrim(cCPFCGC)
@@ -226,6 +224,15 @@ Static Function GeraZC7RM(aDadRM)
     Local lExistSE2 := .f.
     Local lExistZHB := .f.
     Local cNumero   := GetSXENUM("RC1","RC1_NUMTIT")   //NextRC1()
+    Local cFilBkp   := cFilAnt // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+
+    // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+    If Empty(cFilNum)
+        cFilNum := FWxFilial("SE2")
+    EndIf
+
+    cFilAnt := cFilNum
+    //
 
     //cDscBlq := "Processo " + AllTrim(cProcesso) + AllTrim(cZHBItem) + AllTrim(cZHBTip) + AllTrim(Str(nValor)) + DtoC(dVenctoP1)
     cDscBlq := AllTrim(cProcesso) + AllTrim(cZHBItem) + AllTrim(cCPFCGC) + DtoC(dVenctoP1) + AllTrim(cQtdParc) + AllTrim(Str(nValor)) + AllTrim(cZHBTip) // @ticket 18141 - Fernando Macieira - 09/02/2022 - RM - Acordos - Integração Protheus - Processos com 2 ou + favorecidos
@@ -312,6 +319,7 @@ Static Function GeraZC7RM(aDadRM)
 
             If lMsErroAuto
 
+                cFilAnt := cFilBkp // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
                 DisarmTransaction()
                 Break
 
@@ -354,31 +362,6 @@ Static Function GeraZC7RM(aDadRM)
                 u_GrLogZBE( msDate(), TIME(), cUserName, "GEROU CENTRAL APROVACAO - TITULO/PARCELA/TIPO " + SE2->E2_NUM+"/"+SE2->E2_PARCELA+"/"+SE2->E2_TIPO,"RH-ACORDOS","ADFIN120P",;
                 "DATA/VALOR " + DtoC(SE2->E2_VENCTO) + " / " + AllTrim(Str(SE2->E2_VALOR)), ComputerName(), LogUserName() )
 
-                // Flego RM (LK tem que ser fora do begin transaction senão dá erro)
-                /*
-                cSQL := " UPDATE OPENQUERY ( " + cLinked + ",
-                cSQL += " ' SELECT FLAG_SIGA, FILIAL_SIGA, PREFIXO_SIGA, NUM_SIGA
-                cSQL += "   FROM [" + cSGBD + "].[DBO].[VPROCESSOCOMPL]
-                cSQL += "   WHERE CODCOLIGADA = ''"+cColigada+"''
-                cSQL += "   AND CODFORUM = ''"+cForum+"''
-                cSQL += "   AND NUMPROCESSO = ''"+cProcesso+"'' ' )
-                cSQL += " SET FLAG_SIGA = 'T', FILIAL_SIGA = '"+FWxFilial("SE2")+"', PREFIXO_SIGA = '"+cPrefixo+"', NUM_SIGA = '"+cNumero+"'
-
-                If tcSqlExec(cSQL) < 0
-                    msgAlert("UPDATE no RM não foi realizado! Envie o erro que será mostrado na próxima tela ao TI...")
-                    MessageBox(tcSqlError(),"",16)
-                    Conout( DtoC(msDate()) + " " + Time() + " ADFIN115P - RM ACORDOS " + TCSQLError() )
-                EndIf
-
-                cSql := " UPDATE [" + cLinked + "].[" + cSGBD + "].[DBO].[VPROCESSOCOMPL]
-                cSql += " SET FLAG_SIGA = 'T', FILIAL_SIGA = '"+FWxFilial("SE2")+"', PREFIXO_SIGA = '"+cPrefixo+"', NUM_SIGA = '"+cNumero+"'
-                cSQL += "   WHERE CODCOLIGADA = '"+cColigada+"'
-                cSQL += "   AND CODFORUM = '"+cForum+"'
-                cSQL += "   AND NUMPROCESSO = '"+cProcesso+"'
-
-                tcSqlExec(cSQL)
-                */
-            
             EndIf
 
             If !lMsErroAuto
@@ -416,6 +399,7 @@ Static Function GeraZC7RM(aDadRM)
                 EndIf
 
             Else
+                cFilAnt := cFilBkp // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
                 DisarmTransaction()
                 Break
             EndIf
@@ -455,7 +439,8 @@ Static Function GeraZC7RM(aDadRM)
 
     EndIf
 
-	RestArea( aAreaAtu ) 
+	cFilAnt := cFilBkp // @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+    RestArea( aAreaAtu ) 
 	
 Return
 

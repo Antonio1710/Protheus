@@ -1,3 +1,4 @@
+#Include "Topconn.ch"
 
 /*/{Protheus.doc} User Function ADFAT049P
     Job para obter os registros de carregamento do Gemba.
@@ -29,16 +30,71 @@ Return Nil
 User Function ADFAT491()
 
     //Variáveis.
+    Local aArea       := GetArea()
     Local lBarramento := GetMv("MV_#ADF491",,.T.) //Registros de pesagem vindos do barramento.
+    Local cQuery      := ""
+    Local cMsgError  := ""
     
     If lBarramento
         U_ADFAT29J()
     
     Else
-        U_ADFAT50D()
+
+        cQuery += " SELECT  "
+        cQuery += " DISTINCT ZIF_NUMERO "
+        cQuery += " FROM "
+        cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF "
+        cQuery += " INNER JOIN "
+        cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON "
+        cQuery += " ZIF_FILIAL = ZIG_FILIAL "
+        cQuery += " AND ZIF_NUMERO = ZIG_ORDEM "
+        cQuery += " INNER JOIN "
+        cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB ON "
+        cQuery += " ZIF_FILIAL = ZIB_FILIAL "
+        cQuery += " AND ZIF_CTPATI = ZIB_NUMERO "
+        cQuery += " LEFT OUTER JOIN "
+        cQuery += " " + RetSqlName("ZIT") + " (NOLOCK) AS ZIT ON "
+        cQuery += " ZIF_FILIAL = ZIT_FILIAL "
+        cQuery += " AND ZIF_NUMERO = ZIT_ORDEM "
+        cQuery += " AND ZIT.D_E_L_E_T_ = '' "
+        cQuery += " WHERE "
+        cQuery += " ZIF_FILIAL = '" + FwxFilial("ZIF") + "' "
+        cQuery += " AND ZIG_TPMOV = 'R' "
+        cQuery += " AND ZIG_INICIA IN ('1','2','4') "
+        cQuery += " AND ZIB_STATUS NOT IN ('5','6') "
+        cQuery += " AND (ZIT_ORDEM IS NULL OR ZIT_ORDEM = '') "
+        cQuery += " AND ZIF.D_E_L_E_T_ = '' "
+        cQuery += " AND ZIG.D_E_L_E_T_ = '' "
+        cQuery += " AND ZIB.D_E_L_E_T_ = '' "
+        cQuery += " ORDER BY  ZIF_NUMERO "
+
+        If Select("D_DADOS") > 0
+            D_DADOS->(DbCloseArea())
+
+        EndIf
+
+        TcQuery cQuery New Alias "D_DADOS"
+        DbSelectArea("D_DADOS")
+        D_DADOS->(DbGoTop())
+
+        While ! D_DADOS->(Eof())
+
+            If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
+                U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
+
+            Else
+                U_ADFAT173("Obter lacres : sucesso " , D_DADOS->ZIF_NUMERO, "", "GEMBA")
+
+            EndIf
+
+            D_DADOS->(DbSkip())
+
+        End
 
     EndIf
 
     U_ADFAT50B()
+
+    RestArea(aArea)
 
 Return Nil

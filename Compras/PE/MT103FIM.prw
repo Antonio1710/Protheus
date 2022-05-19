@@ -52,6 +52,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
   @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
   @history Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
+  @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
 /*/
 User Function MT103FIM()
 
@@ -70,6 +71,7 @@ User Function MT103FIM()
   Private cToBoletim := ''
   Private lEnviaMail := .F.
   
+  FixBonNcc() // @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
   UpItemCta() // @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 
   If SF1->F1_TIPO == "D" .AND. !EMPTY(SF1->F1_DUPL) .AND. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
@@ -81,12 +83,24 @@ User Function MT103FIM()
 
       If SE1->E1_NUM == SF1->F1_DOC .AND. SE1->E1_CLIENTE == SF1->F1_FORNECE .AND. SE1->E1_LOJA == SF1->F1_LOJA
 
+        // @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
+        u_GrLogZBE(msDate(),TIME(),cUserName,"SE1->E1_TIPO=" + SE1->E1_TIPO,"CUSTOM ANTIGA","MT103FIM",;
+        "DEVOLUCAO VENDA - NF/SERIE " + SF1->F1_DOC + "/" + SF1->F1_SERIE,ComputerName(),LogUserName())
+        //
+
         Reclock("SE1", .F.)
-        SE1->E1_TIPO := "NCC"
+          SE1->E1_TIPO := "NCC"
         SE1->(MsUnlock())
+
+        // @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
+        u_GrLogZBE(msDate(),TIME(),cUserName,"SE1->E1_TIPO=" + SE1->E1_TIPO,"CUSTOM ANTIGA","MT103FIM",;
+        "DEVOLUCAO VENDA ALTERADA - NF/SERIE " + SF1->F1_DOC + "/" + SF1->F1_SERIE,ComputerName(),LogUserName())
+        //
+
       EndIf
 
     Endif
+
   EndIf
 
   //chamado 036068 - Fernando 25/07/2017
@@ -2477,4 +2491,70 @@ Static Function UpItemCta()
 
   RestArea( aAreaSD1 )
   
+Return
+
+/*/{Protheus.doc} Static Function FixBonNcc
+  Gravação forçada autorizada pois TOTVS PRIME não deu solução
+  @type  Static Function
+  @author FWNM
+  @since 18/05/2022
+  @version version
+  @param param_name, param_type, param_descr
+  @return return_var, return_type, return_description
+  @example
+  (examples)
+  @see (links_or_references)
+  @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
+/*/
+Static Function FixBonNcc()
+
+  Local aAreaSE1 := SE1->( GetArea() )
+  Local aArea    := GetArea()
+
+  If AllTrim(SF1->F1_TIPO) == "D"
+
+    SE1->( dbSetOrder(2) ) // E1_FILIAL, E1_CLIENTE, E1_LOJA, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, R_E_C_N_O_, D_E_L_E_T_
+    If SE1->( dbSeek(SF1->F1_FILIAL+SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_SERIE+SF1->F1_DOC) )
+
+      If AllTrim(SE1->E1_TIPO) == "BON"
+
+        u_GrLogZBE(msDate(),TIME(),cUserName,"SE1->E1_TIPO=BON","1 FIXBONNCC","MT103FIM",;
+        "DEVOLUCAO VENDA - NF/SERIE " + SF1->F1_DOC + "/" + SF1->F1_SERIE,ComputerName(),LogUserName())
+
+        RecLock("SE1", .F.)
+          SE1->E1_TIPO := "NCC"
+        SE1->( msUnLock() )
+
+        u_GrLogZBE(msDate(),TIME(),cUserName,"SE1->E1_TIPO=NCC","1 FIXBONNCC","MT103FIM",;
+        "DEVOLUCAO VENDA ALTERADA - NF/SERIE " + SF1->F1_DOC + "/" + SF1->F1_SERIE,ComputerName(),LogUserName())
+
+      EndIf
+
+    Else
+
+      If SE1->( dbSeek(FWxFilial("SE1")+SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_SERIE+SF1->F1_DOC) )
+
+        If AllTrim(SE1->E1_TIPO) == "BON"
+
+          u_GrLogZBE(msDate(),TIME(),cUserName,"SE1->E1_TIPO=BON","2 FIXBONNCC","MT103FIM",;
+          "DEVOLUCAO VENDA - NF/SERIE " + SF1->F1_DOC + "/" + SF1->F1_SERIE,ComputerName(),LogUserName())
+
+          RecLock("SE1", .F.)
+            SE1->E1_TIPO := "NCC"
+          SE1->( msUnLock() )
+
+          u_GrLogZBE(msDate(),TIME(),cUserName,"SE1->E1_TIPO=NCC","2 FIXBONNCC","MT103FIM",;
+          "DEVOLUCAO VENDA ALTERADA - NF/SERIE " + SF1->F1_DOC + "/" + SF1->F1_SERIE,ComputerName(),LogUserName())
+
+        EndIf
+
+      EndIf
+
+    EndIf
+
+  EndIf
+  
+  RestArea(aAreaSE1)
+  RestArea(aArea)
+
 Return

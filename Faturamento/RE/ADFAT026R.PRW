@@ -829,6 +829,7 @@ Static Function IRomaneio(cTicket)
     Local aStatus   := RetSX3Box(GetSX3Cache("ZIG_INICIA", "X3_CBOX"),,,1)
     Local nStatus   := 0
     Local cStatus   := ""
+    Local cPlacaFor := ""
 
     If ! U_ADFAT16A(ZIG->ZIG_ORDEM)
         Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -841,9 +842,10 @@ Static Function IRomaneio(cTicket)
     SC6->(DbSetOrder(17))
     If SC6->(DbSeek( FWxFilial("SC6") + ZIF->ZIF_NUMERO))
         cPedS := SC6->C6_NUM
-        cProduto := Alltrim(cValToChar(Posicione("ZIM", 1, FWxFilial("ZIM") + ZIF->ZIF_PRDSAG, "ZIM_DESSAG")))
 
     EndIf
+    
+    cProduto := Alltrim(cValToChar(Posicione("ZIM", 1, FWxFilial("ZIM") + ZIF->ZIF_PRDSAG, "ZIM_DESSAG")))
 
     cCarga := ZIF->ZIF_ROTEIR
     cDtFab := DToC(ZIG->ZIG_DTPES2)
@@ -879,37 +881,42 @@ Static Function IRomaneio(cTicket)
             oPrinter:Say(145,  20, Iif(ZIF->ZIF_CLIFOR == "C", "Cliente: ", "Fornec:"), oFt16B)
             oPrinter:Say(145, 100,  ZIF->ZIF_FORNEC + "/" + ZIF->ZIF_LJFORN + " " + ZIF->ZIF_NMFOR, oFt14N)
 
-            oPrinter:Say(165,  20, "Placa: ", oFt16B)
-            oPrinter:Say(165, 100, ZIF->ZIF_PLACA, oFt14N)
-
-            oPrinter:Say(205,  20, "Sequência: ", oFt16B)
-            oPrinter:Say(205, 115, ZIG->ZIG_SEQTKT, oFt14N)
-            
-            oPrinter:Say(225,  20, "Produto: ", oFt16B)
-            oPrinter:Say(225, 115, cProduto, oFt14N)
-
-            oPrinter:Say(245,  20, "Quantidade: ", oFt16B)
-            oPrinter:Say(245, 115, Alltrim(cValToChar(Transform(ZIF->ZIF_QUANT, "@E 99,999,999.999"))), oFt14N)
-
-            oPrinter:Say(265,  20, "Cod. Protheus: ", oFt16B)
-            oPrinter:Say(265, 115, ZIF->ZIF_PRDPRO, oFt14N)
-
-            oPrinter:Say(305,  20, "Observações:", oFt16B)
-            oPrinter:Say(340,  20, "____________________________________________________________________________", oFt14N)
-            oPrinter:Say(380,  20, "____________________________________________________________________________", oFt14N)
-            oPrinter:Say(420,  20, "____________________________________________________________________________", oFt14N)
-
         //Coluna 2.      
 
         //Coluna 3.
             oPrinter:Say(120, 420, "Emissão: ", oFt16B)
             oPrinter:Say(120, 490, DToC(ZIF->ZIF_DATA), oFt14N)
 
-            nStatus  := AScan(aStatus, {|x| Alltrim(cValToChar(x[2]))  == Alltrim(cValToChar(ZIG->ZIG_INICIA))})
-            cStatus  := aStatus[nStatus,3]
+            cPlacaFor := Left(ZIF->ZIF_PLACA,3) + "-" + Right(ZIF->ZIF_PLACA,4)
 
-            oPrinter:Say(165, 420, "Situação: ", oFt16B)
-            oPrinter:Say(165, 490, cStatus, oFt14N)
+            oPrinter:Say(165, 420, "Placa: ", oFt16B)
+            oPrinter:Say(165, 490, cPlacaFor, oFt14N)
+
+            oPrinter:FwMSBAR("CODE128" , 015, 036, cPlacaFor,oPrinter,.F. ,Nil ,Nil ,0.017 ,1 ,Nil ,Nil,"A" ,.F. )
+
+
+        nStatus  := AScan(aStatus, {|x| Alltrim(cValToChar(x[2]))  == Alltrim(cValToChar(ZIG->ZIG_INICIA))})
+        cStatus  := aStatus[nStatus,3]
+        oPrinter:Say(165,  20, "Situação: ", oFt16B)
+        oPrinter:Say(165, 100, cStatus, oFt14N)
+
+        oPrinter:Say(205,  20, "Sequência: ", oFt16B)
+        oPrinter:Say(205, 115, ZIG->ZIG_SEQTKT, oFt14N)
+        
+        oPrinter:Say(225,  20, "Produto: ", oFt16B)
+        oPrinter:Say(225, 115, Iif(Empty(cProduto),ZIF->ZIF_PRDSAG,cProduto), oFt14N)
+
+        oPrinter:Say(245,  20, "Quantidade: ", oFt16B)
+        oPrinter:Say(245, 115, Alltrim(cValToChar(Transform(ZIF->ZIF_QUANT, "@E 99,999,999.999"))), oFt14N)
+
+        oPrinter:Say(265,  20, "Cod. Protheus: ", oFt16B)
+        oPrinter:Say(265, 115, ZIF->ZIF_PRDPRO, oFt14N)
+
+
+        oPrinter:Say(305,  20, "Observações:", oFt16B)
+        oPrinter:Say(340,  20, "____________________________________________________________________________", oFt14N)
+        oPrinter:Say(380,  20, "____________________________________________________________________________", oFt14N)
+        oPrinter:Say(420,  20, "____________________________________________________________________________", oFt14N)
 
         oPrinter:Say(500,  20, "________________________________", oFt14N)
         oPrinter:Say(525,  20, ZIF->ZIF_NMFOR, oFt14N)

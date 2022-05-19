@@ -1210,17 +1210,19 @@ Return lRet
     @since 22/02/2022
     @version 01
 /*/
-User Function ADFAT166(cNmOrdem)
+User Function ADFAT166(cNmOrdem, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
     Local lRet      := .F.
     Local oModel    := Nil
     Local aError    := {}
-    Local cMsgError := ""
+
+    Default cMsgError := ""
 
     If ! U_ADFAT16A(cNmOrdem)
-        Help(Nil, Nil, "Função ADFAT166(ADFAT017P)", Nil, "Ordem de pesagem " + cNmOrdem + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        cMsgError := "Ordem de pesagem " + cNmOrdem + " não encontrada."
+        Help(Nil, Nil, "Função ADFAT166(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
@@ -1338,6 +1340,23 @@ User Function ADFAT16A(cNmOrdem)
     DbSelectArea("ZIF")
     ZIF->(DbSetOrder(2))
     If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem) )
+        Return .F.
+
+    EndIf
+
+Return .T.
+/*/{Protheus.doc} ADFAT16E
+    Posiciona no registro de ordem de pesagem pelo número da ordem de ração.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+User Function ADFAT16E(cOrdemC)
+
+    DbSelectArea("ZIF")
+    ZIF->(DbSetOrder(7))
+    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cOrdemC) )
         Return .F.
 
     EndIf
