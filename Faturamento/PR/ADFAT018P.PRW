@@ -256,7 +256,7 @@ User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
     ZI8->(DbSetOrder(1))
     If ! ZI8->( DbSeek( FWxFilial("ZI8") + cLote ) )
         cMsgError := "Lote " + cLote + " não localizado."
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18D(ADFAT018P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
@@ -264,7 +264,7 @@ User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
 
     If ZI8->ZI8_LAUTO == "1"
         cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(automático)."
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18D(ADFAT018P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
@@ -272,7 +272,7 @@ User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
 
     If ZI8->ZI8_STATUS == "4"
         cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(encerrado)."
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18D(ADFAT018P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
@@ -280,7 +280,7 @@ User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
 
     If ! Empty(cPrdSag) .And. Alltrim(cValToChar(cPrdSag)) <> Alltrim(cValToChar(ZI8->ZI8_PRDSAG))
         cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " - produto externo divergente."
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18D(ADFAT018P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
@@ -288,7 +288,7 @@ User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
 
     If ! Empty(cPrdPro) .And. Alltrim(cValToChar(cPrdPro)) <> Alltrim(cValToChar(ZI8->ZI8_PRDPRT))
         cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " - produto protheus divergente."
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18D(ADFAT018P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
