@@ -13,6 +13,7 @@
 	@history Ticket 3205 - William Costa - 08/10/2020 - Adicionado regra para o erro 25, onde foi feito um ajuste para o proprio fonte do Cisp arrumar o erro 25
 	@history Ticket 3205 - Leonardo P. Monteiro - 08/10/2020 - Alterada a regra 19 para alerta e não erro na geração do arquivo para CISP. Após consulta a CISP os mesmos informam que não é um impeditivo para o envio do arquivo.
 	@history Chamado TI  - Leonardo P. Monteiro - 22/02/2022 - Adição de históricos na gravação do valor acumulados.
+	@history Ticket 73019 - 17/05/2022 - Adriano Savoine - Foi removido a Validação -3 pois nao existe no arquivo de validação CISP anexo no Ticket.
 /*/
 
 User Function ADFIN003P() 
@@ -20,6 +21,7 @@ User Function ADFIN003P()
     //Local cArqDest            := ''
     Local cArqDest1           := ''
    	Local cFileCopy           := ''
+	Local nContVetor          := 0   
 	//Local cFileCopy1          := ''
 	Private cArq              := ''
 	Private nHdl              := ''
@@ -34,8 +36,7 @@ User Function ADFIN003P()
 	Private aErro             := {}
 	Private aAlert            := {}
 	Private nTentativa        := 0
-	Private lErroArqOldArqNew := .F. 
-	Private nContVetor        := 0                          
+	Private lErroArqOldArqNew := .F.                           
 	Private cDtUltRe          := ''
 	Private cDtAcuMu          := ''
 	Private nVlAcumu          := ''
@@ -590,8 +591,9 @@ Static Function VerErro1()
 			TRB->(dbCloseArea())  
 			// ****** FINAL VERIFICACAO NA TABELA SA1  ********************* //
 			
+			//Ticket 73019 - 17/05/2022 - Adriano Savoine
 			// ******************** INICIO ERRO -3 ***************** // 
-	        IF (AI == AJ * 100) .OR. (AI == AG * 100)
+	       /* IF (AI == AJ * 100) .OR. (AI == AG * 100)
 	           	           
 	            AADD(aErro, "-3 - Valor do Maior Acumulo * 100 William Costa") 
 				AADD(aErro, 'CNPJ:' + cCnpj1)
@@ -602,7 +604,7 @@ Static Function VerErro1()
 				AADD(aInconsis, aErro) 
 				aErro := {} 
 	           
-	        ENDIF                                                       
+	        ENDIF    */                                                   
 	        // ******************** FINAL ERRO -3 ***************** //
 			
 			// ******************** INICIO ERRO 3 ***************** // 
@@ -2121,6 +2123,7 @@ STATIC FUNCTION TRATARERROS()
 	Local BFOld        := ''
 	Local BGOld        := ''
 	Local BHOld        := ''
+	Local nContVetor   := 0
 
     IF lErroArqOldArqNew == .T.
        /*
@@ -3828,6 +3831,7 @@ Static Function RetHTML(_cStatEml,nId,cmensagem)
 
 	Local cRet       := "" 
 	Local nContEmail := 0
+	Local nCont      := 0
 
 	cRet := "<p <span style='"
 	cRet += 'font-family:"Calibri"'
