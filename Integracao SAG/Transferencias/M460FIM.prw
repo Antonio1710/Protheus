@@ -52,6 +52,7 @@
 	@history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	@history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 /*/
 User Function M460FIM()
 
@@ -272,7 +273,7 @@ Static Function cM460F2()
 
 	// @history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
 	Local cCFOP3    := GetMV("MV_#F45451",,"5451")
-	Local cProd3    := GetMV("MV_#B15451",,"384743")
+	Local cProd3    := GetMV("MV_#B15451",,"384743|384744") // @history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 
 	Private lMsErroAuto := .F.  
 

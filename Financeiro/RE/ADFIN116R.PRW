@@ -12,7 +12,7 @@
 	@history chamado 8797  - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e criado para os tipos de títulos.
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Correção dos valores em segunda moeda.
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Melhoria e correções após validação.
-
+	@history chamado 72972 - Jonathan Carvalho    - 17/05/2022 - Adicionado With lock
 /*/
 
 User Function ADFIN116R()
@@ -525,7 +525,7 @@ Static Function fDadosAnl(Cabec1,Cabec2,Titulo,nLin)
 		*/
 
 		cQuery 	:= " SELECT * "
-		cQuery 	+= " FROM "+ cTabTMP +" "
+		cQuery 	+= " FROM "+ cTabTMP +" WITH(NOLOCK)"
 		cQuery	+= " WHERE D_E_L_E_T_='' AND FORNECE='"+Alltrim((cAliSA2)->A2_COD)+"' AND LOJA='"+Alltrim((cAliSA2)->A2_LOJA)+"' "
 		cQuery	+= " ORDER BY FORNECE, LOJA, FILIAL, NUMERO, PREFIXO, PARCELA, TIPO; "
 
