@@ -280,7 +280,7 @@ Static Function EmailRM()
 
 	Local cMensagem	:= ""
 
-    cMails  := GetMV("MV_#RMAILS",,"amanda.cunha@adoro.com.br;fwnmacieira@gmail.com")
+    cMails  := GetMV("MV_#RMAILS",,"amanda.cunha@adoro.com.br")
 
     cTitulo  := "[Despesas] Acordos Trabalhistas - Empresa: " + cEmpAnt + " - WF de: " + DtoC(msDate())
     cAssunto := cTitulo
