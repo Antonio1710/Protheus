@@ -16,6 +16,7 @@
 	@history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
+	@history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 /*/
 User Function ADLFV011R(cEmpJob, cFilJob)
 
@@ -42,15 +43,22 @@ User Function ADLFV011R(cEmpJob, cFilJob)
 	RpcSetType(3)
 
 	If !RpcSetEnv( cEmpJob, cFilJob )
+		ConOut("[ADLFV011R] - Ambiente não inicializado! Verifique...") // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 		Return .F.
+	Else
+		logZBN("Ambiente inicializado " + cEmpJob + "/" + cFilJob) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 	EndIf
 	
+	// @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
+	/*
 	If !LockByName("ADLFV011R", .T., .F.)
 		ConOut("[ADLFV011R] - Existe outro processamento sendo executado! Verifique...")
 		RPCClearEnv()
 		Return
 	EndIf
+	*/
+	//
 
 	PtInternal(1,ALLTRIM(PROCNAME()))
 	
@@ -145,7 +153,7 @@ User Function ADLFV011R(cEmpJob, cFilJob)
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 	//³Destrava a rotina para o usuário	    ?
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-	UnLockByName("ADLFV011R")
+	//UnLockByName("ADLFV011R") // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 
 	RpcClearEnv()
 	RpcSetType(3)
@@ -456,9 +464,8 @@ Return aZV1_RGRANJ
 
 Static Function EmailFVL()
 
-	LogZBN("1")
-		ProcRel()
-	LogZBN("2")
+	logZBN("ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - " + DtoC(msDate()) ) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
+	ProcRel()
 
 Return
 
@@ -476,44 +483,24 @@ Return
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 
-Static Function logZBN(cStatus)
+Static Function logZBN(cDescri)
 
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Declaração de variávies.
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea	:= GetArea()
 	Local cNomeRotina := "ADLFV011R"
+
+	Default cDescri := ""
 	
 	DbSelectArea("ZBN")
-	ZBN->(DbSetOrder(1))
-	ZBN->(DbGoTop())
-	If ZBN->(DbSeek(xFilial("ZBN") + cNomeRotina))
+	RecLock("ZBN",.T.)
+		ZBN_FILIAL  := xFilial("ZBN")
+		ZBN_DATA    := Date()
+		ZBN_HORA    := cValToChar(Time())
+		ZBN_ROTINA	:= cNomeRotina
+		ZBN_DESCRI  := cDescri
+	MsUnlock()
 		
-		RecLock("ZBN",.F.)
-			ZBN_FILIAL  := xFilial("ZBN")
-			ZBN_DATA    := Date()
-			ZBN_HORA    := cValToChar(Time())
-			ZBN_ROTINA	:= cNomeRotina
-			ZBN_DESCRI  := cDescri
-			ZBN_STATUS	:= cStatus
-		MsUnlock()
-		
-	Else
-		
-		RecLock("ZBN",.T.)
-			ZBN_FILIAL  := xFilial("ZBN")
-			ZBN_DATA    := Date()
-			ZBN_HORA    := cValToChar(Time())
-			ZBN_ROTINA	:= cNomeRotina
-			ZBN_DESCRI  := cDescri
-			ZBN_STATUS	:= cStatus
-		MsUnlock()
-		
-	EndIf
-	
 	ZBN->(dbCloseArea())
 	
-	//
 	RestArea(aArea)
 
 Return Nil
@@ -652,13 +639,18 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email)
 		If !lOk
 			Get Mail Error cErrorMsg
 			ConOut("3 - " + cErrorMsg)
+			logZBN("Erro envio email " + cErrorMsg) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 		Else
 			ConOut(	"ADLFV011R - Email enviado com sucesso! Emails: " + cMails )
+			logZBN("Enviado " + cMails) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 		EndIf
 		
 	Else
+
 		Get Mail Error cErrorMsg
 		ConOut("4 - " + cErrorMsg)
+		logZBN("SMTP falhou" + cErrorMsg) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
+	
 	EndIf
 	
 	If lOk
