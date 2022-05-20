@@ -464,7 +464,7 @@ Return aZV1_RGRANJ
 
 Static Function EmailFVL()
 
-	logZBN("ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - " + DtoC(msDate()) ) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
+	logZBN(cDescri) // @history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 	ProcRel()
 
 Return
