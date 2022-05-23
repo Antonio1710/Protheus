@@ -19,6 +19,7 @@
 	@history chamado 055188 - FWNM    - 18/02/2020 - || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA
 	@history chamado 058822 - FWNM    - 10/06/2020 - || OS 060309 || TECNOLOGIA || ADRIANO || 8451 || CENTRO DE CUSTO SD3
 	@history Chamado 68696  - Leonardo P. Monteiro - 23/02/2022 - Inclusão de temporizador nas mensagens do ponto de entrada para impedir locks.
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 User Function M185BAIX()
 
@@ -42,6 +43,8 @@ User Function M185BAIX()
 	Local cLocManBE       := AllTrim(GetMv("MV_#MANSBE",,"MANUT")) 
 	Local cLocalMan       := AllTrim(GetMV("MV_#MANLOC",,"48"))
 	//
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	//IF SCP->CP_XTIPO = 'T' 
 	If AllTrim(SCP->CP_XTIPO) == "T" .or. AllTrim(SCP->CP_XTIPO) == "M" // Chamado n. 055188 || OS 056599 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || NOVA OPERACAO VENDA - FWNM - 18/02/2020
@@ -240,7 +243,7 @@ User Function M185BAIX()
 
 	ELSE  
 	
-		IF cEmpAnt == '01' .AND. cFilAnt == '02'
+		IF Alltrim(cEmpAnt) $ cEmpSF .AND. Alltrim(cFilAnt) $ cFilSF
 		
 		    SqlBuscaProduto(SCP->CP_PRODUTO,SCP->CP_LOCAL)
 		    
