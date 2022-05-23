@@ -17,8 +17,10 @@
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 	@history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
+	@history ticket 72339 - Fernando Macieira - 23/05/2022 - chumbado empresa e filial devido error log na passagem do parâmetro - enqto aguardamos solução TOTVS
 /*/
-User Function ADLFV011R(cEmpJob, cFilJob)
+//User Function ADLFV011R(cEmpJob, cFilJob)
+User Function ADLFV011R()
 
 	Local cQuery  := ""
 	Local nDias   := ""
@@ -29,15 +31,19 @@ User Function ADLFV011R(cEmpJob, cFilJob)
 	Local cProdPV := ""
 	Local cTESPV  := ""
 
+	// @history ticket 72339 - Fernando Macieira - 23/05/2022 - chumbado empresa e filial devido error log na passagem do parâmetro
 	// @history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
-	Default cEmpJob := "01"
-	Default cFilJob := "02"
+	//Default cEmpJob := "01"
+	//Default cFilJob := "02"
+	Local cEmpJob := "01"
+	Local cFilJob := "02"
+	//
 	
 	// Filial Frango Vivo
 	Private cFilGranjas  := ""
 	
 	Private cArquivo, cPath, cMails, cDescri, cRootPath, cFilPre, cFornCod, cLojaCod, cEspLFV, cProduto, cTESPre
-	
+
 	// Inicializa ambiente
 	RpcClearEnv()
 	RpcSetType(3)
