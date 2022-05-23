@@ -28,7 +28,8 @@
     @history ticket 10355   - Leonardo P. Monteiro - 25/03/2021 - Ajuste na data da contabilização para o dia em que a rotina está sendo executada, conforme pedido da Jade.
     @history ticket 13678   - Leonardo P. Monteiro - 12/05/2021 - Tratamento dos cancelamentos de baixas dos títulos AB- para uma nova contabilização.
     @history ticket 15279   - Fernando Macieira    - 02/07/2021 - Mensagem de duplicidade em todos os títulos
-    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 23/05/2022 - Restaura contabilização AB- baixadas - Tracker Contábil
 /*/
 User Function ADFIN108P()
 
@@ -734,6 +735,8 @@ Static Function FIXAB()
             Return lRet
         EndIf
 
+        //Begin Transaction
+
         // Excluo AB- do período e limpo flag SIG
         cSql := " UPDATE " + RetSqlName("CT2") + " SET CT2_MSEXP='', D_E_L_E_T_='*', R_E_C_D_E_L_=R_E_C_N_O_
         cSql += " WHERE CT2_FILIAL='"+FWxFilial("CT2")+"'
@@ -756,29 +759,59 @@ Static Function FIXAB()
             u_GrLogZBE (msDate(),TIME(),cUserName,"CONTABILIZACAO AB-","CONTROLADORIA","ADFIN108P",;
             "EXCLUSAO CONTABILIZACAO AB- PERIODO " + DtoC(cDtIni) + " ATE " + DtoC(cDtFim),ComputerName(),LogUserName())
 
+            // @history ticket 17717   - Fernando Macieira    - 23/05/2022 - Restaura contabilização AB- baixadas - Tracker Contábil
             nStatus := 0
 
-            // Excluo AB- do período e limpo flag SIG
-            cSql := " UPDATE " + RetSqlName("SE1") + " SET E1_LA=''
-            cSql += " WHERE E1_FILIAL='"+FWxFilial("SE1")+"'
-            cSql += " AND E1_XDTDISP BETWEEN '"+DtoS(cDtIni)+"' AND '"+DtoS(cDtFim)+"'
-            cSql += " AND E1_TIPO='AB-'
-            cSql += " AND E1_SALDO=0
-            cSql += " AND D_E_L_E_T_=''
+            cSql := " DELETE " + RetSqlName("CV3")
+            cSql += " FROM " + RetSqlName("CV3") + " CV3
+            cSql += " INNER JOIN " + RetSqlName("CT2") + " CT2 (NOLOCK) ON CV3_SEQUEN=CT2_SEQUEN AND CT2.R_E_C_N_O_=CV3.CV3_RECDES
+            cSql += " WHERE CT2_FILIAL='"+FWxFilial("CT2")+"'
+            cSql += " AND CT2_DATA BETWEEN '"+DtoS(cDtIni)+"' AND '"+DtoS(cDtFim)+"'
+            cSql += " AND CT2_LOTE='008850'
+            cSql += " AND CT2_SBLOTE='001'
+            cSql += " AND CT2_LP='AB-'
+            cSql += " AND CT2.D_E_L_E_T_='*'
 
             nStatus := tcSqlExec(cSql)
 
             If nStatus < 0
+
                 lRet := .f.
-                Alert("Flags de contabilização dos títulos tipo AB- não foram limpados para recontabilização devido erro " + TCSQLError())
+                Alert("Exclusão do tracker contábil das contabilizações do AB- não realizadas devido erro " + TCSQLError())
+
             Else
-                lRet := .t.
+
                 //gera log
                 u_GrLogZBE (msDate(),TIME(),cUserName,"CONTABILIZACAO AB-","CONTROLADORIA","ADFIN108P",;
-                "LIMPADO FLAG AB- PARA RECONTABILIZACAO - PERIODO " + DtoC(cDtIni) + " ATE " + DtoC(cDtFim),ComputerName(),LogUserName())
+                "EXCLUSAO CV3 CONTABILIZACAO AB- PERIODO " + DtoC(cDtIni) + " ATE " + DtoC(cDtFim),ComputerName(),LogUserName())
+            
+                nStatus := 0
+
+                // Excluo AB- do período e limpo flag SIG
+                cSql := " UPDATE " + RetSqlName("SE1") + " SET E1_LA=''
+                cSql += " WHERE E1_FILIAL='"+FWxFilial("SE1")+"'
+                cSql += " AND E1_XDTDISP BETWEEN '"+DtoS(cDtIni)+"' AND '"+DtoS(cDtFim)+"'
+                cSql += " AND E1_TIPO='AB-'
+                cSql += " AND E1_SALDO=0
+                cSql += " AND D_E_L_E_T_=''
+
+                nStatus := tcSqlExec(cSql)
+
+                If nStatus < 0
+                    lRet := .f.
+                    Alert("Flags de contabilização dos títulos tipo AB- não foram limpados para recontabilização devido erro " + TCSQLError())
+                Else
+                    lRet := .t.
+                    //gera log
+                    u_GrLogZBE (msDate(),TIME(),cUserName,"CONTABILIZACAO AB-","CONTROLADORIA","ADFIN108P",;
+                    "LIMPADO FLAG AB- PARA RECONTABILIZACAO - PERIODO " + DtoC(cDtIni) + " ATE " + DtoC(cDtFim),ComputerName(),LogUserName())
+                EndIf
+
             EndIf
         
         EndIf
+
+        //End Transaction
     
     EndIf
 
@@ -804,8 +837,8 @@ Static Function FIXAB()
         MsgRun( "Reprocessando Saldo Contábeis...","Por favor aguarde...",{ || Eval(bProc) } ) // Saldos Contábeis // com procedure
 
         If Empty(aResult) .or. aResult[1] = "0"
-            Alert("Não foi possível reprocessar o saldo contábil! Reprocesse manualmente...")
-            MessageBox(tcSqlError(),"",16)
+            msgAlert("Não foi possível reprocessar o saldo contábil! Reprocesse manualmente...")
+            MessageBox(tcSqlError(),"",8)
         Endif
 
     EndIf
