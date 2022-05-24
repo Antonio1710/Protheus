@@ -113,6 +113,9 @@ Static Function vldPos(oModel)
     Local cAgrupa    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_ORAGRP")))
     Local lAprova    := GetMv("MV_#APRRAC",,.F.)
     Local cOrdemP    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_ORDEM")))
+    Local cLote      := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_LOTPRD")))
+    Local cPrdSag    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_PRDSAG")))
+    Local cPrdPro    := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIR_PRDPRO")))
 
     If lRet .And. nOperation == MODEL_OPERATION_INSERT
     
@@ -121,17 +124,19 @@ Static Function vldPos(oModel)
 
         EndIf
 
+        lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
+
     EndIf
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
 
-        If lRet .And. ! Empty(cOrdemP) .And. ! U_ADFAT32E(cOrdemP, "")
+        If lRet .And. ! FwIsAdmin() .And. ! Empty(cOrdemP) .And. ! U_ADFAT32E(cOrdemP, "")
             lRet := .F.
             Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, cMsg2, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         EndIf
         
-        If lRet .And. ! Empty(cAgrupa)
+        If lRet .And. ! Empty(cAgrupa) .And. ! FWIsAdmin()
             lRet := .F.
             Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, cMsg1, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
@@ -142,8 +147,10 @@ Static Function vldPos(oModel)
     If lRet .And. nOperation == MODEL_OPERATION_UPDATE 
 
         If lRet .And.;
+           ! FwIsAdmin() .And.;
            ! FWIsInCallStack("U_ADFAT171") .And.;
            ! FWIsInCallStack("U_ADFAT35F") .And.;
+           ! FWIsInCallStack("U_ADFAT049P") .And.;
            ! Empty(cOrdemP) .And.;
            ! U_ADFAT32E(cOrdemP, "")
             lRet := .F.
@@ -152,9 +159,11 @@ Static Function vldPos(oModel)
         EndIf
 
         If lRet .And.;
+            ! FwIsAdmin() .And.;
             ! Empty(cAgrupa) .And.;
             ! FWIsInCallStack("U_ADFAT34B") .And.; //Montagem de carga.
             ! FWIsInCallStack("U_ADFAT35F") .And.; //Atualiza quantidade da ordem de carregamento.
+            ! FWIsInCallStack("U_ADFAT049P") .And.; //Retorno Gemba.
             ! FWIsInCallStack("U_ADFAT17A") .And.; //Criação de ordem de pesagem.
             ! FWIsInCallStack("U_ADFAT171") //Atualização de pesagem final.
             lRet := .F. 
@@ -163,8 +172,10 @@ Static Function vldPos(oModel)
         EndIf
     
         If lRet .And.;
+            ! FwIsAdmin() .And.;
             ! FWIsInCallStack("U_ADFAT33A") .And.; //Aprovação de ordem de carregamento.
             ! FWIsInCallStack("U_ADFAT34B") .And.; //Montagem de carga.
+            ! FWIsInCallStack("U_ADFAT049P") .And.; //Retorno Gemba.
             ! FWIsInCallStack("U_ADFAT17A") .And.;//Criação de ordem de pesagem.
             ! FWIsInCallStack("U_ADFAT171") //Atualização de pesagem final.
 
@@ -176,6 +187,8 @@ Static Function vldPos(oModel)
                 oModel:SetValue("MD_MASTER","ZIR_OK"     , "")
 
         EndIf
+
+        lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
 
     EndIf
 
@@ -213,7 +226,7 @@ User Function ADFAT32B(nOpc)
     Local aArea     := GetArea()
     Local cAgrupa   := ZIR->ZIR_ORAGRP
 
-    If ! Empty(cAgrupa)
+    If ! Empty(cAgrupa) .And. ! FWIsAdmin()
         MsgInfo(cMsg1, "Função ADFAT32B(ADFAT032P)")
         RestArea(aArea)
         Return Nil
@@ -644,3 +657,52 @@ User Function ADFAT32G(cOrdemC)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADFAT32H
+    Cancela ordem de carregamento.
+    @type  User Function
+    @author Everson
+    @since 24/02/2022
+    @version 01
+/*/
+User Function ADFAT32H(cOrdemC, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local oModel    := Nil
+    
+    Default cMsgError := ""
+    
+    If ! U_ADFAT32G(cOrdemC)
+        Help(Nil, Nil, "Função ADFAT32H(ADFAT032P)", Nil, "Ordem de carregamento de ração " + cOrdemC + " não encontrada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return lRet
+
+    EndIf
+
+    oModel := FwLoadModel("ADFAT032P")
+    oModel:SetOperation(MODEL_OPERATION_DELETE)
+    oModel:Activate()
+
+    If oModel:VldData()
+        oModel:CommitData()
+        lRet := .T.
+
+    Else
+        aError := oModel:GetErrorMessage()
+        cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+
+    EndIf
+
+    oModel:DeActivate()
+    oModel:Destroy()
+    oModel := Nil
+
+    If ! Empty(cMsgError)
+        Help(Nil, Nil, "Função ADFAT32H(ADFAT032P)", Nil, "Erro na exclusão de registro da ordem de carregamento de ração " + cOrdemC + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet

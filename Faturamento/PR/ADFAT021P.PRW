@@ -41,6 +41,8 @@ Static Function BrowseDef()
 	oBrowse:AddLegend("ZIK_STATUS = '2'" ,"GREEN" ,"Aprovada")
 	oBrowse:AddLegend("ZIK_STATUS = '3'" ,"RED"	  ,"Reprovada")
 
+    oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
+
 Return oBrowse
 /*/{Protheus.doc} MenuDef
     @type  Static Function

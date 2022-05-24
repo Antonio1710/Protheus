@@ -7,7 +7,8 @@
    @author Mauricio-MDS TEC 
    @since 11/04/2012
    @version 01
-   @histrory TICKET 70540 - ADRIANO SAVOINE - 30/03/2022 - Corrigido o Parametro para entrar com as filiais corretas.
+   @history TICKET 70540 - ADRIANO SAVOINE   - 30/03/2022 - Corrigido o Parametro para entrar com as filiais corretas.
+   @history TICKET 72928 - Jonathan.Carvalho - 17/05/2022 - Corrigido o Paramentro convertendo o valor da Filial para STRING
    /*/
          
 User Function ACOMPVEN() 
@@ -868,7 +869,7 @@ cQuery+=" SELECT C6_FILIAL, C6_NUM, C6_UNSVEN, C6_VALOR, C6_QTDVEN, C5_VEND1, C6
 cQuery += " FROM " + RetSqlName("SC6") + " C6, " + RetSqlName("SC5") + " C5, "+ RetSqlName("SB1") + " B1 "
 cQuery+=" WHERE "
 cQuery+=" 	(C6.C6_ENTREG BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"') AND "
-cQuery+=" 	C6.C6_FILIAL IN ("+Alltrim(mv_PAR03)+") "
+cQuery+=" 	C6.C6_FILIAL IN ("+CValToChar(mv_PAR03)+") " //Conversão para STRING 72928
 cQuery+=" AND C6.C6_FILIAL = C5.C5_FILIAL AND C6.C6_NUM = C5.C5_NUM AND C6.C6_PRODUTO = B1.B1_COD "
 If Empty(MV_PAR08)
    cQuery+=" AND (B1.B1_GRUPO BETWEEN '"+(MV_PAR06)+"' AND '"+(MV_PAR07)+"')

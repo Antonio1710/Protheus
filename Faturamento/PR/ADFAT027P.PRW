@@ -349,7 +349,7 @@ Static Function carDados(cTabela, aCampos, cCmpI, cCmpEx)
         xValor := (cTabela)->&(cCampo)
 
         If cTipo == "C"
-            xValor := Alltrim(cValToChar(xValor))
+            xValor := U_ADFAT50O(Alltrim(cValToChar(xValor)))
 
         ElseIf cTipo == "D"
             If Empty(xValor)

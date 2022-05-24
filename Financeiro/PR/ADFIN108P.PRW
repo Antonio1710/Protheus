@@ -33,7 +33,7 @@
 /*/
 User Function ADFIN108P()
 
-    // @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    // @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
     Local nOpca     := 0
     Local lOk		:= .F.
     Local alSay		:= {}
@@ -680,7 +680,7 @@ Return lDuplic
     @example
     (examples)
     @see (links_or_references)
-    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
 /*/
 Static Function FIXAB()
 
@@ -856,7 +856,7 @@ Return lRet
     @example
     (examples)
     @see (links_or_references)
-    @history ticket 17717   - Fernando Macieira    - 12/07/2022 - Restaura contabilização AB- baixadas
+    @history ticket 17717   - Fernando Macieira    - 12/05/2022 - Restaura contabilização AB- baixadas
 /*/
 Static Function ChkCTG(aRet)
 

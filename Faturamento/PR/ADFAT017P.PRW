@@ -148,7 +148,7 @@ Static Function vldPos(oModel)
 
         //Voltar ao status inicial, com mais de um ticket vinculado.
         If lRet .And. cStatus == "1" .And.;
-           contTkt(cCP) > 0  //Obtém a quantidade de tickets vinculados ao controle de pátio.          
+            U_ADFAT17W(cCP) > 0  //Obtém a quantidade de tickets vinculados ao controle de pátio.          
             oModel:SetValue("MD_MASTER", "ZIB_STATUS", ZIB->ZIB_STATUS)
 
         EndIf
@@ -515,6 +515,8 @@ User Function ADFAT17Y()
         oProcInt := TButton():New(010,515,"Sinc Pesa" ,oCtlPatio,{|| FWMsgRun(,{|| U_ADFAT251(), Eval(bCarCP), Eval(bLOrd) }, "Função ADFAT17Y(ADFAT017P)", "Processando...") },037,11,,,.F.,.T.,.F.,,.F.,{|| .F. },,.F. )
         oProcInt:bWhen := {|| FWIsAdmin() .And. lPesaAut }
 
+        TButton():New(010,557,"Log OP"          ,oCtlPatio,{|| carLog(oOrdPes, aOrdPes) },037,11,,,.F.,.T.,.F.,,.F.,,,.F. )
+
         TButton():New(030,515,"Incluir CP"      ,oCtlPatio,{|| addVeic(), Eval(bCarCP), Eval(bLOrd) },037,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 
         TButton():New(030,557,"Alterar CP"      ,oCtlPatio,{|| altCP(oVecPt, aHVcPt), Eval(bCarCP), Eval(bLOrd) },037,15,,,.F.,.T.,.F.,,.F.,,,.F. )
@@ -548,7 +550,8 @@ User Function ADFAT17Y()
         Aadd(aHVcPt,{"Tipo Mov" 	,"TPMOV",""  ,TamSX3("ZIB_TPMOVI")[1], 0,"","" ,"C","",""})
         			
         oVecPt := MsNewGetDados():New(030,005,155,510,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oCtlPatio,aHVcPt,@aColsVcPt)
-        oVecPt:oBrowse:bLDblClick := {|| Eval(bTimer), carOrdens(oVecPt:nAt, oVecPt, aHVcPt, @oOrdPes, @aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim) }
+        oVecPt:oBrowse:bLDblClick := {|| Eval(bTimer), carOrdens(oVecPt:nAt, oVecPt, aHVcPt, @oOrdPes, @aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim),;
+                                         geraOrd(oVecPt:nAt, oVecPt, aHVcPt, @oOrdPes, @aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim) }
 
         TGroup():New(157,005,200,155,"Balança | Leitor",oCtlPatio,,,.T.)
             TButton():New(165,010,"SB",oCtlPatio,{|| aLeitores := {}, selecBal(.T., @aParBal, @aDdBalAut, @aLeitores), lPodPesar := ! aParBal[1,4], lPesaAut := aDdBalAut[1,1], cBalanca := aParBal[1,1], oLeitores:SetItems(aLeitores),Iif(Len(aLeitores) <=0 , Nil, cLeitor := aLeitores[1]), oLeitores:Refresh(), Eval(bAtuBtn) },020,15,,,.F.,.T.,.F.,,.F.,,,.F. )	
@@ -597,17 +600,19 @@ User Function ADFAT17Y()
         oOrdPes:addColumn({"Peso Liquido"      , {||aOrdPes[oOrdPes:nAt,29]}, "N", "@E 999,999,999"    , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,29]",, .F., .T., , "ID29" })
         
         oOrdPes:addColumn({"Sol Pes Manual"    , {||aOrdPes[oOrdPes:nAt,20]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,20]",, .F., .T., , "ID20" })
-        oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 2, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
+        oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 1, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
+        oOrdPes:addColumn({"Notas Fiscais"     , {||aOrdPes[oOrdPes:nAt,30]}, "C", ""                  , 1, 035    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,30]",, .F., .T., , "ID30" })
     
         oOrdPes:Activate()
-
-                   TButton():New(182,515,"Rom. Ped. Venda" ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(202,515,"Cancelar Ticket" ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oAltTag := TButton():New(222,515,"Alterar Tag"     ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oExcTag := TButton():New(242,515,"Excluir Tag"     ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   
+                   TButton():New(187,515,"Transferência Ordem" ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(207,515,"Rom. Ped. Venda"     ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"     ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oAltTag := TButton():New(247,515,"Alterar Tag"         ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oExcTag := TButton():New(267,515,"Excluir Tag"         ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
-        oFechar := TButton():New(270,555,"Fechar",oCtlPatio,{|| oCtlPatio:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
+        // oFechar := TButton():New(270,555,"Fechar",oCtlPatio,{|| oCtlPatio:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
+        // oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
 
         oTimer := TTimer():New(nTmpRef * 1000, {|| Eval(bCarCP),;
                                                    Eval(bLOrd) }, oCtlPatio)
@@ -619,6 +624,428 @@ User Function ADFAT17Y()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} carLog
+    Carrega logs de processamento da ordem de pesagem.
+    @type  Static Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function carLog(oOrdPes, aOrdPes)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cQuery    := ""
+    Local nLinha    := Val(cValToChar(oOrdPes:nAt))
+    Local cNmOrdem  := ""
+    Local cTexto    := ""
+
+    If nLinha <= 0 .Or. Len(aOrdPes) <= 0
+        Help(Nil, Nil, "Função carLog(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cNmOrdem := aOrdPes[nLinha,08]
+    If Empty(cNmOrdem)
+        Help(Nil, Nil, "Função carLog(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cQuery += " SELECT  " 
+    cQuery += " ZBE_DATA, ZBE_HORA, ZBE_MODULO, ZBE_LOG " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE " 
+    cQuery += " WHERE " 
+    cQuery += " ZBE_FILIAL = '" + FWxFilial("ZBE") + "' " 
+    cQuery += " AND ZBE_PARAME = '" + cNmOrdem + "' " 
+    cQuery += " AND ZBE_ROTINA = 'ADFAT017P' " 
+    cQuery += " ORDER BY ZBE_DATA DESC, ZBE_HORA DESC " 
+
+    If Select("D_DLOG") > 0
+        D_DLOG->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_DLOG"
+    DbSelectArea("D_DLOG")
+    While ! D_DLOG->(Eof())
+
+        cTexto += DToC(SToD(D_DLOG->ZBE_DATA)) + " " + Alltrim(cValToChar(D_DLOG->ZBE_HORA)) + " --- " + PadR(Alltrim(cValToChar(D_DLOG->ZBE_MODULO)), 15, " ") + xPula + Alltrim(cValToChar(D_DLOG->ZBE_LOG)) + xPula + xPula
+
+        D_DLOG->(DbSkip())
+
+    End
+    D_DLOG->(DbCloseArea())
+
+
+    U_TExTelaMen("Logs OP: " +  cNmOrdem, cTexto, "Arial",10,,.F.,.F.)
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} transOrd
+    Interface para transferência de ordem de pesagem.
+    @type  Static Function
+    @author Everson
+    @since 11/05/2022
+    @version 01
+/*/
+Static Function transOrd(oOrdPes, aOrdPes)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local nLinha    := Val(cValToChar(oOrdPes:nAt))
+    Local lRet      := .F.
+    Local oModal    := Nil
+    Local oContainer:= Nil
+    Local aButtons  := {}
+    Local cTpOrdem  := ""
+    Local cCP       := ""
+    Local cNmOrdem  := ""
+    Local cRoteiro  := ""
+    Local cOrdOrg   := Space(TamSX3("ZIF_NUMERO")[1])
+    Local cOrdDes   := Space(TamSX3("ZIF_NUMERO")[1])
+    Local bOO       := Nil
+    Local bOD       := Nil
+    Local lRetC     := .F.
+    Local oGetOO    := Nil
+    Local oGetOD    := Nil
+
+    If nLinha <= 0 .Or. Len(aOrdPes) <= 0
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cTpOrdem := aOrdPes[nLinha,14]
+    If cTpOrdem <> "R"
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Tipo de ordem inválido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cCP := aOrdPes[nLinha,16]
+    If Empty(cCP)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Controle de pátio não selecionado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    //Verifica se o controle de pátio está encerrado.
+    If U_ADFAT17L(cCP)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Controle de pátio " + cCP + " encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cNmOrdem := aOrdPes[nLinha,08]
+    If Empty(cNmOrdem)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+    
+    //Posiciona na ordem de pesagem.
+    If ! U_ADFAT16A(cNmOrdem)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Ordem de pesagem não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cRoteiro := ZIF->ZIF_ROTEIR
+
+    If Empty(cRoteiro)
+        Help(Nil, Nil, "Função transOrd(ADFAT017P)", Nil, "Ordem de pesagem não possui roteiro.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    oModal := FWDialogModal():New()        
+	oModal:SetEscClose(.F.)
+	oModal:setTitle("Transferência Ordem - CP " + cCP)
+	oModal:setSize(100, 200)
+	oModal:createDialog()
+
+    Aadd(aButtons,{Nil,"Confirmar", {|| lRet := confTran(cOrdOrg, cOrdDes), Iif(!lRet, Nil, oModal:DeActivate()) },"","",.T.,.F.})
+    Aadd(aButtons,{Nil,"Cancelar",  {|| oModal:DeActivate() },"","",.T.,.F.})
+
+	oModal:addButtons(aButtons)
+
+        oContainer := TPanel():New(025,,, oModal:getPanelMain())
+        oContainer:Align := CONTROL_ALIGN_ALLCLIENT
+
+        TSay():New(005,010,{||"Roteiro " + cRoteiro}   ,oContainer,,,,,,.T.,CLR_BLACK,CLR_WHITE,200,010)
+
+        bOO := {|| lRetC := pesOrdTr(1, cRoteiro), Iif(!lRetC, Nil, Eval({|| cOrdOrg := ZIF->ZIF_NUMERO, oGetOO:Refresh() }) ) }
+        oGetOO := TGet():New(020,010,{|u|If(PCount() == 0,cOrdOrg,cOrdOrg := u)}, oContainer,060,013,"",{|| .T. },0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cOrdOrg",,,,.T.,,,"Ordem Origem",1) 
+        TButton():New(027,070,"OO", oContainer, bOO,020,15,,,.F.,.T.,.F.,,.F.,,,.F. )	
+        
+        bOD := {|| lRetC := pesOrdTr(2, cRoteiro, cOrdOrg), Iif(!lRetC, Nil, Eval({|| cOrdDes := ZIF->ZIF_NUMERO, oGetOD:Refresh() }) ) }
+        oGetOD := TGet():New(020,115,{|u|If(PCount() == 0,cOrdDes,cOrdDes := u)}, oContainer,060,013,"",{|| .T. },0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cOrdDes",,,,.T.,,,"Ordem Destino",1) 
+        TButton():New(027,175,"OD", oContainer, bOD,020,15,,,.F.,.T.,.F.,,.F.,,,.F. )	
+
+	oModal:Activate()
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} confTran
+    Confirma transferência de ordem de pesagem.
+    @type  Static Function
+    @author Everson
+    @since 10/05/2022
+    @version 01
+/*/
+Static Function confTran(cOrdOrg, cOrdDes)
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local lRet     := .F.
+    Local cTktNv   := ""
+    Local cStatNv  := ""
+    Local cStat2   := ""
+    Local cOrdemC  := ""
+    Local lGemba   := GetMV("MV_#UGEMBA",,.F.) 
+    Local cMsgError:= ""
+    Local lErrGemba:= .F.
+
+    If Empty(cOrdOrg) .Or. Empty(cOrdDes)
+        MsgInfo("É necessário selecionar as ordens de origem e destino.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Ordem de origem.
+    If ! U_ADFAT16A(cOrdOrg)
+        MsgInfo("Ordem de pesagem de origem " + cValToChar(cOrdOrg) + " não localizada.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cStatNv := ZIF->ZIF_STATUS
+    cOrdemC := ZIF->ZIF_ORDRAC
+
+    //Ticket da ordem de origem.
+    If ! U_ADFAT196(cOrdOrg)
+        MsgInfo("Ticket de pesagem da ordem de pesagem de origem " + cValToChar(cOrdOrg) + " não localizado.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cTktNv := ZIG->ZIG_NUMERO
+
+    //Ordem de destino.
+    If ! U_ADFAT16A(cOrdDes)
+        MsgInfo("Ordem de pesagem de destino " + cValToChar(cOrdDes) + " não localizada.", "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cStat2 := ZIF->ZIF_STATUS
+
+
+    Begin Transaction
+
+        //Altera o status da ordem selecionada.
+        If ! U_ADFAT164(cOrdDes, cStatNv, 1, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+        
+        //Altera o status da ordem tomada.
+        If ! U_ADFAT164(cOrdOrg, cStat2, 1, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera a ordem do ticket de pesagem selecionado.
+        If ! U_ADFAT191(cTktNv, "ZIG_ORDEM", cOrdDes, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        If ! U_ADFAT166(cOrdOrg, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Cancela ordem de carregamento de ração.
+        If ! Empty(cOrdemC) .And. ! U_ADFAT32H(cOrdemC, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Cancela ordem de pesagem original no Gemba.
+        If lGemba .And. ! U_ADFAT50G(cOrdOrg, @cMsgError)
+            lErrGemba := .T.
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Envia nova ordem de pesagem para o Gemba.
+        If lGemba .And. ! U_ADFAT50F(cOrdDes, @cMsgError)
+            lErrGemba := .T.
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        lRet := .T.
+
+    End transaction
+    
+    If ! lRet
+        U_ADFAT173("Transferência de ordem : " + cMsgError, cOrdDes, "", "PROTHEUS")
+
+    Else
+
+        TcSqlExec(" UPDATE " + RetSqlName("ZBE") + " SET ZBE_PARAME = '" + cOrdDes + "' WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cOrdOrg + "' AND ZBE_ROTINA = 'ADFAT017P' AND D_E_L_E_T_ = '' ")
+
+        U_ADFAT173("Transferência de ordem : realizada com sucesso", cOrdDes, "", "PROTHEUS")
+
+    EndIf
+
+    If lErrGemba
+        MsgInfo("Não foi realizar as integrações com o Gemba. " + xPula + cMsgError, "Função confTran(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} pesOrdTr
+    Consulta padrão específica.
+    @type  Static Function
+    @author Everson
+    @since 10/05/2022
+    @version 01
+/*/
+Static Function pesOrdTr(nTipo, cRoteiro, cOrdOrg)
+
+    //Variáveis.
+    Local oDlg, oLbx
+    Local aCpos  := {}
+    Local aRet   := {}
+    Local cQuery := ""
+    Local cAlias := GetNextAlias()
+    Local lRet   := .F.
+
+    Default cOrdOrg := ""
+
+    If nTipo == 2 .And. Empty(cOrdOrg)
+        MsgInfo("Selecione a ordem de origem.", "Função pesOrdTr(ADFAT017P)")
+        Return Nil
+
+    EndIf
+
+    cQuery += ""
+    cQuery += " SELECT  " 
+    cQuery += " ZIF_NUMERO, ZIF_PRDSAG, ZIF_PRDPRO " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
+    cQuery += " WHERE " 
+    cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
+    cQuery += " AND ZIF_ROTEIR = '" + cRoteiro + "' " 
+    cQuery += " AND ZIF_TPMOVI = 'R' " 
+
+    If nTipo == 2
+        cQuery += " AND ZIF_NUMERO <> '" + cOrdOrg + "' " 
+
+    EndIf
+
+    cQuery += " AND ZIF.D_E_L_E_T_ = '' "
+    cQuery += " AND ZIF_NUMERO NOT IN ( " 
+    cQuery += " SELECT ZIT_ORDEM FROM " + RetSqlName("ZIT") + " (NOLOCK) AS ZIT WHERE ZIT_FILIAL = '" + FWxFilial("ZIT") + "' AND ZIT.D_E_L_E_T_ = '' " 
+    cQuery += " UNION ALL " 
+    cQuery += " SELECT ZIZ_ORDEM FROM " + RetSqlName("ZIZ") + " (NOLOCK) AS ZIZ WHERE ZIZ_FILIAL = '" + FWxFilial("ZIZ") + "' AND ZIZ.D_E_L_E_T_ = '' " 
+    cQuery += " UNION ALL " 
+    cQuery += " SELECT ZIY_ORDEM FROM " + RetSqlName("ZIY") + " (NOLOCK) AS ZIY WHERE ZIY_FILIAL = '" + FWxFilial("ZIY") + "' AND ZIY.D_E_L_E_T_ = '' " 
+    cQuery += " ) " 
+    cQuery += " ORDER BY ZIF_NUMERO " 
+
+    cQuery := ChangeQuery(cQuery)
+
+    DbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAlias,.T.,.T.)
+
+    While (cAlias)->(!Eof())
+
+        If nTipo == 1
+        
+            If ! U_ADFAT196((cAlias)->(ZIF_NUMERO)) //Localiza ticket de pesagem pelo número da ordem de pesagem.
+                (cAlias)->(DbSkip())
+                Loop
+
+            EndIf
+
+            If ZIG->ZIG_INICIA <> "2" //A ordem de pesagem original precisa ter peso inicial, pois a ordem já deve ter sido integrada no Gemba.
+                (cAlias)->(DbSkip())
+                Loop
+
+            EndIf
+
+        EndIf
+
+        If nTipo == 2 .And.   U_ADFAT196((cAlias)->(ZIF_NUMERO)) //Localiza ticket de pesagem pelo número da ordem de pesagem.
+            (cAlias)->(DbSkip())
+            Loop
+
+        EndIf
+
+        Aadd(aCpos,{(cAlias)->(ZIF_NUMERO), (cAlias)->(ZIF_PRDSAG), (cAlias)->(ZIF_PRDPRO)})
+
+        (cAlias)->(DbSkip())
+
+    End
+    (cAlias)->(DbCloseArea())
+
+    If Len(aCpos) < 1
+        Aadd(aCpos,{" ", " ", ""})
+
+    EndIf
+
+    DEFINE MSDIALOG oDlg TITLE /*STR0083*/ "Ordem de Pesagem" FROM 0,0 TO 240,500 PIXEL
+
+        @ 10,10 LISTBOX oLbx FIELDS HEADER 'Ordem de Pesagem' , 'Produto',  'Produto Protheus' SIZE 230,95 OF oDlg PIXEL
+
+        oLbx:SetArray( aCpos )
+        oLbx:bLine     := {|| {aCpos[oLbx:nAt,1], aCpos[oLbx:nAt,2], aCpos[oLbx:nAt,3] }}
+        oLbx:bLDblClick := {|| {oDlg:End(), lRet:=.T., aRet := {oLbx:aArray[oLbx:nAt,1], oLbx:aArray[oLbx:nAt,2], oLbx:aArray[oLbx:nAt,3] }}}
+
+    DEFINE SBUTTON FROM 107,213 TYPE 1 ACTION (oDlg:End(), lRet:=.T., aRet := {oLbx:aArray[oLbx:nAt,1], oLbx:aArray[oLbx:nAt,2], oLbx:aArray[oLbx:nAt,3] })  ENABLE OF oDlg
+    ACTIVATE MSDIALOG oDlg CENTER
+
+    If Len(aRet) > 0 .And. lRet
+        If Empty(aRet[1])
+            lRet := .F.
+
+        Else
+            ZIF->(DbSetOrder(2))
+            ZIF->(DbSeek( FWxFilial("ZIF") + aRet[1] ) )
+
+        EndIf
+
+    EndIf
+
+Return lRet
 /*/{Protheus.doc} gerPedS
     Gera pedido de saída.
     @type  Static Function
@@ -654,6 +1081,7 @@ Static Function gerPedS(cCP)
     Local lRetPed   := .F.
     Local cMsgError := ""
     Local cUUids    := ""
+    Local cPedGer   := ""
 
     Default cCP     := """
 
@@ -701,28 +1129,14 @@ Static Function gerPedS(cCP)
 
         cNvPed   := ""
 
-        DbSelectArea("SC5")
-        SC5->(DbSetOrder(28))
-        SC5->(DbGoTop())
-        If SC5->( DbSeek( FWxFilial("SC5") + ZIF->ZIF_NUMERO))
-            MsgInfo("Ordem de pesagem " + ZIF->ZIF_NUMERO + " está vinculada ao pedido " + SC5->C5_NUM + ".", "Função gerPedS(ADFAT017P)")
+        cPedGer  := getPedSa(ZIF->ZIF_NUMERO) 
+        If ! Empty(cPedGer)
+            MsgInfo("Ordem de pesagem " + ZIF->ZIF_NUMERO + " está vinculada ao(s) pedido(s) " + cPedGer + ".", "Função gerPedS(ADFAT017P)")
             ZIF->(DbSkip())
             Loop
 
-        Else
-
-            DbSelectArea("SC6")
-            SC6->(DbSetOrder(17))
-            SC6->(DbGoTop())
-            If SC6->( DbSeek( FWxFilial("SC6") + ZIF->ZIF_NUMERO))
-                MsgInfo("Ordem de pesagem " + ZIF->ZIF_NUMERO + " está vinculada ao pedido " + SC6->C6_NUM + ".", "Função gerPedS(ADFAT017P)")
-                ZIF->(DbSkip())
-                Loop
-
-            EndIf
-
-        EndIf    
-
+        EndIf
+    
         //Posiciona no registro de ticket de pesagem pela ordem de pesagem.
         If ! U_ADFAT196(ZIF->ZIF_NUMERO) //Localiza ticket de pesagem.
             ZIF->(DbSkip())
@@ -893,7 +1307,7 @@ Static Function gerPedS(cCP)
 
     EndIF
 
-    U_TExTelaMen("Geração de Pedido de Saída", "Pedidos gerados: " + xPula + cPedidos + xPula + xPula + "Erro: " + xPula + cMsgError, "Arial",10,,.F.,.T.)
+    U_TExTelaMen("Geração de Pedido de Saída", "Pedidos gerados: " + xPula + cPedidos + xPula + xPula + "Erro: " + xPula + cMsgError, "Arial",10,,.F.,.F.)
     
     RestArea(aArea)
 
@@ -964,11 +1378,10 @@ User Function ADFAT17N(cNvPed, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGran
     Local aCabec := {}
     Local aLinha := {}
     Local aItens := {}
-    Local aLog   := {}
-    Local nAux   := 1
 
     Private lMsErroAuto    := .F.
-    Private lAutoErrNoFile := .T.
+    Private lMsHelpAuto    := .T.
+    Private lAutoErrNoFile := .F.
 
     Default cMsgError := ""
     Default lPedSag   := .F.
@@ -1019,18 +1432,7 @@ User Function ADFAT17N(cNvPed, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGran
     MSExecAuto( { |x, y, z, p| MATA410(x, y, z,,,,,,, p) }, aCabec, aItens, 3 )
 
     If lMsErroAuto
-        aLog := MostraErro() 
-
-        For nAux := 1 To Len(aLog)
-
-            If ! Empty(cMsgError)
-                cMsgError += xPula
-
-            EndIf
-
-            cMsgError += aLog[nAux]
-
-        Next nAux
+        cMsgError := MostraErro() 
 
     Else
         cNvPed := SC5->C5_NUM
@@ -1190,6 +1592,18 @@ User Function ADFAT17M(cEmpD, cFilD, cEmpO, cFilO, cTpPed, cFornece, cLjForn, aC
 	RPCSetType(3)
 	RpcSetEnv(cEmpD, cFilD,,,,GetEnvServer(),{ })
 
+        DbSelectArea("SC5")
+        SC5->(DbSetOrder(28))
+        SC5->(DbGoTop())
+        If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
+
+            If ! Empty(SC5->C5_PEDSAG)
+                Return {.T., SC5->C5_NUM, ""}
+                
+            EndIf
+
+        EndIf
+
         DbSelectArea("ZV4")
         ZV4->(DbSetOrder(1))
         ZV4->(DbSeek( FWxFilial("ZV4") + cPlaca ))
@@ -1203,6 +1617,8 @@ User Function ADFAT17M(cEmpD, cFilD, cEmpO, cFilO, cTpPed, cFornece, cLjForn, aC
             cLocPad := Posicione("SB1",1, FWxFilial("SB1") + cProduto, "B1_LOCPAD")
     
         EndIf
+        
+        Sleep(Random(0, 3)*1000)
 
         lRet := U_ADFAT17N(@cNvPed, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGranja, cGranjada, cTpFrt,;
                         cPlaca, cTransp, cUFPlaca, nPesoLiq, cProduto, nVlrUnit, nTotal, cTes, cLocPad, cNmOrdem, cTabGene, lPedSAG, @cMsgError)
@@ -1503,6 +1919,7 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     Local nPosTpSeq := 0
     Local cDesTpSe  := ""
     Local cPedSaida := ""
+    Local cNF       := ""
 
     //Verifica se há ordem de pesagem de ração para ser gerada.
     If cTpMovi == "R" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
@@ -1589,6 +2006,8 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
 
         cPedSaida := getPedSa((cQryT3)->ZIF_NUMERO)
 
+        cNF       := getNF(cPedSaida)
+
         Aadd(aOrdPes,{;
             .F.,;                   //01-Marca browse.
             aTpOrdem[nPTpOrd,3],;   //02-Descrição tp Ordem.
@@ -1618,7 +2037,8 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
             cPedSaida,;             //26-Pedido de saída (SC5).
             (cQryT3)->ZIG_PESINI,;  //27-Peso inicial.
             (cQryT3)->ZIG_PESFIM,;  //28-Peso final.
-            (cQryT3)->ZIG_PESOLI;   //29-Peso liquido.
+            (cQryT3)->ZIG_PESOLI,;  //29-Peso liquido.
+            cNF;                    //30-Peso liquido.
         })
     
         (cQryT3)->(dbSkip())
@@ -1629,6 +2049,36 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
 
     oOrdPes:setArray(aOrdPes)
     oOrdPes:Refresh()
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} carOrdens
+    Carrega gride de ordens de pesagem.
+    @type  Static Function
+    @author Everson
+    @since 18/11/2021
+    @version 01
+/*/
+Static Function geraOrd(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    // Local cCP       := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "NUMER"})]))
+    // Local cPlaca    := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "PLACA"})]))
+    // Local cTpMovi   := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "TPMOV"})]))
+
+    //Verifica se há ordem de pesagem de ração para ser gerada.
+    // If cTpMovi == "R" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
+    //     U_ADFAT17A(cCP, cPlaca)
+
+    // EndIf
+
+    //Verifica se há ordem de saída para ser gerada.
+    // If cTpMovi == "S" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
+    //     U_ADFAT17O(cCP, cPlaca)
+
+    // EndIf
 
     RestArea(aArea)
 
@@ -1650,9 +2100,13 @@ Static Function getPedSa(cNmOrdem)
     SC5->(DbSetOrder(28))
     If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
 
-        While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == cNmOrdem
+        While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == cNmOrdem 
+        
+            If Empty(SC5->C5_PEDSAG)
 
-            cPedidos += SC5->C5_NUM + ", "
+                cPedidos += SC5->C5_NUM + ", "
+
+            EndIf
 
             SC5->(DbSkip())
 
@@ -1686,6 +2140,78 @@ Static Function getPedSa(cNmOrdem)
     RestArea(aArea)
 
 Return cPedidos
+/*/{Protheus.doc} getNF
+    Obtém notas de saída.
+    @type  Static Function
+    @author Everson
+    @since 19/05/2022
+    @version 01
+/*/
+Static Function getNF(cPedSaida)
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local cNF      := ""
+    Local aPedidos := {}
+    Local cPed     := ""
+    Local nAux     := 1
+    Local cQuery   := ""
+
+    If Empty(cPedSaida)
+        Return ""
+
+    EndIf
+
+    aPedidos := Separa(cPedSaida, ",", .F.)
+
+    For nAux := 1 To Len(aPedidos)
+
+        If Empty(aPedidos[nAux])
+            Loop
+
+        EndIf
+
+        If Empty(cPed)
+            cPed += "'" + cValToChar(Alltrim(aPedidos[nAux])) + "'"
+        Else
+            cPed += ",'" + cValToChar(Alltrim(aPedidos[nAux])) + "'"
+
+        EndIf
+
+    Next nAux
+
+    cQuery := ""
+    cQuery += " SELECT " 
+    cQuery += " C5_NOTA + '-' + C5_SERIE AS NOTA " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
+    cQuery += " WHERE " 
+    cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
+    cQuery += " AND C5_NUM IN (" + cPed + ") " 
+    cQuery += " AND C5_NOTA <> '' " 
+    cQuery += " AND SC5.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY C5_NOTA " 
+
+    If Select("D_DNFS")
+        D_DNFS->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_DNFS"
+    DbSelectArea("D_DNFS")
+    D_DNFS->(DbGoTop())
+    While ! D_DNFS->(Eof())
+
+        cNF += Alltrim(cValToChar(D_DNFS->NOTA)) + ", "
+
+        D_DNFS->(DbSkip())
+
+    End
+    D_DNFS->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return cNF
 /*/{Protheus.doc} dfAgpOrd
     Define o agrupamento das ordens de pesagem.
     @type  Static Function
@@ -2248,7 +2774,10 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
 
-        U_ADFAT17K(cCP, cNmOrdem, nQuant, cBalanca, cRotPesa)
+        If U_ADFAT17K(cCP, cNmOrdem, nQuant, cBalanca, cRotPesa)
+            procEnvGb(cNmOrdem)
+
+        EndIf
 
     EndIf
 
@@ -2308,8 +2837,14 @@ Static Function cancTkt(oOrdPes, aOrdPes)
     EndIf
     
     cNmOrdem:= aOrdPes[nLinha,08]
-    
+
     lRet := U_ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, .T.)
+
+    //Cancela ordem no Gemba.
+    If lRet
+        U_ADFAT50G(cNmOrdem)
+
+    EndIf
 
     RestArea(aArea)
 
@@ -2340,7 +2875,7 @@ User Function ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, lExMsg)
 
         EndIf
 
-        If ! U_ADFAT17J(cCP, cNmOrdem, cTpOrdem, @cStatOrd, @cStatCp) //Atualiza status da ordem de pesagem e controle de pátio.
+        If ! U_ADFAT17J(cCP, cNmOrdem, cTpOrdem, @cStatOrd, @cStatCp, @cMsgError) //Atualiza status da ordem de pesagem e controle de pátio.
             DisarmTransaction()
             Break
 
@@ -2355,6 +2890,14 @@ User Function ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, lExMsg)
 
     End Transaction
 
+    If ! Empty(cMsgError)
+        U_ADFAT173("Cancelar ticket de pesagem : " + cMsgError, cNmOrdem, "", "PROTHEUS")
+
+    Else
+        U_ADFAT173("Cancelar ticket de pesagem : " + "ticket de pesagem cancelado " + ZIG->ZIG_NUMERO, cNmOrdem, "", "PROTHEUS")
+
+    EndIf
+
     RestArea(aArea)
 
 Return lRet
@@ -2365,7 +2908,7 @@ Return lRet
     @since 07/03/2022
     @version 01
 /*/
-User Function ADFAT17J(cCP, cNmOrdem, cTpOrdem, cStatOrd, cStatCp)
+User Function ADFAT17J(cCP, cNmOrdem, cTpOrdem, cStatOrd, cStatCp, cMsgError)
 
     //Variáveis.
     Local aArea := GetArea()
@@ -2373,6 +2916,7 @@ User Function ADFAT17J(cCP, cNmOrdem, cTpOrdem, cStatOrd, cStatCp)
 
     Default cStatOrd := ""
     Default cStatCp  := ""
+    Default cMsgError:= ""
 
     Begin Transaction
 
@@ -2386,13 +2930,13 @@ User Function ADFAT17J(cCP, cNmOrdem, cTpOrdem, cStatOrd, cStatCp)
 
         EndIf
         
-        If ! U_ADFAT175(cNmOrdem, cStatOrd, 1) //Atualiza status da ordem.
+        If ! U_ADFAT175(cNmOrdem, cStatOrd, 1, @cMsgError) //Atualiza status da ordem.
             DisarmTransaction()
             Break
 
         EndIf
 
-        If ! U_ADFAT174(cCP, "ZIB_STATUS", cStatCp) //Atualiza status do controle de pátio.
+        If ! U_ADFAT174(cCP, "ZIB_STATUS", cStatCp, @cMsgError) //Atualiza status do controle de pátio.
             DisarmTransaction()
             Break
 
@@ -2567,7 +3111,11 @@ Static Function gerTkOt(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanc
     oTicket := Nil
 
     If ! Empty(cMsgError)
+        U_ADFAT173("Atribuir ticket de pesagem : " + cMsgError, cNmOrdem, "", "PROTHEUS")
         Help(Nil, Nil, "Função gerTkOt(ADFAT017P)", Nil, "Erro na geração de registro de ticket de pesagem." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    Else
+        U_ADFAT173("Atribuir ticket de pesagem : " + "ticket gerado " + ZIG->ZIG_NUMERO, cNmOrdem, "", "PROTHEUS")
 
     EndIf
 
@@ -2659,7 +3207,11 @@ Static Function gerTkEn(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, lAgrup,
     oTicket := Nil
 
     If ! Empty(cMsgError)
+        U_ADFAT173("Atribuir ticket de pesagem : " + cMsgError, cNmOrdem, "", "PROTHEUS")
         Help(Nil, Nil, "Função gerTkOt(ADFAT017P)", Nil, "Erro na geração de registro de ticket de pesagem." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    Else
+        U_ADFAT173("Atribuir ticket de pesagem : " + "ticket gerado " + ZIG->ZIG_NUMERO, cNmOrdem, "", "PROTHEUS")
 
     EndIf
 
@@ -2757,7 +3309,11 @@ User Function ADFAT17K(cCP, cNmOrdem, nQuant, cBalanca, cRotPesa, cSeqTkt, cMsgE
     oTicket := Nil
 
     If ! Empty(cMsgError)
+        U_ADFAT173("Atribuir ticket de pesagem : " + cMsgError, cNmOrdem, "", "PROTHEUS")
         Help(Nil, Nil, "Função ADFAT17K(ADFAT017P)", Nil, "Erro na geração de registro de ticket de pesagem." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    Else
+        U_ADFAT173("Atribuir ticket de pesagem : " + "ticket gerado " + ZIG->ZIG_NUMERO, cNmOrdem, "", "PROTHEUS")
 
     EndIf
 
@@ -2843,7 +3399,11 @@ Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanc
     oTicket := Nil
 
     If ! Empty(cMsgError)
+        U_ADFAT173("Atribuir ticket de pesagem : " + cMsgError, cNmOrdem, "", "PROTHEUS")
         Help(Nil, Nil, "Função gerTkSa(ADFAT017P)", Nil, "Erro na geração de registro de ticket de pesagem." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    Else
+        U_ADFAT173("Atribuir ticket de pesagem : " + "ticket gerado " + ZIG->ZIG_NUMERO, cNmOrdem, "", "PROTHEUS")
 
     EndIf
 
@@ -3003,6 +3563,7 @@ User Function ADFAT17S(cTpOrdem, cPlaca, cTag, cTktProtheus, cFluxoGuard, cNmOrd
 
     //Variáveis.
     Local aArea     := GetArea()
+    Local cPreFx    := "Envio Balança: "
     Local cTktGuard := ""
     Local cStatOrd  := ""
     Local oRetSolic := Nil
@@ -3016,6 +3577,7 @@ User Function ADFAT17S(cTpOrdem, cPlaca, cTag, cTktProtheus, cFluxoGuard, cNmOrd
 
     If Empty(cUrl)
         cMsgError := "Url da balança " + cBalanca + " não está definido."
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT17S(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -3025,6 +3587,7 @@ User Function ADFAT17S(cTpOrdem, cPlaca, cTag, cTktProtheus, cFluxoGuard, cNmOrd
     cPlcFmt := Substr(cPlaca, 1, 3) + "-" + Substr(cPlaca, 4, 4)
 
     If !  U_ADFAT241(cUrl, @oRetSolic, @cMsgError, cPlcFmt, cPlcFmt, cTag, cFluxoGuard, cTktProtheus, nPesIni, cOpIni, cPerPesIni)
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         cMsgError := "Ocorreu erro no envio de pesagem para balança." + xPula + cMsgError
         Help(Nil, Nil, "Função envBlcAut(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
@@ -3047,15 +3610,19 @@ User Function ADFAT17S(cTpOrdem, cPlaca, cTag, cTktProtheus, cFluxoGuard, cNmOrd
             EndIf
 
         Else
+            U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
             Help(Nil, Nil, "Função ADFAT17S(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         EndIf
 
     Else
         cMsgError := "Não há ticket do Guardian gerado."
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT17S(ADFAT017P)", Nil, "Função ADFAT17S(ADFAT017P)-Ticket Guardian gerado para o ticket Protheus " + cTktProtheus + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     EndIf
+
+    U_ADFAT173(cPreFx + "ordem de pesagem enviada para o Guardian ", cNmOrdem, "", "GUARDIAN")
 
     RestArea(aArea)
 
@@ -3400,6 +3967,7 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
     //Variáveis.
     Local aArea       := GetArea()
+    Local cPreFx      := "Pesagem: "
     Local lRet        := .T.
     Local cPlaca      := ""
     Local cNmOrdem    := ""
@@ -3419,21 +3987,13 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     Local aDdSeq      := {}
     Local nPesIni     := 0
     Local cEnvBar     := ""
+    Local lGemba      := GetMV("MV_#UGEMBA",,.F.)    
     
     Default aDdPAnt   := {}
     Default nTpSeq    := 0
     Default cAcaSeq   := ""
     Default lSequestra:= .F. 
     Default cMsgError := ""
-
-    //Valida peso informado/capturado.
-    If nPesTot <= 0 
-        cMsgError := "Peso inválido."
-        Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
 
     //Localiza ticket de pesagem.
     If ! U_ADFAT195(cTicket)
@@ -3448,11 +4008,22 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     cNmOrdem  := ZIG->ZIG_ORDEM
     nQtdOrd   := ZIG->ZIG_PESORD
     nPesIni   := ZIG->ZIG_PESINI
-    cCP := ZIG->ZIG_CTPATI
+    cCP       := ZIG->ZIG_CTPATI
+
+    //Valida peso informado/capturado.
+    If nPesTot <= 0 
+        cMsgError := "Peso inválido."
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
+        Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
 
     //Posiciona no registro de pátio selecionado.
     If ! U_ADFAT17U(cCP)
         cMsgError := "Controle de pátio " + cCP + " não localizado."
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -3469,6 +4040,7 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     //Localiza ordem de pesagem.
     If ! U_ADFAT16A(cNmOrdem)
         cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada."
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -3483,6 +4055,7 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     //Localiza roteiro de pesagem.
     If ! U_ADFAT15B(cRotPesa)
         cMsgError := "Roteiro de pesagem " + cRotPesa + " não localizado."
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -3499,45 +4072,45 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
     EndIf
 
-    //Pesagem final.
-    If lRet .And. nTpPesa == 2
-
-        //Rotina para executar corte automático na ordem de pesagem e pedido de venda.
-        lRet := U_ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, @nQtdOrd, cTicket, nPesoLiq, @cMsgError)
-
-        //Obtém dados de quebra da pesagem.
-        If lRet .And. U_ADFAT177(cRotPesa, cCP, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, @aDdSeq, @cMsgError)
-
-            //Valida dados de quebra da pesagem.
-            lRet := U_ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, @nTpSeq, @cAcaSeq, @cMsgError)
-
-        Else
-            lRet := .F.
-
-        EndIf
-
-        //Valida se há apontamento para produtos ensacados.
-        If lRet .And. lEnsacado .And. ! U_ADFAT178(cRotPesa, cCP, cNmOrdem)
-            nTpSeq := 3 
-            cAcaSeq:= "R"
-
-        EndIf
-
-        //Valida se há apontamento de lacre.
-        If lRet .And. lLacre .And. ! U_ADFAT17F(cRotPesa, cCP, cNmOrdem)
-            nTpSeq := 2
-            cAcaSeq:= "R"
-
-        EndIf
-
-    EndIf
-
     If lRet
+
+        //Pesagem final.
+        If nTpPesa == 2
+
+            //Rotina para executar corte automático na ordem de pesagem e pedido de venda.
+            lRet := lRet .And. U_ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, @nQtdOrd, cTicket, nPesoLiq, @cMsgError)
+
+            //Obtém dados de quebra da pesagem.
+            If lRet .And. U_ADFAT177(cRotPesa, cCP, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, @aDdSeq, @cMsgError)
+
+                //Valida dados de quebra da pesagem.
+                lRet := U_ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, @nTpSeq, @cAcaSeq, @cMsgError)
+
+            Else
+                lRet := .F.
+
+            EndIf
+
+            //Valida se há apontamento para produtos ensacados.
+            If lRet .And. lEnsacado .And. ! U_ADFAT178(cRotPesa, cCP, cNmOrdem)
+                nTpSeq := 3 
+                cAcaSeq:= "R"
+
+            EndIf
+
+            //Valida se há apontamento de lacre.
+            If lRet .And. lLacre .And. ! U_ADFAT17F(cRotPesa, cCP, cNmOrdem)
+                nTpSeq := 2
+                cAcaSeq:= "R"
+
+            EndIf
+
+        EndIf
         
         lSequestra := nTpSeq > 0
             
         If lOutras //Fluxo do tipo "Outras".
-            lRet := U_ADFAT17D(cBalanca, cTicket, cRotPesa, nTpPesa, cRotPesa, cCP, cProdSAG, nQtdOrd, nPesoLiq,;
+            lRet := lRet .And. U_ADFAT17D(cBalanca, cTicket, cRotPesa, nTpPesa, cRotPesa, cCP, cProdSAG, nQtdOrd, nPesoLiq,;
                             cPesAuto, cManual, nPesTot, aDdPAnt, cNmOrdem, cTpMovi, lEnsacado, aDdSeq, nTpSeq,;
                             lSequestra, cAcaSeq, lLacre, cEnvBar, @cMsgError)
 
@@ -3557,18 +4130,143 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
                             lSequestra, cAcaSeq, lLacre, cEnvBar, @cMsgError)
 
         Else
+            lRet := .F.
             cMsgError := "ADFAT017P - ADFAT171 - Tipo de roteiro de pesagem não informado."
 
         EndIf
 
     EndIf
 
-    If ! Empty(cMsgError)
-        logZBE("Erro Pesagem", " Placa " + cPlaca + " Tkt " + cTicket + " Ord " + cNmOrdem, cMsgError)
+    If ! lRet
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         cMsgError += "ADFAT171(ADFAT017P)-" + cMsgError 
 
+    Else
+        U_ADFAT173(cPreFx + Iif(nTpPesa == 1, "Primeira", "Segunda") + " pesagem realizada", cNmOrdem, "", "PROTHEUS")
+
+        //Envia registro de pesagem para o Gemba. ******* Deixar o envio para o Gemba como última operação. ***********
+        If lRacao .And. lGemba .And. nTpPesa == 1
+
+            envGemba(cCP)
+
+        ElseIf lRacao .And. lGemba .And. nTpPesa == 2
+
+            //Envia a pesagem final para o Gemba.
+            If ! U_ADFAT50N(cNmOrdem, @cMsgError) 
+                U_ADFAT173("Envio de pesagem final: " + cMsgError, cNmOrdem, "", "GEMBA")
+
+            EndIf
+
+        EndIf
+
     EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} envGemba
+    Envia as ordem de pesagem para o Gemba.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function envGemba(cCP, cMsgError)
+
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local cPreFx := "Envio OP: "
+    
+    Default cMsgError := ""
+
+    DbSelectArea("ZIF")
+    ZIF->(DbSetOrder(1))
+    ZIF->(DbGoTop())
+    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cCP ) )
+        U_ADFAT173(cPreFx + "ordem de pesagem não localizada pelo controle de pátio " + cCP + ".", ZIF->ZIF_NUMERO, "", "GEMBA")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_CTPATI == cCP
+
+        If chkEnGemba(ZIF->ZIF_NUMERO)
+            ZIF->(DbSkip())
+            Loop
+
+        EndIF
+
+        cMsgError := ""
+        procEnvGb(ZIF->ZIF_NUMERO, @cMsgError)
+
+        ZIF->(DbSkip())
+
+    End
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} procEnvGb
+    Process envio de ordem de pesagem para o Gemba.
+    @type  User Function
+    @author Everson
+    @since 18/05/2022
+    @version 01
+/*/
+Static Function procEnvGb(cNmOrdem, cMsgError)
+    
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local lRet   := .F.
+    Local cPreFx := "Envio OP: "
+
+    Default cMsgError := ""
+
+    lRet := U_ADFAT50F(cNmOrdem, @cMsgError)
+
+    If ! lRet
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GEMBA")
+
+    Else
+        U_ADFAT173(cPreFx + "enviada com sucesso.", cNmOrdem, "", "GEMBA")
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} chkEnGemba
+    Verifica se a ordem de pesagem já foi enviada para o Gemba.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function chkEnGemba(cNmOrdem)
+
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local lRet   := .F.
+    Local cQuery := ""
+
+    cQuery := "SELECT ZBE_DATA FROM " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cNmOrdem + "' AND ZBE_LOG = 'enviada com sucesso.' AND ZBE.D_E_L_E_T_ = ''"
+
+    If Select("D_CHKZBE") > 0
+        D_CHKZBE->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_CHKZBE"
+    DbSelectArea("D_CHKZBE")
+    D_CHKZBE->(DbGoTop())
+    If ! D_CHKZBE->(Eof())
+        lRet := .T.
+
+    EndIf
+
+    D_CHKZBE->(DbCloseArea())
 
     RestArea(aArea)
 
@@ -3584,6 +4282,7 @@ User Function ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, nTpSeq, cAcaSeq, cMsgE
 
     //Variáveis.
     Local aArea     := GetArea()
+    Local cPreFx    := "Qbr Pesagem: "
 
     Default cAcaSeq   := ""
     Default cMsgError := ""
@@ -3595,7 +4294,7 @@ User Function ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, nTpSeq, cAcaSeq, cMsgE
         If cAcaSeq <> "L" 
 
             If chkLibSq(cTicket)
-                logZBE("Pesagem com quebra com liberação de sequestro", " Placa " + cPlaca + " Tkt " + cTicket + " Ord " + cNmOrdem + " Ação " + cAcaSeq, "")
+                U_ADFAT173(cPreFx + "Pesagem com quebra com liberação de sequestro", cNmOrdem, "", "PROTHEUS")
 
             Else
                 nTpSeq := 1
@@ -3604,7 +4303,7 @@ User Function ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, nTpSeq, cAcaSeq, cMsgE
 
         Else
             cAcaSeq := ""
-            logZBE("Pesagem com quebra de peso liberada pelo cadastro de roteiro", " Placa " + cPlaca + " Tkt " + cTicket + " Ord " + cNmOrdem + " Ação " + cAcaSeq, "")
+            U_ADFAT173(cPreFx + "Pesagem com quebra de peso liberada pelo cadastro de roteiro", cNmOrdem, "", "PROTHEUS")
 
         EndIf
 
@@ -4723,14 +5422,14 @@ User Function ADFAT174(cCP, cCampo, xValor, cMsgError)
     EndIf
 
 Return lRet
-/*/{Protheus.doc} contTkt
+/*/{Protheus.doc} ADFAT17W
     Obtém a quantidade de tickets vinculados ao controle de pátio.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 25/11/2021
     @version 01
 /*/
-Static Function contTkt(cCP)
+User Function ADFAT17W(cCP)
 
     //Variáveis.
     Local nNum   := 0
@@ -4814,6 +5513,7 @@ Static Function lerTag(oView, lAtuView, cCP)
         If !Empty(cTag) .And.;
             chkTag(cTag, cCP) //Verifica se a tag de pesagem não está em uso.
             FWFldPut("ZIB_TAG",cTag)
+            oView:lModify := .T.
 
         EndIf
         
@@ -5382,6 +6082,14 @@ User Function ADFAT17A(cCP, cPlaca)
             cNvOrdP:= ""
             aDados := {}
 
+            Sleep(Random(0, 2)*1000)
+
+            If U_ADFAT16E(D_ZIR->ZIR_NUMERO)
+                D_ZIR->(DbSkip())
+                Loop
+
+            EndIf
+
             //Gera ordem de pesagem.
             If ! U_ADFAT167(@cNvOrdP,;
                            cCP,;
@@ -5446,6 +6154,10 @@ User Function ADFAT17O(cCP, cPlaca)
         
     EndIf
 
+    DbSelectArea("SC6")
+    SC6->(DbSetOrder(1))
+    SC6->(DbGoTop())
+
     If Select("D_PEDS") > 0
         D_PEDS->(DbCloseArea())
 
@@ -5479,6 +6191,18 @@ User Function ADFAT17O(cCP, cPlaca)
         While ! D_PEDS->(Eof())
 
             cPedido := D_PEDS->C5_NUM
+
+            Sleep(Random(0, 2)*1000)
+
+            If SC6->(DbSeek( FWxFilial("SC6") + cPedido ))
+
+                If ! Empty(SC6->C6_XORDPES)
+                    D_PEDS->(DbSkip())
+                    Loop
+
+                EndIf
+
+            EndIf
 
             // Valida se há item com bloqueio por estoque ou financeiro.
             If itemBlc(D_PEDS->C5_NUM)
@@ -5759,20 +6483,21 @@ Static Function chkVldSq(cCP, cTicket)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} Static Function LOGZBE
+/*/{Protheus.doc} Static Function ADFAT173
 	Gera log ZBE
 	@type  Static Function
 	@author Everson
 	@since 24/02/2022
 	@version 01
 /*/
-Static Function logZBE(cMsg, cParam, cLog)
+User Function ADFAT173(cMsg, cParam, cLog, cModulo)
 
     //Variáveis.
 
-    Default cMsg   := ""
-    Default cParam := ""
-    Default cLog   := ""
+    Default cMsg    := ""
+    Default cParam  := ""
+    Default cLog    := ""
+    Default cModulo := "FATURAMENTO"
 
 	RecLock("ZBE", .T.)
 		Replace ZBE_FILIAL 	   	With FWxFilial("ZBE")
@@ -5782,7 +6507,7 @@ Static Function logZBE(cMsg, cParam, cLog)
 		Replace ZBE_LOG	        With cMsg
 		Replace ZBE_PARAME	    With cParam
         Replace ZBE_LOGMEM	    With cLog
-		Replace ZBE_MODULO	    With "FATURAMENTO"
+		Replace ZBE_MODULO	    With cModulo
 		Replace ZBE_ROTINA	    With "ADFAT017P" 
 	ZBE->( msUnlock() )
 

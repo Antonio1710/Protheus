@@ -1600,6 +1600,17 @@ Static Function grvBarr(cOperacao, cNumero, cNF, cSerie)
 			   "documentos_de_saida_protheus", cOperacao,;
 			   .T., .T.,.T., Nil)
 
+	If cOperacao == "I" .And. ! Empty(SD2->D2_PEDIDO)
+
+		cFilter := " C6_FILIAL ='" + FWxFilial("SC6") + "' .And. C6_NUM = '" + SD2->D2_PEDIDO + "' "
+
+		U_ADFAT27D("SC5", 1, FWxFilial("SC5") + SD2->D2_PEDIDO,;
+			"SC6", 1, FWxFilial("SC6") + SD2->D2_PEDIDO, "C6_ITEM",cFilter,;
+			"pedidos_de_saida_protheus", "A",;
+			.T., .T.,.T., Nil)
+
+	EndIf
+
 	RestArea(aArea)
 
 Return Nil

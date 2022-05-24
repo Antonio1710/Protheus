@@ -264,15 +264,42 @@ Return lRet
     @since 02/12/2021
     @version 01
 /*/
-User Function ADFAT244()
-    
+User Function ADFAT244(cUrl, oRetSolic, cErro)
+
     //Variáveis.
     Local aArea := GetArea()
+    Local lRet  := .F.
+    // Local oGuardian := WSWS_GUARDIAN():New()
+
+    // Default cErro := ""
+
+    // If Empty(cUrl)
+    //     Help(Nil, Nil, "Função ADFAT24C(ADFAT024P)", Nil, "Balança " + cBalanca + " não possui URL vinculado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     Return .F.
+
+    // EndIf
+
+    // oGuardian:_URL := cUrl
     
+    // If oGuardian:ConfirmaLeituraTicketsMarcados()
+        
+    //     If oGuardian:nErro = 0
+    //         lRet := .T.
+    //         oRetSolic := oGuardian:oWSConfirmaLeituraTicketsMarcadosResult
+
+    //     Else
+    //         cErro := cValToChar(oGuardian:nErro) + " " + Alltrim(cValToChar(oGuardian:cErroMSG))
+
+    //     EndIf
+
+    // Else
+    //     cErro := "GetWSCError " + GetWSCError()
+        
+    // EndIf 
 
     RestArea(aArea)
 
-Return Nil
+Return lRet
 /*/{Protheus.doc} ADFAT245
     Remonta fluxo. 
     @type  User Function
@@ -568,6 +595,10 @@ User Function ADFAT24C()
         nCount++
 
     End
+
+    oRetSolic := Nil
+    cErro := ""
+    // U_ADFAT244(cUrl, @oRetSolic, @cErro)
 
 Return .T.
 /*/{Protheus.doc} ADFAT24F
@@ -1188,5 +1219,78 @@ User Function ADFAT24E()
 
     MsAguarde({|| U_ADFAT24C() },"Aguarde","Obtendo dados...")
     MsAguarde({|| U_ADFAT24D() },"Aguarde","Processando registros...")
+
+Return Nil
+/*/{Protheus.doc} ADFAT24
+    Ponto de entrada.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+User Function ADFAT24()
+
+    //Variáveis.
+    Local aArea       := GetArea()
+	Local aParam	  := PARAMIXB
+	Local xRet 		  := .T.
+	Local oObj 		  := ""
+	Local cIdPonto 	  := ""
+	Local cIdModel 	  := ""
+    Local oModelx     := Nil
+    Local nOperation  := 0
+    Local cNumero     := ""
+    Local lBarramento := GetMv("MV_#ADF251",,.T.) //Registros de pesagem vindos do barramento.
+    
+	If aParam <> Nil
+
+		oObj 	    := aParam[1]
+		cIdPonto    := aParam[2]
+		cIdModel    := aParam[3]
+        nOperation  := oObj:GetOperation()
+
+		If cIdPonto == "MODELCOMMITNTTS" .And. ! lBarramento
+
+            oModelx := FWModelActive()
+            cNumero := oModelx:GetValue("MD_MASTER", "ZIH_TKTGUA") + oModelx:GetValue("MD_MASTER", "ZIH_CODIGO")
+
+            If nOperation == MODEL_OPERATION_INSERT
+                cOperacao := "I"
+
+            ElseIf nOperation == MODEL_OPERATION_UPDATE
+                cOperacao := "A"
+
+            ElseIf nOperation == MODEL_OPERATION_DELETE
+                cOperacao := "D"
+
+            EndIf
+
+            If ! Empty(cOperacao) .And. ! Empty(cNumero)
+                grvBarr(cOperacao, cNumero)
+
+            EndIf
+
+		EndIf
+
+	EndIf
+
+    RestArea(aArea)
+
+Return xRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+	U_ADFAT27C(cTbMast, 4, "pesagens_guardian", cOperacao, FWxFilial(cTbMast) + cNumero)
+
+    RestArea(aArea)
 
 Return Nil

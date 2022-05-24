@@ -146,3 +146,20 @@ User Function ADFAT20A()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} User Function ADFAT20B
+    Posiciona no produto pelo código do SAG.
+    @type  Function
+    @author user
+    @since 13/05/2022
+    @version 01
+    /*/
+User Function ADFAT20B(cProdSAG)
+
+    DbSelectArea("ZIM")
+    ZIM->(DbSetOrder(1))
+    If ! ZIM->( DbSeek( FWxFilial("ZIM") + cProdSAG) )
+        Return .F.
+
+    EndIf
+
+Return .T.

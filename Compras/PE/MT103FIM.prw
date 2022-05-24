@@ -53,6 +53,8 @@ STATIC cResponsavel  := SPACE(60)
   @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
   @history Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
   @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
+  @history Ticket 67494   - Fernando Sigoli   - 24/05/2022 - Feito duplo check para gravar chamada da sp do edata, gravação da nota e datadigitação
+  
 /*/
 User Function MT103FIM()
 
@@ -224,9 +226,22 @@ User Function MT103FIM()
         TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_FATURA] ' +Str(SF1->(Recno()))+","+"'"+cEmpAnt+"'" )
 	      EndTran()
 	    EndIf
-	  EndIf
-	  //Fim Chamado: 036621 10/08/2017 - Fernando Sigoli
 
+	  EndIf
+    //Fim Chamado: 036621 10/08/2017 - Fernando Sigoli
+
+    //Inicio TKT - 67494  - Fernando Sigoli 24/05/2022
+    If SF1->F1_TIPO == "D" .and. Alltrim(cFilAnt) $ "02"  .and. (nOpcao == 3 .or. nOpcao == 4) 
+    
+      If !Empty(SF1->F1_X_SQED)
+        BeginTran() //Executa a Stored Procedure
+        TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_FATURA] ' +Str(SF1->(Recno()))+","+"'"+cEmpAnt+"'" )
+        EndTran()
+      EndIf
+    
+    ENDIF
+
+    //Fim TKT - 67494 
 	  //Inicio Chamado: 043873 24/09/2018 - Adriana Oliveira
 	  //Somente devolução com formulario proprio
 	  If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. SF1->F1_FORMUL == "S" .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
