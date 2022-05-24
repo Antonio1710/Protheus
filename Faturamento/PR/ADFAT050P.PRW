@@ -427,6 +427,7 @@ Static Function atuPeGue(aRecAtu)
             oModel:SetValue("MD_MASTER", "ZHQ_PROCES", "1")
 
         Else
+            oModel:SetValue("MD_MASTER", "ZHQ_PROCES", "1") //Everson - 24/05/2022. Chamado 18465.
             oModel:SetValue("MD_MASTER", "ZHQ_ERRO", aRecAtu[nAux][3])
             
         EndIf
