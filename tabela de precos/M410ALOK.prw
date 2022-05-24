@@ -14,6 +14,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket 8786 - 05/02/2021 - Fernando Macieira - Alterar ou Excluir Pedido de Venda - Base de Dados Adoro
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 /*/
 User Function M410ALOK()
 
@@ -22,6 +23,8 @@ User Function M410ALOK()
 	Local _LCOPIA 		:= If(ValType(VAR_IXB)=="A",If(VAR_IXB[1]=="COPIA_PV",.T.,.F.),.F.)
 	Local _cUsuExcPV	:= Alltrim(GetMv("MV_#USUEPV")) // Incluido por Adriana para validacao exclusao de Pedido de Venda Liberado
 	Local _cEmpRotOK    := GetMV("MV_#EMPROT",,"02#07#09#01") // @history ticket 8786 - 05/02/2021 - Fernando Macieira - Alterar ou Excluir Pedido de Venda - Base de Dados Adoro
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	//Everson - 01/03/2018. Chamado 037261.SalesForce.
 	If IsInCallStack('RESTEXECUTE') .OR. IsInCallStack('U_RESTEXECUTE')
@@ -308,8 +311,9 @@ User Function M410ALOK()
 
 	EndIf
 	
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	// Everson - 13/05/2018. Chamado 037261, SalesForce.
-	If cEmpAnt == "01" .And. cFilAnt == "02" 
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 	
 		If Alltrim(cValToChar(SC5->C5_XGERSF)) == "2" .And. IsInCallStack("A410DELETA") // Everson - 13/05/2018.
 		

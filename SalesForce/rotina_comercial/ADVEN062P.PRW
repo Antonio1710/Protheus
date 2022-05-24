@@ -5,19 +5,14 @@
 
 //Variáveis Estáticas.
 Static cTitulo := "Composição do Desconto"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³ADVEN062P   º Autor ³ Everson          º Data ³  15/11/17   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³Composição do Desconto.                                     º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Chamado 037261.                                            º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
+
+/*/{Protheus.doc} User Function ADVEN062P
+	Composição do Desconto. - Chamado 037261.
+	@type  Function
+	@author Everson
+	@since 15/11/17
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	/*/
 User Function ADVEN062P() // U_ADVEN062P()
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -36,7 +31,8 @@ User Function ADVEN062P() // U_ADVEN062P()
 	Local lFinanceiro:= .F.
 	Local cUsrCom	 := Alltrim(cValToChar(GetMv("MV_#COMPDC")))
 	Local cUsrFim	 := Alltrim(cValToChar(GetMv("MV_#COMPDF")))
-	
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+
 	Private oCodigo
 	Private cCodigo	:= Alltrim(cValToChar(SA1->A1_COD))
 	Private oLoja
@@ -49,7 +45,7 @@ User Function ADVEN062P() // U_ADVEN062P()
 	Private cTxtDesc:= ""
 	
 	//
-	If cEmpAnt <> "01"
+	If !Alltrim(cEmpAnt) $ cEmpSF
 		Return Nil
 		
 	EndIf

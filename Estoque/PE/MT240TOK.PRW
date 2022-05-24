@@ -14,6 +14,7 @@
 	@history Chamado 051482 - William Costa    - 03/09/2019 - OS 052798 || ALMOXARIFADO || EDUARDO || 8429 || BAIXAR ESTOQUE - Identificado que enquanto nao fecha o estoque fica produtos e enderecos com saldo zero na tabela SBF isso estava atrapalhando a query que mostrava saldo zerado no retorno.
 	@history Chamado 054816 - FWNM             - 09/01/2020 - OS 056218 || ALMOXARIFADO || CRISTIANO || 3547 || BAIXA REQUISICAO-RNX
 	@history Chamado 055729 - FERNANDO SIGOLI  - 10/02/2020 - OS 057128 || CONTROLADORIA || FRED_SANTOS || 8947 || ESTOQUE NEGATIVO  
+	@history Ticket 69574   - Abel Babini      - 25/04/2022 - Projeto FAI
 /*/
 
 User Function MT240TOK
@@ -27,7 +28,9 @@ User Function MT240TOK
 	Local cBF_Localiz   := '' 
 	Local nSaldoSB2     := 0
 	Local nSaldoSBF     := 0  
-	
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+
 	If SubStr(M->D3_CC,1,1) = '9'
 		If Empty(M->D3_PROJETO)
 			MsgAlert('INFORME O PROJETO !!!')
@@ -62,8 +65,8 @@ User Function MT240TOK
 	//юддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддддды
 	
 	// *** INICIO CHAMADO 036032  WILLIAM COSTA*** //
-	IF cEmpAnt                     == '01' .AND. ;
-	   cFilAnt                     == '02' .AND. ;
+	IF Alltrim(cEmpAnt) $ cEmpSF .AND. ;
+	   Alltrim(cFilAnt) $ cFilSF .AND. ;
 	   (IsInCallStack('MATA185')   == .T.  .OR.  ;
 	    IsInCallStack('ADEST006P') == .T.)
 		

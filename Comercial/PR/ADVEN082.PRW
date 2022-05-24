@@ -1,21 +1,22 @@
 #include "Topconn.ch"
 
-// ############################################################################################################################
-// Projeto: Projeto Financas
-// Modulo : SIGAFIN
-// Fonte  : ADVEN082 
-// ---------+-------------------+------------------------------------------------------------------------------+---------------
-// Data     | Autor             | Descricao                                                                    | Chamado
-// ---------+-------------------+------------------------------------------------------------------------------+---------------
-// 28/03/18 | Ricardo Lima      | Filtro para Consulta Padrão da tabela SA1 para uso no Pedido de Vendas - SC5 | 
-// ---------+-------------------+------------------------------------------------------------------------------+---------------
-// ############################################################################################################################
-
+/*/{Protheus.doc} User Function ADVEN082
+	Filtro para Consulta Padrão da tabela SA1 para uso no Pedido de Vendas - SC5
+	// Projeto: Projeto Financas
+	// Modulo : SIGAFIN
+	// Fonte  : ADVEN082 
+	@type  Function
+	@author Ricardo Lima
+	@since 28/03/18
+	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+	/*/
 User Function ADVEN082   // #U_ADVEN082()
 
 Local _aCodSup 	:= {}
 Local _cSupV 	:= ""
 Local cM410fil  := ""
+Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+Local _ni := 0
 
 U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Filtro para Consulta Padrão da tabela SA1 para uso no Pedido de Vendas - SC5')
 
@@ -23,7 +24,7 @@ Private _cUserName := '""
 
 _cUserName := Alltrim(cUsername)
 
-If Alltrim(cEmpAnt) == "01"
+If Alltrim(cEmpAnt) $ cEmpSF
 	
 	If ! Alltrim(_cUserName) $ GetMV("MV_GERENTE")
 		_cCodUs := __cUserID

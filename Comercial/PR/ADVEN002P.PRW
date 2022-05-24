@@ -19,9 +19,12 @@
 	@history Ticket 12379   - Leonardo P. Monteiro - 15/04/2021 - Tratamento do EDI para evitar a inclusão de pedidos em duplicidade. Isso evita erros na importação de arquivos.
 	@history Ticket 12379   - Leonardo P. Monteiro - 19/04/2021 - Correção nas mensagens de erros quando não há produto cadastrado.
 	@history Ticket 18915   - Leonardo P. Monteiro - 26/08/2021 - Tratamento na conversão dos itens com valor 0.
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 */
 
 User Function ADVEN002P()
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
 	Private aDirectory    := {} 
 	Private nCont         := 0   
@@ -292,8 +295,8 @@ User Function ADVEN002P()
 				IF TRB->(EOF()) 
 
 					IF ALLTRIM(cEstCli) == 'SP' .AND. ;
-					   cEmpAnt          == '01' .AND. ;
-					   cFilAnt          == '02'
+					   ALLTRIM(cEmpAnt)          $ cEmpSF .AND. ;
+					   ALLTRIM(cFilAnt)          $ cFilSF
 
 						TRB->(dbCloseArea())	 
 						SqlItem()
@@ -645,8 +648,9 @@ Static Function VALPRECO(cProd,nPrecoUnit)
 	Local ACOLS     := {}  
 	Local cCodSuper := ''
 	Local cVend     := ''
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	
-	If cEmpAnt <> "01"   &&somente executa para empresa Adoro.
+	If !Alltrim(cEmpAnt) $ cEmpSF   &&somente executa para empresa Adoro.
 	   return(nPrecoUnit)
 	Endif                
 	 
