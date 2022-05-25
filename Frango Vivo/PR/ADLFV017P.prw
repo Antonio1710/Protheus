@@ -17,6 +17,7 @@
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo. 
   @history Ticket 41586 - Everson              - 05/10/2021 - Tratamento para validação de inclusão de nf.
   @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+  @history Ticket 73466 - Everson              - 25/05/2022 - Adicionada melhoria de para fechamento de registro.
 /*/
 User Function ADLFV017P() // U_ADLFV017P()
 
@@ -53,11 +54,11 @@ Static Function BrowseDef()
 	oBrowse:SetAlias("ZV1")
 	oBrowse:SetDescription(STR0001)
 
-	oBrowse:AddLegend("ZV1_STATUS='I'"					, "BR_AZUL"			, "PRIMEIRA PESAGEM")
+	oBrowse:AddLegend("ZV1_STATUS='I'"					, "BR_AZUL"	    , "PRIMEIRA PESAGEM")
 	oBrowse:AddLegend("ZV1_STATUS='R'"					, "BR_LARANJA" 	, "SEGUNDA PESAGEM")
 	oBrowse:AddLegend("ZV1_STATUS='M'"					, "BR_MARRON" 	, "PESAGEM MANUAL")
-	oBrowse:AddLegend("ZV1_STATUS='G'"					, "BR_VERDE" 		, "GERADO FRETE")
-	oBrowse:AddLegend("ALLTRIM(ZV1_STATUS)=''"	, "BR_PRETO" 		, "ORDEM NAO UTILIZADA")
+	oBrowse:AddLegend("ZV1_STATUS='G'"					, "BR_VERDE" 	, "GERADO FRETE")
+	oBrowse:AddLegend("ALLTRIM(ZV1_STATUS)=''"	        , "BR_PRETO" 	, "ORDEM NAO UTILIZADA")
 
 	// DEFINE DE ONDE SERÁ RETIRADO O MENUDEF
 	oBrowse:SetMenuDef("ADLFV017P")
@@ -69,11 +70,63 @@ Static Function MenuDef()
 	local aRotina := {}
 
 	//Local aRotina := FWMVCMenu("ADLFV017P")
-	ADD OPTION aRotina Title 'Visualizar' Action 'VIEWDEF.ADLFV017P'  OPERATION 2 ACCESS 0
-	ADD OPTION aRotina Title 'Editar'     Action 'VIEWDEF.ADLFV017P'	OPERATION 4 ACCESS 0
+	ADD OPTION aRotina Title 'Visualizar'   Action 'VIEWDEF.ADLFV017P'  OPERATION 2  ACCESS 0
+	ADD OPTION aRotina Title 'Editar'       Action 'VIEWDEF.ADLFV017P'  OPERATION 4  ACCESS 0
+	ADD OPTION aRotina Title 'Fechar Ordem' Action 'U_ADLFV171()'  OPERATION 10 ACCESS 0 //Everson - 24/05/2022. Chamado 73466.
 
 Return (aRotina)
+/*/{Protheus.doc} User Function ADLFV171
+	Fecha ordem de carregamento.
+	Chamado 73466.
+	@type  Function
+	@author Everson
+	@since 24/05/2022
+	@version 02
+	/*/
+User Function ADLFV171()
 
+	//Variáveis.
+	Local aArea := GetArea()
+
+	If ZV1->ZV1_2PESO <= 0
+		MsgInfo("Registro não possui peso final. Operação não permitida.", "Função ADLFV171(ADLFV017P)")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	//1 - Aberto
+	//2 - Fechado Automático
+	//3 - Fechado Manual
+	If ZV1->ZV1_FECHA <> "1"
+		MsgInfo("Registro já está fechado.", "Função ADLFV171(ADLFV017P)")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	If ! MsgYesNo("Deseja fechar o registro?", "Função ADLFV171(ADLFV017P)")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	Begin Transaction
+
+		RecLock("ZV1", .F.)
+			ZV1->ZV1_FECHA := "3"
+		ZV1->(MsUnLock())
+
+		//GrLogZBE(dDate,cTime,cUser,cLog,cModulo,cRotina,cParamer,cEquipam,cUserRed)
+		u_GrLogZBE(msDate(),TIME(),cUserName, "FECHAMENTO DE REGISTRO","FRANGO VIVO","ADLFV017P",;
+				   "Número OC " + cValToChar(ZV1->ZV1_NUMOC),ComputerName(),LogUserName())
+
+
+	End Transaction
+
+	RestArea(aArea)
+
+Return Nil
 // REGRAS DE NEGÓCIO
 Static Function ModelDef()
 	//local nAtual := 0
