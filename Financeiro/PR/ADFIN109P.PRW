@@ -18,7 +18,7 @@
 	@history Ticket 8      - Abel Babini - 01/02/2022 - Ajuste nas regras de liberação de crédito
 	@history Ticket 8      - Abel Babini - 03/03/2022 - Ajuste na gravação da liberação
 	@history Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
-	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE.
+	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE. 
 /*/
 
 User Function ADFIN109P()
