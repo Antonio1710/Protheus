@@ -104,7 +104,7 @@ Static nTipoFrt	:= 0
 	@history 24/03/2022  Sigoli Tkt 70153   - Declaração de variavel OK na função principal
 	@history 28/03/2022 - ADRIANO SAVOINE - Criado o bloqueio para o tipo de ocorrencia 012 e 014 somente para pessoas especificas.
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
-	@history ticket 73505 - Everson - 24/05/2022 - Tratamento para validar exclusão/alteração de registros fechado em rotinas com execauto.
+	@history ticket 73505 - Everson - 24/05/2022 - Tratamento para validar exclusão/alteração de registros fechado em rotinas com execauto. 
 /*/
 User Function ADLOG040P()
 
@@ -130,7 +130,7 @@ User Function ADLOG040P()
 
 	//
 	DbSelectArea("ZFA")
-	ZFA->(DbSetOrder(16))
+	// ZFA->(DbSetOrder(16))
 
 	//
 	oBrowse := FWMBrowse():New()
