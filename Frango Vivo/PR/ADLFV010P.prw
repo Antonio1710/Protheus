@@ -33,8 +33,10 @@
 	@history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	@history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
 /*/
-User Function ADLFV010P(lAuto, cEmpAut, cFilAut, cFilGranja) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+//User Function ADLFV010P(lAuto, cEmpAut, cFilAut, cFilGranja) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+User Function ADLFV010P(aParam)
 
 	Local lOk		:= .F.
 	Local alSay		:= {}
@@ -49,17 +51,25 @@ User Function ADLFV010P(lAuto, cEmpAut, cFilAut, cFilGranja) // @history Ticket:
 
 	Private cRootPath
 
-	Default lAuto	:= .F.
-	Default cEmpAut := "01" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
-	Default cFilAut := "02" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
-	Default cFilGranja := "03" // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
+	Default aParam    	:= Array(4)
+	Default aParam[1] 	:= .F.
+	Default aParam[2] 	:= "01"
+	Default aParam[3] 	:= "02"
+	Default aParam[4] 	:= "03"
+
+	lAuto  	   := aParam[1]
+	cEmpAut    := aParam[2]
+	cFilAut    := aParam[3]
+	cFilGranja := aParam[4]
+	//
 
 	//Ticket: 62540 - 20/10/2021 - Fernando Sigoli  - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	If Select("SX6") == 0
 		lAuto := .T.
 	EndIf
 	
-	If lAuto 
+	If lAuto
 
 		// Inicializa ambiente
 		RpcClearEnv()
@@ -155,6 +165,7 @@ Static Function GeraPV(lAuto, cFilGranja)
 	Local cProdPV := GetMV("MV_#LFVPRD",,"300042")   // --------- VOLTAR ESTA LINHA ANTES DE PUBLICAR EM PRD
 	Local nPrcPV  := GetMV("MV_#LFVPRC",,2)
 	Local cTESPV  := GetMV("MV_#LFVTES",,"701")
+	Local lPVExist := .f.
 
 	Private cNumPV  := ""
 	Private cFilPV  := cFilGranja // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
@@ -172,6 +183,16 @@ Static Function GeraPV(lAuto, cFilGranja)
 	Private cArquivo
 	Private oFuDimep
 	Private cFilOrig // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+
+	// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
+	lPVExist := ExistPVDay()
+	If lPVExist
+		//gera log
+		u_GrLogZBE(msDate(), TIME(), cUserName, "PV COMPLEMENTO FRANGO VIVO","CONTROLADORIA","ADLFV010P",;
+		"JA EXISTE PV GERADO NESTA DATA PARA ESTA FILIAL/GRANJA " + DtoC(msDate()) + " - " + cFilPV, ComputerName(), LogUserName())
+		Return
+	EndIf
+	//
 
 	//Cria arq tmp
 	CriaTMP()
@@ -273,6 +294,12 @@ Static Function GeraPV(lAuto, cFilGranja)
 		RollBackSxe()
 		
 	Else
+
+		// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
+		//gera log
+		u_GrLogZBE(msDate(), TIME(), cUserName, "PV COMPLEMENTO FRANGO VIVO","CONTROLADORIA","ADLFV010P",;
+		"GEROU PV N " + cNumPV + " NESTA DATA PARA ESTA FILIAL/GRANJA " + DtoC(msDate()) + " - " + cFilPV, ComputerName(), LogUserName())
+		//
 
 		// Atualizo com o número do PV gerado os regitros utilizados para composição do mesmo visando impedir a geração de duplicidade
 		cFiltro := ""
@@ -819,3 +846,54 @@ Static Function GrvPV()
 	RestArea( aAreaAtu )
 
 Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	Checa se existe PV de Complemento de Frango no mesmo dia
+	@type  Static Function
+	@author FWNWM
+	@since 24/05/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
+/*/
+Static Function ExistPVDay()
+
+	Local lRet := .f.
+	Local cQuery  := ""
+
+	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
+	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
+	Local cProdPV := GetMV("MV_#LFVPRD",,"300042") 
+	Local cTESPV  := GetMV("MV_#LFVTES",,"701")
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT COUNT(1) TT
+	cQuery += " FROM " + RetSqlName("SC6") + " SC6 (NOLOCK)
+	cQuery += " INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL=C6_FILIAL AND C5_NUM=C6_NUM AND C5_XLFVCMP='S' AND SC5.D_E_L_E_T_=''
+	cQuery += " WHERE C6_FILIAL='"+cFilPV+"'
+	cQuery += " AND C6_COD='"+cProdPV+"'
+	cQuery += " AND C6_TES='"+cTESPV+"'
+	cQuery += " AND SC6.D_E_L_E_T_=''
+	cQuery += " AND C5_CLIENTE='"+cCliCod+"'
+	cQuery += " AND C5_LOJACLI='"+cCliLoj+"'
+	cQuery += " AND C5_EMISSAO='"+DtoS(msDate())+"' 
+
+	tcQuery cQuery new Alias "Work"
+
+	Work->( dbGoTop() )
+	If Work->TT >= 1
+		lRet := .t.
+	EndIf
+
+	If Select("Work") > 0
+		Work->( dbCloseArea() )
+	EndIf
+	
+Return lRet
