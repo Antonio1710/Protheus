@@ -20,6 +20,7 @@
 	@version 10
 	@history chamado 056247 - FWNM     - 16/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history chamado TI     - FWNM     - 05/08/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 /*/
 User function MA410MNU()
 
@@ -176,8 +177,10 @@ User Function AltSfExp()
 
 	Local aArea	:= GetArea()
 	Local cUser	:= ""
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
-	If cEmpAnt <> "01" .Or. cFilAnt <> "02" .Or. Alltrim(cValToChar( SC5->C5_XGERSF )) <> "2"
+	If !cEmpAnt$cEmpSF .Or. !cFilAn$cFilSF .Or. Alltrim(cValToChar( SC5->C5_XGERSF )) <> "2" //Ticket 69574   - Abel Babini      - 21/03/2022 - Projeto FAI
 		RestArea(aArea)
 		Return Nil
 	EndIf
