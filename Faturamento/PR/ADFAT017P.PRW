@@ -2678,6 +2678,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
     Local cLote    := ""
     Local cSitOrd  := ""
     Local cRotPesa := ""
+    Local lGemba   := GetMV("MV_#UGEMBA",,.F.) 
 
     If nLinha <= 0 .Or. Len(aOrdPes) <= 0
         Help(Nil, Nil, "Função atrTicket(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -2774,7 +2775,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
 
-        If U_ADFAT17K(cCP, cNmOrdem, nQuant, cBalanca, cRotPesa)
+        If U_ADFAT17K(cCP, cNmOrdem, nQuant, cBalanca, cRotPesa) .And. lGemba //Everson - 24/05/2022. Validar se a filial envia a ordem para o Gemba.
             procEnvGb(cNmOrdem)
 
         EndIf

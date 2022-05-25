@@ -1175,6 +1175,7 @@ Static Function atuPeGua(aRecAtu)
             oModel:SetValue("MD_MASTER", "ZIH_PROCES", "1")
 
         Else
+            oModel:SetValue("MD_MASTER", "ZIH_PROCES", "1") //Everson - 24/05/2022. Chamado 18465.
             oModel:SetValue("MD_MASTER", "ZIH_ERRO", aRecAtu[nAux][3])
             
         EndIf
