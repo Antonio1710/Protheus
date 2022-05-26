@@ -15,6 +15,7 @@ Static xPula   := Chr(13) + Chr(10)
     @author Everson
     @since 19/11/2021
     @version 01
+    @history, Everson, 26/06/2022, Ticket 18465 - Tratamento para não deixar abrir pesagem quando há nota fiscal vinculada.
     /*/
 User Function ADFAT019P() // U_ADFAT019P()
 
@@ -712,6 +713,20 @@ User Function ADFAT19B()
         MsgInfo("Ticket não possui pesagem.", "Função ADFAT19B(ADFAT019R)")
         RestArea(aArea)
         Return Nil
+
+    EndIf
+
+    DbSelectArea("SC5") //Everson - 26/05/2022. Chamado 18465.
+    SC5->(DbSetOrder(28))
+    SC5->(DbGoTop())
+    If SC5->( DbSeek( FWxFilial("SC5") + ZIG->ZIG_ORDEM))
+
+        If ! Empty(SC5->C5_NOTA)
+            MsgInfo("Há a nota fiscal " + SC5->C5_NOTA + " " + SC5->C5_SERIE + " vinculada à pesagem. Operação não permitida.", "Função ADFAT19B(ADFAT019R)")
+            RestArea(aArea)
+            Return Nil           
+                
+        EndIf
 
     EndIf
 
