@@ -34,9 +34,9 @@
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
+	@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
 /*/
-//User Function ADLFV010P(lAuto, cEmpAut, cFilAut, cFilGranja) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
-User Function ADLFV010P(aParam)
+User Function ADLFV010P()
 
 	Local lOk		:= .F.
 	Local alSay		:= {}
@@ -47,21 +47,15 @@ User Function ADLFV010P(aParam)
 	Local clDesc3   := ''
 	Local clDesc4   := ''
 	Local clDesc5   := ''
-	//Local cEmpAut   := "01" // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+	Local aGranjas  := {}
+	Local i
 
 	Private cRootPath
-
-	// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
-	Default aParam    	:= Array(4)
-	Default aParam[1] 	:= .F.
-	Default aParam[2] 	:= "01"
-	Default aParam[3] 	:= "02"
-	Default aParam[4] 	:= "03"
-
-	lAuto  	   := aParam[1]
-	cEmpAut    := aParam[2]
-	cFilAut    := aParam[3]
-	cFilGranja := aParam[4]
+	
+	//@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
+	Private lAuto := .f.
+	Private cForGranjas := "03|0A"
+	Private cFilGranja  := ""
 	//
 
 	//Ticket: 62540 - 20/10/2021 - Fernando Sigoli  - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
@@ -74,8 +68,7 @@ User Function ADLFV010P(aParam)
 		// Inicializa ambiente
 		RpcClearEnv()
 		RpcSetType(3)
-		//If rpcSetEnv("01", "03",,,,,{"SM0"})
-		If !rpcSetEnv(cEmpAut, cFilAut,,,,,{"SM0"}) // // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+		If !rpcSetEnv("01", "02",,,,,{"SM0"})
 			//ConOut(	"[ADLFV010P] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE 01/03 !!! ")
 			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - NAO FOI POSSIVEL INICIALIZAR O AMBIENTE') // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 			Return .F.
@@ -93,21 +86,17 @@ User Function ADLFV010P(aParam)
 		PtInternal(1,ALLTRIM(PROCNAME()))
 		//FWMonitorMsg( ALLTRIM(PROCNAME()) ) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 
-		// Inicia processamento
-		cEmpAut := GetMV("MV_#LFVEMP",,"01")
-		
-		If cEmpAnt $ cEmpAut
+		//@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
+		cForGranjas := GetMV("MV_#GRANJA",,"03|0A")
+		aGranjas := Separa(cForGranjas,"|")
+
+		For i:=1 to Len(aGranjas)
+			cFilGranja := aGranjas[i]
 			GeraPV(lAuto, cFilGranja)
-		Else
-			//ApMsgStop( '[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!! ' )
-			//ConOut(	"[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA !!!" )
-			LogMsg('ADLFV010P', FAC_FRAME_, SEV_NOTICE_, 1, '', '', '[ADLFV010P] - JOB - EMPRESA NAO AUTORIZADA') // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
-		EndIf
+		Next i
+		//
 
-		
 	Else
-
-		cEmpAut := GetMV("MV_#LFVEMP",,"01")
 
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Complemento Frango Vivo')
 
@@ -125,11 +114,8 @@ User Function ADLFV010P(aParam)
 		FormBatch(clTitulo, alSay, alButton)
 		
 		If lOk
-			If cEmpAnt $ cEmpAut
-				Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV..." )
-			Else
-				msgAlert("Empresa não autorizada! Contate o administrador do sistema...")
-			EndIf
+			cFilGranja := cFilAnt
+			Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV..." )
 		EndIf
 
 	EndIf
@@ -298,7 +284,7 @@ Static Function GeraPV(lAuto, cFilGranja)
 		// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
 		//gera log
 		u_GrLogZBE(msDate(), TIME(), cUserName, "PV COMPLEMENTO FRANGO VIVO","CONTROLADORIA","ADLFV010P",;
-		"GEROU PV N " + cNumPV + " NESTA DATA PARA ESTA FILIAL/GRANJA " + DtoC(msDate()) + " - " + cFilPV, ComputerName(), LogUserName())
+		"GEROU PV N " + cNumPV + " NESTA DATA PARA ESTA GRANJA(FILIAL) " + DtoC(msDate()) + " - " + cFilPV, ComputerName(), LogUserName())
 		//
 
 		// Atualizo com o número do PV gerado os regitros utilizados para composição do mesmo visando impedir a geração de duplicidade
@@ -682,19 +668,25 @@ Static Function ProcessarEmail(cAssunto,cMensagem,email,lAuto)
 	RestArea(aArea)
 
 Return Nil
-/*/{Protheus.doc} CriaTMP 
 
+/*/{Protheus.doc} CriaTMP 
 	@type  Static Function
 	@author Microsiga 
 	@since 04/23/2018
 	@version 01
-	/*/
+/*/
 Static Function CriaTMP()
 
 	Local aAreaAtu  := GetArea()
 	Local aStru		:= {}
 	
 	cArquivo := "TMPTRC"
+
+	// //@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
+	If Select(cArquivo) > 0
+		(cArquivo)->( dbCloseArea() )
+	EndIf
+	//
 
 	//Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
 	oFuDimep := FWTemporaryTable():New(cArquivo)
@@ -878,7 +870,7 @@ Static Function ExistPVDay()
 	cQuery += " FROM " + RetSqlName("SC6") + " SC6 (NOLOCK)
 	cQuery += " INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL=C6_FILIAL AND C5_NUM=C6_NUM AND C5_XLFVCMP='S' AND SC5.D_E_L_E_T_=''
 	cQuery += " WHERE C6_FILIAL='"+cFilPV+"'
-	cQuery += " AND C6_COD='"+cProdPV+"'
+	cQuery += " AND C6_PRODUTO='"+cProdPV+"'
 	cQuery += " AND C6_TES='"+cTESPV+"'
 	cQuery += " AND SC6.D_E_L_E_T_=''
 	cQuery += " AND C5_CLIENTE='"+cCliCod+"'
