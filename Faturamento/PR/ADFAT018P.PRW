@@ -206,28 +206,28 @@ User Function ADFAT18C(cProSAg, cPrdPro, Lote)
     ZI8->(DbSetOrder(1))
     ZI8->(DbGoTop())
     If ! ZI8->(DbSeek( FWxFilial("ZI8") + Lote))
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
     EndIf
 
     If Alltrim(cProSAg) <> Alltrim(ZI8->ZI8_PRDSAG)
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " inválido para o produto " + cProSAg + " | " +  cPrdPro + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " inválido para o produto " + cProSAg + " | " +  cPrdPro + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
     EndIf
 
     If ZI8->ZI8_LAUTO == "1"
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
     EndIf
 
     If ZI8->ZI8_STATUS == "4"
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
