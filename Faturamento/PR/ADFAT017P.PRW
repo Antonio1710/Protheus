@@ -551,7 +551,7 @@ User Function ADFAT17Y()
         			
         oVecPt := MsNewGetDados():New(030,005,155,510,,"Allwaystrue()","Allwaystrue()","",{},Nil,999,Nil,Nil,Nil,oCtlPatio,aHVcPt,@aColsVcPt)
         oVecPt:oBrowse:bLDblClick := {|| Eval(bTimer), carOrdens(oVecPt:nAt, oVecPt, aHVcPt, @oOrdPes, @aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim),;
-                                         geraOrd(oVecPt:nAt, oVecPt, aHVcPt, @oOrdPes, @aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim), Eval(bLOrd) }
+                                         geraOrd(oVecPt:nAt, oVecPt, aHVcPt, @oOrdPes, @aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim) }
 
         TGroup():New(157,005,200,155,"Balança | Leitor",oCtlPatio,,,.T.)
             TButton():New(165,010,"SB",oCtlPatio,{|| aLeitores := {}, selecBal(.T., @aParBal, @aDdBalAut, @aLeitores), lPodPesar := ! aParBal[1,4], lPesaAut := aDdBalAut[1,1], cBalanca := aParBal[1,1], oLeitores:SetItems(aLeitores),Iif(Len(aLeitores) <=0 , Nil, cLeitor := aLeitores[1]), oLeitores:Refresh(), Eval(bAtuBtn) },020,15,,,.F.,.T.,.F.,,.F.,,,.F. )	
@@ -2020,10 +2020,10 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     U_ADFAT17Q()
     
     //Verifica se há ordem de saída para ser gerada.
-    // If cTpMovi == "S" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
-    //     U_ADFAT17O(cCP, cPlaca)
+    If cTpMovi == "S" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
+        U_ADFAT17O(cCP, cPlaca)
 
-    // EndIf
+    EndIf
     
     aOrdPes:= {}
     
@@ -2152,10 +2152,10 @@ Return Nil
 Static Function geraOrd(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOrdem, aStatLb, aTpSeq, dDtIni, dDtFim)
 
     //Variáveis.
-    Local aArea     := GetArea()
-    Local cCP       := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "NUMER"})]))
-    Local cPlaca    := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "PLACA"})]))
-    Local cTpMovi   := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "TPMOV"})]))
+    // Local aArea     := GetArea()
+    // Local cCP       := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "NUMER"})]))
+    // Local cPlaca    := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "PLACA"})]))
+    // Local cTpMovi   := Alltrim(cValToChar(oVecPt:aCols[nLinha][aScan(aHVcPt,{|x| Alltrim(cValToChar(x[2])) == "TPMOV"})]))
 
     //Verifica se há ordem de pesagem de ração para ser gerada.
     // If cTpMovi == "R" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
@@ -2164,12 +2164,12 @@ Static Function geraOrd(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOrde
     // EndIf
 
     //Verifica se há ordem de saída para ser gerada.
-    If cTpMovi == "S" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
-        U_ADFAT17O(cCP, cPlaca)
+    // If cTpMovi == "S" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
+    //     U_ADFAT17O(cCP, cPlaca)
 
-    EndIf
+    // EndIf
 
-    RestArea(aArea)
+    // RestArea(aArea)
 
 Return Nil
 /*/{Protheus.doc} getPedSa
