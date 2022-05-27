@@ -11,6 +11,7 @@
 	@author Everson
 	@since 11/03/2022
 	@version 01
+	@history Everson, 27/05/2022. Ticket 18465. Tratamento para não faturar pedido com bloqueio de corte.
 /*/
 User Function ADFAT041P()
 
@@ -760,6 +761,7 @@ Static Function emitNfGrp(cPedProth)
 		cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
 		cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
 		cQuery += " AND C5_NOTA = '' " 
+		cQuery += " AND C5_XLIBSAG <> '1' " 
 		cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) AND C5_PEDSAG = '' " 
 
 		If ! Empty(cPlaca)
