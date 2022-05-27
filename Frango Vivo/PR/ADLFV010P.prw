@@ -35,6 +35,7 @@
 	@history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
 	@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
+	@history ticket 73501 - Fernando Macieira - 27/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO - SELECT * FROM SCHDTSK WHERE TSK_ROTINA LIKE '%ADLFV010%'
 /*/
 User Function ADLFV010P()
 
@@ -74,13 +75,17 @@ User Function ADLFV010P()
 			Return .F.
 		EndIf
 
-		// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 30/06/2020
-		/*If !LockByName("ADLFV010P", .T., .F.)
+		// @history ticket 73501 - Fernando Macieira - 27/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO - SELECT * FROM SCHDTSK WHERE TSK_ROTINA LIKE '%ADLFV010%'
+		// Garanto uma única thread sendo executada
+		If !LockByName("ADLFV010P", .T., .F.)
 			ConOut("[ADLFV010P] - Existe outro processamento sendo executado! Verifique...")
 			RPCClearEnv()
 			Return
+		Else
+			Sleep( 30000 ) // Segura o processamento por 30 segundos
 		EndIf
-		*/
+		//
+		
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Complemento Frango Vivo')
 		
 		PtInternal(1,ALLTRIM(PROCNAME()))
@@ -125,7 +130,7 @@ User Function ADLFV010P()
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 		//³Destrava a rotina para o usuário	    ?
 		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-		//UnLockByName("ADLFV010P")
+		UnLockByName("ADLFV010P") // @history ticket 73501 - Fernando Macieira - 27/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
 
 		//Fecha o ambiente.
 		RpcClearEnv()
