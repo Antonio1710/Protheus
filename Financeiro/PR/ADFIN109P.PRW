@@ -18,6 +18,7 @@
 	@history Ticket 8      - Abel Babini - 01/02/2022 - Ajuste nas regras de liberação de crédito
 	@history Ticket 8      - Abel Babini - 03/03/2022 - Ajuste na gravação da liberação
 	@history Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
+	@history Ticket 69574  - Abel Babini - 25/04/2022 - Projeto FAI
 	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE. 
 /*/
 
@@ -293,11 +294,11 @@ Static Function fTlAprov()
 		@ 177,001 SAY OemToAnsi("Não Proces.")	FONT oFont003 SIZE 200,15 OF oPnSt01 PIXEL
 		@ 177,050 MSGET nVlTtNP									SIZE 035,008 	OF oPnSt01 PIXEL PICTURE '@E 999,999' WHEN .F.
 
-		@ aBtnPos[5],000 BUTTON OemToAnsi('Filtrar')		   SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)) OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[4],000 BUTTON OemToAnsi('Pré Liberação')		SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xPrcLbCr(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) ) OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[3],000 BUTTON OemToAnsi('Monitoramento PV')	SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADLOG031P() ) OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[2],000 BUTTON OemToAnsi('Analisar Pedidos')	SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xAnPedCl(aSize, cPedDe) ) OF oPnSt01 PIXEL //Everson - 25/05/2022. Chamado 73547.																																OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[1],000 BUTTON OemToAnsi('Sair')				SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (oDlgxPg:End()) 	OF oPnSt01 PIXEL 																															OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[5],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)) OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[4],000 BUTTON OemToAnsi('Pré Liberação')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xPrcLbCr(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) ) OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[3],000 BUTTON OemToAnsi('Monitoramento PV')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADLOG031P() ) OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[2],000 BUTTON OemToAnsi('Analisar Pedidos')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xAnPedCl(aSize, cPedDe) ) OF oPnSt01 PIXEL //Everson - 25/05/2022. Chamado 73547.																																OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[1],000 BUTTON OemToAnsi('Sair')											SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (oDlgxPg:End()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 		
     //**********************************************
     //ABA LIBERAÇÃO
@@ -1895,6 +1896,8 @@ Static Function xAprvPed()
 	Local lLbEst := .F.
 
 	Local i := 0 
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	Private _nQtdLiber := 0
 	Private lLiber	 := .F.
@@ -2016,7 +2019,8 @@ Static Function xAprvPed()
 							If RecLock("SC5",.F.)
 								SC5->C5_XPREAPR := "L"
 								SC5->C5_FLAGFIN := "L"
-								If Findfunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt = "02" .And. Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
+								//Ticket 69574  - Abel Babini - 25/04/2022 - Projeto FAI
+								If Findfunction("U_ADVEN050P") .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 									U_ADVEN050P(,.F.,.T., " AND C5_NUM IN ('" + SC5->C5_NUM + "') AND C5_XPEDSAL <> '' " ,.T.)
 								EndIf
 								SC5->(MsUnlock())
