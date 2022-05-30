@@ -32,6 +32,7 @@
 	@history Ticket 69574   - Abel Babini      - 21/03/2022 - Projeto FAI
 	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.. 
 	@history Ticket  TI     - Everson 			   - 20/04/2022 - Tratamento para pedidos gerados pela integração com o módulo de exportação.
+	@history Ticket 018465  - Everson     - 30/05/2022 - Correção da chamada da função.
 /*/
 
 User Function MT410TOK()
@@ -153,7 +154,8 @@ User Function MT410TOK()
 	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
 	
 	//Everson - 24/03/2022. Chamado 018465. Pesagem.
-	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA .And. ! StaticCall(A410EXC, vldOrdSa, SC5->C5_NUM)
+	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA .And. ;
+	    ! U_ADFAT41A(SC5->C5_NUM) //Everson - 30/05/2022. Chamado TI.
 		RestArea(aArea)
 		Return .F.
 
