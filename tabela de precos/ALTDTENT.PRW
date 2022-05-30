@@ -13,6 +13,7 @@
 	@history Ticket  8    	- Abel B.     - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 	@history Ticket  8    	- Abel B.     - 03/03/2021 - Nova versão - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 	@history Ticket 018465  - Everson     - 24/03/2022 - Tratamento para pedidos com pesagem já iniciada.
+	@history Ticket 018465  - Everson     - 30/05/2022 - Correção da chamada da função.
 
 	/*/
 User Function ALTDTENT() 
@@ -105,7 +106,7 @@ User function ALTPVFAT()
 	EndIf  
 
 	//Everson - 24/03/2022. Chamado 018465. Pesagem.
-	If ! StaticCall(A410EXC, vldOrdSa, SC5->C5_NUM)
+	If ! U_ADFAT41A(SC5->C5_NUM) //Everson - 30/05/2022. Chamado TI.  
 		Return Nil
 
 	EndIf  
