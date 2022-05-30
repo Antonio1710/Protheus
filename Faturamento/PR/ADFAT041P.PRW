@@ -1555,7 +1555,7 @@ User Function ADFAT41A(cNumPed)
 
 		If ZIG->( DbSeek( FWxFilial("ZIG") + D_VLDORD->C6_XORDPES ) )
 			lRet := .F.
-			MsgStop("Pedido está vinculado a ticket de pesagem com pesagem já iniciada.","Função ADFAT41A(ADFAT041P)")
+			MsgStop("Pedido está vinculado a ticket de pesagem.","Função ADFAT41A(ADFAT041P)")
 
 		EndIf
 
