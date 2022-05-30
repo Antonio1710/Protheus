@@ -13,6 +13,7 @@
 	@history 055608 - Everson em 19/02/2020 - Alterações para correção do relatório analítico.
 	@history Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE - Alterações para aparecer os dados nas filiais onde não é feito o carregamento pelo Edata e considerar todos os grupos de produtos quando a empresa for diferente da Adoro Varzea e Ceres Varzea.
 	@history 10500 - Everson em 08/03/2021. Adicionado o código fiscal 6109 ao bloco interestadual.
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	/*/
 User Function ADFatKG()  
 
@@ -885,7 +886,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 	//³ Declaração de variáveis.                                            |
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local cQuery	:= ""
-
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	//
 	cQuery := ""
 	cQuery += " SELECT "
@@ -937,7 +938,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 			cQuery += " AND D2.D2_COD NOT IN (" + cSubPrd + ") " 
 			cQuery += " AND D2.D2_EST = 'SP' " 
 			// Inicio Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE 
-			IF cEmpAnt == '01' .AND. cFilAnt == '02'
+			IF cEmpAnt == '01' .AND. Alltrim(cFilAnt) $ cFilSF //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 				cQuery += " AND D2.D2_GRUPO BETWEEN '0110' AND '0927' " 
 			ENDIF
 
@@ -963,7 +964,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 			cQuery += " AND D2.D2_COD NOT IN (" + cSubPrd + ") " 
 			cQuery += " AND D2.D2_EST NOT IN ('SP','EX') " 
 			// Inicio Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE 
-			IF cEmpAnt == '01' .AND. cFilAnt == '02'
+			IF cEmpAnt == '01' .AND. Alltrim(cFilAnt) $ cFilSF //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 				cQuery += " AND D2.D2_GRUPO BETWEEN '0110' AND '0899' " 
 			ENDIF	
 
@@ -987,7 +988,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 			cQuery += " AND D2.D2_COD NOT IN (" + cSubPrd + ") " 
 			cQuery += " AND D2.D2_EST = 'EX' "
 			// Inicio Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE 
-			IF cEmpAnt == '01' .AND. cFilAnt == '02'
+			IF cEmpAnt == '01' .AND. Alltrim(cFilAnt) $ cFilSF //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 				cQuery += " AND D2.D2_GRUPO BETWEEN '0110' AND '0899' "
 			ENDIF 
 
@@ -1001,7 +1002,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 			cQuery += " AND D2.D2_COD IN (" + cSubPrd + ") "
 			cQuery += " AND D2.D2_EST = 'SP' "
 			// Inicio Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE 
-			IF cEmpAnt == '01' .AND. cFilAnt == '02'
+			IF cEmpAnt == '01' .AND. Alltrim(cFilAnt) $ cFilSF //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 				cQuery += " AND D2.D2_GRUPO BETWEEN '0911' AND '0914' "  
 			ENDIF 
 
@@ -1025,7 +1026,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 			cQuery += " AND D2.D2_COD IN (" + cSubPrd + ") "
 			cQuery += " AND D2.D2_EST NOT IN ('SP','EX') "
 			// Inicio Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE 
-			IF cEmpAnt == '01' .AND. cFilAnt == '02'
+			IF cEmpAnt == '01' .AND. Alltrim(cFilAnt) $ cFilSF //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 				cQuery += " AND D2.D2_GRUPO BETWEEN '0911' AND '0914' " 
 			ENDIF
 
@@ -1050,7 +1051,7 @@ Static Function scriptBase(nData,cSubPrd,nTpFrt)
 		//
 		cQuery += " AND D2.D2_TIPO = 'N' " 
 		// Inicio Ticket 9703 - 23/02/2021 - ADRIANO SAVOINE 
-		IF cEmpAnt == '01' .AND. cFilAnt == '02'
+		IF cEmpAnt == '01' .AND. Alltrim(cFilAnt) $ cFilSF //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 			cQuery += " AND C5_X_SQED <> '' " 
 			cQuery += " AND C5_XINT = '3' " 
 		ENDIF

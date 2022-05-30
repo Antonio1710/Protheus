@@ -44,8 +44,9 @@
 	@history Chamado 056247 - FWNM          - 24/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history Chamado 056247 - FWNM          - 05/06/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history Chamado 059415 - FWNM          - 11/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação
-	@history ticket 102 - FWNM - 26/08/2020 - WS BRADESCO 
-	@history ticket 102 - FWNM - 27/08/2020 - WS BRADESCO 
+	@history ticket 102     - FWNM          - 26/08/2020 - WS BRADESCO 
+	@history ticket 102     - FWNM          - 27/08/2020 - WS BRADESCO 
+	@history Ticket 69574   - Abel Babini   - 25/04/2022 - Projeto FAI
 /*/
 User Function ADFIN018P()
 
@@ -64,6 +65,8 @@ User Function ADFIN018P()
 	Local _cQry     := ""
 	local _nOpc 	:= 0
 	Local cPedidos	:= ""
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Libera credito varejo.')
 
@@ -676,7 +679,8 @@ User Function ADFIN018P()
 			DbSelectArea("TSC9")
 			
 			//Everson - 02/03/2018. Chamado 037261. SalesForce.
-			If cEmpAnt == "01" .And. cFilAnt == "02" .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P") .And. _nOpc == 4
+			//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+			If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P") .And. _nOpc == 4
 				If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 					cPedidos := Substr(cPedidos,1,Len(cPedidos) -1)
 					U_ADVEN050P(,.F.,.T., " AND C5_NUM IN (" + cPedidos + ") AND C5_XPEDSAL <> '' " ,.T.)
@@ -1490,6 +1494,8 @@ Return()
 Static function fexctodos()
 
 	Local cPedidos := "" //Everson - 02/03/2018. Chamado 037261. SalesForce.
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	IF len(_aExclui) > 0
 
@@ -1501,7 +1507,8 @@ Static function fexctodos()
 	Endif
 
 	//Everson - 02/03/2018. Chamado 037261. SalesForce.
-	If cEmpAnt == "01" .And. cFilAnt == "02" .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P")
+	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P")
 		If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 			cPedidos := Substr(cPedidos,1,Len(cPedidos) - 1)
 			U_ADVEN050P(,.F.,.T., " AND C5_NUM IN (" + cPedidos + ") AND C5_XPEDSAL <> '' " , .F. )
