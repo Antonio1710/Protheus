@@ -9,11 +9,12 @@
 	@version version
 	@history Alteração - Everson	     - 24/04/2019 - Chamado: 048650 - Alterado script sql para impressão derelatório para pedidos para fornecedor.
 	@history Alteração - FWNM   	     - 02/08/2019 - Chamado: 049495 - OS 050775  ADM.LOG || MARCEL  || ROMANEIO ENTREGAS   
-  @history Alteração - FWNM   	     - 08/08/2019 - Chamado: 049495 - 049495 || OS 050775 || ADM.LOG || MARCEL Incluir novo campo ZFM_NUMCE2
+  	@history Alteração - FWNM   	     - 08/08/2019 - Chamado: 049495 - 049495 || OS 050775 || ADM.LOG || MARCEL Incluir novo campo ZFM_NUMCE2
 	@history Alteração - Fernando Sigoli - 29/10/2019 - Chamado: 052915 || OS 054267 || FISCAL || RAUL || 8423 || REL. ROMANEIO 
 	@history Alteração - William Costa   - 25/11/2019 - Adiciona para não trazer placas iguais a branco no relatório
 	@hisotry Alteração - Everson         - 02/07/2020 - Chamado: 059359. Adicionado impressão de vale palete. 
 	@history Alteração - Everosn         - 03/07/2020 - Chamado: 059401. Tratamento para utilizar o vale palete no relatório ROTLOG.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 
@@ -888,3 +889,14 @@ Static Function prtVlPlt(cCarga,cCliente,cDtFech,cPlaca,cMotorit,aEmb)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} u_ROMENTA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_ROMENTA0( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6, uPar7 )
+Return( vlPalete( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6, uPar7 ) )

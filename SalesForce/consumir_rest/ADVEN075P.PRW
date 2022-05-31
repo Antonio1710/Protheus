@@ -1460,3 +1460,91 @@ Static Function grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc,cPed
 	RestArea(aArea)
 
 Return nRecno
+
+/*/{Protheus.doc} u_VEN075A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A0( uPar1,uPar2,uPar3,uPar4,uPar5,uPar6,uPar7,uPar8,uPar9 )
+Return( grvLog(uPar1,uPar2,uPar3,uPar4,uPar5,uPar6,uPar7,uPar8,uPar9) )
+
+/*/{Protheus.doc} u_VEN075A1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A1( uPar1,uPar2,uPar3 )
+Return( loginSF(uPar1,uPar2,uPar3) )
+
+/*/{Protheus.doc} u_VEN075A2
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A2( uPar1 )
+Return( envErros( uPar1 ) )
+
+/*/{Protheus.doc} u_VEN075A3
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A3( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6, uPar7 )
+Return( Processar(  uPar1, uPar2, uPar3, uPar4, uPar5, uPar6, uPar7 ) )
+
+/*/{Protheus.doc} u_VEN075A3
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A4( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10 )
+Return( ProcessarB( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10 ) )
+
+/*/{Protheus.doc} u_VEN075A5
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A5( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08 )
+Return( TelErro( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08 ) )
+
+/*/{Protheus.doc} u_VEN075A6
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A6( uPar1,uPar2,uPar3 )
+Return( chkVend(uPar1,uPar2,uPar3) )
+
+/*/{Protheus.doc} u_VEN075A7
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN075A7( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10, uPar11, uPar12, uPar13, uPar14, uPar15, uPar16 )
+Return( chkErro(uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10, uPar11, uPar12, uPar13, uPar14, uPar15, uPar16) )
