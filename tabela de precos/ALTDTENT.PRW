@@ -13,6 +13,7 @@
 	@history Ticket  8    	- Abel B.     - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 	@history Ticket  8    	- Abel B.     - 03/03/2021 - Nova versão - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 	@history Ticket 018465  - Everson     - 24/03/2022 - Tratamento para pedidos com pesagem já iniciada.
+	@history Ticket 70142 - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 018465  - Everson     - 30/05/2022 - Correção da chamada da função.
 
 	/*/
@@ -51,7 +52,7 @@ User function ALTPVFAT()
 	Local aChave     := {}
 	Local cRegLog    := ""  
 	// Local cIndex1, cChave, cFiltro, nIndex
-	Local nLinGetD, cTitulo, aC, aR, aCGD, cLinhaOK, cTudoOk, nOpcx, aAlter, lRetMod2
+	Local nLinGetD, cTitulo, aC, aR, aCGD, cLinhaOK, cTudoOk, nOpcx, aAlter, lRetMod2, _ni
 	// Local nPosPed, nPosIt, nPosEnt, nPosPri, nPosCor, nPosPig, nX
 
 	Private aHeader, aCols
@@ -108,7 +109,6 @@ User function ALTPVFAT()
 	//Everson - 24/03/2022. Chamado 018465. Pesagem.
 	If ! U_ADFAT41A(SC5->C5_NUM) //Everson - 30/05/2022. Chamado TI.  
 		Return Nil
-
 	EndIf  
 
 	if !(Empty(SC5->C5_LIBEROK)).And.!(Empty(SC5->C5_NOTA)) .And. Empty(SC5->C5_BLQ) //somente pedidos em aberto   
@@ -258,7 +258,9 @@ User function ALTPVFAT()
 			u_GrLogZBE (Date(),TIME(),cUserName,cRegLog,"COMERCIAL","ALTDTENT","PEDIDO: "+SC5->C5_NUM,ComputerName(),LogUserName())
 
 			//Ticket  8      - Abel B.  - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-			StaticCall(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+			//Static Call(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+  			u_10STTSA1( SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR )
 
 			//Everson - 04/03/2018. Chamada 037261.
 			If !(Empty(Alltrim(cValToChar(SC5->C5_XPEDSAL)))) .And. FindFunction("U_ADVEN050P")

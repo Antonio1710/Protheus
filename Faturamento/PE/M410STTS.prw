@@ -55,13 +55,14 @@
 	@history Ticket  8      - Abel B.  - 15/06/2021 - Considerar histï¿½rico de liberaï¿½ï¿½o
 	@history Ticket  TI     - F.Maciei - 02/09/2021 - Parï¿½metro liga/desliga nova funï¿½ï¿½o anï¿½lise crï¿½dito
 	@history Ticket  62453  - Everson  - 14/10/2021 - Tratamento errorlog : Error : 102 (37000) (RC=-1) - [Microsoft][ODBC Driver 13 for SQL Server][SQL Server]Incorrect syntax near '%
-	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correï¿½ï¿½o na gravaï¿½ï¿½o dos roteiros na SC5, SC6 e SC9.
-	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correï¿½ï¿½o de error.log na gravaï¿½ï¿½o de PVs na filial 07.
-	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusï¿½o de Conouts.
-	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferï¿½ncia do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravaï¿½ï¿½o da data de entrega nos itens do PV.
-	@history Ticket  69520  - Leonardo P. Monteiro - 26/02/2022 - Inclusï¿½o de conouts no fonte. 
-	@history Everson, 18/03/2022, Chamado 18465. Envio de informaï¿½ï¿½es ao barramento. 
-	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
+	@history Ticket  63537  - Leonardo P. Monteiro  - 10/11/2021 - Correção na gravação dos roteiros na SC5, SC6 e SC9.
+	@history Ticket  65403  - Leonardo P. Monteiro  - 16/11/2021 - Correção de error.log na gravação de PVs na filial 07.
+	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Inclusão de Conouts.
+	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferência do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravação da data de entrega nos itens do PV.
+	@history Ticket  69520  - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Everson, 18/10/2020, Chamado 18465. Envio de informações ao barramento. 
+	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function M410STTS()
 
@@ -1983,7 +1984,7 @@ User Function M410STTS()
 Return 
 
 User Function THRGEPV(cEmpP,cFilP,cPedido)
-	/* Declaraï¿½ï¿½o de Variï¿½veis */
+	/* Declaração de Variáveis */
 	Local nCurrent := 0
 
 	//Inicia o ambiente.
@@ -2002,7 +2003,7 @@ User Function THRGEPV(cEmpP,cFilP,cPedido)
 			u_GeraRAPV()
 		else
 			/* Encerro o processo */
-			ConOut("Pedido nï¿½o encontrado - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))		
+			ConOut("Pedido não encontrado - THRGEPV - Thread: "+AllTrim(cValToChar(nCurrent)))		
 		endif
     
 		/* Encerro o processo */
@@ -2016,7 +2017,7 @@ return Nil
 
 User Function AVLCRED(cEmpP,cFilP,cPedido)
     
-	/* Declaraï¿½ï¿½o de Variï¿½veis */
+	/* Declaração de Variáveis */
 	Local aVrLbAnt	:= {}
 	Local nCurrent := 0
 	
@@ -2037,14 +2038,14 @@ User Function AVLCRED(cEmpP,cFilP,cPedido)
 			aVrLbAnt := fVrLbAnt(SC5->C5_FILIAL, SC5->C5_NUM)
 			//Conout( DToC(Date()) + " " + Time() + " M410STTS - fVrLbAnt - FINAL 1" )
 			IF aVrLbAnt[1] == .F. .or. (aVrLbAnt[1] == .T. .AND. aVrLbAnt[2] < SC5->C5_XTOTPED)
-				//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Prï¿½-liberaï¿½ï¿½o de crï¿½dito levando-se em consideraï¿½ï¿½o a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+				//INICIO Ticket  8      - Abel B.  - 22/02/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - INICIO 2" )
 				fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
 				//Conout( DToC(Date()) + " " + Time() + " M410STTS - fLibCred - FINAL 2" )
 			ENDIF
 		else
 			/* Encerro o processo */
-			ConOut("Pedido nï¿½o encontrado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))		
+			ConOut("Pedido não encontrado - AVLCRED - Thread: "+AllTrim(cValToChar(nCurrent)))		
 		endif
     
 		/* Encerro o processo */
@@ -4071,7 +4072,9 @@ Static Function libPedSAG()
 	Local aArea := GetArea()
 
 	If ! Empty(Alltrim(cValToChar(SC5->C5_PEDSAG)))
-		StaticCall(INTEPEDB,enviStComp)
+		//Static Call(INTEPEDB,enviStComp)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_TEPEDBA0()
 
 	EndIf
 
@@ -4213,9 +4216,11 @@ Static Function fFunDel()
 
 		//ticket 8      - Abel Babini  - 01/03/2021 - Nï¿½o limpar flag dos registros e chamar a rotina de liberaï¿½ï¿½o de crï¿½dtio.
 		//fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)  //&&funcao pra limpeza de flag de pre aprovacao de pedidos de venda.
-		//StaticCall(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR, .T., SC5->C5_FILIAL+SC5->C5_NUM)
+		//Static Call(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR, .T., SC5->C5_FILIAL+SC5->C5_NUM)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		fLibCred(SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR, .T., SC5->C5_FILIAL+SC5->C5_NUM)
-		//&&Mauricio - Chamado 037330 - 07/10/17 - limpo nr pedido na exclusï¿½o de um pedido
+
+		//&&Mauricio - Chamado 037330 - 07/10/17 - limpo nr pedido na exclusão de um pedido
 		IF !Empty(_cPedAnt)
 			AltPedOr(_cPedAnt,cPedido)
 		Endif   
@@ -4737,7 +4742,7 @@ Return lRet
 /*/
 Static Function grvBarr(nOper, cNumero)
 
-    //Variï¿½veis.
+    //Variáveis.
     Local aArea     := GetArea()
 	Local cOperacao	:= ""
 	Local cFilter	:= ""
@@ -4767,3 +4772,36 @@ Static Function grvBarr(nOper, cNumero)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} u_10STTSA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_10STTSA0( uPar1, uPar2, uPar3 )
+Return( envSF(uPar1, uPar2, uPar3) )
+
+/*/{Protheus.doc} u_10STTSA1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_10STTSA1( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 )
+Return( fLibCred( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 ) )
+
+/*/{Protheus.doc} u_10STTSA1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_10STTSA2( uPar1, uPar2 )
+Return( fRetClRd( uPar1, uPar2 ) )

@@ -32,6 +32,7 @@
 	@history Jonathan  14/12/2021, Ticket 64214 - Incluir validação de conexão ao banco do SAG.
 	@history Everson   06/01/2022, Ticket 66328 - Tratamento para error log.
 	@history Wagner    21/02/2022, Ticket 63028 - Permite integrar pedidos C5_TIPO igual a B ou N
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function PED001B()
 
@@ -5467,7 +5468,7 @@ Static Function libEst()
     Conout( DToC(Date()) + " " + Time() + " INTEPEDB - libEst - libera estoque." )
 
     //
-    // StaticCall(LIMPAEST,Elimina)
+    // Static Call(LIMPAEST,Elimina)
 		MsAguarde({|| MATA455() },"Aguarde","Acessando rotina lib estoque...")
 	//
 	RestArea(aArea)
@@ -5636,3 +5637,25 @@ Static Function xLibEst()
 	RestArea(aAreaSC9)
 
 Return
+
+/*/{Protheus.doc} u_TEPEDBA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_TEPEDBA0()
+Return( enviStComp() )
+
+/*/{Protheus.doc} u_TEPEDBA1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_TEPEDBA1( uPar1, uPar2 )
+Return( telProcess( uPar1, uPar2 ) )
