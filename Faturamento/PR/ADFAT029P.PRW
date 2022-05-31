@@ -46,7 +46,7 @@ User Function ADFAT29A()
     U_ADFAT29E()
 
     //Pedido de saída entre filiais.
-    U_ADFAT29F()
+    //U_ADFAT29F()
 
     // //Processar ticket de pesagem.
     // U_ADFAT29H()
