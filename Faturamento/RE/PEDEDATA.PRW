@@ -9,6 +9,7 @@
 	@since 28/05/2014
 	@version 04
 	@history Chamado: 059758 - 17/07/2020 - ADRIANO SAVOINE - Foi efetuado o ajuste no relatorio devido ao erro do tamanho do campo o mesmo nao gerava apos alterar a query TEDATA funcionou normalmente gerando o relatorio em excel.
+	@history Ticket 69574    - Abel Babini- 25/04/2022      - Projeto FAI
 	/*/
 
 User Function PEDEDATA()
@@ -35,7 +36,7 @@ Local oProjeto
 Local oDetDF
 Local oDetMF
 Local aOrdem := {}
-
+Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 Private _nSomNfe := 0
 
 #IFNDEF TOP
@@ -131,11 +132,11 @@ While TPED->(!Eof())
            DbSelectArea("TEDATA")
            DbCloseArea("TEDATA")
      Endif
-
+		 //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
      cQuery := "SELECT (ID_CARGEXPE) CARG, (QN_PESOPADREXPEITEMPEDIVEND) PL, (QN_PESOITEMPEDIVEND) PV  "
-     cQuery += "FROM  [LNKMIMS].[SMART].[dbo].[PEDIDO_VENDA] PED, "
-     cQuery += "[LNKMIMS].[SMART].[dbo].[PEDIDO_VENDA_ITEM] ITE, "
-     cQuery += "[LNKMIMS].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] EMBA "     
+     cQuery += "FROM  ["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_VENDA] PED, "
+     cQuery += "["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_VENDA_ITEM] ITE, "
+     cQuery += "["+cLnkSrv+"].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] EMBA "     
      cQuery += "WHERE PED.ID_PEDIVEND = ITE.ID_PEDIVEND "
      cQuery += "AND PED.IE_PEDIVEND = '"+_cPED+"' "
      cQuery += "AND ITE.ID_MATEEMBA = EMBA.ID_MATEEMBA AND EMBA.IE_MATEEMBA = '"+alltrim(_cProd)+"' "

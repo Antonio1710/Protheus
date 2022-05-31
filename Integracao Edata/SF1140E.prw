@@ -2,20 +2,12 @@
 #INCLUDE "Protheus.ch"
 #INCLUDE "ParmType.ch"
 
-
 /*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³SF1140E   ºAutor  ³Microsiga           º Data ³  11/21/13   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Utilizado na entrada da pre-nota para o ISS ser retido     º±±
-±±º          ³ corretamente quando classifica a pre-nota                  º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ Adoro                                                      º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+	Programa  ³SF1140E   ºAutor  ³Microsiga           º Data ³  11/21/13
+	Desc.     ³ Utilizado na entrada da pre-nota para o ISS ser retido  
+						³ corretamente quando classifica a pre-nota               
+	Uso       ³ Adoro                                                   
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 */
 
 User Function SF1140E()
@@ -24,6 +16,7 @@ Local Area := GetArea()
 Local _cChave := SF1->(F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)
 Local cMens	  := ""
 Local lOk	  := .F.
+Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 Private cRotDesc	:= "Integracao eData"
 
 //TRATAMENTO INTEGRAÇÃO EDATA - INICIO
@@ -45,7 +38,7 @@ If SF1->F1_TIPO=="D"
 		BeginTran()
 			
 			//Executa a Stored Procedure
-			TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_PEDIDEVOVEND_01] ' + Str(SF1->(Recno())) )
+			TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_PEDIDEVOVEND_01] ' + Str(SF1->(Recno())) )
 			cErro := ""
 			cErro := U_RetErroED()
 			

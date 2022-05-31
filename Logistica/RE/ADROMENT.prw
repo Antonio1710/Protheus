@@ -9,11 +9,12 @@
 	@version version
 	@history Alteração - Everson	     - 24/04/2019 - Chamado: 048650 - Alterado script sql para impressão derelatório para pedidos para fornecedor.
 	@history Alteração - FWNM   	     - 02/08/2019 - Chamado: 049495 - OS 050775  ADM.LOG || MARCEL  || ROMANEIO ENTREGAS   
-    @history Alteração - FWNM   	     - 08/08/2019 - Chamado: 049495 - 049495 || OS 050775 || ADM.LOG || MARCEL Incluir novo campo ZFM_NUMCE2
+  @history Alteração - FWNM   	     - 08/08/2019 - Chamado: 049495 - 049495 || OS 050775 || ADM.LOG || MARCEL Incluir novo campo ZFM_NUMCE2
 	@history Alteração - Fernando Sigoli - 29/10/2019 - Chamado: 052915 || OS 054267 || FISCAL || RAUL || 8423 || REL. ROMANEIO 
 	@history Alteração - William Costa   - 25/11/2019 - Adiciona para não trazer placas iguais a branco no relatório
 	@hisotry Alteração - Everson         - 02/07/2020 - Chamado: 059359. Adicionado impressão de vale palete. 
 	@history Alteração - Everosn         - 03/07/2020 - Chamado: 059401. Tratamento para utilizar o vale palete no relatório ROTLOG.
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 
 User Function ADROMENT() // U_ADROMENT()
@@ -745,7 +746,7 @@ Static Function sqlVlPlt(dDtIni,dDtFim,cRotDe,cRotAte,cSeqIni,cSeqFim)
 
 	//Variáveis.
 	Local cQuery := ""
-
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	//
 	cQuery += " SELECT  " 
 	cQuery += " EDATA.NUMERO_CARGA,  " 
@@ -756,7 +757,7 @@ Static Function sqlVlPlt(dDtIni,dDtFim,cRotDe,cRotAte,cSeqIni,cSeqFim)
 	cQuery += " EDATA.CLIENTE,  " 
 	cQuery += " EDATA.EMBALAGEM, " 
 	cQuery += " SUM(EDATA.QUANTIDADE) AS QUANTIDADE " 
-	cQuery += " FROM [LNKMIMS].[SMART].[dbo].ADORO_VW_VALEPALETE AS EDATA " 
+	cQuery += " FROM ["+cLnkSrv+"].[SMART].[dbo].ADORO_VW_VALEPALETE AS EDATA " 
 	cQuery += " WHERE " 
 	cQuery += " EDATA.NUMERO_CARGA IN ( " 
 	cQuery += " SELECT  " 

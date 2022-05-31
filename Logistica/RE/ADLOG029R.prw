@@ -1,20 +1,15 @@
 #INCLUDE "PROTHEUS.CH"  
 #INCLUDE "FILEIO.CH"
 #INCLUDE "TopConn.CH"  
-#INCLUDE "rwmake.ch"     
+#INCLUDE "rwmake.ch"
 
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-//ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-//ฑฑบPrograma  ณADLOG029R บAutor  ณWilliam COSTA       บ Data ณ  30/08/2016 บฑฑ
-//ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-//ฑฑบDesc.     ณ Relatorio de Cortes de Pedidos de Venda ou Deletados       บฑฑ
-//ฑฑบDesc.     ณ pelo Deletado pelo Financeiro ou Cortado pela Expedicao    บฑฑ
-//ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-//ฑฑบUso       ณ SIGAFAT                                                    บฑฑ
-//ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-//ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-//฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*
+	Programa  ณADLOG029R บAutor  ณWilliam COSTA       บ Data ณ  30/08/2016
+	Desc.     ณ Relatorio de Cortes de Pedidos de Venda ou Deletados      
+	Desc.     ณ pelo Deletado pelo Financeiro ou Cortado pela Expedicao   
+	Uso       ณ SIGAFAT                                                   
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+*/
 
 User Function ADLOG029R()
 	
@@ -239,7 +234,11 @@ Return()
 Static Function SqlPedCortado()
 
 	Local cDataIni := DTOS(MV_PAR03)
-    Local cDataFin := DTOS(MV_PAR04) 
+  Local cDataFin := DTOS(MV_PAR04) 
+
+	
+	Local cLnkSrv		:= "["+Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) +"].[SMART].[dbo].[EXPEDICAO_CARGA_HORARIO]"
+	
      
     BeginSQL Alias "TRB"
 			%NoPARSER% 
@@ -260,7 +259,7 @@ Static Function SqlPedCortado()
 				   ZD_RESPNOM,
 				   ZD_DESCMOT,
 				   ZD_AUTNOME,
-				   (SELECT TOP(1) CONVERT(VARCHAR,DT_CARGEXPEHORAFINA,121) FROM [LNKMIMS].[SMART].[dbo].[EXPEDICAO_CARGA_HORARIO] WHERE ID_CARGEXPE =  RIGHT(C5_X_SQED,6) ORDER BY DT_CARGEXPEHORAFINA DESC) AS DTHRCORTE,
+				   (SELECT TOP(1) CONVERT(VARCHAR,DT_CARGEXPEHORAFINA,121) FROM %Exp:cLnkSrv% WHERE ID_CARGEXPE =  RIGHT(C5_X_SQED,6) ORDER BY DT_CARGEXPEHORAFINA DESC) AS DTHRCORTE,
 			       CASE WHEN %Table:SC6%.D_E_L_E_T_ <> '*' THEN 'PEDIDO CORTADO' ELSE 'PEDIDO EXCLUIDO' END AS C6_STATUS
 			  FROM %Table:SC6%, %Table:SB1%, %Table:SC5%
 			  LEFT JOIN %Table:SA1%
