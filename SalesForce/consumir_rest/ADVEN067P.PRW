@@ -63,7 +63,9 @@ Static Function Processar()
 	Private aResponse := {}
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,.F.)
 
 	//
 	If ! lLogin
@@ -154,7 +156,9 @@ Static Function Processar()
 	//Verifica se há erros no retorno da consulta no SalesForce.
 	If !Empty(cErros)
 
-		StaticCall(ADVEN075P,TelErro,"Envio SalesForce - ADVEN067P - O produtos abaixo não serão enviados ","Quantidade de registros: " + cValToChar(nRegErro) + Chr(13) + Chr(10) + cErros,"Arial",10,,.F.,.T.)
+		//Static Call(ADVEN075P,TelErro,"Envio SalesForce - ADVEN067P - O produtos abaixo não serão enviados ","Quantidade de registros: " + cValToChar(nRegErro) + Chr(13) + Chr(10) + cErros,"Arial",10,,.F.,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A5("Envio SalesForce - ADVEN067P - O produtos abaixo não serão enviados ","Quantidade de registros: " + cValToChar(nRegErro) + Chr(13) + Chr(10) + cErros,"Arial",10,,.F.,.T.)
 
 	EndIf
 
@@ -169,7 +173,9 @@ Static Function Processar()
 
 	//Verifica se há erros no envio do estoque ao SalesForce.
 	If ! Empty(cErros)
-		StaticCall(ADVEN075P,TelErro,"Envio SalesForce - ADVEN067P - Retorno com erro.",cErros,"Arial",10,,.F.,.T.)
+		//static Call(ADVEN075P,TelErro,"Envio SalesForce - ADVEN067P - Retorno com erro.",cErros,"Arial",10,,.F.,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A5("Envio SalesForce - ADVEN067P - Retorno com erro.",cErros,"Arial",10,,.F.,.T.)
 
 	Else
 		MsgInfo("Dados enviados.","Função ADVEN067P")
@@ -311,7 +317,9 @@ Static Function envReq(aCarga,cMsg,cErros,aResponse,nRegErro)
 
 				//Checa se o retorno do envio em lote possui erro.
 				nRegErro := 0
-				StaticCall(ADVEN075P,chkErro,@cMsg,@cErros,.F.,cUrl,@cJson,"POST",@aRetOk,,,,,"ADVEN067P",,,,"estoque")
+				//Static Call(ADVEN075P,chkErro,@cMsg,@cErros,.F.,cUrl,@cJson,"POST",@aRetOk,,,,,"ADVEN067P",,,,"estoque")
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN075A7( @cMsg,@cErros,.F.,cUrl,@cJson,"POST",@aRetOk,,,,,"ADVEN067P",,,,"estoque" )
 				aRetOk := {}
 
 			EndIf		

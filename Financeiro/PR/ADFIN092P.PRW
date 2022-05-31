@@ -9,6 +9,7 @@
     @version 01
     @history, Everson, 09/11/2020, Chamado 4597. Tratamento para a rotina considerar a data de entrega.
     @history, Everson, 10/11/2020, Chamado 4597. Adicionado o status "M" liberação manual.
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
     @history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
     @history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
     /*/
@@ -127,7 +128,9 @@ Static Function consulSF(cPdSF,cMsgBol)
     Local nAux          := 1
 
 	//
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,.T.)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,.T.)
+    //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,.T.)
 
 	//
 	If ! lLogin
