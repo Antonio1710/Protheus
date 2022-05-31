@@ -607,7 +607,7 @@ User Function ADFAT17Y()
         oOrdPes:Activate()
                    
                    TButton():New(187,515,"Transferência Ordem" ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-                   TButton():New(207,515,"Rom. Ped. Venda"     ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(207,515,"Romaneio"            ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oCanTkt := TButton():New(227,515,"Cancelar Ticket"     ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oAltTag := TButton():New(247,515,"Alterar Tag"         ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oExcTag := TButton():New(267,515,"Excluir Tag"         ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
@@ -1461,15 +1461,20 @@ User Function ADFAT17N(cNvPed, cTpPed, cFornece, cLjForn, aCampo, cMemNf2, cGran
     Default lPedSag   := .F.
 
     //Validação para gerar pedido com dados vindos de outra filial.
-    DbSelectArea("SC5")
-    SC5->(DbSetOrder(28))
-    SC5->(DbGoTop())
-    If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
 
-        If ! Empty(SC5->C5_PEDSAG)
-            cNvPed := SC5->C5_NUM
-            Return .T.
-            
+    If IsInCallStack("U_ADFAT17M")
+
+        DbSelectArea("SC5")
+        SC5->(DbSetOrder(28))
+        SC5->(DbGoTop())
+        If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
+
+            If ! Empty(SC5->C5_PEDSAG)
+                cNvPed := SC5->C5_NUM
+                Return .T.
+                
+            EndIf
+
         EndIf
 
     EndIf
@@ -6083,7 +6088,9 @@ Static Function impRoPV(oOrdPes, aOrdPes)
     //Variáveis.
     Local lRet      := .F.
     Local nLinha    := Val(cValToChar(oOrdPes:nAt))
+    Local cCP       := ""
     Local cNmOrdem  := ""
+    Local cTpRom    := ""
 
     If nLinha <= 0 .Or. Len(aOrdPes) <= 0
         Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -6091,28 +6098,54 @@ Static Function impRoPV(oOrdPes, aOrdPes)
 
     EndIf
 
+    cCP := aOrdPes[nLinha,16]
+    If Empty(cCP)
+        Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Controle de pátio não selecionado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT17U(cCP)
+        Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Controle de pátio " + cCP + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    If ZIB->ZIB_TPMOVI == "S"
+        cTpRom := "IMPROVD"
+
+    ElseIf ZIB->ZIB_TPMOVI == "R"
+        cTpRom := "IMPRORC"
+
+    Else
+        Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Romaneio não disponível para este tipo de pesagem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
     cTicket  := Alltrim(cValToChar(aOrdPes[nLinha,11]))
-    cTpOrdem := aOrdPes[nLinha,14]
-    If Empty(cTicket)
+    If cTpRom == "IMPROVD" .And. Empty(cTicket)
         Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Ticket de pesagem não selecionado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         Return .F.
 
     EndIf
 
-    If ! U_ADFAT195(cTicket)
+    If cTpRom == "IMPROVD" .And. ! U_ADFAT195(cTicket)
         Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Ticket de pesagem " + cTicket + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         Return .F.
 
     EndIf
 
     cNmOrdem := aOrdPes[nLinha,08]
-    If Empty(cNmOrdem)
+    If cTpRom == "IMPROVD" .And. Empty(cNmOrdem)
         Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         Return .F.
 
     EndIf
 
-    MsAguarde({|| lRet := U_ADFAT026R(cTicket, "IMPRO")}, "Aguarde", "Imprimindo Ordem de Carregamento " + cNmOrdem + "...", .F.)
+    MsAguarde({|| lRet := U_ADFAT026R(cTicket, cTpRom, cCP)}, "Aguarde", "Imprimindo Ordem de Carregamento " + cNmOrdem + "...", .F.)
 
 Return lRet
 /*/{Protheus.doc} ADFAT17A

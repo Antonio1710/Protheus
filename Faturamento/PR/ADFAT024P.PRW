@@ -22,6 +22,7 @@ Static cPtControle := "PONTO_PESAGEM"
     @author Everson
     @since 02/12/2021
     @version 01
+    @history Everson, 31/05/2022, ticket 18465. Tratamento para carga sequestrada.
 /*/
 User Function ADFAT024P() // U_ADFAT024P()
 
@@ -864,7 +865,7 @@ User Function ADFAT24D()
 
         EndIf
 
-        If D_TKT->ZIG_INICIA $"3/5"
+        If D_TKT->ZIG_INICIA == "3" //Everson - 31/05/2022. Chamado 18465.
             cMsgError := "ADFAT24D(ADFAT024P)-TICKET " + D_TKT->ZIH_TKTPRO + " JÁ ENCERRADO. PESAGEM NÃO PODE SER PROCESSADA."
             lRetSlvP := .F.
 
