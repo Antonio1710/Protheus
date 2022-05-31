@@ -10,19 +10,22 @@
   @history Chamado 059049 - Eveson - 18/06/2020. Removido (cQuery1)-> para carregar o valor da variável, pois não existe o campo NTTACUM 
   no retorno da consulta.
   @history Ticket 1562    - Abel Babini - 26/04/2022 - Relatório de Pedidos liberados deve trazer todos os pedidos.
+  @history Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
   /*/
 User Function ADFIN088R()
 	Local aArea		:= GetArea()
 	Local aPergs	:= {}
   Local aRet    := {}
 
-  aAdd( aPergs ,{1,"Data De "     ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
-	aAdd( aPergs ,{1,"Data Até"     ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
-	aAdd( aPergs ,{6,"Local de Gravação",Space(50),"","","",50,.T.,"Todos os arquivos (*.*) |*.*","C:\TEMP\",GETF_RETDIRECTORY + GETF_LOCALHARD + GETF_NETWORKDRIVE})
+  aAdd( aPergs ,{1,"Data Entrega De "     ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
+	aAdd( aPergs ,{1,"Data Entrega Até"     ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
+	aAdd( aPergs ,{6,"Local de Gravação"    ,Space(50),"","","",80,.T.,"Todos os arquivos (*.*) |*.*","C:\TEMP\",GETF_RETDIRECTORY + GETF_LOCALHARD + GETF_NETWORKDRIVE})
+	aAdd( aPergs ,{1,"Pedido de"            ,Space(TAMSX3("C5_NUM")[1]),"" ,'.T.',"SC5",'.T.',80,.F.})//Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
+	aAdd( aPergs ,{1,"Pedido Ate"           ,Space(TAMSX3("C5_NUM")[1]),"" ,'.T.',"SC5",'.T.',80,.F.})//Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
 	//Executa as perguntas ao usuário e só executa o relatório caso o usuário confirme a tela de parâmetros;
 	If ParamBox(aPergs ,"Parâmetros ",aRet,,,,,,,,.T.,.T.)
 
-    MsgRun( "Carregando dados - Apenas Pedidos Liberados, aguarde...",,{ || RPEDLIB(aRet[1], aRet[2], aRet[3]) } )
+    MsgRun( "Carregando dados - Apenas Pedidos Liberados, aguarde...",,{ || RPEDLIB(aRet[1], aRet[2], aRet[3], aRet[4], aRet[5]) } )
 
   Endif
 
@@ -40,7 +43,7 @@ Return
   @author Abel Babini
   @since 26/05/2020
   /*/
-Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
+Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH, MVPAR04, MVPAR05)
   Private cQuery1
   Private oExcel		:= FWMSEXCELEX():New()
   Private oMsExcel	:= NIL
@@ -49,10 +52,11 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
   Private cArquivo  := Alltrim(CRELPATH) +  'LIBPEDIDOS_' + DTOS(DATE()) + STRTRAN(TIME(),':','') + '.XML'
   
   cQuery1:=GetNextAlias()
-
+  //Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
   BeginSql Alias cQuery1
     COLUMN DTLIB AS DATE
     SELECT
+      SC5.C5_FILIAL               AS FILIAL,
       SC5.C5_CLIENTE              AS CODCLI,
       SC5.C5_LOJACLI              AS LOJACLI,
       SA1.A1_NOME                 AS CLIENTE,
@@ -61,30 +65,22 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       SC5.C5_NUM                  AS NUMPEDIDO,
       ISNULL(ZEJ.ZEJ_PERFPG,'')   AS PERFILPAGTO,
       ISNULL(ZEJ.ZEJ_RATCIS,'')   AS RCISP,
-      ISNULL((SELECT TRIM(STRING_AGG(TRIM(ZBH.ZBH_MOTIVO), ','))
-        FROM %TABLE:ZBH% ZBH  (NOLOCK)
-        WHERE 
-          ZBH.ZBH_FILIAL = SC5.C5_FILIAL
-        AND ZBH.ZBH_PEDIDO = SC5.C5_NUM
-        AND ZBH.ZBH_CLIENT = SC5.C5_CLIENTE
-        AND ZBH.ZBH_LOJA = SC5.C5_LOJACLI
-        AND ZBH.%notDel%
-      ),'')                       AS MOT_RETENCAO,
-      C5_XTOTPED                  AS TOT_PEDIDO,
-      ISNULL(ZEJ.ZEJ_VLPED,'')    AS TOT_LIBERADO,
-      ISNULL(ZEJ.ZEJ_MEDATR,'')   AS MED_ATRASO,
-      ISNULL(ZEJ.ZEJ_VLAVEN,'')   AS TIT_AVENCER,
-      ISNULL(ZEJ.ZEJ_VLVENC,'')   AS TIT_VENCIDO,
-      ISNULL(ZEJ.ZEJ_LIMCRD,'')   AS LIMITE,
-      ISNULL(ZEJ.ZEJ_PERCEN,'')   AS PERCENTUAL,
-      ISNULL(ZEJ.ZEJ_VLUTIL,'')   AS VLUTIL,
-      ISNULL(ZEJ.ZEJ_QTDPED,'')   AS QTDPED,
-      ISNULL(ZEJ.ZEJ_TTUTIL,'')   AS TTUTIL,
+      ISNULL(C5_XTOTPED,0)        AS TOT_PEDIDO,
+      ISNULL(ZEJ.ZEJ_VLPED,0)    AS TOT_LIBERADO,
+      ISNULL(ZEJ.ZEJ_MEDATR,0)   AS MED_ATRASO,
+      ISNULL(ZEJ.ZEJ_VLAVEN,0)   AS TIT_AVENCER,
+      ISNULL(ZEJ.ZEJ_VLVENC,0)   AS TIT_VENCIDO,
+      ISNULL(ZEJ.ZEJ_LIMCRD,0)   AS LIMITE,
+      ISNULL(ZEJ.ZEJ_PERCEN,0)   AS PERCENTUAL,
+      ISNULL(ZEJ.ZEJ_VLUTIL,0)   AS VLUTIL,
+      ISNULL(ZEJ.ZEJ_QTDPED,0)   AS QTDPED,
+      ISNULL(ZEJ.ZEJ_TTUTIL,0)   AS TTUTIL,
       IIF(ZEJ.ZEJ_USRLIB IS NULL,'LIBERAÇÃO AUTOMÁTICA',ISNULL(ZEJ.ZEJ_USRLIB,''))   AS LIBERADOR,
       ISNULL(ZEJ.ZEJ_PARECE,'')   AS TXT_LIBERACAO,
       ISNULL(ZEJ.ZEJ_DTLIB,'')    AS DTLIB,
       ISNULL(ZEJ.ZEJ_HRLIB,'')    AS HRLIB,
-      ISNULL(ZEJ.ZEJ_VLLIB,'')    AS VLLIB
+      ISNULL(ZEJ.ZEJ_VLLIB,0)    AS VLLIB,
+      ISNULL(ZEJ_MOTLIB,'')       AS MOTLIB
     FROM %TABLE:SC5% SC5 (NOLOCK)
     LEFT JOIN %TABLE:SA1% SA1 ON
 	    SA1.A1_COD = SC5.C5_CLIENTE
@@ -103,9 +99,10 @@ Static Function RPEDLIB(MVPAR01, MVPAR02, CRELPATH)
       SC5.C5_FILIAL = %xFilial:SC5%
     AND SC5.C5_DTENTR BETWEEN %EXP:DTOS(MVPAR01)% AND %EXP:DTOS(MVPAR02)%
     AND SC5.C5_TIPO NOT IN ('D','B')
+    AND SC5.C5_NUM BETWEEN %EXP:MVPAR04% AND %EXP:MVPAR05%
     AND SC5.%notDel%
-    
   EndSql
+
   //Ticket 1562    - Abel Babini - 26/04/2022 - Relatório de Pedidos liberados deve trazer todos os pedidos.
   //AND ZEJ.ZEJ_DTLIB IS NOT NULL
   // Cria estrutura do Excel
@@ -164,6 +161,7 @@ Static Function ExlCab01()
 	oExcel:AddColumn(cWorksht,cPlan01,"Data Liberação"			  ,1,1)
 	oExcel:AddColumn(cWorksht,cPlan01,"Hora Liberação"			  ,1,1)
 	oExcel:AddColumn(cWorksht,cPlan01,"Valor Liberação"			  ,2,3,.T.)
+  oExcel:AddColumn(cWorksht,cPlan01,"Rotina"			          ,1,1) //Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
 
 Return 
 
@@ -175,11 +173,48 @@ Return
   /*/
 Static Function ExlDet01()
   Local nTtAcum := 0
+  Local cRotina := ''
+  Local cQryMot := ''
+  Local cMotBlq := ''
   DbSelectArea(cQuery1)
   (cQuery1)->(DbGoTop())
   While !(cQuery1)->(eof())
-    IF Alltrim((cQuery1)->MOT_RETENCAO) <> '' .AND. (cQuery1)->MOT_RETENCAO <> nil
+    //Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
+    cMotBlq := ''
+
+    cQryMot:=GetNextAlias()
+    BeginSQL Alias cQryMot
+      SELECT TRIM(ZBH.ZBH_MOTIVO) AS MOTIVO
+        FROM %TABLE:ZBH% ZBH  (NOLOCK)
+        WHERE 
+          ZBH.ZBH_FILIAL = %Exp:(cQuery1)->FILIAL%
+        AND ZBH.ZBH_PEDIDO = %Exp:(cQuery1)->NUMPEDIDO%
+        AND ZBH.ZBH_CLIENT = %Exp:(cQuery1)->CODCLI%
+        AND ZBH.ZBH_LOJA = %Exp:(cQuery1)->LOJACLI%
+        AND ZBH.%notDel%
+    ENDSQL
+    (cQryMot)->(DbGoTop())
+    While !(cQryMot)->(eof())
+      if !Empty(Alltrim(cMotBlq))
+        cMotBlq += ',' + Alltrim((cQryMot)->MOTIVO)
+      else
+        cMotBlq += Alltrim((cQryMot)->MOTIVO)
+      endif
+      (cQryMot)->(DbSkip())  
+    EndDo
+    (cQryMot)->(dbCloseArea())
+    //Ticket 1562    - Abel Babini - 31/05/2022 - Ajustes no relatório
+    //IF Alltrim((cQuery1)->MOT_RETENCAO) <> '' .AND. (cQuery1)->MOT_RETENCAO <> nil
       nTtAcum := (cQuery1)->TOT_PEDIDO + (cQuery1)->TIT_AVENCER + (cQuery1)->TIT_VENCIDO
+
+      If Alltrim((cQuery1)->MOTLIB) == 'MTA450'
+        cRotina := 'MATA450 Lib. Cred/Estoque'
+      ElseIF Alltrim((cQuery1)->LIBERADOR) =='LIBERAÇÃO AUTOMÁTICA'
+        cRotina := 'Liberação Automática'
+      Else
+        cRotina := 'Liberação Manual'
+      Endif
+
       oExcel:AddRow(cWorksht,cPlan01,{;
                                       cEmpAnt,;
                                       cFilAnt,;
@@ -190,7 +225,7 @@ Static Function ExlDet01()
                                       (cQuery1)->NUMPEDIDO,;
                                       (cQuery1)->PERFILPAGTO,;
                                       (cQuery1)->RCISP,;
-                                      substring((cQuery1)->MOT_RETENCAO,1,250),;
+                                      substring(cMotBlq,1,250),;
                                       (cQuery1)->MED_ATRASO,;
                                       (cQuery1)->TOT_PEDIDO,;
                                       (cQuery1)->TIT_AVENCER,;
@@ -205,15 +240,16 @@ Static Function ExlDet01()
                                       (cQuery1)->TXT_LIBERACAO,;
                                       DTOC((cQuery1)->DTLIB),;
                                       (cQuery1)->HRLIB,;
-                                      (cQuery1)->VLLIB})
-    ENDIF 
+                                      (cQuery1)->VLLIB,;
+                                      cRotina})
+    //ENDIF 
     // IIF(alltrim(DTOS((cQuery1)->DTLIB)) == '','',DTOC((cQuery1)->DTLIB)),;
                                       // nTtAcum,; //Tot Port Especial //Everson - 18/06/2020. Chamado 059049. Removido (cQuery1)->
 
     (cQuery1)->(DbSkip())
   EndDo
   
-  oExcel:AddRow(cWorksht,cPlan01,{"","","","","","","","","","","","","","","","","","","","","","","","",""})
+  oExcel:AddRow(cWorksht,cPlan01,{"","","","","","","","","","","","","","","","","","","","","","","","","",""})
 
 Return 
 
