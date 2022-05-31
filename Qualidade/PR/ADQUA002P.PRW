@@ -17,6 +17,7 @@
     @history Chamado 18301 - Leonardo P. Monteiro    - 06/01/2022 - Grava o flag da inspeção da Qualidade.
     @history Chamado 18301 - Leonardo P. Monteiro    - 19/01/2022 - Conversão da rotina para execução em schedule.
     @history Chamado 68365 - Leonardo P. Monteiro    - 16/02/2022 - Grava os dados de liberação no cabeçalho do PV e Ped Exportação.
+    @history Ticket 69574  - Abel Babini             - 25/04/2022 - Projeto FAI
     /*/
 
 user function ADQUA002(aEmpFil)
@@ -591,6 +592,9 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
     Local nAuxZ         := 0
     Local nElementos    := Len(aElementos)
 
+    //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+    Local cLnkSrv		:= "["+Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))+"].[SMART].[dbo].[VW_EXPECARG_02]"
+
     cPdVend := ""
     cCarga  := ""
     dDtICar := Stod("")
@@ -636,6 +640,7 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
             //if .t.
 
                 //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.
+                //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
                 BeginSQL Alias "QSTED"
                     %NoPARSER%
                     SELECT TOP 1 EMPRESA, 
@@ -646,7 +651,7 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
                                 HR_FECHCARG,
                                 DT_ABERTCARG,
                                 HR_ABERTCARG 
-                    FROM [LNKMIMS].[SMART].[dbo].[VW_EXPECARG_02] 
+                    FROM %Exp:cLnkSrv%
                     WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE NOT IN ('AB')
                     
                 EndSQl

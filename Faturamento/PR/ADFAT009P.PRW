@@ -3,20 +3,12 @@
 #Include 'Totvs.ch'
 #Include 'Topconn.ch'
 /*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณADFAT009P บAutor  ณEverson             บ Data ณ  19/10/2018 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณFun็ใo para importa็ใo de cargas Edata.                     บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบUso       ณChamado .                                                   บฑฑ
-ฑฑบversionamento:                                                         บฑฑ
-ฑฑบEverson 20/12/2018. Chamado TI. Tratamento para ser importado          บฑฑ
-ฑฑบpela data de de carregamento do Edata.                                 บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+	Programa  ณADFAT009P บAutor  ณEverson             บ Data ณ  19/10/2018
+	Desc.     ณFun็ใo para importa็ใo de cargas Edata.                    
+	Uso       ณChamado .                                                  
+	Everson 20/12/2018. Chamado TI. Tratamento para ser importado         
+	pela data de de carregamento do Edata.                                
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 */
 User Function ADFAT009P() // U_ADFAT009P()
 
@@ -651,7 +643,8 @@ Static Function dadosEdata(cDtIni,cDtFim,lAut)
 	Local aArea	  	:= GetArea()	
 	//Everson 20/12/2018. Chamado TI.
 	//Local cQuery 	:= " SELECT *, LEFT(CONVERT(VARCHAR, DtFechCarg, 103),10)  + ' ' + RIGHT(CONVERT(VARCHAR, DtFechCarg, 120),8) AS DtFechM FROM [LNKMIMS].[SMART].[dbo].vw_Adoro_EXP033 WHERE DtProducao = '" + cDtIni + "' AND DtProducao <= '" + cDtFim + "' "
-	Local cQuery 	:= " SELECT *, LEFT(CONVERT(VARCHAR, DtFechCarg, 103),10)  + ' ' + RIGHT(CONVERT(VARCHAR, DtFechCarg, 120),8) AS DtFechM FROM [LNKMIMS].[SMART].[dbo].vw_Adoro_EXP033 WHERE CONVERT(date, DtCarregam) >= '" + cDtIni + "' AND CONVERT(date, DtCarregam) <= '" + cDtFim + "' "
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cQuery 	:= " SELECT *, LEFT(CONVERT(VARCHAR, DtFechCarg, 103),10)  + ' ' + RIGHT(CONVERT(VARCHAR, DtFechCarg, 120),8) AS DtFechM FROM ["+cLnkSrv+"].[SMART].[dbo].vw_Adoro_EXP033 WHERE CONVERT(date, DtCarregam) >= '" + cDtIni + "' AND CONVERT(date, DtCarregam) <= '" + cDtFim + "' " //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	Local nTotReg	:= 0
 	Local nAux		:= 0
 	
