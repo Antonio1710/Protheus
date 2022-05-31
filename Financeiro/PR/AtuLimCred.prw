@@ -5,7 +5,7 @@
 
 /*/{Protheus.doc} User Function AtuLimCred
     Rotina executada manualmente. Tem o objetivo de liberar/bloquear o credito dos pedidos de venda.
-	Libera / Bloqueia os pedidos de venda por credito
+		Libera / Bloqueia os pedidos de venda por credito
     Consulte: http://tdn.totvs.com/pages/releaseview.action?pageId=6071394
     @type  Function
     @author Ana Helena
@@ -16,9 +16,10 @@
     @example
     (examples)
     @see (links_or_references)
-	@Chamado xxxxxx - Ana Helena - 21/11/2012 - Desenvolvimento.
-    @chamado 6634 - Leonardo P. Monteiro - 30/12/2020 - Correção na rotina para excluir no fluxo de aprovação do financeiro PVs relacionadas a operações intercompany.
-    @chamado 6634 - Leonardo P. Monteiro - 06/01/2020 - Correção e revisão da rotina que apresentou problemas em ambiente de produção. A rotina não processava corretamente a liberação dos PVs.
+		@history Chamado xxxxxx - Ana Helena - 21/11/2012 - Desenvolvimento.
+    @history chamado 6634   - Leonardo P. Monteiro - 30/12/2020 - Correção na rotina para excluir no fluxo de aprovação do financeiro PVs relacionadas a operações intercompany.
+    @history chamado 6634   - Leonardo P. Monteiro - 06/01/2020 - Correção e revisão da rotina que apresentou problemas em ambiente de produção. A rotina não processava corretamente a liberação dos PVs.
+		@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 
 User Function AtuLimCred()
@@ -39,6 +40,8 @@ Static Function ProcAtu()
 	// Leonardo P. Monteiro - 30/12/20 | Inclui como exceção os PVs do tipo intercompany.
 	Local cFilInter	:= fGetInterc()
 	//Local lVldInter	:= SuperGetMV("MV_#HEXINT",,.T.)
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	MsProcTxt("Analisando Dados  .....")
 
@@ -234,7 +237,8 @@ Static Function ProcAtu()
 	TCSQLExec(cQuery)
 
 	// Ricardo Lima - 09/03/18 | Atualiza SalesForce com status de credito
-	If cEmpAnt == "01" .And. cFilAnt == "02" .And. Findfunction("U_ADVEN050P")
+	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. Findfunction("U_ADVEN050P")
 		If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 			U_ADVEN050P(,.F.,.T., " AND C5_NUM BETWEEN '" + Alltrim(mv_par03) + "' AND '" + Alltrim(mv_par04) + "' AND C5_CLIENTE BETWEEN '" + Alltrim(mv_par05) + "' AND '" + Alltrim(mv_par06) + "' AND C5_NOTA = '' AND C5_DTENTR BETWEEN '" + DTOS(mv_par01) + "' AND '" + DTOS(mv_par02) + "' AND C5_FLAGFIN = 'B' AND C5_XPEDSAL <> '' " ,.F.)
 		
@@ -263,7 +267,8 @@ Static Function ProcAtu()
 	TCSQLExec(cQuery)
 
 	// Ricardo Lima - 09/03/18 | Atualiza SalesForce com status de credito
-	If cEmpAnt == "01" .And. cFilAnt == "02" .And. Findfunction("U_ADVEN050P")
+	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. Findfunction("U_ADVEN050P")
 		If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 			U_ADVEN050P(,.F.,.T., " AND C5_NUM BETWEEN '" + Alltrim(mv_par03) + "' AND '" + Alltrim(mv_par04) + "' AND C5_CLIENTE BETWEEN '" + Alltrim(mv_par05) + "' AND '" + Alltrim(mv_par06) + "' AND C5_NOTA = '' AND C5_DTENTR BETWEEN '" + DTOS(mv_par01) + "' AND '" + DTOS(mv_par02) + "' AND C5_FLAGFIN = 'L' AND C5_XPEDSAL <> '' " ,.T.)				
 

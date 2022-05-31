@@ -1,24 +1,18 @@
 #include "rwmake.ch"
-User Function MTA450T()      // DELMTA450T()  RENOMEADA PARA DEL PARA TESTAR 
 
+/*/{Protheus.doc} User Function MTA450T
+	Ponto de Entrada no MATA450 (Liberacao de Credito apos 
+	gravar SC9, para gravar o campo C9_ROTEIRO, que sera
+	filtrado na preparacao da NF 
+	suarios FAT - MATA450 - Liberacao de Credito
+	@type  Function
+	@author Rogerio Eduardo Nutti
+	@since 01/08/02
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	/*/
-	ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-	±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-	±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-	±±³Fun‡„o    ³ MTA450T  ³ Autor ³ Rogerio Eduardo Nutti ³ Data ³ 01/08/02 ³±±
-	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-	±±³Descri‡„o ³ Ponto de Entrada no MATA450 (Liberacao de Credito apos     ³±±
-	±±³          ³ gravar SC9, para gravar o campo C9_ROTEIRO, que sera       ³±±
-	±±³          ³ filtrado na preparacao da NF                               ³±±
-	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-	±±³ Uso      ³ Especifico Ad'oro Alimenticia                              ³±±
-	±±³          ³ Usuarios FAT - MATA450 - Liberacao de Credito              ³±±
-	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ´±±
-	±±³ Revis„o  ³                                          ³ Data ³          ³±±
-	±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÙ±±
-	±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-	ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-	/*/
+User Function MTA450T()      // DELMTA450T()  RENOMEADA PARA DEL PARA TESTAR 
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Guarda ambiente inicial                                                  ³
@@ -86,7 +80,7 @@ User Function MTA450T()      // DELMTA450T()  RENOMEADA PARA DEL PARA TESTAR
 	//dbGoto(_nRecnoSC6)
 
 	//
-	If Findfunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt = "02"
+	If Findfunction("U_ADVEN050P") .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 		If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 			U_ADVEN050P(,.F.,.T., " AND C5_NUM IN ('" + SC9->C9_PEDIDO + "') AND C5_XPEDSAL <> '' " ,.F.)				
 		

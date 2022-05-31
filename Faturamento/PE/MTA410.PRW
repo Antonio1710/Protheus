@@ -9,6 +9,7 @@
 	@history Chamado 052170 - Adriana       - 04/10/2019 - NF EXPORTACAO SAFEGG 
 	@history Chamado 056368 - William Costa - 06/03/2020 - Colocado GetArea e Adicioando DBSELECTAREA para as tabelas SA1,SA2,SA4 estavamos com erro na cópia de pedido que não estava posicionado nessas tabelas corretamente.
 	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@hsitory Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 */
 
 User Function MTA410
@@ -24,6 +25,7 @@ User Function MTA410
 	Local i			:= 1
 	Local _i		:= 1
 	Local nTotLin	:= Len(aCols)
+	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B") //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	Private _lEECFat	:= GetMv("MV_EECFAT") //por Adriana em 04/10/2019-chamado 052170
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
@@ -45,8 +47,10 @@ User Function MTA410
 	_nTotalCx  := 0
 	_nTotalKg  := 0
 	_nTotalBr  := 0
+	
 	//verifica se placa e uf do veiculo estão preenchidos - SPED
-	if ! Empty(Alltrim(cValToChar(M->C5_PLACA))) .and.  Empty(Alltrim(cValToChar(M->C5_UFPLACA))) .and. xFilial("SC5") $ "02/07" .and. ALLTRIM(CEMPANT)=="01" //incluida filial 07 em 13/08/14
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	if ! Empty(Alltrim(cValToChar(M->C5_PLACA))) .and.  Empty(Alltrim(cValToChar(M->C5_UFPLACA))) .and. Alltrim(xFilial("SC5")) $ cFilRN .and. ALLTRIM(CEMPANT)=="01" //incluida filial 07 em 13/08/14
 		IF IsInCallStack('U_ADVEN002P')  == .T.
 			Aadd(aPedidos,{cchave, ;
 			''    , ;
@@ -197,8 +201,9 @@ Return(_lRet)
 Static Function CliFor_OK()
 
 	Local _lRet:=.T.
+	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B")//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
-	IF (xFilial("SC5") $ "02/06/07") .and. ALLTRIM(CEMPANT)=="01" //ALTERADO LEONARDO (HC) PARA CONTEMPLAR FILIAL 06 - ITUPEVA //incluida filial 07 em 13/08/14
+	IF (Alltrim(xFilial("SC5")) $ cFilRN) .and. ALLTRIM(CEMPANT)=="01" //ALTERADO LEONARDO (HC) PARA CONTEMPLAR FILIAL 06 - ITUPEVA //incluida filial 07 em 13/08/14
 
 		IF !lSfInt .And. M->C5_TIPO $ "DB"
 
@@ -568,8 +573,9 @@ Return _lRet
 Static Function Transp_OK()
 
 	Local _lRet:=.T.
+	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B") //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
-	if xFilial("SC5") $ "02/07" .and. ALLTRIM(CEMPANT)=="01" //incluida filial 07 em 13/08/14
+	if Alltrim(xFilial("SC5")) $ cFilRN .and. ALLTRIM(CEMPANT)=="01" //incluida filial 07 em 13/08/14
 
 		DBSELECTAREA("SA4")
 		DBGOTOP()
