@@ -68,7 +68,9 @@ Static Function Processar(cData,lAut)
 	Local cMsg		  := ""
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -93,10 +95,15 @@ Static Function Processar(cData,lAut)
 
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk,.T.) },"Aguarde","Processando registro(s) ...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk,.T.) },"Aguarde","Processando registro(s) ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4( @aParametros,.F.,"PATCH",@aRetOk,.T.) },"Aguarde","Processando registro(s) ...",.T.)
 
 	Else
-		             StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk,.T.)
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.F.,"PATCH",@aRetOk,.T. )
+
 
 	EndIf
 
@@ -272,10 +279,14 @@ Static Function envItens(cParamBsc,lAut,cChvTab,aResponse)
 	
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
-		
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4( @aParametros,.F.,"PATCH",@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
+
 	Else
-					 StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk)
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.F.,"PATCH",@aRetOk )
 		
 	EndIf
 	
