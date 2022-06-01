@@ -74,7 +74,9 @@ Static Function Processar(cCodPB3,cLojaPB3,lAut,cTexto,cTipo,cExpSql,aResponse)
 
 	//Efetura login no SalesForce.
 	If Len(aResponse) <= 0
-		lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+		//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    	lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 	
 		//
 		If ! lLogin
@@ -101,10 +103,14 @@ Static Function Processar(cCodPB3,cLojaPB3,lAut,cTexto,cTipo,cExpSql,aResponse)
 
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"POST",{}) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"POST",{}) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4(@aParametros,.F.,"POST",{}) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
 
 	Else
-		             StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"POST",{})
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"POST",{})
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.F.,"POST",{} )
 
 	EndIf
 					

@@ -8,6 +8,7 @@
 	@since 12/01/2018
 	@version 01
 	@history Everson, 23/09/2021, Chamado 44817. Tratamento para marcar as notas fiscais já enviadas.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADVEN074P(cEmp,cFili,cParamBsc,lAut,cExpSql,lCancelada) // U_ADVEN074P("01","02","",.F.," AND F2_DOC = '001295801' ") // U_ADVEN074P("01","02","001200752SF1",.F.,"",.T.)
 
@@ -78,7 +79,9 @@ Static Function Processar(cParamBsc,lAut,cExpSql,cEmp,cFili,lCancelada,nOpc)
 	Local aRetOk	:= {}
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -103,11 +106,15 @@ Static Function Processar(cParamBsc,lAut,cExpSql,cEmp,cFili,lCancelada,nOpc)
 
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,Iif(lCanc,.F.,.T.),.T.,"",.T.,.F.) },"Aguarde","Processando cabeçalho NF saída(SF)...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,Iif(lCanc,.F.,.T.),.T.,"",.T.,.F.) },"Aguarde","Processando cabeçalho NF saída(SF)...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4( @aParametros,,"",@aRetOk,Iif(lCanc,.F.,.T.),.T.,"",.T.,.F.) },"Aguarde","Processando cabeçalho NF saída(SF)...",.T.)
 		//Processa({|| itemNEnv(lAut,aResponse) },"Aguarde","Processando item NF saída(SF) não processado...",.T.)
 		
 	Else
-		StaticCall(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,Iif(lCanc,.F.,.T.),.T.,"",.T.,.F.,lMrkCanc)
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,Iif(lCanc,.F.,.T.),.T.,"",.T.,.F.,lMrkCanc)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,,"",@aRetOk,Iif(lCanc,.F.,.T.),.T.,"",.T.,.F.,lMrkCanc )
 		If nOpc == 1
 			itemNEnv(lAut,aResponse)
 		
@@ -399,11 +406,15 @@ Static Function envItens(cParamBsc,lAut,cChvTab,aResponse)
 	
 	//Processa os registros.
 	If  ! lAut
-		//Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,,,@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) ...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,,,@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4(@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) ...",.T.)
 		
 	Else
-					 StaticCall(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.)
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F. )
 		
 	EndIf
 	
@@ -666,8 +677,9 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 			MsgAlert(cMsg,"Função mrkReg (ADVEN074P)")
 			
 		Else
-			StaticCall(ADVEN075P,envErros,cMsg + "Função mrkReg (ADVEN074P)")
-			
+			//Static Call(ADVEN075P,envErros,cMsg + "Função mrkReg (ADVEN074P)")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A2( cMsg + "Função mrkReg (ADVEN074P)" )
 		EndIf	
 		
 	EndIF
