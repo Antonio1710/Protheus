@@ -17,7 +17,7 @@ static lAuto
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history Ticket 69574 - Abel Babini       - 25/04/2022 - Projeto FAI
-/*/
+/*/ 
 User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 
 	// FWNM - 16/04/2018 - CHAMADO 037729
