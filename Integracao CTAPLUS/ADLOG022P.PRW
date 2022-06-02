@@ -26,6 +26,10 @@
 	@history Chamado T.I.   - Everson 23/07/2020. Tratamento para rotina baixar abastecimentos do dia anterior.
 	@history Chamado 060424 - Everson 10/08/2020. Tratamento para vincular código de projeto na requisição ao armazém. 
 	@history Chamado 060424 - Everson 11/08/2020. Tratamento para obter o sequencial da solicitação ao armazém pela função U_SXESXF. 
+	@history Ticket 70142 	- Rodrigo Mello / Flek Solutions 22/03/2022. Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
+	/*/
+
 	@history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
@@ -52,7 +56,8 @@ User Function ADLOG022P() // U_ADLOG022P()
 
 	U_ADINF009P(SUBSTRING(Alltrim(PROCNAME()),3,Len(Alltrim(PROCNAME()))) + '.PRW',SUBSTRING(Alltrim(PROCNAME()),3,Len(Alltrim(PROCNAME()))),"")
 	
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 	logZBN("1") //Log início.

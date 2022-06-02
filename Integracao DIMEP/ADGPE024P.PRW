@@ -43,6 +43,7 @@
 	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
 	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
     @history TICKET: 69748  - ADRIANO SAVOINE - 16/03/2022 - Ajustado o campo credencial para ajustar igual ao RM no DIMEP com 8 caracteres no leitor de codigo de barra mas deixando que no relogio somente considere 6.
+	@history Ticket 70142 	- Rodrigo Mello   - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022 - Criado o parametro no configurador com 1 dia e alterada a query pois estava ocorrendo erro na hora de montar a mesma e transformado o dado.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
@@ -138,7 +139,8 @@ User Function ADGPE024P(aParam) // U_ADGPE024P()
 		cLinked := GetMV("MV_#RMLINK",,"RM") 
 		cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD")
 
-		PtInternal(1,Alltrim(PROCNAME()))
+		// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg(Alltrim(PROCNAME()))
 		ConOut("ADGPE024P - INICIO DO SCHEDULE ADGPE024P" + '||' + DToC(Date()) + '||' + Time() + '|| Empresa:' + aParam[1] + '|| Filial:' + aParam[2])       
 
 		U_ADINF009P(SUBSTRING(Alltrim(PROCNAME()),3,Len(Alltrim(PROCNAME()))) + '.PRW',SUBSTRING(Alltrim(PROCNAME()),3,Len(Alltrim(PROCNAME()))),'Integracao com o sistema DIMEP de catracas Integração de Funcionarios e Caminhoneiros a partir de sql Usando o linked Server para DIMEP')

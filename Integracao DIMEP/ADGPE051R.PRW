@@ -10,6 +10,7 @@
 	@history Chamado: 057108 - Adriano Savoine - 06/04/2020 - Alteração da Ordenação do relatorio Ordenando a Estrutura e o nome da pessoa dentro da estrutura ordenada.
 	@history TICKET  224     - William Costa   - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 USER FUNCTION ADGPE051R()  
 
@@ -28,7 +29,8 @@ USER FUNCTION ADGPE051R()
 
 	ConOut("INICIO DO SCHEDULE ADGPE050R")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'WORKFLOW DE ENVIO DE OCORRENCIAS DE TERCEIROS QUE IRAM VENCER ASO, INTEGRACAO OU CONTRATO')
 

@@ -21,6 +21,8 @@
     @history Ticket TI      - Leonardo P. Monteiro - 17/01/2022 - Correção de error.log.
     @hystory Ticket 67537   - Fernando Macieira    - 02/02/2022 - Importação de Ovos - Ordem de Produção
     @hystory Ticket 69257   - Fernando Macieira    - 08/03/2022 - Redundancia na consistência de duplicação das OPs
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+
 /*/
 User Function ADEST033P()  // U_ADEST033P()
 
@@ -49,7 +51,8 @@ User Function ADEST033P()  // U_ADEST033P()
         EndIf
 
         //ConOut( "[ADEST033P] - "+DToC(Date())+" "+Time()+" - Início Job importação de Ops.")
-        PtInternal(1,ALLTRIM(PROCNAME()))
+        //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     EndIf
 

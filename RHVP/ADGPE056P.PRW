@@ -15,6 +15,7 @@
     @history ticket   TI  - Fernando Macieira - 05/03/2021 - Tratativa nome banco CORPORERM
     @history Ticket 18425 - ADRIANO SAVOINE   - 23/08/2021 - Ajuste na query enviada pelo Marcos Cavalcante Consultor RM, para integrar no JOB os dados do RM.
     @history Ticket 62169 - Everson           - 13/10/2021 - Tratamento para retorno de erro employees_uddi_unique.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 User Function ADGPE056P() // U_ADGPE056P()
 
@@ -38,7 +39,8 @@ User Function ADGPE056P() // U_ADGPE056P()
 		Return
 	EndIf
 
-    PtInternal(1,ALLTRIM(PROCNAME()))
+    // @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     logZBN("1")
 

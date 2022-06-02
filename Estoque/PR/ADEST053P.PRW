@@ -10,6 +10,7 @@
     @author Everson
     @since 04/01/2021.
     @version 01
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADEST053P  // U_ADEST053P()
 
@@ -37,7 +38,8 @@ User Function ADEST053P  // U_ADEST053P()
 
         ConOut( DToC(Date()) + " " + Time() + " ADEST053P - Início Job importação de Ops.")
 
-        PtInternal(1,ALLTRIM(PROCNAME()))
+        //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     EndIf
 

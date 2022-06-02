@@ -37,6 +37,7 @@
     @history Ticket     TI  - William Costa     - 27/11/2020 - Ajuste na Função que gera o Codigo do Fornecedor quando o campo RM está marcado pois na RNX2 não tinha nenhum fornecedor ainda cadastrado com F, a variavel de retorno trazia branco, ajustado o IF e adicionado um Else
     @history Ticket    6648 - Adriano Savoine   - 15/12/2020 - Eliminado da Static Function o Metodo FreeChildren pois ele elimina todos os objetos da classe e causava error log ao mudar o combo produtor rural.
     @history Ticket     TI  - Abel Babini       - 28/09/2021 - Para não calcular exclusão do ICMS da base de Pis e Cofins nas entradas. Conteúdo Padrão do campo deve ser 5
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     @history Ticket 71705   - Adriano Savoine   - 26/04/2022 - Corrigido o Campo Pais e Codigo Pais para não permitir inserir informações erradas.
 /*/
 
@@ -96,8 +97,9 @@ User Function ADCOM015P()
     Private aItensRM := {'Não','Sim'}
     Private cComboRM := aItensRM[1]
     Private cRMFunc  := Space(100)
-
-    PtInternal(1,ALLTRIM(PROCNAME()))
+	
+    //@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
  

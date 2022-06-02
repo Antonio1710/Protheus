@@ -12,6 +12,7 @@
 	@version 01
 	@history Ticket: T.I   - 24/05/2019 - Adriana Oliveira - Devido a substituicao email para shared-relay, substituido MV_RELACNT p/ MV_RELFROM
 	@history Ticket: 63022 - 28/10/2021 - Fernando Sigoli  - parametrizar o email anexo para listar em ordem decrescente pela data de digitação? (o mais recente primeiro)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 
 /*/
 
@@ -34,7 +35,8 @@ User Function ADCON009R()
 
 	logZBN("1")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 

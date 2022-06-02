@@ -9,6 +9,7 @@
   @author Abel Babini
   @since 27/04/2020
   @history Chamado 056918 - Abel Babini - 27/04/2020 - Workflow Financeiro Solicitação de Pagamentos Antecipados
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
   /*/
 User Function ADFIN086R()
 
@@ -38,7 +39,8 @@ User Function ADFIN086R()
 
   /****** COMANDOS *************/
 
-  PtInternal(1,ALLTRIM(PROCNAME()))
+  //@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+  //FWMonitorMsg(ALLTRIM(PROCNAME()))
   
   U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Workflow de Solicitação de PA')
 
