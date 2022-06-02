@@ -13,9 +13,6 @@
 	@history Chamado 055444 - William  				- 11/02/2020 - Ajustado error log do programa ADINF009P estava na posição errada
 	@history Chamado 055979 - Abel Babini			- 28/02/2020 - COMPLEMENTO FRANGO VIVO - Melhoria no filtro que identifica se está PENDENTE ou RECEBIDO
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
-*/
-
-User Function ADLFV011R() 
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 72339 - Fernando Macieira - 03/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO

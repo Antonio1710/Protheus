@@ -28,8 +28,6 @@
 	@history Chamado 060424 - Everson 11/08/2020. Tratamento para obter o sequencial da solicitação ao armazém pela função U_SXESXF. 
 	@history Ticket 70142 	- Rodrigo Mello / Flek Solutions 22/03/2022. Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
-	/*/
-
 	@history ticket  69813  - Fernando Macieira - 22/03/2022 - Requisições Filial 02 948478 e 948479 - Produto 581459
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
