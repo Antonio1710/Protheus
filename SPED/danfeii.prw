@@ -5685,3 +5685,15 @@ User Function IMPDNFLJ(oNFE, cCodAutSef, dDtReceb, cDtHrRecCab)
 U_LJDNFNFE(oNFE, cCodAutSef, dDtReceb, cDtHrRecCab)
 
 Return Nil
+
+/*/{Protheus.doc} u_NFEIIA0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_NFEIIA0( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6, uPar7, uPar8 )
+Return( DanfeProc( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6, uPar7, uPar8 ) )

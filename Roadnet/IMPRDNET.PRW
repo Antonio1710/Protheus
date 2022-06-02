@@ -14,6 +14,7 @@
 	@history Chamado 044314 - Everson      - 28/05/2019 - Removida validação de placa. 
 	@history Chamado 044314 - Everson      - 10/07/2019 - Tratamento para informar a placa do cavalo mecânico para geração do MDF-e
 	@history Tkt     63034  - Sigoli       - 01/11/2021 - Adicionado fClose(nHdl)no final do função  - "fechar o arquivo"
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 User Function IMPRDNET() // U_IMPRDNET()
@@ -1247,7 +1248,9 @@ Static Function gerarGravaDados(cPlaca, dDataEntrega, cRoteiro, cTabFrt, cTipoFr
 		MsgStop("Função gerarGravaDados não recebeu todos os argumentos.","Função gerarGravaDados(IMPRDNET)")
 		
 	Else
-		StaticCall(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
+		//Static Call(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_0055A0(cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
 	
 	EndIf
 	
