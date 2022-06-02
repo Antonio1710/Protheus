@@ -606,11 +606,12 @@ User Function ADFAT17Y()
     
         oOrdPes:Activate()
                    
-                   TButton():New(187,515,"Transferência Ordem" ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-                   TButton():New(207,515,"Romaneio"            ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(227,515,"Cancelar Ticket"     ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oAltTag := TButton():New(247,515,"Alterar Tag"         ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oExcTag := TButton():New(267,515,"Excluir Tag"         ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(187,515,"Transferência Ordem"  ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(207,515,"Romaneio"             ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oAltTag := TButton():New(247,515,"Alterar Tag"          ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oExcTag := TButton():New(267,515,"Excluir Tag"          ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
         // oFechar := TButton():New(270,555,"Fechar",oCtlPatio,{|| oCtlPatio:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
         // oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
@@ -683,6 +684,68 @@ Static Function carLog(oOrdPes, aOrdPes)
 
 
     U_TExTelaMen("Logs OP: " +  cNmOrdem, cTexto, "Arial",10,,.F.,.F.)
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} envGOrd
+    Reenviar ordem para o Gemba.
+    @type  Static Function
+    @author Everson
+    @since 02/06/2022
+    @version 01
+/*/
+Static Function envGOrd(oOrdPes, aOrdPes)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local nLinha    := Val(cValToChar(oOrdPes:nAt))
+    Local cTpOrdem  := ""
+    Local cNmOrdem  := ""
+    Local lGemba    := GetMV("MV_#UGEMBA",,.F.) 
+    Local cMsgError := ""
+
+    If ! lGemba
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Envio não permitido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    If nLinha <= 0 .Or. Len(aOrdPes) <= 0
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cTpOrdem := aOrdPes[nLinha,14]
+    If cTpOrdem <> "R"
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Tipo de ordem inválido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cNmOrdem := aOrdPes[nLinha,08]
+    If Empty(cNmOrdem)
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! MsgYesNo("Deseja reenviar a ordem de pesagem " + cNmOrdem + " para o Gemba?", "Função envGOrd(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT50F(cNmOrdem, @cMsgError)
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    MsgInfo("Ordem de pesagem " + cNmOrdem + " reenviada.", "Função envGOrd(ADFAT017P)")
 
     RestArea(aArea)
 
