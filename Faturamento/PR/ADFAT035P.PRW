@@ -1227,7 +1227,7 @@ User Function ADFAT35G(cCP, cRoteiro, cOrdSlc, cMsgError)
     Begin Transaction
 
         //Ajusta a sequência do ticket de pesagem.
-        aDSeqP := getSeqP(cCP, cRoteiro)
+        aDSeqP := U_ADFAT355(cCP, cRoteiro)
 
         If Len(aDSeqP) <= 0
             cMsgError := "Não foi possível obter dados para verificação de troca de sequência do ticket"
@@ -1260,15 +1260,15 @@ User Function ADFAT35G(cCP, cRoteiro, cOrdSlc, cMsgError)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} getSeqP
+/*/{Protheus.doc} ADFAT355
     Obtém sequência de pesagem. 
     de produtos ensacados.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 02/03/2022
     @version 01
 /*/
-Static Function getSeqP(cCP, cRoteiro)
+User Function ADFAT355(cCP, cRoteiro)
 
     //Variáveis.
     Local aArea     := GetArea()
