@@ -10,6 +10,7 @@
     @author Everson
     @since 06/12/2021
     @version 01
+    @history Everson, 02/06/2022, ticket 18465, alterado a informação da pessoa no ticket de pesagem de ração.
 /*/
 User Function ADFAT026R(cTicket, cTpOrdem, cCP) // U_ADFAT026R("0000070", "R")
 
@@ -498,6 +499,14 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
 
     End
 
+    //Everson - 02/06/2022. Chamado 18465.
+    If ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
+        Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de ração " + ZIF->ZIF_ORDRAC + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
     cCarga := ZIF->ZIF_ROTEIR
     cDtFab := DToC(ZIG->ZIG_DTPES2)
     cDtVld := DToC(ZIG->ZIG_DTPES2 + 30)
@@ -508,7 +517,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
     cFase  := Alltrim(cValToChar(Posicione("ZIM", 1, FWxFilial("ZIM") + ZIF->ZIF_PRDSAG, "ZIM_SGPSAG" )))
 
     oPrinter := FWMSPrinter():New(cTicket, IMP_PDF, lAdjustToLegacy, , lDisableSetup,,,,,,,,2)
-
+ 
     oPrinter:StartPage()
 
         oPrinter:SayBitmap (5, 20, "\img_ticket_racao\logotipo.png", 56.5, 50)
@@ -530,7 +539,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
             oPrinter:Say(165, 100, ZIG->ZIG_PLACA, oFt14N)
 
             oPrinter:Say(185,  20, "Pessoa: ", oFt16B)
-            oPrinter:Say(185, 100, ZIF->ZIF_NMFOR, oFt14N)
+            oPrinter:Say(185, 100, ZIR->ZIR_DESGRJ, oFt14N) //Everson - 02/06/2022. Chamado 18465.
 
             oPrinter:Say(205,  20, "Endereço: ", oFt16B)
             oPrinter:Say(205, 100, cEnd, oFt14N)
