@@ -1599,7 +1599,7 @@ User Function ADFAT50M(cGranjada, cMsgError)
 
     EndIf
 
-    cTpCliFor := Alltrim(cValToChar(ZIS->ZIS_TIPO))
+    cTpCliFor := Alltrim(cValToChar(ZIS->ZIS_CLIFOR))
     cCodigo   := Alltrim(cValToChar(ZIS->ZIS_FORNEC))
     cLoja     := Alltrim(cValToChar(ZIS->ZIS_LOJA))
 
