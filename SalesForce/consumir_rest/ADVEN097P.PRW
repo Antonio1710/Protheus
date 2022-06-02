@@ -16,8 +16,9 @@
 	@history Everson, 18/06/2020, Chamado 059048. Incluído tratamento para quando o Salesforce não retornar
 	todas as tags.  
 	@history Everson, 18/02/2020, Chamado TI. Adicionado campos com informação de vendedores, supervisores e opção para exportar os registro de erros para CSV.                                
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Everson, 18/04/2022, Chamado 71231. Tratamento para nova filial 0B.                                
-	/*/
+/*/
 User Function ADVEN097P() // U_ADVEN097P()
 
 	//Variáveis.
@@ -294,7 +295,9 @@ Static Function rmvDuplic(aHCK,oCheckPro)
 			While ! D_PEDEX->(Eof())
 				
 				cErro := ""
-				StaticCall(ADVEN086P,exclPedVend,@cErro,D_PEDEX->C5_NUM,0,RetCodUsr( ),cUrlServ + Alltrim(D_PEDEX->C5_NUM) )
+				//Static Call(ADVEN086P,exclPedVend,@cErro,D_PEDEX->C5_NUM,0,RetCodUsr( ),cUrlServ + Alltrim(D_PEDEX->C5_NUM) )
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN086A1( @cErro,D_PEDEX->C5_NUM,0,RetCodUsr( ),cUrlServ + Alltrim(D_PEDEX->C5_NUM) )
 				
 				If ! Empty(cErro)
 					MsgStop("Ocorreu erro na exclusão do pedido " + Alltrim(D_PEDEX->C5_NUM) + "." + Chr(13) + Chr(10) + DecodeUTF8(cErro),"Função rmvDuplic(ADVEN097P)")
@@ -1171,7 +1174,9 @@ Static Function acessaSF(oParseJSON,lRetSF,nOpc,lAut,cPedS)
 	Conout("ADVEN097P - Início rotina acessaSF / nOpc " + cValToChar(nOpc))
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -1224,7 +1229,9 @@ Static Function acessaSF(oParseJSON,lRetSF,nOpc,lAut,cPedS)
 	If ! FWJsonDeserialize(cMsg, @oParseJSON)
 		cMsg := "Ocorreu erro na desserialização do json com os dados de login (Função acessaSF - ADVEN097P)." + Chr(13) + Chr(10) + "Json: " + Chr(13) + Chr(10) + cMsg
 		If ! lAut
-			StaticCall(ADVEN075P,TelErro,"Consulta SalesForce - acessaSF - ADVEN097P",cValToChar(cMsg),"Arial",10,,.F.,.T.)
+			//Static Call(ADVEN075P,TelErro,"Consulta SalesForce - acessaSF - ADVEN097P",cValToChar(cMsg),"Arial",10,,.F.,.T.)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A5("Consulta SalesForce - acessaSF - ADVEN097P",cValToChar(cMsg),"Arial",10,,.F.,.T.)
 		
 		Else
 			Conout("ADVEN097P - " + cMsg)
@@ -1862,3 +1869,36 @@ Static Function geraCSV(oRegistros,aHReg)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} u_VEN097A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN097A0( uPar1, uPar2, uPar3, uPar4, uPar5 )
+Return( acessaSF( uPar1, uPar2, uPar3, uPar4, uPar5 ) )
+
+/*/{Protheus.doc} u_VEN097A1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN097A1( uPar1 )
+Return( envSolic( uPar1 ) )
+
+/*/{Protheus.doc} u_VEN097A2
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN097A2()
+Return( sqlSC5() )
