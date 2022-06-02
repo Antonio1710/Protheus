@@ -210,7 +210,7 @@ WsMethod Put WsService manutencao
     //Variáveis.
     Local cEmpresa      := Alltrim(Self:GetHeader("Empresa"))
     Local cFil          := Alltrim(Self:GetHeader("Filial"))
-    Local cAuth         := Alltrim(Self:GetHeader("Authorization"))
+    Local cAuth         := Alltrim(Self:GetHeader("Authorizationx"))
     Local cRecurso      := ""
     Local cBody 	    := Self:GetContent()
     Local aCreden       := {}
