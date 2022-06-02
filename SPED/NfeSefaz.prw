@@ -44,7 +44,7 @@
 	@history Ticket     TI  - Abel Babini     - 19/10/2021 - Ajuste no Return da validação de ambiente de produção
 	@history Ticket 64961  - Leonardo P. Monteiro   - 08/12/2021 - PROBLEMA PARA FATURAR A NOTA FISCAL DE EXPORTAÇÃO.
 	@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
-	
+	@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function XmlNfeSef(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri)
 
@@ -11521,7 +11521,9 @@ Static Function freteCTE(cDocFrt,cSrFrt)
 	EndIf
 	
 	//Executa chamada da função de cálculo do frete.
-	nVlfFrete := StaticCall(ADLOG049P,getVlrFrt,cDocFrt,cSrFrt)
+	//nVlfFrete := Static Call(ADLOG049P,getVlrFrt,cDocFrt,cSrFrt)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	nVlfFrete := u_LOG049A0(cDocFrt,cSrFrt)
 	nVlfFrete := Alltrim(cValToChar(nVlfFrete))
 
 	//
@@ -11727,3 +11729,15 @@ static function retIndPres(cTipo, aNota, aProd)
 	endIf
 
 return cIndPres
+
+/*/{Protheus.doc} u_ESEFAZA0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_ESEFAZA0( uPar1 )
+Return( getApolic( uPar1 ) )

@@ -42,13 +42,17 @@ User Function ADVEN065P(cEmp,cFili,cVend,cCodigoSF,cJobAux) // U_ADVEN065P("01",
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para geração de relatórios em html')
 	
-	StaticCall(ADVEN075P,grvLog,"",cCodigoSF,cVend,"","","ADVEN065P","POST")
+	//Static Call(ADVEN075P,grvLog,"",cCodigoSF,cVend,"","","ADVEN065P","POST")
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0("",cCodigoSF,cVend,"","","ADVEN065P","POST")
 
 	//PutGlbValue(cJobAux,"1")
 	//GlbUnlock()
 
 	//Executa rotina para criação do relatório.
-	StaticCall(ADFIN031R,gerarRelatorio,cVend,"","","",@cNmRelRest)
+	//Static Call(ADFIN031R,gerarRelatorio,cVend,"","","",@cNmRelRest)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_FIN031A0(cVend,"","","",@cNmRelRest)
 
 	//			
 	nHandle  := fopen(cNmRelRest, FO_READWRITE + FO_SHARED )
@@ -68,7 +72,10 @@ User Function ADVEN065P(cEmp,cFili,cVend,cCodigoSF,cJobAux) // U_ADVEN065P("01",
 	
 	//
 	cHoraExec := ELAPTIME(cHoraExec, Time())
-	StaticCall(ADVEN075P,grvLog,"",cCodigoSF,cVend,"","","ADVEN065P","POST",cHoraExec)
+	//Static Call(ADVEN075P,grvLog,"",cCodigoSF,cVend,"","","ADVEN065P","POST",cHoraExec)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0("",cCodigoSF,cVend,"","","ADVEN065P","POST",cHoraExec)
+
 	
 	//Fecha o ambiente.
 	RpcClearEnv()	
@@ -99,7 +106,9 @@ Static Function Processar(cString,cCodigoSF,cVend)
 	Local cHoraExec	:= Time()
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,.F.)
 
 	//
 	If ! lLogin
@@ -121,9 +130,14 @@ Static Function Processar(cString,cCodigoSF,cVend)
 	If ! U_ADVEN075P(cServico,"POST",cResJson,@cMsg,aResponse)
 		Conout("Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg)
 		
-		StaticCall(ADVEN075P,grvLog,"",cCodigoSF,cVend,cResJson,"Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg,"ADVEN065P","POST")
+		//Static Call(ADVEN075P,grvLog,"",cCodigoSF,cVend,cResJson,"Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg,"ADVEN065P","POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0("",cCodigoSF,cVend,cResJson,"Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg,"ADVEN065P","POST")
+
 		
-		StaticCall(envErros,envErros,"Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg)
+		//Static Call(envErros,envErros,"Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A2("Ocorreu erro no envio do relatório financeiro " + cValToChar(cVend) + " no SalesForce." + Chr(13) + Chr(10) + cMsg)
 		
 	EndIf
 
@@ -184,7 +198,9 @@ WsMethod Post WsService relatorios
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
 		RestArea(aArea)
@@ -193,7 +209,9 @@ WsMethod Post WsService relatorios
 	EndIf
 	
 	//
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"",cUrlServ,"POST")
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"",cUrlServ,"POST")
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"",cUrlServ,"POST")
 	
 	//Obtém o código da requisição do SalesForce e código do vendedor.
 	cCodigoSF := Alltrim(cValToChar(oParseJSON:codigoSF))
@@ -203,7 +221,9 @@ WsMethod Post WsService relatorios
 	If Empty(cCodUsuario)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST")
 		
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
 		RestArea(aArea)
@@ -218,7 +238,9 @@ WsMethod Post WsService relatorios
 	If cFormato <> cFormatAceito
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -227,7 +249,9 @@ WsMethod Post WsService relatorios
 	ElseIf cContentType <> cFormatAceito //Verifica o formato no corpo da requisição.
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -236,7 +260,9 @@ WsMethod Post WsService relatorios
 	ElseIf Empty(cBody) //Verifica se o corpo da requisição não está vazio.
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
 		RestArea(aArea)
@@ -283,7 +309,9 @@ WsMethod Post WsService relatorios
 	
 	//
 	cHoraExec := ELAPTIME(cHoraExec, Time())
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"",cUrlServ,"POST",cHoraExec)
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,cCodigoSF,cCodVendedor,cBody,"",cUrlServ,"POST",cHoraExec)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0(cCodUsuario,cCodigoSF,cCodVendedor,cBody,"",cUrlServ,"POST",cHoraExec)
 
 	//
 	RestArea(aArea)

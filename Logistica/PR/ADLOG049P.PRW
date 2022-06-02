@@ -30,6 +30,7 @@
 	@history Everson-16/01/2020-Ch:054941-Adicionado tratamento para tipo de frete. 
 	@history Everson-17/01/2020-Ch:054941-Tratamento para retorno do valor de frete.                                      
 	@history Chamado 058410 - WILLIAM COSTA - 27/05/2020 - Alterado o cálculo do Km quando vier do ravex
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADLOG049P( cEmpAnt , cFilAnt , aCargaFt )
 	
@@ -789,7 +790,9 @@ Static Function getVlrFrt(cNFFrt,cSrFrt)
 	EndIf
 
 	//
-	nPorc := StaticCall(ADLOG057P,getPorEm,cTpVa) //Everson - 17/01/2020. Chamado 054941.
+	//nPorc := Static Call(ADLOG057P,getPorEm,cTpVa) //Everson - 17/01/2020. Chamado 054941.
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	nPorc := u_LOG057A1(cTpVa)
 
 	//Everson - 17/01/2020. Chamado 054941.
 	If nPorc <= 0
@@ -994,3 +997,25 @@ Static Function logZBE(cLog,cParam)
 	RestArea(aArea)
 
 Return Nil 
+
+/*/{Protheus.doc} u_LOG049A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG049A0( uPar1, uPar2 )
+Return( getVlrFrt(uPar1, uPar2) )
+
+/*/{Protheus.doc} u_LOG049A1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG049A1( uPar1, uPar2, uPar3, uPar4 )
+Return( recalFrt( uPar1, uPar2, uPar3, uPar4 ) )

@@ -13,6 +13,7 @@
 	@version 01
 	@history Everson, 22/04/2020, Chamado 057436 - Tratamento para bloqueio de pedidos de clientes com crédito expirado.
 	@history Everson, 07/07/2020, Chamado T.I. - Tratamento para não bloquear pedido com flag Bradesco.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 	/*/ 
 User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
@@ -686,7 +687,9 @@ User Function AtuLCPed(_cPedido)
 		If !Empty(Alltrim(cValToChar(SC5->C5_XWSPAGO))) // @history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 			lBCEntrou := .F.
 			_aTipoBloq := {}
-			StaticCall(F200AVL,limpZBH,cValToChar(SC5->C5_NUM))
+			//Static Call(F200AVL,limpZBH,cValToChar(SC5->C5_NUM))
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_200AVLA0(cValToChar(SC5->C5_NUM))
 		EndIf
 		//
 
