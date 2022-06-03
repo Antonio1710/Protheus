@@ -1368,7 +1368,7 @@ Static Function gerPedS(cCP)
         cTes     := Iif(Alltrim(cValToChar(aCampo[2,2])) == "SP", ZI9->ZI9_TESEST, ZI9->ZI9_TESINT) //Pega Tes do cabeçalho do roteiro.
 
         DbSelectArea("ZIU")
-        ZIU->(DbSetOrder(3))
+        ZIU->(DbSetOrder(4)) //Everson - 03/06/2022. ticket 18465.
         ZIU->(DbGoTop())
         If ZIU->( DbSeek( FWxFilial("ZIU") + ZIA->ZIA_CODROT + ZIF->ZIF_CLIFOR + cFornece + cLjForn )) //Verifica se tem cadastro de exceção de tes por fornecedor / cliente.
             cTes := ZIU->ZIU_TES
