@@ -167,7 +167,7 @@ User Function ADFAT035P() // U_ADFAT035P()
         oFimCar := TButton():New(155,425,"Finaliza Carregamento",oJnPrinc,{|| fimCar(@lCarrega), Iif(lCarrega, Nil, Eval(bBlqApt)) }, 100, 015,,,.F.,.T.,.F.,,.F.,,,.F. )
         oFimCar:Disable()
 
-        oGemba  := TButton():New(155,530, "Importa Gemba"       ,oJnPrinc, {|| MsAguarde({|| imptGb(@lCarrega), Iif(lCarrega, Nil, Eval(bBlqApt)) }, "Aguarde", "Processando...")  }, 065, 015,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oGemba  := TButton():New(155,530, "Importa Gemba"       ,oJnPrinc, {|| MsAguarde({|| imptGb(@lCarrega) }, "Aguarde", "Processando...")  }, 065, 015,,,.F.,.T.,.F.,,.F.,,,.F. )
 
         //Lacre.
         oInLacre := TGet():New(173,005,{|u| if( PCount() > 0, cInfLacre := u, cInfLacre ) } , oJnPrinc,100,013,,,,,,,,.T.,,,,,,,,,,"cInfLacre",,,,,,,"")
