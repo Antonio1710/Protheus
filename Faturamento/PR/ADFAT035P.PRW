@@ -40,6 +40,7 @@ User Function ADFAT035P() // U_ADFAT035P()
     Local lRetLC    := .T.
     Local oAtua     := Nil
     Local oFont     := TFont():New("Courier new",,22)
+    Local bAtualiza := Nil
 
     Private oInLacre  := Nil
     Private oLacre    := Nil
@@ -55,6 +56,9 @@ User Function ADFAT035P() // U_ADFAT035P()
     Private oSilo     := Nil
     Private aHSilo    := {}
     Private aCSilo    := {}
+    Private oGemba    := Nil
+
+    bAtualiza := {|| cOrdSlc := "", aOrdPes := {}, oOrdPes:setArray(aOrdPes), carOrdens(cRoteiro, aOrdPes, oOrdPes)  }
 
     lmpVrEst()
 
@@ -69,6 +73,7 @@ User Function ADFAT035P() // U_ADFAT035P()
                    oInGav:Enable(),;
                    oSilo:Enable(),;
                    oInSilo:Enable(),;
+                   oGemba:Disable(),;
                    oIniCar:Disable(),;
                    oOrdPes:Disable(),;
                    oAtua:Disable();
@@ -86,6 +91,7 @@ User Function ADFAT035P() // U_ADFAT035P()
                    oInGav:Disable(),;
                    oSilo:Disable(),;
                    oInSilo:Disable(),;
+                   oGemba:Enable(),;
                    oOrdPes:Enable(),;
                    oAtua:Enable(),;
                    oRoteiro:SetFocus();
@@ -113,10 +119,9 @@ User Function ADFAT035P() // U_ADFAT035P()
 
         TSay():New(005, 145, {||"Ordem de pesagem selecionada: " + Iif(Empty(cOrdSlc), "-", cOrdSlc) },oJnPrinc,,oFont,,,,.T.,CLR_RED,CLR_WHITE,200,20)
         
-        oAtua := TButton():New(010,555, "Atualizar" ,oJnPrinc,;
-        {|| cOrdSlc := "", aOrdPes := {}, oOrdPes:setArray(aOrdPes), carOrdens(cRoteiro, aOrdPes, oOrdPes) },;
-        040, 010,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oAtua:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #0000CC, stop: 1 #190033);color: white}")
+        oAtua := TButton():New(005,555, "Atualizar" ,oJnPrinc, bAtualiza, 040, 010,,,.F.,.T.,.F.,,.F.,,,.F. )
+
+        // oAtua:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #0000CC, stop: 1 #190033);color: white}")
 
         oPnOrdem := TPanel():New(030,005,,oJnPrinc,,,,,,590,120)
  
@@ -162,6 +167,8 @@ User Function ADFAT035P() // U_ADFAT035P()
         oFimCar := TButton():New(155,425,"Finaliza Carregamento",oJnPrinc,{|| fimCar(@lCarrega), Iif(lCarrega, Nil, Eval(bBlqApt)) }, 100, 015,,,.F.,.T.,.F.,,.F.,,,.F. )
         oFimCar:Disable()
 
+        oGemba  := TButton():New(155,530, "Importa Gemba"       ,oJnPrinc, {|| MsAguarde({|| imptGb(@lCarrega), Iif(lCarrega, Nil, Eval(bBlqApt)) }, "Aguarde", "Processando...")  }, 065, 015,,,.F.,.T.,.F.,,.F.,,,.F. )
+
         //Lacre.
         oInLacre := TGet():New(173,005,{|u| if( PCount() > 0, cInfLacre := u, cInfLacre ) } , oJnPrinc,100,013,,,,,,,,.T.,,,,,,,,,,"cInfLacre",,,,,,,"")
         oInLacre:bValid := {|| lRetLC := U_ADFAT35A("I", @cInfLacre, @oInLacre), cInfLacre := Space(TamSx3("ZIT_LACRE")[1]), oInLacre:Refresh(), lRetLC }
@@ -198,6 +205,99 @@ User Function ADFAT035P() // U_ADFAT035P()
     oJnPrinc := Nil
 
     lmpVrEst()
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} imptGb
+    Importa dados do Gemba.
+    @type  Static Function
+    @author Everson
+    @since 03/06/2022
+    @version 01
+/*/
+Static Function imptGb(lCarrega)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lGemba    := GetMV("MV_#UGEMBA",,.F.) 
+    Local cMsgError := ""
+
+    If ! lGemba
+        Help(Nil, Nil, "Função imptGb(ADFAT017P)", Nil, "Importação não permitida.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+   
+    If Empty(cOrdSlc)
+        MsgInfo("Selecione uma ordem de carregamento.","Função imptGb(ADFAT035P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT16A(cOrdSlc)
+        MsgInfo("Ordem de pesagem " + cOrdSlc + " não localizada", "Função imptGb(ADFAT035P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZIF->ZIF_STATLC <> "A"
+        MsgInfo("Ordem de pesagem não está com status 'Aberta'.","Função imptGb(ADFAT035P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    DbSelectArea("ZIG")
+    ZIG->(DbSetOrder(2))
+    ZIG->(DbGoTop())
+    If ! ZIG->( DbSeek( FWxFilial("ZIG") + cOrdSlc))
+        MsgInfo("Ticket de pesagem referente à ordem " + cOrdSlc + " não localizado.","Função imptGb(ADFAT035P)")
+        RestArea(aArea)
+        Return .F.
+
+    Else
+
+        If ZIG->ZIG_INICIA == "3"
+            MsgInfo("Pesagem encerrada.","Função imptGb(ADFAT035P)")
+            RestArea(aArea)
+            Return .F.
+
+        EndIf
+
+    EndIf
+
+    If ! MsgYesNo("Deseja importar os dados do Gemba referentes à ordem de pesagem " + cOrdSlc + "?", "Função imptGb(ADFAT035P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    DbSelectArea("ZHQ")
+    ZHQ->(DbSetOrder(1))
+    If ZHQ->( DbSeek( FwxFilial("ZHQ") + cOrdSlc ) )
+
+        RecLock("ZHQ", .F.)
+            ZHQ->ZHQ_PROCES := "2"
+        ZHQ->(MsUnlock())
+
+        lCarrega := .T.
+        MsgInfo("Registro já importado será reprocessado.", "Função imptGb(ADFAT035P)")
+
+    Else
+
+        If U_ADFAT491(cOrdSlc, @cMsgError)
+            lCarrega := .T.
+            MsgInfo("Dados importados.", "Função imptGb(ADFAT035P)")
+
+        Else
+            MsgInfo("Erro na importação. " + cMsgError, "Função imptGb(ADFAT035P)")
+
+        EndIf
+
+    EndIf
 
     RestArea(aArea)
 
