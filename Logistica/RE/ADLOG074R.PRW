@@ -12,6 +12,7 @@
     @version 01
     @history Chamado 11355 - Leonardo P. Monteiro - 01/04/2021 - Desenvolvimento e adição do campo de custo.
 	@history Chamado 11355 - Leonardo P. Monteiro - 09/04/2021 - a pedido da solicitante nós eliminamos a pergunta pernoite.
+	@hhitory Ticket 73040 - Jonathan Carvalho - 03/06/2022 - Inclusão de descrição de Cod Prod e Desc Prod.
 /*/
 
 User Function ADLOG074R()
@@ -95,6 +96,35 @@ Static Function GeraExcel()
 			nLinha  := nLinha + 1                                       
 
             //===================== INICIO CRIA VETOR COM POSICAO VAZIA 
+			If MV_PAR04 == 1 //Tkt 73040 - Jonathan.Carvalho
+				AADD(aLinhas,{ "", ; // 01 A
+							"", ; // 02 B
+							"", ; // 03 C
+							"", ; // 04 D
+							"", ; // 05 E
+							"", ; // 06 F
+							"", ; // 07 G
+							"", ; // 08 H
+							"", ; // 09 I
+							"", ; // 10 J
+							"", ; // 11 K
+							"", ; // 12 L
+							"", ; // 13 M
+							"", ; // 14 N
+							"", ; // 15 O
+							"", ; // 16 P
+							"", ; // 17 Q
+							"", ; // 18 R
+							"", ; // 19 S
+							"", ; // 20 T
+							"", ; // 21 U
+							"", ; // 22 V
+							"", ; // 23 W
+							"", ; // 24 X
+							"", ; // 25 Y
+							"" ;  // 26 Z
+								})
+			else
 		   	AADD(aLinhas,{ "", ; // 01 A
 						   "", ; // 02 B
 						   "", ; // 03 C
@@ -117,9 +147,11 @@ Static Function GeraExcel()
 						   "", ; // 20 T
 						   "", ; // 21 U
 						   "", ; // 22 V
-						   "", ;// 23 W
-                           ""  ; // 24 X
+						   "", ; // 23 W						   
+                           ""  ; // 24 X						  
                                })
+
+			EndIf
 			//===================== FINAL CRIA VETOR COM POSICAO VAZIA
 			
 			//======================================= INICIO ADICIONANDO OS CAMPOS NAS LINHAS ===================
@@ -148,6 +180,14 @@ Static Function GeraExcel()
             aLinhas[nLinha][23] := TRB->ZX_TOTAL           //W
 			aLinhas[nLinha][24] := TRB->ZD_OBSERV          //X
 
+			If MV_PAR04 == 1 //Tkt 73040 - Jonathan.Carvalho
+
+				aLinhas[nLinha][25] := TRB->ZX_CODPROD //Y
+				aLinhas[nLinha][26] := TRB->ZX_DESCRIC //Z
+
+			EndIf
+											
+
             //======================================= FINAL ADICIONANDO OS CAMPOS NAS LINHAS ===================			
 			
 			TRB->(dbSkip())    
@@ -157,31 +197,62 @@ Static Function GeraExcel()
 		
 		//============================== INICIO IMPRIME LINHA NO EXCEL
 		FOR nExcel := 1 TO nLinha
-	   		oExcel:AddRow(cPlanilha,cTitulo,{aLinhas[nExcel][01],; // 01 A 
-											 aLinhas[nExcel][02],; // 02 B 
-											 aLinhas[nExcel][03],; // 03 C 
-											 aLinhas[nExcel][04],; // 04 D 
-											 aLinhas[nExcel][05],; // 05 E 
-											 aLinhas[nExcel][06],; // 06 F 
-											 aLinhas[nExcel][07],; // 07 G 
-											 aLinhas[nExcel][08],; // 08 H 
-											 aLinhas[nExcel][09],; // 09 I 
-											 aLinhas[nExcel][10],; // 10 J 
-											 aLinhas[nExcel][11],; // 11 K 
-											 aLinhas[nExcel][12],; // 12 L 
-											 aLinhas[nExcel][13],; // 13 M 
-											 aLinhas[nExcel][14],; // 14 N 
-											 aLinhas[nExcel][15],; // 15 O 
-											 aLinhas[nExcel][16],; // 16 P 
-											 aLinhas[nExcel][17],; // 17 Q 
-											 aLinhas[nExcel][18],; // 18 R 
-											 aLinhas[nExcel][19],; // 19 S 
-											 aLinhas[nExcel][20],; // 20 T 
-											 aLinhas[nExcel][21],; // 21 U 
-											 aLinhas[nExcel][22],; // 22 V 
-											 aLinhas[nExcel][23],; // 23 W 
-                                             aLinhas[nExcel][24]; // 24 X 
-                                                                  }) //GRAVANDO NA LINHA MANDANDO PARA O EXCEL O ARRAY COM AS LINHAS				
+
+			If MV_PAR04 == 1 //Tkt 73040 - Jonathan.Carvalho
+				oExcel:AddRow(cPlanilha,cTitulo,{aLinhas[nExcel][01],; // 01 A 
+												aLinhas[nExcel][02],; // 02 B 
+												aLinhas[nExcel][03],; // 03 C 
+												aLinhas[nExcel][04],; // 04 D 
+												aLinhas[nExcel][05],; // 05 E 
+												aLinhas[nExcel][06],; // 06 F 
+												aLinhas[nExcel][07],; // 07 G 
+												aLinhas[nExcel][08],; // 08 H 
+												aLinhas[nExcel][09],; // 09 I 
+												aLinhas[nExcel][10],; // 10 J 
+												aLinhas[nExcel][11],; // 11 K 
+												aLinhas[nExcel][12],; // 12 L 
+												aLinhas[nExcel][13],; // 13 M 
+												aLinhas[nExcel][14],; // 14 N 
+												aLinhas[nExcel][15],; // 15 O 
+												aLinhas[nExcel][16],; // 16 P 
+												aLinhas[nExcel][17],; // 17 Q 
+												aLinhas[nExcel][18],; // 18 R 
+												aLinhas[nExcel][19],; // 19 S 
+												aLinhas[nExcel][20],; // 20 T 
+												aLinhas[nExcel][21],; // 21 U 
+												aLinhas[nExcel][22],; // 22 V 
+												aLinhas[nExcel][23],; // 23 W
+												aLinhas[nExcel][24],; // 24 X 
+												aLinhas[nExcel][25],; // 25 Y 
+												aLinhas[nExcel][26];  // 26 Z 
+																		})
+			else
+				oExcel:AddRow(cPlanilha,cTitulo,{aLinhas[nExcel][01],; // 01 A 
+												aLinhas[nExcel][02],; // 02 B 
+												aLinhas[nExcel][03],; // 03 C 
+												aLinhas[nExcel][04],; // 04 D 
+												aLinhas[nExcel][05],; // 05 E 
+												aLinhas[nExcel][06],; // 06 F 
+												aLinhas[nExcel][07],; // 07 G 
+												aLinhas[nExcel][08],; // 08 H 
+												aLinhas[nExcel][09],; // 09 I 
+												aLinhas[nExcel][10],; // 10 J 
+												aLinhas[nExcel][11],; // 11 K 
+												aLinhas[nExcel][12],; // 12 L 
+												aLinhas[nExcel][13],; // 13 M 
+												aLinhas[nExcel][14],; // 14 N 
+												aLinhas[nExcel][15],; // 15 O 
+												aLinhas[nExcel][16],; // 16 P 
+												aLinhas[nExcel][17],; // 17 Q 
+												aLinhas[nExcel][18],; // 18 R 
+												aLinhas[nExcel][19],; // 19 S 
+												aLinhas[nExcel][20],; // 20 T 
+												aLinhas[nExcel][21],; // 21 U 
+												aLinhas[nExcel][22],; // 22 V 
+												aLinhas[nExcel][23],; // 23 W
+												aLinhas[nExcel][24]; // 24 X 
+																	}) 
+			EndIf	//GRAVANDO NA LINHA MANDANDO PARA O EXCEL O ARRAY COM AS LINHAS				
         NEXT 
 	    //============================== FINAL IMPRIME LINHA NO EXCEL
 Return()    
@@ -235,6 +306,13 @@ Static Function SqlGeral()
 	cQuery += "			       CASE WHEN SZD.ZD_DEVTOT = 'P' THEN SUM(SZX.ZX_QTDEV2U) ELSE SUM(SZX.ZX_QTSEGUM) END AS SEGUNDA_QUANTIDADE, "+cEOL
 	cQuery += "			       CAST(CAST(ZD_OBSER AS VARBINARY(MAX)) AS VARCHAR(200)) AS ZD_OBSERV, "+cEOL
     cQuery += "	               SUM(CASE WHEN SZX.ZX_TOTAL = 0 THEN ROUND(SD2.D2_TOTAL/SZX.ZX_QTDEV1U,2) ELSE SZX.ZX_TOTAL END) ZX_TOTAL "+cEOL
+	
+	If MV_PAR04 == 1 //Tkt 73040 - Jonathan.Carvalho
+
+		cQuery += ",SZX.ZX_CODPROD, SZX.ZX_DESCRIC "+cEOL
+
+	ENDIF
+
 	cQuery += "			  FROM "+ RetSqlName("SZX") +" (NOLOCK) SZX "+cEOL
     cQuery += "			    INNER JOIN "+ RetSqlName("SZD") +" (NOLOCK) SZD ON SZX.ZX_FILIAL=SZD.ZD_FILIAL AND SZX.ZX_NF=SZD.ZD_NUMNF AND SZX.ZX_SERIE    = SZD.ZD_SERIE "+cEOL
     cQuery += "			    LEFT  JOIN "+ RetSqlName("SA3") +" (NOLOCK) SA3 ON SA3.A3_COD  = SZD.ZD_VEND AND SA3.D_E_L_E_T_ <> '*' "+cEOL
@@ -269,6 +347,13 @@ Static Function SqlGeral()
 	cQuery += "					   SA3.A3_EMAIL, "+cEOL
 	cQuery += "					   SZX.ZX_UNIDADE, "+cEOL
 	cQuery += "					   CAST(CAST(ZD_OBSER AS VARBINARY(MAX)) AS VARCHAR(200)) "+cEOL
+	
+	If MV_PAR04 == 1 //Tkt 73040 - Jonathan.Carvalho
+
+		cQuery += "			       ,SZX.ZX_CODPROD, SZX.ZX_DESCRIC  "+cEOL
+
+	ENDIF
+
 	cQuery += "			ORDER BY SZD.ZD_NUMNF, SZD.ZD_SERIE		   "
     
     TcQuery cQuery ALIAS "TRB" NEW
@@ -332,5 +417,12 @@ Static Function Cabec()
   	oExcel:AddColumn(cPlanilha,cTitulo,"Seg Quantidade "  ,3,3) // 22 V
     oExcel:AddColumn(cPlanilha,cTitulo,"Vlr Total (R$) "  ,3,3) // 23 W
     oExcel:AddColumn(cPlanilha,cTitulo,"Observacao "      ,1,1) // 24 X
+
+	If MV_PAR04 == 1 //Tkt 73040 - Jonathan.Carvalho
+
+		oExcel:AddColumn(cPlanilha,cTitulo,"Cod Prod "      ,1,1) //25 Y
+		oExcel:AddColumn(cPlanilha,cTitulo,"Desc Prod "     ,1,1) //26 Z
+	
+	EndIf
 	
 RETURN(NIL)
