@@ -54,7 +54,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
   @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
   @history Ticket 67494   - Fernando Sigoli   - 24/05/2022 - Feito duplo check para gravar chamada da sp do edata, gravação da nota e datadigitação
-  
+  @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
 /*/
 User Function MT103FIM()
 
@@ -222,9 +222,9 @@ User Function MT103FIM()
       EndIf
 
       If !Empty(SF1->F1_X_SQED)
-        BeginTran() //Executa a Stored Procedure
+        //BeginTran() //Executa a Stored Procedure @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
         TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_FATURA] ' +Str(SF1->(Recno()))+","+"'"+cEmpAnt+"'" )
-	      EndTran()
+	      //EndTran()
 	    EndIf
 
 	  EndIf
@@ -234,9 +234,9 @@ User Function MT103FIM()
     If SF1->F1_TIPO == "D" .and. Alltrim(cFilAnt) $ "02"  .and. (nOpcao == 3 .or. nOpcao == 4) 
     
       If !Empty(SF1->F1_X_SQED)
-        BeginTran() //Executa a Stored Procedure
+        //BeginTran() //Executa a Stored Procedure @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
         TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_FATURA] ' +Str(SF1->(Recno()))+","+"'"+cEmpAnt+"'" )
-        EndTran()
+        //EndTran()
       EndIf
     
     ENDIF
@@ -244,13 +244,13 @@ User Function MT103FIM()
     //Fim TKT - 67494 
 	  //Inicio Chamado: 043873 24/09/2018 - Adriana Oliveira
 	  //Somente devolução com formulario proprio
-	  If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. SF1->F1_FORMUL == "S" .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
+'	  If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. SF1->F1_FORMUL == "S" .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
 	
 	    RecLock("SF1",.F.)
 	    SF1->F1_TPFRETE := BuscaFret(SF1->F1_FILIAL,SF1->F1_SERIE,SF1->F1_DOC,SF1->F1_FORNECE,SF1->F1_LOJA,SF1->F1_TIPO)
 	    MsUnlock()
 	
-	  Endif
+	  Endif'
 	  //Fim Chamado: 043873 24/09/2018 - Adriana Oliveira
 	
 	  // Inicio Chamado: 036733 16/08/2017 - William Costa
