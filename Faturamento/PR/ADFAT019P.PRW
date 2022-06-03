@@ -803,6 +803,21 @@ Static Function procAbrP(cTicket, cStatus)
 
     EndIf
 
+    //Posiciona no controle de pátio.
+    If ! U_ADFAT17U(cCP)
+        MsgInfo("Controle de pátio " + cCP + " não localizado.", "Função procAbrP(ADFAT019R)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Valida controle de pátio.
+    If ! U_ADFAT179(ZIB->ZIB_PLACA, cCP, "", .T.)
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
     Begin Transaction
 
         //Atualiza ticket de pesagem.

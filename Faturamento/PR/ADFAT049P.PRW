@@ -1,3 +1,4 @@
+#INCLUDE "protheus.ch"
 #Include "Topconn.ch"
 
 /*/{Protheus.doc} User Function ADFAT049P
@@ -27,13 +28,17 @@ Return Nil
     @since 10/05/2022
     @version 01
 /*/
-User Function ADFAT491()
+User Function ADFAT491(cNmOrdem, cMsgError)
 
     //Variáveis.
     Local aArea       := GetArea()
     Local lBarramento := GetMv("MV_#ADF491",,.T.) //Registros de pesagem vindos do barramento.
     Local cQuery      := ""
-    Local cMsgError  := ""
+
+    Default cNmOrdem   := ""
+    Default cMsgError  := ""
+
+    cNmOrdem := Alltrim(cValToChar(cNmOrdem))
     
     If lBarramento
         U_ADFAT29J()
@@ -63,6 +68,12 @@ User Function ADFAT491()
         cQuery += " AND ZIG_INICIA IN ('1','2','4') "
         cQuery += " AND ZIB_STATUS NOT IN ('5','6') "
         cQuery += " AND (ZIT_ORDEM IS NULL OR ZIT_ORDEM = '') "
+
+        If ! Empty(cNmOrdem)
+            cQuery += " AND ZIF_NUMERO = '" + cNmOrdem + "' "
+
+        EndIf
+
         cQuery += " AND ZIF.D_E_L_E_T_ = '' "
         cQuery += " AND ZIG.D_E_L_E_T_ = '' "
         cQuery += " AND ZIB.D_E_L_E_T_ = '' "
@@ -80,7 +91,11 @@ User Function ADFAT491()
         While ! D_DADOS->(Eof())
 
             If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
-                U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
+                
+                If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
+                    U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
+
+                EndIf
 
             Else
                 U_ADFAT173("Obter lacres : sucesso " , D_DADOS->ZIF_NUMERO, "", "GEMBA")
