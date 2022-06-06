@@ -10,6 +10,7 @@
     @author Everson
     @since 10/02/2022
     @version 01
+    @history, Everson, 06/06/2022, ticket 18645 - tratamento para reclock.
 /*/
 User Function ADFAT028P()                                    
 Return Nil
@@ -291,6 +292,8 @@ WsMethod Put WsService barramento
     logZBE("Início PUT", "", "")
 
     Self:SetContentType("application/json")
+
+    Sleep(Random(0, 7)*1000) //Everson - 06/06/2022.
 
     lRet := U_ADFAT28C(aParametros, @aRetErro)
 
