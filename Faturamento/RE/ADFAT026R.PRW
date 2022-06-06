@@ -513,7 +513,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
     End
 
     //Everson - 02/06/2022. Chamado 18465.
-    If ! lJob .And. ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
+    If ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
         Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de ração " + ZIF->ZIF_ORDRAC + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
