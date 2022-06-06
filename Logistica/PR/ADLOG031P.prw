@@ -18,6 +18,7 @@
 	@history TICKET   10851 - ADRIANO SAVOINE - 19/03/2021 - Ajustado o campo de Pedidos Liberados para abrir a Janela ao clicar sobre e imprimir o excel.
 	@history TICKET   63590 - Everson - 12/11/2021 - Adicionado openquery para melhorar o desempenho do relatório.
 	@history TICKET   T.I   - Fernando Sigoli 03/01/2022 - Removido atualização automatica e adicionado para atualizar no botao
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 User Function ADLOG031P() //U_ADLOG031P()
 
@@ -450,7 +451,7 @@ Static Function LeDetalhe(nOpc)
 	Local cCidade  := ""
 	Local cBairro  := ""
 	Local cEndereco:= ""
-
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	_aDet := {}    
 
 	If Select("DETPED") > 0
@@ -474,7 +475,7 @@ Static Function LeDetalhe(nOpc)
 		_cquery += " ISNULL(SUM(QN_ITEMPEDIVEND) - SUM(QN_EXPEITEMPEDIVEND),0) AS QTDKGCORT "
 
 		_cquery += " FROM "                                                                                                              
-		_cquery += " [LNKMIMS].SMART.dbo.PEDIDO_VENDA PVV WITH (NOLOCK) INNER JOIN [LNKMIMS].SMART.dbo.PEDIDO_VENDA_ITEM PVI WITH (NOLOCK) "
+		_cquery += " ["+cLnkSrv+"].SMART.dbo.PEDIDO_VENDA PVV WITH (NOLOCK) INNER JOIN ["+cLnkSrv+"].SMART.dbo.PEDIDO_VENDA_ITEM PVI WITH (NOLOCK) "
 		_cquery += " ON PVV.FILIAL = PVI.FILIAL AND PVV.ID_PEDIVEND = PVI.ID_PEDIVEND "
 		_cquery += " INNER JOIN SC5010 SC5 WITH (NOLOCK)   ON PVV.IE_PEDIVEND COLLATE SQL_Latin1_General_CP1_CS_AS = SC5.C5_NUM COLLATE SQL_Latin1_General_CP1_CS_AS "
 		_cquery += " AND SC5.C5_FILIAL COLLATE SQL_Latin1_General_CP1_CS_AS = '02' "

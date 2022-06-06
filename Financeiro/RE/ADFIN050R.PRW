@@ -51,6 +51,7 @@ Static lErroBI := .f.
 	@history ticket   68310 - Fernando Macieira    - 16/02/2022 - Manutenção no relatório de Fluxo de Caixa
 	@history ticket   68310 - Leonardo P. Monteiro - 21/02/2022 - Restore do fonte atualizado.
 	@history ticket   68310 - Fernando Macieira    - 23/02/2022 - Publicação autorizada
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 User Function ADFIN050R() // U_ADFIN050R()
 
@@ -1889,6 +1890,9 @@ Static Function UpEmpFil(cE5FILIAL)
 		
 		If AllTrim(cE5FILIAL) $ "01|02"   // Matriz | Varzea
 			cClassFil := "VP"
+		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+		elseIf AllTrim(cE5FILIAL) $ "0B"   // Itapira
+			cClassFil := "IT"
 		Else
 			cClassFil := "SC"
 		EndIf

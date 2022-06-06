@@ -134,19 +134,23 @@ User Function MT100TOK()
 						cItemCta := GetMV("MV_#ITEM09",,"116")
 						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-					ElseIf cFilAnt == "03"
-						cItemCta := GetMV("MV_#ITEM03",,"114")
-						
-						cCCusto  := gdFieldGet("D1_CC", nCont)
-						If AllTrim(cCCusto) $ GetMV("MV_#CCFIL3",,"6910|4103|9604|9605|9606|5121")
-							cItemCta := "112"
-						EndIf
-						If Left(AllTrim(cCCusto),1) == "7" .or. Left(AllTrim(cCCusto),2) == "97"
-							cItemCta := "111"
-						EndIf
-						If AllTrim(cCCusto) == "5131"
-							cItemCta := "113"
-						EndIf
+				ElseIf cFilAnt == "03"
+					cItemCta := GetMV("MV_#ITEM03",,"114")
+					
+					cCCusto  := gdFieldGet("D1_CC", nCont)
+					If AllTrim(cCCusto) $ GetMV("MV_#CCFIL3",,"6910|4103|9604|9605|9606|5121")
+						cItemCta := "112"
+					EndIf
+					If Left(AllTrim(cCCusto),1) == "7" .or. Left(AllTrim(cCCusto),2) == "97"
+						cItemCta := "111"
+					EndIf
+					If AllTrim(cCCusto) == "5131"
+						cItemCta := "113"
+					EndIf
+					// @history ticket 72027   - Antonio Domingos - 06/06/2022 - Item contábil Centro 5318 retornar Item Contabil 111
+					If AllTrim(cCCusto) == "5318"
+						cItemCta := "111"
+					EndIf
 
 						gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
 

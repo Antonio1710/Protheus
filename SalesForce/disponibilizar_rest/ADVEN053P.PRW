@@ -52,7 +52,9 @@ WsMethod Get WsService consultafinanceira
 	If Len(aParametros) == 0
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Obrigatório informar código e loja do cliente.",cUrlServ,"GET")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Obrigatório informar código e loja do cliente.",cUrlServ,"GET")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"","Obrigatório informar código e loja do cliente.",cUrlServ,"GET")
 
 		SetRestFault(400,EncodeUtf8("Obrigatório informar código e loja do cliente."))
 		RestArea(aArea)
@@ -61,7 +63,9 @@ WsMethod Get WsService consultafinanceira
 	EndIf
 	
 	//
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","",cUrlServ,"GET","")
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","",cUrlServ,"GET","")
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0(cCodUsuario,"",cCodLoja,"","",cUrlServ,"GET","")
 
 	//Obtém o código e loja do cliente.
 	cCodLoja := Alltrim(cValToChar(aParametros[1]))
@@ -70,7 +74,9 @@ WsMethod Get WsService consultafinanceira
 	If Empty(cCodUsuario)
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Código de usuário não informado (UsrVend).",cUrlServ,"GET")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Código de usuário não informado (UsrVend).",cUrlServ,"GET")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"","Código de usuário não informado (UsrVend).",cUrlServ,"GET")
 
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
 		RestArea(aArea)
@@ -85,7 +91,9 @@ WsMethod Get WsService consultafinanceira
 	If cFormato <> cFormatAceito
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"GET")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"GET")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"GET")
 		
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -100,8 +108,10 @@ WsMethod Get WsService consultafinanceira
 	If ! SA1->(DbSeek(xFilial("SA1") + cCodLoja))
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Cliente " + cCodLoja + " não encontrado.",cUrlServ,"GET")
-		
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Cliente " + cCodLoja + " não encontrado.",cUrlServ,"GET")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"","Cliente " + cCodLoja + " não encontrado.",cUrlServ,"GET")
+
 		SetRestFault(404,EncodeUtf8("Cliente " + cCodLoja + " não encontrado."))
 		SA1->(DbCloseArea())
 		RestArea(aArea)
@@ -114,8 +124,10 @@ WsMethod Get WsService consultafinanceira
 	Len(Alltrim(cValToChar(SA1->A1_COD)) + Alltrim(cValToChar(SA1->A1_LOJA))) <> Len(cCodLoja)
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Cliente " + cCodLoja + " não encontrado.",cUrlServ,"GET")
-		
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","Cliente " + cCodLoja + " não encontrado.",cUrlServ,"GET")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"","Cliente " + cCodLoja + " não encontrado.",cUrlServ,"GET")
+
 		SetRestFault(404,EncodeUtf8("Cliente " + cCodLoja + " não encontrado."))
 		SA1->(DbCloseArea())
 		RestArea(aArea)
@@ -129,8 +141,10 @@ WsMethod Get WsService consultafinanceira
 	If ! obtDadosFin(cCodLoja,@cResJson,@cErro,@nErro,@nRecno)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"",cErro,cUrlServ,"GET")
-		
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"",cErro,cUrlServ,"GET")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"",cErro,cUrlServ,"GET")
+
 		SetRestFault(nErro,cErro)
 		RestArea(aArea)
 		Return .F.		
@@ -139,8 +153,10 @@ WsMethod Get WsService consultafinanceira
 	
 		//
 		cHoraExec := ELAPTIME(cHoraExec, Time())
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","",cUrlServ,"GET",cHoraExec)
-		
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,"","",cUrlServ,"GET",cHoraExec)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,"","",cUrlServ,"GET",cHoraExec)
+
 		Self:SetResponse(EncodeUtf8(cResJson))
 
 	EndIf

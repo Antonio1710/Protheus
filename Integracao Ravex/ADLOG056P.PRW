@@ -16,6 +16,7 @@
 	@history Chamado 058641 - WILLIAM COSTA - 04/06/2020 - Identificado que quando a loja do cliente tem letra o ravex não manda o cliente e loja correto então foi alterado o campo de cliente e loja para pegar da tabela do Protheus não mais do WebService
 	@history Chamado 18824  - Leonardo P. Monteiro - 26/08/2020 - Declaração da variável M_PAG para prevenção do erro variable does not exist M_PAG on SENDCABEC(APLIB080.PRW) 18/05/2020 17:21:57 line : 3218.
 	@history Chamado TI  - Leonardo P. Monteiro - 09/02/2022 - Substituição da função criatrab pelo temporarytable.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 */
  
 User Function ADLOG056P()
@@ -1282,7 +1283,9 @@ Static Function gerarGravaDados(cPlaca, dDataEntrega, cRoteiro, cTabFrt, cTipoFr
 		MsgStop("Função gerarGravaDados não recebeu todos os argumentos.","Função gerarGravaDados(IMPRDNET)")
 		
 	Else
-		StaticCall(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
+		//Static Call(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_0055A0(cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
 	
 	EndIf
 	

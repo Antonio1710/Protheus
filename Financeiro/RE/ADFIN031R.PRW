@@ -13,6 +13,7 @@
 	@history Adriana 30/05/2019 TI-Ajuste para execucao via ADFIN030P
 	@history Everson 10/03/2020 Chamado 054162. Envio de relatório Faturamento x Kg.
 	@history Leonardo P. Monteiro 20/08/2021 Chamado 18632. Adequação das queries trocando os nomes da tabela por Retsqlname.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADFIN031R() // U_ADFIN031R()
 
@@ -2334,3 +2335,14 @@ Static Function logZBN(cStatus)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} u_FIN031A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN031A0( uPar1, uPar2, uPar3, uPar4 )
+Return( gerarRelatorio( uPar1, uPar2, uPar3, uPar4 ) )

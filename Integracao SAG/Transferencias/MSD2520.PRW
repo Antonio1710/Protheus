@@ -7,6 +7,7 @@
 	@type  Function
 	@since  10/2013
 	@history Ticket 000001 - Abel Babini - 28/09/2020 - Permitir a exclusão de NF emitidas pelo módulo do Ativo Fixo.
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	/*/
 User Function MSD2520
 
@@ -27,9 +28,12 @@ Return()
 	@type  Function
 	/*/
 Static Function MSD2_1()
-// EXECUTADO NA EXCLUSAO DA NOTA
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
-	if xFilial("SD2") = "02" .and. ALLTRIM(CEMPANT)=="01"     //somente para Adoro Varzea
+	// EXECUTADO NA EXCLUSAO DA NOTA
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	if Alltrim(xFilial("SD2")) $ cFilSF .and. ALLTRIM(CEMPANT)$ cEmpSF     //somente para Adoro Varzea
 		If VAL(SD2->D2_ITEM) = 1
 			DbselectArea("SC5")
 			DbSetOrder(1)

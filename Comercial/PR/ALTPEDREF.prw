@@ -13,7 +13,7 @@
 	@history Chamado 054471 - Adriano Savoine  - 26/12/2019 - Liberar o Refaturamento para pedidos diferentes do Tipo N na C5_TIPO.
 	@history Chamado T.I    - William Costa    - 20/01/2020 - Retirado trava de quando o caminhão não tiver sido enviado para o Edata de acordo a Rosangela.
 	@history Ticket  T.I    - Fernando Sigoli  - 22/11/2021 -  Correção do ErrorLog variable does not exist LRET on OOKREFT(ALTPEDREF.PRW) 31/01/2020 15:58:03 line : 359
-	
+	@history @history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI	
 /*/
 
 User Function ALTPEDREF(cOp,nRopc,sObs) 
@@ -101,6 +101,7 @@ Static Function oOKREFT()
 	Local cNfDevo := ""
 	Local lCont   := .F.
 	Local lRet    := .F. // Ticket  T.I    - Fernando Sigoli  - 22/11/2021 - Declaração da variavel
+	Local cEmpRN:= GetMv("MV_#RNEMP",,"01|02|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
 	If nRadio = 1
 		cLocPad := GetMv("MV_#LCPCLI")  //Cliente 46
@@ -130,7 +131,7 @@ Static Function oOKREFT()
 		
 		//Mauricio - 20/10/2017 - Chamado 037330
 		lRet := .T.
-		if Alltrim(cEmpAnt) $ "01/02"
+		if Alltrim(cEmpAnt) $ cEmpRN
 			
 			_cPedAt   := SC5->C5_NUM
 			_lquatro  := .F.

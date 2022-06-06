@@ -15,6 +15,7 @@ Static xPula   := Chr(13) + Chr(10)
     @author Everson
     @since 19/11/2021
     @version 01
+    @history, Everson, 26/06/2022, Ticket 18465 - Tratamento para não deixar abrir pesagem quando há nota fiscal vinculada
     /*/
 User Function ADFAT019P() // U_ADFAT019P()
 
@@ -715,6 +716,49 @@ User Function ADFAT19B()
 
     EndIf
 
+    DbSelectArea("SC5") //Everson - 26/05/2022. Chamado 18465.
+    SC5->(DbSetOrder(28))
+    SC5->(DbGoTop())
+    If SC5->( DbSeek( FWxFilial("SC5") + ZIG->ZIG_ORDEM))
+
+        While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == ZIG->ZIG_ORDEM 
+    
+            If Empty(SC5->C5_PEDSAG) .And. ! Empty(SC5->C5_NOTA)
+
+                MsgInfo("Há a nota fiscal " + SC5->C5_NOTA + " " + SC5->C5_SERIE + " vinculada à pesagem. Operação não permitida.", "Função ADFAT19B(ADFAT019R)")
+                RestArea(aArea)
+                Return Nil            
+
+            EndIf
+
+            SC5->(DbSkip())
+
+        End
+
+    EndIf
+
+    DbSelectArea("SC6")
+    SC6->(DbSetOrder(17))
+    SC6->(DbGoTop())
+
+    If SC6->(DbSeek( FWxFilial("SC6") + ZIG->ZIG_ORDEM ))
+
+        While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_XORDPES == ZIG->ZIG_ORDEM
+
+            If ! Empty(SC6->C6_NOTA)
+
+                MsgInfo("Há a nota fiscal " + SC6->C6_NOTA + " " + SC6->C6_SERIE + " vinculada à pesagem. Operação não permitida.", "Função ADFAT19B(ADFAT019R)")
+                RestArea(aArea)
+                Return Nil            
+
+            EndIf
+
+            SC6->(DbSkip())
+
+        End
+
+    EndIf
+
     oModal := FWDialogModal():New()        
 	oModal:SetEscClose(.F.)
 	oModal:setTitle("Abrir Pesagem - Ticket " + cTicket)
@@ -754,6 +798,21 @@ Static Function procAbrP(cTicket, cStatus)
 
     If cStatus == ZIG->ZIG_INICIA
         MsgInfo("Ticket já está com o status solicitado.", "Função procAbrP(ADFAT019R)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Posiciona no controle de pátio.
+    If ! U_ADFAT17U(cCP)
+        MsgInfo("Controle de pátio " + cCP + " não localizado.", "Função procAbrP(ADFAT019R)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Valida controle de pátio.
+    If ! U_ADFAT179(ZIB->ZIB_PLACA, cCP, "", .T.)
         RestArea(aArea)
         Return .F.
 

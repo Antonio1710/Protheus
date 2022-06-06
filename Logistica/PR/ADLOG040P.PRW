@@ -104,6 +104,7 @@ Static nTipoFrt	:= 0
 	@history 24/03/2022  Sigoli Tkt 70153   - Declaração de variavel OK na função principal
 	@history 28/03/2022 - ADRIANO SAVOINE - Criado o bloqueio para o tipo de ocorrencia 012 e 014 somente para pessoas especificas.
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
+	@history ticket 73505 - Everson - 24/05/2022 - Tratamento para validar exclusão/alteração de registros fechado em rotinas com execauto. 
 /*/
 User Function ADLOG040P()
 
@@ -129,7 +130,7 @@ User Function ADLOG040P()
 
 	//
 	DbSelectArea("ZFA")
-	ZFA->(DbSetOrder(16))
+	// ZFA->(DbSetOrder(16))
 
 	//
 	oBrowse := FWMBrowse():New()
@@ -395,6 +396,22 @@ Static Function vldPos(oModel)
 	Local cDtFchFim		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_DTFCFM" )))
 	Local cFechado		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_FECHA"  ))) //05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
 	Local cOcFech		:= Alltrim(GetMv("MV_#OCFHFT",,"106/107"))
+	Local cPedDia		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_PEDADT" )))
+	Local cPedFch		:= Alltrim(cValToChar(oModel:GetValue( "ZFAMASTER" , "ZFA_PEDCOM" )))
+
+	//Everson - 24/05/2022. Chamado 73505.
+	//Validações para alteração e exclusão.
+	If lRet .And. ( nOperation == MODEL_OPERATION_UPDATE .Or. nOperation == MODEL_OPERATION_DELETE )
+
+		//Verifica se o registro fechado.
+		If lRet .And. ( cFechado = "S" .Or. !Empty(cPedDia) .Or. !Empty(cPedFch) )
+			lRet := .F.
+			Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Movimento " + cCod + " encerrado ou com pedido de compra vinculado não pode ser alterado ou excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+		EndIf
+
+	EndIf
+	//
 
 	//Valida origem do lançamento.
 	If lRet .And. ! ( nOperation == MODEL_OPERATION_DELETE )
@@ -402,14 +419,14 @@ Static Function vldPos(oModel)
 		//Valida se há tipo de bloqueio para o tipo de frete selecionado.
 		If lRet .And. Empty(cTpBloq)
 			lRet := .F.
-			Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Operação não pode ser realizada pois não há tipo de bloqueio de frete cadastrado para o tipo - " + retDescFrt(nTpFrtS) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+			Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Operação não pode ser realizada pois não há tipo de bloqueio de frete cadastrado para o tipo - " + retDescFrt(nTpFrtS) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
 		EndIf
 
 		//Valida parâmetros de fechamento de período.
 		If lRet .And. cFechado = "S" .And. ( ( Empty(cNumRegF) .And. !(cCodOcorr $cOcFech) ) .Or. Empty(cDtFchmt) .Or. Empty(cDtFchIni) .Or. Empty(cDtFchFim) .Or. cRegAprv = "N" )
 			lRet := .F.
-			Help(Nil, Nil, "Função vldPre(ADLOG040P)", Nil, "Dados incompletos para fechamento de período.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+			Help(Nil, Nil, "Função vldPos(ADLOG040P)", Nil, "Dados incompletos para fechamento de período.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
 		EndIf
 

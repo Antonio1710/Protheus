@@ -61,6 +61,7 @@
     @history Chamado 8465 - Leonardo P. Monteiro - 05/05/2021 - Correção de error.log na execução da rotina.
     @history Chamado 8465 - Leonardo P. Monteiro - 28/05/2021 - Inclusão da opção de integração via Web-bot PGA.
     @history Chamado 8465 - Leonardo P. Monteiro - 06/07/2021 - Implementação dos modelos CSI e exigências por país.
+    @history Ticket 69574 - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 
 user function ADEST055P(nOperac)
@@ -440,6 +441,8 @@ Static function fGetEst()
     Local aDados    := {}
     Local cQuery    := ""
     Local nReg      := Len(aCoPrdDad)
+    Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+
     if nReg == 0
         cProd   := ""
     elseif Type("oCoBPrd") != "O"
@@ -465,7 +468,7 @@ Static function fGetEst()
     cQuery += "   ,[QN_PESOPROD]
     cQuery += "   ,[QN_PROG]
     cQuery += "   ,[QN_PESOPROG]
-    cQuery += " FROM [LNKMIMS].SMART.dbo.[VW_ESTOQUE_SALDO]
+    cQuery += " FROM ["+cLnkSrv+"].SMART.dbo.[VW_ESTOQUE_SALDO]
     cQuery += " WHERE [IE_MATEEMBA]='"+ cProd +"' "
 
     TcQuery cQuery ALIAS "QEST" NEW

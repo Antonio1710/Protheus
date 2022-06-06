@@ -17,6 +17,7 @@
 	@history Everson, 31/01/2022. Chamado 66861.  Tratamento para frete combinado com mais de uma nota fiscal.
 	@history Everson, 01/02/2022. Chamado 65860.  Adicionado novo cálculo de frete.
 	@history Everson, 03/02/2022. Chamado 65860.  Correção na geração de valores de frete.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADLOG041P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr, lAutoJob)
 	
@@ -1877,3 +1878,14 @@ Static Function logZBE(cLog,cParam)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} u_LOG041A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG041A0( uPar1, uPar2, uPar3, uPar4, uPar5 )
+Return( sptEst( uPar1, uPar2, uPar3, uPar4, uPar5 ) )

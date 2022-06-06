@@ -16,6 +16,7 @@ Static cTiMast := "Dados do lote de produto SAG"
     @since 17/11/2021
     @version 01
     @history Everson, 09/05/2022, Chamado TI - Removida a publicação de web service PUBLISH USER MODEL REST.
+    @history Everson, 27/05/2022, ticket 18465 - Alterado texto do cabecalho da MsgInfo.
     /*/
 User Function ADFAT018P() // U_ADFAT018P()
 
@@ -206,28 +207,28 @@ User Function ADFAT18C(cProSAg, cPrdPro, Lote)
     ZI8->(DbSetOrder(1))
     ZI8->(DbGoTop())
     If ! ZI8->(DbSeek( FWxFilial("ZI8") + Lote))
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
     EndIf
 
     If Alltrim(cProSAg) <> Alltrim(ZI8->ZI8_PRDSAG)
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " inválido para o produto " + cProSAg + " | " +  cPrdPro + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " inválido para o produto " + cProSAg + " | " +  cPrdPro + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
     EndIf
 
     If ZI8->ZI8_LAUTO == "1"
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
     EndIf
 
     If ZI8->ZI8_STATUS == "4"
-        Help(Nil, Nil, "Função ADFAT18C(ADFAT017P)", Nil, "Lote " + Lote + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT18C(ADFAT018P)", Nil, "Lote " + Lote + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 

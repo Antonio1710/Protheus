@@ -29,8 +29,10 @@
 	@history Ticket  67573  - Everson 			   - 03/02/2022 - Validaï¿½ï¿½o de quantidade liberada para cï¿½pia de pedido.
 	@history Ticket  67573  - Everson 			   - 07/02/2022 - Validaï¿½ï¿½o de quantidade liberada para cï¿½pia de pedido. 
 	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusï¿½o de conouts no fonte. 
-	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.
+	@history Ticket 69574   - Abel Babini      - 21/03/2022 - Projeto FAI
+	@history Ticket  18465  - Everson 			   - 24/03/2022 - Validação de pedido com pesagem já iniciada.. 
 	@history Ticket  TI     - Everson 			   - 20/04/2022 - Tratamento para pedidos gerados pela integração com o módulo de exportação.
+	@history Ticket 018465  - Everson     - 30/05/2022 - Correção da chamada da função.
 /*/
 
 User Function MT410TOK()
@@ -124,6 +126,10 @@ User Function MT410TOK()
 	Local nTemQt		:= 0
 	Local nNTemQt		:= 0
 	//
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+  Local cEmpRN:= GetMv("MV_#RNEMP",,"01|02|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
 	Private cLido 		:= ""
 	Private nCount 		:= 0
@@ -148,7 +154,8 @@ User Function MT410TOK()
 	//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> INICIO PE" )
 	
 	//Everson - 24/03/2022. Chamado 018465. Pesagem.
-	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA .And. ! StaticCall(A410EXC, vldOrdSa, SC5->C5_NUM)
+	If !IsInCallStack('U_RESTEXECUTE') .And. ! IsInCallStack('RESTEXECUTE') .And. ALTERA .And. ;
+	    ! U_ADFAT41A(SC5->C5_NUM) //Everson - 30/05/2022. Chamado TI.
 		RestArea(aArea)
 		Return .F.
 
@@ -200,15 +207,15 @@ User Function MT410TOK()
 	M->C5_XTOTPED := _nTotValor
 	//
 
-	If Alltrim(cEmpAnt) == "01"
-		_cPermAlt     := M->C5_XINT        //Mauricio 05/02/14 - Solicitado por Ana Barreta para nï¿½o permitir alterar data de entrega de PV com C5_XINT = "3"
+	If Alltrim(cEmpAnt) $ cEmpSF
+		_cPermAlt     := M->C5_XINT        //Mauricio 05/02/14 - Solicitado por Ana Barreta para não permitir alterar data de entrega de PV com C5_XINT = "3"
 	Else
 		_cPermAlt     := ""
 	Endif
 	
 	//Mauricio - 06/10/2017 - Chamado 037330
 	//Inicio
-	if !lSfInt .And. Alltrim(cEmpAnt) $ "01/02" .AND. (INCLUI .OR. ALTERA)
+	if !lSfInt .And. Alltrim(cEmpAnt) $ cEmpRN .AND. (INCLUI .OR. ALTERA)
 		_cPedAt   := _cNumPed
 		_lrfat    := .F.
 		_lTresPed := .F.
@@ -742,7 +749,7 @@ User Function MT410TOK()
 	nTotItem	:= Len(aCols)
 
 	//Inicio - Sigoli 10/03/2017 Chamado: 034029
-	If !lSfInt .And. Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02"
+	If !lSfInt .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 		If nTotItem > 0
 			For _T1 := 1 to nTotItem
 
@@ -846,7 +853,7 @@ User Function MT410TOK()
 	EndIf
 	//
 
-	If !lSfInt .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista.  //incluida filial 07 em 13/08/14
+	If !lSfInt .And. Alltrim(cEmpAnt) $ cEmpSF .AND. Alltrim(cFilAnt) $ cFilRN  // executar somente para empresa Adoro filial Varzea Paulista.  //incluida filial 07 em 13/08/14
 		// Mauricio 14/08/15 - tratamento para que pedidos de venda FOB
 		// nao entrem na validaï¿½ï¿½o de pedido minimo.
 		If M->C5_TIPO == 'N' .AND. M->C5_TPFRETE <> "F"  // somente para pedido de venda
@@ -1067,17 +1074,17 @@ User Function MT410TOK()
 	//Mauricio 14/06/11 - solicitado por Vagner email de 13/06/11 - Nova tabela de preï¿½o.
 	//incluida primeira parte para permitir vendedores interestaduais incluirme pedido depois da hora limite com D+2 dias ou ate parametro limite maximo de dias futuro.
 	//esta primeira parte complementa tratamento no fonte MBRWBTN.prw.
-	//segunda parte valida qualquer pedido com maximo data entrega futura atï¿½ limite contido em parametro.
-	//Em 20/07/2011 conforme reuniï¿½o com Srs. Alex e Vagner ficou definido que Interestadual e Supervisores nï¿½o terï¿½o horario limite para inclusao de PV.
-	//porem os PVï¿½s incluidos apï¿½s o horario limite terï¿½o data de entrega D + 2.
-	IF !lSfInt .And. SM0->M0_CODIGO == "01" .AND. cfilant $ "02/06/07"  // executar somente para empresa Adoro filial Varzea Paulista. //motivo erro no Grupo 06 William Costa chamado 021253
-		IF M->C5_REFATUR <> 'S' //ajuste william costa pois o refaturamento nï¿½o entra nessa regra
+	//segunda parte valida qualquer pedido com maximo data entrega futura até limite contido em parametro.
+	//Em 20/07/2011 conforme reunião com Srs. Alex e Vagner ficou definido que Interestadual e Supervisores não terão horario limite para inclusao de PV.
+	//porem os PV´s incluidos após o horario limite terão data de entrega D + 2.
+	IF !lSfInt .And.  Alltrim(cEmpAnt) $ cEmpSF .AND. Alltrim(cFilAnt) $ cFilRN  // executar somente para empresa Adoro filial Varzea Paulista. //motivo erro no Grupo 06 William Costa chamado 021253
+		IF M->C5_REFATUR <> 'S' //ajuste william costa pois o refaturamento não entra nessa regra
 			dbSelectArea("SA3")
 			dbSetOrder(7)
 			If dbSeek(xFilial("SA3")+__cUserID)
 				// Ricardo Lima - 13/06/18
-				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. CEMPANT = '01' .and. !lSfInt
-					ApMsgInfo('Vendedor sem PERMISSï¿½O para Incluir Pedido, verifique com a Supervisï¿½o!','Permissï¿½es de Vendedores')
+				If SUBSTR(SA3->A3_XVLDPER,1,1) = '1' .AND. Alltrim(cEmpAnt) $ cEmpSF .and. !lSfInt
+					ApMsgInfo('Vendedor sem PERMISSÃO para Incluir Pedido, verifique com a Supervisão!','Permissões de Vendedores')
 					//Conout( DToC(Date()) + " " + Time() + " MT410TOK >>> FINAL PE" )
 					Return(.F.)
 				Endif
@@ -1103,7 +1110,7 @@ User Function MT410TOK()
 
 						ENDIF
 
-						lRet := .F. 
+						lRet := .F.
 					Endif
 				Elseif ( Empty(Alltrim(cValToChar(M->C5_PEDEXP))) .And. TIME()>GETMV("MV_TEMPED3") .AND. SA3->A3_NIVETAB == "2")  //Mauricio - 15/04/15 - tratamento diferenciado para supervisores solicitados pelo Vagner. //Everson - 20/04/2022 - Chamado TI.
 					if _dDTENTR > (_nDiasDte+ddatabase) .Or. _dDTENTR < (ddatabase+2)
@@ -1237,7 +1244,7 @@ User Function MT410TOK()
 					endif
 
 					//ALTERADO POR ADRIANA PARA PERMITIR A ALTERACAO DO VALOR PARA NOTAS DE COMPLEMENTO DE ICMS E IPI, DEVOLUCAO E BENEFICIAMENTO
-					If !M->C5_TIPO $ 'IPBD' .AND. cfilant $ "02/06/07"     //Incluido filial 07 em 13/08/14
+					If !M->C5_TIPO $ 'IPBD' .AND. Alltrim(cFilAnt) $ cFilRN     //Incluido filial 07 em 13/08/14
 						dbSelectArea("DA1")
 						dbSetOrder(1)
 						//Incluido 30/03/11 - ANA, pois estava dando a mensagem quando inserido mais uma linha sem produto
@@ -1336,7 +1343,7 @@ User Function MT410TOK()
 
 	//Mauricio - MDS TECNOLOGIA - 14/10/13 - Validaï¿½ï¿½es para TES de DOACOES e BONIFICACOES
 
-	IF !lSfInt .And. (INCLUI .OR. ALTERA) .and. cEmpAnt == "01" //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
+	IF !lSfInt .And. (INCLUI .OR. ALTERA) .and. Alltrim(cEmpAnt) $ cEmpSF //Alterado por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
 		_lUsuDoa  := .F.
 		_lUsuADMV := .F.
 		_lUsuBON  := .F.
@@ -1544,7 +1551,7 @@ User Function MT410TOK()
 	If !lSfInt .And. ALTERA
 		_aAreaSC5 := SC5->(GetArea())
 		_aAreaSC6 := SC6->(GetArea())
-		IF cEmpAnt == "01" .And. _cPermAlt == "3" .And. cFilAnt == "02"    //Empresa 01, filial 02 e xint == 3
+		IF Alltrim(cEmpAnt) $ cEmpSF .And. _cPermAlt == "3" .And. Alltrim(cFilAnt) $ cFilSF     //Empresa 01, filial 02 e xint == 3
 			DbSelectArea("SC5")
 			DbSetOrder(1)
 			Dbgotop()
@@ -1806,7 +1813,7 @@ User Function MT410TOK()
 	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 	//Verifica pelo cadastro da Tes Inteligente (SFM) qual a tes de venda deve ser utilizada
-	If Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02/07"
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilRN
 		dbSelectArea("SA3")
 		dbSetOrder(7)
 		If dbSeek (xFilial()+__CUSERID) .and. !__CUSERID $ GETMV("MV_EXTESIN")
@@ -2019,7 +2026,7 @@ User Function MT410TOK()
 	
 	// Ricardo Lima-19/02/2019-047354
 	// Ricardo Lima-27/02/2019-047506
-	IF cEmpAnt = '01' .and. !IsInCallStack('u_PED001B')  //Chamado:048015 -Fernando Sigoli 21/03/2019
+	IF Alltrim(cEmpAnt) $ cEmpSF .and. !IsInCallStack('u_PED001B')  //Chamado:048015 -Fernando Sigoli 21/03/2019
 		IF M->C5_XTIPO = '2'
 			if !Empty(M->C5_ROTEIRO)
 				cQueryP := " SELECT C5_FILIAL, C5_NUM, C5_DTENTR, C5_ROTEIRO "
@@ -2050,9 +2057,10 @@ Return(lRet)
 // 1. Valida o cadastro de produtos.
 //--------------------------------------------------
 Static Function fVldProd()
+  Local cEmpRN:= GetMv("MV_#RNEMP",,"01|02|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
-	// Validaï¿½ï¿½es feitas somente para a empresa 01 e 02.
-	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"
+	// Validações feitas somente para a empresa 01 e 02.
+	If Alltrim(cEmpAnt) $ cEmpRN
 		
 		If SF4->F4_ESTOQUE == "S"
 			If Empty(SB1->B1_LOCPAD) .And. Empty(SBZ->BZ_LOCPAD)
@@ -2207,8 +2215,9 @@ return
 // 4. Tratamento integraï¿½ï¿½o eData
 //--------------------------------------------------
 Static Function fVldDat()
+  Local cEmpRN:= GetMv("MV_#RNEMP",,"01|02|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
-	If Alltrim(cEmpAnt) == "01" .or. Alltrim(cEmpAnt) == "02"   // Integraï¿½ï¿½o CERES
+	If Alltrim(cEmpAnt) $ cEmpRN   // Integração CERES
 		
 		If lRet
 			
@@ -2282,7 +2291,9 @@ Static Function fTotPV()
 	Local _cEst1     
 	Local n1
 
-	If Alltrim(cEmpAnt) = "01"    //Incluido por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+
+	If Alltrim(cEmpAnt) $ cEmpSF    //Incluido por Adriana devido ao error.log quando empresa <> 01 - chamado 032804
 
 		If Len(aCols) > 0
 

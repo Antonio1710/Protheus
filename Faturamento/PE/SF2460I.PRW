@@ -35,6 +35,7 @@
 	@history Ticket 8465 	- Leonardo P. Monteiro - 09/08/2021 - Implementação da carga automática das informações referente a inspeção da qualidade. 
 	@history Ticket 8465 	- Leonardo P. Monteiro - 13/08/2021 - Inclusão do comando DbselectArea para a tabela ZEX. 
 	@history Ticket 68178 	- Leonardo P. Monteiro - 14/02/2022 - Gerar log das informações de exportação gravadas na NFe.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function SF2460I()
 
@@ -2899,3 +2900,14 @@ Static Function fChvNfeOri(cNFOri, cSerOri, cCliFor, cLoja)
 	EndIf
 
 Return cChaveNfe
+
+/*/{Protheus.doc} u_2460IA0
+//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_2460IA0( uPar1, uPar2, uPar3, uPar4 )
+Return( fCalcBlt( uPar1, uPar2, uPar3, uPar4 ) )

@@ -492,6 +492,18 @@ Static Function ChkIDCNAB(cIDCNAB)
 
 Return lRet
 
+/*/{Protheus.doc} u_40GAVEA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_200AVLA0( uPar1 )
+Return( limpZBH( uPar1 ) )
+
+
 /*/{Protheus.doc} Static Function ChkIDCNAB
     Não processar se existir 2 ou mais títulos com o mesmo IDCNAB
     @type  Function

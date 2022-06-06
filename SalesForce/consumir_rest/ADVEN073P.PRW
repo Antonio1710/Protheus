@@ -7,6 +7,7 @@
 	@since 10/01/2018
 	@version 01
 	@history Everson, 19/05/2020. Chamado 056977. Adicionado preço mínimo do supervisor.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADVEN073P(cDe,cAte,lAut,cExpSql,lAltTabPrc) // U_ADVEN073P("20200519","20200519",.T.)
 
@@ -59,7 +60,9 @@ Static Function Processar(cDe,cAte,lAut,cExpSql)
 	Local cMsg			:= ""
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -84,10 +87,13 @@ Static Function Processar(cDe,cAte,lAut,cExpSql)
 	
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
-		
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4(@aParametros,.F.,"PATCH",@aRetOk) },"Aguarde","Processando registro(s) ...",.T.)
 	Else
-					 StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk)
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",@aRetOk)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.F.,"PATCH",@aRetOk )
 		
 	EndIf
 
