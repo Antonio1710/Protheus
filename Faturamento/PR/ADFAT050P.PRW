@@ -163,6 +163,11 @@ User Function ADFAT50B()
         cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY REC " 
 
+    If Select("D_GEMBA")
+        D_GEMBA->(DbCloseArea())
+        
+    EndIf
+
     TcQuery cQuery New Alias "D_GEMBA"
     DbSelectArea("D_GEMBA")
     While ! D_GEMBA->(Eof())

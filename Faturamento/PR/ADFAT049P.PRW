@@ -34,6 +34,7 @@ User Function ADFAT491(cNmOrdem, cMsgError)
     Local aArea       := GetArea()
     Local lBarramento := GetMv("MV_#ADF491",,.T.) //Registros de pesagem vindos do barramento.
     Local cQuery      := ""
+    Local cPreFx      := "Envio OP: "
 
     Default cNmOrdem   := ""
     Default cMsgError  := ""
@@ -46,7 +47,7 @@ User Function ADFAT491(cNmOrdem, cMsgError)
     Else
 
         cQuery += " SELECT  "
-        cQuery += " DISTINCT ZIF_NUMERO "
+        cQuery += " DISTINCT ZIF_NUMERO, ZIF_GEMBA "
         cQuery += " FROM "
         cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF "
         cQuery += " INNER JOIN "
@@ -90,15 +91,35 @@ User Function ADFAT491(cNmOrdem, cMsgError)
 
         While ! D_DADOS->(Eof())
 
-            If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
-                
-                If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
-                    U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
+            cMsgError := ""
+
+            If D_DADOS->ZIF_GEMBA == "1" //Ordem enviada.
+
+                If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
+                    
+                    If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
+                        U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
+
+                    EndIf
+
+                Else
+                    U_ADFAT173("Obter lacres : sucesso " , D_DADOS->ZIF_NUMERO, "", "GEMBA")
 
                 EndIf
 
-            Else
-                U_ADFAT173("Obter lacres : sucesso " , D_DADOS->ZIF_NUMERO, "", "GEMBA")
+            Else //Ordem não enviada.
+
+                If ! U_ADFAT50F(D_DADOS->ZIF_NUMERO, @cMsgError) //Envio de ordem para o Gemba.
+
+                    U_ADFAT173(cPreFx + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA") //Gera log de erro.
+
+                Else
+
+                    U_ADFAT165(D_DADOS->ZIF_NUMERO, "ZIF_GEMBA", "1") //Marca ordem como enviada.
+        
+                    U_ADFAT173(cPreFx + "enviada com sucesso.", D_DADOS->ZIF_NUMERO, "", "GEMBA") //Gera log de sucesso.
+
+                EndIf
 
             EndIf
 

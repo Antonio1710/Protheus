@@ -738,7 +738,7 @@ Static Function envGOrd(oOrdPes, aOrdPes)
 
     EndIf
 
-    If ! U_ADFAT50F(cNmOrdem, @cMsgError)
+    If ! procEnvGb(cNmOrdem, @cMsgError)
         Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -956,7 +956,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Cancela ordem de pesagem original no Gemba.
-        If lGemba .And. ! U_ADFAT50G(cOrdOrg, @cMsgError)
+        If lGemba .And. ! procCancGb(cOrdOrg, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -964,7 +964,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Envia nova ordem de pesagem para o Gemba.
-        If lGemba .And. ! U_ADFAT50F(cOrdDes, @cMsgError)
+        If lGemba .And. ! procEnvGb(cOrdDes, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -3001,7 +3001,7 @@ Static Function cancTkt(oOrdPes, aOrdPes)
 
     //Cancela ordem no Gemba.
     If lRet
-        U_ADFAT50G(cNmOrdem)
+        ! procCancGb(cNmOrdem, @cMsgError)
 
     EndIf
 
@@ -4389,8 +4389,39 @@ Static Function procEnvGb(cNmOrdem, cMsgError)
         U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GEMBA")
 
     Else
+        U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "1")
+        
         U_ADFAT173(cPreFx + "enviada com sucesso.", cNmOrdem, "", "GEMBA")
+        
+    EndIf
 
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} procCancGb
+    Process cancelamento de ordem de pesagem para o Gemba.
+    @type  User Function
+    @author Everson
+    @since 18/05/2022
+    @version 01
+/*/
+Static Function procCancGb(cNmOrdem, cMsgError)
+    
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local lRet   := .F.
+    Local cPreFx := "Cancelar OP: "
+
+    Default cMsgError := ""
+
+    lRet := U_ADFAT50G(cNmOrdem, @cMsgError)
+
+    If ! lRet
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GEMBA")
+
+    Else
+        U_ADFAT173(cPreFx + "cancelada com sucesso.", cNmOrdem, "", "GEMBA")
+        
     EndIf
 
     RestArea(aArea)
@@ -4408,24 +4439,28 @@ Static Function chkEnGemba(cNmOrdem)
     //Variáveis.
     Local aArea  := GetArea()
     Local lRet   := .F.
-    Local cQuery := ""
+    // Local cQuery := ""
 
-    cQuery := "SELECT ZBE_DATA FROM " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cNmOrdem + "' AND ZBE_LOG = 'enviada com sucesso.' AND ZBE.D_E_L_E_T_ = ''"
+    U_ADFAT16A(cNmOrdem)
 
-    If Select("D_CHKZBE") > 0
-        D_CHKZBE->(DbCloseArea())
+    lRet := ZIF->ZIF_GEMBA == "1"
 
-    EndIf
+    // cQuery := "SELECT ZBE_DATA FROM " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cNmOrdem + "' AND ZBE_LOG = 'enviada com sucesso.' AND ZBE.D_E_L_E_T_ = ''"
 
-    TcQuery cQuery New Alias "D_CHKZBE"
-    DbSelectArea("D_CHKZBE")
-    D_CHKZBE->(DbGoTop())
-    If ! D_CHKZBE->(Eof())
-        lRet := .T.
+    // If Select("D_CHKZBE") > 0
+    //     D_CHKZBE->(DbCloseArea())
 
-    EndIf
+    // EndIf
 
-    D_CHKZBE->(DbCloseArea())
+    // TcQuery cQuery New Alias "D_CHKZBE"
+    // DbSelectArea("D_CHKZBE")
+    // D_CHKZBE->(DbGoTop())
+    // If ! D_CHKZBE->(Eof())
+    //     lRet := .T.
+
+    // EndIf
+
+    // D_CHKZBE->(DbCloseArea())
 
     RestArea(aArea)
 
