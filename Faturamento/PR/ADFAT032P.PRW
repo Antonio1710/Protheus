@@ -133,13 +133,13 @@ Static Function vldPos(oModel)
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
 
-        If lRet .And. ! FwIsAdmin() .And. ! Empty(cOrdemP) .And. ! U_ADFAT32E(cOrdemP, "")
+        If lRet .And. ! IsInCallStack("transOrd") .And. ! FwIsAdmin() .And. ! Empty(cOrdemP) .And. ! U_ADFAT32E(cOrdemP, "")
             lRet := .F.
             Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, cMsg2, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         EndIf
         
-        If lRet .And. ! Empty(cAgrupa) .And. ! FWIsAdmin()
+        If lRet .And. ! IsInCallStack("transOrd") .And. ! Empty(cAgrupa) .And. ! FWIsAdmin()
             lRet := .F.
             Help(Nil, Nil, "Função ADFAT32A(ADFAT032P)", Nil, cMsg1, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
