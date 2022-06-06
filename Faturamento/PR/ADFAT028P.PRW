@@ -227,6 +227,8 @@ User Function ADFAT28B(cJson)
 
     EndIf
 
+    Sleep(Random(0, 5)*1000) //Everson - 06/06/2022.
+
     TcQuery cQuery New Alias "D_ZIQS"
     DbSelectArea("D_ZIQS")
     D_ZIQS->(DbGoTop())
@@ -315,9 +317,7 @@ User Function ADFAT28C(aParametros, aRetErro)
 
     //Variáveis.
     Local aArea     := GetArea()
-    Local lRet      := .F.
     Local cUuid     := ""
-    Local cMsgError := ""
 
     If Len(aParametros) == 0
         Aadd(aRetErro, {400, EncodeUtf8("Necessário informar o uuid do registro.")})
@@ -328,19 +328,22 @@ User Function ADFAT28C(aParametros, aRetErro)
 
     cUuid := Alltrim(cValToChar(aParametros[2]))
     
-    Sleep(Random(0, 7)*1000) //Everson - 06/06/2022.
+    Sleep(Random(0, 5)*1000) //Everson - 06/06/2022.
 
-    If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
-        Aadd(aRetErro, {400, cMsgError})
 
-    Else
-        lRet := .T.
+    TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1' WHERE ZIQ_HASH = '" + cUuid + "'")
 
-    EndIf
+    // If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
+    //     Aadd(aRetErro, {400, cMsgError})
+
+    // Else
+    //     lRet := .T.
+
+    // EndIf
 
     RestArea(aArea)
 
-Return lRet
+Return .T.
 /*/{Protheus.doc} logZBE
     Gera log ZBE.
     @type  Static Function
