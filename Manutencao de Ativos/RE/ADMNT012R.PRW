@@ -7,7 +7,7 @@
 /*/{Protheus.doc} ADMNT012R - Relatorio de Custo por OS / Eqto Exporta Excel
 )
     @type  Function
-    @author Tiago Stocco
+    @author Tiago Stocco.
     @since 20/07/2020
     @version TKT - 7571
     @param param_name, param_type, param_descr
