@@ -6956,6 +6956,7 @@ Static Function gerPeAut(cNmOrdem)
 
     gerPedS(ZIF->ZIF_CTPATI, .T.)
 
+
     RestArea(aArea)
 
 Return Nil
@@ -6965,7 +6966,7 @@ Return Nil
     @author Everson
     @since 06/06/2022
     @version 01
-    
+
 /*/
 Static Function impTktAut()
 
@@ -7010,7 +7011,7 @@ Static Function impTktAut()
 
     While ! D_IMPTKT->(Eof())
         
-        U_ADFAT026R(D_IMPTKT->ZIG_NUMERO, "R", D_IMPTKT->ZIG_CTPATI, .T.)
+        MsAguarde({|| U_ADFAT026R(D_IMPTKT->ZIG_NUMERO, "R", D_IMPTKT->ZIG_CTPATI, .T.) }, "Aguarde", "Imprimindo ticket...")
 
         D_IMPTKT->(DbSkip())
 
