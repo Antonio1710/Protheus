@@ -2214,6 +2214,12 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     oOrdPes:setArray(aOrdPes)
     oOrdPes:Refresh()
 
+    //imprime ticket de pesagem.
+    If cTpMovi == "R"
+        impTktAut() 
+
+    EndIf
+
     RestArea(aArea)
 
 Return Nil
@@ -6959,19 +6965,58 @@ Return Nil
     @author Everson
     @since 06/06/2022
     @version 01
+    
 /*/
 Static Function impTktAut()
 
     //Variáveis.
     Local aArea := GetArea()
     Local lImp  := GetMv("MV_#IDATCP",,.F.)
+    Local cQuery:= ""
 
     If ! lImp
         RestArea(aArea)
         Return .F.
 
     EndIf
-    
+
+    cQuery := ""
+    cQuery += " SELECT " 
+        cQuery += " ZIG_CTPATI, ZIG_NUMERO " 
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB " 
+        cQuery += " INNER JOIN " 
+        cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON " 
+        cQuery += " ZIB_FILIAL = ZIG_FILIAL " 
+        cQuery += " AND ZIB_NUMERO = ZIG_CTPATI " 
+    cQuery += " WHERE " 
+        cQuery += " ZIB_FILIAL = '" + FWxFilial("ZIB") + "' " 
+        cQuery += " AND CAST(ZIB_DATA AS DATE) = CAST(GETDATE() AS DATE) " 
+        cQuery += " AND ZIB_STATUS = '5' " 
+        cQuery += " AND ZIB_TPMOVI = 'R' " 
+        cQuery += " AND ZIG_ENVIAD <> '1' " 
+        cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
+        cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY ZIG_NUMERO " 
+
+    If Select("D_IMPTKT") > 0
+        D_IMPTKT->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_IMPTKT"
+    DbSelectArea("D_IMPTKT")
+    D_IMPTKT->(DbGoTop())
+
+    While ! D_IMPTKT->(Eof())
+        
+        U_ADFAT026R(D_IMPTKT->ZIG_NUMERO, "R", D_IMPTKT->ZIG_CTPATI, .T.)
+
+        D_IMPTKT->(DbSkip())
+
+    End
+
+    D_IMPTKT->(DbCloseArea())
 
     RestArea(aArea)
 

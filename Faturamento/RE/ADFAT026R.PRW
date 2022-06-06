@@ -12,12 +12,14 @@
     @version 01
     @history Everson, 02/06/2022, ticket 18465, alterado a informação da pessoa no ticket de pesagem de ração.
 /*/
-User Function ADFAT026R(cTicket, cTpOrdem, cCP) // U_ADFAT026R("0000070", "R")
+User Function ADFAT026R(cTicket, cTpOrdem, cCP, lJob) // U_ADFAT026R("0000070", "R")
 
     //Variáveis.
     Local aArea  := GetArea()
     Local cCabec2:= ""
     Local cTpRac := ""
+
+    Default lJob := .F.
 
     If cTpOrdem == "IMPRORC"
         romRacao(cCP)
@@ -62,7 +64,7 @@ User Function ADFAT026R(cTicket, cTpOrdem, cCP) // U_ADFAT026R("0000070", "R")
         iTktSa(cTicket, cCabec2, cTpRac)
 
     ElseIf cTpOrdem == "R"
-       iTktRc(cTicket, cCabec2, cTpRac)
+       iTktRc(cTicket, cCabec2, cTpRac, lJob)
 
     ElseIf cTpOrdem == "IMPROVD"
         romVenda(cTicket)
@@ -129,7 +131,7 @@ Static Function iTktOP(cTicket, cCabec2, cTpRac)
     Local cCarga    := ""
 
     If ! U_ADFAT16A(ZIG->ZIG_ORDEM)
-        Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função iTktOP(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
 
@@ -451,7 +453,7 @@ Return Nil
     @since 09/03/2022
     @version 01
 /*/
-Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
+Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070", "R")
 
     //Variáveis.
     Local aArea := GetArea()
@@ -476,9 +478,20 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
     Local cDtAbt    := ""
     Local cFase     := ""
     Local cEnd      := ""
+    Local cImpress  := Alltrim(cValToChar(GetMv("MV_#IMPCPT", , "")))
+    Local cPreFx    := "Impressão Ticket: "
 
-    If ! U_ADFAT16A(ZIG->ZIG_ORDEM)
+    Default lJob    := .F.
+
+    If ! lJob .And. ! U_ADFAT16A(ZIG->ZIG_ORDEM)
         Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    If lJob .And. Empty(cImpress)
+        U_ADFAT173(cPreFx + " sem impressora configurada(MV_#IMPCPT)", ZIG->ZIG_ORDEM, "", "PROTHEUS")
         RestArea(aArea)
         Return Nil
 
@@ -500,7 +513,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
     End
 
     //Everson - 02/06/2022. Chamado 18465.
-    If ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
+    If ! lJob .And. ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
         Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de ração " + ZIF->ZIF_ORDRAC + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
@@ -517,6 +530,14 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
     cFase  := Alltrim(cValToChar(Posicione("ZIM", 1, FWxFilial("ZIM") + ZIF->ZIF_PRDSAG, "ZIM_SGPSAG" )))
 
     oPrinter := FWMSPrinter():New(cTicket, IMP_PDF, lAdjustToLegacy, , lDisableSetup,,,,,,,,2)
+
+    If lJob
+        oPrinter:lServer  := .F.
+        oPrinter:nDevice  := IMP_SPOOL
+        oPrinter:cPrinter := cImpress
+        oPrinter:SetPortrait()
+
+    EndIf
  
     oPrinter:StartPage()
 
@@ -614,10 +635,23 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
 
     oPrinter:EndPage()
     
-    oPrinter:Setup()
+    If ! lJob
 
-    If oPrinter:nModalResult == PD_OK
-        oPrinter:Preview()
+        oPrinter:Setup()
+
+        If oPrinter:nModalResult == PD_OK
+            oPrinter:Preview()
+
+        EndIf
+
+    Else
+
+
+        oPrinter:Print()
+
+        RecLock("ZIG", .F.)
+            ZIG->ZIG_ENVIAD := "1"
+        ZIG->(MsUnlock())
 
     EndIf
 
