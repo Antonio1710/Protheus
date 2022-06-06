@@ -31,6 +31,7 @@
 	@history ticket 16401   - Fernan Macieira - 12/07/2021 - Saldo Negativo (PC com qtd parcial, porém, valor unitário muito diferente do PC e também com valor total muito próximo do PC)
 	@history ticket  11639 	- Fernan Macieira - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	@history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
 /*/
 User Function MT100TOK()
 
@@ -74,165 +75,176 @@ User Function MT100TOK()
 	Local cTesPcNf := SuperGetMV("MV_TESPCNF")
 	Local nPosTes  := aScan(aHeader,{|x| AllTrim(x[2])=="D1_TES"})
 	Local cArm3    := ""
-	Local cPCPrj := ""
+	Local cPCPrj   := ""
 	Local cPCPrjaCols := ""
-	Local cPCItem := "" 
+	Local cPCItem  := "" 
 
+	// @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+	_lRet := ChkVenctos()
+	If !_lRet
+		Return _lRet
+	EndIf
+	// 
+	
 	// Chamado n. 057107 || OS 058613 || CONTROLADORIA || TAMIRES_SERAFIM || 8503 || CONTA CONTABEIS - FWNM - 03/04/2020
-	For nCont :=1 To Len(aCols)
+	If _lRet
+
+		For nCont :=1 To Len(aCols)
+				
+			If !gdDeleted(nCont)
 			
-		If !gdDeleted(nCont)
-		
-			//@history ticket  6652   - Fernando Macie- 18/01/2021 - Projeto 0022003001 - Revitalização Posto de Combustível, o pedido 401511 consumiu o valor do projeto e o fiscal não esta conseguindo lançar Nota fiscal  (Mensagem projeto com saldo insuficiente)
-			// Carrego pedidos de projeto de investimentos
-			cPCPrjaCols := gdFieldGet("D1_PROJETO", nCont)
-			If !Empty(cPCPrjaCols)
-				If !(gdFieldGet("D1_PEDIDO", nCont) $ cPCPrj)
-					cPCPrj += gdFieldGet("D1_PEDIDO", nCont) + ";"
+				//@history ticket  6652   - Fernando Macie- 18/01/2021 - Projeto 0022003001 - Revitalização Posto de Combustível, o pedido 401511 consumiu o valor do projeto e o fiscal não esta conseguindo lançar Nota fiscal  (Mensagem projeto com saldo insuficiente)
+				// Carrego pedidos de projeto de investimentos
+				cPCPrjaCols := gdFieldGet("D1_PROJETO", nCont)
+				If !Empty(cPCPrjaCols)
+					If !(gdFieldGet("D1_PEDIDO", nCont) $ cPCPrj)
+						cPCPrj += gdFieldGet("D1_PEDIDO", nCont) + ";"
+					EndIf
+					cPCItem += gdFieldGet("D1_PEDIDO", nCont) + gdFieldGet("D1_ITEMPC", nCont) + ";"
 				EndIf
-				cPCItem += gdFieldGet("D1_PEDIDO", nCont) + gdFieldGet("D1_ITEMPC", nCont) + ";"
-			EndIf
-			//
-
-			If cEmpAnt == "01" // Adoro
-
-				If cFilAnt == "01"
-					cItemCta := GetMV("MV_#ITEM01",,"121")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "02"
-					cItemCta := GetMV("MV_#ITEM02",,"121")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "04"
-					cItemCta := GetMV("MV_#ITEM04",,"112")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "05"
-					cItemCta := GetMV("MV_#ITEM05",,"114")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "06"
-					cItemCta := GetMV("MV_#ITEM06",,"122")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "08"
-					cItemCta := GetMV("MV_#ITEM08",,"115")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "09"
-					cItemCta := GetMV("MV_#ITEM09",,"116")
-					gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
-
-				ElseIf cFilAnt == "03"
-					cItemCta := GetMV("MV_#ITEM03",,"114")
-					
-					cCCusto  := gdFieldGet("D1_CC", nCont)
-					If AllTrim(cCCusto) $ GetMV("MV_#CCFIL3",,"6910|4103|9604|9605|9606|5121")
-						cItemCta := "112"
-					EndIf
-					If Left(AllTrim(cCCusto),1) == "7" .or. Left(AllTrim(cCCusto),2) == "97"
-						cItemCta := "111"
-					EndIf
-					If AllTrim(cCCusto) == "5131"
-						cItemCta := "113"
-					EndIf
-
-					gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
-
-				// @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
-				ElseIf AllTrim(cFilAnt) == "0B"
-					cItemCta := AllTrim(GetMV("MV_#ITACTD",,"125"))
-					gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
 				//
 
-				EndIf
+				If cEmpAnt == "01" // Adoro
 
-				/////////////////////////////////
-				// PROJETO INDUSTRIALIZAÇÃO 
-				/////////////////////////////////
-				
-				// @history ticket  11639 	- Fernando Maciei - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
-				If cEmpAnt $ GetMV("MV_#BENEMP",,"01") .and. cFilAnt $ GetMV("MV_#BENFIL",,"02")
+					If cFilAnt == "01"
+						cItemCta := GetMV("MV_#ITEM01",,"121")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-					cCFOP := AllTrim(gdFieldGet("D1_CF", nCont))
-					cTES  := gdFieldGet("D1_TES", nCont)
-					cProd := gdFieldGet("D1_COD", nCont)
+					ElseIf cFilAnt == "02"
+						cItemCta := GetMV("MV_#ITEM02",,"121")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-					// Fornecedor industrializador
-					cArm3 := Posicione("SA2",1,FWxFilial("SA2")+CA100FOR+CLOJA,"A2_LOCAL") // Armazém de retorno para consumo da rotina de controladoria
+					ElseIf cFilAnt == "04"
+						cItemCta := GetMV("MV_#ITEM04",,"112")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-					If AllTrim(SA2->A2_XTIPO) == '4' // Terceiro
+					ElseIf cFilAnt == "05"
+						cItemCta := GetMV("MV_#ITEM05",,"114")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-						// Se o armazem estiver preenchido, então operação de industrialização com fornecedores específicos
-						If !Empty(cArm3)
-							
-							gdFieldPut("D1_LOCAL",cArm3,nCont)
+					ElseIf cFilAnt == "06"
+						cItemCta := GetMV("MV_#ITEM06",,"122")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-							// Consisto código armazém
-							NNR->( dbSetOrder(1) ) // NNR_FILIAL, NNR_CODIGO, R_E_C_N_O_, D_E_L_E_T_
-							If NNR->( !dbSeek(FWxFilial("NNR")+cArm3) )
-								_lRet := .f.
-								Alert( "[MT100TOK-32] - CFOP de retonro Armazém de retorno de insumos não cadastrado! Verifique A2_LOCAL e NNR_CODIGO..." + chr(13) + chr(10) + ;
-									"A2_LOCAL: " + cArm3 + chr(13) + chr(10) + ;
-									"NNR_CODIGO: " + NNR->NNR_CODIGO )
-								Return _lRet
-							EndIf
+					ElseIf cFilAnt == "08"
+						cItemCta := GetMV("MV_#ITEM08",,"115")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-						Else
+					ElseIf cFilAnt == "09"
+						cItemCta := GetMV("MV_#ITEM09",,"116")
+						gdFieldPut("D1_ITEMCTA",cItemCta,nCont)
 
-							_lRet := .f.
-							Alert( "[MT100TOK-31] - NF com CFOP de retorno industrialização sem armazém cadastrado! Preencha A2_LOCAL..." + chr(13) + chr(10) + ;
-									"A2_LOCAL: " + cArm3 + chr(13) + chr(10) + ;
-									"" )
-							Return _lRet
-
+					ElseIf cFilAnt == "03"
+						cItemCta := GetMV("MV_#ITEM03",,"114")
+						
+						cCCusto  := gdFieldGet("D1_CC", nCont)
+						If AllTrim(cCCusto) $ GetMV("MV_#CCFIL3",,"6910|4103|9604|9605|9606|5121")
+							cItemCta := "112"
+						EndIf
+						If Left(AllTrim(cCCusto),1) == "7" .or. Left(AllTrim(cCCusto),2) == "97"
+							cItemCta := "111"
+						EndIf
+						If AllTrim(cCCusto) == "5131"
+							cItemCta := "113"
 						EndIf
 
-						// CFOPs retorno insumos
-						If cCFOP $ GetMV("MV_#BENCFO",,"1902#2902#1903#2903#1925#2925#")
+						gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
 
-							SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
-							If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
+					// @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+					ElseIf AllTrim(cFilAnt) == "0B"
+						cItemCta := AllTrim(GetMV("MV_#ITACTD",,"125"))
+						gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
+					//
+
+					EndIf
+
+					/////////////////////////////////
+					// PROJETO INDUSTRIALIZAÇÃO 
+					/////////////////////////////////
+					
+					// @history ticket  11639 	- Fernando Maciei - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+					If cEmpAnt $ GetMV("MV_#BENEMP",,"01") .and. cFilAnt $ GetMV("MV_#BENFIL",,"02")
+
+						cCFOP := AllTrim(gdFieldGet("D1_CF", nCont))
+						cTES  := gdFieldGet("D1_TES", nCont)
+						cProd := gdFieldGet("D1_COD", nCont)
+
+						// Fornecedor industrializador
+						cArm3 := Posicione("SA2",1,FWxFilial("SA2")+CA100FOR+CLOJA,"A2_LOCAL") // Armazém de retorno para consumo da rotina de controladoria
+
+						If AllTrim(SA2->A2_XTIPO) == '4' // Terceiro
+
+							// Se o armazem estiver preenchido, então operação de industrialização com fornecedores específicos
+							If !Empty(cArm3)
 								
-								// Insumos tem que controlar estoque próprio e ser retorno terceiro
-								If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) <> "D"
+								gdFieldPut("D1_LOCAL",cArm3,nCont)
+
+								// Consisto código armazém
+								NNR->( dbSetOrder(1) ) // NNR_FILIAL, NNR_CODIGO, R_E_C_N_O_, D_E_L_E_T_
+								If NNR->( !dbSeek(FWxFilial("NNR")+cArm3) )
 									_lRet := .f.
-									Alert( "[MT100TOK-30] - Fornecedor " + CA100FOR + ", CFOP " + cCFOP + " tem que atualizar estoque próprio e controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
-											"TES: " + SF4->F4_CODIGO )
+									Alert( "[MT100TOK-32] - CFOP de retonro Armazém de retorno de insumos não cadastrado! Verifique A2_LOCAL e NNR_CODIGO..." + chr(13) + chr(10) + ;
+										"A2_LOCAL: " + cArm3 + chr(13) + chr(10) + ;
+										"NNR_CODIGO: " + NNR->NNR_CODIGO )
 									Return _lRet
 								EndIf
 
+							Else
+
+								_lRet := .f.
+								Alert( "[MT100TOK-31] - NF com CFOP de retorno industrialização sem armazém cadastrado! Preencha A2_LOCAL..." + chr(13) + chr(10) + ;
+										"A2_LOCAL: " + cArm3 + chr(13) + chr(10) + ;
+										"" )
+								Return _lRet
+
 							EndIf
 
-						EndIf
+							// CFOPs retorno insumos
+							If cCFOP $ GetMV("MV_#BENCFO",,"1902#2902#1903#2903#1925#2925#")
 
-						// Exceção - Para o CFOP 1125 (pois são utilizados demais produtos que não podem poluir armazém de retorno)
-						If cCFOP $ GetMV("MV_#BENCFE",,"1125#")
-
-							SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
-							If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
-								
-								// TES 14B = CFOP 1125 – Insumos adquiridos do Industrializador - Atualiza estoque e Não atualiza poder de terceiros
-								If AllTrim(cTES) $ GetMV("MV_#BENTE1",,"14B#")
-
-									If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) == "D"
+								SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
+								If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
+									
+									// Insumos tem que controlar estoque próprio e ser retorno terceiro
+									If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) <> "D"
 										_lRet := .f.
-										Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " tem que atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
+										Alert( "[MT100TOK-30] - Fornecedor " + CA100FOR + ", CFOP " + cCFOP + " tem que atualizar estoque próprio e controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
 												"TES: " + SF4->F4_CODIGO )
 										Return _lRet
 									EndIf
 
 								EndIf
 
-								// TES 13U = CFOP 1125 – Serviço de Industrialização - Não atualiza estoque / Não atualiza poder de terceiros / tipo do produto deve ser SV ou MO
-								If AllTrim(cTES) $ GetMV("MV_#BENTE2",,"13U#")
+							EndIf
 
-									If ( AllTrim(SF4->F4_ESTOQUE) <> "N" .or. AllTrim(SF4->F4_PODER3) == "D" ) .and. Posicione("SB1",1,FWxFilial("SB1")+cProd,"B1_TIPO") $ GetMV("MV_#BENPRO",,"SV#MO")
-										_lRet := .f.
-										Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " de produto Tipo SV/MO não pode atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
-												"TES: " + SF4->F4_CODIGO )
-										Return _lRet
+							// Exceção - Para o CFOP 1125 (pois são utilizados demais produtos que não podem poluir armazém de retorno)
+							If cCFOP $ GetMV("MV_#BENCFE",,"1125#")
+
+								SF4->( dbSetOrder(1) ) // F4_FILIAL + F4_CODIGO
+								If SF4->( dbSeek(FWxFilial("SF4")+cTES) )
+									
+									// TES 14B = CFOP 1125 – Insumos adquiridos do Industrializador - Atualiza estoque e Não atualiza poder de terceiros
+									If AllTrim(cTES) $ GetMV("MV_#BENTE1",,"14B#")
+
+										If AllTrim(SF4->F4_ESTOQUE) <> "S" .or. AllTrim(SF4->F4_PODER3) == "D"
+											_lRet := .f.
+											Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " tem que atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
+													"TES: " + SF4->F4_CODIGO )
+											Return _lRet
+										EndIf
+
+									EndIf
+
+									// TES 13U = CFOP 1125 – Serviço de Industrialização - Não atualiza estoque / Não atualiza poder de terceiros / tipo do produto deve ser SV ou MO
+									If AllTrim(cTES) $ GetMV("MV_#BENTE2",,"13U#")
+
+										If ( AllTrim(SF4->F4_ESTOQUE) <> "N" .or. AllTrim(SF4->F4_PODER3) == "D" ) .and. Posicione("SB1",1,FWxFilial("SB1")+cProd,"B1_TIPO") $ GetMV("MV_#BENPRO",,"SV#MO")
+											_lRet := .f.
+											Alert( "[MT100TOK-30] - CFOP " + cCFOP + ", TES " + cTES + " de produto Tipo SV/MO não pode atualizar estoque próprio e não controlar retorno terceiro! Verifique..." + chr(13) + chr(10) + ;
+													"TES: " + SF4->F4_CODIGO )
+											Return _lRet
+										EndIf
+
 									EndIf
 
 								EndIf
@@ -242,15 +254,15 @@ User Function MT100TOK()
 						EndIf
 
 					EndIf
-
+					//
+				
 				EndIf
-				//
-			
-			EndIf
 
-		EndIf
-			
-	Next nCont
+			EndIf
+				
+		Next nCont
+
+	EndIf
 
 	//@history ticket  6652   - Fernando Macie- 18/01/2021 - Projeto 0022003001 - Revitalização Posto de Combustível, o pedido 401511 consumiu o valor do projeto e o fiscal não esta conseguindo lançar Nota fiscal  (Mensagem projeto com saldo insuficiente)
 	// Consisto Vlr e Qtd da NF + PC para evitar erros operacionais que podem negativar um projeto de investimento
@@ -1098,4 +1110,66 @@ Static Function ChkPrjPCNF(cPCPrj, cPCItem)
 
 	RestArea( aAreaSC7 )
 
+Return lRet
+
+/*/{Protheus.doc} Static Function ChkVenctos()
+	Checa vencimentos para impedir que os títulos sejam incluídos vencidos
+	Aberto chamado na TOTVS N. 14460935 solicitando um PE para consistir o acols da aba Duplicatas
+	@type  Static Function
+	@author FWNM
+	@since 06/06/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	// @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+/*/
+Static Function ChkVenctos()
+
+	Local lRet     := .t.
+	Local aChkVenc := {}
+	Local lFin     := .f.
+	Local i, cTES
+
+	// Checo se existe algum TES que gere financeiro pois então deverá consistir a aba duplicatas
+	For i:=1 to Len(aCols)
+
+		If !gdDeleted(i)
+
+			cTES    := gdFieldGet("D1_TES", i)
+			lFin := Posicione("SF4",1,FWxFilial("SF4")+cTES,"F4_DUPLIC") == "S"
+
+			If lFin
+				Exit
+			EndIf
+
+		EndIf
+
+	Next
+
+	If lFin
+
+		// Consisto de acordo com condição informada (sem considerar o que o usuário possivelmente pode ter digitado/alterado)
+		aChkVenc := Condicao(0.99,cCondicao,,dDataBase)
+		If Len(aChkVenc) > 0 
+			If aChkVenc[1,1] <= msDate()
+				lRet := .f.
+				Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
+				Return lRet
+			EndIf
+		EndIf
+
+		// Consisto apenas uma data alterada/informada pelo usuário pois o padrão não fornece outra maneira
+		If !Empty(dNewVenc)
+			If dNewVenc <= msDate()
+				lRet := .f.
+				Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
+				Return lRet
+			EndIf
+		EndIf
+	
+	EndIf
+	
 Return lRet
