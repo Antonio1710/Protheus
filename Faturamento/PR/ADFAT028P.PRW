@@ -293,8 +293,6 @@ WsMethod Put WsService barramento
 
     Self:SetContentType("application/json")
 
-    Sleep(Random(0, 7)*1000) //Everson - 06/06/2022.
-
     lRet := U_ADFAT28C(aParametros, @aRetErro)
 
     If ! lRet .Or. Len(aRetErro) > 0
@@ -329,6 +327,8 @@ User Function ADFAT28C(aParametros, aRetErro)
     EndIf
 
     cUuid := Alltrim(cValToChar(aParametros[2]))
+    
+    Sleep(Random(0, 7)*1000) //Everson - 06/06/2022.
 
     If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
         Aadd(aRetErro, {400, cMsgError})
