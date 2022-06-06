@@ -23,7 +23,7 @@
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 	@history Ticket 69574   - Sigoli   - 26/05/2022 - Projeto FAI - correção error log -variable does not exist CFILAN on U_ALTSFEXP
-	
+	@history Ticket 18465   - Everson  - 06/06/2022 - Adicionada rotina para alteração de placa na filial 03.
 /*/
 User function MA410MNU()
 
@@ -38,6 +38,12 @@ User function MA410MNU()
 	aadd( aRotina, { "Altera SF"      , "U_AltSfExp()" ,0,10})	//Everson - 22/03/2018. Chamado 037261.
  //   aAdd( aRotina, { 'Registra Bol Bradesco WS'     , "u_BolBrad()" , 0, 5 }) // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 16/04/2020 // chamado TI     - FWNM     - 05/08/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
     aAdd( aRotina, { 'Imprime PDF Bol Bradesco WS'  , "u_RunHCRFB()", 0, 6 }) // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 16/04/2020
+
+	//Everson - 06/06/2022. Chamado 18465.
+	If cFilAnt == "03"
+		aadd( aRotina, { "Altera Placa"      , "U_altPlSC5()" ,0,11})
+
+	EndIf
 
 	RestArea(aArea)
 
@@ -89,6 +95,8 @@ User Function pedSfExp()
 	oCanc   := TButton():New(126,075,"Cancelar",oTelMenu,{|| oTelMenu:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
 
 	oTelMenu:Activate(,,,.T.,{||.T.},,{||  })
+
+	RestArea(aArea)
 
 Return Nil
 
@@ -263,3 +271,104 @@ Static Function RESTEXECUTE()
 	RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} altPlSC5
+	Altera placa do pedido de venda.
+	Chamado 18465.
+	@type  Static Function
+	@author Everson
+	@since 06/06/2022
+	@version 1
+/*/
+User Function altPlSC5()
+
+	//Variáveis.
+	Local aArea := GetArea()
+	Local lRet  := .F.
+
+	//Valida filial.
+	If SC5->C5_FILIAL <> "03"
+		MsgInfo("Filial inválida.", "Função altPlSC5(MA410MNU)")
+		RestArea(aArea)
+		Return .F.
+
+	EndIf
+
+	//Valida nota fiscal.
+	If ! Empty(SC5->C5_NOTA)
+		MsgInfo("Pedido já possui nota fiscal vinculada.", "Função altPlSC5(MA410MNU)")
+		RestArea(aArea)
+		Return .F.
+
+	EndIf
+
+	//Valida se é pedido de saída vinculado a ordem de pesagem de ração.
+	If ! Empty(SC5->C5_XORDPES)
+		MsgInfo("Somente pedido vinculado à ordem de pesagem de saída pode ter a placa alterada.", "Função altPlSC5(MA410MNU)")
+		RestArea(aArea)
+		Return .F.
+
+	EndIf	
+
+	//Valida se há ordem/ticket de pesagem vinculado.
+	If ! U_ADFAT41A(SC5->C5_NUM, .T.)
+		RestArea(aArea)
+		Return .F.
+
+	EndIf
+
+	If ! Pergunte("MA410MNU", .T.)
+		RestArea(aArea)
+		Return .F.
+
+	EndIf
+
+	If Empty(MV_PAR01)
+		MsgInfo("É necessário informar a placa.", "Função altPlSC5(MA410MNU)")
+		RestArea(aArea)
+		Return .F.
+
+	EndIf
+
+	DbSelectArea("SC6")
+	SC6->(DbSetOrder(1))
+	SC6->(DbGoTop())
+
+	DbSelectArea("SC9")
+	SC9->(DbSetOrder(1))
+	SC9->(DbGoTop())
+
+	Begin Transaction
+
+		If SC9->( DbSeek( FWxFilial("SC9") + SC5->C5_NUM ) )
+
+			While ! SC9->(Eof()) .And. SC9->C9_FILIAL == FWxFilial("SC9") .And. SC9->C9_PEDIDO == SC5->C5_NUM
+
+				RecLock("SC9", .F.)
+					SC9->C9_PLACA := MV_PAR01
+				SC9->(MsUnLock())
+
+				SC9->(DbSkip())
+
+			End
+
+		EndIf
+
+		RecLock("SC5", .F.)
+			SC5->C5_PLACA = MV_PAR01
+		SC5->(MsUnlock())
+
+		u_GrLogZBE(msDate(),TIME(),cUserName," ALTERACAO PLACA","FATURAMENTO","MA410MNU",;
+		"Placa do pedido " + cValToChar(SC5->C5_NUM) + " alterada para " + cValToChar(MV_PAR01) + ".",ComputerName(),LogUserName())
+
+		lRet := .T.
+
+	End Transaction
+
+	If lRet
+		MsgInfo("Placa do pedido " + cValToChar(SC5->C5_NUM) + " alterada para " + cValToChar(MV_PAR01) + ".", "Função altPlSC5(MA410MNU)")
+
+	EndIf
+
+	RestArea(aArea)
+
+Return lRet
