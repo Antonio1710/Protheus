@@ -7,11 +7,12 @@
 	@author Ana Helena
 	@since 30/01/2014
 	@version 01
-	@history Chamado 056380 - William Costa - 09/03/2020 - Ajustado regra para não faturar pedido que data de entrega seja menor que a data de hoje
-	@history Chamado T.I    - William Costa - 11/03/2020 - Retirado codigo do chamado anterior para trocar a data de entrega conforme solicitação do fernando.
-	@history Chamado 056247 - FWNM          - 09/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
-	@history Tkt -   T.I    - SIGOLI        - 24/09/2021 - Alterado para validar se o pedido antecipadp foi liberado manualmente C5_XWSPAGO  "S|M" 
-	@history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
+	@history Chamado 056380 - William Costa     - 09/03/2020 - Ajustado regra para não faturar pedido que data de entrega seja menor que a data de hoje
+	@history Chamado T.I    - William Costa     - 11/03/2020 - Retirado codigo do chamado anterior para trocar a data de entrega conforme solicitação do fernando.
+	@history Chamado 056247 - FWNM              - 09/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+	@history Tkt -   T.I    - SIGOLI            - 24/09/2021 - Alterado para validar se o pedido antecipadp foi liberado manualmente C5_XWSPAGO  "S|M" 
+	@history Ticket 69574   - Abel Babini       - 21/03/2022 - Projeto FAI
+	@history ticket 71027   - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 /*/	
 User Function M410PVNF()
                                   
@@ -23,6 +24,8 @@ User Function M410PVNF()
 	Local _aAreaSC5	:=SC5->(GetArea())
 	Local _aAreaSC6	:=SC6->(GetArea())
 	Local _aAreaSA1	:=SA1->(GetArea())
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	// Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 09/04/2020
 	FIE->( dbSetOrder(1) ) // FIE_FILIAL, FIE_CART, FIE_PEDIDO
@@ -81,7 +84,8 @@ User Function M410PVNF()
 		Endif	
 	Endif
 
-	If !(cEmpAnt == "01" .And. cFilAnt = "02")
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	If !(Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF)
 		lRet := .T.
 	Endif
 	

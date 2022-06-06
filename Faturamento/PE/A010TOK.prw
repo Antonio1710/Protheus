@@ -26,6 +26,7 @@
 	@history Chamado T.I. - Everson - 29/11/2019. Tratamento para enviar produto para aprovação, mediante consulta o Edata.
 	@history Chamado T.I. - Everson - 11/12/2019. Chamado 053902, adicionado tratamento no script sql.
 	@history Chamado 17407 - Leonardo P. Monteiro - 26/07/2021. - Adição de validação na confirmação do produto para checar se existe outro código EAN vinculado a outro produto.
+	@history Ticket 69574 - Abel Babini           - 25/04/2022 - Projeto FAI
 	/*/
 User Function A010TOK()  
 
@@ -299,7 +300,8 @@ User Function A10_02(cCodPrd)
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea		:=  GetArea()
 	Local cQuery 	:= ""
-
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	
 	//
 	cQuery := ""
 	cQuery += " SELECT " 
@@ -314,12 +316,12 @@ User Function A10_02(cCodPrd)
 	cQuery += " ISNULL(GN_DESCETIQLINH2DEFIMATEEMBA,'')  +' '+   " //Everson - 11/12/2019 - Chamado 053902.
 	cQuery += " ISNULL(GN_DESCETIQLINH3DEFIMATEEMBA,'') AS CCAD_MATERIAIS_EMBALAGEM   " //Everson - 11/12/2019 - Chamado 053902.
 	cQuery += " FROM   " 
-	cQuery += " [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] MED   " 
+	cQuery += " ["+cLnkSrv+"].[SMART].[dbo].[MATERIAL_EMBALAGEM_DEFINICAO] MED   " 
 	cQuery += " JOIN   " 
-	cQuery += " [LNKMIMS].[SMART].[dbo].[MATERIAL_EMBALAGEM_FILIAL] MEF  " 
+	cQuery += " ["+cLnkSrv+"].[SMART].[dbo].[MATERIAL_EMBALAGEM_FILIAL] MEF  " 
 	cQuery += " ON MED.ID_DEFIMATEEMBA = MEF.ID_DEFIMATEEMBA   " 
 	cQuery += " JOIN   " 
-	cQuery += " [LNKMIMS].[SMART].[dbo].[MATERIAL] MA  " 
+	cQuery += " ["+cLnkSrv+"].[SMART].[dbo].[MATERIAL] MA  " 
 	cQuery += " ON MA.ID_MATERIAL = MED.ID_MATERIAL   " 
 	cQuery += " WHERE  MEF.FILIAL = 2   " 
 	cQuery += " AND MED.IE_DEFIMATEEMBA ='" + cValToChar(cCodPrd) + "'  " 
@@ -348,13 +350,13 @@ User Function A10_01(cCodPrd,cOper,cOp)
 	Local lRet 		:= .T.
 	Local cExec 	:= ""
 	Local aResult 	:= Nil
-
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	Default cOp		:= ""
 
 	//
 	Conout( DToC(Date()) + " " + Time() + " A0110TOK - A10_01 - cCodPrd/cOper - " + cCodPrd + "/" + cOper)
 
-	cExec := "EXEC [LNKMIMS].[SMART].[dbo].[ADPRODUTO] '"+cCodPrd+"','"+cOper+"';"
+	cExec := "EXEC ["+cLnkSrv+"].[SMART].[dbo].[ADPRODUTO] '"+cCodPrd+"','"+cOper+"';"
 
 	Conout( DToC(Date()) + " " + Time() + " A010TOK - A10_01 - cExec " + cExec)
 

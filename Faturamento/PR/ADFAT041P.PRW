@@ -11,6 +11,7 @@
 	@author Everson
 	@since 11/03/2022
 	@version 01
+	@history Everson, 27/05/2022. Ticket 18465. Tratamento para não faturar pedido com bloqueio de corte e previnir exclusão de pedido com ordem de pesagem com ticket de pesagem.
 /*/
 User Function ADFAT041P()
 
@@ -341,7 +342,13 @@ Static Function exclPedido(cNum)
 
 	//Variáveis.
 	Local aArea		:= GetArea()
-	Local lRet		:= .F.	
+	Local lRet		:= .F.
+
+	If ! U_ADFAT41A(cNum)
+		RestArea(aArea)
+		Return .F.
+
+	EndIf	
 	
 	If ! MsgYesNo("Deseja excluir o pedido de venda " + cNum + ".","Função exclPedido(ADFAT041P)")
 		RestArea(aArea)
@@ -760,6 +767,7 @@ Static Function emitNfGrp(cPedProth)
 		cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
 		cQuery += " AND C5_EMISSAO >= '" + DToS(dDataIni) + "' " 
 		cQuery += " AND C5_NOTA = '' " 
+		cQuery += " AND C5_XLIBSAG <> '1' " 
 		cQuery += " AND ( C5_XORDPES <> '' OR  C6_XORDPES <> '' ) AND C5_PEDSAG = '' " 
 
 		If ! Empty(cPlaca)
@@ -1504,3 +1512,69 @@ Static Function xLibEst()
 	RestArea(aAreaSC9)
 
 Return Nil
+/*/{Protheus.doc} ADFAT41A
+	Validação de exclusão de pedido de saída com ordem de pesagem vinculada.
+	Chamado 18465.
+	@type  User Function
+	@author Everson
+	@since 27/05/2022
+	@version 01
+/*/
+User Function ADFAT41A(cNumPed, lVldPed)
+
+	//Variáveis.
+	Local aArea  := GetArea()
+	Local lRet	 := .T.
+	Local cQuery := ""
+
+	Default lVldPed := .F.
+
+	cQuery += " SELECT  " 
+	cQuery += " C6_XORDPES " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 " 
+	cQuery += " WHERE " 
+	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "' " 
+	cQuery += " AND C6_NUM = '" + cNumPed + "' " 
+	cQuery += " AND C6_XORDPES <> '' " 
+	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+	cQuery += " ORDER BY C6_XORDPES "
+
+	If Select("D_VLDORD") > 0
+		D_VLDORD->(DbCloseArea())
+
+	EndIf 
+
+	TcQuery cQuery New Alias "D_VLDORD"
+	DbSelectArea("D_VLDORD")
+	D_VLDORD->(DbGoTop())
+
+	DbSelectArea("ZIG")
+	ZIG->(DbSetOrder(2))
+	ZIG->(DbGoTop())
+
+	While ! D_VLDORD->(Eof())
+
+		If lVldPed
+			lRet := .F.
+			MsgStop("Já há a ordem de pesagem " + cValToChar(D_VLDORD->C6_XORDPES) + " vinculada ao pedido.","Função ADFAT41A(ADFAT041P)")
+			Exit
+
+		EndIf
+
+		If ZIG->( DbSeek( FWxFilial("ZIG") + D_VLDORD->C6_XORDPES ) )
+			lRet := .F.
+			MsgStop("Pedido está vinculado a ticket de pesagem.","Função ADFAT41A(ADFAT041P)")
+			Exit
+
+		EndIf
+
+		D_VLDORD->(DbSkip())
+
+	End
+
+	D_VLDORD->(DbCloseArea())
+
+	RestArea(aArea)
+	
+Return lRet 

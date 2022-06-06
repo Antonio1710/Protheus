@@ -10,6 +10,7 @@
 	@since 31/07/2019
 	@version 01
 	@history Everson, 15/06/2020, Chamado 058936. Correção do error log por falta de declaração da variável.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADLOG059R() // U_ADLOG059R()
 
@@ -108,7 +109,9 @@ Static Function processa()
 		//
 		IncProc() 
 		
-		cMsgStatus := StaticCall(ADLOG057P,tlbStatus,Alltrim(D_DOCEM->ZFK_STATUS),1)
+		//cMsgStatus := Static Call(ADLOG057P,tlbStatus,Alltrim(D_DOCEM->ZFK_STATUS),1)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		cMsgStatus := u_LOG057A4( Alltrim(D_DOCEM->ZFK_STATUS),1 )
 		
 		//
 		cLin += Alltrim(D_DOCEM->ZFK_FILIAL) + ";"	

@@ -19,6 +19,7 @@
 	@history Abel Babini   - 22/11/2019 - 040922 || OS 042030 || FISCAL || DEJAIME || 8921 || RE. NF EMITIDAS
 	@history William Costa - 01/04/2020 - 057050 || OS 058523 || ALMOXARIFADO || FABIO || 8410 || SALDO ESTOQUE
 	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 /*/
 
 User Function M410LIOK()
@@ -74,7 +75,8 @@ User Function M410LIOK()
 	Local nLocaliz := 0
 	Local i			:= 1
 	Local nTotCol	:= 0
-	
+	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B")//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+
 	Private lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE'))
 
 	//Conout( DToC(Date()) + " " + Time() + " M410LIOK >>> INICIO PE" )
@@ -307,8 +309,8 @@ User Function M410LIOK()
 
 	// Alterado para verificar se existe produto igual no mesmo pedido 
 	// Alteracao feita pela HCCONSYS EM 15/01/09 
-
-	If !lSfInt .And. M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. (cfilant $ "02/06/07")  // Valido somente para empresa Adoro filial Varzea    //incluida filial 07 em 13/08/14
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	If !lSfInt .And. M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. (Alltrim(cfilant) $ cFilRN)  // Valido somente para empresa Adoro filial Varzea    //incluida filial 07 em 13/08/14
 
 		For _n := 1 to Len(aCols)
 			If !aCols[_N,Len(aCols[_N])]
@@ -346,7 +348,7 @@ User Function M410LIOK()
 				IF (!DBSEEK( XFILIAL("DA1") + M->C5_TABELA + _Produto )  .OR. EMPTY(M->C5_TABELA)) .AND. !EMPTY(_Produto)
 					DBSELECTAREA("SA3")
 					DBSETORDER(7)
-					IF DBSEEK (XFILIAL()+__CUSERID) .AND. cfilant $ "02/06/07" //incluida filial 07 em 13/08/14
+					IF DBSEEK (XFILIAL()+__CUSERID) .AND. Alltrim(cfilant) $ cFilRN //incluida filial 07 em 13/08/14
 						IF IsInCallStack('U_ADVEN002P')  == .T.
 							Aadd(aPedidos,{cchave, ;
 							''    , ;
@@ -381,7 +383,7 @@ User Function M410LIOK()
 	// Em 13/08/09 incluido tratamento de ST para RS, igual ao efetuado para MG, inclusive utilizando as mesmas TES do parametro(Valeria). 
 	// Em 10/03/10 alterado para considerar tambem a filial 06 - Itupeva - Leonardo (HC)
 	//If M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. cfilant == "02"  
-	If M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. (cfilant $ "02/06/07")//Valido para empresa Adoro filial Varzea/Itupeva //incluida filial 07 em 13/08/14
+	If M->C5_TIPO  == "N" .and. SM0->M0_CODIGO == "01"  .AND. (Alltrim(cfilant) $ cFilRN)//Valido para empresa Adoro filial Varzea/Itupeva //incluida filial 07 em 13/08/14
 		_cMVTESMG := GETMV("MV_STTSMG")
 		_cMVTESRS := GETMV("MV_STTSRS")
 		If M->C5_TIPO $ "B/D"   

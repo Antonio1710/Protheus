@@ -14,6 +14,7 @@
    @history Ticket  8      - Abel Babini   - 01/02/2022 - Ajuste de variáveis
    @history Ticket 69699   - Abel Babini   - 14/03/2022 - Correção ErrorLog 
    @history Ticket 69816   - Abel Babini   - 15/03/2022 - Correção ErrorLog 
+   @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 */   
 User Function ADFIN024P()
 
@@ -392,7 +393,9 @@ User Function ADFIN024P()
                            aPerPgt	:= {}
                            
                            //Carrega Perfil de Pagamento
-                           aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI) //01/02/2022 - Ajuste de Variáveis
+                           //aPerPgt 	:= Static Call(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI) //01/02/2022 - Ajuste de Variáveis
+                           //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+							      aPerPgt 	:= u_FIN103A0( SC5->C5_CLIENTE, SC5->C5_LOJACLI )
                            IF ValType(aPerPgt) = 'A' 
                               cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
                               nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])

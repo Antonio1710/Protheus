@@ -15,8 +15,9 @@
 	@history Chamado 056381 - William Costa - 17/03/2020 - Adicionado log em todos os reclock do campo ZF_LCREDE para descobrir seu valor antes e depois 
 	@history Chamado 056247 - FWNM          - 24/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history Chamado 059415 - FWNM          - 12/08/2020 - || OS 060907 || FINANCAS || WAGNER || 11940283101 || WS BRADESCO - Desfazer consistências por indefinições de implantação
-	@history ticket 102 - FWNM - 26/08/2020 - WS BRADESCO 
-	@history ticket 102 - FWNM - 27/08/2020 - WS BRADESCO 
+	@history ticket 102     - FWNM          - 26/08/2020 - WS BRADESCO 
+	@history ticket 102     - FWNM          - 27/08/2020 - WS BRADESCO 
+	@history Ticket 69574   - Abel Babini   - 25/04/2022 - Projeto FAI
 /*/	
 User Function ADFIN006P()
 
@@ -36,6 +37,8 @@ User Function ADFIN006P()
 	Local _cQry     := ""
 	local _nOpc := 0
 	Local cPedidos := ""
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Adiciona rotina no menu de analise de credito')
 
@@ -844,7 +847,8 @@ User Function ADFIN006P()
 			DbSelectArea("TSC9")                                                                                                         
 			
 			//Everson - 02/03/2018. Chamado 037261. SalesForce.
-			If cEmpAnt == "01" .And. cFilAnt == "02" .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P") .And. _nOpc == 4
+			//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+			If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P") .And. _nOpc == 4
 				
 				If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 				
@@ -1452,6 +1456,8 @@ Return()
 Static function fexctodos()
 
 	Local cPedidos := "" //Everson - 02/03/2018. Chamado 037261. SalesForce.
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	IF len(_aExclui) > 0
 
@@ -1463,7 +1469,8 @@ Static function fexctodos()
 		Next _zz
 		
 		//Everson - 02/03/2018. Chamado 037261. SalesForce.
-		If cEmpAnt == "01" .And. cFilAnt == "02" .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P")
+		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+		If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. ! Empty(cPedidos) .And. Findfunction("U_ADVEN050P")
 			
 			If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 				

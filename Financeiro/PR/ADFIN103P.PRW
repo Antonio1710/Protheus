@@ -7,6 +7,7 @@
   @history Ticket 8      - Abel Babini - 02/02/2021 - Criação de Rotina para cálculo da média de atraso e Perfil de Pagamento
   @history Ticket 8      - Abel Babini - 07/02/2021 - Correção no cálculo do Perfil de Pagamento. Retirando campo filial das cláusulas WHERE
   @history Ticket 8      - Abel Babini - 14/06/2021 - Correção no cálculo do Perfil de Pagamento para considerar redes no calculo de Inatividade e/ou NDA
+  @history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIN103P()
     //Inicia o ambiente. 
@@ -151,7 +152,9 @@ Static Function fCalcAtr(cCodCli, cLojCli)
   aRet[1] := 0    //Média de Atraso
   aRet[2] := ''   //Perfil de Pagamento
 
-  aRetRede := StaticCall(M410STTS,fRetClRd,cCodCli,cLojCli)
+  //aRetRede := Static Call(M410STTS,fRetClRd,cCodCli,cLojCli)
+  //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+  u_10STTSA2(cCodCli,cLojCli)
 	_cCdClIn	:= '%'+FormatIn(aRetRede[1],",")+'%'
 
   
@@ -452,3 +455,14 @@ Static Function fMedPgt(cCodCli, cLojCli)
   (cAlsMPgt)->(dbCloseArea())
 
 Return aRet
+
+/*/{Protheus.doc} u_FIN103A0
+//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN103A0( uPar1, uPar2 )
+Return( fMedPgt( uPar1, uPar2 ) )

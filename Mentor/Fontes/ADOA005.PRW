@@ -56,6 +56,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar".
 	@history Tickets 13526  - Everson - 14/10/2021 - Tratamento para gravar a relação A1_XTPDESC x PB3_XTPDES.
 	@history Tickets TI  - Leonardo P. Monteiro - 29/10/2021 - Tratamento de error.log gerado por caracter especial informado no código do produto e razão social.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -8295,3 +8296,14 @@ Static Function UpAudit()
     EndIf
 
 Return cNextCod
+
+/*/{Protheus.doc} u_OA005A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_OA005A0( uPar1, uPar2 )
+Return( Adoa5Parec( uPar1, uPar2 ) )

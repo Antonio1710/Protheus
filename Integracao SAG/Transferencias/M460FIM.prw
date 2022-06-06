@@ -53,6 +53,7 @@
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
+	@history ticket 18465 - Everson           - 26/05/2022 - Tratamento para envio de nota de saída de venda vinculada a ordem de pesagem.
 /*/
 User Function M460FIM()
 
@@ -1586,7 +1587,7 @@ Static Function grvBarr(cOperacao, cNumero, cNF, cSerie)
     Local aArea     := GetArea()
 	Local cFilter	:= ""
 
-	If ! chkOrd(cNF, cSerie)
+	If ! chkOrd(cNF, cSerie) .And. ! vldOrdSa(cNF, cSerie)
 		RestArea(aArea)
 		Return Nil
 		
@@ -1665,4 +1666,55 @@ Static Function chkOrd(cNF, cSerie)
 
 	RestArea(aArea)
 
+Return lRet
+/*/{Protheus.doc} vldOrdSa
+	Validação de exclusão de pedido de saída com ordem de pesagem vinculada.
+	Chamado 18465.
+	@type  Static Function
+	@author user
+	@since 26/05/2022
+	@version 01
+/*/
+Static Function vldOrdSa(cNF, cSerie)
+
+	//Variáveis.
+	Local aArea  := GetArea()
+	Local lRet	 := .F.
+	Local cQuery := ""
+
+	cQuery += " SELECT  " 
+	cQuery += " C6_XORDPES " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 " 
+	cQuery += " WHERE " 
+	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "' " 
+	cQuery += " AND C6_NOTA = '" + cNF + "' " 
+	cQuery += " AND C6_SERIE = '" + cSerie + "' " 
+	cQuery += " AND C6_XORDPES <> '' " 
+	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+	cQuery += " ORDER BY C6_XORDPES "
+
+	If Select("D_VLDORD") > 0
+		D_VLDORD->(DbCloseArea())
+
+	EndIf 
+
+	TcQuery cQuery New Alias "D_VLDORD"
+	DbSelectArea("D_VLDORD")
+	D_VLDORD->(DbGoTop())
+
+	DbSelectArea("ZIG")
+	ZIG->(DbSetOrder(2))
+	ZIG->(DbGoTop())
+
+	If ! D_VLDORD->(Eof())
+
+		lRet := .T.
+
+	EndIf
+
+	D_VLDORD->(DbCloseArea())
+
+	RestArea(aArea)
+	
 Return lRet

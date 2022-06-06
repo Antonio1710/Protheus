@@ -14,6 +14,7 @@
 	@history Chamado 051619 - ABEL BABINI   - 09/09/2019 - SPED PIS COFINS
 	@history Chamado 053754 - William Costa - 11/12/2019 - Ajuste no item contabil 112 para o produto 386914
 	@history ticket   11814 - Fernando Maci - 09/04/2021 - Verificar Regra de Centro de Custo
+	@history Ticket 69574   - Abel Babini   - 25/04/2022 - Projeto FAI
 /*/
 
 User Function MSD2460()
@@ -310,6 +311,8 @@ Static Function UpCtb()
 				cItemCC:="112"
 			CASE 	SD2->D2_FILIAL = "03" .AND. SB1->B1_XCATEG = "54"
 				cItemCC:= "114"
+			CASE 	SD2->D2_FILIAL = AllTrim(GetMV("MV_#ITAFIL",,"0B")) //Ticket 69574   - Abel Babini      - 25/04/2022 - Projeto FAI
+				cItemCC:= "125"
 			OTHERWISE
 				cItemCC:=""
 		ENDCASE

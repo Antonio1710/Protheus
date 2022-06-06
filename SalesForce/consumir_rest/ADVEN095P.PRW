@@ -859,7 +859,9 @@ User Function lifExpSF(nOpc)
 	U_ADINF009P('ADVEN095P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para cadastro de visitas e ligações.')
 	
 	//
-	StaticCall(AD0080,intEnvSF,nOpc)
+	//Static Call(AD0080,intEnvSF,nOpc)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_0080A0( nOpc )
 	
 	//
 	RestArea(aArea)
@@ -887,7 +889,9 @@ User Function lifExpLSF()
 
 	U_ADINF009P('ADVEN095P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Função para cadastro de visitas e ligações.')
 	
-	StaticCall(AD0080,ProcessarL)
+	//Static Call(AD0080,ProcessarL)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_0080A1()	
 
 	//
 	RestArea(aArea)

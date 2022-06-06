@@ -124,7 +124,10 @@ Static Function vldPos(oModel)
 
         EndIf
 
-        lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
+        If lRet .And. ! IsInCallStack("U_ADFAT049P")
+            lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
+
+        EndIf
 
     EndIf
 
@@ -188,7 +191,11 @@ Static Function vldPos(oModel)
 
         EndIf
 
-        lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
+        If lRet .And. ! IsInCallStack("U_ADFAT049P")
+
+            lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
+
+        EndIf
 
     EndIf
 

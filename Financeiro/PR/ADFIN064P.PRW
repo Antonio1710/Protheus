@@ -54,6 +54,7 @@
 	@history Ticket 44493   - Abel Babini       - 28/09/2021 - Adicionado empresa Simplify
 	@history ticket 18141   - Fernando Macieira - 27/10/2021 - RM - Acordos - Integração Protheus
 	@history ticket 67983   - Fernando Macieira - 10/02/2022 - PA CLML
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIN064P
 // Função para compilar metodos webservice
@@ -3069,3 +3070,14 @@ Static Function UpVistador(cCREMP, cCR_FILIAL, cCR_NUM)
 	RestArea( aArea )
 
 Return cGerente
+
+/*/{Protheus.doc} u_FIN064A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN064A0( uPar1 )
+Return( rmvAcento( uPar1 ) )

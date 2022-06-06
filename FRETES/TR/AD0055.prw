@@ -20,6 +20,7 @@
 	@history Everson - 12/11/2021. Chamado 63536.  Tratamento para zera km na tabela ZFD.
 	@history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 	@history Fernando Sigoli   - 29/11/2021 - Ticket 64163 - Tratamento para pedidos de exportação, nao zerar KM
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 /*/
 User Function AD0055()
@@ -106,7 +107,7 @@ Return Nil
 	@author  Advanced Protheus
 	@since 22/05/2002
 	@version 01
-	StaticCall(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
+	Static Call(AD0055,GravaPLACA,cPlaca,cCodigo,cDestino,cTipoFrt,cRoteiro,cGuia,dDataEntrega,cDescFrt,.F.,.T.)
 /*/
 Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEntr,_cDescFrt,lShowTransp,lAut,cPlcCvMec,cCCDiesel) //Everson - 10/07/2019. //Everson - 01/07/2020. Chamado 059245.
 
@@ -304,7 +305,9 @@ Static Function GravaPLACA(_cPlacPe,_cCod,_cDesti,_cTipoFrt,_cRote,_cGuia,_DtEnt
 	
 	aAreaSC5 := SC5->( GetArea() ) // @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 	If !IsInCallStack("U_IMPRDNET") .And. IsInCallStack("U_ALTEROTE") .And. !Empty(_cRote) .And. cEmpAnt == "01" .And. cFilAnt $ cFilGFrt
-		MsAguarde({|| StaticCall(ADLOG049P,recalFrt,_cPlac,_dtEntr,_cRote,cPlcCvMec) },"Aguarde","Verificando frete...")
+		//MsAguarde({|| Static Call(ADLOG049P,recalFrt,_cPlac,_dtEntr,_cRote,cPlcCvMec) },"Aguarde","Verificando frete...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsAguarde({|| u_LOG049A1(_cPlac,_dtEntr,_cRote,cPlcCvMec) },"Aguarde","Verificando frete...")
 	EndIf
 	RestArea( aAreaSC5 ) // @history Fernando Macieira - 22/11/2021 - Ticket 64172 - ADLOG056 - Ajustar troca de placa no SC5 EM LOTE
 	
@@ -996,3 +999,14 @@ Static Function PutPlaca(_cRote, _dtEntr, _cPlac, _cUFPlaca)
 	RestArea( aAreaSC5 )
 
 Return
+
+/*/{Protheus.doc} u_0055A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_0055A0( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10 )
+Return( GravaPLACA( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10 ) )

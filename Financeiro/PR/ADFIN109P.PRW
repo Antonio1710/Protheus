@@ -18,7 +18,9 @@
 	@history Ticket 8      - Abel Babini - 01/02/2022 - Ajuste nas regras de liberação de crédito
 	@history Ticket 8      - Abel Babini - 03/03/2022 - Ajuste na gravação da liberação
 	@history Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
-	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE.
+	@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 69574  - Abel Babini - 25/04/2022 - Projeto FAI
+	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE. 
 /*/
 
 User Function ADFIN109P()
@@ -296,7 +298,7 @@ Static Function fTlAprov()
 		@ aBtnPos[5],000 BUTTON OemToAnsi('Filtrar')									SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (MsAguarde({|lEnd| xReStart(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) },"Aguarde, Atualizando informações da tela","Atualizando informações...",.F.)) OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[4],000 BUTTON OemToAnsi('Pré Liberação')						SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (xPrcLbCr(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte, cRelPed) ) OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[3],000 BUTTON OemToAnsi('Monitoramento PV')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (U_ADLOG031P() ) OF oPnSt01 PIXEL //"Exportar Excel"
-		@ aBtnPos[2],000 BUTTON OemToAnsi('Analisar Pedidos')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xAnPedCl(aSize, cPedDe) ) //Everson - 25/05/2022. Chamado 73547.																																OF oPnSt01 PIXEL //"Exportar Excel"
+		@ aBtnPos[2],000 BUTTON OemToAnsi('Analisar Pedidos')					SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION ( xAnPedCl(aSize, cPedDe) ) OF oPnSt01 PIXEL //Everson - 25/05/2022. Chamado 73547.																																OF oPnSt01 PIXEL //"Exportar Excel"
 		@ aBtnPos[1],000 BUTTON OemToAnsi('Sair')											SIZE 085,nBtnAlt FONT oPnSt01:oFont ACTION (oDlgxPg:End()) 																																OF oPnSt01 PIXEL //"Exportar Excel"
 		
     //**********************************************
@@ -990,7 +992,9 @@ Static Function xGrdLib()
 	aPerPgt	:= {}
 	
 	//Carrega Perfil de Pagamento
-	aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,(cTbPed)->CODIGO, (cTbPed)->LOJA)
+	//aPerPgt 	:= Static Call(ADFIN103P,fMedPgt,(cTbPed)->CODIGO, (cTbPed)->LOJA)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	aPerPgt 	:= u_FIN103A0( (cTbPed)->CODIGO, (cTbPed)->LOJA )	
 	IF ValType(aPerPgt) = 'A' 
 		cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
 		nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])
@@ -1452,7 +1456,9 @@ Static Function xReproc(lfim, cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte,
 			Exit
 		Endif
 		MsProcTxt("Processando Varejo "+Alltrim(str(i))+ " de "+ Alltrim(str(len(aVarPed))))
-		StaticCall(M410STTS,fLibCred, aVarPed[i,2], aVarPed[i,3], aVarPed[i,4])
+		//Static Call(M410STTS,fLibCred, aVarPed[i,2], aVarPed[i,3], aVarPed[i,4])
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_10STTSA1( aVarPed[i,2], aVarPed[i,3], aVarPed[i,4] )
 	next i
 
 	for i:=1 to len(aRedPed)
@@ -1461,7 +1467,10 @@ Static Function xReproc(lfim, cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte,
 			Exit
 		Endif
 		MsProcTxt("Processando Rede "+Alltrim(str(i))+ " de "+ Alltrim(str(len(aRedPed))))
-		StaticCall(M410STTS,fLibCred, aRedPed[i,2], aRedPed[i,3], aRedPed[i,4])
+		//Static Call(M410STTS,fLibCred, aRedPed[i,2], aRedPed[i,3], aRedPed[i,4])
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_10STTSA1( aRedPed[i,2], aRedPed[i,3], aRedPed[i,4] )
+
 	next i
 	// 
 
@@ -1895,6 +1904,8 @@ Static Function xAprvPed()
 	Local lLbEst := .F.
 
 	Local i := 0 
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	Private _nQtdLiber := 0
 	Private lLiber	 := .F.
@@ -2016,7 +2027,8 @@ Static Function xAprvPed()
 							If RecLock("SC5",.F.)
 								SC5->C5_XPREAPR := "L"
 								SC5->C5_FLAGFIN := "L"
-								If Findfunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt = "02" .And. Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
+								//Ticket 69574  - Abel Babini - 25/04/2022 - Projeto FAI
+								If Findfunction("U_ADVEN050P") .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF .And. Upper(Alltrim(cValToChar(GetMv("MV_#SFATUF")))) == "S"
 									U_ADVEN050P(,.F.,.T., " AND C5_NUM IN ('" + SC5->C5_NUM + "') AND C5_XPEDSAL <> '' " ,.T.)
 								EndIf
 								SC5->(MsUnlock())
@@ -2369,8 +2381,9 @@ Static Function xRlRdSeg()
 		oTempMCli:AddIndex("01", {"TMP_COD"} )
 		oTempMCli:Create()
 
-		// StaticCall(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)
-		oPrcRlRd := MsNewProcess():New({|| StaticCall(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)  },"Aguarde a geração do relatório...","Relatório Rede Segmento",.T.)
+		// Static Call(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)
+		//oPrcRlRd := MsNewProcess():New({|| Static Call(ADFIN071R,geraRelatorio,oCobranca,oPnlFilt1,oMkRede,oMkFxPort)  },"Aguarde a geração do relatório...","Relatório Rede Segmento",.T.)
+		oPrcRlRd := MsNewProcess():New({|| u_FIN071A0(oCobranca,oPnlFilt1,oMkRede,oMkFxPort)  },"Aguarde a geração do relatório...","Relatório Rede Segmento",.T.)
 		oPrcRlRd:Activate()
 
 		oPnlFilt1:FreeChildren()
@@ -2571,8 +2584,9 @@ Return
 	/*/
 Static Function xParecer()
 	//Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
-	StaticCall(ADOA005,Adoa5Parec,(cTbPed)->CODIGO,(cTbPed)->LOJA)
-
+	//Static Call(ADOA005,Adoa5Parec,(cTbPed)->CODIGO,(cTbPed)->LOJA)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_OA005A0((cTbPed)->CODIGO,(cTbPed)->LOJA)
 Return
 
 /*/{Protheus.doc} Static Function xPrcLbCr()
@@ -2636,7 +2650,9 @@ Static Function xRpcLbCr()
 		oPrc2:IncRegua1("Registro " + StrZero( ++ nRegCnt,06) + " de " + StrZero(nCount,06))
 		// If cRdAux <> (cQryClts)->ZF_REDE .OR. (Empty(cRdAux) .AND. (cQryClts)->C5_CLIENTE+(cQryClts)->C5_LOJACLI <> cClLjAux )
 
-		StaticCall(M410STTS,fLibCred,(cQryClts)->C5_CLIENTE, (cQryClts)->C5_LOJACLI, (cQryClts)->C5_DTENTR, .F., '', (cQryClts)->C5_NUM)
+		//Static Call(M410STTS,fLibCred,(cQryClts)->C5_CLIENTE, (cQryClts)->C5_LOJACLI, (cQryClts)->C5_DTENTR, .F., '', (cQryClts)->C5_NUM)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_10STTSA1( (cQryClts)->C5_CLIENTE, (cQryClts)->C5_LOJACLI, (cQryClts)->C5_DTENTR, .F., '', (cQryClts)->C5_NUM )
 
 		// Endif
 		// cRdAux := (cQryClts)->ZF_REDE

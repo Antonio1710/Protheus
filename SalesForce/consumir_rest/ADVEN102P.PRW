@@ -86,7 +86,9 @@ User Function ADVEN102P(cObjeto,cCmpProth,aChaves,cQuery)
 	EndIf
 	
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,.F.)
 	
 	//
 	If ! lLogin
@@ -288,7 +290,9 @@ Static Function envLote(cJson,cObjeto,cChvExt,cParamBsc,aLote,lEnvLote,aResponse
 	If Len(aResponse) <= 0
 
 		//Efetura login no SalesForce.
-		lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+		//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    	lLogin := u_VEN075A1(@aResponse,@cMsg,.F.)
 		
 		//
 		If ! lLogin

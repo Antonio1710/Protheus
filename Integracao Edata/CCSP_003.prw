@@ -16,6 +16,7 @@
 	@history  08/10/2021 - Fernando Sigoli Ticket : 61334  - Comentado Begin Tran nao faz sentido essa rotina, desarmar.
 	@history chamado  62436 - Everson      - 14/10/2021 - Tratamento para verificação de conexão com Edata.
 	@history chamado  TI - Leonardo P. Monteiro - 17/10/2021 - Tratamento de error.log na chamada da função CCSP_002.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history chamado  72284 - Everson - 03/05/2022 - Tratamento para quando o registro não é flagado do lado do Protheus.
 /*/
 
@@ -1146,7 +1147,9 @@ Static Function chkEdtLk()
 	Local aArea := GetArea()
 	Local lRet	:= Nil
 
-	lRet := StaticCall(CCSP_002, chkEdtLk)
+	//lRet := Static Call(CCSP_002, chkEdtLk)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	lRet := u_SP_002A0()
 
 	//
 	RestArea(aArea)
