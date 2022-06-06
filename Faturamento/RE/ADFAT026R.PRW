@@ -1218,11 +1218,11 @@ User Function ADFAT261()
 
         lImp  := GetMv("MV_#IDATCP",,.F.)
 
-        // If ! lImp
-        //     RestArea(aArea)
-        //     Return .F.
+        If ! lImp
+            RestArea(aArea)
+            Return .F.
 
-        // EndIf
+        EndIf
 
         cQuery := ""
         cQuery += " SELECT " 
