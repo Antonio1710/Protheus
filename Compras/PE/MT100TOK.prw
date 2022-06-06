@@ -137,6 +137,10 @@ User Function MT100TOK()
 					If AllTrim(cCCusto) == "5131"
 						cItemCta := "113"
 					EndIf
+					// @history ticket 72027   - Antonio Domingos - 06/06/2022 - Item contábil Centro 5318 retornar Item Contabil 111
+					If AllTrim(cCCusto) == "5318"
+						cItemCta := "111"
+					EndIf
 
 					gdFieldPut("D1_ITEMCTA", cItemCta, nCont)
 
