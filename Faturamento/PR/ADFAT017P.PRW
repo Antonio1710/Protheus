@@ -6956,6 +6956,7 @@ Static Function gerPeAut(cNmOrdem)
 
     gerPedS(ZIF->ZIF_CTPATI, .T.)
 
+
     RestArea(aArea)
 
 Return Nil
