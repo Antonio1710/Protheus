@@ -3,6 +3,7 @@
 #INCLUDE "TBICONN.CH"
 #Include 'TOTVS.ch'
 #INCLUDE "topconn.ch"
+ #define CRLF Chr(13)+Chr(10)
 /*/{Protheus.doc} ADMNT012R - Relatorio de Custo por OS / Eqto Exporta Excel
 )
     @type  Function
@@ -18,6 +19,8 @@
     @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Compatibilizado o relatório para ser envia por email através de Schedule
     @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Incluído a coluna ST1.T1_NOME no relatório
     @Ticket 13242, Data 02/06/2021, DENIS GUEDES, Incluído funcionalidade para copiar a planilha gerada para a pasta "Relatorio"
+    @Ticket 69385, Data 25/04/2022, Everson     , Inclusão de OS em SS.
+    @Ticket 69385, dATA 03/062022, Antonio Domingos, otimização da Query
 /*/
 
 User Function ADMNT012R(aParam)
@@ -76,6 +79,9 @@ Static Function Executa(oProcess)
 Local cQry      := ""
 Local cAlias    := GetNextAlias()
 Local cBem      := ""
+Local cHrTot    := ""
+Local cCodExec  := ""
+Local cNmExec   := ""
 
 Private oExcel  	:= FwMsExcel():New()
 Private dDataIni	
@@ -132,53 +138,150 @@ oExcel:AddColumn("SS","RelaSS","DESCATIV"       ,1,1)
 oExcel:AddColumn("SS","RelaSS","TECNICO"        ,1,1)
 
 
-cQry    := " SELECT DISTINCT"
-cQry    += " TQB_FILIAL,"
-cQry    += " TQB_SOLICI,"
-cQry    += " TQB_TIPOSS,"
-cQry    += " TQB_CODBEM,"
-cQry    += " TQB_CCUSTO,"
-cQry    += " TQB_CENTRA,"
-cQry    += " TQB_DTABER,"
-cQry    += " TQB_HOABER,"
-cQry    += " TQB_DTFECH,"
-cQry    += " TQB_HOFECH,"
-cQry    += " TQB_ORDEM,"
-cQry    += " TQB_TEMPO,"
-cQry    += " TQB_CDSOLI,"
-cQry    += " TQB_CDEXEC,"
-cQry    += " TQ4_NMEXEC,"
+cQry    := " SELECT DISTINCT"+CRLF
+cQry    += " TQB_FILIAL,"+CRLF
+cQry    += " TQB_SOLICI,"+CRLF
+cQry    += " TQB_TIPOSS,"+CRLF
+cQry    += " TQB_CODBEM,"+CRLF
+cQry    += " TQB_CCUSTO,"+CRLF
+cQry    += " TQB_CENTRA,"+CRLF
+cQry    += " TQB_DTABER,"+CRLF
+cQry    += " TQB_HOABER,"+CRLF
+cQry    += " TQB_DTFECH,"+CRLF
+cQry    += " TQB_HOFECH,"+CRLF
+cQry    += " TQB_ORDEM,"+CRLF
+cQry    += " TQB_TEMPO,"+CRLF
+cQry    += " TQB_CDSOLI,"+CRLF
+cQry    += " TQB_CDEXEC,"+CRLF
+cQry    += " TQ4_NMEXEC,"+CRLF
 //@Ticket 11502, Data 05/04/2021, Leonardo P. Monteiro, Adição do tipo do cliente na inclusão ou alteração;
-cQry    += " TQB_CODMSS,"
-cQry    += " CASE WHEN TQB_SOLUCA='A' THEN 'A=Aguardando Analise' WHEN TQB_SOLUCA='D' THEN 'D=Distribuida' WHEN TQB_SOLUCA='E' THEN 'E=Encerrada' WHEN TQB_SOLUCA='C' THEN 'C=Cancelada' ELSE TQB_SOLUCA+'=NA' END TQB_SOLUCA, "
-cQry    += " T1_NOME "
-cQry    += " FROM "+RetSqlName("TQB")+" (NOLOCK) TQB " 
-cQry    += " INNER JOIN "+RetSqlName("TQ4")+" (NOLOCK) TQ4 ON " 
-cQry    += " TQB_FILIAL = TQ4_FILIAL "
-cQry    += " AND TQB_CDEXEC = TQ4_CDEXEC "
-cQry    += " AND TQ4.D_E_L_E_T_ = ' ' "
+cQry    += " ISNULL("+CRLF
+cQry    += "     CONVERT(VARCHAR(400), ("+CRLF
+cQry    += "     SELECT"+CRLF
+cQry    += "     RTRIM(SYP.YP_TEXTO)"+CRLF
+cQry    += " FROM"+CRLF
+cQry    += "     SYP010 SYP"+CRLF
+cQry    += "     WHERE"+CRLF
+cQry    += "     SYP.YP_CHAVE = TQB_CODMSS"+CRLF
+cQry    += "     AND SYP.YP_CAMPO = 'TQB_CODMSS'"+CRLF
+cQry    += "     AND SYP.D_E_L_E_T_ = ' '"+CRLF
+cQry    += "     ORDER BY"+CRLF
+cQry    += "     YP_SEQ"+CRLF
+cQry    += "     FOR XML PATH ('')"+CRLF
+cQry    += "     )),"+CRLF
+cQry    += " '') AS TQB_CODMSS,"+CRLF
+cQry    += " CASE WHEN TQB_SOLUCA='A' THEN 'A=Aguardando Analise' WHEN TQB_SOLUCA='D' THEN 'D=Distribuida' WHEN TQB_SOLUCA='E' THEN 'E=Encerrada' WHEN TQB_SOLUCA='C' THEN 'C=Cancelada' ELSE TQB_SOLUCA+'=NA' END TQB_SOLUCA, "+CRLF
+cQry    += " T1_NOME "+CRLF
+cQry    += " FROM "+RetSqlName("TQB")+" (NOLOCK) TQB " +CRLF
+cQry    += " INNER JOIN "+RetSqlName("TQ4")+" (NOLOCK) TQ4 ON " +CRLF
+cQry    += " TQB_FILIAL = TQ4_FILIAL "+CRLF
+cQry    += " AND TQB_CDEXEC = TQ4_CDEXEC "+CRLF
+cQry    += " AND TQ4.D_E_L_E_T_ = ' ' "+CRLF
 //cQry    += " LEFT JOIN "+RetSqlName("ST1")+" (NOLOCK) ST1 ON " 
 //cQry    += " TQB_FILIAL = T1_FILIAL "
 //cQry    += " AND TQB_CDEXEC = T1_CODFUNC "
 //cQry    += " AND ST1.D_E_L_E_T_ = ' ' "
-cQry    += " LEFT JOIN "+RetSqlName("STL")+" (NOLOCK) STL ON " // Inicio Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE
-cQry    += " TQB_FILIAL = TL_FILIAL "
-cQry    += " AND TL_ORDEM = TQB_ORDEM "
-cQry    += " AND STL.D_E_L_E_T_ = '' "
-cQry    += " LEFT JOIN "+RetSqlName("ST1")+" (NOLOCK) ST1 ON  "
-cQry    += " T1_FILIAL = TL_FILIAL "
-cQry    += " AND T1_CODFUNC = TL_CODIGO "
-cQry    += " AND ST1.D_E_L_E_T_ = ' '  "                        // Fim    Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE
-cQry    += " WHERE "
-cQry    += " TQB_DTABER BETWEEN '"+DTOS(dMVPAR01)+"' AND '"+DTOS(dMVPAR02)+"' "
-cQry    += " AND TQB_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "
+cQry    += " LEFT JOIN "+RetSqlName("STL")+" (NOLOCK) STL ON "+CRLF // Inicio Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE
+cQry    += " TQB_FILIAL = TL_FILIAL "+CRLF
+cQry    += " AND TL_ORDEM = TQB_ORDEM "+CRLF
+cQry    += " AND STL.D_E_L_E_T_ = '' "+CRLF
+
+cQry    += " LEFT JOIN "+RetSqlName("ST1")+" (NOLOCK) ST1 ON  "+CRLF
+cQry    += " T1_FILIAL = TL_FILIAL "+CRLF
+cQry    += " AND T1_CODFUNC = TL_CODIGO "+CRLF
+cQry    += " AND ST1.D_E_L_E_T_ = ' '  "+CRLF                        // Fim    Ticket TI   , Data 10/06/2021, ADRIANO SAVOINE
+
+cQry    += " WHERE "+CRLF
+cQry    += " TQB_DTABER BETWEEN '"+DTOS(dMVPAR01)+"' AND '"+DTOS(dMVPAR02)+"' "+CRLF
+cQry    += " AND TQB_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "+CRLF
 //cQry    += " TQB_DTABER BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' "
 //cQry    += " AND TQB_FILIAL BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR04+"' "
-cQry    += " AND TQB.D_E_L_E_T_ = ' ' "
-cQry    += " ORDER BY TQB_FILIAL,TQB_SOLICI "
-/*
-MemoWrite("c:\TEMP\cQry.txt", cQry)
-*/
+cQry    += " AND TQB.D_E_L_E_T_ = ' ' "+CRLF
+
+//Everson - 25/04/2022. Chamado 69385.
+cQry    += " UNION ALL "+CRLF
+
+cQry += " SELECT  " +CRLF
+cQry += " DISTINCT  " +CRLF
+cQry += " TJ_FILIAL, " +CRLF
+cQry += " '' AS SOLICI, " +CRLF
+cQry += " '' AS TIPOSS, " +CRLF
+cQry += " TJ_CODBEM, " +CRLF
+cQry += " TJ_CCUSTO, " +CRLF
+cQry += " TJ_CENTRAB, " +CRLF
+cQry += " TJ_DTORIGI, " +CRLF
+cQry += " '' AS HORABE, " +CRLF
+cQry += " TJ_DTMRFIM, " +CRLF
+cQry += " TJ_HOMRFIM, " +CRLF
+cQry += " TJ_ORDEM, " +CRLF
+
+cQry += " CASE WHEN  TJ_TERMINO = 'S' THEN "+CRLF
+cQry += " ( "+CRLF
+cQry += " SELECT  " +CRLF
+cQry += " RIGHT('0000'+RIGHT('00'+CAST(CAST(BASE_SEC.TL_QUANTID AS INT)/3600 AS VARCHAR),2)+ " +CRLF
+cQry += " ':'+LEFT(CAST(CAST(BASE_SEC.TL_QUANTID AS INT)%3600/60 AS VARCHAR(2))+'00' ,2) + ':00',10) AS TL_QUANTID  " +CRLF
+cQry += " FROM "  +CRLF
+cQry += " (  " +CRLF
+cQry += " SELECT   "+CRLF
+cQry += " SUM(  " +CRLF
+cQry += " CASE  "   +CRLF
+cQry += " WHEN CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR)) > 0   "   +CRLF
+cQry += " THEN    "     +CRLF
+cQry += " SUBSTRING(CAST(TL_QUANTID AS VARCHAR),1,CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))-1)*3600 +   "     +CRLF
+cQry += " SUBSTRING(CAST(TL_QUANTID AS VARCHAR),CHARINDEX ('.',CAST(TL_QUANTID AS VARCHAR))+1,10)*60     "  +CRLF
+cQry += " ELSE    "    +CRLF
+cQry += " TL_QUANTID*3600    "    +CRLF
+cQry += " END    "  +CRLF
+cQry += " )      " +CRLF
+cQry += " AS TL_QUANTID     " +CRLF
+cQry += " FROM       "+CRLF   
+cQry += " " + RetSqlName("STL") + "   (NOLOCK) AS STL       "   +CRLF
+cQry += " WHERE         " +CRLF
+cQry += " TL_FILIAL = '" + FWxFilial("STL") + "'     " +CRLF
+cQry += " AND TL_ORDEM = TJ_ORDEM      "    +CRLF
+cQry += " AND TL_SEQRELA <> '0'    "      +CRLF
+cQry += " AND TL_TIPOREG = 'M'       "  +CRLF
+cQry += " AND STL.D_E_L_E_T_ = ''    "  +CRLF
+cQry += " ) AS BASE_SEC   " +CRLF
+cQry += " )   " +CRLF
+cQry += " ELSE ''   "+CRLF 
+cQry += " END AS TEMPO,   "+CRLF 
+
+cQry += " '' AS CDSOLI, " +CRLF
+cQry += " CODEXEC.TL_CODIGO, " +CRLF
+cQry += " '' AS NOME, " +CRLF
+cQry += " ISNULL(CONVERT(VARCHAR(2047), CONVERT(VARBINARY(2047), TJ_OBSERVA)),'') AS TJ_OBSERVA, " +CRLF
+cQry += " CASE WHEN TJ_TERMINO = 'S' THEN 'E=Encerrada' ELSE 'D=Distribuida' END, " +CRLF
+cQry += " CODEXEC. T1_NOME " +CRLF
+cQry += " FROM " +CRLF
+cQry += " "+RetSqlName("STJ")+" (NOLOCK) AS STJ " +CRLF
+
+cQry += " LEFT OUTER JOIN "+CRLF
+cQry += " ( "+CRLF
+
+cQry += " SELECT TL_FILIAL, TL_ORDEM, TL_CODIGO, T1_NOME"+CRLF
+cQry += " FROM " + RetSqlName("STL") + " (NOLOCK) AS STL "+CRLF
+cQry += " INNER JOIN "+CRLF
+cQry += " " + RetSqlName("ST1") + " (NOLOCK) AS ST1 ON "+CRLF
+cQry += " TL_FILIAL = T1_FILIAL "+CRLF
+cQry += " AND TL_CODIGO = T1_CODFUNC "+CRLF
+cQry += " WHERE "+CRLF
+cQry += " TL_FILIAL = '" + FWxFilial("STL") + "' AND TL_SEQRELA = '0' AND TL_TIPOREG = 'M' AND STL.D_E_L_E_T_ = '' AND ST1.D_E_L_E_T_ = '' " +CRLF
+
+cQry += " ) AS CODEXEC ON "+CRLF
+cQry += " TJ_FILIAL = CODEXEC.TL_FILIAL "+CRLF
+cQry += " AND TJ_ORDEM = CODEXEC.TL_ORDEM "+CRLF
+
+cQry += " WHERE " +CRLF
+cQry += " TJ_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "+CRLF
+cQry += " AND TJ_DTORIGI BETWEEN '"+DTOS(dMVPAR01)+"' AND '"+DTOS(dMVPAR02)+"' "+CRLF
+cQry += " AND TJ_SOLICI = '' " +CRLF
+cQry += " AND STJ.D_E_L_E_T_ = '' " +CRLF
+
+cQry    += " ORDER BY TQB_FILIAL,TQB_SOLICI "+CRLF
+
+//MemoWrite("c:\TEMP\cQry.txt", cQry)
+
 IF Select (cAlias) > 0
 	(cAlias)->(DbCloseArea())
 EndIf
@@ -187,6 +290,12 @@ DbSelectArea(cAlias)
 DbGotop()
 If (cAlias)->(!EOF())
 	While (cAlias)->(!EOF())
+
+        //Everson - 25/04/2022. Chamado 69385.
+        cHrTot   := (cAlias)->TQB_TEMPO
+        cCodExec := (cAlias)->TQB_CDEXEC
+        cNmExec  := (cAlias)->TQ4_NMEXEC
+
         cBem        := Posicione("ST9",1,xFilial("ST9")+(cAlias)->TQB_CODBEM,"T9_NOME")
         oExcel:AddRow("SS","RelaSS",{	(cAlias)->TQB_FILIAL    ,;
                                         (cAlias)->TQB_SOLICI    ,;
@@ -200,13 +309,13 @@ If (cAlias)->(!EOF())
                                         Stod((cAlias)->TQB_DTFECH)	,;
                                         (cAlias)->TQB_HOFECH	,;
                                         (cAlias)->TQB_ORDEM	    ,;
-                                        (cAlias)->TQB_TEMPO	    ,;
-                                        (cAlias)->TQB_CDEXEC	,;
-                                        (cAlias)->TQ4_NMEXEC	,;
+                                        cHrTot                  ,; //Everson - 25/04/2022. Chamado 69385.
+                                        cCodexec             	,; //Everson - 25/04/2022. Chamado 69385.
+                                        cNmExec             	,; //Everson - 25/04/2022. Chamado 69385.
                                         (cAlias)->TQB_CDSOLI    ,;
                                         UsrFullName((cAlias)->TQB_CDSOLI),;
                                         (cAlias)->TQB_SOLUCA    ,;
-                                        AllTrim(MSMM((cAlias)->TQB_CODMSS)),;
+                                        (cAlias)->TQB_CODMSS,;
                                         (cAlias)->T1_NOME    ;
                                         })	// Linha
         (cAlias)->(DbSkip())
