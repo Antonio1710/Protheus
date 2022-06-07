@@ -6277,6 +6277,12 @@ User Function ADFAT17A(cCP, cPlaca)
 
             EndIf
 
+            If vldRoteiro(cPlaca, D_ZIR->ZIR_ORAGRP) //Everson - 03/06/2022. Chamado 18465.
+                D_ZIR->(DbSkip())
+                Loop
+
+            EndIf
+
             //Gera ordem de pesagem.
             If ! U_ADFAT167(@cNvOrdP,;
                            cCP,;
@@ -6313,6 +6319,52 @@ User Function ADFAT17A(cCP, cPlaca)
     End Transaction
 
     D_ZIR->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} vldRoteiro
+    Verifica se há roteiro aberto para placa.
+    @type  Static Function
+    @author Everson
+    @since 03/06/2022
+    @version 01
+/*/
+Static Function vldRoteiro(cPlaca, cRoteiro)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cQuery    := ""
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIF_NUMERO  " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB " 
+    cQuery += " INNER JOIN " 
+    cQuery += " " + RetSqlName("ZIF") + " (NOLOCK)  AS ZIF ON " 
+    cQuery += " ZIB_FILIAL = ZIF_FILIAL " 
+    cQuery += " AND ZIB_NUMERO = ZIF_CTPATI " 
+    cQuery += " WHERE " 
+    cQuery += " ZIB_FILIAL = '" + FWxFilial("ZIB") + "' " 
+    cQuery += " AND ZIB_PLACA = '" + cPlaca + "' " 
+    cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
+    cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+    cQuery += " AND ZIF_ROTEIR <> '" + cRoteiro + "' " 
+    cQuery += " AND ZIB_STATUS NOT IN ('5','6') " 
+
+    If Select("D_VLDROT")
+        D_VLDROT->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_VLDROT"
+    DbSelectArea("D_VLDROT")
+    D_VLDROT->(DbGoTop())
+
+        lRet := ! D_VLDROT->(Eof())
+
+    D_VLDROT->(DbCloseArea())
 
     RestArea(aArea)
 
