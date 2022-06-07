@@ -23,7 +23,7 @@
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 	@history Ticket 69574   - Sigoli   - 26/05/2022 - Projeto FAI - correção error log -variable does not exist CFILAN on U_ALTSFEXP
-	
+	@history Ticket 18465   - Everson  - 06/06/2022 - Adicionada rotina para alteração de placa na filial 03.
 /*/
 User function MA410MNU()
 
@@ -273,6 +273,7 @@ Static Function RESTEXECUTE()
 Return Nil
 /*/{Protheus.doc} altPlSC5
 	Altera placa do pedido de venda.
+	Chamado 18465.
 	@type  Static Function
 	@author Everson
 	@since 06/06/2022
