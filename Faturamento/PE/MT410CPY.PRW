@@ -20,10 +20,13 @@
 	@history ticket  9765   - Abel Babini 		- 19/02/2021 - Ajustado o ponto de entrada de cópia de pedidos de venda para que o Tipo do cliente seja atualizado com a informação do cadastro do cliente no momento da cópia.
 	@history ticket  8465   - Leonardo P. Monteiro - 13/04/2021 - Limpeza do campo Grupo de Inspeção no eData.
 	@history Ticket 22639   - Everson - 14/09/2021 - Limpeza do flag de pré-aprovado financeiro e erro de retorno do Edata.
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 /*/
 User Function MT410CPY()
 
 	Local _ny	:= 1 //Everson - 14/09/2021. Chamado 22639.
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	Private _aAreaNow	:= GetArea() 				//AREA
 	Private _aAreaSA1	:= SA1->(GetArea())		//AREA DO SA1
@@ -100,7 +103,8 @@ User Function MT410CPY()
 	M->C5_XUSREFA   := " " 
 
 	// Everson - 04/10/2018. Chamado 044154.
-	If cEmpAnt = '01' .And. cFilAnt = '02'
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	If (Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF)
 		M->C5_XPEDSAL   := "" 
 		M->C5_XSFPED    := ""
 		M->C5_XSFSTAT   := ""
@@ -194,7 +198,9 @@ User Function MT410CPY()
 		aCols[_ny][_nPosLoc] := IIF(!RetArqProd(aCols[_ny][_nPosPro]),POSICIONE("SBZ",1,xFilial("SBZ")+aCols[_ny][_nPosPro],"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+aCols[_ny][_nPosPro],"B1_LOCPAD")) //ALTERACAO REFERENTE A TABELA SBZ INDICADORES DE PRODUTOS CHAMADO 030317 - WILLIAM COSTA  // chamado 031276  - erro no local na copia do pedido copiava o local errado ocasionando problema no estoque
 		aCols[_ny][_nPosTES] := IIF(VAR_IXB[2] < ctod("01/04/2017") .and. _nNovoTES <> 0,_aTES[_nNovoTES,2],aCols[_ny][_nPosTES]) // incluido por Adriana em 31/03/17//incluido por Adriana em 04/04/17 - para garantir que na copia nao sejam utilizados TES sem tributacao
 		
-		If cEmpAnt = '01' .And. cFilAnt = '02'
+		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+		If (Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF)
+
 			aCols[_ny][_nPosSF]  := "" // Everson - 04/10/2018. Chamado 044154.
 		
 		EndIf  

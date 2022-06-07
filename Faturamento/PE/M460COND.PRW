@@ -7,6 +7,7 @@
 	@since 16/10/2007
 	@version 01
 	@history Everson, 14/10/2020, Chamado 2663 - Incluída filial 03.
+	@history /Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	/*/
 User Function M460COND()
 	//PARA ALTERAR DATA DE VENCIMENTO, TENDO COMO BASE A DATA DA ENTREGA E NAO A DATA DE EMISSAO DA NOTA
@@ -21,7 +22,8 @@ User Function M460COND()
 	Local aArea  := GetArea()
 	Local _DtIni := paramixb[1]  
 
-	if xFilial("SC9") $  "02/03" .and. Alltrim(cEmpAnt)=="01"  //para filial VARZEA //Everson - 14/10/2020. Chamado 2665.
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	if xFilial("SC9") $  "02/03/0B	" .and. Alltrim(cEmpAnt)=="01"  //para filial VARZEA //Everson - 14/10/2020. Chamado 2665.
 		_DtIni := iif(Empty(SC9->C9_DTENTR), iif(Empty(SC6->C6_ENTREG), _DtIni, SC6->C6_ENTREG) , SC9->C9_DTENTR)    
 		_DtIni := iif(_DtIni < Date(), Date(), _DtIni)  // por Adriana para não apresentar rejeicao na transmissao da nfe  em 01/08/2018 Chamado 042882
 	endif 
