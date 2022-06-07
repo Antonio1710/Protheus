@@ -77,4 +77,4 @@ User Function FA050INC()
 		EndIf
 	EndIf
 
-Return(lRet)
+Return lRet

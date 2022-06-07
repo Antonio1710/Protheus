@@ -26,7 +26,7 @@ User Function MTCOLSE2()
 
     Public __MTCOLSE2 := 0 // Será utilizada no MT100TOK pois a central XML não executa todos os PEs contidos no MATA103 - Exemplo A1031DUP
 
-    If nOpcPar > 0 // @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+    If nOpcPar > 0 // @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos.
     
         // Acho valor total das duplicatas no acols do folder duplicatas
         For i:=1 to Len(aParam)

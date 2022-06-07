@@ -1128,13 +1128,13 @@ Return lRet
 	@example
 	(examples)
 	@see (links_or_references)
-	// @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+	@history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
 /*/
 Static Function ChkVenctos()
 
 	Local lRet     := .t.
-	Local aChkVenc := {}
 	Local lFin     := .f.
+	Local aChkVenc := {}
 	Local i, cTES
 
 	// Checo se existe algum TES que gere financeiro pois então deverá consistir a aba duplicatas
