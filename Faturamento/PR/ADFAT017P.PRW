@@ -1358,7 +1358,6 @@ Static Function gerPedS(cCP, lAut)
         cMemNf2  := "Granja.: " + ZIS->ZIS_DESC
         cTpFrt   := "C"
         cPlaca   := ZIF->ZIF_PLACA
-        cUFPlaca := ""
 
         cUFPlaca := ZV4->ZV4_EST
         cTransp  := ZV4->ZV4_FORNEC
@@ -6533,7 +6532,7 @@ User Function ADFAT17O(cCP, cPlaca)
                 nQtd := D_PEDS->C6_UNSVEN
 
             Else
-                nQtd := C6_QTDVEN
+                nQtd := D_PEDS->C6_QTDVEN
 
             EndIf
 
