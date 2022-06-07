@@ -55,6 +55,7 @@ User Function ADLFV010P()
 	//@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
 	Private lAuto := .f.
 	Private cForGranjas := "03|0A"
+	Private cFilGranja  := ""
 	//
 
 	//Ticket: 62540 - 20/10/2021 - Fernando Sigoli  - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
@@ -97,8 +98,6 @@ User Function ADLFV010P()
 
 	Else
 
-		cEmpAut := GetMV("MV_#LFVEMP",,"01")
-
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Complemento Frango Vivo')
 
 		// Mensagens de Tela Inicial
@@ -115,11 +114,8 @@ User Function ADLFV010P()
 		FormBatch(clTitulo, alSay, alButton)
 		
 		If lOk
-			If cEmpAnt $ cEmpAut
-				Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV..." )
-			Else
-				msgAlert("Empresa não autorizada! Contate o administrador do sistema...")
-			EndIf
+			cFilGranja := cFilAnt
+			Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV..." )
 		EndIf
 
 	EndIf
