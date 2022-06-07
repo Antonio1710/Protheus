@@ -580,6 +580,7 @@ User Function ADFAT17Y()
         oOrdPes:AddStatusColumns({|| U_ADFAT17G( aOrdPes[oOrdPes:nAt,14], aOrdPes[oOrdPes:nAt,17] )})
     
         oOrdPes:addColumn({"Contr. Pátio"      , {||aOrdPes[oOrdPes:nAt,16]}, "C", ""                  , 2, 006    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,16]",, .F., .T., , "ID16" })
+        oOrdPes:addColumn({"Placa"             , {||aOrdPes[oOrdPes:nAt,19]}, "C", ""                  , 1, 007    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,19]",, .F., .T., , "ID19" })
         oOrdPes:addColumn({"Agrupador"         , {||aOrdPes[oOrdPes:nAt,18]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,18]",, .F., .T., , "ID18" })
         oOrdPes:addColumn({"Qtd. Agrupador"    , {||aOrdPes[oOrdPes:nAt,24]}, "N", "@E 999,999,999.999", 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,24]",, .F., .T., , "ID24" })
         oOrdPes:addColumn({"Ordem"             , {||aOrdPes[oOrdPes:nAt,08]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,08]",, .F., .T., , "ID8" })
@@ -603,7 +604,7 @@ User Function ADFAT17Y()
         oOrdPes:addColumn({"Sol Pes Manual"    , {||aOrdPes[oOrdPes:nAt,20]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,20]",, .F., .T., , "ID20" })
         oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 1, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
         oOrdPes:addColumn({"Notas Fiscais"     , {||aOrdPes[oOrdPes:nAt,30]}, "C", ""                  , 1, 035    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,30]",, .F., .T., , "ID30" })
-    
+        
         oOrdPes:Activate()
                    
                    TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
@@ -1190,7 +1191,7 @@ Return lRet
     @since 10/03/2022
     @version 01
 /*/
-Static Function gerPedS(cCP)
+Static Function gerPedS(cCP, lAut)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -1221,6 +1222,7 @@ Static Function gerPedS(cCP)
     Local cPedGer   := ""
 
     Default cCP     := """
+    Default lAut    := .F.
 
     If Empty(cCP)
         MsgInfo("Selecione um registro para emissão de pedido de saída.", "Função gerPedS(ADFAT017P)")
@@ -1256,7 +1258,7 @@ Static Function gerPedS(cCP)
 
     EndIf
 
-    If ! MsgYesNo("Deseja emitir pedido de saída para o controle de pátio " + cCP + "?", "Função gerPedS(ADFAT017P)")
+    If ! lAut .And. ! MsgYesNo("Deseja emitir pedido de saída para o controle de pátio " + cCP + "?", "Função gerPedS(ADFAT017P)")
         RestArea(aArea)
         Return .F.
 
@@ -1439,13 +1441,17 @@ Static Function gerPedS(cCP)
 
 	EndIf
 
-    If Empty(cPedidos)
+    If ! lAut .And. Empty(cPedidos)
         cPedidos := "Não há pedidos gerados."
 
     EndIF
 
-    U_TExTelaMen("Geração de Pedido de Saída", "Pedidos gerados: " + xPula + cPedidos + xPula + xPula + "Erro: " + xPula + cMsgError, "Arial",10,,.F.,.F.)
+    If ! lAut
+
+        U_TExTelaMen("Geração de Pedido de Saída", "Pedidos gerados: " + xPula + cPedidos + xPula + xPula + "Erro: " + xPula + cMsgError, "Arial",10,,.F.,.F.)
     
+    EndIf
+
     RestArea(aArea)
 
 Return Nil
@@ -4319,6 +4325,12 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
         EndIf
 
+        //Gera pedido de saída.
+        If lRacao .And. nTpPesa == 2
+            MsAguarde({|| gerPeAut(cNmOrdem) },"Aguarde", "Processando...")
+
+        EndIf
+
     EndIf
 
     RestArea(aArea)
@@ -6878,7 +6890,7 @@ User Function ADFAT17()
 Return xRet
 /*/{Protheus.doc} grvBarr
     Salva o registro para enviar ao barramento.
-    @type  User Function
+    @type  Static Function
     @author Everson
     @since 25/03/2022
     @version 01
@@ -6911,3 +6923,56 @@ Return cBalanca
 /*/
 User Function ADFAT17X()
 Return Alltrim(cValToChar(Posicione("DX5" , 1, FwxFilial("DX5") + U_ADFAT17V(), "DX5_URL")))
+/*/{Protheus.doc} gerPeAut
+    Gera pedido de compra automático.
+    @type  Static Function
+    @author Everson
+    @since 06/06/2022
+    @version 01
+/*/
+Static Function gerPeAut(cNmOrdem)
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local lGera := GetMv("MV_#PDATCP",,.F.)
+
+    If ! lGera
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT16A(cNmOrdem)
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    gerPedS(ZIF->ZIF_CTPATI, .T.)
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} impTktAut
+    Imprime pedido de compra automático.
+    @type  Static Function
+    @author Everson
+    @since 06/06/2022
+    @version 01
+/*/
+Static Function impTktAut()
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local lImp  := GetMv("MV_#IDATCP",,.F.)
+
+    If ! lImp
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+    
+
+    RestArea(aArea)
+
+Return Nil
