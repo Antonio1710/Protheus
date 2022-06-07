@@ -4,20 +4,11 @@
 #Include "TbiConn.ch"
 
 /*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³NOVO3     º Autor ³ AP6 IDE            º Data ³  10/08/17   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³ Codigo gerado pelo AP6 IDE.                                º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ AP6 IDE                                                    º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºAlteracao ³ William Costa 12/02/2019 046955 Adiciona Validação Alterar º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+	Programa  ³NOVO3     º Autor ³ AP6 IDE            º Data ³  10/08/17  
+	Descricao ³ Codigo gerado pelo AP6 IDE.                               
+	Uso       ³ AP6 IDE                                                   
+	Alteracao ³ William Costa 12/02/2019 046955 Adiciona Validação Alterar
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 
 User Function AD0130() //U_AD0130()
@@ -85,7 +76,8 @@ User function ZV1AltOK()
 	Local nGuia    	:= ZV1->ZV1_X_PESE
 	Local lRet 		:= .T.
 	Local cUpdate  	:= ""
-	Local nOpcao    
+	Local nOpcao
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	U_ADINF009P('AD0130' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Cadastro de Frango Vivo')
 
@@ -97,7 +89,7 @@ User function ZV1AltOK()
 
 	If !Empty(nNumNf) .AND. lRet == .T. 
    		
-   		cUpdate += " update [LNKMIMS].SMART.[dbo].[ENTRADA_AVE_VIVA] SET NR_NOTAFISCENTRAVEVIVA = ' " + alltrim(nNumNf) + "' WHERE ID_ENTRAVEVIVA = "+ nGuia
+   		cUpdate += " update ["+cLnkSrv+"].SMART.[dbo].[ENTRADA_AVE_VIVA] SET NR_NOTAFISCENTRAVEVIVA = ' " + alltrim(nNumNf) + "' WHERE ID_ENTRAVEVIVA = "+ nGuia
     
 	 	PROCESSA({|| nOpcao := TCSQLExec(cUpdate)  },"atualizando Edata [Nota Fiscal]...") 
 	 

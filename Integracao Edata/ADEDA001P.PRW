@@ -1,20 +1,12 @@
 /*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³ADEDA001P ºAutor  ³William COSTA       º Data ³  14/04/15   º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Programa de Ajustes de Cargas                              º±±
-±±º          ³ Relatorio para acompanhamento de troca de cargas que o     º±±
-±±º          ³ protheus faz, esse relatorio e para reorganizar novamente  º±±
-±±º          ³ os numeros da cargas ficando carga protheus e carga edata  º±±
-±±º          ³ igual Programa Relatorio em Excel.                         º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ SIGACOM                                                    º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+	Programa  ³ADEDA001P ºAutor  ³William COSTA       º Data ³  14/04/15  
+	Desc.     ³ Programa de Ajustes de Cargas                             
+						³ Relatorio para acompanhamento de troca de cargas que o    
+						³ protheus faz, esse relatorio e para reorganizar novamente 
+						³ os numeros da cargas ficando carga protheus e carga edata 
+						³ igual Programa Relatorio em Excel.                        
+	Uso       ³ SIGACOM                                                   
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 */
 #INCLUDE "PROTHEUS.CH"  
 #INCLUDE "FILEIO.CH"
@@ -181,13 +173,14 @@ Static Function SqlGeral()
     Local cDataIni := DTOS(MV_PAR03)
     Local cDataFin := DTOS(MV_PAR04)
     Local cQuery   := ''
+		Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
     
     cQuery := " SELECT IE_PEDIVEND, "
     cQuery += "        ID_CARGEXPE, "
     cQuery += "        GN_PLACVEICTRAN, "
     cQuery += "        ROTEIRO, " 
     cQuery += "        DT_ENTRPEDIVEND "
-  	cQuery += "   FROM [LNKMIMS].[SMART].[dbo].[VW_ERRO_02] "
+  	cQuery += "   FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_ERRO_02] "
 	cQuery += "  WHERE DT_ENTRPEDIVEND >= " + "'" + ALLTRIM(cDataIni) + "'" 
     cQuery += "    AND DT_ENTRPEDIVEND <= " + "'" + ALLTRIM(cDataFin) + "'" 
     cQuery += "    AND ROTEIRO         >= " + "'" + ALLTRIM(MV_PAR01) + "'" 
