@@ -102,7 +102,7 @@ User Function ADLFV171()
 	//1 - Aberto
 	//2 - Fechado Automático
 	//3 - Fechado Manual
-	If ZV1->ZV1_FECHA <> "1"
+	If ZV1->ZV1_FECHA <> "1" .And. Alltrim(cValToChar(ZV1->ZV1_FECHA)) <> ""
 		MsgInfo("Registro já está fechado.", "Função ADLFV171(ADLFV017P)")
 		RestArea(aArea)
 		Return Nil
