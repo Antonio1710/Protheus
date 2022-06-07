@@ -11,7 +11,7 @@
 	@author Everson
 	@since 11/03/2022
 	@version 01
-	@history Everson, 27/05/2022. Ticket 18465. Tratamento para não faturar pedido com bloqueio de corte.
+	@history Everson, 27/05/2022. Ticket 18465. Tratamento para não faturar pedido com bloqueio de corte
 /*/
 User Function ADFAT041P()
 
