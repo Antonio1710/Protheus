@@ -57,6 +57,7 @@
 	@history 20/09/2021, Everson, Ch:15138  - Tratamento para emissão de CT-e adicional.
 	@history 12/11/2021, Everson, Ch:63590  - Tratamento para emissão de CT-e adicional.
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history Ticket 70142 - Edvar / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket 71619 - Everson - 20/04/2022 - Tratamento para emissão de MDF-e para transportadoras com CNPJ (SC) mesmo quando há mais de 4 notas na carga.
 	@history ticket 70593 - Everson - 20/04/2022 - Adicionado MVs na interface de configuração.
 /*/
@@ -2732,7 +2733,9 @@ Static Function reenAvb()
 	
 	//Variáveis.	
 	Local aArea	 		:= GetArea()
-	Local cApolic		:= Alltrim(StaticCall(NfeSefaz,getApolic,cTpVa)) //Everson - 03/06/2020. Chamado TI.
+	//Local cApolic		:= Alltrim(Static Call(NfeSefaz,getApolic,cTpVa)) //Everson - 03/06/2020. Chamado TI.
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	Local cApolic		:= Alltrim(u_ESEFAZA0(cTpVa)) //Everson - 03/06/2020. Chamado TI.
 	Local cXml	 		:= ""
 	//Local aDados		:= {}
 	//Local nAux			:= 1
@@ -7891,7 +7894,9 @@ Static Function ddAverb(xDdAverb,cHash)
 	Local cApolice	:= ""
 
 	//Everson - 12/02/2020. Chamado 054941.
-	cApolice := Alltrim(cValToChar(StaticCall(NfeSefaz,getApolic,cTpVa)))
+	//cApolice := Alltrim(cValToChar(Static Call(NfeSefaz,getApolic,cTpVa)))
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	cApolice := Alltrim(cValToChar(u_ESEFAZA0(cTpVa)))
 	Conout( DToC(Date()) + " " + Time() + " ADLOG057P - ddAverb - cApolice " + cApolice )
 	If Empty(cApolice) .Or. cApolice == "0"
 		RestArea(aArea)
@@ -11495,8 +11500,8 @@ Return nPorc
 // 	EndIf
 
 // 	//
-// 	aDiaFim := StaticCall(ADLOG040P,getDiasF,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
-// 	aCond	:= StaticCall(ADLOG040P,getConPg,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
+// 	aDiaFim := Static Call(ADLOG040P,getDiasF,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
+// 	aCond	:= Static Call(ADLOG040P,getConPg,Val(cTpVa)) //Everson - 02/03/2020. Chamado 053926.
 
 // 	//
 // 	//cCodNCM := obtCodNCM(cCTE)
@@ -13382,3 +13387,80 @@ Return Nil
 // 	carDocs(.T.,"6")
 
 // Return Nil
+
+/*/{Protheus.doc} u_LOG057A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A0( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 )
+Return( pdfCTEdow( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 ) )
+
+/*/{Protheus.doc} u_LOG057A1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A1( uPar1 )
+Return( getPorEm( uPar1 ) )
+
+/*/{Protheus.doc} u_LOG057A2
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A2( uPar1, uPar2 )
+Return( consulCTE( uPar1, uPar2 ) )
+
+/*/{Protheus.doc} u_LOG057A3
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A3( uPar1 )
+Return( xmlCTEdow( uPar1 ) )
+
+/*/{Protheus.doc} u_LOG057A4
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A4( uPar1, uPar2 )
+Return( tlbStatus( uPar1, uPar2 ) )
+
+/*/{Protheus.doc} u_LOG057A5
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A5( uPar1 )
+Return( tabelaDoc( uPar1 ) )
+
+/*/{Protheus.doc} u_LOG057A6
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG057A6( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10, uPar11 )
+Return( grCTECompl( uPar01, uPar02, uPar03, uPar04, uPar05, uPar06, uPar07, uPar08, uPar09, uPar10, uPar11 ) )

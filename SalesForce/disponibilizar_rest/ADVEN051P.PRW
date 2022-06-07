@@ -13,6 +13,7 @@
 	@history 26/11/2019, Everson, Chamado 053617 Adicionadas checagem e mensagem de retorno ao Salesforce, quando o CEP informado 
 	no pré-cadastro (Lead) do Salesforce não estiver cadastrado no Protheus.
 	@history 27/11/2019, Everson, Chamado T.I. correção da checagem de CEP de entrega.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history 27/04/2022, Everson, Chamado T.I. não validar crédio sugerido quando a condição de pagamento for antecipada.
 	/*/
 
@@ -79,7 +80,9 @@ Static Function Processar(cParamBsc,lAut)
 	Local nIndAlias	:= 14
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -104,10 +107,14 @@ Static Function Processar(cParamBsc,lAut)
 
 	//
 	If ! aParametros[2]
-		Processa({|| StaticCall(ADVEN075P,Processar,aParametros,@aRetOk,"",aResponse,.F.,"PATCH") },"Aguarde","Processando registro(s) ...",.T.)
+		//Processa({|| Static Call(ADVEN075P,Processar,aParametros,@aRetOk,"",aResponse,.F.,"PATCH") },"Aguarde","Processando registro(s) ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A3( aParametros,@aRetOk,"",aResponse,.F.,"PATCH" ) },"Aguarde","Processando registro(s) ...",.T.)
 
 	Else
-		StaticCall(ADVEN075P,Processar,aParametros,@aRetOk,"",aResponse,.F.,"PATCH")
+		//Static Call(ADVEN075P,Processar,aParametros,@aRetOk,"",aResponse,.F.,"PATCH")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A3( aParametros,@aRetOk,"",aResponse,.F.,"PATCH" )
 
 	EndIf
 
@@ -403,7 +410,10 @@ WsMethod Post WsService precadastros
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 		
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"","",cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST")
+
 	
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
 		RestArea(aArea)
@@ -418,7 +428,9 @@ WsMethod Post WsService precadastros
 	If Empty(cCodUsuario)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST")
 		
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
 		RestArea(aArea)
@@ -427,7 +439,9 @@ WsMethod Post WsService precadastros
 	EndIf
 	
 	//
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cPreCad,cBody,"",cUrlServ,"POST")
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cPreCad,cBody,"",cUrlServ,"POST")
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0(cCodUsuario,cIdSFBkp,cPreCad,cBody,"",cUrlServ,"POST")
 
 	//Atribui usuário.
 	__cUserId := cCodUsuario
@@ -442,7 +456,9 @@ WsMethod Post WsService precadastros
 	If cFormato <> cFormatAceito
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -451,7 +467,9 @@ WsMethod Post WsService precadastros
 	ElseIf cContentType <> cFormatAceito
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -460,7 +478,9 @@ WsMethod Post WsService precadastros
 	ElseIf Empty(cBody)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
 		RestArea(aArea)
@@ -478,7 +498,9 @@ WsMethod Post WsService precadastros
 		cJsonResp := '{"msg":"Sequencial ' + Alltrim(cValToChar(oParseJSON:PB3_XSALES)) + ' já utilizado.","PB3_COD":"' + cNumChkPre + '","PB3_LOJA":"' + cNumChkLoj + '"}'
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cJsonResp,cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cJsonResp,cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,cJsonResp,cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8(cJsonResp))
 
@@ -493,7 +515,9 @@ WsMethod Post WsService precadastros
 	If ! CGC(Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CGC)))),Nil,.F.)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"CNPJ/CPF inválido " + Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CGC)))) + ".",cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,"CNPJ/CPF inválido " + Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CGC)))) + ".",cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,"CNPJ/CPF inválido " + Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CGC)))) + ".",cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8("CNPJ/CPF inválido " + Upper(FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_CGC)))) + "."))
 		RestArea(aArea)
@@ -525,7 +549,9 @@ WsMethod Post WsService precadastros
 			cMsg := 'As Rotinas de Pré-Cliente não estão liberadas para seu Nivel.'
 
 			//
-			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
+			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
 
 			u_FSGrvLog( cMsg + CRLF )
 			u_FSClsLog()
@@ -542,7 +568,9 @@ WsMethod Post WsService precadastros
 		cMsg := 'Você não está autorizado a utilizar essa rotina. Solicite permissão ao seu superior.'
 		
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
 		
 		u_FSGrvLog( cMsg + CRLF)
 		u_FSClsLog()
@@ -567,7 +595,9 @@ WsMethod Post WsService precadastros
 	If ! atribVlr(@oParseJSON,@cMsg)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,cMsg,cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8(cMsg))
 		FreeObj(oParseJSON)
@@ -582,7 +612,9 @@ WsMethod Post WsService precadastros
 	If Len(aRestErro) > 0
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cValToChar(aRestErro[1][2]),cUrlServ,"POST")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cValToChar(aRestErro[1][2]),cUrlServ,"POST")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,cValToChar(aRestErro[1][2]),cUrlServ,"POST")
 		
 		SetRestFault(400,EncodeUtf8(aRestErro[1][2]))
 		FreeObj(oParseJSON)
@@ -598,7 +630,9 @@ WsMethod Post WsService precadastros
 	//Executa a rotina para salvar o pré-cadastro.
 	Begin Transaction
 
-		StaticCall(ADOA002,GravaCli)
+		//Static Call(ADOA002,GravaCli)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_OA002A0()
 		DbSelectArea("PB3")
 		cPreCad := Alltrim(cValToChar(PB3->PB3_COD )) + Alltrim(cValToChar(PB3->PB3_LOJA))
 
@@ -608,7 +642,9 @@ WsMethod Post WsService precadastros
 			DisarmTransaction()
 
 			//
-			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cValToChar(aRestErro[1][2]),cUrlServ,"POST")
+			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,"",cBody,cValToChar(aRestErro[1][2]),cUrlServ,"POST")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A0(cCodUsuario,cIdSFBkp,"",cBody,cValToChar(aRestErro[1][2]),cUrlServ,"POST")
 		
 		
 			SetRestFault(400,EncodeUtf8(aRestErro[1][2]))
@@ -636,7 +672,9 @@ WsMethod Post WsService precadastros
 	
 	//
 	cHoraExec := ELAPTIME(cHoraExec, Time())
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cPreCad,cBody,"",cUrlServ,"POST",cHoraExec)	
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cPreCad,cBody,"",cUrlServ,"POST",cHoraExec)	
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0(cCodUsuario,cIdSFBkp,cPreCad,cBody,"",cUrlServ,"POST",cHoraExec)
 		
 	Self:SetResponse(cJsonResp)
 
@@ -702,7 +740,9 @@ WsMethod Put WsService precadastros
 	If Len(aParametros) == 0
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Obrigatório informar o código e loja do pré-cadastro.",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Obrigatório informar o código e loja do pré-cadastro.",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"","",cBody,"Obrigatório informar o código e loja do pré-cadastro.",cUrlServ,"PUT")
 		
 		SetRestFault(400,EncodeUtf8("Obrigatório informar o código e loja do pré-cadastro."))
 		RestArea(aArea)
@@ -717,7 +757,9 @@ WsMethod Put WsService precadastros
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cCodLoja,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cCodLoja,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"PUT")
 		
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
 		RestArea(aArea)
@@ -729,13 +771,17 @@ WsMethod Put WsService precadastros
 	cIdSFBkp := FwNoAccent(Alltrim(cValToChar(oParseJSON:PB3_XSALES)))
 
 	//
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"",cUrlServ,"PUT")
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"",cUrlServ,"PUT")
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"",cUrlServ,"PUT")
 	
 	//
 	If Empty(cCodUsuario)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"PUT")
 		
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
 		RestArea(aArea)
@@ -756,7 +802,9 @@ WsMethod Put WsService precadastros
 	If cFormato <> cFormatAceito
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"PUT")
 	
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -765,7 +813,9 @@ WsMethod Put WsService precadastros
 	ElseIf cContentType <> cFormatAceito
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"PUT")
 
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
@@ -774,7 +824,9 @@ WsMethod Put WsService precadastros
 	ElseIf Empty(cBody)
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT")
 
 		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
 		RestArea(aArea)
@@ -791,7 +843,9 @@ WsMethod Put WsService precadastros
 			cMsg := 'As Rotinas de Pré-Cliente não estão liberadas para seu Nivel.'
 			
 			//
-			StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,cMsg,cUrlServ,"PUT")
+			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,cMsg,cUrlServ,"PUT")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,cMsg,cUrlServ,"PUT")
 
 			u_FSGrvLog( cMsg + CRLF )
 			u_FSClsLog()
@@ -809,7 +863,9 @@ WsMethod Put WsService precadastros
 		cMsg := 'Você não está autorizado a utilizar essa rotina. Solicite permissão ao seu superior.'
 
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,cMsg,cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,cMsg,cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,cMsg,cUrlServ,"PUT")
 
 		u_FSGrvLog( cMsg + CRLF)
 		u_FSClsLog()
@@ -832,7 +888,9 @@ WsMethod Put WsService precadastros
 	If ! PB3->(DbSeek( xFilial("PB3") + Alltrim(cValToChar(cCodLoja)) ))
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Pré-cadastro " + Alltrim(cValToChar(cCodLoja)) + " não encontrado.",cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Pré-cadastro " + Alltrim(cValToChar(cCodLoja)) + " não encontrado.",cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"Pré-cadastro " + Alltrim(cValToChar(cCodLoja)) + " não encontrado.",cUrlServ,"PUT")
 	
 		SetRestFault(404,EncodeUtf8("Pré-cadastro " + Alltrim(cValToChar(cCodLoja)) + " não encontrado."))
 		FreeObj(oParseJSON)
@@ -849,7 +907,9 @@ WsMethod Put WsService precadastros
 	If ! processAlt(cMotivo,@cErro,@nErro,oParseJSON)
 	
 		//
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,cErro,cUrlServ,"PUT")
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,cErro,cUrlServ,"PUT")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,cErro,cUrlServ,"PUT")
 	
 		SetRestFault(nErro,EncodeUtf8(cErro))
 		FreeObj(oParseJSON)
@@ -867,7 +927,9 @@ WsMethod Put WsService precadastros
 		//
 		//
 		cHoraExec := ELAPTIME(cHoraExec, Time())
-		StaticCall(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"",cUrlServ,"PUT",cHoraExec)
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cCodLoja,cBody,"",cUrlServ,"PUT",cHoraExec)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cCodLoja,cBody,"",cUrlServ,"PUT",cHoraExec)
 	
 		Self:SetResponse('')
 
@@ -951,7 +1013,9 @@ Static Function processAlt(cMotivo,cErro,nErro,oParseJSON)
 	grLogIni()
 
 	//Executa a rotina para salvar o pré-cadastro.
-	StaticCall(ADOA002,GravaCli)
+	//Static Call(ADOA002,GravaCli)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_OA002A0()
 
 	//Valida se houve erro na inclusão do pré-cadastro.
 	If Len(aRestErro) > 0
@@ -1507,7 +1571,9 @@ Static Function process(oParseJSON)
 
 	//Registra parecer do vendedor.
 	cRestParecer := Upper(FwNoAccent(DecodeUTF8(Alltrim(cValToChar(oParseJSON:parecerVnd)))))
-	StaticCall(ADOA005,Adoa5Parec,cCli,cLoja)
+	//Static Call(ADOA005,Adoa5Parec,cCli,cLoja)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_OA005A0(cCli,cLoja)
 
 	//Obtém o código de usuário do superior.
 	DbSelectArea("PB3")
@@ -1515,7 +1581,9 @@ Static Function process(oParseJSON)
 
 	//Registra parecer do supervisor.
 	cRestParecer := Upper(FwNoAccent(DecodeUTF8(Alltrim(cValToChar(oParseJSON:parecerSup)))))
-	StaticCall(ADOA005,Adoa5Parec,cCli,cLoja)
+	//Static Call(ADOA005,Adoa5Parec,cCli,cLoja)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_OA005A0(cCli,cLoja)
 
 	//
 	RestArea(aArea)

@@ -20,6 +20,7 @@
 	@version 10
 	@history chamado 056247 - FWNM     - 16/04/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
 	@history chamado TI     - FWNM     - 05/08/2020 - || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 	@history Ticket 69574   - Sigoli   - 26/05/2022 - Projeto FAI - correção error log -variable does not exist CFILAN on U_ALTSFEXP
 	
@@ -103,7 +104,9 @@ Static Function exProdSfExp(cCombo1,cDe,cAte)
 	Local cExpSql := ""
 
 	If FindFunction("U_ADVEN050P") .And. cCombo1 == "1"
-		StaticCall(M410STTS,envSF,,," AND C5_NUM BETWEEN '" + cDe + "' AND '" + cAte + "' AND C5_NOTA <>'' AND C5_SERIE <> '' AND C5_NOTA <> 'XXXXXXXXX' ")
+		//Static Call(M410STTS,envSF,,," AND C5_NUM BETWEEN '" + cDe + "' AND '" + cAte + "' AND C5_NOTA <>'' AND C5_SERIE <> '' AND C5_NOTA <> 'XXXXXXXXX' ")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_10STTSA0( ,," AND C5_NUM BETWEEN '" + cDe + "' AND '" + cAte + "' AND C5_NOTA <>'' AND C5_SERIE <> '' AND C5_NOTA <> 'XXXXXXXXX' ")
 	EndIf
 
 	If FindFunction("U_ADVEN074P") .And. cCombo1 == "2"
@@ -238,7 +241,10 @@ Static Function RESTEXECUTE()
 	//Se alterou o pedido de venda, gera log.
 	If nRet <> 0
 
-		StaticCall(ADVEN086P,chkLiber,Alltrim(cValToChar( SC5->C5_NUM )),lPedBloq)
+		//Static Call(ADVEN086P,chkLiber,Alltrim(cValToChar( SC5->C5_NUM )),lPedBloq)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN090A0( Alltrim(cValToChar( SC5->C5_NUM )),lPedBloq ) 
+		//Obs: O fonte ADVEN086P nao possuia a funcao chklib, foi utizada do fonte ADVEN090P que aparentemente tem a finalidade desejada.
 
 		DbSelectArea("ZBE")
 		RecLock("ZBE",.T.)
