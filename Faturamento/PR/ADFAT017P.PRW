@@ -610,7 +610,7 @@ User Function ADFAT17Y()
                    TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
                    TButton():New(187,515,"Transferência Ordem"  ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
                    TButton():New(207,515,"Romaneio"             ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oAltTag := TButton():New(247,515,"Alterar Tag"          ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oExcTag := TButton():New(267,515,"Excluir Tag"          ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
@@ -957,7 +957,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Cancela ordem de pesagem original no Gemba.
-        If lGemba .And. ! procCancGb(cOrdOrg, @cMsgError)
+        If lGemba .And. ! cancGb(cOrdOrg, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -3006,8 +3006,8 @@ Static Function cancTkt(oOrdPes, aOrdPes)
     lRet := U_ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, .T.)
 
     //Cancela ordem no Gemba.
-    If lRet
-        ! procCancGb(cNmOrdem, @cMsgError)
+    If lRet .And. cTpOrdem == "R"
+        cancGb(cNmOrdem)
 
     EndIf
 
@@ -4410,14 +4410,14 @@ Static Function procEnvGb(cNmOrdem, cMsgError)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} procCancGb
+/*/{Protheus.doc} cancGb
     Process cancelamento de ordem de pesagem para o Gemba.
     @type  User Function
     @author Everson
     @since 18/05/2022
     @version 01
 /*/
-Static Function procCancGb(cNmOrdem, cMsgError)
+Static Function cancGb(cNmOrdem, cMsgError)
     
     //Variáveis.
     Local aArea  := GetArea()
@@ -5713,7 +5713,9 @@ Static Function lerTag(oView, lAtuView, cCP)
  
     oObj:CloseConnection()
 
-    cTag := Alltrim(cValToChar( StrTran(StrTran(StrTran(StrTran(StrTran(cTag,Chr(2),""),Chr(3),""),Chr(32),""),Chr(10),""),Chr(13),"")  ))
+    cTag := Alltrim(cValToChar(StrTran(StrTran(cTag,Chr(2),""),Chr(3),"")))
+
+    cTag := U_ADFAT50O(cTag)
 
     If lAtuView
         If !Empty(cTag) .And.;
