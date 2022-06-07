@@ -60,7 +60,7 @@ Static Function BrowseDef()
 	oBrowse:AddLegend("ZV1_STATUS='G'"					, "BR_VERDE" 	, "GERADO FRETE", "1")
 	oBrowse:AddLegend("ALLTRIM(ZV1_STATUS)=''"	        , "BR_PRETO" 	, "ORDEM NAO UTILIZADA", "1")
 
-	oBrowse:AddLegend("(ZV1_FECHA='' .OR ZV1_FECHA = '1')"	, "BR_BRANCO"	 , "ABERTO", "2")
+	oBrowse:AddLegend("(ZV1_FECHA='' .OR. ZV1_FECHA = '1')"	, "BR_BRANCO"	 , "ABERTO", "2")
 	oBrowse:AddLegend("ZV1_FECHA ='3'"					    , "YELLOW" 	     , "FECHADO MANUAL",  "2")
 	oBrowse:AddLegend("ZV1_FECHA ='2'"					    , "BR_VIOLETA"	 , "FECHADO AUTOMÁTICO", "2")
 
