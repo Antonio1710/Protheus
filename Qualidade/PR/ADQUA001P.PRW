@@ -85,7 +85,13 @@ WsMethod Get WsService inspecaoqualidade
         cJsonResp := getCarga(@cErro, cId)
 
     ElseIf cRecurso == "paletes"
+<<<<<<< HEAD
+        cPallete := rmvAcento(Substr(cValToChar(cId),1,18))
+        Conout('cPallete ' + cId)
+        cJsonResp := getPalete(@cErro, cId)
+=======
         cJsonResp := getPalete(@cErro, @aResult, cId)
+>>>>>>> origin/master
 
     Else 
         SetRestFault(404,EncodeUTF8("Recurso não encontrado."),.T.,404)
@@ -323,7 +329,10 @@ Static Function getPalete(cErro, aDados, cPallete)
     Local cStatusP  := ""
     Local cTurno    := "" //Everson - 29/07/2021. Chamado 4257.   
     Local cDtVenc   := "" //Everson - 29/07/2021. Chamado 4257.   
-    Local cDtVencT  := "" //Everson - 29/07/2021. Chamado 4257.   
+    Local cDtVencT  := "" //Everson - 29/07/2021. Chamado 4257. 
+
+    Local xChecTag  := "" //Everson - 05/08/2021. Chamado 4257.
+    Local nOpcTag   := 1  //Everson - 05/08/2021. Chamado 4257.
 
     //Everson - 05/08/2021. Chamado 4257.   
     Local xChecTag  := nil
