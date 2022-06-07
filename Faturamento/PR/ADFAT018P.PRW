@@ -16,6 +16,7 @@ Static cTiMast := "Dados do lote de produto SAG"
     @since 17/11/2021
     @version 01
     @history Everson, 09/05/2022, Chamado TI - Removida a publicação de web service PUBLISH USER MODEL REST.
+    @history Everson, 27/05/2022, ticket 18465 - Alterado texto do cabecalho da MsgInfo.
     /*/
 User Function ADFAT018P() // U_ADFAT018P()
 
