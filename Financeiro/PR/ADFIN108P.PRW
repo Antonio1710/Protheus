@@ -1,6 +1,7 @@
 #include "protheus.ch"
 #include "topconn.ch"
 
+
 /*/{Protheus.doc} User Function ADFIN108P (F370CTBUSR)
     Contabilização das baixas de AB-. Reformulação do ponto de entrada F370CTBUSR.
     @type Function
