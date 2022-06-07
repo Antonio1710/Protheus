@@ -956,7 +956,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Cancela ordem de pesagem original no Gemba.
-        If lGemba .And. ! U_ADFAT50G(cOrdOrg, @cMsgError)
+        If lGemba .And. ! procCancGb(cOrdOrg, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -3001,7 +3001,7 @@ Static Function cancTkt(oOrdPes, aOrdPes)
 
     //Cancela ordem no Gemba.
     If lRet
-        U_ADFAT50G(cNmOrdem)
+        ! procCancGb(cNmOrdem, @cMsgError)
 
     EndIf
 
@@ -4392,6 +4392,35 @@ Static Function procEnvGb(cNmOrdem, cMsgError)
         U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "1")
         
         U_ADFAT173(cPreFx + "enviada com sucesso.", cNmOrdem, "", "GEMBA")
+        
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} procCancGb
+    Process cancelamento de ordem de pesagem para o Gemba.
+    @type  User Function
+    @author Everson
+    @since 18/05/2022
+    @version 01
+/*/
+Static Function procCancGb(cNmOrdem, cMsgError)
+    
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local lRet   := .F.
+    Local cPreFx := "Cancelar OP: "
+
+    Default cMsgError := ""
+
+    lRet := U_ADFAT50G(cNmOrdem, @cMsgError)
+
+    If ! lRet
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GEMBA")
+
+    Else
+        U_ADFAT173(cPreFx + "cancelada com sucesso.", cNmOrdem, "", "GEMBA")
         
     EndIf
 
