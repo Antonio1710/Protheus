@@ -121,9 +121,10 @@ Return .T.
 WsMethod Get WsService manutencao
 
     //Variáveis.
+    //Variáveis.
     Local cEmpresa      := Alltrim(Self:GetHeader("Empresa"))
     Local cFil          := Alltrim(Self:GetHeader("Filial"))
-    Local cAuth         := Alltrim(Self:GetHeader("Authorization"))
+    Local cAuth         := Alltrim(Self:GetHeader("Authorizationx")) //Everson, 31/08/2021, Chamado 7936.
     Local aCreden       := {}
     Local cUser         := ""
     Local cSenha        := ""
