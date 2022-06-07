@@ -5713,7 +5713,7 @@ Static Function lerTag(oView, lAtuView, cCP)
  
     oObj:CloseConnection()
 
-    cTag := Alltrim(cValToChar(StrTran(StrTran(cTag,Chr(2),""),Chr(3),"")))
+    cTag := Alltrim(cValToChar( StrTran(StrTran(StrTran(cTag,Chr(2),""),Chr(3),""),Chr(32))  ))
 
     If lAtuView
         If !Empty(cTag) .And.;
