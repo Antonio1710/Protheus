@@ -19,6 +19,7 @@ Static cpEncerrado := "5/6"
     @author Everson
     @since 17/11/2021
     @version 01
+    @history Everson, 27/05/2022, ticket 18465 Tratamento para quando houver mais de um produto SAG vinculado do produto Protheus.
 /*/
 User Function ADFAT017P() // U_ADFAT017P()
 
