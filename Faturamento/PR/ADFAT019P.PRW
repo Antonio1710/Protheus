@@ -15,7 +15,7 @@ Static xPula   := Chr(13) + Chr(10)
     @author Everson
     @since 19/11/2021
     @version 01
-    @history, Everson, 26/06/2022, Ticket 18465 - Tratamento para não deixar abrir pesagem quando há nota fiscal vinculada.
+    @history, Everson, 26/06/2022, Ticket 18465 - Tratamento para não deixar abrir pesagem quando há nota fiscal vinculada
     /*/
 User Function ADFAT019P() // U_ADFAT019P()
 
