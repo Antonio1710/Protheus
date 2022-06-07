@@ -11,6 +11,7 @@
 	@version 01
 	@history Everson, 20/04/2020, Chamado 056247 - Tratamento para bloqueio de pedidos de venda vinculados a boletos de pagamentos antecipados.
 	@history Everson, 12/08/2020, Chamado 060229 - Tratamento para envio de mensagem de boleto ao Salesforce.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
 User Function ADVEN050P(cParamBsc,lAut,lCredito,cExpSql,lAprovFin,lItem,lDtE,_lBon,_lDoa,lPlcLog,nOpc,nBolAnt) //Everson - 20/04/2020. Chamado 056247. // U_ADVEN050P("9A2ZJ6",.F.) // U_ADVEN050P("9A2ZG8",.F.,.F.,,.F.,.T.)
@@ -102,7 +103,9 @@ Static Function Processar(cPedido,lCredito,lAprovFin,lItem,lDtE,cExpSql,lAut,nOp
 	conout("ADVEN050P - >>>>>>>>>>>>>>>>>> Processar nOpc " + cValToChar(nOpc)) 
 	
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -128,12 +131,17 @@ Static Function Processar(cPedido,lCredito,lAprovFin,lItem,lDtE,cExpSql,lAut,nOp
 	//Processa os registros.
 	If  ! lAut
 	
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.,lCredito) },"Aguarde","Enviando pedidos de venda (SF)...",.T.)
-                                                    
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.,lCredito) },"Aguarde","Enviando pedidos de venda (SF)...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4(@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.,lCredito) },"Aguarde","Enviando pedidos de venda (SF)...",.T.)
+
 	Else
-		             StaticCall(ADVEN075P,ProcessarB,@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.,lCredito)
-		             //StaticCall(ADVEN075P,ProcessarB,@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.)
-	
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.,lCredito)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4(@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.,lCredito)
+
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,Iif(lMetodo,.F.,.T.),Iif(lMetodo,"PATCH",""),@aRetOk,Iif(lMetodo,.F.,.T.),.T.,"",.T.,.F.)
+
 		If nOpc == 1 .And. ! lLibFin
 			Conout("ADVEN050P - 60 segundos para envio das correções de itens de pedido de venda")
 			Sleep(60000)
@@ -350,7 +358,9 @@ Static Function montJson(cMetodo,cChvExt,cNmAlias,aResponse)
 		cIdVend := Alltrim(cValToChar(Posicione("SA3",1,xFilial("SA3") + cCodVend, "A3_XIDSF" )))
 		
 		If Empty(cIdVend)
-			StaticCall(ADVEN075P,chkVend,aResponse,@cIdVend,cCodVend)
+			//Static Call(ADVEN075P,chkVend,aResponse,@cIdVend,cCodVend)
+			//@history Ticket 70142 , Edvar   / Flek Solution , 23/03/2022 , Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A6( aResponse,@cIdVend,cCodVend )
 			cIdVend := StrTran(cIdVend,"'","")
 		
 		EndIf
@@ -640,7 +650,9 @@ Static Function envItens(cParamBsc,lAut,cChvTab,aResponse,cMetodo,lItem)
 	If Len(aResponse) <= 0
 
 		//Efetura login no SalesForce.
-		lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+		//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    	lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 	
 		//
 		If ! lLogin
@@ -668,12 +680,18 @@ Static Function envItens(cParamBsc,lAut,cChvTab,aResponse,cMetodo,lItem)
 	//Processa os registros em lote.
 	If  ! lAut
 		
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) itens ...",.T.)
-		//Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,,,{}) },"Aguarde","Processando registro(s) itens ...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) itens ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4(@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) itens ...",.T.)
+		
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,,,{}) },"Aguarde","Processando registro(s) itens ...",.T.)
 
 	Else
-					StaticCall(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.)
-		            //StaticCall(ADVEN075P,ProcessarB,@aParametros,,,{})
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,,"",@aRetOk,.F.,.T.,"",.T.,.F. )
+		
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,,,{})
 
 	EndIf
 
@@ -1010,7 +1028,9 @@ Static Function mrkReg(cChave,lAut,cId,cMetodo,aResponse,cAliasS)
 				MsgAlert(cMsg,"Função mrkReg (ADVEN050P)")
 				
 			Else
-				StaticCall(ADVEN075P,envErros,cMsg + "Função mrkReg (ADVEN050P)")
+				//Static Call(ADVEN075P,envErros,cMsg + "Função mrkReg (ADVEN050P)")
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN075A2(cMsg + "Função mrkReg (ADVEN050P)")
 				
 			EndIf
 		
@@ -1167,7 +1187,9 @@ Static Function rmvDuplic(lAut)
 			MsgAlert(cMsg,"Função mrkReg (ADVEN050P)")
 			
 		Else
-			StaticCall(ADVEN075P,envErros,cMsg + "Função chkDuplic (ADVEN050P)")
+			//Static Call(ADVEN075P,envErros,cMsg + "Função chkDuplic (ADVEN050P)")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A2( cMsg + "Função chkDuplic (ADVEN050P)" )
 			
 		EndIf
 	
@@ -1190,7 +1212,9 @@ Static Function rmvDuplic(lAut)
 			MsgAlert(cMsg,"Função mrkReg (ADVEN050P)")
 			
 		Else
-			StaticCall(ADVEN075P,envErros,cMsg + "Função chkDuplic (ADVEN050P)")
+			//Static Call(ADVEN075P,envErros,cMsg + "Função chkDuplic (ADVEN050P)")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A2( cMsg + "Função chkDuplic (ADVEN050P)" )
 			
 		EndIf
 	
@@ -1213,8 +1237,9 @@ Static Function rmvDuplic(lAut)
 			MsgAlert(cMsg,"Função mrkReg (ADVEN050P)")
 			
 		Else
-			StaticCall(ADVEN075P,envErros,cMsg + "Função chkDuplic (ADVEN050P)")
-			
+			//Static Call(ADVEN075P,envErros,cMsg + "Função chkDuplic (ADVEN050P)")
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A2( cMsg + "Função chkDuplic (ADVEN050P)" )
 		EndIf	
 			
 	EndIf

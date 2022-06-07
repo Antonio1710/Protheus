@@ -9,6 +9,7 @@
 	@since 22/12/2017
 	@version 01
 	@history Everson, 24/04/2020, Tratamento para flegar se a condição de pagamento gera boleto para pagamento antecipado.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADVEN070P(cDe,cAte,lAut,cExpSql) // U_ADVEN070P()
 
@@ -60,7 +61,9 @@ Static Function Processar(cDe,cAte,lAut,cExpSql)
 	Local cChvExt	  := "Codigo__c/"
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -85,10 +88,14 @@ Static Function Processar(cDe,cAte,lAut,cExpSql)
 
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{}) },"Aguarde","Processando cadastro cond.pag.(SF)...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{}) },"Aguarde","Processando cadastro cond.pag.(SF)...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4(@aParametros,.F.,"PATCH",{}) },"Aguarde","Processando cadastro cond.pag.(SF)...",.T.)
 
 	Else
-		             StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{})
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{})
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.F.,"PATCH",{} )
 
 	EndIf
 

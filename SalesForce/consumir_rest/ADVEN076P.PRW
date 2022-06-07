@@ -14,7 +14,16 @@
 	@history Everson 18/01/2021. Chamado TI. Adiconada marcação de clientes optantes pelo Simples Nacional.
 	@history Everson 19/01/2021. Chamado TI. Alterado campo do simples nacional.
 	@history Everson 21/01/2021. Chamado TI. Adicionado tratamento para envio de marcação de Simples Nacional para as demais opções de envio.
+<<<<<<< HEAD
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+=======
+<<<<<<< HEAD
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+=======
+	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+>>>>>>> master
+>>>>>>> 22b14a347bdb762f804252d2045c7cbdd575a5d7
 	/*/
 User Function ADVEN076P(cDe,cAte,lAut,cExpSql,cTpAlt,lParecer,cTexto) // U_ADVEN076("","",.T.) U_ADVEN076("","",.F.," AND A1_VEND = '000028' ","",.T.,"")
 	Local aArea      := GetArea()
@@ -63,7 +72,9 @@ Static Function Processar(cDe,cAte,lAut,cExpSql,cTpAlt,lParecer)
 	Local aRetOk	:= {}
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -87,11 +98,15 @@ Static Function Processar(cDe,cAte,lAut,cExpSql,cTpAlt,lParecer)
 
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{},.F.,.T.,"",.T.,.T.) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
-		//Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{}) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{},.F.,.T.,"",.T.,.T.) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4( @aParametros,.F.,"PATCH",{},.F.,.T.,"",.T.,.T.) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{}) },"Aguarde","Processando cadastro cliente(SF)...",.T.)
 	Else
-		StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{},.F.,.T.,"",.T.,.T.)
-		//StaticCall(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{})
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{},.F.,.T.,"",.T.,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.F.,"PATCH",{},.F.,.T.,"",.T.,.T. )
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.F.,"PATCH",{})
 	EndIf
 
 Return Nil
@@ -495,7 +510,7 @@ Static Function scriptSql(cDe,cAte,aResponse,cExpSql,cTpAlt,lParecer)
 	cTpAlt	:= Alltrim(cValToChar(cTpAlt))
 	
 	//
-/*	If ! StaticCall(ADVEN075P,chkVend,aResponse,@cCodVend)
+/*	If ! Static Call(ADVEN075P,chkVend,aResponse,@cCodVend)
 		Return cQuery 
 
 	EndIf*/
