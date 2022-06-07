@@ -483,14 +483,14 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
 
     Default lJob    := .F.
 
-    If ! lJob .And. ! U_ADFAT16A(ZIG->ZIG_ORDEM)
+    If ! U_ADFAT16A(ZIG->ZIG_ORDEM)
         Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
 
     EndIf
 
-    If lJob .And. Empty(cImpress)
+    If Empty(cImpress)
         U_ADFAT173(cPreFx + " sem impressora configurada(MV_#IMPCPT)", ZIG->ZIG_ORDEM, "", "PROTHEUS")
         RestArea(aArea)
         Return Nil
@@ -645,7 +645,6 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
         EndIf
 
     Else
-
 
         oPrinter:Print()
 
