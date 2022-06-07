@@ -610,7 +610,7 @@ User Function ADFAT17Y()
                    TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
                    TButton():New(187,515,"Transferência Ordem"  ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
                    TButton():New(207,515,"Romaneio"             ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oAltTag := TButton():New(247,515,"Alterar Tag"          ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oExcTag := TButton():New(267,515,"Excluir Tag"          ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
@@ -957,7 +957,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Cancela ordem de pesagem original no Gemba.
-        If lGemba .And. ! procCancGb(cOrdOrg, @cMsgError)
+        If lGemba .And. ! cancGb(cOrdOrg, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -2214,12 +2214,6 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     oOrdPes:setArray(aOrdPes)
     oOrdPes:Refresh()
 
-    //imprime ticket de pesagem.
-    If cTpMovi == "R"
-        impTktAut() 
-
-    EndIf
-
     RestArea(aArea)
 
 Return Nil
@@ -3012,8 +3006,8 @@ Static Function cancTkt(oOrdPes, aOrdPes)
     lRet := U_ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, .T.)
 
     //Cancela ordem no Gemba.
-    If lRet
-        ! procCancGb(cNmOrdem, @cMsgError)
+    If lRet .And. cTpOrdem == "R"
+        cancGb(cNmOrdem)
 
     EndIf
 
@@ -4416,14 +4410,14 @@ Static Function procEnvGb(cNmOrdem, cMsgError)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} procCancGb
+/*/{Protheus.doc} cancGb
     Process cancelamento de ordem de pesagem para o Gemba.
     @type  User Function
     @author Everson
     @since 18/05/2022
     @version 01
 /*/
-Static Function procCancGb(cNmOrdem, cMsgError)
+Static Function cancGb(cNmOrdem, cMsgError)
     
     //Variáveis.
     Local aArea  := GetArea()
@@ -5721,6 +5715,8 @@ Static Function lerTag(oView, lAtuView, cCP)
 
     cTag := Alltrim(cValToChar(StrTran(StrTran(cTag,Chr(2),""),Chr(3),"")))
 
+    cTag := U_ADFAT50O(cTag)
+
     If lAtuView
         If !Empty(cTag) .And.;
             chkTag(cTag, cCP) //Verifica se a tag de pesagem não está em uso.
@@ -6956,68 +6952,6 @@ Static Function gerPeAut(cNmOrdem)
 
     gerPedS(ZIF->ZIF_CTPATI, .T.)
 
-
-    RestArea(aArea)
-
-Return Nil
-/*/{Protheus.doc} impTktAut
-    Imprime pedido de compra automático.
-    @type  Static Function
-    @author Everson
-    @since 06/06/2022
-    @version 01
-
-/*/
-Static Function impTktAut()
-
-    //Variáveis.
-    Local aArea := GetArea()
-    Local lImp  := GetMv("MV_#IDATCP",,.F.)
-    Local cQuery:= ""
-
-    If ! lImp
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    cQuery := ""
-    cQuery += " SELECT " 
-        cQuery += " ZIG_CTPATI, ZIG_NUMERO " 
-    cQuery += " FROM " 
-        cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB " 
-        cQuery += " INNER JOIN " 
-        cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON " 
-        cQuery += " ZIB_FILIAL = ZIG_FILIAL " 
-        cQuery += " AND ZIB_NUMERO = ZIG_CTPATI " 
-    cQuery += " WHERE " 
-        cQuery += " ZIB_FILIAL = '" + FWxFilial("ZIB") + "' " 
-        cQuery += " AND CAST(ZIB_DATA AS DATE) = CAST(GETDATE() AS DATE) " 
-        cQuery += " AND ZIB_STATUS = '5' " 
-        cQuery += " AND ZIB_TPMOVI = 'R' " 
-        cQuery += " AND ZIG_ENVIAD <> '1' " 
-        cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
-        cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
-    cQuery += " ORDER BY ZIG_NUMERO " 
-
-    If Select("D_IMPTKT") > 0
-        D_IMPTKT->(DbCloseArea())
-
-    EndIf
-
-    TcQuery cQuery New Alias "D_IMPTKT"
-    DbSelectArea("D_IMPTKT")
-    D_IMPTKT->(DbGoTop())
-
-    While ! D_IMPTKT->(Eof())
-        
-        MsAguarde({|| U_ADFAT026R(D_IMPTKT->ZIG_NUMERO, "R", D_IMPTKT->ZIG_CTPATI, .T.) }, "Aguarde", "Imprimindo ticket...")
-
-        D_IMPTKT->(DbSkip())
-
-    End
-
-    D_IMPTKT->(DbCloseArea())
 
     RestArea(aArea)
 
