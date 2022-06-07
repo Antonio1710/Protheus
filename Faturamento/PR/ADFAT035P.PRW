@@ -243,8 +243,8 @@ Static Function imptGb(lCarrega)
 
     EndIf
 
-    If ZIF->ZIF_STATLC <> "A"
-        MsgInfo("Ordem de pesagem não está com status 'Aberta'.","Função imptGb(ADFAT035P)")
+    If ZIF->ZIF_STATLC == "E"
+        MsgInfo("Ordem de pesagem está com status 'Encerrada'.","Função imptGb(ADFAT035P)")
         RestArea(aArea)
         Return .F.
 
