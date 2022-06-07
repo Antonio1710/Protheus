@@ -331,7 +331,7 @@ User Function ADFAT28C(aParametros, aRetErro)
     Sleep(Random(0, 5)*1000) //Everson - 06/06/2022.
 
 
-    TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1' WHERE ZIQ_HASH = '" + cUuid + "'")
+    TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1' WHERE ZIQ_UUID = '" + cUuid + "'")
 
     // If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
     //     Aadd(aRetErro, {400, cMsgError})
