@@ -738,7 +738,7 @@ Static Function envGOrd(oOrdPes, aOrdPes)
 
     EndIf
 
-    If ! U_ADFAT50F(cNmOrdem, @cMsgError)
+    If ! procEnvGb(cNmOrdem, @cMsgError)
         Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
@@ -964,7 +964,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Envia nova ordem de pesagem para o Gemba.
-        If lGemba .And. ! U_ADFAT50F(cOrdDes, @cMsgError)
+        If lGemba .And. ! procEnvGb(cOrdDes, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
