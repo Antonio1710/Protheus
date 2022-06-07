@@ -54,11 +54,15 @@ Static Function BrowseDef()
 	oBrowse:SetAlias("ZV1")
 	oBrowse:SetDescription(STR0001)
 
-	oBrowse:AddLegend("ZV1_STATUS='I'"					, "BR_AZUL"	    , "PRIMEIRA PESAGEM")
-	oBrowse:AddLegend("ZV1_STATUS='R'"					, "BR_LARANJA" 	, "SEGUNDA PESAGEM")
-	oBrowse:AddLegend("ZV1_STATUS='M'"					, "BR_MARRON" 	, "PESAGEM MANUAL")
-	oBrowse:AddLegend("ZV1_STATUS='G'"					, "BR_VERDE" 	, "GERADO FRETE")
-	oBrowse:AddLegend("ALLTRIM(ZV1_STATUS)=''"	        , "BR_PRETO" 	, "ORDEM NAO UTILIZADA")
+	oBrowse:AddLegend("ZV1_STATUS='I'"					, "BR_AZUL"	    , "PRIMEIRA PESAGEM", "1")
+	oBrowse:AddLegend("ZV1_STATUS='R'"					, "BR_LARANJA" 	, "SEGUNDA PESAGEM", "1")
+	oBrowse:AddLegend("ZV1_STATUS='M'"					, "BR_MARRON" 	, "PESAGEM MANUAL", "1")
+	oBrowse:AddLegend("ZV1_STATUS='G'"					, "BR_VERDE" 	, "GERADO FRETE", "1")
+	oBrowse:AddLegend("ALLTRIM(ZV1_STATUS)=''"	        , "BR_PRETO" 	, "ORDEM NAO UTILIZADA", "1")
+
+	oBrowse:AddLegend("(ZV1_FECHA='' .OR ZV1_FECHA = '1')"	, "BR_BRANCO"	 , "ABERTO", "2")
+	oBrowse:AddLegend("ZV1_FECHA ='3'"					    , "YELLOW" 	     , "FECHADO MANUAL",  "2")
+	oBrowse:AddLegend("ZV1_FECHA ='2'"					    , "BR_VIOLETA"	 , "FECHADO AUTOMÁTICO", "2")
 
 	// DEFINE DE ONDE SERÁ RETIRADO O MENUDEF
 	oBrowse:SetMenuDef("ADLFV017P")
