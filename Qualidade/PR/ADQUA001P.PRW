@@ -85,13 +85,7 @@ WsMethod Get WsService inspecaoqualidade
         cJsonResp := getCarga(@cErro, cId)
 
     ElseIf cRecurso == "paletes"
-<<<<<<< HEAD
-        cPallete := rmvAcento(Substr(cValToChar(cId),1,18))
-        Conout('cPallete ' + cId)
-        cJsonResp := getPalete(@cErro, cId)
-=======
         cJsonResp := getPalete(@cErro, @aResult, cId)
->>>>>>> origin/master
 
     Else 
         SetRestFault(404,EncodeUTF8("Recurso não encontrado."),.T.,404)
