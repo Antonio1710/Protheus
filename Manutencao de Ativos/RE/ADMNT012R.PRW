@@ -7,7 +7,7 @@
 /*/{Protheus.doc} ADMNT012R - Relatorio de Custo por OS / Eqto Exporta Excel
 )
     @type  Function
-    @author Tiago Stocco
+    @author Tiago Stocco.
     @since 20/07/2020
     @version TKT - 7571
     @param param_name, param_type, param_descr
@@ -20,7 +20,7 @@
     @Ticket 13242, Data 26/05/2021, DENIS GUEDES, Incluído a coluna ST1.T1_NOME no relatório
     @Ticket 13242, Data 02/06/2021, DENIS GUEDES, Incluído funcionalidade para copiar a planilha gerada para a pasta "Relatorio"
     @Ticket 69385, Data 25/04/2022, Everson     , Inclusão de OS em SS.
-    @Ticket 69385, dATA 03/062022, Antonio Domingos, otimização da Query
+    @Ticket 69385, dATA 03/062022, Antonio Domingos, otimização da Query.
 /*/
 
 User Function ADMNT012R(aParam)

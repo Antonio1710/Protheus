@@ -13,7 +13,7 @@ Relatorio horas Disponivel X Realizadas - baseado na Consulta MNTC905
 @author Antonio Domingos
 @since 18/05/2022
 @version undefined
-@type User Function
+@type User Function. 
 /*/
 //---------------------------------------------------------------------
 User Function ADMNT018R(cParam)
