@@ -630,17 +630,8 @@ User Function ADFAT29E()
 
         If ! SA2->( DbSeek( FWxFilial("SA2") + cFornece + cLoja ) )
 
-            If ! SA1->( DbSeek( FWxFilial("SA1") + cFornece + cLoja ) )
-                cMsgError := "Fornecedor/Cliente " + cFornece + cLoja + " não localizado."
-                U_ADFAT29D(cId, "2", cMsgError)
-                Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-                (cAliasAux)->(DbSkip())
-                Loop
-            
-            Else
-                cCliForn := "C"
+            cCliForn := "C"
 
-            EndIf
 
         Else
             cCliForn := "F"
