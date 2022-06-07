@@ -6965,6 +6965,7 @@ Return Nil
     @author Everson
     @since 06/06/2022
     @version 01
+    
 /*/
 Static Function impTktAut()
 

@@ -646,6 +646,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
 
     Else
 
+
         oPrinter:Print()
 
         RecLock("ZIG", .F.)
