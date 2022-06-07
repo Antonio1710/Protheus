@@ -12,6 +12,7 @@
 	@history Ticket 045119.   Everson 12/11/2018. Comentado o trecho de código que não bloqueava pedido exportação por crédito.  
 	@history Ticket T.I - Chamado T.I - Fernado Sigoli 06/06/2019 - tratamemto do erro log, quando existir apenas aprovacao Nível 3.
 	@history Ticket 9300 - Leonardo P. Monteiro 10/02/2021 - Inclusão de parâmetro para que a rotina não seja executada na emrpesa Ceres(02) .
+	@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 User Function Libped1()
@@ -466,7 +467,7 @@ Return
 /*/
 
 Static Function MarkPed2()
-
+	Local _n1
 	For _n1 := 1 to Len(_aPedido)
 		If _aPedido[_n1][01]
 			MsgAlert("Pedido marcado: "+_aPedido[_n1][02])
@@ -498,7 +499,7 @@ Return
 User function APROVA1()
 
 	Local _lPedi  := .F.
-
+	Local _n1
 	U_ADINF009P('LIBPED1' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de liberacao de pedidos loja ')
 
 	For _n1 := 1 to Len(_aPedido)   // Verifica Loja
@@ -538,7 +539,7 @@ Return()
 User Function REJEITA1()
 
 	Local _lPedi  := .F.
-
+	Local _n1
 	U_ADINF009P('LIBPED1' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de liberacao de pedidos loja ')
 
 	For _n1 := 1 to Len(_aPedido)   // Verifica Loja
@@ -579,6 +580,7 @@ Static Function AprvPed()           &&Mauricio 13/05/11 - rotina de aprovação po
 	Local lEstoque := .F.
 	Local lAvCred  := .T.
 	Local lAvEst   := .F.  //.T. Mauricio 26/07/11.
+	Local _n1
 
 	For _n1 := 1 to Len(_aPedido)
 
@@ -823,7 +825,8 @@ Return()
 */
 
 Static Function RejPed()           &&Mauricio 13/05/11 - rotina de rejeicao por pedidos.
-
+	Local _n1
+	
 	For _n1 := 1 to Len(_aPedido)
 
 		If _aPedido[_n1][01]
@@ -1089,7 +1092,7 @@ Return ( Nil )
 */
 /*
 	
-	!!! Função chkBlCred chamada por staticcall nos fontes LIBPED2 e ADVEN090P !!!
+	!!! Função chkBlCred chamada por static call nos fontes LIBPED2 e ADVEN090P !!!
 	
 */
 Static Function chkBlCred(cCliente,cLoja,cNumPed)
@@ -1210,3 +1213,14 @@ Static Function fBscSld(cCliente,cLoja)
 	TSE1->(DbcloseArea())   
 	
 Return(nSld)
+
+/*/{Protheus.doc} u_LIBPEDA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LIBPEDA0( uPar1, uPar2, uPar3 )
+Return( chkBlCred(uPar1, uPar2, uPar3) )

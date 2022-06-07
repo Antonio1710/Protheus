@@ -21,6 +21,7 @@
 	@history Alteração - William Costa   - 26/02/2020 - Chamado: 056129 - Foi ajustado a programação que se não encontrar a descrição no Edata irá trazer a que está no pedido de venda do Protheus.  Essa pergunta só foi feita na Adoro e não na Ceres onde estava gerando o erro. Foi ajustado as perguntas não ocasionando mais os Erros.
 	@history Alteração - Everson         - 03/07/2020 - Chaamdo: 059401 - Adicionado impressão de vale palete.
 	@history Alteração - Everson         - 19/10/2021 - Chaamdo: 055129 - Tratamento para melhorar o desempenho do relatório.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574 - Abel Babini  - 25/04/2022 - Projeto FAI
 /*/
 
@@ -1422,7 +1423,8 @@ Static Function vlPlte()
 	Local cQuery := sqlVlPlt()
 
 	//
-	MsAguarde({|| StaticCall(ADROMENT,vlPalete,"","","","","","",cQuery) },"Função vlPlte(ROTLOG)","Gerando vale palete...")
+	//MsAguarde({|| Static Call(ADROMENT,vlPalete,"","","","","","",cQuery) },"Função vlPlte(ROTLOG)","Gerando vale palete...")
+	MsAguarde({|| u_ROMENTA0("","","","","","",cQuery) },"Função vlPlte(ROTLOG)","Gerando vale palete...")
 
 Return cQuery
 /*/{Protheus.doc} sqlVlPlt

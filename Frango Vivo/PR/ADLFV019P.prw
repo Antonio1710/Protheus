@@ -11,6 +11,7 @@
   @since 18/05/2021
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
   @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+  @history Ticket 70142 - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADLFV019P()
 	
@@ -46,7 +47,9 @@ Static Function ModelDef()
 	
 	// nOpc := oModel:GetOperation()
 	// if nOpc <> MODEL_OPERATION_INSERT
-	oStruZEI:SetProperty( 'ZEI_NUMOC'   , MODEL_FIELD_VALID,FwBuildFeature( STRUCT_FEATURE_VALID,"StaticCall(ADLFV019P, validaOdCarregamento)" ))
+	//oStruZEI:SetProperty( 'ZEI_NUMOC'   , MODEL_FIELD_VALID,FwBuildFeature( STRUCT_FEATURE_VALID,"Static Call(ADLFV019P, validaOdCarregamento)" ))
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	oStruZEI:SetProperty( 'ZEI_NUMOC'   , MODEL_FIELD_VALID,FwBuildFeature( STRUCT_FEATURE_VALID,"u_LFV019A0()" ))
 
 	oStruZEI:SetProperty( 'ZEI_DESCRI'  , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZEE','ZEE_DESCRI')" ))
 	//oStruZEI:SetProperty( 'ZEI_DEPTO'   , MODEL_FIELD_INIT,FwBuildFeature( STRUCT_FEATURE_INIPAD,"U_fillCampo('ZEE','ZEE_DEPTO')"  ))
@@ -266,3 +269,15 @@ Static Function fAfterTTS(oModel)
 	QZEI->(DbCloseArea())
 
 return lRet
+
+
+/*/{Protheus.doc} u_LOG057A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LFV019A0()
+Return( validaOdCarregamento())

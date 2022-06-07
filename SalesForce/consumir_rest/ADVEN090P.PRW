@@ -29,8 +29,18 @@ Static cFil := "02"
 	@history Chamado T.I  - Leonardo P. Monteiro   - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
 	@history Chamado T.I  - Leonardo P. Monteiro   - 27/01/2022 - Correção na rotina comparacab e comparaitem e reformulação das rotinas de reprocessamento.
 	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
+<<<<<<< HEAD
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 	
+=======
+<<<<<<< HEAD
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+=======
+	@history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+	
+>>>>>>> master
+>>>>>>> 22b14a347bdb762f804252d2045c7cbdd575a5d7
 	/*/
 User Function ADVEN090P(cEmp, cFil) // U_ADVEN090P()
 
@@ -373,7 +383,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 	Local cError	 := ""
 	Local lContinua	 := .T. //Everson - 25/09/20219. Chamado T.I.
 	Local nRecErro	 := "" //Everson - 25/09/20219. Chamado T.I.
-
+	Local i
 	Default cRecnos	 := ""
 
 	Private aPedidos := {}
@@ -795,7 +805,9 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 					//Função chkBlCred disponível no fonte LIBPED1.
 					cCliente := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE))
 					cLoja	 := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI))
-					StaticCall(LIBPED1,chkBlCred, cCliente, cLoja, Alltrim(cValToChar(ZCI->ZCI_NUMP)) )
+					//Static Call(LIBPED1,chkBlCred, cCliente, cLoja, Alltrim(cValToChar(ZCI->ZCI_NUMP)) )
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					u_LIBPEDA0( cCliente, cLoja, Alltrim(cValToChar(ZCI->ZCI_NUMP)) )
 				EndIf
 			EndIf
 
@@ -2277,3 +2289,15 @@ Static Function logZBE(cLog, cParam, cMemo)
 	ZBE->( MsUnLock())
 
 Return Nil
+
+
+/*/{Protheus.doc} u_VEN090A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_VEN090A0( uPar1, uPar2 )
+Return( chkLiber( uPar1, uPar2 ) )
