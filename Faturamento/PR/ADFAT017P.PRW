@@ -943,6 +943,14 @@ Static Function confTran(cOrdOrg, cOrdDes)
 
         EndIf
 
+        //Altera a quantidade da ordem de pesagem no ticket de pesagem.
+        If ! U_ADFAT191(cTktNv, "ZIG_PESORD", ZIF->ZIF_QUANT, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Exclui ordem de pesagem.
         If ! U_ADFAT166(cOrdOrg, @cMsgError)
             DisarmTransaction()
             Break
