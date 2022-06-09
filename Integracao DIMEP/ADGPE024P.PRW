@@ -44,6 +44,7 @@
 	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
     @history TICKET: 69748  - ADRIANO SAVOINE - 16/03/2022 - Ajustado o campo credencial para ajustar igual ao RM no DIMEP com 8 caracteres no leitor de codigo de barra mas deixando que no relogio somente considere 6.
 	@history Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022 - Criado o parametro no configurador com 1 dia e alterada a query pois estava ocorrendo erro na hora de montar a mesma e transformado o dado.
+	@history TICKET: 74255  - ADRIANO SAVOINE - 09/06/2022 - Tratado a Filial de Itapira 0B.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -601,7 +602,7 @@ Static Function DimepFuncionario()
         nEstOrgEmpresa     := 0    
         nPerfilAcesso      := 0
         cNomecPerfil       := ''
-		cFilFunc           := Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2)) //Everson - 03/01/2022. Chamado 66111.
+		cFilFunc           := U_TRATAFIL(TRB->CODFILIAL) // TICKET 74255 - ADRIANO SAVOINE - 09/06/2022 
         cCcFunc            := Alltrim(TRB->NROCENCUSTOCONT)
         nMatProth          := Val(TRB->CPF) // chamado 049598
 		cEmpDimep          := ''
@@ -995,7 +996,7 @@ Static Function CargaFuncDimep()
 			// *** INICIO GERA LOG *** // 
 			//Everson - 03/01/2022. Chamado 66111.             
 			cTexto := '6 Log Func:'                                                                                                         + ';' + ;
-						' Fil: '             + Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2))                                                                                + ';' + ;
+						' Fil: '             + U_TRATAFIL(TRB->CODFILIAL)                                                                                + ';' + ;
 						' Mat: '             + TRB->CHAPA                                                                                    + ';' + ;
 						' Nome: '            + TRB->NOME                                                                                   + ';' + ;
 						' Folha: '           + cValToChar(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
@@ -1006,7 +1007,7 @@ Static Function CargaFuncDimep()
 						' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                  + ';' + ;
 						' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
 				
-			GeraLog(Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2)),cTexto,'Integrou: ' + IIF(Alltrim(cIntregou)== '', 'OK',cIntregou)) //Everson - 03/01/2022. Chamado 66111.
+			GeraLog(U_TRATAFIL(TRB->CODFILIAL) ,cTexto,'Integrou: ' + IIF(Alltrim(cIntregou)== '', 'OK',cIntregou)) //Everson - 03/01/2022. Chamado 66111.
 			// *** FINAL GERA LOG *** // 
 		EndIf	
     		
@@ -1063,7 +1064,7 @@ Static Function CargaFuncDimep()
 			// *** INICIO GERA LOG *** // 
 			//Everson - 03/01/2022. Chamado 66111.            
 			cTexto := '2 Log Func:'                                                                                                         + ';' + ;
-						' Fil: '             + Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2))                                                                                 + ';' + ;
+						' Fil: '             + U_TRATAFIL(TRB->CODFILIAL)                                                                                  + ';' + ;
 						' Mat: '             + TRB->CHAPA                                                                                    + ';' + ;
 						' Nome: '            + TRB->NOME                                                                                   + ';' + ;
 						' Folha: '           + cValToChar(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Ause'))        + ';' + ;
@@ -1074,7 +1075,7 @@ Static Function CargaFuncDimep()
 						' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                  + ';' + ;
 						' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
 					
-			GeraLog(Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2)),cTexto,'Integrou: ' + IIF(Alltrim(cIntregou)== '', 'OK',cIntregou)) //Everson - 03/01/2022. Chamado 66111.
+			GeraLog(U_TRATAFIL(TRB->CODFILIAL) ,cTexto,'Integrou: ' + IIF(Alltrim(cIntregou)== '', 'OK',cIntregou)) //Everson - 03/01/2022. Chamado 66111.
 			// *** FINAL GERA LOG *** // 
 		
 			TRC->(dbSkip())
@@ -1409,7 +1410,7 @@ Static Function AlterFuncDimep()
 		// *** INICIO GERA LOG *** //
 		//Everson - 03/01/2022. Chamado 66111.
 		cTexto := '4 Log Func:'                                                                                                        + ';' + ;
-			      ' Fil: '             + Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2))                                                                                + ';' + ;
+			      ' Fil: '             + U_TRATAFIL(TRB->CODFILIAL)                                                                                + ';' + ;
 				  ' Mat: '             + TRB->CHAPA                                                                                   + ';' + ;
 				  ' Nome: '            + TRB->NOME                                                                                  + ';' + ;
 				  ' Folha: '           + cValToChar(nSitFol) + ' ' + IIF(nSitFol == 11,'Traba',IIF(nSitFol == 12,'Demi','Aus'))        + ';' + ;
@@ -1420,7 +1421,7 @@ Static Function AlterFuncDimep()
 				  ' lFuncSitFolha: '   + TRANSFORM(lFuncSitFolha,"@!")                                                                 + ';' + ;
 				  ' lFuncCredencial: ' + TRANSFORM(lFuncCredencial,"@!") 
 		
-		GeraLog(Iif(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2)), cTexto,'Integrou: ' + IIF(Alltrim(cIntregou)== '', 'OK',cIntregou)) //Everson - 03/01/2022. Chamado 66111.
+		GeraLog(U_TRATAFIL(TRB->CODFILIAL) , cTexto,'Integrou: ' + IIF(Alltrim(cIntregou)== '', 'OK',cIntregou)) //Everson - 03/01/2022. Chamado 66111.
 		// *** FINAL GERA LOG *** // 
 		
 		// *** FINAL CREDENCIAL *** //
@@ -1872,7 +1873,7 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
 	*/
 	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF= ''50199207895'' "
+	//cQuery += " AND PPESSOA.CPF= ''43606787898'' "
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
 	//
 
@@ -4288,3 +4289,37 @@ Static Function RunExcPessoa(cCPF)
 	EndIf
 	
 Return
+
+/*/{Protheus.doc} TRATAFIL
+	(Função para tratar filiais 10,11 e outras que surgirem)
+	@type  Static Function
+	@author Adriano Savoine
+	@since 09/06/2022
+	@version 01
+/*/
+
+User Function TRATAFIL(CODFILIAL)
+
+	Local lRet  := ""
+	Local FILIAL  := CVALTOCHAR(CODFILIAL)
+
+	IF FILIAL = "10"
+
+		lRet := IF(STRZERO(TRB->CODFILIAL,2) == "10", "0A", STRZERO(TRB->CODFILIAL,2)) //Everson - 03/01/2022. Chamado 66111.
+
+	ENDIF
+
+	IF FILIAL = "11"
+		// Filial Itapira
+		lRet := If(STRZERO(TRB->CODFILIAL,2) == "11", "0B", STRZERO(TRB->CODFILIAL,2)) //Adriano - 09/06/2022. Ticket  74255.
+
+	ENDIF
+
+	IF lRet = ""
+
+		lRet := FILIAL	
+
+	ENDIF
+
+
+Return lRet
