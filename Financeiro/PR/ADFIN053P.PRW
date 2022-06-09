@@ -28,6 +28,7 @@
 	@history Chamado 058823 - Everson - 09/06/2020. Tratamento para envio de e-mail, quando não localizar conta contábil para conta bancária informada.
 	@history ticket 10979   - Leonardo P. Monteiro - 24/03/2021 - Tratativa do error.log na linha 381 quando o campo E2_MOEDA vem com valores preenchidos informando o tipo da moeda. Anteriormente esse campo vinha como 'nil'.
 	@history ticket 67861   - Fernando Macieira    - 18/02/2022 - Lançamentos do financeiro não integrados (PA SAG)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 User Function ADFIN053P(cOpc)
 
@@ -40,7 +41,7 @@ User Function ADFIN053P(cOpc)
 	Local lAutoJob := .F.
 	Local cCta := "" // Chamado n. 051689 || OS 053035 || CONTROLADORIA || MONIK_MACEDO || 8956 || LOTES FINANCEIRO - FWNM - 12/09/2019
 	Local cMail := "" // Chamado n. 054307 || OS 055702 || SUPRIMENTOS || RACHEL || 1621063514 || WOKFLOW SOL.PA - fwnm - 18/12/2019
-	Local x
+	Local x, PA
 	
 	//VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	If Select("SX6") == 0
@@ -62,7 +63,8 @@ User Function ADFIN053P(cOpc)
 
 	Endif
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'')
 	

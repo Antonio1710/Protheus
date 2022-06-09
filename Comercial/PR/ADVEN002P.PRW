@@ -19,12 +19,15 @@
 	@history Ticket 12379   - Leonardo P. Monteiro - 15/04/2021 - Tratamento do EDI para evitar a inclusão de pedidos em duplicidade. Isso evita erros na importação de arquivos.
 	@history Ticket 12379   - Leonardo P. Monteiro - 19/04/2021 - Correção nas mensagens de erros quando não há produto cadastrado.
 	@history Ticket 18915   - Leonardo P. Monteiro - 26/08/2021 - Tratamento na conversão dos itens com valor 0.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 */
 
 User Function ADVEN002P()
 	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
+
+	Local nCont4
 
 	Private aDirectory    := {} 
 	Private nCont         := 0   
@@ -86,7 +89,7 @@ User Function ADVEN002P()
 
 	//BEGINDOC
 	//01-) aItem == cCodBar         
-	//02-) aItem == TRB->B1_COD     
+	//02-) aItem == TRB->B1_COD     nCont4
 	//03-) aItem == TRB->B1_DESC    
 	//04-) aItem == nQtd            
 	//05-) aItem == nQtdConv        
@@ -121,8 +124,8 @@ User Function ADVEN002P()
 		RPCClearEnv()
 		Return
 	EndIf
-
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	//ConOut("INICIO DO SCHEDULE ADVEN002P " + ALLTRIM(FUNNAME()) + ' ' + TIME())  
 	ConOut("[ADVEN002P] "+ Dtoc(date())+"-"+ Time() +" - INICIO DO SCHEDULE ADVEN002P " + ALLTRIM(FUNNAME()) +"")
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa importador do txt EDI para todos os clientes usando schedules ')
@@ -482,6 +485,7 @@ User Function ADVEN002P()
 RETURN(NIL)  
 
 Static Function CriaPed() 
+	local nCont1
 
 	aCabPV  := {} 
 	aItemPV := {}
@@ -863,6 +867,7 @@ Return
 Static Function RetHTML2(aPedidos,aVendedores)
 
 	Local cRet := ''
+	local n
 	
 	cRet := "<p <span style='"
 	cRet += 'font-family:"Calibri"'

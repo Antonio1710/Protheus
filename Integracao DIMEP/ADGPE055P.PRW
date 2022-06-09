@@ -12,6 +12,7 @@
 	@history TICKET  224 - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history TICKET  39  - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 USER FUNCTION ADGPE055P(aParam)  
 
@@ -43,7 +44,8 @@ USER FUNCTION ADGPE055P(aParam)
 	cLinked := GetMV("MV_#RMLINK",,"RM") 
 	cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	
 	ConOut("INICIO DO SCHEDULE ADGPE055P" + '||' + DTOC(DATE()) + '||' + TIME() + '|| Empresa:' + aParam[1] + '|| Filial:' + aParam[2])       
 	

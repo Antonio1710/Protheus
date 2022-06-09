@@ -8,6 +8,7 @@
     @author Everson
     @since 23/06/2020
     @version 01
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADEST048P()  // U_ADEST048P() //Everson - 23/06/2020. Chamado 
 
@@ -33,7 +34,8 @@ User Function ADEST048P()  // U_ADEST048P() //Everson - 23/06/2020. Chamado
             Return
         EndIf
 
-        PtInternal(1,ALLTRIM(PROCNAME()))
+        //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     EndIf
 

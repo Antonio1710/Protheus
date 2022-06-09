@@ -19,6 +19,8 @@
     @hostory Sigoli   - TKT: T.I       - Removido log , pois esta gerando muito log nos scheduledsRemovido log , pois esta gerando muito log nos scheduleds
     @history Macieira - ticket 67703   - 04/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
     @history Macieira - ticket 67703   - 07/02/2022 - Cadastro de Lote - Lote Recria x Ccusto.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+
 /*/
 User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
 
@@ -52,8 +54,9 @@ User Function ADEST034P(aParam)  // U_ADEST034P("01","04"),
             RPCClearEnv()
             Return
         EndIf
-
-        PtInternal(1,ALLTRIM(PROCNAME()))
+        
+        //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     EndIf
 

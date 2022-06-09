@@ -256,7 +256,8 @@ Static Function RunSubProdutos(oSelf, lAuto)
 		oSelf:SaveLog("")
 	EndIf
 	
-	PtInternal( 1, "[" + cRotina + "] - Inicializando ambiente... " )
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg( "[" + cRotina + "] - Inicializando ambiente... " )
 	
 	// Inicio do processamento
 	
@@ -292,7 +293,9 @@ Static Function RunSubProdutos(oSelf, lAuto)
 		Else
 			oSelf:IncRegua1("Produto " + (cZCSZCR)->ZCR_PRODUT)
 		EndIf
-		PtInternal( 1, "[" + cRotina + "] - Produto [" + (cZCSZCR)->ZCR_PRODUT + "] - Calculando Produções e Preços Médios de Vendas... " )
+		
+		//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg( "[" + cRotina + "] - Produto [" + (cZCSZCR)->ZCR_PRODUT + "] - Calculando Produções e Preços Médios de Vendas... " )
 		
 		If !lAuto
 			oSelf:SetRegua2( nTotTmp )
@@ -387,7 +390,9 @@ Static Function RunSubProdutos(oSelf, lAuto)
 		Else
 			oSelf:IncRegua1("Produto " + (cZCSZCR)->ZCR_PRODUT)
 		EndIf
-		PtInternal( 1, "[" + cRotina + "] - Produto [" + (cZCSZCR)->ZCR_PRODUT + "] - Calculando fatores... " )
+		
+		//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg( "[" + cRotina + "] - Produto [" + (cZCSZCR)->ZCR_PRODUT + "] - Calculando fatores... " )
 		
 		If !lAuto
 			oSelf:SetRegua2( nTotTmp )
@@ -459,7 +464,9 @@ Static Function RunSubProdutos(oSelf, lAuto)
 		Else
 			oSelf:IncRegua1("Produto " + (cZCSZCR)->ZCR_PRODUT)
 		EndIf
-		PtInternal( 1, "[" + cRotina + "] - Produto [" + (cZCSZCR)->ZCR_PRODUT + "] - Calculando Estruturas e CC Indiretos... " )
+		
+		//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg( "[" + cRotina + "] - Produto [" + (cZCSZCR)->ZCR_PRODUT + "] - Calculando Estruturas e CC Indiretos... " )
 		
 		If !lAuto
 			oSelf:SetRegua2( nTotTmp )
@@ -531,7 +538,8 @@ Static Function RunSubProdutos(oSelf, lAuto)
 	// Finalizando processamento
 	cHrFim := Time()
 	
-	PtInternal( 1, "[" + cRotina + "] - Filial ADORO [" + cFilADORO + "] - Finalizando..." )
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg( "[" + cRotina + "] - Filial ADORO [" + cFilADORO + "] - Finalizando..." )
 	If lAuto
 		ConOut(cRotina + " Cálculos subprodutos finalizados e gravados com sucesso!" + ENTER + ENTER + "Iniciado as: " + cHrIni + ENTER + "Finalizado as: " + cHrFim)
 	Else

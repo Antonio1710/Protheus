@@ -50,7 +50,8 @@ If !(Alltrim(FunName()) == "MATA440") .and. !(Alltrim(FunName()) == "MATA410")  
 		Return
 	EndIf
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	ConOut("INICIO DO SCHEDULE ADFIN029P" + '||' + DTOC(DATE()) + '||' + TIME())
 	
@@ -154,6 +155,8 @@ Local cArqName  	:= ""
 Local cTitulo   	:= ""
 Local lFile           
 Local cEmailCred    := Alltrim(GETMV("MV_#LISTPD"))
+
+Local _nx
 
 Private cString		:= ""
 Private cNomeUser 	:= Alltrim(UsrRetName(__CUSERID))
@@ -1070,6 +1073,7 @@ Return
 //-----------------|
 Static Function ValidPerg(cPerg)
 	
+	local i,j
 	sAlias := ALIAS()
 	aRegs  := {}
 	cPerg  := PADR(cPerg,10)

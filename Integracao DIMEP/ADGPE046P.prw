@@ -11,6 +11,7 @@
 	@history Chamado TI     - William Costa   - 27/05/2019 - Chamado TI, para correcao error.log type mismatch on +  on DELAUTORI(ADGPE046P.PRW)
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 
 USER FUNCTION ADGPE046P(aParam)
@@ -34,7 +35,8 @@ USER FUNCTION ADGPE046P(aParam)
 
 	// ****************************FINAL PARA RODAR COM SCHEDULE**************************************** //
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao com o sistema DIMEP de catracas Gerar Tipo de Autorizacao Excepcional por matricula e Filial e Deletar Autorizacao Excepcional de Funcionarios Deletados.')
 
 	ConOut("INICIO DO SCHEDULE ADGPE046P" + '||' + DTOC(DATE()) + '||' + TIME() + '|| Empresa:' + aParam[1] + '|| Filial:' + aParam[2])       

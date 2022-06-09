@@ -14,6 +14,7 @@
 	(examples)
 	@see (links_or_references)
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 USER FUNCTION ADGPE038P()
 
@@ -33,7 +34,8 @@ USER FUNCTION ADGPE038P()
 		Return
 	EndIf
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	ConOut("INICIO DO SCHEDULE ADGPE038P " + ALLTRIM(FUNNAME()) + ' ' + TIME())
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa que altera o campo TX_CAMPO1 do visitante para poder agendar o visitante diversos dias da semana')

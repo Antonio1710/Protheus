@@ -47,7 +47,9 @@ User Function ADPCP001P()
     Endif
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Workflow de diferença de peso padrão de produção')
-    PtInternal(1,ALLTRIM(PROCNAME()))
+    
+    //@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg(ALLTRIM(PROCNAME()))
     
     // Ricardo Lima-26/02/2019
     //cFil01 := StrZero(Year(Date()-1),4)+"-"+StrZero(Month(Date()-1),2)+"-"+StrZero(Day(Date()-1),2) // Alltrim(SuperGetMv( "MV_#ADP011" , .F. , "2019-01-01" , ) ) 
