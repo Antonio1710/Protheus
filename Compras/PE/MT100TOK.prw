@@ -1136,6 +1136,7 @@ Static Function ChkVenctos()
 	Local lFin     := .f.
 	Local aChkVenc := {}
 	Local i, cTES
+	Local lVencDayOk := GetMV("MV_#E2VENC",,.t.)
 
 	// Checo se existe algum TES que gere financeiro pois então deverá consistir a aba duplicatas
 	For i:=1 to Len(aCols)
@@ -1158,19 +1159,35 @@ Static Function ChkVenctos()
 		// Consisto de acordo com condição informada (sem considerar o que o usuário possivelmente pode ter digitado/alterado)
 		aChkVenc := Condicao(0.99,cCondicao,,dDataBase)
 		If Len(aChkVenc) > 0 
-			If aChkVenc[1,1] <= msDate()
-				lRet := .f.
-				Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
-				Return lRet
+			If lVencDayOk
+				If aChkVenc[1,1] < msDate()
+					lRet := .f.
+					Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
+					Return lRet
+				EndIf
+			Else
+				If aChkVenc[1,1] <= msDate()
+					lRet := .f.
+					Alert("[MT100TOK] - Inclusão de título vencido/vencendo hoje não permitido! Verifique...")
+					Return lRet
+				EndIf
 			EndIf
 		EndIf
 
 		// Consisto apenas uma data alterada/informada pelo usuário pois o padrão não fornece outra maneira
 		If !Empty(dNewVenc)
-			If dNewVenc <= msDate()
-				lRet := .f.
-				Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
-				Return lRet
+			If lVencDayOk
+				If dNewVenc < msDate()
+					lRet := .f.
+					Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
+					Return lRet
+				EndIf
+			Else
+				If dNewVenc <= msDate()
+					lRet := .f.
+					Alert("[MT100TOK] - Inclusão de título vencido/vencendo hoje não permitido! Verifique...")
+					Return lRet
+				EndIf
 			EndIf
 		EndIf
 	

@@ -26,6 +26,7 @@ User Function FA050INC()
 	Local lVldSPA	:= GETMV("MV_#VLDSPA",,".T.") //Permite (.T.) ou não (.F.) a inclusao de PA manual  
 	Local cUserSPA	:= GETMV("MV_#UFINPA",,"") //Usuarios com permissao de incluir PA
 	Local dDataFin  := GetMV("MV_DATAFIN")
+	//Local lVencDayOk := GetMV("MV_#E2VENC",,.t.)
 
 	If cEmpAnt == "01"                  
 		If Alltrim(M->E2_CCSOLIC) == "" .and. Alltrim(M->E2_TIPO) == "PA"
@@ -70,11 +71,20 @@ User Function FA050INC()
 	//
 
 	// @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+	/*
 	If lRet
-		If M->E2_VENCTO <= msDate()
-			lRet := .f.
-			Alert("[FA050INC-03] - Inclusão de título vencido não permitido! Verifique...")
+		If lVencDayOk
+			If M->E2_VENCTO < msDate()
+				lRet := .f.
+				Alert("[FA050INC-03] - Inclusão de título vencido não permitido! Verifique...")
+			EndIf
+		Else
+			If M->E2_VENCTO <= msDate()
+				lRet := .f.
+				Alert("[FA050INC-03] - Inclusão de título vencido/vencendo hoje não permitido! Verifique...")
+			EndIf
 		EndIf
 	EndIf
+	*/
 
 Return lRet
