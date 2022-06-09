@@ -58,7 +58,7 @@ Static Function MenuDef()
     Local aRotina := {}
     Local cUsrInc := Alltrim(cValToChar(GetMv("MV_#ADF571",,"")))
     Local cUsrApv := Alltrim(cValToChar(GetMv("MV_#ADF572",,"")))
-    Local cUsrGer := Alltrim(cValToChar(GetMv("MV_#ADF572",,"")))
+    Local cUsrGer := Alltrim(cValToChar(GetMv("MV_#ADF573",,"")))
 
     ADD OPTION aRotina TITLE "Pesquisar"    ACTION "PesqBrw"          	OPERATION 1   ACCESS 0
 	ADD OPTION aRotina TITLE "Visualizar" 	ACTION "VIEWDEF.ADFAT057P" 	OPERATION MODEL_OPERATION_VIEW      ACCESS 0
@@ -270,7 +270,7 @@ Static Function vldHH(oModel, cMsgError)
 
         If cForOri <> cHH
             nDiff++
-            
+
         EndIf
 
     Next nAux
