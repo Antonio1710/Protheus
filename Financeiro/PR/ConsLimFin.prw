@@ -2,6 +2,7 @@
 #include "protheus.ch"
 #include "topconn.ch"
 #include "AP5MAIL.CH"
+
 /*/{Protheus.doc} User Function ConsLimFin
 	Esta rotina calcula o limite disponivel do cliente para    
 	exibição na consulta de posicao de clientes e liberacao / bloqueio dos
@@ -15,11 +16,17 @@
 	@history Everson, 07/07/2020, Chamado T.I. - Tratamento para não bloquear pedido com flag Bradesco.
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket 71027 - Fernando Macieira - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
-	/*/ 
+	@history ticket 74530 - Fernando Macieira - 09/06/2022 - argument #0 error, expected D->U,  function dtos on U_CONSLIMFIN(CONSLIMFIN.PRW) 02/06/2022 09:33:54 line : 327
+/*/ 
 User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 
 	//Local cPortador := ""
 	//Local nPercen   := 0
+
+	// @history ticket 74530 - Fernando Macieira - 09/06/2022 - argument #0 error, expected D->U,  function dtos on U_CONSLIMFIN(CONSLIMFIN.PRW) 02/06/2022 09:33:54 line : 327
+	Default _dDTE1 := msDate()
+	Default _dDTE2 := msDate()+1
+	//
 
 	Public _cCliente:=cCodCli,_cNomeCli:="",_cTipoCli:="",_nValLim:=0,_nVlLmCad:=0,_nVlPed:=0,_nSldTit:=0,_nSldTPor:=0,_nSldTPerc:=0
 	Public _nVlMnPed:=0,_nVlMnPSC:=0,_nVlMnParc:=0,_nDiasAtras:=0,_lDiasAtras:=.F.,_cRede:="",_eMailVend:="",_eMailSup:="",_cRotina:=cRotina,_cNmRede:=""
@@ -136,8 +143,8 @@ User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 		
 		//- Soma dos pedidos a faturar do cliente (pedidos com data entrega >= data atual e liberados por cred/est)
 		
-		&&Mauricio - 06/04/16 - ALTERADO....estava abatendo do limite apenas o valor unitario da SC9 e não o total
-				&&adicionado na query multiplicação pela quantidade....
+		/*&&Mauricio - 06/04/16 - ALTERADO....estava abatendo do limite apenas o valor unitario da SC9 e não o total
+				&&adicionado na query multiplicação pela quantidade....*/
 		/*
 		cQuery:= " SELECT SUM(C9_PRCVEN) AS C9_PRCVEN,C9_CLIENTE FROM " + RetSqlName("SC9") + " WITH(NOLOCK) "
 		cQuery+= " WHERE C9_CLIENTE = '" + cCodCli + "' "
@@ -148,18 +155,18 @@ User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 		cQuery+= " ORDER BY C9_CLIENTE " 
 		*/
 		
-		&&Mauricio - 23/11/16 - Conforme informação do Sr. Alberto, na analise do credito não devem ser considerados pedidos futuros
+		/*&&Mauricio - 23/11/16 - Conforme informação do Sr. Alberto, na analise do credito não devem ser considerados pedidos futuros
 		&&ou seja, pedidos com data de entrega fora do periodo selecionado.. Anteriormente na query estava assim:
-		&&cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "
+		&&cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "*/
 			
 		cQuery:= " SELECT SUM(C9_PRCVEN * C9_QTDLIB) AS C9_PRCTOT,C9_CLIENTE FROM " + RetSqlName("SC9") + " WITH(NOLOCK) "
 		cQuery+= " WHERE C9_CLIENTE = '" + cCodCli + "' "
 		cQuery+= " AND D_E_L_E_T_ <> '*' AND C9_NFISCAL = '' "
 		//cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "
-		IF _cTpCons == "Out"   &&Mauricio - 30/11/16 - tratamento conforme definição Adriana.
-		cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "
+		IF _cTpCons == "Out"   //&&Mauricio - 30/11/16 - tratamento conforme definição Adriana.
+			cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "
 		Else
-		cQuery+= " AND C9_DTENTR BETWEEN '" + DTOS(_dDTE1) + "' AND '" + DTOS(_dDTE2) + "' " 
+			cQuery+= " AND C9_DTENTR BETWEEN '" + DTOS(_dDTE1) + "' AND '" + DTOS(_dDTE2) + "' " 
 		Endif   
 		//cQuery+= " AND C9_BLCRED = '' AND C9_BLEST = '' "     &&Mauricio - 15/02/17 - retirada condicao
 		cQuery+= " GROUP BY C9_CLIENTE "
@@ -204,9 +211,9 @@ User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 		
 		DbCloseArea("TMPF0")
 			
-		&&Mauricio - 13/04/16 - Conforme informações do Alberto a forma de avaliar o saldo percentual para bloqueio esta todo incorreto.
+		/*&&Mauricio - 13/04/16 - Conforme informações do Alberto a forma de avaliar o saldo percentual para bloqueio esta todo incorreto.
 		&&Segundo ele, é para considerar somente titulos em aberto e em ATRASO e se tiver um unico titulo nesta condição com saldo maior que o
-		&&percentual, ai é para bloquear. Assim vou levar o tratamento abaixo para um outro momento na avaliação.
+		&&percentual, ai é para bloquear. Assim vou levar o tratamento abaixo para um outro momento na avaliação.*/
 		//+ Soma do saldo dos titulos com saldo menor que parametro - ZAD_PERCEN
 		/*
 		cQuery:= " SELECT E1_SALDO,E1_VALOR,E1_CLIENTE FROM " + RetSqlName("SE1") + " WITH(NOLOCK) "
@@ -301,8 +308,8 @@ User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 				
 				//- Soma dos pedidos a faturar do cliente (pedidos com data entrega >= data atual e liberados por cred/est)
 				
-				&&Mauricio - 06/04/16 - ALTERADO....estava abatendo do limite apenas o valor unitario da SC9 e não o total
-				&&adicionado na query multiplicado pela quantidade....
+				//&&Mauricio - 06/04/16 - ALTERADO....estava abatendo do limite apenas o valor unitario da SC9 e não o total
+				//&&adicionado na query multiplicado pela quantidade....
 				
 				/*   original
 				cQuery:= " SELECT SUM(C9_PRCVEN) AS C9_PRCVEN,C9_CLIENTE FROM " + RetSqlName("SC9") + " WITH(NOLOCK) "
@@ -314,17 +321,17 @@ User Function ConsLimFin(cCodCli,_cTpCons,cRotina,_dDTE1,_dDTE2)
 				cQuery+= " ORDER BY C9_CLIENTE "
 				*/
 				
-				&&Mauricio - 23/11/16 - Conforme informação do Sr. Alberto, na analise do credito não devem ser considerados pedidos futuros
-				&&ou seja, pedidos com data de entrega fora do periodo selecionado..
+				//&&Mauricio - 23/11/16 - Conforme informação do Sr. Alberto, na analise do credito não devem ser considerados pedidos futuros
+				//&&ou seja, pedidos com data de entrega fora do periodo selecionado..
 				
 				cQuery:= " SELECT SUM(C9_PRCVEN * C9_QTDLIB) AS C9_PRCTOT,C9_CLIENTE FROM " + RetSqlName("SC9") + " WITH(NOLOCK) "
 				cQuery+= " WHERE C9_CLIENTE = '" + cCodCli + "' "
 				cQuery+= " AND D_E_L_E_T_ <> '*' AND C9_NFISCAL = '' "
 				//cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "			
 				IF _cTpCons == "Out"   &&Mauricio - 30/11/16 - tratamento conforme definição Adriana.
-				cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "
+					cQuery+= " AND C9_DTENTR >= '" + DTOS(dDataBase) + "' "
 				Else
-				cQuery+= " AND C9_DTENTR BETWEEN '" + DTOS(_dDTE1) + "' AND '" + DTOS(_dDTE2) + "' " 
+					cQuery+= " AND C9_DTENTR BETWEEN '" + DTOS(_dDTE1) + "' AND '" + DTOS(_dDTE2) + "' " // AQUI!
 				Endif
 				//cQuery+= " AND C9_BLCRED = '' AND C9_BLEST = '' "   &&Mauricio - 15/02/17 - 
 				cQuery+= " GROUP BY C9_CLIENTE "
