@@ -286,11 +286,17 @@ Static Function imptGb(lCarrega)
         lCarrega := .T.
         MsgInfo("Registro já importado será reprocessado.", "Função imptGb(ADFAT035P)")
 
+        U_ADFAT50B(cOrdSlc)
+
     Else
 
         If U_ADFAT491(cOrdSlc, @cMsgError)
-            lCarrega := .T.
-            MsgInfo("Dados importados.", "Função imptGb(ADFAT035P)")
+
+            If U_ADFAT50B(cOrdSlc)
+                lCarrega := .T.
+                MsgInfo("Dados importados.", "Função imptGb(ADFAT035P)")
+
+            EndIf
 
         Else
             MsgInfo("Erro na importação. " + cMsgError, "Função imptGb(ADFAT035P)")

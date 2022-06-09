@@ -125,7 +125,7 @@ Return Nil
     @since 10/05/2022
     @version 01
 /*/
-User Function ADFAT50B()
+User Function ADFAT50B(cNmOrdem)
 
     //Variáveis.
     Local aArea       := GetArea()
@@ -144,6 +144,11 @@ User Function ADFAT50B()
     Local aDSeqP      := {}
     Local cTktNv      := ""
     Local cSeqNV      := ""
+    Local cLacre      := ""
+    Local cCaixa      := ""
+    Local cSilo       := ""
+
+    Default cNmOrdem  := ""
 
     cQuery := ""
     cQuery += " SELECT " 
@@ -158,7 +163,15 @@ User Function ADFAT50B()
         cQuery += " AND ZHQ_ORDEM = ZIF_NUMERO " 
     cQuery += " WHERE " 
         cQuery += " ZHQ_FILIAL = '" + FWxFilial("ZHQ") + "' " 
-        cQuery += " AND ZHQ_PROCES = '2' " 
+
+        If Empty(cNmOrdem)
+            cQuery += " AND ZHQ_PROCES = '2' " 
+
+        Else
+            cQuery += " AND ZHQ_ORDEM = '" + cNmOrdem + "' " 
+
+        EndIf
+
         cQuery += " AND ZHQ.D_E_L_E_T_ = '' " 
         cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY REC " 
@@ -226,7 +239,9 @@ User Function ADFAT50B()
             //Lança lacres.
             For nAux := 1 To Len(aLacres)
 
-                If ! U_ADFAT38A(cCP, cRoteiro, cOrdem, cPlaca, aLacres[nAux], @cMsgError)
+                cLacre := Substr(Alltrim(cValToChar(aLacres[nAux])),1,10)
+
+                If ! U_ADFAT38A(cCP, cRoteiro, cOrdem, cPlaca, cLacre, @cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -238,7 +253,9 @@ User Function ADFAT50B()
             //Lança caixas.
             For nAux := 1 To Len(aCaixas)
 
-                If ! U_ADFAT39A(cCP, cRoteiro, cOrdem, cPlaca, aCaixas[nAux], @cMsgError)
+                cCaixa := Substr(Alltrim(cValToChar(aCaixas[nAux])),1,2)
+
+                If ! U_ADFAT39A(cCP, cRoteiro, cOrdem, cPlaca, cCaixa, @cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -250,7 +267,9 @@ User Function ADFAT50B()
             //Lança silos.
             For nAux := 1 To Len(aSilos)
 
-                If ! U_ADFAT40A(cCP, cRoteiro, cOrdem, cPlaca, aSilos[nAux], @cMsgError)
+                cSilo := Substr(Alltrim(cValToChar(aSilos[nAux])),1,6)
+
+                If ! U_ADFAT40A(cCP, cRoteiro, cOrdem, cPlaca, cSilo, @cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -282,7 +301,7 @@ User Function ADFAT50B()
 
     RestArea(aArea)
 
-Return Nil
+Return lRet
 /*/{Protheus.doc} ajustProd
     Ajusta o produto na ordem de pesagem e ordem de carregamento de ração.
     @type  Static Function
