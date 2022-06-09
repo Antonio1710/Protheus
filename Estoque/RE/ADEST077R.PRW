@@ -7,6 +7,7 @@
 	@author Everson
 	@since 31/05/2022
 	@version version
+	@history, Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
 /*/
 User Function ADEST077R() 
 
@@ -101,6 +102,8 @@ Static Function RPTPrint(oReport)
         cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
         cQuery += " AND ZIG_DTPES1 >= '" + DToS(MV_PAR01) + "' " 
         cQuery += " AND ZIG_DTPES2 <= '" + DToS(MV_PAR02) + "' "  
+        cQuery += " AND ZIG_PLACA >= '" + cValToChar(MV_PAR03) + "' "  //Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
+        cQuery += " AND ZIG_PLACA <= '" + cValToChar(MV_PAR04) + "' "  //Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
         cQuery += " AND ZIG_DTPES2 <> ''  "  
         cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
         cQuery += " AND ZIG.D_E_L_E_T_ = '' " 

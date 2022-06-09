@@ -13,6 +13,7 @@ Static cTiMast := "Dados do apontamento de silo"
     @author Everson
     @since 02/03/2022
     @version 01
+    @history, Everson, 02/06/2022, ticket 18645 - removida validação para quando o registro vem do Job.
     /*/
 User Function ADFAT040P() // U_ADFAT040P()
 
@@ -99,12 +100,16 @@ Static Function vldPos(oModel)
 
     If lRet .And. nOperation == MODEL_OPERATION_INSERT
 
-        DbSelectArea("ZIW")
-        ZIW->(DbSetOrder(1))
-        ZIW->(DbGoTop())
-        If ! ZIW->( DbSeek( FwxFilial("ZIW") + cSilo ) )
-            lRet := .F.
-            Help(Nil, Nil, "Função vldPos(ADFAT040P)", Nil, "Silo " + cSilo + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        If ! IsInCallStack("U_ADFAT049P") //Everson - 02/06/2022. Chamado 18465.
+
+            DbSelectArea("ZIW")
+            ZIW->(DbSetOrder(1))
+            ZIW->(DbGoTop())
+            If ! ZIW->( DbSeek( FwxFilial("ZIW") + cSilo ) )
+                lRet := .F.
+                Help(Nil, Nil, "Função vldPos(ADFAT040P)", Nil, "Silo " + cSilo + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+            EndIf
 
         EndIf
             

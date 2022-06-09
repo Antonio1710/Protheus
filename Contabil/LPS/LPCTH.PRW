@@ -165,8 +165,10 @@ User Function LPCTHCC(cTab, cEntidade)
             
             elseif AllTrim(cEntidade) == "CREDITO"
 
-                //@history Ticket 69338 	- Leonardo P. Monteiro - 	Ajuste no CC para 5131 quando o produto for '190590'. Alterar Lançamento Padrão 641-008 - Quirera.
-                if Alltrim(SD1->D1_COD) == "190590"
+
+                //@history Ticket 69338	- Leonardo P. Monteiro - 	Ajuste no CC para 5131 quando o produto for '190590'. Alterar Lançamento Padrão 641-008 - Quirera.
+                //@history Ticket 73213	- Antonio Domingos - Ajuste no CC para 5131 quando o produto for '190590' e Filial 03/05. Alterar Lançamento Padrão 641-008 - Quirera.
+                if Alltrim(SD1->D1_COD) == "190590" .And. SD1->D1_FILIAL $ "03/05"
                     cCCusto := "5131"
                 endif
             EndIf

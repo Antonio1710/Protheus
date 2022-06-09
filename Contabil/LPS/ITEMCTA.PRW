@@ -15,7 +15,7 @@
 	@history Chamado 053754 - William Costa - 11/12/2019 - Ajuste no item contabil 112 para o produto 386914
 	@history Chamado 055820 - William Costa - 19/02/2020 - Ajuste no item contabil 112 para o produto 384413
 	@history Chamado 057395 - William Costa - 15/04/2020 - Ajuste no item contabil 112 para o produto 342977
-	
+	@history Chamado 073213 - Antonio Domingos - 20/05/2022 - Ajuste no item ccusto 5113 e item contabil 113 para o produto 190590 qdo a filial for 03/05
 /*/
 User Function ItemCta()
 
@@ -29,8 +29,12 @@ User Function ItemCta()
 	If SM0->M0_CODIGO == "01" .And. SD2->D2_FILIAL == "03"   // Somente será executado quando for filial de São Carlos
 
 		cConta:= U_LP610CTA()   // Pego o retorno da Conta que esta sendo usada no lançamento padrão, pois nao posso considerar o que esta no SD2->D2_CONTA
-		cCusto:= U_LP610CC()   // Pego o retorno da Centro de Custo que esta sendo usada no lançamento padrão, pois nao posso considerar o que esta no SD2->D2_CCUSTO
-
+		If Alltrim(SD2->D2_COD) $ "190590"
+			cCusto:= "5131"
+		Else
+			cCusto:= U_LP610CC()   // Pego o retorno da Centro de Custo que esta sendo usada no lançamento padrão, pois nao posso considerar o que esta no SD2->D2_CCUSTO
+		EndIf
+		
 		// Produto Ovos Industrializados
 		If Alltrim(SD2->D2_COD) $ "391650" .And. Alltrim(cConta) $ "337110003" .And. Alltrim(cCusto) $ "6140"
 			cItemCta := "112"
@@ -39,6 +43,8 @@ User Function ItemCta()
 		// Produto Quirera
 		If Alltrim(SD2->D2_COD) == "190590" .And. Alltrim(cConta) $ "337110003" .And. Alltrim(cCusto) $ "6140"
 			cItemCta := "114"
+		ElseIf Alltrim(SD2->D2_COD) $ "190590" .And. Alltrim(cConta) $ "337110003" .And. Alltrim(cCusto) $ "5131"
+			cItemCta := "113"
 		Endif         
 		
 		// Produto Varredura
@@ -217,13 +223,18 @@ User Function ItemCta()
 	If SM0->M0_CODIGO == "01" .And. SD2->D2_FILIAL == "05"   // Somente será executado quando for filial 05
 
 		cConta:= U_LP610CTA()   // Pego o retorno da Conta que esta sendo usada no lançamento padrão, pois nao posso considerar o que esta no SD2->D2_CONTA
-		cCusto:= U_LP610CC()   // Pego o retorno da Centro de Custo que esta sendo usada no lançamento padrão, pois nao posso considerar o que esta no SD2->D2_CCUSTO
-			
+		If Alltrim(SD2->D2_COD) $ "190590"
+			cCusto:= "5131"
+		Else
+			cCusto:= U_LP610CC()   // Pego o retorno da Centro de Custo que esta sendo usada no lançamento padrão, pois nao posso considerar o que esta no SD2->D2_CCUSTO
+		ENDIF
+
 		// Produto Quirera
 		If Alltrim(SD2->D2_COD) == "190590" .And. Alltrim(cConta) $ "337110003" .And. Alltrim(cCusto) $ "6140"
 			cItemCta := "114"
+		ElseIf Alltrim(SD2->D2_COD) == "190590" .And. Alltrim(cConta) $ "337110003" .And. Alltrim(cCusto) $ "5131"
+			cItemCta := "113"		
 		Endif  	
-
 		
 		If Alltrim(SD2->D2_COD) $ "191660/191661/191662/191663/191664/191665/191666/383369/384885" .And. Alltrim(cConta) $ "311110001" .And. Alltrim(cCusto) $ "6150"
 			cItemCta := "114"

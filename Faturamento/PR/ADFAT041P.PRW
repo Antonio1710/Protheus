@@ -1520,12 +1520,14 @@ Return Nil
 	@since 27/05/2022
 	@version 01
 /*/
-User Function ADFAT41A(cNumPed)
+User Function ADFAT41A(cNumPed, lVldPed)
 
 	//Variáveis.
 	Local aArea  := GetArea()
 	Local lRet	 := .T.
 	Local cQuery := ""
+
+	Default lVldPed := .F.
 
 	cQuery += " SELECT  " 
 	cQuery += " C6_XORDPES " 
@@ -1553,9 +1555,17 @@ User Function ADFAT41A(cNumPed)
 
 	While ! D_VLDORD->(Eof())
 
+		If lVldPed
+			lRet := .F.
+			MsgStop("Já há a ordem de pesagem " + cValToChar(D_VLDORD->C6_XORDPES) + " vinculada ao pedido.","Função ADFAT41A(ADFAT041P)")
+			Exit
+
+		EndIf
+
 		If ZIG->( DbSeek( FWxFilial("ZIG") + D_VLDORD->C6_XORDPES ) )
 			lRet := .F.
 			MsgStop("Pedido está vinculado a ticket de pesagem.","Função ADFAT41A(ADFAT041P)")
+			Exit
 
 		EndIf
 

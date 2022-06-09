@@ -22,7 +22,7 @@
 	@history ticket 64739 - Fernando Macieira - 10/12/2021 - Ativação Begin Transaction por OP - ADEDA003P
 	@history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
 	@history ticket T.I   - Fernando Sigoli   - 18/02/2022 - Removido linha de ConOut
- 
+	@history ticket 74410 - Fernando Macieira - 08/06/2022 - Erro processamento OP mai/2022
 /*/
 User Function ADEDA002P(cEmp,cFil,cJobFile)
 
@@ -429,8 +429,10 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
         // ABERTURA DA OP
         MsAguarde({|| MSExecAuto({|x,y| MATA650(x,y)}, aAuto, 3) },"Execauto MATA650","Incluindo OP... " + cChaveOP )
         
-        dbSelectArea("SC2")
+		dbSelectArea("SC2")
         dbSetOrder(1)
+
+        SC2->( dbGoTop() )
         dbSeek(xFilial("SC2") + cChaveOP)
         If !Eof()
             
@@ -438,10 +440,14 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
 
 			// @history ticket 65585 - Fernando Macieira - 01/02/2022 - Processamento OP - Edata p/ Protheus - Item Salsicha 193229
 			FixSalsicha(cChaveOP)
-			
+
 			// @history ticket 11639 - Fernando Macieira - 31/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 			If Upper(AllTrim(cPrd3)) == "T" // Produção de terceiro 
 				
+				// @history ticket 74410 - Fernando Macieira - 08/06/2022 - Erro processamento OP mai/2022
+				FixLocal(cChaveOP,cLoc3) 
+				
+				/*
 				SD4->( dbSetOrder(2) ) // D4_FILIAL, D4_OP, D4_COD, D4_LOCAL, R_E_C_N_O_, D_E_L_E_T_
 				If SD4->( dbSeek(FWxFilial("SD4")+cChaveOP) )
 
@@ -458,6 +464,7 @@ Static Function ADEDA002PB(cAliasOPR,nQtdeTot,nRecOPR,cOp)
 					EndDo
 
 				EndIf
+				*/
 
 			EndIf
 			//
@@ -2133,6 +2140,8 @@ Static Function FixSalsicha(cChaveOP)
 			
 			EndIf
 
+			// @history ticket 74410 - Fernando Macieira - 08/06/2022 - Erro processamento OP mai/2022
+			/*
 			// Limpo D4_OPORIG
 			SD4->( dbSetOrder(4) ) // D4_FILIAL, D4_OPORIG, D4_LOTECTL, D4_NUMLOTE, R_E_C_N_O_, D_E_L_E_T_
 			If SD4->( dbSeek(FWxFilial("SD4")+cOPSD4) )
@@ -2140,6 +2149,8 @@ Static Function FixSalsicha(cChaveOP)
 					SD4->D4_OPORIG := ""
 				SD4->( msUnLock() )
 			EndIf
+			*/
+			//
 
 			SC2->( dbSetOrder(1) ) // C2_FILIAL, C2_NUM, C2_ITEM, C2_SEQUEN, C2_ITEMGRD, R_E_C_N_O_, D_E_L_E_T_
 			If SC2->( dbSeek(FWxFilial("SC2")+cOPSD4) )
@@ -2163,3 +2174,56 @@ Static Function FixSalsicha(cChaveOP)
 	EndIf
 
 Return
+
+/*/{Protheus.doc} FixLocal(cChaveOP) 
+	Corrige o armazém dos terceiros oriundos do edata nos empenhos
+	@type  Static Function
+	@author FWNM
+	@since 08/06/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 74410 - Fernando Macieira - 08/06/2022 - Erro processamento OP mai/2022
+/*/
+Static Function FixLocal(cChaveOP,cLoc3)
+
+	Local cQuery := ""
+	Local aArea  := GetArea()
+
+	If Select("WorkSD4")
+		WorkSD4->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT R_E_C_N_O_ RECNO
+	cQuery += " FROM " + RetSqlName("SD4") + " (NOLOCK)
+	cQuery += " WHERE D4_FILIAL='"+FWxFilial("SD4")+"' 
+	cQuery += " AND D4_OP='"+cChaveOP+"'
+	cQuery += " AND D4_COD NOT LIKE 'Z%'
+	cQuery += " AND D_E_L_E_T_=''
+
+	tcQuery cQuery New Alias "WorkSD4"
+
+	WorkSD4->( dbGoTop() )
+	Do While WorkSD4->( !EOF() )
+
+		SD4->( dbGoTo(WorkSD4->RECNO) )
+
+		RecLock("SD4", .F.)
+			SD4->D4_LOCAL := cLoc3
+		SD4->( msUnLock() )
+
+		WorkSD4->( dbSkip() )
+
+	EndDo
+
+	If Select("WorkSD4")
+		WorkSD4->( dbCloseArea() )
+	EndIf
+
+	RestArea(aArea)
+
+Return
+

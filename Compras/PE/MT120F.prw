@@ -32,7 +32,8 @@ Static cPCMot := ""
 	@history Chamado 056521 - William Costa - 12/03/2020 - Verificado que quando a cotação tem prazo de Dias, não alterar a data de entrega do pedido de compra C7_DATPRF
 	@history Chamado 057440 - FWNM          - 17/04/2020 - || OS 058919 || TECNOLOGIA || LUIZ || 8451 || HIST. APROVACAO
 	@history Chamado 057827 - FWNM          - 30/04/2020 - || OS 059306 || SUPRIMENTOS || IARA_MOURA || 8415 || ERRO LOG
-	@history ticket   10588 - Fernando Maci - 08/03/2021 - Liberação de pedidos - Intercompany (novas regras)
+	@history ticket  10588  - Fernando Maci - 08/03/2021 - Liberação de pedidos - Intercompany (novas regras)
+	@history Ticket  74070  - Jonathan      - 08/06/2021 - Atualizar o C7_UM de acordo com o cadastro do produto B1_UM    
 /*/
 User Function MT120CPE
 	
@@ -378,7 +379,10 @@ User Function MT120F(_cParam) //cParam somente vai ter conteudo quando pedido de
 								RecLock( "SC7", .F. ) // chamado 042931
 								
 									SC7->C7_LOCAL := IIF(!RetArqProd(SC7->C7_PRODUTO),POSICIONE("SBZ",1,xFilial("SBZ")+SC7->C7_PRODUTO,"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+SC7->C7_PRODUTO,"B1_LOCPAD"))
-								 
+								 	
+									//Ticket  74070  - Jonathan - 08/06/2021 - Atualizar o C7_UM de acordo com o cadastro do produto B1_UM 
+									SC7->C7_UM := Posicione("SB1",1,xFilial("SB1") + SC7->C7_PRODUTO , "B1_UM")
+
 								MsUnlock() // chamado 042931 
 							ENDIF
 							

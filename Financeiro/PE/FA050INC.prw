@@ -17,6 +17,7 @@
 	@history chamado 057682 - FWNM        - 28/04/2020 - || OS 059176 || FINANCAS || ANA || 8384 || LP - PAS
 	@history chamado 058888 - FWNM        - 12/06/2020 - || OS 060423 || FINANCAS || ANA || 8384 || STEMAC
 	@history chamado 058888 - SIGOLI      - 18/06/2020 - || OS 060423 || FINANCAS || ANA || 8384 ||Açterado validação DE data atual para mv_datfin
+	@history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
 /*/
 User Function FA050INC()  
 
@@ -25,7 +26,7 @@ User Function FA050INC()
 	Local lVldSPA	:= GETMV("MV_#VLDSPA",,".T.") //Permite (.T.) ou não (.F.) a inclusao de PA manual  
 	Local cUserSPA	:= GETMV("MV_#UFINPA",,"") //Usuarios com permissao de incluir PA
 	Local dDataFin  := GetMV("MV_DATAFIN")
-	
+
 	If cEmpAnt == "01"                  
 		If Alltrim(M->E2_CCSOLIC) == "" .and. Alltrim(M->E2_TIPO) == "PA"
 			Alert("CC Solicit deve ser preenchido para o Tipo PA")
@@ -51,7 +52,7 @@ User Function FA050INC()
 		If AllTrim(M->E2_TIPO) == "PA"
 			If ( M->E2_EMISSAO <> M->E2_VENCTO ) .or. ( M->E2_EMISSAO <> M->E2_VENCREA ) .or. ( M->E2_VENCTO <> M->E2_VENCREA )
 				lRet := .f.
-				msgAlert("[FA050INC-01] - Adiantamento a Fornecedor precisa possuir emissão e os vencimentos iguais! Inclusão não permitida...")
+				Alert("[FA050INC-01] - Adiantamento a Fornecedor precisa possuir emissão e os vencimentos iguais! Inclusão não permitida...")
 			EndIf
 		EndIf
 	EndIf
@@ -62,10 +63,18 @@ User Function FA050INC()
 		If AllTrim(M->E2_TIPO) $ GetMV("MV_#SE2BLQ",,"PA")
 			If M->E2_EMISSAO < dDataFin  //chamado 058888 - SIGOLI - 18/06/2020 
 				lRet := .f.
-				msgAlert("[FA050INC-02] - Data de emissão inferior a data do MV_DATAFIN ! Inclusão não permitida...")
+				Alert("[FA050INC-02] - Data de emissão inferior a data do MV_DATAFIN ! Inclusão não permitida...")
 			EndIf
 		EndIf
 	EndIf
 	//
 
-Return(lRet)
+	// @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+	If lRet
+		If M->E2_VENCTO <= msDate()
+			lRet := .f.
+			Alert("[FA050INC-03] - Inclusão de título vencido não permitido! Verifique...")
+		EndIf
+	EndIf
+
+Return lRet

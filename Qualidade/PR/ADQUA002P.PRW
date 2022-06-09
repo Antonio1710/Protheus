@@ -18,6 +18,7 @@
     @history Chamado 18301 - Leonardo P. Monteiro    - 19/01/2022 - Conversão da rotina para execução em schedule.
     @history Chamado 68365 - Leonardo P. Monteiro    - 16/02/2022 - Grava os dados de liberação no cabeçalho do PV e Ped Exportação.
     @history Ticket 69574  - Abel Babini             - 25/04/2022 - Projeto FAI
+    @history Ticket 74246  - Adriano Savoine         - 06/06/2022 - Retiirado o Begin para TCquery pos o Link Mims estava com erro da query no begin.
     /*/
 
 user function ADQUA002(aEmpFil)
@@ -591,9 +592,11 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
     Local lRet          := .F.
     Local nAuxZ         := 0
     Local nElementos    := Len(aElementos)
+    Local cQuery        := ""
 
     //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
     Local cLnkSrv		:= "["+Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))+"].[SMART].[dbo].[VW_EXPECARG_02]"
+            //cLnkSrv:= STRTRAN(cLnkSrv,'"','')
 
     cPdVend := ""
     cCarga  := ""
@@ -641,7 +644,7 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
 
                 //Mudar para o parâmetro cStatCar para filtrar pelo status do campo FL_STATCARGEXPE.
                 //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
-                BeginSQL Alias "QSTED"
+             /*   BeginSQL Alias "QSTED"
                     %NoPARSER%
                     SELECT TOP 1 EMPRESA, 
                                 FILIAL, 
@@ -654,7 +657,14 @@ Static Function fStEData(aElementos, cMens, cPdVend, cCarga, dDtICar, dDtTCar, c
                     FROM %Exp:cLnkSrv%
                     WHERE ID_CARGEXPE = %EXP:cCarga% AND FL_STATCARGEXPE NOT IN ('AB')
                     
-                EndSQl
+                EndSQl*/
+                //Ticket 74246 - Adriano Savoine - 06/06/2022
+                cQuery := "SELECT TOP 1 EMPRESA, "
+                cQuery += "FILIAL,ID_CARGEXPE,FL_STATCARGEXPE,DT_FECHCARG,HR_FECHCARG,DT_ABERTCARG,HR_ABERTCARG  "
+                cQuery += "FROM "+cLnkSrv+""	
+                cQuery += "WHERE ID_CARGEXPE = '"+cCarga+"' AND FL_STATCARGEXPE NOT IN ('AB') "	
+
+                TcQuery cQuery NEW Alias "QSTED"	
                 
                 if QSTED->(!EOF())
                     dDtICar := cTod(QSTED->DT_ABERTCARG)

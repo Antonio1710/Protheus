@@ -11,7 +11,7 @@
 	@history Leonardo Rios - KF System 	?Data ? 13/04/2016 ³±?±±?		 ?Desc.     ?Criação da função ValPED010()
 	@history Everson, 23/03/2022. Chamado 18465. Validação de exclusão de pedido de saída com ordem de pesagem vinculada.
 	@history Everson, 27/05/2022. Chamado 18465. Validação de exclusão de pedido de saída com ordem de pesagem vinculada (trocada função).
-    /*/
+/*/
 User Function A410EXC()
 
 	Local lRet := .T.

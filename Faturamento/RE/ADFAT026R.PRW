@@ -10,13 +10,16 @@
     @author Everson
     @since 06/12/2021
     @version 01
+    @history Everson, 02/06/2022, ticket 18465, alterado a informação da pessoa no ticket de pesagem de ração.
 /*/
-User Function ADFAT026R(cTicket, cTpOrdem, cCP) // U_ADFAT026R("0000070", "R")
+User Function ADFAT026R(cTicket, cTpOrdem, cCP, lJob) // U_ADFAT026R("0000070", "R")
 
     //Variáveis.
     Local aArea  := GetArea()
     Local cCabec2:= ""
     Local cTpRac := ""
+
+    Default lJob := .F.
 
     If cTpOrdem == "IMPRORC"
         romRacao(cCP)
@@ -61,7 +64,7 @@ User Function ADFAT026R(cTicket, cTpOrdem, cCP) // U_ADFAT026R("0000070", "R")
         iTktSa(cTicket, cCabec2, cTpRac)
 
     ElseIf cTpOrdem == "R"
-       iTktRc(cTicket, cCabec2, cTpRac)
+       iTktRc(cTicket, cCabec2, cTpRac, lJob)
 
     ElseIf cTpOrdem == "IMPROVD"
         romVenda(cTicket)
@@ -128,7 +131,7 @@ Static Function iTktOP(cTicket, cCabec2, cTpRac)
     Local cCarga    := ""
 
     If ! U_ADFAT16A(ZIG->ZIG_ORDEM)
-        Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função iTktOP(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
 
@@ -450,7 +453,7 @@ Return Nil
     @since 09/03/2022
     @version 01
 /*/
-Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
+Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070", "R")
 
     //Variáveis.
     Local aArea := GetArea()
@@ -475,9 +478,21 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
     Local cDtAbt    := ""
     Local cFase     := ""
     Local cEnd      := ""
+    Local cEmailTkt := Alltrim(cValToChar(GetMv("MV_#IMPCPT", , "")))
+    Local cPreFx    := "Impressão Ticket: "
+    Local cDiretorio:= "/ticket_racao/"
+
+    Default lJob    := .F.
 
     If ! U_ADFAT16A(ZIG->ZIG_ORDEM)
         Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de pesagem " + ZIG->ZIG_ORDEM + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    If Empty(cEmailTkt)
+        U_ADFAT173(cPreFx + " sem e-mail configurado(MV_#IMPCPT)", ZIG->ZIG_ORDEM, "", "PROTHEUS")
         RestArea(aArea)
         Return Nil
 
@@ -490,13 +505,33 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
 
     EndIf
 
-    DbSelectArea("SA2")
-    SA2->(DbSetOrder(1))
-    SA2->(DbGoTop())
-    If SA2->( DbSeek( FWxFilial("SA2") + ZIF->ZIF_FORNEC + ZIF->ZIF_LJFORN) )
-        cEnd   := Alltrim(SA2->A2_END) + ", " + Alltrim(SA2->A2_BAIRRO) + " - " + Alltrim(SA2->A2_MUN) + " - " + Alltrim(SA2->A2_EST)
+    If ZIF->ZIF_CLIFOR == "F"
+        DbSelectArea("SA2")
+        SA2->(DbSetOrder(1))
+        SA2->(DbGoTop())
+        If SA2->( DbSeek( FWxFilial("SA2") + ZIF->ZIF_FORNEC + ZIF->ZIF_LJFORN) )
+            cEnd   := Alltrim(SA2->A2_END) + ", " + Alltrim(SA2->A2_BAIRRO) + " - " + Alltrim(SA2->A2_MUN) + " - " + Alltrim(SA2->A2_EST)
+        
+        EndIf
 
-    End
+    ElseIf ZIF->ZIF_CLIFOR == "C"
+        DbSelectArea("SA1")
+        SA1->(DbSetOrder(1))
+        SA1->(DbGoTop())
+        If SA1->( DbSeek( FWxFilial("SA1") + ZIF->ZIF_FORNEC + ZIF->ZIF_LJFORN) )
+            cEnd   := Alltrim(SA1->A1_END) + ", " + Alltrim(SA1->A1_BAIRRO) + " - " + Alltrim(SA1->A1_MUN) + " - " + Alltrim(SA1->A1_EST)
+
+        EndIf
+
+    EndIf
+
+    //Everson - 02/06/2022. Chamado 18465.
+    If ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
+        Help(Nil, Nil, "Função iTktRc(ADFAT026R)", Nil, "Ordem de ração " + ZIF->ZIF_ORDRAC + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
 
     cCarga := ZIF->ZIF_ROTEIR
     cDtFab := DToC(ZIG->ZIG_DTPES2)
@@ -507,8 +542,18 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
     cDtAbt := DToC(Posicione("ZIS", 1, FWxFilial("ZIS") + cCdGrjd, "ZIS_DTALOJ") + 48)
     cFase  := Alltrim(cValToChar(Posicione("ZIM", 1, FWxFilial("ZIM") + ZIF->ZIF_PRDSAG, "ZIM_SGPSAG" )))
 
-    oPrinter := FWMSPrinter():New(cTicket, IMP_PDF, lAdjustToLegacy, , lDisableSetup,,,,,,,,2)
+    If ! lJob
+        oPrinter := FWMSPrinter():New(cTicket, IMP_PDF, lAdjustToLegacy, , lDisableSetup,,,,,,,,2)
 
+    Else
+        oPrinter := FWMSPrinter():New(cTicket + ".pdf", IMP_PDF, .F., '', .T., .F., , , .T., .T., , .F.)
+        oPrinter:lServer   := .T.
+        oPrinter:lInJob      := .T.
+        oPrinter:cPathPDF  := cDiretorio
+        oPrinter:SetPortrait()
+
+    EndIf
+ 
     oPrinter:StartPage()
 
         oPrinter:SayBitmap (5, 20, "\img_ticket_racao\logotipo.png", 56.5, 50)
@@ -530,7 +575,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
             oPrinter:Say(165, 100, ZIG->ZIG_PLACA, oFt14N)
 
             oPrinter:Say(185,  20, "Pessoa: ", oFt16B)
-            oPrinter:Say(185, 100, ZIF->ZIF_NMFOR, oFt14N)
+            oPrinter:Say(185, 100, ZIR->ZIR_DESGRJ, oFt14N) //Everson - 02/06/2022. Chamado 18465.
 
             oPrinter:Say(205,  20, "Endereço: ", oFt16B)
             oPrinter:Say(205, 100, cEnd, oFt14N)
@@ -605,10 +650,26 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac) // U_ADFAT026R("0000070", "R")
 
     oPrinter:EndPage()
     
-    oPrinter:Setup()
+    If ! lJob
 
-    If oPrinter:nModalResult == PD_OK
-        oPrinter:Preview()
+        oPrinter:Setup()
+
+        If oPrinter:nModalResult == PD_OK
+            oPrinter:Preview()
+
+        EndIf
+
+    Else
+
+        oPrinter:Print(,1)
+
+        U_enviaremail(allTrim(cEmailTkt), "TICKET DE PESAGEM - " + cTicket, "Ticket " + cTicket, cDiretorio + cTicket + ".pdf",)
+
+        FErase(cDiretorio + cTicket + ".pdf")
+
+        RecLock("ZIG", .F.)
+            ZIG->ZIG_ENVIAD := "1"
+        ZIG->(MsUnlock())
 
     EndIf
 
@@ -1145,5 +1206,76 @@ Static Function romRacao(cCP)
     EndIf
 
     RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT261
+    Imprime pedido de compra automático.
+    @type  User Function
+    @author Everson
+    @since 06/06/2022
+    @version 01
+
+/*/
+User Function ADFAT261()
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local lImp  := .F.
+    Local cQuery:= ""
+
+
+    RPCClearEnv()
+	RPCSetType(3)
+	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
+
+        lImp  := GetMv("MV_#IDATCP",,.F.)
+
+        If ! lImp
+            RestArea(aArea)
+            Return .F.
+
+        EndIf
+
+        cQuery := ""
+        cQuery += " SELECT " 
+            cQuery += " ZIG_CTPATI, ZIG_NUMERO " 
+        cQuery += " FROM " 
+            cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB " 
+            cQuery += " INNER JOIN " 
+            cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON " 
+            cQuery += " ZIB_FILIAL = ZIG_FILIAL " 
+            cQuery += " AND ZIB_NUMERO = ZIG_CTPATI " 
+        cQuery += " WHERE " 
+            cQuery += " ZIB_FILIAL = '" + FWxFilial("ZIB") + "' " 
+            cQuery += " AND CAST(ZIB_DATA AS DATE) = CAST(GETDATE() AS DATE) " 
+            cQuery += " AND ZIB_STATUS = '5' " 
+            cQuery += " AND ZIB_TPMOVI = 'R' " 
+            cQuery += " AND ZIG_ENVIAD <> '1' " 
+            cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
+            cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
+        cQuery += " ORDER BY ZIG_NUMERO " 
+
+        If Select("D_IMPTKT") > 0
+            D_IMPTKT->(DbCloseArea())
+
+        EndIf
+
+        TcQuery cQuery New Alias "D_IMPTKT"
+        DbSelectArea("D_IMPTKT")
+        D_IMPTKT->(DbGoTop())
+
+        While ! D_IMPTKT->(Eof())
+            
+            MsAguarde({|| U_ADFAT026R(D_IMPTKT->ZIG_NUMERO, "R", D_IMPTKT->ZIG_CTPATI, .T.) }, "Aguarde", "Imprimindo ticket...")
+
+            D_IMPTKT->(DbSkip())
+
+        End
+
+        D_IMPTKT->(DbCloseArea())
+
+        RestArea(aArea)
+
+    RpcClearEnv()
 
 Return Nil

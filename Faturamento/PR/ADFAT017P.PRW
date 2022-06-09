@@ -580,6 +580,7 @@ User Function ADFAT17Y()
         oOrdPes:AddStatusColumns({|| U_ADFAT17G( aOrdPes[oOrdPes:nAt,14], aOrdPes[oOrdPes:nAt,17] )})
     
         oOrdPes:addColumn({"Contr. Pátio"      , {||aOrdPes[oOrdPes:nAt,16]}, "C", ""                  , 2, 006    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,16]",, .F., .T., , "ID16" })
+        oOrdPes:addColumn({"Placa"             , {||aOrdPes[oOrdPes:nAt,19]}, "C", ""                  , 1, 007    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,19]",, .F., .T., , "ID19" })
         oOrdPes:addColumn({"Agrupador"         , {||aOrdPes[oOrdPes:nAt,18]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,18]",, .F., .T., , "ID18" })
         oOrdPes:addColumn({"Qtd. Agrupador"    , {||aOrdPes[oOrdPes:nAt,24]}, "N", "@E 999,999,999.999", 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,24]",, .F., .T., , "ID24" })
         oOrdPes:addColumn({"Ordem"             , {||aOrdPes[oOrdPes:nAt,08]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,08]",, .F., .T., , "ID8" })
@@ -603,14 +604,15 @@ User Function ADFAT17Y()
         oOrdPes:addColumn({"Sol Pes Manual"    , {||aOrdPes[oOrdPes:nAt,20]}, "C", ""                  , 2, 010    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,20]",, .F., .T., , "ID20" })
         oOrdPes:addColumn({"Pedidos de Saída"  , {||aOrdPes[oOrdPes:nAt,26]}, "C", ""                  , 1, 015    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,26]",, .F., .T., , "ID26" })
         oOrdPes:addColumn({"Notas Fiscais"     , {||aOrdPes[oOrdPes:nAt,30]}, "C", ""                  , 1, 035    ,   , .T. , , .F.,, "aOrdPes[oOrdPes:nAt,30]",, .F., .T., , "ID30" })
-    
+        
         oOrdPes:Activate()
                    
-                   TButton():New(187,515,"Transferência Ordem" ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-                   TButton():New(207,515,"Romaneio"            ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(227,515,"Cancelar Ticket"     ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oAltTag := TButton():New(247,515,"Alterar Tag"         ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oExcTag := TButton():New(267,515,"Excluir Tag"         ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(187,515,"Transferência Ordem"  ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(207,515,"Romaneio"             ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oAltTag := TButton():New(247,515,"Alterar Tag"          ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oExcTag := TButton():New(267,515,"Excluir Tag"          ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
         // oFechar := TButton():New(270,555,"Fechar",oCtlPatio,{|| oCtlPatio:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
         // oFechar:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	
@@ -683,6 +685,68 @@ Static Function carLog(oOrdPes, aOrdPes)
 
 
     U_TExTelaMen("Logs OP: " +  cNmOrdem, cTexto, "Arial",10,,.F.,.F.)
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} envGOrd
+    Reenviar ordem para o Gemba.
+    @type  Static Function
+    @author Everson
+    @since 02/06/2022
+    @version 01
+/*/
+Static Function envGOrd(oOrdPes, aOrdPes)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local nLinha    := Val(cValToChar(oOrdPes:nAt))
+    Local cTpOrdem  := ""
+    Local cNmOrdem  := ""
+    Local lGemba    := GetMV("MV_#UGEMBA",,.F.) 
+    Local cMsgError := ""
+
+    If ! lGemba
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Envio não permitido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    If nLinha <= 0 .Or. Len(aOrdPes) <= 0
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cTpOrdem := aOrdPes[nLinha,14]
+    If cTpOrdem <> "R"
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Tipo de ordem inválido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return .F.
+
+    EndIf
+
+    cNmOrdem := aOrdPes[nLinha,08]
+    If Empty(cNmOrdem)
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! MsgYesNo("Deseja reenviar a ordem de pesagem " + cNmOrdem + " para o Gemba?", "Função envGOrd(ADFAT017P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! procEnvGb(cNmOrdem, @cMsgError)
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    MsgInfo("Ordem de pesagem " + cNmOrdem + " reenviada.", "Função envGOrd(ADFAT017P)")
 
     RestArea(aArea)
 
@@ -879,6 +943,14 @@ Static Function confTran(cOrdOrg, cOrdDes)
 
         EndIf
 
+        //Altera a quantidade da ordem de pesagem no ticket de pesagem.
+        If ! U_ADFAT191(cTktNv, "ZIG_PESORD", ZIF->ZIF_QUANT, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Exclui ordem de pesagem.
         If ! U_ADFAT166(cOrdOrg, @cMsgError)
             DisarmTransaction()
             Break
@@ -893,7 +965,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Cancela ordem de pesagem original no Gemba.
-        If lGemba .And. ! U_ADFAT50G(cOrdOrg, @cMsgError)
+        If lGemba .And. ! cancGb(cOrdOrg, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -901,7 +973,7 @@ Static Function confTran(cOrdOrg, cOrdDes)
         EndIf
 
         //Envia nova ordem de pesagem para o Gemba.
-        If lGemba .And. ! U_ADFAT50F(cOrdDes, @cMsgError)
+        If lGemba .And. ! procEnvGb(cOrdDes, @cMsgError)
             lErrGemba := .T.
             DisarmTransaction()
             Break
@@ -1127,7 +1199,7 @@ Return lRet
     @since 10/03/2022
     @version 01
 /*/
-Static Function gerPedS(cCP)
+Static Function gerPedS(cCP, lAut)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -1158,6 +1230,7 @@ Static Function gerPedS(cCP)
     Local cPedGer   := ""
 
     Default cCP     := """
+    Default lAut    := .F.
 
     If Empty(cCP)
         MsgInfo("Selecione um registro para emissão de pedido de saída.", "Função gerPedS(ADFAT017P)")
@@ -1193,7 +1266,7 @@ Static Function gerPedS(cCP)
 
     EndIf
 
-    If ! MsgYesNo("Deseja emitir pedido de saída para o controle de pátio " + cCP + "?", "Função gerPedS(ADFAT017P)")
+    If ! lAut .And. ! MsgYesNo("Deseja emitir pedido de saída para o controle de pátio " + cCP + "?", "Função gerPedS(ADFAT017P)")
         RestArea(aArea)
         Return .F.
 
@@ -1293,7 +1366,6 @@ Static Function gerPedS(cCP)
         cMemNf2  := "Granja.: " + ZIS->ZIS_DESC
         cTpFrt   := "C"
         cPlaca   := ZIF->ZIF_PLACA
-        cUFPlaca := ""
 
         cUFPlaca := ZV4->ZV4_EST
         cTransp  := ZV4->ZV4_FORNEC
@@ -1305,7 +1377,7 @@ Static Function gerPedS(cCP)
         cTes     := Iif(Alltrim(cValToChar(aCampo[2,2])) == "SP", ZI9->ZI9_TESEST, ZI9->ZI9_TESINT) //Pega Tes do cabeçalho do roteiro.
 
         DbSelectArea("ZIU")
-        ZIU->(DbSetOrder(3))
+        ZIU->(DbSetOrder(4)) //Everson - 03/06/2022. ticket 18465.
         ZIU->(DbGoTop())
         If ZIU->( DbSeek( FWxFilial("ZIU") + ZIA->ZIA_CODROT + ZIF->ZIF_CLIFOR + cFornece + cLjForn )) //Verifica se tem cadastro de exceção de tes por fornecedor / cliente.
             cTes := ZIU->ZIU_TES
@@ -1376,13 +1448,17 @@ Static Function gerPedS(cCP)
 
 	EndIf
 
-    If Empty(cPedidos)
+    If ! lAut .And. Empty(cPedidos)
         cPedidos := "Não há pedidos gerados."
 
     EndIF
 
-    U_TExTelaMen("Geração de Pedido de Saída", "Pedidos gerados: " + xPula + cPedidos + xPula + xPula + "Erro: " + xPula + cMsgError, "Arial",10,,.F.,.F.)
+    If ! lAut
+
+        U_TExTelaMen("Geração de Pedido de Saída", "Pedidos gerados: " + xPula + cPedidos + xPula + xPula + "Erro: " + xPula + cMsgError, "Arial",10,,.F.,.F.)
     
+    EndIf
+
     RestArea(aArea)
 
 Return Nil
@@ -2937,8 +3013,8 @@ Static Function cancTkt(oOrdPes, aOrdPes)
     lRet := U_ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, .T.)
 
     //Cancela ordem no Gemba.
-    If lRet
-        U_ADFAT50G(cNmOrdem)
+    If lRet .And. cTpOrdem == "R"
+        cancGb(cNmOrdem)
 
     EndIf
 
@@ -4256,6 +4332,12 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
         EndIf
 
+        //Gera pedido de saída.
+        If lRacao .And. nTpPesa == 2
+            MsAguarde({|| gerPeAut(cNmOrdem) },"Aguarde", "Processando...")
+
+        EndIf
+
     EndIf
 
     RestArea(aArea)
@@ -4326,8 +4408,39 @@ Static Function procEnvGb(cNmOrdem, cMsgError)
         U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GEMBA")
 
     Else
+        U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "1")
+        
         U_ADFAT173(cPreFx + "enviada com sucesso.", cNmOrdem, "", "GEMBA")
+        
+    EndIf
 
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} cancGb
+    Process cancelamento de ordem de pesagem para o Gemba.
+    @type  User Function
+    @author Everson
+    @since 18/05/2022
+    @version 01
+/*/
+Static Function cancGb(cNmOrdem, cMsgError)
+    
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local lRet   := .F.
+    Local cPreFx := "Cancelar OP: "
+
+    Default cMsgError := ""
+
+    lRet := U_ADFAT50G(cNmOrdem, @cMsgError)
+
+    If ! lRet
+        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GEMBA")
+
+    Else
+        U_ADFAT173(cPreFx + "cancelada com sucesso.", cNmOrdem, "", "GEMBA")
+        
     EndIf
 
     RestArea(aArea)
@@ -4345,24 +4458,28 @@ Static Function chkEnGemba(cNmOrdem)
     //Variáveis.
     Local aArea  := GetArea()
     Local lRet   := .F.
-    Local cQuery := ""
+    // Local cQuery := ""
 
-    cQuery := "SELECT ZBE_DATA FROM " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cNmOrdem + "' AND ZBE_LOG = 'enviada com sucesso.' AND ZBE.D_E_L_E_T_ = ''"
+    U_ADFAT16A(cNmOrdem)
 
-    If Select("D_CHKZBE") > 0
-        D_CHKZBE->(DbCloseArea())
+    lRet := ZIF->ZIF_GEMBA == "1"
 
-    EndIf
+    // cQuery := "SELECT ZBE_DATA FROM " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cNmOrdem + "' AND ZBE_LOG = 'enviada com sucesso.' AND ZBE.D_E_L_E_T_ = ''"
 
-    TcQuery cQuery New Alias "D_CHKZBE"
-    DbSelectArea("D_CHKZBE")
-    D_CHKZBE->(DbGoTop())
-    If ! D_CHKZBE->(Eof())
-        lRet := .T.
+    // If Select("D_CHKZBE") > 0
+    //     D_CHKZBE->(DbCloseArea())
 
-    EndIf
+    // EndIf
 
-    D_CHKZBE->(DbCloseArea())
+    // TcQuery cQuery New Alias "D_CHKZBE"
+    // DbSelectArea("D_CHKZBE")
+    // D_CHKZBE->(DbGoTop())
+    // If ! D_CHKZBE->(Eof())
+    //     lRet := .T.
+
+    // EndIf
+
+    // D_CHKZBE->(DbCloseArea())
 
     RestArea(aArea)
 
@@ -5605,6 +5722,8 @@ Static Function lerTag(oView, lAtuView, cCP)
 
     cTag := Alltrim(cValToChar(StrTran(StrTran(cTag,Chr(2),""),Chr(3),"")))
 
+    cTag := U_ADFAT50O(cTag)
+
     If lAtuView
         If !Empty(cTag) .And.;
             chkTag(cTag, cCP) //Verifica se a tag de pesagem não está em uso.
@@ -6214,6 +6333,12 @@ User Function ADFAT17A(cCP, cPlaca)
 
             EndIf
 
+            If vldRoteiro(cPlaca, D_ZIR->ZIR_ORAGRP) //Everson - 03/06/2022. Chamado 18465.
+                D_ZIR->(DbSkip())
+                Loop
+
+            EndIf
+
             //Gera ordem de pesagem.
             If ! U_ADFAT167(@cNvOrdP,;
                            cCP,;
@@ -6250,6 +6375,52 @@ User Function ADFAT17A(cCP, cPlaca)
     End Transaction
 
     D_ZIR->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} vldRoteiro
+    Verifica se há roteiro aberto para placa.
+    @type  Static Function
+    @author Everson
+    @since 03/06/2022
+    @version 01
+/*/
+Static Function vldRoteiro(cPlaca, cRoteiro)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cQuery    := ""
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIF_NUMERO  " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB " 
+    cQuery += " INNER JOIN " 
+    cQuery += " " + RetSqlName("ZIF") + " (NOLOCK)  AS ZIF ON " 
+    cQuery += " ZIB_FILIAL = ZIF_FILIAL " 
+    cQuery += " AND ZIB_NUMERO = ZIF_CTPATI " 
+    cQuery += " WHERE " 
+    cQuery += " ZIB_FILIAL = '" + FWxFilial("ZIB") + "' " 
+    cQuery += " AND ZIB_PLACA = '" + cPlaca + "' " 
+    cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
+    cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+    cQuery += " AND ZIF_ROTEIR <> '" + cRoteiro + "' " 
+    cQuery += " AND ZIB_STATUS NOT IN ('5','6') " 
+
+    If Select("D_VLDROT")
+        D_VLDROT->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_VLDROT"
+    DbSelectArea("D_VLDROT")
+    D_VLDROT->(DbGoTop())
+
+        lRet := ! D_VLDROT->(Eof())
+
+    D_VLDROT->(DbCloseArea())
 
     RestArea(aArea)
 
@@ -6369,7 +6540,7 @@ User Function ADFAT17O(cCP, cPlaca)
                 nQtd := D_PEDS->C6_UNSVEN
 
             Else
-                nQtd := C6_QTDVEN
+                nQtd := D_PEDS->C6_QTDVEN
 
             EndIf
 
@@ -6728,7 +6899,7 @@ User Function ADFAT17()
 Return xRet
 /*/{Protheus.doc} grvBarr
     Salva o registro para enviar ao barramento.
-    @type  User Function
+    @type  Static Function
     @author Everson
     @since 25/03/2022
     @version 01
@@ -6761,3 +6932,34 @@ Return cBalanca
 /*/
 User Function ADFAT17X()
 Return Alltrim(cValToChar(Posicione("DX5" , 1, FwxFilial("DX5") + U_ADFAT17V(), "DX5_URL")))
+/*/{Protheus.doc} gerPeAut
+    Gera pedido de compra automático.
+    @type  Static Function
+    @author Everson
+    @since 06/06/2022
+    @version 01
+/*/
+Static Function gerPeAut(cNmOrdem)
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local lGera := GetMv("MV_#PDATCP",,.F.)
+
+    If ! lGera
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT16A(cNmOrdem)
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    gerPedS(ZIF->ZIF_CTPATI, .T.)
+
+
+    RestArea(aArea)
+
+Return Nil
