@@ -32,6 +32,7 @@
 	@history ticket  11639 	- Fernan Macieira - 19/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
 	@history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 	@history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+	@history ticket 74270 - Fernando Macieira - 09/06/2022 - Devoluções não devem bloquear
 /*/
 User Function MT100TOK()
 
@@ -1137,6 +1138,11 @@ Static Function ChkVenctos()
 	Local aChkVenc := {}
 	Local i, cTES
 	Local lVencDayOk := GetMV("MV_#E2VENC",,.t.)
+
+	// @history ticket 74270 - Fernando Macieira - 09/06/2022 - Devoluções não devem bloquear
+	If AllTrim(cTipo) <> "N"
+		Return lRet
+	EndIf
 
 	// Checo se existe algum TES que gere financeiro pois então deverá consistir a aba duplicatas
 	For i:=1 to Len(aCols)
