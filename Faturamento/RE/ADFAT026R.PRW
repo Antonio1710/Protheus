@@ -505,13 +505,25 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
 
     EndIf
 
-    DbSelectArea("SA2")
-    SA2->(DbSetOrder(1))
-    SA2->(DbGoTop())
-    If SA2->( DbSeek( FWxFilial("SA2") + ZIF->ZIF_FORNEC + ZIF->ZIF_LJFORN) )
-        cEnd   := Alltrim(SA2->A2_END) + ", " + Alltrim(SA2->A2_BAIRRO) + " - " + Alltrim(SA2->A2_MUN) + " - " + Alltrim(SA2->A2_EST)
+    If ZIF->ZIF_CLIFOR == "F"
+        DbSelectArea("SA2")
+        SA2->(DbSetOrder(1))
+        SA2->(DbGoTop())
+        If SA2->( DbSeek( FWxFilial("SA2") + ZIF->ZIF_FORNEC + ZIF->ZIF_LJFORN) )
+            cEnd   := Alltrim(SA2->A2_END) + ", " + Alltrim(SA2->A2_BAIRRO) + " - " + Alltrim(SA2->A2_MUN) + " - " + Alltrim(SA2->A2_EST)
+        
+        EndIf
 
-    End
+    ElseIf ZIF->ZIF_CLIFOR == "C"
+        DbSelectArea("SA1")
+        SA1->(DbSetOrder(1))
+        SA1->(DbGoTop())
+        If SA1->( DbSeek( FWxFilial("SA1") + ZIF->ZIF_FORNEC + ZIF->ZIF_LJFORN) )
+            cEnd   := Alltrim(SA1->A1_END) + ", " + Alltrim(SA1->A1_BAIRRO) + " - " + Alltrim(SA1->A1_MUN) + " - " + Alltrim(SA1->A1_EST)
+
+        EndIf
+
+    EndIf
 
     //Everson - 02/06/2022. Chamado 18465.
     If ! U_ADFAT32G( ZIF->ZIF_ORDRAC)
