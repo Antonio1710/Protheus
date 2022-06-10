@@ -11,6 +11,7 @@
 	@history 01/08/2019, Everson, Ch 044314. Tratamento para que as ocorrências de fechamento não saiam no relatório de fechamento.
 	@history 14/08/2019, Everson, Ch 044314. Tratamento no script sql para que o relatório de fechamento considere apenas os registros fechados.
 	@history 28/10/2019, Everson, Ch 044314. Tratamento para desconsiderar lançamentos rejeitados.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/                                                                                       
 User Function ADLOG045R()
 
@@ -492,3 +493,14 @@ Static Function QryZFA(lFech) //Everson - 14/08/2019. Chamado 044314.
 	xZFA->(DbgoTop())
 
 Return Nil
+
+/*/{Protheus.doc} u_LOG045A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG045A0( uPar1 )
+Return( QryZFA( uPar1 ) )

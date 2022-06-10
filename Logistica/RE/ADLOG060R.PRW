@@ -70,7 +70,9 @@ User Function ADLOG060R()
 	EndIf
 	
 	//
-	StaticCall(ADLOG045R,QryZFA,.T.) //Everson-14/08/20129.Ch 044314.
+	//Static Call(ADLOG045R,QryZFA,.T.) //Everson-14/08/20129.Ch 044314.
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_LOG045A0(.T.)
 
 	//
 	If xZFA->(Eof())

@@ -9,6 +9,7 @@
     @author Everson
     @since 04/01/2021
     @version 01
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADEST052P()  // U_ADEST052P()
@@ -52,7 +53,9 @@ User Function ADEST052P()  // U_ADEST052P()
         U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),"Gera lote de producao por integração do SAG")
         
             //
-            StaticCall(ADEST034P,procRot)
+            //Static Call(ADEST034P,procRot)
+            //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+            u_EST034A0()
 
         //
         logZBN("2","ADEST052P")

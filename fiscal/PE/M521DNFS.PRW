@@ -181,3 +181,14 @@ Static Function estFrt(F2DOC,F2SERIE,F2CLIENTE,F2LOJA)
 	RestArea(aArea)
 	
 Return Nil
+
+/*/{Protheus.doc} u_21DNFSA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_21DNFSA0( uPar1, uPar2 )
+Return( flagSag( uPar1, uPar2 )  )
