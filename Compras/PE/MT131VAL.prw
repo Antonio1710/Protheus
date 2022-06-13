@@ -16,6 +16,7 @@
     @chamado T.I. - Leonardo P. Monteiro      - 01/09/2021 - Inclusão do comando RestArea.
     @history ticket 65456 - Fernando Macieira - 29/12/2021 - Cotação diferentes com a mesma SC gerando compras indevidas
     @history ticket 66599 - Fernando Macieira - 24/01/2022 - Evolução ticket 65456
+    @history Ticket 70142 - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function MT131VAL()
 
@@ -86,7 +87,9 @@ User Function MT131VAL()
 					
 					If IsMark("C1_OK",cMarca)
                         If cCusto+cItemCta <> (cMy2Alias)->C1_CC+C1_ITEMCTA
-                            lRet := StaticCall(MT120LOK, VldCCusto, (cMy2Alias)->C1_CC, cCusto, (cMy2Alias)->C1_ITEMCTA, cItemCta, aAprov, nTotal)
+                            //lRet := Static Call(MT120LOK, VldCCusto, (cMy2Alias)->C1_CC, cCusto, (cMy2Alias)->C1_ITEMCTA, cItemCta, aAprov, nTotal)
+                            //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+                            lRet := u_120LOKA0( (cMy2Alias)->C1_CC, cCusto, (cMy2Alias)->C1_ITEMCTA, cItemCta, aAprov, nTotal )
                         EndIf
                     EndIf
 					
