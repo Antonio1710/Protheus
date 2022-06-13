@@ -6463,7 +6463,7 @@ User Function ADFAT17O(cCP, cPlaca)
     EndIf
 
     cQuery += " SELECT  " 
-    cQuery += " * " 
+    cQuery += " *, SC6.R_E_C_N_O_ AS RECSC6 " 
     cQuery += " FROM " 
         cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
         cQuery += " INNER JOIN " 
@@ -6489,14 +6489,12 @@ User Function ADFAT17O(cCP, cPlaca)
     While ! D_PEDS->(Eof())
         
         cPedido := D_PEDS->C5_NUM
-        
-        If SC6->(DbSeek( FWxFilial("SC6") + cPedido ))
 
-            If ! Empty(SC6->C6_XORDPES)
-                D_PEDS->(DbSkip())
-                Loop
+        SC6->(DbGoTo(Val(cValToChar(D_PEDS->RECSC6))))
 
-            EndIf
+        If ! Empty(SC6->C6_XORDPES)
+            D_PEDS->(DbSkip())
+            Loop
 
         EndIf
 
