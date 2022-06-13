@@ -69,6 +69,7 @@
 	@history Everson-12/08/2020-Ch:059326- Tratamento para geração de frete na empresa Ceres 02. 
 	@history Everson-20/07/2020-Ch:15478- Tratamento para geração de frete de subproduto na empresa Adoro 02 Filial 03.
 	@history Everson-20/07/2020-Ch:19127- Tratamento para geração de frete de subproduto na empresa Adoro 02 Filial 03 para subproduto.
+	@history Everson-13/06/2022-Chr:018465 - Removida a geração de frete de ração.
 	/*/    
 User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, lStorFr )
 	
@@ -130,7 +131,7 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 		U_ADLOG067P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob,cTpCrg)
 
 	ElseIf cTpCrg == "5" .And. cOpc == "1" //Frete Ração. //Everson-21/02/2020-Ch:054941.
-		U_ADLOG052P("2",cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 07/02/2020. Chamado 054941.
+		// U_ADLOG052P("2",cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 07/02/2020. Chamado 054941. //Everson - 13/06/2022. Chamado 018465.
 
 	ElseIf 	Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0102" .Or.;
 			Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0201"

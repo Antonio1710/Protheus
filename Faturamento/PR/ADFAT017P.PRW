@@ -1119,6 +1119,9 @@ Static Function pesOrdTr(nTipo, cRoteiro, cOrdOrg)
     EndIf
 
     cQuery += " AND ZIF.D_E_L_E_T_ = '' "
+    
+    cQuery += " AND ZIF_AGRUPA = '' " //Everson,  13/06/2022 - ticket 18465 - Tratamento para não selecionar ordem agrupada.
+
     cQuery += " AND ZIF_NUMERO NOT IN ( " 
     cQuery += " SELECT ZIT_ORDEM FROM " + RetSqlName("ZIT") + " (NOLOCK) AS ZIT WHERE ZIT_FILIAL = '" + FWxFilial("ZIT") + "' AND ZIT.D_E_L_E_T_ = '' " 
     cQuery += " UNION ALL " 
