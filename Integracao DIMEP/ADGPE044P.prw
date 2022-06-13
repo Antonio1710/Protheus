@@ -20,8 +20,9 @@
 	@history Ticket  65655  - Leonardo P. Monteiro - 22/12/2021 - Correção na obtenção do último número cadastrado.
 	@history Ticket  TI     - ADRIANO SAVOINE  - 11/03/2022 - Alterada a query para conseguir criar perfil de acesso 99999 para novos colaboradores.
 	@history Ticket: 70906  - ADRIANO SAVOINE  - 06/04/2022 - Ajuste realizado para não verificar demitido a mais do que o parametrizado.
-
+	@history TICKET: 69423  - ADRIANO SAVOINE  - 13/06/2022 - Inserido na rotina ao criar perfil especifico criar o Relogio da Empresa.
 /*/
+
 USER FUNCTION ADGPE044P()
 
 	// @history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
@@ -67,12 +68,12 @@ USER FUNCTION ADGPE044P()
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao com o sistema DIMEP de catracas Gerar Perfil de Acesso Especificos para funcionario que tem particularidades por exemplo acessos em cancelas e portas')
 
-	IF !(__cUserId $ GetMv("MV_#USUDIM",,"001439"))
+/*	IF !(__cUserId $ GetMv("MV_#USUDIM",,"001439"))
 	
 		MsgStop("OLÁ " + Alltrim(cUserName) + ", Você não tem permissão de Utilizar essa Rotina", "ADGPE044P-01")
 		RETURN(NIL)
 	
-	ENDIF
+	ENDIF */
 
 	// Garanto uma unica thread sendo executada por empresa
 	IF !LOCKBYNAME(cKeyBloq, .T., .F.)
@@ -357,6 +358,25 @@ STATIC FUNCTION CARREGAPERFIL(cFilAtu,cCPF)
 					lRetPerfil := .T.
 
 					INTSISPERFILACESSO(TRP->CD_PERFIL_ACESSO) // Integra Usuario Perfil de Acesso
+					
+					//TICKET: 69423 - ADRIANO SAVOINE - 13/06/2022
+					//CARREGA RELOGIO ADORO PERFIL ACESSO
+					IF cEmpresa = "01" .AND. cFilAtu = "02"
+
+						INTRELADORO(TRP->CD_PERFIL_ACESSO)
+
+					ENDIF   
+					
+					//TICKET: 69423 - ADRIANO SAVOINE - 13/06/2022
+					//CARREGA RELOGIO CERES PERFIL DE ACESSO
+					IF cEmpresa = "02" .AND. cFilAtu = "01"
+
+						//ORIGEM
+						INTRELCERESO(TRP->CD_PERFIL_ACESSO)
+						//DESTINO
+						IRELCERESD(TRP->CD_PERFIL_ACESSO)
+
+					ENDIF   
 
 					// *** INICIO LIBERA PERFIL DE ACESSO PARA OUTROS USUARIOS *** // 
 					SqlUsuProtheus()
@@ -1878,3 +1898,90 @@ Static Function DELTURNO(nTurno)
 	EndIf        
 	                        
 RETURN(NIL)
+
+
+Static Function INTRELADORO(nPerfilAcesso)
+
+	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PERFIL_ACESSO_REGRA] " 
+	cQuery += "(CD_PERFIL_ACESSO, " 
+	cQuery += "CD_GRUPO, " 
+	cQuery += "CD_AREA, " 
+	cQuery += "TP_ACESSO, "  
+	cQuery += "QT_ACESSO_PERMITIDO, " 
+	cQuery += "TP_AUTENTICACAO, " 
+	cQuery += "FL_NOTIFICA_PRESENTE, " 
+	cQuery += "FL_NOTIFICA_AUSENTE " 
+    cQuery += ") "
+	cQuery += "VALUES (" + " '" + CVALTOCHAR(nPerfilAcesso)                                                                 + "'," // CD_PERFIL_ACESSO
+	cQuery += "'"               + '21'                                                                                      + "'," // CD_GRUPO
+	cQuery += "'"               + '5'                                                                                       + "'," // CD_AREA
+	cQuery += "'"               + '0'                                                                                       + "'," // TP_ACESSO
+	cQuery += "'"               + '999'                                                                                     + "'," // QT_ACESSO_PERMITIDO
+    cQuery += "'"               + '0'                                                                                       + "'," // TP_AUTENTICACAO
+	cQuery += "'"               + '0'                                                                                       + "'," // FL_NOTIFICA_PRESENTE
+	cQuery += "'"               + '0'                                                                                       + "'"  // FL_NOTIFICA_AUSENTE
+    cQuery += ") " 
+
+	If (TCSQLExec(cQuery) < 0)
+    	cIntregou += " TCSQLError() - INTRELADORO: "
+	EndIf        
+	                        
+RETURN(NIL)  
+
+
+Static Function INTRELCERESO(nPerfilAcesso)
+
+	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PERFIL_ACESSO_REGRA] " 
+	cQuery += "(CD_PERFIL_ACESSO, " 
+	cQuery += "CD_GRUPO, " 
+	cQuery += "CD_AREA, " 
+	cQuery += "TP_ACESSO, "  
+	cQuery += "QT_ACESSO_PERMITIDO, " 
+	cQuery += "TP_AUTENTICACAO, " 
+	cQuery += "FL_NOTIFICA_PRESENTE, " 
+	cQuery += "FL_NOTIFICA_AUSENTE " 
+    cQuery += ") "
+	cQuery += "VALUES (" + " '" + CVALTOCHAR(nPerfilAcesso)                                                                 + "'," // CD_PERFIL_ACESSO
+	cQuery += "'"               + '5'                                                                                      + "'," // CD_GRUPO
+	cQuery += "'"               + '6'                                                                                       + "'," // CD_AREA
+	cQuery += "'"               + '0'                                                                                       + "'," // TP_ACESSO
+	cQuery += "'"               + '999'                                                                                     + "'," // QT_ACESSO_PERMITIDO
+    cQuery += "'"               + '0'                                                                                       + "'," // TP_AUTENTICACAO
+	cQuery += "'"               + '0'                                                                                       + "'," // FL_NOTIFICA_PRESENTE
+	cQuery += "'"               + '0'                                                                                       + "'"  // FL_NOTIFICA_AUSENTE
+    cQuery += ") " 
+
+	If (TCSQLExec(cQuery) < 0)
+    	cIntregou += " TCSQLError() - INTRELCERESO: "
+	EndIf        
+	                        
+RETURN(NIL)  
+
+
+Static Function IRELCERESD(nPerfilAcesso)
+
+	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PERFIL_ACESSO_REGRA] " 
+	cQuery += "(CD_PERFIL_ACESSO, " 
+	cQuery += "CD_GRUPO, " 
+	cQuery += "CD_AREA, " 
+	cQuery += "TP_ACESSO, "  
+	cQuery += "QT_ACESSO_PERMITIDO, " 
+	cQuery += "TP_AUTENTICACAO, " 
+	cQuery += "FL_NOTIFICA_PRESENTE, " 
+	cQuery += "FL_NOTIFICA_AUSENTE " 
+    cQuery += ") "
+	cQuery += "VALUES (" + " '" + CVALTOCHAR(nPerfilAcesso)                                                                 + "'," // CD_PERFIL_ACESSO
+	cQuery += "'"               + '5'                                                                                      + "'," // CD_GRUPO
+	cQuery += "'"               + '5'                                                                                       + "'," // CD_AREA
+	cQuery += "'"               + '0'                                                                                       + "'," // TP_ACESSO
+	cQuery += "'"               + '999'                                                                                     + "'," // QT_ACESSO_PERMITIDO
+    cQuery += "'"               + '0'                                                                                       + "'," // TP_AUTENTICACAO
+	cQuery += "'"               + '0'                                                                                       + "'," // FL_NOTIFICA_PRESENTE
+	cQuery += "'"               + '0'                                                                                       + "'"  // FL_NOTIFICA_AUSENTE
+    cQuery += ") " 
+
+	If (TCSQLExec(cQuery) < 0)
+    	cIntregou += " TCSQLError() - IRELCERESD: "
+	EndIf        
+	                        
+RETURN(NIL)  
