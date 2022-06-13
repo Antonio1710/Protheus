@@ -10,6 +10,7 @@
 	@author ANDRE MENDES - Obify
 	@since 17/12/2020
 	@history Ticket 428 - Andre Mendes - 17/12/2020 - Requisição - Alterar Portador em Lote   
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 
@@ -43,7 +44,9 @@ Return
 
 Static Function MenuDef()
 Local aRotina := {}
-    ADD OPTION aRotina TITLE 'Transferir' ACTION 'StaticCall(ADFIN107P,FUN107Proc)' OPERATION 2 ACCESS 0
+    //ADD OPTION aRotina TITLE 'Transferir' ACTION 'Static Call(ADFIN107P,FUN107Proc)' OPERATION 2 ACCESS 0
+    //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    ADD OPTION aRotina TITLE 'Transferir' ACTION 'u_FIN107A0()' OPERATION 2 ACCESS 0
     ADD OPTION aRotina TITLE 'Visualizar' ACTION 'FA280Visua' OPERATION 2 ACCESS 0
     
 Return aRotina
@@ -267,3 +270,13 @@ Static function FIN107Trf(cBanco,cAgencia,cConta,cSituaca,cNumBco)
 
 Return
 
+/*/{Protheus.doc} u_FIN107A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN107A0()
+Return( FUN107Proc() )

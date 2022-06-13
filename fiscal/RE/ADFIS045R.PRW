@@ -8,6 +8,7 @@
     @history Chamado 4672 - Everson - 13/11/2020 - Tratamento para envio de relatório de todas as empresas ativas.
     @history Chamado 4672 - Everson - 17/11/2020 - Tratamento para executar o relatório via job.
     @history Ticket 10892 - Abel B. - 12/03/2021 - Ajuste para execução por
+    @history Ticket 70142 - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
     /*/
 User Function ADFIS045R() // U_ADFIS045R()
 
@@ -88,7 +89,9 @@ User Function ADFIS450(cEmp,cFilLog)
         cEmail:= GetMv("MV_#CTECAN",,"rosangela@adoro.com.br")
 
         //
-        aNmLin := StaticCall(ADFIS041R,UFIS041R, Date() -40, Date(), cArq)
+        //aNmLin := Static Call(ADFIS041R,UFIS041R, Date() -40, Date(), cArq)
+        //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+        aNmLin := u_FIS041A0( Date() -40, Date(), cArq )
 
         //Everson - 17/11/2020. Chamado 4672.
         If ValType(aNmLin) == "A" .And. Len(aNmLin) > 0

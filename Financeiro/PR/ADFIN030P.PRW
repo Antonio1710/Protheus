@@ -22,6 +22,7 @@
 	@history Ticket  14417  - ADRIANO SAVOINE - 31/05/2021 - Criado o campo para o usuario digitar a porcentagem no momento da consulta.
 	@history Ticket  62143  - Everson         - 19/10/2021 - Tratamento para melhorar a performace da rotina cobDia.
 	@history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIN030P() // U_ADFIN030P()
 
@@ -5507,3 +5508,14 @@ Static Function grLRCCSV(oRegistros,aHReg,cArq)
 	RestArea(aArea)
 
 Return Nil
+
+/*/{Protheus.doc} u_FIN030A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN030A0( uPar1 )
+Return( envMaillcrf( uPar1 ) )
