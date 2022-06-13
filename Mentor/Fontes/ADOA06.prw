@@ -11,6 +11,7 @@
 	@history Ticket T.I   - Leonardo P. Monteiro   - 10/02/2021 - Correção na gravação do campo A1_DESC para A1_ZZDESCB.
     @history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
     @history Ticket 69520 - Fernando Macieira      - 01/04/2022 - Error log array out of bounds ( 3 of 2 )  on FWMBROWSE:ACTIVATE(FWMBROWSE.PRW) 18/05/2020 17:21:58 line : 399
+    @history Ticket 70142 - Rodrigo Mello/Flek     - 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 User Function ADOA06()
@@ -21,7 +22,8 @@ User Function ADOA06()
     Private aRotina		:= { {"Pesquisar"	,"AxPesqui"		,0,1},;
                              {"Visualizar"	,"U_AD06CLI"	,0,2},;
                              {"Alterar"		,"U_AD06CLI"	,0,4},;
-                             {"Enviar SF"	,"StaticCall(AD0080,intEnvSF, 1)",0,2} } // @history Ticket 69520 - Fernando Macieira      - 01/04/2022 - Error log array out of bounds ( 3 of 2 )  on FWMBROWSE:ACTIVATE(FWMBROWSE.PRW) 18/05/2020 17:21:58 line : 399
+                             {"Enviar SF"	,"u_0080A0(1)"  ,0,2} } // @history Ticket 69520 - Fernando Macieira      - 01/04/2022 - Error log array out of bounds ( 3 of 2 )  on FWMBROWSE:ACTIVATE(FWMBROWSE.PRW) 18/05/2020 17:21:58 line : 399
+                                                                    // @history Ticket 70142 - Rodrigo Mello/Flek     - 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
                                                                                                                                                             
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Interface de alteração de dados do cliente ')
 

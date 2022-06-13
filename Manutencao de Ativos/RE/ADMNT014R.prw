@@ -13,6 +13,7 @@
     @history Ticket: TI    - 11/06/2021 - ADRIANO SAVOINE - Corrigida a query da consulta para agrupar os dados.
     @history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
     @history Ticket: 63902 - 23/11/2021 - TIAGO STOCCO - Correção da QUERY para desprezar os estornados da SD3
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 User Function ADMNT014R(aParam)
@@ -311,3 +312,14 @@ Static Function fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
  
     RestArea(aArea)
 Return lRet
+
+/*/{Protheus.doc} u_MNT014A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_MNT014A0( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 )
+Return( fEnvMail( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 ) )
