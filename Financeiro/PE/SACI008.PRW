@@ -7,6 +7,7 @@
 	@author Rogerio Nutti
 	@since 12/04/2006
 	@history Ticket 8       - Abel Babini  - 05/07/2021 - Efetua avaliação de crédito do cliente após a baixa.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Grava ambiente inicial     ³
@@ -48,7 +49,9 @@ DbSelectArea("SE1")
 DbSetOrder(1)
 If dbSeek(xFilial("SE1")+SE5->E5_PREFIXO+SE5->E5_NUMERO+SE5->E5_PARCELA)
 	// Ticket 8       - Abel Babini  - 05/07/2021 - Efetua avaliação de crédito do cliente após a baixa.
-	StaticCall(M410STTS,fLibCred, SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate()) 
+	//Static Call(M410STTS,fLibCred, SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate()) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+  	u_10STTSA1( SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate() )  
 
 	While !Eof() .and. E1_PREFIXO = SE5->E5_PREFIXO .and. E1_NUM = SE5->E5_NUMERO .and. E1_PARCELA = SE5->E5_PARCELA .and. SE5->E5_BANCO <> ''
 		If !EMPTY(E1_BAIXA).and. EMPTY(E1_XDTDISP) 

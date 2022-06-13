@@ -12,8 +12,11 @@
 	@history ticket  8      - Abel Babini - 19/02/2021 - Processar a pré liberação no momento do corte
 	@history Ticket  8      - Abel B.     - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
 	@history Ticket  8      - Abel B.     - 03/03/2021 - Nova Versao - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function TELACORTE()
+
+	local _ni	:= 0
 
 	PUBLIC O_DIALOG       := NIL
 
@@ -188,6 +191,9 @@ STATIC FUNCTION RECBCD()
 RETURN (.T.)
 
 Static Function AtuListBox( _aPedido,_nOp)
+
+	local _ni := 0
+	local _nU := 0
 
 	If (Empty(_cProduto) .Or. Empty(_dVcA) .Or. Empty(_dVcD)) .Or. _nOp == 1
 		_aPedido := {}
@@ -494,6 +500,7 @@ Static Function AtuListBox( _aPedido,_nOp)
 Return(Nil)
 
 Static function fCorte()
+	local _n1 := 0
 
 	If MsgYesNo(OemToAnsi("Confirma corte dos produtos para os itens/pedidos ajustados?"),OemToAnsi("A T E N Ç Ã O"))
 		//	Begin transaction
@@ -716,9 +723,11 @@ Static function fCorte()
 							SA3->(DbSetOrder(1))
 							SA3->(DbSeek(FWxFilial("SA3")+SC5->C5_VEND1))
 
-							//StaticCall(M410STTS,fPreLibF)
+							//Static Call(M410STTS,fPreLibF)
 							//Ticket  8      - Abel B.  - 01/03/2021 - Nova rotina de Pré-liberação de crédito levando-se em consideração a ordem DATA DE ENTREGA + NUMERO DO PEDIDO
-							StaticCall(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+							//Static Call(M410STTS,fLibCred, SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR)
+							//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+							u_10STTSA1( SC5->C5_CLIENTE, SC5->C5_LOJACLI, SC5->C5_DTENTR )
 							
 							//FIM ticket  8      - Abel Babini - 19/02/2021 - Processar a pré liberação no momento do corte
 
@@ -1076,6 +1085,8 @@ Static function fCorte()
 Return()
 
 Static function fCalc()
+	local _n1 := 0
+
 	nPosOrd  := Ascan(aHeaderT,{|x| Trim(x[1]) == "Ordem"})
 	nPosSup  := Ascan(aHeaderT,{|x| Trim(x[1]) == "Supervisor"})
 	nPosCli  := Ascan(aHeaderT,{|x| Trim(x[1]) == "Cliente"})

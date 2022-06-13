@@ -32,7 +32,8 @@
 	@history ticket 65263   - Fernando Macieira - 24/01/2022 - numero/nome da granja na contabilização da depreciação
 	@history ticket 72053   - Fernando Macieira - 05/05/2022 - INDEXADORES TROCADOS
 	@history ticket 72858   - Fernando Macieira - 18/05/2022 - Lote 008870 - Depreciação deixa alterar o campo lote x cc mas nao assume a alteração
-	@history ticket 72835   - Abel Babini				- 30/05/2022 - Executa liberação de pedidos do cliente após baixas realizadas.
+	@history ticket 72835   - Abel Babini		- 30/05/2022 - Executa liberação de pedidos do cliente após baixas realizadas.
+	@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function CTBGRV()
 
@@ -181,7 +182,9 @@ User Function CTBGRV()
 							MsUnlock()		
 
 							//ticket 72835   - Abel Babini				- 30/05/2022 - Executa liberação de pedidos do cliente após baixas realizadas.
-							StaticCall(M410STTS,fLibCred, SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate())
+							//StaticCall(M410STTS,fLibCred, SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate())
+							//@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+							u_10STTSA1( SE1->E1_CLIENTE, SE1->E1_LOJA, MsDate() )
 
 						ElseIf Alltrim(CTL->CTL_ALIAS) == "SD1"				
 							Reclock("CT2",.F.)

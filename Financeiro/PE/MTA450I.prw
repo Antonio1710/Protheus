@@ -18,6 +18,7 @@
 	@history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
 	@history Ticket 69574   - Abel Babini       - 21/03/2022 - Projeto FAI
 	@history Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function MTA450I()
 
@@ -29,16 +30,16 @@ User Function MTA450I()
 
 	Local _cRisco 		:= '' 	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
 	Local cPerfPgt 		:= ''	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local nMedAtr			:= 0		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local aPerPgt			:= {}		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local _cTpCli 		:= ''		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local _cCodRed		:= ''		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local nMedAtr		:= 0	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local aPerPgt		:= {}	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local _cTpCli 		:= ''	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local _cCodRed		:= ''	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
 	Local cQryRede 		:= GetNextAlias()	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
 	Local cQryPFtr 		:= ''
 	Local cQryVAbr 		:= ''
-	Local _nTotSdRede := 0
-	Local _nTotVenci  := 0
-	Local _nTotAVenc  := 0
+	Local _nTotSdRede 	:= 0
+	Local _nTotVenci  	:= 0
+	Local _nTotAVenc  	:= 0
 	Local _nPedFut 		:= 0
 	Local _nTotRede 	:= 0
 
@@ -100,7 +101,10 @@ User Function MTA450I()
 			aPerPgt	:= {}
 
 			//Carrega Perfil de Pagamento
-			aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI)
+			//aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI)
+			//@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_FIN103A0( SC5->C5_CLIENTE, SC5->C5_LOJACLI )
+
 			IF ValType(aPerPgt) = 'A' 
 				cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
 				nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])

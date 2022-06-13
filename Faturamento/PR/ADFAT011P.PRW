@@ -32,8 +32,11 @@ User Function ADFAT011P() //U_ADFAT011P()
 		
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para integração de dados de cargas do Edata no Protheus')
 
-		StaticCall(ADFAT009P,dadosEdata,DToS(Date()),DToS(Date()),.T.)
-		//StaticCall(ADFAT009P,dadosEdata,"20181112","20181112",.T.)
+		//Static Call(ADFAT009P,dadosEdata,DToS(Date()),DToS(Date()),.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FAT009A0( DToS(Date()),DToS(Date()),.T. ) 
+		
+		//Static Call(ADFAT009P,dadosEdata,"20181112","20181112",.T.)
 		
 		logZBN("2") //Log fim.
 		conout("Fim integração de dados de cargas no Edata no Protheus.")
