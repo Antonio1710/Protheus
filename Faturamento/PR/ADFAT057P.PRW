@@ -439,10 +439,10 @@ Static Function grvBarr(cOperacao, cNumero)
     cFilter := " ZHR_FILIAL ='" + FWxFilial("ZHR") + "' .And. ZHR_NUMERO = '" + cNumero + "' "
 
     U_ADFAT27D("ZHR", 1, FWxFilial("ZHR") + cNumero,;
-        "ZHR", 1, FWxFilial("ZHR") + cNumero, "ZHR_ITEM", cFilter,;
+        "ZHR", 6, FWxFilial("ZHR") + cNumero, "ZHR_ITEM", cFilter,;
         "refaturamentos_de_racao_protheus", cOperacao,;
         .T., .T., .T.,;
-        cCmp)
+        cCmp) 
 
     RestArea(aArea)
 
