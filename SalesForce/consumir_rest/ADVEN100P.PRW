@@ -7,6 +7,7 @@
 	@since 05/11/2018
 	@version 1.0
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	/*/
 User Function ADVEN100P()  // U_ADVEN100P()
@@ -156,7 +157,9 @@ Static Function acessaSF(oParseJSON,lRetSF,cServTab)
 	Default cServTab	:= "/services/data/v41.0/query?q="
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin

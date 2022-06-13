@@ -24,6 +24,7 @@
 	@history ticket   10573 - Fernando Mac - 08/03/2021 - Ponto de Correção - Manutenção de Ativos
 	@history ticket   63516 - Fer Macieira - 09/11/2021 - Reforço para gravar campo C7_XTXMOEDA utilizado para montar o consumo/saldo do projeto de investimento
 	@history ticket   68971 - Fer Macieira - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket   71057 - Fer Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 /*/
 User Function MT120LOK()
@@ -1464,3 +1465,14 @@ Static Function ChkCCOP()
 	EndIf
 
 Return lRet
+
+/*/{Protheus.doc} u_120LOKA0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_120LOKA0( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 )
+Return( VldCCusto( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 ) )
