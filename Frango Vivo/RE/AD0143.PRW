@@ -17,6 +17,7 @@ static lAuto
 	@see (links_or_references)
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history Ticket 69574 - Abel Babini       - 25/04/2022 - Projeto FAI
+	@history Ticket 74568 - Fernando Macieira - 13/06/2022 - Pedido de Complemento - Filial 0A
 /*/ 
 User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 
@@ -1360,7 +1361,7 @@ EndIF
 // FWNM - 18/04/2018 - CHAMADO 037729
 If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P" .or. lAuto // FWNM - 18/04/2018 - CHAMADO 037729
 	
-	cFilPV   := GetMV("MV_#LFVFIL",,"03")
+	// cFilPV   := GetMV("MV_#LFVFIL",,"03") // @history Ticket 74568 - Fernando Macieira - 13/06/2022 - Pedido de Complemento - Filial 0A
 	cSerNFFV := GetMV("MV_#LFVSER",,"01")
 	cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 	cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
@@ -1696,7 +1697,7 @@ If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
 		// FWNM - 02/05/2018 - Chamado 037729
 		If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P" .or. lAuto
 			
-			cFilPV   := GetMV("MV_#LFVFIL",,"03")
+			// cFilPV   := GetMV("MV_#LFVFIL",,"03") // @history Ticket 74568 - Fernando Macieira - 13/06/2022 - Pedido de Complemento - Filial 0A
 			cSerNFFV := GetMV("MV_#LFVSER",,"01")
 			cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 			cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
