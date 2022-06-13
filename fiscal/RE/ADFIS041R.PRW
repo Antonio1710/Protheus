@@ -10,6 +10,7 @@
 	@history Everson, 11/11/2020, Chamado 4672. Tratamento para executar o relatório via job.
 	@history Everson, 13/11/2020, Chamado 4672. Tratamento para executar o relatório via job.
 	@history Everson, 17/11/2020, Chamado 4672. Tratamento para executar o relatório via job.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIS041R() // U_ADFIS041R()
 	
@@ -185,3 +186,14 @@ Static Function scriptSql(cQuery1,dmvpr01,dmvpr02,_cCNPJ)
 	EndSQL
 
 Return Nil
+
+/*/{Protheus.doc} u_FIS041A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS041A0( uPar1, uPar2, uPar3 )
+Return( UFIS041R( uPar1, uPar2, uPar3 ) )

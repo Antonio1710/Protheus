@@ -43,8 +43,10 @@ User Function ADFIN032R()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Envio automático do relatório Lançamentos Contábeis - Resultado Financeiro.')
 	
 	//
-	StaticCall(ADFIN030P,envMaillcrf,.T.)
-
+	//Static Call(ADFIN030P,envMaillcrf,.T.)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_FIN030A0(.T.)
+	
 	logZBN("2") //Log fim.
 
 	//Fecha o ambiente.

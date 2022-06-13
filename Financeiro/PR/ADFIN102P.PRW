@@ -18,6 +18,7 @@
 	@history Ticket 3810  - Andre Mendes - 10/12/2021 - Ajustes nos gatilhos e validações de campo, carga dos títulos de abatimentos.
 	@history Ticket 18035 - Leonardo P. Monteiro - 27/12/2021 - Ajustes na rotina e cálculo dos abatimentos.
 	@history Ticket 69104  - Leonardo P. Monteiro - 03/02/2022 - Ajuste nas mensagens de validação quando importados os títulos e gatilhos dos campos de descontos, multas e tx. permanência.
+	@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIN102P()
 	Local aCoors := FWGetDialogSize( oMainWnd )
@@ -113,9 +114,11 @@ Static Function MenuDef()
 	Local aRotina := {}
 	
 	ADD OPTION aRotina TITLE "Gerar Grupo" 	ACTION "VIEWDEF.ADFIN102P"     									OPERATION 3	ACCESS 0
-	ADD OPTION aRotina TITLE "Baixar" 		ACTION "Msaguarde( {|| StaticCall(ADFIN102P,FIN102Bx) } )"     	OPERATION 4	ACCESS 0
-	ADD OPTION aRotina TITLE "Cancelar" 	ACTION "Msaguarde( {|| StaticCall(ADFIN102P,FIN102Can) } )"     OPERATION 4	ACCESS 0
-
+	//ADD OPTION aRotina TITLE "Baixar" 		ACTION "Msaguarde( {|| Static Call(ADFIN102P,FIN102Bx) } )"     	OPERATION 4	ACCESS 0
+	//ADD OPTION aRotina TITLE "Cancelar" 	ACTION "Msaguarde( {|| Static Call(ADFIN102P,FIN102Can) } )"     OPERATION 4	ACCESS 0
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	ADD OPTION aRotina TITLE "Baixar" 		ACTION "Msaguarde( {|| u_FIN102A0() } )"     OPERATION 4	ACCESS 0
+	ADD OPTION aRotina TITLE "Cancelar" 	ACTION "Msaguarde( {|| u_FIN102A1() } )"     OPERATION 4	ACCESS 0
 	
 Return aRotina
 
@@ -821,14 +824,17 @@ Return lRet
 
 Static Function fF4()
 
-	StaticCall(ADFIN102P,FIN102Grp)
-
+	//Static Call(ADFIN102P,FIN102Grp)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_FIN102A2()
 
 Return .t.
 
 
 Static Function fF6()
-StaticCall(ADFIN102P,FIN102CSV)
+	//Static Call(ADFIN102P,FIN102CSV)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_FIN102A3()
 Return .t.
 
 
@@ -1006,3 +1012,49 @@ Static Function fieldValidPos(oModelSit, cField, xValue, nLine, xCurrentValue)
 	endif
     
 return lRet
+
+
+/*/{Protheus.doc} u_FIN102A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN102A0()
+Return( FIN102Bx() )
+
+/*/{Protheus.doc} u_FIN102A1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN102A1()
+Return( FIN102Can() )
+
+/*/{Protheus.doc} u_FIN102A2
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN102A2()
+Return( FIN102Grp() )
+
+
+/*/{Protheus.doc} u_FIN102A3
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN102A3()
+Return( FIN102CSV() )
