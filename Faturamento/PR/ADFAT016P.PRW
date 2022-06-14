@@ -1362,3 +1362,20 @@ User Function ADFAT16E(cOrdemC)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADFAT16F
+    Posiciona no registro de ordem de pesagem pelo número do agrupador.
+    @type  User Function
+    @author Everson
+    @since 13/06/2022
+    @version 01
+/*/
+User Function ADFAT16F(cAgrupador)
+
+    DbSelectArea("ZIF")
+    ZIF->(DbSetOrder(3))
+    If ! ZIF->( DbSeek( FWxFilial("ZIF") + cAgrupador) )
+        Return .F.
+
+    EndIf
+
+Return .T.
