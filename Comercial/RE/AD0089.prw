@@ -27,6 +27,7 @@
 ±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+@history Everson, 14/06/2022, ticket 74708 - tratamento para error log.
 /*/
 User Function AD0089()   
 
@@ -235,9 +236,9 @@ oPrn:Say(0065,1950,"Folha.....: " 	+ _cPagina 	,oFontA06,100)//nPag
 oPrn:Say(0110,1950,"DT. Ref..: " 	+ _cDtaBase ,oFontA06,100)
 oPrn:Say(0155,1950,"Emissao: " 		+ _cDtaRefe	,oFontA06,100)
 oPrn:Say(0220,0720,"Data de Entrega de : "+ _cData ,oFontA06,100)
-oPrn:Say(0220,1290,"Ate: "+ _cData2	,oFontA06 ,100)
-oPrn:Say(0280,0720,"Vendedor de :"+ mv_par03 ,oFontA06,100)
-oPrn:Say(0280,1290,"Ate: "+ mv_par04	      ,oFontA06,100)
+oPrn:Say(0220,1290,"Ate: "+ _cData2	,oFontA06 ,100) //Everson - 14/06/2022. Chamado 74708.
+oPrn:Say(0280,0720,"Vendedor de :"+ cValToChar(mv_par03) ,oFontA06,100) //Everson - 14/06/2022. Chamado 74708.
+oPrn:Say(0280,1290,"Ate: "+ cValToChar(mv_par04)	      ,oFontA06,100)
 
 
 oPrn:Line(0050,0030,0050,2300)
