@@ -111,6 +111,7 @@
 	@history Ticket 751                     - Abel Babini - 01/09/2020 - Painel Fiscal ICMS - Correção na soma do campo 57
 	@history Ticket 10535			              - Abel Babini - 09/03/2021 - Criar relatório de conferência de faturamento por tipo de cliente e regime de apuração.
 	@history Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+	@history Ticket 70142                   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
   /*/
 
 User Function ADFIS038R()
@@ -143,9 +144,13 @@ Static Function xABrw27
 	Endif
 	cAlB27Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T27IVA)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T27IVA)
-	oAlB27D1	:= StaticCall(ADFIS028R,CriaTmpT,cAlB27Br,_aFields,_aIndex)
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T27IVA)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T27IVA)
+	//oAlB27D1	:= Static Call(ADFIS028R,CriaTmpT,cAlB27Br,_aFields,_aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T27IVA)
+	_aIndex		:= u_FIS028A1(T27IVA)
+	oAlB27D1	:= u_FIS028A2( cAlB27Br,_aFields,_aIndex)
 
 	If Select(cAlB27Rs) > 0
 		(cAlB27Rs)->(dbCloseArea())
@@ -348,9 +353,13 @@ Static Function xABrw27
 	Endif
 	cAlB27Nf:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T27DETMP)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T27DETMP)
-	oAlB27D2	:= StaticCall(ADFIS028R,CriaTmpT,cAlB27Nf,_aFields,_aIndex)
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T27DETMP)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T27DETMP)
+	//oAlB27D2	:= Static Call(ADFIS028R,CriaTmpT,cAlB27Nf,_aFields,_aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T27DETMP)
+	_aIndex		:= u_FIS028A1(T27DETMP)
+	oAlB27D2	:= u_FIS028A2(cAlB27Nf,_aFields,_aIndex)
 
 	If Select(cAlB27Dt) > 0
 		(cAlB27Dt)->(dbCloseArea())
@@ -645,9 +654,12 @@ Static Function xRelBr27b()
 		Cab27P4()
 		GEx27P4()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
-	
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
+
 	END SEQUENCE
 
 Return
@@ -970,9 +982,13 @@ Static Function xABrw03()
 	Endif
 	//cAlB03Rs:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T01GIA)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T01GIA)
-	oAlB03Rs	:= StaticCall(ADFIS028R,CriaTmpT,cAlB03Rs,_aFields,_aIndex)
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T01GIA)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T01GIA)
+	//oAlB03Rs	:= Static Call(ADFIS028R,CriaTmpT,cAlB03Rs,_aFields,_aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T01GIA)
+	_aIndex		:= u_FIS028A1(T01GIA)
+	oAlB03Rs	:= u_FIS028A2(cAlB03Rs,_aFields,_aIndex)
 
 	FOR i:=1 to Len(aBrw03Rs)
 		RECLOCK(cAlB03Rs,.T.)
@@ -1042,9 +1058,12 @@ Static Function xRelBr03b()
 		//Planilha1 - Detalhamento
 		Cab03P1()             
 		GEx03P1()					
-
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -1168,9 +1187,13 @@ Static Function xABrw20
 	Endif
 	cAlB20Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T20NFCAN)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T20NFCAN)
-	oAlB20D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB20Br, _aFields, _aIndex)
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T20NFCAN)
+	//_aIndex		:= Static Call(ADFIS028R,CriaInd,T20NFCAN)
+	//oAlB20D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB20Br, _aFields, _aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T20NFCAN)
+	_aIndex		:= u_FIS028A1(T20NFCAN)
+	oAlB20D1	:= u_FIS028A2( cAlB20Br,_aFields,_aIndex)
 
 	If Select(cAlB20Dt) > 0
 		(cAlB20Dt)->(dbCloseArea())
@@ -1272,9 +1295,12 @@ Static Function xRelBr20b()
 		Cab20P1()
 		GEx20P1()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
-	
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
+
 	END SEQUENCE
 
 Return
@@ -1338,9 +1364,13 @@ Static Function xABrw28
 	Endif
 	cAlB28Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T28CIAP)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T28CIAP)
-	oAlB28D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB28Br, _aFields, _aIndex) 
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T28CIAP)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T28CIAP)
+	//oAlB28D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB28Br, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T28CIAP)
+	_aIndex		:= u_FIS028A1(T28CIAP)
+	oAlB28D1	:= u_FIS028A2( cAlB28Br,_aFields,_aIndex)
 
 	If Select(cAlB28Dt) > 0
 		(cAlB28Dt)->(dbCloseArea())
@@ -1413,7 +1443,7 @@ Static Function xRelBr28()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio CIAP" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr28b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr28b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -1448,9 +1478,12 @@ Static Function xRelBr28b()
 		Cab28P2()
 		GEx28P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
-	
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
+
 	END SEQUENCE
 
 Return
@@ -1698,9 +1731,13 @@ Static Function xABrw26()
 	Endif
 	cAlB26Z1:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R, CriaExtr, T26OUT01)
-	_aIndex		:= StaticCall(ADFIS028R, CriaInd, T26OUT01)
-	oAlB26D1	:= StaticCall(ADFIS028R, CriaTmpT, cAlB26Z1, _aFields, _aIndex)
+	//_aFields	:= Static Call(ADFIS028R, CriaExtr, T26OUT01)
+	//_aIndex	:= Static Call(ADFIS028R, CriaInd, T26OUT01)
+	//oAlB26D1	:= Static Call(ADFIS028R, CriaTmpT, cAlB26Z1, _aFields, _aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T26OUT01)
+	_aIndex		:= u_FIS028A1(T26OUT01)
+	oAlB26D1	:= u_FIS028A2( cAlB26Z1,_aFields,_aIndex)
 
 	//Tabela Cesta Basiica
 	If Select(cAlB26Z2) > 0
@@ -1708,9 +1745,13 @@ Static Function xABrw26()
 	Endif
 	cAlB26Z2:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R, CriaExtr, T26OUT02)
-	_aIndex		:= StaticCall(ADFIS028R, CriaInd, T26OUT02)
-	oAlB26D2	:= StaticCall(ADFIS028R, CriaTmpT, cAlB26Z2, _aFields, _aIndex)
+	//_aFields	:= Static Call(ADFIS028R, CriaExtr, T26OUT02)
+	//_aIndex	:= Static Call(ADFIS028R, CriaInd, T26OUT02)
+	//oAlB26D2	:= Static Call(ADFIS028R, CriaTmpT, cAlB26Z2, _aFields, _aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T26OUT02)
+	_aIndex		:= u_FIS028A1(T26OUT02)
+	oAlB26D2	:= u_FIS028A2( cAlB26Z2,_aFields,_aIndex)
 
 	DbSelectArea(cAlB26Dt)
 	(cAlB26Dt)->(DbGoTop())
@@ -1857,9 +1898,13 @@ Static Function xABrw26()
 	(cAlB26Dt)->(dbCloseArea())	
 	
 	IF nOpMdl	== 1
-		MsgRun( "Atualizando dados - Demonstrativo, aguarde...",,{ || StaticCall(ADFIS028R, xABrw05) } ) //DEMONSTRATIVO
+		//MsgRun( "Atualizando dados - Demonstrativo, aguarde...",,{ || Static Call(ADFIS028R, xABrw05) } ) //DEMONSTRATIVO
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Atualizando dados - Demonstrativo, aguarde...",,{ || u_FIS028A6() } ) //DEMONSTRATIVO
 	ELSEIF nOpMdl	== 2 .or. nOpMdl	== 4
-		MsgRun( "Atualizando dados - Abertura GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw27) } ) //DEMONSTRATIVO
+		//MsgRun( "Atualizando dados - Abertura GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw27) } ) //DEMONSTRATIVO
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Atualizando dados - Abertura GIA, aguarde...",,{ || u_FIS028A7() } ) //DEMONSTRATIVO
 	ENDIF
 
 	SysRefresh()
@@ -2049,7 +2094,9 @@ Return
 	@version 01
 /*/
 Static Function xRecCl26(cKeyDoc)
-	Local cVerAnt	:= StaticCall(ADFIS028R, xRecVer, '26')
+	//Local cVerAnt	:= Static Call(ADFIS028R, xRecVer, '26')
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	Local cVerAnt	:= u_FIS028A5('26')
 	Local cClass	:= ''
 	Local cQuery	:= GetNextAlias()
 	Local cTabSZU	:= C11110
@@ -2127,7 +2174,9 @@ Return
 Static Function xVrfGr26
 	Local lGrvZFU := .F.
 	Local cClass := ''
-	Local cVerAnt := Alltrim(StaticCall(ADFIS028R, xRecVer, '26'))
+	//Local cVerAnt := Alltrim(Static Call(ADFIS028R, xRecVer, '26'))
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	Local cVerAnt := u_FIS028A5('26')
 	oBrw26Dt:CleanFilter()
 	(cAlB26Z1)->(dbGoTop())
 
@@ -2251,9 +2300,12 @@ Static Function xRelBr26b()
 		Cab26PZ()
 		GEx26PZ()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
-	
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
+
 	END SEQUENCE
 
 Return
@@ -3870,9 +3922,13 @@ Static Function xABrw29
 	Endif
 	cAlB29Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T29COMMP)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T29COMMP)
-	oAlB29D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB29Br, _aFields, _aIndex) 
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T29COMMP)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T29COMMP)
+	//oAlB29D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB29Br, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T29COMMP)
+	_aIndex		:= u_FIS028A1(T29COMMP)
+	oAlB29D1	:= u_FIS028A2( cAlB29Br,_aFields,_aIndex)
 
 	If Select(cAlB29Dt) > 0
 		(cAlB29Dt)->(dbCloseArea())
@@ -3978,7 +4034,7 @@ Static Function xRelBr29()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio Compra MP" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr29b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr29b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -4017,9 +4073,12 @@ Static Function xRelBr29b()
 		Cab29P3()
 		GEx29P3()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
-	
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
+
 	END SEQUENCE
 
 Return
@@ -4236,9 +4295,13 @@ Static Function xABrw30
 	Endif
 	cAlB30Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T30VENFV)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T30VENFV)
-	oAlB30D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB30Br, _aFields, _aIndex) 
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T30VENFV)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T30VENFV)
+	//oAlB30D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB30Br, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T30VENFV)
+	_aIndex		:= u_FIS028A1(T30VENFV)
+	oAlB30D1	:= u_FIS028A2( cAlB30Br,_aFields,_aIndex)
 
 	If Select(cAlB30Dt) > 0
 		(cAlB30Dt)->(dbCloseArea())
@@ -4342,7 +4405,7 @@ Static Function xRelBr30()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio Vendas" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr30b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr30b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -4377,8 +4440,11 @@ Static Function xRelBr30b()
 		Cab30P2()
 		GEx30P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -4520,9 +4586,13 @@ Static Function xABrw31
 	Endif
 	cAlB31Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T31APICM)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T31APICM)
-	oAlB31D1	:= StaticCall(ADFIS028R,CriaTmpT,cAlB31Br,_aFields,_aIndex)
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T31APICM)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T31APICM)
+	//oAlB31D1	:= Static Call(ADFIS028R,CriaTmpT,cAlB31Br,_aFields,_aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T31APICM)
+	_aIndex		:= u_FIS028A1(T31APICM)
+	oAlB31D1	:= u_FIS028A2( cAlB31Br,_aFields,_aIndex)	
 
 	If Select(cAlB31Rs) > 0
 		(cAlB31Rs)->(dbCloseArea())
@@ -4694,9 +4764,13 @@ Static Function xABrw31
 	Endif
 	cAlB31Nf:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T31DETAI)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T31DETAI)
-	oAlB27D2	:= StaticCall(ADFIS028R,CriaTmpT,cAlB31Nf,_aFields,_aIndex)
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T31DETAI)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T31DETAI)
+	//oAlB27D2	:= Static Call(ADFIS028R,CriaTmpT,cAlB31Nf,_aFields,_aIndex)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T31DETAI)
+	_aIndex		:= u_FIS028A1(T31DETAI)
+	oAlB27D2	:= u_FIS028A2( cAlB31Nf,_aFields,_aIndex)		
 
 	If Select(cAlB31Dt) > 0
 		(cAlB31Dt)->(dbCloseArea())
@@ -4949,8 +5023,11 @@ Static Function xRelBr31b()
 		Cab31P4()
 		GEx31P4()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -5269,9 +5346,13 @@ Static Function xABrw32
 	Endif
 	cAlB32Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T32NFSER)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T32NFSER)
-	oAlB32D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB32Br, _aFields, _aIndex) 
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T32NFSER)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T32NFSER)
+	//oAlB32D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB32Br, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T32NFSER)
+	_aIndex		:= u_FIS028A1(T32NFSER)
+	oAlB32D1	:= u_FIS028A2( cAlB32Br,_aFields,_aIndex)		
 
 	If Select(cAlB32Dt) > 0
 		(cAlB32Dt)->(dbCloseArea())
@@ -5384,7 +5465,7 @@ Static Function xRelBr32()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio Conferência NFS" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr32b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr32b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -5419,8 +5500,11 @@ Static Function xRelBr32b()
 		Cab32P2()
 		GEx32P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -5557,9 +5641,13 @@ Static Function xABrw33
 	Endif
 	cAlB33Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T33ENTSA)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T33ENTSA)
-	oAlB33D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB33Br, _aFields, _aIndex) 
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T33ENTSA)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T33ENTSA)
+	//oAlB33D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB33Br, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T33ENTSA)
+	_aIndex		:= u_FIS028A1(T33ENTSA)
+	oAlB33D1	:= u_FIS028A2( cAlB33Br,_aFields,_aIndex)		
 
 	If Select(cAlB33Dt) > 0
 		(cAlB33Dt)->(dbCloseArea())
@@ -5636,7 +5724,7 @@ Static Function xRelBr33()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio Entradas e Saídas por CFOP e Produto" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr33b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr33b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -5671,8 +5759,11 @@ Static Function xRelBr33b()
 		Cab33P2()
 		GEx33P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -5874,9 +5965,13 @@ Static Function xABrw34
 	Endif
 	cAlB34Br:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T30VENFV)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T30VENFV)
-	oAlB34D1	:= StaticCall(ADFIS028R,CriaTmpT, cAlB34Br, _aFields, _aIndex) 
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T30VENFV)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T30VENFV)
+	//oAlB34D1	:= Static Call(ADFIS028R,CriaTmpT, cAlB34Br, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T30VENFV)
+	_aIndex		:= u_FIS028A1(T30VENFV)
+	oAlB34D1	:= u_FIS028A2( cAlB34Br,_aFields,_aIndex)		
 
 	If Select(cAlB34Dt) > 0
 		(cAlB34Dt)->(dbCloseArea())
@@ -5980,7 +6075,7 @@ Static Function xRelBr34()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio Devolução de Vendas" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr34b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr34b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -6015,8 +6110,11 @@ Static Function xRelBr34b()
 		Cab34P2()
 		GEx34P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -6163,19 +6261,22 @@ Static Function xABrw36()
 	// Endif
 	// cAlB36Rs:=GetNextAlias()
 
-	// _aFields	:= StaticCall(ADFIS028R,CriaExtr,T36RESUM)
-	// _aIndex		:= StaticCall(ADFIS028R,CriaInd,T36RESUM)
-	// oAlB36Rs	:= StaticCall(ADFIS028R,CriaTmpT, cAlB36Rs, _aFields, _aIndex) 
+	// _aFields	:= Static Call(ADFIS028R,CriaExtr,T36RESUM)
+	// _aIndex		:= Static Call(ADFIS028R,CriaInd,T36RESUM)
+	// oAlB36Rs	:= Static Call(ADFIS028R,CriaTmpT, cAlB36Rs, _aFields, _aIndex) 
 
 	If Select(cAlB36Dt) > 0
 		(cAlB36Dt)->(dbCloseArea())
 	Endif
 	cAlB36Dt:=GetNextAlias()
 
-	_aFields	:= StaticCall(ADFIS028R,CriaExtr,T36DETAL)
-	_aIndex		:= StaticCall(ADFIS028R,CriaInd,T36DETAL)
-	oAlB36Dt	:= StaticCall(ADFIS028R,CriaTmpT, cAlB36Dt, _aFields, _aIndex) 
-
+	//_aFields	:= Static Call(ADFIS028R,CriaExtr,T36DETAL)
+	//_aIndex	:= Static Call(ADFIS028R,CriaInd,T36DETAL)
+	//oAlB36Dt	:= Static Call(ADFIS028R,CriaTmpT, cAlB36Dt, _aFields, _aIndex) 
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	_aFields	:= u_FIS028A0(T36DETAL)
+	_aIndex		:= u_FIS028A1(T36DETAL)
+	oAlB36Dt	:= u_FIS028A2( cAlB36Dt,_aFields,_aIndex)
 
 	If Select(cAlB36Qr) > 0
 		(cAlB36Qr)->(dbCloseArea())
@@ -6458,7 +6559,7 @@ Static Function xRelBr36()
 	AADD(aSays,"Este programa tem a finalidade de Gerar um arquivo Excel " )
 	AADD(aSays,"Relatorio Devolução de Vendas" )
     
-	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr36b() /*StaticCall(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
+	AADD(aButtons, { 1,.T.,{|o| nOpca:=1, o:oWnd:End(), Processa({|| xRelBr36b() /*Static Call(ADFIS038R,xRelBr28b)*/ },"Gerando arquivo","Aguarde...")    }})
 	AADD(aButtons, { 2,.T.,{|o| nOpca:=2, o:oWnd:End() }})	
 	FormBatch( cCadastr, aSays, aButtons )
 	
@@ -6493,8 +6594,11 @@ Static Function xRelBr36b()
 		Cab36P2()
 		GEx36P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 	
 	END SEQUENCE
 
@@ -7484,8 +7588,11 @@ Static Function xRelBr37b()
 		Cab37P2()
 		GEx37P2()
 
-		StaticCall(ADFIS028R,SalvaXml)
-		StaticCall(ADFIS028R,CriaExcel)
+		//Static Call(ADFIS028R,SalvaXml)
+		//Static Call(ADFIS028R,CriaExcel)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS028A3()
+		u_FIS028A4()
 
 	END SEQUENCE
 
@@ -7625,3 +7732,388 @@ Static Function GEx37P2()
 	oExcel:AddRow(cFld372,cFld37t2,{"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""})
 RETURN
 //FIM Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+
+/*/{Protheus.doc} u_FIS038A0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A0()
+Return( xABrw26() )
+
+/*/{Protheus.doc} u_FIS038A1
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A1()
+Return( xABrw37() )
+
+/*/{Protheus.doc} u_FIS038A2
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A2()
+Return( xABrw03() )
+
+/*/{Protheus.doc} u_FIS038A3
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A3()
+Return( xABrw20() )
+
+/*/{Protheus.doc} u_FIS038A4
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A4()
+Return( xABrw28() )
+
+/*/{Protheus.doc} u_FIS038A5
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A5()
+Return( xABrw29() )
+
+/*/{Protheus.doc} u_FIS038A6
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A6()
+Return( xABrw30() )
+
+/*/{Protheus.doc} u_FIS038A7
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A7()
+Return( xABrw33() )
+
+/*/{Protheus.doc} u_FIS038A8
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A8()
+Return( xABrw34() )
+
+/*/{Protheus.doc} u_FIS038A9
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038A9()
+Return( xABrw37() )
+
+/*/{Protheus.doc} u_FIS038B0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B0()
+Return( xABrw27() )
+
+/*/{Protheus.doc} u_FIS038B1
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B1()
+Return( xABrw32() )
+
+/*/{Protheus.doc} u_FIS038B2
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B2()
+Return( xABrw31() )
+
+/*/{Protheus.doc} u_FIS038B4
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B4()
+Return( xRelBr20() )
+
+/*/{Protheus.doc} u_FIS038B5
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B5( uPar1 )
+Return( xBr26Clf( uPar1 ) )
+
+/*/{Protheus.doc} u_FIS038B6
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B6()
+Return( xRelBr26() )
+
+/*/{Protheus.doc} u_FIS038B7
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B7()
+Return( xVrfGr26() )
+
+/*/{Protheus.doc} u_FIS038B8
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B8()
+Return( xRelBr27() )
+
+/*/{Protheus.doc} u_FIS038B9
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B9()
+Return( xRelBr28() )
+
+/*/{Protheus.doc} u_FIS038C0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C0()
+Return( xRelBr29() )
+
+/*/{Protheus.doc} u_FIS038C1
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C1()
+Return( xRelBr30() )
+
+/*/{Protheus.doc} u_FIS038C2
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C2()
+Return( xRelBr33() )
+
+/*/{Protheus.doc} u_FIS038C3
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C3()
+Return( xRelBr31() )
+
+/*/{Protheus.doc} u_FIS038C4
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C4()
+Return( xRelBr32() )
+
+/*/{Protheus.doc} u_FIS038C5
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C5()
+Return( xRelBr34() )
+
+/*/{Protheus.doc} u_FIS038C6
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C6()
+Return( xRelBr37() )
+
+/*/{Protheus.doc} u_FIS038C7
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C7()
+Return( xRelBr03b() )
+
+/*/{Protheus.doc} u_FIS038C8
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C8()
+Return( xRelBr20b() )
+
+/*/{Protheus.doc} u_FIS038C9
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038C9()
+Return( xRelBr26b() )
+
+/*/{Protheus.doc} u_FIS038D0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038D0()
+Return( xRelBr27b() )
+
+/*/{Protheus.doc} u_FIS038D1
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038D1()
+Return( xRelBr28b() )
+
+/*/{Protheus.doc} u_FIS038D2
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038D2()
+Return( xRelBr29b() )
+
+/*/{Protheus.doc} u_FIS038D3
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038D3()
+Return( xRelBr30b() )
+
+/*/{Protheus.doc} u_FIS038D4
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038D4()
+Return( xRelBr34b() )
+
+/*/{Protheus.doc} u_FIS038D5
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038D5()
+Return( xRelBr33b() )

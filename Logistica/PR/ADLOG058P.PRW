@@ -47,7 +47,9 @@ User Function ADLOG058P(cRoteiro,cDtEntr)
 					
 					Conout( DToC(Date()) + " " + Time() + " ADLOG058P - 3 - Início geração automática de CT-e - cRoteiro/cDtEntr " + cRoteiro + " " + DToC(SToD(cDtEntr)) )
 					
-					StaticCall(ADLOG057P,geraCTERot,cRoteiro,cDtEntr)
+					//Static Call(ADLOG057P,geraCTERot,cRoteiro,cDtEntr)
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					////nao modificado pois nao existe a funcao geraCTERot no projeto
 				
 				EndIf
 			

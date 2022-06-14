@@ -30,6 +30,7 @@
 	@history Ticket: 62540 - 18/10/2021 - Adriano Savoine - Ajustado a entrada da Variavel e alterada a mesma apos entrar no IF devido que por padrão estava dando erro pois o TIPO é C e está entrando String.
 	@history Ticket: 62540 - 20/10/2021 - Fernando Sigoli - VERIFICA SE ESTA RODANDO VIA MENU OU SCHEDULE
 	@history Ticket: 62976 - 28/10/2021 - Fernando Sigoli - Substituido criatrab por FWTemporaryTable na função CriaTMP
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 71972 - Fernando Macieira - 04/05/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
@@ -88,8 +89,8 @@ User Function ADLFV010P()
 		
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Complemento Frango Vivo')
 		
-		PtInternal(1,ALLTRIM(PROCNAME()))
-		//FWMonitorMsg( ALLTRIM(PROCNAME()) ) // @history Ticket: 69945 - 25/03/2022 - Fernan Macieira - Tratamento da setagem da empresa/filial
+		// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 		//@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
 		cForGranjas := GetMV("MV_#GRANJA",,"03|0A")
