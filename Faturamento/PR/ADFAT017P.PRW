@@ -2212,7 +2212,7 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
             (cQryT3)->ZIG_PESINI,;  //27-Peso inicial.
             (cQryT3)->ZIG_PESFIM,;  //28-Peso final.
             (cQryT3)->ZIG_PESOLI,;  //29-Peso liquido.
-            cNF;                    //30-Peso liquido.
+            cNF;                    //30-Nota fiscal.
         })
     
         (cQryT3)->(dbSkip())
@@ -2275,6 +2275,12 @@ Static Function getPedSa(cNmOrdem)
     If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
 
         While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == cNmOrdem 
+
+            If U_ADFAT573(SC5->C5_NUM)
+                SC5->(DbSkip())
+                Loop
+
+            EndIf
         
             If Empty(SC5->C5_PEDSAG)
 
