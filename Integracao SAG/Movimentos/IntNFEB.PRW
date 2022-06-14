@@ -60,6 +60,7 @@
 	@history ticket   69741 - Jonathan Carvalho - 16/03/2022 - Condição para localizar a NF de origem para produtor rural
 	@history ticket   70424 - Jonathan Carvalho - 05/04/2022 - Alterado pesquisa de localização do numero de Chave das NF de Saida.
 	@history ticket   71889 - Jonathan Carvalho - 26/04/2022 - Alteração na consulta para puxar a emissão da HH fonte comentando na linha 1286 a 1298 data de emissão ja incluida corretamente no banco de integração
+	@history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
 /*/
 User Function INTNFEB()
 	Local aArea             := GetArea()
@@ -3274,11 +3275,11 @@ Static Function LFVPreNotas(lClass)
 	Local oVerde 	:= LoadBitmap( GetResources(), "BR_VERDE")
 	Local oVermelho := LoadBitmap( GetResources(), "BR_VERMELHO")
 	Local cOper		:= ""
-	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
+	Local cFilPV    := FWxFilial("SF2") //GetMV("MV_#LFVFIL",,"03") // @history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
-	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
-	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
+	Local cCliCod   := GetMV("MV_#LFVCLI",,"027601")
+	Local cCliLoj   := GetMV("MV_#LFVLOJ",,"00")
 // Dados da Pre-Nota
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cFornCod  := GetMV("MV_#LFVFOR",,"000217")
@@ -3430,18 +3431,18 @@ Return Nil
 */
 Static Function RunLFVClass()
 	Local i
-	Local aAreaAtu := GetArea()
+	Local aAreaAtu  := GetArea()
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
-	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
-	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
-	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
-	Local cChvNfe := ""
-	Local aCabec := {}
-	Local aItens := {}
-	Local aLinha := {}
-	Local aColsCC := {}
-	Local aCodRet := {}
+	Local cFilPV    := FWxFilial("SF2") // GetMV("MV_#LFVFIL",,"03") // @history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
+	Local cCliCod   := GetMV("MV_#LFVCLI",,"027601")
+	Local cCliLoj   := GetMV("MV_#LFVLOJ",,"00")
+	Local cChvNfe   := ""
+	Local aCabec    := {}
+	Local aItens    := {}
+	Local aLinha    := {}
+	Local aColsCC   := {}
+	Local aCodRet   := {}
 	Local nX := 0
 	Local nY := 0
 	Local cDoc := ""
