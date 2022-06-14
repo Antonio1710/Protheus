@@ -29,6 +29,7 @@ Static cRotina  := "ADFIN120P"
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
     @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+    @ticket 74690 - Fernando Macieira - 14/06/2022 - RM - Acordos - Contabilização título PR não deve ocorrer
 /*/
 User Function ADFIN120P()
 
@@ -312,6 +313,11 @@ Static Function GeraZC7RM(aDadRM)
 
             ZC7->( msUnLock() )
 
+            // @ticket 74690 - Fernando Macieira - 14/06/2022 - RM - Acordos - Contabilização título PR não deve ocorrer
+            PERGUNTE(PadR("FIN050",Len(SX1->X1_GRUPO)),.F.) // Inclusão Contas Pagar
+			MV_PAR04 := 2 // Contabiliza On Line ? = NÃO
+            // 
+            
             // Gera PR no Contas a Pagar
             lMsErroAuto := .f.
             dbSelectArea("SE2")
@@ -327,6 +333,8 @@ Static Function GeraZC7RM(aDadRM)
 
                 RecLock("SE2", .F.)
 
+                    SE2->E2_LA := "S" // @ticket 74690 - Fernando Macieira - 14/06/2022 - RM - Acordos - Contabilização título PR não deve ocorrer
+                    
                     SE2->E2_ORIGEM  := "GPEM670" // Em função das customizações existentes
                     SE2->E2_XDIVERG := 'S'
                     SE2->E2_LOGDTHR	:= DtoC(msDate()) + ' ' + TIME()
