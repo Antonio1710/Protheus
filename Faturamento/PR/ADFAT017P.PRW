@@ -2929,7 +2929,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
 
-        gerTkEn(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, lAgrup, cOrdAgrup, cBalanca, cRotPesa)
+        gerTkEn(nLinha, oOrdPes, aOrdPes, cCP, Iif(Empty(cOrdAgrup), cNmOrdem, cOrdAgrup), nQuant, lAgrup, cOrdAgrup, cBalanca, cRotPesa)
 
     ElseIf cTpOrdem == "S" //Saída.
 
@@ -2939,7 +2939,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
         
-        gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanca, cRotPesa)
+        gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, Iif(Empty(cOrdAgrup), cNmOrdem, cOrdAgrup), nQuant, cBalanca, cRotPesa)
         
     ElseIf cTpOrdem == "R" //Ração.
         
@@ -3518,6 +3518,12 @@ Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanc
     If ! Empty(cTicket)
         Help(Nil, Nil, "Função gerTkOt(ADFAT017P)", Nil, "Já há o ticket de pesagem " + cTicket + " vinculado à ordem " + cValToChar(cNmOrdem) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         Return Nil
+
+    EndIf
+
+    //Obtém placa do agrupador.
+    If Empty(cPlaca)
+        cPlaca    := Posicione("ZIF",3,FWxFilial("ZIF") + cNmOrdem,"ZIF_PLACA")
 
     EndIf
 
@@ -4212,15 +4218,15 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     lRacao    := cTpMovi == "R"
     lSaida    := cTpMovi == "S"
 
-    //Localiza ordem de pesagem.
-    If ! U_ADFAT16A(cNmOrdem)
+    //Localiza ordem/agrupador de pesagem.
+    If ! U_ADFAT16A(cNmOrdem) .And. ! U_ADFAT16F(cNmOrdem)
         cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada."
         U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
-    EndIF
+    EndIf
 
     cProdSAG   := ZIF->ZIF_PRDSAG
     cProdPro   := ZIF->ZIF_PRDPRO
