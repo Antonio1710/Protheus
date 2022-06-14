@@ -29,6 +29,7 @@ Static cTitulo      := "Bloqueio de clientes"
 	@history chamado 050729  - FWNM         - 25/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
 	@history Everson, 29/07/2020, Chamado 060134 - Tratamento para não bloquear cliente com pedido em aberto.
 	@history Everson, 03/12/2020, Chamado 6009 - Correção de validação de bloqueio de cliente com pedido em aberto.
+	@history Ticket 74275  - Everson, 14/06/2022, tratamento para bloqueio de cliente a partir do número de pedidos em aberto.
 /*/
 User Function HCFU001()  // U_HCFU001()
 
@@ -176,6 +177,7 @@ Static Function BLOQCLI()
 	Local cQry      := ""
 	Local lRet      := .F.
 	Local cDivVend  := ""
+	Local cDias     := cValToChar(GetMv("MV_#DIABLQ",,10)) //Everson - 14/06/2022. Tratamento para bloqueio de clientes.
 
 	//-------------------------------------------
 	// Monta condicao para filtro dos vendedores
@@ -217,6 +219,9 @@ Static Function BLOQCLI()
 	cQry += " AND SC5.D_E_L_E_T_ = '' " 
 	cQry += " AND C5_NOTA = '' " 
 	cQry += " AND C5_SERIE = '' "
+
+	cQry += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE() - " + cDias + " AS DATE) " //Everson - 14/06/2022. Tratamento para bloqueio de clientes.
+
 	cQry += " GROUP BY  C5_CLIENTE, C5_LOJACLI "
 	cQry+= " ) AS PEDIDOS ON A1_COD = PEDIDOS.C5_CLIENTE AND A1_LOJA = PEDIDOS.C5_LOJACLI "
 	//
