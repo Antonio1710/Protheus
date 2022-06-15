@@ -9,6 +9,8 @@
     @since 17/05/2022
     @version 01
     @Ticket 7290  - 18/05/2022 -Solicitado por Danielle Meira .
+    @Ticket 74763 - 14/06/2022 -Antonio Domingos - Solicitado por Joyce Freitas. Correção do SIG não Imprime creditos somente debito
+ .
 /*/
 User Function ADCON020R() // U_ADCON020R()
 
@@ -121,7 +123,7 @@ Static Function geraRel(dDataDe,dDataAte,cCta_DebDe,cCta_DebAte,cCta_CredDe,cCta
             AND CTD_ITEM = CT2C.CT2_ITEMC
             AND CTD.%notDel%
         WHERE 
-            CT2C.CT2_FILIAL = %xFilial:CTD%
+            CT2C.CT2_FILIAL = %xFilial:CT2%
             AND CT2C.CT2_DATA >= %Exp:dDataDe%
             AND CT2C.CT2_DATA <= %Exp:dDataAte%
             AND CT2C.CT2_CREDIT >= %Exp:cCta_CredDe%
