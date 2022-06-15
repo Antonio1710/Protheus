@@ -46,6 +46,7 @@
 	@history Ticket 70142 	- Rodrigo Mello   - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022 - Criado o parametro no configurador com 1 dia e alterada a query pois estava ocorrendo erro na hora de montar a mesma e transformado o dado.
 	@history TICKET: 74255  - ADRIANO SAVOINE - 09/06/2022 - Tratado a Filial de Itapira 0B.
+	@histori Ticket  74756  - ADRIANO SAVOINE - 15/06/2022 - Efetuado o ajuste para as filiais colocar zero ex: 02,03 etc.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1875,7 +1876,7 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
 	*/
 	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF= ''43606787898'' "
+	//cQuery += " AND PPESSOA.CPF= ''27499962873'' "
 	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
 	//
 
@@ -4317,9 +4318,10 @@ User Function TRATAFIL(CODFILIAL)
 
 	ENDIF
 
+
 	IF lRet = ""
 
-		lRet := FILIAL	
+		lRet := STRZERO(TRB->CODFILIAL,2) //Adriano - 15/06/2022. Ticket  74756.
 
 	ENDIF
 
