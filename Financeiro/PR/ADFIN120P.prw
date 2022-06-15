@@ -29,7 +29,7 @@ Static cRotina  := "ADFIN120P"
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Remodelagem tabela ZHC e ZHD
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
     @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
-    @ticket 74690 - Fernando Macieira - 14/06/2022 - RM - Acordos - Contabilização título PR não deve ocorrer
+    @ticket 74690 - Fernando Macieira - 14/06/2022 - RM - Acordos - Contabilização título PR não deve ocorrer.
 /*/
 User Function ADFIN120P()
 
