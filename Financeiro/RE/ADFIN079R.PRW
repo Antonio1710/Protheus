@@ -19,6 +19,7 @@
 	@history Chamado n. 052132 - FWNM          - 09/10/2019 - OS 053473 || FINANCAS || FLAVIA || 8461 || REL. PAGAMENTO PA
 	@history Chamado n. 054604 - FWNM          - 03/01/2020 - OS 055999 || FINANCAS || FLAVIA || 8461 || REL. PAGAMENTOS
 	@history Chamado n. 058206 - WILLIAM COSTA - 19/05/2020 - Adicionado campo Nr do Cheque
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIN079R()
 
@@ -190,7 +191,8 @@ Static Function ReportPrint(cAliasTRB)
 	oTempTable:Create()
     
 	// Busco dados do painel contas a pagar pois o relatorio sera sempre comparado com o resultado dela
-	cQuery := StaticCall( ADFIN033P, scriptCPD, MV_PAR01, MV_PAR02 )
+	//cQuery := Static Call( ADFIN033P, scriptCPD, MV_PAR01, MV_PAR02 )
+	cQuery := u_FIN033A0( MV_PAR01, MV_PAR02 )
 
 	If Select("Work") > 0
 		Work->( dbCloseArea() )

@@ -38,6 +38,7 @@
     @version 01
     @history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
     @history Chamado 65036 - Leonardo P. Monteiro - 09/12/2021 - Correção na passagem de parâmetros para a rotina de geração do relatório como 'Tipo Relatório', 'Retirar Zero' e 'Retirar Col NCC Financeiro'.
+	@history Chamado 74488 - Antonio Domingos     - 09/06/2022 - Correção do Erro Alias already in use: TEMPFAT  on FWOPENTEMP(CRIATRAB.PRG)
 /*/
 user function ADFIN115R()
     Local cTitle    := "..:: Rede e Segmentos ::.."
@@ -948,7 +949,12 @@ Static Function geraRelatorio()
 	// *** FINAL VALIDACAO *** //
 	
 	// INICIO FATURAMENTO
+	IF SELECT("TEMPFAT") > 0
 
+		TEMPFAT->(DBCLOSEAREA())
+
+	ENDIF
+	
 	oTempFat := FWTemporaryTable():New("TEMPFAT")
 
 	// INICIO Monta os campos da tabela

@@ -30,6 +30,7 @@
 	@history Ticket  7075   - Sigoli              - 06/01/2010 - Alteração da instrução de protesto
 	@history Proj.PIX/LNK   - Rodrigo Mello       - 04/02/2022 - Adicionadas condicoes quando a condicao de pagamento e PIX/LNK, enviando apenas o lgo quando ocorreu erro.
 	@history ticket 68450   - Fernando Macieira   - 18/02/2022 - Email em duplicidade para o cliente/vendedor
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history TICKET: 69826  - ADRIANO SAVOINE     - 25/03/2022 - Alterado Ndevice para imprimir Spool.
 /*/
 User Function HCRFIBLT(aParamIXB)
@@ -86,7 +87,8 @@ User Function HCRFIBLT(aParamIXB)
 
 		logZBE(aParamIXB[4] + " GERABLPV - Inicializando ambiente da empresa/filial [" + cEmpAnt + "/" + cFilAnt + "]")  // Chamado n. 056247 || OS 057671 || FINANCEIRO || LUIZ || 8451 || BOLETO BRADESCO WS - FWNM - 26/05/2020
 		ConOut( " M410STTS - GERABLPV - Inicializado ambiente, empresa/filial/PV " + cEmpAnt + "/" + cFilAnt + " - " + aParamIXB[4] )
-		PtInternal( 1, " M410STTS - GERABLPV - Inicializando ambiente da empresa/filial [" + cEmpAnt + "/" + cFilAnt + "]")
+		//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg( " M410STTS - GERABLPV - Inicializando ambiente da empresa/filial [" + cEmpAnt + "/" + cFilAnt + "]")
 
 		Pergunte (cPerg, .F.) 
 		ConOut( " CPERG " + CPERG )

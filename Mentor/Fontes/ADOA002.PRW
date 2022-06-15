@@ -19,6 +19,7 @@
 	@history Ticket 423 	- Adriana Oliveira 	  - 01/10/2020 - Habilita rotina para demais empresas
 	@history Ticket 8118    - Abel Babini         - 19/01/2021 - Alteração do campo A1_SIMPLES para A1_SIMPNAC
 	@history Ticket 13526   - Everson             - 11/10/2021 - Adicionada relação A1_XTPDESC x PB3_XTPDES.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69520   - Leonardo P. Monteiro- 21/03/2022 - Projeto FAI - Importação PV x SalesForce.
 	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
 /*/
@@ -2204,3 +2205,14 @@ Static Function Grava57608
 	ZG4->(MsUnlock())
 
 Return
+
+/*/{Protheus.doc} u_OA002A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_OA002A0()
+Return( GravaCli() )

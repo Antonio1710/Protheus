@@ -35,6 +35,8 @@
 	@history Ticket 8465 	- Leonardo P. Monteiro - 09/08/2021 - Implementação da carga automática das informações referente a inspeção da qualidade. 
 	@history Ticket 8465 	- Leonardo P. Monteiro - 13/08/2021 - Inclusão do comando DbselectArea para a tabela ZEX. 
 	@history Ticket 68178 	- Leonardo P. Monteiro - 14/02/2022 - Gerar log das informações de exportação gravadas na NFe.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 63560	- Abel Babini          - 13//2022 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
 /*/
 User Function SF2460I()
 
@@ -2070,11 +2072,42 @@ Static FUNCTION FIN040INC()
 	Local nCont 		:= 0
 	Local lDtValida 	:= .F.     
 
-	Local _cEmbut 		:= AllTrim(GETMV("MV_#EMBUT"))     	// chamado 031274 por Adriana 
-	Local _cIntTemp 	:= AllTrim(GETMV("MV_#INTTP"))		// chamado 031274 por Adriana
-	Local _cIntSTemp	:= AllTrim(GETMV("MV_#INTSTP"))		// chamado 031274 por Adriana
-	Local _cCtTemp		:= AllTrim(GETMV("MV_#CTTP"))		// chamado 031274 por Adriana
+	Local _cEmbut 		:= AllTrim(GETMV("MV_#EMBUT"))     	// chamado 031274 por Adriana - Embutidos
+	Local _cIntTemp 	:= AllTrim(GETMV("MV_#INTTP"))		// chamado 031274 por Adriana - Frango Inteiro Temperado
+	Local _cIntSTemp	:= AllTrim(GETMV("MV_#INTSTP"))		// chamado 031274 por Adriana - Frango Inteiro sem tempero
+	Local _cCtTemp		:= AllTrim(GETMV("MV_#CTTP"))		// chamado 031274 por Adriana - Corte Frango Temperado
+	
+	//
+	Local _nAlqIT			:= GETMV("MV_#ALQIT",,0.17)		//Aliquota calculo do ICMS ST Frango Inteiro Temperado para boletos clientes RS - //Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlqIST		:= GETMV("MV_#ALQIST",,0.12)	//Aliquota calculo do ICMS ST Frango Inteiro sem tempero para boletos clientes RS	//Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlqCT			:= GETMV("MV_#ALQCT",,0.17)		//Aliquota calculo do ICMS ST Corte Frango Temperado para boletos clientes RS//Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlqOu			:= GETMV("MV_#ALQOU",,0.12)		//Aliquota calculo do ICMS ST para boletos clientes RS//Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	
+	Local _nAlBl01		:= GETMV("MV_#ALBS01",,0.411765)	//Alq calculo do ICMS ST para boletos clientes RS 01 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl02		:= GETMV("MV_#ALBS02",,0.2)	//Alq calculo do ICMS ST para boletos clientes RS 02 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl03		:= GETMV("MV_#ALBS03",,0.12)	//Alq calculo do ICMS ST para boletos clientes RS 03 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl11		:= GETMV("MV_#ALBS11",,0.4)	//Alq calculo do ICMS ST para boletos clientes RS 01 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
 
+	Local _nAlBl04		:= GETMV("MV_#ALBS04",,0.5833)	//Alq calculo do ICMS ST para boletos clientes RS 04 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl05		:= GETMV("MV_#ALBS05",,0.2)	//Alq calculo do ICMS ST para boletos clientes RS 05 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+
+	Local _nAlBl06		:= GETMV("MV_#ALBS06",,0.411765)	//Alq calculo do ICMS ST para boletos clientes RS 06 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl07		:= GETMV("MV_#ALBS07",,0.6)	//Alq calculo do ICMS ST para boletos clientes RS 07 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl08		:= GETMV("MV_#ALBS08",,0.12)	//Alq calculo do ICMS ST para boletos clientes RS 08 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl12		:= GETMV("MV_#ALBS12",,0.4)	//Alq calculo do ICMS ST para boletos clientes RS 01 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+
+	Local _nAlBl09		:= GETMV("MV_#ALBS09",,0.5833)	//Alq calculo do ICMS ST para boletos clientes RS 09 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl10		:= GETMV("MV_#ALBS10",,0.6)	//Alq calculo do ICMS ST para boletos clientes RS 10 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+
+	Local _nAlBl13		:= GETMV("MV_#ALBS13",,0.5833)	//Alq calculo do ICMS ST para boletos clientes RS 04 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl14		:= GETMV("MV_#ALBS14",,0.12)	//Alq calculo do ICMS ST para boletos clientes RS 05 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl15		:= GETMV("MV_#ALBS15",,0.2341)	//Alq calculo do ICMS ST para boletos clientes RS 05 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl16		:= GETMV("MV_#ALBS16",,0.18)	//Alq calculo do ICMS ST para boletos clientes RS 05 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+
+	Local _nAlBl17		:= GETMV("MV_#ALBS17",,0.07)	//Alq calculo do ICMS ST para boletos clientes RS 04 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl18		:= GETMV("MV_#ALBS18",,0.25)	//Alq calculo do ICMS ST para boletos clientes RS 05 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	Local _nAlBl19		:= GETMV("MV_#ALBS19",,0.18)	//Alq calculo do ICMS ST para boletos clientes RS 05 //Tickets 63560 - Abel Babini - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	//
 	Local cNCM_MG 		:= GetMV("MV_#ICSTMG",,"0207") 		// Chamado 043061 - FWNM em 22/08/2018 
 	
 	Local cCMS			:= AllTrim( GETMV("MV_#VLCMS",,"") ) //Everson - 17/01/2019. Chamado 046222.
@@ -2141,25 +2174,27 @@ Static FUNCTION FIN040INC()
 		dbSetOrder(3)
 		If DbSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)	    
 
+			//INICIO Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
 			IF Alltrim(SD2->D2_COD) $ _cIntTemp // "100252/100253" inteiro temperado - Alterado por Adriana chamado 031274
-				nBIcmST := (SF2->F2_VALMERC * 0.3888 * 0.2) + (SF2->F2_VALMERC * 0.3888)
+				nBIcmST := (SF2->F2_VALMERC * _nAlBl01 * _nAlBl02) + (SF2->F2_VALMERC * _nAlBl01)
 				//    nVIcmST := (nBIcmST * 0.18) - SF2->F2_VALICM
-				nVIcmST := (nBIcmST * 0.18) - ((SF2->F2_VALMERC * 0.3888)	* 0.12)
+				nVIcmST := (nBIcmST * _nAlqIT) - ((SF2->F2_VALMERC * _nAlBl11)	* _nAlBl03)
 
 			ElseIF Alltrim(SD2->D2_COD) $ _cIntSTemp // "128270" inteiro sem tempero - Alterado por Adriana chamado 031274
-				nBIcmST := (SF2->F2_VALMERC * 0.5833 * 0.2) + (SF2->F2_VALMERC * 0.5833)
-				nVIcmST := (nBIcmST * 0.12) - SF2->F2_VALICM
+				nBIcmST := (SF2->F2_VALMERC * _nAlBl04 * _nAlBl05) + (SF2->F2_VALMERC * _nAlBl04)
+				nVIcmST := (nBIcmST * _nAlqIST) - SF2->F2_VALICM
 
 			ElseIF Alltrim(SD2->D2_COD) $ _cCtTemp // corte temperado - Alterado por Adriana chamado 031274
-				nBIcmST := (SF2->F2_VALMERC * 0.3888 * 0.6) + (SF2->F2_VALMERC * 0.3888)
+				nBIcmST := (SF2->F2_VALMERC * _nAlBl06 * _nAlBl07) + (SF2->F2_VALMERC * _nAlBl06)
 				//    nVIcmST := (nBIcmST * 0.18) - SF2->F2_VALICM
-				nVIcmST := (nBIcmST * 0.18) - ((SF2->F2_VALMERC * 0.3888) * 0.12)
+				nVIcmST := (nBIcmST * _nAlqCT) - ((SF2->F2_VALMERC * _nAlBl12) * _nAlBl08)
 
 			Else                                            
-				nBIcmST := (SF2->F2_VALMERC * 0.5833 * 0.6) + (SF2->F2_VALMERC * 0.5833)
-				nVIcmST := (nBIcmST * 0.12) - SF2->F2_VALICM
+				nBIcmST := (SF2->F2_VALMERC * _nAlBl09 * _nAlBl10) + (SF2->F2_VALMERC * _nAlBl09)
+				nVIcmST := (nBIcmST * _nAlqOu) - SF2->F2_VALICM
 
 			EndIf 
+			//FIM Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
 
 		EndIf	                                    
 		//Fim chamado: 044861 
@@ -2204,15 +2239,63 @@ Static FUNCTION FIN040INC()
 			If Left(AllTrim(Posicione("SB1",1,FWxFilial("SB1")+SD2->D2_COD,"B1_POSIPI")),4) $ cNCM_MG
 
 				nA := SF2->F2_VALBRUT
-				nB := nA * 0.5833 * 0.12
-				nC := (nA * 0.2341) + nA
+				nB := nA * _nAlBl13 * _nAlBl14
+				nC := (nA * _nAlBl15) + nA
 
-				nVIcmST := (nC * 0.18) - nB
+				nVIcmST := (nC * _nAlBl16) - nB
 
 			EndIf
 
 		EndIf
+	//INICIO Ticket 63560	- Abel Babini          - 13/06/2022 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
+	ElseIf AllTrim(SF2->F2_EST) == "BA"
+		
+		//Everson - 17/01/2019. Chamado 046222.
+		//Valida códigos de produtos CMS e CFOP.
+		SqlVerificaProdutos()
 
+		While TRB->(!EOF())
+
+			If  Alltrim(TRB->D2_GRUPO) $ cCMS .Or.; //0341/0342/0344/0345 //Everson - 17/01/2019. Chamado 046222.
+				Alltrim(TRB->D2_CF) $ cCFOP //5923
+
+				TRB->(dbCloseArea())				
+
+				Conout("SF2460I - FIN040INC - Entrou terceira validação BA " + DToC(Date()) + " " +  Time() )	
+
+				RestArea(_aArea)
+				RestArea(_aArSD2)				
+				RestArea(aAreaSA1)				
+
+				Return
+				
+			Endif
+
+			TRB->(dbSkip())
+
+		ENDDO
+
+		If Select("TRB") > 0 // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
+			TRB->(dbCloseArea())
+		EndIf
+		//
+
+		//Inicio: chamado:045310 - Fernando Sigoli 26/11/2018
+		DbSelectArea("SD2")
+		dbSetOrder(3)
+		If DbSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)	    
+
+			If Left(AllTrim(Posicione("SB1",1,FWxFilial("SB1")+SD2->D2_COD,"B1_POSIPI")),4) $ cNCM_MG
+
+				nA := SF2->F2_VALBRUT
+				nB := nA * _nAlBl17
+				nC := (nA * _nAlBl18) + nA
+
+				nVIcmST := (nC * _nAlBl19) - nB
+
+			EndIf
+
+		EndIf
 	EndIf
 
 	If nVIcmST > 0  //chamado:045310
@@ -2899,3 +2982,14 @@ Static Function fChvNfeOri(cNFOri, cSerOri, cCliFor, cLoja)
 	EndIf
 
 Return cChaveNfe
+
+/*/{Protheus.doc} u_2460IA0
+//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_2460IA0( uPar1, uPar2, uPar3, uPar4 )
+Return( fCalcBlt( uPar1, uPar2, uPar3, uPar4 ) )

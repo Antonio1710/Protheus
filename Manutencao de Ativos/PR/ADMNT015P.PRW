@@ -15,6 +15,7 @@ Static cFormatRet := "application/json"
     @history Everson, 18/05/2021, Chamado 7936. Tratamento para apontamento das horas no fechamento da OS, adicionado  login.
     @history Everson, 07/07/2021, Chamado 16369. Tratamento para apontamento de fechamento na SS.
     @history Everson, 29/07/2021, Chamado 17344. Tratamento para apontamento de horas maior que 24, no fechamento da OS.
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
     */
 User Function ADMNT015P
 Return Nil
@@ -120,9 +121,10 @@ Return .T.
 WsMethod Get WsService manutencao
 
     //Variáveis.
+    //Variáveis.
     Local cEmpresa      := Alltrim(Self:GetHeader("Empresa"))
     Local cFil          := Alltrim(Self:GetHeader("Filial"))
-    Local cAuth         := Alltrim(Self:GetHeader("Authorization"))
+    Local cAuth         := Alltrim(Self:GetHeader("Authorizationx")) //Everson, 31/08/2021, Chamado 7936.
     Local aCreden       := {}
     Local cUser         := ""
     Local cSenha        := ""
@@ -208,7 +210,7 @@ WsMethod Put WsService manutencao
     //Variáveis.
     Local cEmpresa      := Alltrim(Self:GetHeader("Empresa"))
     Local cFil          := Alltrim(Self:GetHeader("Filial"))
-    Local cAuth         := Alltrim(Self:GetHeader("Authorization"))
+    Local cAuth         := Alltrim(Self:GetHeader("Authorizationx"))
     Local cRecurso      := ""
     Local cBody 	    := Self:GetContent()
     Local aCreden       := {}
@@ -2455,7 +2457,10 @@ Return Iif(lVisT .Or. lChk,"S","N")
     @version 01
     /*/
 Static Function rmvAcento(cTexto)
-Return StaticCall(ADFIN064P, rmvAcento,cTexto)
+//Return Static Call(ADFIN064P, rmvAcento,cTexto)
+//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+Return u_FIN064A0(cTexto)
+
 /*/{Protheus.doc} logZBE
     Gera log.
     @type  Static Function

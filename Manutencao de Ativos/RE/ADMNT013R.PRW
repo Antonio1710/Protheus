@@ -17,6 +17,7 @@
     @see (links_or_references)
     @history Ticket 15804  - Rodrigo Romão  - 27/08/2021 - preparado rotina para enviar email por scheduled
     @history Ticket 64562  - Everson  - 05/01/2022 - Tratamento error log.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 User Function ADMNT013R(aParam) // U_ADMNT013R()
@@ -262,7 +263,9 @@ Static Function Executa()
 
  	aAdd(aAnexos, cFile)
 
-	StaticCall(ADMNT014R, fEnvMail, cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
+	//Static Call(ADMNT014R, fEnvMail, cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_MNT014A0( cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS )
 Return
 
 /* ----- getDadosTitulos ------*/

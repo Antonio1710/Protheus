@@ -22,6 +22,7 @@
 	@history Everson-18/03/2020-Chamado 054941. Tratamento para vincular a natureza correta ao CT-e.
 	@history Leon	-22/07/2020-Chamado TI.		Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history Everson-05/08/2020-Chamado TI. Validação Pedido de compra x CT-e.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Abel   -25/04/2022-Ticket 69574.   Projeto FAI
 	@history Everson-29/04/2022-Ticket 70593.   Projeto FAI
 	/*/
@@ -36,7 +37,8 @@ User Function ADFIS032P(aXEmpFil) // U_ADFIS032P() //Everson-29/04/2022-Ticket 7
 	RPCSetType(3)
 	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ }) //Everson-29/04/2022-Ticket 70593.
 
-		PtInternal(1,ALLTRIM(PROCNAME()))
+		// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Lançamento de documento de entrada (CT-e) por xml')
 		

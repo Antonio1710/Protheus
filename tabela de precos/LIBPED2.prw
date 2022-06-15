@@ -577,7 +577,7 @@ Return
 */
 
 Static Function MarkPed()
-
+	Local _n1
 	For _n1 := 1 to len(_aRede)
 		If _aRede[_n1][01]
 			ApMsgAlert(OemToAnsi("Pedido marcado: "+_aRede[_n1][02]))
@@ -605,7 +605,7 @@ User Function Aprova(_nOpc)
 
 	Local _lRede := .F.
 	Local _lPedi  := .F.
-
+	Local _n1
 	U_ADINF009P('LIBPED2' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de liberacao de redes')
 
 	For _n1 := 1 to Len(_aRede)   // Verifica rede
@@ -651,7 +651,7 @@ User Function REJEITA(_nOpc)
 
 	Local _lRede := .F.
 	Local _lPedi  := .F.
-
+	Local _n1
 	U_ADINF009P('LIBPED2' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Tela de liberacao de redes')
 
 	For _n1 := 1 to Len(_aRede)    // Verifica a rede
@@ -706,7 +706,7 @@ Static Function AprvRede(_nOpc)           &&Mauricio 13/05/11 - rotina de aprova
 	Local lAvAp1   := .F.
 	Local lAvAp2   := .F.
 	Local lAvAp3   := .F.
-
+	Local _n1
 	For _n1 := 1 to Len(_aRede)
 
 		/*
@@ -916,7 +916,9 @@ Static Function AprvRede(_nOpc)           &&Mauricio 13/05/11 - rotina de aprova
 				DbSelectArea("SC9")
 				SC9->(DbSetOrder(1))
 				If SC9->(Dbseek(xFilial("SC9")+_cPed))
-					StaticCall(LIBPED1,chkBlCred, SC9->C9_CLIENTE,SC9->C9_LOJA,_cPed)
+					//Static Call(LIBPED1,chkBlCred, SC9->C9_CLIENTE,SC9->C9_LOJA,_cPed)
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					u_LIBPEDA0( SC9->C9_CLIENTE,SC9->C9_LOJA,_cPed )					
 				
 				EndIf
 
@@ -1072,7 +1074,7 @@ Static Function AprvPed(_nOpc)           &&Mauricio 13/05/11 - rotina de aprovaç
 	Local _lGer    := .F.
 	Local _lfinal  := .F.
 	Local _nSomTot := 0
-
+	Local _n1
 	For _n1 := 1 to Len(_aPedidos)
 		If !(_aPedidos[_n1][01])
 			_lPedi := .T.
@@ -1306,8 +1308,9 @@ Static Function AprvPed(_nOpc)           &&Mauricio 13/05/11 - rotina de aprovaç
 				DbSelectArea("SC9")
 				SC9->(DbSetOrder(1))
 				If SC9->(Dbseek(xFilial("SC9")+_cPed1))
-					StaticCall(LIBPED1,chkBlCred, SC9->C9_CLIENTE,SC9->C9_LOJA,_cPed1)
-				
+					//Static Call(LIBPED1,chkBlCred, SC9->C9_CLIENTE,SC9->C9_LOJA,_cPed1)
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					u_LIBPEDA0( SC9->C9_CLIENTE,SC9->C9_LOJA,_cPed1 )
 				EndIf
 
 				//log de aprovação de pedido a pedido para a rede - fernando 20/07/2017
@@ -1461,7 +1464,7 @@ Return()
 
 Static Function RejRede(_nOpc)           &&Mauricio 13/05/11 - rotina de rejeição para toda a Rede
 	Local _cQueryR := ""
-
+	Local _n1
 	/*
 	Ao fazer alterações na variável _aRede, verificar o fonte ADVEN052P, pois a rotina AprvRede está sendo utilizada no fonte
 	ADVEN052P (serviço Rest).
@@ -1671,6 +1674,7 @@ Return()
 
 Static Function IPTAB(_nOpc)
 
+	Local _n1
 	Private _nSomaDig := 0
 	Private _nSomaTab := 0
 	Private _cNrPed   := ""
@@ -2102,6 +2106,7 @@ Static Function IPTAB2(_nOpc)
 	Local lEstoque := .F.
 	Local lAvCred  := .T.
 	Local lAvEst   := .F. //.T. Mauricio 26/07/11
+	Local _n1
 
 	Private _nSomaDig := 0
 	Private _nSomaTab := 0

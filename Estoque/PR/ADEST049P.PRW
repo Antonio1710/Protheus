@@ -10,6 +10,8 @@
     @author Everson
     @since 23/06/2020.
     @version 01
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADEST049P  // U_ADEST049P()
 
@@ -37,7 +39,8 @@ User Function ADEST049P  // U_ADEST049P()
 
         ConOut( DToC(Date()) + " " + Time() + " ADEST049P - Início Job importação de Ops.")
 
-        PtInternal(1,ALLTRIM(PROCNAME()))
+        //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     EndIf
 
@@ -45,7 +48,9 @@ User Function ADEST049P  // U_ADEST049P()
         U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gera ordem de produção e aponta a mesmo por integração do SAG Quando a OP for excluida no SAG e gravado um log, a partir desse log, o protheus estorna o apontamento e faz a exclusao')
 
         //
-        StaticCall(ADEST033P,procRot,lAutoJob)
+        //Static Call(ADEST033P,procRot,lAutoJob)
+        //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+        u_EST033A0(lAutoJob)        
 
     //
     If lAutoJob 

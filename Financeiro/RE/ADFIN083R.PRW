@@ -8,6 +8,7 @@
 	@author William Costa
 	@since 12/02/2020
 	@version 01
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	
 /*/
                
@@ -28,7 +29,8 @@ USER FUNCTION ADFIN083R()
 
 	ConOut("INICIO DO SCHEDULE ADLOG013R")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'WORKFLOW DE ENVIO PARA QUANDO UMA REDE FICA DUPLICADA PARA AVALIAÇÃO DA T.I E FINANCEIRO')
 

@@ -18,6 +18,7 @@
 	@history Everson 16/09/2020 Chamado 1702. Alterada a lógica da data das devoluções.
 	@history Everson 29/09/2020 Chamado 2470. Adicionada a filial 01 da empresa 01.
 	@history Everson 06/05/2020 Chamado 12436. Alterada a periodicidade do gráfico Ticket Médio x Prazo Médio (Ad'oro) de diários para mensal.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 */
 User Function ADFIN037R() // U_ADFIN037R()
 
@@ -41,7 +42,8 @@ User Function ADFIN037R() // U_ADFIN037R()
 
 	EndIf
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de faturamento.')
 	logZBN("1") //Log início.
@@ -1710,6 +1712,7 @@ Static Function aba2(cHtml,aAnos,aEmpresa,aNmEmpresas,cDGrf1,cDGrf2_1,cDGrf2_2,c
 	Local nVarSAno		:= 0
 	Local nTtGeVarU		:= 0
 	Local nTtGeVarA		:= 0
+	Local i
 
 	//
 	cHtml += ' <div class="conteudo"> ' 

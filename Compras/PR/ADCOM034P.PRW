@@ -59,6 +59,7 @@ Static lAuto    := .t.
 	@history chamado 050729 - FWNM            - 30/06/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE
 	@history Ticket  69088  - ADRIANO SAVOINE - 02/03/2022 - RETIRADO O LOCK BY NAME.
 	@history Ticket  69072  - ADRIANO SAVOINE - 04/03/2022 - Ajuste na query para não pegar os pedidos gerados no SAG.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 User Function ADCOM034P()
 
@@ -82,7 +83,8 @@ User Function ADCOM034P()
 		Return
 	EndIf
 
-    PtInternal( 1, cRotina + " - Inicializando ambiente da empresa código [" + cEmpAnt + "]")
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg( cRotina + " - Inicializando ambiente da empresa código [" + cEmpAnt + "]")
         
     cDtIni  := GetMv("MV_#PCDTI",,"20200131")
     cEmpRun := GetMV("MV_#PCEMP",,"01|02|03|06|07|08|09")
@@ -115,8 +117,8 @@ User Function ADCOM034P()
             RPCClearEnv()
             Return
         EndIf*/
-
-        PtInternal( 1, cRotina + " - Inicializando ambiente da empresa/filial [" + cEmpAnt + "/" +cFilAnt + "]")
+		// 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg( cRotina + " - Inicializando ambiente da empresa/filial [" + cEmpAnt + "/" +cFilAnt + "]")
 
 		//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina job para envio de relatório de PC aprovados aos compradores/fornecedores')
 
@@ -147,7 +149,8 @@ User Function ADCOM034P()
         Work->( dbGoTop() )
         Do While Work->( !EOF() )
 
-            PtInternal( 1, cRotina + " - Gerando relatório PC aprovado [" + cEmpAnt + "/" +cFilAnt + " => " + Work->C7_NUM + "]")
+            // @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+			//FWMonitorMsg( cRotina + " - Gerando relatório PC aprovado [" + cEmpAnt + "/" +cFilAnt + " => " + Work->C7_NUM + "]")
 
             // Posiciono PC
             SC7->( dbSetOrder(1) ) // C7_FILIAL+C7_NUM+C7_ITEM

@@ -1,24 +1,19 @@
 #Include "Totvs.ch"
 
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³A103CLAS  ºAutor  ³ Fabritech          º Data ³  01/03/2018 º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³Ponto de entrada na Classificacao da NF-e                   º±±
-±±º          ³                                                            º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³ ADORO                                                      º±±
-±±ºChamado   ³                                                            º±±
-±±º048558    ³ ABEL BABINI - AJUSTE NO TES DE DEVOLUÇÃO CONFORME TES      º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
+/*/{Protheus.doc} User Function A103CLAS
+	Ponto de entrada na Classificacao da NF-e
+	@type  Function
+	@author Fabritech
+	@since 01/03/2018
+	@version version
+	@history Chamado 048558  - ABEL BABINI - 23/04/2019 - AJUSTE NO TES DE DEVOLUÇÃO CONFORME TES
+	@history Ticket  71736   - Abel Babini - 14/06/2022 - Trazer o Armazem da CentralXML
+	/*/
 
 User Function A103CLAS()
 	Local cCondAT	:= CCONDICAO	//Variavel Private da Rotina MATA103
+	Local i := 0
+	Local nPosLoc	:= Ascan( aHeader, { |x| Alltrim( x[2] ) == "D1_LOCAL" 	} )
 	
 	// *** Específico ADORO - INICIO ABEL BABINI 23/04/2019 CHAMADO 048558 || FISCAL || RENATA || CORRIGIR A TES DE DEVOLUÇÃO CONFORME TES DO DOC. DE SAÍDA
 	Local cAliasSD1 := PARAMIXB[1] //ABEL BABINI
@@ -34,6 +29,14 @@ User Function A103CLAS()
 		If Alltrim( SF1->F1_COND ) <> Alltrim( cCondAT )
 			CCONDICAO	:= SF1->F1_COND
 		EndIf
+
+		//INICIO Ticket  71736   - Abel Babini - 14/06/2022 - Trazer o Armazem da CentralXML
+		IF (cAliasSD1)->D1_TIPO == 'D' .AND. !Empty(Alltrim(RECNFXMLITENS->XIT_LOCAL))
+			For i:=1 to Len(aCols)
+				aCols[i, nPosLoc] := Alltrim(RECNFXMLITENS->XIT_LOCAL)
+			Next i
+		ENDIF
+		//FIM Ticket  71736   - Abel Babini - 14/06/2022 - Trazer o Armazem da CentralXML
 	EndIf
 	
 Return Nil

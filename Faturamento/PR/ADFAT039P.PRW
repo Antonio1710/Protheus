@@ -13,6 +13,7 @@ Static cTiMast := "Dados do apontamento de caixa"
     @author Everson
     @since 02/03/2022
     @version 01
+    @history, Everson, 02/06/2022, ticket 18645 - removida validação para quando o registro vem do Job.
     /*/
 User Function ADFAT039P() // U_ADFAT039P()
 
@@ -110,12 +111,16 @@ Static Function vldPos(oModel)
 
         // EndIf
 
-        DbSelectArea("ZIX")
-        ZIX->(DbSetOrder(1))
-        ZIX->(DbGoTop())
-        If ! ZIX->( DbSeek( FwxFilial("ZIX") + cPlaca + cCaixa ) )
-            lRet := .F.
-            Help(Nil, Nil, "Função vldPos(ADFAT039P)", Nil, "Veículo " + cPlaca + " não possui caixa " + cCaixa + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        If ! IsInCallStack("U_ADFAT049P") //Everson - 02/06/2022. Chamado 18465.
+
+            DbSelectArea("ZIX")
+            ZIX->(DbSetOrder(1))
+            ZIX->(DbGoTop())
+            If ! ZIX->( DbSeek( FwxFilial("ZIX") + cPlaca + cCaixa ) )
+                lRet := .F.
+                Help(Nil, Nil, "Função vldPos(ADFAT039P)", Nil, "Veículo " + cPlaca + " não possui caixa " + cCaixa + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+            EndIf
 
         EndIf
             

@@ -13,6 +13,8 @@
 	@history Chamado 046860 - WILLIAM COSTA - 13/02/2019 - ALTERA PARA NAO TER MAIS ENTREGA  
 	@history Chamado 046860 - WILLIAM COSTA - 19/05/2020 - Adicionado valor de Roteiro Final
 	@history Chamado 059327 - WILLIAM COSTA - 01/07/2020 - Alterado o roteiro inicial de 201 para 300 para enviar ao ravex
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+
 	@history ticket 70750 - Everson - 19/04/2022 - Adaptação do fonte para nova filial.
 */	
 
@@ -57,7 +59,8 @@ User Function ADLOG017P()
 
 	ConOut("INICIO DO SCHEDULE ADLOG017P" + ALLTRIM(FUNNAME()) + ' ' + TIME())
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa consumidor do Webservice da Ravex para viagens planejadas ')
 

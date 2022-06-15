@@ -64,7 +64,8 @@ Else
 		Return
 	EndIf
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 	logZBN("1") //Log início.
@@ -108,6 +109,7 @@ Local cCont
 Local nRet
 Local lGrvLido	:= .F.     
 Local cRelogio  := GetMv( "MV_#RELOG" , .F. , "" )   //Apenas relogios ativos para o schedule, que tem arquivo txt, Ex: relogio99.txt, onde 99 e o codigo constante no parametro
+local x
 //Local cPergPon 	:= ""
 //Local lAchou	:= .F.
 

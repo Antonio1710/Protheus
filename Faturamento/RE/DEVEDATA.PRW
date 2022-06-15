@@ -2,26 +2,13 @@
 #include "topconn.ch"
 //--------------------------RELEASE 4-------------------------------------------//
 /*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Programa  ³DEVEDATA³ Autor ³Mauricio - MDS Tecnologia Data ³16/04/2014³±±                 
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡…o ³Relatorio para detalhamento das devoluções com dados do Pro-³±±
-±±³          ³theus e do Edata. Solicitado pelo Evandro.                  ³±±
-±±³          ³                                                            ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Retorno   ³ExpO1: Objeto do relatório                                  ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³USO       ³ADORO                                                       ³±±
-±±³          ³                                                            ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³   DATA   ³ Programador   ³ Manutencao efetuada                        ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³          ³               ³                                            ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+	Programa  ³DEVEDATA³ Autor ³Mauricio - MDS Tecnologia Data ³16/04/2014
+	Descri‡…o ³Relatorio para detalhamento das devoluções com dados do Pro-
+	          ³theus e do Edata. Solicitado pelo Evandro.                  
+	Retorno   ³ExpO1: Objeto do relatório                                  
+	USO       ³ADORO                                                       
+	DATA   ³ Programador   ³ Manutencao efetuada                        
+	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 /*/
 
 User Function DEVEDATA()
@@ -118,7 +105,7 @@ Return(oReport)
 
 Static Function ReportPrint( cAliasDEV )
 Local oProjeto  	:= oReport:Section(1)
-                                 
+Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 dbSelectArea("SF1")
 dbSetOrder(1)
 
@@ -251,14 +238,14 @@ While TSD1->(!Eof())
            DbSelectArea("TEDATA")
            DbCloseArea("TEDATA")
         Endif
-
+				//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
         cQuery := "SELECT PED.ID_PEDIVEND, PED.IE_PEDIVEND, PED.ID_CARGEXPE, DEVIT.QN_EMBAEXPEITEMPEDIDEVOVEND, DEVIT.QN_EMBAITEMPEDIDEVOVEND, MOT.NM_MOTIDEVOVEND, DEV.ID_PEDIDEVOVEND, CONVERT(CHAR(10), DEV.DT_PEDIDEVOVEND, 103) AS DATAD, EMBA.IE_MATEEMBA, "
-        cQuery += "TRA.GN_PLACVEICTRAN, TRA.ID_FORNECEDOR_TRANSPORTADOR, TRA.ID_TRANMOTOTRAN, DEVIT.QN_EMBAAJUSITEMPEDIDEVOVEND FROM  [LNKMIMS].[SMART].[dbo].[PEDIDO_VENDA] PED, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA] DEV, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA_ITEM] DEVIT, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] EMBA, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[TRANSPORTADOR_VEICULO] TRA, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[VENDA_DEVOLUCAO_MOTIVO] MOT "
+        cQuery += "TRA.GN_PLACVEICTRAN, TRA.ID_FORNECEDOR_TRANSPORTADOR, TRA.ID_TRANMOTOTRAN, DEVIT.QN_EMBAAJUSITEMPEDIDEVOVEND FROM  ["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_VENDA] PED, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA] DEV, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA_ITEM] DEVIT, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] EMBA, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[TRANSPORTADOR_VEICULO] TRA, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[VENDA_DEVOLUCAO_MOTIVO] MOT "
         cQuery += "WHERE PED.ID_PEDIVEND = DEV.ID_PEDIVEND AND DEVIT.ID_PEDIDEVOVEND = DEV.ID_PEDIDEVOVEND AND DEV.ID_MOTIDEVOVEND = MOT.ID_MOTIDEVOVEND "
         cQuery += "AND PED.ID_PEDIVEND = '"+_cPEDED+"' AND TRA.ID_VEICTRAN = DEV.ID_VEICTRAN "
         cQuery += "AND DEVIT.ID_MATEEMBA = EMBA.ID_MATEEMBA AND EMBA.IE_MATEEMBA = '"+alltrim(_cProd)+"' "
@@ -295,14 +282,14 @@ While TSD1->(!Eof())
            DbSelectArea("TEDATA")
            DbCloseArea("TEDATA")
         Endif
-
+				//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
         cQuery := "SELECT PED.ID_PEDIVEND, PED.IE_PEDIVEND, PED.ID_CARGEXPE, DEVIT.QN_EMBAEXPEITEMPEDIDEVOVEND, DEVIT.QN_EMBAITEMPEDIDEVOVEND, MOT.NM_MOTIDEVOVEND, DEV.ID_PEDIDEVOVEND, CONVERT(CHAR(10), DEV.DT_PEDIDEVOVEND, 103) AS DATAD, EMBA.IE_MATEEMBA, "
-        cQuery += "TRA.GN_PLACVEICTRAN, TRA.ID_FORNECEDOR_TRANSPORTADOR, TRA.ID_TRANMOTOTRAN, DEVIT.QN_EMBAAJUSITEMPEDIDEVOVEND FROM  [LNKMIMS].[SMART].[dbo].[PEDIDO_VENDA] PED, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA] DEV, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA_ITEM] DEVIT, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] EMBA, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[TRANSPORTADOR_VEICULO] TRA, "
-        cQuery += "[LNKMIMS].[SMART].[dbo].[VENDA_DEVOLUCAO_MOTIVO] MOT "
+        cQuery += "TRA.GN_PLACVEICTRAN, TRA.ID_FORNECEDOR_TRANSPORTADOR, TRA.ID_TRANMOTOTRAN, DEVIT.QN_EMBAAJUSITEMPEDIDEVOVEND FROM  ["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_VENDA] PED, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA] DEV, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[PEDIDO_DEVOLUCAO_VENDA_ITEM] DEVIT, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[VW_MATERIAL_EMBALAGEM] EMBA, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[TRANSPORTADOR_VEICULO] TRA, "
+        cQuery += "["+cLnkSrv+"].[SMART].[dbo].[VENDA_DEVOLUCAO_MOTIVO] MOT "
         cQuery += "WHERE PED.ID_PEDIVEND = DEV.ID_PEDIVEND AND DEVIT.ID_PEDIDEVOVEND = DEV.ID_PEDIDEVOVEND AND DEV.ID_MOTIDEVOVEND = MOT.ID_MOTIDEVOVEND "        
         cQuery += "AND PED.IE_PEDIVEND = '"+_cPEDPRO+"' AND TRA.ID_VEICTRAN = DEV.ID_VEICTRAN "
         cQuery += "AND DEVIT.ID_MATEEMBA = EMBA.ID_MATEEMBA AND EMBA.IE_MATEEMBA = '"+alltrim(_cProd)+"' "

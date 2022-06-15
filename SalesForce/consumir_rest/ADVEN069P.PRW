@@ -77,7 +77,9 @@ Static Function Processar(cParamBsc,lAut,cExpSql,cAltTes)
 	Local cMsg		  := ""
 
 	//Efetura login no SalesForce.
-	lLogin := StaticCall(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//lLogin := Static Call(ADVEN075P,loginSF,@aResponse,@cMsg,lAut)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    lLogin := u_VEN075A1(@aResponse,@cMsg,lAut)
 
 	//
 	If ! lLogin
@@ -108,10 +110,14 @@ Static Function Processar(cParamBsc,lAut,cExpSql,cAltTes)
 
 	//Processa os registros.
 	If  ! lAut
-		Processa({|| StaticCall(ADVEN075P,ProcessarB,@aParametros,.T.,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) ...",.T.)
+		//Processa({|| Static Call(ADVEN075P,ProcessarB,@aParametros,.T.,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) ...",.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({|| u_VEN075A4( @aParametros,.T.,"",@aRetOk,.F.,.T.,"",.T.,.F.) },"Aguarde","Processando registro(s) ...",.T.)
 
 	Else
-		             StaticCall(ADVEN075P,ProcessarB,@aParametros,.T.,"",@aRetOk,.F.,.T.,"",.T.,.F.)
+		//Static Call(ADVEN075P,ProcessarB,@aParametros,.T.,"",@aRetOk,.F.,.T.,"",.T.,.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A4( @aParametros,.T.,"",@aRetOk,.F.,.T.,"",.T.,.F. )
 
 	EndIf
 	
@@ -130,10 +136,14 @@ Static Function Processar(cParamBsc,lAut,cExpSql,cAltTes)
 	//
 	If !Empty(cErroItem) .And. !lAut
 		
-		StaticCall(ADVEN075P,TelErro,"Envio SalesForce - ADVEN069P ",cErroItem,"Arial",10,,.F.,.T.)
-	
+		//Static Call(ADVEN075P,TelErro,"Envio SalesForce - ADVEN069P ",cErroItem,"Arial",10,,.F.,.T.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A5("Envio SalesForce - ADVEN069P ",cErroItem,"Arial",10,,.F.,.T.)
+
 	ElseIf !Empty(cErroItem) .And. lAut
-		StaticCall(ADVEN075P,envErros,cErroItem)
+		//Static Call(ADVEN075P,envErros,cErroItem)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A2( cErroItem )
 
 	EndIf
 

@@ -56,6 +56,9 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Tickets TI          - Fernando Macieira - 31/08/2021 - Consistência Redes (SZF) para checar outros valores antes de gravar para não "somar".
 	@history Tickets 13526  - Everson - 14/10/2021 - Tratamento para gravar a relação A1_XTPDESC x PB3_XTPDES.
 	@history Tickets TI  - Leonardo P. Monteiro - 29/10/2021 - Tratamento de error.log gerado por caracter especial informado no código do produto e razão social.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 74275  - Everson, 13/06/2022, tratamento para bloqueio de cliente a partir do número de pedidos em aberto.
+	@history Ticket TI  - Everson, 14/06/2022, tratamento para error log.
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -259,7 +262,8 @@ User Function ADOA005() // U_ADOA005()
 	@ 050,365 SAY "UF" SIZE 200,15 OF oTPane1 PIXEL
 	@ 049,385 MSGET oSigla VAR cSigla Valid fVldCar(cSigla) .and. fGetDados('PB3', PB3->(Recno()), 4,aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData  )SIZE 40,10 OF oTPane1 PIXEL
 
-	oBotaoParecer 	:= tButton():New( 050, 430,'Parecer',oDlg,{||Adoa5Parec(oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_COD' }) ], oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_LOJA' }) ]),/*, fGetDados("PB3",nRecno,nOpca,@aAlter, Left( cComboMotivo,2 ), cComboSetor, cCNPJ, cRazao, cCliente, cVendedor, cSupervisor, cComboAnalise, cSigla, cEnviado, dData)*/ },50,15,,,,.t.,,,,,,,,,,,.f.)
+	//Everson, 14/06/2022.
+	oBotaoParecer 	:= tButton():New( 050, 430,'Parecer',oDlg,{|| Iif( ValType(oGetd) == "O", Adoa5Parec(oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_COD' }) ], oGetd:aCols[ oGetd:nAt, Ascan( oGetd:aHeader, {|x| AllTrim( x[2] ) == 'PB3_LOJA' }) ]), Nil ) },50,15,,,,.t.,,,,,,,,,,,.f.)
 	//oBotaoParecer:SetCss("QPushButton{background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0000, stop: 1 #8C1717);color: white}")	 CHAMADO: TI - ADRIANO SAVOINE - 22/07/2020
 
 	//oBotaoQtd 		:= tButton():New( 059, 430,'Quantidades',oDlg,{||Adoa5Qtd( oGetd:aHeader, oGetd:aCols )},50,15,,,,.t.,,,,,,,,,,,.f.)
@@ -4294,6 +4298,7 @@ Static Function getNumPed(cCod,cLoja)
 	Local aArea  := GetArea()
 	Local cQuery := ""
 	Local nNumPed:= 0
+	Local cDias  := cValToChar(GetMv("MV_#DIABLQ",,10))
 
 	//
 	cQuery := ""
@@ -4305,7 +4310,9 @@ Static Function getNumPed(cCod,cLoja)
 	cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
 	cQuery += " AND C5_CLIENTE = '" + cCod + "' " 
 	cQuery += " AND C5_LOJACLI = '" + cLoja + "' " 
-	//cQuery += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE() AS DATE) " 
+	
+	cQuery += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE() - " + cDias + " AS DATE) " 
+
 	cQuery += " AND SC5.D_E_L_E_T_ = '' " 
 	cQuery += " AND C5_NOTA = '' " 
 	cQuery += " AND C5_SERIE = '' " 
@@ -8295,3 +8302,14 @@ Static Function UpAudit()
     EndIf
 
 Return cNextCod
+
+/*/{Protheus.doc} u_OA005A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_OA005A0( uPar1, uPar2 )
+Return( Adoa5Parec( uPar1, uPar2 ) )

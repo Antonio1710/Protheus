@@ -43,7 +43,9 @@ WsMethod Post WsService comissoes
 	//
 	Self:SetContentType(cFormatAceito)
 	
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,"","","","",cUrlServ,"POST")
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,"","","","",cUrlServ,"POST")
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0( cCodUsuario,"","","","",cUrlServ,"POST" )
 
 	//
 	If Empty(cCodUsuario)
@@ -89,8 +91,10 @@ WsMethod Post WsService comissoes
 	//
 	cHoraExec := ELAPTIME(cHoraExec, Time())
 	//grvLog(cUsuario,cIdSF,cNumP,cJson,cErro,Url,cMetodo,cTmProc
-	StaticCall(ADVEN075P,grvLog,cCodUsuario,"","","","",cUrlServ,"POST",cHoraExec)
-	
+	//Static Call(ADVEN075P,grvLog,cCodUsuario,"","","","",cUrlServ,"POST",cHoraExec)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_VEN075A0( cCodUsuario,"","","","",cUrlServ,"POST",cHoraExec )
+
 	//
 	FreeObj(oParseJSON)
 	oParseJSON := Nil

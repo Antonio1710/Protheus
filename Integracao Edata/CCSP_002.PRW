@@ -34,6 +34,7 @@ Static cLinkSe  	:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS"))
 	@history chamado  TI 	- Leonardo P. Monteiro      - 29/12/2021 - Tratamento de error.log quando não existem dados na aCols.
 	@history chamado  18301 - Leonardo P. Monteiro      - 06/01/2022 - Grava o flag da inspeção da Qualidade.
 	@history chamado  18301 - Leonardo P. Monteiro      - 17/01/2022 - Correção de error.log na chamada da função CCSP_003.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket   71027 - Fernando Macieira         - 07/04/2022 - Liberação Pedido Antecipado sem Aprovação Financeiro - PV 9BEGCC foi incluído depois que o job do boleto parou, não gerou FIE e SE1 (PR) e foi liberado manualmente pelo financeiro, sendo faturado como pv normal... por isso da dupla checagem
 /*/
 User Function CCSP_002() // U_CCSP_002()
@@ -896,7 +897,9 @@ Static Function CCS_002PN()
 		//Everson - 30/05/2019. Chamado 044314.
 		If cEmpAnt $ cEmpFrt .And. cFilAnt $ cFilGFrt //Everson-CH:044314-06/08/19.
 			logZBE("Geração de frete CCS_002PN","Dt Entrega|roteiro|roteiro " + cValToChar(dDtPed) + "|" + cValToChar(cRoteiro) + "|" + cValToChar(cRoteiro) ) //Everson - 05/06/19. Chamado 044314.
-			StaticCall(ADLOG042P,sptEst,dDtPed,dDtPed,cRoteiro,cRoteiro) //Everson - 03/06/19. Chamado 044314.//Everson - 12/06/2019. Chamado 044314.
+			//Static Call(ADLOG042P,sptEst,dDtPed,dDtPed,cRoteiro,cRoteiro) //Everson - 03/06/19. Chamado 044314.//Everson - 12/06/2019. Chamado 044314.
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_LOG041A0(dDtPed,dDtPed,cRoteiro,cRoteiro) //No ADLOG042P não possuia a funcao sptEst, por isso foi inserida a user function no ADLOG041P
 
 		EndIf
 
@@ -990,7 +993,9 @@ Static Function CCS_002PF()
 	//Everson - 30/05/2019. Chamado 044314.
 	If cEmpAnt $ cEmpFrt .And. cFilAnt $ cFilGFrt //Everson-CH:044314-06/08/19.
 		logZBE("Geração de frete CCS_002PF","Dt Entrega|roteiro|roteiro " + cValToChar(cData) + "|" + cValToChar(cRoteiro) + "|" + cValToChar(cRoteiro) ) //Everson - 05/06/19. Chamado 044314.
-		StaticCall(ADLOG042P,sptEst,SToD(cData),SToD(cData),cRoteiro,cRoteiro) //Everson - 03/06/2019. Chamado 044314.
+		//Static Call(ADLOG042P,sptEst,SToD(cData),SToD(cData),cRoteiro,cRoteiro) //Everson - 03/06/2019. Chamado 044314.
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_LOG041A0(SToD(cData),SToD(cData),cRoteiro,cRoteiro) //No ADLOG042P não possuia a funcao sptEst, por isso foi inserida a user function no ADLOG041P
 
 	EndIf
 
@@ -1290,7 +1295,9 @@ Static Function CCS_002PD()
 		//Everson - 30/05/2019. Chamado 044314.
 		If cEmpAnt $ cEmpFrt .And. cFilAnt $ cFilGFrt //Everson-CH:044314-06/08/19.
 			logZBE("Geração de frete CCS_002PD","Dt Entrega|roteiro|roteiro " + cValToChar(dDtPed) + "|" + cValToChar(cRoteiro) + "|" + cValToChar(cRoteiro) ) //Everson - 05/06/19. Chamado 044314.
-			StaticCall(ADLOG042P,sptEst,dDtPed,dDtPed,cRoteiro,cRoteiro) //Everson - 03/06/2019. Chamado 044314. //Everson - 12/06/19. Chamado 044314.
+			//Static Call(ADLOG042P,sptEst,dDtPed,dDtPed,cRoteiro,cRoteiro) //Everson - 03/06/2019. Chamado 044314. //Everson - 12/06/19. Chamado 044314.
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_LOG041A0(dDtPed,dDtPed,cRoteiro,cRoteiro) //No ADLOG042P não possuia a funcao sptEst, por isso foi inserida a user function no ADLOG041P
 			
 		EndIf
 
@@ -2062,3 +2069,14 @@ Static Function chkEdtLk()
 	RestArea(aArea)
 	
 Return lRet
+
+/*/{Protheus.doc} u_SP_002A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_SP_002A0( )
+Return( chkEdtLk( ) )

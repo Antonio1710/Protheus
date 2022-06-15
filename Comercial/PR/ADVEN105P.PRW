@@ -11,6 +11,7 @@
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history 29/04/2021, Leonardo P. Monteiro, Ajuste na consulta padrão da rotina para restringir somente pedidos do tipo normal. Incluso nas consultas a condição D_E_L_E_T_ para os cadastros SB1 e SBM.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
 User Function ADVEN105P()
@@ -32,7 +33,8 @@ User Function ADVEN105P()
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'(Popula os indicadores da diretoria comercial no Salesforce no objeto v2.)')
 	
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	conout("Início envio de dados dos indicadores Salesforce")
 	
 	logZBN("1") //Log início

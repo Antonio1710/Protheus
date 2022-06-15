@@ -34,7 +34,7 @@ User Function ADCON020R() // U_ADCON020R()
     //
 
     If ParamBox(aPergs ,"Parâmetros ",aRet,,,,,,,,.T.,.T.)
-        Processa({|| geraRel(aRet[1],aRet[2],aRet[3],aRet[4],aRet[5],aRet[6],aRet[7],aRet[8],aRet[9],aRet[10],aRet[11],aRet[12],aRet[13]) },"Função ADCON020R(ADCON020R)","Gerando relatório",.F.)
+        Processa({|| geraRel(aRet[1],aRet[2],aRet[3],aRet[4],aRet[5],aRet[6],aRet[7],aRet[8],aRet[9],aRet[10],aRet[11],aRet[12],alltrim(aRet[13])) },"Função ADCON020R(ADCON020R)","Gerando relatório",.F.)
     EndIf
 
     //
@@ -102,7 +102,7 @@ Static Function geraRel(dDataDe,dDataAte,cCta_DebDe,cCta_DebAte,cCta_CredDe,cCta
             AND CT2D.%notDel%
         UNION ALL
 		SELECT 
-            CT2_DATA,CT2_CREDIT AS CONTA,CT2_CCC AS CC , CT2_ITEMD AS ITEM, CT2_HIST, 
+            CT2_DATA,CT2_CREDIT AS CONTA,CT2_CCC AS CC , CT2_ITEMC AS ITEM, CT2_HIST, 
 			CT2_XLTXCC, CT2_XDLXCC, 
 			(CT2_VALOR*-1) AS VALOR, 
             CT1_DESC01, CTD_DESC01, CTT_DESC01

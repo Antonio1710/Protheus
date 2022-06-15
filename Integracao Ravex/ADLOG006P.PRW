@@ -15,7 +15,9 @@
 	@history ticket 68820 - Fernando Macieira - 09/03/2022 - Migração de quebra de peso entre ravex e protheus
 	@history ticket 68820 - Fernando Macieira - 11/03/2022 - Function DelDupSZX (Exclui registros duplicados) + Function ChkDupSZX (via query pois já existe seek) + Inclusão PadR
 	@history ticket 68820 - Fernando Macieira - 16/03/2022 - Novo campo ZD_BLQRAVE que será utilizado no job ADLOG006P (integrador RAVEX)
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history ticket TI    - Fernando Macieira - 23/03/2022 - Aumento tempo consulta retroativa e inibição da variável nCont3
+	@history ticket 73148 - Everson           - 31/05/2022 - Adicionar demais códigos como quebra de peso.
 /*/
 User Function ADLOG006P()
 
@@ -38,7 +40,8 @@ User Function ADLOG006P()
 
 	ConOut("INICIO DO SCHEDULE ADLOG006P")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa consumir de webservice ravex para baixa de devolucoes de notas fiscais ')
 
@@ -47,7 +50,7 @@ User Function ADLOG006P()
 	//FINAL CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
 
 	FOR nCont3 := 1 TO 2
-		CRIAWEBSERVICE()
+		CRIAWEBSERVICE(nCont3)
 	NEXT nCont3
 	
 	//INICIO CHAMADO 033882 - WILLIAM COSTA - Grava log de Execucao Schedule
@@ -67,7 +70,7 @@ User Function ADLOG006P()
 
 RETURN(NIL)	
 
-STATIC FUNCTION CRIAWEBSERVICE()
+STATIC FUNCTION CRIAWEBSERVICE(nCont3)
 
 	oWs := WSSiviraFullWebService():New()
 
@@ -81,7 +84,7 @@ STATIC FUNCTION CRIAWEBSERVICE()
 	    
 	    IF oResp:NID == 2
 	    
-	    	RETORNAVIAGEM()
+	    	RETORNAVIAGEM(nCont3)
 	    
 	    ENDIF
 	    
@@ -89,7 +92,7 @@ STATIC FUNCTION CRIAWEBSERVICE()
 
 RETURN(NIL)     	  
 
-STATIC FUNCTION RETORNAVIAGEM()
+STATIC FUNCTION RETORNAVIAGEM(nCont3)
 
 	oWs:CCNPJEMISSOR       := '60037058000301'
 	oWs:LVIAGEMFECHADAS    := IIF(nCont3 == 1,.F.,.T.) 
@@ -109,6 +112,8 @@ RETURN(NIL)
 STATIC FUNCTION IMPORTAXML()
 
 	Local lExistSZX     := .f. // @history ticket 68820 - Fernando Macieira - 11/03/2022 - Function ChkDupSZX (via query pois já existe seek)
+
+	Local cCodQuebra    := AllTrim(cValToChar(GetMv("MV_#CODQDV",,"39/91"))) //Everson - 31/0/2022. Chamado 73148.
 
 	Private nCont       := 0
 	Private nCont2      := 0
@@ -436,13 +441,11 @@ STATIC FUNCTION IMPORTAXML()
 								
 							// **************** FINAL DEVOLUCAO TOTAL    ******************* //
 							
-
-
 							///////////////////////////////////////////////////////////////////
 							// **************** INICIO DEVOLUCAO PARCIAL ******************* //
 							///////////////////////////////////////////////////////////////////
 							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
-								oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO <> '39'
+								!(Alltrim(cValToChar(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO)) $cCodQuebra) //Everson - 31/05/2021. Chamado 73505.
 								
 								IF	RecLock("SC5",.F.)
 										SC5->C5_MOK := '03'
@@ -664,13 +667,12 @@ STATIC FUNCTION IMPORTAXML()
 								Aadd(aDevolucoes,aDev)
 								
 							// **************** FINAL DEVOLUCAO PARCIAL ******************** //
-							
-							
+														
 							//////////////////////////////////////////////////////////////////
 							// **************** INICIO DEVOLUCAO QUEBRA ******************* //
 							//////////////////////////////////////////////////////////////////
 							CASE oResp:OWSANOMALIA[nCont]:NTIPORETORNO  == 2  .AND. ;
-								oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO == '39'
+								 (Alltrim(cValToChar(oResp:OWSANOMALIA[nCont]:CCODIGOMOTIVO)) $cCodQuebra)  //Everson - 31/05/2021. Chamado 73505.
 								
 								IF	RecLock("SC5",.F.)
 										SC5->C5_MOK := '06'
@@ -960,7 +962,9 @@ STATIC FUNCTION IMPORTAXML()
 								cMetodo := 'Devolver'
 								nId     := -1
 								EmailViagem(cMetodo,nId,'000000000 - 1-) ERRO WEBSERVICE NÃO É DEVOLUÇÃO')	
+
 						ENDCASE
+
 					ELSE
 					
 						cMetodo := 'Devolver'

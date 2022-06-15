@@ -29,6 +29,9 @@ Static cTitulo  := "Acordos Trabalhistas"
     @example
     (examples)
     @see (links_or_references)
+    @ticket 72346
+    @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    
     @ticket 72346 - Fernando Macieira - 20/05/2022 - Conferência títulos
 /*/
 User Function ADFIN132P()
@@ -75,7 +78,8 @@ User Function ADFIN132P()
 		Return
 	EndIf
 	*/
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina job para acordos trabalhistas')
 

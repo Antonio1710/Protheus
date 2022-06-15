@@ -18,6 +18,11 @@
 	@history chamado TI     - FWNM - 14/08/2020 - Desativação devido impactos de block no SF
 	@history Ticket 69574   - Abel Babini       - 21/03/2022 - Projeto FAI
 	@history Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+<<<<<<< HEAD
+	@history Ticket 74991   - Antonio Domingos  - 09/06/2022 - Correção do Erro Cannot insert duplicate key row in object 'dbo.ZEJ010' with unique index 'ZEJ010_UNQ'
+=======
+	@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+>>>>>>> af0c9a90d16c9f5755c54f760d2d73dc668e1553
 /*/
 User Function MTA450I()
 
@@ -29,23 +34,25 @@ User Function MTA450I()
 
 	Local _cRisco 		:= '' 	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
 	Local cPerfPgt 		:= ''	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local nMedAtr			:= 0		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local aPerPgt			:= {}		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local _cTpCli 		:= ''		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
-	Local _cCodRed		:= ''		//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local nMedAtr		:= 0	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local aPerPgt		:= {}	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local _cTpCli 		:= ''	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
+	Local _cCodRed		:= ''	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
 	Local cQryRede 		:= GetNextAlias()	//Ticket 1562    - Abel Babini       - 30/05/2022 - RELATORIO DE PEDIDOS LIBERADOS
 	Local cQryPFtr 		:= ''
 	Local cQryVAbr 		:= ''
-	Local _nTotSdRede := 0
-	Local _nTotVenci  := 0
-	Local _nTotAVenc  := 0
+	Local _nTotSdRede 	:= 0
+	Local _nTotVenci  	:= 0
+	Local _nTotAVenc  	:= 0
 	Local _nPedFut 		:= 0
 	Local _nTotRede 	:= 0
 
 	If Alltrim(cEmpAnt) == "01"
 
 		_cDtEntr  := DTOC(SC5->C5_DTENTR)
+		_sDtEntr  := DTOS(SC5->C5_DTENTR)
 		_cCliente := SC5->C5_CLIENTE
+		_cLojaCli := SC5->C5_LOJACLI
 		_cNomeCli := ""
 		dbSelectArea("SA1")
 		dbSetOrder(1)
@@ -100,7 +107,10 @@ User Function MTA450I()
 			aPerPgt	:= {}
 
 			//Carrega Perfil de Pagamento
-			aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI)
+			//aPerPgt 	:= StaticCall(ADFIN103P,fMedPgt,SC5->C5_CLIENTE, SC5->C5_LOJACLI)
+			//@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_FIN103A0( SC5->C5_CLIENTE, SC5->C5_LOJACLI )
+
 			IF ValType(aPerPgt) = 'A' 
 				cPerfPgt	:= IIF(Empty(Alltrim(aPerPgt[2])) .OR. ValType(aPerPgt) != 'A','NDA', aPerPgt[2])
 				nMedAtr		:= IIF(ValType(aPerPgt) != 'A',0, aPerPgt[1])
@@ -210,9 +220,9 @@ User Function MTA450I()
 					FROM %TABLE:SC6% SC6 (NOLOCK)
 					WHERE 
 						SC6.C6_FILIAL = %xFilial:SC6%
-						AND SC6.C6_CLI = %Exp:(cTbClie)->CODIGO%
-						AND SC6.C6_LOJA = %Exp:(cTbClie)->LOJA%
-						AND SC6.C6_ENTREG > %Exp:DTOS(dDtFim)%
+						AND SC6.C6_CLI = %Exp:_cCliente%
+						AND SC6.C6_LOJA = %Exp:_cLojaCli%
+						AND SC6.C6_ENTREG > %Exp:_sDtEntr%
 						AND ((SC6.C6_QTDVEN - SC6.C6_QTDENT) > 0)
 						AND SC6.%notDel% 
 				EndSQL
@@ -228,7 +238,10 @@ User Function MTA450I()
 
 
 			//GRAVA REGISTRO DA LIBERAÇÃO DE CRÉDITO
-			If RecLock("ZEJ",.T.)
+			//ZEJ_FILIAL+ZEJ_NUM+ZEJ_DTLIB+ZEJ_HRLIB
+			ZEJ->(dbSetOrder(1))
+			If !ZEJ->(dbSeek(SC5->C5_FILIAL+SC5->C5_NUM+DTOS(MsDate())+TIME()))
+				RecLock("ZEJ",.T.)
 				ZEJ->ZEJ_FILIAL	:= SC5->C5_FILIAL					//
 				ZEJ->ZEJ_NUM		:= SC5->C5_NUM						//
 				ZEJ->ZEJ_DTLIB	:= MsDate()								//

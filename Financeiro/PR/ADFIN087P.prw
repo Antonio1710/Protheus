@@ -44,6 +44,9 @@ Static lAuto    := .t.
 	@history ticket 68450   - Fernando Macieira     - 18/02/2022 - Email em duplicidade para o cliente/vendedor
 	@history ticket TI      - Rodrigo Mello         - 01/03/2022 - Ajuste valor default e tipo do MV_#CTAPIX / MV_#CTALINK
 	@history ticket TI      - Leonardo P. Monteiro  - 16/03/2022 - Retirada da função unlockbyname.
+	@history Ticket 70142   - Edvar / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history ticket 70142 	- Rodrigo Mello 		- 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history ticket TI   	- Fernando Macieira     - 07/06/2022 - Chave duplicada no PIX - SE1
 /*/
 User Function ADFIN087P()
 
@@ -77,7 +80,9 @@ User Function ADFIN087P()
 		Return
 	EndIf
 	*/
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina job para geracao boleto de adiantamento do PV')
 
@@ -366,6 +371,11 @@ User Function GeraRAPV()
 		If !lAllTESFin
             logZBE(SC5->C5_NUM + " possui item com TES F4_DUPLIC='N'" )
 			Conout(" ADFIN087P - TES - PV N. " + SC5->C5_NUM + " POSSUI F4_DUPLIC=N - BOLETO WS NAO GERADO ")
+			// @history ticket TI   	- Fernando Macieira     - 07/06/2022 - Chave duplicada no PIX - SE1
+			RecLock("SC5", .F.)
+				SC5->C5_XWSBOLG := "N"
+			SC5->( msUnLock() )
+			//
 			Return
 		EndIf
 		//
@@ -411,9 +421,11 @@ User Function GeraRAPV()
 					cE1PORTADO := cBcoRA
 					cE1AGEDEP  := cAgeRA
 					cE1CONTA   := cCtaRA
-					StaticCall(SF2460I, fCalcBlt, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, cE1PORTADO, cE1AGEDEP, cE1CONTA)
+					//Static Call(SF2460I, fCalcBlt, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, cE1PORTADO, cE1AGEDEP, cE1CONTA)
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					u_2460IA0( SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO )
 
-		            logZBE(SE1->E1_NUM + " gerou E1_NUMBCO pela rotina SF2460I via STATICCALL")
+		            logZBE(SE1->E1_NUM + " gerou E1_NUMBCO pela rotina SF2460I via ROTINA")
 
 				EndIf
 
@@ -527,9 +539,18 @@ User Function GeraRAPV()
 		            { "E1_VALOR"  , nVlrRA           , NIL },;
 		            { "E1_HIST"   , cHistRA          , NIL }}
 
+		// @history ticket TI   	- Fernando Macieira     - 07/06/2022 - Chave duplicada no PIX - SE1
+		nOpcAuto := 3
+		SE1->( dbSetOrder(1) ) // E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, R_E_C_N_O_, D_E_L_E_T_
+		If SE1->( dbSeek(FWxFilial("SE1")+PadR(cTipoE1,TamSX3("E1_PREFIXO")[1])+PadR(AllTrim(SC5->C5_NUM),TamSX3("E1_NUM")[1])+PadR("",TamSX3("E1_PARCELA")[1])+PadR(cTipoE1,TamSX3("E1_TIPO")[1])) )
+			nOpcAuto := 4
+			logZBE(SC5->C5_NUM + " nOpcAuto = 4 para executar o EXECAUTO FINA040 (inclusao/alteracao) titulo tipo PR")
+		EndIf
+		//
+
 		lMsErroAuto := .f.
 		dbSelectArea("SE1")
-		msExecAuto( { |x,y| FINA040(x,y) }, aDadRA, 3 )  // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
+		msExecAuto( { |x,y| FINA040(x,y) }, aDadRA, nOpcAuto )  // 3 - Inclusao, 4 - Alteração, 5 - Exclusão
 
 		logZBE(SC5->C5_NUM + " EXECAUTO FINA040 foi executado")
 
@@ -583,9 +604,11 @@ User Function GeraRAPV()
 				cE1PORTADO := cBcoRA
 				cE1AGEDEP  := cAgeRA
 				cE1CONTA   := cCtaRA
-				StaticCall(SF2460I, fCalcBlt, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, cBcoRA, cAgeRA, cCtaRA)
+				//Static Call(SF2460I, fCalcBlt, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, cBcoRA, cAgeRA, cCtaRA)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_2460IA0( SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO )
 
-				logZBE(SE1->E1_NUM + " gerou E1_NUMBCO pela rotina SF2460I via STATICCALL")
+				logZBE(SE1->E1_NUM + " gerou E1_NUMBCO pela rotina SF2460I via ROTINA")
 
 				// Registra boleto bradesco WS
 				logZBE(SE1->E1_NUM + " esta acessando funcao T288BPCK7 para fazer registro do E1_NUMBCO")				

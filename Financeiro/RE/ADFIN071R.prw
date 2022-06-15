@@ -15,6 +15,7 @@
 	@history Chamado TI    - William Costa   - 29/01/2020 - Retirado o campo A1_MSBLQL para listar todos os clientes até os inativos, para verificar se tem divida financeira.
 	@history Ticket 001545 - Abel Babini     - 14/09/2020 - Ajuste no fechamento das tabelas temporárias
 	@history Ticket 18602  - Fernando Sigoli - 20/08/2021 - Alterado rotina para trazer como defult nos parametros Ano-1
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 
 User Function ADFIN071R()
@@ -3299,3 +3300,14 @@ STATIC FUNCTION NOMECLIENTE()
 	RestArea(aArea)
 
 RETURN(cNome)
+
+/*/{Protheus.doc} u_FIN071A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN071A0( uPar1, uPar2, uPar3, uPar4 )
+Return( geraRelatorio( uPar1, uPar2, uPar3, uPar4 ) )

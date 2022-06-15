@@ -12,6 +12,7 @@
 	@history Everson, 27/02/2020. Tratamento para marcação do sistema origem do lançamento.
 	@history Everson, 11/03/2020. Ch. 053926 Alterado o índice de busca da rotina.
 	@history Everson, 17/06/2020. Ch. 058732 Tratamento para o fonte utilizar a mesma função que está no fonte ADLOG022P.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADLOG030P() // U_ADLOG030P()
 
@@ -35,7 +36,11 @@ User Function ADLOG030P() // U_ADLOG030P()
 	Aadd(aSays,"Leitura Manual de Oléo CTAPLUS. " )
 	
 	Aadd(aButtons, { 5,.T.,{|o| Pergunte(cPerg,.T.) }})
-	Aadd(aButtons, { 1,.T.,{|o| o:oWnd:End(), MsAguarde({|| StaticCall(ADLOG022P,impDados,MV_PAR01,MV_PAR02) },"Função ADLOG030P(LERCTAPLUS)","Obtendo registros...")}})
+	//Aadd(aButtons, { 1,.T.,{|o| o:oWnd:End(), MsAguarde({|| Static Call(ADLOG022P,impDados,MV_PAR01,MV_PAR02) },"Função ADLOG030P(LERCTAPLUS)","Obtendo registros...")}})
+	
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	Aadd(aButtons, { 1,.T.,{|o| o:oWnd:End(), MsAguarde({|| u_LOG022A0( MV_PAR01,MV_PAR02 ) },"Função ADLOG030P(LERCTAPLUS)","Obtendo registros...")}})
+
 	Aadd(aButtons, { 2,.T.,{|o| o:oWnd:End() }})
 	  
 	FormBatch( cCadastro, aSays, aButtons )  

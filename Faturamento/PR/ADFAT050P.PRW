@@ -125,7 +125,7 @@ Return Nil
     @since 10/05/2022
     @version 01
 /*/
-User Function ADFAT50B()
+User Function ADFAT50B(cNmOrdem)
 
     //Variáveis.
     Local aArea       := GetArea()
@@ -141,6 +141,14 @@ User Function ADFAT50B()
     Local aCaixas     := {}
     Local aSilos      := {}
     Local nAux        := 1
+    Local aDSeqP      := {}
+    Local cTktNv      := ""
+    Local cSeqNV      := ""
+    Local cLacre      := ""
+    Local cCaixa      := ""
+    Local cSilo       := ""
+
+    Default cNmOrdem  := ""
 
     cQuery := ""
     cQuery += " SELECT " 
@@ -155,10 +163,23 @@ User Function ADFAT50B()
         cQuery += " AND ZHQ_ORDEM = ZIF_NUMERO " 
     cQuery += " WHERE " 
         cQuery += " ZHQ_FILIAL = '" + FWxFilial("ZHQ") + "' " 
-        cQuery += " AND ZHQ_PROCES = '2' " 
+
+        If Empty(cNmOrdem)
+            cQuery += " AND ZHQ_PROCES = '2' " 
+
+        Else
+            cQuery += " AND ZHQ_ORDEM = '" + cNmOrdem + "' " 
+
+        EndIf
+
         cQuery += " AND ZHQ.D_E_L_E_T_ = '' " 
         cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY REC " 
+
+    If Select("D_GEMBA")
+        D_GEMBA->(DbCloseArea())
+        
+    EndIf
 
     TcQuery cQuery New Alias "D_GEMBA"
     DbSelectArea("D_GEMBA")
@@ -176,6 +197,33 @@ User Function ADFAT50B()
 
         Begin Transaction
 
+            //Ajusta a sequência do ticket de pesagem.
+            aDSeqP := U_ADFAT355(cCP, cRoteiro)
+
+            If Len(aDSeqP) <= 0
+                cMsgError := "Não foi possível obter dados para verificação de troca de sequência do ticket"
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            cTktNv := aDSeqP[1]
+            cSeqNV := aDSeqP[2]
+
+            //Ajusta sequência de pesagem.
+            If ! U_ADFAT192(cCP, cOrdem, cTktNv, cSeqNV, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            If ! U_ADFAT16A(cOrdem)
+                cMsgError := "Ordem de pesagem " + cOrdem + " não localizado(ZIF)(ADFAT50B)."
+                RestArea(aArea)
+                Return .F.
+
+            EndIf
+
             //Valida se o produto retornado do Gemba é o mesmo da ordem de pesagem.
             If Alltrim(cValToChar(D_GEMBA->ZHQ_PRODUT)) <> Alltrim(cValToChar(D_GEMBA->ZIF_PRDSAG))
                 
@@ -191,7 +239,9 @@ User Function ADFAT50B()
             //Lança lacres.
             For nAux := 1 To Len(aLacres)
 
-                If ! U_ADFAT38A(cCP, cRoteiro, cOrdem, cPlaca, aLacres[nAux], @cMsgError)
+                cLacre := Substr(Alltrim(cValToChar(aLacres[nAux])),1,10)
+
+                If ! U_ADFAT38A(cCP, cRoteiro, cOrdem, cPlaca, cLacre, @cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -203,7 +253,9 @@ User Function ADFAT50B()
             //Lança caixas.
             For nAux := 1 To Len(aCaixas)
 
-                If ! U_ADFAT39A(cCP, cRoteiro, cOrdem, cPlaca, aCaixas[nAux], @cMsgError)
+                cCaixa := Substr(Alltrim(cValToChar(aCaixas[nAux])),1,2)
+
+                If ! U_ADFAT39A(cCP, cRoteiro, cOrdem, cPlaca, cCaixa, @cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -215,7 +267,9 @@ User Function ADFAT50B()
             //Lança silos.
             For nAux := 1 To Len(aSilos)
 
-                If ! U_ADFAT40A(cCP, cRoteiro, cOrdem, cPlaca, aSilos[nAux], @cMsgError)
+                cSilo := Substr(Alltrim(cValToChar(aSilos[nAux])),1,6)
+
+                If ! U_ADFAT40A(cCP, cRoteiro, cOrdem, cPlaca, cSilo, @cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -247,7 +301,7 @@ User Function ADFAT50B()
 
     RestArea(aArea)
 
-Return Nil
+Return lRet
 /*/{Protheus.doc} ajustProd
     Ajusta o produto na ordem de pesagem e ordem de carregamento de ração.
     @type  Static Function
@@ -271,6 +325,8 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
     Local nRecMax  := 0
     Local cCodRet  := ""
     Local aDados   := {}
+    Local cProProth:= ""
+    Local cDescPro := ""
 
     Default cMsgError := ""
 
@@ -373,18 +429,38 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
 
         EndIf
 
-        //Altera lote na ordem de pesagem.
-        If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_LOTE", cCodRet, @cMsgError)
+        cProProth := Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_PRDPRO")
+        cDescPro  := Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_DESSAG")
+
+        //Altera produto, descrição e lote na ordem de carregamento de ração.
+        aDados := {}
+        Aadd(aDados,{"ZIR_PRDSAG", cProdGemba})
+        Aadd(aDados,{"ZIR_PRDPRO", cProProth})
+        Aadd(aDados,{"ZIR_DESC"  , cDescPro})
+        Aadd(aDados,{"ZIR_LOTPRD", cCodRet})
+        Aadd(aDados,{"ZIR_DESLOT", cDesc})
+        If ! U_ADFAT32D(cOrdemC, aDados, @cMsgError)
             DisarmTransaction()
             Break
 
         EndIf
 
-        //Altera lote na ordem de carregamento de ração.
-        aDados := {}
-        Aadd(aDados,{"ZIR_LOTPRD", cCodRet})
-        Aadd(aDados,{"ZIR_DESLOT", cDesc})
-        If ! U_ADFAT32D(cOrdemC, aDados, @cMsgError)
+        //Altera produto sag da ordem de pesagem.
+        If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_PRDSAG", cProdGemba, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera produto protheus da ordem de pesagem.
+        If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_PRDPRO", cProProth, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera lote na ordem de pesagem.
+        If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_LOTE", cCodRet, @cMsgError)
             DisarmTransaction()
             Break
 
@@ -1547,7 +1623,7 @@ User Function ADFAT50M(cGranjada, cMsgError)
 
     EndIf
 
-    cTpCliFor := Alltrim(cValToChar(ZIS->ZIS_TIPO))
+    cTpCliFor := Alltrim(cValToChar(ZIS->ZIS_CLIFOR))
     cCodigo   := Alltrim(cValToChar(ZIS->ZIS_FORNEC))
     cLoja     := Alltrim(cValToChar(ZIS->ZIS_LOJA))
 

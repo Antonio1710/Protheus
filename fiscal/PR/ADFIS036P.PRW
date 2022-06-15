@@ -9,6 +9,7 @@
     @author Everson
     @since 16/12/2019
     @version 01
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADFIS036P() // U_ADFIS036P()
     
@@ -30,7 +31,8 @@ User Function ADFIS036P() // U_ADFIS036P()
 		Return
 	EndIf
 
-    PtInternal(1,ALLTRIM(PROCNAME()))
+    // @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para consulta Sintegra. Chamado 052760.')
 

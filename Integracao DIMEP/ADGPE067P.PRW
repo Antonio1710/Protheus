@@ -10,8 +10,7 @@
 	@version 01
 	@history TI - ADRIANO SAVOINE - Dismembrando o Schedule ADGPE024P para rodar somente Motoristas neste.
 	@history Chamado 66187 - Leonardo P. Monteiro  - 10/01/2022 - Implementação da integração de motoristas estrangeiros que utilizam passaporte ao invés do CPF como identificação.
-	
-
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 
 USER FUNCTION ADGPE067P(aParam)
@@ -85,7 +84,8 @@ USER FUNCTION ADGPE067P(aParam)
 	cLinked := GetMV("MV_#RMLINK",,"RM") 
 	cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	ConOut("INICIO DO SCHEDULE ADGPE067P" + '||' + DTOC(DATE()) + '||' + TIME() + '|| Empresa:' + aParam[1] + '|| Filial:' + aParam[2])       
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Integracao com o sistema DIMEP de catracas IntegraÃ§Ã£o de Funcionarios e Caminhoneiros a partir de sql Usando o linked Server para DIMEP')

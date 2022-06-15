@@ -11,6 +11,7 @@
 	@since 17/03/2020
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	/*/
 User Function ADFIS040P() // U_ADFIS040P()
 	//Declaracao de Variaveis
@@ -40,7 +41,8 @@ User Function ADFIS040P() // U_ADFIS040P()
 		// 	Return
 		// EndIf
 
-		PtInternal(1,ALLTRIM(PROCNAME()))
+		//@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Lançamento de documento de entrada (CT-e) por xml')
 		logZBN("1") //Log início.

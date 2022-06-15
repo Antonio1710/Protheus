@@ -23,6 +23,7 @@
 	@history Chamado TI    - Leonardo P. Monteiro - 22/02/2022 - Adição de históricos na gravação do valor acumulados.
 	@history Chamado 68815 - Leonardo P. Monteiro - 24/02/2022 - Correção da ordenação dos movimentos quando os movimentos de inclusão de títulos e baixas ocorrem no mesmo dia.
 																 Ajustamos também a regras de baixas relacionadas aos movimentos de juros.
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 
 
@@ -83,7 +84,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	
 	ConOut("INICIO DO SCHEDULE ADFIN002P" + '||' + DTOC(DATE()) + '||' + TIME()) 
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Funcao para gerar a data de acumulo e o valor do maior acumulo do envio de arquivo da cisp do financeiro.')
 	
