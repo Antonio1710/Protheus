@@ -54,20 +54,21 @@
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 	@history ticket 18465 - Everson           - 26/05/2022 - Tratamento para envio de nota de saída de venda vinculada a ordem de pesagem.
+	@history ticket 74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057.
 /*/
 User Function M460FIM()
 
-	Local Area		:= GetArea()
-	Local cFilGranjas    := GetMV("MV_#GRANJA",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
-	Local _aCabec 	:= {}
-	Local _aItens 	:= {}
-	Local cCliCod 	:= GetMV("MV_#LFVCLI",,"027601")
-	Local cCliLoj 	:= GetMV("MV_#LFVLOJ",,"00")
-	Local cProdPV 	:= GetMV("MV_#LFVPRD",,"300042")  	//  publicar este em producao
-	Local cTESPV  	:= GetMV("MV_#LFVTES",,"701")       
-	Local cFilGFrt	:= Alltrim(SuperGetMv( "MV_#M46F5" , .F. , '' ,  )) // Ricardo Lima-CH:044314-19/11/18
-	Local cEmpFrt	:= Alltrim(SuperGetMv( "MV_#M46F6" , .F. , '' ,  )) //Everson-CH:044314-06/08/19.
-	Local nVlr 		:= 0 //Everson - 03/09/2020. Chamado 744.
+	Local Area		  := GetArea()
+	Local cFilGranjas := GetMV("MV_#GRANJA",,"03|0A") // GetMV("MV_#LFVFIL",,"03") // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A // @history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
+	Local _aCabec 	  := {}
+	Local _aItens 	  := {}
+	Local cCliCod 	  := GetMV("MV_#LFVCLI",,"027601")
+	Local cCliLoj 	  := GetMV("MV_#LFVLOJ",,"00")
+	Local cProdPV 	  := GetMV("MV_#LFVPRD",,"300042")  	//  publicar este em producao
+	Local cTESPV  	  := GetMV("MV_#LFVTES",,"701")       
+	Local cFilGFrt	  := Alltrim(SuperGetMv( "MV_#M46F5" , .F. , '' ,  )) // Ricardo Lima-CH:044314-19/11/18
+	Local cEmpFrt	  := Alltrim(SuperGetMv( "MV_#M46F6" , .F. , '' ,  )) //Everson-CH:044314-06/08/19.
+	Local nVlr 		  := 0 //Everson - 03/09/2020. Chamado 744.
 	
 	Private cMostraErro     
 
@@ -884,6 +885,12 @@ Static Function GeraPreNFE()
 	Local cTESPre   := ''//GetMV("MV_#LFVTEE",,"031") //Ch:055979 - Abel Babini			- 28/02/20 - COMPLEMENTO FRANGO VIVO - Retirada da TES para não gerar erro nos filtros das outras rotinas do processo (INTNFEB)
 
 	Local cF1Origem := GetMV("MV_#LFVSF1",,"FRANGOVI") // Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 13/05/2019
+
+	// @history ticket   74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
+	If AllTrim(cFilPV) == "0A"
+		cFornCod := GetMV("MV_#LFVGHH",,"030057")
+	EndIf
+	//
 
 	// @history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 	If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "0B"
