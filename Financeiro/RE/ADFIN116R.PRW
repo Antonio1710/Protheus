@@ -13,6 +13,7 @@
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Correção dos valores em segunda moeda.
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Melhoria e correções após validação.
 	@history chamado 72972 - Jonathan Carvalho    - 17/05/2022 - Adicionado With lock
+	@history Ticket  72972 - Jonathan Carvalho    - 14/06/2022 - Alterado consulta para BeginSql para correção de erro.
 /*/
 
 User Function ADFIN116R()
@@ -71,8 +72,8 @@ User Function ADFIN116R()
 	Private nTotal		 := 0
 	
 	//Ticket 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e tipos de títulos.
-	Private cTpExc		 := Formatin(SupergetMv("MV_XTIEXCC",,"NDF"),";")
-	Private cFoExc		 := Formatin(SupergetMv("MV_XFOEXCC",,"014000"),";")
+	Private cTpExc		 := Formatin(SupergetMv("MV_XTIEXCC",,'NDF'),";")
+	Private cFoExc		 := Formatin(SupergetMv("MV_XFOEXCC",,'014000'),";")
 	Private cString 	 := "SE5"
 	Private cDtIni		 := Dtoc(Date()) + "-"+Alltrim(Time())
 	Private cDtFim		 := ""
@@ -757,48 +758,81 @@ Static Function fDados()
 	oProcess:incRegua1("Consultando movimentos financeiros (4/8)")
 	oProcess:setRegua2(2)
 	oProcess:incRegua2("Importando...")
-	
+
 	//If mv_par08 == 1 //Analitico
-	cQuery:=" SELECT E5_FILIAL,E5_PREFIXO,E5_NUMERO,E5_PARCELA,E5_MOEDA,E5_TXMOEDA,E5_VLMOED2,E5_TIPO,E5_CLIFOR,E5_LOJA,E5_DATA,E5_VALOR,E5_TIPODOC,E5_RECPAG, "
-	cQuery+=" 		  E5_MOTBX,E5_VLACRES, E5_VLDECRE,	E5_VLDESCO, E5_VLJUROS "
-	cQuery+=" FROM " + RetSqlName("SE5") + " WITH(NOLOCK) "
-	cQuery+=" WHERE D_E_L_E_T_ <> '*' "
-	cQuery+=" AND E5_CLIFOR BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"
-	cQuery+=" AND E5_LOJA BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "'"				
-	cQuery+=" AND E5_SITUACA <> 'C' "	
-	cQuery+=" AND E5_DATA <= '" + DTOS(mv_par07) + "' "
-	cQuery+=" AND E5_DATA BETWEEN '" + DTOS(mv_par05) + "' AND '" + DTOS(mv_par06) + "'"
-	cQuery+=" AND E5_TIPO+E5_TIPODOC+E5_MOTBX <> 'PA BACMP' "
-	cQuery+=" AND E5_TIPO+E5_TIPODOC+E5_RECPAG <> 'PA VLR' "
-	cQuery+=" AND E5_TIPO+E5_TIPODOC+E5_RECPAG <> 'PA BAR' "	
-	cQuery+=" AND E5_TIPO+E5_TIPODOC+E5_MOTBX <> 'PA ESCMP' "	
-	cQuery+=" AND E5_TIPODOC+E5_RECPAG <> 'JRP' "	
-	//Ticket 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e tipos de títulos.
-	//cQuery+=" AND E5_TIPO <> 'NDF' "
-	cQuery+=" AND E5_TIPO NOT IN "+ cTpExc +" "
-	cQuery+=" AND E5_CLIFOR NOT IN "+ cFoExc +" "
-	cQuery+=" AND E5_TIPODOC <> 'DC' "	//Chamado 028902    
-	cQuery+=" AND E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO+E5_CLIFOR+E5_LOJA "  //retirada filial
-	cQuery+=" IN (  "
-	cQuery+=" SELECT E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA FROM " +  RetSqlName("SE2") + " WITH(NOLOCK) "   //retirada filial
-	cQuery+=" WHERE E2_EMIS1 BETWEEN '" + DTOS(mv_par05) + "' AND '" + DTOS(mv_par06) + "'"
-	cQuery+=" AND D_E_L_E_T_ <> '*' "
-	cQuery+=" AND E2_FORNECE BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"
-	cQuery+=" AND E2_LOJA BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "'"	
-	//Ticket 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e tipos de títulos.
-	//cQuery+=" AND E2_TIPO <> 'NDF' "	
-	cQuery+=" AND E2_TIPO NOT IN "+ cTpExc +" "
-	cQuery+=" AND E2_FORNECE NOT IN "+ cFoExc +" "	
-	cQuery+=" AND E2_CREDIT = '" + Alltrim(mv_par09) + "' "	 	
-	/*
-	If !Alltrim(mv_par10) == "XXX"
-		cQuery+=" AND E2_PREFIXO <> 'RJ' "	
-	Endif
-	*/	
-	cQuery+=" ) "
-	cQuery+=" ORDER BY E5_CLIFOR,E5_LOJA,E5_DATA,E5_RECPAG "	
+	//Tkt 72972 alteração da consulta para BeginSql
+	//Tratando as variaveis cTpExc e cFoExc
+	cTpExc := REPLACE(cTpExc,"('","")
+	cTpExc := REPLACE(cTpExc,"')","")
+
+	cFoExc := REPLACE(cFoExc,"('","")
+	cFoExc := REPLACE(cFoExc,"')","")	
+
+	BeginSql Alias cAliSE5
 	
-	TCQUERY cQuery ALIAS &cAliSE5 NEW
+		SELECT  E5_FILIAL,
+		E5_PREFIXO,
+		E5_NUMERO,
+		E5_PARCELA,
+		E5_MOEDA,
+		E5_TXMOEDA,
+		E5_VLMOED2,
+		E5_TIPO,
+		E5_CLIFOR,
+		E5_LOJA,
+		E5_DATA,
+		E5_VALOR,
+		E5_TIPODOC,
+		E5_RECPAG, 
+	  	E5_MOTBX,
+		E5_VLACRES, 
+		E5_VLDECRE,	
+		E5_VLDESCO, 
+		E5_VLJUROS 
+		FROM %table:SE5% SE5 (NOLOCK) 
+		WHERE SE5.D_E_L_E_T_ = ''	 
+		AND E5_CLIFOR BETWEEN %Exp:mv_par01% AND %Exp:mv_par02%
+		AND E5_LOJA BETWEEN %Exp:mv_par03% AND %Exp:mv_par04%			
+		AND E5_SITUACA <> 'C' 
+		AND E5_DATA <= %Exp:Dtos(mv_par07)%	
+		AND E5_DATA BETWEEN %Exp:Dtos(mv_par05)% AND %Exp:Dtos(mv_par06)%
+		AND E5_TIPO+E5_TIPODOC+E5_MOTBX <> 'PA BACMP' 
+		AND E5_TIPO+E5_TIPODOC+E5_RECPAG <> 'PA VLR' 
+		AND E5_TIPO+E5_TIPODOC+E5_RECPAG <> 'PA BAR' 
+		AND E5_TIPO+E5_TIPODOC+E5_MOTBX <> 'PA ESCMP' 	
+		AND E5_TIPODOC+E5_RECPAG <> 'JRP' 
+		//Ticket 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e tipos de títulos.
+		//cQuery+=" AND E5_TIPO <> 'NDF' "	
+		AND E5_TIPO NOT IN (%Exp:cTpExc%)
+		AND E5_CLIFOR NOT IN (%Exp:cFoExc%)
+		AND E5_TIPODOC <> 'DC' 	//Chamado 028902
+		AND E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO+E5_CLIFOR+E5_LOJA   //retirada filial
+		IN (  
+		SELECT E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA //retirada filial
+		FROM %table:SE2% SE2 (NOLOCK)    
+		WHERE E2_EMIS1 BETWEEN %Exp:Dtos(mv_par05)% AND %Exp:Dtos(mv_par06)%
+		AND SE2.D_E_L_E_T_ = ''
+		AND E2_FORNECE BETWEEN %Exp:mv_par01% AND %Exp:mv_par02%
+		AND E2_LOJA BETWEEN %Exp:mv_par03% AND %Exp:mv_par04%
+		//Ticket 8797 - Leonardo P. Monteiro - 02/07/2019 - Inclusão de parâmetro de exceção para exclusão de fornecedores (Governos, Prefeiuras e etc...) e tipos de títulos.
+		//cQuery+=" AND E2_TIPO <> 'NDF' "	
+		AND E2_TIPO NOT IN (%Exp:cTpExc%)
+		AND E2_FORNECE NOT IN (%Exp:cFoExc%)
+		AND E2_CREDIT = %Exp:AllTrim(mv_par09)%	
+		/*
+		If !Alltrim(mv_par10) == "XXX"
+		cQuery+=" AND E2_PREFIXO <> 'RJ' "	
+		Endif
+		*/	
+		) 
+		ORDER BY E5_CLIFOR,E5_LOJA,E5_DATA,E5_RECPAG 
+
+	EndSql 
+
+	aDados := GetLastQuery()
+	cMensagem := ""
+	cMensagem += "* cAlias - " + aDados[1] + Chr(13) + Chr(10)
+	cMensagem += "* cQuery - " + aDados[2]
 	
 	dbselectArea(cAliSE5)
 	(cAliSE5)->(DbgoTop())

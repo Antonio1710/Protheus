@@ -21,6 +21,7 @@
 	@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574  - Abel Babini - 25/04/2022 - Projeto FAI
 	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE. 
+	@history Ticket 72835  - Abel Babini - 14/06/2022 - Atualiza valores de Rede
 /*/
 
 User Function ADFIN109P()
@@ -1003,6 +1004,7 @@ Static Function xGrdLib()
 	ENDIF
 
 	IF Alltrim((cTbClie)->TPCLI) == 'REDE' //REDE
+		xAtuRed((cTbClie)->CODIGO) //Ticket 72835  - Abel Babini - 14/06/2022 - Atualiza valores de Rede
 		//Informações da Rede
 		
 		BeginSQL alias cQryRede
