@@ -13,6 +13,7 @@ Static nTipoFrt
 	@since 20/01/2020
 	@version 01
 	@history Everson, 22/01/2020, Chamado 054941. Adicionado restarea antes da chamada de alteração/exclusão e tratamento para pedido vinculado a nota fiscal.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 User Function ADLOG066P() // U_ADLOG066P()
 
@@ -35,7 +36,9 @@ User Function ADLOG066P() // U_ADLOG066P()
 	nTipoFrt := MV_PAR01
 
 	//
-	cDescFrt :=  StaticCall(ADLOG040P, retDescFrt, MV_PAR01)
+	//cDescFrt :=  Static Call(ADLOG040P, retDescFrt, MV_PAR01)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	cDescFrt :=  u_LOG040A0( MV_PAR01 )
 
     //
 	oBrowse := FWMBrowse():New()

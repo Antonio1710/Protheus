@@ -25,6 +25,7 @@ remessa para integrado (SAG). Chamado 058120.
 @since 22/05/2020
 @version 1.0
 @history Everson - 28/05/2020. Chamado  058120. Adiconado consulta da situação da nota fiscal.
+@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADSAG002P() // U_ADSAG002P()  
 
@@ -77,7 +78,9 @@ Static Function remesInt(nOpc)
     Conout( DToC(Date()) + " " + Time() + " ADSAG002P - remesInt - movimento - nOpc " + cValToChar(nOpc) )
 
 	//
-	aNFTrans := StaticCall(INTEPEDB,telProcess,nOpc,.T.)
+	//aNFTrans := Static Call(INTEPEDB,telProcess,nOpc,.T.)
+    //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	aNFTrans := u_TEPEDBA1(nOpc,.T.)
 
     //
     cIdent := RetIdEnti() //Everson - 28/05/2020. Chamado  058120.
@@ -194,7 +197,9 @@ Static Function geraDanfe(cNota, cSerie, cIdent)
     nColAux   := 0
         
     //Chamando a impressão da danfe no RDMAKE
-    StaticCall(DANFEII, DanfeProc, @oDanfe, @lEnd, cIdent, , , @lExistNFe)
+    //Static Call(DANFEII, DanfeProc, @oDanfe, @lEnd, cIdent, , , @lExistNFe)
+    //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	u_NFEIIA0(@oDanfe, @lEnd, cIdent, , , @lExistNFe)
 
     //
     If ! lExistNFe
