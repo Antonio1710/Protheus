@@ -105,6 +105,12 @@ Static Function RPTPrint(oReport)
 		cQuery += " ZIF_FILIAL = C5_FILIAL "
 		cQuery += " AND ZIF_NUMERO = C5_XORDPES "
 
+		cQuery += " LEFT OUTER JOIN "
+		cQuery += " " + RetSqlName("ZHR") + " (NOLOCK) AS ZHR ON "
+		cQuery += " C5_FILIAL = C5_FILIAL "
+		cQuery += " AND C5_NUM = ZHR_NVPED "
+		cQuery += " AND ZHR.D_E_L_E_T_ = '' " 
+
     cQuery += " WHERE " 
         cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
         cQuery += " AND ZIG_DTPES1 >= '" + DToS(MV_PAR01) + "' " 
@@ -114,11 +120,12 @@ Static Function RPTPrint(oReport)
         cQuery += " AND ZIG_DTPES2 <> ''  "  
 		
 		cQuery += " AND C5_PEDSAG = '' "
+
+		cQuery += " AND ZHR_NVPED IS NULL "
         
 		cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
         cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
         cQuery += " AND SC5.D_E_L_E_T_ = '' " 
-
 
     cQuery += " ORDER BY ZIF_ROTEIR, ZIR_NUMERO, ZIF_NUMERO, ZIG_NUMERO " 
 	
