@@ -54,7 +54,7 @@
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
 	@history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 	@history ticket 18465 - Everson           - 26/05/2022 - Tratamento para envio de nota de saída de venda vinculada a ordem de pesagem.
-	@history ticket 74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
+	@history ticket 74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057.
 /*/
 User Function M460FIM()
 
