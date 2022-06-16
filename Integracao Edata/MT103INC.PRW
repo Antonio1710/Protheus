@@ -9,6 +9,7 @@
 	@version 01
 	@history Chamado:047834 Fernando sigoli 13/03/2019 - Tratamento para nao validar notas do TIpo CTE, pois integra classificada.
 	@history Chamado: T.I.  Everson 17/07/2020 - Substituída função TcLink por LinkedServer.
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	/*/
 User Function MT103INC()
 
@@ -18,12 +19,13 @@ User Function MT103INC()
 	Local lRet	  		:= .T.   
 	Local cUsr	   	    := RetCodUsr()
 	Local cUsrMaster	:= GetMV('MV_X_USSEG',,"000000")   // usuário master
+	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³TRATAMENTO INTEGRAÇÃO EDATA - INICIO³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-	If Alltrim(cEmpAnt) == "01"  
+	If Alltrim(cEmpAnt) $ cEmpSF
 
 		If SF1->F1_TIPO=="D" .AND. SF1->F1_XFLAGE == "1"
 			
