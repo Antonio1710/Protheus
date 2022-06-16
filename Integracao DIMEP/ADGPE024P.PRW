@@ -47,6 +47,7 @@
 	@history Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022 - Criado o parametro no configurador com 1 dia e alterada a query pois estava ocorrendo erro na hora de montar a mesma e transformado o dado.
 	@history TICKET: 74255  - ADRIANO SAVOINE - 09/06/2022 - Tratado a Filial de Itapira 0B.
 	@histori Ticket  74756  - ADRIANO SAVOINE - 15/06/2022 - Efetuado o ajuste para as filiais colocar zero ex: 02,03 etc.
+	@history Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022 - Corrigido a query para resolver os valores do RM.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1855,35 +1856,15 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] AS PFCOMPL WITH (NOLOCK)
 	cQuery += "				ON PFCOMPL.CODCOLIGADA                              = PFUNC.CODCOLIGADA
 	cQuery += "				AND PFCOMPL.CHAPA                                   = PFUNC.CHAPA
-	cQuery += "				AND ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') <> ''0'' "  // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-	
+	cQuery += "				AND ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') <> ''0'' "  // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.	
 	cQuery += "			    WHERE PFUNC.CODCOLIGADA                             = ''"+cEmpresa+"''
 	cQuery += "			    AND PFUNC.CODTIPO                                   <> ''A''
-	//cQuery += "				AND PFUNC.CODSITUACAO                               <> ''Z'' // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 	cQuery += "				AND PFUNC.CODHORARIO                                <> ''A001''
-
-	//Ticket: TI - 03/02/2022 - Adriano Savoine
-	//cQuery += "				AND PFUNC.DATADEMISSAO                             <= GETDATE() " // debug - inibir 
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()-"+nDias+" "  //Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022
+	//cQuery += "				AND PPESSOA.CPF                                     = ''50199207895'' Linha para teste de Colaborador 
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= CONVERT(date, GETDATE()-"+nDias+") "  //Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL) " // debug - voltar 
-	
-	// @history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
-	//Ticket: 55228 - 04/10/2021 - Adriano Savoine INICIO
-	/*
-	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE()   
-	cQuery += "				OR  PFUNC.RECMODIFIEDON >= GETDATE() )
-	cQuery += "				OR (PPESSOA.RECMODIFIEDON >= GETDATE() - 1
-	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
-	*/
-	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF= ''27499962873'' "
-	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
-	//
-
 	cQuery += "				AND PFUNC.PISPASEP                                  NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
-
-	cQuery += "			ORDER BY PPESSOA.CPF
-
+	cQuery += "			ORDER BY  PFUNC.NOME,PFUNC.DATAADMISSAO
 	cQuery += " ')
 
 	tcQuery cQuery New Alias TRB
