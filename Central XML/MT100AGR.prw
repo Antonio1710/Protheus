@@ -23,6 +23,8 @@
 */
 User Function MT100AGR()
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E na na após a confirmação da NF, apos commit ')
+
 	//Validar apenas chamada da Rotina de CT-e
 	If IsInCallStack( "U_RECNFECTE" ) .And. Type( "aCtePriv" ) <> "U" .And. ValType( aCtePriv[01] ) == "D"
 		AltVencSe2()

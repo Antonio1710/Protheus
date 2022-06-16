@@ -50,6 +50,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 67570   - Everson         - 02/02/2022 - Tratamento error log.
   @history Ticket 67570   - Everson         - 04/02/2022 - Tratamento error log.
   @history Ticket 69712   - Fernan Macieira - 14/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
+  @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
   @history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
   @history Ticket 70597   - Abel Babini     - 15/04/2022 - Alteração na Janela de Complemento Bloco C113
   @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
@@ -244,7 +245,7 @@ User Function MT103FIM()
     //Fim TKT - 67494 
 	  //Inicio Chamado: 043873 24/09/2018 - Adriana Oliveira
 	  //Somente devolução com formulario proprio
-'	  If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. SF1->F1_FORMUL == "S" .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
+	  If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. SF1->F1_FORMUL == "S" .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
 	
 	    RecLock("SF1",.F.)
 	    SF1->F1_TPFRETE := BuscaFret(SF1->F1_FILIAL,SF1->F1_SERIE,SF1->F1_DOC,SF1->F1_FORNECE,SF1->F1_LOJA,SF1->F1_TIPO)
@@ -2313,7 +2314,7 @@ Return
   @version 01
 /*/
 Static Function atlSC7Dt(cForn, cLj, cDoc, cSerie)
-  //StaticCall(MT103FIM,atlSC7Dt,'014769','01','000042477','1  ')
+  //Static Call(MT103FIM,atlSC7Dt,'014769','01','000042477','1  ')
   //Variáveis.
   Local aArea := GetArea()
   Local cUpdt := ""

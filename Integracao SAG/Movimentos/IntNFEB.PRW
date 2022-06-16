@@ -60,8 +60,11 @@
 	@history ticket   69741 - Jonathan Carvalho - 16/03/2022 - Condição para localizar a NF de origem para produtor rural
 	@history ticket   70424 - Jonathan Carvalho - 05/04/2022 - Alterado pesquisa de localização do numero de Chave das NF de Saida.
 	@history ticket   71889 - Jonathan Carvalho - 26/04/2022 - Alteração na consulta para puxar a emissão da HH fonte comentando na linha 1286 a 1298 data de emissão ja incluida corretamente no banco de integração
+	@history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
+	@history ticket   74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
 /*/
 User Function INTNFEB()
+
 	Local aArea             := GetArea()
 	Local oInterface
 	Local oSBtn01
@@ -79,6 +82,7 @@ User Function INTNFEB()
 	Local oBusca
 	Local oBtnBusca
 	Local oCSV 
+
 	Private cBusca          := ""
 	Private _sDtLim         := DToS(dDatabase)
 	Private _conProthe      := advConnection()
@@ -99,13 +103,16 @@ User Function INTNFEB()
 	Private aColsInterface  := {}
 	Private cInsSer         := Alltrim(cValToChar(GetMv("MV_#SERIMP"))) // Everson - 03/07/2017. Chamado 035012.
 	Private cNFApanha       := ''
+
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Vai gerar Pre-Notas por uma opção no menu do usuario ')
+
 	// FWNM - CHAMADO 037757 - 07/05/2018
 	If msgYesNo("Classificar as notas fiscais diárias de Complemento de Frango Vivo?")
 		LFVClass()
 		Return
 	EndIf
 	// FWNM - FIM
+
 	aFiltro := {}
 	Aadd(aFiltro,"1=Todos")
 	Aadd(aFiltro,"2=Entrada por compra")
@@ -634,6 +641,8 @@ User Function InteNfeB()
 	Local cICCPTra	 := aTesTrans[3]
 	//
 	Local aPCSAG := {}
+	Local k
+
 	// define link com a base da Interface
 	_cNomBco2  := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
 	_cSrvBco2  := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
@@ -3262,9 +3271,7 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function LFVPreNotas(lClass)
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Declaracao de Variaveis                                             ³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
 	Local aCTEInteg	:= {}
@@ -3274,12 +3281,11 @@ Static Function LFVPreNotas(lClass)
 	Local oVerde 	:= LoadBitmap( GetResources(), "BR_VERDE")
 	Local oVermelho := LoadBitmap( GetResources(), "BR_VERMELHO")
 	Local cOper		:= ""
-	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
-	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
-	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
-	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
-	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
-// Dados da Pre-Nota
+	Local cFilPV    := FWxFilial("SF2") //GetMV("MV_#LFVFIL",,"03") // @history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
+	Local cCliCod   := GetMV("MV_#LFVCLI",,"027601")
+	Local cCliLoj   := GetMV("MV_#LFVLOJ",,"00")
+
+	// Dados da Pre-Nota
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cFornCod  := GetMV("MV_#LFVFOR",,"000217")
 	Local cLojaCod  := GetMV("MV_#LFVLOJ",,"01")
@@ -3289,12 +3295,22 @@ Static Function LFVPreNotas(lClass)
 	Local cLocal    := GetMV("MV_#LFVALM",,"16")
 	Local cEspLFV   := GetMV("MV_#LFVESP",,"SPED")
 	Local cProduto  := GetMV("MV_#LFVPRD",,"300042")  //  publicar este em producao
+	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
+
+	// @history ticket   74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
+	If AllTrim(cFilPV) == "0A"
+		cFornCod := GetMV("MV_#LFVGHH",,"030057")
+	EndIf
+	//
+
 	Default lClass := .f.
+
 	nOpcImp := Val(Alltrim(cValToChar(nOpcImp)))
 	oRegistros:aCols := {}
 	oRegistros:Refresh()
 	nQtdReg := 0
 	oQtdReg:Refresh()
+
 	cQuery := " SELECT D1_FILIAL, D1_TIPO, F1_ESPECIE, D1_DOC, D1_SERIE, D1_EMISSAO, D1_DTDIGIT, D1_FORNECE, D1_LOJA, D1_COD, D1_QUANT, D1_VUNIT, D1_TOTAL, D1_TES, F1_CHVNFE "
 	cQuery += " FROM " + RetSqlName("SD1") + " SD1, " + RetSqlName("SF1") + " SF1 "
 	cQuery += " WHERE F1_FILIAL=D1_FILIAL "
@@ -3430,18 +3446,18 @@ Return Nil
 */
 Static Function RunLFVClass()
 	Local i
-	Local aAreaAtu := GetArea()
+	Local aAreaAtu  := GetArea()
 	Local cFilPre   := GetMV("MV_#LFVPRE",,"02")
 	Local cTESPre   := GetMV("MV_#LFVTEE",,"031")
-	Local cFilPV  := GetMV("MV_#LFVFIL",,"03")
-	Local cCliCod := GetMV("MV_#LFVCLI",,"027601")
-	Local cCliLoj := GetMV("MV_#LFVLOJ",,"00")
-	Local cChvNfe := ""
-	Local aCabec := {}
-	Local aItens := {}
-	Local aLinha := {}
-	Local aColsCC := {}
-	Local aCodRet := {}
+	Local cFilPV    := FWxFilial("SF2") // GetMV("MV_#LFVFIL",,"03") // @history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
+	Local cCliCod   := GetMV("MV_#LFVCLI",,"027601")
+	Local cCliLoj   := GetMV("MV_#LFVLOJ",,"00")
+	Local cChvNfe   := ""
+	Local aCabec    := {}
+	Local aItens    := {}
+	Local aLinha    := {}
+	Local aColsCC   := {}
+	Local aCodRet   := {}
 	Local nX := 0
 	Local nY := 0
 	Local cDoc := ""

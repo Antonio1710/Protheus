@@ -897,6 +897,7 @@ Static Function gerPedS(cNum, cRegistros)
         Aadd( aCabec, { "C5_PESOTOT"  , nPesoLiq, Nil } )
         Aadd( aCabec, { "C5_XORDPES"  , cNmOrdem, .F. } )
         Aadd( aCabec, { "C5_TABEGEN"  , cTabGene, .F. } )
+        Aadd( aCabec, { "C5_OBS"      , "REFATURAMENTO", .F. } )
 
         //Item.
         Aadd( aLinha, { "C6_ITEM"	 , "001"	, Nil } )
@@ -1191,3 +1192,21 @@ User Function ADFAT572(cNmRft)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADFAT573
+    Posiciona no registro de refaturamento pelo pedido.
+    @type  User Function
+    @author Everson
+    @since 14/06/2022
+    @version 01
+/*/
+User Function ADFAT573(cPedido)
+
+    DbSelectArea("ZHR")
+    ZHR->(DbSetOrder(7))
+    If ! ZHR->(DbSeek( FWxFilial("ZHR") + cPedido ))
+        Return .F.
+        
+    EndIf
+
+Return .T.
+
