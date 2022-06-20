@@ -33,6 +33,7 @@
 	@history ticket 71057   - Fernan Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 	@history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
 	@history ticket 74270 - Fernando Macieira - 09/06/2022 - Devoluções não devem bloquear
+	@history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
 /*/
 User Function MT100TOK()
 
@@ -1162,26 +1163,18 @@ Static Function ChkVenctos()
 
 	If lFin
 
-		// Consisto de acordo com condição informada (sem considerar o que o usuário possivelmente pode ter digitado/alterado)
-		aChkVenc := Condicao(0.99,cCondicao,,dDataBase)
-		If Len(aChkVenc) > 0 
-			If lVencDayOk
-				If aChkVenc[1,1] < msDate()
-					lRet := .f.
-					Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
-					Return lRet
-				EndIf
-			Else
-				If aChkVenc[1,1] <= msDate()
-					lRet := .f.
-					Alert("[MT100TOK] - Inclusão de título vencido/vencendo hoje não permitido! Verifique...")
-					Return lRet
-				EndIf
+		// @history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
+		If Type("lMT103DUP") <> "U"
+			If lMT103DUP// Variável pública criada no MT103DUP para consistir o conteúdo do acols/folder duplicata
+				lRet := .f.
+				Alert("[MT100TOK] - Inclusão de título vencido/vencendo não permitido! Verifique...")
+				Return lRet
 			EndIf
 		EndIf
 
 		// Consisto apenas uma data alterada/informada pelo usuário pois o padrão não fornece outra maneira
 		If !Empty(dNewVenc)
+		
 			If lVencDayOk
 				If dNewVenc < msDate()
 					lRet := .f.
@@ -1195,8 +1188,29 @@ Static Function ChkVenctos()
 					Return lRet
 				EndIf
 			EndIf
+
+		Else
+
+			// Consisto de acordo com condição informada (sem considerar o que o usuário possivelmente pode ter digitado/alterado)
+			aChkVenc := Condicao(0.99,cCondicao,,dDataBase)
+			If Len(aChkVenc) > 0 
+				If lVencDayOk
+					If aChkVenc[1,1] < msDate()
+						lRet := .f.
+						Alert("[MT100TOK] - Inclusão de título vencido não permitido! Verifique...")
+						Return lRet
+					EndIf
+				Else
+					If aChkVenc[1,1] <= msDate()
+						lRet := .f.
+						Alert("[MT100TOK] - Inclusão de título vencido/vencendo hoje não permitido! Verifique...")
+						Return lRet
+					EndIf
+				EndIf
+			EndIf
+
 		EndIf
-	
+
 	EndIf
 	
 Return lRet
