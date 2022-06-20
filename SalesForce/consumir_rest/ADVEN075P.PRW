@@ -36,7 +36,7 @@ Static cHK				:= "&"
 @history Chamado T.I  - Leonardo P. Monteiro  - 30/07/2021 - Inclusão do campo de controle GUUID.
 @history Chamado T.I  - Leonardo P. Monteiro  - 15/01/2022 - Inclusão data, hora e quantidade de processamentos.
 @history Chamado 69520 - Leonardo P. Monteiro   - 17/03/2022 - Ajuste na ordenação do processamento para priorizar os PVs por data de entrega e condições de pagamento que geram boletos ou PIX.
-@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+
 */
 User Function ADVEN075P(cServico,cMetodo,cBody,cMsg,aResponse) // U_ADVEN075P()
 
@@ -182,9 +182,9 @@ Static Function loginSF(aResponse,cMsg,lAut)
 	Local cContentType	:= ""
 	Local cUrlDest		:= ""
 	Local cExcInt		:= ""
-	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	
 	//
-	If ! Alltrim(cEmpAnt) $ cEmpSF
+	If cEmpAnt <> "01"
 		
 		RestArea(aArea)
 		Return .F.

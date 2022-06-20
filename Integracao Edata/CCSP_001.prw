@@ -748,14 +748,14 @@ Static Function CCS_001P(oTela)
 						EndIf                 
 
 					ENDIF
-					
+
 					BEGIN TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020                     
 
 					IF Empty(cErro) 
-						//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+
 						//Executa a Stored Procedure
 						//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq)) )  // sigoli 13/02/2017
-						TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"','"+cFilAnt+"'") 
+						TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'")
 						cErro := ""
 						cErro := U_RetErroED() 
 
@@ -1004,7 +1004,7 @@ Static Function CCS_001E(oTela)
 					BEGIN TRANSACTION //CHAMADO: T.I FERNANDO SIGOLI 10/02/2020  
 					//Executa a Stored Procedure
 					//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq)) )  // Chamado : 034776 sigoli 19/04/2017
-					TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"','"+cFilAnt+"'") 
+					TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'") 
 					cErro := ""
 					cErro := U_RetErroED() 
 
@@ -1141,13 +1141,11 @@ Static Function CCS_001T(oTela)
 
 	Local lRet				:= .T.
 	Local aArea				:= {}
-	Local ni				  := 0
+	Local ni				:= 0
 	Local cChave			:= ""
 	Local cMens				:= ""
 	Local cRest01			:= ""
-	Local cQuery      := ""
-	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cQuery            := ""
 
 	If Empty(aLstPED) .OR. ValType(aLstPED) # "A"
 		Return !lRet
@@ -1183,7 +1181,7 @@ Static Function CCS_001T(oTela)
 
 				//Executa a Stored Procedure de estorno
 				//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq)) ) // Chamado : 034776 sigoli 19/04/2017
-				TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"','"+cFilAnt+"'") 
+				TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FD_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'") 
 				cErro := ""
 				cErro := U_RetErroED()
 
@@ -1228,7 +1226,7 @@ Static Function CCS_001T(oTela)
 
 					//Executa a Stored Procedure de envio
 					//TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq)) )  // sigoli 13/02/2017
-					TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"','"+cFilAnt+"'") 
+					TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FI_EXPECARG_01] ' +Str(Val(cSeq))+","+"'"+cEmpAnt+"'")
 					cErro := ""
 					cErro := U_RetErroED()
 
@@ -1276,7 +1274,7 @@ Static Function CCS_001T(oTela)
 			" CHAVE "+AllTrim(Dtos(aLstPED[ni][1]))+" "+AllTrim(aLstPED[ni][2])+" "+AllTrim(aLstPED[ni][3])+" "+AllTrim(aLstPED[ni][4]),ComputerName(),LogUserName()) 
 			
 			//Everson - 02/04/2018. Chamado 037261.
-			If FindFunction("U_ADVEN050P") .And. Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
+			If FindFunction("U_ADVEN050P") .And. cEmpAnt == "01" .And. cFilAnt == "02"
 				If Upper(Alltrim(cValToChar(GetMv("MV_#SFATUL")))) == "S"
 					U_ADVEN050P("",,," AND C5_ROTEIRO = '" + Alltrim(cValToChar(aLstPED[ni][2])) + "' AND C5_DTENTR = '" + Alltrim(DToS(aLstPED[ni][1])) + "' AND C5_XPEDSAL <> '' ",,,,,,.T.)
 				

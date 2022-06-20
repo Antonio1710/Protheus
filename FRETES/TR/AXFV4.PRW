@@ -601,7 +601,7 @@ Static Function fEnveData(cCPFPass, cFornece, cPlaca, cEmpresa)
 	if SqlMotorista(cCPFPass)
 		
 
-		nStatus :=  TcSQLExec('EXEC ['+cLinkSe+'].[SMART].[dbo].[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+     "'"+cPlaca+"'"   +",'"+  cCPFPass +"',"+  "'"+cEmpresa+"','"+cFilAnt+"'" )//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+		nStatus :=  TcSQLExec('EXEC ['+cLinkSe+'].[SMART].[dbo].[FI_TRANVEIC] '+    "'"+cFornece+"'"    +","+     "'"+cPlaca+"'"   +",'"+  cCPFPass +"',"+  "'"+cEmpresa+"'" )
 		
 		// Inicio Ticket 61154  - 05/10/2021 - SIGOLI 
 		cError := U_RetErroED() 
@@ -868,7 +868,6 @@ User Function FV4TGSG() // U_FV4TGSG()
         Else
             Conout( DToC(Date()) + " " + Time() + " --> Tentativa de Conexão porta: " + cValToChar(nPort) + " IP: " + cValToChar(cIp) + " " + StrZero(nX,3) )
             Sleep(nSleep)
-            //continue
 
         EndIf
 
@@ -900,8 +899,8 @@ User Function FV4TGSG() // U_FV4TGSG()
     FWMsgRun(, {|oSay| nResp := oObj:Receive( @cBuffer, nTEspR ) }, "Aguarde", "Efetuando leitura...")
     Conout( DToC(Date()) + " " + Time() + " --> nResp " + cValToChar(nResp) )
     If ( nResp >= 0 )
-			cBuffer :=  U_ADFAT50O(cBuffer)
-      Conout( DToC(Date()) + " " + Time() + " --> cBuffer " + cValToChar(cBuffer) )
+		cBuffer :=  U_ADFAT50O(cBuffer)
+        Conout( DToC(Date()) + " " + Time() + " --> cBuffer " + cValToChar(cBuffer) )
 		M->ZV4_TGFIXA := Alltrim(cValToChar(cBuffer))
 
     ElseIf nResp < 0

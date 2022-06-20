@@ -3,23 +3,34 @@
 #Include "Topconn.ch" 
 #INCLUDE "TOTVS.CH"
 /*
-	Programa  ³CCSP_004  ºAutor  ³Microsiga           º Data ³  10/17/14   
-	Desc.     ³Gera pedido de vendas para transportados devido a quebra    
-						³na devoluçao                                                
-	Uso       ³Adoro                                                       
-	Versionamento: Chamado: TI - Fernando Sigoli 26/11/2018                 
-	Tratameneto para gerar aprovação de refaturamento automatico, na geraçaõ
-	PDV                                                                     
-	Alteração ³12/12/2018 - Ricardo Lima - 044314 | Controle de Frete, será
-						³gerado um registro de desconto nas movimentações de frete,  
-						³esse movimento de desconto passará por alçada de aprovação, 
-						³não será mais gerado o pedido de vendas para o transportador
-	Alteração ³21/01/2019-Ricardo Lima-044314, Ajuste no retorno da        
-						³nova rotina de devolução de vendaque gera desconto para o   
-						³transportador                                               
-	Alteração ³19/03/2019-Everson-044314. Removido desconto pela nota      
-						³geração da nota de saída.                                   
-	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCSP_004  ºAutor  ³Microsiga           º Data ³  10/17/14   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Gera pedido de vendas para transportados devido a quebra    º±±
+±±º          ³na devoluçao                                                º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³Adoro                                                       º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±± 
+±± Versionamento: Chamado: TI - Fernando Sigoli 26/11/2018                 ±±
+±± Tratameneto para gerar aprovação de refaturamento automatico, na geraçaõ±±
+±± PDV                                                                     ±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºAlteração ³12/12/2018 - Ricardo Lima - 044314 | Controle de Frete, seráº±±
+±±º          ³gerado um registro de desconto nas movimentações de frete,  º±±
+±±º          ³esse movimento de desconto passará por alçada de aprovação, º±±
+±±º          ³não será mais gerado o pedido de vendas para o transportadorº±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºAlteração ³21/01/2019-Ricardo Lima-044314, Ajuste no retorno da        º±±
+±±º          ³nova rotina de devolução de vendaque gera desconto para o   º±±
+±±º          ³transportador                                               º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºAlteração ³19/03/2019-Everson-044314. Removido desconto pela nota      º±±
+±±º          ³geração da nota de saída.                                   º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 User Function CCSP_004()
 
@@ -84,7 +95,6 @@ User Function TlItensD()
 	Local nFreeze     := 000 //quantidade minima de linhas na minha tela
 	Local nMax        := 999 //quantidade máxima de linhas na minha tela
 	Local nPosParou   := 0  
-	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 
 	Private ALTERA	  := .T.
 	Private aAux	  := {} //Array auxiliar utilizado para guardar informações que serão necessarias
@@ -223,7 +233,7 @@ User Function TlItensD()
 		EndIf                                   
 		
 		cQuery := " SELECT QN_EMBAAJUS AS DIFERENCA, FL_FATUMOTIAJUSDEVOVEND AS FATURA "
-		cQuery += " FROM ["+cLnkSrv+"].[SMART].[dbo].[VW_PEDIDEVOVEND_01] "
+		cQuery += " FROM [LNKMIMS].[SMART].[dbo].[VW_PEDIDEVOVEND_01] "
 		cQuery += " WHERE IE_PEDIDEVOVEND= "+ ALLTRIM(STR(aAux[x, 14])) + " AND ID_ITEMPEDIDEVOVEND= " +ALLTRIM(STR(aAux[x, 13]))
 	
 		If Select("TMP_WEB") > 0

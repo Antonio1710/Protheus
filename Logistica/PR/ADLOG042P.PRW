@@ -81,8 +81,6 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 	Local lAutoJob 		:= .F.
 	Local cTpCrg 		:= ""
 	Local cRote 		:= ""	//Everson - 20/07/2021. Chamado 15478.
-	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Geração de frete a partir de emissão da Nota')
 
@@ -133,10 +131,9 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 		U_ADLOG067P(cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob,cTpCrg)
 
 	ElseIf cTpCrg == "5" .And. cOpc == "1" //Frete Ração. //Everson-21/02/2020-Ch:054941.
-		//U_ADLOG052P("2",cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 07/02/2020. Chamado 054941.
-	
-	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	ElseIf 	(Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF) .Or.;
+		// U_ADLOG052P("2",cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJA  , C5NUM , cOpc , C5DTENTR, @lStorFr, lAutoJob) //Everson - 07/02/2020. Chamado 054941. //Everson - 13/06/2022. Chamado 018465.
+
+	ElseIf 	Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0102" .Or.;
 			Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0201"
 			
 			//Everson-10/09/2021-Ch:19127.

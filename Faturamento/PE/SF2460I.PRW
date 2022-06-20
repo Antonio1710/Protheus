@@ -35,8 +35,6 @@
 	@history Ticket 8465 	- Leonardo P. Monteiro - 09/08/2021 - Implementação da carga automática das informações referente a inspeção da qualidade. 
 	@history Ticket 8465 	- Leonardo P. Monteiro - 13/08/2021 - Inclusão do comando DbselectArea para a tabela ZEX. 
 	@history Ticket 68178 	- Leonardo P. Monteiro - 14/02/2022 - Gerar log das informações de exportação gravadas na NFe.
-	@history Ticket 63560	- Abel Babini          - 09/11/2021 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
-	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 63560	- Abel Babini          - 13//2022 - Alteração de alíquotas e parametros de acordo com a nova tabela de alíquotas
 /*/
@@ -47,9 +45,6 @@ User Function SF2460I()
 	Local aDadVol 		:= {} // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
 	Local aAreaAtu 		:= GetArea() // Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
 	Local aDadImp		:= {}
-	Local cEmpSF:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	Local cFilSF:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-
 	Private SF2AREA     := SF2->(GETAREA())
 	Private SD2AREA     := SD2->(GETAREA())
 	Private SF3AREA     := SF3->(GETAREA())
@@ -318,8 +313,8 @@ User Function SF2460I()
 	// UTILIZADO NO MOMENTO DA ROTERIZACAO DOS PEDIDOS.
 	
 	// Chamado n. 059092 || OS 060609 || FISCAL || ANDRESA || 8423 || ERRO LOG MSRUNLOCK - FWNM - 23/06/2020
-	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
-	If Alltrim(FWxFilial("SC5")) $ cFilSF .and. AllTrim(cEmpAnt) == cEmpSF
+
+	If FWxFilial("SC5") == "02" .and. AllTrim(cEmpAnt) == "01"
 	
 		SC9->( dbSetOrder(1) )
 		If SC9->( dbSeek(FWxfilial("SC9")+SC5->C5_NUM) )
@@ -595,7 +590,7 @@ Static Function AtuExp()
 	@  05,010 SAY "PEDIDO: " +  _cNum + "   NOTA: " + SF2->F2_DOC
 	@  15,010 TO 120,240 TITLE "Informações de Embarque "
 	@  25,015 SAY " NUMERO DO CONTAINER      : "
-//@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
+	//@history Ticket 68663  - Leonardo P. Monteiro   - 25/02/2022 - Inibir a impressão dos lacres do armador.
 	//@  45,015 SAY " NUMERO LACRE CONTAINER: "
 	@  45,015 SAY " NUMERO LACRE OFICIAL(SIF): "             // 15/03/19-Chamado:047943 - Fernando Sigoli
 	@  65,015 SAY " TEMPERATURA DE EMBARQUE: "
