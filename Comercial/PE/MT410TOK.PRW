@@ -34,6 +34,7 @@
 	@history Ticket  TI     - Everson 			   - 20/04/2022 - Tratamento para pedidos gerados pela integração com o módulo de exportação.
 	@history Ticket 70142   - Rodrigo Mello/Flek   - 19/05/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 018465  - Everson     - 30/05/2022 - Correção da chamada da função.
+	@history Ticket 75016   - Abel Babini      - 20/06/2022 - Acerto error.log
 /*/
 
 User Function MT410TOK()
@@ -133,7 +134,7 @@ User Function MT410TOK()
 	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
 	Local 	_x1			:= 0
-	Local 	_nX			:= 0
+	Local _nX				:= 0
 	
 	Private cLido 		:= ""
 	Private nCount 		:= 0
@@ -1396,11 +1397,11 @@ User Function MT410TOK()
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doaï¿½ï¿½o para este produto!'})
+						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doação para este produto!'})
 
 					ELSE
 
-						MsgInfo("Seu usuario não pode incluir pedido com esta TES de doaï¿½ï¿½o para este produto!","Atenï¿½ï¿½o")
+						MsgInfo("Seu usuario não pode incluir pedido com esta TES de doação para este produto!","Atenção")
 
 					ENDIF
 
@@ -1413,15 +1414,15 @@ User Function MT410TOK()
 						''    , ;
 						''    , ;
 						''    , ;
-						'Seu usuario não pode incluir pedido com esta TES de doaï¿½ï¿½o!' ,;
+						'Seu usuario não pode incluir pedido com esta TES de doação!' ,;
 						cVendedor})
 
 					ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doaï¿½ï¿½o!'})
+						Aadd(aPedidos,{'Seu usuario não pode incluir pedido com esta TES de doação!'})
 
 					ELSE
 
-						MsgInfo("Seu usuario não pode incluir pedido com esta TES de doaï¿½ï¿½o!","Atenï¿½ï¿½o")
+						MsgInfo("Seu usuario não pode incluir pedido com esta TES de doação!","Atenção")
 
 					ENDIF
 
@@ -1443,7 +1444,7 @@ User Function MT410TOK()
 
 				ELSE
 
-					MsgInfo("Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao!","Atenï¿½ï¿½o")
+					MsgInfo("Seu usuario não pode incluir pedido com esta TES de bonificacao/doacao!","Atenção")
 
 				ENDIF
 
@@ -1457,15 +1458,15 @@ User Function MT410TOK()
 					''    , ;
 					''    , ;
 					''    , ;
-					'Seu usuario sï¿½ pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ")) ,;
+					'Seu usuario só pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ")) ,;
 					cVendedor})
 
 				ELSEIF lSfInt //Everson - 25/09/2017. Chamado 037261.
-					Aadd(aPedidos,{'Seu usuario sï¿½ pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ"))})
+					Aadd(aPedidos,{'Seu usuario só pode incluir pedido com TES de bonificacao: '+Alltrim(GETMV("MV_XTESBOQ"))})
 
 				ELSE
 
-					MsgInfo("Seu usuario sï¿½ pode incluir pedido com TES de bonificacao: "+Alltrim(GETMV("MV_XTESBOQ")),"Atenï¿½ï¿½o")
+					MsgInfo("Seu usuario só pode incluir pedido com TES de bonificacao: "+Alltrim(GETMV("MV_XTESBOQ")),"Atenção")
 
 				ENDIF
 
@@ -1635,7 +1636,7 @@ User Function MT410TOK()
 					fVldUM()
 
 					// 3. Valida se o item controla localizaï¿½ï¿½o.
-					fVldLocaliz()
+					fVldLocaliz(_nX) //Ticket 75016   - Abel Babini      - 20/06/2022 - Acerto error.log
 
 					// 4. Tratamento integraï¿½ï¿½o eData
 					fVldDat()
@@ -2177,7 +2178,7 @@ return
 // 3. Valida se o item controla localizaï¿½ï¿½o.
 // @history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Validaï¿½ï¿½o do item que controla endereï¿½o para tornar obrigatï¿½rio o preenchimento do campo 'Localizaï¿½ï¿½o'.
 //--------------------------------------------------
-Static Function fVldLocaliz()
+Static Function fVldLocaliz(_nX) //Ticket 75016   - Abel Babini      - 20/06/2022 - Acerto error.log
 	IF SF4->F4_ESTOQUE == "S" .AND. _cLocaliz == "S"
 		if Empty(ACOLS[_nX, _nLocaliz])
 
