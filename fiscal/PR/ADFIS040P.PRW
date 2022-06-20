@@ -11,6 +11,10 @@
 	@since 17/03/2020
 	@version 01
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+<<<<<<< HEAD
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+=======
+>>>>>>> master
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	/*/
 User Function ADFIS040P() // U_ADFIS040P()
@@ -51,7 +55,9 @@ User Function ADFIS040P() // U_ADFIS040P()
 		cEmail	:= GetMv("MV_#AUTCTE",,"")
 		
 		Conout( DToC(Date()) + " " + Time() + " ADFIS040P - Início " + cFilAnt )
-		StaticCall(ADFIS032P,processa,cEmail)
+		//Static Call(ADFIS032P,processa,cEmail)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS032A1( cMail )
 		Conout( DToC(Date()) + " " + Time() + " ADFIS040P - Fim " + cFilAnt )
 			
 		logZBN("2") //Log fim.

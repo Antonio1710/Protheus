@@ -9,6 +9,7 @@
     @author Everson
     @since 16/12/2019
     @version 01
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADFIS036P() // U_ADFIS036P()
@@ -104,7 +105,9 @@ Static Function processa()
         Conout( DToC(Date()) + " " + Time() + " ADFIS036P - processa - consulta Sintegra pedido/UF/IE " + cValToChar(cPedido) + " / " + cValToChar(cUF) + " / " + cValToChar(cIE) + " " + cValToChar(nAux) + "/" + cValToChar(nTotal) )
         
         //
-        cRetC := StaticCall(ADVEN086P,ConsIE,cIE,cUF)
+        //cRetC := Static Call(ADVEN086P,ConsIE,cIE,cUF)
+        //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+        cRetC := u_VEN086A0(cIE,cUF)
         VarInfo("cRetC",cRetC)
 
         //

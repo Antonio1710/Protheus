@@ -97,8 +97,8 @@ Static Function vldPos(oModel)
     Local lRet       := .T.
     Local nOperation := oModel:GetOperation()
     //Local cRoteiro   := oModel:GetValue("MD_MASTER", "ZIZ_ROTEIR")
-    Local cPlaca     := oModel:GetValue("MD_MASTER", "ZIZ_PLACA")
-    Local cCaixa     := oModel:GetValue("MD_MASTER", "ZIZ_CAIXA")
+    // Local cPlaca     := oModel:GetValue("MD_MASTER", "ZIZ_PLACA")
+    // Local cCaixa     := oModel:GetValue("MD_MASTER", "ZIZ_CAIXA")
 
     If lRet .And. nOperation == MODEL_OPERATION_INSERT
 
@@ -111,18 +111,18 @@ Static Function vldPos(oModel)
 
         // EndIf
 
-        If ! IsInCallStack("U_ADFAT049P") //Everson - 02/06/2022. Chamado 18465.
+        // If ! IsInCallStack("U_ADFAT049P") //Everson - 02/06/2022. Chamado 18465.
 
-            DbSelectArea("ZIX")
-            ZIX->(DbSetOrder(1))
-            ZIX->(DbGoTop())
-            If ! ZIX->( DbSeek( FwxFilial("ZIX") + cPlaca + cCaixa ) )
-                lRet := .F.
-                Help(Nil, Nil, "Função vldPos(ADFAT039P)", Nil, "Veículo " + cPlaca + " não possui caixa " + cCaixa + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        //     DbSelectArea("ZIX")
+        //     ZIX->(DbSetOrder(1))
+        //     ZIX->(DbGoTop())
+        //     If ! ZIX->( DbSeek( FwxFilial("ZIX") + cPlaca + cCaixa ) )
+        //         lRet := .F.
+        //         Help(Nil, Nil, "Função vldPos(ADFAT039P)", Nil, "Veículo " + cPlaca + " não possui caixa " + cCaixa + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
-            EndIf
+        //     EndIf
 
-        EndIf
+        // EndIf
             
     EndIf
   

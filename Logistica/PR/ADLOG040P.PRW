@@ -102,6 +102,7 @@ Static nTipoFrt	:= 0
 	@history 04/11/2021, Everson, Ch:63137  - Tratamento para não permitir alteração e exclusão de registro por usuário diferente que inseriu o registro.
 	@history 05/11/2021  Sigoli Tkt: T.I    - Declaração de variavel  - CFECHADO on VLDPOS 
 	@history 24/03/2022  Sigoli Tkt 70153   - Declaração de variavel OK na função principal
+	@history Ticket 70142   - Edvar   / Flek Solution - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history 28/03/2022 - ADRIANO SAVOINE - Criado o bloqueio para o tipo de ocorrencia 012 e 014 somente para pessoas especificas.
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 	@history ticket 73505 - Everson - 24/05/2022 - Tratamento para validar exclusão/alteração de registros fechado em rotinas com execauto. 
@@ -860,7 +861,8 @@ Static Function carCTE()
 	Local aRet		:= {}	
 	Local oVerde  	:= LoadBitmap( GetResources(), "BR_VERDE")
 	Local oVermelho	:= LoadBitmap( GetResources(), "BR_VERMELHO")
-	Local aParam	:= StaticCall(ADFIS032P,paramFis,Val(cEmpAnt))
+	//Local aParam	:= Static Call(ADFIS032P,paramFis,Val(cEmpAnt))
+	Local aParam	:= u_FIS032A0() 
 	Local nPosPrd	:= 0
 	Local aOcFech	:= StrToKarr(Alltrim(GetMv("MV_#OCFHFT")),"/") //Everson-Ch:044314-02/10/2019.
 	Local cOcFAcr	:= Alltrim(aOcFech[1]) //Everson-Ch:044314-02/10/2019.
@@ -3415,14 +3417,17 @@ Static Function funcCTE(oDadosP3,aHToP3,nOpc)
 		
 	//
 	If nOpc == 1
-		MsAguarde({|| StaticCall(ADLOG057P,consulCTE,cHash,1) },"Aguarde...","Consultando CT-e.",.F.)
-					
+		//MsAguarde({|| Static Call(ADLOG057P,consulCTE,cHash,1) },"Aguarde...","Consultando CT-e.",.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsAguarde({|| u_LOG057A2(cHash,1) },"Aguarde...","Consultando CT-e.",.F.)
 	ElseIf nOpc == 2
-		MsAguarde({|| StaticCall(ADLOG057P,pdfCTEdow,cHash)}  ,"Aguarde...","Efetuando download DACTE.",.F.)
-		
+		//MsAguarde({|| Static Call(ADLOG057P,pdfCTEdow,cHash)}  ,"Aguarde...","Efetuando download DACTE.",.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsAguarde({|| u_LOG057A0(cHash)}  ,"Aguarde...","Efetuando download DACTE.",.F.)
 	ElseIf nOpc == 3
-		MsAguarde({|| StaticCall(ADLOG057P,xmlCTEdow,cHash)}  ,"Aguarde...","Efetuando download XML.",.F.)
-		
+		//MsAguarde({|| Static Call(ADLOG057P,xmlCTEdow,cHash)}  ,"Aguarde...","Efetuando download XML.",.F.)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsAguarde({|| u_LOG057A3(cHash)}  ,"Aguarde...","Efetuando download XML.",.F.)
 	EndIf
 	
 	//
@@ -4483,7 +4488,7 @@ Static Function fechFrt(oDadosP,aHToP)
 	Local lRetFina	:= .F.
 	//Local cTes		:= ""
 	//Local nPosPrd	:= 0
-	//Local aParam	:= StaticCall(ADFIS032P,paramFis)
+	//Local aParam	:= Static Call(ADFIS032P,paramFis)
 	Local cTpComp	:= Alltrim( GetMv("MV_#TPEMCO") ) //Everson-Ch:044314-31/07/2019.
 	Local nTpFrtS	:= U_ADLG40H() //Everson - 05/11/2019. Chamado 029058.
 	Local cCodZFA2	:= ""
@@ -4694,7 +4699,10 @@ Static Function fechFrt(oDadosP,aHToP)
 			aRetCFch := {}
 	
 			//Everson-Ch:044314-31/07/2019.                         
-			MsAguarde({|| StaticCall(ADLOG057P,grCTECompl,cRoteiro,cDtEntr,nTotLiq,"",cTpComp,cTpEnv,cNumCTe,cSNumCte,cChvCte,.T., aPorcOco ) } ,;
+			//MsAguarde({|| Static Call(ADLOG057P,grCTECompl,cRoteiro,cDtEntr,nTotLiq,"",cTpComp,cTpEnv,cNumCTe,cSNumCte,cChvCte,.T., aPorcOco ) } ,;
+			//"Aguarde...","CT-e complementar " + cCodTran + "/" + cLojTran + "-" + cPlaca ,.F.)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			MsAguarde({|| u_LOG057A6( cRoteiro,cDtEntr,nTotLiq,"",cTpComp,cTpEnv,cNumCTe,cSNumCte,cChvCte,.T., aPorcOco ) } ,;
 			"Aguarde...","CT-e complementar " + cCodTran + "/" + cLojTran + "-" + cPlaca ,.F.)
 			aPorcOco := {}
 
@@ -6374,8 +6382,11 @@ Static Function carrDocs()
 
 		//
 		cStatus 	:= Alltrim(cValToChar(D_DOCS->ZFK_STATUS))
-		cMsgStatus 	:= StaticCall(ADLOG057P,tlbStatus,cStatus,1)
-		cTipoDoc 	:= StaticCall(ADLOG057P,tabelaDoc,Alltrim(cValtoChar(D_DOCS->ZFK_TPDOC)))
+		//cMsgStatus 	:= Static Call(ADLOG057P,tlbStatus,cStatus,1)
+		//cTipoDoc 	:= Static Call(ADLOG057P,tabelaDoc,Alltrim(cValtoChar(D_DOCS->ZFK_TPDOC)))
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		cMsgStatus 	:= u_LOG057A4(cStatus,1)
+		cTipoDoc 	:= u_LOG057A5(Alltrim(cValtoChar(D_DOCS->ZFK_TPDOC)))
 
 		//
 		If cMsgStatus == 'Processando'
@@ -7733,3 +7744,14 @@ Static Function SendADI()
     EndIf
 
 Return
+
+/*/{Protheus.doc} u_LOG040A0
+//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_LOG040A0( uPar1 )
+Return( retDescFrt( uPar1 ) )
