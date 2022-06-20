@@ -6,6 +6,7 @@
   @since 15/02/2022
   @version version
   @history Ticket 068238 - Abel Babini - 15/02/2022 - Relatório detalhado CIAP
+  @history Ticket 068238 - Abel Babini - 20/06/2022 - Adicionando novas colunas
   /*/
 User Function ADFIS049R
 	Local aArea		:= GetArea()
@@ -50,8 +51,7 @@ Static Function xExecRel()
 	//Private cArquivo	:= cGetFile("Arquivo XML", "Selecione o diretório para salvar o relatório",,'C:\',.T.,GETF_RETDIRECTORY + GETF_LOCALHARD + GETF_NETWORKDRIVE)	
 	Private oMsExcel   := NIL
 
-
-	
+	//Ticket 068238 - Abel Babini - 20/06/2022 - Adicionando novas colunas
 	BEGINSQL Alias cQuery
 		COLUMN F9_DTENTNE AS DATE
 		COLUMN F9_DTEMINE AS DATE
@@ -93,6 +93,8 @@ Static Function xExecRel()
 			SF9.F9_VALFRET,
 			SF9.F9_VALICMP,
 			SF9.F9_VLDBATV,
+			SD1.D1_CC,
+			SD1.D1_QUANT,
 			CASE WHEN N1_XATFBEN = '1' THEN 'Benfeitoria Bens' ELSE CASE WHEN N1_XATFBEN = '2' THEN 'Benfeitoria Servicos' ELSE CASE WHEN N1_XATFBEN = '3' THEN 'Ativo Imobilizado' ELSE '' END END END AS XATFBEN,
 			CASE 
 				WHEN SN1.N1_CALCPIS = '1' THEN 'Sim'
@@ -100,12 +102,23 @@ Static Function xExecRel()
 				WHEN SN1.N1_CALCPIS = '3' THEN 'Fração'
 				ELSE ''
 			end AS N1_CALCPIS,
-			(SELECT SUM(SFA.FA_VALOR) FROM %TABLE:SFA% SFA WHERE SFA.FA_FILIAL = SF9.F9_FILIAL AND SFA.FA_CODIGO = SF9.F9_CODIGO AND SFA.FA_TIPO = '1' AND SFA.%notDel%) AS FA_VALOR
+			(SELECT SUM(SFA.FA_VALOR) FROM %TABLE:SFA% SFA WHERE SFA.FA_FILIAL = SF9.F9_FILIAL AND SFA.FA_CODIGO = SF9.F9_CODIGO AND SFA.FA_TIPO = '1' AND SFA.%notDel%) AS FA_VALOR,
+			(SELECT SUM(SFA.FA_VALOR*SFA.FA_FATOR) FROM SFA010 SFA WHERE SFA.FA_FILIAL = SF9.F9_FILIAL AND SFA.FA_CODIGO = SF9.F9_CODIGO AND SFA.FA_TIPO = '1' AND SFA.D_E_L_E_T_ = '') AS FA_VALXFAT,
+			(SELECT SUM(SFA.FA_VALOR) FROM SFA010 SFA WHERE SFA.FA_FILIAL = SF9.F9_FILIAL AND SFA.FA_CODIGO = SF9.F9_CODIGO AND SFA.FA_TIPO = '1' AND SFA.D_E_L_E_T_ = '') -
+			(SELECT SUM(SFA.FA_VALOR*SFA.FA_FATOR) FROM SFA010 SFA WHERE SFA.FA_FILIAL = SF9.F9_FILIAL AND SFA.FA_CODIGO = SF9.F9_CODIGO AND SFA.FA_TIPO = '1' AND SFA.D_E_L_E_T_ = '') AS FA_DIFFAT
 		FROM %TABLE:SF9% SF9
 		LEFT JOIN %TABLE:SN1% SN1 ON
 			SN1.N1_FILIAL = SF9.F9_FILIAL
 			AND SN1.N1_CODCIAP = SF9.F9_CODIGO
 			AND SN1.%notDel%
+		LEFT JOIN %TABLE:SD1% SD1 ON
+			SD1.D1_FILIAL = SN1.N1_FILIAL AND
+			SD1.D1_DOC = SN1.N1_NFISCAL AND
+			SD1.D1_SERIE = SN1.N1_NSERIE AND
+			SD1.D1_ITEM = SN1.N1_NFITEM AND
+			SD1.D1_FORNECE = SN1.N1_FORNEC AND
+			SD1.D1_LOJA = SN1.N1_LOJA AND
+			SD1.%notDel%
 		WHERE
 			SF9.F9_FILIAL = %xFilial:SF9%
 			AND SF9.F9_CODIGO BETWEEN %Exp:aRet[3]% AND %Exp:aRet[4]%
@@ -128,6 +141,8 @@ Static Function xExecRel()
 	oExcel:AddColumn(cFld01,cFld01,"Dt Ent NFE",1,1)
 	oExcel:AddColumn(cFld01,cFld01,"Dt Emis NFE",1,1)
 	oExcel:AddColumn(cFld01,cFld01,"CFOP NFE",1,1)
+	oExcel:AddColumn(cFld01,cFld01,"CC NFE",1,1) //Ticket 068238 - Abel Babini - 20/06/2022 - Adicionando novas colunas
+	oExcel:AddColumn(cFld01,cFld01,"Quant NFE",1,1) //Ticket 068238 - Abel Babini - 20/06/2022 - Adicionando novas colunas
 	oExcel:AddColumn(cFld01,cFld01,"Cod.Cliente",1,1)
 	oExcel:AddColumn(cFld01,cFld01,"Lj. Cliente",1,1)
 	oExcel:AddColumn(cFld01,cFld01,"Doc NFS",1,1)
@@ -148,7 +163,9 @@ Static Function xExecRel()
 	oExcel:AddColumn(cFld01,cFld01,"Vlr ICMS Próprio",2,2)
 	oExcel:AddColumn(cFld01,cFld01,"Tipo Ativo",1,1)
 	oExcel:AddColumn(cFld01,cFld01,"Cálculo Pis/Cofins",1,1)
-	oExcel:AddColumn(cFld01,cFld01,"Vlr Apropr.",3,2)
+	oExcel:AddColumn(cFld01,cFld01,"(A) Vlr Total Apropr.",3,2)
+	oExcel:AddColumn(cFld01,cFld01,"(B) Vlr Creditado",3,2) //Ticket 068238 - Abel Babini - 20/06/2022 - Adicionando novas colunas
+	oExcel:AddColumn(cFld01,cFld01,"(C) = (A) - (B) Valor Não Creditado",3,2) //Ticket 068238 - Abel Babini - 20/06/2022 - Adicionando novas colunas
 
 	DbSelectArea(cQuery)
 	(cQuery)->(DbGoTop())
@@ -164,6 +181,8 @@ Static Function xExecRel()
 																	IIF(ALLTRIM(DTOS((cQuery)->F9_DTENTNE)) == '','',DTOC((cQuery)->F9_DTENTNE)),;
 																	IIF(ALLTRIM(DTOS((cQuery)->F9_DTEMINE)) == '','',DTOC((cQuery)->F9_DTEMINE)),;
 																	(cQuery)->F9_CFOENT,;
+																	(cQuery)->D1_CC,;
+																	(cQuery)->D1_QUANT,;
 																	(cQuery)->F9_CLIENTE,;
 																	(cQuery)->F9_LOJACLI,;
 																	(cQuery)->F9_DOCNFS,;
@@ -184,12 +203,14 @@ Static Function xExecRel()
 																	(cQuery)->F9_VALICMP,;
 																	(cQuery)->XATFBEN,;
 																	(cQuery)->N1_CALCPIS,;
-																	(cQuery)->FA_VALOR})
+																	(cQuery)->FA_VALOR,;
+																	(cQuery)->FA_VALXFAT,;
+																	(cQuery)->FA_DIFFAT})
 		(cQuery)->(DbSkip())
 	EndDo
 	(cQuery)->(dbCloseArea())
 	
-	oExcel:AddRow(cFld01,cFld01,{'','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	oExcel:AddRow(cFld01,cFld01,{'','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
 
 
 	oExcel:Activate()
