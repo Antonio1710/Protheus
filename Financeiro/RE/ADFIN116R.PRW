@@ -14,6 +14,7 @@
 	@history chamado 63633 - Leonardo P. Monteiro - 12/11/2021 - Melhoria e correções após validação.
 	@history chamado 72972 - Jonathan Carvalho    - 17/05/2022 - Adicionado With lock
 	@history Ticket  72972 - Jonathan Carvalho    - 14/06/2022 - Alterado consulta para BeginSql para correção de erro.
+	@history Ticket  75036 - Jonathan Carvalho    - 20/06/2022 - Incluido na linha 773 a função %noparse% e na consulta with(nolock)
 /*/
 
 User Function ADFIN116R()
@@ -699,15 +700,15 @@ Static Function fDados()
 	//If mv_par08 == 1 //Analitico
 	//cQuery:=" SELECT E2_FILIAL,E2_PREFIXO,E2_NUM,E2_PARCELA,E2_TIPO,E2_FORNECE,E2_LOJA,E2_VALOR AS E2_VALOR, E2_EMIS1 " //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 	cQuery:=" INSERT INTO "+cTabTMP+"(FILIAL, FORNECE, LOJA, PREFIXO, NUMERO, PARCELA, TIPO, DATASE2, DATASE5, DATACT2, VALORSE2, VALORCT2, DEBITO, CREDIT, TIPODOC, RECPAG, VLACRES, D_E_L_E_T_, R_E_C_D_E_L_) "
-	cQuery+=" SELECT E2_FILIAL FILIAL,"
-	cQuery+="  E2_FORNECE FORNECE,"
-	cQuery+="  E2_LOJA LOJA,
-	cQuery+="  E2_PREFIXO PREFIXO,
-	cQuery+="  E2_NUM NUMERO,
-	cQuery+="  E2_PARCELA PARCELA,
+	cQuery+=" SELECT E2_FILIAL FILIAL, "
+	cQuery+="  E2_FORNECE FORNECE, "
+	cQuery+="  E2_LOJA LOJA, "
+	cQuery+="  E2_PREFIXO PREFIXO, "
+	cQuery+="  E2_NUM NUMERO, "
+	cQuery+="  E2_PARCELA PARCELA, "
 	cQuery+="  E2_TIPO TIPO, "
-	cQuery+="  E2_EMIS1 DATASE2,
-	cQuery+="  '' DATASE5,
+	cQuery+="  E2_EMIS1 DATASE2, "
+	cQuery+="  '' DATASE5, "
 	cQuery+="  '' DATACT2, "
 	cQuery+="  IIF(E2_MOEDA<>'1' AND (E2_EMIS1 >='20210901' OR (E2_EMIS1 >='20190601' AND E2_FORNECE='025960')),E2_VLCRUZ,E2_VALOR) AS VALORSE2, " //INICIO Chamado Interno TI - Abel Babini - Considerar valor da correção monetária passiva abatendo do valor do título - 02/07/2019
 	cQuery+="  0 VALORCT2, "
@@ -769,6 +770,7 @@ Static Function fDados()
 	cFoExc := REPLACE(cFoExc,"')","")	
 
 	BeginSql Alias cAliSE5
+		%noparser%
 	
 		SELECT  E5_FILIAL,
 		E5_PREFIXO,
@@ -789,7 +791,7 @@ Static Function fDados()
 		E5_VLDECRE,	
 		E5_VLDESCO, 
 		E5_VLJUROS 
-		FROM %table:SE5% SE5 (NOLOCK) 
+		FROM %table:SE5% SE5 WITH(NOLOCK) 
 		WHERE SE5.D_E_L_E_T_ = ''	 
 		AND E5_CLIFOR BETWEEN %Exp:mv_par01% AND %Exp:mv_par02%
 		AND E5_LOJA BETWEEN %Exp:mv_par03% AND %Exp:mv_par04%			
@@ -809,7 +811,7 @@ Static Function fDados()
 		AND E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO+E5_CLIFOR+E5_LOJA   //retirada filial
 		IN (  
 		SELECT E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA //retirada filial
-		FROM %table:SE2% SE2 (NOLOCK)    
+		FROM %table:SE2% SE2 WITH(NOLOCK)    
 		WHERE E2_EMIS1 BETWEEN %Exp:Dtos(mv_par05)% AND %Exp:Dtos(mv_par06)%
 		AND SE2.D_E_L_E_T_ = ''
 		AND E2_FORNECE BETWEEN %Exp:mv_par01% AND %Exp:mv_par02%
