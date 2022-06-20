@@ -56,6 +56,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
   @history Ticket 67494   - Fernando Sigoli   - 24/05/2022 - Feito duplo check para gravar chamada da sp do edata, gravação da nota e datadigitação
   @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
+  @history Ticket 69574   - Abel Babini     - 25/04/2022 - Projeto FAI
 /*/
 User Function MT103FIM()
 
@@ -71,6 +72,8 @@ User Function MT103FIM()
   Local lGrBlqIcm    := .T.
   Local lBlqICM      := SuperGetMv( "MV_#MT13F1" , .F. , .F. ,  )
   Local lBlqNvS      := SuperGetMv( "MV_#MT13F2" , .F. , .F. ,  )
+  Local cFilSF       := GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+  Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
   Private cToBoletim := ''
   Private lEnviaMail := .F.
   
@@ -92,7 +95,7 @@ User Function MT103FIM()
         //
 
         Reclock("SE1", .F.)
-          SE1->E1_TIPO := "NCC"
+        SE1->E1_TIPO := "NCC"
         SE1->(MsUnlock())
 
         // @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
@@ -134,7 +137,7 @@ User Function MT103FIM()
     EndIf
 
     //Inicio Chamado: 036621 10/08/2017 - Fernando Sigoli
-    If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. Alltrim(cFilAnt) $ "02"  .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
+    If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. Alltrim(cFilAnt) $ cFilSF  .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
 
       If	nOpcao == 3	//apenas inclusao ou retorno
 
@@ -224,14 +227,14 @@ User Function MT103FIM()
 
       If !Empty(SF1->F1_X_SQED)
         //BeginTran() //Executa a Stored Procedure @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
-        TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_FATURA] ' +Str(SF1->(Recno()))+","+"'"+cEmpAnt+"'" )
+        TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FU_PEDIDEVOVEND_FATURA] ' +Str(SF1->(Recno()))+","+"'"+cEmpAnt+"','"+cFilAnt+"'" ) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	      //EndTran()
 	    EndIf
 
 	  EndIf
-    //Fim Chamado: 036621 10/08/2017 - Fernando Sigoli
+	  //Fim Chamado: 036621 10/08/2017 - Fernando Sigoli
 
-    //Inicio TKT - 67494  - Fernando Sigoli 24/05/2022
+	    //Inicio TKT - 67494  - Fernando Sigoli 24/05/2022
     If SF1->F1_TIPO == "D" .and. Alltrim(cFilAnt) $ "02"  .and. (nOpcao == 3 .or. nOpcao == 4) 
     
       If !Empty(SF1->F1_X_SQED)
@@ -243,7 +246,7 @@ User Function MT103FIM()
     ENDIF
 
     //Fim TKT - 67494 
-	  //Inicio Chamado: 043873 24/09/2018 - Adriana Oliveira
+    //Inicio Chamado: 043873 24/09/2018 - Adriana Oliveira
 	  //Somente devolução com formulario proprio
 	  If (Alltrim(FunName()) == "MATA103") .and. SF1->F1_TIPO == "D" .and. SF1->F1_FORMUL == "S" .and. (nOpcao == 3 .or. nOpcao == 4) //Incluir e Classificar
 	
@@ -251,7 +254,7 @@ User Function MT103FIM()
 	    SF1->F1_TPFRETE := BuscaFret(SF1->F1_FILIAL,SF1->F1_SERIE,SF1->F1_DOC,SF1->F1_FORNECE,SF1->F1_LOJA,SF1->F1_TIPO)
 	    MsUnlock()
 	
-	  Endif'
+	  Endif
 	  //Fim Chamado: 043873 24/09/2018 - Adriana Oliveira
 	
 	  // Inicio Chamado: 036733 16/08/2017 - William Costa
@@ -2314,7 +2317,7 @@ Return
   @version 01
 /*/
 Static Function atlSC7Dt(cForn, cLj, cDoc, cSerie)
-  //Static Call(MT103FIM,atlSC7Dt,'014769','01','000042477','1  ')
+  //StaticCall(MT103FIM,atlSC7Dt,'014769','01','000042477','1  ')
   //Variáveis.
   Local aArea := GetArea()
   Local cUpdt := ""

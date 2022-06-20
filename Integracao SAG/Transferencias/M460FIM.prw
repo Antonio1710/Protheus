@@ -44,11 +44,13 @@
 	@history Ch: 13526 - Everson         - 18/10/2021 - Tratamento para apuração de descontos por NCC.
 	@history ticket 69652 - Fer Macieira - 15/03/2022 - COMPENSAÇÃO DE RA - MADRUGADA
 	@history ticket 69724 - Fer Macieira - 15/03/2022 - Exceção CFOP 5451 - 384743 PINTOS DE 1 DIA MATRIZ - FEMEA
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	@history Everson, 22/03/2022, Chamado 18465. Envio de informações ao barramento. 
 	@history ticket TI - Fernan Macieira - 22/03/2022 - Forçar publicação
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento..
 	@history Everson, 24/03/2022, Chamado 18465. Envio de informações ao barramento.
 	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 	@history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 	@history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 	@history ticket 72339 - Fernando Macieira - 04/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO
@@ -648,6 +650,9 @@ Static function fGrvVend2()
 	Local _cAreaSA1 := SA1->(GetARea())	//Incluido para manter ponteiro no SA1 em 10/11/16 por Adriana - chamado 031170
 	Local nRecnoSc5 := 0  //chamado : 036627 - Fernando Sigoli  10/08/2017
 	Local cErro     := "" //chamado : 036627 - Fernando Sigoli  10/08/2017
+	Local cFilSF		:= GetMv("MV_#SFFIL",,"02|0B|") 	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cEmpSF		:= GetMv("MV_#SFEMP",,"01|") 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 
 	_cNOTA    	:=	SF2->F2_DOC
 	_cSERIE   	:=	SF2->F2_SERIE
@@ -683,14 +688,15 @@ Static function fGrvVend2()
 	Endif
 
 	//chamado : 036627 - Fernando Sigoli  10/08/2017
-	If Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02"
+	//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	If Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF
 
 		If nRecnoSc5 > 0 
 
 			BeginTran()
 
 			//Executa a Stored Procedure
-			TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDO_FATURA] ' +Str(nRecnoSc5)+","+"'"+cEmpAnt+"'" )
+			TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FU_PEDIDO_FATURA] ' +Str(nRecnoSc5)+","+"'"+cEmpAnt+"','"+cFilAnt+"'" )
 
 			EndTran()	
 
@@ -743,7 +749,8 @@ Static Function updEdata(cNF,cSerie,cCliente,cLoja)
 
 	Local aArea	    := GetArea()
 	Local cQuery	:= ""
-
+	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	
 	If Alltrim(cEmpAnt) == "01" .And. Alltrim(cFilAnt) $ "02"
 
 		cQuery := ""
@@ -788,7 +795,7 @@ Static Function updEdata(cNF,cSerie,cCliente,cLoja)
 			If Val(cValToChar(CHK_NF->REC)) > 0 
 
 				//
-				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_AJUSTE_TRANSPORTADOR] ' + cValToChar(CHK_NF->REC) + "," + "'" + cEmpAnt + "'" )
+				TcSQLExec('EXEC ['+cLnkSrv+'].[SMART].[dbo].[FU_PEDIDEVOVEND_AJUSTE_TRANSPORTADOR] ' + cValToChar(CHK_NF->REC) + "," + "'" + cEmpAnt + "','"+cFilAnt+"'" )
 
 			EndIf
 
@@ -1273,8 +1280,6 @@ Static Function COMPCRAUTO()
     Local nSaldoComp := 0
 	Local aAreaSE1   := SE1->( GetArea() )
 	Local dBkpDtBs   := dDataBase // @history Ch:059415 - FWNM 			 - 13/08/2020 - Contabilizar pela data do RA a Compensação automática para PV Bradesco WS
-	Local dDtNF      := CtoD("//") // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
-	Local dDtRA      := CtoD("//") // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 
     // @history Ticket 1208 – FWNM - 09/09/2020 - Queda no sistema
     Private nRecnoE1  := 0
@@ -1295,7 +1300,6 @@ Static Function COMPCRAUTO()
 			// Busco recno do título da NF
 			If SE1->( dbSeek(FWxFilial("SE1")+SF2->(F2_SERIE+F2_DOC)+PadR("",Len(SE1->E1_PARCELA))+PadR("NF",Len(SE1->E1_TIPO))) )
 				nRecnoE1 := SE1->( RECNO() )
-				dDtNF := SE1->E1_EMISSAO // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 			EndIf
 
 			// Busco recno e valor a compensar do adiantamento do PV
@@ -1303,7 +1307,6 @@ Static Function COMPCRAUTO()
 		
 				nRecnoRA   := SE1->( RECNO() )
 				nSaldoComp := SE1->E1_SALDO
-				dDtRA      := SE1->E1_EMISSAO // @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 
 				PERGUNTE(PadR("AFI340",Len(SX1->X1_GRUPO)),.F.) // Commpensação Contas Pagar
 				MV_PAR11 := 2 // Contabiliza On Line ? = NÃO
@@ -1326,17 +1329,7 @@ Static Function COMPCRAUTO()
 				aRecSE1 := { nRecnoE1 }
 		
 				// Efetuo compensação automática (POSICIONADO NO ADIANTAMENTO)
-				
-				// @history ticket 71738 - Fernando Macieira - 25/04/2022 - As compensações automáticas deverão ser realizadas na data da emissão da NF
 				dDataBase := SE1->E1_EMISSAO // @history Ch:059415 - FWNM 			 - 13/08/2020 - Contabilizar pela data do RA a Compensação automática para PV Bradesco WS
-				If !Empty(dDtNF) .and. !Empty(dDtRA)
-					If dDtNF >= dDtRA
-						dDataBase := dDtNF
-					Else
-						dDataBase := dDtRA
-					EndIf
-				EndIf
-				//
 				
 				If !(SE1->E1_TIPO $ MVPROVIS) // @history tic 15299 - Fer Macieira    - 09/06/2021 - Compensação Errada PR
 
@@ -1594,7 +1587,7 @@ Static Function grvBarr(cOperacao, cNumero, cNF, cSerie)
     Local aArea     := GetArea()
 	Local cFilter	:= ""
 
-	If ! chkOrd(cNF, cSerie) .And. ! vldOrdSa(cNF, cSerie)
+	If ! chkOrd(cNF, cSerie)
 		RestArea(aArea)
 		Return Nil
 		
@@ -1607,17 +1600,6 @@ Static Function grvBarr(cOperacao, cNumero, cNF, cSerie)
 			   "SD2", 3, FWxFilial("SD2") + cNumero, "D2_COD+D2_ITEM",cFilter,;
 			   "documentos_de_saida_protheus", cOperacao,;
 			   .T., .T.,.T., Nil)
-
-	If cOperacao == "I" .And. ! Empty(SD2->D2_PEDIDO)
-
-		cFilter := " C6_FILIAL ='" + FWxFilial("SC6") + "' .And. C6_NUM = '" + SD2->D2_PEDIDO + "' "
-
-		U_ADFAT27D("SC5", 1, FWxFilial("SC5") + SD2->D2_PEDIDO,;
-			"SC6", 1, FWxFilial("SC6") + SD2->D2_PEDIDO, "C6_ITEM",cFilter,;
-			"pedidos_de_saida_protheus", "A",;
-			.T., .T.,.T., Nil)
-
-	EndIf
 
 	RestArea(aArea)
 
@@ -1673,55 +1655,4 @@ Static Function chkOrd(cNF, cSerie)
 
 	RestArea(aArea)
 
-Return lRet
-/*/{Protheus.doc} vldOrdSa
-	Validação de exclusão de pedido de saída com ordem de pesagem vinculada.
-	Chamado 18465.
-	@type  Static Function
-	@author user
-	@since 26/05/2022
-	@version 01
-/*/
-Static Function vldOrdSa(cNF, cSerie)
-
-	//Variáveis.
-	Local aArea  := GetArea()
-	Local lRet	 := .F.
-	Local cQuery := ""
-
-	cQuery += " SELECT  " 
-	cQuery += " C6_XORDPES " 
-	cQuery += " FROM " 
-	cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 " 
-	cQuery += " WHERE " 
-	cQuery += " C6_FILIAL = '" + FWxFilial("SC6") + "' " 
-	cQuery += " AND C6_NOTA = '" + cNF + "' " 
-	cQuery += " AND C6_SERIE = '" + cSerie + "' " 
-	cQuery += " AND C6_XORDPES <> '' " 
-	cQuery += " AND SC6.D_E_L_E_T_ = '' " 
-	cQuery += " ORDER BY C6_XORDPES "
-
-	If Select("D_VLDORD") > 0
-		D_VLDORD->(DbCloseArea())
-
-	EndIf 
-
-	TcQuery cQuery New Alias "D_VLDORD"
-	DbSelectArea("D_VLDORD")
-	D_VLDORD->(DbGoTop())
-
-	DbSelectArea("ZIG")
-	ZIG->(DbSetOrder(2))
-	ZIG->(DbGoTop())
-
-	If ! D_VLDORD->(Eof())
-
-		lRet := .T.
-
-	EndIf
-
-	D_VLDORD->(DbCloseArea())
-
-	RestArea(aArea)
-	
 Return lRet
