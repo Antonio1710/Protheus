@@ -134,8 +134,7 @@ User Function MT410TOK()
 	Local cFilRN:= GetMv("MV_#RNFIL",,"02|06|07|0B") //Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 
 	Local 	_x1			:= 0
-
-	private _nX			:= 0 //Ticket 75016   - Abel Babini      - 20/06/2022 - Acerto error.log
+	Local _nX				:= 0
 	
 	Private cLido 		:= ""
 	Private nCount 		:= 0
@@ -1637,7 +1636,7 @@ User Function MT410TOK()
 					fVldUM()
 
 					// 3. Valida se o item controla localiza��o.
-					fVldLocaliz()
+					fVldLocaliz(_nX) //Ticket 75016   - Abel Babini      - 20/06/2022 - Acerto error.log
 
 					// 4. Tratamento integra��o eData
 					fVldDat()
@@ -2179,7 +2178,7 @@ return
 // 3. Valida se o item controla localiza��o.
 // @history Ticket  63807  - Leonardo P. Monteiro - 17/11/2021 - Valida��o do item que controla endere�o para tornar obrigat�rio o preenchimento do campo 'Localiza��o'.
 //--------------------------------------------------
-Static Function fVldLocaliz()
+Static Function fVldLocaliz(_nX) //Ticket 75016   - Abel Babini      - 20/06/2022 - Acerto error.log
 	IF SF4->F4_ESTOQUE == "S" .AND. _cLocaliz == "S"
 		if Empty(ACOLS[_nX, _nLocaliz])
 
