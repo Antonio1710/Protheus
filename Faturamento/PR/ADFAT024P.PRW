@@ -867,7 +867,7 @@ User Function ADFAT24D()
 
         If D_TKT->ZIG_INICIA == "3" //Everson - 31/05/2022. Chamado 18465.
             cMsgError := "ADFAT24D(ADFAT024P)-TICKET " + D_TKT->ZIH_TKTPRO + " JÁ ENCERRADO. PESAGEM NÃO PODE SER PROCESSADA."
-            lRetSlvP := .F.
+            lRetSlvP := .T.
 
         ElseIf Alltrim(cValToChar(D_TKT->ZIH_CODOPE)) $"2/3/8"
         

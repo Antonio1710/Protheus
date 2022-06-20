@@ -1119,6 +1119,9 @@ Static Function pesOrdTr(nTipo, cRoteiro, cOrdOrg)
     EndIf
 
     cQuery += " AND ZIF.D_E_L_E_T_ = '' "
+    
+    cQuery += " AND ZIF_AGRUPA = '' " //Everson,  13/06/2022 - ticket 18465 - Tratamento para não selecionar ordem agrupada.
+
     cQuery += " AND ZIF_NUMERO NOT IN ( " 
     cQuery += " SELECT ZIT_ORDEM FROM " + RetSqlName("ZIT") + " (NOLOCK) AS ZIT WHERE ZIT_FILIAL = '" + FWxFilial("ZIT") + "' AND ZIT.D_E_L_E_T_ = '' " 
     cQuery += " UNION ALL " 
@@ -2209,7 +2212,7 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
             (cQryT3)->ZIG_PESINI,;  //27-Peso inicial.
             (cQryT3)->ZIG_PESFIM,;  //28-Peso final.
             (cQryT3)->ZIG_PESOLI,;  //29-Peso liquido.
-            cNF;                    //30-Peso liquido.
+            cNF;                    //30-Nota fiscal.
         })
     
         (cQryT3)->(dbSkip())
@@ -2272,6 +2275,12 @@ Static Function getPedSa(cNmOrdem)
     If SC5->( DbSeek( FWxFilial("SC5") + cNmOrdem))
 
         While ! SC5->(Eof()) .And. SC5->C5_FILIAL == FWxFilial("SC5") .And. SC5->C5_XORDPES == cNmOrdem 
+
+            If U_ADFAT573(SC5->C5_NUM)
+                SC5->(DbSkip())
+                Loop
+
+            EndIf
         
             If Empty(SC5->C5_PEDSAG)
 
@@ -2926,7 +2935,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
 
-        gerTkEn(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, lAgrup, cOrdAgrup, cBalanca, cRotPesa)
+        gerTkEn(nLinha, oOrdPes, aOrdPes, cCP, Iif(Empty(cOrdAgrup), cNmOrdem, cOrdAgrup), nQuant, lAgrup, cOrdAgrup, cBalanca, cRotPesa)
 
     ElseIf cTpOrdem == "S" //Saída.
 
@@ -2936,7 +2945,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
         
-        gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanca, cRotPesa)
+        gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, Iif(Empty(cOrdAgrup), cNmOrdem, cOrdAgrup), nQuant, cBalanca, cRotPesa)
         
     ElseIf cTpOrdem == "R" //Ração.
         
@@ -3515,6 +3524,12 @@ Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanc
     If ! Empty(cTicket)
         Help(Nil, Nil, "Função gerTkOt(ADFAT017P)", Nil, "Já há o ticket de pesagem " + cTicket + " vinculado à ordem " + cValToChar(cNmOrdem) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         Return Nil
+
+    EndIf
+
+    //Obtém placa do agrupador.
+    If Empty(cPlaca)
+        cPlaca    := Posicione("ZIF",3,FWxFilial("ZIF") + cNmOrdem,"ZIF_PLACA")
 
     EndIf
 
@@ -4209,15 +4224,15 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     lRacao    := cTpMovi == "R"
     lSaida    := cTpMovi == "S"
 
-    //Localiza ordem de pesagem.
-    If ! U_ADFAT16A(cNmOrdem)
+    //Localiza ordem/agrupador de pesagem.
+    If ! U_ADFAT16A(cNmOrdem) .And. ! U_ADFAT16F(cNmOrdem)
         cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada."
         U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
         Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
-    EndIF
+    EndIf
 
     cProdSAG   := ZIF->ZIF_PRDSAG
     cProdPro   := ZIF->ZIF_PRDPRO
@@ -6460,7 +6475,7 @@ User Function ADFAT17O(cCP, cPlaca)
     EndIf
 
     cQuery += " SELECT  " 
-    cQuery += " * " 
+    cQuery += " *, SC6.R_E_C_N_O_ AS RECSC6 " 
     cQuery += " FROM " 
         cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
         cQuery += " INNER JOIN " 
@@ -6486,14 +6501,12 @@ User Function ADFAT17O(cCP, cPlaca)
     While ! D_PEDS->(Eof())
         
         cPedido := D_PEDS->C5_NUM
-        
-        If SC6->(DbSeek( FWxFilial("SC6") + cPedido ))
 
-            If ! Empty(SC6->C6_XORDPES)
-                D_PEDS->(DbSkip())
-                Loop
+        SC6->(DbGoTo(Val(cValToChar(D_PEDS->RECSC6))))
 
-            EndIf
+        If ! Empty(SC6->C6_XORDPES)
+            D_PEDS->(DbSkip())
+            Loop
 
         EndIf
 

@@ -1,6 +1,6 @@
 #include "rwmake.ch"   
 #include "TOPCONN.CH"
-#INCLUDE "PROTHEUS.CH    
+#INCLUDE "PROTHEUS.CH"    
 
 /*/{Protheus.doc} User Function FA080CHK
 	PONTO DE ENTRADA Baixa de Titulos a Pagar e Mensagem de Adiantamento a Fornecedor 

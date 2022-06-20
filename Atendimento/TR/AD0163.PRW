@@ -14,6 +14,7 @@
 	@history ticket 64881 - Fernando Sigoli         - 09/12/2021 - Adicionar limpar placa na tela de ocorrencias  
 	@history ticket TI    - Leonardo P. Monteiro    - 08/02/2022 - Correção da rotina para eliminar o lock na tabela SC5 quando selecionada as opções do menu.
 	@history Ticket 69533 - ADRIANO SAVOINE         - 11/03/2022 - Ajustado o Fonte para funcionar a consulta pelo Botão F12
+	@history Ticket 74562 - Antonio Domingos        - 13/06/2022 - Corrigido invalid macro source (SSYacc0105e: Error token failed, no valid token)
 /*/
 User Function AD0163(xAutoCab,xAutoItens) // U_AD0163() 
 
@@ -75,8 +76,8 @@ Static Function fFiltro()
 
 
 	IF ALLTRIM(MV_PAR02) <> '' .and. ALLTRIM(MV_PAR03) <> ''
-	
-		_nFiltRot := " C5_DTENTR = '"+ALLTRIM(DTOS(MV_PAR01))+"' .AND. C5_PLACA = '"+ ALLTRIM(MV_PAR02) +"' AND C5_ROTEIRO = '" + ALLTRIM(MV_PAR03)+"'"    //SQL
+		// corrigido filtro Ticket 74562 - Antonio Domingos - 13/06/2022 - Corrigido invalid macro source (SSYacc0105e: Error token failed, no valid token)
+		_nFiltRot := " C5_DTENTR = '"+ALLTRIM(DTOS(MV_PAR01))+"' .AND. C5_PLACA = '"+ ALLTRIM(MV_PAR02) +"' .AND. C5_ROTEIRO = '" + ALLTRIM(MV_PAR03)+"'"    //SQL
 
 	Else
 		If ALLTRIM(MV_PAR02) <> ''

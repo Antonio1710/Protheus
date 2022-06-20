@@ -10,6 +10,8 @@
 	@since 22/11/2018
 	@version 1.0
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	/*/
 User Function ADVEN101P() //U_ADVEN101P()
 	//Declaração de variávies
@@ -28,7 +30,8 @@ User Function ADVEN101P() //U_ADVEN101P()
 	// 	Return
 	// EndIf
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	conout("ADVEN101P - Início solicitação de erro de integração Salesforce")
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para solicitação de pedido com erro de integração ao Salesforce.')
@@ -75,7 +78,9 @@ Static Function processar()
 	
 	//Obtém pedidos com bandeira vermelha.
 	Conout("ADVEN101P - Solicitação de bandeira vermelha ao Salesforce acessaSF")
-	If StaticCall(ADVEN097P,acessaSF,@oPJsonBV,@lRetBV,2,.T.) //Obtém pedidos Salesforce com bandeira vermelha.
+	//If Static Call(ADVEN097P,acessaSF,@oPJsonBV,@lRetBV,2,.T.) //Obtém pedidos Salesforce com bandeira vermelha.
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	If u_VEN097A0( @oPJsonBV,@lRetBV,2,.T. )//Obtém pedidos Salesforce com bandeira vermelha.
 		For i := 1 To Len(oPJsonBV:records)			
 			Aadd(aDadosPV,oPJsonBV:records[i]:Id)
 		Next i
@@ -85,8 +90,10 @@ Static Function processar()
 			Conout("ADVEN101P - Envio de solicitação de bandeira vermelha ao Salesforce")
 			VarInfo("",aDadosPV)
 			cJson := FWJsonSerialize(aDadosPV,.F.,.F.)
-			StaticCall(ADVEN097P,envSolic,cJson)
-		Else
+			//Static Call(ADVEN097P,envSolic,cJson)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN097A1(cJson)
+		Else	
 			Conout("ADVEN101P - Não há pedidos com bandeira vermelha Salesforce")
 		EndIf
 		
@@ -97,7 +104,9 @@ Static Function processar()
 	//Obtém Ids pedidos pedidos Salesforce.
 	Conout("ADVEN101P - Solicitação de pedidos ao Salesforce acessaSF")
 	aDadosPV := {}
-	If StaticCall(ADVEN097P,acessaSF,@oPJsonPV,@lRetPV,1,.T.) //Obtém pedidos Salesforce.
+	//If Static Call(ADVEN097P,acessaSF,@oPJsonPV,@lRetPV,1,.T.) //Obtém pedidos Salesforce.
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	If u_VEN097A0(@oPJsonPV,@lRetPV,1,.T.) //Obtém pedidos Salesforce.
 		For i := 1 To Len(oPJsonPV:records)
 			If ! (Empty(Alltrim(cValToChar(oPJsonPV:records[i]:Codigo_Protheus__c)))) .Or.;
 			   ( Empty(Alltrim(cValToChar(oPJsonPV:records[i]:Codigo_Protheus__c))) .And. Upper(Alltrim(cValToChar(DecodeUTF8(oPJsonPV:records[i]:Status)))) <> "CANCELADO" .And. Upper(Alltrim(cValToChar(DecodeUTF8(oPJsonPV:records[i]:Status)))) <> "COTAÇÃO" )
@@ -117,7 +126,9 @@ Static Function processar()
 		Next i
 		
 		//
-		cQuery := StaticCall(ADVEN097P,sqlSC5)
+		//cQuery := Static Call(ADVEN097P,sqlSC5)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		cQuery := u_VEN097A2()
 		If Select("DADOS_SC5") > 0
 			DADOS_SC5->(DbCloseArea())
 		EndIf
@@ -170,7 +181,9 @@ Static Function processar()
 			Conout("ADVEN101P - Envio de solicitação de pedido ao Salesforce")
 			VarInfo("",aDadosPV)
 			cJson := FWJsonSerialize(aDadosPV,.F.,.F.)
-			StaticCall(ADVEN097P,envSolic,cJson)
+			//Static Call(ADVEN097P,envSolic,cJson)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN097A1(cJson)
 		Else
 			Conout("ADVEN101P - Não há pedidos com erros Salesforce")
 		EndIf

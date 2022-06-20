@@ -159,6 +159,7 @@ DEFINIÇÃO DE TABELAS
 	@history Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
 	@history Ticket 62140										- Abel Babini - 07/10/2021 - Ajustado relatório Porder 3 e adicionado Valores de Dev Serv Industr na Abertura da Gia para Safegg
 	@history Ticket 64836										- Abel Babini - 07/12/2021 - Ajustar query do relatório de Poder de 3s no Relatório de Industriazação de PA para considerar data de digitação e não data de emissão
+	@history Ticket 70142                   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	/*/
 
 User Function ADFIS028R()
@@ -1536,12 +1537,22 @@ Static Function PNCON001()
 		MsgRun( "Carregando dados - Compra Legumes, aguarde...",,{ || xABrw17() } ) //COMPRA LEGUMES
 		MsgRun( "Carregando dados - DifAl Não Contribuinte, aguarde...",,{ || xABrw06() } ) //DIFAL NAO CONTRIBUINTE
 		MsgRun( "Carregando dados - Outras Saídas, aguarde...",,{ || xABrw09() } ) //OUTRAS SAIDAS //INICIO Chamado n.050629 - OS n.052801 - Relatorio Outras Saídas - Abel Babini - 02/12/2019
-		MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw26) } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
-		MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || StaticCall(ADFIS038R,xABrw37) } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+		//MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || Static Call(ADFIS038R,xABrw26) } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
+		//MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || Static Call(ADFIS038R,xABrw37) } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || u_FIS038A0() } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
+		MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || u_FIS038A1() } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+		
 		MsgRun( "Carregando dados - Demonstrativo, aguarde...",,{ || xABrw05() } ) //DEMONSTRATIVO
-		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
-		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw20) } ) //NF CANCELADAS
-		// MsgRun( "Carregando dados - Conf Faturamento, aguarde...",,{ || StaticCall(ADFIS038R,xABrw36) } ) //NF CANCELADAS
+
+		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+		//MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || Static Call(ADFIS038R,xABrw20) } ) //NF CANCELADAS
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || u_FIS038A2() } ) //RESUMO DA GIA
+		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || u_FIS038A3() } ) //NF CANCELADAS
+		
+		// MsgRun( "Carregando dados - Conf Faturamento, aguarde...",,{ || Static Call(ADFIS038R,xABrw36) } ) //NF CANCELADAS
 	ELSEIF nOpMdl	== 2
 		MsgRun( "Carregando dados - Parâmetros, aguarde...",,{ || xABrw00() } ) //ESPECIE DE DOCUMENTOS
 		MsgRun( "Carregando dados - Dif. de Alíquota, aguarde...",,{ || xABrw07() } ) //DIFERENCIAL DE ALIQUOTA // INICIO n.040924  - Relatorio Dif. de Alíquota - Abel Babini - 07/05/2019
@@ -1553,25 +1564,47 @@ Static Function PNCON001()
 		MsgRun( "Carregando dados - Revenda Tributada, aguarde...",,{ || xABrw22() } ) //REVENDA TRIBUTADA
 		MsgRun( "Carregando dados - Industrialização PA, aguarde...",,{ || xABrw23() } ) //INDUSTR DE PA // INICIO n.040930  - Relatorio Industrialização PA - Abel Babini - 24/06/2019
 		MsgRun( "Carregando dados - Apuração ICMS Frete, aguarde...",,{ || xABrw24() } ) //APURACAO ICMS FRETE // INICIO n.050629  - Relatorio Apuração ICMS Frete - Abel Babini - 01/10/2019
-		MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw26) } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
-		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
-		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw20) } ) //NF CANCELADAS
-		MsgRun( "Carregando dados - Crédito CIAP, aguarde...",,{ || StaticCall(ADFIS038R,xABrw28) } ) //CREDITO CIAP
-		MsgRun( "Carregando dados - Compra Materia Prima, aguarde...",,{ || StaticCall(ADFIS038R,xABrw29) } ) //COMPRA MP
-		MsgRun( "Carregando dados - Vendas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw30) } ) //COMPRA MP
+		//MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || Static Call(ADFIS038R,xABrw26) } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || u_FIS038A0() } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
+
+		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+		//MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || Static Call(ADFIS038R,xABrw20) } ) //NF CANCELADAS
+		//MsgRun( "Carregando dados - Crédito CIAP, aguarde...",,{ || Static Call(ADFIS038R,xABrw28) } ) //CREDITO CIAP
+		//MsgRun( "Carregando dados - Compra Materia Prima, aguarde...",,{ || Static Call(ADFIS038R,xABrw29) } ) //COMPRA MP
+		//MsgRun( "Carregando dados - Vendas, aguarde...",,{ || Static Call(ADFIS038R,xABrw30) } ) //COMPRA MP
+
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || u_FIS038A3() } ) //NF CANCELADAS
+		MsgRun( "Carregando dados - Crédito CIAP, aguarde...",,{ || u_FIS038A4() } ) //CREDITO CIAP
+		MsgRun( "Carregando dados - Compra Materia Prima, aguarde...",,{ || u_FIS038A5() } ) //COMPRA MP
+		MsgRun( "Carregando dados - Vendas, aguarde...",,{ || u_FIS038A6() } ) //COMPRA MP
 		//Chamado Interno TI - OS        - Abel Babini - 29/05/2020 - Painel Fiscal ICMS - Ajuste de Error.log no Modelo2 - O relatório precisa ser executado no Modelo 2
-		MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw33) } ) //ENTRADAS E SAIDAS
-		MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw34) } ) //COMPRA MP
-		MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || StaticCall(ADFIS038R,xABrw37) } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
-		MsgRun( "Carregando dados - IVA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw27) } ) //IVA
-		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+		////MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || Static Call(ADFIS038R,xABrw33) } ) //ENTRADAS E SAIDAS
+		//MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || Static Call(ADFIS038R,xABrw34) } ) //COMPRA MP
+		//MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || Static Call(ADFIS038R,xABrw37) } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+		//MsgRun( "Carregando dados - IVA, aguarde...",,{ || Static Call(ADFIS038R,xABrw27) } ) //IVA
+		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || u_FIS038A7() } ) //ENTRADAS E SAIDAS
+		MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || u_FIS038A8() } ) //COMPRA MP
+		MsgRun( "Carregando dados - Débito Serv. Industrialização, aguarde...",,{ || u_FIS038A9() } ) //DEB SERV INDUSTRIALIZACAO //INICIO Ticket 18004                   - Abel Babini - 17/08/2021 - Alterações no Painel Fiscal - Apuração de Frete e criação do relatório Débito Serv. Industrialização
+		MsgRun( "Carregando dados - IVA, aguarde...",,{ || u_FIS038B0() } ) //IVA
+		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || u_FIS038A2() } ) //RESUMO DA GIA
 	ELSEIF nOpMdl	== 3
 		MsgRun( "Carregando dados - Parâmetros, aguarde...",,{ || xABrw00() } ) //ESPECIE DE DOCUMENTOS
-		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw20) } ) //NF CANCELADAS
-		MsgRun( "Carregando dados - Conferência NF Serviço...",,{ || StaticCall(ADFIS038R,xABrw32) } ) //CONFERÊNCIA NF SERVIÇO
+		//MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || Static Call(ADFIS038R,xABrw20) } ) //NF CANCELADAS
+		//MsgRun( "Carregando dados - Conferência NF Serviço...",,{ || Static Call(ADFIS038R,xABrw32) } ) //CONFERÊNCIA NF SERVIÇO
+		//MsgRun( "Carregando dados - Apuração ICMS, aguarde...",,{ || Static Call(ADFIS038R,xABrw31) } ) //APURAÇÃO ICMS
+		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
 		
-		MsgRun( "Carregando dados - Apuração ICMS, aguarde...",,{ || StaticCall(ADFIS038R,xABrw31) } ) //APURAÇÃO ICMS
-		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || u_FIS038A3() } ) //NF CANCELADAS
+		MsgRun( "Carregando dados - Conferência NF Serviço...",,{ || u_FIS038B1() } ) //CONFERÊNCIA NF SERVIÇO
+		MsgRun( "Carregando dados - Apuração ICMS, aguarde...",,{ || u_FIS038B2() } ) //APURAÇÃO ICMS
+		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || u_FIS038A2() } ) //RESUMO DA GIA
+
 	ELSEIF nOpMdl	== 4
 		MsgRun( "Carregando dados - Parâmetros, aguarde...",,{ || xABrw00() } ) //ESPECIE DE DOCUMENTOS
 		MsgRun( "Carregando dados - Dif. de Alíquota, aguarde...",,{ || xABrw07() } ) //DIFERENCIAL DE ALIQUOTA // INICIO n.040924  - Relatorio Dif. de Alíquota - Abel Babini - 07/05/2019
@@ -1582,15 +1615,27 @@ Static Function PNCON001()
 		MsgRun( "Carregando dados - Retorno Industrial., aguarde...",,{ || xABrw21() } ) //INDUSTR E USO E CONSUMO
 		MsgRun( "Carregando dados - Revenda Tributada, aguarde...",,{ || xABrw22() } ) //REVENDA TRIBUTADA
 		MsgRun( "Carregando dados - Apuração ICMS Frete, aguarde...",,{ || xABrw24() } ) //APURACAO ICMS FRETE // INICIO n.050629  - Relatorio Apuração ICMS Frete - Abel Babini - 01/10/2019
-		MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw26) } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
-		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw20) } ) //NF CANCELADAS
-		MsgRun( "Carregando dados - Crédito CIAP, aguarde...",,{ || StaticCall(ADFIS038R,xABrw28) } ) //CREDITO CIAP
-		MsgRun( "Carregando dados - Compra Materia Prima, aguarde...",,{ || StaticCall(ADFIS038R,xABrw29) } ) //COMPRA MP
-		MsgRun( "Carregando dados - Vendas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw30) } ) //COMPRA MP
-		MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw34) } ) //COMPRA MP
-		MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || StaticCall(ADFIS038R,xABrw33) } ) //ENTRADAS E SAIDAS
-		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw27) } ) //IVA
-		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+		
+		//MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || Static Call(ADFIS038R,xABrw26) } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
+		//MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || Static Call(ADFIS038R,xABrw20) } ) //NF CANCELADAS
+		//MsgRun( "Carregando dados - Crédito CIAP, aguarde...",,{ || Static Call(ADFIS038R,xABrw28) } ) //CREDITO CIAP
+		//MsgRun( "Carregando dados - Compra Materia Prima, aguarde...",,{ || Static Call(ADFIS038R,xABrw29) } ) //COMPRA MP
+		//MsgRun( "Carregando dados - Vendas, aguarde...",,{ || Static Call(ADFIS038R,xABrw30) } ) //COMPRA MP
+		//MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || Static Call(ADFIS038R,xABrw34) } ) //COMPRA MP
+		//MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || Static Call(ADFIS038R,xABrw33) } ) //ENTRADAS E SAIDAS
+		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw27) } ) //IVA
+		//MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw03) } ) //RESUMO DA GIA
+
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Carregando dados - Outras Entradas, aguarde...",,{ || u_FIS038A0() } ) //OUTRAS ENTRADAS //INICIO Chamado n.055157 - OS n.056585 - Relatório Outras Entradas - Abel Babini - 28/01/2020
+		MsgRun( "Carregando dados - NFs Canceladas, aguarde...",,{ || u_FIS038A3() } ) //NF CANCELADAS
+		MsgRun( "Carregando dados - Crédito CIAP, aguarde...",,{ || u_FIS038A4() } ) //CREDITO CIAP
+		MsgRun( "Carregando dados - Compra Materia Prima, aguarde...",,{ || u_FIS038A5() } ) //COMPRA MP
+		MsgRun( "Carregando dados - Vendas, aguarde...",,{ || u_FIS038A6() } ) //COMPRA MP
+		MsgRun( "Carregando dados - Devolução Vendas, aguarde...",,{ || u_FIS038A8() } ) //COMPRA MP
+		MsgRun( "Carregando dados - Entradas e Saidas, aguarde...",,{ || u_FIS038A7() } ) //ENTRADAS E SAIDAS
+		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || u_FIS038B0() } ) //IVA
+		MsgRun( "Carregando dados - Resumo da GIA, aguarde...",,{ || u_FIS038A2() } ) //RESUMO DA GIA
 	ENDIF
 
 	cHrFim	:= ElapTime( cHrIni, TIME() )
@@ -1869,7 +1914,10 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oP02RE01 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr03) OF oP02RE01 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr03) OF oP02RE01 PIXEL //"Exportar Excel"
+		
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038B3() OF oP02RE01 PIXEL //"Exportar Excel"
 
 		oBrw03Rs:= TcBrowse():New(010,050,150,150,,,,oP02D101,,,,,,,,,,,,.f.,cAlB03Rs,.t.,,.f.,,,,)
 		oBrw03Rs:AddColumn( TcColumn():New( "Filial"		, {|| (cAlB03Rs)->FILIAL}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
@@ -3992,7 +4040,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn20R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr20)  OF oPn20R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr20)  OF oPn20R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038B4()  OF oPn20R1 PIXEL //"Exportar Excel"
 
 		
 		oBrw20Rs:= TcBrowse():New(010,050,150,150,,,,oPn20D1E,,,,,,,,,,,,.f.,cAlB20Br,.t.,,.f.,,,,)
@@ -6170,12 +6220,18 @@ Static Function PNCON001()
 		@ 011,165 COMBOBOX oClassOE VAR cClassOE ITEMS aClassOE SIZE 110,08 PIXEL OF oPn26T1 ON CHANGE nClassOE := oClassOE:nAt 
 		@ 011,280 SAY OemToAnsi("2 > Selecione os itens a serem classificados")		FONT oFont003 SIZE 200,15 OF oPn26T1 PIXEL
 		@ 011,450 SAY OemToAnsi("3 > Clique no botão Aplica Classif.")		FONT oFont003 SIZE 150,15 OF oPn26T1 PIXEL
-		@ 011,590 BUTTON OemToAnsi('Aplica Classif.')	SIZE 42,13	FONT oDlg:oFont ACTION MsgRun( "Processando classificação de Outras Entradas, aguarde...",,{ || StaticCall(ADFIS038R,xBr26Clf, nClassOE) } ) OF oPn26T1 PIXEL //"Exportar Excel"
+		//@ 011,590 BUTTON OemToAnsi('Aplica Classif.')	SIZE 42,13	FONT oDlg:oFont ACTION MsgRun( "Processando classificação de Outras Entradas, aguarde...",,{ || Static Call(ADFIS038R,xBr26Clf, nClassOE) } ) OF oPn26T1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 011,590 BUTTON OemToAnsi('Aplica Classif.')	SIZE 42,13	FONT oDlg:oFont ACTION MsgRun( "Processando classificação de Outras Entradas, aguarde...",,{ || u_FIS038B5(nClassOE) } ) OF oPn26T1 PIXEL //"Exportar Excel"
 
 		//QUADRO DE RELATÓRIO
 		@ 001,528 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn26R1 PIXEL
-		@ 011,528 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr26) OF oPn26R1 PIXEL //"Exportar Excel"
-		@ 011,580 BUTTON OemToAnsi('Grava Classif.')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xVrfGr26) OF oPn26R1 PIXEL //"Exportar Excel"
+		//@ 011,528 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr26) OF oPn26R1 PIXEL //"Exportar Excel"
+		//@ 011,580 BUTTON OemToAnsi('Grava Classif.')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xVrfGr26) OF oPn26R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 011,528 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038B6() OF oPn26R1 PIXEL //"Exportar Excel"
+		@ 011,580 BUTTON OemToAnsi('Grava Classif.')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038B7() OF oPn26R1 PIXEL //"Exportar Excel"
+
 		
 		oBrw26Dt := FWMarkBrowse():New() 
 		oBrw26Dt:SetOwner(oPn26DE1) 
@@ -6283,7 +6339,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn27R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr27)  OF oPn27R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr27)  OF oPn27R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038B8() OF oPn27R1 PIXEL //"Exportar Excel"
 
 		
 		oBrw27Rs:= TcBrowse():New(010,050,150,150,,,,oPn27D1E,,,,,,,,,,,,.f.,cAlB27Br,.t.,,.f.,,,,)
@@ -6333,7 +6391,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn28R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr28)  OF oPn28R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr28)  OF oPn28R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038B9() OF oPn28R1 PIXEL //"Exportar Excel"
 
 		@ 014,008 SAY OemToAnsi("Valor Crédito ICMS (CIAP)")	FONT oFont002 SIZE 200,15 OF oPn28R1 PIXEL
 		@ 014,150 MSGET nVCiap SIZE 60,08 OF oPn28R1 PIXEL When .F. PICTURE '@E 9,999,999,999.99'
@@ -6395,7 +6455,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn29R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr29) OF oPn29R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr29) OF oPn29R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C0() OF oPn29R1 PIXEL //"Exportar Excel"
 
 		oBrw29Rs:= TcBrowse():New(010,050,150,150,,,,oPn29D1E,,,,,,,,,,,,.f.,cAlB29Br,.t.,,.f.,,,,)
 		oBrw29Rs:AddColumn( TcColumn():New( "Filial"			, {|| (cAlB29Br)->FILIAL}			, "@!"						,,,"CENTER"	,015,.f.,.f.,,,,.f.,) )
@@ -6458,7 +6520,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn30R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr30) OF oPn30R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr30) OF oPn30R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C1() OF oPn30R1 PIXEL //"Exportar Excel"
 
 		oBrw30Rs:= TcBrowse():New(010,050,150,150,,,,oPn30D1E,,,,,,,,,,,,.f.,cAlB30Br,.t.,,.f.,,,,)
 		oBrw30Rs:AddColumn( TcColumn():New( "Filial"			, {|| (cAlB30Br)->FILIAL}			, "@!"						,,,"CENTER"	,015,.f.,.f.,,,,.f.,) )
@@ -6520,7 +6584,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn33R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr33) OF oPn33R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr33) OF oPn33R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C2() OF oPn33R1 PIXEL //"Exportar Excel"
 
 		oBrw33Rs:= TcBrowse():New(010,050,150,150,,,,oPn33D1E,,,,,,,,,,,,.f.,cAlB33Br,.t.,,.f.,,,,)
 		oBrw33Rs:AddColumn( TcColumn():New( "Filial"			, {|| (cAlB33Br)->FILIAL}			, "@!"						,,,"CENTER"	,015,.f.,.f.,,,,.f.,) )
@@ -6565,9 +6631,10 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn31R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr31)  OF oPn31R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr31)  OF oPn31R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C3()  OF oPn31R1 PIXEL //"Exportar Excel"
 
-		
 		oBrw31Rs:= TcBrowse():New(010,050,150,150,,,,oPn31D1E,,,,,,,,,,,,.f.,cAlB31Br,.t.,,.f.,,,,)
 		oBrw31Rs:AddColumn( TcColumn():New( "Filial"			, {|| (cAlB31Br)->FILIAL}		, "@!"						,,,"CENTER"	,020,.f.,.f.,,,,.f.,) )
 		oBrw31Rs:AddColumn( TcColumn():New( "CFOP"				, {|| (cAlB31Br)->CFOP}			, "@!"						,,,"LEFT"	,040,.f.,.f.,,,,.f.,) )
@@ -6610,7 +6677,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn32R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr32)  OF oPn32R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr32)  OF oPn32R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C4()  OF oPn32R1 PIXEL //"Exportar Excel"
 
 		
 		oBrw32Rs:= TcBrowse():New(010,050,150,150,,,,oPn32D1E,,,,,,,,,,,,.f.,cAlB32Br,.t.,,.f.,,,,)
@@ -6676,7 +6745,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oPn34R1 PIXEL
-		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr34) OF oPn34R1 PIXEL //"Exportar Excel"
+		//@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr34) OF oPn34R1 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 014,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C5() OF oPn34R1 PIXEL //"Exportar Excel"
 
 		oBrw34Rs:= TcBrowse():New(010,050,150,150,,,,oPn34D1E,,,,,,,,,,,,.f.,cAlB34Br,.t.,,.f.,,,,)
 		oBrw34Rs:AddColumn( TcColumn():New( "Filial"			, {|| (cAlB34Br)->FILIAL}			, "@!"						,,,"CENTER"	,015,.f.,.f.,,,,.f.,) )
@@ -7123,7 +7194,7 @@ Static Function PNCON001()
 	// 	oBrw36R1:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw36R1[oBrw36R1:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
 
 	// 	For nColBr36 := 1 To nQNCM36
-	// 		StaticCall(ADFIS038R, fAddCl36, nColBr36, "361")
+	// 		Static Call(ADFIS038R, fAddCl36, nColBr36, "361")
 	// 	Next nColBr36
 	// 	oBrw36R1:AddColumn( TcColumn():New( "Total"			, {|| aBrw36R1[oBrw36R1:nAt,nQNCM36+3]}	, "@E 999,999,999.99"						,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
 
@@ -7142,7 +7213,7 @@ Static Function PNCON001()
 	// 	oBrw36R4:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw36R4[oBrw36R4:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
 
 	// 	For nColBr36 := 1 To nQNCM36
-	// 		StaticCall(ADFIS038R, fAddCl36, nColBr36, "364")
+	// 		Static Call(ADFIS038R, fAddCl36, nColBr36, "364")
 
 	// 	Next nColBr36
 	// 	oBrw36R4:AddColumn( TcColumn():New( "Total"			, {|| aBrw36R4[oBrw36R4:nAt,nQNCM36+3]}	, "@E 999,999,999.99"						,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
@@ -7165,7 +7236,7 @@ Static Function PNCON001()
 	// 	oBrw36R2:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw36R2[oBrw36R2:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
 
 	// 	For nColBr36 := 1 To nQNCM36
-	// 		StaticCall(ADFIS038R, fAddCl36, nColBr36, "362")
+	// 		Static Call(ADFIS038R, fAddCl36, nColBr36, "362")
 	// 	Next nColBr36
 	// 	oBrw36R2:AddColumn( TcColumn():New( "Total"			, {|| aBrw36R2[oBrw36R2:nAt,nQNCM36+3]}	, "@E 999,999,999.99"						,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
 
@@ -7184,7 +7255,7 @@ Static Function PNCON001()
 	// 	oBrw36R5:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw36R5[oBrw36R5:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
 
 	// 	For nColBr36 := 1 To nQNCM36
-	// 		StaticCall(ADFIS038R, fAddCl36, nColBr36, "365")
+	// 		Static Call(ADFIS038R, fAddCl36, nColBr36, "365")
 	// 	Next nColBr36
 	// 	oBrw36R5:AddColumn( TcColumn():New( "Total"			, {|| aBrw36R5[oBrw36R5:nAt,nQNCM36+3]}	, "@E 999,999,999.99"						,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
 
@@ -7205,7 +7276,7 @@ Static Function PNCON001()
 	// 	oBrw36R3:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw36R3[oBrw36R3:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
 
 	// 	For nColBr36 := 1 To nQNCM36
-	// 		StaticCall(ADFIS038R, fAddCl36, nColBr36, "363")
+	// 		Static Call(ADFIS038R, fAddCl36, nColBr36, "363")
 	// 	Next nColBr36
 	// 	oBrw36R3:AddColumn( TcColumn():New( "Total"			, {|| aBrw36R3[oBrw36R3:nAt,nQNCM36+3]}	, "@E 999,999,999.99"						,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
 
@@ -7224,7 +7295,7 @@ Static Function PNCON001()
 	// 	oBrw36R6:AddColumn( TcColumn():New( "CFOP"			, {|| aBrw36R6[oBrw36R6:nAt,02]}	, "@!"						,,,"LEFT"	,020,.f.,.f.,,,,.f.,) )
 
 	// 	For nColBr36 := 1 To nQNCM36
-	// 		StaticCall(ADFIS038R, fAddCl36, nColBr36, "366")
+	// 		Static Call(ADFIS038R, fAddCl36, nColBr36, "366")
 	// 	Next nColBr36
 	// 	oBrw36R6:AddColumn( TcColumn():New( "Total"			, {|| aBrw36R6[oBrw36R6:nAt,nQNCM36+3]}	, "@E 999,999,999.99"						,,,"RIGHT"	,050,.f.,.f.,,,,.f.,) )
 
@@ -7257,7 +7328,7 @@ Static Function PNCON001()
 	// 	//QUADRO DE RELATÓRIO
 
 	// 	@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oP36RE01 PIXEL
-	// 	@ 010,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr36) OF oP36RE01 PIXEL //"Exportar Excel"
+	// 	@ 010,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr36) OF oP36RE01 PIXEL //"Exportar Excel"
 
 	// 	////////////////////////////////////////////////////////////
 	// 	oFLr36p2:= FWLayer():New()
@@ -7417,7 +7488,9 @@ Static Function PNCON001()
 
 		//QUADRO DE RELATÓRIO
 		@ 001,558 SAY OemToAnsi("OUTRAS OPÇÕES")		SIZE 200,15	FONT oFont003 OF oP37RE01 PIXEL
-		@ 010,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION StaticCall(ADFIS038R,xRelBr37) OF oP37RE01 PIXEL //"Exportar Excel"
+		//@ 010,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION Static Call(ADFIS038R,xRelBr37) OF oP37RE01 PIXEL //"Exportar Excel"
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		@ 010,558 BUTTON OemToAnsi('Gera Relatório')	SIZE 42,13	FONT oDlg:oFont ACTION u_FIS038C6() OF oP37RE01 PIXEL //"Exportar Excel"
 
 		////////////////////////////////////////////////////////////
 		oFLr37p2:= FWLayer():New()
@@ -11017,7 +11090,10 @@ Static Function xABrw09()
 	IF nOpMdl	== 1
 		MsgRun( "Atualizando dados - Demonstrativo, aguarde...",,{ || xABrw05() } ) //DEMONSTRATIVO
 	ELSEIF nOpMdl	== 2 .or. nOpMdl == 4
-		MsgRun( "Atualizando dados - Abertura GIA, aguarde...",,{ || StaticCall(ADFIS038R,xABrw27) } ) //DEMONSTRATIVO
+		//MsgRun( "Atualizando dados - Abertura GIA, aguarde...",,{ || Static Call(ADFIS038R,xABrw27) } ) //DEMONSTRATIVO
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		MsgRun( "Atualizando dados - Abertura GIA, aguarde...",,{ || u_FIS038B0() } ) //DEMONSTRATIVO
+
 	ENDIF
 
 	SysRefresh()
@@ -16472,7 +16548,9 @@ Return
 Static Function xExpICMR()
 	_lAbreEx := .F.
 	IF nOpMdl == 1
-		Processa({||StaticCall(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C7()},"Gerando arquivo Abertura GIA","Aguarde...")
 		Processa({||xRelBr04b()},"Gerando arquivo Abertura GIA ST","Aguarde...")
 		Processa({||xRelBr05b()},"Gerando arquivo Demonstrativo","Aguarde...")
 		Processa({||xRelBr06b()},"Gerando arquivo Difal Não Contribuinte","Aguarde...")
@@ -16488,13 +16566,17 @@ Static Function xExpICMR()
 		Processa({||xRelBr17b()},"Gerando arquivo Legumes","Aguarde...")
 		Processa({||xRelBr18b()},"Gerando arquivo Uniformes","Aguarde...")
 		Processa({||xRelBr19b()},"Gerando arquivo Produtos não comestíveis","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C8()},"Gerando arquivo NF Canceladas","Aguarde...")
 		Processa({||xRelBr21b()},"Gerando arquivo Retorno de Industrializados","Aguarde...")
 		Processa({||xRelBr22b()},"Gerando arquivo Revenda Tributada","Aguarde...")
 		Processa({||xRelBr23b(1)},"Gerando arquivo Industrialização de PA","Aguarde...")
 		Processa({||xRelBr24b()},"Gerando arquivo Fretes","Aguarde...")
 		Processa({||xRelBr25b()},"Gerando arquivo Celulares","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr26b)},"Gerando arquivo Outras Entradas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr26b)},"Gerando arquivo Outras Entradas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C9()},"Gerando arquivo Outras Entradas","Aguarde...")
 
 		Processa({||xRelBr8b()},"Gerando arquivo Crédito Outorgado","Aguarde...")
 		Processa({||xRelB8d()},"Gerando arquivo DGCA","Aguarde...")
@@ -16512,45 +16594,72 @@ Static Function xExpICMR()
 		ENDIF
 
 	ELSEIF nOpMdl == 2
-		Processa({||StaticCall(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C7()},"Gerando arquivo Abertura GIA","Aguarde...")
 		Processa({||xRelBr07b()},"Gerando arquivo Diferencial de Alíquota","Aguarde...")
 		Processa({||xRelBr09b()},"Gerando arquivo Outras Saídas","Aguarde...")
 		Processa({||xRelBr10b()},"Gerando arquivo Devolução de Compras","Aguarde...")
 		Processa({||xRelBr14b()},"Gerando arquivo Graxaria","Aguarde...")
 		Processa({||xRelBr15b()},"Gerando arquivo Compra de Lenha","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C8()},"Gerando arquivo NF Canceladas","Aguarde...")
 		Processa({||xRelBr21b()},"Gerando arquivo Retorno de Industrializados","Aguarde...")
 		Processa({||xRelBr22b()},"Gerando arquivo Revenda Tributada","Aguarde...")
 		Processa({||xRelBr23b(1)},"Gerando arquivo Industrialização de PA","Aguarde...")
 		Processa({||xRelBr24b()},"Gerando arquivo Fretes","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr26b)},"Gerando arquivo Outras Entradas","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr27b)},"Gerando arquivo IVA","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr28b)},"Gerando arquivo CIAP","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr29b)},"Gerando arquivo Compra MP","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr30b)},"Gerando arquivo Vendas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr26b)},"Gerando arquivo Outras Entradas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr27b)},"Gerando arquivo IVA","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr28b)},"Gerando arquivo CIAP","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr29b)},"Gerando arquivo Compra MP","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr30b)},"Gerando arquivo Vendas","Aguarde...")		
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C9()},"Gerando arquivo Outras Entradas","Aguarde...")
+		Processa({||u_FIS038D0()},"Gerando arquivo IVA","Aguarde...")
+		Processa({||u_FIS038D1()},"Gerando arquivo CIAP","Aguarde...")
+		Processa({||u_FIS038D2()},"Gerando arquivo Compra MP","Aguarde...")
+		Processa({||u_FIS038D3()},"Gerando arquivo Vendas","Aguarde...")
 	ELSEIF nOpMdl == 3
-		Processa({||StaticCall(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C7()},"Gerando arquivo Abertura GIA","Aguarde...")
 		//Ticket 7689 - Leonardo P. Monteiro - 07/01/2020 - Tratamento do error.log ao selecionar a opção 'Exp. Todas' na filial 08-Goiás.
 		//Processa({||xRelBr09b()},"Gerando arquivo Outras Saídas","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C8()},"Gerando arquivo NF Canceladas","Aguarde...")
 		Processa({||xRelBr23b(1)},"Gerando arquivo Industrialização de PA","Aguarde...")
 	ELSEIF nOpMdl == 4
-		Processa({||StaticCall(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr03b)},"Gerando arquivo Abertura GIA","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C7()},"Gerando arquivo Abertura GIA","Aguarde...")
 		Processa({||xRelBr07b()},"Gerando arquivo Diferencial de Alíquota","Aguarde...")
 		Processa({||xRelBr09b()},"Gerando arquivo Outras Saídas","Aguarde...")
 		Processa({||xRelBr10b()},"Gerando arquivo Devolução de Compras","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr34b)},"Gerando arquivo Devolção de Vendas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr34b)},"Gerando arquivo Devolção de Vendas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038D4()},"Gerando arquivo Devolção de Vendas","Aguarde...")
 		Processa({||xRelBr14b()},"Gerando arquivo Graxaria","Aguarde...")
 		Processa({||xRelBr15b()},"Gerando arquivo Compra de Lenha","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		
+		//Processa({||Static Call(ADFIS038R,xRelBr20b)},"Gerando arquivo NF Canceladas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C8()},"Gerando arquivo NF Canceladas","Aguarde...")
 		Processa({||xRelBr21b()},"Gerando arquivo Retorno de Industrializados","Aguarde...")
 		Processa({||xRelBr22b()},"Gerando arquivo Revenda Tributada","Aguarde...")
 		Processa({||xRelBr24b()},"Gerando arquivo Fretes","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr26b)},"Gerando arquivo Outras Entradas","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr28b)},"Gerando arquivo CIAP","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr29b)},"Gerando arquivo Compra MP","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr30b)},"Gerando arquivo Vendas","Aguarde...")
-		Processa({||StaticCall(ADFIS038R,xRelBr33b)},"Gerando arquivo Entradas e Saídas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr26b)},"Gerando arquivo Outras Entradas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr28b)},"Gerando arquivo CIAP","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr29b)},"Gerando arquivo Compra MP","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr30b)},"Gerando arquivo Vendas","Aguarde...")
+		//Processa({||Static Call(ADFIS038R,xRelBr33b)},"Gerando arquivo Entradas e Saídas","Aguarde...")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		Processa({||u_FIS038C9()},"Gerando arquivo Outras Entradas","Aguarde...")
+		Processa({||u_FIS038D1()},"Gerando arquivo CIAP","Aguarde...")
+		Processa({||u_FIS038D2()},"Gerando arquivo Compra MP","Aguarde...")
+		Processa({||u_FIS038D3()},"Gerando arquivo Vendas","Aguarde...")
+		Processa({||u_FIS038D5()},"Gerando arquivo Entradas e Saídas","Aguarde...")
 	ENDIF
 	_lAbreEx := .T.
 Return
@@ -26040,10 +26149,14 @@ Static Function xPrcMn05
 				IF nOpMdl == 1
 					xABrw05()
 				ELSEIF nOpMdl == 2 .or. nOpMdl == 4
-					StaticCall(ADFIS038R,xABrw27)
+					//Static Call(ADFIS038R,xABrw27)
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					u_FIS038B0()
 				ENDIF
 				GravaZFU(xFilial('ZFU'), _cAnoI+_cMesI, cNewVers, dDATABASE, '05', C05999, _cNomUse, '1', nA05T05,'', '')
-				StaticCall(ADFIS038R,xABrw03)
+				//Static Call(ADFIS038R,xABrw03)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_FIS038A2()
 				//Altera o status dos registros da versão anterior para 3 - Cancelado
 				If ZFU->(dbSeek(xFilial('ZFU')+_cAnoI+_cMesI+cVerAnt+'05'))
 					While !ZFU->(eof()) .AND. ;
@@ -26064,9 +26177,13 @@ Static Function xPrcMn05
 				IF nOpMdl == 1
 					xABrw05()
 				ELSEIF nOpMdl == 2 .or. nOpMdl == 4
-					StaticCall(ADFIS038R,xABrw27)
+					//Static Call(ADFIS038R,xABrw27)
+					//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+					u_FIS038B0()
 				ENDIF
-				StaticCall(ADFIS038R,xABrw03)
+				//Static Call(ADFIS038R,xABrw03)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_FIS038A2()
 			ENDIF
 			//Reprocessa Demonstrativo
 			
@@ -27604,9 +27721,13 @@ Static Function xAbrFcht()
 		IF nOpMdl == 1
 			xABrw05()
 		ELSEIF nOpMdl == 2 .or. nOpMdl == 4
-			StaticCall(ADFIS038R,xABrw27)
+			//Static Call(ADFIS038R,xABrw27)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_FIS038B0()
 		ENDIF
-		StaticCall(ADFIS038R,xABrw03)
+		//Static Call(ADFIS038R,xABrw03)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIS038A2()
 	Endif
 	
 	aSldFcht	:= xSldFcht()
@@ -29895,3 +30016,91 @@ Static Function xLoadPar()
 	ENDIF
 
 Return
+
+/*/{Protheus.doc} u_FIS028A0
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A0( uPar1 )
+Return( CriaExtr( uPar1 ) )
+
+/*/{Protheus.doc} u_FIS028A1
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A1( uPar1 )
+Return( CriaInd( uPar1 ) )
+
+/*/{Protheus.doc} u_FIS028A2
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A2( uPar1, uPar2, uPar3 )
+Return( CriaTmpT( uPar1, uPar2, uPar3 ) )
+
+/*/{Protheus.doc} u_FIS028A3
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A3()
+Return( SalvaXml()) 
+
+/*/{Protheus.doc} u_FIS028A4
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A4()
+Return( CriaExcel()) 
+
+/*/{Protheus.doc} u_FIS028A5
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A5( uPar1 )
+Return( xRecVer( uPar1 )) 
+
+/*/{Protheus.doc} u_FIS028A6
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A6()
+Return( xABrw05()) 
+
+/*/{Protheus.doc} u_FIS028A7
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS028A7()
+Return( xABrw27()) 

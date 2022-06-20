@@ -65,6 +65,7 @@ Static oTempTable
     @history Ticket   8093 - Abel Babini - 15/01/2021 - Erro na verificação de títulos em outras unidades
     @history Ticket  14431 - Abel Babini - 24/05/2021 - Correção na regra de Divergência na forma de pagamentos
     @history Ticket  14432 - Fer Macieira- 08/06/2021 - BLOQUEIO DE GTA - IMPOSTO (PAINEL DE PAGAMENTOS)
+	@history Ticket  70142 - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 User Function ADFIN100P(cRotina)
 
@@ -1570,3 +1571,37 @@ Static Function xVrfData(dDtAtu)
 	RestArea(aArea) //Ticket    429 - Abel Babini - 08/12/2020 - Ajuste no fonte para utilizar GetArea / ResArea
 Return dRet
 //FIM Ticket    429 - Abel Babini - 30/11/2020 - Substituição da rotina DataValida que causa error.log
+
+
+/*/{Protheus.doc} u_FIN100A0
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN100A0( uPar1 )
+Return( xVrfData( uPar1 ) )
+
+/*/{Protheus.doc} u_FIN100A1
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN100A1()
+Return( CriaTRB() )
+
+/*/{Protheus.doc} u_FIN100A2
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIN100A2(uPar01,uPar02,uPar03,uPar04,uPar05,uPar06,uPar07,uPar08,uPar09,uPar10,uPar11,uPar12,uPar13,uPar14,uPar15,;
+					uPar16,uPar17,uPar18,uPar19,uPar20,uPar21,uPar22,uPar23,uPar24,uPar25,uPar26,uPar27,uPar28,uPar29)
+
+Return( ChkRegras(uPar01,uPar02,uPar03,uPar04,uPar05,uPar06,uPar07,uPar08,uPar09,uPar10,uPar11,uPar12,uPar13,uPar14,uPar15,;
+				  uPar16,uPar17,uPar18,uPar19,uPar20,uPar21,uPar22,uPar23,uPar24,uPar25,uPar26,uPar27,uPar28,uPar29) )

@@ -35,6 +35,7 @@ Static cRotina  := "ADFIN121P"
     @ticket TI    - Fernando Macieira - 24/02/2022 - RM - Acordos - Título vencido com error log está impedindo a geração dos demais
     @ticket 18141 - Fernando Macieira - 25/02/2022 - RM - Acordos - Integração Protheus - Parcelas com Data vencimento errado (sem respeitar o sequencial de 30 dias)
     @ticket 18141 - Fernando Macieira - 03/03/2022 - RM - Acordos - Integração Protheus - Tratamento na função de gerar parcelas (Título 047073054 de R$ 7.000,00 gerou 3 parcelas de R$ 2.333,33 (faltou 1 centavo));
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     @ticket 70440 - Fernando Macieira - 28/03/2022 - acordos lançados em fevereiro geraram a parcela de março para a data errada, não podera ser 30 dias nesse caso
     @ticket 18141 - Fernando Macieira - 29/03/2022 - RM - Acordos - Integração Protheus - Desativação função fix
     @ticket 18141 - Fernando Macieira - 30/03/2022 - RM - Acordos - Integração Protheus - Gerar contas a pagar com a database e não pela data do servidor
@@ -113,7 +114,8 @@ User Function ADFIN121P(lAuto)
         Return
     EndIf
 
-    PtInternal(1,ALLTRIM(PROCNAME()))
+    //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     lSigaOn := GetMV("MV_#RMSIGA",,.T.)
 

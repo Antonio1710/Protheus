@@ -10,6 +10,7 @@
 	@since 22/05/2018
 	@version 1.0
 	@history 21/07/2020, Leon, Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	@history 19/04/2022, Everson, Chamado 71231, ajuste para atender a nova filial 0B.
 	/*/
@@ -26,7 +27,8 @@ User Function ADVEN096P(aXEmpFil)
 	RPCSetType(3)
 	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ })
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	conout("Início atualização nota fiscal (entrada) SalesForce")
 

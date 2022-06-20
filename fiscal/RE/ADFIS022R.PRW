@@ -10,6 +10,7 @@
 	@history Chamado 048580 - FWNM        - 13/05/2019 - OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW
 	@history Chamado TI     - Adriana     - 24/05/2019 - Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM
 	@history Ticket  17013  - Abel Babini - 27/07/2021 - Criado filtro para não demonstrar Pré-Notas (F1_STATUS <> '')
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	/*/
 
 User Function ADFIS022R()   //U_ADFIS022R()
@@ -34,7 +35,8 @@ User Function ADFIS022R()   //U_ADFIS022R()
 
 	logZBN("1")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatório de Entradas sem passar pela Central XML')
 

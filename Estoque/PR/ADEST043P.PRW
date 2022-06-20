@@ -14,6 +14,7 @@
     @history Everson, 12/03/2020, Tratamento para selecionar registros de abastecimento que estejam liberados.
     @history Fernando,03/04/2020, Chamado 056980 - Tratamento para validação da placa
     @history Wagner , 25/02/2022 - Ticket - 68095 - Comentário do FlockByName/UnlockByName
+	@history Ticket 70142 	- Rodrigo Mello | Flek Solutions - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     @history Everson, 06/04/2022 - Ticket - 70330 - Tratamento para verificar se já há SA vinculada ao registro de abastecimento.
     @history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 /*/
@@ -24,7 +25,8 @@ User Function ADEST043P() // U_ADEST043P()
 	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
 
 
-    PtInternal(1,ALLTRIM(PROCNAME()))
+   	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Requisição de abastecimento')
 

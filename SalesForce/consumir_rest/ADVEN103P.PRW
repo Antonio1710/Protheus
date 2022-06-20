@@ -19,6 +19,7 @@
 	@history Leon	 - 14/01/2020.Chamado TI. Adicionar campo de nome do vendedor para atribuição do objeto Indicadores Diretoria;
 	@history Everson - 20/05/2020.Chamado TI. Tratamento para pedidos de complemento de preço.
 	@history Leon	 - 21/07/2020.Chamato TI. Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history, Everson, 18/04/2022, Chamado 71231 - ajuste para atender a nova filial 0B.
 	/*/
 User Function ADVEN103P() // U_ADVEN103P()
@@ -39,7 +40,8 @@ User Function ADVEN103P() // U_ADVEN103P()
 	// 	Return
 	// EndIf
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	conout("Início envio de dados dos indicadores Salesforce")
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Popula os indicadores da diretoria comercial no Salesforce')

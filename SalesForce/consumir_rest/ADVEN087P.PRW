@@ -9,6 +9,7 @@
 	@since 19/03/2018
 	@version 1.0
 	@history Leon - 21/07/2020 - Comentar LockByName para contornar falta de execução de rotinas de agendamento;
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	/*/
 User Function ADVEN087P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADVEN094P()
 	
@@ -33,7 +34,8 @@ User Function ADVEN087P(aXEmpFil) //18/04/2022, Everson, Chamado 71231. // U_ADV
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para envio de pedidos de venda.')
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	
 	conout("ADVEN087P - Início envio de pedidos de venda ao SalesForce")
 	logZBN("1") //Log início.

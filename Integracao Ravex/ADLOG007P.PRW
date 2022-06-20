@@ -10,11 +10,12 @@
 	@since 02/06/2015
 	@version 01
 	@history chamado 052861 William Costa 23/10/2019 - Retirado regra para não alterar a ocorrencia quando for diferente de O
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 
 User Function ADLOG007P()
 
-	Private nCont2 := 0
+	Local nCont2 := 0
 
 	// ****************************INICIO PARA RODAR COM SCHEDULE**************************************** //	
 	RPCClearEnv()
@@ -31,7 +32,8 @@ User Function ADLOG007P()
 
 	ConOut("INICIO DO SCHEDULE ADLOG007P")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa consumir de webservice ravex para baixa de entrega de notas fiscais')
 
@@ -41,7 +43,7 @@ User Function ADLOG007P()
 
 	FOR nCont2 := 1 TO 2
 
-		CRIAWEBSERVICE()
+		CRIAWEBSERVICE(nCont2)
 
 	NEXT nCont2                 
 
@@ -62,7 +64,7 @@ User Function ADLOG007P()
 
 RETURN(NIL)	
 
-STATIC FUNCTION CRIAWEBSERVICE()
+STATIC FUNCTION CRIAWEBSERVICE(nCont2)
 
 	oWs := WSSiviraFullWebService():New()
 
@@ -76,7 +78,7 @@ STATIC FUNCTION CRIAWEBSERVICE()
 	    
 	    IF oResp:NID == 2
 	    
-	    	ENTREGAVIAGEM()
+	    	ENTREGAVIAGEM(nCont2)
 	    
 	    ENDIF
 	    
@@ -84,7 +86,7 @@ STATIC FUNCTION CRIAWEBSERVICE()
 
 RETURN(NIL)     	  
 
-STATIC FUNCTION ENTREGAVIAGEM()
+STATIC FUNCTION ENTREGAVIAGEM(nCont2)
 
 	oWs:CCNPJEMISSOR       := '60037058000301'
 	oWs:LVIAGEMFECHADAS    := IIF(nCont2 == 1,.F.,.T.) 

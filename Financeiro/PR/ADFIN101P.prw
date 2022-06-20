@@ -27,6 +27,7 @@
 	@history Ticket 6543   - Abel Babini - 14/12/2020 - Ajuste nos campos de informações bancárias do fornecedor no título a pagar
 	@history Ticket   4883 - Abel Babini - 08/01/2021 - Implementação de novas modalidades de pagamento
 	@history Ticket   8061 - Abel Babini - 19/01/2021 - Desabilitar regra 01 no Painel de Pagamentos
+	@history Ticket  70142 - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
   /*/
 User Function ADFIN101P()
   Local aArea   := GetArea()
@@ -59,7 +60,9 @@ User Function ADFIN101P()
 			cFilAdic := '%'+" AND SE2.E2_IDCNAB = '' " + '%'
 		ENDIF
 
-		StaticCall(ADFIN100P,xVrfData,CtoD(cVencFim))
+		//Static Call(ADFIN100P,xVrfData,CtoD(cVencFim))
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIN100A0( CtoD(cVencFim) )
 		// alert('teste')
     fPnPagto()
   Endif
@@ -209,8 +212,11 @@ Static Function fPnPagto
 	Private aEmpresas	:= {} //Ticket    429 - Abel Babini - 01/12/2020 - Ajuste no fonte para reposicionar o Alias SM0
 	Private cStartPath := GetSrvProfString("Startpath","")
 
-	Private dDtBordI	:= StaticCall(ADFIN100P,xVrfData,msdate())
-	Private dDtBordF	:= StaticCall(ADFIN100P,xVrfData,msdate()+1)
+	//Private dDtBordI	:= Static Call(ADFIN100P,xVrfData,msdate())
+	//Private dDtBordF	:= Static Call(ADFIN100P,xVrfData,msdate()+1)
+	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	Private dDtBordI	:= u_FIN100A0( msdate() )
+	Private dDtBordF	:= u_FIN100A0( msdate()+1 )
 
 	//Cria Array de Títulos
 	aBord := {}
@@ -694,11 +700,15 @@ Static Function fCarga(cTbBord,cTbTit)
 
 		nSaldo 	:= Round(NoRound(xMoeda((cAlias)->E2_SALDO + (cAlias)->E2_SDACRES - (cAlias)->E2_SDDECRE,(cAlias)->E2_MOEDA,1,dDataBase),3),2)
 
-		StaticCall(ADFIN100P,CriaTRB)
+		//Static Call(ADFIN100P,CriaTRB)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_FIN100A1()
+
 		aRetRegr	:= {.t., .t., .t., .t., .t., .t., .t., .t., .t.}
 		
 		//Ticket 6543   - Abel Babini - 13/12/2020 - Ajuste nos campos de informações bancárias do fornecedor no título a pagar
-		aRetRegr	:= StaticCall(ADFIN100P,ChkRegras, ;
+		/*
+		aRetRegr	:= Static Call(ADFIN100P,ChkRegras, ;
 								(cAlias)->E2_NUMBOR, ;
 								(cAlias)->E2_FILIAL, ;
 								(cAlias)->E2_PREFIXO, ;
@@ -728,7 +738,38 @@ Static Function fCarga(cTbBord,cTbTit)
 								(cAlias)->E2_FATPREF, ;
 								(cAlias)->E2_XRECORI, ;
 								(cAlias)->EA_MODELO )
-								
+		*/
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		aRetRegr	:= u_FIN100A2(;
+								(cAlias)->E2_NUMBOR, ;
+								(cAlias)->E2_FILIAL, ;
+								(cAlias)->E2_PREFIXO, ;
+								(cAlias)->E2_NUM, ;
+								(cAlias)->E2_PARCELA, ;
+								(cAlias)->E2_TIPO, ;
+								(cAlias)->E2_FORNECE, ;
+								(cAlias)->E2_LOJA, ;
+								(cAlias)->E2_VENCREA, ;
+								nSaldo, ;
+								(cAlias)->EA_PORTADO, ;
+								(cAlias)->EA_AGEDEP, ;
+								(cAlias)->EA_NUMCON, ;
+								(cAlias)->E2_NOMFOR, ;
+								(cAlias)->E2_VALOR, ;
+								(cAlias)->E2_MOEDA, ;
+								(cAlias)->E2_CODBAR, ;
+								Alltrim((cAlias)->A2_CGC), ;
+								(cAlias)->E2_ORIGEM, ;
+								(cAlias)->E2_BANCO, ;
+								(cAlias)->E2_AGEN, ;
+								(cAlias)->E2_NOCTA, ;
+								(cAlias)->A2_BANCO, ;
+								(cAlias)->A2_AGENCIA, ;
+								(cAlias)->A2_NUMCON, ;
+								(cAlias)->E2_FATURA, ;
+								(cAlias)->E2_FATPREF, ;
+								(cAlias)->E2_XRECORI, ;
+								(cAlias)->EA_MODELO)
 		GrvRestr()
 		//@history Ticket    429 - Abel Babini - 09/11/2020 - Ajuste na verificação do Status na Central de Aprovação
 		lDiverg	:= IIF((cAlias)->E2_XDIVERG == 'S' .AND. (cAlias)->E2_RJ != 'X' ,.T.,.F.)
@@ -1404,7 +1445,7 @@ Static Function xAutBor()
 	Local aArea				:= GetArea()
 	Local cAlsBACB 		:= GetNextAlias()
 	Local cAlsVUti		:= ''
-	// Local dDtSrv 			:= StaticCall(ADFIN100P,xVrfData,msDate() + 1)
+	// Local dDtSrv 			:= Static Call(ADFIN100P,xVrfData,msDate() + 1)
 	Local cCodCart		:=	GetMv("MV_#CDCART",,"01,30,31,41,11,13,16,17,35,91")  	
 	Local InCdCart		:= '%'+FormatIn(cCodCart,",")+'%'
 	Local _i					:= 0

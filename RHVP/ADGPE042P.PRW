@@ -9,6 +9,7 @@
 	@version 01
 	@history 18/04/2019 - Chamado TI Adriana - Alterado intervalo de datas
 	@history 18/11/2019 - Chamado TI Adriana - Alterado tabela principal query, para considerar data do cálculo e não da demissão
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 /*/
 
 User Function ADGPE042P()
@@ -42,7 +43,8 @@ User Function ADGPE042P()
 
     logZBN("1")
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	//@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Envio de aviso de desligamento de funcionário para providencias da TI - chamado 047319')
 	ConOut("INICIO DO SCHEDULE ADGPE042P: " + DTOC(DATE()) + " as " + TIME())       

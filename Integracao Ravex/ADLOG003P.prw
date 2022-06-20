@@ -17,6 +17,7 @@
 	@history Chamado 1237   - WILLIAM COSTA - 09/09/2020 - Adicionado order by no select do SQLINTNOTA, pois estava gerando varias erros por falta de ordenação.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 04/05/2021 - Tratativa no fonte para gerar o fechamento do frete quando não foi gerado no momento do faturamento da NFe.
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 */
  
@@ -85,7 +86,8 @@ User Function ADLOG003P(aXEmpFil)
 
 	ConOut("INICIO DO SCHEDULE ADLOG003P " + ALLTRIM(FUNNAME()) + ' ' + TIME())
 
-	PtInternal(1,ALLTRIM(PROCNAME()))
+	// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	//FWMonitorMsg(ALLTRIM(PROCNAME()))
 	  
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programa consumir de webservice ravex para Viagens faturadas de notas fiscais')
 

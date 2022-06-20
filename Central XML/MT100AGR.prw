@@ -23,6 +23,8 @@
 */
 User Function MT100AGR()
 
+	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'CENTRALXML- P.E na na após a confirmação da NF, apos commit ')
+
 	//Validar apenas chamada da Rotina de CT-e
 	If IsInCallStack( "U_RECNFECTE" ) .And. Type( "aCtePriv" ) <> "U" .And. ValType( aCtePriv[01] ) == "D"
 		AltVencSe2()
@@ -156,7 +158,9 @@ Static Function chkSag(cFornec,cLoja,cNf,cSerie)
 		cDoc 	:= Alltrim(cValToChar(CHK_SAG->D2_DOC))
 		cSer	:= Alltrim(cValToChar(CHK_SAG->D2_SERIE))
 
-		StaticCall(M521DNFS,flagSag,cDoc,cSer)
+		//Static Call(M521DNFS,flagSag,cDoc,cSer)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_21DNFSA0(cDoc,cSer)
 		
 		CHK_SAG->(DbSkip())
 	End

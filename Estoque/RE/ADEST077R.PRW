@@ -61,7 +61,8 @@ Static Function RPTStruc(cPerg)
 	TRCell():New(oSection1,"PRODUTO" ,"D_LISTA","Produto","@!",15)
 	TRCell():New(oSection1,"LOTE"    ,"D_LISTA","Lote"   ,"@!",15)
 	TRCell():New(oSection1,"PESO"    ,"D_LISTA","Peso"   ,"@!",15)
-	TRCell():New(oSection1,"SILO"    ,"D_LISTA","Silo"   ,"@!",04)
+	TRCell():New(oSection1,"PEDV"    ,"D_LISTA","Pedido"   ,"@!",06)
+	TRCell():New(oSection1,"NF"      ,"D_LISTA","NF"   ,"@!",12)
 
 Return (oReport)
 /*/{Protheus.doc} RPTPrint
@@ -87,7 +88,7 @@ Static Function RPTPrint(oReport)
         cQuery += " ZIR_DESGRJ, " 
         cQuery += " ZIR_DESC, " 
         cQuery += " ZIR_DESLOT, " 
-        cQuery += " ZIG_PESOLI " 
+        cQuery += " ZIG_PESOLI, C5_NUM, C5_NOTA+C5_SERIE AS NF " 
     cQuery += " FROM " 
         cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
         cQuery += " INNER JOIN " 
@@ -98,6 +99,18 @@ Static Function RPTPrint(oReport)
         cQuery += " " + RetSqlName("ZIR") + " (NOLOCK) AS ZIR ON  " 
         cQuery += " ZIF_FILIAL = ZIR_FILIAL " 
         cQuery += " AND ZIF_NUMERO = ZIR_ORDEM " 
+
+		cQuery += " LEFT OUTER JOIN "
+		cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 ON "
+		cQuery += " ZIF_FILIAL = C5_FILIAL "
+		cQuery += " AND ZIF_NUMERO = C5_XORDPES "
+
+		cQuery += " LEFT OUTER JOIN "
+		cQuery += " " + RetSqlName("ZHR") + " (NOLOCK) AS ZHR ON "
+		cQuery += " C5_FILIAL = C5_FILIAL "
+		cQuery += " AND C5_NUM = ZHR_NVPED "
+		cQuery += " AND ZHR.D_E_L_E_T_ = '' " 
+
     cQuery += " WHERE " 
         cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
         cQuery += " AND ZIG_DTPES1 >= '" + DToS(MV_PAR01) + "' " 
@@ -105,8 +118,15 @@ Static Function RPTPrint(oReport)
         cQuery += " AND ZIG_PLACA >= '" + cValToChar(MV_PAR03) + "' "  //Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
         cQuery += " AND ZIG_PLACA <= '" + cValToChar(MV_PAR04) + "' "  //Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
         cQuery += " AND ZIG_DTPES2 <> ''  "  
-        cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+		
+		cQuery += " AND C5_PEDSAG = '' "
+
+		cQuery += " AND ZHR_NVPED IS NULL "
+        
+		cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
         cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
+        cQuery += " AND SC5.D_E_L_E_T_ = '' " 
+
     cQuery += " ORDER BY ZIF_ROTEIR, ZIR_NUMERO, ZIF_NUMERO, ZIG_NUMERO " 
 	
 	If Select("D_LISTA") > 0
@@ -148,8 +168,10 @@ Static Function RPTPrint(oReport)
 		oSection1:Cell("GRANJA"):SetValue(D_LISTA->ZIR_DESGRJ)	
 		oSection1:Cell("PRODUTO"):SetValue(D_LISTA->ZIR_DESC)
 		oSection1:Cell("LOTE"):SetValue(D_LISTA->ZIR_DESLOT)	
-		oSection1:Cell("PESO"):SetValue(Transform(D_LISTA->ZIG_PESOLI, "@E 999,999,999.999"))	
-		oSection1:Cell("SILO"):SetValue("")	
+		oSection1:Cell("PESO"):SetValue(Transform(D_LISTA->ZIG_PESOLI, "@E 999,999,999.999"))
+
+		oSection1:Cell("PEDV"):SetValue(D_LISTA->C5_NUM)	
+		oSection1:Cell("NF"):SetValue(D_LISTA->NF)	
 
 		oSection1:Printline()	
 

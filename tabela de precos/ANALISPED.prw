@@ -157,7 +157,7 @@ Static Function AnPedRd()
 		DbCloseArea("TOTR")
 	Endif  
 	cQuery := "SELECT C5_CODRED AS REDE, COUNT(DISTINCT C5_NUM) AS TOTPED, SUM(C6_UNSVEN) AS TOTCXS "
-	cQuery += "FROM "+RetSqlName("SC5")+" SC5, "+RetSqlName("SA3")+" SA3, "+RetSqlName("SC6")+" SC6 "
+	cQuery += "FROM "+RetSqlName("SC5")+" SC5 WITH(NOLOCK), "+RetSqlName("SA3")+" SA3 WITH(NOLOCK), "+RetSqlName("SC6")+" SC6 WITH(NOLOCK) "
 	cQuery += "WHERE SC5.C5_FILIAL = '"+xFilial("SC5")+"' AND "
 	cQuery += "      C5_XREDE  = 'S' AND "
 	cQuery += "      C5_CODRED <> '' AND C5_NOTA = '' AND " //fernando sigoli 30/09/2019 - Chamado: 052215
@@ -219,7 +219,7 @@ Static Function AnPedRd()
 			DbCloseArea("TSC5")
 		Endif   
 		cQuery := "SELECT C5_FILIAL, C5_NUM "
-		cQuery += "FROM "+RetSqlName("SC5")+" SC5, "+RetSqlName("SA3")+" SA3 "
+		cQuery += "FROM "+RetSqlName("SC5")+" SC5 WITH(NOLOCK), "+RetSqlName("SA3")+" SA3 WITH(NOLOCK) "
 		cQuery += "WHERE SC5.C5_FILIAL = '"+xFilial("SC5")+"' AND "
 		cQuery += "      C5_XREDE = 'S' AND "  
 		cQuery += "      C5_CODRED <> '' AND C5_NOTA = '' AND  " //fernando sigoli 30/09/2019 - Chamado: 052215
@@ -314,7 +314,7 @@ Static Function AnPedRd()
 				Endif
 
 				_cQueryZ := ""
-				_cQueryZ += "SELECT A1_VEND, A1_TABELA FROM "+RetSqlName("SA1")+" SA1 "
+				_cQueryZ += "SELECT A1_VEND, A1_TABELA FROM "+RetSqlName("SA1")+" SA1 WITH(NOLOCK)"
 				_cQueryZ += " WHERE SA1.A1_COD = '"+_cRede+"' AND SA1.A1_LOJA = '00' AND SA1.D_E_L_E_T_ = '' " 
 
 				TCQUERY _cQueryZ NEW ALIAS "TSA1"
@@ -467,7 +467,7 @@ Static Function AnPedRd()
 	&&novo tratamento conforme solicitado pelo Sr. Vagner em 21/06/11(email)
 	cQuery := "SELECT C5_CODRED AS REDE, SUM(C5_PESOL) AS TOTPES, SUM(C5_TOTDIG) AS TOTDIG, "
 	cQuery += "       SUM(C5_TOTTAB) AS TOTTAB "
-	cQuery += "FROM "+RetSqlName("SC5")+" SC5, "+RetSqlName("SA3")+" SA3, "+RetSqlName("SA1")+" SA1 "
+	cQuery += "FROM "+RetSqlName("SC5")+" SC5 WITH(NOLOCK), "+RetSqlName("SA3")+" SA3 WITH(NOLOCK), "+RetSqlName("SA1")+" SA1 WITH(NOLOCK) "
 	cQuery += "WHERE SC5.C5_FILIAL = '"+xFilial("SC5")+"' AND "
 	cQuery += "      C5_XREDE = 'S' AND "
 	cQuery += "      C5_CODRED <> '' AND C5_NOTA = '' AND  " //fernando sigoli 30/09/2019 - Chamado: 052215
@@ -603,7 +603,7 @@ Static Function AnPedRd()
 			_cQuery4 := " UPDATE "+RetSqlName("SC5")+" WITH(UPDLOCK) SET C5_XLIBERA = 'N', C5_ANALISE = 'S', C5_APROV1='"+_cSupervi+"',C5_DTBLOQ = '"+DTOS(Date())+"',C5_HRBLOQ = '"+TIME()+"',C5_CHAVE='"+_cChave+"' "
 			EndIf
 			*/
-			_cQuery4 += "FROM "+RetSqlName("SA3")+", "+RetSqlName("SA1")+" "		
+			_cQuery4 += "FROM "+RetSqlName("SA3")+" WITH(NOLOCK), "+RetSqlName("SA1")+" WITH(NOLOCK)"		
 			_cQuery4 += "WHERE C5_XREDE = 'S' AND "
 			_cQuery4 += "      C5_CODRED <> '' AND C5_NOTA = '' AND  " //fernando sigoli 30/09/2019 - Chamado: 052215
 			
@@ -684,7 +684,7 @@ Static Function AnPedRd()
 		Else // Libera a rede
 			_cQuery6 := ""
 			_cQuery6 := "UPDATE "+RetSqlName("SC5")+" WITH(UPDLOCK) SET C5_XLIBERA = 'S' "
-			_cQuery6 += "FROM "+RetSqlName("SA3")+", "+RetSqlName("SA1")+" "
+			_cQuery6 += "FROM "+RetSqlName("SA3")+" WITH(NOLOCK), "+RetSqlName("SA1")+" WITH(NOLOCK)"
 			_cQuery6 += "WHERE C5_XREDE   = 'S' AND "
             _cQuery6 += "      C5_CODRED <> '' AND C5_NOTA = '' AND " //fernando sigoli 30/09/2019 - Chamado: 052215
  
@@ -722,7 +722,7 @@ Static Function AnPedRd()
 
 	// Libero os pedidos que não cairam no bloqueio. Mantem a instrução para liberar pela data de entrega (Paulo - TDS - 12/05/2011)
 	cQuery := ""
-	cQuery := "SELECT * FROM "+RetSqlName("SC5")+", "+RetSqlName("SA3")+", "+RetSqlName("SA1")+"  "
+	cQuery := "SELECT * FROM "+RetSqlName("SC5")+" WITH(NOLOCK), "+RetSqlName("SA3")+" WITH(NOLOCK), "+RetSqlName("SA1")+" WITH(NOLOCK) "
 	cQuery += "WHERE C5_XREDE = 'S' AND "
     cQuery += "      C5_CODRED <> '' AND C5_NOTA = '' AND  " //fernando sigoli 30/09/2019 - Chamado: 052215
 

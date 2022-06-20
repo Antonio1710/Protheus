@@ -8,6 +8,8 @@
     @author Everson
     @since 23/06/2020
     @version 01
+    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
     /*/
 User Function ADEST048P()  // U_ADEST048P() //Everson - 23/06/2020. Chamado 
 
@@ -33,7 +35,8 @@ User Function ADEST048P()  // U_ADEST048P() //Everson - 23/06/2020. Chamado
             Return
         EndIf
 
-        PtInternal(1,ALLTRIM(PROCNAME()))
+        //	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+        //FWMonitorMsg(ALLTRIM(PROCNAME()))
 
     EndIf
 
@@ -47,7 +50,9 @@ User Function ADEST048P()  // U_ADEST048P() //Everson - 23/06/2020. Chamado
         U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Gera lote de producao por integração do SAG')
         
             //
-            StaticCall(ADEST034P,procRot)
+            //Static Call(ADEST034P,procRot)
+            //@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+            u_EST034A0()
 
         //
         logZBN("2","ADEST048P")

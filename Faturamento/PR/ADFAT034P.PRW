@@ -128,7 +128,7 @@ User Function ADFAT34A(nOpc)
         oPlaca := TGet():New(005,060,{|u| if( PCount() > 0, cPlaca := u, cPlaca ) } ,oJanela,050,010,"@!",,,,,,,.T.,,,,,,,,,,"cPlaca",,,,,,,"Placa",1)
         oPlaca:cF3 := "ZV4"
         oPlaca:bWhen := {|| lEditTg }
-        oPlaca:bValid := {|| Iif(Empty(cPlaca), .T., vldCaixa(cPlaca) ) }
+        oPlaca:bValid := {|| Iif(Empty(cPlaca), .T., U_ADFAT34I(cPlaca) ) }
         
         oDtCar := TGet():New(005,115,{|u| if( PCount() > 0, dData := u, dData ) } ,oJanela,050,010,,,,,,,,.T.,,,,,,,,,,"dData",,,,,,,"Dt Carregamento",1)
         oDtCar:bWhen := {|| lEditTg }
@@ -654,14 +654,14 @@ User Function ADFAT34G()
     EndIf
     
 Return lRet
-/*/{Protheus.doc} vldCaixa
+/*/{Protheus.doc} ADFAT34I
     Validação de placa e caixa de transporte.
     @type  User Function
     @author Everson
     @since 18/03/2022
     @version 01
 /*/
-Static Function vldCaixa(cPlaca)
+User Function ADFAT34I(cPlaca)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -687,7 +687,7 @@ Static Function vldCaixa(cPlaca)
 
         If nTotCp <= 0
             lRet := .F.
-            MsgInfo("Veículo " + cPlaca + " não possui caixa de transporte cadastrada.","Função vldCaixa(ADFAT034P)")
+            MsgInfo("Veículo " + cPlaca + " não possui caixa de transporte cadastrada.","Função ADFAT34I(ADFAT034P)")
 
         EndIf
 

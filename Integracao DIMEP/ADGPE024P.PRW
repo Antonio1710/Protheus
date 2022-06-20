@@ -43,8 +43,11 @@
 	@history Ticket: 66952  - Fernando Macieir- 28/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar - novo parâmetro para buscar 7 dias atrás.
 	@history Ticket: 69427  - Fernando Macieir- 14/03/2022 - Nome duplicado no DIMEP
     @history TICKET: 69748  - ADRIANO SAVOINE - 16/03/2022 - Ajustado o campo credencial para ajustar igual ao RM no DIMEP com 8 caracteres no leitor de codigo de barra mas deixando que no relogio somente considere 6.
+	@history Ticket 70142 	- Rodrigo Mello   - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022 - Criado o parametro no configurador com 1 dia e alterada a query pois estava ocorrendo erro na hora de montar a mesma e transformado o dado.
 	@history TICKET: 74255  - ADRIANO SAVOINE - 09/06/2022 - Tratado a Filial de Itapira 0B.
+	@histori Ticket  74756  - ADRIANO SAVOINE - 15/06/2022 - Efetuado o ajuste para as filiais colocar zero ex: 02,03 etc.
+	@history Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022 - Corrigido a query para resolver os valores do RM.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -139,7 +142,8 @@ User Function ADGPE024P(aParam) // U_ADGPE024P()
 		cLinked := GetMV("MV_#RMLINK",,"RM") 
 		cSGBD   := GetMV("MV_#RMSGBD",,"CCZERN_119204_RM_PD")
 
-		PtInternal(1,Alltrim(PROCNAME()))
+		// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg(Alltrim(PROCNAME()))
 		ConOut("ADGPE024P - INICIO DO SCHEDULE ADGPE024P" + '||' + DToC(Date()) + '||' + Time() + '|| Empresa:' + aParam[1] + '|| Filial:' + aParam[2])       
 
 		U_ADINF009P(SUBSTRING(Alltrim(PROCNAME()),3,Len(Alltrim(PROCNAME()))) + '.PRW',SUBSTRING(Alltrim(PROCNAME()),3,Len(Alltrim(PROCNAME()))),'Integracao com o sistema DIMEP de catracas Integração de Funcionarios e Caminhoneiros a partir de sql Usando o linked Server para DIMEP')
@@ -1852,35 +1856,15 @@ Static Function Sqlfuncionario(cEmpresa)
 	cQuery += "				INNER JOIN [" + cSGBD + "].[DBO].[PFCOMPL] AS PFCOMPL WITH (NOLOCK)
 	cQuery += "				ON PFCOMPL.CODCOLIGADA                              = PFUNC.CODCOLIGADA
 	cQuery += "				AND PFCOMPL.CHAPA                                   = PFUNC.CHAPA
-	cQuery += "				AND ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') <> ''0'' "  // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.
-	
+	cQuery += "				AND ISNULL(PFCOMPL.PTOCREDENCIAL,''0'') <> ''0'' "  // @history ticket  13791  - Fernando Macieir- 11/05/2021 - Migração informação Protheus e Dimep.	
 	cQuery += "			    WHERE PFUNC.CODCOLIGADA                             = ''"+cEmpresa+"''
 	cQuery += "			    AND PFUNC.CODTIPO                                   <> ''A''
-	//cQuery += "				AND PFUNC.CODSITUACAO                               <> ''Z'' // @history ticket   39 - Fernando Macieira - 10/02/2021 - de/para no campo CODSITUACAO
 	cQuery += "				AND PFUNC.CODHORARIO                                <> ''A001''
-
-	//Ticket: TI - 03/02/2022 - Adriano Savoine
-	//cQuery += "				AND PFUNC.DATADEMISSAO                             <= GETDATE() " // debug - inibir 
-	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= GETDATE()-"+nDias+" "  //Ticket: 70906  - ADRIANO SAVOINE - 06/04/2022
+	//cQuery += "				AND PPESSOA.CPF                                     = ''50199207895'' Linha para teste de Colaborador 
+	cQuery += "				AND (PFUNC.DATADEMISSAO                             >= CONVERT(date, GETDATE()-"+nDias+") "  //Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022
 	cQuery += "				OR  PFUNC.DATADEMISSAO                              IS NULL) " // debug - voltar 
-	
-	// @history Ticket: 66952  - Fernando Macieir- 21/02/2022 - Filtro da query não trazia funcionários para poder integrar/atualizar 
-	//Ticket: 55228 - 04/10/2021 - Adriano Savoine INICIO
-	/*
-	cQuery += "				AND ((PFUNC.RECCREATEDON >= GETDATE()   
-	cQuery += "				OR  PFUNC.RECMODIFIEDON >= GETDATE() )
-	cQuery += "				OR (PPESSOA.RECMODIFIEDON >= GETDATE() - 1
-	cQuery += "				OR PFCOMPL.RECMODIFIEDON >= GETDATE() - 1))
-	*/
-	// DEBUG - INIBIR
-	//cQuery += " AND PPESSOA.CPF= ''43606787898'' "
-	//Ticket: 55228 - 04/10/2021 - Adriano Savoine FIM
-	//
-
 	cQuery += "				AND PFUNC.PISPASEP                                  NOT IN (SELECT TOP(1) PFUNC2.PISPASEP FROM [" + cSGBD + "].[DBO].[PFUNC] PFUNC2 WHERE PFUNC2.PISPASEP = PFUNC.PISPASEP AND PFUNC2.CODCOLIGADA <> PFUNC.CODCOLIGADA AND PFUNC2.CODSITUACAO <> ''D'')
-
-	cQuery += "			ORDER BY PPESSOA.CPF
-
+	cQuery += "			ORDER BY  PFUNC.NOME,PFUNC.DATAADMISSAO
 	cQuery += " ')
 
 	tcQuery cQuery New Alias TRB
@@ -4315,9 +4299,10 @@ User Function TRATAFIL(CODFILIAL)
 
 	ENDIF
 
+
 	IF lRet = ""
 
-		lRet := FILIAL	
+		lRet := STRZERO(TRB->CODFILIAL,2) //Adriano - 15/06/2022. Ticket  74756.
 
 	ENDIF
 

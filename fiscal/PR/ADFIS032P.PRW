@@ -22,6 +22,8 @@
 	@history Everson-18/03/2020-Chamado 054941. Tratamento para vincular a natureza correta ao CT-e.
 	@history Leon	-22/07/2020-Chamado TI.		Comentar LockByName para contornar falta de execução de rotinas de agendamento;
 	@history Everson-05/08/2020-Chamado TI. Validação Pedido de compra x CT-e.
+	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Abel   -25/04/2022-Ticket 69574.   Projeto FAI
 	@history Everson-29/04/2022-Ticket 70593.   Projeto FAI
 	/*/
@@ -36,7 +38,8 @@ User Function ADFIS032P(aXEmpFil) // U_ADFIS032P() //Everson-29/04/2022-Ticket 7
 	RPCSetType(3)
 	RpcSetEnv(aXEmpFil[1],aXEmpFil[2],,,,GetEnvServer(),{ }) //Everson-29/04/2022-Ticket 70593.
 
-		PtInternal(1,ALLTRIM(PROCNAME()))
+		// @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+		//FWMonitorMsg(ALLTRIM(PROCNAME()))
 
 		U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Lançamento de documento de entrada (CT-e) por xml')
 		
@@ -362,7 +365,9 @@ Static Function incDocN(aParam,cEmail)
 						//Everson-30/07/2019-Chamado 044314.
 						cPFis  := "\cte_log\"
 						cNmArq := cNumDoc+cSerDoc+cForne+cLoja+"_ADFIS032P"
-						lRetPdf:= StaticCAll(ADLOG057P,pdfCTEdow,cHash,cPFis,"",.F.,cNmArq,@cRetCamin)
+						//lRetPdf:= Static CAll(ADLOG057P,pdfCTEdow,cHash,cPFis,"",.F.,cNmArq,@cRetCamin)
+						//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+						lRetPdf:= u_LOG057A0(cHash,cPFis,"",.F.,cNmArq,@cRetCamin)
 						
 						//
 						Conout( DToC(Date()) + " " + Time() + " ADFIS032P - incDocN - lRetPdf " + cValToChar(lRetPdf) )
@@ -665,3 +670,25 @@ Static Function logZBN(cStatus)
 		
 	RestArea(aArea)
 Return Nil
+
+/*/{Protheus.doc} u_FIS032A0
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS032A0()
+Return( paramFis() )
+
+/*/{Protheus.doc} u_FIS032A1
+Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 16/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS032A1( uPar1 )
+Return( processa( uPar1) )
