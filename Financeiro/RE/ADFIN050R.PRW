@@ -51,7 +51,8 @@ Static lErroBI := .f.
 	@history ticket   68310 - Fernando Macieira    - 16/02/2022 - Manutenção no relatório de Fluxo de Caixa
 	@history ticket   68310 - Leonardo P. Monteiro - 21/02/2022 - Restore do fonte atualizado.
 	@history ticket   68310 - Fernando Macieira    - 23/02/2022 - Publicação autorizada
-	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	@history Ticket   69574 - Abel Babini          - 25/04/2022 - Projeto FAI
+	@history Ticket   74849 - Jonathan Carvalho    - 16/06/2022 - Melhora na performace do relatorio
 /*/
 User Function ADFIN050R() // U_ADFIN050R()
 
@@ -269,108 +270,108 @@ Static Function PrintReport(oReport)
 			Column E5_DTDISPO as Date
 			Column E5_DTDIGIT as Date
 		*/
-		cQuery := "	SELECT 	'SE1' TABELA, " +cEOL
-		cQuery += "			E1_FILIAL E5FILIAL, " +cEOL
-		cQuery += "			IIF(E1_FILIAL='01' OR E1_FILIAL='02','VP','SC') E5_FILIAL,  " +cEOL
-		cQuery += "			E1_PREFIXO E5_PREFIXO,  " +cEOL
-		cQuery += "			E1_NUM E5_NUMERO,  " +cEOL
-		cQuery += "			E1_PARCELA  " +cEOL
-		cQuery += "			E5_PARCELA,  " +cEOL
-		cQuery += "			E1_TIPO E5_TIPO,  " +cEOL
-		cQuery += "			E1_CLIENTE E5_CLIFOR,  " +cEOL
-		cQuery += "			E1_LOJA E5_LOJA,  " +cEOL
-		cQuery += "			E1_NOMCLI E5_BENEF,  " +cEOL
-		cQuery += "			SUBSTRING(E1_NATUREZ,1,3) E5_NATUREZ,  " +cEOL
-		cQuery += "			E1_EMISSAO E5_DATA,  " +cEOL
-		cQuery += "			E1_VENCREA E5_VENCTO,  " +cEOL
-		cQuery += "			E1_EMIS1 E5_DTDISPO,  " +cEOL
-		cQuery += "			E1_EMISSAO E5_DTDIGIT,  " +cEOL
-		cQuery += "			E1_SALDO E5_VALOR,  " +cEOL
-		cQuery += "			'' E5_SEQ,  " +cEOL
-		cQuery += "			E1_BANCO E5_BANCO,  " +cEOL
-		cQuery += "			E1_AGEDEP E5_AGENCIA,  " +cEOL
-		cQuery += "			E1_CONTA E5_CONTA, " +cEOL
-		cQuery += "			SE1.R_E_C_N_O_ RECNO,  " +cEOL
-		cQuery += "			'R' E5_RECPAG,  " +cEOL
-		cQuery += "			E1_NATUREZ NATUREZA_FIN, " +cEOL 
-		cQuery += "			'' E5_NUMCHEQ,  " +cEOL
-		cQuery += "			E1_PORTADO PORTADOR,  " +cEOL
-		cQuery += "			E1_NUMBOR BORDERO,  " +cEOL
-		cQuery += "			E1_DATABOR DTBORDERO, " +cEOL
-		cQuery += "			ISNULL(ED_CODIGO,'') NAT_COD, " +cEOL
-		cQuery += "			ISNULL(ED_DESCRIC,'') NAT_DESC, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			'' E5_TIPODOC " +cEOL
-		cQuery += "	FROM "+ retsqlname("SE1") +" SE1 (NOLOCK)  " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE1.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE1.E1_NATUREZ=SED.ED_CODIGO " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
-		cQuery += "	WHERE " +cEOL
-		cQuery += "	E1_FILIAL BETWEEN '"+MV_PAR09+"' AND '"+MV_PAR10+"' " +cEOL
-		cQuery += "	AND E1_VENCREA BETWEEN '"+dtos(MV_PAR12)+"' AND '"+dtos(MV_PAR13)+"'  " +cEOL
-		cQuery += "	AND E1_BANCO between '' AND '"+'ZZZ'+"' " +cEOL
-		cQuery += "	AND E1_NATUREZ BETWEEN '"+MV_PAR07+"' AND '"+MV_PAR08+"' " +cEOL
-		cQuery += "	AND E1_CLIENTE BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR05+"' " +cEOL
-		cQuery += "	AND E1_LOJA BETWEEN '"+MV_PAR04+"' AND '"+MV_PAR06+"' " +cEOL
-		cQuery += "	AND E1_SALDO>0  " +cEOL
-		cQuery += "	AND SE1.D_E_L_E_T_='' " +cEOL
+		//Tkt 74849 - Melhora de Performace
+		BeginSql Alias cAliasTop
+			%noparser%
+			SELECT 	'SE1' TABELA, 
+					E1_FILIAL E5FILIAL, 
+					CASE WHEN E1_FILIAL='01' OR E1_FILIAL='02' THEN 'VP' ELSE 'SC'END E5_FILIAL,  
+					E1_PREFIXO E5_PREFIXO, 
+					E1_NUM E5_NUMERO,  
+					E1_PARCELA  
+					E5_PARCELA,  
+					E1_TIPO E5_TIPO,  
+					E1_CLIENTE E5_CLIFOR,  
+					E1_LOJA E5_LOJA, 
+					E1_NOMCLI E5_BENEF,  
+					SUBSTRING(E1_NATUREZ,1,3) E5_NATUREZ,  
+					E1_EMISSAO E5_DATA,  
+					E1_VENCREA E5_VENCTO,  
+					E1_EMIS1 E5_DTDISPO, 
+					E1_EMISSAO E5_DTDIGIT,  
+					E1_SALDO E5_VALOR,  
+					'' E5_SEQ,  
+					E1_BANCO E5_BANCO,  
+					E1_AGEDEP E5_AGENCIA,  
+					E1_CONTA E5_CONTA, 
+					SE1.R_E_C_N_O_ RECNO,  
+					'R' E5_RECPAG,  
+					E1_NATUREZ NATUREZA_FIN, 
+					'' E5_NUMCHEQ,  
+					E1_PORTADO PORTADOR,  
+					E1_NUMBOR BORDERO, 
+					E1_DATABOR DTBORDERO, 
+					ISNULL(ED_CODIGO,'') NAT_COD, 
+					ISNULL(ED_DESCRIC,'') NAT_DESC, 
+					ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, 
+					ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC,
+					ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, 
+					ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC,
+					'' E5_TIPODOC 
+					FROM %table:SE1% SE1 WITH(NOLOCK)  
+					LEFT JOIN %table:SED% SED WITH(NOLOCK) ON SE1.%NotDel% AND SED.%NotDel% AND SE1.E1_NATUREZ=SED.ED_CODIGO 
+					LEFT JOIN %table:ZFH% ZFH WITH(NOLOCK) ON ZFH.%NotDel% AND ZFH.ZFH_COD=SED.ED_XGRPFIN 
+					WHERE E1_FILIAL BETWEEN %Exp:MV_PAR09% AND %Exp:MV_PAR10% 
+					AND E1_VENCREA BETWEEN %Exp:Dtos(MV_PAR12)% AND %Exp:Dtos(MV_PAR13)%  
+					AND E1_BANCO between '' AND 'ZZZ' 
+					AND E1_NATUREZ BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR08% 
+					AND E1_CLIENTE BETWEEN %Exp:MV_PAR03% AND %Exp:MV_PAR05% 
+					AND E1_LOJA BETWEEN %Exp:MV_PAR04% AND %Exp:MV_PAR06% 
+					AND E1_SALDO>0  
+					AND SE1.%NotDel%
 
-		cQuery += "	UNION ALL " +cEOL
+					UNION ALL 
 
-			//SELECT 'SE2' TABELA, E2_FILIAL E5FILIAL, IIF(E2_FILIAL='01' OR E2_FILIAL='02','VP','SC') E5_FILIAL, E2_PREFIXO E5_PREFIXO, E2_NUM E5_NUMERO, E2_PARCELA E5_PARCELA, E2_TIPO E5_TIPO, E2_FORNECE E5_CLIFOR, E2_LOJA E5_LOJA, E2_NOMFOR E5_BENEF, SUBSTRING(E2_NATUREZ,1,3) E5_NATUREZ, E2_EMISSAO E5_DATA, E2_VENCREA E5_VENCTO, E2_EMIS1 E5_DTDISPO, E2_EMISSAO E5_DTDIGIT, E2_SALDO E5_VALOR, '' E5_SEQ, E2_BANCO E5_BANCO, E2_AGEN E5_AGENCIA, E2_NOCTA E5_CONTA, 'P' E5_RECPAG, E2_NATUREZ NATUREZA_FIN, '' E5_NUMCHEQ, E2_PORTADO PORTADOR, E2_NUMBOR BORDERO, E2_DTBORDE DTBORDERO // @history ticket   10451 - Fernando Maciei - 22/04/2021 - Relatório, Visão = Previsto - Trazer títulos tipo = PA somente quando NÃO tiver SE5 para o registro.
-		cQuery += "	SELECT 	'SE2' TABELA,  " +cEOL
-		cQuery += "			E2_FILIAL E5FILIAL,  " +cEOL
-		cQuery += "			IIF(E2_FILIAL='01' OR E2_FILIAL='02','VP','SC') E5_FILIAL,  " +cEOL
-		cQuery += "			E2_PREFIXO E5_PREFIXO,  " +cEOL
-		cQuery += "			E2_NUM E5_NUMERO,  " +cEOL
-		cQuery += "			E2_PARCELA E5_PARCELA,  " +cEOL
-		cQuery += "			E2_TIPO E5_TIPO,  " +cEOL
-		cQuery += "			E2_FORNECE E5_CLIFOR,  " +cEOL
-		cQuery += "			E2_LOJA E5_LOJA,  " +cEOL
-		cQuery += "			E2_NOMFOR E5_BENEF,  " +cEOL
-		cQuery += "			SUBSTRING(E2_NATUREZ,1,3) E5_NATUREZ,  " +cEOL
-		cQuery += "			E2_EMISSAO E5_DATA,  " +cEOL
-		cQuery += "			E2_VENCREA E5_VENCTO,  " +cEOL
-		cQuery += "			E2_VENCREA E5_DTDISPO,  " +cEOL
-		cQuery += "			E2_EMISSAO E5_DTDIGIT,  " +cEOL
-		cQuery += "			E2_SALDO E5_VALOR,  " +cEOL
-		cQuery += "			'' E5_SEQ,  " +cEOL
-		cQuery += "			E2_BANCO E5_BANCO,  " +cEOL
-		cQuery += "			E2_AGEN E5_AGENCIA,  " +cEOL
-		cQuery += "			E2_NOCTA E5_CONTA, " +cEOL
-		cQuery += "			SE2.R_E_C_N_O_ RECNO, " +cEOL
-		cQuery += "			'P' E5_RECPAG,  " +cEOL
-		cQuery += "			E2_NATUREZ NATUREZA_FIN,  " +cEOL
-		cQuery += "			'' E5_NUMCHEQ,  " +cEOL
-		cQuery += "			E2_PORTADO PORTADOR,  " +cEOL
-		cQuery += "			E2_NUMBOR BORDERO,  " +cEOL
-		cQuery += "			E2_DTBORDE DTBORDERO,  " +cEOL
-		cQuery += "			ISNULL(ED_CODIGO,'') NAT_COD, " +cEOL
-		cQuery += "			ISNULL(ED_DESCRIC,'') NAT_DESC, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			'' E5_TIPODOC " +cEOL
-		cQuery += "	FROM "+ retsqlname("SE2") +" SE2 (NOLOCK)  " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE2.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE2.E2_NATUREZ=SED.ED_CODIGO " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
-		cQuery += "	WHERE " +cEOL
-		cQuery += "	E2_FILIAL BETWEEN '"+MV_PAR09+"' AND '"+MV_PAR10+"' " +cEOL
-		cQuery += "	AND E2_VENCREA BETWEEN '"+dtos(MV_PAR12)+"' AND '"+dtos(MV_PAR13)+"'  " +cEOL
-		cQuery += "	AND E2_BANCO between '' AND '"+'ZZZ'+"' " +cEOL
-		cQuery += "	AND E2_NATUREZ BETWEEN '"+MV_PAR07+"' AND '"+MV_PAR08+"' " +cEOL
-		cQuery += "	AND E2_FORNECE BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR05+"' " +cEOL
-		cQuery += "	AND E2_LOJA BETWEEN '"+MV_PAR04+"' AND '"+MV_PAR06+"' " +cEOL
-		cQuery += "	AND E2_SALDO>0  " +cEOL
-		cQuery += "	AND SE2.D_E_L_E_T_='' " +cEOL
+					//SELECT 'SE2' TABELA, E2_FILIAL E5FILIAL, IIF(E2_FILIAL='01' OR E2_FILIAL='02','VP','SC') E5_FILIAL, E2_PREFIXO E5_PREFIXO, E2_NUM E5_NUMERO, E2_PARCELA E5_PARCELA, E2_TIPO E5_TIPO, E2_FORNECE E5_CLIFOR, E2_LOJA E5_LOJA, E2_NOMFOR E5_BENEF, SUBSTRING(E2_NATUREZ,1,3) E5_NATUREZ, E2_EMISSAO E5_DATA, E2_VENCREA E5_VENCTO, E2_EMIS1 E5_DTDISPO, E2_EMISSAO E5_DTDIGIT, E2_SALDO E5_VALOR, '' E5_SEQ, E2_BANCO E5_BANCO, E2_AGEN E5_AGENCIA, E2_NOCTA E5_CONTA, 'P' E5_RECPAG, E2_NATUREZ NATUREZA_FIN, '' E5_NUMCHEQ, E2_PORTADO PORTADOR, E2_NUMBOR BORDERO, E2_DTBORDE DTBORDERO // @history ticket   10451 - Fernando Maciei - 22/04/2021 - Relatório, Visão = Previsto - Trazer títulos tipo = PA somente quando NÃO tiver SE5 para o registro.
+					SELECT 	'SE2' TABELA, 
+							E2_FILIAL E5FILIAL, 
+							CASE WHEN E2_FILIAL='01' OR E2_FILIAL='02' THEN 'VP' ELSE 'SC' END E5_FILIAL, 
+							E2_PREFIXO E5_PREFIXO,  
+							E2_NUM E5_NUMERO,  
+							E2_PARCELA E5_PARCELA, 
+							E2_TIPO E5_TIPO, 
+							E2_FORNECE E5_CLIFOR,  
+							E2_LOJA E5_LOJA, 
+							E2_NOMFOR E5_BENEF,  
+							SUBSTRING(E2_NATUREZ,1,3) E5_NATUREZ, 
+							E2_EMISSAO E5_DATA, 
+							E2_VENCREA E5_VENCTO,  
+							E2_VENCREA E5_DTDISPO, 
+							E2_EMISSAO E5_DTDIGIT, 
+							E2_SALDO E5_VALOR,  
+							'' E5_SEQ, 
+							E2_BANCO E5_BANCO,  
+							E2_AGEN E5_AGENCIA, 
+							E2_NOCTA E5_CONTA, 
+							SE2.R_E_C_N_O_ RECNO, 
+							'P' E5_RECPAG, 
+							E2_NATUREZ NATUREZA_FIN,  
+							'' E5_NUMCHEQ,  
+							E2_PORTADO PORTADOR,  
+							E2_NUMBOR BORDERO,  
+							E2_DTBORDE DTBORDERO,  
+							ISNULL(ED_CODIGO,'') NAT_COD, 
+							ISNULL(ED_DESCRIC,'') NAT_DESC, 
+							ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, 
+							ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, 
+							ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO,
+							ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, 
+							'' E5_TIPODOC
+							FROM %table:SE2% SE2 WITH(NOLOCK)
+							LEFT JOIN %table:SED% SED WITH(NOLOCK) ON SE2.%NotDel% AND SED.%NotDel% AND SE2.E2_NATUREZ=SED.ED_CODIGO 
+							LEFT JOIN %table:ZFH% ZFH WITH(NOLOCK) ON ZFH.%NotDel% AND ZFH.ZFH_COD=SED.ED_XGRPFIN 
+							WHERE E2_FILIAL BETWEEN %Exp:MV_PAR09% AND %Exp:MV_PAR10% 
+							AND E2_VENCREA BETWEEN %Exp:Dtos(MV_PAR12)% AND %Exp:Dtos(MV_PAR13)%  
+							AND E2_BANCO between '' AND 'ZZZ' 
+							AND E2_NATUREZ BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR08%
+							AND E2_FORNECE BETWEEN %Exp:MV_PAR03% AND %Exp:MV_PAR05% 
+							AND E2_LOJA BETWEEN %Exp:MV_PAR04% AND %Exp:MV_PAR06% 
+							AND E2_SALDO>0 
+							AND SE2.%NotDel%
 
-		cQuery += "	ORDER BY E5_DATA, E5_NATUREZ, E5_FILIAL " +cEOL
-			
-		//EndSql
-
+							ORDER BY E5_DATA, E5_NATUREZ, E5_FILIAL 
+						
+		EndSql
 	//
 	Else
 		/*
@@ -382,169 +383,165 @@ Static Function PrintReport(oReport)
 			Column E5_DTDIGIT as Date
 		*/
 	 		// Chamado n. 051865 || OS 053202 || FINANCAS || DRIELE || 8376 || RELATORIO DE FLUXO - fwnm - 25/09/2019
-		cQuery := "	SELECT 	'SE5' TABELA,  " +cEOL
-		cQuery += "			E5_FILIAL E5FILIAL,  " +cEOL
-		cQuery += "			IIF(E5_FILIAL='01' OR E5_FILIAL='02','VP','SC') E5_FILIAL,  " +cEOL
-		cQuery += "			E5_PREFIXO,  " +cEOL
-		cQuery += "			E5_NUMERO,  " +cEOL
-		cQuery += "			E5_PARCELA,  " +cEOL
-		cQuery += "			E5_TIPO,  " +cEOL
-		cQuery += "			E5_CLIFOR,  " +cEOL
-		cQuery += "			E5_LOJA,  " +cEOL
-		cQuery += "			E5_BENEF,  " +cEOL
-		cQuery += "			E5_NATUREZ,  " +cEOL
-		cQuery += "			E5_DATA,  " +cEOL
-		cQuery += "			E5_VENCTO,  " +cEOL
-		cQuery += "			E5_DTDISPO,  " +cEOL
-		cQuery += "			E5_DTDIGIT,  " +cEOL
-		cQuery += "			E5_VALOR,  " +cEOL
-		cQuery += "			E5_SEQ,  " +cEOL
-		cQuery += "			E5_BANCO,  " +cEOL
-		cQuery += "			E5_AGENCIA,  " +cEOL
-		cQuery += "			E5_CONTA, " +cEOL
-		cQuery += "			SE5.R_E_C_N_O_ RECNO, " +cEOL
-		cQuery += "			E5_RECPAG,  " +cEOL
-		cQuery += "			E5_NATUREZ NATUREZA_FIN,  " +cEOL
-		cQuery += "			E5_NUMCHEQ,  " +cEOL
-		cQuery += "			E5_BANCO PORTADOR,  " +cEOL
-		cQuery += "			'' BORDERO,  " +cEOL
-		cQuery += "			'' DTBORDERO, " +cEOL
-		cQuery += "			ISNULL(ED_CODIGO,'') NAT_COD, " +cEOL
-		cQuery += "			ISNULL(ED_DESCRIC,'') NAT_DESC, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "			ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			E5_TIPODOC " +cEOL
 
-		cQuery += "	FROM "+ retsqlname("SE5") +" SE5 (NOLOCK) " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE5.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE5.E5_NATUREZ=SED.ED_CODIGO " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
-		cQuery += "	WHERE " +cEOL
-		cQuery += "	E5_FILIAL BETWEEN '"+MV_PAR09+"' AND '"+MV_PAR10+"' " +cEOL
-			
-		cQuery += "	AND E5_DTDISPO BETWEEN '"+dtos(MV_PAR01)+"' AND '"+dtos(MV_PAR02)+"' " +cEOL
-			
-		cQuery += "	AND E5_BANCO between '' AND '"+'ZZZ'+"' " +cEOL
-		cQuery += "	AND E5_BANCO NOT IN ('P98','','P99') " +cEOL
-		
-		cQuery += "	AND E5_NATUREZ BETWEEN '"+MV_PAR07+"' AND '"+MV_PAR08+"' " +cEOL
+		BeginSql Alias cAliasTop
+			%noparser%
+			SELECT 	'SE5' TABELA,  
+				E5_FILIAL E5FILIAL,  
+				CASE WHEN E5_FILIAL='01' OR E5_FILIAL='02' THEN 'VP' ELSE 'SC' END E5_FILIAL,  
+				E5_PREFIXO,  
+				E5_NUMERO,  
+				E5_PARCELA,  
+				E5_TIPO,  
+				E5_CLIFOR,  
+				E5_LOJA,  
+				E5_BENEF,  
+				E5_NATUREZ,  
+				E5_DATA,  
+				E5_VENCTO,  
+				E5_DTDISPO,  
+				E5_DTDIGIT,  
+				E5_VALOR,  
+				E5_SEQ,  
+				E5_BANCO,  
+				E5_AGENCIA,  
+				E5_CONTA, 
+				SE5.R_E_C_N_O_ RECNO, 
+				E5_RECPAG,  
+				E5_NATUREZ NATUREZA_FIN,  
+				E5_NUMCHEQ,  
+				E5_BANCO PORTADOR,  
+				'' BORDERO,  
+				'' DTBORDERO, 
+				ISNULL(ED_CODIGO,'') NAT_COD, 
+				ISNULL(ED_DESCRIC,'') NAT_DESC, 
+				ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, 
+				ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, 
+				ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, 
+				ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, 
+				E5_TIPODOC 
 
-		cQuery += "	AND E5_NATUREZ NOT IN ('NATMOVP','NATMOVR') " +cEOL
-		cQuery += "	AND E5_CLIFOR BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR05+"' " +cEOL
-		cQuery += "	AND E5_LOJA BETWEEN '"+MV_PAR04+"' AND '"+MV_PAR06+"' " +cEOL
-		cQuery += "	AND SE5.D_E_L_E_T_='' " +cEOL
-		cQuery += "	AND E5_TIPODOC NOT IN ('DC','D2','JR','J2','TL','MT','M2','CM','C2')  " +cEOL
+				FROM %table:SE5%  SE5 WITH(NOLOCK)
+				LEFT JOIN %table:SED% SED WITH(NOLOCK) ON SE5.%NotDel% AND SED.%NotDel% AND SE5.E5_NATUREZ=SED.ED_CODIGO 
+				LEFT JOIN %table:ZFH% ZFH WITH(NOLOCK) ON ZFH.%NotDel% AND ZFH.ZFH_COD=SED.ED_XGRPFIN 
+				WHERE E5_FILIAL BETWEEN %Exp:MV_PAR09% AND %Exp:MV_PAR10%
+				AND E5_DTDISPO BETWEEN %Exp:Dtos(MV_PAR01)% AND %Exp:Dtos(MV_PAR02)%				
+				AND E5_BANCO between '' AND 'ZZZ' 
+				AND E5_BANCO NOT IN ('P98','','P99') 			
+				AND E5_NATUREZ BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR08%
+				AND E5_NATUREZ NOT IN ('NATMOVP','NATMOVR') 
+				AND E5_CLIFOR BETWEEN %Exp:MV_PAR03% AND %Exp:MV_PAR05% 
+				AND E5_LOJA BETWEEN %Exp:MV_PAR04% AND %Exp:MV_PAR06% 
+				AND SE5.%NotDel% 
+				AND E5_TIPODOC NOT IN ('DC','D2','JR','J2','TL','MT','M2','CM','C2','E2')  
+				AND E5_SITUACA NOT IN ('C')  
+				
+				AND ((E5_TIPODOC = 'CD' AND E5_VENCTO <= E5_DATA) OR (E5_TIPODOC <> 'CD')) 
+				//AND E5_TIPODOC <> 'E2' 
+				AND E5_MOTBX IN ('   ','NOR','DEB') 
 
-		cQuery += "	AND E5_SITUACA NOT IN ('C')  " +cEOL
+				UNION ALL 
 			
-		cQuery += "	AND ((E5_TIPODOC = 'CD' AND E5_VENCTO <= E5_DATA) OR (E5_TIPODOC <> 'CD')) " +cEOL
-		cQuery += "	AND E5_TIPODOC <> '"+'E2'+"' " +cEOL
-		cQuery += "	AND E5_MOTBX IN ('   ','NOR','DEB') " +cEOL
-		cQuery += "	UNION ALL " +cEOL
-			
-		cQuery += "	SELECT 'SE2' TABELA, " +cEOL
-		cQuery += "	 E2_FILIAL E5FILIAL,  " +cEOL
-		cQuery += "	IIF(E2_FILIAL='01' OR E2_FILIAL='02','VP','SC') E5_FILIAL,  " +cEOL
-		cQuery += "	E2_PREFIXO E5_PREFIXO,  " +cEOL
-		cQuery += "	E2_NUM E5_NUMERO,  " +cEOL
-		cQuery += "	E2_PARCELA E5_PARCELA,  " +cEOL
-		cQuery += "	E2_TIPO E5_TIPO,  " +cEOL
-		cQuery += "	E2_FORNECE E5_CLIFOR,  " +cEOL
-		cQuery += "	E2_LOJA E5_LOJA,  " +cEOL
-		cQuery += "	E2_NOMFOR E5_BENEF,  " +cEOL
-		cQuery += "	SUBSTRING(E2_NATUREZ,1,3) E5_NATUREZ,  " +cEOL
-		cQuery += "	'' E5_DATA,  " +cEOL
-		cQuery += "	E2_VENCTO E5_VENCTO,  " +cEOL
-		cQuery += "	E2_EMIS1 E5_DTDISPO,  " +cEOL
-		cQuery += "	E2_EMISSAO E5_DTDIGIT,  " +cEOL
-		cQuery += "	E2_SALDO E5_VALOR,  " +cEOL
-		cQuery += "	'' E5_SEQ,  " +cEOL
-		cQuery += "	E2_BANCO E5_BANCO,  " +cEOL
-		cQuery += "	E2_AGEN E5_AGENCIA,  " +cEOL
-		cQuery += "	E2_NOCTA E5_CONTA, " +cEOL
-		cQuery += "	SE2.R_E_C_N_O_ RECNO, " +cEOL
-		cQuery += "	'P' E5_RECPAG,  " +cEOL
-		cQuery += "	E2_NATUREZ NATUREZA_FIN, " +cEOL 
-		cQuery += "	'' E5_NUMCHEQ,  " +cEOL
-		cQuery += "	E2_PORTADO PORTADOR,  " +cEOL
-		cQuery += "	E2_NUMBOR BORDERO,  " +cEOL
-		cQuery += "	E2_DTBORDE DTBORDERO, " +cEOL
-		cQuery += "	ISNULL(ED_CODIGO,'') NAT_COD, " +cEOL
-		cQuery += "	ISNULL(ED_DESCRIC,'') NAT_DESC, " +cEOL
-		cQuery += "	ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
-		cQuery += "	ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
-		cQuery += "	ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "	ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "	'' E5_TIPODOC " +cEOL
+				SELECT 'SE2' TABELA, 
+					E2_FILIAL E5FILIAL,  
+					CASE WHEN E2_FILIAL='01' OR E2_FILIAL='02' THEN 'VP' ELSE 'SC' END E5_FILIAL, 
+					E2_PREFIXO E5_PREFIXO,  
+					E2_NUM E5_NUMERO,  
+					E2_PARCELA E5_PARCELA,  
+					E2_TIPO E5_TIPO,  
+					E2_FORNECE E5_CLIFOR,  
+					E2_LOJA E5_LOJA,  
+					E2_NOMFOR E5_BENEF,  
+					SUBSTRING(E2_NATUREZ,1,3) E5_NATUREZ,  
+					'' E5_DATA,  
+					E2_VENCTO E5_VENCTO,  
+					E2_EMIS1 E5_DTDISPO,  
+					E2_EMISSAO E5_DTDIGIT,  
+					E2_SALDO E5_VALOR,  
+					'' E5_SEQ,  
+					E2_BANCO E5_BANCO,  
+					E2_AGEN E5_AGENCIA,  
+					E2_NOCTA E5_CONTA, 
+					SE2.R_E_C_N_O_ RECNO, 
+					'P' E5_RECPAG,  
+					E2_NATUREZ NATUREZA_FIN,  
+					'' E5_NUMCHEQ,  
+					E2_PORTADO PORTADOR,  
+					E2_NUMBOR BORDERO,  
+					E2_DTBORDE DTBORDERO, 
+					ISNULL(ED_CODIGO,'') NAT_COD, 
+					ISNULL(ED_DESCRIC,'') NAT_DESC, 
+					ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, 
+					ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, 
+					ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, 
+					ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, 
+					'' E5_TIPODOC 
 
-		cQuery += "	FROM "+ retsqlname("SE2") +" SE2 (NOLOCK) " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE2.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE2.E2_NATUREZ=SED.ED_CODIGO " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
-		cQuery += "	WHERE " +cEOL
-		cQuery += "	E2_FILIAL BETWEEN '"+MV_PAR09+"' AND '"+MV_PAR10+"' " +cEOL
-		cQuery += "	AND E2_VENCTO BETWEEN '"+dtos(MV_PAR12)+"' AND '"+dtos(MV_PAR13)+"' " +cEOL
-		cQuery += "	AND E2_BANCO between '' AND '"+'ZZZ'+"' " +cEOL
-		
-		cQuery += "	AND E2_NATUREZ BETWEEN '"+MV_PAR07+"' AND '"+MV_PAR08+"' " +cEOL
-		cQuery += "	AND E2_FORNECE BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR05+"' " +cEOL
-		cQuery += "	AND E2_LOJA BETWEEN '"+MV_PAR04+"' AND '"+MV_PAR06+"' " +cEOL
-		cQuery += "	AND E2_SALDO>0 " +cEOL
-		cQuery += "	AND SE2.D_E_L_E_T_='' " +cEOL
-			
-		cQuery += "	UNION ALL " +cEOL
-		
-		cQuery += "	SELECT 'SE1' TABELA,  " +cEOL
-		cQuery += "	E1_FILIAL E5FILIAL,  " +cEOL
-		cQuery += "	IIF(E1_FILIAL='01' OR E1_FILIAL='02','VP','SC') E5_FILIAL,  " +cEOL
-		cQuery += "	E1_PREFIXO E5_PREFIXO,  " +cEOL
-		cQuery += "	E1_NUM E5_NUMERO,  " +cEOL
-		cQuery += "	E1_PARCELA E5_PARCELA,  " +cEOL
-		cQuery += "	E1_TIPO E5_TIPO,  " +cEOL
-		cQuery += "	E1_CLIENTE E5_CLIFOR,  " +cEOL
-		cQuery += "	E1_LOJA E5_LOJA,  " +cEOL
-		cQuery += "	E1_NOMCLI E5_BENEF,  " +cEOL
-		cQuery += "	SUBSTRING(E1_NATUREZ,1,3) E5_NATUREZ, '' E5_DATA, E1_VENCTO E5_VENCTO,  " +cEOL
-		cQuery += "	E1_EMIS1 E5_DTDISPO,  " +cEOL
-		cQuery += "	E1_EMISSAO E5_DTDIGIT,  " +cEOL
-		cQuery += "	E1_SALDO E5_VALOR,  " +cEOL
-		cQuery += "	'' E5_SEQ,  " +cEOL
-		cQuery += "	E1_BANCO E5_BANCO,  " +cEOL
-		cQuery += "	E1_AGEDEP E5_AGENCIA,  " +cEOL
-		cQuery += "	E1_CONTA E5_CONTA, " +cEOL
-		cQuery += "	SE1.R_E_C_N_O_ RECNO, " +cEOL
-		cQuery += "	'R' E5_RECPAG,  " +cEOL
-		cQuery += "	E1_NATUREZ NATUREZA_FIN, " +cEOL 
-		cQuery += "	'' E5_NUMCHEQ,  " +cEOL
-		cQuery += "	E1_PORTADO PORTADOR,  " +cEOL
-		cQuery += "	E1_NUMBOR BORDERO,  " +cEOL
-		cQuery += "	E1_DATABOR DTBORDERO, " +cEOL
-		cQuery += "	ISNULL(ED_CODIGO,'') NAT_COD, " +cEOL
-		cQuery += "	ISNULL(ED_DESCRIC,'') NAT_DESC, " +cEOL
-		cQuery += "	ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, " +cEOL
-		cQuery += "	ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, " +cEOL
-		cQuery += "	ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, " +cEOL
-		cQuery += "	ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '"+'1=CAIXA OPERACIONAL'+"' WHEN 2 THEN '"+'2=CAIXA NAO OPERACIONAL'+"' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, " +cEOL
-		cQuery += "			'' E5_TIPODOC " +cEOL
-
-		cQuery += "	FROM "+ retsqlname("SE1") +" SE1 (NOLOCK)  " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("SED") +" SED (NOLOCK) ON SE1.D_E_L_E_T_='' AND SED.D_E_L_E_T_='' AND SE1.E1_NATUREZ=SED.ED_CODIGO " +cEOL
-		cQuery += "		LEFT JOIN "+ retsqlname("ZFH") +" ZFH (NOLOCK) ON ZFH.D_E_L_E_T_='' AND ZFH.ZFH_COD=SED.ED_XGRPFIN " +cEOL
-		cQuery += "	WHERE " +cEOL
-		cQuery += "	E1_FILIAL BETWEEN '"+MV_PAR09+"' AND '"+MV_PAR10+"' " +cEOL
-		cQuery += "	AND E1_VENCTO BETWEEN '"+dtos(MV_PAR12)+"' AND '"+dtos(MV_PAR13)+"' " +cEOL
-		cQuery += "	AND E1_BANCO between '' AND '"+'ZZZ'+"' " +cEOL
-		cQuery += "	AND E1_NATUREZ BETWEEN '"+MV_PAR07+"' AND '"+MV_PAR08+"' " +cEOL
-		cQuery += "	AND E1_CLIENTE BETWEEN '"+MV_PAR03+"' AND '"+MV_PAR05+"' " +cEOL
-		cQuery += "	AND E1_LOJA BETWEEN '"+MV_PAR04+"' AND '"+MV_PAR06+"' " +cEOL
-		cQuery += "	AND E1_SALDO>0 " +cEOL
-		cQuery += "	AND SE1.D_E_L_E_T_='' " +cEOL
-		
-		cQuery += "	ORDER BY E5_DATA, E5_NATUREZ, E5_FILIAL " +cEOL
+					FROM %table:SE2% SE2 WITH(NOLOCK)
+						LEFT JOIN %table:SED% SED WITH(NOLOCK) ON SE2.%NotDel% AND SED.%NotDel% AND SE2.E2_NATUREZ=SED.ED_CODIGO 
+						LEFT JOIN %table:ZFH% ZFH WITH(NOLOCK) ON ZFH.%NotDel% AND ZFH.ZFH_COD=SED.ED_XGRPFIN 
+					WHERE E2_FILIAL BETWEEN %Exp:MV_PAR09% AND %Exp:MV_PAR10% 
+					AND E2_VENCTO BETWEEN %Exp:Dtos(MV_PAR12)% AND %Exp:Dtos(MV_PAR13)%
+					AND E2_BANCO between '' AND 'ZZZ'
+				
+					AND E2_NATUREZ BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR08%
+					AND E2_FORNECE BETWEEN %Exp:MV_PAR03% AND %Exp:MV_PAR05%
+					AND E2_LOJA BETWEEN %Exp:MV_PAR04% AND %Exp:MV_PAR06%
+					AND E2_SALDO>0 
+					AND SE2.%NotDel% 
+					
+					UNION ALL 
+				
+					SELECT 'SE1' TABELA,  
+						E1_FILIAL E5FILIAL,  
+						CASE WHEN E1_FILIAL='01' OR E1_FILIAL='02' THEN 'VP' ELSE 'SC' END E5_FILIAL, 
+						E1_PREFIXO E5_PREFIXO,  
+						E1_NUM E5_NUMERO,  
+						E1_PARCELA E5_PARCELA,  
+						E1_TIPO E5_TIPO,  
+						E1_CLIENTE E5_CLIFOR,  
+						E1_LOJA E5_LOJA,  
+						E1_NOMCLI E5_BENEF,  
+						SUBSTRING(E1_NATUREZ,1,3) E5_NATUREZ, '' E5_DATA, E1_VENCTO E5_VENCTO,  
+						E1_EMIS1 E5_DTDISPO,  
+						E1_EMISSAO E5_DTDIGIT,  
+						E1_SALDO E5_VALOR,  
+						'' E5_SEQ,  
+						E1_BANCO E5_BANCO,  
+						E1_AGEDEP E5_AGENCIA,  
+						E1_CONTA E5_CONTA, 
+						SE1.R_E_C_N_O_ RECNO, 
+						'R' E5_RECPAG,  
+						E1_NATUREZ NATUREZA_FIN,  
+						'' E5_NUMCHEQ,  
+						E1_PORTADO PORTADOR,  
+						E1_NUMBOR BORDERO,  
+						E1_DATABOR DTBORDERO, 
+						ISNULL(ED_CODIGO,'') NAT_COD, 
+						ISNULL(ED_DESCRIC,'') NAT_DESC, 
+						ISNULL(ZFH.ZFH_COD,'') GRPFIN_COD, 
+						ISNULL(ZFH.ZFH_DESCRI,'') GRPFIN_DESC, 
+						ISNULL(ZFH.ZFH_TIPO,'') GRPFIN_TIPO, 
+						ISNULL(CASE ZFH.ZFH_TIPO WHEN 1 THEN '1=CAIXA OPERACIONAL' WHEN 2 THEN '2=CAIXA NAO OPERACIONAL' ELSE ZFH.ZFH_TIPO END,'') GRPFIN_DESC, 
+								'' E5_TIPODOC 
+						FROM %table:SE1% SE1 WITH(NOLOCK)
+							LEFT JOIN %table:SED% SED WITH(NOLOCK) ON SE1.%NotDel% AND SED.%NotDel% AND SE1.E1_NATUREZ=SED.ED_CODIGO 
+							LEFT JOIN %table:ZFH% ZFH WITH(NOLOCK) ON ZFH.%NotDel% AND ZFH.ZFH_COD=SED.ED_XGRPFIN 
+						WHERE E1_FILIAL BETWEEN %Exp:MV_PAR09% AND %Exp:MV_PAR10% 
+						AND E1_VENCTO BETWEEN %Exp:Dtos(MV_PAR12)% AND %Exp:Dtos(MV_PAR13)% 
+						AND E1_BANCO between '' AND 'ZZZ'
+						AND E1_NATUREZ BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR08%
+						AND E1_CLIENTE BETWEEN %Exp:MV_PAR03% AND %Exp:MV_PAR05%
+						AND E1_LOJA BETWEEN %Exp:MV_PAR04% AND %Exp:MV_PAR06%
+						AND E1_SALDO > 0 
+						AND SE1.%NotDel%
+					
+						ORDER BY E5_DATA, E5_NATUREZ, E5_FILIAL 
+			EndSql
 
 	EndIf
 
-	TcQuery cQuery ALIAS (cAliasTop) NEW
+	//TcQuery cQuery ALIAS (cAliasTop) NEW
 
 	TCSETFIELD( cAliasTop, "E5_DATA"	, "D", 8, 0 )
 	TCSETFIELD( cAliasTop, "E5_VENCTO"	, "D", 8, 0 )
@@ -737,17 +734,16 @@ Static Function PrintReport(oReport)
 			IF AllTrim((cAliasTop)->E5_TIPO) = 'FT'
 				
 				BeginSql Alias 'TMPFAT'
-					
+					%noparser%
 					Column E2_VENCREA as Date
 					Column E2_EMIS1   as Date
 					
 					SELECT COUNT(E2_VENCREA) NUM_TITULO, E2_VENCREA, E2_EMIS1
-					FROM %table:SE2% E2 (NOLOCK)
+					FROM %table:SE2% E2 WITH(NOLOCK)
 					WHERE E2_FATURA = %EXP:(cAliasTop)->E5_NUMERO% AND E2_FILIAL = %EXP:(cAliasTop)->E5FILIAL%
 					// @history ticket   11767 - Fernando Maciei - 31/03/2021 - Classificação Agrupador - O relatório está com erro quando o tipo de título (E2_TIPO = FT) - A fatura 242320 está agrupando como Milho, porém deveria agrupar como FARELO DE SOJA, visto que o agrupador do produto predominante é FARELO
 					AND E2_FORNECE=%EXP:(cAliasTop)->E5_CLIFOR%
 					AND E2_LOJA=%EXP:(cAliasTop)->E5_LOJA%
-					//
 					AND E2.%NotDel%
 					GROUP BY E2_VENCREA, E2_EMIS1
 					ORDER BY COUNT(E2_VENCREA) DESC
@@ -885,14 +881,13 @@ Static Function PrintReport(oReport)
 			IF AllTrim((cAliasTop)->E5_TIPO) = 'FT'
 				
 				BeginSql Alias 'TMPFAT'
-					
-					SELECT *
-					FROM %table:SE2% E2 (NOLOCK)
+					%noparser%					
+					SELECT E2_VENCREA, E2_EMIS1, E2_NUM,E2_PREFIXO, E2_FORNECE, E2_LOJA, E2_FILIAL
+					FROM %table:SE2% E2 WITH(NOLOCK)
 					WHERE E2_FATURA = %EXP:(cAliasTop)->E5_NUMERO% AND E2_FILIAL = %EXP:(cAliasTop)->E5FILIAL%
 					// @history ticket   11767 - Fernando Maciei - 31/03/2021 - Classificação Agrupador - O relatório está com erro quando o tipo de título (E2_TIPO = FT) - A fatura 242320 está agrupando como Milho, porém deveria agrupar como FARELO DE SOJA, visto que o agrupador do produto predominante é FARELO
 					AND E2_FORNECE=%EXP:(cAliasTop)->E5_CLIFOR%
 					AND E2_LOJA=%EXP:(cAliasTop)->E5_LOJA%
-					//
 					AND E2.%NotDel%
 					
 				EndSql
@@ -900,10 +895,10 @@ Static Function PrintReport(oReport)
 				While !TMPFAT->(Eof())
 					
 					BeginSql Alias 'TMPB1'
-						
+						%noparser%
 						SELECT B1_COD, B1_DESC, D1_EMISSAO, D1_TOTAL
-						FROM %table:SD1% D1 (NOLOCK)
-						INNER JOIN %table:SB1% TB1 ON B1_COD=D1_COD AND TB1.%NotDel%
+						FROM %table:SD1% D1 WITH(NOLOCK)
+						INNER JOIN %table:SB1% TB1 WITH(NOLOCK) ON B1_COD=D1_COD AND TB1.%NotDel%
 						WHERE D1_DOC = %EXP:TMPFAT->E2_NUM% AND D1_SERIE = %EXP:TMPFAT->E2_PREFIXO%
 						AND D1_FORNECE = %EXP:TMPFAT->E2_FORNECE% AND D1_LOJA = %EXP:TMPFAT->E2_LOJA%
 						AND D1_FILIAL = %EXP:TMPFAT->E2_FILIAL% AND D1.%NotDel%
@@ -941,16 +936,16 @@ Static Function PrintReport(oReport)
 				If Empty(CodPrdMv)
 					CodPrdMv := AllTrim(SED->ED_CODIGO)
 					cPrdMvlr := "[ED_XGRPFIN] VAZIO - " + AllTrim(SED->ED_DESCRIC)
-				EndIf
+				EndIfcAliaTop2
 				*/
 				
 			Else
 				
 				BeginSql Alias cAliaTop2
-					
+					%noparser%
 					SELECT B1_COD, B1_DESC, D1_EMISSAO, D1_TOTAL
-					FROM %table:SD1% D1 (NOLOCK)
-					INNER JOIN %table:SB1% B1 ON B1_COD=D1_COD AND B1.%NotDel%
+					FROM %table:SD1% D1 WITH(NOLOCK)
+					INNER JOIN %table:SB1% B1 WITH(NOLOCK) ON B1_COD=D1_COD AND B1.%NotDel%
 					WHERE D1_DOC = %EXP:(cAliasTop)->E5_NUMERO% AND D1_SERIE = %EXP:(cAliasTop)->E5_PREFIXO%
 					AND D1_FORNECE = %EXP:(cAliasTop)->E5_CLIFOR% AND D1_LOJA = %EXP:(cAliasTop)->E5_LOJA%
 					AND D1_FILIAL = %EXP:(cAliasTop)->E5FILIAL% AND D1.%NotDel%
@@ -1011,8 +1006,7 @@ Static Function PrintReport(oReport)
 				CodPrdMv := AllTrim((cAliasTop)->E5_NATUREZ)
 				cPrdMvlr := "[ED_XGRPFIN] VAZIO - " + AllTrim(Posicione("SED",1,FWxFilial("SED")+(cAliasTop)->E5_NATUREZ,"ED_DESCRIC"))
 			EndIf
-			//
-			
+			//			
 			//oSection:Cell("PRODUTO"):SetValue( cPrdMvlr )
 			//oSection:Cell("CODPROD"):SetValue( CodPrdMv )
 			
@@ -1059,8 +1053,8 @@ Static Function PrintReport(oReport)
 					WorkPRJ->( dbCloseArea() )
 				EndIf 
 				
-				cQuery := " SELECT TOP 1 D2_COD, D2_XPROJET, D2_TOTAL"
-				cQuery += " FROM " + RetSqlName("SD2") + " SD2 (NOLOCK) "
+				cQuery := " SELECT TOP 1 D2_COD, D2_XPROJET, D2_TOTAL "
+				cQuery += " FROM " + RetSqlName("SD2") + " SD2 WITH(NOLOCK) "
 				cQuery += " WHERE D2_FILIAL='"+(cAliasTop)->E5FILIAL+"' "
 				cQuery += " AND D2_DOC='"+(cAliasTop)->E5_NUMERO+"' "
 				cQuery += " AND D2_SERIE='"+(cAliasTop)->E5_PREFIXO+"' "
@@ -1108,8 +1102,8 @@ Static Function PrintReport(oReport)
 					WorkPRJ->( dbCloseArea() )
 				EndIf 
 				
-				cQuery := " SELECT TOP 1 D1_COD, D1_PROJETO, D1_TOTAL"
-				cQuery += " FROM " + RetSqlName("SD1") + " SD1 (NOLOCK) "
+				cQuery := " SELECT TOP 1 D1_COD, D1_PROJETO, D1_TOTAL "
+				cQuery += " FROM " + RetSqlName("SD1") + " SD1 WITH(NOLOCK) "
 				cQuery += " WHERE D1_FILIAL='"+(cAliasTop)->E5FILIAL+"' "
 				cQuery += " AND D1_DOC='"+(cAliasTop)->E5_NUMERO+"' "
 				cQuery += " AND D1_SERIE='"+(cAliasTop)->E5_PREFIXO+"' "
@@ -1176,8 +1170,8 @@ Static Function PrintReport(oReport)
 				EndIf 
 				                                    
 				cQuery := " SELECT TOP 1 ZFQ_PRODUT, ZFQ_TOTAL "
-				cQuery += " FROM " + RetSqlName("ZFQ") + " ZFQ (NOLOCK) "
-				cQuery += " INNER JOIN " + RetSqlName("SE2") + " SE2 (NOLOCK) ON E2_FILIAL=ZFQ_FILIAL AND E2_PREFIXO=ZFQ_PREFIX AND E2_NUM=ZFQ_NUM AND E2_PARCELA=ZFQ_PARCEL AND E2_TIPO=ZFQ_TIPO AND E2_FORNECE=ZFQ_FORNEC AND E2_LOJA=ZFQ_LOJA AND SE2.D_E_L_E_T_='' "
+				cQuery += " FROM " + RetSqlName("ZFQ") + " ZFQ WITH(NOLOCK) "
+				cQuery += " INNER JOIN " + RetSqlName("SE2") + " SE2 WITH(NOLOCK) ON E2_FILIAL=ZFQ_FILIAL AND E2_PREFIXO=ZFQ_PREFIX AND E2_NUM=ZFQ_NUM AND E2_PARCELA=ZFQ_PARCEL AND E2_TIPO=ZFQ_TIPO AND E2_FORNECE=ZFQ_FORNEC AND E2_LOJA=ZFQ_LOJA AND SE2.D_E_L_E_T_='' "
 				cQuery += " WHERE ZFQ_FILIAL='"+(cAliasTop)->E5FILIAL+"' " 
 				cQuery += " AND ZFQ_PREFIX='"+(cAliasTop)->E5_PREFIXO+"' " 
 				cQuery += " AND ZFQ_NUM='"+(cAliasTop)->E5_NUMERO+"' " 
@@ -1232,8 +1226,8 @@ Static Function PrintReport(oReport)
 					*/
 
 					cQuery := " SELECT TOP 1 SGFIN010.E2_PRODUTO, SGFIN010.E2_TOTAL "
-					cQuery += " FROM SGFIN010 SGFIN010 (NOLOCK) "
-					cQuery += " INNER JOIN " + RetSqlName("SE2") + " SE2 (NOLOCK) ON SE2.E2_FILIAL=SGFIN010.E2_FILIAL COLLATE Latin1_General_CI_AS AND SE2.E2_PREFIXO=SGFIN010.E2_PREFIXO COLLATE Latin1_General_CI_AS AND SE2.E2_NUM=SGFIN010.E2_NUM COLLATE Latin1_General_CI_AS AND SE2.E2_PARCELA=SGFIN010.E2_PARCELA COLLATE Latin1_General_CI_AS AND SE2.E2_TIPO=SGFIN010.E2_TIPO COLLATE Latin1_General_CI_AS AND SE2.E2_FORNECE=SGFIN010.E2_FORNECE COLLATE Latin1_General_CI_AS AND SE2.E2_LOJA=SGFIN010.E2_LOJA COLLATE Latin1_General_CI_AS AND SE2.D_E_L_E_T_='' COLLATE Latin1_General_CI_AS "
+					cQuery += " FROM SGFIN010 SGFIN010 WITH(NOLOCK) "
+					cQuery += " INNER JOIN " + RetSqlName("SE2") + " SE2 WITH(NOLOCK) ON SE2.E2_FILIAL=SGFIN010.E2_FILIAL AND SE2.E2_PREFIXO=SGFIN010.E2_PREFIXO AND SE2.E2_NUM=SGFIN010.E2_NUM AND SE2.E2_PARCELA=SGFIN010.E2_PARCELA AND SE2.E2_TIPO=SGFIN010.E2_TIPO AND SE2.E2_FORNECE=SGFIN010.E2_FORNECE AND SE2.E2_LOJA=SGFIN010.E2_LOJA AND SE2.D_E_L_E_T_='' "
 					cQuery += " WHERE SGFIN010.E2_FILIAL='"+(cAliasTop)->E5FILIAL+"' " 
 					cQuery += " AND SGFIN010.E2_PREFIXO='"+(cAliasTop)->E5_PREFIXO+"' " 
 					cQuery += " AND SGFIN010.E2_NUM='"+(cAliasTop)->E5_NUMERO+"' " 
@@ -1275,7 +1269,7 @@ Static Function PrintReport(oReport)
 					EndIf 
 				                                    
 					cQuery := " SELECT TOP 1 E5_DOCUMEN, E5_VALOR "
-					cQuery += " FROM " + RetSqlName("SE5") + " SE5 (NOLOCK) "
+					cQuery += " FROM " + RetSqlName("SE5") + " SE5 WITH(NOLOCK) "
 					cQuery += " WHERE E5_FILIAL='"+(cAliasTop)->E5FILIAL+"' " 
 					cQuery += " AND E5_PREFIXO='"+(cAliasTop)->E5_PREFIXO+"' " 
 					cQuery += " AND E5_NUMERO='"+(cAliasTop)->E5_NUMERO+"' " 
@@ -1304,7 +1298,7 @@ Static Function PrintReport(oReport)
 						EndIf
 						
 						cQuery := " SELECT TOP 1 D1_COD, D1_TOTAL "
-						cQuery += " FROM " + RetSqlName("SD1") + " SD1 (NOLOCK) "
+						cQuery += " FROM " + RetSqlName("SD1") + " SD1 WITH(NOLOCK) "
 						cQuery += " WHERE D1_FILIAL='"+(cAliasTop)->E5FILIAL+"' "
 						cQuery += " AND D1_SERIE='"+cSerie+"' "
 						cQuery += " AND D1_DOC='"+cDoc+"' "
@@ -1401,15 +1395,15 @@ Static Function PrintReport(oReport)
 					WorkFTPRJ->( dbCloseArea() )
 				EndIf
 
-				cQuery := " SELECT TOP 1 E2_FILIAL, E2_NUM, E2_PREFIXO, E2_FORNECE, E2_LOJA, D1_COD, D1_TOTAL, D1_PROJETO
-				cQuery += " FROM " + RetSqlName("SE2") + " E2 (NOLOCK)
-				cQuery += " INNER JOIN " + RetSqlName("SD1") + " D1 (NOLOCK) ON D1_FILIAL=E2_FILIAL AND D1_DOC=E2_NUM AND D1_SERIE=E2_PREFIXO AND D1_FORNECE=E2_FORNECE AND D1_LOJA=E2_LOJA AND D1_PROJETO<>'' AND D1.D_E_L_E_T_=''
-				cQuery += " WHERE E2_FILIAL='"+(cAliasTop)->E5FILIAL+"' 
-				cQuery += " AND E2_FATURA = '"+(cAliasTop)->E5_NUMERO+"' 
-				cQuery += " AND E2_FORNECE='"+(cAliasTop)->E5_CLIFOR+"' 
-				cQuery += " AND E2_LOJA='"+(cAliasTop)->E5_LOJA+"' 
-				cQuery += " AND E2.D_E_L_E_T_=''
-				cQuery += " ORDER BY 7 DESC
+				cQuery := " SELECT TOP 1 E2_FILIAL, E2_NUM, E2_PREFIXO, E2_FORNECE, E2_LOJA, D1_COD, D1_TOTAL, D1_PROJETO "
+				cQuery += " FROM " + RetSqlName("SE2") + " E2 WITH(NOLOCK)  "
+				cQuery += " INNER JOIN " + RetSqlName("SD1") + " D1 WITH(NOLOCK) ON D1_FILIAL=E2_FILIAL AND D1_DOC=E2_NUM AND D1_SERIE=E2_PREFIXO AND D1_FORNECE=E2_FORNECE AND D1_LOJA=E2_LOJA AND D1_PROJETO<>'' AND D1.D_E_L_E_T_='' "
+				cQuery += " WHERE E2_FILIAL='"+(cAliasTop)->E5FILIAL+"'  "
+				cQuery += " AND E2_FATURA = '"+(cAliasTop)->E5_NUMERO+"' " 
+				cQuery += " AND E2_FORNECE='"+(cAliasTop)->E5_CLIFOR+"' " 
+				cQuery += " AND E2_LOJA='"+(cAliasTop)->E5_LOJA+"' " 
+				cQuery += " AND E2.D_E_L_E_T_='' "
+				cQuery += " ORDER BY 7 DESC "
 
 				tcQuery cQuery new Alias "WorkFTPRJ"
 
@@ -1700,8 +1694,7 @@ Static Function getDscGrp(cChave)
 		
 		SELECT TOP 1 X5_DESCRI
 		FROM %table:SX55% SX5
-		WHERE
-		X5_TABELA = %EXP:'_1'%
+		WHERE X5_TABELA = %EXP:'_1'%
 		AND X5_CHAVE = %EXP:cChave%
 		AND SX5.%NotDel%
 		
@@ -2249,20 +2242,20 @@ Static Function UpDtBor( cE5FILIAL, cE5_CLIFOR, cE5_LOJA, cE5_PREFIXO, cE5_NUMER
 		WorkDtBor->( dbCloseArea() )
 	EndIf
 
-	cQuery := " SELECT TOP 1 EA_DATABOR
-	cQuery += " FROM " + RetSqlName("SEA") + " (NOLOCK)
-	cQuery += " WHERE EA_FILIAL='"+cE5FILIAL+"' 
-	cQuery += " AND EA_PREFIXO='"+cE5_PREFIXO+"' 
-	cQuery += " AND EA_NUM='"+cE5_NUMERO+"' 
-	cQuery += " AND EA_PARCELA='"+cE5_PARCELA+"' 
-	cQuery += " AND EA_TIPO='"+cE5_TIPO+"' 
-	cQuery += " AND EA_CART='"+cE5_RECPAG+"' 
+	cQuery := " SELECT TOP 1 EA_DATABOR "
+	cQuery += " FROM " + RetSqlName("SEA") + " WITH(NOLOCK) "
+	cQuery += " WHERE EA_FILIAL='"+cE5FILIAL+"'  "
+	cQuery += " AND EA_PREFIXO='"+cE5_PREFIXO+"' " 
+	cQuery += " AND EA_NUM='"+cE5_NUMERO+"' " 
+	cQuery += " AND EA_PARCELA='"+cE5_PARCELA+"' " 
+	cQuery += " AND EA_TIPO='"+cE5_TIPO+"' " 
+	cQuery += " AND EA_CART='"+cE5_RECPAG+"' " 
 	If AllTrim(cE5_RECPAG) == "P"
-		cQuery += " AND EA_FORNECE='"+cE5_CLIFOR+"' 
-		cQuery += " AND EA_LOJA='"+cE5_LOJA+"' 
+		cQuery += " AND EA_FORNECE='"+cE5_CLIFOR+"' " 
+		cQuery += " AND EA_LOJA='"+cE5_LOJA+"' " 
 	EndIf
-	cQuery += " AND D_E_L_E_T_='*'
-	cQuery += " ORDER BY 1 DESC
+	cQuery += " AND D_E_L_E_T_='*' "
+	cQuery += " ORDER BY 1 DESC "
 
 	tcQuery cQuery new Alias "WorkDtBor"
 
