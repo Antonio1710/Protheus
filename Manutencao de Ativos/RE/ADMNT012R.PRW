@@ -2,6 +2,7 @@
 #INCLUDE "RWMAKE.CH"
 #INCLUDE "TBICONN.CH"
 #Include 'TOTVS.ch'
+#include 'fwbrowse.ch'   
 #INCLUDE "topconn.ch"
  #define CRLF Chr(13)+Chr(10)
 /*/{Protheus.doc} ADMNT012R - Relatorio de Custo por OS / Eqto Exporta Excel
@@ -23,11 +24,12 @@
     @Ticket 69385, Data 03/062022, Antonio Domingos, otimização da Query.
     @Ticket 74549, Data 10/06/2022, Antonio Domingos, Otimização da emissão do relaotorio (Módulo no protheus não abre).
     @Ticket 74594, Data 10/062022, Antonio Domingos, Desmembramento do relatorio.
+    @Ticket 74929, Data 20/062022, Antonio Domingos, Correção do Erro em Relação SS/OS Base de dados Ceres.
 /*/
 
 User Function ADMNT012R(aParam)
 Local bProcess 		:= {|oSelf| Executa(oSelf) }
-Local cPerg 		:= "ADMNT012R"
+Local cPerg 		:= "ADMNT012R "
 Local aInfoCustom 	:= {}
 Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL da relação das SS"
 local lSetEnv       := .f.
@@ -67,7 +69,7 @@ If lJob
     czFIL    := aParam[2]   
     
     PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
-    cPara      :=  SuperGetMv('ZZ_MNT012R', .f. ,"leonardo.monteiro@adoro.com.br" ) 
+    cPara      :=  SuperGetMv('ZZ_MNT012R', .f. ,"antonio.filho@adoro.com.br" ) 
     
     oProcess := Executa()
 Else
@@ -81,14 +83,14 @@ Return
 Static Function Executa(oProcess)
 Local cQry      := ""
 Local cAlias    := GetNextAlias()
-Local cBem      := ""
-Local cHrTot    := ""
-Local cCodExec  := ""
-Local cNmExec   := ""
+Local _cHrTot    := ""
+Local _cCodExec  := ""
+Local _cNmExec   := ""
 Local cTimeNow  := ""
 Local cDirLocal := "C:\TEMP\"
 Local _cPlanilha := "SS"
 Local _cTitulo   := "RelaçãoSS"
+Local _nCount
 
 Private oExcel  	:= FwMsExcel():New()
 Private dDataIni	
@@ -336,7 +338,8 @@ IF Select (cAlias) > 0
 EndIf
 DbUseArea(.T., "TOPCONN", TcGenQry(,,cQry), cAlias)
 DbSelectArea(cAlias)
-DbGotop()
+(cAlias)->(DbGotop())
+        
 If (cAlias)->(!EOF())
 	While (cAlias)->(!EOF())
 
