@@ -20,6 +20,7 @@ Static cFormatRet := "application/json"
     @history Chamado 63954 - Leonardo P. Monteiro    - 06/12/2021 - Ajustado o campo de lote para considerar o ShiftNo ao invés PrintedShiftNo.
     @history Chamado 63954 - Leonardo P. Monteiro    - 07/12/2021 - Tratamento de error.log na importação de um pallet com apenas uma caixa. O retorno, quando nessas condições é de um objeto ao invés de uma array.
     @history Chamado T.I   - Everson Silva           - 04/04/2022 - Adicionado a Tag - oWsdl:bNoCheckPeerCert := .T. // Desabilita o check de CAs
+    @history Chamado T.I   - Everson Silva           - 21/06/2022 - Tratamento para erro no retorno do xml do Edata.
 
 /*/
 User Function ADQUA001P
@@ -574,7 +575,16 @@ Static Function wsEdata(cErro,cPallete)
     xRet := oWsdl:ParseURL(cUrl)
     If xRet == .F.
         conout( "Erro1: " + oWsdl:cError )
-        cErro := "Erro1: " + oWsdl:cError
+
+        //Everson - 21/06/2022. Chamado TI.
+        If "Could not parse schema http://schemas.xmlsoap.org/wsdl/" $Alltrim(cValToChar(oWsdl:cError))
+            cErro := "Não foi possível obter dados. Tente novamente."
+
+        Else
+            cErro := "Erro1: " + oWsdl:cError
+
+        EndIf
+
         Return xRet
     
     EndIf
