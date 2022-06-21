@@ -2094,6 +2094,10 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     Local cDesTpSe  := ""
     Local cPedSaida := ""
     Local cNF       := ""
+    Local cTpSeq    := ""
+    Local nPesoIni  := 0
+    Local nPesoFim  := 0
+    Local nPesoLiq  := 0
 
     //Verifica se há ordem de pesagem de ração para ser gerada.
     If cTpMovi == "R" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
@@ -2113,64 +2117,84 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     aOrdPes:= {}
     
     cQuery += " SELECT  " 
-    cQuery += " *  " 
+        cQuery += " ZIF_NUMERO, ZIF_FORNEC, ZIF_LJFORN, ZIF_NMFOR, ZIF_PRDSAG, " 
+        cQuery += " ZIF_PRDPRO, ZIF_TPMOVI, ZIF_STATLA, ZIF_EAGRUP,  ZIF_STATUS, ZIF_AGRUPA, " 
+        cQuery += " ZIF_LOTE, ZIF_QUANT, ZIF_CLIFOR, ZIF_CTPATI, ZIF_PLACA, " 
+        cQuery += " ZIG_TPSEQU, ZIG_NUMGUA, ZIG_NUMERO, ZIG_SEQTKT, " 
+        cQuery += " ZIG_PESINI, ZIG_PESFIM, ZIG_PESOLI " 
     cQuery += " FROM  " 
-    cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
+        cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
 
-    cQuery += " INNER JOIN "
-    cQuery += " " + RetSqlName("ZIB") + "  (NOLOCK) AS ZIB ON "
-    cQuery += " ZIF_FILIAL = ZIB_FILIAL "
-    cQuery += " AND ZIF_CTPATI = ZIB_NUMERO "
+        cQuery += " INNER JOIN "
+        cQuery += " " + RetSqlName("ZIB") + "  (NOLOCK) AS ZIB ON "
+        cQuery += " ZIF_FILIAL = ZIB_FILIAL "
+        cQuery += " AND ZIF_CTPATI = ZIB_NUMERO "
 
-    cQuery += " LEFT OUTER JOIN "
-    cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON "
-    cQuery += " ZIF_FILIAL = ZIG_FILIAL "
-    cQuery += " AND ZIF_NUMERO = ZIG_ORDEM "
-    cQuery += " AND ZIG.D_E_L_E_T_ = '' "
+        cQuery += " LEFT OUTER JOIN "
+        cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON "
+        cQuery += " ZIF_FILIAL = ZIG_FILIAL "
+        cQuery += " AND ZIF_NUMERO = ZIG_ORDEM "
+        cQuery += " AND ZIG.D_E_L_E_T_ = '' "
 
     cQuery += " WHERE " 
-    cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
-    cQuery += " AND ZIF_CTPATI = '" + cCP + "' "
+        cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
+        cQuery += " AND ZIF_CTPATI = '" + cCP + "' "
 
-    cQuery += " AND ZIF_DATA BETWEEN '" + DToS(dDtIni) + "' AND '" + DToS(dDtFim) + "' " 
-    cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
-    cQuery += " AND ZIB.D_E_L_E_T_ = '' "
+        cQuery += " AND ZIF_DATA BETWEEN '" + DToS(dDtIni) + "' AND '" + DToS(dDtFim) + "' " 
+        cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+        cQuery += " AND ZIB.D_E_L_E_T_ = '' "
 
     DbUseArea( .T., "TOPCONN", TcGenQry( ,, cQuery ) , cQryT3, .T., .F. )
     
     (cQryT3)->(DbGoTop())
-    While (cQryT3)->(!EOF())
+    While (cQryT3)->(!Eof())
+
+        cTktGua   := ""
+        cTicket   := ""
+        cSeqTkt   := ""
 
         cForn     := (cQryT3)->ZIF_FORNEC + " " + (cQryT3)->ZIF_LJFORN + " " + (cQryT3)->ZIF_NMFOR
         cProd     := U_ADFAT176((cQryT3)->ZIF_PRDSAG, (cQryT3)->ZIF_PRDPRO)
         nPTpOrd   := AScan(aTpOrdem, {|x| Alltrim(cValToChar(x[2])) == Alltrim(cValToChar((cQryT3)->ZIF_TPMOVI))})
         nStatLab  := AScan(aStatLb, {|x| Alltrim(cValToChar(x[2]))  == Alltrim(cValToChar((cQryT3)->ZIF_STATLA))})
         cAgrupada := Iif(Alltrim(cValToChar((cQryT3)->ZIF_EAGRUP))  == "1","Sim", Iif(Alltrim(cValToChar((cQryT3)->ZIF_EAGRUP))  == "2","Não",""))
-        aSituacao := U_ADFAT17H((cQryT3)->ZIF_TPMOVI, Alltrim(cValToChar((cQryT3)->ZIF_STATUS)), (cQryT3)->ZIG_TPSEQU)
-
-        nPosTpSeq:= 0
-        cDesTpSe := ""
-        If (cQryT3)->ZIG_TPSEQU <> "0"
-            nPosTpSeq := AScan(aTpSeq, {|x| Alltrim(cValToChar(x[2]))  == Alltrim(cValToChar((cQryT3)->ZIG_TPSEQU))})
-            cDesTpSe  := " - " + aTpSeq[nPosTpSeq,3]
-
-        EndIf
-            
-        cTktGua   := ""
-        cTicket   := ""
-        cSeqTkt   := ""
-        nQtdAgr   := 0
         
         If ! Empty(Alltrim(cValToChar((cQryT3)->ZIF_AGRUPA)))
-            cTktGua  := Posicione("ZIG", 2, FWxFilial("ZIG") + (cQryT3)->ZIF_AGRUPA ,"ZIG_NUMGUA")
-            cTicket  := Posicione("ZIG", 2, FWxFilial("ZIG") + (cQryT3)->ZIF_AGRUPA ,"ZIG_NUMERO")
-            cSeqTkt  := Posicione("ZIG", 2, FWxFilial("ZIG") + (cQryT3)->ZIF_AGRUPA ,"ZIG_SEQTKT")
+
+            DbSelectArea("ZIG")
+            ZIG->(DbSetOrder(2))
+            If ZIG->(DbSeek( FWxFilial("ZIG") + (cQryT3)->ZIF_AGRUPA ))
+
+                cTktGua  := ZIG->ZIG_NUMGUA
+                cTicket  := ZIG->ZIG_NUMERO
+                cSeqTkt  := ZIG->ZIG_SEQTKT
+                cTpSeq   := ZIG->ZIG_TPSEQU
+                nPesoIni := ZIG->ZIG_PESINI
+                nPesoFim := ZIG->ZIG_PESFIM
+                nPesoLiq := ZIG->ZIG_PESOLI
+
+            EndIf
+
             nQtdAgr  := getPesToOr((cQryT3)->ZIF_NUMERO)
 
         Else
-            cTktGua  := (cQryT3)->ZIG_NUMGUA
-            cTicket  := (cQryT3)->ZIG_NUMERO
-            cSeqTkt  := (cQryT3)->ZIG_SEQTKT
+
+            cTktGua   := (cQryT3)->ZIG_NUMGUA
+            cTicket   := (cQryT3)->ZIG_NUMERO
+            cSeqTkt   := (cQryT3)->ZIG_SEQTKT
+            cTpSeq    := (cQryT3)->ZIG_TPSEQU 
+            nPesoIni  := (cQryT3)->ZIG_PESINI
+            nPesoFim  := (cQryT3)->ZIG_PESFIM
+            nPesoLiq  := (cQryT3)->ZIG_PESOLI
+            
+        EndIf
+
+        aSituacao := U_ADFAT17H((cQryT3)->ZIF_TPMOVI, Alltrim(cValToChar((cQryT3)->ZIF_STATUS)), cTpSeq)
+        nPosTpSeq := 0
+        cDesTpSe  := ""
+        If cTpSeq <> "0"
+            nPosTpSeq := AScan(aTpSeq, {|x| Alltrim(cValToChar(x[2]))  == Alltrim(cValToChar(cTpSeq))})
+            cDesTpSe  := " - " + aTpSeq[nPosTpSeq,3]
 
         EndIf
 
@@ -2209,9 +2233,9 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
             nQtdAgr,;               //24-Quantidade agrupador.
             cNmLote,;               //25-Nome do lote.
             cPedSaida,;             //26-Pedido de saída (SC5).
-            (cQryT3)->ZIG_PESINI,;  //27-Peso inicial.
-            (cQryT3)->ZIG_PESFIM,;  //28-Peso final.
-            (cQryT3)->ZIG_PESOLI,;  //29-Peso liquido.
+            nPesoIni,;              //27-Peso inicial.
+            nPesoFim,;              //28-Peso final.
+            nPesoLiq,;              //29-Peso liquido.
             cNF;                    //30-Nota fiscal.
         })
     
@@ -2712,15 +2736,18 @@ Return lRet
 Static Function getPesToOr(cNmOrdem)
 
     //Variáveis.
-    Local nQuant := 0
-    Local cAgrupa:= Alltrim(cValToChar(Posicione("ZIF", 2, FWxFilial("ZIF") + cNmOrdem, "ZIF_AGRUPA")))
-    Local cQuery := ""
+    Local aArea     := GetArea()
+    Local nQuant    := 0
+    Local cAgrupador:= Alltrim(cValToChar(Posicione("ZIF", 2, FWxFilial("ZIF") + cNmOrdem, "ZIF_AGRUPA")))
+    Local cQuery    := ""
     
-    If Empty(cAgrupa)
+    If Empty(cAgrupador)
         cQuery := " SELECT ISNULL(SUM(ZIF_QUANT),0) AS ZIF_QUANT FROM " + RetSqlName("ZIF") + " AS ZIF (NOLOCK) WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_NUMERO = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' "
 
     Else
-        cQuery := " SELECT ISNULL(SUM(ZIF_QUANT),0) AS ZIF_QUANT FROM " + RetSqlName("ZIF") + " AS ZIF (NOLOCK) WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cAgrupa + "' AND ZIF.D_E_L_E_T_ = '' "
+        nQuant := U_ADFAT16G(cAgrupador)[2]
+        RestArea(aArea)
+        Return nQuant
 
     EndIf
 
@@ -2733,6 +2760,8 @@ Static Function getPesToOr(cNmOrdem)
     DbSelectArea("D_QTAGR")
         nQuant := Val(cValToChar(D_QTAGR->ZIF_QUANT))
     D_QTAGR->(DbCloseArea())
+
+    RestArea(aArea)
 
 Return nQuant
 /*/{Protheus.doc} carOrdAg
@@ -2802,7 +2831,7 @@ Return Nil
     @since 09/12/2021
     @version 01
 /*/
-User Function ADFAT176(cCodSAG, cCodProth, nOPc)
+User Function ADFAT176(cCodSAG, cCodProth, nOPc, lAgrupa)
 
     //Variáveis.
     Local cProduto := ""
@@ -2810,6 +2839,7 @@ User Function ADFAT176(cCodSAG, cCodProth, nOPc)
     Default cCodSAG   := ""
     Default cCodProth := ""
     Default nOPc      := 1
+    Default lAgrupa   := .F.
     
     If !Empty(cCodSAG)
 
@@ -2830,6 +2860,11 @@ User Function ADFAT176(cCodSAG, cCodProth, nOPc)
             cProduto := Alltrim(Posicione("SB1",1, FWxFilial("SB1") + cCodProth, "B1_DESC"))
 
         EndIf
+
+    EndIf
+
+    If lAgrupa
+        cProduto += " (AGRUPADO)"
 
     EndIf
 
@@ -2945,7 +2980,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIF
         
-        gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, Iif(Empty(cOrdAgrup), cNmOrdem, cOrdAgrup), nQuant, cBalanca, cRotPesa)
+        gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, Iif(Empty(cOrdAgrup), cNmOrdem, cOrdAgrup), nQuant, cBalanca, cRotPesa, ! Empty(cOrdAgrup))
         
     ElseIf cTpOrdem == "R" //Ração.
         
@@ -3508,7 +3543,7 @@ Return lRet
     @since 23/03/2022
     @version 01
 /*/
-Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanca, cRotPesa)
+Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanca, cRotPesa, lAgrupado)
 
     //Variáveis.
     Local oTicket    := Nil
@@ -3520,6 +3555,8 @@ Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanc
     Local cLjTransp := Posicione("ZV4",1,FWxFilial("ZV4") + cPlaca,"ZV4_LOJFOR")
     Local cMotori   := Posicione("ZV4",1,FWxFilial("ZV4") + cPlaca,"ZV4_CPF")
     Local cTag      := Posicione("ZIB",1,FWxFilial("ZIB") + cCP,"ZIB_TAG")
+
+    Default lAgrupado := .F.
 
     If ! Empty(cTicket)
         Help(Nil, Nil, "Função gerTkOt(ADFAT017P)", Nil, "Já há o ticket de pesagem " + cTicket + " vinculado à ordem " + cValToChar(cNmOrdem) + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -3553,6 +3590,7 @@ Static Function gerTkSa(nLinha, oOrdPes, aOrdPes, cCP, cNmOrdem, nQuant, cBalanc
     oTicket:SetValue("MD_MASTER","ZIG_PESORD" ,nQuant)
     oTicket:SetValue("MD_MASTER","ZIG_BALANC" ,cBalanca)
     oTicket:SetValue("MD_MASTER","ZIG_ROTEIR" ,cRotPesa)
+    oTicket:SetValue("MD_MASTER","ZIG_AGRUPA" ,Iif(lAgrupado, "1", "2"))
 
     Begin Transaction
 
@@ -3712,7 +3750,7 @@ Static Function envBlcAut(oOrdPes, aOrdPes, cBalanca)
     EndIf
 
     //Verifica se há ordem de pesagem com peso inicial e sem peso final.
-    If ! vldOrdAb(cCP, cNmOrdem)
+    If ! U_ADFAT19C(cCP, cNmOrdem)
         Help(Nil, Nil, "Função envBlcAut(ADFAT017P)", Nil, "Há ordem de pesagem com peso inicial, mas não finalizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
@@ -3944,7 +3982,7 @@ Static Function pesaSemAut(lPesagManu, aParBal, oOrdPes, aOrdPes, cBalanca)
     cSituacao:= aOrdPes[nLinha,12]
 
     //Verifica se há ordem de pesagem com peso inicial e sem peso final.
-    If ! vldOrdAb(cCP, cNmOrdem)
+    If ! U_ADFAT19C(cCP, cNmOrdem)
         Help(Nil, Nil, "Função pesaSemAut(ADFAT017P)", Nil, "Há ordem de pesagem com peso inicial, mas não finalizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return Nil
@@ -4076,41 +4114,6 @@ User Function ADFAT17I(nTpPesa, cBalanca, cCP, cTicket, nPesTot, cPesAuto, cManu
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} vldOrdAb
-    Verifica se há ordem de pesagem com peso inicial e sem peso final.
-    @type  Static Function
-    @author Everson
-    @since 03/03/2022
-    @version 01
-/*/
-Static Function vldOrdAb(cCP, cNmOrdem)
-
-    //Variáveis.
-    Local aArea := GetArea()
-    Local lRet  := .T.
-
-    DbSelectArea("ZIG")
-    ZIG->(DbSetOrder(5))
-    ZIG->(DbGoTop())
-    If ZIG->( DbSeek( FWxFilial("ZIG") + cCP ) )
-
-        While ! ZIG->(Eof()) .And. ZIG->ZIG_FILIAL == FWxFilial("ZIG") .And. ZIG->ZIG_CTPATI == cCP
-
-            If ZIG->ZIG_INICIA $"2/4/5" .And.; //Peso inicial, Sequestrada e Sequestro Liberado.
-               ZIG->ZIG_ORDEM <> cNmOrdem
-                lRet := .F.
-                Exit
-                
-            EndIf
-
-            ZIG->(DbSkip())
-            
-        End
-
-    EndIf
-    RestArea(aArea)
-
-Return lRet
 /*/{Protheus.doc} getPesMan
     Interface para digitação de peso manual.
     @type  Static Function
@@ -4175,6 +4178,8 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     Local nPesIni     := 0
     Local cEnvBar     := ""
     Local lGemba      := GetMV("MV_#UGEMBA",,.F.)    
+    Local lOrdAgrp    := .F.
+    Local cNumAgrp    := ""
     
     Default aDdPAnt   := {}
     Default nTpSeq    := 0
@@ -4225,18 +4230,26 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     lSaida    := cTpMovi == "S"
 
     //Localiza ordem/agrupador de pesagem.
-    If ! U_ADFAT16A(cNmOrdem) .And. ! U_ADFAT16F(cNmOrdem)
-        cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada."
-        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
-        Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return .F.
+    If ! U_ADFAT16A(cNmOrdem) 
+    
+        If ! U_ADFAT16F(cNmOrdem) //Ordens agrupadas.
+            cMsgError := "Ordem/agrupador de pesagem " + cNmOrdem + " não localizada."
+            U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
+            Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            RestArea(aArea)
+            Return .F.
+
+        Else
+            lOrdAgrp :=  .T.
+            cNumAgrp := ZIF->ZIF_AGRUPA
+            
+        EndIf
 
     EndIf
 
     cProdSAG   := ZIF->ZIF_PRDSAG
     cProdPro   := ZIF->ZIF_PRDPRO
-    cProduto   := U_ADFAT176(cProdSAG, cProdPro)
+    cProduto   := U_ADFAT176(cProdSAG, cProdPro, ,.T.)
     cEnvBar    := ZIF->ZIF_ENVBAR
 
     //Localiza roteiro de pesagem.
@@ -4265,10 +4278,10 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
         If nTpPesa == 2
 
             //Rotina para executar corte automático na ordem de pesagem e pedido de venda.
-            lRet := lRet .And. U_ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, @nQtdOrd, cTicket, nPesoLiq, @cMsgError)
+            lRet := lRet .And. U_ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, @nQtdOrd, cTicket, nPesoLiq, lOrdAgrp, @cMsgError)
 
             //Obtém dados de quebra da pesagem.
-            If lRet .And. U_ADFAT177(cRotPesa, cCP, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, @aDdSeq, @cMsgError)
+            If lRet .And. U_ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, @aDdSeq, lOrdAgrp, cNumAgrp, lEnsacado, @cMsgError)
 
                 //Valida dados de quebra da pesagem.
                 lRet := U_ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, @nTpSeq, @cAcaSeq, @cMsgError)
@@ -4278,10 +4291,29 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
             EndIf
 
-            //Valida se há apontamento para produtos ensacados.
-            If lRet .And. lEnsacado .And. ! U_ADFAT178(cRotPesa, cCP, cNmOrdem)
-                nTpSeq := 3 
-                cAcaSeq:= "R"
+            If lRet .And. lEnsacado 
+
+                //Valida se há apontamento para produtos ensacados.
+                If ! U_ADFAT178(cRotPesa, cCP, cNmOrdem)
+                    nTpSeq := 3 
+                    cAcaSeq:= "R"
+
+                Else
+
+                    If lSaida //Transferência de ensacado.
+                        If ! cortEnsacado(cNmOrdem, lOrdAgrp)
+                            nTpSeq := 3 
+                            cAcaSeq:= "R"
+
+                        EndIf
+
+                    EndIf
+
+                    If lEntrada //Entrada de produtos ensacados.
+
+                    EndIf
+
+                EndIf
 
             EndIf
 
@@ -4354,6 +4386,68 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
         EndIf
 
     EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} cortEnsacado
+    Realiza corte no pedido de saída de transferência de ensacado.
+    @type  User Function
+    @author Everson
+    @since 17/05/2022
+    @version 01
+/*/
+Static Function cortEnsacado(cNmOrdem, lOrdAgrp, cMsgError)
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local lRet  := .F.
+
+    Default cMsgError := ""
+
+    Begin Transaction
+
+        If ! lOrdAgrp
+
+            If ! U_ADFAT16A(cNmOrdem)
+                cMsgError := "Ordem de pesagem " + cNmOrdem + " não localizada"
+                DisarmTransaction() 
+                Break
+
+            EndIf
+            
+            If ! cortaPed(ZIF->ZIF_NUMERO, ZIF->ZIF_QUANT, @cMsgError)
+                DisarmTransaction() 
+                Break
+
+            EndIf
+
+        Else
+
+            If ! U_ADFAT16F(cNmOrdem)
+                cMsgError := "Agrupamento de pesagem " + cNmOrdem + " não localizada"
+                DisarmTransaction() 
+                Break
+
+            EndIf
+
+            While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrdem
+
+                If ! cortaPed(ZIF->ZIF_NUMERO, ZIF->ZIF_QUANT, @cMsgError)
+                    DisarmTransaction() 
+                    Break
+                    
+                EndIf
+
+                ZIF->(DbSkip())
+
+            End
+        
+        EndIf
+
+        lRet := .T.
+
+    End Transaction
 
     RestArea(aArea)
 
@@ -4547,12 +4641,20 @@ Return .T.
     @since 24/03/2022
     @version 01
 /*/
-User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, cMsgError)
+User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, lOrdAgrp, cMsgError)
 
     //Variáveis.
-    Local aArea := GetArea()
-    Local lRet  := .F.
+    Local aArea   := GetArea()
+    Local lRet    := .F.
+    Local nPeso   := 0
+    Local nPesoT  := 0
+    Local nTotOrd := 0
+    Local nCntOrd := 0
 
+    Default lOrdAgrp  := .F.
+    Default cMsgError := ""
+
+    //Se a quantidade da ordem de pesagem é menor que o peso liquido da balança, não há corte a ser feito.
     If nQtdOrd < nPesoLi
         RestArea(aArea)
         Return .T.
@@ -4575,20 +4677,62 @@ User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, 
 
     Begin Transaction
 
-        If ! U_ADFAT165(cNmOrdem, "ZIF_QUANT", nPesoLi) //Altera quantidade na ordem de pesagem.
-            DisarmTransaction()
-            Break
+        If ! lOrdAgrp
+
+            If ! U_ADFAT165(cNmOrdem, "ZIF_QUANT", nPesoLi, @cMsgError) //Altera quantidade na ordem de pesagem.
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            If ! cortaPed(cNmOrdem, nPesoLi, @cMsgError) //Altera a quantidade do pedido de saída.
+                DisarmTransaction() 
+                Break
+
+            EndIf
+
+        Else //Corte de ordem agrupada.
+
+            If ! U_ADFAT16F(cNmOrdem) //Ordens agrupadas.
+                cMsgError := "Ordem/agrupador de pesagem " + cNmOrdem + " não localizada."
+                DisarmTransaction()
+                    Break
+
+            EndIf
+
+            nTotOrd := U_ADFAT16G(cNmOrdem)[1]
+
+            While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrdem
+
+                nCntOrd++
+                nPeso   := Round(nPesoLi * (ZIF->ZIF_QUANT/nPesoLi),0)
+                nPesoT  += nPeso
+
+                If nCntOrd == nTotOrd
+                    nPeso := nPesoLi - nPesoT
+
+                EndIf
+
+                If ! U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_QUANT", nPeso, @cMsgError) //Altera quantidade na ordem de pesagem.
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+                If ! cortaPed(ZIF->ZIF_NUMERO, nPeso, @cMsgError) //Altera a quantidade do pedido de saída.
+                    DisarmTransaction() 
+                    Break
+
+                EndIf
+
+                ZIF->(DbSkip())
+
+            End
 
         EndIf
 
-        If ! U_ADFAT191(cTicket, "ZIG_PESORD", nPesoLi) //Altera a quantidade da ordem no ticket de pesagem.
+        If ! U_ADFAT191(cTicket, "ZIG_PESORD", nPesoLi, @cMsgError) //Altera a quantidade da ordem no ticket de pesagem.
             DisarmTransaction()
-            Break
-
-        EndIf
-
-        If ! cortaPed(cNmOrdem, nPesoLi, @cMsgError) //Altera a quantidade do pedido de saída.
-            DisarmTransaction() 
             Break
 
         EndIf
@@ -4977,7 +5121,7 @@ Return lRet
     @since 01/12/2021
     @version 01
 /*/
-User Function ADFAT177(cRotPesa, cCP, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, aDdSeq, cMsgError)
+User Function ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, aDdSeq, lOrdAgrp, cAgrupador, lEnsacado, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -4988,8 +5132,35 @@ User Function ADFAT177(cRotPesa, cCP, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, aDdS
     Local nQrbPer   := 0
     Local lLib      := .F.
     Local cAnLabo   := ""
+    Local cQuery    := ""
+    Local cOrdAgrp  := ""
 
+    Default lOrdAgrp  := .F.
+    Default cAgrupador:= ""
     Default cMsgError := ""
+
+    //Para produtos ensacados, obtem-se o peso bruto do apontamento de ensacados.
+    If lEnsacado
+
+        cOrdAgrp := Iif(!Empty(cAgrupador), cAgrupador, cNmOrdem)
+
+        If U_ADEST738(cOrdAgrp)
+
+            nQtdOrd := 0
+
+            While ! ZIL->(Eof()) .And. ZIL->ZIL_FILIAL == FWxFilial("ZIL") .And. ZIL->ZIL_ORDEM == cOrdAgrp
+                    
+                    nQtdOrd += ZIL->ZIL_PESBRU
+
+                ZIL->(DbSkip())
+
+            End
+
+        EndIf
+
+    EndIf
+
+    nQrbKg := Abs(nPesoLiq - nQtdOrd)
 
     If nQtdOrd > 0
         nQrbPer := (nQrbKg/nQtdOrd) * 100
@@ -5011,14 +5182,59 @@ User Function ADFAT177(cRotPesa, cCP, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, aDdS
     cUnRot  := ZI9->ZI9_UNTOLE
     nTolRot := ZI9->ZI9_QTTOLE
 
-    DbSelectArea("ZIA")
-    ZIA->(DbSetOrder(2))
-    ZIA->(DbGoTop())
-    If ZIA->(DbSeek( FWxFilial("ZIA") + cRotPesa + cProdSAG ))
-        cUnRot  := ZIA->ZIA_UNTOLE
-        nTolRot := ZIA->ZIA_QTTOLE
-        cAnLabo := ZIA->ZIA_ANLABO
-        lLib := ZIA->ZIA_VLDTOL == "2"
+    If ! lOrdAgrp
+
+        DbSelectArea("ZIA")
+        ZIA->(DbSetOrder(2))
+        ZIA->(DbGoTop())
+        If ZIA->(DbSeek( FWxFilial("ZIA") + cRotPesa + cProdSAG ))
+            cUnRot  := ZIA->ZIA_UNTOLE
+            nTolRot := ZIA->ZIA_QTTOLE
+            cAnLabo := ZIA->ZIA_ANLABO
+            lLib := ZIA->ZIA_VLDTOL == "2"
+
+        EndIf
+
+    Else
+
+        cQuery := ""
+        cQuery += " SELECT " 
+         cQuery += " TOP 1 ZIA_UNTOLE, ZIA_QTTOLE, ZIA_ANLABO, ZIA_VLDTOL " 
+        cQuery += " FROM " 
+            cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
+            cQuery += " INNER JOIN " 
+            cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB ON " 
+            cQuery += " ZIF_FILIAL = ZIB_FILIAL " 
+            cQuery += " AND ZIF_CTPATI = ZIB_NUMERO " 
+            cQuery += " INNER JOIN " 
+            cQuery += " " + RetSqlName("ZIA") + " (NOLOCK) AS ZIA ON " 
+            cQuery += " ZIB_FILIAL = ZIA_FILIAL " 
+            cQuery += " AND ZIB_CODROT = ZIA_CODROT " 
+            cQuery += " AND ZIF_PRDSAG = ZIA_PRDPRT " 
+        cQuery += " WHERE " 
+            cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
+            cQuery += " AND ZIF_AGRUPA = '" + cAgrupador + "' " 
+            cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+            cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
+            cQuery += " AND ZIA.D_E_L_E_T_ = '' " 
+        cQuery += " ORDER BY ZIA_QTTOLE DESC " 
+
+        If Select("D_ZIA") > 0
+            D_ZIA->(DbCloseArea())
+
+        EndIf
+
+        TcQuery cQuery New Alias "D_ZIA"
+        If ! D_ZIA->(Eof())
+
+            cUnRot  := D_ZIA->ZIA_UNTOLE
+            nTolRot := D_ZIA->ZIA_QTTOLE
+            cAnLabo := D_ZIA->ZIA_ANLABO
+            lLib := D_ZIA->ZIA_VLDTOL == "2"
+
+        EndIf
+
+        D_ZIA->(DbCloseArea())
 
     EndIf
 
@@ -5055,7 +5271,7 @@ User Function ADFAT178(cRotPesa, cCP, cNmOrdem)
 
     EndIf
 
-    Help(Nil, Nil, "Função ADFAT178(ADFAT017P)", Nil, "Não há apontamento de ensacados para ordem " + cNmOrdem + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    Help(Nil, Nil, "Função ADFAT178(ADFAT017P)", Nil, "Não há apontamento de ensacados para ordem/agrupador " + cNmOrdem + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     RestArea(aArea)
     
@@ -5215,7 +5431,7 @@ Static function grvPesagem(cBalanca,;
 
             EndIf
 
-            If nTpPesa == 2 .And. lEnsacado .And. ! U_ADEST735(cNmOrdem, 3, "ZIL_PESADO", "1", @cMsgError) //Marca conferência de ensacado como pesada.
+            If nTpPesa == 2 .And. !lSequestra .And. lEnsacado .And. ! U_ADEST735(cNmOrdem, 3, "ZIL_PESADO", "1", @cMsgError) //Marca conferência de ensacado como pesada.
                 DisarmTransaction()
                 Break
 
@@ -5270,7 +5486,7 @@ Static Function chkLiTOrd(cCP, cTpOrdem, lChkTkt)
     While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_CTPATI == cCP
         
         //Verifica se há ticket de pesagem.
-        If lChkTkt .And. ! ZIG->(DbSeek( FWxFilial("ZIG") + ZIF->ZIF_NUMERO ))
+        If lChkTkt .And. ! ZIG->(DbSeek( FWxFilial("ZIG") + Iif( Empty(ZIF->ZIF_AGRUPA), ZIF->ZIF_NUMERO, ZIF->ZIF_AGRUPA ) ))
             ZIF->(DbSkip())
             Loop
 
@@ -5407,6 +5623,8 @@ Static Function criaSolLiM(cTicket, cNmOrdem, cPlaca, cProduto, nQtdOrd, nPesTot
 
     oSolMan:SetOperation(MODEL_OPERATION_INSERT)
     oSolMan:Activate() 
+
+    cProduto := Substr(cProduto,1,TamSX3("ZIK_PRODUT")[1])
 
     oSolMan:SetValue("MD_MASTER","ZIK_TICKET" , cTicket)
     oSolMan:SetValue("MD_MASTER","ZIK_ORDEM"  , cNmOrdem)
@@ -5547,8 +5765,7 @@ User Function ADFAT175(cNmOrdem, cStatus, nStatus, cMsgError)
     
     If ! U_ADFAT16A(cNmOrdem)
 
-        ZIF->(DbSetOrder(3))
-        If ! ZIF->(DbSeek( FWxFilial("ZIF") + cNmOrdem ))
+        If ! U_ADFAT16F(cNmOrdem)
             cMsgError := "Ordem de pesagem " + cNmOrdem + " não encontrada."
             Help(Nil, Nil, "Função ADFAT175(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
             RestArea(aArea)
@@ -5565,34 +5782,33 @@ User Function ADFAT175(cNmOrdem, cStatus, nStatus, cMsgError)
 
     Begin Transaction
 
-        lRet := U_ADFAT164(cNmOrdem, cStatus, nStatus, cMsgError)
-        If ! lRet
-            DisarmTransaction()
-            Break
+        If Empty(cNmOrAgr)
+        
+            lRet := U_ADFAT164(cNmOrdem, cStatus, nStatus, @cMsgError)
 
-        EndIf
-
-        If lRet .And. ! Empty(cNmOrAgr)
-
-            DbSelectArea("ZIF")
-            ZIF->(DbSetOrder(3))
-            If ZIF->(DbSeek( FWxFilial("ZIF") + cNmOrAgr))
-
-                While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrAgr
-
-                    lRet := U_ADFAT164(ZIF->ZIF_NUMERO, cStatus, nStatus, cMsgError)
-
-                    If ! lRet
-                        DisarmTransaction()
-                        Break
-
-                    EndIf
-
-                    ZIF->(DbSkip())
-
-                End
+            If ! lRet
+                DisarmTransaction()
+                Break
 
             EndIf
+
+        Else
+
+            While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrAgr
+
+                lRet := U_ADFAT164(ZIF->ZIF_NUMERO, cStatus, nStatus, @cMsgError)
+
+                If ! lRet
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+                ZIF->(DbSkip())
+
+            End
+
+            U_ADFAT16F(cNmOrAgr)
 
         EndIf
 

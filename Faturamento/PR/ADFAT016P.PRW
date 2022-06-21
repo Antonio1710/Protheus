@@ -1,5 +1,6 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
+#Include "Topconn.ch"
 
 Static cTbMast := "ZIF"
 Static cTitulo := "Ordem de Pesagem"
@@ -1379,3 +1380,46 @@ User Function ADFAT16F(cAgrupador)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADFAT16G
+    Obtém a quantidade de ordens e peso total dentro do agrupador.
+    @type  User Function
+    @author Everson
+    @since 17/06/2022
+    @version 01
+/*/
+User Function ADFAT16G(cAgrupador)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cQuery    := ""
+    Local nTotOrd   := 0
+    Local nPesoT    := 0
+
+    cQuery := ""
+    cQuery += " SELECT " 
+    cQuery += " COUNT(DISTINCT ZIF_NUMERO) AS QTD_ORDENS, SUM(ZIF_QUANT) AS QTD_PEST " 
+    cQuery += " FROM " 
+    cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
+    cQuery += " WHERE " 
+    cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
+    cQuery += " AND ZIF_AGRUPA = '" +  cAgrupador + "' " 
+    cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+
+    If Select("D_TAGRP") > 0
+        D_TAGRP->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_TAGRP"
+    DbSelectArea("D_TAGRP")
+    If ! D_TAGRP->(Eof())
+
+        nTotOrd := Val(cValToChar(D_TAGRP->QTD_ORDENS))
+        nPesoT  := Val(cValToChar(D_TAGRP->QTD_PEST))
+
+    EndIf
+    D_TAGRP->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return {nTotOrd, nPesoT}

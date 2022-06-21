@@ -3,7 +3,7 @@
 #Include "Topconn.ch"
 
 Static cTbMast := "ZIL"
-Static cTitulo := "Conferência de Produtos Ensacados"
+Static cTitulo := "Conferência de Produtos Ensacados" 
 Static cTiMast := "Dados da conferência de produtos ensacados"
 Static xPula   := Chr(13) + Chr(10)
 
@@ -35,8 +35,13 @@ Static Function BrowseDef()
     //Variáveis.
     Local oBrowse := FwMBrowse():New()
 
-    oBrowse:SetAlias(cTbMast)
+    oBrowse:SetAlias(cTbMast) 
     oBrowse:SetDescription(cTitulo)
+
+    oBrowse:AddLegend("ZIL_PESADO = '1' ","BR_VERMELHO" , "Pesado")
+    oBrowse:AddLegend("ZIL_PESADO = '2' ","BR_VERDE"    , "Aberto")
+
+    oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
 
 Return oBrowse
 /*/{Protheus.doc} MenuDef
@@ -91,7 +96,7 @@ Static Function ModelDef()
     
     //Variáveis.
     Local oModel    := Nil
-    Local oStrMast  := FWFormStruct(1, cTbMast, {|cCampo| AllTRim(cCampo) $ "ZIL_FILIAL;ZIL_PLACA;ZIL_ORDEM;ZIL_CTPATI;ZIL_TPENSA;ZIL_PESADO;ZIL_SEQUEN;"})
+    Local oStrMast  := FWFormStruct(1, cTbMast, {|cCampo| AllTRim(cCampo) $ "ZIL_FILIAL;ZIL_PLACA;ZIL_ORDEM;ZIL_AGRUPA;ZIL_CTPATI;ZIL_TPENSA;ZIL_PESADO;ZIL_SEQUEN;"})
     Local oStrGrid  := FWFormStruct(1, cTbMast)
     Local bPost     := Nil
 
@@ -107,12 +112,19 @@ Static Function ModelDef()
  
     oModel:SetRelation("MD_GRID", {;
             {"ZIL_FILIAL", 'FWxFilial("' + cTbMast + '")'},;
-            {"ZIL_ORDEM", "ZIL_ORDEM"};
+            {"ZIL_PLACA", "ZIL_PLACA"},;
+            {"ZIL_AGRUPA", "ZIL_AGRUPA"},;
+            {"ZIL_CTPATI", "ZIL_CTPATI"},;
+            {"ZIL_TPENSA", "ZIL_TPENSA"},;
+            {"ZIL_PESADO", "ZIL_PESADO"},;
+            {"ZIL_SEQUEN", "ZIL_SEQUEN"};
         }, (cTbMast)->(IndexKey(1)))
 
     oModel:GetModel("MD_GRID")
     oModel:SetDescription(cTiMast)
     oModel:SetPrimaryKey({})
+
+    oModel:AddCalc("ADEST73TOT", "MD_MASTER", "MD_GRID", "ZIL_PESBRU", "ZIL_QTDTOT", "SUM", { | oFW | .T. },,"Quantidade Total")
 
 Return oModel
 /*/{Protheus.doc} vldPos
@@ -133,6 +145,7 @@ Static Function vldPos(oModel)
     Local cPlaca     := oModel:GetValue("MD_MASTER", "ZIL_PLACA")
     Local cPesado    := oModel:GetValue("MD_MASTER", "ZIL_PESADO")
     Local cSeqAtu    := oModel:GetValue("MD_MASTER", "ZIL_SEQUEN")
+    Local cTpPesa    := oModel:GetValue("MD_MASTER", "ZIL_TPENSA")
     Local nPesoLiq   := 0
     Local nPLiqT     := 0
     Local cPrdPro    := ""
@@ -145,23 +158,36 @@ Static Function vldPos(oModel)
     Local nAux       := 1
     Local nQtdOrd    := 0
     Local cQtdOrd    := ""
+    Local aDSeqP     := {}
+    Local cTktNv     := ""
 
-    If lRet .And. cPesado == "2" .And. ( nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE )
+    If lRet .And. ! IsInCallStack("U_ADEST735") .And. cPesado <> "2"
+        lRet := .F.
+        Help(Nil, Nil, "Função vldPos(ADEST073P)",,"Ação não permitida, ordem de pesagem já está pesada.", 1, 0 )
+
+    EndIf
+
+    If lRet .And. ( nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE ) .And. ! IsInCallStack("U_ADEST735")
         
-        If lRet .And. Empty(cSeqAtu) .And. nOperation == MODEL_OPERATION_INSERT
+        aDSeqP  := U_ADEST736(cCP)
 
-            cSeqAtu := getSeqP(cCP, cNmOrdem)
+        cTktNv  := aDSeqP[1]
+        cSeqAtu := aDSeqP[2]
 
-            lRet := U_ADFAT192(cCP, cNmOrdem, cSeqAtu)
+        //Ajusta sequência de pesagem de ordem de pesagem não agrupada.
+        lRet := U_ADFAT192(cCP, cNmOrdem, cTktNv, cSeqAtu)
             
-            If lRet
-                oModel:SetValue("MD_MASTER","ZIL_SEQUEN", cSeqAtu)
-
-            EndIf
+        If lRet
+            oModel:SetValue("MD_MASTER","ZIL_SEQUEN", cSeqAtu)
 
         EndIf
 
-        If lRet
+        If lRet .And. cTpPesa == "S"
+            lRet := U_ADEST737(oModel, cTktNv) //Valida a quantidade e ajusta a quantidade da ordem de pesagem.
+
+        EndIf
+
+        If lRet .And. cTpPesa == "E"
 
             For nAux := 1 To nLength
                 
@@ -194,27 +220,63 @@ Static Function vldPos(oModel)
     EndIf
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
-        
-        lRet := U_ADEST743(cNmOrdem, cMsgError)
+        lRet := U_ADEST743(cNmOrdem)
 
     EndIf
     
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} getSeqP
+/*/{Protheus.doc} ADEST736
     Obtém sequência de pesagem. 
     de produtos ensacados.
-    @type  Static Function
+    @type  User Function
     @author Everson
     @since 05/04/2022
     @version 01
 /*/
-Static Function getSeqP(cCP, cNmOrdem)
-
+User Function ADEST736(cCP)
     //Variáveis.
-    Local cSeq  := ""
-    Local cQuery:= " SELECT ISNULL(MAX(ZIL_SEQUEN),0)+1 AS ZIL_SEQUEN FROM " + RetSqlName("ZIL") + " (NOLOCK) AS ZIL WHERE ZIL_FILIAL = '" + FWxFilial("ZIL") + "' AND ZIL_CTPATI = '" + cCP + "' AND ZIL_ORDEM <> '" + cNmOrdem + "' AND D_E_L_E_T_ = '' "
+    Local aArea     := GetArea()
+    Local cSeq      := ""
+    Local cTicket   := ""
+    Local cQuery    := ""
+
+    //Ticket que está com pesagem inicial.
+    cQuery := ""
+    cQuery += " SELECT  " 
+    cQuery += " MIN(ZIG_NUMERO) AS ZIG_NUMERO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIG_FILIAL = '" + FWxFilial("ZIG") + "'  " 
+    cQuery += " AND ZIG_CTPATI = '" + cCP + "'  " 
+    cQuery += " AND ZIG_INICIA IN ('2','4') " //Peso inicial, pesagem sequestrada.
+    cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
+
+    If Select("D_TKT") > 0
+        D_TKT->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_TKT"
+    DbSelectArea("D_TKT")
+
+        cTicket   := D_TKT->ZIG_NUMERO
+
+    D_TKT->(DbCloseArea())
+
+    //Menor sequência de pesagem disponível
+    cQuery := ""
+    cQuery += " SELECT  " 
+    cQuery += " MIN(ZIG_SEQTKT) AS ZIG_SEQTKT "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIG_FILIAL = '" + FWxFilial("ZIG") + "'  " 
+    cQuery += " AND ZIG_CTPATI = '" + cCP + "'  " 
+    cQuery += " AND ZIG_INICIA IN ('1', '2', '4') " //Pesagem não iniciada, Peso inicial, sequestrada.
+    cQuery += " AND ZIG.D_E_L_E_T_ = '' " 
 
     If Select("D_SEQ") > 0
         D_SEQ->(DbCloseArea())
@@ -223,10 +285,14 @@ Static Function getSeqP(cCP, cNmOrdem)
 
     TcQuery cQuery New Alias "D_SEQ"
     DbSelectArea("D_SEQ")
-        cSeq := cValToChar(D_SEQ->ZIL_SEQUEN)
+
+        cSeq := D_SEQ->ZIG_SEQTKT
+
     D_SEQ->(DbCloseArea())
 
-Return cSeq
+    RestArea(aArea)
+
+Return {cTicket, cSeq}
 /*/{Protheus.doc} vldPeso
     Valida peso informado na conferência 
     de produtos ensacados.
@@ -239,9 +305,6 @@ Static Function vldPeso(cNmOrdem, nPesoLiq, aDdSeq, cEntSai)
 
     //Variáveis.
     Local aArea     := GetArea()
-    Local nZIFIndex := 2
-    // Local cRoteiro  := ""
-    // Local cProdSAG  := ""
     Local lRet      := .F.
     Local lLib      := .F.
 
@@ -249,30 +312,23 @@ Static Function vldPeso(cNmOrdem, nPesoLiq, aDdSeq, cEntSai)
     ZIG->(DbSetOrder(2))
     ZIG->(DbGoTop())
     If ! ZIG->( DbSeek( FWxFilial("ZIG") + cNmOrdem ) )
-        Help(,,"Função vldPeso(ADEST073P)",,"Ordem de pesagem " + cNmOrdem + " não localizada.", 1, 0 )
+        Help(Nil, Nil, "Função vldPeso(ADEST073P)",,"Ordem de pesagem/agrupador " + cNmOrdem + " não localizada.", 1, 0 )
         RestArea(aArea)
         Return .F.
         
     EndIf
 
     If ZIG->ZIG_AGRUPA == "1"
-        nZIFIndex := 3
+        U_ADFAT16F(cNmOrdem)
+
+    Else
+        U_ADFAT16A(cNmOrdem)
 
     EndIf
 
-    // DbSelectArea("ZIF")
-    // ZIF->(DbSetOrder(nZIFIndex))
-    // ZIF->(DbGoTop())
-    // If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem ) )
-    //     Help(,,"Função vldPeso(ADEST073P)",,"Ordem de pesagem " + cNmOrdem + " não localizada.", 1, 0 )
-    //     RestArea(aArea)
-    //     Return .F.
-        
-    // EndIf
-
-    // cRoteiro := Posicione("ZIB", 1, FWxFilial("ZIB") + ZIF->ZIF_CTPATI, "ZIB_CODROT")
-    // cProdSAG := ZIF->ZIF_PRDSAG   
-    // cEntSai  := ZIF->ZIF_TPMOVI
+    cRoteiro := Posicione("ZIB", 1, FWxFilial("ZIB") + ZIF->ZIF_CTPATI, "ZIB_CODROT")
+    cProdSAG := ZIF->ZIF_PRDSAG   
+    cEntSai  := ZIF->ZIF_TPMOVI
 
     //U_ADFAT177(cRoteiro, ZIF->ZIF_CTPATI, cProdSAG, ZIG->ZIG_PESORD, nPesoLiq, @aDdSeq)
 
@@ -284,7 +340,7 @@ Static Function vldPeso(cNmOrdem, nPesoLiq, aDdSeq, cEntSai)
         lRet := aDdSeq[1][1]
 
     Else
-        Help(,,"Função vldPeso(ADEST073P)",,"Não foi possível validar a quebra de peso.", 1, 0)
+        Help(Nil, Nil, "Função vldPeso(ADEST073P)",,"Não foi possível validar a quebra de peso.", 1, 0)
 
     EndIf
 
@@ -302,21 +358,26 @@ Static Function ViewDef()
     //Variáveis.
     Local oModel    := FWLoadModel("ADEST073P")
     Local oView     := Nil
-    Local cCampos   := "ZIL_FILIAL;ZIL_PLACA;ZIL_ORDEM;ZIL_CTPATI;ZIL_TPENSA;ZIL_PESADO;ZIL_SEQUEN;"
+    Local cCampos   := "ZIL_FILIAL;ZIL_PLACA;ZIL_AGRUPA;ZIL_ORDEM;ZIL_CTPATI;ZIL_TPENSA;ZIL_PESADO;ZIL_SEQUEN;"
     Local oStrMast  := FWFormStruct(2, cTbMast, {|cCampo| AllTRim(cCampo) $ cCampos})
     Local oStrGrid  := FWFormStruct(2, cTbMast, {|cCampo| !(Alltrim(cCampo) $ cCampos)})
+    Local oStrTotal := FWCalcStruct( oModel:GetModel("ADEST73TOT") )
 
     oView:= FWFormView():New() 
     oView:SetModel(oModel)              
  
     oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
     oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID")
+    oView:AddField("VW_CALC",   oStrTotal,"ADEST73TOT")
  
     oView:CreateHorizontalBox("MAIN", 25)
-    oView:CreateHorizontalBox("GRID", 75)
+    oView:CreateHorizontalBox("GRID", 60)
+    oView:CreateHorizontalBox("CALC", 15)
 
     oView:SetOwnerView("VW_MASTER", 'MAIN')
     oView:SetOwnerView("VW_GRID", 'GRID')
+    oView:SetOwnerView("VW_CALC", "CALC")
+
     oView:EnableControlBar(.T.)
 
     oView:AddUserButton("Carregar Ordens","",{|oView| U_ADEST731(oView) } ,"",, {MODEL_OPERATION_INSERT} , .T. )   
@@ -364,8 +425,10 @@ User Function ADEST731(oView)
 	oModal:setTitle("Ordens de Carregamento - " + cPlaca)
 	oModal:setSize(150, 350)
 	oModal:createDialog()
-	oModal:addCloseButton(Nil, "Fechar")
+
     Aadd(aButtons,{Nil,"Confimar",{|| Iif(! prcOrd(aOrdens, cPlaca), Nil, oModal:DeActivate()) },"","",.T.,.F.})
+    Aadd(aButtons,{Nil,"Cancelar",  {|| oModal:DeActivate() },"","",.T.,.F.})
+
 	oModal:addButtons(aButtons)
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
@@ -433,10 +496,9 @@ Return Nil
 Static Function carOrdEn(aOrdens, cPlaca)
 
     //Variáveis.
-    Local aArea     := GetArea()
-    Local cQuery    := ""
-    Local cDescProd := ""
-    Local cRotPesa  := ""
+    Local aArea      := GetArea()
+    Local cQuery     := ""
+    Local cDescProd  := ""
 
     cQuery += " SELECT  DISTINCT " 
         cQuery += " CASE WHEN ZIF_AGRUPA <> '' THEN ZIF_AGRUPA ELSE ZIF_NUMERO END AS ORDEM, " 
@@ -447,14 +509,19 @@ Static Function carOrdEn(aOrdens, cPlaca)
         cQuery += " ZIF_STATUS, " 
         cQuery += " ZIF_STATLA, " 
         cQuery += " ZIF_CTPATI, " 
-        cQuery += " CASE WHEN ZIF_AGRUPA <> '' THEN 'Agrupador' ELSE 'Ordem' END AS AGR_ORD " 
+        cQuery += " CASE WHEN ZIF_AGRUPA <> '' THEN 'Agrupador' ELSE 'Ordem' END AS AGR_ORD, ZIB_CODROT " 
     cQuery += " FROM  " 
-        cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF  " 
+        cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF  "
+        cQuery += " INNER JOIN "  
+        cQuery += " " + RetSqlName("ZIB") + " (NOLOCK) AS ZIB ON " 
+        cQuery += " ZIF_FILIAL = ZIB_FILIAL " 
+        cQuery += " AND ZIF_CTPATI = ZIB_NUMERO " 
+
     cQuery += " WHERE  " 
         cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "'  " 
         cQuery += " AND ZIF_PLACA = '" + cPlaca + "'  " 
-        cQuery += " AND ZIF_TPMOVI IN ('E','S') " 
-        cQuery += " AND ZIF_STATUS NOT IN ('E','S') " 
+        cQuery += " AND ZIB_STATUS NOT IN ('5','6') " 
+        cQuery += " AND ZIB_TPMOVI IN ('E','S') " 
         cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY ORDEM " 
 
@@ -462,10 +529,6 @@ Static Function carOrdEn(aOrdens, cPlaca)
         D_DORD->(DbCloseArea())
 
     EndIf
-
-    DbSelectArea("ZIB")
-    ZIB->(DbSetOrder(1))
-    ZIB->(DbGoTop())
 
     DbSelectArea("ZIL")
     ZIL->(DbSetOrder(3))
@@ -479,44 +542,37 @@ Static Function carOrdEn(aOrdens, cPlaca)
     DbSelectArea("D_DORD")
     While ! D_DORD->(Eof())
 
-        If ZIB->( DbSeek( FWxFilial("ZIB") + D_DORD->ZIF_CTPATI ))
-            If ZIB->ZIB_STATUS == "5" .Or. ZIB->ZIB_STATUS == "6"
-                D_DORD->(Dbskip())
-                Loop
-
-            EndIf
-
-        EndIf
-
-        If ZIL->( DbSeek( FWxFilial("ZIL") + D_DORD->ORDEM ) )
+        If (D_DORD->ZIF_STATUS $"5/7" .And. D_DORD->ZIF_TPMOVI == "S");       //Ordem de pesagem de saída encerrada/Sequestrada e liberada.
+           .Or. (D_DORD->ZIF_STATUS $"11/13" .And. D_DORD->ZIF_TPMOVI == "E") //Ordem de pesagem de entrada encerrada/Sequestrada e liberada.
             D_DORD->(Dbskip())
             Loop
 
         EndIf
 
-        cRotPesa := Posicione("ZIB", 1, FWxFilial("ZIB") + D_DORD->ZIF_CTPATI, "ZIB_CODROT")
-
-        If ! U_ADFAT15B(cRotPesa)
+        If ZIL->( DbSeek( FWxFilial("ZIL") + D_DORD->ORDEM ) ) //Ordem de pesagem que já tenha apontamento de ensacado.
             D_DORD->(Dbskip())
             Loop
 
         EndIf
 
-        If ZI9->ZI9_ENSACA <> "1"
+        If ! U_ADFAT15B(D_DORD->ZIB_CODROT) //Posiciona no cadastro de roteiro.
+            D_DORD->(Dbskip())
+            Loop
+
+        EndIf
+
+        If ZI9->ZI9_ENSACA <> "1" //Valida se o roteiro é de produtos ensacados.
             D_DORD->(Dbskip())
             Loop
             
         EndIf
 
-        If ! ZIG->( DbSeek( FWxFilial("ZIG") + D_DORD->ORDEM ) )
-            D_DORD->(Dbskip())
-            Loop
+        If ZIG->( DbSeek( FWxFilial("ZIG") + D_DORD->ORDEM ) )
+            If ZIG->ZIG_INICIA $"3" //Não carrega ordens de pesagem com peso final.
+                D_DORD->(Dbskip())
+                Loop
 
-        EndIf
-
-        If ZIG->ZIG_INICIA <> "2"
-            D_DORD->(Dbskip())
-            Loop
+            EndIf
 
         EndIf
 
@@ -552,6 +608,7 @@ Static Function prcOrd(aOrdens, cPlaca)
     Local cPrdPro   := ""
     Local cPrdSAG   := ""
     Local cDesProd  := ""
+    Local lAgrupa   := .F.
 
     oGrid:setNoInsertLine(.F.)
     oGrid:setNoDeleteLine(.F.)
@@ -569,10 +626,17 @@ Static Function prcOrd(aOrdens, cPlaca)
             cNmOrdem := aOrdens[nAux,2]
             cCP      := aOrdens[nAux,7]
             cEntSai  := aOrdens[nAux,6]
+
+            If U_ADFAT16F(cNmOrdem)
+                lAgrupa := .T.
+
+            EndIf
+
             FWFldPut("ZIL_ORDEM",cNmOrdem)
             FWFldPut("ZIL_CTPATI",cCP)
             FWFldPut("ZIL_TPENSA",cEntSai)
             FWFldPut("ZIL_PESADO","2")
+            FWFldPut("ZIL_AGRUPA",Iif(lAgrupa,"1","2"))
 
         EndIf
 
@@ -901,7 +965,7 @@ Return .F.
     @since 05/04/2022
     @version 01
 /*/
-User Function ADEST735(cNmOrdem, nIndex, cCampo, xValor, cMsgError)
+User Function ADEST735(cNmOrdem, nIndex, cCampo, xValor, cMsgError, lExibe)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -909,12 +973,18 @@ User Function ADEST735(cNmOrdem, nIndex, cCampo, xValor, cMsgError)
     Local oModel    := Nil
     
     Default cMsgError := ""
+    Default lExibe    := .F.
     
     DbSelectArea("ZIL")
     ZIL->(DbSetOrder(nIndex))
     If ! ZIL->(DbSeek( FWxFilial("ZIL") + cNmOrdem ))
         cMsgError := "Registro " + cNmOrdem + " não encontrado. Não há apontamento de ensacados."
-        Help(Nil, Nil, "Função ADEST735(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        If lExibe
+            Help(Nil, Nil, "Função ADEST735(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        EndIf
+
         RestArea(aArea)
         Return lRet
 
@@ -940,12 +1010,176 @@ User Function ADEST735(cNmOrdem, nIndex, cCampo, xValor, cMsgError)
     oModel:Destroy()
     oModel := Nil
 
-    If ! Empty(cMsgError)
-        Help(Nil, Nil, "Função ADEST735(ADFAT016P)", Nil, "Erro na atualização de registro de conferência de ensacado " + cNmOrdem + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    If ! Empty(cMsgError) .And. lExibe
+        Help(Nil, Nil, "Função ADEST735(ADEST073P)", Nil, "Erro na atualização de registro de conferência de ensacado " + cNmOrdem + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     EndIf
 
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} ADEST737
+    Valida quantidade de saída.
+    @type  User Function
+    @author Everson
+    @since 20/06/2022
+    @version 01
+/*/
+User Function ADEST737(oModel, cTicket)
 
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local lRet     := .T.
+    Local oGrid    := oModel:GetModel("MD_GRID")
+    Local nLength  := oGrid:length()
+    Local nAux     := 1
+    Local cNmOrdem := oGrid:GetValue("ZIL_ORDEM")
+    Local cAgrupa  := oGrid:GetValue("ZIL_AGRUPA")
+    Local nPesLiq  := 0
+    Local nPesoTot := 0
+    Local cProdSAG := ""
+    Local cMsgError:= ""
+
+    DbSelectArea("ZIF")
+
+    If cAgrupa == "1"
+        ZIF->(DbSetOrder(5))
+
+    Else
+        ZIF->(DbSetOrder(2))
+
+    EndIf
+
+    ZIF->(DbGoTop())
+
+    Begin Transaction
+
+        For nAux := 1 To nLength
+
+            oGrid:GoLine(nAux)
+
+            nPesLiq  := oGrid:GetValue("ZIL_PESLIQ")
+            cProdSAG := oGrid:GetValue("ZIL_PRDSAG")
+
+            nPesoTot += nPesLiq
+            
+            If nPesLiq <= 0
+                cMsgError := "Produto " + cProdSAG + " está com peso inválido."
+                lRet := .F.
+                DisarmTransaction()
+                Break
+
+            EndIf
+            
+            aRet := getPOrd(cNmOrdem, cProdSAG)
+
+            If nPesLiq > aRet[2]
+                cMsgError := "Produto " + cProdSAG + " está com apontamento de peso maior que o pedido de saída."
+                lRet := .F.
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            If ! U_ADFAT165(aRet[1], "ZIF_QUANT", nPesLiq) //Ajusta quantidade da ordem de pesagem.
+                lRet := .F.
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+
+        Next nAux
+
+        If ! U_ADFAT191(cTicket, "ZIG_PESORD", nPesoTot, @cMsgError) //Altera a quantidade da ordem no ticket de pesagem.
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+    End Transaction
+    
+    If ! Empty(cMsgError)
+        Help(Nil, Nil, "Função ADEST737(ADEST073P)",, cMsgError, 1, 0)
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} getPOrd
+    Valida quantidade.
+    @type  Static Function
+    @author Everson
+    @since 20/06/2022
+    @version 01
+/*/
+Static Function getPOrd(cNmOrdem, cProdSAG)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local nPeso     := 0
+    Local cOrdem    :=  ""
+    Local lAgrupa   := .F.
+    Local cQuery    := ""
+
+    If U_ADFAT16F(cNmOrdem)
+        lAgrupa := .T.
+
+    EndIf
+
+    cQuery := ""
+    cQuery += " SELECT " 
+        cQuery += " ZIF_NUMERO, SUM(C6_UNSVEN) AS C6_UNSVEN " 
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF " 
+        cQuery += " INNER JOIN "
+        cQuery += " " + RetSqlName("SC6") + " (NOLOCK) AS SC6 ON "
+        cQuery += " ZIF_FILIAL = C6_FILIAL "
+        cQuery += " AND ZIF_NUMERO = C6_XORDPES "
+
+    cQuery += " WHERE " 
+        cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
+        cQuery += " AND ZIF_PRDSAG = '" + cProdSAG + "' "
+
+        If ! lAgrupa
+            cQuery += " AND ZIF_NUMERO = '" + cNmOrdem + "' "
+
+        Else 
+            cQuery += " AND ZIF_AGRUPA = '" + cNmOrdem + "' " 
+
+        EndIf
+
+        cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
+        cQuery += " AND SC6.D_E_L_E_T_ = '' " 
+
+    cQuery += " GROUP BY ZIF_NUMERO " 
+
+    TcQuery cQuery New Alias "QTD_ORD"
+    DbSelectArea("QTD_ORD")
+
+        cOrdem   := QTD_ORD->ZIF_NUMERO
+        nPeso    := Val(cValToChar(QTD_ORD->C6_UNSVEN))
+
+    QTD_ORD->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return {cOrdem, nPeso}
+/*/{Protheus.doc} ADEST738
+    Posiciona no registro pela ordem/agrupamento.
+    @type  User Function
+    @author Everson
+    @since 21/06/2022
+    @version 01
+/*/
+User Function ADEST738(cNmOrdem)
+
+    DbSelectArea("ZIL")
+    ZIL->(DbSetOrder(3))
+    If ! ZIL->( DbSeek( FWxFilial("ZIL") + cNmOrdem))
+        Return .F.
+
+    EndIf
+
+Return .T.

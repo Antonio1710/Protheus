@@ -450,17 +450,71 @@ User Function ADFAT192(cCP, cOrdeSlc, cTktNv, cSeqNV, cMsgError) //Ordem de pesa
     //Variáveis.
     Local aArea    := GetArea()
     Local lRet     := .F.
-    Local cOrd2    := Posicione("ZIG", 1, FWxFilial("ZIG") + cTktNv,"ZIG_ORDEM")  //Ordem de pesagem vinculada ao novo ticket de pesagem.
-    Local cStatNv  := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrd2, "ZIF_STATUS") //Novo status.
-    Local cStat2   := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrdeSlc, "ZIF_STATUS") //Status da ordem de pesagem selecionada.
-    Local cSeq2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_SEQTKT") //Sequência de pesagem da ordem selecionada.
-    Local cTkt2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_NUMERO") //Ticket de pesagem da ordem selecionada.
-    Local cStaTkt  := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_INICIA") //Ticket de pesagem da ordem selecionada.
+    
+    Local cStat2   := ""
+    Local cSeq2    := ""
+    Local cTkt2    := ""
+    Local cStaTkt  := ""
+    Local nPesOrd1 := 0
+    Local cAgrSlc  := ""
+
+    Local cOrd2    := ""
+    Local cStatNv  := ""
     Local cTktSq2  := Posicione("ZIG", 5, FWxFilial("ZIG") + cCP + cSeqNV, "ZIG_NUMERO") //Ticket de pesagem da sequência trocada.
-    Local nPesOrd1 := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrdeSlc, "ZIF_QUANT") //Peso da ordem selecionada.
-    Local nPesOrd2 := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrd2, "ZIF_QUANT") //Peso da ordem trocada.
+    Local nPesOrd2 := 0
+    Local cAgr2    := ""
 
     Default cMsgError := ""
+
+    //Obtém dados da ordem selecionada.
+    If U_ADFAT16A(cOrdeSlc) //Valida se é ordem de pesagem.
+
+        cStat2   := ZIF->ZIF_STATUS //Status da ordem de pesagem selecionada.
+        cSeq2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_SEQTKT") //Sequência de pesagem da ordem selecionada.
+        cTkt2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_NUMERO") //Ticket de pesagem da ordem selecionada.
+        cStaTkt  := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_INICIA") //Ticket de pesagem da ordem selecionada.
+        nPesOrd1 := ZIF->ZIF_QUANT //Peso da ordem selecionada.
+
+
+    ElseIf U_ADFAT16F(cOrdeSlc) //Valida se é agrupador.
+
+        cAgrSlc  := ZIF->ZIF_AGRUPA
+        cStat2   := ZIF->ZIF_STATUS //Status da ordem de pesagem selecionada.
+        cSeq2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cAgrSlc, "ZIG_SEQTKT") //Sequência de pesagem da ordem selecionada.
+        cTkt2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cAgrSlc, "ZIG_NUMERO") //Ticket de pesagem da ordem selecionada.
+        cStaTkt  := Posicione("ZIG", 2, FWxFilial("ZIG") + cAgrSlc, "ZIG_INICIA") //Ticket de pesagem da ordem selecionada.
+        nPesOrd1 := U_ADFAT16G(cAgrSlc)[1]
+
+    Else
+
+        cMsgError := "Ordem/agrupador " + cOrdeSlc + " não localizada(ADFAT019P-ADFAT192)"
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cOrd2 := Posicione("ZIG", 1, FWxFilial("ZIG") + cTktNv,"ZIG_ORDEM") //Ordem de pesagem vinculada ao novo ticket de pesagem.
+
+    //Obtém dados da ordem trocada.
+    If U_ADFAT16A(cOrd2) //Valida se é ordem de pesagem.
+
+        cStatNv  := ZIF->ZIF_STATUS //Novo status.
+        nPesOrd2 := ZIF->ZIF_QUANT  //Peso da ordem selecionada.
+
+
+    ElseIf U_ADFAT16F(cOrd2) //Valida se é agrupador.
+
+        cAgr2    := ZIF->ZIF_AGRUPA
+        cStatNv  := ZIF->ZIF_STATUS      //Novo status.
+        nPesOrd2 := U_ADFAT16G(cAgr2)[2] //Quantidade do agrupador.
+
+    Else
+
+        cMsgError := "Ordem/agrupador " + cOrd2 + " não localizada(ADFAT019P-ADFAT192)"
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
 
     If cStaTkt == "4" .Or. (cOrdeSlc == cOrd2 .And.;
                            cSeqNV == cSeq2 .And.;
@@ -475,17 +529,44 @@ User Function ADFAT192(cCP, cOrdeSlc, cTktNv, cSeqNV, cMsgError) //Ordem de pesa
 
     Begin Transaction
 
-        //Altera o status da ordem selecionada.
-        If ! U_ADFAT164(cOrdeSlc, cStatNv, 1, @cMsgError)
-            DisarmTransaction()
-            Break
+        If Empty(cAgrSlc)
+        
+            //Altera o status da ordem selecionada.
+            If ! U_ADFAT164(cOrdeSlc, cStatNv, 1, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+        Else
+
+            //Altera o status das ordens vinculadas ao agrupador.
+            If ! altAgrup(cAgrSlc, cStatNv, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
 
         EndIf
+
+        If Empty(cAgr2)
         
-        //Altera o status da ordem tomada.
-        If ! U_ADFAT164(cOrd2, cStat2, 1, @cMsgError)
-            DisarmTransaction()
-            Break
+            //Altera o status da ordem tomada.
+            If ! U_ADFAT164(cOrd2, cStat2, 1, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+        Else
+
+            //Altera o status das ordens tomadas vinculadas ao agrupador.
+            If ! altAgrup(cAgr2, cStat2, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
 
         EndIf
 
@@ -496,8 +577,20 @@ User Function ADFAT192(cCP, cOrdeSlc, cTktNv, cSeqNV, cMsgError) //Ordem de pesa
 
         EndIf
 
+        If ! U_ADFAT191(cTktNv, "ZIG_AGRUPA", Iif(Empty(cAgrSlc), "2", "1"), @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
         //Altera a ordem do ticket de pesagem tomado.
         If ! U_ADFAT191(cTkt2, "ZIG_ORDEM", cOrd2, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        If ! U_ADFAT191(cTkt2, "ZIG_AGRUPA", Iif(Empty(cAgr2), "2", "1"), @cMsgError)
             DisarmTransaction()
             Break
 
@@ -542,6 +635,52 @@ User Function ADFAT192(cCP, cOrdeSlc, cTktNv, cSeqNV, cMsgError) //Ordem de pesa
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} altAgrup
+    Altera ordens do agrupamento.
+    @type  User Function
+    @author Everson
+    @since 17/06/2022
+    @version 01
+/*/
+Static Function altAgrup(cAgrupador, cStatus, cMsgError)
+
+    //Variáveis
+    Local aArea := GetArea()
+
+    Default cMsgError := ""
+
+    If ! U_ADFAT16F(cAgrupador)
+        cMsgError := "Ordem/agrupador de pesagem " + cAgrupador + " não localizada."
+        Help(Nil, Nil, "Função altAgrup(ADFAT019P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    Begin Transaction
+
+        While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cAgrupador
+
+                If ! U_ADFAT164(ZIF->ZIF_NUMERO, cStatus, 1, @cMsgError)
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+            ZIF->(DbSkip())
+
+        End
+
+    End Transaction
+
+    If ! Empty(cMsgError)
+        Help(Nil, Nil, "Função altAgrup(ADFAT019P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
 /*/{Protheus.doc} ADFAT193
     Processa cancelamento de ticket de pesagem.
     @type  User Function
@@ -708,6 +847,10 @@ User Function ADFAT19B()
     Local cTicket   := ZIG->ZIG_NUMERO
     Local oModal    := Nil
     Local aButtons  := {}
+    Local aOrdens   := {}
+    Local nAux      := 1
+    Local lAgrupa   := .F.
+    Local lEnsacado := .F.
 
     If ZIG->ZIG_INICIA == "1"
         MsgInfo("Ticket não possui pesagem.", "Função ADFAT19B(ADFAT019R)")
@@ -715,6 +858,32 @@ User Function ADFAT19B()
         Return Nil
 
     EndIf
+
+    //Verifica se há ordem de pesagem com peso inicial e sem peso final.
+    If ! U_ADFAT19C(ZIG->ZIG_CTPATI, ZIG->ZIG_ORDEM)
+        Help(Nil, Nil, "Função ADFAT19B(ADFAT019P)", Nil, "Há ordem de pesagem com peso inicial, mas não finalizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return Nil
+
+    EndIF
+
+    //Posiciona no registro de pátio selecionado.
+    If ! U_ADFAT17U(ZIG->ZIG_CTPATI)
+        MsgInfo("Controle de pátio " + ZIG->ZIG_CTPATI + " não localizado.", "Função ADFAT19B(ADFAT019P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    //
+    If ! U_ADFAT15B(ZIB->ZIB_CODROT)
+        MsgInfo("Roteiro de pesagem " + ZIB->ZIB_CODROT + " não localizado.", "Função ADFAT19B(ADFAT019P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    lEnsacado := ZI9->ZI9_ENSACA == "1"
 
     DbSelectArea("SC5") //Everson - 26/05/2022. Chamado 18465.
     SC5->(DbSetOrder(28))
@@ -737,27 +906,56 @@ User Function ADFAT19B()
 
     EndIf
 
-    DbSelectArea("SC6")
-    SC6->(DbSetOrder(17))
-    SC6->(DbGoTop())
+    lAgrupa := ZIG->ZIG_AGRUPA == "1"
 
-    If SC6->(DbSeek( FWxFilial("SC6") + ZIG->ZIG_ORDEM ))
+    If ! lAgrupa //Ticket não é referente a ordens de pesagem agrupadas.
+        
+        Aadd(aOrdens, ZIG->ZIG_ORDEM)
 
-        While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_XORDPES == ZIG->ZIG_ORDEM
+    Else
 
-            If ! Empty(SC6->C6_NOTA)
+        If ! U_ADFAT16F(ZIG->ZIG_ORDEM)
+            MsgInfo("Agrupador " + ZIG->ZIG_ORDEM + " não localizado.", "Função ADFAT19B(ADFAT019R)")
+            RestArea(aArea)
+            Return Nil  
 
-                MsgInfo("Há a nota fiscal " + SC6->C6_NOTA + " " + SC6->C6_SERIE + " vinculada à pesagem. Operação não permitida.", "Função ADFAT19B(ADFAT019R)")
-                RestArea(aArea)
-                Return Nil            
+        EndIf
 
-            EndIf
+        While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == ZIG->ZIG_ORDEM
 
-            SC6->(DbSkip())
+            Aadd(aOrdens, ZIF->ZIF_NUMERO)
+
+            ZIF->(DbSkip())
 
         End
 
     EndIf
+
+    DbSelectArea("SC6")
+    SC6->(DbSetOrder(17))
+    SC6->(DbGoTop())
+
+    For nAux := 1 To Len(aOrdens)
+
+        If SC6->(DbSeek( FWxFilial("SC6") + aOrdens[nAux] ))
+
+            While ! SC6->(Eof()) .And. SC6->C6_FILIAL == FWxFilial("SC6") .And. SC6->C6_XORDPES == aOrdens[nAux]
+
+                If ! Empty(SC6->C6_NOTA)
+
+                    MsgInfo("Há a nota fiscal " + SC6->C6_NOTA + " " + SC6->C6_SERIE + " vinculada à pesagem. Operação não permitida.", "Função ADFAT19B(ADFAT019R)")
+                    RestArea(aArea)
+                    Return Nil            
+
+                EndIf
+
+                SC6->(DbSkip())
+
+            End
+
+        EndIf
+
+    Next nAux
 
     oModal := FWDialogModal():New()        
 	oModal:SetEscClose(.F.)
@@ -772,8 +970,8 @@ User Function ADFAT19B()
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
 
-        TButton():New(005,010,"1-Refazer pesagem inicial" , oContainer,{|| Iif(! procAbrP(cTicket, "1"), Nil, oModal:DeActivate()) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        TButton():New(005,110,"2-Refazer pesagem final"   , oContainer,{|| Iif(! procAbrP(cTicket, "2"), Nil, oModal:DeActivate()) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        TButton():New(005,010,"1-Refazer pesagem inicial" , oContainer,{|| Iif(! procAbrP(cTicket, "1", lEnsacado, ZIG->ZIG_TPMOV), Nil, oModal:DeActivate()) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        TButton():New(005,110,"2-Refazer pesagem final"   , oContainer,{|| Iif(! procAbrP(cTicket, "2", lEnsacado, ZIG->ZIG_TPMOV), Nil, oModal:DeActivate()) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 
 	oModal:Activate()
 
@@ -787,7 +985,7 @@ Return Nil
     @since 09/05/2022
     @version 01
 /*/
-Static Function procAbrP(cTicket, cStatus)
+Static Function procAbrP(cTicket, cStatus, lEnsacado, cTpMov)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -868,6 +1066,11 @@ Static Function procAbrP(cTicket, cStatus)
 
         lRet := lRet .And. logZBE("Abertura de pesagem do ticket " + cTicket + " para status " + cStatus)
 
+        If lRet .And. lEnsacado .And. cTpMov == "S" .And. U_ADEST738(cNmOrdem) .And. ! U_ADEST735(cNmOrdem, 3, "ZIL_PESADO", "2")
+            lRet := .F.
+
+        EndIf
+
         If ! lRet
             DisarmTransaction()
             Break
@@ -904,3 +1107,143 @@ Static Function logZBE(cMsg)
 	ZBE->( msUnlock() )
 
 Return .T.
+/*/{Protheus.doc} ADFAT197
+    Ajusta sequência de pesagem de ordem agrupadas.
+    @type  User Function
+    @author Everson
+    @since 17/06/2022
+    @version 01
+/*/
+User Function ADFAT197(cCP, cOrdeSlc, cTktNv, cSeqNV, cMsgError) //Ordem de pesagem selecionada e novo ticket de pesagem.
+
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local lRet     := .F.
+    Local cOrd2    := Posicione("ZIG", 1, FWxFilial("ZIG") + cTktNv,"ZIG_ORDEM")  //Ordem de pesagem vinculada ao novo ticket de pesagem.
+    Local cStatNv  := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrd2, "ZIF_STATUS") //Novo status.
+    Local cStat2   := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrdeSlc, "ZIF_STATUS") //Status da ordem de pesagem selecionada.
+    Local cSeq2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_SEQTKT") //Sequência de pesagem da ordem selecionada.
+    Local cTkt2    := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_NUMERO") //Ticket de pesagem da ordem selecionada.
+    Local cStaTkt  := Posicione("ZIG", 2, FWxFilial("ZIG") + cOrdeSlc, "ZIG_INICIA") //Ticket de pesagem da ordem selecionada.
+    Local cTktSq2  := Posicione("ZIG", 5, FWxFilial("ZIG") + cCP + cSeqNV, "ZIG_NUMERO") //Ticket de pesagem da sequência trocada.
+    Local nPesOrd1 := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrdeSlc, "ZIF_QUANT") //Peso da ordem selecionada.
+    Local nPesOrd2 := Posicione("ZIF", 2, FWxFilial("ZIF") + cOrd2, "ZIF_QUANT") //Peso da ordem trocada.
+
+    Default cMsgError := ""
+
+    If cStaTkt == "4" .Or. (cOrdeSlc == cOrd2 .And.;
+                           cSeqNV == cSeq2 .And.;
+                           cStatNv == cStat2 .And.;
+                           cTkt2 == cTktSq2 .And.;
+                           nPesOrd1 == nPesOrd2)
+       
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    Begin Transaction
+
+        //Altera o status da ordem selecionada.
+        If ! U_ADFAT164(cOrdeSlc, cStatNv, 1, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+        
+        //Altera o status da ordem tomada.
+        If ! U_ADFAT164(cOrd2, cStat2, 1, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera a ordem do ticket de pesagem selecionado.
+        If ! U_ADFAT191(cTktNv, "ZIG_ORDEM", cOrdeSlc, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera a ordem do ticket de pesagem tomado.
+        If ! U_ADFAT191(cTkt2, "ZIG_ORDEM", cOrd2, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera o peso da ordem no ticket de pesagem selecionado.
+        If ! U_ADFAT191(cTktNv, "ZIG_PESORD", nPesOrd1, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        //Altera o peso da ordem no ticket de pesagem tomado.
+        If ! U_ADFAT191(cTkt2, "ZIG_PESORD", nPesOrd2, @cMsgError)
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+        If cTktNv <> cTktSq2
+
+            //Altera sequência do ticket de pesagem selecionado.
+            If ! U_ADFAT191(cTktNv, "ZIG_SEQTKT", cSeqNv, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            //Altera sequência do ticket de pesagem tomado.
+            If ! U_ADFAT191(cTktSq2, "ZIG_SEQTKT", cSeq2, @cMsgError)
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+        EndIf
+
+        lRet := .T.
+
+    End transaction
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} ADFAT19C
+    Verifica se há ordem de pesagem com peso inicial e sem peso final.
+    @type  Static Function
+    @author Everson
+    @since 21/06/2022
+    @version 01
+/*/
+User Function ADFAT19C(cCP, cNmOrdem)
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local lRet  := .T.
+
+    DbSelectArea("ZIG")
+    ZIG->(DbSetOrder(5))
+    ZIG->(DbGoTop())
+    If ZIG->( DbSeek( FWxFilial("ZIG") + cCP ) )
+
+        While ! ZIG->(Eof()) .And. ZIG->ZIG_FILIAL == FWxFilial("ZIG") .And. ZIG->ZIG_CTPATI == cCP
+
+            If ZIG->ZIG_INICIA $"2/4/5" .And.; //Peso inicial, Sequestrada e Sequestro Liberado.
+               ZIG->ZIG_ORDEM <> cNmOrdem
+                lRet := .F.
+                Exit
+                
+            EndIf
+
+            ZIG->(DbSkip())
+            
+        End
+
+    EndIf
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheu

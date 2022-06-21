@@ -117,6 +117,8 @@ Static Function ModelDef()
     oModel:SetDescription(cTiMast)
     oModel:SetPrimaryKey({})
 
+    oModel:GetModel("MD_GRID"):SetUniqueLine({"ZHS_PRDSAG"}) 
+
     oModel:AddCalc("ADFAT58TOT", "MD_MASTER", "MD_GRID", "ZHS_QUANT", "ZHS_QTDTOT", "SUM", { | oFW | ADFAT57CAL( oFW, .T. ) },,"Quantidade Total")
 
 Return oModel
@@ -865,7 +867,7 @@ User Function ADFAT58B(cRotPesa)
 
     EndIf
 
-    If ZI9_TPMOVI <> "1"
+    If ZI9_ATIVO <> "1"
         Help(Nil, Nil, "Função ADFAT58B(ADFAT058P)", Nil, "Roteiro " + cValToChar(cRotPesa) + " não está ativo.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
