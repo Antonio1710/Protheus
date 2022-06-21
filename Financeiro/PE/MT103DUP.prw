@@ -15,6 +15,7 @@
     (examples)
     @see (links_or_references)
     @ticket 74270 - Criar trava no sistema para impedir lançamentos de titulos vencidos
+    @history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
 /*/
 User Function MT103DUP()
 
@@ -24,18 +25,23 @@ User Function MT103DUP()
     Local i, ii
     Local lVencDayOk := GetMV("MV_#E2VENC",,.t.)
 
+    // @history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
+    Public lMT103DUP  := .f. // Variável será usada no MT100TOK para consistir o conteúdo do acols/folder duplicata
+    
     // Validações Novo Conteúdo
     For i:=1 to Len(aDupNew)
         If lVencDayOk
             If aDupNew[i,1] < msDate()
                 lRet := .t.
                 Alert("[MT103DUP-01] - Inclusão de título vencido não permitido! As nova condição de pagamento informada não será modificada...")
+                lMT103DUP  := lRet // Variável será usada no MT100TOK para consistir o conteúdo do acols/folder duplicata
                 Return lRet
             EndIf
         Else
             If aDupNew[i,1] <= msDate()
                 lRet := .t.
-                Alert("[MT103DUP-01] - Inclusão de título vencido/vencendo hoje não permitido! As nova condição de pagamento informada não será modificada...")
+                Alert("[MT103DUP-02] - Inclusão de título vencido/vencendo hoje não permitido! As nova condição de pagamento informada não será modificada...")
+                lMT103DUP  := lRet // Variável será usada no MT100TOK para consistir o conteúdo do acols/folder duplicata
                 Return lRet
             EndIf
         EndIf
@@ -46,13 +52,15 @@ User Function MT103DUP()
         If lVencDayOk
             If aDupAtu[ii,2] < msDate()
                 lRet := .t.
-                Alert("[MT103ATU-02] - Inclusão de título vencido não permitido! Verifique a condição de pagamento/database utilizada...")
+                Alert("[MT103ATU-03] - Inclusão de título vencido não permitido! Verifique a condição de pagamento/database utilizada...")
+                lMT103DUP  := lRet // Variável será usada no MT100TOK para consistir o conteúdo do acols/folder duplicata
                 Return lRet
             EndIf
         Else
             If aDupAtu[ii,2] <= msDate()
                 lRet := .t.
-                Alert("[MT103ATU-02] - Inclusão de título vencido/vencendo hoje não permitido! Verifique a condição de pagamento/database utilizada...")
+                Alert("[MT103ATU-04] - Inclusão de título vencido/vencendo hoje não permitido! Verifique a condição de pagamento/database utilizada...")
+                lMT103DUP  := lRet // Variável será usada no MT100TOK para consistir o conteúdo do acols/folder duplicata
                 Return lRet
             EndIf
         EndIf
