@@ -51,6 +51,7 @@
 	@history Ticket 65109   - Abel Babini			- 13/12/2021 - Ajuste na query, na clausula INNER JOIN, de F1_LOJA para D1_LOJA e acrescentando o campo FILIAL.
 	@history Ticket 68971   - Fer Macieira	  - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 	@history ticket 71057   - Fer Macieira    - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history ticket 74027   - TI              - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
 /*/ 
 User Function MT100LOK
 
@@ -1274,14 +1275,13 @@ User Function MT100LOK
 	EndIf
 	// 
 
-	RestArea(_aArea)
-	
 	//MSGSTOP( "Trocou a conta contábil !!!" + CHR(13) + ALLTRIM(FUNNAME()) + "  aCols[n][_nPCONTA] " + aCols[n][_nPCONTA] + "  SB1->B1_CONTAR: " + SB1->B1_CONTAR + "  ZZB->ZZB_CONTA: " + ZZB->ZZB_CONTA, "ATENÇÃO !!", "ALERT")
 	
 	// Chamado n. 051888 || OS 053228 || CONTROLADORIA || MONIK_MACEDO || 8956 || REL. INVESTIMENTO - FWNM - 09/10/2019
 	UpItemCta()
-	//
-	
+
+	RestArea(_aArea)
+
 Return(_lOk)
 
 /*{Protheus.doc} Static Function SQLVERNOTACOMPRAORDEM
@@ -1591,13 +1591,17 @@ Static Function UpItemCta()
 	EndIf
 	//
 
+	// @history ticket 74027 - TI                - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
+	If AllTrim(cCusto) == "5318" .or. Left(AllTrim(cCusto),1) == "7"
+		cItemCta := "111"
+	EndIf
+	//
+
 	If !Empty(cItemCta)
 		gdFieldPut("D1_ITEMCTA", cItemCta, n)
 	Else
 		msgAlert("Parâmetro MV_#ITEMCT não existe ou não possui item contábil definido para esta filial... O item contábil ficará errado! Contate a contabilidade...")
 	EndIf
-
-
 
 Return
 

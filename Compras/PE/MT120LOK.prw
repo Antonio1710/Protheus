@@ -26,6 +26,7 @@
 	@history ticket   68971 - Fer Macieira - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket   71057 - Fer Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history ticket   74027 - TI           - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
 /*/
 User Function MT120LOK()
 
@@ -253,6 +254,12 @@ User Function MT120LOK()
 	If AllTrim(cEmpAnt) == "01" .and. AllTrim(cFilAnt) == "0B"
 		cMVItemCta := AllTrim(GetMV("MV_#ITACTD",,"125"))
 		gdFieldPut("C7_ITEMCTA", cMVItemCta, n)
+	EndIf
+	//
+
+	// @history ticket 74027 - TI                - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
+	If AllTrim(cCC) == "5318" .or. Left(AllTrim(cCC),1) == "7"
+		gdFieldPut("C7_ITEMCTA", "111", n)
 	EndIf
 	//
 
