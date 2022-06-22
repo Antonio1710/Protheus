@@ -16,6 +16,7 @@
     @see (links_or_references)
     @ticket 74270 - Criar trava no sistema para impedir lançamentos de titulos vencidos
     @history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
+    @history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
 /*/
 User Function MT103DUP()
 
@@ -27,6 +28,8 @@ User Function MT103DUP()
 
     // @history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
     Public lMT103DUP  := .f. // Variável será usada no MT100TOK para consistir o conteúdo do acols/folder duplicata
+
+    Return lRet // @history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
     
     // Validações Novo Conteúdo
     For i:=1 to Len(aDupNew)
@@ -85,6 +88,8 @@ User Function X3VencE2()
 
     Local lRet       := .t.
     Local lVencDayOk := GetMV("MV_#E2VENC",,.t.)
+
+    Return lRet // @history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
 
     If Left(AllTrim(FunName()),3) <> "FIN"
         If lVencDayOk
