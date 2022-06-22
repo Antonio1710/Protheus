@@ -472,7 +472,7 @@ User Function ADFAT58E()
 
     EndIf
 
-    If ! MsgYesNo("Deseja processar o refaturamento " + cNum + "?", "Função ADFAT58E(ADFAT058P)")
+    If ! MsgYesNo("Deseja processar a transferência " + cNum + "?", "Função ADFAT58E(ADFAT058P)")
         RestArea(aArea)
         Return Nil
 
@@ -510,7 +510,7 @@ Static Function gerPedS(cNum, cRegistros)
 
     //Variáveis.
     Local aArea    := GetArea()
-    Local cRotPes  := GetMv("MV_#ADF584",,"")
+    Local cRotPes  := ""//GetMv("MV_#ADF584",,"")
     Local aCabec   := {}
     Local aLinha   := {}
     Local aItens   := {}
@@ -546,6 +546,8 @@ Static Function gerPedS(cNum, cRegistros)
         Return .F.
 
     EndIf
+
+    cRotPes  := ZHS->ZHS_CODROT
     
     cRegistros += Chr(13) + Chr(10) + Chr(13) + Chr(10)  + "Pedidos gerados: " + Chr(13) + Chr(10) 
 
@@ -566,7 +568,7 @@ Static Function gerPedS(cNum, cRegistros)
         cFornece := "014999"
         cLjForn  := "00"
 
-    ElseIf ZHS->ZHS_DESTIN == "2" .Or. ZHS_DESTIN == "3"
+    ElseIf ZHS->ZHS_DESTIN == "2" .Or. ZHS->ZHS_DESTIN == "3"
         cFornece := "025652"
         cLjForn  := "00"
 
@@ -904,5 +906,22 @@ User Function ADFAT58C(cProduto)
     EndIf 
 
     RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} ADFAT582
+    Posiciona no registro de pedido de transferência pelo pedido de venda + item.
+    @type  User Function
+    @author Everson
+    @since 22/06/2022
+    @version 01
+/*/
+User Function ADFAT583(cPedido, cItem)
+
+    DbSelectArea("ZHS")
+    ZHS->(DbSetOrder(3))
+    If ! ZHS->(DbSeek( FWxFilial("ZHS") + cPedido + cItem ))
+        Return .F.
+        
+    EndIf
 
 Return .T.
