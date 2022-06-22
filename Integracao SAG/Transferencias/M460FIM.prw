@@ -784,7 +784,6 @@ Static Function updEdata(cNF,cSerie,cCliente,cLoja)
 
 			If Val(cValToChar(CHK_NF->REC)) > 0 
 
-				//
 				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_AJUSTE_TRANSPORTADOR] ' + cValToChar(CHK_NF->REC) + "," + "'" + cEmpAnt + "'" )
 
 			EndIf
