@@ -55,6 +55,7 @@
 	@history ticket 72911 - Fernando Macieira - 16/05/2022 - Exceção CFOP - PRODUTO 384744 - PINTOS DE 1 DIA MATRIZ - MACHO
 	@history ticket 18465 - Everson           - 26/05/2022 - Tratamento para envio de nota de saída de venda vinculada a ordem de pesagem.
 	@history ticket 74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057.
+	@history ticket 75082 - Fernando Macieira - 21/06/2022 - ERROR LOG M460FIM
 /*/
 User Function M460FIM()
 
@@ -687,12 +688,8 @@ Static function fGrvVend2()
 
 		If nRecnoSc5 > 0 
 
-			BeginTran()
-
 			//Executa a Stored Procedure
 			TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDO_FATURA] ' +Str(nRecnoSc5)+","+"'"+cEmpAnt+"'" )
-
-			EndTran()	
 
 		EndIf
 
@@ -787,7 +784,6 @@ Static Function updEdata(cNF,cSerie,cCliente,cLoja)
 
 			If Val(cValToChar(CHK_NF->REC)) > 0 
 
-				//
 				TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDEVOVEND_AJUSTE_TRANSPORTADOR] ' + cValToChar(CHK_NF->REC) + "," + "'" + cEmpAnt + "'" )
 
 			EndIf
@@ -887,7 +883,7 @@ Static Function GeraPreNFE()
 	Local cF1Origem := GetMV("MV_#LFVSF1",,"FRANGOVI") // Chamado n. 048580 || OS 049871 || FISCAL || DEJAIME || 8921 || REL. WOKFLOW - FWNM - 13/05/2019
 
 	// @history ticket   74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
-	If AllTrim(cFilPV) == "0A"
+	If AllTrim(cFilAnt) == "0A" // @history ticket 75082 - Fernando Macieira - 21/06/2022 - ERROR LOG M460FIM
 		cFornCod := GetMV("MV_#LFVGHH",,"030057")
 	EndIf
 	//
