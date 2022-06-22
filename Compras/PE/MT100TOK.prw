@@ -34,6 +34,7 @@
 	@history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
 	@history ticket 74270 - Fernando Macieira - 09/06/2022 - Devoluções não devem bloquear
 	@history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
+	@history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
 /*/
 User Function MT100TOK()
 
@@ -81,12 +82,15 @@ User Function MT100TOK()
 	Local cPCPrjaCols := ""
 	Local cPCItem  := "" 
 
+	// @history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
+	/*
 	// @history ticket 74270 - Fernando Macieira - 06/06/2022 - Criar trava no sistema para impedir lançamentos de titulos vencidos
 	_lRet := ChkVenctos()
 	If !_lRet
 		Return _lRet
 	EndIf
 	// 
+	*/
 	
 	// Chamado n. 057107 || OS 058613 || CONTROLADORIA || TAMIRES_SERAFIM || 8503 || CONTA CONTABEIS - FWNM - 03/04/2020
 	If _lRet
@@ -1163,6 +1167,8 @@ Static Function ChkVenctos()
 
 	If lFin
 
+		// @history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
+		/*
 		// @history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
 		If Type("lMT103DUP") <> "U"
 			If lMT103DUP// Variável pública criada no MT103DUP para consistir o conteúdo do acols/folder duplicata
@@ -1171,6 +1177,8 @@ Static Function ChkVenctos()
 				Return lRet
 			EndIf
 		EndIf
+		*/
+		//
 
 		// Consisto apenas uma data alterada/informada pelo usuário pois o padrão não fornece outra maneira
 		If !Empty(dNewVenc)
