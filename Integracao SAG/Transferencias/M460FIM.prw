@@ -688,12 +688,8 @@ Static function fGrvVend2()
 
 		If nRecnoSc5 > 0 
 
-			BeginTran()
-
 			//Executa a Stored Procedure
 			TcSQLExec('EXEC [LNKMIMS].[SMART].[dbo].[FU_PEDIDO_FATURA] ' +Str(nRecnoSc5)+","+"'"+cEmpAnt+"'" )
-
-			EndTran()	
 
 		EndIf
 
