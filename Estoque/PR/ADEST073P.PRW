@@ -520,7 +520,7 @@ Static Function carOrdEn(aOrdens, cPlaca)
     cQuery += " WHERE  " 
         cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "'  " 
         cQuery += " AND ZIF_PLACA = '" + cPlaca + "'  " 
-        cQuery += " AND ZIB_STATUS NOT IN ('5','6') " 
+        cQuery += " AND ZIB_STATUS IN ('4') " 
         cQuery += " AND ZIB_TPMOVI IN ('E','S') " 
         cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY ORDEM " 
@@ -541,6 +541,12 @@ Static Function carOrdEn(aOrdens, cPlaca)
     TcQuery cQuery New Alias "D_DORD"
     DbSelectArea("D_DORD")
     While ! D_DORD->(Eof())
+
+        If ! vldPesAbt(D_DORD->ZIF_CTPATI)
+            D_DORD->(Dbskip())
+            Loop
+
+        EndIf
 
         If (D_DORD->ZIF_STATUS $"5/7" .And. D_DORD->ZIF_TPMOVI == "S");       //Ordem de pesagem de saída encerrada/Sequestrada e liberada.
            .Or. (D_DORD->ZIF_STATUS $"11/13" .And. D_DORD->ZIF_TPMOVI == "E") //Ordem de pesagem de entrada encerrada/Sequestrada e liberada.
@@ -588,6 +594,50 @@ Static Function carOrdEn(aOrdens, cPlaca)
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} vldPesAbt
+    Valida apontamento de ensacado lançado mas não pesado.
+    @type  Static Function
+    @author Everson
+    @since 22/06/2022
+    @version 01
+/*/
+Static Function vldPesAbt(cCP)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cQuery    := ""
+
+    cQuery := ""
+    cQuery += " SELECT " 
+        cQuery += " ZIL_ORDEM " 
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("ZIL") + " (NOLOCK) AS ZIL " 
+        cQuery += " INNER JOIN " 
+        cQuery += " " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG ON " 
+        cQuery += " ZIL_FILIAL = ZIG_FILIAL " 
+        cQuery += " AND ZIL_ORDEM = ZIG_ORDEM " 
+    cQuery += " WHERE " 
+        cQuery += " ZIL_FILIAL = '" + FWxFilial("ZIL") + "' " 
+        cQuery += " AND ZIG_CTPATI = '" + cCP + "' " 
+        cQuery += " AND ZIL.D_E_L_E_T_ = '' " 
+        cQuery += " AND ZIL_PESADO = '2' " 
+
+    If Select("D_VLPABT") > 0
+        D_VLPABT->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_VLPABT"
+    DbSelectArea("D_VLPABT")
+
+        lRet := D_VLPABT->(Eof())
+
+    D_VLPABT->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return lRet
 /*/{Protheus.doc} prcOrd
     Processa ordens selecionadas.
     @type  Static Function

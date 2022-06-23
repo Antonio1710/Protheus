@@ -89,7 +89,7 @@ User Function ADLOG042P( cEmpAnt , cFilAnt , F2DOC , F2SERIE , F2CLIENTE , F2LOJ
 
 	//Everson - 07/02/2020. Chamado 054941.
 	If Alltrim(cEmpAnt) + Alltrim(cFilAnt) == "0103" .And. cOpc == "1"
-		U_ADLOG052P("1",cEmpAnt , cFilAnt )
+		//U_ADLOG052P("1",cEmpAnt , cFilAnt )
 
 	EndIf
 

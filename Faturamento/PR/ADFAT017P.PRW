@@ -1016,11 +1016,11 @@ Static Function getPrd(cPrdPro)
 
     //Variáveis.
     Local oDlg, oLbx
-    Local aCpos  := {}
-    Local aRet   := {}
-    Local cQuery := ""
-    Local cAlias := GetNextAlias()
-    Local lRet   := .F.
+    Local aCpos     := {}
+    Local aRet      := {}
+    Local cQuery    := ""
+    Local cAlias    := GetNextAlias()
+    Local lRet      := .F.
 
     Default cOrdOrg := ""
 
@@ -2148,7 +2148,8 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     
     (cQryT3)->(DbGoTop())
     While (cQryT3)->(!Eof())
-
+        
+        nQtdAgr   := 0 
         cTktGua   := ""
         cTicket   := ""
         cSeqTkt   := ""
@@ -4179,7 +4180,7 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     Local cEnvBar     := ""
     Local lGemba      := GetMV("MV_#UGEMBA",,.F.)    
     Local lOrdAgrp    := .F.
-    Local cNumAgrp    := ""
+    Local cPedSC6     := "" 
     
     Default aDdPAnt   := {}
     Default nTpSeq    := 0
@@ -4241,9 +4242,13 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
         Else
             lOrdAgrp :=  .T.
-            cNumAgrp := ZIF->ZIF_AGRUPA
-            
+
         EndIf
+
+    EndIf
+
+    If lSaida
+        cPedSC6 := Posicione("SC6", 17, FWxFilial("SC6") + ZIF->ZIF_NUMERO, "C6_NUM")
 
     EndIf
 
@@ -4278,10 +4283,10 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
         If nTpPesa == 2
 
             //Rotina para executar corte automático na ordem de pesagem e pedido de venda.
-            lRet := lRet .And. U_ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, @nQtdOrd, cTicket, nPesoLiq, lOrdAgrp, @cMsgError)
+            lRet := lRet .And. U_ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, @nQtdOrd, cTicket, nPesoLiq, lOrdAgrp, cPedSC6, @cMsgError)
 
             //Obtém dados de quebra da pesagem.
-            If lRet .And. U_ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, @aDdSeq, lOrdAgrp, cNumAgrp, lEnsacado, @cMsgError)
+            If lRet .And. U_ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, @aDdSeq, lOrdAgrp, lEnsacado, @cMsgError)
 
                 //Valida dados de quebra da pesagem.
                 lRet := U_ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, @nTpSeq, @cAcaSeq, @cMsgError)
@@ -4416,7 +4421,7 @@ Static Function cortEnsacado(cNmOrdem, lOrdAgrp, cMsgError)
 
             EndIf
             
-            If ! cortaPed(ZIF->ZIF_NUMERO, ZIF->ZIF_QUANT, @cMsgError)
+            If ! ajustPed(ZIF->ZIF_NUMERO, ZIF->ZIF_QUANT, @cMsgError)
                 DisarmTransaction() 
                 Break
 
@@ -4433,7 +4438,7 @@ Static Function cortEnsacado(cNmOrdem, lOrdAgrp, cMsgError)
 
             While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrdem
 
-                If ! cortaPed(ZIF->ZIF_NUMERO, ZIF->ZIF_QUANT, @cMsgError)
+                If ! ajustPed(ZIF->ZIF_NUMERO, ZIF->ZIF_QUANT, @cMsgError)
                     DisarmTransaction() 
                     Break
                     
@@ -4635,13 +4640,13 @@ User Function ADFAT17T(aDdSeq, cPlaca, cTicket, cNmOrdem, nTpSeq, cAcaSeq, cMsgE
 
 Return .T.
 /*/{Protheus.doc} ADFAT17R
-    Efetua corte na ordem de pesagem e pedido de saída.
+    Efetua ajuste na ordem de pesagem e pedido de saída.
     @type  User Function
     @author Everson
     @since 24/03/2022
     @version 01
 /*/
-User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, lOrdAgrp, cMsgError)
+User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, lOrdAgrp, cPedSC6, cMsgError)
 
     //Variáveis.
     Local aArea   := GetArea()
@@ -4650,12 +4655,18 @@ User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, 
     Local nPesoT  := 0
     Local nTotOrd := 0
     Local nCntOrd := 0
+    Local lTransf := .F.
 
     Default lOrdAgrp  := .F.
     Default cMsgError := ""
 
+    If ! Empty(cPedSC6) .And. U_ADFAT583(cPedSC6, "")
+        lTransf := .T.
+
+    EndIf
+
     //Se a quantidade da ordem de pesagem é menor que o peso liquido da balança, não há corte a ser feito.
-    If nQtdOrd < nPesoLi
+    If ! lTransf .And. nQtdOrd < nPesoLi
         RestArea(aArea)
         Return .T.
 
@@ -4685,7 +4696,7 @@ User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, 
 
             EndIf
 
-            If ! cortaPed(cNmOrdem, nPesoLi, @cMsgError) //Altera a quantidade do pedido de saída.
+            If ! ajustPed(cNmOrdem, nPesoLi, @cMsgError) //Altera a quantidade do pedido de saída.
                 DisarmTransaction() 
                 Break
 
@@ -4719,7 +4730,7 @@ User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, 
 
                 EndIf
 
-                If ! cortaPed(ZIF->ZIF_NUMERO, nPeso, @cMsgError) //Altera a quantidade do pedido de saída.
+                If ! ajustPed(ZIF->ZIF_NUMERO, nPeso, @cMsgError) //Altera a quantidade do pedido de saída.
                     DisarmTransaction() 
                     Break
 
@@ -4746,14 +4757,14 @@ User Function ADFAT17R(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, cTicket, nPesoLi, 
     RestArea(aArea)
 
 Return lRet
-/*/{Protheus.doc} cortaPed
+/*/{Protheus.doc} ajustPed
     Altera a quantidade do pedido de saída.
     @type  User Function
     @author Everson
     @since 24/03/2022
     @version 01
 /*/
-Static Function cortaPed(cNmOrdem, nNvQtd1, cMsgError)
+Static Function ajustPed(cNmOrdem, nNvQtd1, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -4776,12 +4787,12 @@ Static Function cortaPed(cNmOrdem, nNvQtd1, cMsgError)
 			
 	EndIf
 
-	If (nNvQtd1 > SC6->C6_QTDVEN)
-		cMsgError := "cortaPed - Quantidade de corte maior que quantidade liberada (Qtd Lib " + Transform(SC6->C6_QTDVEN,"@E 999,999,999.999") + ")"
-		RestArea(aArea)
-		Return .F.
+	// If (nNvQtd1 > SC6->C6_QTDVEN)
+	// 	cMsgError := "ajustPed - Quantidade de corte maior que quantidade liberada (Qtd Lib " + Transform(SC6->C6_QTDVEN,"@E 999,999,999.999") + ")"
+	// 	RestArea(aArea)
+	// 	Return .F.
 			
-	EndIf
+	// EndIf
 
     cPedS    := SC6->C6_NUM
     cItem    := SC6->C6_ITEM
@@ -4791,7 +4802,7 @@ Static Function cortaPed(cNmOrdem, nNvQtd1, cMsgError)
     SC5->(DbSetOrder(1))
     SC5->(DbGoTop())
     If ! SC5->( DbSeek( FwxFilial("SC5") + cPedS ))
-        cMsgError := "cortaPed - Pedido " + cPedS + " não localizado na tabela SC5"
+        cMsgError := "ajustPed - Pedido " + cPedS + " não localizado na tabela SC5"
 		RestArea(aArea)
 		Return .F.
 
@@ -4801,7 +4812,7 @@ Static Function cortaPed(cNmOrdem, nNvQtd1, cMsgError)
 	SC9->(DbSetOrder(1))
 	SC9->(DbGoTop())
 	If ! SC9->( DbSeek( FWxFilial("SC9") + cPedS + cItem ))
-        cMsgError := "cortaPed - Pedido " + cPedS + " não localizado na tabela SC9"
+        cMsgError := "ajustPed - Pedido " + cPedS + " não localizado na tabela SC9"
 		RestArea(aArea)
 		Return .F.
 
@@ -5121,7 +5132,7 @@ Return lRet
     @since 01/12/2021
     @version 01
 /*/
-User Function ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, aDdSeq, lOrdAgrp, cAgrupador, lEnsacado, cMsgError)
+User Function ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq, aDdSeq, lOrdAgrp, lEnsacado, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -5133,22 +5144,18 @@ User Function ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq,
     Local lLib      := .F.
     Local cAnLabo   := ""
     Local cQuery    := ""
-    Local cOrdAgrp  := ""
 
     Default lOrdAgrp  := .F.
-    Default cAgrupador:= ""
     Default cMsgError := ""
 
     //Para produtos ensacados, obtem-se o peso bruto do apontamento de ensacados.
     If lEnsacado
 
-        cOrdAgrp := Iif(!Empty(cAgrupador), cAgrupador, cNmOrdem)
-
-        If U_ADEST738(cOrdAgrp)
+        If U_ADEST738(cNmOrdem)
 
             nQtdOrd := 0
 
-            While ! ZIL->(Eof()) .And. ZIL->ZIL_FILIAL == FWxFilial("ZIL") .And. ZIL->ZIL_ORDEM == cOrdAgrp
+            While ! ZIL->(Eof()) .And. ZIL->ZIL_FILIAL == FWxFilial("ZIL") .And. ZIL->ZIL_ORDEM == cNmOrdem
                     
                     nQtdOrd += ZIL->ZIL_PESBRU
 
@@ -5213,7 +5220,7 @@ User Function ADFAT177(cRotPesa, cNmOrdem, cProdSAG, nQtdOrd, nPesIni, nPesoLiq,
             cQuery += " AND ZIF_PRDSAG = ZIA_PRDPRT " 
         cQuery += " WHERE " 
             cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
-            cQuery += " AND ZIF_AGRUPA = '" + cAgrupador + "' " 
+            cQuery += " AND ZIF_AGRUPA = '" + cNmOrdem + "' " 
             cQuery += " AND ZIF.D_E_L_E_T_ = '' " 
             cQuery += " AND ZIB.D_E_L_E_T_ = '' " 
             cQuery += " AND ZIA.D_E_L_E_T_ = '' " 
@@ -6713,7 +6720,6 @@ User Function ADFAT17O(cCP, cPlaca)
     DbSelectArea("D_PEDS")
     D_PEDS->(DbGoTop())
 
-
     While ! D_PEDS->(Eof())
         
         cPedido := D_PEDS->C5_NUM
@@ -6744,21 +6750,32 @@ User Function ADFAT17O(cCP, cPlaca)
 
             cMsgError := ""
             cNvOrdP   := ""
-            cProdSAG  := getPrd(D_PEDS->C6_PRODUTO) //Everson - 27/05/2022. Chamado 18465.
 
-            If Empty(cProdSAG)
-                cMsgError := "É necessário selecionar o produto para gerar a ordem de pesagem do pedido " + cValToChar(SC6->C6_NUM) + " - Controle de pátio " + cCP + "."
-                DisarmTransaction()
-                Break
+            If U_ADFAT583(cPedido, Padl(D_PEDS->C6_ITEM, 3, "0"))
 
-            EndIf
+                cProdSAG  := Alltrim(cValToChar(ZHS->ZHS_PRDSAG))
 
-            cLoteProd := U_ADFAT18B(cProdSAG)
+                cLoteProd := Alltrim(cValToChar(ZHS->ZHS_LOTE))
 
-            If Empty(cLoteProd)
-                cMsgError := "Produto " + cProdSAG + " não possui lote."
-                DisarmTransaction()
-                Break
+            Else
+                
+                cProdSAG  := getPrd(D_PEDS->C6_PRODUTO) //Everson - 27/05/2022. Chamado 18465.
+
+                If Empty(cProdSAG)
+                    cMsgError := "É necessário selecionar o produto para gerar a ordem de pesagem do pedido " + cValToChar(SC6->C6_NUM) + " - Controle de pátio " + cCP + "."
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+                cLoteProd := U_ADFAT18B(cProdSAG)
+
+                If Empty(cLoteProd)
+                    cMsgError := "Produto " + cProdSAG + " não possui lote."
+                    DisarmTransaction()
+                    Break
+
+                EndIf
 
             EndIf
 
@@ -6917,7 +6934,7 @@ Static Function itemBlc(cPedS)
 
         While ! SC9->(Eof()) .And. SC9->C9_FILIAL == FWxFilial("SC9") .And. SC9->C9_PEDIDO == cPedS
 
-            If ! Empty(SC9->C9_BLEST) .Or. ! Empty(SC9->C9_BLCRED)
+            If ! Empty(SC9->C9_BLCRED)
                 lRet := .T.
                 Exit
 
