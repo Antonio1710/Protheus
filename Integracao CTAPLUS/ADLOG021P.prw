@@ -31,6 +31,10 @@ User Function ADLOG021P()
         cFiltro := "B"
         cFiltro2:= "N"
 
+    ElseIf cEmpAnt+cFilAnt = "0104" 
+        cFiltro := "C"
+        cFiltro2:= "D"
+
     Else
         cFiltro := "A"
         cFiltro2:= "M"
