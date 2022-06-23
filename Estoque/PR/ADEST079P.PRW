@@ -32,7 +32,7 @@ User Function ADEST079P() // U_ADEST079P()
 
         If ZBN->ZBN_STATUS == "2" .Or. ( ZBN->ZBN_STATUS == "1" .And. ( ZBN->ZBN_DATA < Date() .Or. ElapTime(ZBN->ZBN_HORA, Time()) > "00:10:00" ))
 
-            cLinkedServer := GetMv("MV_#LKSWRC",,"")
+            cLinkedServer := Alltrim(cValToChar(GetMv("MV_#LKSWRC",,"")))
 
             Conout( DToC(Date()) + " " + Time() + " ADEST079P - Início - " )
             logZBN("1")
@@ -135,7 +135,7 @@ Static Function impDados()
                 ZBB->ZBB_PLAORI := D_DADOS->VEICULO
                 ZBB->ZBB_SISTEM := "C" 
                 ZBB->ZBB_CCWINF := Alltrim(cValToChar(D_DADOS->EMPRESA))
-                ZBB->ZBB_BOMBA  := "S500"
+                ZBB->ZBB_BOMBA  := "S10"
                 ZBB->ZBB_ESTOQU := .F.
                 ZBB->ZBB_LOGIST := .F.
                 ZBB->ZBB_CTAPLU := .F.
