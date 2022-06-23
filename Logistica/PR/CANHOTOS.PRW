@@ -9,10 +9,9 @@
 	@since 05/12/2019
 	@version 01
 	@history CHAMADO: 053687 - RETIRADO O BOTÃO 'DESMARCAR DIA' E DEIXADO NA POSIÇÃO O 'MARCAR TODOS' POR ADRIANO SAVOINE 05/12/2019.
-	@history CHAMADO: 7805 - RETIRADO O BOTÃO 'DESMARCAR DIA' E DEIXADO NA POSIÇÃO O 'MARCAR TODOS' POR ADRIANO SAVOINE 05/12/2019.
-	@history Ticket   7805 - Leonardo P. Monteiro - 12/01/2021 - Correção do error.log ao selecionar a opção de parâmetros para recarregar o componente de tela Mbrowser. Erro: 'TOTVS Manufatura ERROR.LOG - U_CANHOTOS(CANHOTOS.PRW)'.
-
-	
+	@history CHAMADO: 7805   - RETIRADO O BOTÃO 'DESMARCAR DIA' E DEIXADO NA POSIÇÃO O 'MARCAR TODOS' POR ADRIANO SAVOINE 05/12/2019.
+	@history Ticket   7805   - Leonardo P. Monteiro - 12/01/2021 - Correção do error.log ao selecionar a opção de parâmetros para recarregar o componente de tela Mbrowser. Erro: 'TOTVS Manufatura ERROR.LOG - U_CANHOTOS(CANHOTOS.PRW)'.
+	@history Ticket   75031  - Everson, 23/06/2022 - Tratamento para marcar registros com data de entrega futura.
 	/*/
 
 User Function CANHOTOS()   
@@ -99,7 +98,7 @@ Static Function MarquUne()
 	
 	dDtEntrega := SC5->C5_DTENTR
 
-	IF (dDtEntrega <= DATE() .AND. ALLTRIM(SC5->C5_CANHOTO) == '' ).OR. ALLTRIM(SC5->C5_XTIPO) = '2'
+	IF ALLTRIM(SC5->C5_CANHOTO) == '' .OR. ALLTRIM(SC5->C5_XTIPO) = '2' //Everson - 23/06/2022. Chamado 75031.
 	
 		IF SC5->(RecLock("SC5",.F.))
 		
@@ -117,7 +116,7 @@ Static Function MarquUne()
 	
 			dDtEntrega := SC5->C5_DTENTR
 		
-			IF (dDtEntrega == DATE()      .OR. ;
+			IF (dDtEntrega > Date()) .Or. (dDtEntrega == DATE()      .OR. ; //Everson - 23/06/2022. Chamado 75031.
 			   dDtEntrega  == (DATE()  - GETMV("MV_#DIACAN"))) .OR. ALLTRIM(SC5->C5_XTIPO) = '2'
 			   
 				   IF SC5->(RecLock("SC5",.F.))
@@ -166,7 +165,8 @@ Static Function MARCA(cMarca)
 			cDtEntr    := SC5->C5_DTENTR
 			cRot       := SC5->C5_ROTEIRO
 	
-			IF dDtEntrega <= DATE() .OR. ALLTRIM(SC5->C5_XTIPO) = '2'    
+			// IF dDtEntrega <= DATE() .OR. ALLTRIM(SC5->C5_XTIPO) = '2'    
+			IF ALLTRIM(SC5->C5_XTIPO) = '2'    
 			   
 			   IF cDtEntr == cDtEntrOld .AND. ;
 			      cRot    == cRotOld          // e a mesma data de entrega e o mesmo roteiro altera 
@@ -215,7 +215,7 @@ Static Function DESMARCA(cMarca)
 	
 			dDtEntrega := SC5->C5_DTENTR
 		
-			IF (dDtEntrega == DATE()      .OR. ;
+			IF (dDtEntrega > Date()) .Or. (dDtEntrega == DATE()      .OR. ; //Everson - 23/06/2022. Chamado 75031.
 			   dDtEntrega  == (DATE() - GETMV("MV_#DIACAN"))) .OR. ALLTRIM(SC5->C5_XTIPO) = '2'
 			   
 				   IF SC5->(RecLock("SC5",.F.))
