@@ -18,6 +18,7 @@
 	@history ticket 69712 - Fernando Macieira - 15/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 	@history ticket TI    - Fernando Macieira - 22/03/2022 - Forçar publicação
 	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history ticket 74027 - TI                - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
 /*/
 User Function MT110LOK()
 
@@ -164,7 +165,13 @@ User Function MT110LOK()
 				gdFieldPut("C1_ITEMCTA", cMVItemCta, n)
 			EndIf
 			//
-			
+
+			// @history ticket 74027 - TI                - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
+			If AllTrim(cCC) == "5318" .or. Left(AllTrim(cCC),1) == "7"
+				gdFieldPut("C1_ITEMCTA", "111", n)
+			EndIf
+			//
+		
 			// Consiste exigência ou não do projeto
 			lPrjInv := Left(AllTrim(cCC),1) == "9"
 			
