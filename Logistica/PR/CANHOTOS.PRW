@@ -165,8 +165,7 @@ Static Function MARCA(cMarca)
 			cDtEntr    := SC5->C5_DTENTR
 			cRot       := SC5->C5_ROTEIRO
 	
-			// IF dDtEntrega <= DATE() .OR. ALLTRIM(SC5->C5_XTIPO) = '2'    
-			IF ALLTRIM(SC5->C5_XTIPO) = '2'    
+			IF (dDtEntrega > Date()) .Or. dDtEntrega <= DATE() .OR. ALLTRIM(SC5->C5_XTIPO) = '2'     
 			   
 			   IF cDtEntr == cDtEntrOld .AND. ;
 			      cRot    == cRotOld          // e a mesma data de entrega e o mesmo roteiro altera 
