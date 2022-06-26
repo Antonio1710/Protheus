@@ -113,6 +113,9 @@ User Function ADFAT491(cNmOrdem, cMsgError)
                     U_ADFAT173("Envio de pesagem final: " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
 
                 Else
+
+                    U_ADFAT165(D_DADOS->ZIF_NUMERO, "ZIF_GEMBA", "3") //Marca ordem como enviada.
+
                     U_ADFAT173("Envio de pesagem final: sucesso ", D_DADOS->ZIF_NUMERO, "", "GEMBA")
 
                 EndIf
