@@ -4380,6 +4380,12 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
             If ! U_ADFAT50N(cNmOrdem, @cMsgError) 
                 U_ADFAT173("Envio de pesagem final: " + cMsgError, cNmOrdem, "", "GEMBA")
 
+            Else
+
+                U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "3") //Marca ordem como enviada.
+
+                U_ADFAT173("Envio de pesagem final: sucesso ", cNmOrdem, "", "GEMBA")
+
             EndIf
 
         EndIf

@@ -16,11 +16,10 @@
 	@history Alteração - Everosn         - 03/07/2020 - Chamado: 059401. Tratamento para utilizar o vale palete no relatório ROTLOG.
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
+	@history Alteração - Everson - 23/06/2022 - Ticket 75212 - Adicionar filtro por placa de veículo e nota fiscal. 
 /*/
 
 User Function ADROMENT() // U_ADROMENT()
-
-	Local cQuer1			:= ""           
 
 	Private cDesc1			:= "Este programa tem como objetivo imprimir relatorio "
 	Private cDesc2			:= "de acordo com os parametros informados pelo usuario."
@@ -35,7 +34,6 @@ User Function ADROMENT() // U_ADROMENT()
 	
 	Private lEnd   	    	:= .F.
 	Private lAbortPrint 	:= .F.
-	Private CbTxt       	:= ""
 	Private limite			:= 220
 	Private tamanho			:= "G"
 	Private nomeprog		:= "ADROMENT" 
@@ -55,10 +53,7 @@ User Function ADROMENT() // U_ADROMENT()
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio de Romaneio de Entrega')
 	
 	If !Pergunte(cPerg,.T.)
-		ValidPerg()
-		If !Pergunte (cPerg, .T.)
-			Return
-		EndIf
+		Return
 	EndIf
 	
 	wnrel := SetPrint(cString,NomeProg,"",@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
@@ -506,8 +501,13 @@ Static Function fSelect()
 	cQuery	+= " AND SD2.D2_FILIAL 	 = '" + XFILIAL("SD2") 			+ "' AND SD2.D_E_L_E_T_ = ' ' " 
 	cQuery	+= " AND SF2.F2_ROTEIRO	BETWEEN '" 	+ MV_PAR03 			+ "' AND '" + MV_PAR05 		+ "' "
 	cQuery  += " AND SF2.F2_SEQUENC BETWEEN '" 	+ MV_PAR04			+ "' AND '" + MV_PAR06 		+ "' "
+	
 	cQuery	+= " AND C5_DTENTR 		BETWEEN '" 	+ DTOS(MV_PAR01)	+ "' AND '" + DTOS(MV_PAR02)+ "' "
-	cQuery	+= " AND C5_PLACA  <> '' "  //William Costa - 25/11/2019 - Chamado 053588
+
+	cQuery	+= " AND C5_PLACA  BETWEEN '" + cValToChar(MV_PAR11) + "' AND '" + cValToChar(MV_PAR12) + "' " //William Costa - 25/11/2019 - Chamado 053588 //Everson - 23/06/2022. Chamado 75212.
+	cQuery	+= " AND F2_DOC    BETWEEN '" + cValToChar(MV_PAR13) + "' AND '" + cValToChar(MV_PAR15) + "' "   //Everson - 23/06/2022. Chamado 75212.
+	cQuery	+= " AND F2_SERIE  BETWEEN '" + cValToChar(MV_PAR14) + "' AND '" + cValToChar(MV_PAR16) + "' " //Everson - 23/06/2022. Chamado 75212.
+
 	cQuery 	+= " AND ISNULL(C5_VEND1,'')  		BETWEEN '"	+ MV_PAR09   		+ "' AND '" + MV_PAR10 		+ "' " //Everson - 24/04/19. Chamado 048650.
 	cQuery 	+= " AND ISNULL(SA3.A3_CODSUP,'') 	BETWEEN '"	+ MV_PAR07			+ "' AND '"	+ MV_PAR08		+ "' " //Everson - 24/04/19. Chamado 048650.
 	

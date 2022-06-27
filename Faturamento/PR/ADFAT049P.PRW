@@ -47,7 +47,7 @@ User Function ADFAT491(cNmOrdem, cMsgError)
     Else
 
         cQuery += " SELECT  "
-        cQuery += " DISTINCT ZIF_NUMERO, ZIF_GEMBA "
+        cQuery += " DISTINCT ZIF_NUMERO, ZIG_INICIA, ZIF_GEMBA, CASE WHEN (ZIT_ORDEM IS NULL OR ZIT_ORDEM = '') THEN '1' ELSE '0' END AS LACRE "
         cQuery += " FROM "
         cQuery += " " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF "
         cQuery += " INNER JOIN "
@@ -66,9 +66,8 @@ User Function ADFAT491(cNmOrdem, cMsgError)
         cQuery += " WHERE "
         cQuery += " ZIF_FILIAL = '" + FwxFilial("ZIF") + "' "
         cQuery += " AND ZIG_TPMOV = 'R' "
-        cQuery += " AND ZIG_INICIA IN ('1','2','4') "
+        cQuery += " AND ( ZIG_INICIA IN ('1','2','4') OR (ZIG_INICIA = '3' AND ZIF_GEMBA = '1' ) ) "
         cQuery += " AND ZIB_STATUS NOT IN ('5','6') "
-        cQuery += " AND (ZIT_ORDEM IS NULL OR ZIT_ORDEM = '') "
 
         If ! Empty(cNmOrdem)
             cQuery += " AND ZIF_NUMERO = '" + cNmOrdem + "' "
@@ -93,7 +92,7 @@ User Function ADFAT491(cNmOrdem, cMsgError)
 
             cMsgError := ""
 
-            If D_DADOS->ZIF_GEMBA == "1" //Ordem enviada.
+            If D_DADOS->ZIF_GEMBA == "1" .And. D_DADOS->ZIG_INICIA <> "3" .And. D_DADOS->LACRE == "1" //Ordem enviada, peso não fechado e lacre não lançado.
 
                 If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
                     
@@ -107,7 +106,21 @@ User Function ADFAT491(cNmOrdem, cMsgError)
 
                 EndIf
 
-            Else //Ordem não enviada.
+            ElseIf D_DADOS->ZIF_GEMBA == "1" .And. D_DADOS->ZIG_INICIA == "3" .And. D_DADOS->LACRE == "0" //Ordem enviada, peso fechado e lacre lançado.
+
+                //Envia a pesagem final para o Gemba.
+                If ! U_ADFAT50N(D_DADOS->ZIF_NUMERO, @cMsgError) 
+                    U_ADFAT173("Envio de pesagem final: " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
+
+                Else
+
+                    U_ADFAT165(D_DADOS->ZIF_NUMERO, "ZIF_GEMBA", "3") //Marca ordem como enviada.
+
+                    U_ADFAT173("Envio de pesagem final: sucesso ", D_DADOS->ZIF_NUMERO, "", "GEMBA")
+
+                EndIf
+
+            ElseIf D_DADOS->ZIF_GEMBA == "2" //Ordem não enviada.
 
                 If ! U_ADFAT50F(D_DADOS->ZIF_NUMERO, @cMsgError) //Envio de ordem para o Gemba.
 
