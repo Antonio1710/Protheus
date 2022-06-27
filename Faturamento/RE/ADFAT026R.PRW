@@ -481,6 +481,7 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
     Local cEmailTkt := Alltrim(cValToChar(GetMv("MV_#IMPCPT", , "")))
     Local cPreFx    := "Impressão Ticket: "
     Local cDiretorio:= "/ticket_racao/"
+    Local cTktF     := ""
 
     Default lJob    := .F.
 
@@ -643,10 +644,26 @@ Static Function iTktRc(cTicket, cCabec2, cTpRac, lJob) // U_ADFAT026R("0000070",
         oPrinter:Say(490,  20, "Data/Hora Recebimento:__/__/_____ __:___ Estoque Silo (Antes Decarga):_________________", oFt14N)
 
         //Imagem.
-            oPrinter:SayBitmap (495, 20, "\img_ticket_racao\" + FWxFilial("ZIG") + "\" + cFase + ".png", 555, 330)
-            oPrinter:Say(785,  70, cLote,  oFt16B)
-            oPrinter:Say(785, 250, cDtFab, oFt16B)
-            oPrinter:Say(785, 420, cDtVld, oFt16B)
+
+            If cFilAnt == "05"
+
+                If SubsTr(Alltrim(cValToChar(cVersao)), 1, 1) $"M/P"
+                    cTktF := SubsTr(Alltrim(cValToChar(cVersao)), 1, 3)
+                Else
+                    cTktF := SubsTr(Alltrim(cValToChar(cVersao)), 1, 2)
+
+                EndIf
+
+                oPrinter:SayBitmap (495, 20, "\img_ticket_racao\" + FWxFilial("ZIG") + "\" + cTktF + ".png", 555, 330)
+
+            Else
+                oPrinter:SayBitmap (495, 20, "\img_ticket_racao\" + FWxFilial("ZIG") + "\" + cFase + ".png", 555, 330)
+
+            EndIf
+
+            oPrinter:Say(770,  70, cLote,  oFt16B)
+            oPrinter:Say(770, 250, cDtFab, oFt16B)
+            oPrinter:Say(770, 420, cDtVld, oFt16B)
 
     oPrinter:EndPage()
     

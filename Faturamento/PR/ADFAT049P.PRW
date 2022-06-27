@@ -67,7 +67,7 @@ User Function ADFAT491(cNmOrdem, cMsgError)
         cQuery += " ZIF_FILIAL = '" + FwxFilial("ZIF") + "' "
         cQuery += " AND ZIG_TPMOV = 'R' "
         cQuery += " AND ( ZIG_INICIA IN ('1','2','4') OR (ZIG_INICIA = '3' AND ZIF_GEMBA = '1' ) ) "
-        cQuery += " AND ZIB_STATUS NOT IN ('5','6') "
+        cQuery += " AND ZIB_STATUS NOT IN ('6') "
 
         If ! Empty(cNmOrdem)
             cQuery += " AND ZIF_NUMERO = '" + cNmOrdem + "' "
