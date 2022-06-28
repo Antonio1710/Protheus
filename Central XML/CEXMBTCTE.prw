@@ -8,6 +8,7 @@
 @version		1.0
 @return			Nil
 @type 			Function
+@history		Ticket 66275  - Abel Babini		-	07/06/2022 - Criação de botão para vincular CT-e a Documento de Origem quando CNPJ duplicado na base ou Fornecedor estrangeiro
 /*/
 
 //RECNFCTE->XML_TPFRET
@@ -56,6 +57,7 @@ User Function CEXCTEBT()
 	Local oBtn01	:= Nil //Altera Tipo CTe
 	Local oBtn02	:= Nil //Recusa ADORO CT-e
 	Local oBtn03	:= Nil //Relatório CT-e Pendente
+	Local oBtn04	:= Nil //Ticket 66275  - Abel Babini		-	07/06/2022 - Criação de botão para vincular CT-e a Documento de Origem quando CNPJ duplicado na base ou Fornecedor estrangeiro
 
 	Private oDlgAdr	:= Nil
 
@@ -66,6 +68,7 @@ User Function CEXCTEBT()
 	oBtn01 := TButton():New( 018, 010, "Alterar Tipo CT-e",oDlgAdr,{||U_CEXCTETP()}, 60,20,,,.F.,.T.,.F.,,.F.,,,.F. )
 	oBtn02 := TButton():New( 018, 080, "Recusa Ad´oro CT-e",oDlgAdr,{||U_CEXCTERC()}, 60,20,,,.F.,.T.,.F.,,.F.,,,.F. )
 	oBtn03 := TButton():New( 042, 080, "Relatório CT-e Pend.",oDlgAdr,{||U_ADFIS033R()}, 60,20,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oBtn04 := TButton():New( 042, 010, "Vincula CT-e Doc. Orig.",oDlgAdr,{||U_CEXCTEDO()}, 60,20,,,.F.,.T.,.F.,,.F.,,,.F. ) //Ticket 66275  - Abel Babini		-	07/06/2022 - Criação de botão para vincular CT-e a Documento de Origem quando CNPJ duplicado na base ou Fornecedor estrangeiro
 	
 	DEFINE SBUTTON oBtnCan 	FROM 068, 130 TYPE 02 OF oDlgAdr ENABLE Action( oDlgAdr:End() )
 	
@@ -225,3 +228,67 @@ static function DlgOk(lPar,cMotivo,cCodigo,cLoja)
 oDlg:end()
 
 Return
+
+/*/{Protheus.doc} User Function CEXCTEDO
+	Vincula CT-e ao Documento de Origem preenchendo o campo XIT_KEYNFO
+	@type  User Function
+	@author Abel Babini
+	@since 07/06/2022
+	@history Ticket 66275  - Abel Babini		-	07/06/2022 - Criação de botão para vincular CT-e a Documento de Origem quando CNPJ duplicado na base ou Fornecedor estrangeiro
+	/*/
+User Function CEXCTEDO()
+	Local oDlg	:= Nil
+	Local nOpt	:= 0
+	Local cNFOri	:= Space(FWTamSX3("F1_DOC")[1])
+	Local cSerOri	:= Space(FWTamSX3("F1_SERIE")[1])
+	Local cForOri	:= Space(FWTamSX3("F1_FORNECE")[1])
+	Local cLojOri	:= Space(FWTamSX3("F1_LOJA")[1])
+
+	IF RECNFCTE->XML_TPFRET == 'C' .AND. Empty(Alltrim(RECNFCTEITENS->XIT_KEYNFO))
+
+		oDlg := MSDialog():New (0,0, 120,300, "Amarração Manual Doc. de Origem" ,,, .F.,,,,,, .T.,,, .T. )
+
+    //**********************************************
+    //ESTRUTURA DA JANELA  
+    //**********************************************
+    oDlg:lEscClose 	:= 	.T.
+    oDlg:lMaximized := 	.F. 
+
+		@ 005,005 Say OemToAnsi("Nota") PIXEL COLORS CLR_HBLUE OF oDlg 
+		@ 014,005 MSGET cNFOri				SIZE 030,008	OF oDlg PIXEL PICTURE '@!' F3 "SF1"
+
+		@ 005,050 Say OemToAnsi("Série") PIXEL COLORS CLR_HBLUE OF oDlg 
+		@ 014,050 MSGET cSerOri				SIZE 015,008	OF oDlg PIXEL PICTURE '@!'
+
+		@ 005,075 Say OemToAnsi("Fornecedor") PIXEL COLORS CLR_HBLUE OF oDlg 
+		@ 014,075 MSGET cForOri				SIZE 030,008	OF oDlg PIXEL PICTURE '@!'
+
+		@ 005,110 Say OemToAnsi("Loja") PIXEL COLORS CLR_HBLUE OF oDlg 
+		@ 014,110 MSGET cLojOri				SIZE 015,008	OF oDlg PIXEL PICTURE '@!'
+
+		@ 030,050 BUTTON "Cancela"  OF oDlg SIZE 030,015 PIXEL ACTION (oDlg:End())
+		@ 030,080 BUTTON "Confirma" OF oDlg SIZE 030,015 PIXEL ACTION (nOpt:=1,oDlg:End())
+
+		ACTIVATE MSDIALOG oDlg CENTER
+
+		If nOpt == 1
+			If Empty(Alltrim(RECNFCTEITENS->XIT_KEYNFO)) .and. Empty(Alltrim(RECNFCTE->XML_STATF1)) .and. Empty(Alltrim(RECNFCTE->XML_KEYF1))
+				cQuery := "UPDATE RECNFCTEITENS SET XIT_KEYNFO = '"+cNFOri+cSerOri+cForOri+cLojOri+"N' WHERE XIT_CHAVE = '"+RECNFCTE->XML_CHAVE+"'"
+				If TcSqlExec(cQuery) < 0
+					MsgStop("Não foi possível atualizar o registro." + CRLF + "TCSQLError() " + TCSQLError(),"Função CEXMBTCTE - 01")
+					Return
+				EndIf
+				MsgInfo("Processo Concluído!","Atenção")
+			else
+				MsgStop("O registro já possui vínculo com documento de origem ou já foi classificado","Função CEXMBTCTE - 02")
+			endif
+			// RecLock("RECNFCTEITENS",.F.)
+			// RECNFCTEITENS->XIT_KEYNFO := cNFOri+cSerOri+cForOri+cLojOri+'N'
+			// MsUnlock() 		
+		Endif
+	ENDIF
+
+Return 
+
+
+
