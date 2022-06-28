@@ -12,7 +12,7 @@
     @example
     (examples)
     @see (links_or_references)
-    @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação do SIG V33
+    @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação do SIG R33
 /*/
 User Function DPCTB102GR()
 
