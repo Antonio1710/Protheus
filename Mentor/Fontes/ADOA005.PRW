@@ -59,6 +59,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 74275  - Everson, 13/06/2022, tratamento para bloqueio de cliente a partir do número de pedidos em aberto.
 	@history Ticket TI  - Everson, 14/06/2022, tratamento para error log.
+	@history Ticket 73694 - Everson, 29/06/2022, tratamento para aprovação de crédito.
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -2014,7 +2015,7 @@ Static Function Adoa5Cred( cCodcli, cLojacli )
 					If M->PB3_BLOQUE = '2' .or. lRede == .T. .or. M->PB3_COND = '0' .or. M->PB3_COND = '00' .or. M->PB3_LIMAPR <= nValNivel
 
 						//sigoli 01/06/2017 Chamado:035009
-						If GetAdvFVal("SE4", "E4_DMEDI",xFilial("SE4")+M->PB3_COND, 1) > nPrazoGer .and. lAltPraz == .T. .and. cNivel <= '5' 
+						If GetAdvFVal("SE4", "E4_DMEDI",xFilial("SE4")+M->PB3_COND, 1) > nPrazoGer .and. lAltPraz == .T. .and. cNivel <= '6' //Everson, 29/06/2022. Chamado 73694.
 							MsgAlert("Crédito não aprovado. Encaminhe para um nível superior para aprovação") 
 							lAprov := .F.	
 							Return       
@@ -2022,7 +2023,7 @@ Static Function Adoa5Cred( cCodcli, cLojacli )
 
 						nLimApAnt:= PesqLimiRed() && rotina para buscar limite da rede
 
-						If nLimApAnt <> M->PB3_LIMAPR .and. cNivel <= '5'
+						If nLimApAnt <> M->PB3_LIMAPR .and. cNivel <= '6' //Everson, 29/06/2022. Chamado 73694.
 
 							If !MsgBox(ALLTRIM(cusername)+", limite da rede R$: "+cvaltochar(Alltrim(Transform(nLimApAnt,"@E 999,999,999.99")))+" está diferente do limite solicitado R$: "+cvaltochar(Alltrim(Transform(M->PB3_LIMAPR,"@E 999,999,999.99")))+". Deseja aprovar?"+chr(13)+chr(10)+chr(13)+chr(10),"Limite REDE","YESNO")	
 								MsgAlert("Crédito não aprovado. Encaminhe para um nível superior para aprovação") 
@@ -2054,7 +2055,7 @@ Static Function Adoa5Cred( cCodcli, cLojacli )
 			ElseIf !Empty(M->PB3_CODRED) .and. (M->PB3_BLOQUE = '2' .or. lRede = .T. .or. M->PB3_COND = '0' .or. M->PB3_COND = '00' .or. M->PB3_LIMAPR <= nValNivel)
 
 				//sigoli 01/06/2017 Chamado:035009
-				If GetAdvFVal("SE4", "E4_DMEDI",xFilial("SE4")+M->PB3_COND, 1) > nPrazoGer .and. lAltPraz == .T. .and. cNivel <= '5' 
+				If GetAdvFVal("SE4", "E4_DMEDI",xFilial("SE4")+M->PB3_COND, 1) > nPrazoGer .and. lAltPraz == .T. .and. cNivel <= '6' //Everson, 29/06/2022. Chamado 73694. 
 					MsgAlert("Crédito não aprovado. Encaminhe para um nível superior para aprovação") 
 					lAprov := .F.	
 					Return       
@@ -2062,7 +2063,7 @@ Static Function Adoa5Cred( cCodcli, cLojacli )
 
 				nLimApAnt:= PesqLimiRed() //rotina para buscar saldo da rede
 
-				If nLimApAnt <> M->PB3_LIMAPR .and. cNivel <= '5'	
+				If nLimApAnt <> M->PB3_LIMAPR .and. cNivel <= '6' //Everson, 29/06/2022. Chamado 73694.	
 
 					If  M->PB3_LIMAPR > nLimApAnt && é aumentando o limite
 
