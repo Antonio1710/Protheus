@@ -19,6 +19,7 @@
 	@history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 	@history ticket 72339 - Fernando Macieira - 20/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão de logs pois manualmente o email dispara e no schedule não
 	@history ticket 72339 - Fernando Macieira - 23/05/2022 - Tratamento array para passagem do parâmetro
+	@history ticket 75333 - Everson  - 29/06/2022 - Alterada a ordenação dos registros do relatório para ordem de abate.
 /*/
 User Function ADLFV011R(aParam)
 
@@ -221,7 +222,8 @@ Static Function CriaTMP()
 
 	// @history ticket 72339 - Fernando Macieira - 16/05/2022 - workflow - ACOMPANHAMENTO DAS NOTAS FISCAIS DE FRANGO VIVO - inclusão filial/granja
 	cNameIdx := FileNoExt(cArquivo)
-	DBCreateIndex(cNameIdx,'FILIAL+NF')
+	//DBCreateIndex(cNameIdx,'FILIAL+NF')
+	DBCreateIndex(cNameIdx,'ABATE+FILIAL+NF') //Everson - 29/06/2022. Chamado 75333.
 	//
 	
 	RestArea( aAreaAtu )
