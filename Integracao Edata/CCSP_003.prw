@@ -18,6 +18,7 @@
 	@history chamado  TI - Leonardo P. Monteiro - 17/10/2021 - Tratamento de error.log na chamada da função CCSP_002.
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history chamado  72284 - Everson - 03/05/2022 - Tratamento para quando o registro não é flagado do lado do Protheus.
+	@history Everson, 29/06/2022, ticket 75370 - tratamento para não carregar nota classificada.
 /*/
 
 
@@ -432,6 +433,7 @@ BeginSQL Alias cAliasT
 	AND SF1.F1_STATUS = ' '
 	AND SF1.F1_PLACA = %exp:MV_PAR01%
 	AND SF1.F1_DTDIGIT = %exp:MV_PAR02%
+	AND SD1.D1_TES = '' //Everson - 29/06/2022. Ticket 75370.
 	AND %exp:cRest01% 	
 	AND %exp:cRest02% 	
 
