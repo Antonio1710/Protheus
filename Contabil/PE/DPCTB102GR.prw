@@ -12,7 +12,7 @@
     @example
     (examples)
     @see (links_or_references)
-    @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação do SIG R33
+    @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação R33
 /*/
 User Function DPCTB102GR()
 
@@ -32,7 +32,7 @@ User Function DPCTB102GR()
 
     If GetRpoRelease() >= "12.1.033"
 
-        If nOpcLct == 3 .and. AllTrim(cLtLct) $ cLotMan .and. IsInCallStack("CTBA102") .and. AllTrim(FunName()) == "CTBA102"
+        If (nOpcLct == 3 .or. nOpcLct == 7) .and. AllTrim(cLtLct) $ cLotMan .and. IsInCallStack("CTBA102") .and. AllTrim(FunName()) == "CTBA102"
         
             Do While .t.
 
@@ -82,7 +82,9 @@ User Function DPCTB102GR()
             EndDo
 
             If lOKDOC
-                GrvNewDoc(cNewDOC)
+                MsgRun( "Número original " + cDocLct + " pelo novo informado " + cNewDOC,"Alterando...", { || GrvNewDoc(cNewDOC) } )
+                //msAguarde(GrvNewDoc(cNewDOC),"Aguarde...","Alterando número original " + cDocLct + " pelo novo informado " + cNewDOC)
+                //GrvNewDoc(cNewDOC)
             EndIf
 
         EndIf
