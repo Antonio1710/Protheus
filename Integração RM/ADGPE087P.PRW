@@ -16,6 +16,7 @@
     @history Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 - Corrigida a Rotina para que na hora que alterar o Armario Grave quem fez a alteração.
     @history Chamado 71363 - Everson - 27/04/2022 - Tratamento para filtrar apenas os armários que estão com funcionários demitidos.
     @history Chamado 72260 - Everson - 02/05/2022 - Tratamento para apagar os dados do armário da tabela ZI1, apenas quando for devolução de armário.
+    @history Chamado 75608 - Everson - 30/06/2022 - Tratamento para devolução de armário..
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
@@ -128,9 +129,9 @@ user function ADGPE087P()
     Private bF8             := {|| oWnd:End()          }
     Private bF9             := {|| oPesq:setFocus()    }
     Private bRelArm         := {|| U_ADGPE089R() }
+    Private bF11            := {|| devArm(aArDeDad) }
     Private bF10            := {|| fGetArma() }
-    Private bF11            := {|| fConfArm(.F.), fGetArma() } //Ticket 72260 - Everson - 02/05/2022
-    
+        
     Default cTitle   := "..:: Tela de Entrega e Devolução de Uniformes ::.."
 
     cLayCSS := "QFrame{ margin-top: 15px; } TButton{ margin-bottom: 7px; } TSay{ margin-bottom: 7px; margin-top: 7px; }"    
@@ -251,6 +252,10 @@ RETURN
 
 Static Function fPainel2(nRow, nCol, nHeight, nWidth)
 
+    //Variáveis.
+    Local oARMARIO := Nil
+    Local cArmPesq := Space(TamSX3("ZI1_CODZHL")[1])
+
     oP2Pnl02 := TPanel():New(nRow,nCol,'',oTTabs,,,,,,nWidth,nHeight,,.T.)
     oP2Pnl02:lVisibleControl  := .F.
 
@@ -307,19 +312,98 @@ Static Function fPainel2(nRow, nCol, nHeight, nWidth)
 	oSize:SetWindowSize({000, 000, oP2Win02:nHeight, oP2Win02:nWidth})
 	oSize:Process() 		// executa os calculos
 
+    oARMARIO  := TGet():New(2,oSize:GetDimension("OBJ01","COLINI"),{|u|If(PCount() == 0, cArmPesq, cArmPesq := u)}, oP2Win02,oSize:GetDimension("OBJ01","YSIZE"),010,"", {|| bscArm(cArmPesq) },0,16777215,,.F.,,.T.,,.F.,{|| .T. },.F.,.F.,,.F.,.F. ,,"cArmPesq",,,,.T.,,,"Pesquisar Armário",1) 
+
     oButRelArm := TButton():New( 2, oSize:GetDimension("OBJ02","COLINI"), "Rel. Armário", oP2Win02, bRelArm,;
     oSize:GetDimension("OBJ02","XSIZE"),oSize:GetDimension("OBJ02","YSIZE")-02,,,.F.,.T.,.F.,,.F.,,,.F. )
     
     oButAtual := TButton():New( 2, oSize:GetDimension("OBJ03","COLINI"), "Atualiza [F10]", oP2Win02, bF10,;
     oSize:GetDimension("OBJ03","XSIZE"),oSize:GetDimension("OBJ03","YSIZE")-02,,,.F.,.T.,.F.,,.F.,,,.F. )
 
-    oButConAr := TButton():New( 2, oSize:GetDimension("OBJ04","COLINI"), "Confirmar [F11]", oP2Win02, bF11,;
+    oButConAr := TButton():New( 2, oSize:GetDimension("OBJ04","COLINI"), "Confirmar[11]", oP2Win02, bF11,; //Everson, 30/06/2022, ticket 75608.
     oSize:GetDimension("OBJ04","XSIZE"),oSize:GetDimension("OBJ04","YSIZE")-02,,,.F.,.T.,.F.,,.F.,,,.F. )
     
     SetKey( VK_F10,  bF10 )
     SetKey( VK_F11,  bF11 )
 
 return
+/*/{Protheus.doc} User Function bscArm
+    Rotina para devolver armário de funcionário demitido.
+    @type  Static Function
+    @author Everson
+    @since 30/06/2022
+    @version 01
+/*/
+Static Function bscArm(cArmPesq)
+
+    //Variáveis.
+    Local aArea   := GetArea()
+    Local cQuery  := ""
+    Local cMsg    := "Armário livre para uso."
+
+    Default cArmPesq := ""
+
+    If Empty(cArmPesq)
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    If ! Existcpo("ZHL", cArmPesq)
+        MsgInfo("Armário " + cValToChar(cArmPesq) + " não localizado.", "Função bscArm(ADGPE087P)")
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    cQuery := " SELECT * FROM " + RetSqlName("ZI1") + " AS ZI1 WHERE ZI1_FILIAL = '" + FWxFilial("ZI1") + "' AND ZI1_CODZHL = '" + cArmPesq + "' AND ZI1.D_E_L_E_T_ = '' "
+
+    If Select("D_ARMPSQ") > 0
+        D_ARMPSQ->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_ARMPSQ"
+    DbSelectArea("D_ARMPSQ")
+    If ! D_ARMPSQ->(Eof())
+        
+        cMsg := "Armário sendo utilizado por: " + D_ARMPSQ->ZI1_MAT + " " + Alltrim(cValToChar(D_ARMPSQ->ZI1_NOME))
+
+    EndIf
+    D_ARMPSQ->(DbCloseArea())
+
+    MsgInfo(cMsg, "Função bscArm(ADGPE087P)")
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} User Function devArm
+    Rotina para devolver armário de funcionário demitido.
+    @type  Static Function
+    @author Everson
+    @since 30/06/2022
+    @version 01
+/*/
+Static Function devArm(aArDeDad)
+
+    //Variáveis.
+    Local aArea   := GetArea()
+    Local nAux    := 1
+
+    For nAux := 1 To Len(aArDeDad)
+        
+        If aArDeDad[nAux, 5]
+            fConfArm(.T., aArDeDad[nAux, 1])
+
+        EndIf
+
+    Next
+    
+    fGetArma()
+
+    RestArea(aArea)
+
+Return Nil
 
 Static Function fGetArma()
     aArDeDad    := getDadoBRW(CONSULTA_ARMA_DEVOLUCAO)
@@ -328,17 +412,19 @@ Static Function fGetArma()
     oBArDev:refresh()
 return
 
-Static Function fConfArm(lDevolv) //Ticket 72260 - Everson - 02/05/2022.
+Static Function fConfArm(lDevolv, cCodigo) //Ticket 72260 - Everson - 02/05/2022. //Everson, 30/06/2022, ticket 75608.
 
-    Local   cQuery  := ""
-    Local    nRegist := 0
+    Local cQuery  := ""
+    Local nRegist := 0
+
+    Default cCodigo := ZI1->ZI1_CODZHL //Everson, 30/06/2022, ticket 75608.
 
     Default lDevolv := .F. //Ticket 72260 - Everson - 02/05/2022
     
     DbSelectArea("ZHL")
     cQuery := " SELECT R_E_C_N_O_ REGISTRO "
     cQuery += " FROM "+ RetSqlName("ZHL") +" "
-    cQuery += " WHERE D_E_L_E_T_='' AND ZHL_CODIGO ='"+ ZI1->ZI1_CODZHL +"'; "
+    cQuery += " WHERE D_E_L_E_T_='' AND ZHL_CODIGO ='"+ cCodigo +"'; "
 
     TcQuery cQuery ALIAS "QZHL" NEW
     
@@ -385,6 +471,7 @@ Static Function fConfArm(lDevolv) //Ticket 72260 - Everson - 02/05/2022.
                         ZHP_USUARI  := AllTrim( __cUserID )
                         ZHP_NOMUSU  := AllTrim(UsrRetName(__cUserID))
                     ZHP->(MsUnlock())
+
                 endif
 
                 ZHP->(Dbclosearea())
@@ -1288,7 +1375,7 @@ Static function getDadoBRW(nTypeBrowse)
         cQuery := " SELECT ZHL.*, ZHL.R_E_C_N_O_ REGISTRO"+cQebra
         cQuery += " FROM "+ retsqlname("ZI1") +" ZI1  "+cQebra
         cQuery += "   INNER JOIN "+ retsqlname("ZHL") +" ZHL ON ZI1.D_E_L_E_T_='' AND ZHL.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL='"+xFilial("ZI1")+"' AND ZHL.ZHL_FILIAL='"+xFilial("ZHL")+"' AND ZI1.ZI1_CODZHL=ZHL.ZHL_CODIGO "+cQebra
-        cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL = '"+ xFilial("ZI1") +"' AND ZI1.ZI1_DEMISS <> '' "+cQebra //Everson - 27/04/2022. Chamado 71636.
+        cQuery += " WHERE ZI1.D_E_L_E_T_='' AND ZI1.ZI1_FILIAL = '"+ xFilial("ZI1") +"' AND ZI1.ZI1_CODSIT = 'D' "+cQebra //Everson - 27/04/2022. Chamado 71636. //Everson, 30/06/2022, ticket 75608.
         cQuery += " ORDER BY ZHL.ZHL_CODIGO; "
     
     endif
