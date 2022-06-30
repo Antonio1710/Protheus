@@ -21,6 +21,7 @@
 	@history Ticket  TI     - ADRIANO SAVOINE  - 11/03/2022 - Alterada a query para conseguir criar perfil de acesso 99999 para novos colaboradores.
 	@history Ticket: 70906  - ADRIANO SAVOINE  - 06/04/2022 - Ajuste realizado para não verificar demitido a mais do que o parametrizado.
 	@history TICKET: 69423  - ADRIANO SAVOINE  - 13/06/2022 - Inserido na rotina ao criar perfil especifico criar o Relogio da Empresa.
+	@history Ticket: 75521  - Adriano Savoine  - 30/06/2022 - Alterado da Catraca dos Motoristas para o torniquete.
 /*/
 
 USER FUNCTION ADGPE044P()
@@ -481,8 +482,8 @@ STATIC FUNCTION CARREGAPERFIL(cFilAtu,cCPF)
 
 					// *** FINAL INTEGRA GRUPO CATRACA PORTARIA *** //
 
-					// *** INICIO INTEGRA GRUPO CATRACA SALA DOS MOTORISTAS *** //  TICKET TI - ADRIANO SAVOINE - 02/09/2021	      	 	  
-					CatracaSMotor()
+					// *** INICIO INTEGRA GRUPO TORNIQUETE PORTARIA *** //  Ticket 75521 - Adriano Savoine - 30/06/2022     	 	  
+					TorniquetePortaria()
 					While TSIM->(!EOF())
 						
 						SqlVTurnoDimep(CVALTOCHAR(nUlTurno))
@@ -501,7 +502,7 @@ STATIC FUNCTION CARREGAPERFIL(cFilAtu,cCPF)
 					ENDDO
 					TSIM->(dbCloseArea()) 
 
-					// *** FINAL INTEGRA GRUPO CATRACA SALA DOS MOTORISTAS *** //
+					// *** FINAL INTEGRA GRUPO TORNIQUETE PORTARIA *** //
 				
 				ENDIF            
 				TRP->(dbCloseArea()) 
@@ -1454,7 +1455,8 @@ Static Function SqlCatracaPortaria()
 RETURN(NIL)
 
 // Ticket  TI  - Adriano Savoine - 02/09/2021
-Static Function CatracaSMotor()
+// Ticket 75521 - Adriano Savoine - 30/06/2022
+Static Function TorniquetePortaria()
 
 	BeginSQL Alias "TSIM"
 			%NoPARSER%  
@@ -1462,7 +1464,7 @@ Static Function CatracaSMotor()
 			       CD_AREA,
 			       FL_AREA_ORIGEM
 			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
-		    WHERE CD_GRUPO = 2
+		    WHERE CD_GRUPO = 22
      	       		
  	EndSQl        
 
