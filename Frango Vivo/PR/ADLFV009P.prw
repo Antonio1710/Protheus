@@ -26,6 +26,7 @@
 	@history TICKET: 62797  - ADRIANO SAVOINE   - 26/10/2021 - Alteração no campo para novo modelo de checagem.
 	@history ticket  69945  - Fernando Macieira - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history ticket  75561  - Everson, 30/06/2022, inclusão da informação de linhagem. 
+	@history ticket  75561  - Everson, 01/07/2022, inclusão da informação de linhagem. 
 /*/
 User Function ADLFV009P()  //u_ADLFV009P()
 	
@@ -746,6 +747,7 @@ Static Function PROGRAMACAO(COPC)
 								ZV1_PGRANJ := cForCod
 								ZV1_PHCARR := STRTRAN(aCols[_I,nPosHrPr],'.',':')
 								ZV1_PRLOTE := cNumLote                           //Chamado T.I -Fernando sigoli 24/06/2019
+								ZV1_LINHA  := cLinhaZFB //Everson - 01/07/2022 - Chamado 75561.
 							ZV1->( MsUnlock() )
 						
 						Else
@@ -824,6 +826,7 @@ Static Function PROGRAMACAO(COPC)
 							ZV1_PGRANJ := cForCod
 							ZV1_PHCARR := STRTRAN(aCols[_I,nPosHrPr],'.',':')
 							ZV1_PRLOTE := cNumLote                           //Chamado T.I -Fernando sigoli 24/06/2019
+							ZV1_LINHA  := cLinhaZFB //Everson - 01/07/2022 - Chamado 75561.
 							MsUnlock()
 						EndIf
 						

@@ -96,10 +96,10 @@ User Function ADFAT491(cNmOrdem, cMsgError)
 
                 If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
                     
-                    If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
+                    // If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
                         U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
 
-                    EndIf
+                    // EndIf
 
                 Else
                     U_ADFAT173("Obter lacres : sucesso " , D_DADOS->ZIF_NUMERO, "", "GEMBA")
