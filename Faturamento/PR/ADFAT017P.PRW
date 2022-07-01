@@ -705,6 +705,7 @@ Static Function envGOrd(oOrdPes, aOrdPes)
     Local cNmOrdem  := ""
     Local lGemba    := GetMV("MV_#UGEMBA",,.F.) 
     Local cMsgError := ""
+    Local cCp       := ""
 
     If ! lGemba
         Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Envio não permitido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -728,6 +729,28 @@ Static Function envGOrd(oOrdPes, aOrdPes)
     cNmOrdem := aOrdPes[nLinha,08]
     If Empty(cNmOrdem)
         Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Ordem de pesagem não selecionada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT196(cNmOrdem)
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Ordem de pesagem não possui ticket de pesagem vinculado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cCp := aOrdPes[nLinha,16]
+    If ! U_ADFAT17U(cCP)
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Controle de pátio " + cCP + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZIB->ZIB_STATUS <> "4"
+        Help(Nil, Nil, "Função envGOrd(ADFAT017P)", Nil, "Controle de pátio " + cCP + " não está com status de pesagem inicial.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
@@ -3012,13 +3035,14 @@ Static Function cancTkt(oOrdPes, aOrdPes)
 
     //Variáveis.
     Local aArea     := GetArea()
-    Local lRet      := .F.
+    Local lRet      := .T.
     Local nLinha    := Val(cValToChar(oOrdPes:nAt))
     Local cOrdAgrup := ""
     Local cTicket   := ""
     Local cCP       := ""
     Local cNmOrdem  := ""
     Local cTpOrdem  := ""
+    Local cMsgError := ""
 
     If nLinha <= 0 .Or. Len(aOrdPes) <= 0
         Help(Nil, Nil, "Função cancTkt(ADFAT017P)", Nil, "Não há dados.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -3055,13 +3079,14 @@ Static Function cancTkt(oOrdPes, aOrdPes)
     
     cNmOrdem:= aOrdPes[nLinha,08]
 
-    lRet := U_ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, .T.)
-
     //Cancela ordem no Gemba.
-    If lRet .And. cTpOrdem == "R"
-        cancGb(cNmOrdem)
+    If lRet .And. cTpOrdem == "R" .And. ! cancGb(cNmOrdem, @cMsgError)
+        lRet := .F.
+        Help(Nil, Nil, "Função cancTkt(ADFAT017P)", Nil, "Não foi possível cancelar a ordem " + cNmOrdem + " no sistema Gemba." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     EndIf
+
+    lRet := lRet .And. U_ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, .T.)
 
     RestArea(aArea)
 
@@ -6081,7 +6106,7 @@ Static Function devoTag(oVecPt, aHVcPt)
 	oModal:setSize( 150 , 130 )
 	oModal:createDialog()
 
-    bSalvar := {|| lRetSlv := procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag), Iif(!lRetSlv, Nil, oModal:DeActivate()) }
+    bSalvar := {|| lRetSlv := procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag, cTpMovi), Iif(!lRetSlv, Nil, oModal:DeActivate()) }
 
     Aadd(aButtons,{Nil, "Confimar", bSalvar, "", "", .T., .F.})
     Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
@@ -6112,7 +6137,7 @@ Return Nil
     @since 02/12/2021
     @version 01
 /*/
-Static Function procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag)
+Static Function procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag, cTpMovi)
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -6125,9 +6150,16 @@ Static Function procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag)
 
     EndIf
 
-    If ! chkLiTOrd(cCP, cTpMovi, .F.) .And. ! MsgYesNo("Há ordens não encerradas vinculadas ao controle de pátio. Deseja prosseguir?", "Função procDevTag(ADFAT017P)")
+    If ! chkLiTOrd(cCP, cTpMovi, .F.) .And. ! MsgYesNo("Há ordens não encerradas vinculadas ao controle de pátio. Deseja prosseguir?", "Função procDevTag(ADFAT017P)")        
         RestArea(aArea)
         Return Nil
+
+    EndIf
+
+    //Checa se há ordem de carregamento inicializada no Gemba.
+    If ZIB->ZIB_STATUS <> "5" .And. cTpMovi == "R" .And. ! chkGemba(cCP)
+        RestArea(aArea)
+        Return Nil    
 
     EndIf
 
@@ -6161,6 +6193,57 @@ Static Function procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag)
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} chkGemba
+    Verifica se há ordem de pesagem iniciada no Gemba.
+    @type  Static Function
+    @author Everson
+    @since 01/07/2022
+    @version 01
+/*/
+Static Function chkGemba(cCP)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cMsgError := ""
+
+    DbSelectArea("ZIF")
+    ZIF->(DbSetOrder(1))
+    If ! ZIF->(DbSeek( FWxFilial("ZIF") + cCP))
+        Help(Nil, Nil, "Função chkGemba(ADFAT017P)", Nil, "Ordem de pesagem vinculada ao controle de pátio " + cCP + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_CTPATI == cCP
+
+        cMsgError := ""
+
+        If ZIF->ZIF_GEMBA == "1" .And. ZIF->ZIF_STATUS <> "5" //Ordem enviada para o Gemba e encerrada.
+
+            If ! cancGb(ZIF->ZIF_NUMERO, @cMsgError)
+
+                If ! "WS Gemba não retornou dados do método Delete(Ordem de Pesagem)." $cMsgError
+                    Help(Nil, Nil, "Função chkGemba(ADFAT017P)", Nil, "Não foi possível cancelar a ordem " + ZIF->ZIF_NUMERO + " no sistema Gemba." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+                    RestArea(aArea)
+                    Return .F.
+
+                EndIf
+
+            Else
+                U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_GEMBA", "2")
+
+            EndIf
+
+        EndIf
+
+        ZIF->(DbSkip())
+
+    End
+
+    RestArea(aArea)
+
+Return .T.
 /*/{Protheus.doc} ADFAT17P
     Deleta todos os tickets de pesagem não utilizados e vinculados a controle de pátio.
     @type  Static Function
@@ -6470,7 +6553,6 @@ Static Function impRoPV(oOrdPes, aOrdPes)
 
     If ! U_ADFAT17U(cCP)
         Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Controle de pátio " + cCP + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
         Return Nil
 
     EndIf
@@ -6483,7 +6565,6 @@ Static Function impRoPV(oOrdPes, aOrdPes)
 
     Else
         Help(Nil, Nil, "Função impRoPV(ADFAT017P)", Nil, "Romaneio não disponível para este tipo de pesagem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
         Return Nil
 
     EndIf
