@@ -6599,14 +6599,15 @@ Return lRet
     @since 23/02/2022
     @version 01
 /*/
-User Function ADFAT17A(cCP, cPlaca)
+User Function ADFAT17A(cCP, cPlaca, cNvOrdP)
 
     //Variáveis.
     Local aArea     := GetArea()
     Local lRet      := .T.
     Local cQuery    := ""
     Local aDados    := {}
-    Local cNvOrdP   := ""
+    
+    Default cNvOrdP   := ""
 
     //Verifica se o controle de pátio está encerrado.
     If U_ADFAT17L(cCP)
