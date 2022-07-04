@@ -1,4 +1,4 @@
-#include "totvs.ch"
+#Include "Protheus.Ch"
 #include "topconn.ch"
 
 /*/{Protheus.doc} User Function DPCTB102GR
@@ -13,6 +13,7 @@
     (examples)
     @see (links_or_references)
     @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação R33
+    @history ticket 73451 - Fernando Macieira - 04/07/2022 - Padronização lote RM
 /*/
 User Function DPCTB102GR()
 
@@ -90,6 +91,9 @@ User Function DPCTB102GR()
         EndIf
     
     EndIf
+
+    //@history ticket 73451 - Fernando Macieira - 04/07/2022 - Padronização lote RM
+    FixLtRM()
     
 Return
 
@@ -218,3 +222,74 @@ Static Function fExistCT2(cNewDOC)
     RestArea( aArea )
     
 Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+    Padroniza lote vindo do RM
+    @type  Static Function
+    @author FWNM
+    @since 30/06/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
+Static Function FixLtRM()
+
+    Local aArea    := GetArea()
+    Local aAreaCT2 := CT2->( GetArea() )
+    Local cQuery   := ""
+    Local cLtFolha := GetMV("MV_#LOTERM",,"008890")
+
+    If Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. AllTrim(CT2->CT2_SBLOTE) == "000"
+
+        If Select("Work") > 0
+            Work->( dbCloseArea() )
+        EndIf
+
+        cQuery := " SELECT R_E_C_N_O_ RECNO
+        cQuery += " FROM " + RetSqlName("CT2") + " (NOLOCK)
+        cQuery += " WHERE CT2_FILIAL='"+FWxFilial("CT2")+"'
+        cQuery += " AND CT2_DATA='"+DtoS(dDtLct)+"'
+        cQuery += " AND CT2_LOTE='"+cLtLct+"'
+        cQuery += " AND CT2_SBLOTE='"+cSbLtLct+"'
+        cQuery += " AND CT2_DOC='"+cDocLct+"'
+        cQuery += " AND D_E_L_E_T_=''
+
+        tcQuery cQuery New Alias "Work"
+
+        Begin Transaction
+
+            Work->( dbGoTop() )
+            Do While Work->( !EOF() )
+
+                CT2->( dbGoTo(Work->RECNO) )
+
+                If CT2->CT2_LOTE <> cLtFolha
+
+                    u_GrLogZBE(msDate(),TIME(),cUserName,"SIG","CONTABILIDADE",FunName(),;
+                    "GRAVOU NOVO LOTE RM, ORIGINAL " + cLtLct + " NOVO " + cLtFolha, ComputerName(), LogUserName() )
+
+                    RecLock("CT2", .F.)
+                        CT2->CT2_LOTE := cLtFolha
+                    CT2->( msUnLock() )
+
+                EndIf
+
+                Work->( dbSkip() )
+
+            EndDo
+
+        End Transaction
+
+    EndIf
+
+    If Select("Work") > 0
+        Work->( dbCloseArea() )
+    EndIf
+
+    RestArea( aArea )
+    RestArea( aAreaCT2 )
+
+Return
