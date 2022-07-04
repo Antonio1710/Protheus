@@ -19,6 +19,7 @@
   @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
   @history Ticket 73466 - Everson              - 25/05/2022 - Adicionada melhoria de para fechamento de registro.
   @history Ticket 73466 - Adriano Savoine      - 29/06/2022 - Melhoria para fechar pesagem manual com dados Fixos.
+  @history Ticket Ti    - Adriano Savoine      - 04/07/2022 - Declarado a variavel cZV1C.
 /*/
 User Function ADLFV017P() // U_ADLFV017P()
 
@@ -156,6 +157,7 @@ User Function ADLFV171()
     //Variáveis.
 
     Local aArea := GetArea()
+	Local cZV1C := ''
 
 
     If ZV1->ZV1_DTABAT < DATE()- 5 .OR. ZV1->ZV1_INTEGR = 'I'
