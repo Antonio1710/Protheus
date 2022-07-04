@@ -16,7 +16,8 @@
     @history Ticket: 70990 - ADRIANO SAVOINE - 11/04/2022 - Corrigida a Rotina para que na hora que alterar o Armario Grave quem fez a alteração.
     @history Chamado 71363 - Everson - 27/04/2022 - Tratamento para filtrar apenas os armários que estão com funcionários demitidos.
     @history Chamado 72260 - Everson - 02/05/2022 - Tratamento para apagar os dados do armário da tabela ZI1, apenas quando for devolução de armário.
-    @history Chamado 75608 - Everson - 30/06/2022 - Tratamento para devolução de armário..
+    @history Chamado 75608 - Everson - 30/06/2022 - Tratamento para devolução de armário.
+    @history Ticket  75797 - Everson - 04/07/2022 - Tratamento para errorlog.
 /*/
 
 #DEFINE CAMPOS_UNIF_ENTREGA     "ZHH_CODIGO,ZHH_DESCRI,ZHI_UM,TMP_SALDO,ZI5_QTDUNF,ZHK_NUMKIT,ZHI_PRODUT"
@@ -1428,11 +1429,11 @@ return(aDados)
 Static Function fMark(oBMark, nMarkID)
     Local cRet := "LBNO"
 
-    IF nMarkID == CONSULTA_UNIF_ENTREGA
+    IF nMarkID == CONSULTA_UNIF_ENTREGA .And. Len(aUnEnDad) > 0 .And. Len(aUnEnDad) >= oBUnEnt:At() //Everson, 04/07/2022. ticket 75797.
         cRet := IIf(aUnEnDad[oBUnEnt:At(), nUnEnCam],'LBOK','LBNO')
-    ElseIF nMarkID == CONSULTA_UNIF_DEVOLUCAO
+    ElseIF nMarkID == CONSULTA_UNIF_DEVOLUCAO .And. Len(aUnDeDad) > 0 .And. Len(aUnDeDad) >= oBUnDev:At() //Everson, 04/07/2022. ticket 75797.
         cRet := IIf(aUnDeDad[oBUnDev:At(), nUnDeCam],'LBOK','LBNO')
-    ElseIF nMarkID == CONSULTA_ARMA_DEVOLUCAO
+    ElseIF nMarkID == CONSULTA_ARMA_DEVOLUCAO .And. Len(aArDeDad) > 0 .And. Len(aArDeDad) >= oBArDev:At() //Everson, 04/07/2022. ticket 75797.
         cRet := IIf(aArDeDad[oBArDev:At(), nArDeCam],'LBOK','LBNO')
     ENDIF
 
