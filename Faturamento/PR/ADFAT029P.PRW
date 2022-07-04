@@ -36,6 +36,15 @@ Return Nil
 /*/
 User Function ADFAT29A()
 
+    //Variáveis.
+    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+
+    If Len(aEmpFil) <= 0
+        Help(Nil, Nil, "Função ADFAT29A(ADFAT029P)", Nil, "Filial não possui configuração.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Return Nil
+
+    EndIf
+
     //Produtos.
     U_ADFAT29B()
 
@@ -123,6 +132,7 @@ User Function ADFAT29B()
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
         
+        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
         cOperac   := (cAliasAux)->ZIQ_OPERAC 
         cMsgError := ""
         cJson     := ZIQ->ZIQ_DADOS
@@ -137,7 +147,15 @@ User Function ADFAT29B()
 
         EndIf
 
-        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        If ValType(oJson['dados']) == "U"
+            cMsgError := "Objeto json não possui a chave dados " + cId
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29B(ADFAT029P)", Nil, "Erro no processamento de registro de produto SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
         cProdSAG  := Alltrim(cValToChar(oJson['dados']['codSag']))
         cDescSAG  := Alltrim(cValToChar(oJson['dados']['descSag']))
         cProdProt := Alltrim(cValToChar(oJson['dados']['prdProth']))
@@ -332,6 +350,7 @@ User Function ADFAT29C()
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
         
+        cId      := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
         cOperac   := (cAliasAux)->ZIQ_OPERAC 
         cMsgError := ""
         cJson := ZIQ->ZIQ_DADOS
@@ -346,7 +365,15 @@ User Function ADFAT29C()
 
         EndIf
 
-        cId      := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        If ValType(oJson['dados']) == "U"
+            cMsgError := "Objeto json não possui a chave dados " + cId
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, "Erro no processamento de registro de lote SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
         cCdLote  := Alltrim(cValToChar(oJson['dados']['lotSag']))
         cDesLote := Alltrim(cValToChar(oJson['dados']['descSag']))
         cProdSAG := Alltrim(cValToChar(oJson['dados']['codSag']))
@@ -492,7 +519,7 @@ Return Nil
     @version 01
 /*/
 User Function ADFAT29E()
-
+ 
     //Variáveis.
     Local aArea     := GetArea()
     Local cAliasAux := GetNextAlias()
@@ -559,6 +586,7 @@ User Function ADFAT29E()
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
         
+        cId := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
         cOperac   := (cAliasAux)->ZIQ_OPERAC
         cCliForn  := ""
         cMsgError := ""
@@ -566,7 +594,7 @@ User Function ADFAT29E()
         oJson := getJson(cJson)
 
         If ValType(oJson) == "U"
-            cMsgError := "Não foi possível converter a string para objeto json."
+            cMsgError := "Não foi possível converter a string para objeto json. " + cId
             U_ADFAT29D(cId, "2", cMsgError)
             Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
             (cAliasAux)->(DbSkip())
@@ -574,7 +602,15 @@ User Function ADFAT29E()
 
         EndIf
 
-        cId      := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        If ValType(oJson['dados']) == "U"
+            cMsgError := "Objeto json não possui a chave dados " + cId
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29E(ADFAT029P)", Nil, "Erro no processamento de registro de granjada SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
         cCodGrj  := Alltrim(cValToChar(oJson['dados']['codGjada']))
         cDCodGrj := Alltrim(cValToChar(oJson['dados']['desGjada']))
         cDtAloja := Alltrim(cValToChar(oJson['dados']['aloGjada']))
