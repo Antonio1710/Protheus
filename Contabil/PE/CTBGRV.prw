@@ -66,12 +66,17 @@ User Function CTBGRV()
 	//
 
 	//@history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
-	If Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. AllTrim(CT2->CT2_ROTINA) == "CTBA102" .or. AllTrim(CT2->CT2_SBLOTE) == "000"
+	If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
 
 		If CT2->CT2_LOTE <> cLtFolha
+
+			u_GrLogZBE(msDate(),TIME(),cUserName,"FOLHA","CONTABILIDADE","CTBGRV",;
+			"LOTE ORIGINAL " + CT2->CT2_LOTE + ", NOVO LOTE FOLHA " + cLtFolha, ComputerName(), LogUserName() )
+
 			RecLock("CT2", .F.)
 				CT2->CT2_LOTE := cLtFolha
 			CT2->( msUnLock() )
+
 		EndIf
 
 	EndIf

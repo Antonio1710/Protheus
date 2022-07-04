@@ -242,7 +242,7 @@ Static Function FixLtRM()
     Local cQuery   := ""
     Local cLtFolha := GetMV("MV_#LOTERM",,"008890")
 
-    If Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. AllTrim(CT2->CT2_SBLOTE) == "000"
+    If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
 
         If Select("Work") > 0
             Work->( dbCloseArea() )
@@ -268,7 +268,7 @@ Static Function FixLtRM()
 
                 If CT2->CT2_LOTE <> cLtFolha
 
-                    u_GrLogZBE(msDate(),TIME(),cUserName,"SIG","CONTABILIDADE",FunName(),;
+                    u_GrLogZBE(msDate(),TIME(),cUserName,"FOLHA","CONTABILIDADE","DPCTB102GR",;
                     "GRAVOU NOVO LOTE RM, ORIGINAL " + cLtLct + " NOVO " + cLtFolha, ComputerName(), LogUserName() )
 
                     RecLock("CT2", .F.)
