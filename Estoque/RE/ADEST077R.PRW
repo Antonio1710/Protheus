@@ -7,7 +7,8 @@
 	@author Everson
 	@since 31/05/2022
 	@version version
-	@history, Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
+	@history, Everson, 09/06/2022, ticket 18465 - Adicionado filtro por placa.
+	@history, Everson, 28/06/2022, ticket 75316 - Adicionado filtro por data da pesagem final e totalizador de peso líquido.
 /*/
 User Function ADEST077R() 
 
@@ -60,9 +61,11 @@ Static Function RPTStruc(cPerg)
 	TRCell():New(oSection1,"GRANJA"  ,"D_LISTA","Granja" ,"@!",15)
 	TRCell():New(oSection1,"PRODUTO" ,"D_LISTA","Produto","@!",15)
 	TRCell():New(oSection1,"LOTE"    ,"D_LISTA","Lote"   ,"@!",15)
-	TRCell():New(oSection1,"PESO"    ,"D_LISTA","Peso"   ,"@!",15)
+	TRCell():New(oSection1,"PESO"    ,"D_LISTA","Peso"   ,"@!",15,,,"RIGHT")
 	TRCell():New(oSection1,"PEDV"    ,"D_LISTA","Pedido"   ,"@!",06)
 	TRCell():New(oSection1,"NF"      ,"D_LISTA","NF"   ,"@!",12)
+
+	TRFunction():New(oSection1:Cell("PESO"),"Total Geral" ,"SUM",,,"@E 999,999,999,999,999.999",,.F.,.T.)
 
 Return (oReport)
 /*/{Protheus.doc} RPTPrint
@@ -113,7 +116,8 @@ Static Function RPTPrint(oReport)
 
     cQuery += " WHERE " 
         cQuery += " ZIF_FILIAL = '" + FWxFilial("ZIF") + "' " 
-        cQuery += " AND ZIG_DTPES1 >= '" + DToS(MV_PAR01) + "' " 
+        //cQuery += " AND ZIG_DTPES1 >= '" + DToS(MV_PAR01) + "' " 
+        cQuery += " AND ZIG_DTPES2 >= '" + DToS(MV_PAR01) + "' "  //Everson, 28
         cQuery += " AND ZIG_DTPES2 <= '" + DToS(MV_PAR02) + "' "  
         cQuery += " AND ZIG_PLACA >= '" + cValToChar(MV_PAR03) + "' "  //Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.
         cQuery += " AND ZIG_PLACA <= '" + cValToChar(MV_PAR04) + "' "  //Everson, 09/06/20222, ticket 18465 - Adicionado filtro por placa.

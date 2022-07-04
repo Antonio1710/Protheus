@@ -24,7 +24,9 @@
 	@history Chamado 050729 - FWNM - 15/07/2020 - || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - Tratativa na funзгo U_TAKECHAR que й utilizada tambйm no X3_VLDUSER mas retorna string, dando error log
 	@history Chamado 326334 - Everson - 15/09/2021 - Correзгo de erro variable does not exist _I on U_VALVEICB
 	@history TICKET: 62797  - ADRIANO SAVOINE   - 26/10/2021 - Alteraзгo no campo para novo modelo de checagem.
-	@history ticket 69945   - Fernando Macieira - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket  69945  - Fernando Macieira - Projeto FAI - Ordens Carregamento - Frango vivo
+	@history ticket  75561  - Everson, 30/06/2022, inclusгo da informaзгo de linhagem. 
+	@history ticket  75561  - Everson, 01/07/2022, inclusгo da informaзгo de linhagem. 
 /*/
 User Function ADLFV009P()  //u_ADLFV009P()
 	
@@ -32,10 +34,6 @@ User Function ADLFV009P()  //u_ADLFV009P()
 							{'TRIM( ZFB_STATUS )== "2"','BR_AMARELO'},;
 							{'TRIM( ZFB_STATUS )== "3"','BR_VERMELHO'},;
 							{'TRIM( ZFB_STATUS )== "4"','BR_BRANCO'}}  
-
-	Local _I            := 0
-	Local aCols         := ''
-	Local COPC          := ""
 		
 	Private cPerg	  	:= "ADLFV9A"
 
@@ -89,8 +87,6 @@ User Function ADLFV9A(COPC)
 	//ЪДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДї
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ	
-	Local cZFBAmar  := Alltrim(cValToChar(ZFB->ZFB_AMARRA))
-	Local cQuery    := ""
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')
 	
@@ -130,6 +126,9 @@ User Function ADLFV9A(COPC)
    	Private nQuant			:=	ZFB->ZFB_QTDPRE
 	Private nPeso			:=	ZFB->ZFB_PESPRE
 	Private nFrtKg          :=  0
+	Private aTpLinha  		:= RetSX3Box(GetSX3Cache("ZFB_LINHA", "X3_CBOX"),,,1)
+	Private cLinhaZFB		:= ZFB->ZFB_LINHA
+	Private cLinhagem		:= Iif(Empty(cLinhaZFB), "    ", aTpLinha[Val(cValToChar(cLinhaZFB)),3]) //Everson, 29/06/2022, ticket 75561.
 	
 	Public dDtPrev 			:=	ZFB->ZFB_ABTPRE //necessario como publico para colocar no inicializador do campo
 	Public dDtCarr 			:=  ZFB->ZFB_DTACAR //necessario como publico para colocar no inicializador do campo
@@ -271,9 +270,9 @@ Static Function PROGRAMACAO(COPC)
 	//ЪДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДї
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ   
-	Local cDATAZFB := ZFB->ZFB_ABTPRE
 	Local aButtons := {}
 	Local cTicket  := ""
+	Local _I	   := 1
 
 	Private cForCod  := Posicione('ZF3', 1, xFilial('ZF3') + cGranja, 'ZF3_FORCOD')
 	Private cForLoj  := Posicione('ZF3', 1, xFilial('ZF3') + cGranja, 'ZF3_FORLOJ')
@@ -306,7 +305,7 @@ Static Function PROGRAMACAO(COPC)
 			Alltrim(X3_CAMPO)== "ZFC_FRTTOT"    .OR. ;
 			Alltrim(X3_CAMPO)== "ZFC_NUMERO"    .OR. ;
 			Alltrim(X3_CAMPO)== "ZFC_NF"    	.OR. ; //Everson - 10/12/2019 - Chamado 029058.
-			Alltrim(X3_CAMPO)== "ZFC_SERIE"            //Everson - 10/12/2019 - Chamado 029058.
+			Alltrim(X3_CAMPO)== "ZFC_SERIE"          ; //Everson - 10/12/2019 - Chamado 029058.
 			
 			IF X3USO(x3_usado) .AND. cNivel >= x3_nivel
 				nUsado	:=	nUsado	+	1
@@ -434,7 +433,8 @@ Static Function PROGRAMACAO(COPC)
         			
     		EndIf &&Fecha checagem de status
     	
-    	ZFC->(dbSkip())	
+    		ZFC->(dbSkip())	
+		
 		Enddo 
 		
 	Else
@@ -466,7 +466,7 @@ Static Function PROGRAMACAO(COPC)
 				Alltrim(X3_CAMPO)== "ZFC_SEQUEN"    .OR. ;
 				Alltrim(X3_CAMPO)== "ZFC_NUMERO"    .OR. ; 
 				Alltrim(X3_CAMPO)== "ZFC_NF"        .OR. ;  //Everson - (2)10/12/2019 - Chamado 029058.
-				Alltrim(X3_CAMPO)== "ZFC_SERIE"             //Everson - 10/12/2019 - Chamado 029058.
+				Alltrim(X3_CAMPO)== "ZFC_SERIE"          ;  //Everson - 10/12/2019 - Chamado 029058.
 								
 				If X3USO(x3_usado) .AND. cNivel >= x3_nivel
 					nUsado:=nUsado+1
@@ -502,6 +502,7 @@ Static Function PROGRAMACAO(COPC)
 	AADD(aC,{"cGranja" 				,{15,085}," Granja: "												  ,"@!",,,.F.})
 	AADD(aC,{"cNumLote"				,{15,150}," Lote: "		  											  ,"@!",,,.F.})
 	AADD(aC,{"cGalpao" 				,{15,195}," Galpao: "												  ,"@!",,,.F.})
+	AADD(aC,{"cLinhagem" 		    ,{15,335}," Linhagem: "												  ,"@!",,,.F.})
   	
   	AADD(aC,{"DADOSLOGISTIC"		,{12,475}," DADOS LOGISTICOS"										  ,"@!",,,.F.})   
   	AADD(aC,{"DADOSLOGISTIC"		,{21,450}," KM Ida/Volta --> "+Transform(nKilometro,"@E 999,999,999") ,"@!",,,.F.})
@@ -714,6 +715,7 @@ Static Function PROGRAMACAO(COPC)
 							ZFC_FRTPED  := acols[_I,nPosFrtPed]
 							ZFC_NF  	:= acols[_I,nPosNF]  //Everson - 10/12/2019 - Chamado 029058.
 							ZFC_SERIE   := acols[_I,nPosSer] //Everson - 10/12/2019 - Chamado 029058.
+							ZFC_LINHA   := cLinhaZFB //Everson - 29/06/2022 - Chamado 75561.
 							MSUNLOCK()     
 							cOrdemCarr  := ZFC->ZFC_NUMERO
 							nQtAves	    += aCols[_I,nPosTota]
@@ -745,8 +747,7 @@ Static Function PROGRAMACAO(COPC)
 								ZV1_PGRANJ := cForCod
 								ZV1_PHCARR := STRTRAN(aCols[_I,nPosHrPr],'.',':')
 								ZV1_PRLOTE := cNumLote                           //Chamado T.I -Fernando sigoli 24/06/2019
-								ZFC_NF     := aCols[_I,nPosNF]  //Everson - 10/12/2019 - Chamado 029058.
-								ZFC_SERIE  := aCols[_I,nPosSer] //Everson - 10/12/2019 - Chamado 029058.
+								ZV1_LINHA  := cLinhaZFB //Everson - 01/07/2022 - Chamado 75561.
 							ZV1->( MsUnlock() )
 						
 						Else
@@ -791,6 +792,7 @@ Static Function PROGRAMACAO(COPC)
 						ZFC_FRTPED  := acols[_I,nPosFrtPed]
 						ZFC_NF      := acols[_I,nPosNF]  //Everson - 10/12/2019 - Chamado 029058.
 						ZFC_SERIE   := acols[_I,nPosSer] //Everson - 10/12/2019 - Chamado 029058.
+						ZFC_LINHA   := cLinhaZFB //Everson - 29/06/2022 - Chamado 75561.
 						MSUNLOCK()
 						
 						nQtAves	+=	aCols[_I,nPosTota]   
@@ -824,6 +826,7 @@ Static Function PROGRAMACAO(COPC)
 							ZV1_PGRANJ := cForCod
 							ZV1_PHCARR := STRTRAN(aCols[_I,nPosHrPr],'.',':')
 							ZV1_PRLOTE := cNumLote                           //Chamado T.I -Fernando sigoli 24/06/2019
+							ZV1_LINHA  := cLinhaZFB //Everson - 01/07/2022 - Chamado 75561.
 							MsUnlock()
 						EndIf
 						
@@ -965,7 +968,6 @@ User Function LACRENU
 	Local cGet4	 		:= Space(10)
 	Local cGet5	 		:= Space(10) 
 	Local lCheckBox1	:= .F.
-	Local lInf  		:= .F.
 	Local cLacres       := ""
 
 	Private oDlg	
@@ -1078,6 +1080,7 @@ User Function VALVEICA()
 	Local cVecAloc	:= aCols[n,nPosNume]
 	Local nCheckV   := ""
 	Local cTpViag	:= ""
+	Local _po		:= 1
 
 	Local nPosPlaca	:= aScan(aHeader,{|x| ALLTRIM(X[2])=="ZFC_VEICUL"})
 	Local nPosEqApa := aScan(aHeader,{|x| ALLTRIM(X[2])=="ZFC_EQUIPE"})
@@ -1203,7 +1206,7 @@ User Function VALVEICA()
 			Endif    
 			
 			DbSelectArea("XVA")
-			Dbclosearea("XVA")
+			XVA->(Dbclosearea())
 			
 			//calculo do frete+pedagio
 			nVlrFrete := CalculoFrete(DA3->DA3_XFRET,nKilometro)
@@ -1352,7 +1355,6 @@ Static Function CalculoFrete(cTabFrete,nKmFrete,nPraca,nVlreixo)
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
 	Local nVlrFrete := 0
-	Local cQuyFrt   := ""
 
 	cQryFrt := " SELECT * FROM " + Retsqlname("ZF6")+" ZF6"
 	cQryFrt += " WHERE 
@@ -1374,7 +1376,7 @@ Static Function CalculoFrete(cTabFrete,nKmFrete,nPraca,nVlreixo)
     
     nVlrFrete := XZF6->ZF6_TABPRC
 
-	DbClosearea("XZF6")
+	XZF6->(DbClosearea())
 
 Return nVlrFrete
 /*/{Protheus.doc} User Function VALVEICB
@@ -1453,10 +1455,12 @@ User Function 009LINOK
 	Local aVecHr2   := {}
 	Local nMarc     := 0
 	Local nFrtVlr   := 0
-	Local nLn       := len(acols)+1 
 
 	Local cNFLn		:= ""
 	Local cSrLn		:= ""
+	Local ip		:= 1
+	Local y			:= 1
+	Local i 		:= 1
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')
 
@@ -1580,7 +1584,10 @@ User Function 009TUDOOK
 	Local nMarc     := 0
 	Local nSaldo1	:= 0
 	Local lVlrl		:=	.T.
-	Local oDlg
+	Local oDlg		:= Nil
+	Local ip 		:= 1
+	Local y			:= 1
+	Local i			:= 1
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')
 		
@@ -1685,6 +1692,7 @@ User Function 009DLINOK
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
 	Local nSaldo	:= nQuant
+	Local ip		:= 1
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')
 
@@ -1711,6 +1719,7 @@ User Function  009DTUDOOK
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
 	Local nSaldo1	:= 0
 	Local lVlrl		:=.T.
+	Local ip		:= 1
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')
 
@@ -1738,13 +1747,6 @@ User Function ADLFV9B(nOpca)
 	//ЪДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДї
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
-	Local	cQuery1		:= ""
-	Local	cPedagio	:= ""
-	Local	cPed		:= ""
-	Local	cKm			:= ""
-	Local	nVlrTot		:= 0
-	Local	nPipe		:= 1
-	Local	nLinha		:= 1700
 
 	Private aArea	    := GetArea()
 	Private titulo      := "Ordem de Carregamento"
@@ -1820,14 +1822,13 @@ User Function ADLFV9B(nOpca)
 	TCQUERY cQuery new alias "XZFC"
 
 	DbSelectArea("XZFC")
-	DbGotop()
-	While !Eof()
+	XZFC->(DbGotop())
+	While ! XZFC->(Eof())
 
 		RptStatus({|| RumOrdemCar() },Titulo)
 		oPrn:Endpage()
 
-	DbSelectArea("XZFC")
-	DbSkip()
+		XZFC->(DbSkip())
 
 	Enddo       
 
@@ -1837,8 +1838,7 @@ User Function ADLFV9B(nOpca)
 	MV_PAR01:= cMV1 
 	MV_PAR02:= cMV2
 
-	DbSelectArea("XZFC")
-	Dbclosearea("XZFC")
+	XZFC->(Dbclosearea())
 
 	RestArea(aArea)
 	
@@ -1856,21 +1856,23 @@ Static Function RumOrdemCar()
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
 	Local cPlaca 	:= ""
-	Local lVez		:= .T.
 	Local dDtaBase	:= RIGHT(DTOS(DDATABASE),2)+"/"+SUBSTR(DTOS(DDATABASE),5,2)+"/"+LEFT(DTOS(DDATABASE),4)
 	Local cHora		:= time()
 	Local nLin		:= 135
 	Local cNomLogo  := "ADORO.BMP"
 	Local nLarg     := 240
-	Local nAlt      := 150                                
+	Local nAlt      := 150    
+	Local L			:= 1   
 
-	Local cZF3FOR   := ""
-	Local cZF3LOJ   := ""
+	//Everson, 30/06/2022, ticket 75561.
+	Local aTpLinha  := RetSX3Box(GetSX3Cache("ZFB_LINHA", "X3_CBOX"),,,1)
+	Local cLinhaZFC	:= XZFC->ZFC_LINHA  
+	Local cLinhagem	:= Iif(Empty(cLinhaZFC), "    ", aTpLinha[Val(cValToChar(cLinhaZFC)),3])
+	//                       
 
 	oPrn:Startpage()
 	oPrn:SetPaperSize(10)
 	oPrn:SetPortrait()    // retrato
-
 
 	//========= bloco 1 =========
 	oPrn:SayBitmap( 0025,0060, cNomLogo, nLarg , nAlt )
@@ -1906,16 +1908,16 @@ Static Function RumOrdemCar()
 	oPrn:Say(0285,0300,XZFC->ZFC_VEICUL,oFontA12B,0100)
 
 	DbSelectArea("DA3")
-	DbSetOrder(1)
-	DbSeek(xFilial("DA3")+XZFC->ZFC_VEICUL,.F.)
+	DA3->(DbSetOrder(1))
+	DA3->(DbSeek(xFilial("DA3")+XZFC->ZFC_VEICUL,.F.))
 
 	DbSelectArea("DA4")
-	DbSetOrder(1)
-	DbSeek(xFilial("DA4")+DA3->DA3_MOTORI,.F.)
+	DA4->(DbSetOrder(1))
+	DA4->(DbSeek(xFilial("DA4")+DA3->DA3_MOTORI,.F.))
 
 	DbSelectArea("SA4")
-	DbSetOrder(1)
-	DbSeek(xFilial("SA4")+DA3->DA3_XTRANS,.F.)
+	SA4->(DbSetOrder(1))
+	SA4->(DbSeek(xFilial("SA4")+DA3->DA3_XTRANS,.F.))
 
 	oPrn:Say(0355,0325,SUBSTR(DA4->DA4_NOME,1,25),oFontA10N,0100)
 	oPrn:Say(0285,1240,transform(DA3->DA3_QTDUNI,"@E 9999"),oFontA12B,0100)
@@ -1923,17 +1925,17 @@ Static Function RumOrdemCar()
 
 	//========= bloco 4 =========
 	DbselectArea("ZF3")
-	DbsetOrder(1)
-	Dbseek(xFilial("ZF3")+Alltrim(XZFC->ZFC_GRANJA))
+	ZF3->(DbsetOrder(1))
+	ZF3->(Dbseek(xFilial("ZF3")+Alltrim(XZFC->ZFC_GRANJA)))
 	
 	DbSelectArea("SA2")
-	DbSetOrder(1)
-	DbSeek(xFilial("SA2")+ZF3->ZF3_FORCOD+ZF3->ZF3_FORLOJ,.F.)
+	SA2->(DbSetOrder(1))
+	SA2->(DbSeek(xFilial("SA2")+ZF3->ZF3_FORCOD+ZF3->ZF3_FORLOJ,.F.))
 
 
 	DbSelectArea("ZF1")
-	DbSetOrder(1)
-	DbSeek(xFilial("ZZ1")+XZFC->ZFC_EQUIPE,.F.)
+	ZF1->(DbSetOrder(1))
+	ZF1->(DbSeek(xFilial("ZZ1")+XZFC->ZFC_EQUIPE,.F.))
 
 	If	XZFC->ZFC_TIPVIA == "4"
 
@@ -1958,6 +1960,7 @@ Static Function RumOrdemCar()
 	oPrn:Say(0520,1380,"Turma:"			 ,oFontA12B,0100)
 	oPrn:Say(0590,0080,"Aves por gaiola:",oFontA12B,0100)
 	oPrn:Say(0590,1600,"Total de aves:"	 ,oFontA12B,0100)
+	oPrn:Say(0660,1600,"Linhagem:"	 	 ,oFontA12B,0100) //Everson, 30/06/2022, ticket 75561.
 	oPrn:Say(0730,0080,"Municipio/UF:"	 ,oFontA12B,0100) //Chamado T.I -Fernando sigoli 05/07/2019 
 
 
@@ -1968,6 +1971,8 @@ Static Function RumOrdemCar()
 	oPrn:Say(0590,1940,Transform(XZFC->ZFC_TOTAL,"@E 999,999"),oFontA10N,0100)
 	oPrn:Say(0660,0300,XZFC->ZFC_GRANJA+" - "+Alltrim(Substr(SA2->A2_END,1,40)),oFontA12B,0100) //Chamado T.I -Fernando sigoli 24/06/2019
 	oPrn:Say(0730,0375,Alltrim(SA2->A2_MUN)+" - "+Alltrim(SA2->A2_EST) + "    GALPAO: "+XZFC->ZFC_GALPAO +" LOTE: "+ XZFC->ZFC_NRLOTE,oFontA12B,0100) //Chamado T.I -Fernando sigoli 05/07/2019 
+
+	oPrn:Say(0660,1940,cLinhagem,oFontA10N,0100) //Everson, 30/06/2022, ticket 75561.
 
 	cPlaca	:=	XZFC->ZFC_VEICUL
 																			
@@ -2219,6 +2224,7 @@ User Function VALLACRE()
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
 	Local cLacrest	:= " "  
+	Local h 		:= 1
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')                       
 
@@ -2387,6 +2393,7 @@ User Function xTAKECHAR(_cDesc)
 	//ЪДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДї
 	//і Declaraзгo de variбveis.                                            |
 	//АДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ
+	Local i := 1
 
 	U_ADINF009P('ADLFV009P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Programaзгo de Retirada/Apanha de Aves.')
 
@@ -2661,7 +2668,8 @@ Return lRet
 /*/ 
 User Function TAKECHAR(_cCmp, _cDesc) 
 
-	Local lRet := .t.
+	Local lRet 	:= .t.
+	Local i		:= 1
 
 	Default _cCmp := ""
 	Default _cDesc := ""

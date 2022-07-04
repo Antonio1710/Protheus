@@ -67,7 +67,7 @@ User Function ADFAT491(cNmOrdem, cMsgError)
         cQuery += " ZIF_FILIAL = '" + FwxFilial("ZIF") + "' "
         cQuery += " AND ZIG_TPMOV = 'R' "
         cQuery += " AND ( ZIG_INICIA IN ('1','2','4') OR (ZIG_INICIA = '3' AND ZIF_GEMBA = '1' ) ) "
-        cQuery += " AND ZIB_STATUS NOT IN ('5','6') "
+        cQuery += " AND ZIB_STATUS NOT IN ('6') "
 
         If ! Empty(cNmOrdem)
             cQuery += " AND ZIF_NUMERO = '" + cNmOrdem + "' "
@@ -96,10 +96,10 @@ User Function ADFAT491(cNmOrdem, cMsgError)
 
                 If ! U_ADFAT50D(D_DADOS->ZIF_NUMERO, @cMsgError)
                     
-                    If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
+                    // If Alltrim(cValToChar(cMsgError)) <> "WS Gemba não retornou dados do método Get(Ordem de Pesagem)."
                         U_ADFAT173("Obter lacres : " + cMsgError, D_DADOS->ZIF_NUMERO, "", "GEMBA")
 
-                    EndIf
+                    // EndIf
 
                 Else
                     U_ADFAT173("Obter lacres : sucesso " , D_DADOS->ZIF_NUMERO, "", "GEMBA")

@@ -61,8 +61,9 @@
 	@history Ticket  TI  	- Leonardo P. Monteiro  - 02/02/2022 - Transferência do P.E. MTA410I para o fonte atual M410STTS. Transferimos a gravação da data de entrega nos itens do PV.
 	@history Ticket  69520  - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 	@history Everson, 18/10/2020, Chamado 18465. Envio de informações ao barramento. 
-	@history Ticket  TI    - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
+	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 75647   - Everson, 01/07/2022, descomentada função envSF.
 /*/
 User Function M410STTS()
 
@@ -2553,7 +2554,7 @@ Static function fPreAprv(_cFilial,cPedido,_cCliente,_cLoja)
 	dbGoto(_cRSC5)
 Return()
 */
-
+//Ticket 75647   - Everson, 01/07/2022.
 /*/{Protheus.doc} ï¿½envSF
 	Envio de pedido para o SalesForce. Chamado 037261.
 	@type  Static Function
@@ -2561,12 +2562,9 @@ Return()
 	@since 08/03/2018
 	@version 01
 	/*/
-/*
 Static Function envSF(_lBon,_lDoa,cExpSql)
 
-	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
-	//ï¿½Declaraï¿½ï¿½o de variï¿½veis.                                                   ï¿½
-	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	
+	//Variáveis.
 	Local aArea		:= GetArea()
 	Default _lBon	:= .F.
 	Default _lDoa	:= .F.
@@ -2580,7 +2578,6 @@ Static Function envSF(_lBon,_lDoa,cExpSql)
 
 	EndIf
 
-	//
 	If Empty(cExpSql)
 		U_ADVEN050P( Alltrim(cValToChar(SC5->C5_NUM)) ,.F.,.F.,"",.F.,.F.,.F.,_lBon,_lDoa)
 
@@ -2589,12 +2586,9 @@ Static Function envSF(_lBon,_lDoa,cExpSql)
 
 	EndIf
 
-	//
 	RestArea(aArea)
 
 Return Nil
-*/
-
 /*/{Protheus.doc} VerifAprovDoacao
 	Verifica aprovaï¿½ï¿½o de doaï¿½ï¿½o.
 	@type  Static Function

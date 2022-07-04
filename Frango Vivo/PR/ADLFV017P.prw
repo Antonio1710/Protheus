@@ -18,6 +18,8 @@
   @history Ticket 41586 - Everson              - 05/10/2021 - Tratamento para validação de inclusão de nf.
   @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
   @history Ticket 73466 - Everson              - 25/05/2022 - Adicionada melhoria de para fechamento de registro.
+  @history Ticket 73466 - Adriano Savoine      - 29/06/2022 - Melhoria para fechar pesagem manual com dados Fixos.
+  @history Ticket Ti    - Adriano Savoine      - 04/07/2022 - Declarado a variavel cZV1C.
 /*/
 User Function ADLFV017P() // U_ADLFV017P()
 
@@ -87,7 +89,7 @@ Return (aRotina)
 	@since 24/05/2022
 	@version 02
 	/*/
-User Function ADLFV171()
+/*User Function ADLFV171()
 
 	//Variáveis.
 	Local aArea := GetArea()
@@ -130,7 +132,117 @@ User Function ADLFV171()
 
 	RestArea(aArea)
 
+Return Nil*/
+
+/*/{Protheus.doc} User Function ADLFV171C
+
+    Fecha ordem de carregamento apos o fechamento da ordem.
+
+    Chamado 73466.
+
+    @type  Function
+
+    @author Adriano Savoine
+
+    @since 28/06/2022
+
+    @version 01
+
+    /*/
+
+User Function ADLFV171()
+
+
+
+    //Variáveis.
+
+    Local aArea := GetArea()
+	Local cZV1C := ''
+
+
+    If ZV1->ZV1_DTABAT < DATE()- 5 .OR. ZV1->ZV1_INTEGR = 'I'
+
+        MsgInfo("Data do abate maior que 5 dias, ou ordem já integrada correção não permitida.", "Função ADLFV171(ADLFV017P) - 1")
+
+        RestArea(aArea)
+
+        Return Nil
+
+
+
+    EndIf
+
+
+    If ! MsgYesNo("Deseja Corrigir a Pesagem, colocando a tara padrão?", "Função ADLFV171(ADLFV017P)")
+
+        RestArea(aArea)
+
+        Return Nil
+
+
+
+    EndIf
+
+
+    BEGINSQL ALIAS "cZV1C"
+
+		%NoPARSER%
+
+        SELECT CASE WHEN (QN_PESOBRUTENTRAVEVIVA - ZV4.ZV4_PESO) IS NULL THEN '0' ELSE (QN_PESOBRUTENTRAVEVIVA - ZV4.ZV4_PESO)  END ZV1_PESLIQ1,
+		
+		ZV4.ZV4_PESO AS TARA,
+
+        ((QN_PESOBRUTENTRAVEVIVA  - ZV4.ZV4_PESO + ZV1_QTDQBR) + ((QN_PESOBRUTENTRAVEVIVA - ZV4.ZV4_PESO + ZV1_QTDQBR) * '0.007')) AS ZV1_RPESOT1
+
+        FROM %table:ZV1% Z
+
+			INNER JOIN [LNKMIMS].[SMART].[dbo].[ENTRADA_AVE_VIVA] EAV ON
+
+			EAV.ID_LOTECRIAEXTEENTRAVEVIVA = Z.ZV1_NUMOC COLLATE Latin1_general_CI_AS
+
+			INNER JOIN %table:ZV4% ZV4 ON
+
+			ZV4.ZV4_PLACA = EAV.GN_PLACCAMIENTRAVEVIVA COLLATE Latin1_general_CI_AS
+
+			AND ZV4.%notDel%
+
+        WHERE Z.ZV1_NUMOC = %exp:ZV1->ZV1_NUMOC%
+
+
+
+    ENDSQL
+
+
+    DbSelectArea(cZV1C)
+
+    IF SELECT("cZV1C")>0
+
+        RecLock("ZV1", .F.)
+
+            ZV1->ZV1_PESLIQ := cZV1C->ZV1_PESLIQ1 
+
+            ZV1->ZV1_RPESOT := cZV1C->ZV1_RPESOT1
+
+            ZV1->ZV1_TARAPD := cZV1C->TARA
+
+			ZV1->ZV1_FECHA := "3"
+
+        ZV1->(MsUnLock())
+
+		//GrLogZBE(dDate,cTime,cUser,cLog,cModulo,cRotina,cParamer,cEquipam,cUserRed)
+		u_GrLogZBE(msDate(),TIME(),cUserName, "FECHAMENTO DE REGISTRO","FRANGO VIVO","ADLFV017P",;
+				   "Número OC " + cValToChar(ZV1->ZV1_NUMOC),ComputerName(),LogUserName())
+
+		cZV1C->(DbCloseArea())
+    ENDIF  
+
+
+    RestArea(aArea)
+
 Return Nil
+
+
+
 // REGRAS DE NEGÓCIO
 Static Function ModelDef()
 	//local nAtual := 0

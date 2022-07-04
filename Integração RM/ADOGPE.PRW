@@ -20,6 +20,7 @@
     @history Ticket   69148 - Leonardo P. Monteiro - 03/03/2022 - Correção de error.log no tratamento da varíavel cSexo.
     @history Chamado 16833 - Leonardo P. Monteiro - 08/03/2022- Ajustes e adequações nos fontes conforme novas regras propostas e inconsistências encontradas.
     @history Chamado 16833 - Leonardo P. Monteiro - 31/03/2022- Correção na gravação dos campos de medidas para os uniformes e armários. Quando alterado o cadastro os valores estavam sendo zerados.
+    @history Chamado TI - Everson, 01/07/2022, Correção na gravação do campo sexo. Quando alterado o cadastro o valor estava sendo zerado.
 /*/
 
 Class ADOGPE
@@ -146,7 +147,8 @@ METHOD fCadEleg(cFilPro,;
                 cJalecoT    := ZI1->ZI1_TJALEC
 
                 cCodZHLT    := ZI1->ZI1_CODZHL
-            
+                
+                cSexo       := ZI1->ZI1_SEXO //Chamado TI - Everson, 01/07/2022.
 
                 if Reclock("ZI1",.F.)
                     Dbdelete()

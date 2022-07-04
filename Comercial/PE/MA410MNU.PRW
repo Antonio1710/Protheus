@@ -24,6 +24,7 @@
 	@history Ticket 69574   - Abel Bab - 21/03/2022 - Projeto FAI
 	@history Ticket 69574   - Sigoli   - 26/05/2022 - Projeto FAI - correção error log -variable does not exist CFILAN on U_ALTSFEXP
 	@history Ticket 18465   - Everson  - 06/06/2022 - Adicionada rotina para alteração de placa na filial 03.
+	@history Ticket 18465   - Everson  - 28/06/2022 - Adicionada rotina para enviar registro ao barramento na filial 03.
 /*/
 User function MA410MNU()
 
@@ -42,6 +43,7 @@ User function MA410MNU()
 	//Everson - 06/06/2022. Chamado 18465.
 	If cFilAnt == "03"
 		aadd( aRotina, { "Altera Placa"      , "U_altPlSC5()" ,0,11})
+		aadd( aRotina, { "Env Barramento"    , "U_MA4101()" ,0,11})
 
 	EndIf
 
@@ -372,3 +374,36 @@ User Function altPlSC5()
 	RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} MA4101
+	Envia registro para o barramento.
+	Chamado 18465.
+	@type  Static Function
+	@author Everson
+	@since 28/06/2022
+	@version 1
+/*/
+User Function MA4101()
+
+	//Variáveis.
+	Local aArea 	:= GetArea()
+	Local cPedido 	:= SC5->C5_NUM
+	Local cFilter	:= ""
+
+	If ! MsgYesNo("Deseja enviar o pedido de venda " + cPedido + " para o barramento ?","Função MA4101(MA410MNU)")
+		RestArea(aArea)
+		Return Nil
+
+	EndIf
+
+	cFilter := " C6_FILIAL ='" + FWxFilial("SC6") + "' .And. C6_NUM = '" + cPedido + "' "
+
+	U_ADFAT27D("SC5", 1, FWxFilial("SC5") + cPedido,;
+		"SC6", 1, FWxFilial("SC6") + cPedido, "C6_ITEM",cFilter,;
+		"pedidos_de_saida_protheus", "A",;
+		.T., .T.,.T., Nil)
+
+	MsgInfo("Pedido enviado.","Função MA4101(MA410MNU)")
+
+	RestArea(aArea)
+
+Return Nil

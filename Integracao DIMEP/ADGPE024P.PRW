@@ -48,6 +48,7 @@
 	@history TICKET: 74255  - ADRIANO SAVOINE - 09/06/2022 - Tratado a Filial de Itapira 0B.
 	@histori Ticket  74756  - ADRIANO SAVOINE - 15/06/2022 - Efetuado o ajuste para as filiais colocar zero ex: 02,03 etc.
 	@history Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022 - Corrigido a query para resolver os valores do RM.
+	@history Ticket: 75521  - ADRIANO SAVOINE - 30/06/2022 - Adicionado para integrar Torniquete portaria em novos perfis de acesso.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -532,6 +533,28 @@ Static Function DimepRegraDeAcesso()
 							
 				End
 			    TSE->(DbCloseArea()) 
+
+				// *** INICIO INTEGRA GRUPO TORNIQUETE PORTARIA *** //  Ticket 75521 - Adriano Savoine - 30/06/2022     	 	  
+				TorniquetePortaria()
+				While TSIM->(!EOF())
+					
+					SqlVTurnoDimep(CVALTOCHAR(nUlTurno))
+		
+					IF TRH->(!EOF())  
+					
+						nQtdAcesso := 999
+						INTPERACREGRA(TRP->CD_PERFIL_ACESSO,TSIM->CD_GRUPO,TSIM->CD_AREA,'NULL','NULL','0','NULL',nQtdAcesso) // Integra Perfil de Regra
+						INTPERRESTRICAO(TRP->CD_PERFIL_ACESSO,TSIM->CD_GRUPO,TSIM->CD_AREA) // Integra PERFIL_ACESSO_RESTRICAO	
+						
+					ENDIF
+					TRH->(dbCloseArea())                  
+					
+					TSIM->(dbSkip())
+							
+				ENDDO
+				TSIM->(dbCloseArea()) 
+
+				// *** FINAL INTEGRA GRUPO TORNIQUETE PORTARIA *** //
 
     		EndIf            
     		TRP->(DbCloseArea()) 
@@ -2609,6 +2632,21 @@ Static Function SqlCatracaPortaria()
  	EndSQl        
 
 Return Nil
+
+// Ticket 75521 - Adriano Savoine - 30/06/2022
+Static Function TorniquetePortaria()
+
+	BeginSQL Alias "TSIM"
+			%NoPARSER%  
+			SELECT CD_GRUPO,
+			       CD_AREA,
+			       FL_AREA_ORIGEM
+			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
+		    WHERE CD_GRUPO = 22
+     	       		
+ 	EndSQl        
+
+RETURN(NIL)
 
 Static Function SqlEMP1(cEstLoc)
 
