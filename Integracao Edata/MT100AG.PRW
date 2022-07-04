@@ -140,7 +140,7 @@ Local aArea		:= GetArea()
 Local aAreaSA2  := GetARea("SA2")
 Local aAreaSA1  := GetARea("SA1")
 Local aAreaSF1 := SF1->(GetArea())
-Local aAreaSD1 := SF1->(GetArea())
+Local aAreaSD1 := SD1->( GetArea() ) //SF1->(GetArea()) // ti - fwnm - 04/07/2022
 Local cTesRem	:= GetMv("MV_#TESENT")
 Local cAlDes	:= cAlOri := ""
 Local lContinua :=.F.
