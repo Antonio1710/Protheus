@@ -12,26 +12,29 @@
 	@history Chamado TI     - Ricardo Lima    - 14/01/2018 - Ajuste de leiaute de tela
 	@history Chamado 055345 - William Costa   - 29/01/2019 - Identificado para verificar também o produto que está salvo no banco de dados da tabela SBE, para verificar se esse produto também tem saldo na hora da alteração para não deixar.
 	@history Chamado 057610 - William Costa   - 23/04/2020 - Identificado que não funcionava mais o M-> para pegar a variavel de memoria, devido a tela ser em MVC, foi necessário trocar para o comando FWFLDGET("BE_LOCALIZ"), após testes o error log foi solucionado.
-
+	@history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço
 */	
                                  
 USER FUNCTION MT015TOK()
 
-	Local lRet := .T.
-	
+	Local lRet  := .T.
+	Local _cMV_XMT015B :=  SuperGetMV("MV_XMT015B",.F.,"001357/001337")
+	//Local _lMV_XMT015A :=  SuperGetMv('MV_XMT015A', .f. ,.F. ) //Libera .T. ou Não Libera .F. o Cadastro de Endereço para Diversos produtos
+
 	IF VALTYPE(PARAMIXB[1]) == 'N' .AND. ; //trava para o ParamIXB não ser Nulo
 	   PARAMIXB[1]           == 3          //Se for igual a 3 INCLUSAO
 	   
 	    SqlVSBF(FWFLDGET("BE_FILIAL"),FWFLDGET("BE_LOCAL"),FWFLDGET("BE_CODPRO"),FWFLDGET("BE_LOCALIZ"))
 	    IF TRB->(!EOF())       
-	       
-	    	MSGSTOP('Olá ' + ALLTRIM(cUserName) + ', não é possivel efetivar o endereço!!!'  + CHR(13) + CHR(10) + ;
-				    'Esse produto já está com saldo localizado em outro lugar.'               + CHR(13) + CHR(10) + ; 
-				    'Localização:' + TRB->BF_LOCALIZ + ' Saldo:' + CVALTOCHAR(TRB->BF_QUANT) + CHR(13) + CHR(10) + ; 
-				    ' Verifique o Saldo de Localização.', 'MT015TOK-01' )						
-				    
-	   		lRet := .F.
-			    	   			
+			//@history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço
+			//Somente fará a validação se o endereço for cadastrado com o codigo do produto M->BE_CODPRO.
+			If !__cUserID $ _cMV_XMT015B //!Empty(M->BE_CODPRO)
+				MSGSTOP('Olá ' + ALLTRIM(cUserName) + ', não é possivel efetivar o endereço!!!'  + CHR(13) + CHR(10) + ;
+						'Esse produto já está com saldo localizado em outro lugar.'               + CHR(13) + CHR(10) + ; 
+						'Localização:' + TRB->BF_LOCALIZ + ' Saldo:' + CVALTOCHAR(TRB->BF_QUANT) + CHR(13) + CHR(10) + ; 
+						' Verifique o Saldo de Localização.', 'MT015TOK-01' )						
+				lRet := .F.
+			EndIf
 		ENDIF
    	    TRB->(dbCloseArea()) 
    	    
@@ -57,14 +60,16 @@ USER FUNCTION MT015TOK()
 	   	ENDIF
 	   		
 	    IF TRB->(!EOF())       
-	       
-	    	MSGSTOP('Olá ' + ALLTRIM(cUserName) + ', não é possivel efetivar o endereço!!!'  + CHR(13) + CHR(10) + ;
-				    'Esse produto já está com saldo localizado em outro lugar.'               + CHR(13) + CHR(10) + ; 
-				    'Localização:' + TRB->BF_LOCALIZ + ' Saldo:' + CVALTOCHAR(TRB->BF_QUANT) + CHR(13) + CHR(10) + ; 
-				    ' Verifique o Saldo de Localização.', 'MT015TOK-03' )						
-				    
-	   		lRet := .F.
-			    	   			
+			//@history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço
+			//Somente fará a validação se o endereço for cadastrado com o codigo do produto M->BE_CODPRO.
+	    	If !__cUserID $ _cMV_XMT015B //!Empty(M->BE_CODPRO)
+				MSGSTOP('Olá ' + ALLTRIM(cUserName) + ', não é possivel efetivar o endereço!!!'  + CHR(13) + CHR(10) + ;
+						'Esse produto já está com saldo localizado em outro lugar.'               + CHR(13) + CHR(10) + ; 
+						'Localização:' + TRB->BF_LOCALIZ + ' Saldo:' + CVALTOCHAR(TRB->BF_QUANT) + CHR(13) + CHR(10) + ; 
+						' Verifique o Saldo de Localização.', 'MT015TOK-03' )						
+						
+				lRet := .F.
+			EndIf			    	   			
 		ENDIF
    	    TRB->(dbCloseArea()) 
 
@@ -74,14 +79,16 @@ USER FUNCTION MT015TOK()
 	   	SqlVSBF2(SBE->BE_FILIAL,SBE->BE_LOCAL,SBE->BE_CODPRO,SBE->BE_LOCALIZ)
 	   		
 	    IF TRC->(!EOF())       
-	       
-	    	MSGSTOP('Olá ' + ALLTRIM(cUserName) + ', não é possivel efetivar o endereço!!!'  + CHR(13) + CHR(10) + ;
-				    'o produto que estava salvo ainda tem saldo localizado nesse lugar.'     + CHR(13) + CHR(10) + ; 
-				    'Localização:' + TRC->BF_LOCALIZ + ' Saldo:' + CVALTOCHAR(TRC->BF_QUANT) + CHR(13) + CHR(10) + ; 
-				    'Transfira todo o Saldo desse produto para outro endereço, depois volte e altere o cadastro de Endereço.', 'MT015TOK-03' )						
-				    
-	   		lRet := .F.
-			    	   			
+	       	//@history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço
+			//Somente fará a validação se o endereço for cadastrado com o codigo do produto M->BE_CODPRO.
+		    If !__cUserID $ _cMV_XMT015B //!Empty(M->BE_CODPRO)
+				MSGSTOP('Olá ' + ALLTRIM(cUserName) + ', não é possivel efetivar o endereço!!!'  + CHR(13) + CHR(10) + ;
+						'o produto que estava salvo ainda tem saldo localizado nesse lugar.'     + CHR(13) + CHR(10) + ; 
+						'Localização:' + TRC->BF_LOCALIZ + ' Saldo:' + CVALTOCHAR(TRC->BF_QUANT) + CHR(13) + CHR(10) + ; 
+						'Transfira todo o Saldo desse produto para outro endereço, depois volte e altere o cadastro de Endereço.', 'MT015TOK-03' )						
+						
+				lRet := .F.
+			EndIf			    	   			
 		ENDIF
    	    TRC->(dbCloseArea()) 
 
@@ -92,8 +99,6 @@ USER FUNCTION MT015TOK()
 RETURN(lRet)  
 
 STATIC FUNCTION SqlVSBF(cFil,cLocal,cCod,cLocaliz)
-
-	Local cTeste := ''
 
 	BeginSQL Alias "TRB"
 			%NoPARSER%        
@@ -113,8 +118,7 @@ RETURN(NIL)
 
 STATIC FUNCTION SqlVSBF2(cFil,cLocal,cCod,cLocaliz)
 
-	Local cTeste := ''
-
+	
 	BeginSQL Alias "TRC"
 			%NoPARSER%        
 			SELECT BF_PRODUTO,
