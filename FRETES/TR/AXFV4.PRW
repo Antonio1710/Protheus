@@ -23,6 +23,7 @@
 	@history Everson, 18/03/2022, Chamado 18465. Envio de informações ao barramento.
 	@history Everson, 24/03/2022, Chamado 18465. Nova rotina para cadastro de caixas de transporte.
 	@history Everson, 14/06/2022, Chamado 74587. Tratamento para errorlog.
+	@history Everson, 05/07/2022, Chamado 18465. Tratamento para removar caractere especial na leitura da tag.
 /*/
 
 User Function AXFV4() 
@@ -899,11 +900,12 @@ User Function FV4TGSG() // U_FV4TGSG()
     FWMsgRun(, {|oSay| nResp := oObj:Receive( @cBuffer, nTEspR ) }, "Aguarde", "Efetuando leitura...")
     Conout( DToC(Date()) + " " + Time() + " --> nResp " + cValToChar(nResp) )
     If ( nResp >= 0 )
-		cBuffer :=  U_ADFAT50O(cBuffer)
+		cBuffer := Alltrim(cValToChar(StrTran(StrTran(cBuffer,Chr(2),""),Chr(3),""))) //Everson - 05/07/2022. Chamado 18465.
+		cBuffer := U_ADFAT50O(cBuffer)
         Conout( DToC(Date()) + " " + Time() + " --> cBuffer " + cValToChar(cBuffer) )
 		M->ZV4_TGFIXA := Alltrim(cValToChar(cBuffer))
 
-    ElseIf nResp < 0
+    ElseIf nResp < 0 
         oObj:GetError(@cErro)
         Conout( DToC(Date()) + " " + Time() + " --> Erro " + cValToChar(cErro) )
         MsgStop("Ocorreu erro na leitura dos dados." + Chr(13) + Chr(10) + cValToChar(cErro) ,"Função ")
