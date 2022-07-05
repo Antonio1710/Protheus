@@ -1,4 +1,4 @@
-#Include "Protheus.Ch"
+#include "totvs.ch"
 #include "topconn.ch"
 
 /*/{Protheus.doc} User Function DPCTB102GR
@@ -14,6 +14,7 @@
     @see (links_or_references)
     @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação R33
     @history ticket 73451 - Fernando Macieira - 04/07/2022 - Padronização lote RM
+    @history ticket 73451 - 05/07/2022 - Fernando Macieira - Travamento na exclusão do lote manual
 /*/
 User Function DPCTB102GR()
 
@@ -120,6 +121,7 @@ Static Function GrvNewDoc(cNewDOC)
     Local aAreaCT2 := CT2->( GetArea() )
     Local cQuery   := ""
     Local lMsg     := .f.
+    Local lLockCTF := .t.
 
     If Select("Work") > 0
         Work->( dbCloseArea() )
@@ -155,6 +157,37 @@ Static Function GrvNewDoc(cNewDOC)
             Work->( dbSkip() )
 
         EndDo
+
+        // @history ticket 73451 - 05/07/2022 - Fernando Macieira - Travamento na exclusão do lote manual
+        If lMsg
+
+            CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+            If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+CT2->CT2_LOTE+CT2->CT2_SBLOTE+cDocLct) )
+                
+                RecLock("CTF", .F.)
+                    CTF->CTF_DOC := cNewDOC
+                CTF->( msUnLock() )
+            
+            Else
+
+                CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+                If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+CT2->CT2_LOTE+CT2->CT2_SBLOTE+cNewDOC) )
+                    lLockCTF := .f.
+                EndIf
+
+                RecLock("CTF", lLockCTF)
+                    CTF->CTF_FILIAL := FWxFilial("CTF")
+                    CTF->CTF_DOC    := cNewDOC
+                    CTF->CTF_LOTE   := CT2->CT2_LOTE
+                    CTF->CTF_SBLOTE := CT2->CT2_SBLOTE
+                    CTF->CTF_DATA   := CT2->CT2_DATA
+                    CTF->CTF_USADO  := "S"
+                CTF->( msUnLock() )
+
+            EndIf
+            //
+
+        EndIf
 
     End Transaction
 
