@@ -169,7 +169,7 @@ Static Function SqlBuscaProduto(cCodProd,cLocal,cLocaliz)
 
 	BeginSQL Alias "TRD"
 			%NoPARSER%  
-			   SELECT B1_LOCALIZ,BE_CODPRO,BE_LOCALIZ,BZ_LOCALIZ
+			   SELECT B1_LOCALIZ,BE_CODPRO,BE_LOCALIZ,BZ_LOCALIZ,BF_LOCALIZ
 			     FROM %Table:SB1% WITH (NOLOCK)
 			LEFT JOIN %Table:SBE% WITH (NOLOCK)
 			       ON BE_FILIAL               = %EXP:cFil%
@@ -182,6 +182,12 @@ Static Function SqlBuscaProduto(cCodProd,cLocal,cLocaliz)
 				  AND BZ_COD                  = B1_COD
 				  AND %Table:SBZ%.D_E_L_E_T_ <> '*'
 				  AND %Table:SBE%.D_E_L_E_T_ <> '*'
+			LEFT JOIN %Table:SBF% SBF WITH (NOLOCK)
+					ON BF_FILIAL   = %EXP:cFil%
+					AND BF_PRODUTO = B1_COD
+					AND BF_LOCAL   = %EXP:cLocal% 
+					AND BF_LOCALIZ = %EXP:cLocaliz% 
+					AND SBF.%NotDel%  
 			    WHERE B1_COD                  = %EXP:cCodProd% 
 			      AND %Table:SB1%.D_E_L_E_T_ <> '*'
 	EndSQl             
