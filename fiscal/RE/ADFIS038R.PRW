@@ -7876,6 +7876,17 @@ Substituicao de funcao Static Call por User Function MP 12.1.33
 Function u_FIS038B2()
 Return( xABrw31() )
 
+/*/{Protheus.doc} u_FIS038B3
+Substituicao de funcao Static Call por User Function MP 12.1.33
+@type function
+@version 1.0
+@author Edvar   / Flek Solution
+@since 23/03/2022
+@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+/*/
+Function u_FIS038B3()
+Return( xRelBr03() )
+
 /*/{Protheus.doc} u_FIS038B4
 Substituicao de funcao Static Call por User Function MP 12.1.33
 @type function
