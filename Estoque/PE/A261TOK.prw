@@ -11,7 +11,7 @@
     @since 03/04/2019
     @history Chamado 049041 - Fernando Sigoli - 09/05/2019 - tratamento para nao  entrar no P.E quando chamado pela função U_ADEST011P
 	@history Chamado 058645 - William Costa   - 02/06/2020 - Adicionado If de pulo quando for o armazém 03 para ajuste de regra de acordo ao endereço serem todos iguais como PROD
-
+	@history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço
 */	
 
 USER FUNCTION A261TOK()
@@ -21,7 +21,7 @@ USER FUNCTION A261TOK()
 	Local lRetProOri := .T.
 	Local lRetProDes := .T.
 	Local lRetSalOri := .T.
-	Local lRetSalDes := .T.
+	Local lRetSalDif := .T.
 	Local nProdOri   := aScan(aHeader,{|x| Alltrim(x[1]) ==  "Prod.Orig." })
 	Local nLocalOri  := aScan(aHeader,{|x| Alltrim(x[1]) ==  "Armazem Orig." })
 	Local nEndOri    := aScan(aHeader,{|x| Alltrim(x[1]) ==  "Endereco Orig." })
@@ -50,20 +50,20 @@ USER FUNCTION A261TOK()
 				   
 				   cErro:= CHR(13) + CHR(10) + CHR(13) + CHR(10) + "Prod Origem: " + aCols[nCont][nProdOri] + CHR(13) + CHR(10) + CHR(13) + CHR(10) 
 				   
-				   lRetProOri := ValidCad(aCols[nCont][nProdOri],aCols[nCont][nLocalOri])
-				   lRetSalOri := VERIFSALDO(aCols[nCont][nProdOri],aCols[nCont][nLocalOri])
-				   
+				   lRetProOri := ValidCad(aCols[nCont][nProdOri],aCols[nCont][nLocalOri],aCols[nCont][nEndOri])
+				   lRetSalDif := VERSALDif(aCols[nCont][nProdOri],aCols[nCont][nLocalOri])
+				   lRetSalOri := VERSALOri(aCols[nCont][nProdOri],aCols[nCont][nLocalOri],aCols[nCont][nEndOri])
+
 				   cErro+= CHR(13) + CHR(10) + CHR(13) + CHR(10) + "Prod Destino: " + aCols[nCont][nProdDes] + CHR(13) + CHR(10) + CHR(13) + CHR(10)
 				   
-				   lRetProDes := ValidCad(aCols[nCont][nProdDes],aCols[nCont][nLocalDes])
-				   lRetSalDes := VERIFSALDO(aCols[nCont][nProdDes],aCols[nCont][nLocalDes])
-				   
+				   lRetProDes := ValidCad(aCols[nCont][nProdDes],aCols[nCont][nLocalDes],aCols[nCont][nEndDes])
+				   				   
 				ENDIF
 				
 				IF lRetProOri == .F. .OR. ;
 				   lRetProDes == .F. .OR. ;
 				   lRetSalOri == .F. .OR. ;
-				   lRetSalDes == .F. 
+				   lRetSalDif == .F. 
 				
 					lRet := .F.
 					U_ExTelaMen("A261TOK - Tela de Transferência!!!", cErro, "Arial", 16, , .F., .T.)
@@ -78,7 +78,7 @@ USER FUNCTION A261TOK()
 	
 RETURN(lRet)
 
-Static Function ValidCad(cCod,cLoc)
+Static Function ValidCad(cCod,cLoc,cLocaliz)
 
 	Local lRet     := .T.
 	Local nContEnd := 0
@@ -159,7 +159,7 @@ Static Function ValidCad(cCod,cLoc)
         // *** INICIO VERIFICA ENDERECO DO PRODUTO DE *** //
 		IF ALLTRIM(cLoc) <> '03' // chamado 053805 WILLIAM COSTA 03/12/2019 - TRATATIVA PARA O ARMAZEM 03
 			
-			SqlEndereco(cCod,cLoc)
+			SqlEndereco(cCod,cLoc,clocaliz)
 			IF TRD->(EOF())
 			
 				cErro := cErro + ' Produto: ' + ALLTRIM(cCod) + ' sem Endereço, favor verificar!!!' + CHR(13) + CHR(10)
@@ -171,8 +171,9 @@ Static Function ValidCad(cCod,cLoc)
 			While TRD->(!EOF())
 			
 				// *** INICIO CONTA A QUANTIDADE DE ENDERECOS PARA ESSE PRODUTO E LOCAL *** //
-				
-				nContEnd := nContEnd + 1
+				If !Empty(TRD->BE_CODPRO)
+					nContEnd := nContEnd + 1
+				EndIf
 				// *** FINAL CONTA A QUANTIDADE DE ENDERECOS PARA ESSE PRODUTO E LOCAL *** //
 			
 				TRD->(dbSkip())
@@ -195,7 +196,7 @@ Static Function ValidCad(cCod,cLoc)
 		
 Return(lRet)
 
-STATIC FUNCTION VERIFSALDO(cCod,cLoc)
+STATIC FUNCTION VERSALDIF(cCod,cLoc,clocaliz)
 
 	Local lRet     := .T.
 	Local nSalProd := 0
@@ -284,7 +285,7 @@ Static Function SqlIndicador(cProd)
 	
 RETURN(NIL)
 
-Static Function SqlEndereco(cProd,cLocal)
+Static Function SqlEndereco(cProd,cLocal,cLocaliz)
 
 	Local cFilAtu := FWXFILIAL('SBE')
 
@@ -297,11 +298,25 @@ Static Function SqlEndereco(cProd,cLocal)
 			  FROM %Table:SBE% SBE WITH (NOLOCK)
 			  WHERE BE_FILIAL   = %EXP:cFilAtu%
 			    AND BE_LOCAL    = %EXP:cLocal%
-				AND BE_CODPRO   = %EXP:cProd%
+				AND BE_CODPRO  = %EXP:cProd%
 				AND D_E_L_E_T_ <> '*'
 			
 	EndSQl          
-	
+	If TRD->(Eof())		
+		TRD->(dbCloseArea())
+		BeginSQL Alias "TRD"
+				%NoPARSER%
+				SELECT BE_FILIAL,
+					BE_LOCAL,
+					BE_CODPRO,
+					BE_LOCALIZ 
+				FROM %Table:SBE% SBE WITH (NOLOCK)
+				WHERE BE_FILIAL   = %EXP:cFilAtu%
+					AND BE_LOCAL    = %EXP:cLocal%
+					AND BE_LOCALIZ  = %EXP:cLocaliz%
+					AND D_E_L_E_T_ <> '*'
+		EndSQl          
+	EndIf
 RETURN(NIL)
 
 Static Function SqlSB2(cProd,cLocal)
@@ -327,19 +342,14 @@ STATIC FUNCTION SqlSBF(cProd,cLocal)
 
 	BeginSQL Alias "TRF"
 			%NoPARSER% 
-			   SELECT BF_QUANT
-				 FROM %Table:SBE% SBE WITH (NOLOCK)
-				 INNER JOIN %Table:SBF% SBF WITH (NOLOCK)
-				         ON BF_FILIAL       = BE_FILIAL
-						AND BF_PRODUTO      = BE_CODPRO
-						AND BF_LOCAL        = BE_LOCAL
-						AND BF_LOCALIZ      = BE_LOCALIZ
+			   SELECT BF_FILIAL,BF_PRODUTO,BF_LOCAL,SUM(BF_QUANT) AS BF_QUANT
+				 FROM %Table:SBF% SBF WITH (NOLOCK)
+				      WHERE BF_FILIAL       = %EXP:cFilAtu%
+				        AND BF_PRODUTO       = %EXP:cProd%
+				        AND BF_LOCAL        = %EXP:cLocal%
+				        AND BF_QUANT        <> 0
 						AND SBF.D_E_L_E_T_ <> '*'
-				      WHERE BE_FILIAL       = %EXP:cFilAtu%
-				        AND BE_CODPRO       = %EXP:cProd%
-				        AND BE_LOCAL        = %EXP:cLocal%
-				        AND SBE.D_E_L_E_T_ <> '*'
-			   
+			   	GROUP BY BF_FILIAL,BF_PRODUTO,BF_LOCAL
 	EndSQl  
 	           
 RETURN(NIL)
@@ -350,14 +360,73 @@ STATIC FUNCTION SqlSBF2(cProd,cLocal)
 
 	BeginSQL Alias "TRF"
 			%NoPARSER% 
-			SELECT BF_QUANT 
+			SELECT BF_FILIAL,BF_PRODUTO,BF_LOCAL,SUM(BF_QUANT) AS BF_QUANT
 			FROM  SBF010 SBF WITH (NOLOCK) 
 			   WHERE BF_FILIAL     = %EXP:cFilAtu%
 			   AND BF_PRODUTO      = %EXP:cProd%
 			   AND BF_LOCAL        = %EXP:cLocal%
-			   AND BF_LOCALIZ      = 'PROD'
 			   AND SBF.D_E_L_E_T_ <> '*' 
-			   
+			   GROUP BY BF_FILIAL,BF_PRODUTO,BF_LOCAL   
 	EndSQl  
 	           
 RETURN(NIL)
+
+STATIC FUNCTION SqlSBF3(cProd,cLocal,cLocaliz)
+
+	Local cFilAtu := FWXFILIAL('SBF')
+
+	BeginSQL Alias "TRF"
+			%NoPARSER% 
+			SELECT BF_FILIAL,BF_PRODUTO,BF_LOCAL,SUM(BF_QUANT) AS BF_QUANT
+			FROM  SBF010 SBF WITH (NOLOCK) 
+			   WHERE BF_FILIAL     = %EXP:cFilAtu%
+			   AND BF_PRODUTO      = %EXP:cProd%
+			   AND BF_LOCAL        = %EXP:cLocal%
+			   AND BF_LOCALIZ      = %EXP:cLocaliz%
+			   AND SBF.D_E_L_E_T_ <> '*' 
+			   GROUP BY BF_FILIAL,BF_PRODUTO,BF_LOCAL   
+	EndSQl  
+	           
+RETURN(NIL)
+
+STATIC FUNCTION VERSALORI(cCod,cLoc,clocaliz)
+
+	Local lRet     := .T.
+	Local nSalEnd  := 0
+	
+	// *** FINAL BUSCA QUANTIDADE DO PRODUTO *** //
+	
+	// *** INICIO BUSCA QUANTIDADE DO PRODUTO *** //
+	IF ALLTRIM(cLoc) <> '03'  // chamado 053805 WILLIAM COSTA 03/12/2019 - TRATATIVA PARA O ARMAZEM 03
+		
+		SqlSBF3(cCod,cLoc,cLocaliz)
+		While TRF->(!EOF())
+				
+			nSalEnd := TRF->BF_QUANT
+			
+			TRF->(dbSkip())
+		ENDDO
+		TRF->(dbCloseArea())
+	
+	ELSE
+	
+		SqlSBF3(cCod,cLocal,cLocaliz)
+		While TRF->(!EOF())
+				
+			nSalEnd := TRF->BF_QUANT
+			
+			TRF->(dbSkip())
+		ENDDO
+		TRF->(dbCloseArea())
+		
+	ENDIF	
+	// *** FINAL BUSCA QUANTIDADE DO PRODUTO *** //
+	
+	IF nSalEnd <= 0
+	
+		cErro := cErro + ' Produto : ' + ALLTRIM(cCod) + ' está com Saldo insuficiente, ' + ' para o Local: ' + ALLTRIM(cLoc) + ' e Endereço: ' + ALLTRIM(cLocaliz) + ' Saldo Ender: ' + CVALTOCHAR(nSalEnd) + ' favor verificar!!!' + CHR(13) + CHR(10)
+		lRet := .F.
+	
+	ENDIF
+	
+Return(lRet)

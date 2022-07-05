@@ -59,7 +59,7 @@ User Function ADEST011P()
 Return (Nil)
 
 Static Function ProcFile() 
-
+	Local  nCont
 	Private cDoc            := ''
 	Private cNumseq         := ''
 	Private cLocalizOrigem  := ''
@@ -67,7 +67,7 @@ Static Function ProcFile()
 	Private cMensagem       := ''
 	Private aQuant          := {}
 	Private nQuant          := 0
-	Private nCont           := 1
+	//Private nCont           := 1
     Private aItens          := {}   
 	Private cErro           := ''
 	Private cDescProd       := ''                     

@@ -6,12 +6,13 @@
 
 /*/{Protheus.doc} User Function MT260TOK
 	Ponto de Entrada localizado na confirmação da Dialog na função A260TudoOK.EM QUE PONTO : executada ao pressionar o botão da EnchoiceBar.FINALIDADE : Validar as informações inseridas pelo Usuário.
+	@ PE da rotina MATA260 - Transferência Simples
 	@type  Function
 	@author William Costa
 	@since 03/04/2019
 	@version version
 	@history Chamado 053805 - WILLIAM COSTA         - 03/12/2019 - TRATATIVA PARA O ARMAZEM 03  
-	
+	@history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço	
 /*/
 
 USER FUNCTION MT260TOK()
@@ -65,7 +66,7 @@ USER FUNCTION MT260TOK()
 	
 RETURN(lRet)
 
-Static Function ValidCad(cCod,cLoc)
+Static Function ValidCad(cCod,cLoc,cLocaliz)
 
 	Local lRet     := .T.
 	Local nContEnd := 0
@@ -148,7 +149,7 @@ Static Function ValidCad(cCod,cLoc)
 		// *** INICIO VERIFICA ENDERECO DO PRODUTO DE *** //
 		IF ALLTRIM(cLoc) <> '03' // chamado 053805 WILLIAM COSTA 03/12/2019 - TRATATIVA PARA O ARMAZEM 03
 
-			SqlEndereco(cCod,cLoc)
+			SqlEndereco(cCod,cLoc,cLocaliz)
 			IF TRD->(EOF())
 			
 				cErro := cErro + ' Produto: ' + ALLTRIM(cCod) + ' sem Endereço, favor verificar!!!' + CHR(13) + CHR(10)
@@ -274,7 +275,7 @@ Static Function SqlIndicador(cProd)
 	
 RETURN(NIL)
 
-Static Function SqlEndereco(cProd,cLocal)
+Static Function SqlEndereco(cProd,cLocal,cLocaliz)
 
 	Local cFilAtu := FWXFILIAL('SBE')
 
@@ -291,7 +292,21 @@ Static Function SqlEndereco(cProd,cLocal)
 				AND D_E_L_E_T_ <> '*'
 			
 	EndSQl          
-	
+	If TRD->(!Eof())
+		BeginSQL Alias "TRD"
+				%NoPARSER%
+				SELECT BE_FILIAL,
+					BE_LOCAL,
+					BE_CODPRO,
+					BE_LOCALIZ 
+				FROM %Table:SBE% SBE WITH (NOLOCK)
+				WHERE BE_FILIAL   = %EXP:cFilAtu%
+					AND BE_LOCAL    = %EXP:cLocal%
+					AND BE_LOCALIZ  = %EXP:cLocaliz%
+					AND D_E_L_E_T_ <> '*'
+				
+		EndSQl          
+	EndIf
 RETURN(NIL)
 
 Static Function SqlSB2(cProd,cLocal)
