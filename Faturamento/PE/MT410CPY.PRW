@@ -21,6 +21,7 @@
 	@history ticket  8465   - Leonardo P. Monteiro - 13/04/2021 - Limpeza do campo Grupo de Inspeção no eData.
 	@history Ticket 22639   - Everson - 14/09/2021 - Limpeza do flag de pré-aprovado financeiro e erro de retorno do Edata.
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	@history Ticket 18465   - Everson - Tratamento para apagar o número da ordem de pesagem.
 /*/
 User Function MT410CPY()
 
@@ -159,6 +160,11 @@ User Function MT410CPY()
 	//Chamado: 045862
 	M->C5_SHELFLF   := .F.
 
+	If FieldPos("C5_XORDPES") > 0
+		M->C5_XORDPES   := "" //Everson - 05/07/2022. ticket 18465.
+
+	EndIf
+
 	//LOG DE COPIA
 	If M->C5_XCOPIA == "C" //incluido por copia
 		u_GrLogZBE (Date(),TIME(),cUserName," COPIA DE PEDIDO ","LOGISTICA","MT410CPY",;
@@ -179,8 +185,9 @@ User Function MT410CPY()
 	_nPoslog := GDFIELDPOS("C6_LOGCORT")
 	_nPosPro := GDFIELDPOS("C6_PRODUTO")
 	_nPosLoc := GDFIELDPOS("C6_LOCAL")
-	_nPosTES := GDFIELDPOS("C6_TES")   // incluido por Adriana em 31/03/17
-	_nPosSF  := GDFIELDPOS("C6_XIDSF") // Everson - 04/10/2018. Chamado 044154. 
+	_nPosTES := GDFIELDPOS("C6_TES")     // incluido por Adriana em 31/03/17
+	_nPosSF  := GDFIELDPOS("C6_XIDSF")   // Everson - 04/10/2018. Chamado 044154. 
+	_nPosOrdP:= GDFIELDPOS("C6_XORDPES") //Everson - 05/07/2022. ticket 18465.
 
 	_aTES:= {{"523",	"501"},{"654",	"603"},{"559",	"558"},{"560",	"557"},{"687",	"519"},{"803",	"505"},{"601",	"598"}}   //incluido por Adriana em 04/04/17 - para garantir que na copia nao sejam utilizados TES sem tributacao
 
@@ -198,6 +205,11 @@ User Function MT410CPY()
 		aCols[_ny][_nPosLoc] := IIF(!RetArqProd(aCols[_ny][_nPosPro]),POSICIONE("SBZ",1,xFilial("SBZ")+aCols[_ny][_nPosPro],"BZ_LOCPAD"),POSICIONE("SB1",1,xFilial("SB1")+aCols[_ny][_nPosPro],"B1_LOCPAD")) //ALTERACAO REFERENTE A TABELA SBZ INDICADORES DE PRODUTOS CHAMADO 030317 - WILLIAM COSTA  // chamado 031276  - erro no local na copia do pedido copiava o local errado ocasionando problema no estoque
 		aCols[_ny][_nPosTES] := IIF(VAR_IXB[2] < ctod("01/04/2017") .and. _nNovoTES <> 0,_aTES[_nNovoTES,2],aCols[_ny][_nPosTES]) // incluido por Adriana em 31/03/17//incluido por Adriana em 04/04/17 - para garantir que na copia nao sejam utilizados TES sem tributacao
 		
+		If _nPosOrdP > 0
+			aCols[_ny][_nPosOrdP]:= "" //Everson - 05/07/2022. ticket 18465.
+
+		EndIf
+
 		//Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
 		If (Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF)
 
