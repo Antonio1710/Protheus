@@ -15,26 +15,28 @@
 	@history chamado 048119 - Everson			- 26/03/2019 - Correção no lançamentos nos dados de projeto
 	@history chamado TI 	- Everson			- 14/07/2020 - Ajustes na chamada da função para versão 12.1.27
 	@history Ticket  34		- Glauco/ Adriana	- 02/10/2020 - Gera dados de importação para tabela CDA
+	@history chamado TI 	- Fernando Macieira - 04/07/2022 - SD1 está sendo disposicionado, interferindo nos d+ PEs e no negócio
 /*/
 
 User Function GQREENTR()
 
 	Local aArea		:= GetArea() //Everson - 25/09/2017 - 037341.
+
 	Local aRecnoNFE := {}
 	Local cLocPad	:= ""
 	Local cQuery 	:= ""
 	Local nRecno 	:= 0
 	Local aCampos	:={}
 	Local cChave	:= SF1->(F1_FILIAL+F1_DOC+ALLTRIM(F1_SERIE)+F1_FORNECE+F1_LOJA)
-	// Local _cNomBco2 := GetPvProfString("INTSAGBD","BCO2","ERROR",GetADV97())
-	// Local _cSrvBco2 := GetPvProfString("INTSAGBD","SRV2","ERROR",GetADV97())
-	// Local _cPortBco2:= Val(GetPvProfString("INTSAGBD","PRT2","ERROR",GetADV97()))
-	// Local _nTcConn1 := advConnection()
-	// Local _nTcConn2 := 0
 	Local lRural	:= .F.
 	Local cEMLMOV	:= ""
 	Local cEMLFIN	:= ""
 	Local cMensag	:= ""
+	
+	// @history chamado TI 	- Fernando Macieira - 04/07/2022 - SD1 está sendo disposicionado, interferindo nos d+ PEs e no negócio
+	Local aAreaSD1 := SD1->( GetArea() )
+	Local aAreaSF1 := SF1->( GetArea() )
+	//
 
 	Private lMsErroAuto 	:= .F.
 	Private lMsHelpAuto 	:= .T.
@@ -84,14 +86,6 @@ User Function GQREENTR()
 
 		If SF1->F1_CODIGEN > 0
 
-			// TcConType("TCPIP")
-			// If (_nTcConn2 := TcLink(_cNomBco2,_cSrvBco2,_cPortBco2)) < 0
-			// 	_lRet     := .F.
-			// 	cMsgError := "Não foi possível  conectar ao banco integração"
-			// 	MsgInfo("Não foi possível  conectar ao banco integração para ajustar a tabela SGNFE010, verifique com administrador","ERROR")
-
-			// EndIf
-
 			cQuery := " SELECT * "
 			cQuery += " FROM SGNFE010 "
 			cQuery += " WHERE F1_FILIAL+F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA = '" +cChave + "' "
@@ -139,9 +133,6 @@ User Function GQREENTR()
 
 					cMOVCodAux := MOV->D3_COD
 					nMOVQbrAux := MOV->D3_QUANT
-
-					//TcSetConn(_nTcConn1)
-
 
 					cMensag	+= "<ul>"
 					cMensag	+= "<li>Cod. Produto: " + cMOVCodAux + "</li>"
@@ -401,6 +392,11 @@ User Function GQREENTR()
 
 	RestArea(aArea)
 
+	// @history chamado TI 	- Fernando Macieira - 04/07/2022 - SD1 está sendo disposicionado, interferindo nos d+ PEs e no negócio
+	RestArea(aAreaSD1)
+	RestArea(aAreaSF1)
+	//
+
 Return
 
 /*/{Protheus.doc} CleanStr
@@ -443,6 +439,11 @@ Static Function grvCodPrj()
 	Local cLoja    	:= SF1->F1_LOJA
 	Local cTESAtlz 	:= ""
 
+	// @history chamado TI 	- Fernando Macieira - 04/07/2022 - SD1 está sendo disposicionado, interferindo nos d+ PEs e no negócio
+	Local aAreaSD1 := SD1->( GetArea() )
+	Local aAreaSF1 := SF1->( GetArea() )
+	//
+
 	//Everson-26/03/2019. Chamado 048119.
 	DbSelectArea("SD1")
 	SD1->(DbSetOrder(1))
@@ -469,6 +470,11 @@ Static Function grvCodPrj()
 
 	//
 	RestArea(aArea)
+
+	// @history chamado TI 	- Fernando Macieira - 04/07/2022 - SD1 está sendo disposicionado, interferindo nos d+ PEs e no negócio
+	RestArea(aAreaSD1)
+	RestArea(aAreaSF1)
+	//
 
 Return Nil
 

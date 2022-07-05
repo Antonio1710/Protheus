@@ -157,8 +157,7 @@ User Function ADLFV171()
     //Variáveis.
 
     Local aArea := GetArea()
-	Local cZV1C := ''
-
+	
 
     If ZV1->ZV1_DTABAT < DATE()- 5 .OR. ZV1->ZV1_INTEGR = 'I'
 
@@ -192,7 +191,9 @@ User Function ADLFV171()
 		
 		ZV4.ZV4_PESO AS TARA,
 
-        ((QN_PESOBRUTENTRAVEVIVA  - ZV4.ZV4_PESO + ZV1_QTDQBR) + ((QN_PESOBRUTENTRAVEVIVA - ZV4.ZV4_PESO + ZV1_QTDQBR) * '0.007')) AS ZV1_RPESOT1
+        ((QN_PESOBRUTENTRAVEVIVA  - ZV4.ZV4_PESO + ZV1_QTDQBR) + ((QN_PESOBRUTENTRAVEVIVA - ZV4.ZV4_PESO + ZV1_QTDQBR) * '0.007')) AS ZV1_RPESOT1,
+
+		CAST(((QN_PESOBRUTENTRAVEVIVA - ZV4.ZV4_PESO) / QN_CABEENTRAVEVIVA) AS DECIMAL(10,2)) AS ZV1_PESOME1
 
         FROM %table:ZV1% Z
 
@@ -213,7 +214,7 @@ User Function ADLFV171()
     ENDSQL
 
 
-    DbSelectArea(cZV1C)
+    DbSelectArea("cZV1C")
 
     IF SELECT("cZV1C")>0
 
@@ -224,6 +225,8 @@ User Function ADLFV171()
             ZV1->ZV1_RPESOT := cZV1C->ZV1_RPESOT1
 
             ZV1->ZV1_TARAPD := cZV1C->TARA
+
+			ZV1->ZV1_PESOME := cZV1C->ZV1_PESOME1
 
 			ZV1->ZV1_FECHA := "3"
 

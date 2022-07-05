@@ -34,31 +34,17 @@
 	@history ticket 72858   - Fernando Macieira - 18/05/2022 - Lote 008870 - Depreciação deixa alterar o campo lote x cc mas nao assume a alteração
 	@history ticket 72835   - Abel Babini		- 30/05/2022 - Executa liberação de pedidos do cliente após baixas realizadas.
 	@history Ticket 70142   - Rodrigo Mello/Flek- 10/06/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
 /*/
 User Function CTBGRV()
 
-	//Local cCT2_ORIGEM := "" //GetMV("MV_#RMORIG",,"CTBI102") // @history ticket  5949   - Fernando Macieira - 10/12/2020 - Projeto - RM - CT2_SEQLAN - Razão Contábil concatena históricos
-	
-	//@history ticket 2388 - FWNM - 06/11/2020 - Requisição - Lançamentos que custos da RNX2 e Safegg
-	/*
-	// Chamado n. 048749 || OS 050023 || CONTROLADORIA || REINALDO_FRANCISCHINELLI || 8947 || CUSTO MEDIO
-	If IsInCallStack("MATA330") // custo medio
-		Return
-	EndIf
-	// 
-	*/
+	Local cLtFolha := GetMV("MV_#LOTERM",,"008890") // @history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
 
-	// Inibido conforme diretriz Eduardo Sta Maria em 24/04/2019 - FWNM - 24/04/2019 
-	                                                            
-	//If cEmpAnt <> "01"       
-	// Ricardo Lima-27/11/18  | 037647
-	//If .not. cEmpAnt $ "01 02 07"    //Alterado por Adriana em 21/08/2018 para atender empresa CERES - chamado 043263
 	If .not. cEmpAnt $ "01 02 07 09"    // Chamado n. 051550 || OS 052878 || CONTROLADORIA || MONIK_MACEDO || 8956 || INDEXADORES - fwnm - 26/09/2019 (conforme email da Monik/Wilson autorizando após nosso questionamento antecipado)
 		Return
 	Endif
 	              
 	//Opção para lançamento (3-Inclusão; 4-Alteracão;5-Exclusão).
-	
 	nOpcLct := ParamIxb[1]
 	nProgra := ParamIxb[2]
 	
@@ -71,49 +57,29 @@ User Function CTBGRV()
 	Private _aAreaSF2	:=SF2->(GetArea()) //ticket  9307   - Abel Babini       - 15/02/2021 - Acrescentar indesxadores para rotinas do Ativo de Baixas e Transferências
 	
 	//@history ticket  5949   - Fernando Macieira - 10/12/2020 - Projeto - RM - CT2_SEQLAN - Razão Contábil concatena históricos
-
-	/* Script para correção da base
-	UPDATE CT2090 SET CT2_SEQLAN=CT2_LINHA
-	WHERE CT2_DATA>='20201031'
-	AND CT2_LOTE NOT IN ('008810','008820','008840','008850','008860','008890')
-	AND CT2_ORIGEM='CTBI102'
-	AND CT2_SEQLAN<>CT2_LINHA
-	AND D_E_L_E_T_=''
-	*/
-
-	/*
-	cCT2_ORIGEM := GetMV("MV_#RMORIG",,"CTBI102") 
-	If AllTrim(CT2->CT2_ORIGEM) == AllTrim(cCT2_ORIGEM)
-		
-		If AllTrim(CT2->CT2_LOTE) <> '008810' .and.;
-		   AllTrim(CT2->CT2_LOTE) <> '008820' .and.;
-		   AllTrim(CT2->CT2_LOTE) <> '008840' .and.;
-		   AllTrim(CT2->CT2_LOTE) <> '008850' .and.;
-		   AllTrim(CT2->CT2_LOTE) <> '008860' .and.;
-		   AllTrim(CT2->CT2_LOTE) <> '008890' 
-		
-			If AllTrim(CT2->CT2_SEQLAN) <> AllTrim(CT2->CT2_LINHA)
-			
-				RecLock("CT2", .F.)
-					CT2->CT2_SEQLAN := AllTrim(CT2->CT2_LINHA)
-				CT2->( msUnLock() )
-
-			EndIf
-		
-		EndIf
-
-	EndIf
-	*/
-
 	//@history ticket  8938   - Fernando Macieira - 03/02/2021 - Histórico de Lançamentos Origem Lote Folha bagunçados no razão
 	If AllTrim(CT2->CT2_SEQLAN) <> AllTrim(CT2->CT2_LINHA)
-			
 		RecLock("CT2", .F.)
 			CT2->CT2_SEQLAN := AllTrim(CT2->CT2_LINHA)
 		CT2->( msUnLock() )
-
 	EndIf
 	//
+
+	//@history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
+	If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
+
+		If CT2->CT2_LOTE <> cLtFolha
+
+			u_GrLogZBE(msDate(),TIME(),cUserName,"FOLHA","CONTABILIDADE","CTBGRV",;
+			"LOTE ORIGINAL " + CT2->CT2_LOTE + ", NOVO LOTE FOLHA " + cLtFolha, ComputerName(), LogUserName() )
+
+			RecLock("CT2", .F.)
+				CT2->CT2_LOTE := cLtFolha
+			CT2->( msUnLock() )
+
+		EndIf
+
+	EndIf
 
 	If nOpcLct == 3 //inclusao   
 

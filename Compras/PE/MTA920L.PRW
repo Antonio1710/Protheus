@@ -40,7 +40,7 @@ If Alltrim(FunName()) == "ADRANFIMP"
 				DbSelectArea("SF4")
 				DbSetOrder(1)
 				DbSeek(xfilial("SF4")+SD1->D1_TES )
-				IF FOUND()          && Chamado 006475 - Mauricio. Tratamento para IPI isento.
+				IF FOUND()          //&& Chamado 006475 - Mauricio. Tratamento para IPI isento.
 				   if SF4->F4_LFIPI == "I"
 				      _LIPI := .T.
 				   ELSE
