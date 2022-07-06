@@ -12,6 +12,7 @@
 	@history Chamado TI    - William Costa   - 24/09/2019 - ajustado query para nao trazer terceiro
 	@history TICKET  224   - William Costa   - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365 - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history ticket  75853 - Adriano Savoine - 06/07/2022 - Atualizado o Fonte para Filial 03.
 */
 
 User Function ADGPE026R()
@@ -78,8 +79,8 @@ Return(NIL)
 
 Static Function GeraExcel()
 
+	Local   nExcel     := 0
     Private nLinha     := 0
-	Private nExcel     := 0
 	Private nCred      := ''
     Private nCredold   := ''
     Private nCafeManha := 0 
@@ -250,6 +251,10 @@ Static Function SqlGeral()
 	IF CEMPANT == '01' .AND. xFilial("SRA") == '02'
 	
 		nFil := 9 //Emresa Adoro codigo da filial de Varzea no Dimep
+
+	ELSEIF CEMPANT == '01' .AND. xFilial("SRA") == '03'	
+	
+		nFil := 10 //Empresa Adoro codigo da filial de São Carlos ticket  75853 - Adriano Savoine - 06/07/2022
 		
 	ELSEIF CEMPANT == '02' .AND. xFilial("SRA") == '01'	
 	
