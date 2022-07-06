@@ -9,8 +9,9 @@
 	@author William Costa
 	@since 04/10/2017
 	@version 01
-	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
-	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history TICKET  224    - William Costa    - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
+	@history ticket  14365  - Fernando Macieir - 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  75853  - Adriano Savoine  - 06/07/2022 - Ajustado para a Filial 03 obter dados do Dimep.
 */
 
 User Function ADGPE027R()
@@ -77,8 +78,8 @@ Return(NIL)
 
 Static Function GeraExcel()
 
+	Local   nExcel     := 0
     Private nLinha     := 0
-	Private nExcel     := 0
 	Private nCred      := ''
     Private nCredold   := ''
     Private nCafeManha := 0 
@@ -249,6 +250,10 @@ Static Function SqlGeral()
 	IF CEMPANT == '01' .AND. xFilial("SRA") == '02'
 	
 		nFil := 9 //Emresa Adoro codigo da filial de Varzea no Dimep
+
+	ELSEIF CEMPANT == '01' .AND. xFilial("SRA") == '03'	
+	
+		nFil := 10 //Empresa Adoro codigo da filial de São Carlos Ticket  75853  - Adriano Savoine  - 06/07/2022	
 		
 	ELSEIF CEMPANT == '02' .AND. xFilial("SRA") == '01'	
 	
