@@ -1,4 +1,4 @@
-#Include "Protheus.Ch"
+#include "totvs.ch"
 #include "topconn.ch"
 
 /*/{Protheus.doc} User Function DPCTB102GR
@@ -14,6 +14,7 @@
     @see (links_or_references)
     @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação R33
     @history ticket 73451 - Fernando Macieira - 04/07/2022 - Padronização lote RM
+    @history ticket 73451 - 05/07/2022 - Fernando Macieira - Travamento na exclusão do lote manual
 /*/
 User Function DPCTB102GR()
 
@@ -84,8 +85,6 @@ User Function DPCTB102GR()
 
             If lOKDOC
                 MsgRun( "Número original " + cDocLct + " pelo novo informado " + cNewDOC,"Alterando...", { || GrvNewDoc(cNewDOC) } )
-                //msAguarde(GrvNewDoc(cNewDOC),"Aguarde...","Alterando número original " + cDocLct + " pelo novo informado " + cNewDOC)
-                //GrvNewDoc(cNewDOC)
             EndIf
 
         EndIf
@@ -118,8 +117,10 @@ Static Function GrvNewDoc(cNewDOC)
 
     Local aArea    := GetArea()
     Local aAreaCT2 := CT2->( GetArea() )
+    Local aAreaCTF := CTF->( GetArea() )
     Local cQuery   := ""
     Local lMsg     := .f.
+    Local lLockCTF := .t.
 
     If Select("Work") > 0
         Work->( dbCloseArea() )
@@ -144,7 +145,7 @@ Static Function GrvNewDoc(cNewDOC)
             CT2->( dbGoTo(Work->RECNO) )
 
             u_GrLogZBE(msDate(),TIME(),cUserName,"SIG","CONTABILIDADE","CTBA102",;
-            "GRAVOU NOVO NUMERO do documento manual, ORIGINAL " + cDocLct + " NOVO " + cNewDOC, ComputerName(), LogUserName() )
+            "NOVO NUMERO, ORIGINAL " + cDocLct + " NOVO " + cNewDOC + " - DT/LOTE " + DtoC(CT2->CT2_DATA)+"/"+CT2->CT2_LOTE, ComputerName(), LogUserName() )
 
             RecLock("CT2", .F.)
                 CT2->CT2_DOC := cNewDOC
@@ -155,6 +156,38 @@ Static Function GrvNewDoc(cNewDOC)
             Work->( dbSkip() )
 
         EndDo
+
+        // @history ticket 73451 - 05/07/2022 - Fernando Macieira - Travamento na exclusão do lote manual
+        If lMsg
+
+            CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+            If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+CT2->CT2_LOTE+CT2->CT2_SBLOTE+cDocLct) )
+                
+                RecLock("CTF", .F.)
+                    CTF->CTF_DOC := cNewDOC
+                CTF->( msUnLock() )
+            
+            Else
+
+                lLockCTF := .t.
+                CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+                If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+CT2->CT2_LOTE+CT2->CT2_SBLOTE+cNewDOC) )
+                    lLockCTF := .f.
+                EndIf
+
+                RecLock("CTF", lLockCTF)
+                    CTF->CTF_FILIAL := FWxFilial("CTF")
+                    CTF->CTF_DATA   := CT2->CT2_DATA
+                    CTF->CTF_LOTE   := CT2->CT2_LOTE
+                    CTF->CTF_SBLOTE := CT2->CT2_SBLOTE
+                    CTF->CTF_DOC    := cNewDOC
+                    CTF->CTF_USADO  := "S"
+                CTF->( msUnLock() )
+
+            EndIf
+            //
+
+        EndIf
 
     End Transaction
 
@@ -172,6 +205,7 @@ Static Function GrvNewDoc(cNewDOC)
 
     RestArea( aArea )
     RestArea( aAreaCT2 )
+    RestArea( aAreaCTF )
 
 Return
 
@@ -239,10 +273,13 @@ Static Function FixLtRM()
 
     Local aArea    := GetArea()
     Local aAreaCT2 := CT2->( GetArea() )
+    Local aAreaCTF := CTF->( GetArea() )
     Local cQuery   := ""
     Local cLtFolha := GetMV("MV_#LOTERM",,"008890")
+    Local lCTF     := .f.
+    Local lLockCTF := .t.
 
-    If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
+    If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
 
         If Select("Work") > 0
             Work->( dbCloseArea() )
@@ -269,17 +306,51 @@ Static Function FixLtRM()
                 If CT2->CT2_LOTE <> cLtFolha
 
                     u_GrLogZBE(msDate(),TIME(),cUserName,"FOLHA","CONTABILIDADE","DPCTB102GR",;
-                    "GRAVOU NOVO LOTE RM, ORIGINAL " + cLtLct + " NOVO " + cLtFolha, ComputerName(), LogUserName() )
+                    "LOTE RM, ORIGINAL " + cLtLct + " NOVO " + cLtFolha + " - DT/DOC " + DtoC(CT2->CT2_DATA)+"/"+CT2->CT2_DOC, ComputerName(), LogUserName() )
 
                     RecLock("CT2", .F.)
                         CT2->CT2_LOTE := cLtFolha
                     CT2->( msUnLock() )
+
+                    lCTF     := .t.
 
                 EndIf
 
                 Work->( dbSkip() )
 
             EndDo
+
+            // @history ticket 73451 - 05/07/2022 - Fernando Macieira - Travamento na exclusão do lote manual
+            If lCTF
+
+                CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+                If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+cLtLct+CT2->CT2_SBLOTE+CT2->CT2_DOC) )
+                    
+                    RecLock("CTF", .F.)
+                        CTF->CTF_LOTE := cLtFolha
+                    CTF->( msUnLock() )
+                
+                Else
+
+                    lLockCTF := .t.
+                    CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+                    If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+cLtFolha+CT2->CT2_SBLOTE+CT2->CT2_DOC) )
+                        lLockCTF := .f.
+                    EndIf
+
+                    RecLock("CTF", lLockCTF)
+                        CTF->CTF_FILIAL := FWxFilial("CTF")
+                        CTF->CTF_DATA   := CT2->CT2_DATA
+                        CTF->CTF_LOTE   := cLtFolha
+                        CTF->CTF_SBLOTE := CT2->CT2_SBLOTE
+                        CTF->CTF_DOC    := CT2->CT2_DOC
+                        CTF->CTF_USADO  := "S"
+                    CTF->( msUnLock() )
+
+                EndIf
+                //
+
+            EndIf            
 
         End Transaction
 
@@ -291,5 +362,6 @@ Static Function FixLtRM()
 
     RestArea( aArea )
     RestArea( aAreaCT2 )
+    RestArea( aAreaCTF )
 
 Return
