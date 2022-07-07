@@ -8,6 +8,7 @@ Static xPula    := Chr(13) + Chr(10)
 Static cTbMast  := "ZHR"
 Static cTitulo  := "Refaturamento de Carga de Ração"
 Static cTiMast  := "Dados do refaturamento da carga de ração"
+Static cTpMv    := "1" //1=Refaturamento de Ração;2=Sobra de Ração
 
 /*/{Protheus.doc} User Function ADFAT057P
     Refaturamento de ordem de ração.
@@ -22,7 +23,6 @@ User Function ADFAT057P() // U_ADFAT057P()
 
     //Variáveis.
     Local oBrowse := Nil
-    Local cTpMv   := "1" //1=Refaturamento de Ração;2=Sobra de Ração
 
     If FWIsAdmin() .Or. __cUserID $ Alltrim(cValToChar(GetMv("MV_#ADF574",,"")))
 
@@ -98,7 +98,7 @@ Static Function MenuDef()
 
     EndIf
 
-    If FWIsAdmin() .Or. __cUserID $cUsrApv
+    If cTpMv == "1" .And. FWIsAdmin() .Or. __cUserID $cUsrApv
         ADD OPTION aRotina TITLE "Aprovar"  ACTION "U_ADFAT57D()"       OPERATION 10  ACCESS 0
 
     EndIf
@@ -158,7 +158,6 @@ Static Function ModelDef()
             {"ZHR_DTAPRV"  , "ZHR_DTAPRV"},;
             {"ZHR_HRAPRV"  , "ZHR_HRAPRV"},;
             {"ZHR_STATUS"  , "ZHR_STATUS"},;
-            {"ZHR_NFSERD"  , "ZHR_NFSERD"},;
             {"ZHR_QTDORI"  , "ZHR_QTDORI"};
         }, (cTbMast)->(IndexKey(1)))
 
@@ -220,25 +219,25 @@ Static Function vldPos(oModel)
 
         EndIf
 
-        If lRet .And. Empty(cOrdRac)
+        If lRet .And. Empty(cOrdRac) .And. cTpMv == "1"
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Necessário informar a ordem de carregamento de ração de origem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         
         EndIf
 
-        If lRet .And. Empty(cMotivo)
+        If lRet .And. Empty(cMotivo) .And. cTpMv == "1"
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Necessário informar o motivo do refaturamento.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         
         EndIf
 
-        If lRet .And. cQtdOri <> cQtdDes
+        If lRet .And. cTpMv == "1" .And. cQtdOri <> cQtdDes
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Quantidade total dos destinos está divergente do total de origem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         
         EndIf
 
-        If lRet .And. cStatus <> "3" .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("gerPedS")
+        If lRet .And. cTpMv == "1" .And. cStatus <> "3" .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("gerPedS")
             oModel:SetValue("MD_MASTER","ZHR_CDAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_NMAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_DTAPRV", SToD(" / / "))
@@ -280,7 +279,7 @@ Static Function vldPos(oModel)
 
         EndIf
 
-        U_GrLogZBE(Date(), Time(), cUserName, cOperacao, "FATURAMENTO", "ADFAT057P",;
+        U_GrLogZBE(Date(), Time(), cUserName, cOperacao, Iif(cTpMv == "1", "FATURAMENTO DE RACAO", "SOBRA DE RACAO"), "ADFAT057P",;
                    cNumero, ComputerName(), LogUserName())
 
     EndIf
@@ -356,17 +355,41 @@ Static Function ViewDef()
     oView:= FWFormView():New() 
     oView:SetModel(oModel)              
  
-    oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
-    oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID",,{|| gridFocus(oView) })
-    oView:AddField("VW_CALC",   oStrTotal,"ADFAT57TOT")
- 
-    oView:CreateHorizontalBox("MAIN", 50)
-    oView:CreateHorizontalBox("GRID", 35)
-    oView:CreateHorizontalBox("CALC", 15)
+    
+    If cTpMv == "1"
+        oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
+        oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID",,{|| gridFocus(oView) })
+        oView:AddField("VW_CALC",   oStrTotal,"ADFAT57TOT")
+        oView:CreateHorizontalBox("MAIN", 50)
+        oView:CreateHorizontalBox("GRID", 35)
+        oView:CreateHorizontalBox("CALC", 15)
 
-    oView:SetOwnerView("VW_MASTER", "MAIN")
-    oView:SetOwnerView("VW_GRID", "GRID")
-    oView:SetOwnerView("VW_CALC", "CALC")
+        oView:SetOwnerView("VW_MASTER", "MAIN")
+        oView:SetOwnerView("VW_GRID", "GRID")
+        oView:SetOwnerView("VW_CALC", "CALC")
+
+    ElseIf cTpMv == "2"
+        oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
+        oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID",,)
+        oView:CreateHorizontalBox("MAIN", 50)
+        oView:CreateHorizontalBox("GRID", 50)
+        oView:SetOwnerView("VW_MASTER", "MAIN")
+        oView:SetOwnerView("VW_GRID", "GRID")
+
+        oStrMast:RemoveField("ZHR_ORRORI")
+        oStrMast:RemoveField("ZHR_MOTIVO")
+        oStrMast:RemoveField("ZHR_ROTEIR")
+        oStrMast:RemoveField("ZHR_ORPORI")
+        oStrMast:RemoveField("ZHR_NFORI")
+        oStrMast:RemoveField("ZHR_SERORI")
+        oStrMast:RemoveField("ZHR_FORORI")
+        oStrMast:RemoveField("ZHR_LOJORI")
+        oStrMast:RemoveField("ZHR_QTDORI")
+        oStrMast:RemoveField("ZHR_CDAPRV")
+        oStrMast:RemoveField("ZHR_NMAPRV")
+        oStrMast:RemoveField("ZHR_DTAPRV")
+
+    EndIf
 
     oView:EnableControlBar(.T.)
 
@@ -418,7 +441,7 @@ Return Nil
     @version 01
 /*/
 Static Function getCmps()
-Return "ZHR_FILIAL;ZHR_NFSERD;ZHR_NUMERO;ZHR_PLACA;ZHR_STATUS;ZHR_ROTEIR;ZHR_ORRORI;ZHR_DESGOR;ZHR_ORPORI;ZHR_NFORI;ZHR_SERORI;ZHR_FORORI;ZHR_LOJORI;ZHR_PRDSAG;ZHR_PRDPRO;ZHR_DESPRT;ZHR_QTDORI;ZHR_VLRUNT;ZHR_MOTIVO;ZHR_CDAPRV;ZHR_NMAPRV;ZHR_DTAPRV;ZHR_HRAPRV"
+Return "ZHR_FILIAL;ZHR_NUMERO;ZHR_PLACA;ZHR_STATUS;ZHR_ROTEIR;ZHR_ORRORI;ZHR_DESGOR;ZHR_ORPORI;ZHR_NFORI;ZHR_SERORI;ZHR_FORORI;ZHR_LOJORI;ZHR_PRDSAG;ZHR_PRDPRO;ZHR_DESPRT;ZHR_QTDORI;ZHR_VLRUNT;ZHR_MOTIVO;ZHR_CDAPRV;ZHR_NMAPRV;ZHR_DTAPRV;ZHR_HRAPRV"
 /*/{Protheus.doc} ADFAT57
     Ponto de entrada.
     @type  User Function
@@ -487,12 +510,18 @@ Static Function grvBarr(cOperacao, cNumero)
     Local aArea     := GetArea()
     Local cFilter   := ""
     Local cCmp      := getCmps()
+    Local cTopico   := "refaturamentos_de_racao_protheus"
+
+    If cTpMv == "2"
+        cTopico := "sobras_de_racao_protheus"
+
+    EndIf
     
     cFilter := " ZHR_FILIAL ='" + FWxFilial("ZHR") + "' .And. ZHR_NUMERO = '" + cNumero + "' "
 
     U_ADFAT27D("ZHR", 1, FWxFilial("ZHR") + cNumero,;
         "ZHR", 6, FWxFilial("ZHR") + cNumero, "ZHR_ITEM", cFilter,;
-        "refaturamentos_de_racao_protheus", cOperacao,;
+        cTopico, cOperacao,;
         .T., .T., .T.,;
         cCmp) 
 
@@ -1595,6 +1624,7 @@ User Function ADFAT575(aNFTrans)
 
             RecLock("ZHR", .F.)
                 ZHR->ZHR_STATUS := "4"
+                ZHR->ZHR_NFSERD := cValToChar(aNFTrans[nAux][1]) + cValToChar(aNFTrans[nAux][2])
             ZHR->(MsUnlock())
 
             ZHR->(DbSkip())
