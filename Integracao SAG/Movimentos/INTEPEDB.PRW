@@ -33,6 +33,7 @@
 	@history Everson   06/01/2022, Ticket 66328 - Tratamento para error log.
 	@history Wagner    21/02/2022, Ticket 63028 - Permite integrar pedidos C5_TIPO igual a B ou N
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Jonathan  07/07/2022, Ticket 75846 - Verificação no campo de valor unitario da NFOrig para analisar o desconto.
 /*/
 User Function PED001B()
 
@@ -4394,7 +4395,7 @@ Static Function obtItemNFOri(cFil,cFornece,cLoja,cNF,cSerie,cProduto)
 	//
 	cQuery := ""
 	cQuery += " SELECT " 
-	cQuery += " TOP 1 D1_ITEM, D1_VUNIT " 
+	cQuery += " TOP 1 D1_ITEM, ((D1_TOTAL - D1_VALDESC) / D1_QUANT) AS D1_VUNIT " //Ticket 75846 - Jonathan 07/07/2022
 	cQuery += " FROM " 
 	cQuery += " " + RetSqlName("SD1") + " AS SD1 " 
 	cQuery += " WHERE " 
