@@ -4,6 +4,7 @@
 #Include "FWPrintSetup.ch"
 #Include "RPTDEF.CH"
 
+Static xPula    := Chr(13) + Chr(10)
 Static cTbMast  := "ZHR"
 Static cTitulo  := "Refaturamento de Carga de Ração"
 Static cTiMast  := "Dados do refaturamento da carga de ração"
@@ -20,7 +21,33 @@ Static cTiMast  := "Dados do refaturamento da carga de ração"
 User Function ADFAT057P() // U_ADFAT057P()
 
     //Variáveis.
-    Local oBrowse := FwLoadBrw("ADFAT057P")
+    Local oBrowse := Nil
+    Local cTpMv   := "1" //1=Refaturamento de Ração;2=Sobra de Ração
+
+    If FWIsAdmin() .Or. __cUserID $ Alltrim(cValToChar(GetMv("MV_#ADF574",,"")))
+
+        If ! Pergunte("ADFAT057P1",.T.)
+            Return Nil
+
+        EndIf   
+
+        If Empty(MV_PAR01)
+            MsgInfo("Necessário escolher uma opção", "Função ADFAT057P")
+            Return Nil
+
+        EndIf 
+
+        cTpMv := cValToChar(MV_PAR01)
+
+    EndIf 
+
+    If cTpMv == "2"
+        cTitulo  := "Sobra de Ração"
+        cTiMast  := "Sobra de ração"
+
+    EndIf
+    
+    oBrowse := FwLoadBrw("ADFAT057P")
 
     oBrowse:Activate()
 
@@ -42,6 +69,7 @@ Static Function BrowseDef()
     oBrowse:AddLegend("ZHR_STATUS = '1' ","BR_VERDE"   , "Aberto"    )
     oBrowse:AddLegend("ZHR_STATUS = '2' ","BR_AZUL"    , "Aprovado"    )
     oBrowse:AddLegend("ZHR_STATUS = '3' ","BR_VERMELHO", "Pedido Gerado" )
+    oBrowse:AddLegend("ZHR_STATUS = '4' ","BR_PRETO"   , "Faturado" )
 
     oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
 
@@ -76,7 +104,9 @@ Static Function MenuDef()
     EndIf
 
     If FWIsAdmin() .Or. __cUserID $cUsrGer
-        ADD OPTION aRotina TITLE "Processar" ACTION "U_ADFAT57E()"       OPERATION 11  ACCESS 0
+        ADD OPTION aRotina TITLE "Processar Dev"   ACTION "U_ADFAT57E(1)"      OPERATION 11  ACCESS 0
+        ADD OPTION aRotina TITLE "Processar Saída" ACTION "U_ADFAT57E(2)"      OPERATION 11  ACCESS 0
+        ADD OPTION aRotina TITLE "SPEDNFe"         ACTION "SPEDNFe()"          OPERATION 11  ACCESS 0
 
     EndIf
 
@@ -173,12 +203,14 @@ Static Function vldPos(oModel)
     Local aArea      := GetArea()
     Local lRet       := .T.
     Local nOperation := oModel:GetOperation()
+    Local cNumero    := oModel:GetValue("MD_MASTER","ZHR_NUMERO")
     Local cOrdRac    := oModel:GetValue("MD_MASTER","ZHR_ORRORI")
     Local cMotivo    := oModel:GetValue("MD_MASTER","ZHR_MOTIVO")
     Local cStatus    := oModel:GetValue("MD_MASTER","ZHR_STATUS")
     Local cQtdOri    := Val(cValToChar(oModel:GetValue("MD_MASTER","ZHR_QTDORI")))
     Local cQtdDes    := Val(cValToChar(oModel:GetValue("ADFAT57TOT","ZHR_QTDTOT")))
     Local cMsgError  := ""
+    Local cOperacao  := ""
 
     If lRet .And. (nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE)
 
@@ -221,6 +253,8 @@ Static Function vldPos(oModel)
         
         EndIf
 
+
+
     EndIf
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
@@ -230,6 +264,24 @@ Static Function vldPos(oModel)
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Registro não pode ser excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         
         EndIf
+
+    EndIf
+
+    If lRet
+
+        If  nOperation == MODEL_OPERATION_INSERT
+            cOperacao := "INCLUSAO"
+
+        ElseIf  nOperation == MODEL_OPERATION_UPDATE
+            cOperacao := "ALTERACAO"
+
+        ElseIf  nOperation == MODEL_OPERATION_DELETE
+            cOperacao := "EXCLUSAO"
+
+        EndIf
+
+        U_GrLogZBE(Date(), Time(), cUserName, cOperacao, "FATURAMENTO", "ADFAT057P",;
+                   cNumero, ComputerName(), LogUserName())
 
     EndIf
 
@@ -622,21 +674,28 @@ User Function ADFAT57D()
     ZHR->(DbSetOrder(1))
     If ZHR->(DbSeek( FWxFilial("ZHR") + cNum ))
 
-        While ! ZHR->(Eof()) .And. ZHR->ZHR_FILIAL == FWxFilial("ZHR") .And. ZHR->ZHR_NUMERO == cNum
+        Begin Transaction
 
-            RecLock("ZHR", .F.)
-                ZHR->ZHR_STATUS := "2"
-                ZHR->ZHR_CDAPRV := __cUserID
-                ZHR->ZHR_NMAPRV := cUserName
-                ZHR->ZHR_DTAPRV := Date()
-                ZHR->ZHR_HRAPRV := Time()
-            ZHR->(MsUnlock())
+            While ! ZHR->(Eof()) .And. ZHR->ZHR_FILIAL == FWxFilial("ZHR") .And. ZHR->ZHR_NUMERO == cNum
 
-            ZHR->(DbSkip())
+                RecLock("ZHR", .F.)
+                    ZHR->ZHR_STATUS := "2"
+                    ZHR->ZHR_CDAPRV := __cUserID
+                    ZHR->ZHR_NMAPRV := cUserName
+                    ZHR->ZHR_DTAPRV := Date()
+                    ZHR->ZHR_HRAPRV := Time()
+                ZHR->(MsUnlock())
 
-        End
+                ZHR->(DbSkip())
 
-        grvBarr("A", cNum)
+            End
+
+            U_GrLogZBE(Date(), Time(), cUserName, "APROVACAO", "FATURAMENTO", "ADFAT057P",;
+                ZHR->ZHR_NUMERO, ComputerName(), LogUserName())
+
+            grvBarr("A", cNum)
+
+        End Transaction
 
     EndIf
 
@@ -650,13 +709,16 @@ Return Nil
     @since 03/06/2022
     @version 01
 /*/
-User Function ADFAT57E()
+User Function ADFAT57E(nOpc)
 
     //Variáveis.
-    Local aArea := GetArea()
-    Local lRet  := .F.
-    Local cNum  := ZHR->ZHR_NUMERO
+    Local aArea      := GetArea()
+    Local lRet       := .F.
+    Local cNum       := ZHR->ZHR_NUMERO
     Local cRegistros := ""
+    Local aPedInc    := {}
+    Local cPedProth  := ""
+    Local nAux       := 1
 
     If ZHR->ZHR_STATUS <> "2"
         MsgInfo("Ação não permitida.", "Função ADFAT57E(ADFAT057P)")
@@ -671,27 +733,212 @@ User Function ADFAT57E()
 
     EndIf
 
-    Begin Transaction
+    If nOpc == 1 //Gera nota fiscal de devolução.
 
-        MsAguarde({|| lRet := gerPedS(cNum, @cRegistros) }, "Aguarde", "Gerando pedido(s) de saída...")
+        MsAguarde({|| lRet := gerDev(cNum, @cRegistros) }, "Aguarde", "Gerando NF de devolução...")
 
-        If ! lRet
-            DisarmTransaction()
-            Break
-            
-        EndIf
+        // If lRet .And. MsgYesNo("Deseja gerar os pedidos de saída?", "Função ADFAT57E(ADFAT057P)")
+        //     nOpc := 2
 
-        grvBarr("A", cNum)
+        // EndIf
 
-        lRet := .T.
+    EndIf
 
-    End Transaction
+    If nOpc == 2 //Gera pedidos de venda.
+
+        Begin Transaction
+
+            MsAguarde({|| lRet := gerPedS(cNum, @cRegistros, @aPedInc) }, "Aguarde", "Gerando pedido(s) de saída...")
+
+            If ! lRet
+                DisarmTransaction()
+                Break
+                
+            EndIf
+
+            grvBarr("A", cNum)
+
+            lRet := .T.
+
+        End Transaction
+
+    EndIf
 
     U_TExTelaMen("Geração de NF de Devolução e Pedido de Saída", cRegistros, "Arial",10,,.F.,.F.)
+
+    //Geração de nota fiscal.
+    If Len(aPedInc) > 0 .And. MsgYesNo("Deseja emitir nota(s) fiscal(is)?", "Função ADFAT57E(ADFAT057P)")
+
+		For nAux := 1 To Len(aPedInc)
+			cPedProth += "'" + aPedInc[nAux] + "',"
+			
+		Next nAux
+		
+		cPedProth := Substr(cPedProth,1,Len(cPedProth) - 1)
+
+        MsAguarde({|| U_ADFAT574(cPedProth) },"Aguarde","Emitindo nota(s) fiscal(is) de saída...")
+
+    EndIf
 
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} User Function gerDev
+    Gera entrada por devolução.
+    @type  Function
+    @author Everson
+    @since 05/07/2022
+    @version 01
+/*/
+Static Function gerDev(cNum, cRegistros)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local aItens    := {}
+    Local aCab      := {}
+    Local cNumero   := ""
+    Local cTes      := Alltrim(cValToChar(GETMV("MV_#ADF575",,"15A"))) //"15A" //Sobra de ração 15C
+    Local cItemCC   := Alltrim(cValToChar(GETMV("MV_#ADF576",,"114"))) //"114"
+    Local cSerie	:= Alltrim(cValToChar(GETMV("MV_#SRNFIT",,"")))
+    Local cTpNrNfs  := ""
+    Local cNFOri    := ""
+    Local cSerOri   := ""
+    Local cForOri   := ""
+    Local cLojOri   := ""
+    Local aNFTrans  := {}
+
+    Private lMsErroAuto    := .F.
+    Private lMsHelpAuto    := .T.
+    Private lAutoErrNoFile := .F.
+
+    Default cRegistros  := ""
+
+    cRegistros += xPula
+
+    DbSelectArea("ZHR")
+    ZHR->(DbSetOrder(1))
+    If ! ZHR->(DbSeek( FWxFilial("ZHR") + cNum ))
+        cRegistros += "Faturamento " + cNum + " não localizado"
+        RestArea(aArea)
+        Return .F.
+        
+    EndIf
+
+    DbSelectArea("SD2")
+    SD2->(DbSetOrder(3))
+    If ! SD2->(DbSeek( FWxFilial("SD2") + ZHR->ZHR_NFORI + ZHR->ZHR_SERORI ))
+        cRegistros += "Nota de origem " + cValToChar(ZHR->ZHR_NFORI) + "/" + cValToChar(ZHR->ZHR_SERORI) + " não localizada"
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cNFOri  := ZHR->ZHR_NFORI
+    cSerOri := ZHR->ZHR_SERORI
+    cForOri := ZHR->ZHR_FORORI
+    cLojOri := ZHR->ZHR_LOJORI
+
+    DbSelectArea("SD1")
+    SD1->(DbSetOrder(19))
+    SD1->(DbGoTop())
+    If SD1->( DbSeek( FWxFilial("SD1") + cNFOri + cSerOri + cForOri + cLojOri ))
+        cRegistros += "Nota de devolução já gerada: " + SD1->D1_DOC + " " + SD1->D1_SERIE
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    cTpNrNfs := SuperGetMV("MV_TPNRNFS")
+    cNumero  := NxtSX5Nota(Padr(cSerie, TamSX3("D2_SERIE")[1], " "),.T.,cTpNrNfs)
+
+    If Empty(cNumero)
+        cRegistros += "Função NxtSX5Nota não retornou próximo número disponível para emissão de nota fiscal"
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+	Aadd(aItens,{{"D1_FILIAL" ,FWxFilial("SD1"),Nil},;
+				{"D1_COD"    ,SD2->D2_COD     ,Nil},;
+				{"D1_TES"    ,cTes            ,Nil},;
+				{"D1_NFORI"  ,SD2->D2_DOC     ,Nil},;
+				{"D1_SERIORI",SD2->D2_SERIE   ,Nil},;
+				{"D1_ITEMORI",SD2->D2_ITEM    ,Nil},;
+				{"D1_DOC"    ,cNumero         ,Nil},;
+				{"D1_SERIE"  ,cSerie          ,Nil},;
+				{"D1_ITEM"   ,"0001"          ,Nil},;
+				{"D1_UM"     ,SD2->D2_UM      ,Nil},;
+				{"D1_QUANT"  ,SD2->D2_QUANT   ,Nil},;
+				{"D1_VUNIT"  ,SD2->D2_PRCVEN  ,Nil},;
+				{"D1_TOTAL"  ,SD2->D2_TOTAL   ,Nil},;
+				{"D1_FORNECE",SD2->D2_CLIENTE ,Nil},;
+				{"D1_LOJA"   ,SD2->D2_LOJA    ,Nil},;
+				{"D1_EMISSAO", Date()         ,Nil},;
+				{"D1_DTDIGIT", Date()         ,Nil},;
+				{"D1_LOCAL"  ,SD2->D2_LOCAL   ,Nil},;
+				{"D1_CC"     ,SD2->D2_CCUSTO  ,Nil},;
+				{"D1_FORMUL" ,"S"             ,Nil},;
+				{"D1_TIPO"   ,"N"             ,Nil},;
+                {"D1_ITEMCTA",cItemCC         ,Nil},;
+                {"D1_CONTA"  ,SD2->D2_CONTA   ,Nil},;
+                {"D1_GRUPO"  ,SD2->D2_GRUPO   ,Nil},;
+                {"D1_NFRURAL",SD2->D2_DOC     ,Nil},;
+                {"D1_SRRURAL",SD2->D2_SERIE   ,Nil},;
+                {"D1_TP"     ,SD2->D2_TP      ,Nil}})
+				
+        aCab := {{"F1_FILIAL" ,FWxFilial("SF1") ,Nil},;
+                 {"F1_TIPO"   ,"N"              ,Nil},;
+                 {"F1_FORMUL" ,"S"              ,Nil},;
+                 {"F1_DOC"    ,cNumero          ,Nil},;
+                 {"F1_SERIE"  ,cSerie           ,Nil},;
+                 {"F1_EMISSAO",Date()           ,Nil},;
+                 {"F1_DTDIGIT",Date()           ,Nil},;
+                 {"F1_FORNECE",SD2->D2_CLIENTE  ,Nil},;
+                 {"F1_LOJA"   ,SD2->D2_LOJA     ,Nil},;
+                 {"F1_ESPECIE","SPED"           ,Nil},;
+                 {"F1_VALMERC",SD2->D2_TOTAL    ,Nil},;
+                 {"F1_VALBRUT",SD2->D2_TOTAL    ,Nil}}
+
+    aCab   := FWVetByDic(aCab,  "SF1",.F.,1)
+
+    aItens := FWVetByDic(aItens,"SD1",.T.,1)
+
+    MsExecAuto({|x,y| MATA103(x,y)}, aCab, aItens, 3)
+
+    If lMsErroAuto
+        cRegistros += MostraErro()
+        RestArea(aArea)
+        Return .F.
+
+    Else
+
+        DbSelectArea("SD1")
+        SD1->(DbSetOrder(19))
+        SD1->(DbGoTop())
+        If ! SD1->( DbSeek( FWxFilial("SD1") + cNFOri + cSerOri + cForOri + cLojOri ))
+            cRegistros += "Nota de devolução não lançada."
+            RestArea(aArea)
+            Return .F.
+
+        EndIf
+
+        Aadd(aNFTrans, {cNumero, cSerie})
+
+        cRegistros += "Nota de devolução gerada: " + cNumero + " " + cSerie
+
+        U_GrLogZBE(Date(), Time(), cUserName, "DEVOLUCAO DE NF " + cNumero + " " + cSerie, "FATURAMENTO", "ADFAT057P",;
+            ZHR->ZHR_NUMERO, ComputerName(), LogUserName())
+
+    EndIf
+
+    If Len(aNFtrans) > 0
+	    MsAguarde({|| transmNF(aNFTrans, cSerie, "D", cForOri, cLojOri) },"Aguarde","Transmitindo NF's...")
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
 /*/{Protheus.doc} User Function gerPedS
     Gera pedido de saída.
     @type  Function
@@ -699,7 +946,7 @@ Return lRet
     @since 03/06/2022
     @version 01
 /*/
-Static Function gerPedS(cNum, cRegistros)
+Static Function gerPedS(cNum, cRegistros, aPedInc)
 
     //Variáveis.
     Local aArea    := GetArea()
@@ -735,11 +982,15 @@ Static Function gerPedS(cNum, cRegistros)
     Private lMsErroAuto    := .F.
     Private lMsHelpAuto    := .T.
     Private lAutoErrNoFile := .F.
+
+    Default cRegistros := ""
+
+    cRegistros += xPula
     
     DbSelectArea("ZHR")
     ZHR->(DbSetOrder(1))
     If ! ZHR->(DbSeek( FWxFilial("ZHR") + cNum ))
-        cRegistros := "Faturamento " + cNum + " não localizado"
+        cRegistros += "Faturamento " + cNum + " não localizado"
         RestArea(aArea)
         Return .F.
         
@@ -754,19 +1005,19 @@ Static Function gerPedS(cNum, cRegistros)
     SD1->(DbSetOrder(19))
     SD1->(DbGoTop())
     If ! SD1->( DbSeek( FWxFilial("SD1") + cNFOri + cSerOri + cForOri + cLojOri ))
-        cRegistros := "Nota de devolução não lançada."
+        cRegistros += "Nota de devolução não lançada."
         RestArea(aArea)
         Return .F.
 
     EndIf
 
-    cRegistros += Chr(13) + Chr(10) + Chr(13) + Chr(10)  +"Pedidos gerados: " + Chr(13) + Chr(10) 
+    cRegistros += "Pedidos gerados: " + xPula
 
     While ! ZHR->(Eof()) .And. ZHR->ZHR_FILIAL == FWxFilial("ZHR") .And. ZHR->ZHR_NUMERO == cNum
 
         //Posiciona na ordem de pesagem.
         If ! U_ADFAT16A(ZHR->ZHR_ORPORI)
-            cRegistros := "Ordem de pesagem " + cValToChar(ZHR->ZHR_ORPORI) + " não localizada."
+            cRegistros += "Ordem de pesagem " + cValToChar(ZHR->ZHR_ORPORI) + " não localizada."
             RestArea(aArea)
             Return .F.
 
@@ -774,7 +1025,7 @@ Static Function gerPedS(cNum, cRegistros)
 
         //Posiciona no registro de pátio selecionado.
         If ! U_ADFAT17U(ZIF->ZIF_CTPATI)
-            cRegistros := "Controle de pátio não localizado."
+            cRegistros += "Controle de pátio não localizado."
             RestArea(aArea)
             Return .F.
 
@@ -785,7 +1036,7 @@ Static Function gerPedS(cNum, cRegistros)
         ZV4->(DbSetOrder(1))
         ZV4->(DbGoTop())
         If ! ZV4->( DbSeek( FWxFilial("ZV4") + ZHR->ZHR_PLACAD))
-            cRegistros := "Veículo " + ZHR->ZHR_PLACAD + " não localizado."
+            cRegistros += "Veículo " + ZHR->ZHR_PLACAD + " não localizado."
             RestArea(aArea)
             Return .F.
 
@@ -793,7 +1044,7 @@ Static Function gerPedS(cNum, cRegistros)
 
         //Posiciona no cadastro de roteiro de pesagem.
         If ! U_ADFAT15B(ZIB->ZIB_CODROT)
-            cRegistros := "Roteiro de pesagem " +  ZIB->ZIB_CODROT + " não localizado."
+            cRegistros += "Roteiro de pesagem " +  ZIB->ZIB_CODROT + " não localizado."
             RestArea(aArea)
             Return .F.
 
@@ -804,7 +1055,7 @@ Static Function gerPedS(cNum, cRegistros)
         ZIA->(DbSetOrder(2))
         ZIA->(DbGoTop())
         If ! ZIA->( DbSeek( FWxFilial("ZIA") + ZIB->ZIB_CODROT + ZIF->ZIF_PRDSAG))
-            cRegistros := "Item do roteiro de pesagem " +  ZIB->ZIB_CODROT + " " + ZIF->ZIF_PRDSAG + " não localizado."
+            cRegistros += "Item do roteiro de pesagem " +  ZIB->ZIB_CODROT + " " + ZIF->ZIF_PRDSAG + " não localizado."
             RestArea(aArea)
             Return .F.
 
@@ -915,11 +1166,16 @@ Static Function gerPedS(cNum, cRegistros)
         MSExecAuto( { |x, y, z, p| MATA410(x, y, z,,,,,,, p) }, aCabec, aItens, 3 )
 
         If lMsErroAuto
-            cRegistros := MostraErro()
+            cRegistros += MostraErro()
             RestArea(aArea)
             Return .F.
 
         Else
+
+            U_GrLogZBE(Date(), Time(), cUserName, "PEDIDO DE VENDA " + SC5->C5_NUM, "FATURAMENTO", "ADFAT057P",;
+                ZHR->ZHR_NUMERO, ComputerName(), LogUserName())
+
+            Aadd(aPedInc, SC5->C5_NUM)
             cRegistros += SC5->C5_NUM + Chr(13) + Chr(10)
 
             RecLock("ZHR", .F.)
@@ -962,7 +1218,7 @@ Static Function getInfo(cCliFor, aCampo, cTpPed, cCodCF, cLoja, cRegistros)
     If cCliFor == "C"
 
         If ! SA1->( DbSeek( FWxFilial("SA1") + cCodCF + cLoja))
-            cRegistros := "Cliente " + cCodCF + cLoja + " não localizado."
+            cRegistros += "Cliente " + cCodCF + cLoja + " não localizado."
 
         Else
             lRet := .T.
@@ -974,7 +1230,7 @@ Static Function getInfo(cCliFor, aCampo, cTpPed, cCodCF, cLoja, cRegistros)
     Else
 
         If ! SA2->( DbSeek( FWxFilial("SA2") + cCodCF + cLoja))
-            cRegistros := "Fornecedor " + cCodCF + cLoja + " não localizado."
+            cRegistros += "Fornecedor " + cCodCF + cLoja + " não localizado."
 
         Else
             lRet := .T.
@@ -1209,4 +1465,499 @@ User Function ADFAT573(cPedido)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADFAT574
+	Interface para seleção de pedidos a serem faturados. Chamado 033511.
+	@type  Function
+	@author Everson
+	@since 05/07/2022
+	@version 01
+/*/
+User Function ADFAT574(cPedProth)
 
+	//Variáveis.	
+	Local aArea		:= GetArea() 
+	Local cQuery	:= ""
+	Local nNFGer	:= 0
+	Local nNFErr    := 0
+	Local lRetNf	:= .F.
+	Local cNota     := ""
+	Local cSerie	:= Alltrim(cValToChar(GETMV("MV_#SRNFIT",,"")))
+	Local aNFTrans	:= {}
+	Local cNFErro	:= ""
+	Local cAliasF2	:= ""
+	
+	Private aNfGerada 	:= {}
+
+	If Empty(cSerie)
+		MsgStop("Série da nota fiscal não definida no parâmetro MV_#SRNFIT.", "Função ADFAT574(ADFAT057P)")
+		RestArea(aArea)
+		Return aNFTrans
+			
+	EndIf
+	
+	cQuery := ""
+	cQuery += " SELECT " 
+	    cQuery += " C5_FILIAL, CONVERT(VARCHAR(10),CAST(C5_EMISSAO AS DATE),103) AS C5_EMISSAO, C5_NUM, C5_PEDSAG, C5_CLIENTE, C5_LOJACLI, C5_NOMECLI, C5_PLACA, C5_TRANSP " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("SC5") + " AS SC5 (NOLOCK) " 
+	cQuery += " WHERE " 
+        cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
+        cQuery += " AND C5_NOTA = '' " 
+        cQuery += " AND C5_SERIE = '' " 
+        cQuery += " AND C5_NUM IN (" + cPedProth + ")"
+        cQuery += " AND SC5.D_E_L_E_T_ = '' " 
+	cQuery += " ORDER BY C5_NUM " 
+	
+	cAliasF2 := GetNextAlias()
+
+	MsAguarde({|| DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasF2, .F., .T.) },"Função ADFAT574(ADFAT057P)","Carregando registros...")
+	
+	DbSelectArea(cAliasF2)
+	(cAliasF2)->(DbGoTop())
+	
+	If (cAliasF2)->(Eof())
+		(cAliasF2)->(DbCloseArea())
+		MsgStop("Não há pedidos para emissão doc de saída.","Função ADFAT574(ADFAT057P)")
+		RestArea(aArea)
+		Return aNFTrans
+		
+	EndIf
+	
+	While ! (cAliasF2)->(Eof())
+		
+		lRetNf := .F.
+
+		MsAguarde({|| NfLot(Alltrim(cValToChar((cAliasF2)->C5_NUM)), @cNota, @lRetNf, cSerie) },"Aguarde", "Emitindo NF, pedido " + Alltrim(cValToChar((cAliasF2)->C5_NUM + "...")))
+		
+		If lRetNf
+			nNFGer++
+			
+		Else
+			nNFErr++
+			
+		EndIf
+
+		Aadd(aNfGerada, {cNota, Alltrim(cValToChar((cAliasF2)->C5_NUM)), lRetNf, cSerie} )
+		
+		If lRetNf
+			Aadd(aNFTrans, {cNota, cSerie, (cAliasF2)->C5_NUM})
+			
+		EndIf
+		
+		If ! lRetNf
+			cNFErro += Alltrim(cValToChar((cAliasF2)->C5_NUM)) + " " + cNota + Chr(13) + Chr(10)
+		
+		EndIf
+		
+		(cAliasF2)->(DbSkip())
+		
+	End
+
+	If ! Empty(cNFErro)
+		cNFErro := "Não foram geradas as notas fiscais para os pedidos abaixo: " + Chr(13) + Chr(10) + cNFErro
+		MsgAlert(cNFErro,"Função ADFAT574(ADFAT057P)")
+	
+	EndIf
+	
+	If Len(aNFTrans) > 0
+        U_ADFAT575(aNFTrans)
+	 	MsAguarde({|| transmNF(@aNFTrans, cSerie, "S") }, "Aguarde", "Transmitindo NF's...")
+
+	EndIf
+	
+	RestArea(aArea)
+	
+Return aNFTrans
+/*/{Protheus.doc} ADFAT575
+	Altera status do registro de refaturamento.
+	@type  Static Function
+	@author Everson
+	@since 05/07/2022
+	@version 01
+/*/
+User Function ADFAT575(aNFTrans)
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local nAux  := 1
+    Local cNvPed:= ""
+
+    For nAux := 1 To Len(aNFTrans)
+
+        cNvPed := aNFTrans[nAux][3]
+
+        If ! U_ADFAT573(cNvPed)
+            Loop
+
+        EndIf
+
+        While ! ZHR->(Eof()) .And. ZHR->ZHR_FILIAL == FWxFilial("ZHR") .And. ZHR->ZHR_NVPED == cNvPed
+
+            RecLock("ZHR", .F.)
+                ZHR->ZHR_STATUS := "4"
+            ZHR->(MsUnlock())
+
+            ZHR->(DbSkip())
+
+        End
+
+    Next nAux
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} NfLot
+	Gera nota fiscal de saída.
+	@type  Static Function
+	@author Everson
+	@since 05/07/2022
+	@version 01
+/*/
+Static Function NfLot(cNumPed,cNota,lRetNf,cSerie)
+
+    //Variáveis.
+	Local aArea	  	    := GetArea()
+	Local aPvlNfs 	    := {}
+	Local lRet		    := .F.
+	
+	//Localiza pedido de venda - cabeçalho.
+	DbSelectArea("SC5")
+	SC5->(DbSetOrder(1))
+	SC5->(MsSeek(FWxFilial("SC5") + cNumPed))
+	If SC5->(Eof())
+		cNota := "Pedido não localizado (SC5)."
+		RestArea(aArea)
+		Return lRet
+
+	EndIf
+
+	//Localiza condição de pagamento do pedido.
+	DbSelectArea("SE4")
+	SE4->(DbSetOrder(1))
+	SE4->(MsSeek(FWxFilial("SE4") + SC5->C5_CONDPAG))
+	If SE4->(Eof())
+		cNota := "Condição de pagamento não localizada (SE4): " + Alltrim(cValToChar(SC5->C5_CONDPAG)) + "."
+		RestArea(aArea)
+		Return lRet
+
+	EndIf
+
+	//Localiza pedido de venda - itens.
+	DbSelectArea("SC6")
+	SC6->(DbSetOrder(1))
+	SC6->(MsSeek(FWxFilial("SC6") + cNumPed))
+	If SC6->(Eof())
+		cNota := "Pedido não localizado (SC6)."
+		RestArea(aArea)
+		Return lRet
+
+	EndIf
+	
+	//Abre tabelas e configura os índices a serem usados.
+	DbSelectArea("SC9")
+	SC9->(DbSetOrder(1))
+	
+	DbSelectArea("SB1")
+	SB1->(DbSetOrder(1))
+	
+	DbSelectArea("SB2")
+	SB2->(DbSetOrder(1))	
+
+	DbSelectArea("SF4")
+	SF4->(DbSetOrder(1))
+	
+	//Itera sobre os itens do pedido de venda.
+	While ! SC6->(Eof()) .And. Alltrim(cValToChar(SC6->C6_NUM)) == cNumPed
+	
+	 	If SC9->(MsSeek(FWxFilial("SC9") + SC6->(C6_NUM + C6_ITEM))) // Valida se o item está liberado na tabela SC9.
+	 		
+	 		If Empty(Alltrim(cValToChar(SC9->C9_BLCRED))) .And. Empty(Alltrim(cValToChar(SC9->C9_BLEST))) // Valida se o item está liberado pelo financeiro e estoque.
+	 			
+	 			//Localiza cadastro do produto.
+				SB1->(MsSeek(FWxFilial("SB1") + SC6->C6_PRODUTO))
+				If SB1->(Eof())
+					cNota := "Produto não localizado: " + Alltrim(cValToChar(SC6->C6_PRODUTO)) + "."
+					RestArea(aArea)
+					Return lRet
+
+				EndIf
+				
+				//Localiza cadastro de saldos físico e financeiro do produto para o local informado.
+				SB2->(MsSeek(FWxFilial("SB2") + SC6->(C6_PRODUTO + C6_LOCAL)))
+				If SB2->(Eof())
+					cNota := "Produto sem cadastro de saldos físicos e financeiros (SB2): " + Alltrim(cValToChar(SC6->C6_PRODUTO)) + " Local: " + Alltrim(cValToChar(SC6->C6_LOCAL)) + "."
+					RestArea(aArea)
+					Return lRet
+
+				EndIf
+				
+				//Localiza o cadastro do TES informado.			
+				SF4->(MsSeek(FWxFilial("SF4") + SC6->C6_TES))
+				If SF4->(Eof())
+					cNota := "TES não localizado (SF4): " + Alltrim(cValToChar(SC6->C6_TES)) + "."
+					RestArea(aArea)
+					Return lRet
+
+				EndIf
+				
+				//Monta array para geração da NF de saída.		 	
+				Aadd(aPvlNfs,{ 	SC9->C9_PEDIDO,;
+								SC9->C9_ITEM,;
+								SC9->C9_SEQUEN,;
+								SC9->C9_QTDLIB,;
+								SC9->C9_PRCVEN,;
+								SC9->C9_PRODUTO,;
+								.F.,;
+								SC9->(RecNo()),;
+								SC5->(RecNo()),;
+								SC6->(RecNo()),;
+								SE4->(RecNo()),;
+								SB1->(RecNo()),;
+								SB2->(RecNo()),;
+								SF4->(RecNo())})
+			
+			Else
+				cNota := "Item não liberado: " + Alltrim(cValToChar(SC6->C6_NUM)) + " " + Alltrim(cValToChar(SC6->C6_ITEM)) + " " + Alltrim(cValToChar(SC6->C6_PRODUTO)) + "."
+				RestArea(aArea)
+				Return lRet	
+			
+			EndIf
+			
+		Else
+
+			cNota := "Item não liberado: " + Alltrim(cValToChar(SC6->C6_NUM)) + " " + Alltrim(cValToChar(SC6->C6_ITEM)) + " " + Alltrim(cValToChar(SC6->C6_PRODUTO)) + "."
+			RestArea(aArea)
+			Return lRet			
+			
+		EndIf
+		
+		SC6->(DbSkip())
+	
+	End
+	
+	/*
+	±±³Descri‡…o ³Inclusao de Nota fiscal de Saida atraves do PV liberado     ³±±
+	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+	±±³Retorno   ³                                                            ³±±
+	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+	±±³Parametros³ExpA1: Array com os itens a serem gerados                   ³±±
+	±±³          ³ExpC2: Serie da Nota Fiscal                                 ³±±
+	±±³          ³ExpC3: Numero da Nota Fiscal                                ³±±
+	±±³          ³ExpL4: Lancamento 610                                       ³±±
+	±±³          ³ExpL5: Lancamento 620                                       ³±±
+	±±³          ³ExpN6: Controle de contabilizacao                           ³±±
+	±±³          ³ExpN7: Handle do arquivo de contabilizacao                  ³±±
+	±±³          ³ExpL8: Reajuste de preco na nota fiscal                     ³±±
+	±±³          ³ExpN9: Tipo de Acrescimo Financeiro                         ³±±
+	±±³          ³ExpNA: Tipo de Arredondamento                               ³±±
+	±±³          ³ExpLB: Atualiza Amarracao Cliente x Produto                 ³±±
+	±±³          ³ExplC: Cupom Fiscal                                         ³±±
+	±±³          ³ExpCD: Numero do Embarque de Exportacao                     ³±±
+	±±³          ³ExpBE: Code block para complemento de atualizacao dos titu- ³±±
+	±±³          ³       los financeiros.                                     ³±±
+	±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+	*/
+
+	If Len(aPvlNfs) > 0
+
+        DbSelectArea("SX5")
+        cNota  := MaPvlNfs(aPvlNfs,cSerie,/* cNota */, .F., .F., .F., .F., 0, 0, .F.)
+        lRet   := .T.
+        lRetNf := .T.
+
+	Else
+		cNota := "Pedido de venda não liberado (SC9)."
+		
+	EndIf
+	
+	RestArea(aArea)
+
+return lRet
+/*/{Protheus.doc} transmNF
+	Transmissão de nota fiscal.
+	@type  Static Function
+	@author Everson
+	@since 05/07/2022
+	@version 01
+	/*/
+Static Function transmNF(aNFTrans, cSerie, cTpMv, cFornec, cLoja)
+
+    //Variáveis.
+	Local aArea		:= GetArea()
+	Local cIdent    := ""
+    Local oWs       := Nil
+	Local cURL		:= ""
+	Local cNFIni	:= aNFTrans[1][1]
+	Local cNFFim	:= aNFTrans[Len(aNFTrans)][1]
+	Local cNFT 		:= ""
+	Local cAmbiTrans:= ""
+	Local nAux		:= 1
+	
+	MsgInfo("Notas geradas de " + cNFIni + " até " + cNFFim + ".","Função transmNF", "Função transmNF(ADFAT057P)")
+
+    If ! CTIsReady()
+		Conout( DToC(Date()) + " " + Time() + " ADFAT057P - transmNF - CTIsReady retornou .F. " )
+        MsgSTop( "A função CTIsReady retornou .F. . Não será possível fazer a transmissão automática, faça a transmissão manual." ,"Função transmNF(ADFAT057P)")
+		RestArea(aArea)
+        Return .F. 
+
+    EndIf
+
+    cIdent := RetIdEnti()
+
+    oWs := WsSpedCfgNFe():New()
+
+    cURL := PadR(GetMv("MV_SPEDURL"),250)
+
+    oWS:cUSERTOKEN := "TOTVS"
+    oWS:cID_ENT := cIdent
+    oWS:nAmbiente := 0
+    oWS:_URL := AllTrim(cURL)+"/SPEDCFGNFe.apw"
+    
+    If oWS:CFGAMBIENTE()
+        cAmbiTrans := oWS:cCfgAmbienteResult
+        cAmbiTrans := Substr(cAmbiTrans,1,1)
+
+    EndIf
+
+    Conout( DToC(Date()) + " " + Time() + " ADFAT057P - transmNF - ambiente para transmissão NF " + cAmbiTrans)
+	
+	If Empty(cAmbiTrans)
+		Conout( DToC(Date()) + " " + Time() + " ADFAT057P - transmNF - Não foi possível obter o ambiente de transmissão de nota fiscal.")
+		MsgStop("Não foi possível obter o ambiente de transmissão de nota fiscal.","Função transmNF(ADFAT057P)")
+		RestArea(aArea)
+		Return .F.
+		
+	EndIf
+
+    If cTpMv == "D"
+
+        DbSelectArea("SF1")
+        SF1->(DbSetOrder(1))
+        SF1->(DbGoTop())
+
+        If SF1->(DbSeek( xFilial("SF1") + cNFIni + cSerie + Space(TamSX3("F1_SERIE")[1] - Len(cSerie)) +  cFornec +  cLoja ))
+            MsAguarde({|| AutoNfeEnv(cEmpAnt, SF1->F1_FILIAL, "5", cAmbiTrans, SF1->F1_SERIE, cNFIni, cNFFim) },"Transmitindo NF","De " + cNFIni + " até " + cNFFim + " Série: " + cValToChar(SF1->F1_SERIE) + " ..." )
+            
+        Else
+            MsgStop("Não foi possível efetuar a transmissão das notas fiscais.","Função transmNF(ADFAT057P)")
+        
+        EndIf
+
+    ElseIf cTpMv == "S"
+
+        DbSelectArea("SF2")
+        SF2->(DbSetOrder(1))
+        SF2->(DbGoTop())
+        
+        For nAux := 1 To Len(aNFTrans) 
+
+            cNFT := aNFTrans[nAux][1]
+
+            SF2->(DbGoTop())
+            If SF2->(DbSeek( FWxFilial("SF2") + cNFT + cSerie ))
+                
+                If SM0->M0_CODFIL == SF2->F2_FILIAL
+                    MsAguarde({|| AutoNfeEnv(FWCodEmp(),SF2->F2_FILIAL,"1",cAmbiTrans,SF2->F2_SERIE,SF2->F2_DOC,SF2->F2_DOC) },"Transmitindo NF","De " + cNFT + " até " + cNFT + " Série: " + cSerie + " ..." )
+                
+                Else
+                    MsgStop("A filial corrente está divergente da NF para transmissão " + cNFT + cSerie + ".", "Função transmNF(ADFAT057P)")
+
+                Endif
+
+            Else 
+                MsgStop("NF não encontrada para transmissão " + cNFT + cSerie + ".", "Função transmNF(ADFAT057P)")
+                
+            EndIf 
+
+        Next nAux 
+
+    EndIf
+
+	MsAguarde({|| imprimeNF(cValToChar(aNFTrans[1][1]),cValToChar(aNFTrans[Len(aNFTrans)][1]), cTpMv) },"Aguarde","Imprimindo notas fiscais...")
+
+	RestArea(aArea)
+	
+Return .T.
+/*/{Protheus.doc} imprimeNF
+	Carrega o conteúdo na variável da pergunta. Chamado 033511.
+	@type  Static Function
+	@author Everson
+	@since 05/07/2022
+	@version 01
+/*/
+Static Function imprimeNF(cNFIni,cNFFim, cTpMv)
+
+	//Variáveis.
+	Local aArea 	:= GetArea()
+	Local cCondicao := "F2_FILIAL=='"+FWxFilial("SF2")+"'"
+
+	Private aFilBrw	:=	{'SF2',cCondicao}
+
+	Default cNFIni	:= ""
+	Default cNFFim	:= ""
+	
+	If ! Empty(cNFIni) .And. ! Empty(cNFFim)
+		zAtuPerg("NFSIGW", "MV_PAR01", cNFIni)
+		zAtuPerg("NFSIGW", "MV_PAR02", cNFFim)
+		zAtuPerg("NFSIGW", "MV_PAR04", Iif(cTpMv == "D", 1, 2))
+		
+	EndIf
+	
+	SpedDanfe()
+	
+	RestArea(aArea)
+	
+Return Nil
+/*/{Protheus.doc} zAtuPerg
+	Carrega o conteúdo na variável da pergunta.
+	@type  Static Function
+	@author Everson
+	@since 05/07/2022
+	@version 01
+/*/
+Static Function zAtuPerg(cPergAux, cParAux, xConteud)
+
+	//Variáveis.
+	Local aArea      := GetArea()
+	Local nPosPar    := 14
+	Local nLinEncont := 0
+	Local aPergAux   := {}
+
+	Default xConteud := ''
+
+	If Empty(cPergAux) .Or. Empty(cParAux)
+		Return Nil
+
+	EndIf
+
+	//Chama a pergunta em memória.
+	Pergunte(cPergAux, .F., /*cTitle*/, /*lOnlyView*/, /*oDlg*/, /*lUseProf*/, @aPergAux)
+
+	//Procura a posição do MV_PAR.
+	nLinEncont := aScan(aPergAux, {|x| Upper(Alltrim(x[nPosPar])) == Upper(cParAux) })
+
+	//Se encontrou o parâmetro
+	If nLinEncont > 0
+		//Caracter
+		If ValType(xConteud) == 'C'
+			&(cParAux+" := '"+xConteud+"'")
+
+		//Data
+		ElseIf ValType(xConteud) == 'D'
+			&(cParAux+" := sToD("+dToS(xConteud)+")")
+
+		//Numérico ou Lógico
+		ElseIf ValType(xConteud) == 'N' .Or. ValType(xConteud) == 'L'
+			&(cParAux+" := "+cValToChar(xConteud)+"")
+
+		EndIf
+
+		//Chama a rotina para salvar os parâmetros
+		__SaveParam(cPergAux, aPergAux)
+
+	EndIf
+
+	RestArea(aArea)
+
+Return Nil
