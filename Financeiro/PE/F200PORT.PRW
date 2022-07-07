@@ -13,6 +13,7 @@
     (examples)
     @see (links_or_references)
     @ticket 75186 - 06/07/2022 - As baixas estão gerando totalizados em portador errado
+    @ticket 75186 - 07/07/2022 - Melhoria nos logs para filtragem, análise e acompanhamento
 /*/
 User Function F200PORT()
 
@@ -31,7 +32,8 @@ User Function F200PORT()
     MESSAGEBOX( cBoxTxt, cBoxTit, 8 )
 
     //gera log 
-    u_GrLogZBE( msDate(), TIME(), cUserName, "FINA200", "FINANCEIRO", "F200PORT",;
+    //GrLogZBE(dDate,cTime,cUser,cLog,cModulo,cRotina,cParamer,cEquipam,cUserRed)
+    u_GrLogZBE( msDate(), TIME(), cUserName, cBoxTxt, "FINA200", "F200PORT",;
     "ARQUIVO RETORNO " + AllTrim(MV_PAR04) + " LEIAUTE " + AllTrim(MV_PAR05) + " BANCO/AGENCIA/CONTA/SUBCTA " + MV_PAR06 + "/" + MV_PAR07 + "/" + MV_PAR08 + "/" + MV_PAR09, ComputerName(), LogUserName() )
     
 Return lAltPort
@@ -75,7 +77,7 @@ Static Function FixLote()
             cFixLote := Soma1(cFixLote)
         Else
             //gera log 
-            u_GrLogZBE( msDate(), TIME(), cUserName, "FINA200", "FINANCEIRO", "F200PORT",;
+            u_GrLogZBE( msDate(), TIME(), cUserName, "FINANCEIRO", "FINA200", "F200PORT",;
             "EE_LOTE AJUSTADO DE/PARA " + SEE->EE_LOTE + "/" + cFixLote + " - BANCO/AGENCIA/CONTA/SUBCTA " + SEE->EE_CODIGO + "/" + AllTrim(SEE->EE_AGENCIA) + "/" + AllTrim(SEE->EE_CONTA) + "/" + AllTrim(SEE->EE_SUBCTA), ComputerName(), LogUserName() )
             Exit
         EndIf
