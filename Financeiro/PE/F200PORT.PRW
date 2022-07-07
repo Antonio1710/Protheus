@@ -25,7 +25,7 @@ User Function F200PORT()
     FixLote()
 
     cBoxTxt  := "Lote da Baixa: " + cLoteFin + chr(13)+chr(10)+;
-                "Banco/Agência/Conta/SubConta: " + MV_PAR06 + "/" + MV_PAR07 + "/" + MV_PAR08 + "/" + MV_PAR09 + chr(13)+chr(10)+;
+                "Banco/Agencia/Conta/SubConta: " + MV_PAR06 + "/" + MV_PAR07 + "/" + MV_PAR08 + "/" + MV_PAR09 + chr(13)+chr(10)+;
                 "Arquivo Retorno: " + AllTrim(MV_PAR04) + chr(13)+chr(10)+;
                 "Leiaute: " + AllTrim(MV_PAR05)
 
