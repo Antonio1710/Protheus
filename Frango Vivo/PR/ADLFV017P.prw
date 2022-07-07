@@ -20,7 +20,9 @@
   @history Ticket 73466 - Everson              - 25/05/2022 - Adicionada melhoria de para fechamento de registro.
   @history Ticket 73466 - Adriano Savoine      - 29/06/2022 - Melhoria para fechar pesagem manual com dados Fixos.
   @history Ticket Ti    - Adriano Savoine      - 04/07/2022 - Declarado a variavel cZV1C.
+  @history Ticket 75551 - Adriano Savoine      - 06/07/2022 - Inserida a trava para não alterar se tiver pedido de complemento gerado.
 /*/
+
 User Function ADLFV017P() // U_ADLFV017P()
 
 	local cPerg   := PadR("ADLFV017P",10)
@@ -162,6 +164,19 @@ User Function ADLFV171()
     If ZV1->ZV1_DTABAT < DATE()- 5 .OR. ZV1->ZV1_INTEGR = 'I'
 
         MsgInfo("Data do abate maior que 5 dias, ou ordem já integrada correção não permitida.", "Função ADLFV171(ADLFV017P) - 1")
+
+        RestArea(aArea)
+
+        Return Nil
+
+
+
+    EndIf
+
+	
+    If ZV1->ZV1_FLAGPV <> ''
+
+        MsgInfo("Já foi Gerado pedido de Complemento correção não permitida. Obs.: Para conseguir ajustar o peso terá que ser excluido o Pedido de Complemento.", "Função ADLFV171(ADLFV017P) - 2")
 
         RestArea(aArea)
 

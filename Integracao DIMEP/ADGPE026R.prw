@@ -12,6 +12,7 @@
 	@history Chamado TI    - William Costa   - 24/09/2019 - ajustado query para nao trazer terceiro
 	@history TICKET  224   - William Costa   - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365 - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history ticket  75853 - Adriano Savoine - 06/07/2022 - Atualizado o Fonte para Filial 03.
 */
 
 User Function ADGPE026R()
@@ -78,8 +79,8 @@ Return(NIL)
 
 Static Function GeraExcel()
 
+	Local   nExcel     := 0
     Private nLinha     := 0
-	Private nExcel     := 0
 	Private nCred      := ''
     Private nCredold   := ''
     Private nCafeManha := 0 
@@ -250,6 +251,10 @@ Static Function SqlGeral()
 	IF CEMPANT == '01' .AND. xFilial("SRA") == '02'
 	
 		nFil := 9 //Emresa Adoro codigo da filial de Varzea no Dimep
+
+	ELSEIF CEMPANT == '01' .AND. xFilial("SRA") == '03'	
+	
+		nFil := 10 //Empresa Adoro codigo da filial de São Carlos ticket  75853 - Adriano Savoine - 06/07/2022
 		
 	ELSEIF CEMPANT == '02' .AND. xFilial("SRA") == '01'	
 	
@@ -267,7 +272,9 @@ Static Function SqlGeral()
 			       CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '03:30:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '08:01:00.000' THEN 1 ELSE 0 END AS CAFE_MANHA,
 			       CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '09:45:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '13:31:00.000' THEN 1 ELSE 0 END AS ALMOCO,
 			       CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '14:45:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '17:01:00.000' THEN 1 ELSE 0 END AS CAFE_TARDE,
-			       CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '18:00:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '23:46:00.000' THEN 1 ELSE 0 END AS JANTAR
+			       CASE WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '18:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '23:59:59' THEN 1 
+				        WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '00:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '01:00:00' THEN 1 
+					ELSE 0 END AS JANTAR
 			  FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
 			  INNER JOIN  [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 			          ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = LOG_ACESSO.CD_ESTRUTURA
