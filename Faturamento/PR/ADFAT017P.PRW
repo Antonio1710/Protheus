@@ -658,7 +658,7 @@ Static Function carLog(oOrdPes, aOrdPes)
     EndIf
 
     cQuery += " SELECT  " 
-    cQuery += " ZBE_DATA, ZBE_HORA, ZBE_MODULO, ZBE_LOG " 
+    cQuery += " ZBE_DATA, ZBE_HORA, ZBE_MODULO, ZBE_LOG, ZBE_USUARI " 
     cQuery += " FROM " 
     cQuery += " " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE " 
     cQuery += " WHERE " 
@@ -676,7 +676,8 @@ Static Function carLog(oOrdPes, aOrdPes)
     DbSelectArea("D_DLOG")
     While ! D_DLOG->(Eof())
 
-        cTexto += DToC(SToD(D_DLOG->ZBE_DATA)) + " " + Alltrim(cValToChar(D_DLOG->ZBE_HORA)) + " --- " + PadR(Alltrim(cValToChar(D_DLOG->ZBE_MODULO)), 15, " ") + xPula + Alltrim(cValToChar(D_DLOG->ZBE_LOG)) + xPula + xPula
+        cTexto += DToC(SToD(D_DLOG->ZBE_DATA)) + " " + Alltrim(cValToChar(D_DLOG->ZBE_HORA)) + " --- " + PadR(Alltrim(cValToChar(D_DLOG->ZBE_MODULO)), 15, " ") + xPula +;
+                  Alltrim(cValToChar(D_DLOG->ZBE_LOG)) + xPula + "Usuário: " + Alltrim(cValToChar(D_DLOG->ZBE_USUARI)) + xPula + xPula
 
         D_DLOG->(DbSkip())
 
@@ -4607,7 +4608,7 @@ Static Function chkEnGemba(cNmOrdem)
 
     U_ADFAT16A(cNmOrdem)
 
-    lRet := ZIF->ZIF_GEMBA == "1"
+    lRet := ZIF->ZIF_GEMBA $"1/3"
 
     // cQuery := "SELECT ZBE_DATA FROM " + RetSqlName("ZBE") + " (NOLOCK) AS ZBE WHERE ZBE_FILIAL = '" + FWxFilial("ZBE") + "' AND ZBE_PARAME = '" + cNmOrdem + "' AND ZBE_LOG = 'enviada com sucesso.' AND ZBE.D_E_L_E_T_ = ''"
 
