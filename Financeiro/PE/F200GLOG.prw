@@ -13,6 +13,7 @@
     (examples)
     @see (links_or_references)
     @ticket 75186 - 06/07/2022 - As baixas estão gerando totalizados em portador errado
+    @ticket 75186 - 07/07/2022 - Melhoria nos logs para filtragem, análise e acompanhamento
 /*/
 User Function F200GLOG()
 
@@ -45,6 +46,6 @@ User Function F200GLOG()
     */
 
     //GrLogZBE(dDate,cTime,cUser,cLog,cModulo,cRotina,cParamer,cEquipam,cUserRed)
-    u_GrLogZBE( msDate(), TIME(), cUserName, cLog200, cLoteFin, "FINA200-F200GLOG", cLog100, ComputerName(), LogUserName() )
+    u_GrLogZBE( msDate(), TIME(), cUserName, cLog200, "FINA200", "F200GLOG", cLog100, ComputerName(), LogUserName() )
 
 Return lPELog
