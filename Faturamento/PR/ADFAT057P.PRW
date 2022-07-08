@@ -159,6 +159,10 @@ Static Function ModelDef()
             {"ZHR_DTAPRV"  , "ZHR_DTAPRV"},;
             {"ZHR_HRAPRV"  , "ZHR_HRAPRV"},;
             {"ZHR_STATUS"  , "ZHR_STATUS"},;
+            {"ZHR_NFRURA"  , "ZHR_NFRURA"},;
+            {"ZHR_SRRURA"  , "ZHR_SRRURA"},;
+            {"ZHR_NMUSR"   , "ZHR_NMUSR"},;
+            {"ZHR_TIPO"    , "ZHR_TIPO"},;
             {"ZHR_QTDORI"  , "ZHR_QTDORI"};
         }, (cTbMast)->(IndexKey(1)))
 
@@ -828,12 +832,12 @@ User Function ADFAT57E(nOpc)
 
     If nOpc == 1 //Gera nota fiscal de devolução.
 
-        If cTpMv == "1"
+        If ZHR->ZHR_TIPO == "1"
             MsAguarde({|| lRet := gerDev(cNum, @cRegistros) }, "Aguarde", "Gerando NF de devolução...")
 
         EndIf
 
-        If cTpMv == "2"
+        If ZHR->ZHR_TIPO  == "2"
             MsAguarde({|| lRet := gerDevS(cNum, @cRegistros) }, "Aguarde", "Gerando NF de devolução...")
 
         EndIf
