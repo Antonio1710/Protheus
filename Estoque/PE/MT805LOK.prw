@@ -14,6 +14,7 @@
     @history Chamado T.I    - WILLIAM COSTA - 08/06/2020     - Quando precisa adicionar saldo no endereço a menor do que precisa o ponto de entrada não deixa, então coloquei esse parametro para permitir.
     @history Chamado 059319 - 01/07/2020 - ADRIANO SAVOINE   - Ajuste no IF para verificar o parametro.
     @history ticket  6752   - Fernando Macieira - 16/12/2020 - Equalizar SB2 vs SBF
+    @history ticket 75276   - Antonio Domingos - 30/06/2022 - Transferencia - Desvincular produto do endereço
 /*/
 User Function MT805LOK()
 
@@ -94,19 +95,20 @@ User Function MT805LOK()
 
                 IF ALLTRIM(aCols[n][nPosLocaliz]) <> '' .AND. UPPER(ALLTRIM(aCols[n][nPosLocaliz])) <> 'PROD'
 
-                    IF TRB->BE_LOCALIZ <> aCols[n][nPosLocaliz]
+                    IF TRB->BF_LOCALIZ <> aCols[n][nPosLocaliz]
                 
                         MsgAlert("OLÁ " + Alltrim(cUserName) + ", Verifique o Cadastro de Endereços, produto não foi encontrado no Endereço correto BE_PRODUTO " , "MT805LOK-08")
                         lRet := .F.
 
                     ENDIF
-
+                    /*
                     IF TRB->BF_QUANT > 0
                 
                         MsgAlert("OLÁ " + Alltrim(cUserName) + ", Já existe Saldo de Endereço para esse produto não é permitido. " , "MT805LOK-09")
                         lRet := .F.
 
                     ENDIF
+                    */
                 ENDIF
             ENDIF
             TRB->(dbSkip())
@@ -165,7 +167,47 @@ STATIC FUNCTION SqlProduto(cProduto,cLocal)
             ORDER BY %Table:SB1%.B1_COD
 		
 	EndSQl
+    If !TRB->(Eof()) .AND. !Empty(TRB->BE_CODPRO)
+        BeginSQL Alias "TRB"
+            %NoPARSER%
+            SELECT B1_COD,
+                    B1_DESC,
+                    B1_LOCALIZ,
+                    BZ_LOCALIZ,
+                    BZ_COD,
+                    B1_CODBAR,
+                    B2_QATU,
+                    B2_QACLASS,
+                    B2_QEMPSA,
+                    B2_RESERVA,
+                    B2_QEMP,
+                    B2_DINVENT,
+                    BE_LOCALIZ,
+                    BE_DTINV, 
+                    BF_LOCALIZ,
+                    BF_QUANT,
+                    BF_EMPENHO
+                FROM %Table:SB2% WITH(NOLOCK),%Table:SB1% WITH(NOLOCK)
+                LEFT JOIN %Table:SBF% WITH(NOLOCK)
+                    ON BF_FILIAL               = %EXP:cFilAtu%
+                    AND BF_PRODUTO             = B1_COD 
+                    AND %Table:SBF%.D_E_L_E_T_ <> '*' 
+                LEFT JOIN %Table:SBZ% WITH(NOLOCK)
+                    ON BZ_FILIAL               = %EXP:cFilAtu%
+                    AND BZ_COD                  = B1_COD
+                    AND %Table:SBZ%.D_E_L_E_T_ <> '*' 
+                    WHERE B2_COD                  = %EXP:cProduto%
+                    AND B2_FILIAL               = %EXP:cFilAtu%
+                    AND B2_LOCAL                = %EXP:cLocal%
+                    AND %Table:SB2%.D_E_L_E_T_ <> '*'
+                    AND B1_COD                  = B2_COD
+                    AND B1_MSBLQL               = '2'
+                    AND %Table:SB1%.D_E_L_E_T_ <> '*'
 
+                ORDER BY %Table:SB1%.B1_COD
+            
+        EndSQl
+    EndIf
 RETURN(NIL)
 
 /*/{Protheus.doc} Static Function GetBFQUANT()

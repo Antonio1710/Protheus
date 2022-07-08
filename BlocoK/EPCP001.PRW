@@ -774,7 +774,7 @@ Else
 	Endif	
 EndIf  
 
-If lRet .And. Localiza(M->ZAM_COD)
+If lRet .And. Localiza(M->ZAM_COD) .And. Posicione("SB1",1,xFilial("SB1")+M->ZAM_COD,"B1_LOCALIZ") == 'S'
 	If lRet .And. (Empty(M->ZAM_LOCALI) .And. Empty(M->ZAM_NUMSER))
 		Help(" ",1,"LOCALIZOBR")
 		lRet:=.F.

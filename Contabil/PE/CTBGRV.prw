@@ -38,7 +38,10 @@
 /*/
 User Function CTBGRV()
 
-	Local cLtFolha := GetMV("MV_#LOTERM",,"008890") // @history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
+	// @history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
+	Local cLtFolha := GetMV("MV_#LOTERM",,"008890") 
+	Local lLockCTF := .t.
+	//
 
 	If .not. cEmpAnt $ "01 02 07 09"    // Chamado n. 051550 || OS 052878 || CONTROLADORIA || MONIK_MACEDO || 8956 || INDEXADORES - fwnm - 26/09/2019 (conforme email da Monik/Wilson autorizando após nosso questionamento antecipado)
 		Return
@@ -66,16 +69,43 @@ User Function CTBGRV()
 	//
 
 	//@history ticket 73451   - Fernando Macieira - 04/07/2022 - Padronização lote RM
-	If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. Subs(AllTrim(CT2->CT2_HIST),6,1) == "-" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
+	If AllTrim(CT2->CT2_ORIGEM) == "CTBI102" .or. CT2->CT2_LOTE='******' .or. AllTrim(CT2->CT2_SBLOTE) == "000"
 
 		If CT2->CT2_LOTE <> cLtFolha
 
 			u_GrLogZBE(msDate(),TIME(),cUserName,"FOLHA","CONTABILIDADE","CTBGRV",;
-			"LOTE ORIGINAL " + CT2->CT2_LOTE + ", NOVO LOTE FOLHA " + cLtFolha, ComputerName(), LogUserName() )
+			"LOTE RM, ORIGINAL " + cLtLct + " NOVO " + cLtFolha + " - DT/DOC " + DtoC(CT2->CT2_DATA)+"/"+CT2->CT2_DOC, ComputerName(), LogUserName() )
 
 			RecLock("CT2", .F.)
 				CT2->CT2_LOTE := cLtFolha
 			CT2->( msUnLock() )
+
+			// SEQUENCIA DOCUMENTO
+			CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+			If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+cLtLct+CT2->CT2_SBLOTE+CT2->CT2_DOC) )
+				
+				RecLock("CTF", .F.)
+					CTF->CTF_LOTE := cLtFolha
+				CTF->( msUnLock() )
+			
+			Else
+
+				lLockCTF := .t.
+				CTF->( DbSetOrder(1) ) // CTF_FILIAL, CTF_DATA, CTF_LOTE, CTF_SBLOTE, CTF_DOC, R_E_C_N_O_, D_E_L_E_T_
+				If CTF->( dbSeek(FWxFilial("CTF")+DtoS(CT2->CT2_DATA)+cLtFolha+CT2->CT2_SBLOTE+CT2->CT2_DOC) )
+					lLockCTF := .f.
+				EndIf
+
+				RecLock("CTF", lLockCTF)
+					CTF->CTF_FILIAL := FWxFilial("CTF")
+					CTF->CTF_DATA   := CT2->CT2_DATA
+					CTF->CTF_LOTE   := cLtFolha
+					CTF->CTF_SBLOTE := CT2->CT2_SBLOTE
+					CTF->CTF_DOC    := CT2->CT2_DOC
+					CTF->CTF_USADO  := "S"
+				CTF->( msUnLock() )
+
+			EndIf
 
 		EndIf
 
