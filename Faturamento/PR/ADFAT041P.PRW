@@ -55,6 +55,7 @@ User Function ADFAT041P()
         TButton():New( 042, 249, "Visualizar Ped." , oInterface,{|| MsAguarde({|| visualPed(oRegistros:aCols[oRegistros:nat][Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"})])  },"Aguarde","Acessando pedido " + Alltrim(cValToChar(oRegistros:aCols[oRegistros:nat][Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"})])) + "...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
         TButton():New( 042, 294, "Excluir Ped."    , oInterface,{|| MsAguarde({|| exclPedido( oRegistros:aCols[oRegistros:nat][Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"})] ) },"Aguarde","Excluindo pedido..."), MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
         TButton():New( 042, 339, "Cort. Man."      , oInterface,{|| MsAguarde({|| corteMan() },"Aguarde","Acessando corte manual de produtos..."), MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
+        TButton():New( 042, 384, "Romaneio"        , oInterface,{|| MsAguarde({|| U_ADROMENT() },"Aguarde","Acessando romaneio..."), MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
         
         TGet():New(035,474,{|u|If(PCount() == 0,cBusca,cBusca := u)},oInterface,050,010,"@C",,0,16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cBusca",,,,.T.,,,"Pedido",1) 
 		oBtnBusca := TButton():New(042,525,"Ok",oInterface,,20,12,,,.F.,.T.,.F.,,.F.,,,.F. )
