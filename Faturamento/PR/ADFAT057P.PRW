@@ -62,6 +62,7 @@ Static Function BrowseDef()
 
     //Variáveis.
     Local oBrowse := FwMBrowse():New()
+    Local cFiltro := " " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' .AND. ZHR_TIPO = '" + cTpMv + "' "
 
     oBrowse:SetAlias(cTbMast)
     oBrowse:SetDescription(cTitulo)
@@ -71,7 +72,7 @@ Static Function BrowseDef()
     oBrowse:AddLegend("ZHR_STATUS = '3' ","BR_VERMELHO", "Pedido Gerado" )
     oBrowse:AddLegend("ZHR_STATUS = '4' ","BR_PRETO"   , "Faturado" )
 
-    oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
+    oBrowse:SetFilterDefault(cFiltro)
 
 Return oBrowse
 /*/{Protheus.doc} MenuDef
@@ -206,6 +207,9 @@ Static Function vldPos(oModel)
     Local cOrdRac    := oModel:GetValue("MD_MASTER","ZHR_ORRORI")
     Local cMotivo    := oModel:GetValue("MD_MASTER","ZHR_MOTIVO")
     Local cStatus    := oModel:GetValue("MD_MASTER","ZHR_STATUS")
+    Local cDesGro    := oModel:GetValue("MD_MASTER","ZHR_DESGOR")
+    Local cPrdSAG    := oModel:GetValue("MD_MASTER","ZHR_PRDSAG")
+    Local cProdPro   := oModel:GetValue("MD_MASTER","ZHR_PRDPRO")
     Local cQtdOri    := Val(cValToChar(oModel:GetValue("MD_MASTER","ZHR_QTDORI")))
     Local cQtdDes    := Val(cValToChar(oModel:GetValue("ADFAT57TOT","ZHR_QTDTOT")))
     Local cMsgError  := ""
@@ -237,6 +241,30 @@ Static Function vldPos(oModel)
         
         EndIf
 
+        If lRet .And. cTpMv == "2" .And. cQtdDes <= 0
+            lRet := .F.
+            Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Quantidade de destino inválida.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        
+        EndIf
+
+        If lRet .And. cTpMv == "2" .And. Empty(cDesGro)
+            lRet := .F.
+            Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Necessário informar a granjada de origem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        
+        EndIf
+
+        If lRet .And. cTpMv == "2" .And. Empty(cPrdSAG)
+            lRet := .F.
+            Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Necessário informar o produto.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        
+        EndIf
+
+        If lRet .And. cTpMv == "2" .And. Empty(cProdPro)
+            lRet := .F.
+            Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Necessário informar o produto(Protheus).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        
+        EndIf
+
         If lRet .And. cTpMv == "1" .And. cStatus <> "3" .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("gerPedS")
             oModel:SetValue("MD_MASTER","ZHR_CDAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_NMAPRV", "")
@@ -252,7 +280,16 @@ Static Function vldPos(oModel)
         
         EndIf
 
+        If lRet .And. cTpMv == "2" .And. cStatus == "1"
+            oModel:SetValue("MD_MASTER","ZHR_STATUS", "2")
 
+        EndIf
+
+        If lRet
+            oModel:SetValue("MD_MASTER","ZHR_NMUSR", cUserName)
+            oModel:SetValue("MD_MASTER","ZHR_TIPO", cTpMv)
+
+        EndIf
 
     EndIf
 
@@ -368,13 +405,20 @@ Static Function ViewDef()
         oView:SetOwnerView("VW_GRID", "GRID")
         oView:SetOwnerView("VW_CALC", "CALC")
 
+        oStrMast:RemoveField("ZHR_NFRURA")
+        oStrMast:RemoveField("ZHR_SRRURA")
+
     ElseIf cTpMv == "2"
         oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
-        oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID",,)
+        oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID",,{|| gridFocus(oView) })
+        oView:AddField("VW_CALC",   oStrTotal,"ADFAT57TOT")
         oView:CreateHorizontalBox("MAIN", 50)
-        oView:CreateHorizontalBox("GRID", 50)
+        oView:CreateHorizontalBox("GRID", 35)
+        oView:CreateHorizontalBox("CALC", 15)
+
         oView:SetOwnerView("VW_MASTER", "MAIN")
         oView:SetOwnerView("VW_GRID", "GRID")
+        oView:SetOwnerView("VW_CALC", "CALC")
 
         oStrMast:RemoveField("ZHR_ORRORI")
         oStrMast:RemoveField("ZHR_MOTIVO")
@@ -388,6 +432,8 @@ Static Function ViewDef()
         oStrMast:RemoveField("ZHR_CDAPRV")
         oStrMast:RemoveField("ZHR_NMAPRV")
         oStrMast:RemoveField("ZHR_DTAPRV")
+        oStrMast:RemoveField("ZHR_HRAPRV")
+        oStrMast:RemoveField("ZHR_PLACA")
 
     EndIf
 
@@ -411,22 +457,40 @@ Static Function gridFocus(oView)
     Local cOrdRac := oModel:GetValue("MD_MASTER","ZHR_ORRORI")
     Local cNota   := oModel:GetValue("MD_MASTER","ZHR_NFORI")
     Local cMotivo := oModel:GetValue("MD_MASTER","ZHR_MOTIVO")
+    Local cDesGro := oModel:GetValue("MD_MASTER","ZHR_DESGOR")
+    Local cProdSAG:= oModel:GetValue("MD_MASTER","ZHR_PRDSAG")
+    Local cProdPro:= oModel:GetValue("MD_MASTER","ZHR_PRDPRO")
+    Local nVlrUnit:= Val(cValToChar(oModel:GetValue("MD_MASTER","ZHR_VLRUNT")))
 
-    If Empty(cOrdRac)
+    If cTpMv == "1" .And. Empty(cOrdRac)
         Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Necessário informar a ordem de carregamento de ração de origem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_ORRORI"):OCtrl:OGet:SetFocus()
-
-    EndIf
-
-    If Empty(cNota)
+    
+    ElseIf cTpMv == "1" .And. Empty(cNota)
         Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Nota fiscal não carregada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_ORRORI"):OCtrl:OGet:SetFocus()
 
-    EndIf
-
-    If Empty(cMotivo)
+    ElseIf cTpMv == "1" .And. Empty(cMotivo)
         Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Necessário informar o motivo.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_ORRORI"):OCtrl:OGet:SetFocus()
+
+    EndIf
+
+    If cTpMv == "2" .And. Empty(cDesGro)
+        Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Necessário informar a granjada de origem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_DESGOR"):OCtrl:OGet:SetFocus()
+
+    ElseIf cTpMv == "2" .And. Empty(cProdSAG)
+        Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Necessário informar o produto.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_DESGOR"):OCtrl:OGet:SetFocus()
+
+    ElseIf cTpMv == "2" .And. Empty(cProdPro)
+        Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Necessário informar o produto (Protheus).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_DESGOR"):OCtrl:OGet:SetFocus()
+
+    ElseIf cTpMv == "2" .And. nVlrUnit <= 0
+        Help(Nil, Nil, "Função gridFocus(ADFAT057P)", Nil, "Necessário informar o valor unitário.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHR_DESGOR"):OCtrl:OGet:SetFocus()
 
     EndIf
 
@@ -441,7 +505,7 @@ Return Nil
     @version 01
 /*/
 Static Function getCmps()
-Return "ZHR_FILIAL;ZHR_NUMERO;ZHR_PLACA;ZHR_STATUS;ZHR_ROTEIR;ZHR_ORRORI;ZHR_DESGOR;ZHR_ORPORI;ZHR_NFORI;ZHR_SERORI;ZHR_FORORI;ZHR_LOJORI;ZHR_PRDSAG;ZHR_PRDPRO;ZHR_DESPRT;ZHR_QTDORI;ZHR_VLRUNT;ZHR_MOTIVO;ZHR_CDAPRV;ZHR_NMAPRV;ZHR_DTAPRV;ZHR_HRAPRV"
+Return "ZHR_FILIAL;ZHR_NFRURA;ZHR_TIPO;ZHR_SRRURA;ZHR_NMUSR;ZHR_NUMERO;ZHR_PLACA;ZHR_STATUS;ZHR_ROTEIR;ZHR_ORRORI;ZHR_DESGOR;ZHR_ORPORI;ZHR_NFORI;ZHR_SERORI;ZHR_FORORI;ZHR_LOJORI;ZHR_PRDSAG;ZHR_PRDPRO;ZHR_DESPRT;ZHR_QTDORI;ZHR_VLRUNT;ZHR_MOTIVO;ZHR_CDAPRV;ZHR_NMAPRV;ZHR_DTAPRV;ZHR_HRAPRV"
 /*/{Protheus.doc} ADFAT57
     Ponto de entrada.
     @type  User Function
@@ -764,12 +828,15 @@ User Function ADFAT57E(nOpc)
 
     If nOpc == 1 //Gera nota fiscal de devolução.
 
-        MsAguarde({|| lRet := gerDev(cNum, @cRegistros) }, "Aguarde", "Gerando NF de devolução...")
+        If cTpMv == "1"
+            MsAguarde({|| lRet := gerDev(cNum, @cRegistros) }, "Aguarde", "Gerando NF de devolução...")
 
-        // If lRet .And. MsgYesNo("Deseja gerar os pedidos de saída?", "Função ADFAT57E(ADFAT057P)")
-        //     nOpc := 2
+        EndIf
 
-        // EndIf
+        If cTpMv == "2"
+            MsAguarde({|| lRet := gerDevS(cNum, @cRegistros) }, "Aguarde", "Gerando NF de devolução...")
+
+        EndIf
 
     EndIf
 
@@ -950,6 +1017,139 @@ Static Function gerDev(cNum, cRegistros)
             Return .F.
 
         EndIf
+
+        Aadd(aNFTrans, {cNumero, cSerie})
+
+        cRegistros += "Nota de devolução gerada: " + cNumero + " " + cSerie
+
+        U_GrLogZBE(Date(), Time(), cUserName, "DEVOLUCAO DE NF " + cNumero + " " + cSerie, "FATURAMENTO", "ADFAT057P",;
+            ZHR->ZHR_NUMERO, ComputerName(), LogUserName())
+
+    EndIf
+
+    If Len(aNFtrans) > 0
+	    MsAguarde({|| transmNF(aNFTrans, cSerie, "D", cForOri, cLojOri) },"Aguarde","Transmitindo NF's...")
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} User Function gerDev
+    Gera entrada por devolução de sobra.
+    @type  Function
+    @author Everson
+    @since 07/07/2022
+    @version 01
+/*/
+Static Function gerDevS(cNum, cRegistros)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local aItens    := {}
+    Local aCab      := {}
+    Local cNumero   := ""
+    Local cTes      := Alltrim(cValToChar(GETMV("MV_#ADF577",,"15C"))) //"15A" //Sobra de ração 15C
+    Local cItemCC   := Alltrim(cValToChar(GETMV("MV_#ADF578",,"114"))) //"114"
+    Local cSerie	:= Alltrim(cValToChar(GETMV("MV_#SRNFIT",,"")))
+    Local cTpNrNfs  := ""
+    Local cForOri   := ""
+    Local cLojOri   := ""
+    Local aNFTrans  := {}
+    Local cGranjada := ""
+
+    Private lMsErroAuto    := .F.
+    Private lMsHelpAuto    := .T.
+    Private lAutoErrNoFile := .F.
+
+    Default cRegistros  := ""
+
+    cRegistros += xPula
+
+    DbSelectArea("ZHR")
+    ZHR->(DbSetOrder(1))
+    If ! ZHR->(DbSeek( FWxFilial("ZHR") + cNum ))
+        cRegistros += "Faturamento " + cNum + " não localizado"
+        RestArea(aArea)
+        Return .F.
+        
+    EndIf
+
+    cGranjada := ZHR->ZHR_DESGOR
+
+    If ! U_ADLFV22C(cGranjada)
+        cRegistros += "Granjada " + cGranjada + " não localizada"
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cForOri := ZIS->ZIS_FORNEC
+    cLojOri := ZIS->ZIS_LOJA
+
+    cTpNrNfs := SuperGetMV("MV_TPNRNFS")
+    cNumero  := NxtSX5Nota(Padr(cSerie, TamSX3("D2_SERIE")[1], " "),.T.,cTpNrNfs)
+
+    If Empty(cNumero)
+        cRegistros += "Função NxtSX5Nota não retornou próximo número disponível para emissão de nota fiscal"
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+	Aadd(aItens,{{"D1_FILIAL" ,FWxFilial("SD1"),Nil},;
+				{"D1_COD"    ,SD2->D2_COD     ,Nil},;
+				{"D1_TES"    ,cTes            ,Nil},;
+				{"D1_NFORI"  ,SD2->D2_DOC     ,Nil},;
+				{"D1_SERIORI",SD2->D2_SERIE   ,Nil},;
+				{"D1_ITEMORI",SD2->D2_ITEM    ,Nil},;
+				{"D1_DOC"    ,cNumero         ,Nil},;
+				{"D1_SERIE"  ,cSerie          ,Nil},;
+				{"D1_ITEM"   ,"0001"          ,Nil},;
+				{"D1_UM"     ,SD2->D2_UM      ,Nil},;
+				{"D1_QUANT"  ,SD2->D2_QUANT   ,Nil},;
+				{"D1_VUNIT"  ,SD2->D2_PRCVEN  ,Nil},;
+				{"D1_TOTAL"  ,SD2->D2_TOTAL   ,Nil},;
+				{"D1_FORNECE",cForOri         ,Nil},;
+				{"D1_LOJA"   ,cLojOri         ,Nil},;
+				{"D1_EMISSAO", Date()         ,Nil},;
+				{"D1_DTDIGIT", Date()         ,Nil},;
+				{"D1_LOCAL"  ,SD2->D2_LOCAL   ,Nil},;
+				{"D1_CC"     ,SD2->D2_CCUSTO  ,Nil},;
+				{"D1_FORMUL" ,"S"             ,Nil},;
+				{"D1_TIPO"   ,"N"             ,Nil},;
+                {"D1_ITEMCTA",cItemCC         ,Nil},;
+                {"D1_CONTA"  ,SD2->D2_CONTA   ,Nil},;
+                {"D1_GRUPO"  ,SD2->D2_GRUPO   ,Nil},;
+                {"D1_NFRURAL",SD2->D2_DOC     ,Nil},;
+                {"D1_SRRURAL",SD2->D2_SERIE   ,Nil},;
+                {"D1_TP"     ,SD2->D2_TP      ,Nil}})
+				
+        aCab := {{"F1_FILIAL" ,FWxFilial("SF1") ,Nil},;
+                 {"F1_TIPO"   ,"N"              ,Nil},;
+                 {"F1_FORMUL" ,"S"              ,Nil},;
+                 {"F1_DOC"    ,cNumero          ,Nil},;
+                 {"F1_SERIE"  ,cSerie           ,Nil},;
+                 {"F1_EMISSAO",Date()           ,Nil},;
+                 {"F1_DTDIGIT",Date()           ,Nil},;
+                 {"F1_FORNECE",cForOri          ,Nil},;
+                 {"F1_LOJA"   ,cLojOri          ,Nil},;
+                 {"F1_ESPECIE","SPED"           ,Nil},;
+                 {"F1_VALMERC",SD2->D2_TOTAL    ,Nil},;
+                 {"F1_VALBRUT",SD2->D2_TOTAL    ,Nil}}
+
+    aCab   := FWVetByDic(aCab,  "SF1",.F.,1)
+
+    aItens := FWVetByDic(aItens,"SD1",.T.,1)
+
+    MsExecAuto({|x,y| MATA103(x,y)}, aCab, aItens, 3)
+
+    If lMsErroAuto
+        cRegistros += MostraErro()
+        RestArea(aArea)
+        Return .F.
+
+    Else
 
         Aadd(aNFTrans, {cNumero, cSerie})
 
@@ -1991,3 +2191,126 @@ Static Function zAtuPerg(cPergAux, cParAux, xConteud)
 	RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} ADFAT576
+	Valida granjada selecionada.
+	@type  Function
+	@author Everson
+	@since 07/07/2022
+	@version 01
+/*/
+User Function ADFAT576(cGranjada)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+    Default cGranjada := ""
+
+    If ! U_ADLFV22C(cGranjada)
+        Help(Nil, Nil, "Função ADFAT576(ADFAT057P)", Nil, "Granjada " + cGranjada + " não localizada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZIS->ZIS_ATIVO <> "1"
+        Help(Nil, Nil, "Função ADFAT576(ADFAT057P)", Nil, "Granjada " + cGranjada + " está bloqueada.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} ADFAT577
+	Valida produto selecionado.
+	@type  Function
+	@author Everson
+	@since 07/07/2022
+	@version 01
+/*/
+User Function ADFAT577(cPrdSAG)
+
+    //Variáveis.
+    Local aArea  := GetArea()
+    Local lLote  := .F.
+
+    Default cPrdSAG := ""
+
+    FWFldPut("ZHR_PRDPRO", Space(TamSX3("ZHR_PRDPRO")[1]))
+    FWFldPut("ZHR_DESPRT", Space(TamSX3("ZHR_DESPRT")[1]))
+    FWFldPut("ZHR_VLRUNT", 0)
+
+    If ! U_ADFAT20B(cPrdSAG)
+        Help(Nil, Nil, "Função ADFAT577(ADFAT057P)", Nil, "Produto " + cPrdSAG + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! ("RACAO" $ZIM->ZIM_GRPSAG)
+        Help(Nil, Nil, "Função ADFAT576(ADFAT057P)", Nil, "Produto " + cPrdSAG + " não é ração.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ZIM->ZIM_ATIVO <> "1"
+        Help(Nil, Nil, "Função ADFAT576(ADFAT057P)", Nil, "Produto " + cPrdSAG + " está bloqueado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    DbSelectArea("ZI8")
+    ZI8->(DbSetOrder(3))
+    ZI8->(DbGoTop())
+
+    If ! ZI8->( DbSeek( FWxFilial("ZI8") + cPrdSAG))
+        Help(Nil, Nil, "Função ADFAT576(ADFAT057P)", Nil, "Produto " + cPrdSAG + " não possui lote.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    While ! ZI8->(Eof()) .And. ZI8->ZI8_FILIAL == FWxFilial("ZI8") .And. Alltrim(cValToChar(ZI8->ZI8_PRDSAG)) == Alltrim(cValToChar(cPrdSAG))
+
+        If ZI8->ZI8_STATUS $"1"
+            lLote := .T.
+
+        EndIf
+
+        If ZI8->ZI8_STATUS $"2"
+            lLote := .T.
+            Exit
+
+        EndIf
+
+        ZI8->(DbSkip())
+
+    End
+
+    If ! lLote
+        Help(Nil, Nil, "Função ADFAT576(ADFAT057P)", Nil, "Produto " + cPrdSAG + " não possui lote em aberto ou em uso.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    Else
+        FWFldPut("ZHR_PRDPRO", ZIM->ZIM_PRDPRO)
+        FWFldPut("ZHR_DESPRT", ZIM->ZIM_DESSAG)
+        FWFldPut("ZHR_VLRUNT", ZI8->ZI8_LTCUST)
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} ADFAT578
+	Retorna o tipo de registro.
+	@type  Function
+	@author Everson
+	@since 08/07/2022
+	@version 01
+/*/
+User Function ADFAT578()
+Return cTpMv
