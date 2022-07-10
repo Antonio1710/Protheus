@@ -12,6 +12,7 @@
 	@since 11/03/2022
 	@version 01
 	@history Everson, 27/05/2022. Ticket 18465. Tratamento para não faturar pedido com bloqueio de corte e previnir exclusão de pedido com ordem de pesagem com ticket de pesagem.
+	@history ticket   TI    - Everson           - 10/07/2022 - Removida transmissão automática de NF.
 /*/
 User Function ADFAT041P()
 
@@ -829,7 +830,7 @@ Static Function emitNfGrp(cPedProth)
 	EndIf
 	
 	If Len(aNFTrans) > 0
-	 	MsAguarde({|| transmNF(@aNFTrans,cSerie,.F.) },"Função emitNfGrp(ADFAT041P)","Transmitindo NF's")
+	 	//MsAguarde({|| transmNF(@aNFTrans,cSerie,.F.) },"Função emitNfGrp(ADFAT041P)","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI
 
 	EndIf
 	
@@ -1323,7 +1324,7 @@ Static Function gerNFLt(cTemp)
 	EndIf
 
 	If Len(aNFTrans) > 0
-	 	MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's")
+	 	//MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI
 
 	EndIf
 

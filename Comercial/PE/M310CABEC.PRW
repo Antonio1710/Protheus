@@ -11,7 +11,7 @@
 	@since  28/04/21 
 	@version 01
 	@history Chamado 8566 	- André Mendes 	- 29/04/2021 - Transferência entre Filiais 
-	
+	@history ticket   TI    - Everson           - 10/07/2022 - Removida transmissão automática de NF.
 /*/
 User Function M310CABEC
     Local cProg := PARAMIXB[1]
@@ -41,7 +41,7 @@ User Function M310CABEC
         Endif 
 
         If Len(aNFTrans) > 0
-            MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
+            //MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI
 
         EndIf
 		
