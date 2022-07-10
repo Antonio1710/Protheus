@@ -152,4 +152,21 @@ User Function ADLFV22B(cGranjada)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADLFV22B
+    Posiciona no registro de granjada pela descrição.
+    @type  Static Function
+    @author Everson
+    @since 07/07/2022
+    @version 01
+/*/
+User Function ADLFV22C(cDesc)
+
+    DbSelectArea("ZIS")
+    ZIS->(DbSetOrder(3))
+    If ! ZIS->( DbSeek( FWxFilial("ZIS") + cDesc) )
+        Return .F.
+
+    EndIf
+
+Return .T.
 
