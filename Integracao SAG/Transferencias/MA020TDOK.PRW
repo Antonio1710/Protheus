@@ -12,7 +12,7 @@
 	@history Chamado 052327 - Adriana Oliveira - 07/10/2019 - Habilita Pre-cadastro Fornecedor p/ SAFEGG
 	@history Chamado 052327 - Adriana Oliveira - 16/10/2019 - Ajuste emails Pre-Cadastro p/ SAFEGG
 	@history Chamado 052636 - William Costa    - 25/11/2019 - Adicionado a empresa 07 para carregar corretamente o pré cadastro
-
+	@history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor
 */
 
 User Function MA020TDOK
@@ -25,12 +25,16 @@ User Function MA020TDOK
 	Local cDsWfFis  := SuperGetMv( "MV_#EMLWF1" , .F. , '' ,  )+';'+SuperGetMv( "MV_#EMLWF2" , .F. , '' ,  )
 	Local sAltFis   := "" 
 	Local aHeader   :={}
+	Local _aHeader2 := {}
+	LOcal _aHeader3 := {}
+	Local _lAchouSA2:= .F.
 	Local lAtvCad   := .F.
 	Local aArea 	:= GetArea()
-	Local sTabJson  := '{ '
-	Local sMemJson  := '{ '
-	Local lZclAapr := .F.
+	//Local sTabJson  := '{ '
+	//Local sMemJson  := '{ '
+	//Local lZclAapr := .F.
 	Local lFilPreC := SuperGetMv( "MV_#PRECAD" , .F. , .F. ,  )
+	Local h
 	
 	If Alltrim(cEmpAnt) $ "01/07/09" // Por Adriana Oliveira em 07/10/2019 - Chamado 052327 // William Costa 25/11/2019 chamado 052636  
 		If Empty(M->A2_LOCAL) .and. M->A2_XTIPO $ "1|2"
@@ -94,28 +98,32 @@ User Function MA020TDOK
 	EndIf
 	
 	if lFilPreC // Ricardo Lima-17/07/2019-046541|habilita filial para o pre-cadastro por parametro
+		//@history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor
+		//Otimizado para fazer a busca no SX3 apenas 1 vez.
+		_aHeader2 := {}
+		_aHeader3 := {}
+		dbSelectArea("SX3")
+		DbSetOrder(1)
+		DbSeek("SA2")
+		While !Eof().And.(x3_arquivo=="SA2")
+			If X3USO(x3_usado).And.x3_folder='2'.And.x3_context<>'V'
+				Aadd(_aHeader2,{ TRIM(x3_titulo), x3_campo, x3_picture, x3_tamanho, x3_decimal, "AllwaysTrue()", x3_usado, x3_tipo, x3_arquivo, x3_context } )
+			elseif X3USO(x3_usado).And.x3_folder='3'.And.x3_context<>'V'
+				Aadd(_aHeader3,{ TRIM(x3_titulo), x3_campo, x3_picture, x3_tamanho, x3_decimal, "AllwaysTrue()", x3_usado, x3_tipo, x3_arquivo, x3_context } )
+			Endif    
+			dbSkip()
+		End
 	 If M->A2_MSBLQL = '1'
 		If M->A2_MSBLQL = "1" .AND. SA2->A2_MSBLQL = "1"
 			If ALLTRIM(PswRet()[1][12])$'FINANCAS|TI|GERFIS'
 				sAltFis := ""
-				aHeader   :={}
 				lAtuFis   := .F.
-				dbSelectArea("SX3")
-				DbSetOrder(1)
-				DbSeek("SA2")
-				While !Eof().And.(x3_arquivo=="SA2")
-					If X3USO(x3_usado).And.x3_folder='2'.And.x3_context<>'V'
-						Aadd(aHeader,{ TRIM(x3_titulo), x3_campo, x3_picture, x3_tamanho, x3_decimal, "AllwaysTrue()", x3_usado, x3_tipo, x3_arquivo, x3_context } )
-					Endif    
-					dbSkip()
-				End
-				for h:=1 to LEN(aHeader)
-					IF &("M->"+aHeader[h][2]) <> &("SA2->"+aHeader[h][2])
-						sAltFis += "Alterado Campo( "+aHeader[h][1]+" ) de: "+Alltrim(&("SA2->"+aHeader[h][2]))+" para: "+Alltrim(&("M->"+aHeader[h][2]))+chr(13)+chr(10)
+				for h:=1 to LEN(_aHeader2) //x3_folder='2'
+					IF &("M->"+_aHeader2[h][2]) <> &("SA2->"+_aHeader2[h][2])
+						sAltFis += "Alterado Campo( "+_aHeader2[h][1]+" ) de: "+Alltrim(&("SA2->"+_aHeader2[h][2]))+" para: "+Alltrim(&("M->"+_aHeader2[h][2]))+chr(13)+chr(10)
 						lAtuFis := .T.
 					EndIf
 	            next	
-	
 				If M->A2_XPRECAD = '1'
 					RecLock("SA2",.F.)
 						SA2->A2_XPRECAD := '2'
@@ -139,12 +147,18 @@ User Function MA020TDOK
 	 Endif
 	
 	 if M->A2_MSBLQL <> '1'
-	
-		DbSelectArea("SA2")
-		DbSetOrder(1)
-		IF DbSeek( xFilial("SA2") + M->A2_COD + M->A2_LOJA )
+		//Se Estou posicionando no mesmo registro, não é preciso pesquisar o fornecedor.
+		//@history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor
+		If M->(A2_FILIAL + A2_COD + A2_LOJA) == SA2->(A2_FILIAL + A2_COD + A2_LOJA)
+			_lAchouSA2:=.T.			
+		else
+			DbSelectArea("SA2")
+			DbSetOrder(1)
+			DbSeek( xFilial("SA2") + M->A2_COD + M->A2_LOJA )
+			_lAchouSA2:=!SA2->(Eof())
+		EndIf
+		If _lAchouSA2
 			if M->A2_MSBLQL = "2" .AND. SA2->A2_MSBLQL = "1"  // WORKFLOW DE DESBLOQUEIO DE FORNECEDOR
-				
 				RecLock("CV8",.T.)
 					CV8->CV8_FILIAL  := xFilial("CV8")
 					CV8->CV8_MSG     := "CADASTRO DE FORNECEDOR ATIVADO"
@@ -172,22 +186,12 @@ User Function MA020TDOK
 				sAltFis := ""
 				aHeader   :={}
 				lAtuFis   := .F.
-				dbSelectArea("SX3")
-				DbSetOrder(1)
-				DbSeek("SA2")
-				While !Eof().And.(x3_arquivo=="SA2")
-					If X3USO(x3_usado).And.x3_folder='3'.And.x3_context<>'V'
-						Aadd(aHeader,{ TRIM(x3_titulo), x3_campo, x3_picture, x3_tamanho, x3_decimal, "AllwaysTrue()", x3_usado, x3_tipo, x3_arquivo, x3_context } )
-					Endif    
-					dbSkip()
-				End
-				for h:=1 to LEN(aHeader)
-					IF &("M->"+aHeader[h][2]) <> &("SA2->"+aHeader[h][2])
-						sAltFis += "Alterado Campo( "+aHeader[h][1]+" ) de: "+Alltrim(&("SA2->"+aHeader[h][2]))+" para: "+Alltrim(&("M->"+aHeader[h][2]))+chr(13)+chr(10)
+				for h:=1 to LEN(_aHeader3)
+					IF &("M->"+_aHeader3[h][2]) <> &("SA2->"+_aHeader3[h][2])
+						sAltFis += "Alterado Campo( "+_aHeader3[h][1]+" ) de: "+Alltrim(&("SA2->"+_aHeader3[h][2]))+" para: "+Alltrim(&("M->"+_aHeader3[h][2]))+chr(13)+chr(10)
 						lAtuFis := .T.
 					EndIf
 	            next	
-	
 				if lAtuFis
 					RecLock("CV8",.T.)
 						CV8->CV8_FILIAL  := xFilial("CV8")
@@ -209,18 +213,9 @@ User Function MA020TDOK
 				sAltFis := ""
 				aHeader   :={}
 				lAtuFis   := .F.
-				dbSelectArea("SX3")
-				DbSetOrder(1)
-				DbSeek("SA2")
-				While !Eof().And.(x3_arquivo=="SA2")
-					If X3USO(x3_usado).And.x3_folder='2'.And.x3_context<>'V'
-						Aadd(aHeader,{ TRIM(x3_titulo), x3_campo, x3_picture, x3_tamanho, x3_decimal, "AllwaysTrue()", x3_usado, x3_tipo, x3_arquivo, x3_context } )
-					Endif    
-					dbSkip()
-				End
-				for h:=1 to LEN(aHeader)
-					IF &("M->"+aHeader[h][2]) <> &("SA2->"+aHeader[h][2])
-						sAltFis += "Alterado Campo( "+aHeader[h][1]+" ) de: "+Alltrim(&("SA2->"+aHeader[h][2]))+" para: "+Alltrim(&("M->"+aHeader[h][2]))+chr(13)+chr(10)
+				for h:=1 to LEN(_aHeader2) //x3_folder = '2'
+					IF &("M->"+_aHeader2[h][2]) <> &("SA2->"+_aHeader2[h][2])
+						sAltFis += "Alterado Campo( "+_aHeader2[h][1]+" ) de: "+Alltrim(&("SA2->"+_aHeader2[h][2]))+" para: "+Alltrim(&("M->"+_aHeader2[h][2]))+chr(13)+chr(10)
 						lAtuFis := .T.
 					EndIf
 	            next	
@@ -251,5 +246,8 @@ User Function MA020TDOK
 		EndIf
 	 ENDIF
 	endif
+	//@history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor
+	//Incluido RestArea 
+	RestArea(aArea)
 
 Return lRet

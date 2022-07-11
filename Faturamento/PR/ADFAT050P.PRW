@@ -285,7 +285,12 @@ User Function ADFAT50B(cNmOrdem)
 
             EndIf
 
-        End Transaction    
+        End Transaction   
+
+        If ! Empty(cMsgError)
+            U_ADFAT173("Erro carregamento : " + cMsgError, cOrdem, "", "GEMBA")
+
+        EndIf
             
         Aadd(aRecAtu, {D_GEMBA->REC, lRet, cMsgError})
 

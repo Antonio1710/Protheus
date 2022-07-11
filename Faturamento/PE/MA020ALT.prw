@@ -14,6 +14,7 @@
     (examples)
     @see (links_or_references)
     @history ticket 11639 - Fernando Macieira - 31/05/2021 - Projeto - OPS Documento de entrada - Industrialização/Beneficiamento
+    @history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor
 /*/
 User Function MA020ALT()   
                        
@@ -103,12 +104,16 @@ Return(_lRetCGC)
     @example
     (examples)
     @see (links_or_references)
+    @ticket 18071 - Antonio Domingos - 27/06/2022 - Melhoria no cadastro de fornecedor
+    Ticket aberto via sistema pelo cliente MARILIA CRIS
 /*/
 Static Function ChkLoc3()
 
     Local lRet := .t.
-    Local cQuery := ""
-
+    Local _aGetArea := GetArea()
+    //Retirado Query - Pesquisa direta na tabela SA2.
+    //Local cQuery := ""
+    /*
     If Select("Work") > 0
         Work->( DbCloseArea() )
     EndIf
@@ -130,5 +135,15 @@ Static Function ChkLoc3()
     If Select("Work") > 0
         Work->( DbCloseArea() )
     EndIf
+    */
+    //@ticket 18071 - Antonio Domingos - 27/06/2022 - Melhoria no cadastro de fornecedor
+    dbSelectArea("SA2")
+    SA2->(DBORDERNICKNAME("CODLOJALMO")) 
+    dbSeek(M->A2_FILIAL+M->A2_COD+M->A2_LOJA+M->A2_LOCAL)
+    If !SA2->(Eof())
+        lRet := .f.
+        Alert("[MA020ALT-03] - O 'Almoxarifado' (conteúdo do campo A2_LOCAL)! já foi utilizado para o fornecedor " + SA2->A2_COD + "/" +SA2->A2_LOJA + " - " + SA2->A2_NREDUZ + " ! Informe um código ainda não utilizado...")    
+    EndIf
+    RestArea(_aGetArea)
 
 Return lRet

@@ -617,6 +617,7 @@ Static Function paramFis() //Everson - 21/10/2019. Chamado 029058.
 			Aadd(aDados,{"800924","07Q","07Q","22004"}) //Frete Frango Vivo. Everson - 11/11/2019. Chamado 029058.
 		ElseIf cFilAnt == "03"
 			Aadd(aDados,{"801607","07Q","07Q","22007"}) //Frete diversos/Transf.
+			Aadd(aDados,{"854206","07Q","07Q","22007"}) //Frete diversos/Transf.
 		EndIf
 	ElseIf cEmpAnt == "02"
 		//

@@ -12,6 +12,7 @@
     (examples)
     @see (links_or_references)
     @ticket 75186 - 06/07/2022 - As baixas estão gerando totalizados em portador errado
+    @ticket 75186 - 07/07/2022 - Melhoria nos logs para filtragem, análise e acompanhamento
 /*/
 User Function F200BXAG()
 
@@ -21,7 +22,10 @@ User Function F200BXAG()
     cLog200 := "Lote da Baixa: " + cLoteFin +;
                 " Banco/Agencia/Conta/SubConta: " + MV_PAR06 + "/" + MV_PAR07 + "/" + MV_PAR08 + "/" + MV_PAR09 +;
                 " Arquivo Retorno: " + AllTrim(MV_PAR04) +;
-                " Leiaute: " + AllTrim(MV_PAR05)
+                " Leiaute: " + AllTrim(MV_PAR05) +;
+                " SEE " + AllTrim(SEE->EE_CODIGO) + "/" + AllTrim(SEE->EE_AGENCIA) + "/" + AllTrim(SEE->EE_CONTA) + "/" + AllTrim(SEE->EE_SUBCTA) + "/" + AllTrim(SEE->EE_LOTE) +;
+                " SA6 " + AllTrim(SA6->A6_COD) + "/" + AllTrim(SA6->A6_AGENCIA) + "/" + AllTrim(SA6->A6_NUMCON) +;
+                " Privates " + AllTrim(cBanco) + "/" + AllTrim(cAgencia) + "/" + AllTrim(cConta) + "/" + AllTrim(cSubCta)
 
     cLog100 := AllTrim(Str(TRB->TOTAL))
 
@@ -43,6 +47,6 @@ User Function F200BXAG()
     */
 
     //GrLogZBE(dDate,cTime,cUser,cLog,cModulo,cRotina,cParamer,cEquipam,cUserRed)
-    u_GrLogZBE( msDate(), TIME(), cUserName, cLog200, cLoteFin, "FINA200-F200BXAG", cLog100, ComputerName(), LogUserName() )
+    u_GrLogZBE( msDate(), TIME(), cUserName, cLog200, "FINA200", "F200BXAG", cLog100, ComputerName(), LogUserName() )
 
 Return

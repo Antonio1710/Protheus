@@ -13,6 +13,7 @@
 	@history TICKET  224   - William Costa   - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365 - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history ticket  75853 - Adriano Savoine - 06/07/2022 - Atualizado o Fonte para Filial 03.
+	@history ticket  75853 - Jonathan Carvalho 07/07/2022 - Inclusão da coluna Ceia.
 */
 
 User Function ADGPE026R()
@@ -87,6 +88,7 @@ Static Function GeraExcel()
     Private nAlmoco    := 0
     Private nCafeTarde := 0
     Private nJantar    := 0
+	Private nCeia      := 0
     Private cCcusto    := ''   
     Private cNmCCusto  := ''
     Private cNome      := ''    
@@ -111,6 +113,7 @@ Static Function GeraExcel()
 			    nAlmoco    := nAlmoco    + TRB->ALMOCO
 			    nCafeTarde := nCafeTarde + TRB->CAFE_TARDE
 			    nJantar    := nJantar    + TRB->JANTAR 
+				nCeia      := nCeia      + TRB->CEIA
 			    cCcusto    := TRB->NU_ESTRUTURA
 			    cNmCCusto  := TRB->NM_ESTRUTURA
 			    cNome      := TRB->NM_PESSOA
@@ -125,6 +128,7 @@ Static Function GeraExcel()
 			    nAlmoco    := nAlmoco    + TRB->ALMOCO
 			    nCafeTarde := nCafeTarde + TRB->CAFE_TARDE
 			    nJantar    := nJantar    + TRB->JANTAR
+				nCeia      := nCeia      + TRB->CEIA
 			    cCcusto    := TRB->NU_ESTRUTURA 
 			    cNmCCusto  := TRB->NM_ESTRUTURA
 			    cNome      := TRB->NM_PESSOA
@@ -149,7 +153,8 @@ Static Function GeraExcel()
 	   	                	                 aLinhas[nExcel][06],; // 06 F  
 	   	                	                 aLinhas[nExcel][07],; // 07 G  
 	   	                	                 aLinhas[nExcel][08],; // 08 H
-	   	                	                 aLinhas[nExcel][09] ; // 09 I
+	   	                	                 aLinhas[nExcel][09],; // 09 I
+											 aLinhas[nExcel][10] ; // 10 J
                                                                   }) //GRAVANDO NA LINHA MANDANDO PARA O EXCEL O ARRAY COM AS LINHAS				
        NEXT 
 	   //============================== FINAL IMPRIME LINHA NO EXCEL
@@ -168,7 +173,8 @@ Static Function IMPRIMELINHA()
    	               "", ; // 06 F  
    	               "", ; // 07 G  
    	               "", ; // 08 H  
-   	               ""  ; // 09 I  
+   	               "", ; // 09 I  
+				   ""  ; // 10 J
    	                   })
 	//===================== FINAL CRIA VETOR COM POSICAO VAZIA
 	
@@ -182,6 +188,7 @@ Static Function IMPRIMELINHA()
 	aLinhas[nLinha][07] := nAlmoco              //G
 	aLinhas[nLinha][08] := nCafeTarde           //H
 	aLinhas[nLinha][09] := nJantar              //I
+	aLinhas[nLInha][10] := nCeia                //J
 	
 	//======================================= FINAL ADICIONANDO OS CAMPOS NAS LINHAS ===================			
 	
@@ -189,6 +196,7 @@ Static Function IMPRIMELINHA()
     nAlmoco    := 0
     nCafeTarde := 0
     nJantar    := 0
+	nCeia      := 0
     cCcusto    := ''
     cNome      := ''
     cMat       := ''
@@ -239,6 +247,7 @@ Static Function Cabec()
 	oExcel:AddColumn(cPlanilha,cTitulo,"Total Almoco "        ,1,1) // 07 G
 	oExcel:AddColumn(cPlanilha,cTitulo,"Total Cafe da Tarde " ,1,1) // 08 H
 	oExcel:AddColumn(cPlanilha,cTitulo,"Total Jantar "        ,1,1) // 09 I
+	oExcel:AddColumn(cPlanilha,cTitulo,"Total Ceia "          ,1,1) // 10 J
 	
 RETURN(NIL)
 
@@ -276,7 +285,8 @@ Static Function SqlGeral()
 						CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '14:45:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '17:01:00.000' THEN 1 ELSE 0 END AS CAFE_TARDE,
 						CASE WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '18:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '23:59:59' THEN 1 
 							WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '00:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '01:00:00' THEN 1 
-						ELSE 0 END AS JANTAR
+						ELSE 0 END AS JANTAR,
+						0 AS CEIA
 					FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
 					INNER JOIN  [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 							ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = LOG_ACESSO.CD_ESTRUTURA
@@ -314,9 +324,10 @@ Static Function SqlGeral()
 						CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '03:30:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '08:01:00.000' THEN 1 ELSE 0 END AS CAFE_MANHA,
 						CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '09:45:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '13:31:00.000' THEN 1 ELSE 0 END AS ALMOCO,
 						CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '14:45:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '17:01:00.000' THEN 1 ELSE 0 END AS CAFE_TARDE,
-						CASE WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '18:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '23:59:59' THEN 1 
-							WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '00:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '01:00:00' THEN 1 
-						ELSE 0 END AS JANTAR
+						CASE WHEN CONVERT(VARCHAR(11),DT_REQUISICAO,114) >= '17:30:00.000' AND CONVERT(VARCHAR(11),DT_REQUISICAO,114) <= '21:01:00.000' THEN 1 ELSE 0 END AS JANTAR,
+						CASE WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '23:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '23:59:59' THEN 1 
+							WHEN CONVERT(VARCHAR,DT_REQUISICAO,24) >= '00:00:00' AND CONVERT(VARCHAR,DT_REQUISICAO,24) <= '03:01:00' THEN 1 
+						ELSE 0 END AS CEIA
 					FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
 					INNER JOIN  [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 							ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = LOG_ACESSO.CD_ESTRUTURA
