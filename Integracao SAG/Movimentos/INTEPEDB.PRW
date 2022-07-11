@@ -4669,7 +4669,7 @@ Static Function emitNfGrp(nOpc, cPedProth, cSeqPed, lAut)
 	
 	//Everson - 30/11/2020. Chamado T.I.
 	If Len(aNFTrans) > 0
-	 	MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
+	 	//MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
 
 	EndIf
 	

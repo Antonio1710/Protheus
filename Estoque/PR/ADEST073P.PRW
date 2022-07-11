@@ -397,7 +397,6 @@ User Function ADEST731(oView)
     //Variáveis.
     Local aArea     := GetArea()
     Local oModal    := Nil
-    Local aButtons  := {}
     Local oContainer:= Nil
     Local oOrdens   := Nil
     Local aOrdens   := {}
@@ -420,16 +419,17 @@ User Function ADEST731(oView)
 
     EndIf
 
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
-	oModal:setTitle("Ordens de Carregamento - " + cPlaca)
-	oModal:setSize(150, 350)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
+	oModal:setTitle("Devolver Tag de Pesagem")
+	oModal:setSize( 150 , 350 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
+    oModal:CreateFormBar()
 
-    Aadd(aButtons,{Nil,"Confimar",{|| Iif(! prcOrd(aOrdens, cPlaca), Nil, oModal:DeActivate()) },"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Cancelar",  {|| oModal:DeActivate() },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
+    oModal:AddButton( "Confirmar", {|| Iif(! prcOrd(aOrdens, cPlaca), Nil, oModal:DeActivate()) }, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Cancelar" , {|| oModal:DeActivate() }   , "Cancelar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
@@ -754,7 +754,6 @@ User Function ADEST733(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
     Local aArea     := GetArea()
     Local lRet      := .F.
     Local oModal    := Nil
-    Local aButtons  := {}
     Local oContainer:= Nil
     Local cCodSol   := Alltrim(cValToChar(__cUserID))
     Local cSolic    := UsrFullName(__cUserID)
@@ -765,17 +764,18 @@ User Function ADEST733(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
     Local cNumLib   := ""
     Local cMsg      := ""
 
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
-	oModal:setTitle("Autorização - Quebra fora da tolerância permitida")
-	oModal:setSize(150, 275)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
+	oModal:setTitle("Ordens de Carregamento - " + cPlaca)
+	oModal:setSize( 150 , 350 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
-	oModal:addCloseButton(Nil, "Cancelar")
+    oModal:CreateFormBar()
+    oModal:addCloseButton(Nil, "Cancelar")
 
-    Aadd(aButtons,{Nil,"Solicitar",{|| solicLib("", cNmOrdem, nValor, nLimite, nDife, @cNumLib, cPlaca, cProduto, cMotivo) },"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Confirmar",{|| Iif(! verifLib(@lRet, cNumLib), Nil, oModal:DeActivate()) },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
+    oModal:AddButton( "Confirmar", {|| solicLib("", cNmOrdem, nValor, nLimite, nDife, @cNumLib, cPlaca, cProduto, cMotivo) }, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Solicitar" , {|| Iif(! verifLib(@lRet, cNumLib), Nil, oModal:DeActivate()) }  , "Solicitar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
