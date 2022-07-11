@@ -8,6 +8,7 @@
 	@since 04/05/18
 	@version version
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	@history Ticket TI      - Abel Babini          - 11/07/2022 - Não faz o bloqueio da A1 e A2
 	/*/
 User Function MT410TRV()
  
@@ -27,7 +28,11 @@ User Function MT410TRV()
 	If (Alltrim(cEmpAnt) $ cEmpSF .And. Alltrim(cFilAnt) $ cFilSF) .AND. lAtvPE
 
 		lTravaSB2 := .F.  // Desliga trava da tabela SB2
-		
+
+		//Ticket TI      - Abel Babini          - 11/07/2022 - Não faz o bloqueio da A1 e A2
+		lTravaSA1 := .F.  // Desliga trava da tabela SB2
+		lTravaSA2 := .F.  // Desliga trava da tabela SB2
+
 	endif 
 
 	aRet[1] := lTravaSA1 
