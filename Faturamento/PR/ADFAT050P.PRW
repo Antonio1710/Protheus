@@ -434,6 +434,11 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
 
         EndIf
 
+        //Gera log.
+        U_ADFAT173("Alteração produto ant/post: " + cValToChar(ZIF->ZIF_PRDSAG) + " / " + cValToChar(cProdGemba), ZIF->ZIF_NUMERO, "", "GEMBA")
+
+        U_ADFAT173("Alteração lote ant/post: " + cValToChar(ZIF->ZIF_LOTE) + " / " + cValToChar(cCodRet), ZIF->ZIF_NUMERO, "", "GEMBA")
+
         cProProth := Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_PRDPRO")
         cDescPro  := Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_DESSAG")
 
