@@ -22,6 +22,7 @@
 	@history Ticket 69574  - Abel Babini - 25/04/2022 - Projeto FAI
 	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE. 
 	@history Ticket 72835  - Abel Babini - 14/06/2022 - Atualiza valores de Rede
+	@hsitory Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
 /*/
 
 User Function ADFIN109P()
@@ -137,7 +138,7 @@ Static Function fTlAprov()
 	Private aX3PdTp	:= FWTamSX3("C5_TIPO")
 	Private aX3PdRot:= FWTamSX3("C5_ROTEIRO")
 	Private aX3PdCp	:= FWTamSX3("C5_CONDPAG")
-	Private aX3PdCtr:= FWTamSX3("E4_CTRADT")
+	// Private aX3PdCtr:= FWTamSX3("E4_CTRADT") //Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
 	Private aX3PdEnt:= FWTamSX3("C5_DTENTR")
 	Private aX3PdEmi:= FWTamSX3("C5_EMISSAO")
 	Private aX3PdNf	:= FWTamSX3("C5_NOTA")
@@ -523,6 +524,9 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
   nVlTtNP := 0
   nVlTtTt := 0
 
+	//Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
+  //    SE4.E4_CTRADT,
+
   BeginSQL alias cQuery
 		column C5_DTENTR as Date
 		column C5_EMISSAO as Date
@@ -546,7 +550,6 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			ISNULL(SZF.ZF_NOMERED,'') AS ZF_NOMERED,
       SC5.C5_ROTEIRO,
       SC5.C5_CONDPAG,
-      SE4.E4_CTRADT,
       SC5.C5_DTENTR,
       SC5.C5_EMISSAO,
       SC5.C5_NOTA,
@@ -615,7 +618,6 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			ZF_NOMERED,
       SC5.C5_ROTEIRO,
       SC5.C5_CONDPAG,
-      SE4.E4_CTRADT,
       SC5.C5_DTENTR,
       SC5.C5_EMISSAO,
       SC5.C5_NOTA,
@@ -736,7 +738,7 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 				(cTbPed)->NUMERO    	:= (cQuery)->C5_NUM
 				(cTbPed)->ROTEIRO    	:= (cQuery)->C5_ROTEIRO
 				(cTbPed)->CONDPAG    	:= (cQuery)->C5_CONDPAG
-				(cTbPed)->CPANT    		:= (cQuery)->E4_CTRADT
+				// (cTbPed)->CPANT    		:= (cQuery)->E4_CTRADT //Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
 				(cTbPed)->DTENTR    	:= (cQuery)->C5_DTENTR
 				(cTbPed)->DTEMIS    	:= (cQuery)->C5_EMISSAO
 				(cTbPed)->NOTA    		:= (cQuery)->C5_NOTA
@@ -883,7 +885,7 @@ Static Function xGrdPed()
 	oGrd20:SetColumns(AddCols("NUMERO"		 ,"Pedido"	  		,01,PesqPict("SC5","C5_NUM")  		,1	,aX3PdNum[1],aX3PdNum[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("ROTEIRO"		 ,"Roteiro"	  		,01,PesqPict("SC5","C5_ROTEIRO")  ,1	,aX3PdRot[1],aX3PdRot[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("CONDPAG"		 ,"Cond Pagto"	  ,01,PesqPict("SC5","C5_CONDPAG")  ,1	,aX3PdCp[1] ,aX3PdCp[2]  , .T.,"P"))
-	oGrd20:SetColumns(AddCols("CPANT"		 	 ,"Antecipado"	  ,01,PesqPict("SE4","E4_CTRADT")  	,1	,aX3PdCtr[1],aX3PdCtr[2] , .T.,"P"))
+	// oGrd20:SetColumns(AddCols("CPANT"		 	 ,"Antecipado"	  ,01,PesqPict("SE4","E4_CTRADT")  	,1	,aX3PdCtr[1],aX3PdCtr[2] , .T.,"P")) //Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
 	oGrd20:SetColumns(AddCols("DTENTR"		 ,"Entrega"	  		,01,PesqPict("SC5","C5_DTENTR")  	,1	,aX3PdEnt[1],aX3PdEnt[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("DTEMIS"		 ,"Emissão"	  		,01,PesqPict("SC5","C5_EMISSAO")  ,1	,aX3PdEmi[1],aX3PdEmi[2] , .T.,"P"))
 	oGrd20:SetColumns(AddCols("NOTA"		 	 ,"NF"	  				,01,PesqPict("SC5","C5_NOTA")  		,1	,aX3PdNf[1],aX3PdNf[2] , .T.,"P"))
@@ -1358,7 +1360,7 @@ Static Function CriaExtr(_table)
 		aadd(_aFields,{"NOME"		    ,aX3NomC[3]	,aX3NomC[1]	,aX3NomC[2]})
 		aadd(_aFields,{"ROTEIRO"		,aX3PdRot[3],aX3PdRot[1],aX3PdRot[2]})
 		aadd(_aFields,{"CONDPAG"		,aX3PdCp[3]	,aX3PdCp[1]	,aX3PdCp[2]})
-		aadd(_aFields,{"CPANT"			,aX3PdCtr[3],aX3PdCtr[1],aX3PdCtr[2]})
+		// aadd(_aFields,{"CPANT"			,aX3PdCtr[3],aX3PdCtr[1],aX3PdCtr[2]}) //Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
 		aadd(_aFields,{"DTENTR"			,aX3PdEnt[3],aX3PdEnt[1],aX3PdEnt[2]})
 		aadd(_aFields,{"DTEMIS"			,aX3PdEmi[3],aX3PdEmi[1],aX3PdEmi[2]})
 		aadd(_aFields,{"TOTAL"	    ,aX3TotP[3]	,aX3TotP[1]	,aX3TotP[2]})
