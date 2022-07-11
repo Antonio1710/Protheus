@@ -52,6 +52,7 @@
 	@history Ticket 68971   - Fer Macieira	  - 02/03/2022 - Integração Notas Centro de Custo 5134 - Item 113
 	@history ticket 71057   - Fer Macieira    - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
 	@history ticket 74027   - TI              - 22/06/2022 - Pedido de Compra e Documento de Entrada CC 5318 - Item 111
+	@history ticket 76269   - TI              - 11/07/2022 - Erro Doc de Entrada DEVOLUCAO
 /*/ 
 User Function MT100LOK
 
@@ -315,13 +316,16 @@ User Function MT100LOK
 		dbSetOrder(1)
 		dbSeek( xFilial() + aCols[n][_nPCOD] )
 		
-		If Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTA) .AND.;		// Validacao da conta contabil - Everaldo Casaroli
-			Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTAR).AND.;
-			Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTAA) .And. !('LEXML' $ ALLTRIM(FUNNAME()))
-			//Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTAA) .And. ALLTRIM(FUNNAME()) <> "U_LEXML" .AND. ALLTRIM(FUNNAME()) <> "U_LEXMLSC"
-			MSGSTOP( "A Conta Contábil: " + Alltrim(aCols[n, _nPosCta]) + " informada, não existe no cadastro do Produto, digite novamente o TES para que a conta seja atualizada.", "ATENÇÃO !", "ALERT")
-			_lOK := .F.
-		Endif
+		If AllTrim(cTipo) <> "D" // @history ticket 76269   - TI              - 11/07/2022 - Erro Doc de Entrada
+			If Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTA) .AND.;		// Validacao da conta contabil - Everaldo Casaroli
+				Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTAR).AND.;
+				Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTAA) .And. !('LEXML' $ ALLTRIM(FUNNAME()))
+				//Alltrim(aCols[n, _nPosCta])!= Alltrim(SB1->B1_CONTAA) .And. ALLTRIM(FUNNAME()) <> "U_LEXML" .AND. ALLTRIM(FUNNAME()) <> "U_LEXMLSC"
+				MSGSTOP( "A Conta Contábil: " + Alltrim(aCols[n, _nPosCta]) + " informada, não existe no cadastro do Produto, digite novamente o TES para que a conta seja atualizada.", "ATENÇÃO !", "ALERT")
+				_lOK := .F.
+			Endif
+		EndIf
+
 		//Faz a validacao do almoxarifado - Everaldo Casaroli em 30/10/2008
 		dbSelectAreA('SF4')
 		dbSetOrder(1)
