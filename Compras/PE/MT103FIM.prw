@@ -825,7 +825,7 @@ Static Function GeraComissaoArmazenagem()
   Local aItens    := {}
   Local nVlrItem  := 0
   Local cKeySd1   := 0
-  Local cTMPadrao := GetMv('MV_#TMPADR') 			//tipo movimentacao
+  Local cTMPadrao := GetMv('MV_#TMPADR',,"498") 			//tipo movimentacao
   Local cPrdTroca := GetMv('MV_#PRDTRO')+SPACE(9) //produto de troca/destino
   Local nRecSD1   := 0
 
