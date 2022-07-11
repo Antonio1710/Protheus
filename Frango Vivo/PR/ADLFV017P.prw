@@ -21,6 +21,7 @@
   @history Ticket 73466 - Adriano Savoine      - 29/06/2022 - Melhoria para fechar pesagem manual com dados Fixos.
   @history Ticket Ti    - Adriano Savoine      - 04/07/2022 - Declarado a variavel cZV1C.
   @history Ticket 75551 - Adriano Savoine      - 06/07/2022 - Inserida a trava para não alterar se tiver pedido de complemento gerado.
+  @history Ticket TI    - ADRIANO SAVOINE      - 08/07/2022 - Alterada a validação do campo vaziu para EMPTY.
 /*/
 
 User Function ADLFV017P() // U_ADLFV017P()
@@ -174,7 +175,7 @@ User Function ADLFV171()
     EndIf
 
 	
-    If ZV1->ZV1_FLAGPV <> ''
+    If !EMPTY(ZV1->ZV1_FLAGPV)  // Ticket TI - 08/07/2022 - ADRIANO SAVOINE
 
         MsgInfo("Já foi Gerado pedido de Complemento correção não permitida. Obs.: Para conseguir ajustar o peso terá que ser excluido o Pedido de Complemento.", "Função ADLFV171(ADLFV017P) - 2")
 

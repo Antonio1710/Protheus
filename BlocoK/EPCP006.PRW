@@ -174,7 +174,17 @@ Static Function PCP006Proc()
 	While TMPSD3->(!Eof())
 			
 		cNumInv   := TMPSD3->D3_NUMINV
+		
 		cTm       := If(TMPSD3->D3_TM == "499","999","499")
+		
+		// @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+		If AllTrim(cTM) == "499"
+			cTM := "497"
+		ElseIf AllTrim(cTM) == "999"
+			cTM := "997"
+		EndIf
+		//
+
 		cCod      := TMPSD3->D3_COD
 		cLocal    := TMPSD3->D3_LOCAL
 		cLocaliz  := TMPSD3->D3_LOCALIZ 
