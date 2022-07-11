@@ -345,6 +345,8 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
 
     cOrdemC := ZIF->ZIF_ORDRAC
 
+    cProdGemba := Alltrim(cValToChar(cProdGemba))
+
     //Posiciona no produto (ZIM).
     If ! U_ADFAT20B(cProdGemba)
         cMsgError := "Produto " + cProdGemba + " não localizado(ZIM)."
@@ -399,7 +401,7 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
 
     End
 
-    cCodRet := Iif(Empty(cCodUso), cCodAb, cCodUso)
+    cCodRet := Alltrim(cValToChar(Iif(Empty(cCodUso), cCodAb, cCodUso)))
 
     Begin Transaction
 
@@ -417,7 +419,7 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
 
             If oModel:VldData()
                 oModel:CommitData()
-                cCodRet := cCodMax
+                cCodRet := Alltrim(cValToChar(cCodMax))
 
             Else
                 aError := oModel:GetErrorMessage()
@@ -434,8 +436,13 @@ Static Function ajustProd(cNmOrdem, cProdGemba, cProduto, cMsgError)
 
         EndIf
 
-        cProProth := Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_PRDPRO")
-        cDescPro  := Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_DESSAG")
+        //Gera log.
+        U_ADFAT173("Alteração produto ant/post: " + cValToChar(ZIF->ZIF_PRDSAG) + " / " + cValToChar(cProdGemba), ZIF->ZIF_NUMERO, "", "GEMBA")
+
+        U_ADFAT173("Alteração lote ant/post: " + cValToChar(ZIF->ZIF_LOTE) + " / " + cValToChar(cCodRet), ZIF->ZIF_NUMERO, "", "GEMBA")
+
+        cProProth := Alltrim(cValToChar(Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_PRDPRO")))
+        cDescPro  := Alltrim(cValToChar(Posicione("ZIM", 1, FwxFilial("ZIM") + cProdGemba, "ZIM_DESSAG")))
 
         //Altera produto, descrição e lote na ordem de carregamento de ração.
         aDados := {}
