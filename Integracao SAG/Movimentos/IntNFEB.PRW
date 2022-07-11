@@ -63,6 +63,7 @@
 	@history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
 	@history ticket   74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
 	@history ticket   TI    - Everson           - 10/07/2022 - Removida transmissão automática de NF.
+	
 /*/
 User Function INTNFEB()
 
