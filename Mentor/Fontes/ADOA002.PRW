@@ -22,7 +22,7 @@
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69520   - Leonardo P. Monteiro- 21/03/2022 - Projeto FAI - Importação PV x SalesForce.
 	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
-	@history Ticket TI    - Everson - Tratamento para integração com Salesforce.
+	@history Ticket TI    - Everson - 11/07/2022 - Tratamento para integração com Salesforce.
 /*/
 /*
 *************Ao fazer alterações neste fonte, verificar o fonte ADVEN051P (serviço Rest para inclusão de pré-cadastro).
