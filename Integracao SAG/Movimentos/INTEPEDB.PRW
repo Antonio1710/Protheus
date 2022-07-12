@@ -4669,7 +4669,7 @@ Static Function emitNfGrp(nOpc, cPedProth, cSeqPed, lAut)
 	
 	//Everson - 30/11/2020. Chamado T.I.
 	If Len(aNFTrans) > 0
-	 	//MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
+		MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
 
 	EndIf
 	
@@ -4700,6 +4700,11 @@ Static Function transmNF(aNFTrans,cSerie,lAut)
 	Local cAmbiTrans:= ""
 	Local nAux		:= 1
 	Local lTAut  	:= GetMv("MV_#TRAUT",,.F.)
+
+	MsgInfo("Notas geradas de " + cNFIni + " até " + cNFFim + ".","Função transmNF")
+	aNFTrans := {}
+	RestArea(aArea)
+	Return .F.
 	
 	//Everson - 30/11/2020. Chamado TI.
 	//RestArea(aArea)
