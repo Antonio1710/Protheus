@@ -900,6 +900,7 @@ Static Function gerDev(cNum, cRegistros)
     Local cNumero   := ""
     Local cTes      := Alltrim(cValToChar(GETMV("MV_#ADF575",,"15A"))) //"15A" //Sobra de ração 15C
     Local cItemCC   := Alltrim(cValToChar(GETMV("MV_#ADF576",,"114"))) //"114"
+    Local cLocal    := Alltrim(cValToChar(GETMV("MV_#ADF579",,"08"))) //"114"
     Local cSerie	:= Alltrim(cValToChar(GETMV("MV_#SRNFIT",,"")))
     Local cTpNrNfs  := ""
     Local cNFOri    := ""
@@ -976,7 +977,7 @@ Static Function gerDev(cNum, cRegistros)
 				{"D1_LOJA"   ,SD2->D2_LOJA    ,Nil},;
 				{"D1_EMISSAO", Date()         ,Nil},;
 				{"D1_DTDIGIT", Date()         ,Nil},;
-				{"D1_LOCAL"  ,SD2->D2_LOCAL   ,Nil},;
+				{"D1_LOCAL"  ,cLocal          ,Nil},;
 				{"D1_CC"     ,SD2->D2_CCUSTO  ,Nil},;
 				{"D1_FORMUL" ,"S"             ,Nil},;
 				{"D1_TIPO"   ,"N"             ,Nil},;
@@ -1056,7 +1057,7 @@ Static Function gerDevS(cNum, cRegistros)
     Local cNumero   := ""
     Local cTes      := Alltrim(cValToChar(GETMV("MV_#ADF577",,"15C"))) //"15A" //Sobra de ração 15C
     Local cItemCC   := Alltrim(cValToChar(GETMV("MV_#ADF578",,"114"))) //"114"
-    Local cLocal    := Alltrim(cValToChar(GETMV("MV_#ADF579",,"08"))) //"114"
+    Local cLocal    := Alltrim(cValToChar(GETMV("MV_#ADF579",,"08"))) 
     Local cContaC   := Alltrim(cValToChar(GETMV("MV_#ADF57A",,"111520004"))) //"114"
     Local cSerie	:= Alltrim(cValToChar(GETMV("MV_#SRNFIT",,"")))
     Local cTpNrNfs  := ""
@@ -1225,12 +1226,12 @@ Static Function gerPedS(cNum, cRegistros, aPedInc)
     Local nVlrUnit := 0
     Local nTotal   := 0
     Local cTes     := ""
-    Local cLocPad  := ""
     Local cNFOri   := ""
     Local cSerOri  := ""
     Local cForOri  := ""
     Local cLojOri  := ""
     Local cOrdPOri := ""
+    Local cLocal   := Alltrim(cValToChar(GETMV("MV_#ADF579",,"08"))) 
 
     Private lMsErroAuto    := .F.
     Private lMsHelpAuto    := .T.
@@ -1355,7 +1356,6 @@ Static Function gerPedS(cNum, cRegistros, aPedInc)
         cProduto := ZHR->ZHR_PRDPRO
         nVlrUnit := ZHR->ZHR_VLRUNT
         nTotal   := Round(ZHR->ZHR_VLRUNT * ZHR->ZHR_QTDDES, TamSX3("C6_VALOR")[2])
-        cLocPad  := ""
 
         aCampo   := {}
 
@@ -1386,14 +1386,6 @@ Static Function gerPedS(cNum, cRegistros, aPedInc)
             EndIf
 
         EndIf        
-
-        If ! RetArqProd(cProduto)
-            cLocPad := Posicione("SBZ",1, FWxFilial("SBZ") + cProduto, "BZ_LOCPAD")
-            
-        Else
-            cLocPad := Posicione("SB1",1, FWxFilial("SB1") + cProduto, "B1_LOCPAD")
-    
-        EndIf
 
         Aadd( aCabec, { "C5_TIPO"	  , cTpPed, Nil } )
         Aadd( aCabec, { "C5_CLIENTE"  , cFornece, Nil } )
@@ -1429,7 +1421,7 @@ Static Function gerPedS(cNum, cRegistros, aPedInc)
         Aadd( aLinha, { "C6_PRCVEN"	 , nVlrUnit	,0 , Nil } )
         Aadd( aLinha, { "C6_VALOR"	 , nTotal	,0 , Nil } )
         Aadd( aLinha, { "C6_TES"	 , cTes	    ,.F. } )
-        Aadd( aLinha, { "C6_LOCAL"	 , cLocPad  , Nil } )
+        Aadd( aLinha, { "C6_LOCAL"	 , cLocal   , Nil } )
         Aadd( aLinha, { "C6_PRUNIT"	 , nVlrUnit	,0 , Nil } )
 
         //Itens.
