@@ -32,15 +32,12 @@ RETURN
 
 */
 
-USER FUNCTION ADCM0271()
+USER FUNCTION ADCM0271(_cFolder)
     Local lRet   := .T.
     Local aArea  := GetArea()
     Local cFld03 := Alltrim(SuperGetMv( "MV_#CM0273" , .F. , '3|6' ,  ) )
     Local cFld04 := Alltrim(SuperGetMv( "MV_#CM0274" , .F. , '1|2|4|7|8' ,  ) )
     // *** INICIO WILLIAM COSTA 18/03/2020 - CHAMADO 056503 || OS 057942 || TECNOLOGIA || LUIZ || 8451 || ERRORLOG -ADCM0271
-    
-    _cFolder := Posicione("SX3",2,ReadVar(),"X3_FOLDER")
-    
     IF IsInCallStack('MATA020') == .F.
         Public lADRAltF := .F.
     ENDIF
