@@ -1,20 +1,19 @@
 #include "rwmake.ch"
 #Include "Protheus.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณ MA020MEM บAutor  ณRicardo Lima        บ Data ณ  17/01/2019 บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDescricao ณCh: 046516, Variavel Publica para controle de altera็ใo de  บฑฑ
-ฑฑบ          ณCampos no cadastro de fornecedor                            บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/ 
+ 
+/*{Protheus.doc} User Function MA020MEM
+	046516, Variavel Publica para controle de altera็ใo de Campos no cadastro de fornecedor
+	@type  Function
+	@author Ricardo Lima
+	@since 17/01/2019
+	@version 01
+    @Ticket 18071 - 21/06/2022 - Antonio Domingos - Melhoria no cadastro de fornecedor
+*/
 User function MA020MEM()
 
-    Local cUsMemo   := ""
-    Public lADRAltF := .F.
+    Local cUsMemo     := ""
+    Public lADRAltF   := .F.
+    Public _lRetFld01 := .F.
+    Public _lRetFld02 := .F.
 
 Return( cUsMemo )
