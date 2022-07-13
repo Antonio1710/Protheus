@@ -26,7 +26,7 @@
     @Ticket 74549, Data 10/06/2022, Antonio Domingos, Otimização da emissão do relaotorio (Módulo no protheus não abre).
     @Ticket 74594, Data 10/062022, Antonio Domingos, Desmembramento do relatorio.
     @Ticket 74929, Data 20/06/2022, Antonio Domingos, Correção do Erro em Relação SS/OS Base de dados Ceres.
-    @Ticket 75147, Data 21/06/2022, Antonio Domingos, RELATORIO S.S demora na emissão do relatorio...
+    @Ticket 75147, Data 21/06/2022, Antonio Domingos, RELATORIO S.S demora na emissão do relatorio....
 /*/
 
 User Function ADMNT012R(aParam)
