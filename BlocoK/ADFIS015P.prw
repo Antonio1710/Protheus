@@ -36,7 +36,7 @@
 	https://tdn.totvs.com/pages/viewpage.action?pageId=271843449
 	https://tdn.totvs.com/display/public/PROT/BEGIN+TRANSACTION
 	https://centraldeatendimento.totvs.com/hc/pt-br/articles/360020775851-MP-ADVPL-BEGIN-TRANSACTION
-	@history ticket 72655 - Fernando Macieira - 10/05/2022 - Serviço de Integrado - OP Granja HH
+	@history ticket 72655 - Fernando Macieira - 10/05/2022 - Serviço de Integrado - OP Granja HH 
 /*/
 User function ADFIS015P(cIniFil, cFimFil, lJob, aParamDat, aParams, lEstorno)
 
