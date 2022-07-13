@@ -19,7 +19,7 @@ User Function FA290OK()
 
 	If !LockByName(AllTrim(cFatura), .T., .F.)
 		lRet := .f.
-		MESSAGEBOX( "Número da fatura está em uso pelo seu colega de trabalho... ", "Fatura n. " + cFatura, 16 )
+		MESSAGEBOX( "Número da fatura está em uso, na tela do seu colega de trabalho! Peça para ele finalizar a operação que após as baixas o sistema efetiva a numeração e você poderá continuar com segurança... ", "Fatura n. " + cFatura, 16 )
 	Else
 		lRet := .t.
 	EndIf
