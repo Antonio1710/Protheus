@@ -15,7 +15,7 @@ Static cAltera := "N"  //Essa variavel é utilizada na pornto de entrada MALTCLI
 	@since 28/12/2010
 	@version 01
 	@history WILLIAM COSTA 15/08/2019 - 050799 || OS 052114 || EXPORTACAO || CICERO || 8360 || A1_CEPE E PB3_CEPE - Adicionado tratativa do CEP de Entrega para clientes nacionais ser obrigado a informar para salvar o Cliente
-	@history Ticket 76086 - 13/07/2022 - Antonio Domingos - Validação dos campos A1_XLONGIT e A1_XLATITU. 
+	@history Ticket 76086 - 13/07/2022 - Antonio Domingos - Validação dos campos A1_XLONGIT e A1_XLATITU.. 
 */
 User Function MA030TOK()  
 
