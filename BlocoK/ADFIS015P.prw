@@ -27,7 +27,7 @@
 	@param aParam[5,9] 	:[C] aParams[9]	 - Sequência da OP
 	@param aParam[5,10]	:[C] aParams[10] - Revisão da OP
 	@param aParam[6]  	:[L] lEstorno	 - True(.T.) caso seja um estorno, ou False(.F.) caso contrário
-	@version version
+	@version version 
 	@return [L] - Retorna o valor estatico e default True(.T.)
 	@history CHAMADO T.I  - WILLIAM COSTA     - 14/11/2019 - ALTERADO O CAMPO DE C2_FILIAL ERRADO PARA D3_FILIAL CORRETO
 	@history ticket 10248 - Fernando Macieira - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
