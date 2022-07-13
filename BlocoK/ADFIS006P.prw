@@ -11,6 +11,7 @@
 	@history Chamado 054188 - FWNM                  - 16/12/2019 - OS 055594 || CONTROLADORIA || DANIELLE_MEIRA || 8459 || ADFIS005P
 	@history ticket   10248 - Fernando Macieira     - 02/03/2021 - Revisão das rotinas de apontamento de OP´s
 	@history ticket   30160 - Fernando Macieira     - 29/09/2021 - Lentidão ao processar ordem
+	@history ticket   76071 - Fernando Macieira     - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 /*/
 User Function ADFIS006P(cEmp, cFil, cJobFile, lJOb)
 
@@ -234,7 +235,7 @@ Return .T.
 	@param aParam[3,8] 	:[C] aParams[8]	- Código do RECNO de origem do movimento
 	@param aParam[3,9]	:[C] aParams[9] - Código da OP do movimento
 	@version 01
-*/
+/*/
 User Function ADFIS007P(cIniFil, cFimFil, aParams)
 
 	Local aArea     := GetArea()	/* Pega a Area corrente das posiçoes nas tabelas do Protheus */
@@ -751,7 +752,8 @@ User Function ADFIS009P(cIniFil, cFimFil, aParams, nOpc, lEstorno)
 							
 							lMsErroAuto := .F.
 							
-							If SD3->D3_TM == "499" .OR. SD3->D3_TM == "999"
+							//If SD3->D3_TM == "499" .OR. SD3->D3_TM == "999" // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+							If SD3->D3_TM == "499" .OR. SD3->D3_TM == "999" .or. AllTrim(SD3->D3_TM) == "497" .OR. AllTrim(SD3->D3_TM) == "997"// @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 								SB2->(DbSetOrder(1))
 								If SB2->(DbSeek( Padr(cFilINV, TamSX3("D3_FILIAL")[1]) + Padr(cCodAux, TamSX3("D3_COD")[1]) + Padr(cLocAux, TamSX3("D3_LOCAL")[1]) ))
 									RecLock("SB2", .F.)

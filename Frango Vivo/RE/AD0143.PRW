@@ -18,6 +18,8 @@ static lAuto
 	@history ticket 69945 - Fernando Macieira - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
 	@history Ticket 69574 - Abel Babini       - 25/04/2022 - Projeto FAI
 	@history Ticket 74568 - Fernando Macieira - 13/06/2022 - Pedido de Complemento - Filial 0A
+	@history Ticket 76197 - ADRIANO SAVOINE   - 11/07/2022 - Corrigido para não gerar pedido sem fechar a Pesagem.
+	@hisotry Ticket 76414 - Everson           - 13/07/2022 - Adiciona opção para o usuário selecionar a filial de origem.
 /*/ 
 User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 
@@ -260,6 +262,23 @@ User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 		IF 	pergunte(cPerg,.T.)=.F.
 			RETURN
 		ENDIF
+
+		//Ticket 76414 - Everson           - 13/07/2022 - Adiciona opção para o usuário selecionar a filial de origem.
+			If MV_PAR14 == 1
+				cFilPV := "03"
+
+			ElseIf MV_PAR14 == 2
+				cFilPV := "0A"
+
+			Else
+				Aviso(	"AD0143-01",;
+				"Necessário selecionar a filial de origem." ,;
+				{ "&OK" },,;
+				"PV - Complemento Frango Vivo" )
+				Return Nil
+
+			EndIf
+		//
 
 		_dDataini	:=mv_par01    //GRAVA DATA INICIAL DE ABATE
 		_dDataFim	:=mv_par02    //GRAVA DATA FINAL DE ABATE
@@ -580,6 +599,7 @@ cQuery+=" AND "+retsqlname("ZV1")+".D_E_L_E_T_ ='' "
 // FWNM - 17/04/2018 - CHAMADO 037729
 If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P"  .or. lAuto // FWNM - 18/04/2018 - CHAMADO 037729
 	cQuery += " AND ZV1_FLAGPV='' "
+	cQuery += " AND ZV1_FECHA <>'' " // Ticket 76197 - 11/07/2022 - ADRIANO SAVOINE
 EndIf
 
 // Variavel que será utilizada na rotina ADLFV010P para fazer o UPDATE no campo ZV1_FLAGPV

@@ -1579,7 +1579,7 @@ Static Function ADEDA002G(nRec, nQuant, cOP, nOpc, cData)
 	Local _aArea    := GetArea()
 	Local _lRet     := .F.
 	Local cProd		:= GetMv("MV_XPRDFV",.F.,"") // 300042
-	Local cTPMov	:= GetMv("MV_XTMFV",.F.,"")
+	Local cTPMov	:= GetMv("MV_XTMFV",.F.,"808")
 	Local cLoc		:= RetFldProd(cProd,"B1_LOCPAD")   // 26
 	Local dData		:= DDATABASE
 	Local cError  := ""

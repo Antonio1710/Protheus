@@ -21,6 +21,7 @@
 	@history ticket 18558  - Fernando Macieira - 19/08/2021 - Erro Processamento Inventário
 	@history ticket 31898  - Fernando Macieira - 14/10/2021 - Processamento - Gera Ajuste Inventário - Força recalculo para evitar diferença após processamento
 	@history ticket 62623  - Fernando Macieira - 19/10/2021 - Check list itens que atrasam o fechamento - Identificar melhorias via TI.
+	@history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 /*/
 User Function EPCP002(lBatch,cCodInv)
 
@@ -995,7 +996,17 @@ Static Function ViewPreProc()
 	
 	// Define Legenda
 	For nI:=1 to Len(aCampos1)
+
 		cTm     := aCampos1[nI][21]
+
+		// @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+		If AllTrim(cTM) == "499"
+			cTM := "497"
+		ElseIf AllTrim(cTM) == "999"
+			cTM := "997"
+		EndIf
+		//
+
 		cLog    := aCampos1[nI][25]
 		nQtdInv := aCampos1[nI][7]
 		nQtdSB2 := aCampos1[nI][8]
@@ -1024,7 +1035,8 @@ Static Function ViewPreProc()
 		If Len(aCampos1[nI][23]) == 0  
 			Aadd(aCampos1[nI][23],{.F.,"NAO HA OP",aCampos1[nI][2], "","","","",0,0,0})	
 		Else
-			If cLog == "B2D3" .And. cTm == "999" .And. TemOp(aCampos1[nI][23])	
+			//If cLog == "B2D3" .And. cTm == "999" .And. TemOp(aCampos1[nI][23]) // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+			If cLog == "B2D3" .And. (cTm == "999" .or. AllTrim(cTm) == "997") .And. TemOp(aCampos1[nI][23]) // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 				aCampos1[nI][25] := "SBF "
 			Endif	
 		Endif
@@ -1594,13 +1606,24 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 		nQtdInv := aCampos1[i][7]
 		nDif    := aCampos1[i][9]
 		cNumInv := aCampos1[i][24]
-		cTm     := If(nQtdInv-nQtdSB2<0,"999","499")
 		
-		If cLog == "B2D3" .And. cTm == "999" .And. TemOp(aCampos1[i][23])
+		cTm     := If(nQtdInv-nQtdSB2<0,"999","499")
+
+		// @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+		If AllTrim(cTM) == "499"
+			cTM := "497"
+		ElseIf AllTrim(cTM) == "999"
+			cTM := "997"
+		EndIf
+		//
+
+		// If cLog == "B2D3" .And. cTm == "999" .And. TemOp(aCampos1[i][23]) // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+		If cLog == "B2D3" .And. (cTm == "999" .or. AllTrim(cTM) == "997") .And. TemOp(aCampos1[i][23]) // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 			cLog := "SBF "
 		Endif
 		
-		If cTm == "999" .And. nQtdSB2 < nDif
+		//If cTm == "999" .And. nQtdSB2 < nDif // // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+		If (cTm == "999" .or. AllTrim(cTM) == "997") .And. nQtdSB2 < nDif // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 			cLog := "SB2 "		
 		Endif
 		
@@ -1610,7 +1633,8 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 		
 		If (cLog <> "B2BF" .And. cLog <> "B2D3" .And. cLog <> "S/OP" .And. cLog <> "SB2-" .And. cLog <> "SBF0" .And. cLog <> "NULO" .And. cLog <> "SB2 ")
 	
-			If cTm == "999" .And. cTpSaldo=="S"	//--Valdir 29-08-2007
+			//If cTm == "999" .And. cTpSaldo=="S"	//--Valdir 29-08-2007 // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+			If (cTm == "999" .or. AllTrim(cTM) == "997") .And. cTpSaldo=="S"	// // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 				lRet := RefazVetOp(i)			//--Valdir 29-08-2007
 		    Else                      			//--Valdir 29-08-2007
 		    	lRet := .T.                   	//--Valdir 29-08-2007
@@ -1705,7 +1729,8 @@ Static Function EPCP002PAcerto(dDtInvDe,dDtInvAte,cDocDe,cDocAte)
 								//³ Atualiza Totais do Inventario processado                  ³
 								nSaldRat += nQtdRat
 								
-								If cTm == "999"
+								//If cTm == "999" // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+								If cTm == "999" .or. AllTrim(cTM) == "997" // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 									nSaldFim := nQtdSB2 - nSaldRat
 								Else
 									nSaldFim := nQtdSB2 + nSaldRat
@@ -1916,7 +1941,15 @@ Static Function MudaLin(nPos)
 	
 	nDif   := aCampos1[nPos][9]
 	cTm    := aCampos1[nPos][21]
-	
+
+	// @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+	If AllTrim(cTM) == "499"
+		cTM := "497"
+	ElseIf AllTrim(cTM) == "999"
+		cTM := "997"
+	EndIf
+	//
+
 	// Remonta Base Calculo conforme OPs selecionadas
 	For nX := 1 to Len(aCampos1[nPos][23])
 		If aCampos1[nPos][23][nX][1]
@@ -1925,7 +1958,8 @@ Static Function MudaLin(nPos)
 	Next nX
 	
 	// Se for requisicao verifica apenas de tem alguma op selecionada
-	If cTm == "999"
+	//If cTm == "999" // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
+	If cTm == "999" .or. AllTrim(cTM) == "997" // @history ticket 76071  - Fernando Macieira - 07/07/2022 - MATA240 - TM (* 499 para 497) (* 999 para 997)
 		For nX := 1 to Len(aCampos1[nPos][23])
 			If aCampos1[nPos][23][nX][1]
 		    	lOk := .T.

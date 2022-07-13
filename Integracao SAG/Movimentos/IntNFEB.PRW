@@ -62,6 +62,8 @@
 	@history ticket   71889 - Jonathan Carvalho - 26/04/2022 - Alteração na consulta para puxar a emissão da HH fonte comentando na linha 1286 a 1298 data de emissão ja incluida corretamente no banco de integração
 	@history ticket   74568 - Fernando Macieira - 14/06/2022 - Pedido de Complemento - Filial 0A
 	@history ticket   74568 - Fernando Macieira - 15/06/2022 - Nova Granja - filial 03, fornecedor 000217, filial 0A, fornecedor 030057
+	@history ticket   TI    - Everson           - 10/07/2022 - Removida transmissão automática de NF.
+	
 /*/
 User Function INTNFEB()
 
@@ -1849,7 +1851,7 @@ If nRadio == 6
 EndIf
 //Everson - 06/11/2018.
 If Len(aNFtrans) > 0
-	MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's")
+	//MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI.
 ElseIf !Empty(cNotaDe)
 	MsgAlert("Geradas Notas Fiscais De.: "+cNotaDe+" a Ate -> "+cNotaAte)
 ELSEIF !Empty(cDoc) .AND. Empty(cNotaDe) .AND. lErroFrete == .F.  .and. cDoc <> '000000000'

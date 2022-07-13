@@ -790,7 +790,6 @@ Static Function transOrd(oOrdPes, aOrdPes)
     Local lRet      := .F.
     Local oModal    := Nil
     Local oContainer:= Nil
-    Local aButtons  := {}
     Local cTpOrdem  := ""
     Local cCP       := ""
     Local cNmOrdem  := ""
@@ -856,16 +855,17 @@ Static Function transOrd(oOrdPes, aOrdPes)
 
     EndIf
 
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
 	oModal:setTitle("Transferência Ordem - CP " + cCP)
-	oModal:setSize(100, 200)
+	oModal:setSize( 150 , 200 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
+    oModal:CreateFormBar()
 
-    Aadd(aButtons,{Nil,"Confirmar", {|| lRet := confTran(cOrdOrg, cOrdDes), Iif(!lRet, Nil, oModal:DeActivate()) },"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Cancelar",  {|| oModal:DeActivate() },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
+    oModal:AddButton( "Confirmar", {|| lRet := confTran(cOrdOrg, cOrdDes), Iif(!lRet, Nil, oModal:DeActivate()) }, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Cancelar" , {|| oModal:DeActivate() }  , "Cancelar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
@@ -2455,7 +2455,6 @@ Static Function dfAgpOrd(oOrdPes, aOrdPes, aTpOrdem)
     Local cNmOrdem  := ""
     Local oModal    := Nil
     Local oContainer:= Nil
-    Local aButtons  := {}
     Local cCP       := ""
     Local oOrdPAgr  := Nil
     Local aOrdens   := {}
@@ -2514,16 +2513,17 @@ Static Function dfAgpOrd(oOrdPes, aOrdPes, aTpOrdem)
 
     EndIf
 
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
 	oModal:setTitle("Agrupamento de Ordens de Pesagem - CP " + cCP)
-	oModal:setSize(150, 350)
+	oModal:setSize( 150 , 350 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
+    oModal:CreateFormBar()
 
-    Aadd(aButtons,{Nil,"Confimar",{|| Iif(! prcAgrp(aOrdens), Nil, oModal:DeActivate()) },"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
+    oModal:AddButton( "Confirmar", {|| Iif(! prcAgrp(aOrdens), Nil, oModal:DeActivate()) }, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Cancelar" , {|| oModal:DeActivate() }  , "Cancelar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
@@ -3928,7 +3928,6 @@ Static Function pesaSemAut(lPesagManu, aParBal, oOrdPes, aOrdPes, cBalanca)
     Local oPesSemiA := Nil
     Local oContainer:= Nil
     Local bConfirm  := {}
-    Local aButtons  := {}
     Local cDTpPes    := ""
     Local nPesoLiq  := 0
     Local nPOrLi    := 0
@@ -4037,16 +4036,17 @@ Static Function pesaSemAut(lPesagManu, aParBal, oOrdPes, aOrdPes, cBalanca)
             Iif(  ! lRetSlv, Nil, oPesSemiA:DeActivate() );
     }
 
-    oPesSemiA := FWDialogModal():New()        
-	oPesSemiA:SetEscClose(.F.)
+    oPesSemiA := FWDialogModal():New() 
+    oPesSemiA:SetBackground( .T. ) 
 	oPesSemiA:setTitle("Múltiplos Pesos")
 	oPesSemiA:setSize( 290 , 200 )
+    oPesSemiA:EnableFormBar( .T. )
+    oPesSemiA:SetEscClose(.F.)
 	oPesSemiA:createDialog()
+    oPesSemiA:CreateFormBar()
 
-    Aadd(aButtons,{Nil,"Confimar", bConfirm,"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Cancelar", {|| oPesSemiA:DeActivate() },"","",.T.,.F.})
-	
-        oPesSemiA:addButtons(aButtons)
+    oPesSemiA:AddButton( "Confirmar", bConfirm, "Confirmar", , .T., .F., .T., )
+    oPesSemiA:AddButton( "Cancelar" , {|| oPesSemiA:DeActivate() }  , "Cancelar" , , .T., .F., .T., )
 
     	oContainer := TPanel():New( ,,, oPesSemiA:getPanelMain() )
 	    oContainer:Align := CONTROL_ALIGN_ALLCLIENT
@@ -6047,8 +6047,8 @@ Static Function devoTag(oVecPt, aHVcPt)
     //Variáveis.
     Local aArea         := GetArea()
     Local nLinhaC       := oVecPt:nAt
-    Local oModal        := FWDialogModal():New() 
-    Local aButtons      := {}   
+    Local oModal        := Nil
+    //Local aButtons      := {}   
     Local oContainer    := Nil  
     Local cCP           := ""
     Local cPlaca        := ""
@@ -6102,18 +6102,20 @@ Static Function devoTag(oVecPt, aHVcPt)
 
     EndIf
 	
-    oModal:SetEscClose(.F.)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
 	oModal:setTitle("Devolver Tag de Pesagem")
 	oModal:setSize( 150 , 130 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
+    oModal:CreateFormBar()
 
     bSalvar := {|| lRetSlv := procDevTag(cTpMovi, cCP, cTagAtual, cNovaTag, cTpMovi), Iif(!lRetSlv, Nil, oModal:DeActivate()) }
-
-    Aadd(aButtons,{Nil, "Confimar", bSalvar, "", "", .T., .F.})
-    Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
-
+    
+    oModal:AddButton( "Confirmar", bSalvar, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Cancelar" , {|| oModal:DeActivate() }   , "Cancelar" , , .T., .F., .T., )
+    
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
 
@@ -6293,8 +6295,7 @@ Static Function altTag(oOrdPes, aOrdPes, cBalanca)
     //Variáveis.
     Local aArea         := GetArea()
     Local nLinha        := Val(cValToChar(oOrdPes:nAt))
-    Local oModal        := FWDialogModal():New() 
-    Local aButtons      := {}   
+    Local oModal        := Nil 
     Local oContainer    := Nil  
     Local cCP           := ""
     Local cPlaca        := ""
@@ -6333,16 +6334,18 @@ Static Function altTag(oOrdPes, aOrdPes, cBalanca)
     cPlaca      := ZIB->ZIB_PLACA
     cTagAtual   := ZIB->ZIB_TAG
     cFluxo      := Posicione("ZI9", 1, FwxFilial("ZI9") + ZIB->ZIB_CODROT, "ZI9_FXGURD")
-	
-    oModal:SetEscClose(.F.)
+
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
 	oModal:setTitle("Alterar Tag de Pesagem")
 	oModal:setSize( 150 , 130 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
+    oModal:CreateFormBar()
 	
-    Aadd(aButtons,{Nil,"Confimar",{|| lRetSlv := atuaTag(cBalanca, cCP, cFluxo, cPlaca, cTktProtheus, cNovaTag, cTktGuard), Iif(!lRetSlv, Nil, oModal:DeActivate()) },"","",.T.,.F.})
-    Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
-	
-    oModal:addButtons(aButtons)
+    oModal:AddButton( "Confirmar", {|| lRetSlv := atuaTag(cBalanca, cCP, cFluxo, cPlaca, cTktProtheus, cNovaTag, cTktGuard), Iif(!lRetSlv, Nil, oModal:DeActivate()) }, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Cancelar" , {|| oModal:DeActivate() }  , "Cancelar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT

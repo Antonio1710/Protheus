@@ -800,7 +800,6 @@ Static Function dupliMv(lCarrega)
     Local cBalanca  := ""
     Local cRotPesa  := ""
     Local oModal    := Nil
-    Local aButtons  := {}
     Local bConfirmar:= Nil
     Local oContainer:= Nil
 
@@ -868,16 +867,17 @@ Static Function dupliMv(lCarrega)
                       );
                   }
 
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
 	oModal:setTitle("Duplicação de Movimentos")
-	oModal:setSize(100, 275)
+	oModal:setSize( 100 , 275 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
+    oModal:CreateFormBar()
 
-        Aadd(aButtons,{Nil,"Confimar", bConfirmar,"","",.T.,.F.})
-        Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
-
-        oModal:addButtons(aButtons)
+        oModal:AddButton( "Confirmar", bConfirmar, "Confirmar", , .T., .F., .T., )
+        oModal:AddButton( "Cancelar" , {|| oModal:DeActivate() }  , "Cancelar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT

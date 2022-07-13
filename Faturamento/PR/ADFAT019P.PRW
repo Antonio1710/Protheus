@@ -846,7 +846,6 @@ User Function ADFAT19B()
     Local aArea     := GetArea()
     Local cTicket   := ZIG->ZIG_NUMERO
     Local oModal    := Nil
-    Local aButtons  := {}
     Local aOrdens   := {}
     Local nAux      := 1
     Local lAgrupa   := .F.
@@ -957,15 +956,15 @@ User Function ADFAT19B()
 
     Next nAux
 
-    oModal := FWDialogModal():New()        
-	oModal:SetEscClose(.F.)
+    oModal := FWDialogModal():New() 
+    oModal:SetBackground( .T. ) 
 	oModal:setTitle("Abrir Pesagem - Ticket " + cTicket)
-	oModal:setSize(070, 200)
+	oModal:setSize( 070 , 200 )
+    oModal:EnableFormBar( .T. )
+    oModal:SetEscClose(.F.)
 	oModal:createDialog()
-
-    Aadd(aButtons,{Nil,"Cancelar", {|| oModal:DeActivate() },"","",.T.,.F.})
-
-	oModal:addButtons(aButtons)
+    oModal:CreateFormBar()
+    oModal:addCloseButton(Nil, "Cancelar")
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT

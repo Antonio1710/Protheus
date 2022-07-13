@@ -10,6 +10,7 @@
   @history Ticket 13294 - Leonardo P. Monteiro - 13/08/2021 - Melhoria para o projeto apontamento de paradas p/ o recebimento do frango vivo.
   @history Ticket 13294 - Leonardo P. Monteiro - 20/08/2021 - Correção na coluna de tempo de espera.
   @history Ticket 69945 - Fernando Macieira    - 21/03/2022 - Projeto FAI - Ordens Carregamento - Frango vivo
+  @history Ticket 76225 - Everson              - 11/07/2022 - Tratamento para colunas que não estavam saindo no relatório.
 /*/
 User Function ADLFV018R()
 
@@ -239,9 +240,9 @@ Static Function ReportDef(oReport)
 
 	oSection2 := TRSection():New(oReport,"Dados Aves")
 	TRCell():New(oSection2,"NUMOC"   	            ,cAlias,"N. DA OC"    	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //01
-	TRCell():New(oSection2,"GTA"   	            	,cAlias,"GTA"        	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //03
+	TRCell():New(oSection2,"GTA"   	            	,cAlias,"GTA"        	,"@!"               	,TamSX3("ZV1_NUMGTA")[1],  ,,"LEFT",,"LEFT",,,,,,,) //03 //Ticket 76225 - Everson              - 11/07/2022 - Tratamento para colunas que não estavam saindo no relatório.
 	TRCell():New(oSection2,"GRNJ"   	            ,cAlias,"GRNJ"        	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //02
-	TRCell():New(oSection2,"MUNICIPIO"            	,cAlias,"MUNICÍPIO"    	,"@!"               	,008,  ,,"LEFT",,"LEFT",,,,,,,) //04
+	TRCell():New(oSection2,"MUNICIPIO"            	,cAlias,"MUNICÍPIO"    	,"@!"               	,TamSX3("ZV1_PCIDAD")[1],  ,,"LEFT",,"LEFT",,,,,,,) //04 //Ticket 76225 - Everson              - 11/07/2022 - Tratamento para colunas que não estavam saindo no relatório.
 	TRCell():New(oSection2,"VEICULO"   	            ,cAlias,"VEICULO"     	,"@!"               	,010,  ,,"LEFT",,"LEFT",,,,,,,) //05
 	TRCell():New(oSection2,"QTD_AVES_ORIGEM" 	    ,cAlias,"QTD ORIGEM"   	,"@E 99,999,999" 		,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //06
 	TRCell():New(oSection2,"QTD_AVES_RECEBIDA"      ,cAlias,"RECEBIDAV" 	,"@!"               	,015,  ,,"RIGHT",,"RIGHT",,,,,,,) //07

@@ -33,7 +33,11 @@
 	@history Everson   06/01/2022, Ticket 66328 - Tratamento para error log.
 	@history Wagner    21/02/2022, Ticket 63028 - Permite integrar pedidos C5_TIPO igual a B ou N
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+<<<<<<< HEAD
 	@history Jonathan  07/07/2022, Ticket 75846 - Verificação no campo de valor unitario da NFOrig para analisar o desconto.
+=======
+	@history ticket   TI    - Everson           - 10/07/2022 - Removida transmissão automática de NF.
+>>>>>>> 59c1b7d38265b566af6d3e3f84cb32d26ff21976
 /*/
 User Function PED001B()
 
@@ -4669,7 +4673,7 @@ Static Function emitNfGrp(nOpc, cPedProth, cSeqPed, lAut)
 	
 	//Everson - 30/11/2020. Chamado T.I.
 	If Len(aNFTrans) > 0
-	 	MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
+		MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
 
 	EndIf
 	
@@ -4700,6 +4704,11 @@ Static Function transmNF(aNFTrans,cSerie,lAut)
 	Local cAmbiTrans:= ""
 	Local nAux		:= 1
 	Local lTAut  	:= GetMv("MV_#TRAUT",,.F.)
+
+	MsgInfo("Notas geradas de " + cNFIni + " até " + cNFFim + ".","Função transmNF")
+	aNFTrans := {}
+	RestArea(aArea)
+	Return .F.
 	
 	//Everson - 30/11/2020. Chamado TI.
 	//RestArea(aArea)
@@ -5386,7 +5395,7 @@ Static Function gerNFLt(cTemp)
 
 	//Acessa a rotina para transmissão da nota fiscal.
 	If Len(aNFTrans) > 0
-	 	MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's")
+	 	//MsAguarde({|| transmNF(aNFTrans,cSerie) },"Aguarde","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI.
 
 	EndIf
 
