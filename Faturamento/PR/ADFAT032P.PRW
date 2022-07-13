@@ -191,7 +191,7 @@ Static Function vldPos(oModel)
 
         EndIf
 
-        If lRet .And. ! IsInCallStack("U_ADFAT049P")
+        If lRet .And. ! IsInCallStack("U_ADFAT049P") .And. ! FWIsInCallStack("U_ADFAT171")
 
             lRet := lRet .And. U_ADFAT18D(cLote, cPrdSag, cPrdPro)
 
