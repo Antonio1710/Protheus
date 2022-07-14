@@ -20,6 +20,7 @@ static lAuto
 	@history Ticket 74568 - Fernando Macieira - 13/06/2022 - Pedido de Complemento - Filial 0A
 	@history Ticket 76197 - ADRIANO SAVOINE   - 11/07/2022 - Corrigido para não gerar pedido sem fechar a Pesagem.
 	@hisotry Ticket 76414 - Everson           - 13/07/2022 - Adiciona opção para o usuário selecionar a filial de origem.
+	@history Ticket 76430 - ADRIANO SAVOINE   - 14/07/2022 - Os Pedidos de complemento só irá gerar apos a integração do SAG.
 /*/ 
 User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 
@@ -600,6 +601,7 @@ cQuery+=" AND "+retsqlname("ZV1")+".D_E_L_E_T_ ='' "
 If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P"  .or. lAuto // FWNM - 18/04/2018 - CHAMADO 037729
 	cQuery += " AND ZV1_FLAGPV='' "
 	cQuery += " AND ZV1_FECHA <>'' " // Ticket 76197 - 11/07/2022 - ADRIANO SAVOINE
+	cQuery += " AND ZV1_INTEGR = 'I' " // Ticket 76430 - 14/07/2022 - ADRIANO SAVOINE
 EndIf
 
 // Variavel que será utilizada na rotina ADLFV010P para fazer o UPDATE no campo ZV1_FLAGPV
