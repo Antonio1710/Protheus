@@ -505,6 +505,9 @@ User Function ADFAT29C()
 
         EndIf
 
+        FreeObj(oJson)
+        oJson := Nil
+
         (cAliasAux)->(DbSkip())
 
     End
@@ -752,6 +755,9 @@ User Function ADFAT29E()
 
         End Transaction
 
+        FreeObj(oJson)
+        oJson := Nil
+
         (cAliasAux)->(DbSkip())
 
     End
@@ -932,6 +938,9 @@ User Function ADFAT29F(aPedidos, cUUids)
             U_ADFAT29D(cId, "1", "")
 
         EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
 
         (cAliasAux)->(DbSkip())
 
