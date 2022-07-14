@@ -24,9 +24,6 @@ User Function PM200ROT()
 
 	Private aUsRotina := MenuDef()
 	
-	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'P.E Adiciona botões no (PMS) ')
-
-	
 	aAdd(aUsRotina, {'Cronograma Financeiro', "u_ADPMS001P()", 0, 7, 0, Nil})
 	aAdd(aUsRotina, {'Projetos x CC Autorizados', "u_ADPRJ002P()", 0, 8, 0, Nil})
 	aAdd(aUsRotina, {'Aprovações', "u_UpZC7()", 0, 9, 0, Nil})
