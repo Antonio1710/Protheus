@@ -475,7 +475,11 @@ User Function ADFAT29C()
 
             oModel:SetValue("MD_MASTER", "ZI8_LAUTO", cAuto)
             oModel:SetValue("MD_MASTER", "ZI8_LTSALD", nSaldo)
-            oModel:SetValue("MD_MASTER", "ZI8_LTCUST", nCusto)
+
+            If cStatus <> "4"
+                oModel:SetValue("MD_MASTER", "ZI8_LTCUST", nCusto)
+
+            EndIf
 
         EndIf
 
@@ -500,6 +504,9 @@ User Function ADFAT29C()
             U_ADFAT29D(cId, "1", "")
 
         EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
 
         (cAliasAux)->(DbSkip())
 
@@ -748,6 +755,9 @@ User Function ADFAT29E()
 
         End Transaction
 
+        FreeObj(oJson)
+        oJson := Nil
+
         (cAliasAux)->(DbSkip())
 
     End
@@ -928,6 +938,9 @@ User Function ADFAT29F(aPedidos, cUUids)
             U_ADFAT29D(cId, "1", "")
 
         EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
 
         (cAliasAux)->(DbSkip())
 

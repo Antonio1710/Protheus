@@ -2492,7 +2492,6 @@ Static Function dfAgpOrd(oOrdPes, aOrdPes, aTpOrdem)
     //Verifica se o controle de pátio está encerrado.
     If U_ADFAT17L(cCP)
         Help(Nil, Nil, "Função dfAgpOrd(ADFAT017P)", Nil, "Controle de pátio " + cCP + " encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
         Return Nil
 
     EndIf

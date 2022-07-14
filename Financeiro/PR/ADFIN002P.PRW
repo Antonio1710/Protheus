@@ -24,6 +24,7 @@
 	@history Chamado 68815 - Leonardo P. Monteiro - 24/02/2022 - Correção da ordenação dos movimentos quando os movimentos de inclusão de títulos e baixas ocorrem no mesmo dia.
 																 Ajustamos também a regras de baixas relacionadas aos movimentos de juros.
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history Ticket TI      - Everson  - 13/07/2022 - Removida a função LockByName.
 /*/
 
 
@@ -76,11 +77,12 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 
 	// Garanto uma única thread sendo executada - // Adoro - Chamado n. 050729 || OS 052035 || TECNOLOGIA || LUIZ || 8451 || REDUCAO DE BASE - fwnm - 29/06/2020
 	
-	If !LockByName("ADFIN002P", .T., .F.)
-		ConOut("[ADFIN002P] - Existe outro processamento sendo executado! Verifique...")
-		RPCClearEnv()
-		Return
-	EndIf
+	//Ticket TI      - Everson  - 13/07/2022 - Removida a função LockByName.
+	// If !LockByName("ADFIN002P", .T., .F.)
+	// 	ConOut("[ADFIN002P] - Existe outro processamento sendo executado! Verifique...")
+	// 	RPCClearEnv()
+	// 	Return
+	// EndIf
 	
 	ConOut("INICIO DO SCHEDULE ADFIN002P" + '||' + DTOC(DATE()) + '||' + TIME()) 
 
@@ -183,7 +185,8 @@ USER FUNCTION ADFIN002P() // U_ADFIN002P()
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
 	//³Destrava a rotina para o usuário	    ?
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ?
-	UnLockByName("ADFIN002P")
+	//Ticket TI      - Everson  - 13/07/2022 - Removida a função LockByName.
+	// UnLockByName("ADFIN002P")
 
 RETURN(NIL) 	  
 	
