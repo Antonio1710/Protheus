@@ -15,6 +15,7 @@
     @history ticket 73451 - 28/06/2022 - Fernando Macieira - Validação R33
     @history ticket 73451 - Fernando Macieira - 04/07/2022 - Padronização lote RM
     @history ticket 73451 - 05/07/2022 - Fernando Macieira - Travamento na exclusão do lote manual
+    @history ticket 73451 - 13/07/2022 - Fernando Macieira - Publicação
 /*/
 User Function DPCTB102GR()
 
