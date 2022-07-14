@@ -56,6 +56,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 72348   - Fernando Macieira - 18/05/2022 - NCC COMO TIPO BON
   @history Ticket 67494   - Fernando Sigoli   - 24/05/2022 - Feito duplo check para gravar chamada da sp do edata, gravação da nota e datadigitação
   @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
+  @hisotry Ticket 76436   - Everson           - 14/07/2022 - Tratamento para envio incorreto de e-mail.
 /*/
 User Function MT103FIM()
 
@@ -71,6 +72,9 @@ User Function MT103FIM()
   Local lGrBlqIcm    := .T.
   Local lBlqICM      := SuperGetMv( "MV_#MT13F1" , .F. , .F. ,  )
   Local lBlqNvS      := SuperGetMv( "MV_#MT13F2" , .F. , .F. ,  )
+
+  Local cChaveEml    := SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA //Ticket 76436   - Everson           - 14/07/2022
+
   Private cToBoletim := ''
   Private lEnviaMail := .F.
   
@@ -460,7 +464,7 @@ User Function MT103FIM()
 
     IF lEnviaMail == .T.
 
-      SendMlBE(SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
+      SendMlBE(cChaveEml) //Ticket 76436   - Everson           - 14/07/2022
 
     ENDIF
 
@@ -1493,6 +1497,17 @@ STATIC Function SendMlBE(cChaveEml)
 	Local cAtach 		:= ""
 	Local cSubject  := "Boletim de Entrada " + Substr(cChaveEml,1,9) + " - " + Substr(cChaveEml,10,3) + " Fornecedor: "+ Substr(cChaveEml,13,6) + "-" + Substr(cChaveEml,19,2)
 
+  //Ticket 76436   - Everson           - 14/07/2022
+  u_GrLogZBE (Date(),; 
+              Time(),; 
+              cUserName,; 
+              "Chave envio de boletim: " + cChaveEml + " Posicao: " + SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_DOC+SF1->F1_SERIE ,;
+              " DOCUMENTO ENTRADA SendMlBE",;
+              "FISCAL",;
+              "MT103FIM",;
+              ComputerName(),;
+              LogUserName())
+
 	Connect Smtp Server cServer Account cAccount 	Password cPassword Result lOk
 				
 	If !lAutOk
@@ -1531,6 +1546,17 @@ Static Function RetHTML(cChaveEml)
   If !dbSeek(xFilial("SF1")+cChaveEml)
     Return(cRet)
   Endif
+
+  //Ticket 76436   - Everson           - 14/07/2022
+  u_GrLogZBE (Date(),; 
+            Time(),; 
+            cUserName,; 
+            "Chave envio de boletim: " + cChaveEml + " Posicao: " + SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_DOC+SF1->F1_SERIE ,;
+            " DOCUMENTO ENTRADA RetHTML",;
+            "FISCAL",;
+            "MT103FIM",;
+            ComputerName(),;
+            LogUserName())
 
   cRet := "<p <span style='"
   cRet += 'font-family:"MS Sans Serif"'
