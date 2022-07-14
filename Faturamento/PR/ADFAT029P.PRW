@@ -475,7 +475,11 @@ User Function ADFAT29C()
 
             oModel:SetValue("MD_MASTER", "ZI8_LAUTO", cAuto)
             oModel:SetValue("MD_MASTER", "ZI8_LTSALD", nSaldo)
-            oModel:SetValue("MD_MASTER", "ZI8_LTCUST", nCusto)
+
+            If cStatus <> "4"
+                oModel:SetValue("MD_MASTER", "ZI8_LTCUST", nCusto)
+
+            EndIf
 
         EndIf
 
