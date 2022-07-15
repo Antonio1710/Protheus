@@ -11,6 +11,7 @@
 	@since 04/11/2020
 	@history Ticket 18035 - Leonardo P. Monteiro - 27/12/2021 - Ajustes na rotina e separação referente ao ponto de entrada F050ROT.
     @history Ticket 14558 - Fernando Macieira    - 18/04/2022 - Rotina para lançamentos de NDFs - Ajuste R$
+    @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
 /*/
 User Function ADFIN117P()
 
@@ -37,6 +38,7 @@ User Function ADFIN117P()
     Private nPosCCusto  := 15
     Private nPosValor   := 16
     Private nPosHistor  := 17
+    Private nPosCCSol   := 18 // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
     
 	@ 200, 001 To 377, 380 Dialog oLeTxt Title OemToAnsi("Conversão de Lançamentos")
 	@ 002, 004 To 040, 187 Title OemToAnsi("Comentário : ")
@@ -112,7 +114,8 @@ Static Function Converte()
             cLinha		:= FT_FREADLN()
             aLinha		:= StrTokArr2(cLinha, ";", .T.)
             
-            if len(aLinha) == 17
+            //if len(aLinha) == 17 // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
+            if len(aLinha) == 18 // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
                 If !Empty(aLinha[02]) .And. Val(aLinha[11]) > 0 .And. Alltrim(aLinha[02]) <> "FILIAL" .and. nLinha <> 1
 
                     cE2_FILIAL	:= StrZero(Val(aLinha[nPosFilial]),2)
@@ -136,9 +139,11 @@ Static Function Converte()
                     cE2_ITEMC   := Alltrim(PadR(aLinha[nPosIteCre]	, TamSX3("E2_ITEMC")		[1]))
                     cE2_CCC     := Alltrim(PadR(aLinha[nPosCCusto]	, TamSX3("E2_CCC")		    [1]))
                     cE2_HIST	:= Alltrim(PadR(aLinha[nPosHistor]	, TamSX3("E2_HIST")		    [1]))
+                    cE2_CCSOLIC := Alltrim(PadR(aLinha[nPosCCusto]	, TamSX3("E2_CCSOLIC")		[1])) // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
                     
                     SE2->(DbSetOrder(1))
                     SED->(DbSetOrder(1))
+                    CTT->( dbSetOrder(1) ) // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
 
                     If !SE2->( DbSeek(xFilial("SE2") + cE2_PREFIXO + cE2_NUM + cE2_PARCELA + cE2_TIPO + cE2_FORNECE + cE2_LOJA))
                         SA2->( DbSetOrder(1))
@@ -152,6 +157,9 @@ Static Function Converte()
                             Case !SED->( DbSeek(xFilial("SED") + cE2_NATUREZ))
                                 _lErro := .T.
                                 U_F050Log("NATUREZA FINANCEIRA INEXISTENTE")
+                            Case !CTT->( DbSeek(FWxFilial("CTT") + cE2_CCSOLIC) ) // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
+                                _lErro := .T.
+                                U_F050Log("CCUSTO SOLICITANTE INEXISTENTE")
                             OTHERWISE
                                 aVetor:={   {"E2_FILIAL"   	, cE2_FILIAL		,NIL},;
                                             {"E2_PREFIXO" 	, cE2_PREFIXO		,NIL},;	
@@ -171,6 +179,7 @@ Static Function Converte()
                                             {"E2_ITEMC"     , cE2_ITEMC 		,NIL},;
                                             {"E2_CCC"       , cE2_CCC 			,NIL},;
                                             {"E2_HIST"   	, cE2_HIST 			,NIL},;
+                                            {"E2_CCSOLIC"   , cE2_CCSOLIC 		,NIL},;
                                             {"E2_FILORIG" 	, cE2_FILIAL		,NIL}}	  
                                 Aadd(aTitSE2, aVetor)
                         EndCase
@@ -190,7 +199,7 @@ Static Function Converte()
                     Endif
                 Endif
             else
-                AAdd(aLog, "Linha: "+ StrZero(nLinha,6) + "- Layout do arquivo deve ter 12 colunas!")
+                AAdd(aLog, "Linha: "+ StrZero(nLinha,6) + "- Layout do arquivo deve ter 13 colunas!")
             endif
 
             FT_FSKIP()
@@ -222,6 +231,7 @@ Static Function Converte()
                         {"E2_ITEMD"   	, aTitSE2[_i][aScan(aTitSE2[_i],{ |x| Alltrim(x[1]) == 'E2_ITEMD'})  ][02], NIL},;
                         {"E2_ITEMC"   	, aTitSE2[_i][aScan(aTitSE2[_i],{ |x| Alltrim(x[1]) == 'E2_ITEMC'})  ][02], NIL},;
                         {"E2_CCC"   	, aTitSE2[_i][aScan(aTitSE2[_i],{ |x| Alltrim(x[1]) == 'E2_CCC'})    ][02], NIL},;
+                        {"E2_CCSOLIC"   , aTitSE2[_i][aScan(aTitSE2[_i],{ |x| Alltrim(x[1]) == 'E2_CCSOLIC'})][02], NIL},;
                         {"E2_FILORIG" 	, aTitSE2[_i][aScan(aTitSE2[_i],{ |x| Alltrim(x[1]) == 'E2_FILORIG'})][02], NIL}}	  
             lMsErroAuto := .F.
             LjMsgRun("Gerando Titulo a Pagar..: "+cE2_NUM,,{||MSExecAuto({|x,y| FINA050(x,y)},aVetor,3)})

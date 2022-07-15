@@ -6,9 +6,9 @@
 
 /*/{Protheus.doc} User Function INTEPEDB
 	Interface de entradas. Chamado 033511.  
-	@type  Function
+	@type  Function 
 	@author Everson
-	@since 24/03/2017
+	@since 24/03/2017 
 	@version 01
 	@history Everson,  08/01/2019, chamado 046285 - Incluído faturamento por código de produto.
 	@history Everson,  22/01/2019, chamado 046622 - Incluída função de ordenamento do array de itens do pedido de venda.
