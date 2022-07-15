@@ -27,12 +27,14 @@
 	@history Chamado T.I. - Everson - 11/12/2019. Chamado 053902, adicionado tratamento no script sql.
 	@history Chamado 17407 - Leonardo P. Monteiro - 26/07/2021. - Adição de validação na confirmação do produto para checar se existe outro código EAN vinculado a outro produto.
 	@history Ticket 69574 - Abel Babini           - 25/04/2022 - Projeto FAI
+	@history Ticket 76157 - Antonio Domingos 	  - 13/07/2022 - Gravação do historico das Alterações na descrição do produto (Tabela ZBE)
 	/*/
 User Function A010TOK()  
 
-	Local lExecuta 	:= .T. // Validações do usuário para inclusão ou alteração do produto 
-	Local lAtzEdt	:= GetMv("MV_#ATLEDT",,.F.)  
-	
+	Local lExecuta 	  := .T. // Validações do usuário para inclusão ou alteração do produto 
+	Local lAtzEdt	  := GetMv("MV_#ATLEDT",,.F.)  
+	Local _lGRVALTSB1 := SuperGetMv("MV_X010GAP",.F.,.T.) //.T.-Ativa, .F.-Desativa a Gravação das alterações feitas na descrição do cadastro de produtos.
+
 	//Everson - 29/11/2019 - Chamado T.I.
 	If Type("aInClApv") == "U"
 		Public aInClApv := {}
@@ -139,8 +141,35 @@ User Function A010TOK()
 		EndIf
 
 	EndIf
-	//
-	
+	//Ticket 76157 - Antonio Domingos - 13/07/2022 - Gravação do historico das Alterações na descrição do produto (Tabela ZBE)
+	If Altera .And. lExecuta .And. _lGRVALTSB1
+	     IF SB1->B1_DESC <> M->B1_DESC
+	         dbSelectArea("ZBE")
+		     RecLock("ZBE",.T.)
+			    Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
+			    Replace ZBE_DATA 	   	WITH dDataBase
+			    Replace ZBE_HORA 	   	WITH TIME()
+			    Replace ZBE_USUARI	    WITH UPPER(Alltrim(cUserName))
+			    Replace ZBE_LOG	        WITH ("CAMPO M->B1_DESC DE " + SB1->B1_DESC + " PARA "+ M->B1_DESC)  
+			    Replace ZBE_MODULO	    WITH cModulo
+			    Replace ZBE_ROTINA	    WITH "A010TOK"
+			    Replace ZBE_PARAME	    WITH "PRODUTO: " + M->B1_COD
+		     ZBE->(MsUnlock())            
+	      Endif
+	 	IF SB1->B1_DESCOMP <> M->B1_DESCOMP
+	         dbSelectArea("ZBE")
+		     RecLock("ZBE",.T.)
+			    Replace ZBE_FILIAL 	   	WITH xFilial("ZBE")
+			    Replace ZBE_DATA 	   	WITH dDataBase
+			    Replace ZBE_HORA 	   	WITH TIME()
+			    Replace ZBE_USUARI	    WITH UPPER(Alltrim(cUserName))
+			    Replace ZBE_LOG	        WITH ("CAMPO M->B1_DESCOMP DE " + SB1->B1_DESCOMP + " PARA "+ M->B1_DESCOMP)  
+			    Replace ZBE_MODULO	    WITH cModulo
+			    Replace ZBE_ROTINA	    WITH "A010TOK"
+			    Replace ZBE_PARAME	    WITH "PRODUTO: " + M->B1_COD
+		     ZBE->(MsUnlock())            
+	      Endif
+	EndIF
 Return (lExecuta)
 
 /* fDupEAN - Verifica se o código EAN informado está vinculado a outro produto. */
@@ -349,7 +378,7 @@ User Function A10_01(cCodPrd,cOper,cOp)
 	Local aArea		:=  GetArea()
 	Local lRet 		:= .T.
 	Local cExec 	:= ""
-	Local aResult 	:= Nil
+	//Local aResult 	:= Nil
 	Local cLnkSrv		:= Alltrim(SuperGetMV("MV_#UEPSRV",,"LNKMIMS")) //Ticket 69574   - Abel Babini          - 25/04/2022 - Projeto FAI
 	Default cOp		:= ""
 
