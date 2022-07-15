@@ -13,7 +13,8 @@
     @history Ticket: TI    - 11/06/2021 - ADRIANO SAVOINE - Corrigida a query da consulta para agrupar os dados.
     @history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
     @history Ticket: 63902 - 23/11/2021 - TIAGO STOCCO - Correção da QUERY para desprezar os estornados da SD3
-    @history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    @history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+    @history Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE - Corrigido o programa para rodar Schedule na versão Protheus V33.
 /*/
 
 User Function ADMNT014R(aParam)
@@ -30,6 +31,12 @@ aAnexos    := {}
 lMostraLog := .F.
 lUsaTLS    := .T.
 
+IF !EMPTY(aParam)  //Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE
+                RpcClearEnv()
+                RpcSetType(3)
+    lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
+ENDIF
+
 Private lJob          := IsBlind()
 Private oProcess
 Private dMVPAR01   
@@ -40,8 +47,8 @@ Private czEMP
 Private czFIL
 
 If lJob
-	RpcSetType(3)
-	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
+	//RpcSetType(3)
+	//lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
     czEMP    := aParam[1]   
     czFIL    := aParam[2]  
     
