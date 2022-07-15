@@ -4404,19 +4404,19 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
             envGemba(cCP)
 
-        ElseIf lRacao .And. lGemba .And. nTpPesa == 2
+        ElseIf lRacao .And. lGemba .And. nTpPesa == 2 .And. ! lSequestra
 
-            //Envia a pesagem final para o Gemba.
-            If ! U_ADFAT50N(cNmOrdem, @cMsgError) 
-                U_ADFAT173("Envio de pesagem final: " + cMsgError, cNmOrdem, "", "GEMBA")
+            // //Envia a pesagem final para o Gemba.
+            // If ! U_ADFAT50N(cNmOrdem, @cMsgError) 
+            //     U_ADFAT173("Envio de pesagem final: " + cMsgError, cNmOrdem, "", "GEMBA")
 
-            Else
+            // Else
 
-                U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "3") //Marca ordem como enviada.
+            //     U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "3") //Marca ordem como enviada.
 
-                U_ADFAT173("Envio de pesagem final: sucesso ", cNmOrdem, "", "GEMBA")
+            //     U_ADFAT173("Envio de pesagem final: sucesso ", cNmOrdem, "", "GEMBA")
 
-            EndIf
+            // EndIf
 
         EndIf
 
