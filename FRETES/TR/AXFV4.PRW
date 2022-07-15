@@ -24,6 +24,7 @@
 	@history Everson, 24/03/2022, Chamado 18465. Nova rotina para cadastro de caixas de transporte.
 	@history Everson, 14/06/2022, Chamado 74587. Tratamento para errorlog.
 	@history Everson, 05/07/2022, Chamado 18465. Tratamento para removar caractere especial na leitura da tag.
+	@history Everson, 15/07/2022, Chamado TI   . Tratamento para errorlog.
 /*/
 
 User Function AXFV4() 
@@ -430,7 +431,7 @@ User Function FV4LOG()
 		DbSkip()
 	End  
 
-	LOG1->(DbCloseArea)
+	LOG1->(DbCloseArea()) //Everson, 15/07/2022, Chamado TI   . Tratamento para errorlog.
 
 	If Empty( aListBox )
 
