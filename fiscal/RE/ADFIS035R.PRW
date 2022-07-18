@@ -39,6 +39,8 @@ Static Function ReportDef()
 	Local cAliasRep	 	:= GetNextAlias()
 	Local cPerg			:= "CENTRCIM"
 	Local oNota			:= Nil
+	Local aPerg			:= {}
+	Local aRet			:= {}
 	// Local oItens		:= Nil
 
 	//Ajusta as Perguntas
@@ -71,7 +73,7 @@ Static Function ReportDef()
 		MV_PAR10	:= aRet[10]
 		MV_PAR11	:= aRet[11]
 		//FIM Ticket   76599 - Abel Babini - 18/07/2022 - Ajuste na chamada das perguntas para utilizar ParamBox
-		
+
 		oReport := TReport():New("ADORO_CENTRCIM",cTitulo,cPerg,{|oReport| ReportPrint(oReport,@cAliasRep)},cDescr)
 		oReport:SetLandscape()
 		oReport:HideParamPage()
