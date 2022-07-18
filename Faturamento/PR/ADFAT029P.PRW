@@ -45,6 +45,9 @@ User Function ADFAT29A()
 
     EndIf
 
+    //Análise laboratorial.
+    U_ADFAT29K()
+
     //Produtos.
     U_ADFAT29B()
 
@@ -1503,6 +1506,160 @@ User Function ADFAT29J() // U_ADFAT29J("01", "03")
         If ! lSlvReg
             U_ADFAT29D(cId, "2", cMsgError)
             Help(Nil, Nil, "Função ADFAT29H(ADFAT029P)", Nil, "Erro no processamento de registro de carregamento Gemba " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+        Else
+            U_ADFAT29D(cId, "1", "")
+
+        EndIf
+
+        FreeObj(oJson)
+        oJson := Nil
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    (cAliasAux)->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT29K
+    Processa registros de análise laboratorial.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 18/07/2022
+    @version 01
+/*/
+User Function ADFAT29K()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cAliasAux := GetNextAlias()
+    Local cQuery    := ""
+    Local cMsgError := ""
+    Local cJson     := ""
+    Local oJson     := Nil
+    Local cId       := ""
+    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    Local cOperac   := ""
+
+    cQuery := ""
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'resultado_analise_laboratorial' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_SISGER = 'SAG' " 
+    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO "
+
+    DbSelectArea("ZIQ")
+    ZIQ->(DbSetOrder(1))
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
+        
+        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        cOperac   := (cAliasAux)->ZIQ_OPERAC 
+        cMsgError := ""
+        cJson     := ZIQ->ZIQ_DADOS
+        oJson     := getJson(cJson)
+
+        If ValType(oJson) == "U"
+            cMsgError := "Não foi possível converter a string para objeto json."
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        If ValType(oJson['dados']) == "U"
+            cMsgError := "Objeto json não possui a chave dados " + cId
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, "Erro no processamento de registro de lote SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        cOperacao  := Alltrim(cValToChar(oJson['operacao']))
+        cNmOrdem   := Alltrim(cValToChar(oJson['dados']['ordPesagem']))
+        cSituacao  := Alltrim(cValToChar(oJson['dados']['situacao']))
+        cPrdSAG    := Alltrim(cValToChar(oJson['dados']['prdSag']))
+
+        If cOperacao == "D"
+            cSituacao := "2"
+
+        Else
+            cSituacao := Iif(cSituacao == "A", "3", "4")
+
+        EndIf
+
+        If U_ADFAT16A(cNmOrdem) //Atualização de ordem de pesagem.
+
+            Begin Transaction
+
+                If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                    DisarmTransaction()
+                    Break
+                    
+                EndIf
+
+                If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+            End Transaction
+
+        ElseIf U_ADFAT16F(cNmOrdem) //Atualização de agrupador de ordem de pesagem.
+
+            Begin Transaction
+
+                While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrdem
+
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                        DisarmTransaction()
+                        Break
+                        
+                    EndIf
+
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                        DisarmTransaction()
+                        Break
+
+                    EndIf
+
+                    ZIF->(DbSkip())
+
+                End
+
+            End Transaction
+
+        Else
+            cMsgError := "Ordem de pesagem/agrupador " + cNmOrdem + " não localizado."
+
+        EndIf
+
+        If ! Empty(cMsgError)
+            U_ADFAT29D(cId, "2", cMsgError)
+            Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, "Erro no processamento de registro de lote de produto SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         Else
             U_ADFAT29D(cId, "1", "")
