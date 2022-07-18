@@ -48,14 +48,14 @@ User Function ADFAT29A()
     //Análise laboratorial.
     U_ADFAT29K()
 
-    //Produtos.
-    U_ADFAT29B()
+    // //Produtos.
+    // U_ADFAT29B()
 
-    //Lotes de produtos.
-    U_ADFAT29C()
+    // //Lotes de produtos.
+    // U_ADFAT29C()
 
-    //Granjada.
-    U_ADFAT29E()
+    // //Granjada.
+    // U_ADFAT29E()
 
     //Pedido de saída entre filiais.
     //U_ADFAT29F()
@@ -1544,6 +1544,11 @@ User Function ADFAT29K()
     Local cId       := ""
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
     Local cOperac   := ""
+    Local cOperacao := ""
+    Local cNmOrdem  := ""
+    Local cSituacao := ""
+    Local cPrdSAG   := ""
+    Local cLote     := ""
 
     cQuery := ""
     cQuery += " SELECT  " 
@@ -1601,6 +1606,21 @@ User Function ADFAT29K()
         cNmOrdem   := Alltrim(cValToChar(oJson['dados']['ordPesagem']))
         cSituacao  := Alltrim(cValToChar(oJson['dados']['situacao']))
         cPrdSAG    := Alltrim(cValToChar(oJson['dados']['prdSag']))
+        cLote      := Alltrim(cValToChar(oJson['dados']['lote']))
+
+        If U_ADFAT196(cNmOrdem)
+
+            If ZIG->ZIG_INICIA <> "3" //Não deixa alterar o lote se a pesagem estiver encerrada.
+
+                cMsgError := "Pesagem encerrada, ordem " + cNmOrdem + "."
+                U_ADFAT29D(cId, "2", cMsgError)
+                Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+                (cAliasAux)->(DbSkip())
+                Loop
+
+            EndIf
+
+        EndIf
 
         If cOperacao == "D"
             cSituacao := "2"
@@ -1626,6 +1646,12 @@ User Function ADFAT29K()
 
                 EndIf
 
+                If ! U_ADFAT165(cNmOrdem, "ZIF_LOTE", cLote, @cMsgError) //Lote da ordem de pesagem.
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
             End Transaction
 
         ElseIf U_ADFAT16F(cNmOrdem) //Atualização de agrupador de ordem de pesagem.
@@ -1641,6 +1667,12 @@ User Function ADFAT29K()
                     EndIf
 
                     If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                        DisarmTransaction()
+                        Break
+
+                    EndIf
+
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_LOTE", cLote, @cMsgError) //Lote da ordem de pesagem.
                         DisarmTransaction()
                         Break
 
