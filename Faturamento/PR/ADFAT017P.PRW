@@ -1952,7 +1952,10 @@ Static Function carVcPt(aStatCP, oVecPt, aHVcPt, cTagDev, dDtIni, dDtFim, cTpOP,
         nPStatCP := AScan(aStatCP, {|x| Alltrim(cValToChar(x[2])) == Alltrim(cValToChar(D_VEIC->ZIB_STATUS)) })
 		oVecPt:aCols[Len(oVecPt:aCols),Ascan(aHVcPt,{|x| AllTrim(x[2]) == "SITUA" })] := aStatCP[nPStatCP,3]
 		
-        oVecPt:aCols[Len(oVecPt:aCols),Ascan(aHVcPt,{|x| AllTrim(x[2]) == "MOTO"  })] := Alltrim(D_VEIC->ZIB_MOTORI) + " " + Posicione("ZVC",1, FWxFilial("ZVC") + ZIB->ZIB_MOTORI ,"ZVC_MOTORI")
+        If ! Empty(ZIB->ZIB_MOTORI)
+            oVecPt:aCols[Len(oVecPt:aCols),Ascan(aHVcPt,{|x| AllTrim(x[2]) == "MOTO"  })] := Alltrim(D_VEIC->ZIB_MOTORI) + " " + Posicione("ZVC",1, FWxFilial("ZVC") + ZIB->ZIB_MOTORI ,"ZVC_MOTORI")
+
+        EndIf
 
         D_VEIC->(DbSkip())
 
@@ -2986,7 +2989,7 @@ Static Function atrTicket(oOrdPes, aOrdPes, cBalanca)
 
         EndIf
 
-        If !(cSitOrd $"3/5") // Aprovado laboratório / Aprovado comercial
+        If !(cSitOrd $"1/3/5") // Aberto/ Aprovado laboratório / Aprovado comercial
             Help(Nil, Nil, "Função atrTicket(ADFAT017P)", Nil, "A situação da ordem de pesagem não permite atribuição de ticket de pesagem.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
             RestArea(aArea)
             Return .F.
@@ -3103,16 +3106,16 @@ Return lRet
     @since 10/12/2021
     @version 01
 /*/
-User Function ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, lExMsg)
+User Function ADFAT172(cCP, cNmOrdem, cTicket, cTpOrdem, lExMsg, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
     Local lRet      := .F.
-    Local cMsgError := ""
     Local cStatOrd  := ""
     Local cStatCp   := ""
-
-    Default lExMsg  := .T.
+    
+    Default lExMsg    := .T.
+    Default cMsgError := ""
  
     Begin Transaction
 
