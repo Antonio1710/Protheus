@@ -4,7 +4,6 @@
 #Include 'TOTVS.ch'
 #INCLUDE "topconn.ch"
 
-
 /*/{Protheus.doc} ADMNT014R - Relatorio de custo de requisição de almoxarifado
     @type  Function
     @author Denis Guedes
@@ -15,184 +14,212 @@
     @history Ticket: 63902 - 23/11/2021 - TIAGO STOCCO - Correção da QUERY para desprezar os estornados da SD3
     @history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
     @history Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE - Corrigido o programa para rodar Schedule na versão Protheus V33.
+    @history Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE - Corrigido o programa para rodar Schedule na versão Protheus V33.
+    @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
 /*/
-
 User Function ADMNT014R(aParam)
-Local bProcess 		:= {|oSelf| Executa(oSelf) }
-Local cPerg 		:= "ADMNT012R"
-Local aInfoCustom 	:= {}
-Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL do custo de requisição de almoxarifado"
-local lSetEnv       := .f.
 
-cPara      := ""
-cAssunto   := "Relação do custo de requisição de almoxarifado"
-cCorpo     := "Relação do custo de requisição de almoxarifado"
-aAnexos    := {}
-lMostraLog := .F.
-lUsaTLS    := .T.
+    Local bProcess 		:= {|oSelf| Executa(oSelf) }
+    Local cPerg 		:= "ADMNT012R"
+    Local aInfoCustom 	:= {}
+    Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL do custo de requisição de almoxarifado"
+    //local lSetEnv       := .f.
 
-IF !EMPTY(aParam)  //Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE
-                RpcClearEnv()
-                RpcSetType(3)
-    lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
-ENDIF
+    // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+    Default aParam    	:= Array(2)
+    Default aParam[1] 	:= "01"
+    Default aParam[2] 	:= "02"
 
-Private lJob          := IsBlind()
-Private oProcess
-Private dMVPAR01   
-Private dMVPAR02   
-Private cMVPAR03   
-Private cMVPAR04  
-Private czEMP
-Private czFIL
+    Private lJob          := IsBlind()
 
-If lJob
-	//RpcSetType(3)
-	//lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
-    czEMP    := aParam[1]   
-    czFIL    := aParam[2]  
-    
-    //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
-    dMVPAR01	:= Stod( Left( Dtos( Date() ),6 )+"01" )
-    dMVPAR02	:= Date()
-    
-    cMVPAR03 := czFIL
-    cMVPAR04 := czFIL
-    
-    Qout(" JOB ADMNT-Protheus - 01 - Parametros dMVPAR01="+ Dtoc(dMVPAR01) + ", dMVPAR02=" + Dtoc(dMVPAR02) +", cMVPAR03="+ cMVPAR03 +", cMVPAR04="+cMVPAR04+" ")
-    
-    PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
-    cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"sonia.silva@adoro.com.br;hercules.moreira@adoro.com.br;debora.silva@adoro.com.br" )
-    
-    oProcess := Executa()
-Else
-    oProcess := tNewProcess():New("ADMNT014R","Custo de requisição",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Custo de requisição", .T. )
-Endif
+    /*
+    IF !EMPTY(aParam)  //Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE
+                    RpcClearEnv()
+                    RpcSetType(3)
+        lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
+    ENDIF
+    */
+    //
 
-U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de custo de requisição de almoxarifado ')
+    Private oProcess
+    Private dMVPAR01   
+    Private dMVPAR02   
+    Private cMVPAR03   
+    Private cMVPAR04  
+    Private czEMP
+    Private czFIL
+
+    // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+    If Select("SX6") == 0
+        lJob := .T.
+    EndIf
+    //
+
+    cPara      := ""
+    cAssunto   := "Relação do custo de requisição de almoxarifado"
+    cCorpo     := "Relação do custo de requisição de almoxarifado"
+    aAnexos    := {}
+    lMostraLog := .F.
+    lUsaTLS    := .T.
+
+    If lJob
+
+        // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+        RPCClearEnv()
+        RPCSetType(3)  //Nao consome licensas
+        RpcSetEnv(aParam[1],aParam[2],,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas	
+        //
+
+        czEMP    := aParam[1]   
+        czFIL    := aParam[2]  
+        
+        //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
+        dMVPAR01	:= Stod( Left( Dtos( Date() ),6 )+"01" )
+        dMVPAR02	:= Date()
+        
+        cMVPAR03 := czFIL
+        cMVPAR04 := czFIL
+        
+        Qout(" JOB ADMNT-Protheus - 01 - Parametros dMVPAR01="+ Dtoc(dMVPAR01) + ", dMVPAR02=" + Dtoc(dMVPAR02) +", cMVPAR03="+ cMVPAR03 +", cMVPAR04="+cMVPAR04+" ")
+        
+        //PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST" // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+        cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"sonia.silva@adoro.com.br;hercules.moreira@adoro.com.br;debora.silva@adoro.com.br" )
+        
+        logZBN("1") //Log início // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+        oProcess := Executa()
+        logZBN("2") //Log fim // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+
+    Else
+        oProcess := tNewProcess():New("ADMNT014R","Custo de requisição",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Custo de requisição", .T. )
+    Endif
+
+    U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rel. de custo de requisição de almoxarifado ')
 
 Return
 
 Static Function Executa(oProcess)
-Local cQry      := ""
-Local cAlias    := GetNextAlias()
 
-Private oExcel  	:= FwMsExcel():New()
-Private dDataIni	
-Private dDataFim
-Private cNomArq
-Private cDIRARQ
-Private cDIRREDE
+    Local cQry      := ""
+    Local cAlias    := GetNextAlias()
 
-//@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
-If !lJob
+    Private oExcel  	:= FwMsExcel():New()
+    Private dDataIni	
+    Private dDataFim
+    Private cNomArq
+    Private cDIRARQ
+    Private cDIRREDE
 
-    dMVPAR01	:= MV_PAR01
-    dMVPAR02	:= MV_PAR02
-    cMVPAR03	:= MV_PAR03
-    cMVPAR04	:= MV_PAR04
+    //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
+    If !lJob
 
-EndIf
+        dMVPAR01	:= MV_PAR01
+        dMVPAR02	:= MV_PAR02
+        cMVPAR03	:= MV_PAR03
+        cMVPAR04	:= MV_PAR04
 
-
-oExcel:AddworkSheet("Custo") // Planilha
-oExcel:AddTable ("Custo","RelCusto") // Titulo da Planilha (CabeÃ§alho)
-oExcel:AddColumn("Custo","RelCusto","FILIAL"         ,1,1)
-oExcel:AddColumn("Custo","RelCusto","GRUPO"	         ,1,1)
-oExcel:AddColumn("Custo","RelCusto","DESCRIÇÃO"	     ,1,1)
-oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,3,3,.T.)
-
-
-cQry    := " SELECT "
-cQry    += " D3_FILIAL,"
-cQry    += " D3_GRUPO,"
-cQry    += " BM_DESC,"
-cQry    += " SUM(D3_CUSTO1) AS D3_CUSTO1"    // Ticket: TI - 11/06/2021 - ADRIANO SAVOINE
-cQry    += " FROM "+RetSqlName("SD3")+" (NOLOCK) D3 " 
-cQry    += " INNER JOIN "+RetSqlName("SBM")+" (NOLOCK) BM ON " 
-cQry    += " BM_FILIAL = '"+xFilial("SBM")+"' "
-cQry    += " AND D3_GRUPO = BM_GRUPO"
-cQry    += " AND BM.D_E_L_E_T_ = ' ' "
-cQry    += " WHERE "
-cQry    += " D3_EMISSAO BETWEEN '"+DTOS(dMVPAR01)+"' AND '"+DTOS(dMVPAR02)+"' "
-cQry    += " AND D3_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "
-cQry    += " AND D3_TM = '501'
-cQry    += " AND D3_CC IN ('5213','5217','5304')
-cQry    += " AND D3.D_E_L_E_T_ = ' ' "
-cQry    += " AND D3_ESTORNO <> 'S' " //Ticket: 63902 - 23/11/2021 - TIAGO STOCCO
-cQry    += " GROUP BY D3_FILIAL,D3_GRUPO,BM_DESC "  // Ticket: TI - 11/06/2021 - ADRIANO SAVOINE
-cQry    += " ORDER BY D3_FILIAL,D3_GRUPO "
-
-/*
-MemoWrite("c:\TEMP\cQry.txt", cQry)
-*/
-
-IF Select (cAlias) > 0
-	(cAlias)->(DbCloseArea())
-EndIf
-
-DbUseArea(.T., "TOPCONN", TcGenQry(,,cQry), cAlias)
-DbSelectArea(cAlias)
-DbGotop()
-
-If (cAlias)->(!EOF())
-	While (cAlias)->(!EOF())
-        oExcel:AddRow("Custo","RelCusto",{	(cAlias)->D3_FILIAL,;
-                                            (cAlias)->D3_GRUPO     ,;
-                                            (cAlias)->BM_DESC	   ,;
-                                            (cAlias)->D3_CUSTO1	    ;
-                                         })	
-        (cAlias)->(DbSkip())
-    EndDo
-    (cAlias)->(DbCloseArea())
-    
-    If !(lJob)
-        cDIRARQ := "c:\temp\"
-        cNomArq := "REL_CUSTO_"+cEmpAnt+"_"+cFilAnt+".XLS" 
-    Else
-        cDIRARQ := "\DATA\"
-        cNomArq := "REL_CUSTO_"+czEMP+"_"+czFIL+".XLS" 
     EndIf
-	
-    oExcel:Activate()
-	
-    If !(lJob)
-        MsAguarde({||Processa({|| oExcel:GetXMLFile(cDIRARQ+cNomArq) })},"Processanento", "Gerando arquivo XML, aguarde....")
-	Else
-        oExcel:GetXMLFile(cDIRARQ+cNomArq)
-     	/*
-        cDIRREDE := "\RELATORIO\"
-        nStatus  := __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
-		If FError() == 25 //Arquivo jÃ¡ existe na pasta destino
-			FERASE(cDIRREDE+cNomArq) 
-            nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
-		EndIf
-        */
 
-    Endif
 
-	oExcelApp:=MsExcel():New()                                         
-	
-    If !(lJob)
-        oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
-        oExcelApp:SetVisible(.T.)
-        /*
-        cDIRARQ := "\DATA\"
-        cNomArq := "REL_CUSTO_"+cEmpAnt+"_"+cFilAnt+".XLS" 
-        aAdd(aAnexos, cDIRARQ+cNomArq)
-        oExcel:GetXMLFile(cDIRARQ+cNomArq)
-        cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"denis.guedes@dtmit.com.br" ) 
-        fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
-        */
-    Else
-        aAdd(aAnexos, cDIRARQ+cNomArq)
-        fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
-	EndIf
-       
-EndIf
+    oExcel:AddworkSheet("Custo") // Planilha
+    oExcel:AddTable ("Custo","RelCusto") // Titulo da Planilha (CabeÃ§alho)
+    oExcel:AddColumn("Custo","RelCusto","FILIAL"         ,1,1)
+    oExcel:AddColumn("Custo","RelCusto","GRUPO"	         ,1,1)
+    oExcel:AddColumn("Custo","RelCusto","DESCRIÇÃO"	     ,1,1)
+    oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,3,3,.T.)
+
+
+    cQry    := " SELECT "
+    cQry    += " D3_FILIAL,"
+    cQry    += " D3_GRUPO,"
+    cQry    += " BM_DESC,"
+    cQry    += " SUM(D3_CUSTO1) AS D3_CUSTO1"    // Ticket: TI - 11/06/2021 - ADRIANO SAVOINE
+    cQry    += " FROM "+RetSqlName("SD3")+" (NOLOCK) D3 " 
+    cQry    += " INNER JOIN "+RetSqlName("SBM")+" (NOLOCK) BM ON " 
+    cQry    += " BM_FILIAL = '"+xFilial("SBM")+"' "
+    cQry    += " AND D3_GRUPO = BM_GRUPO"
+    cQry    += " AND BM.D_E_L_E_T_ = ' ' "
+    cQry    += " WHERE "
+    cQry    += " D3_EMISSAO BETWEEN '"+DTOS(dMVPAR01)+"' AND '"+DTOS(dMVPAR02)+"' "
+    cQry    += " AND D3_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "
+    cQry    += " AND D3_TM = '501'
+    cQry    += " AND D3_CC IN ('5213','5217','5304')
+    cQry    += " AND D3.D_E_L_E_T_ = ' ' "
+    cQry    += " AND D3_ESTORNO <> 'S' " //Ticket: 63902 - 23/11/2021 - TIAGO STOCCO
+    cQry    += " GROUP BY D3_FILIAL,D3_GRUPO,BM_DESC "  // Ticket: TI - 11/06/2021 - ADRIANO SAVOINE
+    cQry    += " ORDER BY D3_FILIAL,D3_GRUPO "
+
+    /*
+    MemoWrite("c:\TEMP\cQry.txt", cQry)
+    */
+
+    IF Select (cAlias) > 0
+        (cAlias)->(DbCloseArea())
+    EndIf
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,,cQry), cAlias)
+    DbSelectArea(cAlias)
+    DbGotop()
+
+    If (cAlias)->(!EOF())
+        While (cAlias)->(!EOF())
+            oExcel:AddRow("Custo","RelCusto",{	(cAlias)->D3_FILIAL,;
+                                                (cAlias)->D3_GRUPO     ,;
+                                                (cAlias)->BM_DESC	   ,;
+                                                (cAlias)->D3_CUSTO1	    ;
+                                            })	
+            (cAlias)->(DbSkip())
+        EndDo
+        (cAlias)->(DbCloseArea())
+        
+        If !(lJob)
+            cDIRARQ := "c:\temp\"
+            cNomArq := "REL_CUSTO_"+cEmpAnt+"_"+cFilAnt+".XLS" 
+        Else
+            cDIRARQ := "\DATA\"
+            cNomArq := "REL_CUSTO_"+czEMP+"_"+czFIL+".XLS" 
+        EndIf
+        
+        oExcel:Activate()
+        
+        If !(lJob)
+            MsAguarde({||Processa({|| oExcel:GetXMLFile(cDIRARQ+cNomArq) })},"Processanento", "Gerando arquivo XML, aguarde....")
+        Else
+            oExcel:GetXMLFile(cDIRARQ+cNomArq)
+            /*
+            cDIRREDE := "\RELATORIO\"
+            nStatus  := __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
+            If FError() == 25 //Arquivo jÃ¡ existe na pasta destino
+                FERASE(cDIRREDE+cNomArq) 
+                nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
+            EndIf
+            */
+
+        Endif
+
+        oExcelApp:=MsExcel():New()                                         
+        
+        If !(lJob)
+            oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
+            oExcelApp:SetVisible(.T.)
+            /*
+            cDIRARQ := "\DATA\"
+            cNomArq := "REL_CUSTO_"+cEmpAnt+"_"+cFilAnt+".XLS" 
+            aAdd(aAnexos, cDIRARQ+cNomArq)
+            oExcel:GetXMLFile(cDIRARQ+cNomArq)
+            cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"denis.guedes@dtmit.com.br" ) 
+            fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
+            */
+        Else
+            aAdd(aAnexos, cDIRARQ+cNomArq)
+            fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
+        EndIf
+        
+    EndIf
+
 Return
 
 Static Function fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
+
     Local aArea        := GetArea()
     Local nAtual       := 0
     Local lRet         := .T.
@@ -318,6 +345,7 @@ Static Function fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
     EndIf
  
     RestArea(aArea)
+
 Return lRet
 
 /*/{Protheus.doc} u_MNT014A0
@@ -330,3 +358,35 @@ Ticket 70142 - Substituicao de funcao Static Call por User Function MP 12.1.33
 /*/
 Function u_MNT014A0( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 )
 Return( fEnvMail( uPar1, uPar2, uPar3, uPar4, uPar5, uPar6 ) )
+
+/*/{Protheus.doc} logZBN
+	(Gera log na ZBN. Chamado 037261)
+	@type  Static Function
+	@author Everson
+	@since 29/03/2019
+	@version 01
+/*/
+Static Function logZBN(cStatus)
+
+	Local aArea	:= GetArea()
+    Local cRotina := "ADMNT014R"
+    Local lLock   := .t.
+	
+	ZBN->(DbSetOrder(1))
+	ZBN->(DbGoTop()) 
+
+	If ZBN->( dbSeek(FWxFilial("ZBN") + cRotina) )
+        lLock := .f.
+    EndIf
+	
+    RecLock("ZBN", lLock)
+        ZBN_FILIAL  := FWxFilial("ZBN")
+        ZBN_DATA    := msDate()
+        ZBN_HORA    := cValToChar(Time())
+        ZBN_ROTINA	:= cRotina
+        ZBN_STATUS	:= cStatus
+    ZBN->( msUnlock() )
+
+	RestArea(aArea)
+
+Return
