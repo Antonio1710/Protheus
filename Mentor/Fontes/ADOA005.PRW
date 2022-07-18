@@ -1275,7 +1275,7 @@ Static Function Adoa5Enc( cCodVend, cLojaVend, cVend )
 	If !lPodeCred
 		nEnca := Aviso('Atenção','Deseja encaminhar o cliente ?',{'Não','Superior'},1)
 
-		if nEnca = 2 .Or. IsInCallStack('RESTEXECUTE')  //Enviar ao Superior //Everson - 16/12/2019. Chamado 054143.
+		if nEnca = 2 .Or. IsInCallStack('RESTEXECUTE') .Or. IsBlind() //Enviar ao Superior //Everson - 16/12/2019. Chamado 054143.
 			AutSndEnc( cCodVend, cLojaVend, __cUserId )
 		endif
 		Return
@@ -1310,7 +1310,7 @@ Static Function Adoa5Enc( cCodVend, cLojaVend, cVend )
 		PB8->( DbSkip())
 	Enddo
 
-	If ! IsInCallStack('RESTEXECUTE') //Everson - 09/10/2017. Chamado 037261.
+	If ! IsInCallStack('RESTEXECUTE') .And. ! IsBlind()//Everson - 09/10/2017. Chamado 037261.
 
 		DEFINE MSDIALOG oDlgEnc TITLE "Encaminhamento/Aprovação" FROM 10,10 To 200,370 OF oMainWnd PIXEL
 
@@ -2906,13 +2906,13 @@ Static Function Adoa5Parec( cCodCli, cLojaCli, cLtParecer )
 
 	If Empty(cLtParecer) // @history Tickets 18751/18748 - Fernando Macieira - 26/08/2021 - Ajuste de Limites em Lote (Clientes e Redes)
 
-		If cLerParec <> '1' .And. ! IsInCallStack('RESTEXECUTE') //Everson - 09/10/2017. Chamado 037261.
+		If cLerParec <> '1' .And. ! IsInCallStack('RESTEXECUTE') .And. ! IsBlind() //Everson - 09/10/2017. Chamado 037261.
 			Alert( 'Usuario sem acesso a visualização de pareceres. Verificar cadastro de Permissões')
 			RestArea( aArea )
 			Return
 		Endif
 
-		If ! IsInCallStack('RESTEXECUTE') 
+		If ! IsInCallStack('RESTEXECUTE') .And. ! IsBlind()
 
 			DEFINE MSDIALOG oDlg TITLE "Pareceres " FROM 10,10 To 400,640 OF oMainWnd PIXEL
 
@@ -2953,7 +2953,7 @@ Static Function Adoa5Parec( cCodCli, cLojaCli, cLtParecer )
 	EndIf
 	//
 
-	If nOpcao == 1 .And. !Empty( cParecer ) .Or. IsInCallStack('RESTEXECUTE') .or. IsInCallStack("FIXLIMITS")
+	If nOpcao == 1 .And. !Empty( cParecer ) .Or. IsInCallStack('RESTEXECUTE') .Or. IsBlind() .or. IsInCallStack("FIXLIMITS")
 
 		If !Empty(cCodCli)
 
@@ -2968,7 +2968,7 @@ Static Function Adoa5Parec( cCodCli, cLojaCli, cLtParecer )
 				PBA_NOME	:= cNomeUsr
 				PBA_DATA	:= dDatabase
 				PBA_HORA	:= TIME()
-				MSMM(,TamSx3("PBA_PARECE")[1],,UPPER(Iif(! IsInCallStack('RESTEXECUTE'),cParecer,cRestParecer)),1,,,"PBA","PBA_CODMEM")
+				MSMM(,TamSx3("PBA_PARECE")[1],,UPPER(Iif(! IsInCallStack('RESTEXECUTE' .And. ! IsBlind()),cParecer,cRestParecer)),1,,,"PBA","PBA_CODMEM")
 
 			PBA->( MsUnLock())
 
@@ -3017,7 +3017,7 @@ Static Function Adoa5Parec( cCodCli, cLojaCli, cLtParecer )
 			EndIf
 
 			//Everson - 09/10/2017. Chamado 037261.
-			If IsInCallStack('RESTEXECUTE')
+			If IsInCallStack('RESTEXECUTE') .Or. IsBlind()
 
 				If cNivel <> '1' //Se o cadastro foi gerado pelo serviço rest e o nível do usuário é diferente de 1 (vendedor). O cadastro é encaminhado para o crédito.
 					nEnca := 3

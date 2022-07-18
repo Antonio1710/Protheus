@@ -141,20 +141,25 @@ Static Function vldPos(oModel)
     If lRet .And. nOperation == MODEL_OPERATION_UPDATE
 
         If lRet .And.;
-            ! U_ADFAT179(cPlaca, cCP, @cCp2, .F.) //Verifica se há controla de pátio aberto para placa informada.
+            ! isInCallStack("atuaTag") .And.; //atualiza tag.
+            ! U_ADFAT179(cPlaca, cCP, @cCp2, .F.) //Verifica se há controle de pátio aberto para placa informada.
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT017P)", Nil, "Há registro de controle de pátio não finalizado vinculado (" + cCp2 + ") à placa.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         EndIf
 
         //Voltar ao status inicial, com mais de um ticket vinculado.
-        If lRet .And. cStatus == "1" .And.;
+        If lRet .And.;
+            ! isInCallStack("atuaTag") .And.; //atualiza tag.
+            cStatus == "1" .And.;
             U_ADFAT17W(cCP) > 0  //Obtém a quantidade de tickets vinculados ao controle de pátio.          
             oModel:SetValue("MD_MASTER", "ZIB_STATUS", ZIB->ZIB_STATUS)
 
         EndIf
 
-        If lRet .And. lTagObg .And. Empty(cTag)
+        If lRet .And.;
+            lTagObg .And.;
+            Empty(cTag)
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT017P)", Nil, "Necessário informar tag.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
@@ -2492,7 +2497,6 @@ Static Function dfAgpOrd(oOrdPes, aOrdPes, aTpOrdem)
     //Verifica se o controle de pátio está encerrado.
     If U_ADFAT17L(cCP)
         Help(Nil, Nil, "Função dfAgpOrd(ADFAT017P)", Nil, "Controle de pátio " + cCP + " encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
         Return Nil
 
     EndIf
@@ -4400,19 +4404,19 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
             envGemba(cCP)
 
-        ElseIf lRacao .And. lGemba .And. nTpPesa == 2
+        ElseIf lRacao .And. lGemba .And. nTpPesa == 2 .And. ! lSequestra
 
-            //Envia a pesagem final para o Gemba.
-            If ! U_ADFAT50N(cNmOrdem, @cMsgError) 
-                U_ADFAT173("Envio de pesagem final: " + cMsgError, cNmOrdem, "", "GEMBA")
+            // //Envia a pesagem final para o Gemba.
+            // If ! U_ADFAT50N(cNmOrdem, @cMsgError) 
+            //     U_ADFAT173("Envio de pesagem final: " + cMsgError, cNmOrdem, "", "GEMBA")
 
-            Else
+            // Else
 
-                U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "3") //Marca ordem como enviada.
+            //     U_ADFAT165(cNmOrdem, "ZIF_GEMBA", "3") //Marca ordem como enviada.
 
-                U_ADFAT173("Envio de pesagem final: sucesso ", cNmOrdem, "", "GEMBA")
+            //     U_ADFAT173("Envio de pesagem final: sucesso ", cNmOrdem, "", "GEMBA")
 
-            EndIf
+            // EndIf
 
         EndIf
 
@@ -6375,13 +6379,21 @@ Return lRetSlv
 Static Function atuaTag(cBalanca, cCP, cFluxo, cPlaca, cTktProtheus, cNovaTag, cTktGuard)
 
     //Variáveis.
-    Local cUrl      := Alltrim(cValToChar(Posicione("DX5" , 1, FwxFilial("DX5") + cBalanca, "DX5_URL")))
-    Local cErro     := ""
-    Local oRetSolic := Nil
+    // Local cUrl      := Alltrim(cValToChar(Posicione("DX5" , 1, FwxFilial("DX5") + cBalanca, "DX5_URL")))
+    // Local cErro     := ""
+    // Local oRetSolic := Nil
     Local lRetBal   := .F.
+    Local cScript   := ""
+    Local nStatus   := 0
 
-    If Empty(cUrl)
-        Help(Nil, Nil, "Função atuaTag(ADFAT017P)", Nil, "Url da balança não está definido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    // If Empty(cUrl)
+    //     Help(Nil, Nil, "Função atuaTag(ADFAT017P)", Nil, "Url da balança não está definido.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     Return .F.
+
+    // EndIf
+
+    If Empty(cCP)
+        Help(Nil, Nil, "Função atuaTag(ADFAT017P)", Nil, "Controle de pátio não selecionado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         Return .F.
 
     EndIf
@@ -6392,22 +6404,34 @@ Static Function atuaTag(cBalanca, cCP, cFluxo, cPlaca, cTktProtheus, cNovaTag, c
 
     EndIf
 
-    If ! Empty(cTktGuard)
+    lRetBal := U_ADFAT174(cCP, "ZIB_TAG", cNovaTag) 
 
-        FWMsgRun(,{|| lRetBal := U_ADFAT242(cUrl, @oRetSolic, cErro, cPlaca, cPlaca, cNovaTag, cFluxo, cTktProtheus) }, "Função atuaTag(ADFAT017P)",;
-                    "Alterando " + cUrl)
+    If lRetBal
+    
+        If ! Empty(cTktGuard)
 
-        If ! lRetBal
-            Help(Nil, Nil, "Função atuaTag(ADFAT017P)", Nil, "Ocorreu erro na alteração da tag." + xPula + cErro, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-            Return .F.
+            cScript	:= ' EXEC [SCSRV03].[ADORO].[dbo].[PRO_ADO_ALTERA_TICKET] ' +    "'" + cNovaTag + "', '" + cTktGuard + "' ;"
+
+            nStatus :=  TcSQLExec(cScript)
+
+            Conout( DToC(Date()) + " " + Time() + " ADFAT017P - atuaTag - nStatus " + cValToChar(nStatus) )
+
+            // FWMsgRun(,{|| lRetBal := U_ADFAT242(cUrl, @oRetSolic, cErro, cPlaca, cPlaca, cNovaTag, cFluxo, cTktProtheus) }, "Função atuaTag(ADFAT017P)",;
+            //             "Alterando " + cUrl)
+
+            // If ! lRetBal
+            //     Help(Nil, Nil, "Função atuaTag(ADFAT017P)", Nil, "Ocorreu erro na alteração da tag." + xPula + cErro, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            //     Return .F.
+
+            // EndIf
 
         EndIf
 
+        MsgInfo("Tag alterada.", "Função atuaTag(ADFAT017P)")
+
     EndIf
-    
-    U_ADFAT174(cCP, "ZIB_TAG", cNovaTag)
-    
-Return .T.
+
+Return lRetBal
 /*/{Protheus.doc} excTag
     Exclui tag de pesagem.
     @type  Static Function

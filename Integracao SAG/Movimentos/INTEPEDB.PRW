@@ -6,9 +6,9 @@
 
 /*/{Protheus.doc} User Function INTEPEDB
 	Interface de entradas. Chamado 033511.  
-	@type  Function
+	@type  Function 
 	@author Everson
-	@since 24/03/2017
+	@since 24/03/2017 
 	@version 01
 	@history Everson,  08/01/2019, chamado 046285 - Incluído faturamento por código de produto.
 	@history Everson,  22/01/2019, chamado 046622 - Incluída função de ordenamento do array de itens do pedido de venda.
@@ -4669,7 +4669,7 @@ Static Function emitNfGrp(nOpc, cPedProth, cSeqPed, lAut)
 	
 	//Everson - 30/11/2020. Chamado T.I.
 	If Len(aNFTrans) > 0
-	 	//MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
+		MsAguarde({|| transmNF(@aNFTrans,cSerie,lAut) },"Aguarde","Transmitindo NF's")
 
 	EndIf
 	
@@ -4700,6 +4700,11 @@ Static Function transmNF(aNFTrans,cSerie,lAut)
 	Local cAmbiTrans:= ""
 	Local nAux		:= 1
 	Local lTAut  	:= GetMv("MV_#TRAUT",,.F.)
+
+	MsgInfo("Notas geradas de " + cNFIni + " até " + cNFFim + ".","Função transmNF")
+	aNFTrans := {}
+	RestArea(aArea)
+	Return .F.
 	
 	//Everson - 30/11/2020. Chamado TI.
 	//RestArea(aArea)

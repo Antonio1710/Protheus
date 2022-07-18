@@ -15,6 +15,7 @@
 	@history Chamado 053754 - William Costa - 11/12/2019 - Ajuste no item contabil 112 para o produto 386914
 	@history ticket   11814 - Fernando Maci - 09/04/2021 - Verificar Regra de Centro de Custo
 	@history Ticket 69574   - Abel Babini   - 25/04/2022 - Projeto FAI
+	@history Ticket 76434   - Fernando Sigoli - 13/07/2022 - PROTHEUS V33 VALIDA CLASSE DE VALOR REMOVIDO
 /*/
 
 User Function MSD2460()
@@ -184,7 +185,7 @@ User Function MSD2460()
 		dbSetOrder(1)
 		dbSeek(xFilial()+SD2->D2_CLIENTE+SD2->D2_LOJA)
 		
-		SD2->D2_CLVL 	:= SUBSTR(SB1->B1_XGRUPO,2,1)+SA1->A1_SATIV1
+		//SD2->D2_CLVL 	:= SUBSTR(SB1->B1_XGRUPO,2,1)+SA1->A1_SATIV1 PROTHEUS V33 VALIDA CLASSE DE VALOR REMOVIDO 
 		
 		//+-----------------------------------------------------------------+
 		//| FIM DO TRATAMENTO                                               |

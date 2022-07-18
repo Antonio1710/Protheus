@@ -12,7 +12,7 @@
 	@history Chamado 052327 - Adriana Oliveira - 07/10/2019 - Habilita Pre-cadastro Fornecedor p/ SAFEGG
 	@history Chamado 052327 - Adriana Oliveira - 16/10/2019 - Ajuste emails Pre-Cadastro p/ SAFEGG
 	@history Chamado 052636 - William Costa    - 25/11/2019 - Adicionado a empresa 07 para carregar corretamente o pré cadastro
-	@history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor
+	@history Chamado 18071  - Antonio Domingos - 05/07/2022 - Melhoria no cadastro de fornecedor.
 */
 
 User Function MA020TDOK

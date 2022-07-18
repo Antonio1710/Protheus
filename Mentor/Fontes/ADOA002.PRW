@@ -318,7 +318,7 @@ Static Function GravaCli(/*INCLUI, aHeader, aCols */)
 
 	// Grava o temporario para refresh em tela das alteracoes
 	//If AllTrim( M->PB3_BLOQUE ) <> PB3->PB3_BLOQUE
-	If ! IsInCallStack('U_ADVEN051P') //Everson - 09/10/2017. Chamado 037261. //Everson - ticket ti - 11/07/2022.
+	If ! IsInCallStack('U_RESTEXECUTE') .And. Select("TRB") > 0 //Everson - 09/10/2017. Chamado 037261. //Everson - ticket ti - 11/07/2022.
 		DbSelectArea( 'TRB')
 		TRB->( DbGoTop() )
 		TRB->( DbSetOrder( 1 ))
