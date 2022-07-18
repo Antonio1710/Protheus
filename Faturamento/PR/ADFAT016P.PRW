@@ -198,7 +198,7 @@ Static Function getStOE(cStatus)
     Local aSituacao := {}
 
     If cStatus == "1"
-        Aadd(aSituacao,{cStatus, "Aguardando Agrupamento", "BR_BRANCO"})
+        Aadd(aSituacao,{cStatus, "Aberto", "BR_BRANCO"})
 
     ElseIf cStatus == "2"
         Aadd(aSituacao,{cStatus, "Pendente laboratório", "BR_BRANCO"})
@@ -392,6 +392,7 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
     Local cLoteAuth := ""
     Local cProdSAG  := ""
     Local cStatLab  := ""
+    Local cCliFor   := ""
 
     Default cOrdem  := ""
 
@@ -421,8 +422,17 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
 
     EndIf
 
-    cNmFornec := Alltrim(Posicione("SA2", 1, FWxFilial("SA2") + cFornece + cLjForn, "A2_NOME"))
+    If SD1->D1_TIPO == "B"
+        cNmFornec := Alltrim(Posicione("SA1", 1, FWxFilial("SA1") + cFornece + cLjForn, "A1_NOME"))
+        cCliFor := "C"
 
+    Else
+        cNmFornec := Alltrim(Posicione("SA2", 1, FWxFilial("SA2") + cFornece + cLjForn, "A2_NOME"))
+        cCliFor := "F"
+
+    EndIf
+
+    //Deleta ordem de pesagem do tipo "Entrada".
     DbSelectArea("ZIF")
     ZIF->(DbSetOrder(4))
     If  ZIF->(DbSeek( FWxFilial("ZIF") + cFornece + cLjForn + cNF + cSerie))
@@ -489,7 +499,7 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
             oModel:SetValue("MD_MASTER", "ZIF_FORNEC", cFornece)
             oModel:SetValue("MD_MASTER", "ZIF_LJFORN", cLjForn)
             oModel:SetValue("MD_MASTER", "ZIF_NMFOR",  cNmFornec)
-            oModel:SetValue("MD_MASTER", "ZIF_CLIFOR", "F")
+            oModel:SetValue("MD_MASTER", "ZIF_CLIFOR", cCliFor)
             oModel:SetValue("MD_MASTER", "ZIF_NF"    , cNF)
             oModel:SetValue("MD_MASTER", "ZIF_SERIE" , cSerie)
             oModel:SetValue("MD_MASTER", "ZIF_PRDPRO", SD1->D1_COD)
@@ -497,11 +507,12 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
             oModel:SetValue("MD_MASTER", "ZIF_ITEMNF", SD1->D1_ITEM)
             oModel:SetValue("MD_MASTER", "ZIF_QUANT" , SD1->D1_QUANT)
             oModel:SetValue("MD_MASTER", "ZIF_TPMOVI", "E")
-            oModel:SetValue("MD_MASTER", "ZIF_STATUS", "1")
+            oModel:SetValue("MD_MASTER", "ZIF_STATUS", Iif(cStatLab == "2", "2", "1"))
             oModel:SetValue("MD_MASTER", "ZIF_LOTE"  , cLoteAuth)
             oModel:SetValue("MD_MASTER", "ZIF_STATLA", cStatLab)
             oModel:SetValue("MD_MASTER", "ZIF_PEDCOM", SD1->D1_PEDIDO)
             oModel:SetValue("MD_MASTER", "ZIF_ENVBAR", ZIA->ZIA_MVESTO)
+            oModel:SetValue("MD_MASTER", "ZIF_EAGRUP", "2")
 
             If oModel:VldData()
                 oModel:CommitData()
@@ -548,12 +559,15 @@ Return lRet
     @since 10/12/2021
     @version 01
 /*/
-User Function ADFAT163(cCP)
+User Function ADFAT163(cCP, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
     Local lRet      := .T.
     Local cNmOrdem  := ""
+    Local cQuery    := ""
+
+    Default cMsgError := ""
 
     If Empty(Alltrim(cValToChar(cCP)))
         RestArea(aArea)
@@ -569,19 +583,30 @@ User Function ADFAT163(cCP)
 
     EndIf   
 
+    cQuery := " SELECT ZIF_NUMERO, ZIF_AGRUPA FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE  ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_CTPATI = '" + cCP + "' AND ZIF.D_E_L_E_T_ = '' "
+
+    If Select("D_DORDEM") > 0
+        D_DORDEM->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_DORDEM"
+    DbSelectArea("D_DORDEM")
+    D_DORDEM->(DbGoTop())
+
     DbSelectArea("ZIG")
     ZIG->(DbSetOrder(2))
 
     Begin Transaction
 
-        While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And.;
-            ZIF->ZIF_CTPATI == cCP
+        While ! D_DORDEM->(Eof()) 
 
-            cNmOrdem := Iif(Empty(ZIF->ZIF_AGRUPA), ZIF->ZIF_NUMERO, ZIF->ZIF_AGRUPA)
+            cNmOrdem := Iif(Empty(D_DORDEM->ZIF_AGRUPA), D_DORDEM->ZIF_NUMERO, D_DORDEM->ZIF_AGRUPA)
 
             If ZIG->(DbSeek(FWxFilial("ZIG") + cNmOrdem))
 
-                If ! U_ADFAT172(cCP, ZIG->ZIG_ORDEM, ZIG->ZIG_NUMERO)
+                //Cancela ticket de pesagem.
+                If ! U_ADFAT172(cCP, ZIG->ZIG_ORDEM, ZIG->ZIG_NUMERO,,,@cMsgError)
                     lRet := .F.
                     DisarmTransaction()
                     Break
@@ -590,7 +615,15 @@ User Function ADFAT163(cCP)
 
             EndIf
 
-            ZIF->(DbSkip())
+            //Cancela ordem de pesagem.
+            If ! U_ADFAT166(cNmOrdem, @cMsgError)
+                lRet := .F.
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            D_DORDEM->(DbSkip())
 
         End
 
