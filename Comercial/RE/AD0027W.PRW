@@ -1,7 +1,7 @@
 #include "rwmake.ch"
 #include "Protheus.ch"
 #include "topconn.ch"
-
+#include "totvs.ch"
 /*/{Protheus.doc} User Function AD0027W
     Relatório para geração em Excel.
     @type Function
@@ -17,7 +17,8 @@
 	@history ticket   8382 - Andre Mendes (Obify) - 24/02/2021 - Documentação e correção do error.log 'Alias already in use: COBTOT'.
 	@history ticket  11311 - Andre Mendes (Obify) - 06/05/2021 - Erro log: Alias already in use: COBTOT  on RUNCONT(AD0027W.PRW) 25/02/2021 12:39:19 line : 415
 	@history Ticket  70540 - ADRIANO SAVOINE      - 30/03/2022 - Ajuste para o parametro de filiais.
- /*/
+ 	@history Ticket  76574 - Antonio Domingos     - 18/07/2022 - Corrigido erro Alias already in use: COBSUP  on RUNCONT(AD0027W.PRW) 21/06/2022 10:52:34 line : 425  .
+  /*/
 
 User Function AD0027W()
 
@@ -79,7 +80,7 @@ User Function AD0027W()
 
 	_nTotQbrB:=0
 	_nIndice:=0
-	_cAcumMetaCli:=0
+	_nAcumMetaCli:=0
 	_nVlr:=0
 	_Supervis1:=""
 	_Supervis2:=""     
@@ -420,7 +421,8 @@ User Function AD0027W()
 	_cNomTrM := CriaTrab(aStru)
 	//@history ticket  8382 - Andre Mendes (Obify) - 24/02/2021
 	if Select("COBSUP") > 0
-		dbSelectArea('COBSUP')
+		//@history Ticket  76574 - Antonio Domingos     - 18/07/2022 - Corrigido erro Alias already in use: COBSUP  on RUNCONT(AD0027W.PRW) 21/06/2022 10:52:34 line : 425  .
+		COBSUP->(dbCloseArea())
 	endif
 	dbUseArea(.T.,,_cNomTrM,"COBSUP",.F.,.F.)
 	_cIndexM   := "T2_SUPERVI + T2_QBRTOT + T2_QBRNVL + T2_CODGRUP + T2_CLIENTE + T2_LOJA"
@@ -1424,7 +1426,7 @@ _cContV:=0
 _cContv2:=0
 Return
 
-Static Function ImpCabec2
+Static Function ImpCabec2(_nAcumMetaCli)
 
 _nIndice:=0
 
@@ -1437,7 +1439,7 @@ cLin := ""
 dbSelectArea("TEM1")
 dbGoTop()
 
-_nIndice:=(_cCont1 / _cAcumMetaCli)*100
+_nIndice:=(_cCont1 / _nAcumMetaCli)*100
 &&Mauricio 26/10/11 - incluido dias corridos
 //Cabec3 := "| SUPERVISOR: "+mv_par03+ " Ate "+mv_par04+ Space(100)+"DE : "+substr(dtos(mv_par01),7,2)+"/"+substr(dtos(mv_par01),5,2)+"/"+substr(dtos(mv_par01),1,4)+ "      DIAS " + Space(16)+"|"
 Cabec3 := "| VENDEDORES: "+_cVendIni+ " Ate "+_cVendFim+ Space(100)+"DE : "+substr(dtos(mv_par01),7,2)+"/"+substr(dtos(mv_par01),5,2)+"/"+substr(dtos(mv_par01),1,4)+ Space(54)+"  DIAS UTEIS: " +right(str(_nDiasUtil),2)+"  |"
@@ -1447,7 +1449,7 @@ fWrite(nHdl,cLin,Len(cLin))
 Cabec4 := "|"+Space(130)+"ATE: "+substr(dtos(mv_par02),7,2)+"/"+substr(dtos(mv_par02),5,2)+"/"+substr(dtos(mv_par02),1,4) +Space(2)+Space(51)+ "DIAS CORRIDOS: " +right(str(_nDiasCorr),2)+Space(49)+"  |"
 cLin := ";;;;;;;ATE:"+substr(dtos(mv_par02),7,2)+"/"+substr(dtos(mv_par02),5,2)+"/"+substr(dtos(mv_par02),1,4)+";;;;;DIAS CORRIDOS:;"+right(str(_nDiasCorr),2)+";;;"+_eof
 fWrite(nHdl,cLin,Len(cLin)) 
-//Cabec5 := "| CLIENTES  META : "+right(str(_cAcumMetaCli),4)+"        REALIZADO: "+right(str(_cCont1),4)+"     INDICE: "//+ right(str(_nIndice ),4)+" % "+ Space(107)+"|"
+//Cabec5 := "| CLIENTES  META : "+right(str(_nAcumMetaCli),4)+"        REALIZADO: "+right(str(_cCont1),4)+"     INDICE: "//+ right(str(_nIndice ),4)+" % "+ Space(107)+"|"
 Cabec5 := "| CLIENTES CARTEIRA : "+right(str(_nQtcartT),5)+"        COBERTURA MES: "+right(str(_nTotCont),5)+"     ATIVO1: "+right(str(_ntotContv),5)+"     ATIVO2: "+right(str(_ntContv2),5)
 cLin := "CLIENTES;CARTEIRA:;"+right(str(_nQtcartT),5)+";;;;COBERTURA;MES:"+right(str(_nTotCont),5)+";;ATIVO1:;"+right(str(_ntotContv),5)+";;ATIVO2:;"+right(str(_ntContv2),5)+";;;"+_eof
 fWrite(nHdl,cLin,Len(cLin))
@@ -1481,7 +1483,7 @@ nLin++
 
 @nLin,00 PSAY Cabec8
 nLin++
-_cAcumMetaCli :=0
+_nAcumMetaCli :=0
 dbSelectArea("TEM2")
 
 Return
@@ -1612,7 +1614,7 @@ If dbSeek(xFilial()+_Supervis)
 			Alert("Erro na meta de Clientes")
 	EndCase
 Endif
-_cAcumMetaCli+=_cMeta
+_nAcumMetaCli+=_cMeta
 Return(_cMeta,_nVlr)
 
 /*************************************************************************************************
@@ -1859,7 +1861,7 @@ nLin++
 return
 
 
-Static Function ImpTotais2()
+Static Function ImpTotais2(_n)
 
 _nA1T2Vendas	:= 0
 _nA1T2MtPrc	:= 0
@@ -1906,7 +1908,7 @@ While !EOF() .and. T2_SUPERVI >= mv_par03 .and. T2_SUPERVI <= mv_par04
     //If nLin > 60   //60
 	//	Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 	//	nLin := 8
-	//	ImpCabec2(_cAcumMetaCli)
+	//	ImpCabec2(_nAcumMetaCli)
 	//Endif
 	
 	
@@ -2434,7 +2436,7 @@ DbGoTop()
 _Supervis:= TEM2->T2_SUPERVI
 Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 nLin := 5
-ImpCabec2(_cAcumMetaCli)
+ImpCabec2(_nAcumMetaCli)
 
 _cQuebraAnt:=	TEM2->T2_QBRNVL
 _cQuebraGrp	:=	TEM2->T2_CODGRUP
@@ -2460,7 +2462,7 @@ DO WHILE !EOF()
 	If nLin > 55   //55
 		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
 		nLin := 5
-		ImpCabec2(_cAcumMetaCli)
+		ImpCabec2(_nAcumMetaCli)
 	Endif 
 	If	_cQuebraGrp	!=	TEM2->T2_CODGRUP
 	    cLin := ""
@@ -2777,8 +2779,8 @@ Return
 static function fbuscafrt(_cF,_cPedido)
 &&Mauricio 26/10/11 - Ver com Alex se ao inves desta função não da para passar na aprovação de pedidos o valor do frete para um campo do sistema...
 &&e ai pegar desse campo o valor...
-Local _cPedido
-Local _cF
+//Local _cPedido
+//Local _cF
 Local _nFrete := 0
 
 DbSelectArea("SC5")
