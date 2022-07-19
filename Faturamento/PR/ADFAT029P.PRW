@@ -48,14 +48,14 @@ User Function ADFAT29A()
     //Análise laboratorial.
     U_ADFAT29K()
 
-    // //Produtos.
-    // U_ADFAT29B()
+    //Produtos.
+    U_ADFAT29B()
 
-    // //Lotes de produtos.
-    // U_ADFAT29C()
+    //Lotes de produtos.
+    U_ADFAT29C()
 
-    // //Granjada.
-    // U_ADFAT29E()
+    //Granjada.
+    U_ADFAT29E()
 
     //Pedido de saída entre filiais.
     //U_ADFAT29F()

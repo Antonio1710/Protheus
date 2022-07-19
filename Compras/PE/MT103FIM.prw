@@ -57,6 +57,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 67494   - Fernando Sigoli   - 24/05/2022 - Feito duplo check para gravar chamada da sp do edata, gravação da nota e datadigitação
   @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
   @hisotry Ticket 76436   - Everson           - 14/07/2022 - Tratamento para envio incorreto de e-mail.
+  @history Ticket 18465   - Everson           - 19/07/2022 - Envio de registro para o barramento.
 /*/
 User Function MT103FIM()
 
@@ -507,6 +508,13 @@ User Function MT103FIM()
 
   EndIf
   // 
+
+  //Everson - 19/07/2022. Chamado 18465.
+  If FieldPos("F1_XPOSORD") > 0 .And. nConfirma == 1 .And. SF1->F1_XPOSORD == "1"
+    grvBarr(nOpcao, SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
+
+  EndIf
+  //
     
   RestArea(aAreaSE1)
 	RestArea(aAreaSF1)
@@ -2600,3 +2608,50 @@ Static Function FixBonNcc()
   RestArea(aArea)
 
 Return
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 19/07/2022
+    @version 01
+/*/
+Static Function grvBarr(nOpc, cNumero)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cFilter   := ""
+    Local cTopico   := "documentos_de_entrada_protheus"
+    Local cOperacao := ""
+    Local cFiliais  := Alltrim(GetMv("MV_#ADFAT171",,""))
+
+    If !(cFilAnt $cFiliais)
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    If nOpc == 4 
+        cOperacao := "A"
+
+    ElseIf nOpc == 3 
+        cOperacao := "I"
+    
+    ElseIf nOpc == 5
+        cOperacao := "D"
+
+    Else
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+    
+    cFilter := " D1_FILIAL ='" + FWxFilial("SD1") + "' .And. D1_DOC = '" + SF1->F1_DOC + "' .And. D1_SERIE = '" + SF1->F1_SERIE + "' .And. D1_FORNECE = '" + SF1->F1_FORNECE + "' .And. D1_LOJA = '" + SF1->F1_LOJA  + "' "
+    
+    U_ADFAT27D("SF1", 1, FWxFilial("SF1") + cNumero,;
+               "SD1", 1, FWxFilial("SD1") + cNumero, "D1_COD+D1_ITEM",cFilter,;
+               cTopico, cOperacao,;
+               .T., .T.,.T., Nil)
+
+    RestArea(aArea)
+
+Return Nil
