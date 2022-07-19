@@ -23,6 +23,7 @@
     @chamado 055749 || OS 057158 || CONTROLADORIA || ANDRE || 8386 || CLASSE DE VALOR SIG
     @Ticket 69338 	- Leonardo P. Monteiro - 	Ajuste no CC para 5131 quando o produto for '190590'. Alterar LanÇamento PadrÃo 641-008 - Quirera.
     @history ticket 76679 - 18/07/2022 - Fernando Macieira - alteração LP 641-007 DEVOLUCAO DE VENDAS EMBUTIDOS - SALSICHA
+    @history ticket 76679 - 19/07/2022 - Fernando Macieira - alteração LP 641-007 DEVOLUCAO DE VENDAS EMBUTIDOS - SALSICHA - Desabilitar
 /*/
 User Function LPCTH(cTab, cEntidade)
 
@@ -175,16 +176,19 @@ User Function LPCTHCC(cTab, cEntidade)
                 endif
             EndIf
 
+            // @history ticket 76679 - 19/07/2022 - Fernando Macieira - alteração LP 641-007 DEVOLUCAO DE VENDAS EMBUTIDOS - SALSICHA - Desabilitar
             // @history ticket 76679 - 18/07/2022 - Fernando Macieira - alteração LP 641-007 DEVOLUCAO DE VENDAS EMBUTIDOS - SALSICHA
             /*
             Se CFOP igual a 1410 ou 1201: 6120
             Se CFOP igual a 2410 ou 2201: 6220
             */
+            /*
             If AllTrim(SD1->D1_CF) == "1410" .or. AllTrim(SD1->D1_CF) == "1201"
                 cCCusto := "6120"
             ElseIf AllTrim(SD1->D1_CF) == "2410" .or. AllTrim(SD1->D1_CF) == "2201"
                 cCCusto := "6220"
             EndIf
+            */
             //
 
         ElseIf AllTrim(cTab) == "SDE" // LP 651 (RATEIO CC)
