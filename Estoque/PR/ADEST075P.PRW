@@ -150,7 +150,6 @@ Static Function carPesagens(dDtIni, dDtFim, oPesagens, aPesagens)
     Local aArea     := GetArea()
     Local cQuery    := " SELECT * FROM " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG WHERE ZIG_FILIAL = '" + FWxFilial("ZIG") + "' AND ZIG_DTPES2 >= '" + DToS(dDtIni) + "' AND ZIG_DTPES2 <= '" + DToS(dDtFim) + "' AND ZIG_INICIA = '4' AND ZIG_TPSEQU = '1' AND ZIG.D_E_L_E_T_ = '' ORDER BY ZIG_ORDEM "
     Local cProduto  := ""
-    Local cRoteiro  := ""
     Local cOperacao := ""
     Local nIndex    := 0
 
@@ -168,8 +167,19 @@ Static Function carPesagens(dDtIni, dDtFim, oPesagens, aPesagens)
         nIndex := Iif(D_PES->ZIG_AGRUPA == "1", 3, 2)
         cProduto := getDes(D_PES->ZIG_ORDEM, nIndex)
 
-        cRoteiro  := Posicione("ZIB", 1, FWxFilial("ZIB") + D_PES->ZIG_CTPATI,"ZIB_CODROT")
-        cOperacao := Alltrim(cValToChar(Posicione("ZI9", 1, FWxFilial("ZI9") + cRoteiro,"ZI9_ROTEIR")))
+        If ! U_ADFAT17U(D_PES->ZIG_CTPATI)
+            D_PES->(DbSkip())
+            Loop
+            
+        EndIf
+
+        If ZIB->ZIB_STATUS == "6"
+            D_PES->(DbSkip())
+            Loop
+
+        EndIf
+
+        cOperacao := Alltrim(cValToChar(Posicione("ZI9", 1, FWxFilial("ZI9") + ZIB->ZIB_CODROT, "ZI9_ROTEIR")))
 
         Aadd(aPesagens,{;
             .F.,;                       //01 - Marcação.

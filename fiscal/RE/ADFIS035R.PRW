@@ -11,6 +11,7 @@
 	@history Ticket    1867 - Abel Babini - 07/12/2020 - Acrescentar Filtro de Data de Entrada e Docs Digitados
 	@history Ticket    1867 - Abel Babini - 28/12/2020 - Acrescentar Ajuste nos filtros / parâmetros do relatório que não estavam sendo utilizados e considerar o cadastro de cliente/fornecedor quand o campo XIT_CODPRD estiver em branco
 	@history Ticket   10427 - Abel Babini - 05/03/2021 - Acrescentado condição para procurar a NF de entrada na tabela SFT e SD1 com a série com 1, 2 ou 3 caracteres
+	@history Ticket   76599 - Abel Babini - 18/07/2022 - Ajuste na chamada das perguntas para utilizar ParamBox
 /*/
 
 User Function ADFIS035R()
@@ -38,60 +39,89 @@ Static Function ReportDef()
 	Local cAliasRep	 	:= GetNextAlias()
 	Local cPerg			:= "CENTRCIM"
 	Local oNota			:= Nil
+	Local aPerg			:= {}
+	Local aRet			:= {}
 	// Local oItens		:= Nil
 
 	//Ajusta as Perguntas
-	CriaPerg(@cPerg)
-	Pergunte(cPerg,.F.)
+	//INICIO Ticket   76599 - Abel Babini - 18/07/2022 - Ajuste na chamada das perguntas para utilizar ParamBox
+	Aadd(aPerg ,{1,"Nota Fiscal De" ,Space(FWTAMSX3("D1_DOC")[1])		,"" ,'.T.',,'.T.',60,.F.})
+	Aadd(aPerg ,{1,"Série De" 			,Space(FWTAMSX3("D1_SERIE")[1])	,"" ,'.T.',,'.T.',20,.F.})
+	Aadd(aPerg ,{1,"Nota Fiscal Até",Space(FWTAMSX3("D1_DOC")[1])		,"" ,'.T.',,'.T.',60,.T.})
+	Aadd(aPerg ,{1,"Série Até" 			,Space(FWTAMSX3("D1_SERIE")[1])	,"" ,'.T.',,'.T.',20,.T.})
+	aAdd(aPerg ,{1,"Emissão NF De" ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.F.})
+	aAdd(aPerg ,{1,"Emissão NF Até",Ctod(space(8)),"" ,'.T.',,'.T.',80,.F.})
+	Aadd(aPerg ,{1,"Filial De" ,Space(FWTAMSX3("D1_FILIAL")[1])	,"" ,'.T.',,'.T.',20,.F.})
+	Aadd(aPerg ,{1,"Filial Ate",Space(FWTAMSX3("D1_FILIAL")[1])	,"" ,'.T.',,'.T.',20,.T.})
+	aAdd(aPerg ,{1,"Dt Entrada De" ,Ctod(space(8)),"" ,'.T.',,'.T.',80,.F.})
+	aAdd(aPerg ,{1,"Dt Entrada Até",Ctod(space(8)),"" ,'.T.',,'.T.',80,.T.})
+	aAdd(aPerg ,{3,"Mostrar Todos ?"		,1,{'Todos','Apenas lançados','Não lançados'},120,"",.F.})
+	//
+	// CriaPerg(@cPerg)
+	// Pergunte(cPerg,.F.)
+	If ParamBox(aPerg ,"Parâmetros ",aRet,,,,,,,,.T.,.T.)
 
-	oReport := TReport():New("ADORO_CENTRCIM",cTitulo,cPerg,{|oReport| ReportPrint(oReport,@cAliasRep)},cDescr)
-	oReport:SetLandscape()
-	oReport:HideParamPage()
+		MV_PAR01	:= aRet[1]
+		MV_PAR02	:= aRet[2]
+		MV_PAR03	:= aRet[3]
+		MV_PAR04	:= aRet[4]
+		MV_PAR05	:= aRet[5]
+		MV_PAR06	:= aRet[6]
+		MV_PAR07	:= aRet[7]
+		MV_PAR08	:= aRet[8]
+		MV_PAR09	:= aRet[9]
+		MV_PAR10	:= aRet[10]
+		MV_PAR11	:= aRet[11]
+		//FIM Ticket   76599 - Abel Babini - 18/07/2022 - Ajuste na chamada das perguntas para utilizar ParamBox
 
-	oNota := TRSection():New(oReport,"Nota Fiscal",{(cAliasRep)},,/*Campos do SX3*/,/*Campos do SIX*/)
-	oNota:SetTotalInLine(.F.)
-	TRCell():New(oNota,"F1_DOC"		,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
-	TRCell():New(oNota,"F1_SERIE"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
-	TRCell():New(oNota,"F1_FORNECE"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
-	TRCell():New(oNota,"F1_LOJA"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
-	TRCell():New(oNota,"A2_NOME"	,"SA2"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
-	TRCell():New(oNota,"F1_EMISSAO"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
-	TRCell():New(oNota,"F1_DTDIGIT"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		oReport := TReport():New("ADORO_CENTRCIM",cTitulo,cPerg,{|oReport| ReportPrint(oReport,@cAliasRep)},cDescr)
+		oReport:SetLandscape()
+		oReport:HideParamPage()
 
-	TRCell():New(oNota,"D1_ITEM"		,"SD1"		,/*Titulo*/			,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
-	TRCell():New(oNota,"REFFORN"		,""			,"Ref. Fornecedor",/*Mascara*/			,TamSx3("D1_COD")[1]	,/*lPixel*/	,		)
-	TRCell():New(oNota,"D1_COD"			,"SD1"	,/*Titulo*/				,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
-	TRCell():New(oNota,"B1_DESC"		,"SB1"	,/*Titulo*/				,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
-	TRCell():New(oNota,"F4_CODIGO"	,"SF4"	,"TES"						,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
-	TRCell():New(oNota,"ICMSXML"		,""			,"ICMS XML"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"ICMSNFE"		,""			,"ICMS NF-e"			,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)	
-	TRCell():New(oNota,"CONFICMS"		,""			,"CONF. ICMS"			,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
-	TRCell():New(oNota,"ICMSSTXML"	,""			,"ICMS ST XML"		,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"ICMSSTNFE"	,""			,"ICMS ST NF-e"		,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"IPIXML"			,""			,"IPI XML"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"IPINFE"			,""			,"IPI NF-e"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CONFIPI"		,""			,"CONF. IPI"			,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
-	TRCell():New(oNota,"PISXML"			,""			,"PIS XML"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"PISNFE"			,""			,"PIS NF-e"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CONFPIS"		,""			,"CONF. PIS"			,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
-	TRCell():New(oNota,"COFXML"			,""			,"COFINS XML"			,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"COFNFE"			,""			,"COFINS NF-e"		,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CONFCOF"		,""			,"CONF. COFINS"		,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
+		oNota := TRSection():New(oReport,"Nota Fiscal",{(cAliasRep)},,/*Campos do SX3*/,/*Campos do SIX*/)
+		oNota:SetTotalInLine(.F.)
+		TRCell():New(oNota,"F1_DOC"		,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		TRCell():New(oNota,"F1_SERIE"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		TRCell():New(oNota,"F1_FORNECE"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		TRCell():New(oNota,"F1_LOJA"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		TRCell():New(oNota,"A2_NOME"	,"SA2"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		TRCell():New(oNota,"F1_EMISSAO"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
+		TRCell():New(oNota,"F1_DTDIGIT"	,"SF1"		,/*Titulo*/		,/*Mascara*/	,/*Tamanho*/	,/*lPixel*/	,		)
 
-	TRCell():New(oNota,"CSTPISXML"		,""			,"CST PIS XML"		,"@!"					,05						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CSTPISNFE"		,""			,"CST PIS NF-e"		,"@!"					,05						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CSTCOFXML"		,""			,"CST COFINS XML"	,"@!"					,05						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CSTCOFNFE"		,""			,"CST COFINS NF-e"	,"@!"					,05						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CSTICMXML"		,""			,"CST ICMS XML"		,"@!"					,05						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CSTICMNFE"		,""			,"CST ICMS NF-e"	,"@!"					,05						,/*lPixel*/	,		)
-	TRCell():New(oNota,"NCMXML"		,""			,"NCM XML"			,"@!"					,10						,/*lPixel*/	,		)
-	TRCell():New(oNota,"NCMNFE"		,""			,"NCM NF-e"			,"@!"					,10						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CONFNCM"		,""			,"CONF. NCM"		,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
-	TRCell():New(oNota,"CFOPXML"		,""			,"CFOP XML"			,"@!"					,06						,/*lPixel*/	,		)
-	TRCell():New(oNota,"CFOPNFE"		,""			,"CFOP NF-e"		,"@!"					,06						,/*lPixel*/	,		)
+		TRCell():New(oNota,"D1_ITEM"		,"SD1"		,/*Titulo*/			,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
+		TRCell():New(oNota,"REFFORN"		,""			,"Ref. Fornecedor",/*Mascara*/			,TamSx3("D1_COD")[1]	,/*lPixel*/	,		)
+		TRCell():New(oNota,"D1_COD"			,"SD1"	,/*Titulo*/				,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
+		TRCell():New(oNota,"B1_DESC"		,"SB1"	,/*Titulo*/				,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
+		TRCell():New(oNota,"F4_CODIGO"	,"SF4"	,"TES"						,/*Mascara*/			,/*Tamanho*/			,/*lPixel*/	,		)
+		TRCell():New(oNota,"ICMSXML"		,""			,"ICMS XML"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"ICMSNFE"		,""			,"ICMS NF-e"			,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)	
+		TRCell():New(oNota,"CONFICMS"		,""			,"CONF. ICMS"			,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
+		TRCell():New(oNota,"ICMSSTXML"	,""			,"ICMS ST XML"		,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"ICMSSTNFE"	,""			,"ICMS ST NF-e"		,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"IPIXML"			,""			,"IPI XML"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"IPINFE"			,""			,"IPI NF-e"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CONFIPI"		,""			,"CONF. IPI"			,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
+		TRCell():New(oNota,"PISXML"			,""			,"PIS XML"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"PISNFE"			,""			,"PIS NF-e"				,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CONFPIS"		,""			,"CONF. PIS"			,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
+		TRCell():New(oNota,"COFXML"			,""			,"COFINS XML"			,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"COFNFE"			,""			,"COFINS NF-e"		,"@E 999,999,999.99"	,14						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CONFCOF"		,""			,"CONF. COFINS"		,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
 
-	TRCell():New(oNota,"OBSERVA"		,""			,"Observações"		,"@!"					,30						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CSTPISXML"		,""			,"CST PIS XML"		,"@!"					,05						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CSTPISNFE"		,""			,"CST PIS NF-e"		,"@!"					,05						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CSTCOFXML"		,""			,"CST COFINS XML"	,"@!"					,05						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CSTCOFNFE"		,""			,"CST COFINS NF-e"	,"@!"					,05						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CSTICMXML"		,""			,"CST ICMS XML"		,"@!"					,05						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CSTICMNFE"		,""			,"CST ICMS NF-e"	,"@!"					,05						,/*lPixel*/	,		)
+		TRCell():New(oNota,"NCMXML"		,""			,"NCM XML"			,"@!"					,10						,/*lPixel*/	,		)
+		TRCell():New(oNota,"NCMNFE"		,""			,"NCM NF-e"			,"@!"					,10						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CONFNCM"		,""			,"CONF. NCM"		,"@!"	,20						,/*lPixel*/	,		) //Ticket    1867 - Abel Babini - 18/09/2020 - Acrescentar Filtro de Filial e verificar inconsistências na NF
+		TRCell():New(oNota,"CFOPXML"		,""			,"CFOP XML"			,"@!"					,06						,/*lPixel*/	,		)
+		TRCell():New(oNota,"CFOPNFE"		,""			,"CFOP NF-e"		,"@!"					,06						,/*lPixel*/	,		)
 
+		TRCell():New(oNota,"OBSERVA"		,""			,"Observações"		,"@!"					,30						,/*lPixel*/	,		)
+	Endif
 Return oReport
 
 // Function ReportPrint
