@@ -36,6 +36,7 @@
 	@history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
 	@history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
 	@history ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+	@history ticket 76490 - Abel Babini       - 19/07/2022 - Corrigir arredondamento igual do calculo da duplicata.
 /*/
 User Function MT100TOK()
 
@@ -326,12 +327,14 @@ User Function MT100TOK()
 							nBaseFun  := gdFieldGet("D1_BASEFUN", i) //ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
 							nAliqFun  := gdFieldGet("D1_ALIQFUN", i) //ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
 							// nValFun  := gdFieldGet("D1_VALFUN", i) //ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
-							lValFun := GETMV("MV_RNDFUN")
-							If lValFun
+							
+							// ticket 76490 - Abel Babini       - 19/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+							// lValFun := GETMV("MV_RNDFUN")
+							// If lValFun
 								nValFun		:= Round(nBaseFun*(nAliqFun/100),2)
-							Else
-								nValFun		:= NoRound(nBaseFun*(nAliqFun/100),2)
-							Endif
+							// Else
+								// nValFun		:= NoRound(nBaseFun*(nAliqFun/100),2)
+							// Endif
 							//FIM ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
 
 							If Left(AllTrim(cCFOP),1) == "3" // Moeda Estrangeira
