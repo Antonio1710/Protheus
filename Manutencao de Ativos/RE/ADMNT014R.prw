@@ -16,6 +16,7 @@
     @history Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE - Corrigido o programa para rodar Schedule na versão Protheus V33.
     @history Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE - Corrigido o programa para rodar Schedule na versão Protheus V33.
     @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+    @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG
 /*/
 User Function ADMNT014R(aParam)
 
@@ -30,7 +31,8 @@ User Function ADMNT014R(aParam)
     Default aParam[1] 	:= "01"
     Default aParam[2] 	:= "02"
 
-    Private lJob          := IsBlind()
+    //Private lJob          := IsBlind() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
+    Private lJob          := !IsBlind() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
 
     /*
     IF !EMPTY(aParam)  //Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE
@@ -52,6 +54,8 @@ User Function ADMNT014R(aParam)
     // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
     If Select("SX6") == 0
         lJob := .T.
+    Else
+        lJob := .f.
     EndIf
     //
 
@@ -97,12 +101,26 @@ User Function ADMNT014R(aParam)
 
 Return
 
+/*/{Protheus.doc} nomeStaticFunction
+    (long_description)
+    @type  Static Function
+    @author user
+    @since 19/07/2022
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+/*/
 Static Function Executa(oProcess)
 
     Local cQry      := ""
     Local cAlias    := GetNextAlias()
 
-    Private oExcel  	:= FwMsExcel():New()
+    //Private oExcel  	:= FwMsExcel():New() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
+    Private oExcel  	:= FwMsExcelXlsx():New() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
+    
     Private dDataIni	
     Private dDataFim
     Private cNomArq
@@ -111,14 +129,11 @@ Static Function Executa(oProcess)
 
     //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
     If !lJob
-
         dMVPAR01	:= MV_PAR01
         dMVPAR02	:= MV_PAR02
         cMVPAR03	:= MV_PAR03
         cMVPAR04	:= MV_PAR04
-
     EndIf
-
 
     oExcel:AddworkSheet("Custo") // Planilha
     oExcel:AddTable ("Custo","RelCusto") // Titulo da Planilha (CabeÃ§alho)
@@ -126,7 +141,6 @@ Static Function Executa(oProcess)
     oExcel:AddColumn("Custo","RelCusto","GRUPO"	         ,1,1)
     oExcel:AddColumn("Custo","RelCusto","DESCRIÇÃO"	     ,1,1)
     oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,3,3,.T.)
-
 
     cQry    := " SELECT "
     cQry    += " D3_FILIAL,"
@@ -180,11 +194,13 @@ Static Function Executa(oProcess)
         EndIf
         
         oExcel:Activate()
-        
+
         If !(lJob)
             MsAguarde({||Processa({|| oExcel:GetXMLFile(cDIRARQ+cNomArq) })},"Processanento", "Gerando arquivo XML, aguarde....")
         Else
+            
             oExcel:GetXMLFile(cDIRARQ+cNomArq)
+
             /*
             cDIRREDE := "\RELATORIO\"
             nStatus  := __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
@@ -196,11 +212,16 @@ Static Function Executa(oProcess)
 
         Endif
 
-        oExcelApp:=MsExcel():New()                                         
+        //oExcelApp:=MsExcel():New()             // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG
         
-        If !(lJob)
+        If !lJob
+
+            oExcelApp:=MsExcel():New()             // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG
+            //oExcelApp:=FwMsExcelXlsx():New()             // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG
+
             oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
             oExcelApp:SetVisible(.T.)
+            
             /*
             cDIRARQ := "\DATA\"
             cNomArq := "REL_CUSTO_"+cEmpAnt+"_"+cFilAnt+".XLS" 
