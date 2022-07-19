@@ -519,7 +519,7 @@ User Function ADFAT17Y()
         },035,011,,,.F.,.T.,.F.,,.F.,,,.F. )
 
         oProcInt := TButton():New(010,515,"Sinc Pesa" ,oCtlPatio,{|| FWMsgRun(,{|| U_ADFAT251(), Eval(bCarCP), Eval(bLOrd) }, "Função ADFAT17Y(ADFAT017P)", "Processando...") },037,11,,,.F.,.T.,.F.,,.F.,{|| .F. },,.F. )
-        oProcInt:bWhen := {|| FWIsAdmin() .And. lPesaAut }
+        oProcInt:bWhen := {|| lPesaAut }
 
         TButton():New(010,557,"Log OP"          ,oCtlPatio,{|| carLog(oOrdPes, aOrdPes) },037,11,,,.F.,.T.,.F.,,.F.,,,.F. )
 
