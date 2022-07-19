@@ -65,15 +65,18 @@ Static lRet             := .F.
 	@history Chamado 055246 - ADRIANO SAVOINE      - 28/01/2020 - VALIDADOR DO PEDIDOS DE COMPRAS QUE CHEGAM NA PORTARIA PARA ELES VERIFICAREM SE EXISTE PEDIDO E LIBERAREM A ENTRADA.
 	@history Chamado 055246 - WILLIAM COSTA        - 29/01/2020 - Alterado a chamada do relatório de impressão de MATR110() direto para a função A120Impri.
 	@history ticket    3873 - Fernando Macieira    - 23/11/2020 - Projeto - Contrato e Controle de Entradas - São Carlos
-	@history Chamado 6716   - ANDRE MENDES (OBIFY) - 20/01/2021 - Criando a opção de alterar a condição de pagamento no pedido de vendas
+	@history Chamado 6716   - ANDRE MENDES (OBIFY) - 20/01/2021 - Criando a opção de alterar a condição de pagamento no pedidode Compras
 	@history Ticket TI      - Adriano Savoine      - 04/03/2021 - Alteração da Data de entrega verifica se vai alterar todos itens ou somente o posicionado.
 	@history Ticket 43012   - Everson              - 04/10/2021 - Tratamento para que o usuário que incluiu o pedido e o grupo de compras do qual faz parte possa alterar a data de entrega do pedido de compra.
 	@history Ticket 43012   - Everson              - 13/10/2021 - Tratamento para que o usuário que incluiu o pedido e o grupo de compras do qual faz parte possa alterar a data de entrega do pedido de compra.
 	@history Ticket T.I     - Sigoli               - 21/10/2021 - Tratamento error Log - variable does not exist NOPCA on U_ALTCONPC(MT121BRW.PRW) 13/10/2021 17:25:00 line : 1542
+	@history Ticket 76155   - Antonio Domingos     - 18/07/2022 - Alteração da Observação do Pedido de Compra para todos os itens do pedido
+
 /*/
 
 User Function MT121BRW()
-
+	
+	Local _lMV_XMT121A := SuperGetMV("MV_XMT121A",.F.,.T.) //Ativa a Nova função de altera observação do Pedido de Compra.
    
 	If __cUserID $ GETMV("MV_#USUPCF")   &&usuarios cadastrados/liberado para inclusao de pedidos de frete
 		
@@ -82,9 +85,12 @@ User Function MT121BRW()
 	Endif
 	
 	// Chamado n. 050978 || OS 052284 || TECNOLOGIA || LUIZ || 8451 || OBSERV. PEDIDO - FWNM - 08/08/2019 - Permitir alterar observacoes
-		aAdd( aRotina, {'Alterar Observação', "u_AltObsPC()", 0, 7, 0, Nil} )
+		If _lMV_XMT121A //Ticket 76155 - Antonio Domingos - 18/07/2022 - Alteração da Observação do Pedido de Compra para todos os itens do pedido
+			aAdd( aRotina, {'Alterar Obs.', "u_MT121APC()", 0, 7, 0, Nil} )
+		Else
+			aAdd( aRotina, {'Alterar Observação', "u_AltObsPC()", 0, 7, 0, Nil} )			
+		EndIf
 	//
-
 		aAdd( aRotina, {'Alterar DT.ENTREGA', "u_AltDTPC()", 0, 7, 0, Nil} ) // Chamado: 054127 - ADRIANO SAVOINE - 20/12/2019 - Alteração da Data de Entrega sem passar pela Alçada de aprovação.
 
 	
@@ -141,7 +147,7 @@ User Function PCFRETE()
 	Private aHeader01	:= {}
 	Private _aDados01	:= {}
 	
-	Private cPerg		:= "SC7CTE01" 
+	Private cPerg		:= "SSC7CTE01" 
 	Private cFilLog     := Substr(CNUMEMP,3,2)
 	Private lOk			:= .F.
 	Private aPergunte   := {}
@@ -465,7 +471,7 @@ Static Function CCSP001GD(nOpc,aDados,oGDSel,nColSel,aHead)
 	Else
 		If nColSel == 1
 			For ni := 1 to Len(aDados)
-				If !Empty(U_GDField(2,aHead,aDados,TCB_POS_CMP,"C5_NUM",ni,.T.))
+				If !Empty(U_GDField(2,aHead,aDados,TCB_POS_CMP,"C7_NUM",ni,.T.))
 					aDados[ni][1] := !aDados[ni][1]
 				Endif
 			Next ni
@@ -757,7 +763,7 @@ Static Function GERADADO()
 	    oDetalhe:aCols := {}
 	    oDetalhe:Refresh()
 	    	
-	    Pergunte("SC7CTE01" ,.F.)
+	    Pergunte("SSC7CTE01" ,.F.)
     
 Return .T.  
 
@@ -1492,9 +1498,6 @@ Static Function RunOBSLIB(cNewOBSLIB,cPedido)
 
 Return(NIL)
 
-
-
-
 User Function AltConPC()
 	
 	Local aAreaSC7 		:= SC7->(GetArea())
@@ -1780,3 +1783,304 @@ Static Function checkGrp(cDono, cUsuario, cMsg)
 	RestArea(aArea)
 
 Return lRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} fAltObsPC
+Função para Alterar Observação dos Itens do Pedido de Compras
+@author Antonio Domingos
+@since 15/07/2022
+@version 1.0
+@history Ticket 76155   - Antonio Domingos     - 18/07/2022 - Alteração da Observação do Pedido de Compra para todos os itens do pedido
+/*/
+//-------------------------------------------------------------------
+User Function MT121APC()
+Local nCnt     := 0
+Local nOpcA    := 0
+Local cVarTemp := ""
+Local oDlg     := Nil
+Local oGet     := Nil
+Local cAlias1   := 'SC7'
+Local aGetArea  := SC7->(GetArea())
+Local nRecno   := SC7->(Recno())
+Local nOpcx    := 3
+Local _nRecno  := SC7->(Recno())
+Local lRet       := .t.
+Local aAreaFIE   := FIE->( GetArea() )
+// parametros
+Local lUsrAut    := GetMV("MV_#USRLIG",,.f.) // Ativa controle de usuarios autorizados
+Local cUsrAut    := GetMV("MV_#USRPCF",,"000000") // Usuarios autorizados
+
+// dialog
+Local oDlgAltObs, OBTNALTOBS
+Local lOKAltObs  := .f.
+Local cNewObs    := SC7->C7_OBS
+Local oCmpNewObs := Array(01)
+
+Private cFilSC7 	:= SC7->C7_FILIAL
+Private cNUM    	:= SC7->C7_NUM
+Private cITEM   	:= SC7->C7_ITEM
+Private cPRODUTO  	:= SC7->C7_PRODUTO
+Private cFORNECE   	:= SC7->C7_FORNECE
+Private cLOJA   	:= SC7->C7_LOJA
+Private cOBS     	:= SC7->C7_OBS
+Private aHeader 	:= {}
+Private aCOLS   	:= {}
+Private nUsado  	:= 0
+Private cMsg        := ""
+
+// Consisto usuarios autorizados
+If lUsrAut
+	If !(cUsrAut $ RetCodUsr())
+		lRet := .f.
+		Aviso(	"MT121APC-01",;
+				"Login não autorizado... Alteração da observação não permitida!",;
+				{ "&Retorna" },,;
+				"Altera Observação" )
+	EndIf
+ElseIf AllTrim(SC7->C7_USER) <> AllTrim(RetCodUsr())
+		lRet := .f.
+		Aviso(	"MT121APC-02",;
+				"Somente comprador que incluiu este PC pode alterar a observação!... Alteração da observação não permitida!",;
+				{ "&Retorna" },,;
+				"Altera Observação" )
+ElseIf SC7->C7_RESIDUO == "S" .OR. SC7->C7_ENCER == 'E'
+	/*
+	Se o Pedido foi eliminado por resíduo - C7_RESIDUO ( S )
+	Se o Pedido estiver encerrado - C7_ENCER - ( E )
+	*/
+	lRet := .f.
+	Aviso(	"MT121APC-03",;
+			"Pedido Encerrado!... Alteração da observação não permitida!",;
+			{ "&Retorna" },,;
+			"Altera Observação" )
+ElseIf SC7->C7_QUJE <> 0
+	lRet := .f.
+	Aviso(	"MT121APC-04",;
+		"Pedido de compra atendido ou parcialmente atendido!... Alteração da observação não permitida!",;
+		{ "&Retorna" },,;
+		"Altera Observação" )
+ElseIf SC7->C7_QTDACLA > 0
+		lRet := .f.
+		Aviso(	"MT121APC-05",;
+				"Pedido de compra usado em pré-nota!... Alteração da observação não permitida!",;
+				{ "&Retorna" },,;
+				"Altera Observação" )
+ElseIf SC7->C7_CONAPRO == 'R'
+		lRet := .f.
+		Aviso(	"MT121APC-06",;
+				"Pedido de compra Rejeitado pelo aprovador!... Alteração da observação não permitida!",;
+				{ "&Retorna" },,;
+				"Altera Observação" )
+Else 
+	FIE->( dbSetOrder(1) ) // FIE_FILIAL+FIE_CART+FIE_PEDIDO
+	If FIE->( dbSeek( FWxFilial("FIE")+"P"+SC7->C7_NUM ) )
+		lRet := .f.
+		Aviso(	"MT121APC-07",;
+				"Pedido de compra possui amarração com adiantamento!... Alteração da observação não permitida!",;
+				{ "&Retorna" },,;
+				"Altera Observação" )
+	EndIf
+EndIf
+
+If !lRet
+	RestArea(aGetArea)
+	Return
+EndIf
+
+dbSelectArea(cAlias1)
+dbSetOrder(1)
+dbSeek( cFilSC7 + cNUM )
+
+While !SC7->(EOF()) .And. SC7->C7_FILIAL + SC7->C7_NUM == cFilSC7 + cNUM
+	nCnt++
+	If SC7->C7_RESIDUO == "S" .OR. SC7->C7_ENCER == 'E' .OR. SC7->C7_QUJE <> 0 .OR. SC7->C7_QTDACLA > 0
+		SC7->(dbSkip())
+		Loop
+	EndIf
+	SC7->(dbSkip())
+End
+
+If nCnt == 0
+   Return
+Endif
+
+dbSelectArea("SX3")
+dbSetOrder(1)
+dbSeek(cAlias1)
+While !EOF() .And. X3_ARQUIVO == cAlias1
+	IF X3USO(X3_USADO) .AND. cNivel >= X3_NIVEL .And.;
+		ALLTRIM(X3_CAMPO) $ 'C7_ITEM/C7_PRODUTO/C7_OBS/C7_DESCRI'
+		If X3_CAMPO <> 'C7_DESC   ' 
+			nUsado++
+			AADD(aHeader,{ TRIM(X3Titulo()) ,;
+						X3_CAMPO         ,;
+						X3_PICTURE       ,;
+						X3_TAMANHO       ,;
+						X3_DECIMAL       ,;
+						X3_VALID         ,;
+						X3_USADO         ,;
+						X3_TIPO          ,;
+						X3_ARQUIVO       ,;
+						X3_CONTEXT       })
+		EndIf
+	Endif
+	dbSkip()
+EndDo
+
+dbSelectArea(cAlias1)
+dbSetOrder(1)
+dbSeek( cFilSC7 + cNUM )
+
+nCnt := 0
+
+While !EOF() .And. SC7->C7_FILIAL + SC7->C7_NUM == cFilSC7 + cNUM
+   
+	If SC7->C7_RESIDUO == "S" .OR. SC7->C7_ENCER == 'E' .OR. SC7->C7_QUJE <> 0 .OR. SC7->C7_QTDACLA > 0
+		SC7->(dbSkip())
+		Loop
+	EndIf
+	
+	aAdd( aCOLS, Array(Len(aHeader)+1))
+   
+	nCnt++
+	nUsado:=0
+	dbSelectArea("SX3")
+	dbSetOrder(1)
+	dbSeek(cAlias1)
+	While !EOF() .And. X3_ARQUIVO == cAlias1
+		IF X3USO(X3_USADO) .AND. cNivel >= X3_NIVEL .And.;
+			ALLTRIM(X3_CAMPO) $ 'C7_ITEM/C7_PRODUTO/C7_OBS/C7_DESCRI'
+			If X3_CAMPO <> 'C7_DESC   ' 
+				nUsado++
+				cVarTemp := cAlias1+"->"+(X3_CAMPO)
+				If X3_CONTEXT # "V"
+					aCOLS[nCnt][nUsado] := &cVarTemp
+				ElseIF X3_CONTEXT == "V"
+					aCOLS[nCnt][nUsado] := CriaVar(AllTrim(X3_CAMPO))
+				Endif
+			EndIf		
+		Endif
+		dbSkip()
+	End
+	aCOLS[nCnt][nUsado+1] := .F.
+	dbSelectArea(cAlias1)
+	dbSkip()
+EndDo
+
+If nCnt == 0
+    cMsg := "Nao há Itens para alteração!"
+    Help("",1,"","SEMITENS",cMsg,1,0)
+	RestArea(aGetArea)
+	Return
+EndIf
+
+DEFINE MSDIALOG oDlg TITLE cCadastro From 8,0 To 28,80 OF oMainWnd
+
+@ 30, 2 TO 45,315 LABEL "" OF oDlg PIXEL
+
+@ 34, 006 SAY "Pedido:"     SIZE 50,7 PIXEL OF oDlg
+@ 34, 062 SAY "Fornecedor:" SIZE 50,7 PIXEL OF oDlg
+@ 34, 130 SAY "Loja:"       SIZE 50,7 PIXEL OF oDlg
+
+@ 33, 028 MSGET cNUM     When .F. SIZE 30,7 PIXEL OF oDlg
+@ 33, 097 MSGET cFORNECE When .F. SIZE 30,7 PIXEL OF oDlg
+@ 33, 150 MSGET cLOJA    When .F. SIZE 10,7 PIXEL OF oDlg
+
+oGet := MSGetDados():New(51,2,140,315,nOpcX,"u_AltPcLinOk()","u_AltPcTudoOk()","+C7_ITEM",.T.,{"C7_OBS"},,.F.,nCnt)
+
+ACTIVATE MSDIALOG oDlg ON INIT EnchoiceBar(oDlg,{||nOpcA:=1,Iif(u_AltPcTudoOk(),oDlg:End(),nOpcA:=0)},{||oDlg:End()})
+
+If nOpcA == 1
+   Begin Transaction
+      AltPcGrv(cAlias1)
+   End Transaction
+Endif
+
+Return
+//-------------------------------------------------------------------
+/*/{Protheus.doc} AltPcLinOk
+Função para verificar se a linha está ok
+@author Antonio Domingos
+@since 15/07/2022
+@version 1.0
+/*/
+//-------------------------------------------------------------------
+User Function AltPcLinOk()
+Local lRet := .T.
+Local cMsg := ""
+
+//+----------------------------------------------------
+//| Verifica se o NUM esta em branco, se ok bloqueia
+//+----------------------------------------------------
+//| Se a linha nao estiver deletada.
+If !aCols[n][nUsado+1]
+   If Empty(aCols[n][AltPcPesq("C7_PRODUTO")])
+      cMsg := "Nao sera permitido linhas sem a produto."
+      Help("",1,"","AltPcLinOk",cMsg,1,0)
+      lRet := .F.
+   Endif
+Endif
+
+Return( lRet )
+//-------------------------------------------------------------------
+/*/{Protheus.doc} AltPcTudoOk
+Função para Validar se todas as linhas estao OK
+@author Antonio Domingos
+@since 15/07/2022
+@version 1.0
+/*/
+//-------------------------------------------------------------------
+User Function AltPcTudoOk()
+Local lRet := .T.
+
+lRet := u_AltPcLinOk()
+
+Return( lRet )
+//-------------------------------------------------------------------
+/*/{Protheus.doc} AltPcPesq()
+Função para Retornar a posicao do campo no vetor aHeader
+@author Antonio Domingos
+@since 15/07/2022
+@version 1.0
+/*/
+//-------------------------------------------------------------------
+Static Function AltPcPesq(cCampo)
+Local nPos := 0
+nPos := aScan(aHeader,{|x|AllTrim(Upper(x[2]))==cCampo})
+Return(nPos)
+//-------------------------------------------------------------------
+/*/{Protheus.doc} AltPcGrv()
+Funcao de para gravar os dados
+@author Antonio Domingos
+@since 15/07/2022
+@version 1.0
+/*/
+//-------------------------------------------------------------------
+Static Function AltPcGrv(cAlias1)
+	Local lRet := .T.
+	Local nI := 0
+	Local nY := 0
+	Local cVar := ""
+	Begin Transaction      
+		dbSelectArea(cAlias1)
+		dbSetOrder(1)
+		For nI := 1 To Len(aCols)
+			dbSeek( cFilSC7 + cNUM + aCols[nI][AltPcPesq("C7_ITEM")] )
+			If !aCols[nI][nUsado+1]            
+				If Found()
+					RecLock(cAlias1,.F.)
+				Endif
+				For nY = 1 to Len(aHeader)
+					If aHeader[nY][10] # "V" .And. Trim(aHeader[nY][2]) == "C7_OBS"
+						cVar := Trim(aHeader[nY][2])
+						Replace &cVar. With aCols[nI][nY]
+						u_GrLogZBE (Date(),TIME(),cUserName,"PC/ITEM " + SC7->C7_NUM + "/" + SC7->C7_ITEM + " - VER PC ANTES DA ALTERACAO NA TABELA SCY ","COMPRAS ","MT121BRW ",;
+					   		   				"ADORO - ALTERA OBS ",ComputerName(),LogUserName()) 
+					Endif
+				Next nY
+				MsUnLock(cAlias1)      
+			Endif
+		Next nI
+	End Transaction
+Return( lRet )
+
