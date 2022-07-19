@@ -15,6 +15,7 @@
 	@version version
 	@history 01/12/2020, Andre Mendes, TKT:3515 - Ajustar a ordem das transferências, colocando as mesmas em primeiro lugar, ou seja 100.
 	@history 27/01/2022, Fer Macieira, TKT:66653- Regra Sequencia de Calculo arm 11 filial 02 TM 503 - Mudança sequência cálculo armazém devolução quebra
+	@history 18/07/2022, Fernando Macieira, TKT:75632- Sequencia de Calculo filial 02 arm 46
 /*/
 User Function MA330TRB()
 
@@ -26,6 +27,7 @@ User Function MA330TRB()
 	Local cFilProc	:= GetMV("MV_#CMFIL",,"02")
 	Local cTMProc	:= GetMV("MV_#CMTM",,"503")
 	Local cAlmProc	:= GetMV("MV_#CMALM",,"11")
+	Local cAlmDev	:= GetMV("MV_#CMALD",,"46") // @history 18/07/2022, Fernando Macieira, TKT:75632- Sequencia de Calculo filial 02 arm 46
 
 	//cTimeIni := time()
 	
@@ -55,6 +57,19 @@ User Function MA330TRB()
 				EndIf
 
 			EndIf
+
+			// @history 18/07/2022, Fernando Macieira, TKT:75632- Sequencia de Calculo filial 02 arm 46
+			/*
+			500 = Saída para Vendas
+			500 = Entrada por Devolução de Venda - Período Atual
+			*/
+			If AllTrim(TRB->TRB_LOCAL) $ AllTrim(cAlmDev) .and. AllTrim(TRB->TRB_ALIAS) == "SD1" .and. AllTrim(TRB->TRB_TIPONF) == "D"
+				RecLock("TRB", .F.)
+					TRB->TRB_ORDEM := "499"
+					TRB->TRB_NIVEL := Subs(TRB_NIVEL,1,2)+"z"
+				TRB->( msUnlock() )
+			EndIf
+			//
 
 		EndIf
 
