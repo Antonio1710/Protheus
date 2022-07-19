@@ -21,6 +21,7 @@
     @history Chamado 34655  - Abel Babini           - 28/09/2021 - Correção preenchimento do campo C7_XSOLIC
     @history Chamado 64070  - Everson               - 03/02/2022 - Tratamento para zerar valor de frete do item.
     @history Chamado TI     - Everson               - 07/02/2022 - Tratamento para zerar valor de frete do item.
+    @history Ticket 18465   - Everson               - 19/07/2022 - Rotina para envio para o barramento.
 /*/
 User Function MT120FIM()
     Local aArea      := GetArea()
@@ -126,8 +127,12 @@ User Function MT120FIM()
     //Everson - 03/02/2020. Chamado 64070.
     lmpFrt(SC7->C7_NUM)
 
+    //Everson - 19/07/2022. Chamado 18465.
+    grvBarr(SC7->C7_NUM)
+
     RestArea( aAreaSC7 )
     RestArea(aArea)
+
 Return
 
 Static Function fGrvInf()
@@ -211,8 +216,6 @@ Static Function fGrvInf()
     ENDIF
 
 return
-
-
 /*/{Protheus.doc} Static Function UpApp
     Função para gerenciar flag que será utilizado pelo APP na Central de Aprovação
     @type  Static Function
@@ -379,6 +382,55 @@ Static Function lmpFrt(cNumPed)
         End
 
     EndIf
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  User Function
+    @author Everson
+    @since 19/07/2022
+    @version 01
+/*/
+Static Function grvBarr(cNumero)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cFilter   := ""
+    Local cCmp      := ""
+    Local cTopico   := "pedidos_de_compra_protheus"
+    Local cOperacao := "C7_FILIAL;C7_NUM;C7_EMISSAO;C7_FORNECE;C7_LOJA;C7_COND;C7_CONTATO;C7_FILENT;C7_MOEDA;C7_TX;"
+    Local cFiliais  := Alltrim(GetMv("MV_#ADFAT171",,""))
+
+    If !(cFilAnt $cFiliais)
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    If (ALTERA .Or. nOpc == 4) 
+        cOperacao := "A"
+
+    ElseIf(INCLUI .Or. nOpc == 3) .Or. nOpc == 9 
+        cOperacao := "I"
+    
+    ElseIf nOpc == 5
+        cOperacao := "D"
+
+    Else
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+    
+    cFilter := " C7_FILIAL ='" + FWxFilial("SC7") + "' .And. C7_NUM = '" + cNumero + "' "
+
+    U_ADFAT27D("SC7", 1, FWxFilial("SC7") + cNumero,;
+        "SC7", 1, FWxFilial("ZHR") + cNumero, "C7_ITEM", cFilter,;
+        cTopico, cOperacao,;
+        .T., .T., .T.,;
+        cCmp) 
 
     RestArea(aArea)
 
