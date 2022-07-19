@@ -35,6 +35,7 @@
 	@history ticket 74270 - Fernando Macieira - 09/06/2022 - Devoluções não devem bloquear
 	@history ticket 75023 - Fernando Macieira - 20/06/2022 - Condição de Pagamento de Titulos
 	@history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
+	@history ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
 /*/
 User Function MT100TOK()
 
@@ -321,14 +322,25 @@ User Function MT100TOK()
 							nValIMP5 := gdFieldGet("D1_VALIMP5", i)
 							nValIMP6 := gdFieldGet("D1_VALIMP6", i)
 							nVSenar  := gdFieldGet("D1_VLSENAR", i) //Chamado 056841 - Abel Babini - 23/03/2020 - OS 058286 || FISCAL || ELIZABETE || 8954 || NF -  PRODUTOR RURAL || Descontar o valor do SENAR
+							//INICIO ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+							nBaseFun  := gdFieldGet("D1_BASEFUN", i) //ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+							nAliqFun  := gdFieldGet("D1_ALIQFUN", i) //ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+							// nValFun  := gdFieldGet("D1_VALFUN", i) //ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+							lValFun := GETMV("MV_RNDFUN")
+							If lValFun
+								nValFun		:= Round(nBaseFun*(nAliqFun/100),2)
+							Else
+								nValFun		:= NoRound(nBaseFun*(nAliqFun/100),2)
+							Endif
+							//FIM ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
 
 							If Left(AllTrim(cCFOP),1) == "3" // Moeda Estrangeira
 
 								nTtNF += nTt + nValIPI + nValFre + nDespesa + nSeguro + nValICM + nValImp5 + nValImp6 + nICMSRet - nValDesc
 
 							Else
-
-								nTtNF += nTt + nValIPI + nValFre + nDespesa + nSeguro + nICMSRet - nValDesc - nVSenar //Chamado 056841 - Abel Babini - 23/03/2020 - OS 058286 || FISCAL || ELIZABETE || 8954 || NF -  PRODUTOR RURAL || Descontar o valor do SENAR
+								//ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
+								nTtNF += nTt + nValIPI + nValFre + nDespesa + nSeguro + nICMSRet - nValDesc - nVSenar - nValFun //Chamado 056841 - Abel Babini - 23/03/2020 - OS 058286 || FISCAL || ELIZABETE || 8954 || NF -  PRODUTOR RURAL || Descontar o valor do SENAR
 
 							EndIf
 
