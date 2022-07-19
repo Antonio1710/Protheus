@@ -398,9 +398,9 @@ Static Function grvBarr(cNumero)
     //Variáveis.
     Local aArea     := GetArea()
     Local cFilter   := ""
-    Local cCmp      := ""
+    Local cCmp      := "C7_FILIAL;C7_NUM;C7_EMISSAO;C7_FORNECE;C7_LOJA;C7_COND;C7_CONTATO;C7_FILENT;C7_MOEDA;C7_TX;"
     Local cTopico   := "pedidos_de_compra_protheus"
-    Local cOperacao := "C7_FILIAL;C7_NUM;C7_EMISSAO;C7_FORNECE;C7_LOJA;C7_COND;C7_CONTATO;C7_FILENT;C7_MOEDA;C7_TX;"
+    Local cOperacao := ""
     Local cFiliais  := Alltrim(GetMv("MV_#ADFAT171",,""))
 
     If !(cFilAnt $cFiliais)
