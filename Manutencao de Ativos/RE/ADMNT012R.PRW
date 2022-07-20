@@ -27,6 +27,7 @@
     @Ticket 74594, Data 10/062022, Antonio Domingos, Desmembramento do relatorio.
     @Ticket 74929, Data 20/06/2022, Antonio Domingos, Correção do Erro em Relação SS/OS Base de dados Ceres.
     @Ticket 75147, Data 21/06/2022, Antonio Domingos, RELATORIO S.S demora na emissão do relatorio....
+    @Ticket 76780, Data 20/07/2022, Antonio Domingos, Campo "Executante" no Relatório de SS na Base Ceres está divergente.
 /*/
 
 User Function ADMNT012R(aParam)
@@ -185,13 +186,14 @@ oExcel:AddColumn(_cPlanilha,_cTitulo,"NOMESER"        ,1,1)
     cQry    += " TQB.TQB_CDSOLI AS CDSOLI,"+CRLF
     cQry    += " TQB.TQB_USUARI AS USUARI,"+CRLF
     //Ajuste @ticket 75147 - Antonio Domingos - 29/06/2022 - Solicitado por Jefferson Apolito
+    /*
     If cEmpAnt+cFilAnt $ _cMV_XMNT012
         cQry    += " STJ.TJ_CODAREA AS CDEXEC,"+CRLF
         cQry    += " STD.TD_NOME    AS NMEXEC,"+CRLF
-    else
+    else*/
         cQry    += " TQB.TQB_CDEXEC AS CDEXEC,"+CRLF    
         cQry    += " TQ4.TQ4_NMEXEC AS NMEXEC,"+CRLF
-    EndIf
+    //EndIf
     //@Ticket 11502, Data 05/04/2021, Leonardo P. Monteiro, Adição do tipo do cliente na inclusão ou alteração;
     If cEmpAnt+cFilAnt $ _cMV_XMNT012
         cQry    += " ISNULL(CONVERT(VARCHAR(2047), CONVERT(VARBINARY(2047), TJ_OBSERVA)),'') AS CODMSS, "+CRLF
