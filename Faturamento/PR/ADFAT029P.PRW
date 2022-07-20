@@ -1552,6 +1552,8 @@ User Function ADFAT29K()
     Local cSituacao := ""
     Local cPrdSAG   := ""
     Local cLote     := ""
+    Local cQuery2   := ""
+    Local cNewAlias := ""
 
     cQuery := ""
     cQuery += " SELECT  " 
@@ -1564,7 +1566,8 @@ User Function ADFAT29K()
     cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'resultado_analise_laboratorial' " 
-    cQuery += " AND ZIQ_PROCES = '2' " 
+    //cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_UUID = '10a0572d-3759-43a0-a5eb-0d3e4dbde7bc' " 
     cQuery += " AND ZIQ_SISGER = 'SAG' " 
     cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
     cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
@@ -1659,33 +1662,43 @@ User Function ADFAT29K()
 
         ElseIf U_ADFAT16F(cNmOrdem) //Atualização de agrupador de ordem de pesagem.
 
+            cQuery2 := " SELECT ZIF_NUMERO FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' "
+
+            cNewAlias := GetNextAlias()
+
+            DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery2), cNewAlias, .F., .T.)
+
+            (cNewAlias)->(DbGoTop())
+
             Begin Transaction
 
-                While ! ZIF->(Eof()) .And. ZIF->ZIF_FILIAL == FWxFilial("ZIF") .And. ZIF->ZIF_AGRUPA == cNmOrdem
+                While ! (cNewAlias)->(Eof())
 
-                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
                         DisarmTransaction()
                         Break
                         
                     EndIf
 
-                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
                         DisarmTransaction()
                         Break
 
                     EndIf
 
-                    If ! U_ADFAT165(cNmOrdem, "ZIF_LOTE", cLote, @cMsgError) //Lote da ordem de pesagem.
+                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_LOTE", cLote, @cMsgError) //Lote da ordem de pesagem.
                         DisarmTransaction()
                         Break
 
                     EndIf
 
-                    ZIF->(DbSkip())
+                    (cNewAlias)->(DbSkip())
 
                 End
 
             End Transaction
+
+            (cNewAlias)->(DbCloseArea())
 
         Else
             cMsgError := "Ordem de pesagem/agrupador " + cNmOrdem + " não localizado."
