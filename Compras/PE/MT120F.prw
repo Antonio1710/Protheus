@@ -34,6 +34,7 @@ Static cPCMot := ""
 	@history Chamado 057827 - FWNM          - 30/04/2020 - || OS 059306 || SUPRIMENTOS || IARA_MOURA || 8415 || ERRO LOG
 	@history ticket  10588  - Fernando Maci - 08/03/2021 - Liberação de pedidos - Intercompany (novas regras)
 	@history Ticket  74070  - Jonathan      - 08/06/2021 - Atualizar o C7_UM de acordo com o cadastro do produto B1_UM    
+	@history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra.
 /*/
 User Function MT120CPE
 	
@@ -584,7 +585,7 @@ User Function FGrvSCR( cTipo, cDocto, cNivel, cCodUsr, cCodApr, nTotPed, dEmissa
 	//Procura se existe o movimento no arquivo                                                
 	
 	dbSelectArea( "SCR" )
-	dbSetorder( 1 )				// FILIAL+TIPO+NUM+NIVEL
+	dbSetorder( 1 )				// CR_FILIAL, CR_TIPO, CR_NUM, CR_NIVEL, R_E_C_N_O_, D_E_L_E_T_
 	If !( MsSeek( xFilial ( "SCR" ) + cTipo + cDocto + cNivel ) ) 
 		RecLock( "SCR", .T. )
 	Else
@@ -786,47 +787,89 @@ Static Function ChkInterCo()
 
 	If lInterCo
 
-		cSql := " DELETE 
-		cSql += " FROM " + RetSqlName("SCR")
- 		cSql += " WHERE CR_FILIAL='"+SC7->C7_FILIAL+"' 
- 		cSql += " AND CR_NUM='"+SC7->C7_NUM+"'
- 		cSql += " AND CR_NIVEL<>'01'
- 		cSql += " AND CR_STATUS<>'02'
+		Begin Transaction // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
 
-		nStatus := tcSqlExec(cSql)
-	
-		If nStatus < 0
+			cSql := " DELETE 
+			cSql += " FROM " + RetSqlName("SCR")
+			cSql += " WHERE CR_FILIAL='"+SC7->C7_FILIAL+"' 
+			cSql += " AND CR_NUM='"+SC7->C7_NUM+"'
+			cSql += " AND CR_NIVEL<>'01'
+			cSql += " AND CR_STATUS<>'02'
 
-			SCR->( dbSetOrder(4) ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_
-			If SCR->( dbSeek(SC7->C7_FILIAL+SC7->C7_NUM) )
+			nStatus := tcSqlExec(cSql)
 		
-				Do While SCR->( !EOF() ) .and. SCR->CR_FILIAL==SC7->C7_FILIAL .and. SCR->CR_NUM==SC7->C7_NUM
-				
-					If AllTrim(SCR->CR_NIVEL)<>"01" .and. AllTrim(SCR->CR_STATUS<>"02")
+			If nStatus < 0
 
-						RecLock("SCR", .F.)
-							SCR->( dbDelete() )
-						SCR->( msUnLock() )
+				//SCR->( dbSetOrder(4) ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_ // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
+				SCR->( dbOrderNickName("SCRNUM") ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_ // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
+				If SCR->( dbSeek(SC7->C7_FILIAL+SC7->C7_NUM) )
+			
+					Do While SCR->( !EOF() ) .and. SCR->CR_FILIAL==SC7->C7_FILIAL .and. SCR->CR_NUM==SC7->C7_NUM
+					
+						If AllTrim(SCR->CR_NIVEL)<>"01" .and. AllTrim(SCR->CR_STATUS<>"02")
 
-					EndIf
+							RecLock("SCR", .F.)
+								SCR->( dbDelete() )
+							SCR->( msUnLock() )
 
-					SCR->( dbSkip() )
+						EndIf
 
-				EndDo
-				
+						SCR->( dbSkip() )
+
+					EndDo
+					
+				EndIf
+			
 			EndIf
-		
-		EndIf
 
-		// Mudo o SCR->CR_XTPLIB == "A" para que as lógicas contidas nas demais rotinas (como o ADOA040) não sofram impactos, pois neste caso o Vistador vira Aprovador
-		SCR->( dbSetOrder(4) ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_
-		If SCR->( dbSeek(SC7->C7_FILIAL+SC7->C7_NUM) )
+			// Mudo o SCR->CR_XTPLIB == "A" para que as lógicas contidas nas demais rotinas (como o ADOA040) não sofram impactos, pois neste caso o Vistador vira Aprovador
+			//SCR->( dbSetOrder(4) ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_ // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
+			SCR->( dbOrderNickName("SCRNUM") ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_ // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
+			If SCR->( dbSeek(SC7->C7_FILIAL+SC7->C7_NUM) )
 
-			RecLock("SCR", .F.)
-				SCR->CR_XTPLIB := "A"
-			SCR->( msUnLock() )
+				RecLock("SCR", .F.)
+					SCR->CR_XTPLIB := "A"
+				SCR->( msUnLock() )
 
-		EndIf
+			Else
+
+				//@history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
+				cSql := " UPDATE " + RetSqlName("SCR")
+				cSql += " SET CR_XTPLIB = 'A'
+				cSql += " WHERE CR_FILIAL='"+SC7->C7_FILIAL+"' 
+				cSql += " AND CR_NUM='"+SC7->C7_NUM+"'
+				cSql += " AND D_E_L_E_T_=''
+
+				nStatus := tcSqlExec(cSql)
+
+			EndIf
+
+			// @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra		
+			// Checa resultado
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			EndIf
+
+			cQuery := " SELECT CR_XTPLIB
+			cQuery += " FROM " + RetSqlName("SCR") + " (NOLOCK)
+			cQuery += " WHERE CR_FILIAL='"+SC7->C7_FILIAL+"' 
+			cQuery += " AND CR_NUM='"+SC7->C7_NUM+"'
+			cQuery += " AND D_E_L_E_T_=''
+
+			tcquery cQuery New Alias "Work"
+
+			Work->( dbGoTop() )
+			If Work->( !EOF() )
+				If Work->CR_XTPLIB<>"A"
+					DisarmTransaction() 
+				EndIf
+			EndIf
+
+			If Select("Work") > 0
+				Work->( dbCloseArea() )
+			EndIf
+
+		End Transaction // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra		
 
 	EndIf
 

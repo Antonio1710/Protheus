@@ -21,8 +21,8 @@ Static _cUsuDPR := ""      //por Adriana em 24/05/2017 chamado 035167
 	@history Chamado 048333	- Adriana       - 18/04/2019 - Tratar SENAR sem FUNRURAL
 	@history Chamado 048333	- Adriana     	- 24/04/2019 - Informar quando produtor tem Liminar
 	@history Chamado TI		- Adriana		- 04/08/2020 - Desabilitar botao MEMO, devido error.log InterFunctionCall: cannot find function U_MEMOCOMP
+	@history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra.
 /*/
-
 User Function MA120BUT()
 
 	Local aButtons	:= {}
@@ -972,7 +972,8 @@ Static Function RunAltForPC(cNumPC,cForPC,cLojPC,cNumCot,cNEWCodFor,cNEWLojFor)
 		EndIf
 		
 		// Alcada
-		SCR->( dbSetOrder(4) ) // CR_FILIAL+CR_NUM
+		//SCR->( dbSetOrder(4) ) // CR_FILIAL+CR_NUM
+		SCR->( dbOrderNickName("SCRNUM") ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_ // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
 		If SCR->( dbSeek( FWxFilial("SCR")+cNumPC ) )
 			Do While SCR->( !EOF() ) .and. SCR->CR_FILIAL == FWxFilial("SCR") .and. AllTrim(SCR->CR_NUM) == AllTrim(cNumPC)
 				RecLock("SCR", .f.)
