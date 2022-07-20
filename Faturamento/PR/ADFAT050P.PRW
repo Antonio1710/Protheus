@@ -1992,7 +1992,15 @@ User Function ADFAT50P(cNmOrdem, nPeso, cMsgError)
 
     EndIf
 
+    //Valida tipo de embalagem.
     cTpEmb := ZIM->ZIM_TPEMB
+
+    If Empty(cTpEmb)
+        cMsgError := "Produto " + cPrdSAG + " sem tipo de embalagem definido(ZIM_TPEMB-ZIM)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
 
     //Valida produto no Gemba.
     If ! U_ADFAT50K(cPrdSAG, @cMsgError)
