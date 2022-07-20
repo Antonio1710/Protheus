@@ -22,8 +22,10 @@
     @history Chamado 64070  - Everson               - 03/02/2022 - Tratamento para zerar valor de frete do item.
     @history Chamado TI     - Everson               - 07/02/2022 - Tratamento para zerar valor de frete do item.
     @history Ticket 18465   - Everson               - 19/07/2022 - Rotina para envio para o barramento.
+    @history Ticket  76847  - Fernando Macieira     - 20/07/2021 - falha aprovação pedido de compra
 /*/
 User Function MT120FIM()
+
     Local aArea      := GetArea()
     Local aAreaSC7   := SC7->( GetArea() )
     Local nQtdApr    := 0
@@ -334,7 +336,8 @@ Static Function UpApp()
 
     // Chamado TI - FWNM - 14/05/2020 - Preenche campo customizado CR_XLEGAPP
     // Grava SCR
-    SCR->( dbSetOrder(4) ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_
+    //SCR->( dbSetOrder(4) ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_
+    SCR->( dbOrderNickName("SCRNUM") ) // CR_FILIAL, CR_NUM, R_E_C_N_O_, D_E_L_E_T_ // @history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra
     If SCR->( dbSeek(FWxFilial("SCR")+cNumPC) )
 
         Do While SCR->( !EOF() ) .and. SCR->CR_FILIAL==FWxFilial("SCR") .and. AllTrim(SCR->CR_NUM)==AllTrim(cNumPC)
