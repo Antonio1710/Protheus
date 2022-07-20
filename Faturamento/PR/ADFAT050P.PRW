@@ -1922,3 +1922,391 @@ User Function ADFAT50O(cString)
 	cString := FwCutOff(cString,.T.)
 
 Return cString
+/*/{Protheus.doc} ADFAT50P
+	Envio de ordem de pesagem para descarga.
+	@type  User Function
+	@author Everson
+	@since 19/07/2022
+	@version 01
+/*/
+User Function ADFAT50P(cNmOrdem, nPeso, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cASMX     := "OrderReceiving.asmx"
+    Local cUrl      := GetMv("MV_#GEMBA",,"http://186.224.100.105:48884/WsGemba/" + cASMX)
+    Local oWsdl     := WSOrderReceiving():New()
+    Local cFornece  := "" 
+    Local cLoja     := ""
+    Local cPrdSAG   := ""
+    Local cPlaca    := ""
+    Local cNFSer    := ""
+    Local cQtdOrd   := ""
+    Local cTpEmb    := ""
+    Local cMetodo   := "Insert"
+
+    Default cNmOrdem    := ""
+    Default nPeso       := 0
+    Default cMsgError   := ""
+
+    If Empty(cUrl)
+        cMsgError := "URL não definida."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If Empty(cNmOrdem)
+        cMsgError := "Ordem de pesagem não informada."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If nPeso <= 0
+        cMsgError := "Peso da ordem não informado."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT16A(cNmOrdem)
+        cMsgError := "Ordem de pesagem não localizada(ZIF)(Get - dados de carregamento do Gemba)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cFornece := ZIF->ZIF_FORNEC
+    cLoja    := ZIF->ZIF_LJFORN
+    cPrdSAG  := Alltrim(cValToChar(ZIF->ZIF_PRDSAG))
+    cPlaca   := Alltrim(cValToChar(ZIF->ZIF_PLACA))
+    cNFSer   := Alltrim(cValToChar(ZIF->ZIF_NF)) + Alltrim(cValToChar(ZIF->ZIF_SERIE))
+    cQtdOrd  := cValToChar(Round(Val(cValToChar(ZIF->ZIF_QUANT)),0))
+
+    //Posiciona no produto SAG.
+    If ! U_ADFAT20B(cPrdSAG)
+        cMsgError := "Produto " + cPrdSAG + " não localizado(ZIM)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Valida tipo de embalagem.
+    cTpEmb := ZIM->ZIM_TPEMB
+
+    If Empty(cTpEmb)
+        cMsgError := "Produto " + cPrdSAG + " sem tipo de embalagem definido(ZIM_TPEMB-ZIM)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Valida produto no Gemba.
+    If ! U_ADFAT50K(cPrdSAG, @cMsgError)
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    DbSelectArea("ZI8")
+    ZI8->(DbSetOrder(1))
+    ZI8->(DbGoTop())
+    If ! ZI8->( DbSeek( FWxFilial("ZI8") + ZIF->ZIF_LOTE))
+        cMsgError := "Lote " + ZIF->ZIF_LOTE + " não localizado(ZI8)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf 
+
+    cLote := Alltrim(cValToChar(ZI8->ZI8_DESLOT))
+
+    //Cadastro de fornecedor.
+    If ! U_ADFAT50Q(cFornece, cLoja, @cMsgError)
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    oWsdl:_URL               := cUrl
+    oWsdl:CCD_COMPANY_UNIT   := cCodCop
+    oWsdl:CDS_CODE_RECEIVING := cNmOrdem
+
+    oOrder := OrderReceiving_orderReceiving():New()
+    oOrder:CCD_COMPANY_UNIT     := cCodCop
+    oOrder:CDS_CODE_PRODUCT     := cPrdSAG
+    oOrder:CDS_CODE_RECEIVING   := cNmOrdem
+    oOrder:CDS_CODE_SUPPLIER    := cFornece+cLoja
+    oOrder:CDS_OBSERVATION      := ""
+    oOrder:CDT_MANUFACTURE      := Month2Str(Date()) + "/" + Day2Str(Date()) + "/" + Year2Str(Date())
+    oOrder:CDT_VALIDITY         := Month2Str(Date()+30) + "/" + Day2Str(Date()+30) + "/" + Year2Str(Date()+30)
+    oOrder:CNM_DRIVER           := "MOTORISTA"
+    oOrder:CNR_LOT              := cLote
+    oOrder:CNR_PLATE            := cPlaca
+    oOrder:CPS_BRUTE_QUANTITY   := cValToChar(nPeso)
+    oOrder:CPS_NOMINAL_QUANTITY := cQtdOrd
+    oOrder:CTP_PRODUCT_RECEIVING:= cTpEmb
+    oOrder:CVL_DOCUMENT_NUMBER  := cNFSer
+
+    Aadd(oWsdl:OWSORDERSRECEIVING:OWSORDERRECEIVING , oOrder)
+
+    oWsdl:Insert()
+
+    If ValType(oWsdl:OWSINSERTRESULT:OWSSTATUS) <> "A" .Or. Len(oWsdl:OWSINSERTRESULT:OWSSTATUS) < 1
+        cMsgError := "WS Gemba não retornou dados do método Insert(Ordem de pesagem " + cNmOrdem + "). " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cCodRet := oWsdl:OWSINSERTRESULT:OWSSTATUS[1]:CSTATUSCODE
+    cErro   := oWsdl:OWSINSERTRESULT:OWSSTATUS[1]:CDESCRIPTION
+
+    If ! (cCodRet $"0/1")
+        cMsgError := "Gemba retornou código inexistente " + cCodRet + " para ordem de pesagem " + cNmOrdem + " (método " + cMetodo + "). " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If cCodRet == "0"
+        cMsgError := "Erro na execução do método " + cMetodo + " para ordem de pesagem " + cNmOrdem + ". " + cErro + " " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    FreeObj(oOrder)
+    FreeObj(oWsdl)
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} ADFAT50P
+	Envio de ordem de pesagem final de descarga.
+	@type  User Function
+	@author Everson
+	@since 19/07/2022
+	@version 01
+/*/
+User Function ADFAT50R(cNmOrdem, nPeso, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cASMX     := "OrderReceiving.asmx"
+    Local cUrl      := GetMv("MV_#GEMBA",,"http://186.224.100.105:48884/WsGemba/" + cASMX)
+    Local oWsdl     := WSOrderReceiving():New()
+    Local cMetodo   := "SetTareWeight"
+
+    Default cNmOrdem    := ""
+    Default nPeso       := 0
+    Default cMsgError   := ""
+
+    If Empty(cUrl)
+        cMsgError := "URL não definida."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If Empty(cNmOrdem)
+        cMsgError := "Ordem de pesagem não informada."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If nPeso <= 0
+        cMsgError := "Peso da ordem não informado."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT16A(cNmOrdem)
+        cMsgError := "Ordem de pesagem não localizada(ZIF)(Get - dados de carregamento do Gemba)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    oWsdl:_URL               := cUrl
+    oWsdl:CCD_COMPANY_UNIT   := cCodCop
+    oWsdl:CDS_CODE_RECEIVING := cNmOrdem
+    oWsdl:CPS_TARE_QUANTITY  := cValToChar(nPeso)
+
+    oWsdl:SetTareWeight()
+
+    If ValType(oWsdl:OWSSETTAREWEIGHTRESULT:OWSSTATUS) <> "A" .Or. Len(oWsdl:OWSSETTAREWEIGHTRESULT:OWSSTATUS) < 1
+        cMsgError := "WS Gemba não retornou dados do método SetTareWeight(Ordem de pesagem " + cNmOrdem + "). " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cCodRet := oWsdl:OWSSETTAREWEIGHTRESULT:OWSSTATUS[1]:CSTATUSCODE
+    cErro   := oWsdl:OWSSETTAREWEIGHTRESULT:OWSSTATUS[1]:CDESCRIPTION
+
+    If ! (cCodRet $"0/1")
+        cMsgError := "Gemba retornou código inexistente " + cCodRet + " para ordem de pesagem " + cNmOrdem + " (método " + cMetodo + "). " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If cCodRet == "0"
+        cMsgError := "Erro na execução do método " + cMetodo + " para ordem de pesagem " + cNmOrdem + ". " + cErro + " " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    FreeObj(oWsdl)
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} User Function ADFAT50E
+    Envio de cadastro de fornecedor para o Gemba.
+    @type  Function
+    @author Everson
+    @since 19/07/2022
+    @version 01
+/*/
+User Function ADFAT50Q(cFornece, cLoja, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cASMX     := "Supplier.asmx"
+    Local cUrl      := GetMv("MV_#GEMBA",,"http://186.224.100.105:48884/WsGemba/" + cASMX)
+    Local oWsdl     := WSSupplier():New()
+    Local oFornec   := Nil
+    Local cMetodo   := "Insert"
+    Local cCodRet   := ""
+    Local cErro     := ""
+
+    Local cEndereco := ""
+    Local cCidade   := ""
+    Local cCep      := ""
+    Local cTelefone := ""
+    Local cEst      := ""
+
+    Default cFornece    := ""
+    Default cLoja       := ""
+    Default cMsgError   := ""
+    Default lUpdate     := .T.
+
+    If Empty(cUrl)
+        cMsgError := "URL não definida."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If Empty(cFornece) .Or. Empty(cLoja)
+        cMsgError := "Código de fornecedor e/ou loja não informados."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    DbSelectArea("SA2")
+    SA2->(DbSetOrder(1))
+    If ! SA2->(DbSeek( FWxFilial("SA2") + cFornece + cLoja ))
+        cMsgError := "Fornecedor " + cFornece + cLoja + " não localizado(SA2)."
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    oWsdl:_URL              := cUrl
+    oWsdl:CDS_CODE_SUPPLIER := cFornece+cLoja
+
+    oWsdl:Exists()
+
+    If ValType(oWsdl:OWSEXISTSRESULT:OWSSTATUS) <> "A" .Or. Len(oWsdl:OWSEXISTSRESULT:OWSSTATUS) < 1
+        cMsgError := "WS Gemba não retornou dados do método Exists(Fornecedor " + cFornece + cLoja + "). " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cCodRet := oWsdl:OWSEXISTSRESULT:OWSSTATUS[1]:CSTATUSCODE
+    cErro   := oWsdl:OWSEXISTSRESULT:OWSSTATUS[1]:CDESCRIPTION
+
+    If ! (cCodRet $"0/1")
+        cMsgError := "Gemba retornou código inexistente " + cCodRet + " para fornecedor " + cFornece + cLoja + " (método Exists). " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If cCodRet == "1"
+        FreeObj(oWsdl)
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    cEndereco := U_ADFAT50O(Substr(Alltrim(SA2->A2_END) + "," + Alltrim(SA2->A2_BAIRRO),1,50))
+    cCidade   := U_ADFAT50O(Substr(Alltrim(SA2->A2_MUN),1,50))
+    cCep      := U_ADFAT50O(Substr(Alltrim(cValToChar(SA2->A2_CEP)),1,10))
+    cTelefone := U_ADFAT50O(Substr(Alltrim(cValToChar(SA2->A2_DDD)) + Alltrim(cValToChar(SA2->A2_TEL)) ,1,15))
+    cEst      := U_ADFAT50O(Substr(Alltrim(cValToChar(SA2->A2_EST)),1,2))
+
+    oFornec := Supplier_supplier():New()
+    oFornec:CCD_COMPANY_UNIT  := cCodCop
+    oFornec:CDS_ADDRESS       := Iif(Empty(cEndereco), "NC", cEndereco)
+    oFornec:CDS_CODE_SUPPLIER := cFornece+cLoja
+    
+    If SA2->A2_TIPO == "J"
+        oFornec:CDS_CNPJ := U_ADFAT50O(Alltrim(cValToChar(SA2->A2_CGC)))
+        oFornec:CDS_CPF  := ""
+    Else
+        oFornec:CDS_CPF  := U_ADFAT50O(Alltrim(cValToChar(SA2->A2_CGC)))
+        oFornec:CDS_CNPJ := ""
+
+    EndIf
+    
+    oFornec:CDS_EMAIL    := Substr(Alltrim(cValToChar(SA2->A2_EMAIL)),1,50)
+    oFornec:CNM_CITY     := Iif(Empty(cCidade),"NC", cCidade)
+    oFornec:CNM_COUNTRY  := "BRASIL"
+    oFornec:CNM_SUPPLIER := Substr(Alltrim(cValToChar(SA2->A2_NOME)),1,60) + " " + cFornece+cLoja
+    oFornec:CNR_CEP      := Iif(Empty(cCep), "00000000" , cCep)
+    oFornec:CNR_PHONE    := cTelefone
+    oFornec:CSG_STATE    := Iif(Empty(cEst), "NC", cEst) 
+
+    Aadd(oWsdl:OWSSUPPLIERS:OWSSUPPLIER , oFornec)
+
+    oWsdl:Insert()  
+
+    If ValType(oWsdl:OWSINSERTRESULT:OWSSTATUS) <> "A" .Or. Len(oWsdl:OWSINSERTRESULT:OWSSTATUS) < 1
+        cMsgError := "WS Gemba não retornou dados do método Insert(Fornecedor " + cFornece + cLoja + "). " + GetWSCError()
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    cCodRet := oWsdl:OWSINSERTRESULT:OWSSTATUS[1]:CSTATUSCODE
+    cErro   := oWsdl:OWSINSERTRESULT:OWSSTATUS[1]:CDESCRIPTION
+
+    If ! (cCodRet $"0/1")
+        cMsgError := "Gemba retornou código inexistente " + cCodRet + " para fornecedor " + cFornece + cLoja + " (método " + cMetodo + "). " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If cCodRet == "0"
+        cMsgError := "Erro na execução do método " + cMetodo + " para fornecedor " + cFornece + cLoja + ". " + cErro
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    FreeObj(oFornec)
+    FreeObj(oWsdl)
+
+    RestArea(aArea)
+
+Return .T.
