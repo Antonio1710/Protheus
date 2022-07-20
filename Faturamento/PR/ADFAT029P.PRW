@@ -99,6 +99,7 @@ User Function ADFAT29B()
     Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
     Local cOperac   := ""
     Local envBar    := ""
+    Local cTpEmp    := ""    
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -169,6 +170,7 @@ User Function ADFAT29B()
         cRoteiro  := Alltrim(cValToChar(oJson['dados']['roteiro']))
         nToleran  := Val(cValToChar(oJson['dados']['tolerancia']))
         envBar    := Alltrim(cValToChar(oJson['dados']['envBarra']))
+        cTpEmp    := Alltrim(cValToChar(oJson['dados']['tpPrdSag']))
 
         If cAtivo == "0"
             cAtivo := "2"
@@ -237,6 +239,7 @@ User Function ADFAT29B()
             oModel:SetValue("MD_MASTER", "ZIM_GRPSAG", cGrpSAG)
             oModel:SetValue("MD_MASTER", "ZIM_SGPSAG", cSGrpSAG)
             oModel:SetValue("MD_MASTER", "ZIM_ATIVO" , cAtivo)
+            oModel:SetValue("MD_MASTER", "ZIM_TPEMB" , cTpEmp)
 
         EndIf
 
