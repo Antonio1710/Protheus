@@ -1779,7 +1779,6 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 			cHtml += ' 	</body>'
 			cHtml += ' </html>'
 
-	lJob:=.t.	
 	If !(lJob)
         oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
         oExcelApp:SetVisible(.T.)
