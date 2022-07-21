@@ -23,6 +23,7 @@
     @history Chamado TI     - Everson               - 07/02/2022 - Tratamento para zerar valor de frete do item.
     @history Ticket 18465   - Everson               - 19/07/2022 - Rotina para envio para o barramento.
     @history Ticket  76847  - Fernando Macieira     - 20/07/2021 - falha aprovação pedido de compra
+    @history Ticket 18465   - Everson           - 21/07/2022 - Envio de registro para o barramento.
 /*/
 User Function MT120FIM()
 
@@ -404,7 +405,7 @@ Static Function grvBarr(cNumero)
     Local cCmp      := "C7_FILIAL;C7_NUM;C7_EMISSAO;C7_FORNECE;C7_LOJA;C7_COND;C7_CONTATO;C7_FILENT;C7_MOEDA;C7_TX;"
     Local cTopico   := "pedidos_de_compra_protheus"
     Local cOperacao := ""
-    Local cFiliais  := Alltrim(GetMv("MV_#ADFAT171",,""))
+    Local cFiliais  := Alltrim(GetMv("MV_#FAT171",,"")) //Ticket 18465   - Everson - 21/07/2022.
 
     If !(cFilAnt $cFiliais)
         RestArea(aArea)
