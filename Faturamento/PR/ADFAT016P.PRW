@@ -378,14 +378,13 @@ Return lRet
     @since 09/12/2021
     @version 01
 /*/
-User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
+User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
     Local oModel    := Nil
     Local lRet      := .F.
     Local aError    := {}
-    Local cMsgError := ""
     Local cPlaca    := ""
     Local cNmFornec := ""
     Local cUsuario  := Iif(Empty(__cUserID), "000000", __cUserID)
@@ -394,7 +393,8 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
     Local cStatLab  := ""
     Local cCliFor   := ""
 
-    Default cOrdem  := ""
+    Default cOrdem    := ""
+    Default cMsgError := ""
 
     If Empty(Alltrim(cValToChar(cCP)))
         RestArea(aArea)
@@ -553,7 +553,7 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem)
 
 Return lRet
 /*/{Protheus.doc} ADFAT163
-    Deleta ordem de pesagem do tipo "Entrada".
+    Deleta ordem de pesagem do tipo "Entrada" vinculadas ao controle de pátio.
     @type  User Function
     @author Everson
     @since 10/12/2021
@@ -563,75 +563,135 @@ User Function ADFAT163(cCP, cMsgError)
 
     //Variáveis.
     Local aArea     := GetArea()
-    Local lRet      := .T.
+    Local lRet      := .F.
     Local cNmOrdem  := ""
     Local cQuery    := ""
+    Local aNotas    := {}
+    Local cAlias    := ""
+    Local cAgrupador:= ""
 
     Default cMsgError := ""
 
     If Empty(Alltrim(cValToChar(cCP)))
         RestArea(aArea)
-        Return lRet
+        Return .T.
 
     EndIf
- 
-    DbSelectArea("ZIF")
-    ZIF->(DbSetOrder(1))
-    If ! ZIF->(DbSeek( FWxFilial("ZIF") + cCP))
+
+    //Posiciona na ordem de pesagem pelo controle de pátio.
+    If ! U_ADFAT17U(cCP)
         RestArea(aArea)
-        Return lRet
+        Return .T.
 
     EndIf   
 
-    cQuery := " SELECT ZIF_NUMERO, ZIF_AGRUPA FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE  ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_CTPATI = '" + cCP + "' AND ZIF.D_E_L_E_T_ = '' "
+    cQuery := " SELECT ZIF_NUMERO, ZIF_AGRUPA, ZIF_NF, ZIF_SERIE, ZIF_FORNEC, ZIF_LJFORN FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE  ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_CTPATI = '" + cCP + "' AND ZIF.D_E_L_E_T_ = '' ORDER BY ZIF_NUMERO "
 
-    If Select("D_DORDEM") > 0
-        D_DORDEM->(DbCloseArea())
+    cAlias := GetNextAlias()
 
-    EndIf
+    DbUseArea( .T., "TOPCONN", TcGenQry( ,, cQuery ) , cAlias, .T., .F. )
 
-    TcQuery cQuery New Alias "D_DORDEM"
-    DbSelectArea("D_DORDEM")
-    D_DORDEM->(DbGoTop())
-
-    DbSelectArea("ZIG")
-    ZIG->(DbSetOrder(2))
+    (cAlias)->(DbGoTop())
 
     Begin Transaction
 
-        While ! D_DORDEM->(Eof()) 
+        While ! (cAlias)->(Eof()) 
 
-            cNmOrdem := Iif(Empty(D_DORDEM->ZIF_AGRUPA), D_DORDEM->ZIF_NUMERO, D_DORDEM->ZIF_AGRUPA)
+            cNmOrdem    := (cAlias)->ZIF_NUMERO
+            cAgrupador  := (cAlias)->ZIF_AGRUPA
 
-            If ZIG->(DbSeek(FWxFilial("ZIG") + cNmOrdem))
-
-                //Cancela ticket de pesagem.
-                If ! U_ADFAT172(cCP, ZIG->ZIG_ORDEM, ZIG->ZIG_NUMERO,,,@cMsgError)
-                    lRet := .F.
-                    DisarmTransaction()
-                    Break
-
-                EndIf
-
-            EndIf
-
-            //Cancela ordem de pesagem.
-            If ! U_ADFAT166(cNmOrdem, @cMsgError)
-                lRet := .F.
+            If ! U_ADFAT16I(cCP, cNmOrdem, cAgrupador, @cMsgError)
                 DisarmTransaction()
                 Break
 
             EndIf
 
-            D_DORDEM->(DbSkip())
+            Aadd(aNotas,{(cAlias)->ZIF_NF,  (cAlias)->ZIF_SERIE, (cAlias)->ZIF_FORNEC, (cAlias)->ZIF_LJFORN})
+
+            (cAlias)->(DbSkip())
 
         End
 
+        //Marca nota fiscal de entrada.
+        U_ADFAT16H(aNotas, "2")
+
+        lRet := .T.
+
     End Transaction
+
+    (cAlias)->(DbCloseArea())
 
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} ADFAT16I
+    Deleta ordem de pesagem de entrada.
+    @type  User Function
+    @author Everson
+    @since 21/07/2022
+    @version 01
+/*/
+User Function ADFAT16I(cCP, cNmOrdem, cAgrupador, cMsgError)
+
+    //Variáveis.
+    Local aArea := GetArea()
+
+    Default cMsgError := ""
+
+    If U_ADFAT196(Iif(!Empty(cAgrupador),cAgrupador,cNmOrdem))
+
+        //Cancela ticket de pesagem.
+        If ! U_ADFAT172(cCP, ZIG->ZIG_ORDEM, ZIG->ZIG_NUMERO,"E",,@cMsgError)
+            RestArea(aArea)
+            Return .F.
+
+        EndIf
+
+    EndIf
+
+    //Cancela ordem de pesagem.
+    If ! U_ADFAT166(cNmOrdem, @cMsgError)
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    RestArea(aArea)
+
+Return .T.
+/*/{Protheus.doc} ADFAT16H
+    Marca notas de entrada.
+    @type  User Function
+    @author Everson
+    @since 21/07/2022
+    @version 01
+/*/
+User Function ADFAT16H(aNotas, cMarca)
+
+    //Variáveis.
+    Local aArea := GetArea()
+    Local nAux  := 1
+
+    DbSelectArea("SF1")
+    SF1->(DbSetOrder(1))
+    SF1->(DbGoTop())
+
+    For nAux := 1 To Len(aNotas)
+
+        If ! SF1->(DbSeek( FWxFilial("SF1") + aNotas[nAux][1] + aNotas[nAux][2] + aNotas[nAux][3] + aNotas[nAux][4]  ))
+            Loop
+
+        EndIf
+
+        RecLock("SF1", .F.)
+            SF1->F1_XPOSORD := cMarca // 1=Possui ordem pesagem vinculada, 2=Não possui ordem de pesagem vinculada.
+        SF1->(MsUnlock())
+
+    Next nAux
+
+    RestArea(aArea)
+
+Return Nil
 /*/{Protheus.doc} ADFAT167
     Gera ordem de pesagem do tipo "Ração".
     @type  User Function
@@ -956,7 +1016,7 @@ User Function ADFAT16C(cNmOrdem, cMsgError)
 
     If ! U_ADFAT16A(cNmOrdem)
         cMsgError := "Ordem de pesagem " + cNmOrdem + " não encontrada."
-        Help(Nil, Nil, "Função ADFAT166(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        Help(Nil, Nil, "Função ADFAT16C(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
 
