@@ -64,6 +64,7 @@
 	@history Ticket  TI     - Leonardo P. Monteiro - 26/02/2022 - Inclusão de conouts no fonte. 
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 75647   - Everson, 01/07/2022, descomentada função envSF.
+	@history Ticket 76915   - Fernando Macieira, 21/07/2022, variable does not exist LSFINT on ENVSF(M410STTS.PRW) 09/07/2022 21:31:05 line : 2575
 /*/
 User Function M410STTS()
 
@@ -2569,6 +2570,8 @@ Static Function envSF(_lBon,_lDoa,cExpSql)
 	Default _lBon	:= .F.
 	Default _lDoa	:= .F.
 	Default cExpSql	:= ""
+
+	lSfInt	:= (IsInCallStack('U_RESTEXECUTE') .OR. IsInCallStack('RESTEXECUTE')) // @history Ticket 76915   - Fernando Macieira, 21/07/2022, variable does not exist LSFINT on ENVSF(M410STTS.PRW) 09/07/2022 21:31:05 line : 2575
 
 	//Somente para empresa 01 e filial 02.
 	If lSfInt .Or. Alltrim(cEmpAnt) <> "01" .Or.;
