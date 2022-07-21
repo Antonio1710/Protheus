@@ -148,10 +148,12 @@ Static Function carPesagens(dDtIni, dDtFim, oPesagens, aPesagens)
 
     //Variáveis.
     Local aArea     := GetArea()
-    Local cQuery    := " SELECT * FROM " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG WHERE ZIG_FILIAL = '" + FWxFilial("ZIG") + "' AND ZIG_DTPES2 >= '" + DToS(dDtIni) + "' AND ZIG_DTPES2 <= '" + DToS(dDtFim) + "' AND ZIG_INICIA = '4' AND ZIG_TPSEQU = '1' AND ZIG.D_E_L_E_T_ = '' ORDER BY ZIG_ORDEM "
+    Local cQuery    := ""
     Local cProduto  := ""
     Local cOperacao := ""
     Local nIndex    := 0
+
+    cQuery    := " SELECT * FROM " + RetSqlName("ZIG") + " (NOLOCK) AS ZIG WHERE ZIG_FILIAL = '" + FWxFilial("ZIG") + "' AND ZIG_DTPES2 >= '" + DToS(dDtIni) + "' AND ZIG_DTPES2 <= '" + DToS(dDtFim) + "' AND ZIG_INICIA = '4' AND ZIG_TPSEQU = '1' AND ZIG.D_E_L_E_T_ = '' ORDER BY ZIG_ORDEM "
 
     aPesagens := {}
 
@@ -173,7 +175,7 @@ Static Function carPesagens(dDtIni, dDtFim, oPesagens, aPesagens)
             
         EndIf
 
-        If ZIB->ZIB_STATUS == "6"
+        If ZIG->ZIG_TPMOV == "R" .And. ZIB->ZIB_STATUS == "6"
             D_PES->(DbSkip())
             Loop
 
@@ -409,7 +411,7 @@ Static Function confirmar(oPesagens, aPesagens, nRadio, cObservao)
         lRet := descFin(oPesagens, aPesagens, @cTicket)
 
     ElseIf nRadio == 2 //Quebra de estoque.
-        lRet := lancQbr()
+        lRet := lancQbr(cNmOrdem, aDados, nRadio, cObservao)
 
     ElseIf nRadio == 3 //Devolução Fornecedor.
         lRet := devFor()
@@ -653,11 +655,97 @@ Return lRet
     @since 05/04/2022
     @version 01
 /*/
-Static Function lancQbr()
+Static Function lancQbr(cNmOrdem, aDados, nRadio, cObservao)
+    
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cTicket   := aDados[17]
+    Local cQuery    := ""
+
+    If U_ADFAT16A(cNmOrdem)
+
+        Begin Transaction
+
+            lRet := procLib(cNmOrdem, cTicket, aDados, nRadio, cObservao)
+
+            If ! lRet
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+        End Transaction
+
+    ElseIf U_ADFAT16F(cNmOrdem)
+
+        cQuery := " SELECT ZIF_NUMERO FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' ORDER BY ZIF_NUMERO "
+
+        If Select("D_ORDLIB") > 0
+            D_ORDLIB->(DbCloseArea())
+
+        EndIf
+
+        TcQuery cQuery New Alias "D_ORDLIB"
+        DbSelectArea("D_ORDLIB")
+        D_ORDLIB->(DbGoTop())
+
+        Begin Transaction
+
+            While ! D_ORDLIB->(Eof())
+
+                If ! procLib(D_ORDLIB->ZIF_NUMERO, cTicket, aDados, nRadio, cObservao)
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+                D_ORDLIB->(DbSkip())
+
+            End
+
+            lRet := .T.
+
+        End Transaction
+
+    Else
+        Help(Nil, Nil, "Função lancQbr(ADEST075P)", Nil, "Ordem de pesagem/agrupador " + cNmOrdem + " não localizado." , 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} procLib
+    Process liberação.
+    @type  Static Function
+    @author Everson
+    @since 18/07/2022
+    @version 01
+/*/
+Static Function procLib(cNmOrdem, cTicket, aDados, nRadio, cObservao)
 
     //Variáveis.
+    Local aArea  := GetArea()
+    Local lRet   := .F.
 
-Return .T.
+    If ! U_ADFAT194(cTicket, cValToChar(nRadio), cObservao) //Atualiza o status do ticket de pesagem.
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If ! U_ADFAT164(cNmOrdem, "13", 1) //Atualiza status da ordem de pesagem.
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    lRet := .T.
+
+    RestArea(aArea)
+
+Return lRet
 /*/{Protheus.doc} lancQbr
     Processa devolução para o fornecedor.
     @type  Static Function
