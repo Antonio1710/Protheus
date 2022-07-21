@@ -14,6 +14,7 @@ Relatorio horas Disponivel X Realizadas - baseado na Consulta MNTC905
 @since 18/05/2022
 @version undefined
 @type User Function. 
+@Ticket 63356, Data 21/07/2022, Antonio Domingos, SIGAMNT - E-mail - Homem Hora. Solicitado por DEBORA ROSILAI DA SILVA.
 /*/
 //---------------------------------------------------------------------
 User Function ADMNT018R(cParam)
@@ -24,7 +25,7 @@ Local aInfoCustom 	:= {}
 Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL do Relatorio Horas Disponiveis x Realizadas"
 local lSetEnv       := .f.
 
-Private cPara      := SuperGetMv('ZZ_MNT018B', .f. ,"antonio.filho@adoro.com.br" ) 
+Private cPara      := SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br") 
 Private cAssunto   := "Relatorio de Horas Disponiveis x Realizadas"
 Private cCorpo     := "Relatorio de Horas Disponiveis x Realizadas"
 Private aAnexos    := {}
@@ -53,7 +54,7 @@ Private nTipoOrd    //Tipo de Ordens 1=Corretiva, 2=Preventiva, 3=Outros, 4=Toda
 Private czEMP	:= cEmpAnt
 Private czFIL   := cFilAnt
 Private cNivel  := SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
-
+Private _cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
 //Aadd(aInfoCustom,{"Visualizar",{|oCenterPanel| visualiza(oCenterPanel)},"WATCH" })
 //Aadd(aInfoCustom,{"Relatorio" ,{|oCenterPanel| Relat(oCenterPanel) },"RELATORIO"})
 
@@ -64,7 +65,7 @@ If lJob
     czFIL    := aParam[2]   
     
     PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
-    cPara      :=  SuperGetMv('ZZ_MNT018B', .f. ,"antonio.filho@adoro.com.br" ) 
+    cPara      :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br" ) 
     
     oProcess := Executa()
 Else
@@ -151,57 +152,42 @@ Static Function Executa(oProcess)
 	SET CENTURY ON
 	
 	Private dPeriodoDe  := FirstDay(DATE()) 						//Do Periodo
-	Private dPeriodoAte := LastDay(DATE())  						//Ate Periodo
-	Private cCCustoDe   := Space(TAMSX3("CTT_CUSTO")[1]) 			//Do Centro de Custo
-	Private cCCustoAte  := REPLICATE("Z",TAMSX3("CTT_CUSTO")[1]) 	//Até Centro de Custo
-	Private cEspeciDe   := Space(TAMSX3("T2_ESPECIA")[1]) 		//Da especialidade
-	Private cEspeciAte  := REPLICATE("Z",TAMSX3("T2_ESPECIA")[1]) //Ate Especialidade
-	Private cFuncioDe   := Space(TAMSX3("T1_CODFUNC")[1]) 		//Do Funcionario 
-	Private cFuncioAte  := REPLICATE("Z",TAMSX3("T1_CODFUNC")[1]) //Ate Funcionario
+	Private dPeriodoAte := DATE()-1  								//Ate Periodo
+	Private cCCustoDe   := "5304" 									//Do Centro de Custo
+	Private cCCustoAte  := "5304"									//Até Centro de Custo
+	Private cEspeciDe   := Space(TAMSX3("T2_ESPECIA")[1]) 			//Da especialidade
+	Private cEspeciAte  := REPLICATE("Z",TAMSX3("T2_ESPECIA")[1]) 	//Ate Especialidade
+	Private cFuncioDe   := Space(TAMSX3("T1_CODFUNC")[1]) 			//Do Funcionario 
+	Private cFuncioAte  := REPLICATE("Z",TAMSX3("T1_CODFUNC")[1]) 	//Ate Funcionario
 	Private nTipoRel    := 3 										//Tipo 1=Por Centro Cust, 2=Por Especialid., 3=Por Funcionario
 	Private nTipoOrd    := 4 										//Tipo de Ordens 1=Corretiva, 2=Preventiva, 3=Outros, 4=Todas
 	Private aParamBox   := {}
     Private aRet        := {}
 
-    //Parametro da consulta
-    Aadd( aParamBox ,{1,"Do Periodo" ,dPeriodoDe,"" ,'.T.',"",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Ate Periodo",dPeriodoAte,"" ,'.T.',"",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Do Centro de Custo",cCCustoDe ,"" ,'.T.',"CTT",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Do Centro de Custo",cCCustoAte ,REPLICATE("Z",TAMSX3("CTT_CUSTO")[1]),'.T.',"CTT",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Da especialidade",cEspeciDe,"",'.T.',"ST0",'.T.',50,.F.})
-	Aadd( aParamBox ,{1,"Ate Especialidade",cEspeciAte,REPLICATE("Z",TAMSX3("T2_ESPECIA")[1]),'.T.',"ST2",'.T.',50,.F.})
-	Aadd( aParamBox ,{1,"Do Funcionario",cFuncioDe,"",'.T.',"ST1",'.T.',80,.F.})
-	Aadd( aParamBox ,{1,"Ate Funcionario",cFuncioAte,REPLICATE("Z",TAMSX3("T1_CODFUNC")[1]),'.T.',"ST1",'.T.',80,.F.})
-	Aadd( aParamBox ,{2,"Tipo de Rel.",nTipoRel,{"1=Por Centro Cust","2=Por Especialid.","3=Por Funcionario"},80,"",.T.})
-	Aadd( aParamBox ,{2,"Tipo de Ordens",nTipoOrd,{"1=Corretiva","2=Preventiva","3=Outros","4=Todas"},80,"",.T.})
-
-	If lJob
+    If lJob
 		dPeriodoDe  := FirstDay(DATE()) 						//Do Periodo
-		dPeriodoAte := LastDay(DATE())  						//Ate Periodo
-		cCCustoDe   := Space(TAMSX3("CTT_CUSTO")[1]) 			//Do Centro de Custo
-		cCCustoAte  := REPLICATE("Z",TAMSX3("CTT_CUSTO")[1]) 	//Até Centro de Custo
-		cEspeciDe   := Space(TAMSX3("T2_ESPECIA")[1]) 		//Da especialidade
-		cEspeciAte  := REPLICATE("Z",TAMSX3("T2_ESPECIA")[1]) //Ate Especialidade
-		cFuncioDe   := Space(TAMSX3("T1_CODFUNC")[1]) 		//Do Funcionario 
-		cFuncioAte  := REPLICATE("Z",TAMSX3("T1_CODFUNC")[1]) //Ate Funcionario
+		dPeriodoAte := DATE()-1  								//Ate Periodo
+		cCCustoDe   := "5304" 									//Do Centro de Custo
+		cCCustoAte  := "5304"									//Até Centro de Custo
+		cEspeciDe   := Space(TAMSX3("T2_ESPECIA")[1]) 			//Da especialidade
+		cEspeciAte  := REPLICATE("Z",TAMSX3("T2_ESPECIA")[1]) 	//Ate Especialidade
+		cFuncioDe   := Space(TAMSX3("T1_CODFUNC")[1]) 			//Do Funcionario 
+		cFuncioAte  := REPLICATE("Z",TAMSX3("T1_CODFUNC")[1]) 	//Ate Funcionario
 		nTipoRel    := 3 										//Tipo 1=Por Centro Cust, 2=Por Especialid., 3=Por Funcionario
 		nTipoOrd    := 4 										//Tipo de Ordens 1=Corretiva, 2=Preventiva, 3=Outros, 4=Todas
+		aParamBox   := {}
+		aRet        := {}
 	else
-    	if ParamBox(aParamBox,"Parâmetros",@aRet)
-		
-			dPeriodoDe  := aRet[1]  //Do Periodo
-			dPeriodoAte := aRet[2]  //Ate Periodo
-			cCCustoDe   := aRet[3]  //Do Centro de Custo
-			cCCustoAte  := aRet[4]  //Até Centro de Custo
-			cEspeciDe   := aRet[5]  //Da especialidade
-			cEspeciAte  := aRet[6]  //Ate Especialidade
-			cFuncioDe   := aRet[7]  //Do Funcionario 
-			cFuncioAte  := aRet[8]  //Ate Funcionario
-			nTipoRel    := aRet[9]  //Tipo "1=Por Centro Cust","2=Por Especialid.","3=Por Funcionario"
-			nTipoOrd    := aRet[10]  //Tipo de Ordens "1=Corretiva","2=Preventiva","3=Outros","4=Todas"
-		else
-			Return	
-		EndIf
+ 		dPeriodoDe  := mv_par01 	//Do Periodo
+		dPeriodoAte := mv_par02  	//Ate Periodo
+		cCCustoDe   := mv_par03 	//Do Centro de Custo
+		cCCustoAte  := mv_par04		//Até Centro de Custo
+		cEspeciDe   := mv_par05 	//Da especialidade
+		cEspeciAte  := mv_par06 	//Ate Especialidade
+		cFuncioDe   := mv_par07 	//Do Funcionario 
+		cFuncioAte  := mv_par08 	//Ate Funcionario
+		nTipoRel    := mv_par09 	//Tipo 1=Por Centro Cust, 2=Por Especialid., 3=Por Funcionario
+		nTipoOrd    := mv_par10 	//Tipo de Ordens 1=Corretiva, 2=Preventiva, 3=Outros, 4=Todas
 	EndIf	
 
 	aDBF := {{"TIPO"  , "C", Len(STJ->TJ_CCUSTO),0},;
@@ -1704,11 +1690,11 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 	EndIf
 
     If !(lJob)
-        cDIRARQ := "\DATA\"
+        cDIRARQ := "C:\TEMP\"
         cNomArq := "REL_HDR"+cEmpAnt+"_"+cFilAnt+".XLS" 
     	//cNomZip := "REL_HDR"+czEMP+"_"+czFIL+".ZIP"
 	Else
-        cDIRARQ := "\DATA\"
+        cDIRARQ := "\rel_mnt\"
         cNomArq := "REL_HDR"+czEMP+"_"+czFIL+".XLS"
         //cNomZip := "REL_HDR"+czEMP+"_"+czFIL+".ZIP"
     EndIf
@@ -1719,7 +1705,7 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
         MsAguarde({||Processa({|| oExcel:GetXMLFile(cDIRARQ+cNomArq) })},"Processanento", "Gerando arquivo XML, aguarde....")
 		//fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq})
      	//@Ticket 13242 ini
-        cDIRREDE :="\RELATORIO\"
+        cDIRREDE :="\rel_mnt\"
         nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 		
 		If FError() == 25 //Arquivo já existe na pasta destino
 			FERASE(cDIRREDE+cNomArq) 
@@ -1730,7 +1716,7 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 
         //fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq})
      	//@Ticket 13242 ini
-        cDIRREDE :="\RELATORIO\"
+        cDIRREDE :="\rel_mnt\"
         nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 		
 		If FError() == 25 //Arquivo já existe na pasta destino
 			FERASE(cDIRREDE+cNomArq) 
@@ -1772,7 +1758,7 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 			cHtml += ' 	<body>'
 			cHtml += ' 		<div style="text-align: left;">'
 			cHtml += ' 			<p>'
-			cHtml += ' 				<strong><em>Relatorio de Horas Disponiveis x Realizadas</em></strong></p>'
+			cHtml += ' 				<strong><em>'+_cNomeEmpFil+' Relatorio de Horas Disponiveis x Realizadas</em></strong></p>'
 			cHtml += ' 			<h3 style="color:red;">'
 			cHtml += ' 				<strong><u>Parametros:</u></strong></h3>'
 			cHtml += ' 			<p>'
@@ -1793,13 +1779,12 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 			cHtml += ' 	</body>'
 			cHtml += ' </html>'
 
+	lJob:=.t.	
 	If !(lJob)
-        //oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
-        //oExcelApp:SetVisible(.T.)
- 		aAdd(aAnexos, cDIRARQ+cNomArq)
-        fEnvMail(cPara, cAssunto, cHtml, aAnexos, lMostraLog, lUsaTLS)
+        oExcelApp:WorkBooks:Open( cDIRARQ+cNomArq ) // Abre uma planilha
+        oExcelApp:SetVisible(.T.)
     Else
-        aAdd(aAnexos, cDIRARQ+cNomArq)
+        aAdd(aAnexos, cDIRREDE+cNomArq)
         fEnvMail(cPara, cAssunto, cHtml, aAnexos, lMostraLog, lUsaTLS)
 	EndIf
 
@@ -1817,6 +1802,8 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	Local cRodaTxt := ""
 	Local nCntImpr := 0
 	Local nTotalRel := 0
+	Local _cPlanilha := "HDR_N1"
+	Local _cTitulo   := _cNomeEmpFil+" Relação de Horas Disponiveis x Realizadas "
 
 	Private li		:= 80
 	Private Cabec1	:=  AllTrim(cRelDet1) + " (" + AllTrim(cRelCab) + ")"
@@ -1825,16 +1812,16 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	Private nTipo	:= IIF(aReturn[4]==1,15,18)
 	Private nomeprog:= "MNTC905"
 	
-	oExcel:AddworkSheet("HDR_N1") // Planilha
-	oExcel:AddTable ("HDR_N1","RelHDR") // Titulo da Planilha (Cabeçalho)
-	oExcel:AddColumn("HDR_N1","RelHDR","Tipo"         ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Nome"		    ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Bloqueio"	        ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Disponíveis"	        ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Realizadas"		    ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Diferenças"		    ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Percentual"		    ,1,1)
-	oExcel:AddColumn("HDR_N1","RelHDR","Extras"	    ,1,1)
+	oExcel:AddworkSheet(_cPlanilha) // Planilha
+	oExcel:AddTable (_cPlanilha,_cTitulo) // Titulo da Planilha (Cabeçalho)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Tipo"         ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Nome"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Bloqueio"	        ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Disponíveis"	        ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Realizadas"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Diferenças"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Percentual"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Extras"	    ,1,1)
 
 	DbSelectArea(cTRB)
 	DbGoTop()
@@ -1843,7 +1830,7 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 		IncRegua()
 
 		NGSOMALI(58)
-		oExcel:AddRow("HDR_N1","RelHDR",{(cTRB)->TIPO ,;
+		oExcel:AddRow(_cPlanilha,_cTitulo,{(cTRB)->TIPO ,;
 				                        (cTRB)->NOME   ,;
 		                        		(cTRB)->BLOQUE ,;
 		                        		(cTRB)->DISPON ,;
@@ -1863,7 +1850,7 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 
 	nTotalPer := Round(( NGCONVERHORA( HTON( nTotalRel ),'D','S') * 100 ) / NGCONVERHORA( HTON( nTotalCal ),'D','S'),5 )//Variavel que verifica percentual realizado.
 
-	oExcel:AddRow("HDR_N1","RelHDR",{	STR0038   ,;
+	oExcel:AddRow(_cPlanilha,_cTitulo,{	STR0038   ,;
 			                        " "		  ,;
 	                        		nTotalBlo ,;
 	                        		nTotalDis ,;
@@ -1887,6 +1874,8 @@ Static Function C9052Imp(lEnd,wnRel,titulo,tamanho,oprocess)
 
 	Local cRodaTxt := ""
 	Local nCntImpr := 0
+	Local _cPlanilha := "HDR_N2"
+	Local _cTitulo   := _cNomeEmpFil+" Relação de Horas Disponiveis x Realizadas "
 
 	Private li		:= 80
 	Private m_pag	:= 1
@@ -1896,16 +1885,16 @@ Static Function C9052Imp(lEnd,wnRel,titulo,tamanho,oprocess)
 	Private nomeprog:= "MNTC905"
 	//Private oExcel  	:= FwMsExcel():New()
 
-	oExcel:AddworkSheet("HDR_N2") // Planilha
-	oExcel:AddTable ("HDR_N2","RelHDR") // Titulo da Planilha (Cabeçalho)
-	oExcel:AddColumn("HDR_N2","RelHDR","Funcionario"         ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Nome"		    ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Hr.bloqueadas"	        ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Hr.Disponíveis"	        ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Hr.Realizadas"		    ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Diferenças"		    ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Percentual"		    ,1,1)
-	oExcel:AddColumn("HDR_N2","RelHDR","Hr.Extras"	    ,1,1)
+	oExcel:AddworkSheet(_cPlanilha) // Planilha
+	oExcel:AddTable (_cPlanilha,_cTitulo) // Titulo da Planilha (Cabeçalho)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Funcionario"         ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Nome"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.bloqueadas"	        ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.Disponíveis"	        ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.Realizadas"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Diferenças"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Percentual"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.Extras"	    ,1,1)
 
 	DbSelectArea(cTRB9052)
 	DbGoTop()
@@ -1915,7 +1904,7 @@ Static Function C9052Imp(lEnd,wnRel,titulo,tamanho,oprocess)
 
 		NGSOMALI(58)
 	
-		oExcel:AddRow("HDR_N2","RelHDR",{(cTRB9052)->CODFUN,;
+		oExcel:AddRow(_cPlanilha,_cTitulo,{(cTRB9052)->CODFUN,;
 										(cTRB9052)->NOME,;
 										(cTRB9052)->BLOQUE,;
 										(cTRB9052)->DISPON,;
@@ -1939,7 +1928,7 @@ Static Function C9052Imp(lEnd,wnRel,titulo,tamanho,oprocess)
 	NGSOMALI(58)
 	NGSOMALI(58)
 
-	oExcel:AddRow("HDR_N2","RelHDR",{	STR0038   ,;
+	oExcel:AddRow(_cPlanilha,_cTitulo,{	STR0038   ,;
 			                        " "		  ,;
 	                        		nToHrBloq ,;
 	                        		nToHrDisp ,;
@@ -1973,7 +1962,9 @@ Static Function C9053Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 
 	Local cRodaTxt := ""
 	Local nCntImpr := 0
-
+	Local _cPlanilha := "HDR_N3"
+	Local _cTitulo   := _cNomeEmpFil+" Relação de Horas Disponiveis x Realizadas "
+	
 	Private li		:= 80
 	Private Cabec1	:= AllTrim(cRelDet3) + " " + AllTrim(cRelCab)
 	Private Cabec2	:= STR0059
@@ -1981,16 +1972,16 @@ Static Function C9053Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	Private nTipo	:= IIF(aReturn[4]==1,15,18)
 	Private nomeprog:= "MNTC905"
 
-	oExcel:AddworkSheet("HDR_N3") // Planilha
-	oExcel:AddTable ("HDR_N3","RelHDR") // Titulo da Planilha (Cabeçalho)
-	oExcel:AddColumn("HDR_N3","RelHDR","Data"          ,1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Calend"		  ,1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Hr.bloqueadas" ,1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Hr.Disponíveis",1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Hr.Realizadas" ,1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Diferenças"	  ,1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Percentual"	  ,1,1)
-	oExcel:AddColumn("HDR_N3","RelHDR","Hr.Extras"	  ,1,1)
+	oExcel:AddworkSheet(_cPlanilha) // Planilha
+	oExcel:AddTable (_cPlanilha,_cTitulo) // Titulo da Planilha (Cabeçalho)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Data"          ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Calend"		  ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.bloqueadas" ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.Disponíveis",1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.Realizadas" ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Diferenças"	  ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Percentual"	  ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Hr.Extras"	  ,1,1)
 	
 	DbSelectArea(cTRB9051)
 	DbGoTop()
@@ -2000,7 +1991,7 @@ Static Function C9053Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 
 		NGSOMALI(58)
 	
-		oExcel:AddRow("HDR_N3","RelHDR",{(cTRB9051)->DATAF,;
+		oExcel:AddRow(_cPlanilha,_cTitulo,{(cTRB9051)->DATAF,;
 											(cTRB9051)->CALEND,;
 											(cTRB9051)->BLOQUE,;
 											(cTRB9051)->DISPON,;
@@ -2023,7 +2014,7 @@ Static Function C9053Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	NGSOMALI(58)
 	NGSOMALI(58)
 	
-	oExcel:AddRow("HDR_N3","RelHDR",{STR0038,;
+	oExcel:AddRow(_cPlanilha,_cTitulo,{STR0038,;
 	       			                nToHrCale  ,;
 	                        		nToHrBloq  ,;
 	                        		nToHrDisp  ,;
