@@ -42,6 +42,8 @@ Static Function BrowseDef()
 	oBrowse:AddLegend("ZID_STATUS = '2'" ,"GREEN" ,"Aprovada")
 	oBrowse:AddLegend("ZID_STATUS = '3'" ,"RED"	  ,"Reprovada")
 
+    oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
+
 Return oBrowse
 /*/{Protheus.doc} MenuDef
     @type  Static Function
@@ -226,6 +228,110 @@ User Function ADEST743(cNmOrdem, cMsgError)
 
     If ! Empty(cMsgError)
         Help(Nil, Nil, "Função ADEST743(ADEST074P)", Nil, "Erro na exclusão na solicitação de liberação de pesagem de produtos ensacados." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    EndIf
+
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} ADEST744
+	Posiciona no registro.
+	@type  User Function
+	@author Everson
+	@since 22/07/2022
+	@version 01
+/*/
+User Function ADEST744(cNumero)
+
+    //Variáveis.
+
+    DbSelectArea("ZID")
+    ZID->(DbSetOrder(1))
+    ZID->(DbGoTop())
+    If ! ZID->( DbSeek( FWxFilial("ZID") + cNumero ) )
+        Return .F.
+
+    EndIf
+
+Return .T.
+/*/{Protheus.doc} ADEST745
+	Posiciona no registro pela ordem.
+	@type  User Function
+	@author Everson
+	@since 22/07/2022
+	@version 01
+/*/
+User Function ADEST745(cNmOrdem)
+
+    //Variáveis.
+
+    DbSelectArea("ZID")
+    ZID->(DbSetOrder(2))
+    ZID->(DbGoTop())
+    If ! ZID->( DbSeek( FWxFilial("ZID") + cNmOrdem ) )
+        Return .F.
+
+    EndIf
+
+Return .T.
+/*/{Protheus.doc} ADEST745
+	Cria solicitação.
+	@type  User Function
+	@author Everson
+	@since 22/07/2022
+	@version 01
+/*/
+User Function ADEST746(cPlaca, cNmOrdem, cProduto, nValor, nLimite, nDife, cMotivo, cNumLib, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local oSolic    := Nil
+    Local aError    := {}
+
+    Default cMsgError   := ""
+
+    oSolic := FwLoadModel("ADEST074P")
+
+    oSolic:SetOperation(MODEL_OPERATION_INSERT)
+    oSolic:Activate() 
+
+    oSolic:SetValue("MD_MASTER","ZID_DATA"  ,Date())
+    oSolic:SetValue("MD_MASTER","ZID_HORA"  ,Time())
+    oSolic:SetValue("MD_MASTER","ZID_PLACA" ,cPlaca)
+    oSolic:SetValue("MD_MASTER","ZID_ORDEM" ,cNmOrdem)
+    oSolic:SetValue("MD_MASTER","ZID_MEMPRO",cProduto)
+    oSolic:SetValue("MD_MASTER","ZID_VALOR" ,nValor)
+    oSolic:SetValue("MD_MASTER","ZID_LIMITE",nLimite)
+    oSolic:SetValue("MD_MASTER","ZID_DIFERE",nDife)
+    oSolic:SetValue("MD_MASTER","ZID_MOTIVO",cMotivo)
+    oSolic:SetValue("MD_MASTER","ZID_SOLIC" ,__cUserID)
+    oSolic:SetValue("MD_MASTER","ZID_NMSOLI",cUserName)
+
+    Begin Transaction
+
+        If oSolic:VldData()
+            oSolic:CommitData()
+            lRet := .T.
+            cNumLib := ZID->ZID_NUMERO
+
+        Else
+            aError := oSolic:GetErrorMessage()
+            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+
+        EndIf
+
+    End Transaction
+
+    oSolic:DeActivate()
+    oSolic:Destroy()
+    oSolic := Nil
+
+    If ! Empty(cMsgError)
+        Help(Nil, Nil, "Função ADEST746(ADEST074P)", Nil, "Erro na geração de registro de solicitação de liberação." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
+    Else
+        Help(Nil, Nil, "Função ADEST746(ADEST074P)", Nil, "Solicitação gerada " + cNumLib + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     EndIf
 

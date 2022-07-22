@@ -220,7 +220,7 @@ User Function ADFAT28B(cJson)
     Local aDados    := {}
     Local oJsonLn   := Nil
     Local oJson     := Nil
-    Local cQuery    := " SELECT R_E_C_N_O_ AS RECNO FROM " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ WHERE ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "' AND ZIQ_TIPO = 'S' AND ZIQ_PROCES = '2' AND ZIQ.D_E_L_E_T_ = '' ORDER BY ZIQ_DTGRV, ZIQ_HRGRV, R_E_C_N_O_ "
+    Local cQuery    := " SELECT R_E_C_N_O_ AS RECNO FROM " + RetSqlName("ZIQ") + " AS ZIQ WHERE ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "' AND ZIQ_TIPO = 'S' AND ZIQ_PROCES = '2' AND ZIQ.D_E_L_E_T_ = '' ORDER BY ZIQ_DTGRV, ZIQ_HRGRV, R_E_C_N_O_ "
 
     If Select("D_ZIQS") > 0
         D_ZIQS->(DbCloseArea())

@@ -74,7 +74,7 @@ User Function ADEST734(nOpc)
     //Variáveis.
     Local aArea     := GetArea()
 
-    If ZIL->ZIL_PESADO == "1"
+    If ZIL->ZIL_PESADO == "1" .And. ! FWIsAdmin()
         MsgInfo("Ordem com peso final. Operação não permitida.","Função ADEST734(ADEST073P)")
         RestArea(aArea)
         Return Nil
@@ -764,6 +764,14 @@ User Function ADEST733(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
     Local cNumLib   := ""
     Local cMsg      := ""
 
+    If U_ADEST745(cNmOrdem)
+        If ZID->ZID_STATUS == "1"
+            excLib("", ZID->ZID_NUMERO)
+
+        EndIf
+
+    EndIf
+
     oModal := FWDialogModal():New() 
     oModal:SetBackground( .T. ) 
 	oModal:setTitle("Ordens de Carregamento - " + cPlaca)
@@ -774,13 +782,13 @@ User Function ADEST733(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
     oModal:CreateFormBar()
     oModal:addCloseButton(Nil, "Cancelar")
 
-    oModal:AddButton( "Confirmar", {|| solicLib("", cNmOrdem, nValor, nLimite, nDife, @cNumLib, cPlaca, cProduto, cMotivo) }, "Confirmar", , .T., .F., .T., )
-    oModal:AddButton( "Solicitar" , {|| Iif(! verifLib(@lRet, cNumLib), Nil, oModal:DeActivate()) }  , "Solicitar" , , .T., .F., .T., )
+    oModal:AddButton( "Solicitar", {|| solicLib("", cNmOrdem, nValor, nLimite, nDife, @cNumLib, cPlaca, cProduto, cMotivo) }, "Confirmar", , .T., .F., .T., )
+    oModal:AddButton( "Verificar" , {|| Iif(! verifLib(@lRet, cNumLib), Nil, oModal:DeActivate()) }  , "Solicitar" , , .T., .F., .T., )
 
         oContainer := TPanel():New(025,,, oModal:getPanelMain())
         oContainer:Align := CONTROL_ALIGN_ALLCLIENT
         TGet():New(010,010,{|u|If(PCount() == 0,cCodSol,cCodSol := u)}  ,oContainer,125,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cCodSol",,,,.T.,,,"Cod. Solicitante",1)
-        TGet():New(010,140,{|u|If(PCount() == 0,cSolic,cSolic := u)}    ,oContainer,125,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cSolic",,,,.T.,,,"Solicitante",1) 
+        TGet():New(010,140,{|u|If(PCount() == 0,cSolic ,cSolic := u)}   ,oContainer,125,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| .F. },.F.,.F.,,.F.,.F. ,,"cSolic",,,,.T.,,,"Solicitante",1) 
 
         TGet():New(040,010,{|u|If(PCount() == 0,cMotivo,cMotivo := u)}  ,oContainer,255,015,"",,0,16777215,,.F.,,.T.,,.F.,{|| Empty(cNumLib) },.F.,.F.,,.F.,.F. ,,"cMotivo",,,,.T.,,,"Motivo",1)  
         
@@ -789,6 +797,7 @@ User Function ADEST733(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
     oModal:Activate()
     
     cMsg := "A conferênca de ensacados não pôde ser salva, pois a quebra de peso necessita de aprovação."
+
     If ! Empty(cNumLib) 
     
         If excLib("", cNumLib)
@@ -796,7 +805,7 @@ User Function ADEST733(aDdSeq, cEntSai, nPesoLiq, cNmOrdem, cPlaca, cProduto)
 
         EndIf
 
-    ElseIf Empty(cNumLib)
+    Else
         Help(Nil, Nil, "Função ADEST733(ADEST073P)", Nil, cMsg, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
     
     EndIf
@@ -815,7 +824,6 @@ Static Function solicLib(cMsgError, cNmOrdem, nValor, nLimite, nDife, cNumLib, c
 
     //Variáveis.
     Local aArea := GetArea()
-    Local oSolic:= Nil
 
     Default cMsgError := ""
 
@@ -833,62 +841,15 @@ Static Function solicLib(cMsgError, cNmOrdem, nValor, nLimite, nDife, cNumLib, c
 
     EndIf
 
-    DbSelectArea("ZID")
-    ZID->(DbSetOrder(2))
-    If ZID->(DbSeek( FWxFilial("ZID") + cNmOrdem ))
+    If U_ADEST745(cNmOrdem)
         If ZID->ZID_STATUS == "1"
-            cNumLib := ZID->ZID_NUMERO
-            //Help(Nil, Nil, "Função solicLib(ADEST073P)", Nil, "Já há a solicitação " + ZID->ZID_NUMERO + " para ordem " + cNmOrdem + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-            RestArea(aArea)
-            Return Nil
+            excLib("", ZID->ZID_NUMERO)
 
         EndIf
 
     EndIf
 
-    oSolic := FwLoadModel("ADEST074P")
-
-    oSolic:SetOperation(MODEL_OPERATION_INSERT)
-    oSolic:Activate() 
-
-    oSolic:SetValue("MD_MASTER","ZID_DATA"  ,Date())
-    oSolic:SetValue("MD_MASTER","ZID_HORA"  ,Time())
-    oSolic:SetValue("MD_MASTER","ZID_PLACA" ,cPlaca)
-    oSolic:SetValue("MD_MASTER","ZID_ORDEM" ,cNmOrdem)
-    oSolic:SetValue("MD_MASTER","ZID_MEMPRO",cProduto)
-    oSolic:SetValue("MD_MASTER","ZID_VALOR" ,nValor)
-    oSolic:SetValue("MD_MASTER","ZID_LIMITE",nLimite)
-    oSolic:SetValue("MD_MASTER","ZID_DIFERE",nDife)
-    oSolic:SetValue("MD_MASTER","ZID_MOTIVO",cMotivo)
-    oSolic:SetValue("MD_MASTER","ZID_SOLIC" ,__cUserID)
-    oSolic:SetValue("MD_MASTER","ZID_NMSOLI",cUserName)
-
-    Begin Transaction
-
-        If oSolic:VldData()
-            oSolic:CommitData()
-
-            cNumLib := ZID->ZID_NUMERO
-            Help(Nil, Nil, "Função solicLib(ADEST073P)", Nil, "Solicitação gerada " + cNumLib + ".", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-        Else
-            aError := oSolic:GetErrorMessage()
-            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
-
-        EndIf
-
-    End Transaction
-
-    oSolic:DeActivate()
-    oSolic:Destroy()
-    oSolic := Nil
-
-    If ! Empty(cMsgError)
-        MsgStop("Erro na geração de registro de solicitação de liberação." + xPula + cMsgError, "Função solicLib(ADEST073P)")
-
-    EndIf
-
-    RestArea(aArea)
+    U_ADEST746(cPlaca, cNmOrdem, cProduto, nValor, nLimite, nDife, cMotivo, @cNumLib, @cMsgError)
 
 Return Nil
 /*/{Protheus.doc} excLib
@@ -1233,3 +1194,35 @@ User Function ADEST738(cNmOrdem)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} ADEST738
+    Abre registro.
+    @type  User Function
+    @author Everson
+    @since 22/07/2022
+    @version 01
+/*/
+User Function ADEST739(cNmOrdem, cMsgError)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local lRet      := .F.
+
+    Default cMsgError := ""
+
+    If ! U_ADEST738(cNmOrdem)
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    If ZIL->ZIL_PESADO == "2"
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    lRet := U_ADEST735(cNmOrdem, 3, "ZIL_PESADO", "2", @cMsgError, .F.)
+
+    RestArea(aArea)
+
+Return lRet
