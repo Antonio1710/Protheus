@@ -247,7 +247,8 @@ Return .T.
 User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
 
     //Variáveis.
-    Local aArea := GetArea()
+    Local aArea     := GetArea()
+    Local cLotesN   := Alltrim(cValToChar(GetMV("MV_#FAT181",,"3/4")))
 
     Default cPrdSag   := ""
     Default cPrdPro   := ""
@@ -271,8 +272,8 @@ User Function ADFAT18D(cLote, cPrdSag, cPrdPro, cMsgError)
 
     EndIf
 
-    If ZI8->ZI8_STATUS == "4"
-        cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(encerrado)."
+    If ZI8->ZI8_STATUS $cLotesN
+        cMsgError := "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(status " + cValToChar(ZI8->ZI8_STATUS) + ")."
         Help(Nil, Nil, "Função ADFAT18D(ADFAT018P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.

@@ -1615,7 +1615,7 @@ User Function ADFAT29K()
 
         If U_ADFAT196(cNmOrdem)
 
-            If ZIG->ZIG_INICIA <> "3" //Não deixa alterar o lote se a pesagem estiver encerrada.
+            If ZIG->ZIG_INICIA == "3" //Não deixa alterar o lote se a pesagem estiver encerrada.
 
                 cMsgError := "Pesagem encerrada, ordem " + cNmOrdem + "."
                 U_ADFAT29D(cId, "2", cMsgError)
@@ -1639,15 +1639,19 @@ User Function ADFAT29K()
 
             Begin Transaction
 
-                If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
-                    DisarmTransaction()
-                    Break
-                    
-                EndIf
+                If ZIF->ZIF_STATUS $"1/2" //1=Aberto, 2=Aguardando análise laboratorial.
 
-                If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
-                    DisarmTransaction()
-                    Break
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                        DisarmTransaction()
+                        Break
+                        
+                    EndIf
+
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                        DisarmTransaction()
+                        Break
+
+                    EndIf
 
                 EndIf
 
@@ -1661,7 +1665,7 @@ User Function ADFAT29K()
 
         ElseIf U_ADFAT16F(cNmOrdem) //Atualização de agrupador de ordem de pesagem.
 
-            cQuery2 := " SELECT ZIF_NUMERO FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' "
+            cQuery2 := " SELECT ZIF_NUMERO, ZIF_STATUS FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' "
 
             cNewAlias := GetNextAlias()
 
@@ -1673,15 +1677,19 @@ User Function ADFAT29K()
 
                 While ! (cNewAlias)->(Eof())
 
-                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
-                        DisarmTransaction()
-                        Break
-                        
-                    EndIf
+                    If (cNewAlias)->ZIF_STATUS $"1/2" //1=Aberto, 2=Aguardando análise laboratorial.
 
-                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
-                        DisarmTransaction()
-                        Break
+                        If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                            DisarmTransaction()
+                            Break
+                            
+                        EndIf
+
+                        If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                            DisarmTransaction()
+                            Break
+
+                        EndIf
 
                     EndIf
 

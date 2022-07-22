@@ -33,6 +33,9 @@ User Function ADFAT017P() // U_ADFAT017P()
     //Verifica se há ordem de saída para ser excluída.
     U_ADFAT17Q()
 
+    //Verifica se há ordem de entrada para ser excluída.
+    U_ADFT172()
+
     If FWIsAdmin() .And. MsgNoYes("Abrir cadastro?", "Cadastro x Controle de Pátio(ADFAT017P)")
         oBrowse := FwLoadBrw("ADFAT017P")
         oBrowse:Activate()
@@ -612,10 +615,10 @@ User Function ADFAT17Y()
         
         oOrdPes:Activate()
                    
-                   TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+                   TButton():New(167,515,"Reenviar Ordem Gemba" ,oCtlPatio,{|| envGOrd(oOrdPes, aOrdPes),  Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
                    TButton():New(187,515,"Transferência Ordem"  ,oCtlPatio,{|| transOrd(oOrdPes, aOrdPes), Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
                    TButton():New(207,515,"Romaneio"             ,oCtlPatio,{|| impRoPV(oOrdPes, aOrdPes) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes), Eval(bLOrd) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+        oCanTkt := TButton():New(227,515,"Cancelar Ticket"      ,oCtlPatio,{|| cancTkt(oOrdPes, aOrdPes),  Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oAltTag := TButton():New(247,515,"Alterar Tag"          ,oCtlPatio,{||  altTag(oOrdPes, aOrdPes, cBalanca) , Eval(bLOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         oExcTag := TButton():New(267,515,"Excluir Tag"          ,oCtlPatio,{||  excTag(oOrdPes, aOrdPes, cBalanca) , Eval(bApgOrd), Eval(bCarCP) },080,15,,,.F.,.T.,.F.,,.F.,,,.F. )
         
@@ -2194,8 +2197,13 @@ Static Function carOrdens(nLinha, oVecPt, aHVcPt, oOrdPes, aOrdPes, cTpOP, aTpOr
     //Verifica se há ordem de entrada para ser excluída.
     // U_ADFT172()
 
-    //Verifica se há ordem de saída para ser gerada.
+    //Verifica se há ordem de entrada para ser gerada.
     If cTpMovi == "E" .And. ! Empty(cCP) .And. ! Empty(cPlaca)
+
+        //Verifica se há ordem de entrada para ser excluída.
+        U_ADFT172()
+        
+        //Verifica se há ordem de entrada para ser gerada.
         U_ADFT171(cCP, cPlaca)
 
     EndIf
@@ -3237,7 +3245,7 @@ User Function ADFAT17J(cCP, cNmOrdem, cTpOrdem, cStatOrd, cStatCp, cMsgError)
 
         ElseIf cTpOrdem == "E"
             cStatOrd := "3"
-            cStatCp  := "2"
+            cStatCp  := "1"
 
         EndIf
         
@@ -3315,30 +3323,36 @@ Return lRet
 Static Function prVldLote(cLote)
 
     //Variáveis.
-    Local aArea := GetArea()
+    Local aArea     := GetArea()
 
-    DbSelectArea("ZI8")
-    ZI8->(DbSetOrder(1))
-    If ! ZI8->( DbSeek( FWxFilial("ZI8") + cLote ) )
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, "Lote " + cLote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    If ! U_ADFAT18D(cLote)
         RestArea(aArea)
         Return .F.
 
     EndIf
 
-    If ZI8->ZI8_LAUTO == "1"
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return .F.
+    // DbSelectArea("ZI8")
+    // ZI8->(DbSetOrder(1))
+    // If ! ZI8->( DbSeek( FWxFilial("ZI8") + cLote ) )
+    //     Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, "Lote " + cLote + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     RestArea(aArea)
+    //     Return .F.
 
-    EndIf
+    // EndIf
 
-    If ZI8->ZI8_STATUS == "4"
-        Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return .F.
+    // If ZI8->ZI8_LAUTO == "1"
+    //     Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(automático).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     RestArea(aArea)
+    //     Return .F.
 
-    EndIf
+    // EndIf
+
+    // If ZI8->ZI8_STATUS == "4"
+    //     Help(Nil, Nil, "Função prVldLote(ADFAT017P)", Nil, "Lote " + Alltrim(cValToChar(ZI8->ZI8_DESLOT)) + " não é válido(encerrado).", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     RestArea(aArea)
+    //     Return .F.
+
+    // EndIf
 
     RestArea(aArea)
 
@@ -4353,7 +4367,7 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
 
     cProdSAG   := ZIF->ZIF_PRDSAG
     cProdPro   := ZIF->ZIF_PRDPRO
-    cProduto   := U_ADFAT176(cProdSAG, cProdPro, ,.T.)
+    cProduto   := U_ADFAT176(cProdSAG, cProdPro, , lOrdAgrp)
     cEnvBar    := ZIF->ZIF_ENVBAR
 
     //Localiza roteiro de pesagem.
@@ -7516,6 +7530,9 @@ User Function ADFT171(cCP, cPlaca)
         cQuery += " AND F1_LOJA = D1_LOJA " 
     cQuery += " WHERE " 
         cQuery += " F1_FILIAL = '" + FWxFilial("SF1") + "' " 
+
+        // cQuery += " AND F1_DOC IN ('000486502','000487312') AND F1_FORNECE = '001434' " 
+
         cQuery += " AND CAST(F1_EMISSAO AS DATE) >= CAST(GETDATE() - " + cValToChar(cDias) + " AS DATE) " 
         cQuery += " AND D1_TES = '' " 
         cQuery += " AND F1_XPOSORD <> '1' " 
@@ -7693,6 +7710,14 @@ User Function ADFT172(cNf, cSerie, cFornece, cLoja)
 
             If ! U_ADFAT16I((cAlias)->ZIF_CTPATI, (cAlias)->ZIF_NUMERO, (cAlias)->ZIF_AGRUPA, @cMsgError)
                 U_ADFAT173("Exclusão de ordem : " + cMsgError, (cAlias)->ZIF_NUMERO, "", "PROTHEUS")
+
+            Else
+
+                // //Verifica a quantidade de tickets vinculados ao controle de pátio.
+                // If U_ADFAT17W((cAlias)->ZIF_CTPATI) <= 0
+                //     U_ADFAT174((cAlias)->ZIF_CTPATI, "ZIB_STATUS", "1")
+                    
+                // EndIf
 
             EndIf
 

@@ -58,6 +58,7 @@ STATIC cResponsavel  := SPACE(60)
   @history Ticket 67494   - Fernando Sigoli   - 03/06/2022 - Removido Begin
   @hisotry Ticket 76436   - Everson           - 14/07/2022 - Tratamento para envio incorreto de e-mail.
   @history Ticket 18465   - Everson           - 19/07/2022 - Envio de registro para o barramento.
+  @history Ticket 18465   - Everson           - 21/07/2022 - Envio de registro para o barramento.
 /*/
 User Function MT103FIM()
 
@@ -2622,7 +2623,7 @@ Static Function grvBarr(nOpc, cNumero)
     Local cFilter   := ""
     Local cTopico   := "documentos_de_entrada_protheus"
     Local cOperacao := ""
-    Local cFiliais  := Alltrim(GetMv("MV_#ADFAT171",,""))
+    Local cFiliais  := Alltrim(GetMv("MV_#FAT171",,"")) //Ticket 18465   - Everson - 21/07/2022.
 
     If !(cFilAnt $cFiliais)
         RestArea(aArea)
