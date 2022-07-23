@@ -220,14 +220,16 @@ User Function ADFAT28B(cJson)
     Local aDados    := {}
     Local oJsonLn   := Nil
     Local oJson     := Nil
-    Local cQuery    := " SELECT R_E_C_N_O_ AS RECNO FROM " + RetSqlName("ZIQ") + " AS ZIQ WHERE ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "' AND ZIQ_TIPO = 'S' AND ZIQ_PROCES = '2' AND ZIQ.D_E_L_E_T_ = '' ORDER BY ZIQ_DTGRV, ZIQ_HRGRV, R_E_C_N_O_ "
+    Local cQtdReg   := Alltrim(cValToChar(GetMv("MV_#FAT281",,"25")))
+    Local nTmpSleep := Val(cValToChar(GetMv("MV_#FAT282",,3)))
+    Local cQuery    := " SELECT TOP " + cValToChar(cQtdReg) + " R_E_C_N_O_ AS RECNO FROM " + RetSqlName("ZIQ") + " AS ZIQ WHERE ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "' AND ZIQ_TIPO = 'S' AND ZIQ_PROCES = '2' AND ZIQ.D_E_L_E_T_ = '' ORDER BY ZIQ_DTGRV, ZIQ_HRGRV, R_E_C_N_O_ "
 
     If Select("D_ZIQS") > 0
         D_ZIQS->(DbCloseArea())
 
     EndIf
 
-    Sleep(Random(0, 5)*1000) //Everson - 06/06/2022.
+    Sleep(Random(0, nTmpSleep)*1000) //Everson - 06/06/2022.
 
     TcQuery cQuery New Alias "D_ZIQS"
     DbSelectArea("D_ZIQS")
@@ -318,6 +320,7 @@ User Function ADFAT28C(aParametros, aRetErro)
     //Variáveis.
     Local aArea     := GetArea()
     Local cUuid     := ""
+    Local nTmpSleep := Val(cValToChar(GetMv("MV_#FAT283",,3)))
 
     If Len(aParametros) == 0
         Aadd(aRetErro, {400, EncodeUtf8("Necessário informar o uuid do registro.")})
@@ -328,8 +331,7 @@ User Function ADFAT28C(aParametros, aRetErro)
 
     cUuid := Alltrim(cValToChar(aParametros[2]))
     
-    Sleep(Random(0, 5)*1000) //Everson - 06/06/2022.
-
+    Sleep(Random(0, nTmpSleep)*1000) //Everson - 06/06/2022.
 
     TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1' WHERE ZIQ_UUID = '" + cUuid + "'")
 
