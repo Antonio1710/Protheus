@@ -163,3 +163,20 @@ User Function ADFAT20B(cProdSAG)
     EndIf
 
 Return .T.
+/*/{Protheus.doc} User Function ADFAT20B
+    Posiciona no produto pelo código do Protheus.
+    @type  Function
+    @author Everson
+    @since 22/07/2022
+    @version 01
+    /*/
+User Function ADFAT20C(cProdPro)
+
+    DbSelectArea("ZIM")
+    ZIM->(DbSetOrder(2))
+    If ! ZIM->( DbSeek( FWxFilial("ZIM") + cProdPro) )
+        Return .F.
+
+    EndIf
+
+Return .T.

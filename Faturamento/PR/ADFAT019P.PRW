@@ -992,6 +992,7 @@ Static Function procAbrP(cTicket, cStatus, lEnsacado, cTpMov)
     Local cCP       := ZIG->ZIG_CTPATI
     Local cNmOrdem  := ZIG->ZIG_ORDEM
     Local cTpOrdem  := ZIG->ZIG_TPMOV
+    Local cMsgError := ""
 
     If cStatus == ZIG->ZIG_INICIA
         MsgInfo("Ticket já está com o status solicitado.", "Função procAbrP(ADFAT019R)")
@@ -1016,6 +1017,8 @@ Static Function procAbrP(cTicket, cStatus, lEnsacado, cTpMov)
     EndIf
 
     Begin Transaction
+
+        lRet := lRet .And. U_ADEST739(cNmOrdem, @cMsgError)
 
         //Atualiza ticket de pesagem.
         lRet := lRet .And. U_ADFAT191(cTicket, "ZIG_INICIA", cStatus)
@@ -1080,7 +1083,10 @@ Static Function procAbrP(cTicket, cStatus, lEnsacado, cTpMov)
 
     If lRet
         MsgInfo("Pesagem aberta.", "Função procAbrP(ADFAT019P)")
-        
+
+    Else
+        Help(Nil, Nil, "Função procAbrP(ADEST019P)", Nil, "Ocorreu erro na abertura da pesagem." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+
     EndIf
 
     RestArea(aArea)
