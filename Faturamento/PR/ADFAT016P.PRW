@@ -388,7 +388,6 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem, cMsgError)
     Local cPlaca    := ""
     Local cNmFornec := ""
     Local cUsuario  := Iif(Empty(__cUserID), "000000", __cUserID)
-    Local cLoteAuth := ""
     Local cProdSAG  := ""
     Local cStatLab  := ""
     Local cCliFor   := ""
@@ -460,8 +459,15 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem, cMsgError)
                 
             EndIf
 
-            cLoteAuth := Alltrim(cValToChar(Posicione("ZI8", 4, FWxFilial("ZI8") + SD1->D1_COD + "1" + "1", "ZI8_CDLOTE")))
-            cProdSAG  := Alltrim(cValToChar(Posicione("ZIM", 2, FWxFilial("ZIM") + SD1->D1_COD, "ZIM_PRDSAG")))
+            If ! U_ADFAT20C(SD1->D1_COD)
+                cMsgError := "Não há o produto Protheus " + Alltrim(cValToChar(SD1->D1_COD)) + " na tabela ZIM."
+                DisarmTransaction()
+                Break
+
+            EndIf
+
+            cStatGemba:= Iif(Alltrim(cValToChar(ZIM->ZIM_TPEMB)) == "1", "2", "4")
+            cProdSAG  := ZIM->ZIM_PRDSAG
             cRoteiro  := Posicione("ZIB", 1, FWxFilial("ZIB") + cCP, "ZIB_CODROT")  
 
             If Empty(cProdSAG)
@@ -508,11 +514,12 @@ User Function ADFAT162(cCP, cNF, cSerie, cFornece, cLjForn, cOrdem, cMsgError)
             oModel:SetValue("MD_MASTER", "ZIF_QUANT" , SD1->D1_QUANT)
             oModel:SetValue("MD_MASTER", "ZIF_TPMOVI", "E")
             oModel:SetValue("MD_MASTER", "ZIF_STATUS", Iif(cStatLab == "2", "2", "1"))
-            oModel:SetValue("MD_MASTER", "ZIF_LOTE"  , cLoteAuth)
+            oModel:SetValue("MD_MASTER", "ZIF_LOTE"  , "") //Aguarda o lote vir do barramento.
             oModel:SetValue("MD_MASTER", "ZIF_STATLA", cStatLab)
             oModel:SetValue("MD_MASTER", "ZIF_PEDCOM", SD1->D1_PEDIDO)
             oModel:SetValue("MD_MASTER", "ZIF_ENVBAR", ZIA->ZIA_MVESTO)
             oModel:SetValue("MD_MASTER", "ZIF_EAGRUP", "2")
+            oModel:SetValue("MD_MASTER", "ZIF_GEMBA" , cStatGemba)
 
             If oModel:VldData()
                 oModel:CommitData()

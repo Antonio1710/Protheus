@@ -1566,8 +1566,11 @@ User Function ADFAT29K()
     cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
     cQuery += " AND ZIQ_TIPO = 'E' " 
     cQuery += " AND ZIQ_TOPICO = 'resultado_analise_laboratorial' " 
+    
     cQuery += " AND ZIQ_PROCES = '2' " 
-    cQuery += " AND ZIQ_SISGER = 'SAG' " 
+
+    // cQuery += " AND ZIQ_UUID IN ('bcf13551-db84-49b9-98eb-db787153214f','93b25865-7c7b-4fc4-9ad7-9043facfacf5') " 
+    
     cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
     cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
     cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
@@ -1615,9 +1618,10 @@ User Function ADFAT29K()
 
         If U_ADFAT196(cNmOrdem)
 
-            If ZIG->ZIG_INICIA <> "3" //Não deixa alterar o lote se a pesagem estiver encerrada.
+            If ZIG->ZIG_INICIA == "3" //Não deixa alterar o lote se a pesagem estiver encerrada.
 
                 cMsgError := "Pesagem encerrada, ordem " + cNmOrdem + "."
+                U_ADFAT173("Atribuição de lote : " + cMsgError + " - ordem de pesagem " + cNmOrdem, cNmOrdem, "", "PROTHEUS")
                 U_ADFAT29D(cId, "2", cMsgError)
                 Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
                 (cAliasAux)->(DbSkip())
@@ -1639,15 +1643,26 @@ User Function ADFAT29K()
 
             Begin Transaction
 
-                If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                //Valida lote.
+                If ! U_ADFAT18D(cLote, cPrdSAG, "", @cMsgError)
                     DisarmTransaction()
                     Break
-                    
+
                 EndIf
 
-                If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
-                    DisarmTransaction()
-                    Break
+                If Alltrim(cValToChar(ZIF->ZIF_STATLA)) == "2" //Aguardando análise laboratorial.
+
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                        DisarmTransaction()
+                        Break
+                        
+                    EndIf
+
+                    If ! U_ADFAT165(cNmOrdem, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                        DisarmTransaction()
+                        Break
+
+                    EndIf
 
                 EndIf
 
@@ -1661,7 +1676,7 @@ User Function ADFAT29K()
 
         ElseIf U_ADFAT16F(cNmOrdem) //Atualização de agrupador de ordem de pesagem.
 
-            cQuery2 := " SELECT ZIF_NUMERO FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' "
+            cQuery2 := " SELECT ZIF_NUMERO, ZIF_STATUS, ZIF_STATLA, ZIF_PRDSAG FROM " + RetSqlName("ZIF") + " (NOLOCK) AS ZIF WHERE ZIF_FILIAL = '" + FWxFilial("ZIF") + "' AND ZIF_AGRUPA = '" + cNmOrdem + "' AND ZIF.D_E_L_E_T_ = '' "
 
             cNewAlias := GetNextAlias()
 
@@ -1673,15 +1688,28 @@ User Function ADFAT29K()
 
                 While ! (cNewAlias)->(Eof())
 
-                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                    cNmOrdem := (cNewAlias)->ZIF_NUMERO
+
+                    //Valida lote.
+                    If ! U_ADFAT18D(cLote, (cNewAlias)->ZIF_PRDSAG, "", @cMsgError)
                         DisarmTransaction()
                         Break
-                        
+
                     EndIf
 
-                    If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
-                        DisarmTransaction()
-                        Break
+                    If Alltrim(cValToChar((cNewAlias)->ZIF_STATLA)) == "2" //Aguardando análise laboratorial.
+
+                        If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATLA", cSituacao, @cMsgError) //Status do laboratório.
+                            DisarmTransaction()
+                            Break
+                            
+                        EndIf
+
+                        If ! U_ADFAT165((cNewAlias)->ZIF_NUMERO, "ZIF_STATUS", cSituacao, @cMsgError) //Status da ordem de pesagem.
+                            DisarmTransaction()
+                            Break
+
+                        EndIf
 
                     EndIf
 
@@ -1705,10 +1733,16 @@ User Function ADFAT29K()
         EndIf
 
         If ! Empty(cMsgError)
+            cMsgError += " - ordem de pesagem " + cNmOrdem
+            U_ADFAT173("Atribuição de lote : " + cMsgError, cNmOrdem, "", "PROTHEUS")
+
             U_ADFAT29D(cId, "2", cMsgError)
             Help(Nil, Nil, "Função ADFAT29C(ADFAT029P)", Nil, "Erro no processamento de registro de lote de produto SAG " + cId + "." + xPula + cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
         Else
+
+            U_ADFAT173("Atribuição de lote : sucesso", cNmOrdem, "", "PROTHEUS")
+
             U_ADFAT29D(cId, "1", "")
 
         EndIf
