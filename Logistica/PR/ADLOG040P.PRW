@@ -106,6 +106,7 @@ Static nTipoFrt	:= 0
 	@history 28/03/2022 - ADRIANO SAVOINE - Criado o bloqueio para o tipo de ocorrencia 012 e 014 somente para pessoas especificas.
 	@history ticket 70750 - Everson - 07/04/2022 - Adaptação do fonte para nova filial.
 	@history ticket 73505 - Everson - 24/05/2022 - Tratamento para validar exclusão/alteração de registros fechado em rotinas com execauto. 
+	@history ticket 76823 - Fernando Macieira - 21/07/2022 - Configuração visualização de cidade NF
 /*/
 User Function ADLOG040P()
 
@@ -6728,7 +6729,8 @@ Static Function ADLG0402( cCarga, lMarca, cRoteiro,cTpCarga) //Everson 26/04/201
 	cQuery += " ZFD_SEQCAR, ZFD_CAMINH, ZFD_PEDIDO, "
 	cQuery += " ZFD_CLIENT, ZFD_LOJA, ZFD_NOMECL, ZFD_NUMNF, " 
 	cQuery += " ZFD_SERIE, C5_CIDADE, C5_PBRUTO, C5_PESOL, "
-	cQuery += " C5_VOLUME1, C5_TIPO, F2_CHVNFE  "
+	cQuery += " C5_VOLUME1, C5_TIPO, F2_CHVNFE, "
+	cQuery += " C5_CLIENT, C5_LOJAENT " // @history ticket 76823 - Fernando Macieira - 21/07/2022 - Configuração visualização de cidade NF
 	cQuery += " FROM " + RetSqlName("ZFD") + " AS ZFD "
 	cQuery += " INNER JOIN " + RetSqlName("SC5") + " AS SC5 ON "
 	cQuery += " ZFD_FILIAL = C5_FILIAL "
@@ -6793,7 +6795,8 @@ Static Function ADLG0402( cCarga, lMarca, cRoteiro,cTpCarga) //Everson 26/04/201
 			//ADLG0403->ZFD_LONGIT := ""
 		
 		Else
-			ADLG0403->ZFD_CIDADE := Posicione("SA1",1, FWxFilial("SA1") + Alltrim(tADLG0403->ZFD_CLIENT) + Alltrim(tADLG0403->ZFD_LOJA) ,"A1_MUN")
+			//ADLG0403->ZFD_CIDADE := Posicione("SA1",1, FWxFilial("SA1") + Alltrim(tADLG0403->ZFD_CLIENT) + Alltrim(tADLG0403->ZFD_LOJA) ,"A1_MUN") // @history ticket 76823 - Fernando Macieira - 21/07/2022 - Configuração visualização de cidade NF
+			ADLG0403->ZFD_CIDADE := Posicione("SA1",1, FWxFilial("SA1") + Alltrim(tADLG0403->C5_CLIENT) + Alltrim(tADLG0403->C5_LOJAENT) ,"A1_MUNE") // @history ticket 76823 - Fernando Macieira - 21/07/2022 - Configuração visualização de cidade NF
 			
 			//Everson - 11/08/2020. Chamado 059326.
 			//ADLG0403->ZFD_LATITU := Posicione("SA1",1, FWxFilial("SA1") + Alltrim(tADLG0403->ZFD_CLIENT) + Alltrim(tADLG0403->ZFD_LOJA) ,"A1_XLATITU")
