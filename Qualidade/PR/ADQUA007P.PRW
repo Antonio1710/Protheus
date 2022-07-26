@@ -1,22 +1,21 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
 
-Static cTbMast := "ZHV"
-Static cTitulo := "Exame Laboratorial"
-Static cTiMast := "Exame Laboratorial"
+Static cTbMast := "ZHW"
+Static cTitulo := "Produto x Exame"
 
-/*/{Protheus.doc} User Function ADQUA006P
-    Exame laboratorial
+/*/{Protheus.doc} User Function ADQUA007P
+    Produto x Exame
     Chamado 18465.
     @type  Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
-User Function ADQUA006P() // U_ADQUA006P()
+User Function ADQUA007P() // U_ADQUA007P()
 
     //Variáveis.
-    Local oBrowse := FwLoadBrw("ADQUA006P")
+    Local oBrowse := FwLoadBrw("ADQUA007P")
 
     oBrowse:Activate()
 
@@ -24,7 +23,7 @@ Return Nil
 /*/{Protheus.doc} BrowseDef
     @type  Static Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
 Static Function BrowseDef()
@@ -41,7 +40,7 @@ Return oBrowse
 /*/{Protheus.doc} MenuDef
     @type  Static Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
 Static Function MenuDef()
@@ -49,17 +48,17 @@ Static Function MenuDef()
     //Variáveis
     Local aRotina := {}
 
-    ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.ADQUA006P" OPERATION 2 ACCESS 0
-    ADD OPTION aRotina TITLE "Incluir"    ACTION "VIEWDEF.ADQUA006P" OPERATION 3 ACCESS 0
-    ADD OPTION aRotina TITLE "Alterar"    ACTION "VIEWDEF.ADQUA006P" OPERATION 4 ACCESS 0
-    ADD OPTION aRotina TITLE "Excluir"    ACTION "VIEWDEF.ADQUA006P" OPERATION 5 ACCESS 0
-    ADD OPTION aRotina TITLE "Imprimir"   ACTION "VIEWDEF.ADQUA006P" OPERATION 8 ACCESS 0
+    ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.ADQUA007P" OPERATION 2 ACCESS 0
+    ADD OPTION aRotina TITLE "Incluir"    ACTION "VIEWDEF.ADQUA007P" OPERATION 3 ACCESS 0
+    ADD OPTION aRotina TITLE "Alterar"    ACTION "VIEWDEF.ADQUA007P" OPERATION 4 ACCESS 0
+    ADD OPTION aRotina TITLE "Excluir"    ACTION "VIEWDEF.ADQUA007P" OPERATION 5 ACCESS 0
+    ADD OPTION aRotina TITLE "Imprimir"   ACTION "VIEWDEF.ADQUA007P" OPERATION 8 ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} ModelDef
     @type  Static Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
 Static Function ModelDef()
@@ -69,32 +68,31 @@ Static Function ModelDef()
     Local oStrMast  := FWFormStruct(1, cTbMast, {|cCampo| AllTRim(cCampo) $ getCmps()})
     Local oStrGrid  := FWFormStruct(1, cTbMast)
  
-    oModel := MPFormModel():New("ADQUA6", /*bPreValidacao*/, /*{|oModel| fValidGrid(oModel)}*/, /*bCommit*/, /*bCancel*/ )
+    oModel := MPFormModel():New("ADQUA7", /*bPreValidacao*/, /*{|oModel| fValidGrid(oModel)}*/, /*bCommit*/, /*bCancel*/ )
  
     oModel:AddFields("MD_MASTER", NIL, oStrMast)
     oModel:AddGrid("MD_GRID", "MD_MASTER", oStrGrid, ,)
  
     oModel:SetRelation("MD_GRID", {;
-            {"ZHV_FILIAL", 'FWxFilial("' + cTbMast + '")'},;
-            {"ZHV_NUMERO", "ZHV_NUMERO"},;
-            {"ZHV_NOME"  , "ZHV_NOME"};
+            {"ZHW_FILIAL", 'FWxFilial("' + cTbMast + '")'},;
+            {"ZHW_PRODUT", "ZHW_PRODUT"},;
+            {"ZHW_DESC"  , "ZHW_DESC"};
         }, (cTbMast)->(IndexKey(1)))
 
-    oModel:SetDescription(cTiMast)
-    oModel:SetPrimaryKey({"ZHV_FILIAL","ZHV_NUMERO"})
+    oModel:SetPrimaryKey({"ZHW_FILIAL","ZHW_PRODUT"})
 
 Return oModel
 /*/{Protheus.doc} ViewDef
     @type  Static Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
 Static Function ViewDef()
     
     //Variáveis.
     Local oView     := Nil
-    Local oModel    := FWLoadModel("ADQUA006P")
+    Local oModel    := FWLoadModel("ADQUA007P")
     Local cCampos   := getCmps()
     Local oStrMast  := FWFormStruct(2, cTbMast, {|cCampo| AllTRim(cCampo) $ cCampos})
     Local oStrGrid  := FWFormStruct(2, cTbMast, {|cCampo| !(Alltrim(cCampo) $ cCampos)})
@@ -112,14 +110,14 @@ Static Function ViewDef()
     oView:SetOwnerView("VW_GRID", 'GRID')
     oView:EnableControlBar(.T.)
  
-    oView:AddIncrementField("VW_GRID", "ZHV_ITEM")
+    oView:AddIncrementField("VW_GRID", "ZHW_ITEM")
 
 Return oView
 /*/{Protheus.doc} gridFocus
     Função executada quando a grid ganha foco.
     @type  Static Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
 Static Function gridFocus(oView)
@@ -127,11 +125,16 @@ Static Function gridFocus(oView)
     //Variáveis.
     Local aArea   := GetArea()
     Local oModel  := oView:GetModel()
-    Local cNome   := oModel:GetValue("MD_MASTER","ZHV_NOME")
+    Local cCodPrd := oModel:GetValue("MD_MASTER","ZHW_PRODUT")
+    Local cDescPrd:= oModel:GetValue("MD_MASTER","ZHW_DESC")
 
-    If Empty(cNome)
-        Help(Nil, Nil, "Função gridFocus(ADQUA006P)", Nil, "Necessário informar o nome do exame.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHV_NOME"):OCtrl:SetFocus()
+    If Empty(cCodPrd)
+        Help(Nil, Nil, "Função gridFocus(ADQUA007P)", Nil, "Necessário informar o código do produto.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHW_PRODUT"):OCtrl:SetFocus()
+    
+    ElseIf Empty(cDescPrd)
+        Help(Nil, Nil, "Função gridFocus(ADQUA007P)", Nil, "Necessário informar a descrição do produto.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHW_PRODUT"):OCtrl:SetFocus()
     
     EndIf
 
@@ -142,19 +145,19 @@ Return Nil
     Retorna campos do cabeçalho.
     @type  Static Function
     @author Everson
-    @since 25/07/2022
+    @since 26/07/2022
     @version 01
 /*/
 Static Function getCmps()
-Return "ZHV_FILIAL;ZHV_NUMERO;ZHV_NOME;"
-/*/{Protheus.doc} ADQUA6
+Return "ZHW_FILIAL;ZHW_PRODUT;ZHW_DESC;"
+/*/{Protheus.doc} ADQUA7
     Ponto de entrada.
     @type  User Function
     @author Everson
     @since 26/07/2022
     @version 01
 /*/
-User Function ADQUA6()
+User Function ADQUA7()
 
     //Variáveis.
     Local aArea     := GetArea()
@@ -177,7 +180,7 @@ User Function ADQUA6()
 		If cIdPonto == "MODELCOMMITNTTS"
 
             oModelx := FWModelActive()
-            cNumero := oModelx:GetValue("MD_MASTER", "ZHV_NUMERO")
+            cNumero := oModelx:GetValue("MD_MASTER", "ZHW_PRODUT")
 
             If nOperation == MODEL_OPERATION_INSERT
                 cOperacao := "I"
@@ -215,13 +218,13 @@ Static Function grvBarr(cOperacao, cNumero)
     Local aArea     := GetArea()
     Local cFilter   := ""
     Local cCmp      := getCmps()
-    Local cTopico   := "exame_laboratorio_protheus"
+    Local cTopico   := "produto_x_exame_protheus"
 
     
-    cFilter := " ZHV_FILIAL ='" + FWxFilial("ZHV") + "' .And. ZHV_NUMERO = '" + cNumero + "' "
+    cFilter := " ZHW_FILIAL ='" + FWxFilial("ZHW") + "' .And. ZHW_PRODUT = '" + cNumero + "' "
 
-    U_ADFAT27D("ZHV", 1, FWxFilial("ZHV") + cNumero,;
-        "ZHV", 1, FWxFilial("ZHV") + cNumero, "ZHV_ITEM", cFilter,;
+    U_ADFAT27D("ZHW", 1, FWxFilial("ZHW") + cNumero,;
+        "ZHW", 2, FWxFilial("ZHW") + cNumero, "ZHW_ITEM", cFilter,;
         cTopico, cOperacao,;
         .T., .T., .T.,;
         cCmp) 
