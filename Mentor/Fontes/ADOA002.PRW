@@ -21,8 +21,9 @@
 	@history Ticket 13526   - Everson             - 11/10/2021 - Adicionada relação A1_XTPDESC x PB3_XTPDES.
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history Ticket 69520   - Leonardo P. Monteiro- 21/03/2022 - Projeto FAI - Importação PV x SalesForce.
-	@history Ticket 69520 - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
-	@history Ticket TI    - Everson - 11/07/2022 - Tratamento para integração com Salesforce.
+	@history Ticket 69520   - Leonardo P. Monteiro   - 17/03/2022 - Preparação da rotina para integrações de diferentes Empresas/Filiais com a entrada da nova filial de Itupeva.
+	@history Ticket TI      - Everson - 11/07/2022 - Tratamento para integração com Salesforce.
+	@history Ticket 76863   - Fernando Macieira - 25/07/2022 - ERRO ATUALIZAÇÃO DE CADASTRO CLIENTE
 /*/
 /*
 *************Ao fazer alterações neste fonte, verificar o fonte ADVEN051P (serviço Rest para inclusão de pré-cadastro).
@@ -1600,6 +1601,8 @@ User Function ArrayCli(cCodSa1, cLoja, cAcx, nVlrDes)
 	Local cSegCli		:= ""
 	Local nVlrPeMin 	:= 0
 	//
+
+	Local i
 	
 	lMsErroAuto := .F.
 
@@ -1795,6 +1798,14 @@ User Function ArrayCli(cCodSa1, cLoja, cAcx, nVlrDes)
 		Aadd(aVetor, {"A1_XPEDMIN",nVlrPeMin,Nil})
 	//
 
+	// @history Ticket 76863   - Fernando Macieira - 25/07/2022 - ERRO ATUALIZAÇÃO DE CADASTRO CLIENTE
+	For i:=1 to Len(aVetor)
+		If TamSX3(aVetor[i,1])[3] == "C"
+			aVetor[i,2] := PadR(AllTrim(aVetor[i,2]),TamSX3(aVetor[i,1])[1])
+		EndIf
+	Next i
+	//
+
 Return (aVetor)
 /*/{Protheus.doc} getPedMin
 	Obtém o preço mínimo do pedido do cliente.
@@ -1862,7 +1873,11 @@ User Function AltCliB3(cCodCli, cloja, aCli, cAcao, nVlrDes)
 	//
 	aCli := FWVetByDic(aCli,"SA1",.F.) //Everson - 24/07/2020. Chamado 059932.
 
-	MsExecAuto({|x,y| MATA030(x,y)},aCli,nOpc)
+	// @history Ticket 76863   - Fernando Macieira - 25/07/2022 - ERRO ATUALIZAÇÃO DE CADASTRO CLIENTE
+	//MsExecAuto({|x,y| MATA030(x,y)},aCli,nOpc)
+	//MSExecAuto({|a,b,c| CRMA980(a,b,c)}, aCli, nOpc /*, aAI0Auto*/)
+	FWMsgRun(, {|| MSExecAuto({|a,b,c| CRMA980(a,b,c)}, aCli, nOpc /*, aAI0Auto*/) }, "Aguarde", "Atualizando cadastro de clientes ["+Time()+"] ...")
+	//
 
 	If lMsErroAuto
 		MostraErro()
