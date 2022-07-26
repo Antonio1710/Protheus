@@ -232,3 +232,24 @@ Static Function grvBarr(cOperacao, cNumero)
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} User Function ADQUA71
+    Posiciona no registro.
+    @type  Function
+    @author Everson
+    @since 26/07/2022
+    @version 01
+/*/
+User Function ADQUA71(cProduto)
+
+    //Variáveis.
+
+    DbSelectArea("ZHW")
+    ZHW->(DbSetOrder(1))
+    ZHW->(DbGoTop())
+
+    If ! ZHW->( DbSeek( FWxFilial("ZHW") + cProduto) )
+        Return .F.
+
+    EndIf
+
+Return .T.
