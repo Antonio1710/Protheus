@@ -56,9 +56,9 @@ Static Function MenuDef()
 	Local aRotina 	:= {}
 
 	ADD OPTION aRotina TITLE "Pesquisar"    ACTION "PesqBrw"          	OPERATION 1   ACCESS 0
-	ADD OPTION aRotina TITLE "Visualizar" 	ACTION "VIEWDEF.ADEST073P" 	OPERATION MODEL_OPERATION_VIEW   ACCESS 0
+	ADD OPTION aRotina TITLE "Visualizar" 	ACTION "VIEWDEF.ADEST073P" 	OPERATION MODEL_OPERATION_VIEW     ACCESS 0
 	ADD OPTION aRotina TITLE "Incluir" 	    ACTION "VIEWDEF.ADEST073P" 	OPERATION MODEL_OPERATION_INSERT   ACCESS 0
-	ADD OPTION aRotina TITLE "Alterar"      ACTION "U_ADEST734(4)" 	    OPERATION MODEL_OPERATION_UPDATE ACCESS 0
+	ADD OPTION aRotina TITLE "Alterar"      ACTION "U_ADEST734(4)" 	    OPERATION MODEL_OPERATION_UPDATE   ACCESS 0
 	ADD OPTION aRotina TITLE "Excluir" 	    ACTION "U_ADEST734(5)" 	    OPERATION MODEL_OPERATION_DELETE   ACCESS 0
 
 Return aRotina
@@ -421,7 +421,7 @@ User Function ADEST731(oView)
 
     oModal := FWDialogModal():New() 
     oModal:SetBackground( .T. ) 
-	oModal:setTitle("Devolver Tag de Pesagem")
+	oModal:setTitle("Selecionar ordem de pesagem/agrupador")
 	oModal:setSize( 150 , 350 )
     oModal:EnableFormBar( .T. )
     oModal:SetEscClose(.F.)
@@ -474,7 +474,7 @@ Static Function selecOrd(oBrowse, aArquivo)
     For nAux := 1 To Len(aArquivo)
 
         If aArquivo[nAux,02] == cNmOrdem
-            aArquivo[nAux,01] := .T.
+            aArquivo[nAux,01] := ! aArquivo[nAux,01]
 
         Else
             aArquivo[nAux,01] := .F.
