@@ -205,7 +205,8 @@ Static Function vldPos(oModel)
             cBalanca   := Posicione("ZIG", 1, FWxFilial("ZIG") + cNumTkt, "ZIG_BALANC")
             cUrl       := Alltrim(cValToChar(Posicione("DX5" , 1, FwxFilial("DX5") + cBalanca, "DX5_URL")))
 
-            If ! FWIsInCallStack("U_ADFAT17Q") .And. ! U_ADFAT249(cUrl, @cMsgError, cTktGua, 4, "WS G", "01")
+            If ! FWIsInCallStack("U_ADFAT17Q")
+                U_ADFAT249(cUrl, "", cTktGua, 4, "WS G", "01")
                 lRet := .F.
                 Help(Nil, Nil, "Função vldPos(ADFAT019P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
