@@ -2,8 +2,8 @@
 #Include "FWMVCDef.ch"
 
 Static cTbMast := "ZHU"
-Static cTitulo := "Item Análise Laboratorial"
-Static cTiMast := "Item Dados da Análise Laboratorial"
+Static cTitulo := "Tipo Análise Laboratorial"
+Static cTiMast := "Dados do Tipo de Análise Laboratorial"
 
 Static cTipoD  := "1"
 
@@ -52,11 +52,11 @@ Static Function MenuDef()
     //Variáveis
     Local aRotina := {}
 
-    ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.ADFAT015P" OPERATION 2 ACCESS 0
+    ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.ADQUA005P" OPERATION 2 ACCESS 0
     ADD OPTION aRotina TITLE "Incluir"    ACTION "U_ADQUA51()"       OPERATION 3 ACCESS 0
     ADD OPTION aRotina TITLE "Alterar"    ACTION "U_ADQUA52(4)"      OPERATION 4 ACCESS 0
     ADD OPTION aRotina TITLE "Excluir"    ACTION "U_ADQUA52(5)"      OPERATION 5 ACCESS 0
-    ADD OPTION aRotina TITLE "Imprimir"   ACTION "VIEWDEF.ADFAT015P" OPERATION 8 ACCESS 0
+    ADD OPTION aRotina TITLE "Imprimir"   ACTION "VIEWDEF.ADQUA005P" OPERATION 8 ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} User Function ADQUA51
@@ -129,7 +129,7 @@ Static Function ModelDef()
     
     //Variáveis.
     Local oModel    := Nil
-    Local oStrMast  := FWFormStruct(1, cTbMast, {|cCampo| AllTRim(cCampo) $ getCampos()})
+    Local oStrMast  := FWFormStruct(1, cTbMast, {|cCampo| AllTRim(cCampo) $ getCmps()})
     Local oStrGrid  := FWFormStruct(1, cTbMast)
  
     oModel := MPFormModel():New("ADQUA5", /*bPreValidacao*/, /*{|oModel| fValidGrid(oModel)}*/, /*bCommit*/, /*bCancel*/ )
@@ -145,7 +145,6 @@ Static Function ModelDef()
             {"ZHU_UN"    , "ZHU_UN"};
         }, (cTbMast)->(IndexKey(1)))
 
-    oModel:SetDescription(cTiMast)
     oModel:SetPrimaryKey({"ZHU_FILIAL","ZHU_NUMERO"})
 
 Return oModel
@@ -160,7 +159,7 @@ Static Function ViewDef()
     //Variáveis.
     Local oView     := Nil
     Local oModel    := FWLoadModel("ADQUA005P")
-    Local cCampos   := getCampos()
+    Local cCampos   := getCmps()
     Local oStrMast  := FWFormStruct(2, cTbMast, {|cCampo| AllTRim(cCampo) $ cCampos})
     Local oStrGrid  := FWFormStruct(2, cTbMast, {|cCampo| !(Alltrim(cCampo) $ cCampos)})
 
@@ -178,6 +177,8 @@ Static Function ViewDef()
     oView:EnableControlBar(.T.)
  
     oView:AddIncrementField("VW_GRID", "ZHU_ITEM")
+
+    oStrGrid:RemoveField("ZHU_UN")
 
     If cTipoD == "1"
         oStrGrid:RemoveField("ZHU_MINIMO")
@@ -202,33 +203,104 @@ Static Function gridFocus(oView)
     Local aArea   := GetArea()
     Local oModel  := oView:GetModel()
     Local cNome   := oModel:GetValue("MD_MASTER","ZHU_NOME")
-    //Local cTpDado := oModel:GetValue("MD_MASTER","ZHU_TPDADO")
-    Local cUnidade:= oModel:GetValue("MD_MASTER","ZHU_UN")
 
     If Empty(cNome)
         Help(Nil, Nil, "Função gridFocus(ADQUA005P)", Nil, "Necessário informar o nome do item.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHU_NOME"):OCtrl:SetFocus()
-        Return Nil
-    
-    // ElseIf Empty(cTpDado)
-    //     Help(Nil, Nil, "Função gridFocus(ADQUA005P)", Nil, "Necessário informar o tipo do dado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-    //     oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHU_TPDADO"):OCtrl:SetFocus()
-
-    ElseIf Empty(cUnidade)
-        Help(Nil, Nil, "Função gridFocus(ADQUA005P)", Nil, "Necessário informar a unidade de medida.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHU_UN"):OCtrl:SetFocus()
     
     EndIf
 
     RestArea(aArea)
 
 Return Nil
-/*/{Protheus.doc} getCampos
+/*/{Protheus.doc} getCmps
     Retorna campos do cabeçalho.
     @type  Static Function
     @author Everson
     @since 25/07/2022
     @version 01
 /*/
-Static Function getCampos()
+Static Function getCmps()
 Return "ZHU_FILIAL;ZHU_NUMERO;ZHU_NOME;ZHU_TPDADO;ZHU_UN;"
+/*/{Protheus.doc} ADQUA5
+    Ponto de entrada.
+    @type  User Function
+    @author Everson
+    @since 26/07/2022
+    @version 01
+/*/
+User Function ADQUA5()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+	Local aParam	:= PARAMIXB
+	Local xRet 		:= .T.
+	Local oObj 		:= ""
+	Local cIdPonto 	:= ""
+	Local cIdModel 	:= ""
+    Local oModelx   := Nil
+    Local nOperation:= 0
+    Local cNumero   := ""
+
+	If aParam <> Nil
+
+		oObj 	    := aParam[1]
+		cIdPonto    := aParam[2]
+		cIdModel    := aParam[3]
+        nOperation  := oObj:GetOperation()
+
+		If cIdPonto == "MODELCOMMITNTTS"
+
+            oModelx := FWModelActive()
+            cNumero := oModelx:GetValue("MD_MASTER", "ZHU_NUMERO")
+
+            If nOperation == MODEL_OPERATION_INSERT
+                cOperacao := "I"
+
+            ElseIf nOperation == MODEL_OPERATION_UPDATE
+                cOperacao := "A"
+
+            ElseIf nOperation == MODEL_OPERATION_DELETE
+                cOperacao := "D"
+
+            EndIf
+
+            If ! Empty(cOperacao) .And. ! Empty(cNumero)
+                grvBarr(cOperacao, cNumero)
+
+            EndIf
+
+		EndIf
+
+	EndIf
+
+    RestArea(aArea)
+
+Return xRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  Static Function
+    @author Everson
+    @since 26/07/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cFilter   := ""
+    Local cCmp      := getCmps()
+    Local cTopico   := "tipo_analise_laboratorio_protheus"
+
+    
+    cFilter := " ZHU_FILIAL ='" + FWxFilial("ZHU") + "' .And. ZHU_NUMERO = '" + cNumero + "' "
+
+    U_ADFAT27D("ZHU", 1, FWxFilial("ZHU") + cNumero,;
+        "ZHU", 3, FWxFilial("ZHU") + cNumero, "ZHU_ITEM", cFilter,;
+        cTopico, cOperacao,;
+        .T., .T., .T.,;
+        cCmp) 
+
+    RestArea(aArea)
+
+Return Nil
