@@ -17,6 +17,8 @@
     @history Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE - Corrigido o programa para rodar Schedule na versão Protheus V33.
     @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
     @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG
+    @history Ticket 75264  - 26/07/2022 - Antonio Domingos - Relatório " Requisição Transferência "
+
 /*/
 User Function ADMNT014R(aParam)
 
@@ -24,25 +26,13 @@ User Function ADMNT014R(aParam)
     Local cPerg 		:= "ADMNT012R"
     Local aInfoCustom 	:= {}
     Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL do custo de requisição de almoxarifado"
-    //local lSetEnv       := .f.
-
+    Local _aEmpFil      := {{"01","02"},{"02","01"}}
+    Local _n1
     // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
     Default aParam    	:= Array(2)
-    Default aParam[1] 	:= "01"
-    Default aParam[2] 	:= "02"
-
-    //Private lJob          := IsBlind() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
+    Default aParam[1] 	:= "02"
+    Default aParam[2] 	:= "01"
     Private lJob          := !IsBlind() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
-
-    /*
-    IF !EMPTY(aParam)  //Ticket 76482  - 15/07/2022 - ADRIANO SAVOINE
-                    RpcClearEnv()
-                    RpcSetType(3)
-        lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
-    ENDIF
-    */
-    //
-
     Private oProcess
     Private dMVPAR01   
     Private dMVPAR02   
@@ -50,7 +40,13 @@ User Function ADMNT014R(aParam)
     Private cMVPAR04  
     Private czEMP
     Private czFIL
-
+    Private cPara      := ""
+    Private cAssunto   := "Relação do custo de requisição de almoxarifado"
+    Private cCorpo     := "Relação do custo de requisição de almoxarifado"
+    Private aAnexos    := {}
+    Private lMostraLog := .F.
+    Private lUsaTLS    := .T.
+    
     // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
     If Select("SX6") == 0
         lJob := .T.
@@ -58,41 +54,39 @@ User Function ADMNT014R(aParam)
         lJob := .f.
     EndIf
     //
-
-    cPara      := ""
-    cAssunto   := "Relação do custo de requisição de almoxarifado"
-    cCorpo     := "Relação do custo de requisição de almoxarifado"
-    aAnexos    := {}
-    lMostraLog := .F.
-    lUsaTLS    := .T.
-
+   
     If lJob
 
+       For _n1 := 1 To Len(_aEmpFil)
+    
         // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
-        RPCClearEnv()
-        RPCSetType(3)  //Nao consome licensas
-        RpcSetEnv(aParam[1],aParam[2],,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas	
-        //
+            RPCClearEnv()
+            RPCSetType(3)  //Nao consome licensas
+            RpcSetEnv(_aEmpFil[_n1,1],_aEmpFil[_n1,2],,,,GetEnvServer(),{ }) //Abertura do ambiente em rotinas automáticas	
+            //
 
-        czEMP    := aParam[1]   
-        czFIL    := aParam[2]  
-        
-        //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
-        dMVPAR01	:= Stod( Left( Dtos( Date() ),6 )+"01" )
-        dMVPAR02	:= Date()
-        
-        cMVPAR03 := czFIL
-        cMVPAR04 := czFIL
-        
-        Qout(" JOB ADMNT-Protheus - 01 - Parametros dMVPAR01="+ Dtoc(dMVPAR01) + ", dMVPAR02=" + Dtoc(dMVPAR02) +", cMVPAR03="+ cMVPAR03 +", cMVPAR04="+cMVPAR04+" ")
-        
-        //PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST" // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
-        cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"sonia.silva@adoro.com.br;hercules.moreira@adoro.com.br;debora.silva@adoro.com.br" )
-        
-        logZBN("1") //Log início // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
-        oProcess := Executa()
-        logZBN("2") //Log fim // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
 
+            czEMP    := _aEmpFil[_n1,1]   
+            czFIL    := _aEmpFil[_n1,2]  
+
+            //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
+            dMVPAR01	:= Stod( Left( Dtos( Date() ),6 )+"01" )
+            dMVPAR02	:= Date()
+            
+            cMVPAR03 := czFIL
+            cMVPAR04 := czFIL
+            
+            Qout(" JOB ADMNT-Protheus - 01 - Parametros dMVPAR01="+ Dtoc(dMVPAR01) + ", dMVPAR02=" + Dtoc(dMVPAR02) +", cMVPAR03="+ cMVPAR03 +", cMVPAR04="+cMVPAR04+" ")
+            
+            //PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST" // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+            cPara      :=  SuperGetMv('ZZ_MNT014R', .f. ,"antonio.filho@adoro.com.br") //"sonia.silva@adoro.com.br;hercules.moreira@adoro.com.br;debora.silva@adoro.com.br" )
+            
+            logZBN("1") //Log início // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+            oProcess := Executa()
+            logZBN("2") //Log fim // @history Ticket 76312  - 18/07/2022 - Fernando Macieira - RELATORIO DE CUSTOS
+    
+        Next
+    
     Else
         oProcess := tNewProcess():New("ADMNT014R","Custo de requisição",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Custo de requisição", .T. )
     Endif
@@ -117,7 +111,7 @@ Static Function Executa(oProcess)
 
     Local cQry      := ""
     Local cAlias    := GetNextAlias()
-
+    Local _cCusto   := SuperGetMv("MV_XMNT014",.F.,"5213/5217/5304")
     //Private oExcel  	:= FwMsExcel():New() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
     Private oExcel  	:= FwMsExcelXlsx():New() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
     
@@ -126,6 +120,8 @@ Static Function Executa(oProcess)
     Private cNomArq
     Private cDIRARQ
     Private cDIRREDE
+
+    aAnexos:={}
 
     //@history Ticket: 13556 - 25/06/2021 - LEONARDO P. MONTEIRO - Correção da rotina para execução via schedule.
     If !lJob
@@ -142,6 +138,8 @@ Static Function Executa(oProcess)
     oExcel:AddColumn("Custo","RelCusto","DESCRIÇÃO"	     ,1,1)
     oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,3,3,.T.)
 
+    _cCusto := STRTRAN(_cCusto,"/","','")
+
     cQry    := " SELECT "
     cQry    += " D3_FILIAL,"
     cQry    += " D3_GRUPO,"
@@ -156,15 +154,14 @@ Static Function Executa(oProcess)
     cQry    += " D3_EMISSAO BETWEEN '"+DTOS(dMVPAR01)+"' AND '"+DTOS(dMVPAR02)+"' "
     cQry    += " AND D3_FILIAL BETWEEN '"+cMVPAR03+"' AND '"+cMVPAR04+"' "
     cQry    += " AND D3_TM = '501'
-    cQry    += " AND D3_CC IN ('5213','5217','5304')
+    cQry    += " AND D3_CC IN ('"+_cCusto+"') "
     cQry    += " AND D3.D_E_L_E_T_ = ' ' "
     cQry    += " AND D3_ESTORNO <> 'S' " //Ticket: 63902 - 23/11/2021 - TIAGO STOCCO
     cQry    += " GROUP BY D3_FILIAL,D3_GRUPO,BM_DESC "  // Ticket: TI - 11/06/2021 - ADRIANO SAVOINE
     cQry    += " ORDER BY D3_FILIAL,D3_GRUPO "
-
-    /*
-    MemoWrite("c:\TEMP\cQry.txt", cQry)
-    */
+  
+    MemoWrite("c:\TEMP\ADMNT014R_Qry.SQL", cQry)
+  
 
     IF Select (cAlias) > 0
         (cAlias)->(DbCloseArea())
@@ -187,7 +184,7 @@ Static Function Executa(oProcess)
         
         If !(lJob)
             cDIRARQ := "c:\temp\"
-            cNomArq := "REL_CUSTO_"+cEmpAnt+"_"+cFilAnt+".XLS" 
+            cNomArq := "REL_CUSTO_"+czEMP+"_"+czFIL+".XLS" 
         Else
             cDIRARQ := "\DATA\"
             cNomArq := "REL_CUSTO_"+czEMP+"_"+czFIL+".XLS" 
