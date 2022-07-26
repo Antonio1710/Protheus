@@ -107,12 +107,17 @@ Static Function MenuDef()
 
     If FWIsAdmin() .Or. __cUserID $cUsrGer
         ADD OPTION aRotina TITLE "Processar Dev"   ACTION "U_ADFAT57E(1)"      OPERATION 11  ACCESS 0
-        ADD OPTION aRotina TITLE "Processar Saída" ACTION "U_ADFAT57E(2)"      OPERATION 11  ACCESS 0
-        ADD OPTION aRotina TITLE "SPEDNFe"         ACTION "SPEDNFe()"          OPERATION 11  ACCESS 0
+        ADD OPTION aRotina TITLE "Processar Saída" ACTION "U_ADFAT57E(2)"      OPERATION 12  ACCESS 0
+        ADD OPTION aRotina TITLE "SPEDNFe"         ACTION "SPEDNFe()"          OPERATION 13  ACCESS 0
 
     EndIf
 
-    ADD OPTION aRotina TITLE "Imp. Ticket" 	ACTION "U_ADFAT57F()" 	   OPERATION 12  ACCESS 0
+    If FWIsAdmin()
+        ADD OPTION aRotina TITLE "Env Barramento"  ACTION "U_ADFAT579()"          OPERATION 14  ACCESS 0
+
+    EndIf
+
+    ADD OPTION aRotina TITLE "Imp. Ticket" 	ACTION "U_ADFAT57F()" 	   OPERATION 15  ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} ModelDef
@@ -2415,3 +2420,21 @@ Static Function obtUltOrd(cDescGrj, cPrdSAG)
     RestArea(aArea)
 
 Return cNmOrdem
+/*/{Protheus.doc} User Function nomeFunction
+    (long_description)
+    @type  Function
+    @author user
+    @since 26/07/2022
+    @version 01
+/*/
+User Function ADFAT579()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cNumero   := ZHR->ZHR_NUMERO
+    
+    MsAguarde({||  grvBarr("A", cNumero) }, "Aguarde", "Enviando registro...")
+
+    RestArea(aArea)
+
+Return Nil
