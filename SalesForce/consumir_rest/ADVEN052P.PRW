@@ -1,18 +1,19 @@
 #Include "Totvs.ch"
 #Include "Topconn.ch"
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
-±±ºPrograma  ³ADVEN052P      ºAutor  ³Everson      º Data ³ 22/01/2018    º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³Função para envio de parecer ao SalesForce.                 º±±
-±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³Chamado 037261.                                             º±±
-±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-*/
+
+/*/{Protheus.doc} User Function ADVEN052P
+	Função para envio de parecer ao SalesForce. 
+	@type  Function
+	@author Everson
+	@since 22/01/2018
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 76863 - 26/07/2022 - Fernando Macieira - ERRO ATUALIZAÇÃO DE CADASTRO CLIENTE
+/*/
 User Function ADVEN052P(cCodPB3,cLojaPB3,lAut,cTexto,cTipo,cExpSql,aResponse) // U_ADVEN052P("190162","00",.F.)
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -173,7 +174,7 @@ Static Function montJson(cMetodo,cChvExt,cNmAlias)
 		//Json para novo cliente aprovado (necessário primeiro enviar o cadastro do cliente - Account).
 		ElseIf Alltrim(cValToChar((cNmAlias)->TIPO)) == "D" .And. !Empty(Alltrim(cValToChar((cNmAlias)->PB3_XSALES))) .And. Substr(Alltrim(cValToChar((cNmAlias)->PB3_MOTACE)),1,2) $("01|06") .and.;
 			Empty((cNmAlias)->PB3_CODSA1) .And.;
-			Empty((cNmAlias)->PB3_LOJSA1)
+			Empty((cNmAlias)->PB3_LOJSA1) // @history ticket 76863 - 26/07/2022 - Fernando Macieira - ERRO ATUALIZAÇÃO DE CADASTRO CLIENTE - Incluído Empty((cNmAlias)->PB3_CODSA1) e Empty((cNmAlias)->PB3_LOJSA1)
 
 	
 			cJson += '"Parecer__c" : "Aprovação de Pré-cadastro - ' + Alltrim(cValToChar((cNmAlias)->TEXTO)) + '",'
