@@ -171,7 +171,10 @@ Static Function montJson(cMetodo,cChvExt,cNmAlias)
 			cJson += '"Lead__c" : "'    + Alltrim(cValToChar((cNmAlias)->PB3_XSALES)) + '"'	
 	
 		//Json para novo cliente aprovado (necessário primeiro enviar o cadastro do cliente - Account).
-		ElseIf Alltrim(cValToChar((cNmAlias)->TIPO)) == "D" .And. !Empty(Alltrim(cValToChar((cNmAlias)->PB3_XSALES))) .And. Substr(Alltrim(cValToChar((cNmAlias)->PB3_MOTACE)),1,2) $("01|06")
+		ElseIf Alltrim(cValToChar((cNmAlias)->TIPO)) == "D" .And. !Empty(Alltrim(cValToChar((cNmAlias)->PB3_XSALES))) .And. Substr(Alltrim(cValToChar((cNmAlias)->PB3_MOTACE)),1,2) $("01|06") .and.;
+			Empty((cNmAlias)->PB3_CODSA1) .And.;
+			Empty((cNmAlias)->PB3_LOJSA1)
+
 	
 			cJson += '"Parecer__c" : "Aprovação de Pré-cadastro - ' + Alltrim(cValToChar((cNmAlias)->TEXTO)) + '",'
 			cJson += '"Usuario__c" : "'  + Upper(Alltrim(cUserName)) + '",'
