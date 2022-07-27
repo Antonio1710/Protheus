@@ -13,6 +13,7 @@
 	@version 01
   @history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
   @history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+  @history Ticket  77205 - Adriano Savoine  - 27/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 */	
 
 User Function ADGPE062P()
@@ -43,8 +44,8 @@ STATIC FUNCTION SqlPessoa(cMAt)
     BeginSQL Alias "TRB"
 			%NoPARSER% 
              SELECT NM_ESTRUTURA
-               FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] PESSOA
-         INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] ESTRUTURA_ORGANIZACIONAL
+               FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] PESSOA
+         INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] ESTRUTURA_ORGANIZACIONAL
                  ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = PESSOA.CD_ESTRUTURA_ORGANIZACIONAL
                 AND CD_ESTRUTURA_RELACIONADA = 1223
               WHERE CD_SITUACAO_PESSOA = 11
