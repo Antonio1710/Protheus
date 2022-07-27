@@ -227,7 +227,7 @@ Static Function vldPos(oModel)
 
     If lRet .And. (nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE)
 
-        If nOperation == MODEL_OPERATION_UPDATE .And. cStatus $"3/4" .And. ! IsInCallStack("U_ADFAT57E")
+        If nOperation == MODEL_OPERATION_UPDATE .And. cStatus $"3/4" .And. ! IsInCallStack("U_ADFAT57E") .And. ! FWIsAdmin()
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Registro não pode ser alterado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
@@ -275,7 +275,7 @@ Static Function vldPos(oModel)
         
         EndIf
 
-        If lRet .And. cTpMv == "1" .And. !(cStatus $"3/4") .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("U_ADFAT57E")
+        If lRet .And. cTpMv == "1" .And. !(cStatus $"3/4") .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("U_ADFAT57E") .And. ! FWIsAdmin()
             oModel:SetValue("MD_MASTER","ZHR_CDAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_NMAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_DTAPRV", SToD(" / / "))
@@ -707,16 +707,7 @@ User Function ADFAT57B(cOrdRac) // U_ADFAT57B(M->ZHR_ORRORI)
     EndIf
 
     //Localiza granjada.
-    If ! U_ADLFV22B(ZIR->ZIR_CODGRJ)
-        MsgInfo("Granjada " + ZIR->ZIR_CODGRJ + " "  + ZIR->ZIR_DESGRJ + " não localizada.", "Função ADFAT57B(ADFAT057P)")
-        RestArea(aArea)
-        Return .F.
-
-    EndIf
-
-    //Valida se a granjada está ativa.
-    If ZIS->ZIS_ATIVO <> "1"
-        MsgInfo("Granjada " + ZIS->ZIS_NUMERO + " "  + ZIS->ZIS_DESC + " está fechada.", "Função ADFAT57B(ADFAT057P)")
+    If ! U_ADFAT57G(ZIR->ZIR_CODGRJ)
         RestArea(aArea)
         Return .F.
 
@@ -2445,7 +2436,7 @@ Static Function obtUltOrd(cDescGrj, cPrdSAG)
     RestArea(aArea)
 
 Return cNmOrdem
-/*/{Protheus.doc} User Function nomeFunction
+/*/{Protheus.doc} User Function ADFAT579
     (long_description)
     @type  Function
     @author user
@@ -2463,3 +2454,32 @@ User Function ADFAT579()
     RestArea(aArea)
 
 Return Nil
+/*/{Protheus.doc} User Function ADFAT57G
+    Valida granjada.
+    @type  Function
+    @author Everson
+    @since 27/07/2022
+    @version 01
+/*/
+User Function ADFAT57G(cGranjada)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+
+    //Localiza granjada.
+    If ! U_ADLFV22B(cGranjada)
+        MsgInfo("Granjada " + cGranjada + " não localizada.", "Função ADFAT57B(ADFAT057P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Valida se a granjada está ativa.
+    If ZIS->ZIS_ATIVO <> "1"
+        MsgInfo("Granjada " + ZIS->ZIS_NUMERO + " "  + ZIS->ZIS_DESC + " está fechada.", "Função ADFAT57B(ADFAT057P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+Return .T.
