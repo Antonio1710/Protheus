@@ -12,6 +12,7 @@
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history Ticket  77205 - Adriano Savoine  - 27/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
 
 USER FUNCTION ADGPE046P(aParam)
@@ -155,8 +156,8 @@ Static Function SqlPessoa()
 	BeginSQL Alias "TRB"
 			%NoPARSER% 
 			SELECT NU_CPF,CASE WHEN CD_ESTRUTURA_RELACIONADA = 1223 THEN 'TERCEIRO' ELSE 'FUNCIONARIO' END AS TIPO_PESSOA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA]
-		INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA]
+		INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 				ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = PESSOA.CD_ESTRUTURA_ORGANIZACIONAL
 			 WHERE CD_SITUACAO_PESSOA <> '12'
 			   AND NU_MATRICULA       <> 22
@@ -180,7 +181,7 @@ RETURN(NIL)
 Static Function SqlTPAUT(cMat)
 
     cQuery := " SELECT CD_TIPO_AUTORIZACAO,DS_TIPO_AUTORIZACAO "
-    cQuery += " FROM [DIMEP].[DMPACESSOII].[DBO].[TIPO_AUTORIZACAO]  WITH (NOLOCK) "
+    cQuery += " FROM [DMPACESSO].[DMPACESSOII].[DBO].[TIPO_AUTORIZACAO]  WITH (NOLOCK) "
     cQuery += " WHERE DS_TIPO_AUTORIZACAO LIKE '%"+cMat+"%' "
 
 	TCQUERY cQuery new alias "TRC"
@@ -189,7 +190,7 @@ RETURN(NIL)
 
 Static Function INTUSUSISTPAUT(nTipoAut)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[USU_SIS_TIPO_AUTORIZACAO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[USU_SIS_TIPO_AUTORIZACAO] " 
 	cQuery += "(CD_TIPO_AUTORIZACAO, " 
 	cQuery += "CD_USUARIO, " 
     cQuery += "DT_PERSISTENCIA " 
@@ -207,7 +208,7 @@ RETURN(NIL)
 
 Static Function INTTIPOAUTORIZACAO(cDesc)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[TIPO_AUTORIZACAO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[TIPO_AUTORIZACAO] " 
 	cQuery += "(DS_TIPO_AUTORIZACAO) " 
 	cQuery += "VALUES ('"  + cDesc + "')" 
 	
