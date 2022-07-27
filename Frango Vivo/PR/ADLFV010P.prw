@@ -45,9 +45,9 @@ User Function ADLFV010P()
 	Local alButton	:= {}
 	Local clTitulo	:= 'Complemento Frango Vivo'
 	Local clDesc1   := ''
-	Local clDesc2   := 'O objetivo desta rotina é gerar um PV de complemento de frango vivo.'
-	Local clDesc3   := ''
-	Local clDesc4   := ''
+	Local clDesc2   := 'O objetivo desta rotina é gerar um PV de complemento de frango vivo nas granjas.'
+	Local clDesc3   := 'Importante:'
+	Local clDesc4   := '- Granjas 03 (São Carlos) e 0A (HH)'
 	Local clDesc5   := ''
 	Local aGranjas  := {}
 	Local i
@@ -120,8 +120,22 @@ User Function ADLFV010P()
 		FormBatch(clTitulo, alSay, alButton)
 		
 		If lOk
+
+			// @history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+			cForGranjas := GetMV("MV_#GRANJA",,"03|0A")
+			aGranjas := Separa(cForGranjas,"|")
+
+			For i:=1 to Len(aGranjas)
+				cFilGranja := aGranjas[i]
+				Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV na granja " + cFilGranja)
+				//GeraPV(lAuto, cFilGranja)
+			Next i
+
+			/*
 			cFilGranja := cFilAnt
 			Processa( { || GeraPV(lAuto, cFilGranja) }, "Gerando PV..." )
+			*/
+
 		EndIf
 
 	EndIf
@@ -177,12 +191,14 @@ Static Function GeraPV(lAuto, cFilGranja)
 	Private cFilOrig // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
 
 	// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
-	lPVExist := ExistPVDay()
-	If lPVExist
-		//gera log
-		u_GrLogZBE(msDate(), TIME(), cUserName, "PV COMPLEMENTO FRANGO VIVO","CONTROLADORIA","ADLFV010P",;
-		"JA EXISTE PV GERADO NESTA DATA PARA ESTA FILIAL/GRANJA " + DtoC(msDate()) + " - " + cFilPV, ComputerName(), LogUserName())
-		Return
+	If lAuto
+		lPVExist := ExistPVDay()
+		If lPVExist
+			//gera log
+			u_GrLogZBE(msDate(), TIME(), cUserName, "PV COMPLEMENTO FRANGO VIVO","CONTROLADORIA","ADLFV010P",;
+			"JA EXISTE PV GERADO NESTA DATA PARA ESTA FILIAL/GRANJA " + DtoC(msDate()) + " - " + cFilPV, ComputerName(), LogUserName())
+			Return
+		EndIf
 	EndIf
 	//
 
@@ -206,11 +222,11 @@ Static Function GeraPV(lAuto, cFilGranja)
 
 		Else
 			Aviso(	"ADLFV010P-02",;
-			"Não existem dados com os filtros utilizados para a geração do PV! "  + chr(13) + chr(10) +  chr(13) + chr(10)+;
+			"Não existem dados com os filtros utilizados para a geração do PV na filial " + cFilPV + chr(13) + chr(10) +  chr(13) + chr(10)+;
 			"Verifique se o pedido de venda de complemento de frango vivo já foi gerado através do campo ZV1_FLAGPV no cadastro de frango vivo... "  + chr(13) + chr(10) +;
 			"" ,;
 			{ "&OK" },,;
-			"PV - Complemento Frango Vivo" )
+			"PV - Complemento Frango Vivo - Filial " + cFilPV )
 		EndIf
 				
 		Return

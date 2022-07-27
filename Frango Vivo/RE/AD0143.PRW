@@ -21,6 +21,7 @@ static lAuto
 	@history Ticket 76197 - ADRIANO SAVOINE   - 11/07/2022 - Corrigido para não gerar pedido sem fechar a Pesagem.
 	@hisotry Ticket 76414 - Everson           - 13/07/2022 - Adiciona opção para o usuário selecionar a filial de origem.
 	@history Ticket 76430 - ADRIANO SAVOINE   - 14/07/2022 - Os Pedidos de complemento só irá gerar apos a integração do SAG.
+	@history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
 /*/ 
 User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 
@@ -264,21 +265,33 @@ User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 			RETURN
 		ENDIF
 
+		// @history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+		/*
 		//Ticket 76414 - Everson           - 13/07/2022 - Adiciona opção para o usuário selecionar a filial de origem.
-			If MV_PAR14 == 1
-				cFilPV := "03"
+		If MV_PAR14 == 1
+			cFilPV := "03"
 
-			ElseIf MV_PAR14 == 2
-				cFilPV := "0A"
+		ElseIf MV_PAR14 == 2
+			cFilPV := "0A"
 
-			Else
-				Aviso(	"AD0143-01",;
-				"Necessário selecionar a filial de origem." ,;
-				{ "&OK" },,;
-				"PV - Complemento Frango Vivo" )
-				Return Nil
+		Else
+			Aviso(	"AD0143-01",;
+			"Necessário selecionar a filial de origem." ,;
+			{ "&OK" },,;
+			"PV - Complemento Frango Vivo" )
+			Return Nil
 
-			EndIf
+		EndIf
+		//
+		*/
+
+		// @history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+		/*
+		Aviso(	"PV - Complemento Frango Vivo",;
+		"Prodecimento: " +chr(13)+chr(10) + "- Entrar na filial de abate 02/0B" + chr(13)+chr(10) + "- Setar no último parâmetro a filial de origem (granja)",;
+		{ "&OK" },,;
+		"Setado filial " + cFilPV )
+		*/
 		//
 
 		_dDataini	:=mv_par01    //GRAVA DATA INICIAL DE ABATE
@@ -515,7 +528,7 @@ else
 		If AllTrim(FunName()) <> "AD0130" .and. AllTrim(FunName()) <> "ADLFV010P" // FWNM - 16/04/2018 - CHAMADO 037729
 			MsAguarde(bBloco,"Aguarde, Gerando Relatorio","Processando...",.T.)
 		Else
-			MsAguarde(bBloco,"Aguarde, Gerando PV","Processando...",.T.)
+			MsAguarde(bBloco,"Aguarde, Gerando PV na granja " + cFilPV,"Processando - granja " + cFilPV,.T.)
 		EndIf
 	EndIf
 endif
@@ -632,15 +645,16 @@ Dbgotop()
 _dDTBatF:=ROC->ZV1_DTABAT
 
 While !EOF() .and. !EMPTY(_dDTBatF)       //&& Chamado 004885 - Efetuada correcao para data em branco no final do arquivo
-	//&& Qdo parametrizado por ordem = DATA DE ABATE e SINTETICO.
-	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Verifica o cancelamento pelo usuario...                             ³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	
-	//Incrementadno Regua
-	// ProcRegua(RecCount())
-	
+
+	// @history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+	If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P"
+		If AllTrim(cFilPV) <> AllTrim(Posicione("ZFC",4,FWxFilial("ZFC")+ROC->ZV1_NUMOC,"ZFC_FILORI")) // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
+			ROC->( dbSkip() )
+			Loop
+		EndIf
+	EndIf
+	//
+
 	nLin:=GETVARS(nLin)				//Obtem campos da query
 	
 	If !lAuto
@@ -1388,6 +1402,10 @@ If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P" .or. lA
 	cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 	cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
 	cProdPV  := GetMV("MV_#LFVPRD",,"300042")
+
+	// @history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+	//cFilPV := Posicione("ZFC",4,FWxFilial("ZFC")+_cNumOC,"image.png") // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
+	//
 	
 	SD2->( dbSetOrder(3) ) //D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM
 	If SD2->( dbSeek(cFilPV+StrZero(Val(_nNUMNFS),TamSX3("D2_DOC")[1])+PadR(cSerNFFV,TamSX3("D2_SERIE")[1])+cCliCod+cCliLoj+cProdPV) )
@@ -1724,6 +1742,10 @@ If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
 			cCliCod  := GetMV("MV_#LFVCLI",,"027601")
 			cCliLoj  := GetMV("MV_#LFVLOJ",,"00")
 			cProdPV  := GetMV("MV_#LFVPRD",,"300042")
+
+			// @history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+			//cFilPV := Posicione("ZFC",4,FWxFilial("ZFC")+_cNumOC,"ZFC_FILORI") // ZFC_FILIAL, ZFC_NUMERO, ZFC_STATUS, R_E_C_N_O_, D_E_L_E_T_
+			//
 			
 			SD2->( dbSetOrder(3) ) //D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM
 			If SD2->( dbSeek(cFilPV+StrZero(Val(cNroFiscal),TamSX3("D2_DOC")[1])+PadR(cSerNFFV,TamSX3("D2_SERIE")[1])+cCliCod+cCliLoj+cProdPV) )
