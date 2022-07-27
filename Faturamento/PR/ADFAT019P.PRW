@@ -132,7 +132,6 @@ Static Function vldPos(oModel)
     Local cPesManual := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIG_MANUAL")))
     Local cPesAutoma := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIG_AUTOMA")))
     Local cSeq       := Alltrim(cValToChar(oModel:GetValue("MD_MASTER", "ZIG_SEQTKT")))
-    Local cMsgError  := ""
     Local cBalanca   := ""
     Local cUrl       := ""
 
@@ -205,12 +204,7 @@ Static Function vldPos(oModel)
             cBalanca   := Posicione("ZIG", 1, FWxFilial("ZIG") + cNumTkt, "ZIG_BALANC")
             cUrl       := Alltrim(cValToChar(Posicione("DX5" , 1, FwxFilial("DX5") + cBalanca, "DX5_URL")))
 
-            If ! FWIsInCallStack("U_ADFAT17Q")
-                U_ADFAT249(cUrl, "", cTktGua, 4, "WS G", "01")
-                lRet := .F.
-                Help(Nil, Nil, "Função vldPos(ADFAT019P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-            EndIf
+            U_ADFAT249(cUrl, "", cTktGua, 4, "WS G", "01")
 
         EndIf
 
