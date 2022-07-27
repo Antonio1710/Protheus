@@ -12,6 +12,7 @@
 	@history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud 
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history Ticket 77205   - ADRIANO SAVOINE - 27/07/2022 - Alterado o Link de DIMEP para DMPACESSO.
 /*/
 USER FUNCTION ADGPE025P() 
 
@@ -301,7 +302,7 @@ Static Function SqlVEmpresaDimep(cEmpresa)
 			       DS_CEI,
 			       CD_ESTRUTURA_RELACIONADA,
 			       TP_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 			  WHERE NU_ESTRUTURA = %EXP:cEmpresa%
 			    AND TP_ESTRUTURA = '0'
 			    AND NU_CNPJ <> 0
@@ -321,7 +322,7 @@ Static Function SqlVFilialDimep(nEstOrganizacional, cFil)
 			       DS_CEI,
 			       CD_ESTRUTURA_RELACIONADA,
 			       TP_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 			  WHERE CD_ESTRUTURA_RELACIONADA = %EXP:nEstOrganizacional%
 			    AND NU_ESTRUTURA             = %EXP:cFil%
                 AND TP_ESTRUTURA             = '1'
@@ -341,7 +342,7 @@ Static Function SqlVEstrutura()
 			       DS_CEI,
 			       CD_ESTRUTURA_RELACIONADA,
 			       TP_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 			 
                 
 	EndSQl             
@@ -353,7 +354,7 @@ Static Function SqlVUSUSISESTRUTURA(nEstrutura)
 			%NoPARSER%  
 			SELECT CD_ESTRUTURA_ORGANIZACIONAL AS ESTRUTURA,
 			       CD_USUARIO
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORG_USUARIO_SISTEMA] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORG_USUARIO_SISTEMA] WITH (NOLOCK)
 			  WHERE CD_ESTRUTURA_ORGANIZACIONAL = %EXP:nEstrutura%
 			    
     EndSQl             
@@ -429,7 +430,7 @@ Static Function SqlVCCDimep(nFil, cCc)
 			       DS_CEI,
 			       CD_ESTRUTURA_RELACIONADA,
 			       TP_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 			  WHERE CD_ESTRUTURA_RELACIONADA = %EXP:nFil%
 			    AND NU_ESTRUTURA             = %EXP:cCc%
                 AND TP_ESTRUTURA             = '1'
@@ -439,7 +440,7 @@ RETURN(NIL)
 
 Static Function INTESTRUTURA(cNumEstrutura,cNomeEsturtura,nCnpj,cRazaoSocial,cCei,nEstRelacional,nTpEstrutura)   
 
-    cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[ESTRUTURA_ORGANIZACIONAL] " 
+    cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[ESTRUTURA_ORGANIZACIONAL] " 
 	cQuery += "(NU_ESTRUTURA, " 
 	cQuery += "NM_ESTRUTURA, " 
 	cQuery += "NU_CNPJ, " 
@@ -465,7 +466,7 @@ RETURN(NIL)
 
 Static Function INTUSUSISESTRUTURA(nEstrutura)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] " 
 	cQuery += "(CD_ESTRUTURA_ORGANIZACIONAL, " 
 	cQuery += "CD_USUARIO " 
     cQuery += ") "

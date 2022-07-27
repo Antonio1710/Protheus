@@ -13,6 +13,7 @@
 	@history TICKET  39  - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history Ticket  77205 - Adriano Savoine  - 27/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
 USER FUNCTION ADGPE055P(aParam)  
 
@@ -136,7 +137,7 @@ RETURN(NIL)
 
 Static Function INTSITPESSOAMULTIPLA(nPessoa,nSitFolMult,cDataIni,cDataFin)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[SITUACAO_PESSOA_MULTIPLA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[SITUACAO_PESSOA_MULTIPLA] " 
 	cQuery += "(CD_PESSOA, " 
 	cQuery += "CD_SITUACAO_PESSOA, " 
     cQuery += "DT_PERIODO_INICIAL, " 
@@ -156,7 +157,7 @@ RETURN(NIL)
 
 Static Function INTHISTSITPESSOA(nPessoa,nSitFol,cDataIni,cDataFin)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA] " 
 	cQuery += "(CD_PESSOA, " 
 	cQuery += "CD_SITUACAO_PESSOA, " 
 	cQuery += "DT_ATRIBUICAO, " 
@@ -367,7 +368,7 @@ Static Function SqlVFuncDimep(cMat)
 	BeginSQL Alias "TRC"
 			%NoPARSER%
             SELECT * 
-              FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
+              FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
              WHERE NU_MATRICULA       = %EXP:cMat%
                		
 	EndSQl
@@ -376,7 +377,7 @@ RETURN(NIL)
 
 STATIC FUNCTION UPDPESS1(cCampo1,cCampo2,nMat)
 
-	cQuery := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
+	cQuery := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] " 
 	cQuery += " SET " + cCampo1 + " = " + ""  + cvaltochar(cCampo2) + ""
 	cQuery += " WHERE NU_MATRICULA  = " + "" + cvaltochar(nMat) + "" // chamado 053384 - WILLIAM COSTA - 14/11/2019
     

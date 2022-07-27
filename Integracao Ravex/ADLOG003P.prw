@@ -19,6 +19,7 @@
 	@history Chamado 13494  - LEONARDO P. MONTEIRO - 05/05/2021 - Correção do error.log na emissão do log (ZBE).
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
 	@history Ticket 69574   - Abel Babini          - 21/03/2022 - Projeto FAI
+	@history Ticket 76923   - ADRIANO SAVOINE      - 27/07/2022 - Criado o Parametro para alterar o Roteiro do fonte se ser de forma fixa.
 */
  
 User Function ADLOG003P(aXEmpFil)
@@ -1219,6 +1220,8 @@ RETURN(nIdRot)
 
 STATIC FUNCTION SqlIntNota()
 
+	Local cRotDe:= SuperGetMV("MV_XROTDE") // Ticket 76923 - 27/07/2022 - ADRIANO SAVOINE
+
     //LPM 
     BeginSQL Alias "TRA"
 			%NoPARSER% 
@@ -1247,7 +1250,7 @@ STATIC FUNCTION SqlIntNota()
 				  AND SC5.C5_DTENTR  >= CONVERT(VARCHAR(8), GETDATE(), 112)
 				  AND SC5.C5_NOTA    <> ''
 				  AND SC5.C5_PLACA   <> '' 
-				  AND SC5.C5_ROTEIRO >= '300'
+				  AND SC5.C5_ROTEIRO >= %exp:cRotDe%
                   AND SC5.C5_ROTEIRO <= '999'
 				  AND SC5.C5_XRAVEX   = 'T'
 				  AND SF2.F2_XRAVEX   = 'F'

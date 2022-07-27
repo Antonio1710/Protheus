@@ -19,6 +19,7 @@
     A consulta não pode ter ORDER BY, pois ele já é especificado em um parâmetro
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  77205 - Adriano Savoine  - 27/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
 
 //Constantes
@@ -30,6 +31,6 @@ User Function ADGPE063P()
 	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Consulta Especifica para a Tabela PESSOA DO DIMEP')
 	
-	cTexto := u_ConsultEspecif("SELECT CONVERT(VARCHAR,NU_ESTRUTURA) AS NU_ESTRUTURA,NM_ESTRUTURA,CONVERT(VARCHAR,NU_CNPJ) AS NU_CNPJ,DS_RAZAO_SOCIAL FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WHERE CD_ESTRUTURA_RELACIONADA = 1223", "NU_ESTRUTURA,NM_ESTRUTURA,NU_CNPJ,DS_RAZAO_SOCIAL","","NU_ESTRUTURA")                                   
+	cTexto := u_ConsultEspecif("SELECT CONVERT(VARCHAR,NU_ESTRUTURA) AS NU_ESTRUTURA,NM_ESTRUTURA,CONVERT(VARCHAR,NU_CNPJ) AS NU_CNPJ,DS_RAZAO_SOCIAL FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WHERE CD_ESTRUTURA_RELACIONADA = 1223", "NU_ESTRUTURA,NM_ESTRUTURA,NU_CNPJ,DS_RAZAO_SOCIAL","","NU_ESTRUTURA")                                   
 
 RETURN(cTexto)    
