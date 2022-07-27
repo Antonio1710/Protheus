@@ -90,8 +90,8 @@ Static Function SqlVisita(cData)
 				       NU_DOCUMENTO,
 				       DT_VISITA, 
 				       TX_CAMPO1
-				  FROM [DIMEP].[DMPACESSOII].[DBO].[VISITA] AS VISITA
-				  INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[VISITANTE] AS VISITANTE
+				  FROM [DMPACESSO].[DMPACESSOII].[DBO].[VISITA] AS VISITA
+				  INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[VISITANTE] AS VISITANTE
 				          ON VISITANTE.CD_VISITANTE  = VISITA.CD_VISITANTE
 				       WHERE DT_VISITA               = CONVERT(DATETIME,%EXP:cData%,103)
 				         AND DT_BAIXA_CREDENCIAL     IS NULL
@@ -103,7 +103,7 @@ RETURN()
 
 STATIC FUNCTION UPDVISITANTE(cCampo1,cCodVisitante)
 
-	cQuery := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[VISITANTE] " 
+	cQuery := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[VISITANTE] " 
 	cQuery += " SET  TX_CAMPO1    = " + "'" + cCampo1 + "'"
 	cQuery += " WHERE CD_VISITANTE = " + ""  + cvaltochar(cCodVisitante) + ""
 	
