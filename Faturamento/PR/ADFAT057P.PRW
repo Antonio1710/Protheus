@@ -227,7 +227,7 @@ Static Function vldPos(oModel)
 
     If lRet .And. (nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE)
 
-        If nOperation == MODEL_OPERATION_UPDATE .And. cStatus == "3" .And. ! IsInCallStack("U_ADFAT57E")
+        If nOperation == MODEL_OPERATION_UPDATE .And. cStatus $"3/4" .And. ! IsInCallStack("U_ADFAT57E")
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Registro não pode ser alterado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
@@ -275,7 +275,7 @@ Static Function vldPos(oModel)
         
         EndIf
 
-        If lRet .And. cTpMv == "1" .And. cStatus <> "3" .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("U_ADFAT57E")
+        If lRet .And. cTpMv == "1" .And. !(cStatus $"3/4") .And. nOperation == MODEL_OPERATION_UPDATE .And. ! IsInCallStack("U_ADFAT57E")
             oModel:SetValue("MD_MASTER","ZHR_CDAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_NMAPRV", "")
             oModel:SetValue("MD_MASTER","ZHR_DTAPRV", SToD(" / / "))
@@ -305,7 +305,7 @@ Static Function vldPos(oModel)
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
 
-        If lRet .And. cStatus == "3"
+        If lRet .And. cStatus $"3/4"
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Registro não pode ser excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         
