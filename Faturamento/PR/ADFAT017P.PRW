@@ -4393,14 +4393,14 @@ User Function ADFAT171(cBalanca, cTicket, nPesTot, nPesoLiq, nTpPesa, cPesAuto,;
     cCP       := ZIG->ZIG_CTPATI
 
     //Valida peso informado/capturado.
-    If nPesTot <= 0 
-        cMsgError := "Peso inválido."
-        U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
-        Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return .F.
+    // If nPesTot <= 0 
+    //     cMsgError := "Peso inválido."
+    //     U_ADFAT173(cPreFx + cMsgError, cNmOrdem, "", "GUARDIAN")
+    //     Help(Nil, Nil, "Função ADFAT171(ADFAT017P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+    //     RestArea(aArea)
+    //     Return .F.
 
-    EndIf
+    // EndIf
 
     //Posiciona no registro de pátio selecionado.
     If ! U_ADFAT17U(cCP)
