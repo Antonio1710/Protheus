@@ -690,8 +690,33 @@ User Function ADFAT57B(cOrdRac) // U_ADFAT57B(M->ZHR_ORRORI)
     Local aArea := GetArea()
     Local lPedV := .F.
 
+    //Localiza a ordem de pesagem.
     If ! U_ADFAT16E(cOrdRac)
         MsgInfo("Ordem de pesagem não localizada.", "Função ADFAT57B(ADFAT057P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Localiza a ordem de ração.
+    If ! U_ADFAT32G(cOrdRac)
+        MsgInfo("Ordem de ração " + cOrdRac + " não localizada.", "Função ADFAT57B(ADFAT057P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Localiza granjada.
+    If ! U_ADLFV22B(ZIR->ZIR_CODGRJ)
+        MsgInfo("Granjada " + ZIR->ZIR_CODGRJ + " "  + ZIR->ZIR_DESGRJ + " não localizada.", "Função ADFAT57B(ADFAT057P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    //Valida se a granjada está ativa.
+    If ZIS->ZIS_ATIVO <> "1"
+        MsgInfo("Granjada " + ZIS->ZIS_NUMERO + " "  + ZIS->ZIS_DESC + " está fechada.", "Função ADFAT57B(ADFAT057P)")
         RestArea(aArea)
         Return .F.
 
