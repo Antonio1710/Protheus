@@ -12,6 +12,7 @@
 	@history chamado 058844 - William Costa - 23/07/2020 - Alterado variavel cMat quando ela esta vazia dava error log.
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  77205  - Adriano Savoine  - 28/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 */
 
 User Function ADGPE059R()
@@ -1858,11 +1859,11 @@ Static Function SqlAcessoNoite(cMat,cDataIni,cDataFin)
 			        DS_TIPO_CREDENCIAL,
 			        CD_ESTRUTURA,
 			        LOG_ACESSO.NM_ESTRUTURA
-			   FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO
-			   INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
+			   FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO
+			   INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
 				       ON CD_ESTRUTURA_ORGANIZACIONAL = LOG_ACESSO.CD_ESTRUTURA
 				      AND CD_ESTRUTURA_RELACIONADA    = 1223 
-			   LEFT JOIN [DIMEP].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
+			   LEFT JOIN [DMPACESSO].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
 			          ON TIPO_CREDENCIAL.CD_TIPO_CREDENCIAL = LOG_ACESSO.CD_TIPO_CREDENCIAL
 			  WHERE NU_DATA_REQUISICAO                                            >= %EXP:cDataIni%
 			    AND NU_DATA_REQUISICAO                                            <= %EXP:cDataFin%
@@ -1929,7 +1930,7 @@ Static Function SqlFuncaoDimep(cMat)
 
 	cQuery := "SELECT ISNULL(TX_CAMPO06,'') AS TX_CAMPO06, "
     cQuery += "       NU_MATRICULA "
-  	cQuery += "  FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] "
+  	cQuery += "  FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] "
  	cQuery += " WHERE NU_MATRICULA = '" + cMat + "' "
 	
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TRJ",.F.,.T.)             

@@ -10,6 +10,7 @@
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+	@history Ticket  77205  - Adriano Savoine  - 28/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
                
 USER FUNCTION ADGPE050R()  
@@ -221,10 +222,10 @@ Static Function SqlDimep()
 	BeginSQL Alias "TRB"
 			%NoPARSER%
 			SELECT CD_PESSOA,NU_MATRICULA,NM_PESSOA 
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA]
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA]
 			  WHERE CD_SITUACAO_PESSOA = 13
 			    AND CD_PESSOA NOT IN (SELECT CD_PESSOA 
-			                            FROM [DIMEP].[DMPACESSOII].[DBO].[SITUACAO_PESSOA_MULTIPLA] 
+			                            FROM [DMPACESSO].[DMPACESSOII].[DBO].[SITUACAO_PESSOA_MULTIPLA] 
 			                           WHERE SITUACAO_PESSOA_MULTIPLA.CD_PESSOA = PESSOA.CD_PESSOA)
 			  
 	EndSQl             

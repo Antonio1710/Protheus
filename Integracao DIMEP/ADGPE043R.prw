@@ -13,6 +13,7 @@
 	@history chamado 053011 - William Costa - 01/11/2019 - Adicionado o Equipamento Restaurante 1 e Restaurante 2
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
     @history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  77205 - Adriano Savoine  - 28/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
 
 User Function ADGPE043R()
@@ -87,9 +88,9 @@ Return(NIL)
 
 Static Function GeraExcel()
 
+	Local   nExcel        := 0
 	Local   nTotReg       := 0
     Private nLinha        := 0
-	Private nExcel        := 0
 	Private oTempTable    := NIL
 	Private aCampos       := {}
 	Private cEquip        := ''
@@ -746,8 +747,8 @@ Static Function SqlGeral(cEquip)
 	cQuery += "       CASE WHEN TP_EVENTO = 27 THEN 'ACESSO MASTER' ELSE CASE WHEN TP_EVENTO = 10 THEN 'ACESSO CONCLUIDO' ELSE CASE WHEN TP_EVENTO = 12 THEN 'ACESSO BATCH' ELSE 'ACESSO AUTORIZACAO EXCEPCIONAL' END END END AS TP_EVENTO,  "
 	cQuery += "       CASE WHEN TP_SENTIDO_CONSULTA = 1 THEN 'ENTRADA' ELSE 'SAIDA' END AS  TP_SENTIDO_CONSULTA,  "
 	cQuery += "       LOG_ACESSO.CD_TIPO_CREDENCIAL, "
-	cQuery += "       (SELECT DS_TIPO_CREDENCIAL FROM [DIMEP].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL WHERE TIPO_CREDENCIAL.CD_TIPO_CREDENCIAL = LOG_ACESSO.CD_TIPO_CREDENCIAL)  AS DS_TIPO_CREDENCIAL "
-	cQuery += "       FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO "
+	cQuery += "       (SELECT DS_TIPO_CREDENCIAL FROM [DMPACESSO].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL WHERE TIPO_CREDENCIAL.CD_TIPO_CREDENCIAL = LOG_ACESSO.CD_TIPO_CREDENCIAL)  AS DS_TIPO_CREDENCIAL "
+	cQuery += "       FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO "
 	cQuery += " WHERE NU_DATA_REQUISICAO >= '" + cDtIni   + "' "
 	cQuery += "   AND NU_DATA_REQUISICAO <= '" + cDtFin   + "' "
 	cQuery += "   AND CD_EQUIPAMENTO     IN (" + cEquip + ") " 
@@ -884,7 +885,7 @@ RETURN()
 Static Function SqlCredencial(cCred) 
 
 	cQuery := "SELECT CD_CREDENCIAL "
-	cQuery += "       FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL] AS CREDENCIAL "
+	cQuery += "       FROM [DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL] AS CREDENCIAL "
 	cQuery += " WHERE NU_CREDENCIAL = '" + cCred   + "' "
 	
 	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TRK",.F.,.T.)
@@ -894,7 +895,7 @@ RETURN()
 Static Function SqlVisita(cCdVisitante,cDtVisita,cCredencial) 
 
 	cQuery := "SELECT NM_CONTATO "
-	cQuery += "       FROM [DIMEP].[DMPACESSOII].[DBO].[VISITA] AS VISITA "
+	cQuery += "       FROM [DMPACESSO].[DMPACESSOII].[DBO].[VISITA] AS VISITA "
 	cQuery += " WHERE CD_VISITANTE  = '" + cCdVisitante + "' "
 	cQuery += "   AND DT_VISITA     = '" + cDtVisita    + "' "
 	cQuery += "   AND CD_CREDENCIAL = '" + cCredencial  + "' "
@@ -906,7 +907,7 @@ RETURN()
 Static Function SqlVis2(cCdVisitante,cDtVisita) 
 
 	cQuery := "SELECT NM_CONTATO "
-	cQuery += "       FROM [DIMEP].[DMPACESSOII].[DBO].[VISITA] AS VISITA "
+	cQuery += "       FROM [DMPACESSO].[DMPACESSOII].[DBO].[VISITA] AS VISITA "
 	cQuery += " WHERE CD_VISITANTE  = '" + cCdVisitante + "' "
 	cQuery += "   AND DT_VISITA     = '" + cDtVisita    + "' "
 	

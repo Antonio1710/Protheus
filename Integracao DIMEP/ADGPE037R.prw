@@ -11,6 +11,7 @@
 	@version 01	
 	@history TICKET  224    - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  77205  - Adriano Savoine  - 28/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 */
 
 User Function ADGPE037R()
@@ -76,8 +77,9 @@ Return(NIL)
 
 Static Function GeraExcel()
 
+	Local   nCont       := 0
+	Local   nExcel      := 0
     Private nLinha      := 0
-	Private nExcel      := 0
 	Private dData       := ''
 	Private cData       := ''
 	Private nMatricula  := ''
@@ -443,8 +445,8 @@ Static Function SqlMatriculas()
 	BeginSQL Alias "TRA"
 			%NoPARSER%
 			  SELECT VISITANTE.NU_DOCUMENTO,NM_VISITANTE
-				FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO
-				INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[VISITANTE] AS VISITANTE
+				FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO
+				INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[VISITANTE] AS VISITANTE
 						ON VISITANTE.CD_VISITANTE   = LOG_ACESSO.CD_VISITANTE
 						AND VISITANTE.NU_DOCUMENTO >= %EXP:MV_PAR01%
 						AND VISITANTE.NU_DOCUMENTO <= %EXP:MV_PAR02%
@@ -487,8 +489,8 @@ Static Function SqlEntrada(cMat,cData)
 					        DS_TIPO_CREDENCIAL,
 					        CD_ESTRUTURA,
 					        NM_ESTRUTURA
-					   FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
-					   LEFT JOIN [DIMEP].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
+					   FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
+					   LEFT JOIN [DMPACESSO].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
 					          ON TIPO_CREDENCIAL.CD_TIPO_CREDENCIAL = LOG_ACESSO.CD_TIPO_CREDENCIAL
 					  WHERE NU_DATA_REQUISICAO                                            = %EXP:cData%
 						AND NU_DOCUMENTO                                                  = %EXP:cMat%
@@ -540,8 +542,8 @@ Static Function SqlSaida(cMat,cData)
 					        DS_TIPO_CREDENCIAL,
 					        CD_ESTRUTURA,
 					        NM_ESTRUTURA
-					   FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
-					   LEFT JOIN [DIMEP].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
+					   FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
+					   LEFT JOIN [DMPACESSO].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
 					          ON TIPO_CREDENCIAL.CD_TIPO_CREDENCIAL = LOG_ACESSO.CD_TIPO_CREDENCIAL
 					  WHERE NU_DATA_REQUISICAO                                            = %EXP:cData%
 						AND NU_DOCUMENTO                                                  = %EXP:cMat%
@@ -593,8 +595,8 @@ Static Function SqlSaida2(cMat,cData)
 					        DS_TIPO_CREDENCIAL,
 					        CD_ESTRUTURA,
 					        NM_ESTRUTURA
-					   FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
-					   LEFT JOIN [DIMEP].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
+					   FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO 
+					   LEFT JOIN [DMPACESSO].[DMPACESSOII].[DBO].[TIPO_CREDENCIAL] AS TIPO_CREDENCIAL
 					          ON TIPO_CREDENCIAL.CD_TIPO_CREDENCIAL = LOG_ACESSO.CD_TIPO_CREDENCIAL
 					  WHERE NU_DATA_REQUISICAO                                            = %EXP:cData%
 						AND NU_DOCUMENTO                                                  = %EXP:cMat%

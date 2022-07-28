@@ -12,6 +12,7 @@
 	@history Chamado TI  - William Costa - 24/09/2019 - ajustado query para nao trazer terceiro
 	@history TICKET  224 - William Costa - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  77205 - Adriano Savoine  - 28/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 */
 
 User Function ADGPE041R()
@@ -212,8 +213,8 @@ Static Function SqlGeral()
 	cQuery := "SELECT CONVERT(CHAR,NU_MATRICULA) AS MAT, "
 	cQuery += "       CONVERT(CHAR,NU_HORA_REQUISICAO) AS HORA,  "
 	cQuery += "       *  "
-	cQuery += "  FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO  "
-	cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]  "
+	cQuery += "  FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO  "
+	cQuery += " INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]  "
 	cQuery += "         ON CD_ESTRUTURA_ORGANIZACIONAL = CD_ESTRUTURA  "
 	cQuery += " WHERE NU_DATA_REQUISICAO  >= '" + cDtIni   + "' "
 	cQuery += "   AND NU_DATA_REQUISICAO  <= '" + cDtFin   + "' "
