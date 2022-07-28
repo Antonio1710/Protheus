@@ -49,6 +49,7 @@
 	@histori Ticket  74756  - ADRIANO SAVOINE - 15/06/2022 - Efetuado o ajuste para as filiais colocar zero ex: 02,03 etc.
 	@history Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022 - Corrigido a query para resolver os valores do RM.
 	@history Ticket: 75521  - ADRIANO SAVOINE - 30/06/2022 - Adicionado para integrar Torniquete portaria em novos perfis de acesso.
+	@history Ticket: 77205  - ADRIANO SAVOINE - 27/07/2022 - Alterado DIMEP por DMPACESSO no link de dados.
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -1990,7 +1991,7 @@ Static Function carFuncD(lReload)
 			CD_CREDENCIAL_REP,
 			TX_CAMPO08 
 		FROM 
-			[DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
+			[DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA WITH (NOLOCK)
 		//WHERE NU_CPF='05452774696' // DEBUG - INIBIR
 		ORDER BY
 			NU_MATRICULA
@@ -2036,7 +2037,7 @@ Static Function SqlVSitPessoaDimep(nCdPessoa)
 			        CD_SITUACAO_PESSOA,
 			        DT_PERIODO_INICIAL AS DT_INI,
 			        DT_PERIODO_FINAL   AS DT_FIN
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[SITUACAO_PESSOA_MULTIPLA]  WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[SITUACAO_PESSOA_MULTIPLA]  WITH (NOLOCK)
 			  WHERE CD_PESSOA = %EXP:nCdPessoa%
 			    AND GETDATE() BETWEEN DT_PERIODO_INICIAL AND DT_PERIODO_FINAL
 	EndSQl             
@@ -2098,7 +2099,7 @@ Static Function SqlVCredencialDimep(cCredencial)
 			%NoPARSER% 
 
 			 SELECT CD_CREDENCIAL,NU_CREDENCIAL 
-			   FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK)
+			   FROM [DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK)
 			  WHERE NU_CREDENCIAL = %EXP:cCredencial%
 			  
 	EndSQl             
@@ -2132,7 +2133,7 @@ Static Function SqlVTurnoDimep(nTurno)
 	BeginSQL Alias "TRH"
 			%NoPARSER%   
 			SELECT CD_TURNO,NU_TURNO,DS_TURNO,HR_ZERA_QTD_ACESSO
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[TURNO]  WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[TURNO]  WITH (NOLOCK)
              WHERE NU_TURNO = %EXP:nTurno%
 			
 	EndSQl             
@@ -2189,7 +2190,7 @@ Static Function SqlVEmpresaDimep(cEmpresa, lReload)
 				DS_CEI,
 				CD_ESTRUTURA_RELACIONADA,
 				TP_ESTRUTURA
-		FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+		FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 		WHERE NU_ESTRUTURA = %EXP:cEmpresa%
 			AND TP_ESTRUTURA = '0'
 			AND NU_CNPJ <> 0
@@ -2246,7 +2247,7 @@ Static Function carEstDpt() //nEstOrganizacional, cCC
 				CD_ESTRUTURA_RELACIONADA,
 				TP_ESTRUTURA
 		FROM 
-			[DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			[DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 		WHERE 
 			TP_ESTRUTURA = '1'     
 		ORDER BY
@@ -2331,7 +2332,7 @@ Static Function SqlJORNADA(cTurno)
 			       DS_JORNADA,
 			       TP_JORNADA,
 			       QT_DIAS_PERIODO
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[JORNADA] WITH (NOLOCK) 
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[JORNADA] WITH (NOLOCK) 
 		     WHERE DS_JORNADA = %EXP:cTurno%
  			 
  	EndSQl             
@@ -2345,7 +2346,7 @@ Static Function SqlPerAc(nTurno)
 			       NM_PERFIL_ACESSO,
 			       TP_PERFIL_ACESSO,
 			       FL_PUBLICO
-			 FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO] WITH (NOLOCK) 
+			 FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO] WITH (NOLOCK) 
 		    WHERE NM_PERFIL_ACESSO = %EXP:nTurno%
 		
  	EndSQl             
@@ -2362,7 +2363,7 @@ Static Function SqlGrupoArea(nGrupo)
 			SELECT CD_GRUPO,
 			       CD_AREA,
 			       FL_AREA_ORIGEM
-			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
+			 FROM [DMPACESSO].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
 		    WHERE CD_GRUPO = %EXP:cWhere%
 		
  	EndSQl             
@@ -2374,7 +2375,7 @@ Static Function SqlTurnoFaixa(nTurno)
 			%NoPARSER%  
 			SELECT CD_TURNO,
 			       CD_FAIXA_HORARIA
-			 FROM [DIMEP].[DMPACESSOII].[DBO].[TURNO_FAIXA] WITH (NOLOCK) 
+			 FROM [DMPACESSO].[DMPACESSOII].[DBO].[TURNO_FAIXA] WITH (NOLOCK) 
 		    WHERE CD_TURNO = %EXP:nTurno%
 		
  	EndSQl             
@@ -2388,7 +2389,7 @@ Static Function SqlFxHor(cFaixa1,cFaixa2)
 			       NU_FAIXA_HORARIA,
 				   HR_FAIXA_DE,
 				   HR_FAIXA_ATE
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[FAIXA_HORARIA] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[FAIXA_HORARIA] WITH (NOLOCK)
 			 WHERE CD_FAIXA_HORARIA = %EXP:cFaixa1%
 			   OR  CD_FAIXA_HORARIA = %EXP:cFaixa2%
  			 
@@ -2405,7 +2406,7 @@ Static Function SqlCredPessoa(cCredencia,cPessoa)
 			       DT_FIM,
 			       FL_PERMANENTE,
 			       TP_TECNOLOGIA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL_PESSOA] WITH (NOLOCK)
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL_PESSOA] WITH (NOLOCK)
 			 WHERE CD_CREDENCIAL = %EXP:cCredencia%
 			   AND CD_PESSOA     = %EXP:cPessoa%
  			 
@@ -2417,7 +2418,7 @@ Static Function SqlBuscaCredencialDimep(cCredencial)
 	BeginSQL Alias "TRU"
 			%NoPARSER% 
 			 SELECT CD_CREDENCIAL,NU_CREDENCIAL 
-			   FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK)
+			   FROM [DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK)
 			  WHERE CD_CREDENCIAL = %EXP:cCredencial%
 			  
 	EndSQl             
@@ -2431,7 +2432,7 @@ Static Function SqlJorDia(cJornada,cDia,cTurno)
 			        CD_JORNADA,
 				    NU_DIA,
 				    CD_TURNO 
-			   FROM [DIMEP].[DMPACESSOII].[DBO].[JORNADA_DIA] WITH (NOLOCK) 
+			   FROM [DMPACESSO].[DMPACESSOII].[DBO].[JORNADA_DIA] WITH (NOLOCK) 
 		      WHERE CD_JORNADA = %EXP:cJornada%
                 AND NU_DIA     = %EXP:cDia%
                 AND CD_TURNO   = %EXP:cTurno%
@@ -2448,7 +2449,7 @@ Static Function SqlNomePerAc(nTurno)
 			       NM_PERFIL_ACESSO,
 			       TP_PERFIL_ACESSO,
 			       FL_PUBLICO
-			 FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO] WITH (NOLOCK) 
+			 FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO] WITH (NOLOCK) 
 		    WHERE CD_PERFIL_ACESSO = %EXP:nTurno%
 		
  	EndSQl             
@@ -2473,7 +2474,7 @@ Static Function carEstFil(nEstOrganizacional, cFil, lReload)
 			CD_ESTRUTURA_RELACIONADA,
 			NU_ESTRUTURA
 		FROM 
-			[DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
+			[DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] WITH (NOLOCK)
 		WHERE 
 			TP_ESTRUTURA = '1'
 	EndSQl 
@@ -2507,7 +2508,7 @@ Static Function SqlTodaCredencial(cPessoa)
 				DT_FIM,
 				FL_PERMANENTE,
 				TP_TECNOLOGIA
-			FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL_PESSOA] WITH (NOLOCK)
+			FROM [DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL_PESSOA] WITH (NOLOCK)
 			WHERE CD_PESSOA     = %EXP:cPessoa% 
  	EndSQl
 
@@ -2533,7 +2534,7 @@ Static Function SqlBloqTerceiro()
 					TX_CAMPO01, 
 					TX_CAMPO02,
 					TX_CAMPO03
-			FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] WITH (NOLOCK)
+			FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] WITH (NOLOCK)
 			WHERE CD_SITUACAO_PESSOA  = 11 
 			  AND (TX_CAMPO01        <> '' 
 			   OR TX_CAMPO02         <> ''
@@ -2561,8 +2562,8 @@ Return Nil
 // 			SELECT 
 // 				NU_MATRICULA,
 // 				ESTRUTURA_ORGANIZACIONAL.NU_ESTRUTURA
-// 			FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
-// 				INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
+// 			FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
+// 				INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 // 			    ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = PESSOA.CD_ESTRUTURA_ORGANIZACIONAL
 // 			ORDER BY 
 // 				PESSOA.NU_MATRICULA
@@ -2626,7 +2627,7 @@ Static Function SqlCatracaPortaria()
 			SELECT CD_GRUPO,
 			       CD_AREA,
 			       FL_AREA_ORIGEM
-			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
+			 FROM [DMPACESSO].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
 		    WHERE CD_GRUPO = 8
      	       		
  	EndSQl        
@@ -2641,7 +2642,7 @@ Static Function TorniquetePortaria()
 			SELECT CD_GRUPO,
 			       CD_AREA,
 			       FL_AREA_ORIGEM
-			 FROM [DIMEP].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
+			 FROM [DMPACESSO].[DMPACESSOII].[DBO].[GRUPO_AREA] WITH (NOLOCK) 
 		    WHERE CD_GRUPO = 22
      	       		
  	EndSQl        
@@ -2654,7 +2655,7 @@ Static Function SqlEMP1(cEstLoc)
 
 			%NoPARSER% 
 			SELECT NU_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
 			 WHERE CD_ESTRUTURA_ORGANIZACIONAL = %EXP:cEstLoc%
 			  
 	EndSQl             
@@ -2666,7 +2667,7 @@ Static Function SqlEMP2(cEstLoc)
 
 			%NoPARSER% 
 			SELECT CD_ESTRUTURA_RELACIONADA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
 			 WHERE CD_ESTRUTURA_ORGANIZACIONAL = %EXP:cEstLoc%			
 			  
 	EndSQl             
@@ -2678,7 +2679,7 @@ Static Function SqlEMP3(cEstLoc)
 
 			%NoPARSER% 
 			SELECT NU_ESTRUTURA
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL]
 			 WHERE CD_ESTRUTURA_ORGANIZACIONAL = %EXP:cEstLoc%			
 			  
 	EndSQl             
@@ -2690,8 +2691,8 @@ Static Function SqlCCDIMEP(nMatricula)
 
 			%NoPARSER% 
 			SELECT NU_ESTRUTURA 
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
-			  INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
+			  INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 					  ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = PESSOA.CD_ESTRUTURA_ORGANIZACIONAL
 			  WHERE NU_MATRICULA = %EXP:nMatricula%
 			  
@@ -2710,7 +2711,7 @@ Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerf
 	EndIf
 
 	cQuery := " SELECT NU_CPF
-	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
+	cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
 	cQuery += " WHERE NU_CPF IS NOT NULL
 	cQuery += " AND NU_CPF='"+cCic+"'
 
@@ -2719,7 +2720,7 @@ Static Function INTPESSOA(nMat,cNome,nSitFol,nGrupo,nEmpresa,cCic,cRg,cPis,nPerf
 	Work->( dbGoTop() )
 	If Work->( EOF() )
 
-		cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
+		cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] " 
 		cQuery += "(NU_MATRICULA, " 
 		cQuery += "NM_PESSOA, " 
 		cQuery += "CD_SITUACAO_PESSOA, " 
@@ -2759,7 +2760,7 @@ Return Nil
 
 Static Function IntCredencial(nCred,nEstrutura,cTipo)   
 
-    cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] " 
+    cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL] " 
 	cQuery += "(CD_TIPO_CREDENCIAL, " 
 	cQuery += "CD_ESTRUTURA_ORGANIZACIONAL, " 
 	cQuery += "TP_TECNOLOGIA, " 
@@ -2795,7 +2796,7 @@ Return Nil
 
 Static Function INTCREDMOTORISTA(nCred,nEstrutura,cTipo)   
 
-    cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] " 
+    cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL] " 
 	cQuery += "(CD_TIPO_CREDENCIAL, " 
 	cQuery += "CD_ESTRUTURA_ORGANIZACIONAL, " 
 	cQuery += "TP_TECNOLOGIA, " 
@@ -2845,7 +2846,7 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 	// @history Ticket  17021 - Fernando Macieir- 19/07/2021 - Integração DImep
 	If ISINCALLSTACK("DIMEPCAMINHONEIRO")
 
-		cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+		cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 		cQuery += "(CD_CREDENCIAL, " 
 		cQuery += "CD_PESSOA, " 
 		cQuery += "DT_INICIO, " 
@@ -2878,8 +2879,8 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 		EndIf
 
 		cQuery := " SELECT AMARRA.CD_CREDENCIAL, AMARRA.TP_TECNOLOGIA
-		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
-		cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+		cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+		cQuery += " INNER JOIN [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
 		cQuery += " WHERE AMARRA.CD_PESSOA='"+cValToChar(nPessoa)+"'
 	//	cQuery += " AND CRED.NU_CREDENCIAL='"+cValToChar(nKey)+"'
 	//	cQuery += " AND AMARRA.TP_TECNOLOGIA='"+cValToChar(cTpTecno)+"'
@@ -2897,7 +2898,7 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 
 			If !Empty(cCredenc)
 
-				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 				cSql += "(CD_CREDENCIAL, " 
 				cSql += "CD_PESSOA, " 
 				cSql += "DT_INICIO, " 
@@ -2927,7 +2928,7 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 
 			If !Empty(cCredenc)
 
-				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 				cSql += "(CD_CREDENCIAL, " 
 				cSql += "CD_PESSOA, " 
 				cSql += "DT_INICIO, " 
@@ -2962,8 +2963,8 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 		cTpTecno := 1 // Codigo Barra
 
 		cQuery := " SELECT AMARRA.CD_CREDENCIAL, AMARRA.TP_TECNOLOGIA
-		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
-		cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+		cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+		cQuery += " INNER JOIN [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
 		cQuery += " WHERE AMARRA.CD_PESSOA='"+cValToChar(nPessoa)+"'
 	//	cQuery += " AND CRED.NU_CREDENCIAL='"+cValToChar(nKey)+"'
 		cQuery += " AND AMARRA.TP_TECNOLOGIA='"+cValToChar(cTpTecno)+"'
@@ -2981,7 +2982,7 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 
 			If !Empty(cCredenc)
 
-				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 				cSql += "(CD_CREDENCIAL, " 
 				cSql += "CD_PESSOA, " 
 				cSql += "DT_INICIO, " 
@@ -3016,8 +3017,8 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 		cTpTecno := 3 // Proximidade
 		
 		cQuery := " SELECT AMARRA.CD_CREDENCIAL, AMARRA.TP_TECNOLOGIA
-		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
-		cQuery += " INNER JOIN [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
+		cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK)
+		cQuery += " INNER JOIN [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL
 		cQuery += " WHERE AMARRA.CD_PESSOA='"+cValToChar(nPessoa)+"'
 	//	cQuery += " AND CRED.NU_CREDENCIAL='"+cValToChar(nKey)+"'
 		cQuery += " AND AMARRA.TP_TECNOLOGIA='"+cValToChar(cTpTecno)+"'
@@ -3035,7 +3036,7 @@ Static Function IntCrePessoa(nPessoa,nCredencial,cDataIni,cDataFin)
 
 			If !Empty(cCredenc)
 
-				cSql := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+				cSql := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 				cSql += "(CD_CREDENCIAL, " 
 				cSql += "CD_PESSOA, " 
 				cSql += "DT_INICIO, " 
@@ -3070,7 +3071,7 @@ Return Nil
 
 Static Function INTHISTSITPESSOA(nPessoa,nSitFol,cDataIni,cDataFin)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA] " 
 	cQuery += "(CD_PESSOA, " 
 	cQuery += "CD_SITUACAO_PESSOA, " 
 	cQuery += "DT_ATRIBUICAO, " 
@@ -3092,7 +3093,7 @@ Return Nil
 
 Static Function INTSITPESSOAMULTIPLA(nPessoa,nSitFolMult,cDataIni,cDataFin)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[SITUACAO_PESSOA_MULTIPLA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[SITUACAO_PESSOA_MULTIPLA] " 
 	cQuery += "(CD_PESSOA, " 
 	cQuery += "CD_SITUACAO_PESSOA, " 
     cQuery += "DT_PERIODO_INICIAL, " 
@@ -3112,7 +3113,7 @@ Return Nil
 
 Static Function IntUsuSisCredencial(nCredencial)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_CREDENCIAL] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_CREDENCIAL] " 
 	cQuery += "(CD_CREDENCIAL, " 
 	cQuery += "CD_USUARIO, " 
     cQuery += "DT_PERSISTENCIA " 
@@ -3130,7 +3131,7 @@ Return Nil
 
 Static Function INTUSUSISPESSOA(nPessoa)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_PESSOA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_PESSOA] " 
 	cQuery += "(CD_USUARIO, " 
 	cQuery += "CD_PESSOA, " 
     cQuery += "DT_PERSISTENCIA " 
@@ -3150,7 +3151,7 @@ Static Function CargaTurnoDimep(nTurno,cDesc)
 
 	Local cHoraAcesso := "1904-01-01" +  "T" + '00:00:00'
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[TURNO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[TURNO] " 
 	cQuery += "(NU_TURNO, " 
 	cQuery += "DS_TURNO, " 
     cQuery += "HR_ZERA_QTD_ACESSO " 
@@ -3168,7 +3169,7 @@ Return Nil
 
 Static Function INTUSUSISTURNO(nTurno)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_TURNO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_TURNO] " 
 	cQuery += "(CD_TURNO, " 
 	cQuery += "CD_USUARIO, " 
     cQuery += "DT_PERSISTENCIA " 
@@ -3186,7 +3187,7 @@ Return Nil
 
 Static Function INTTURNOFAIXA(nTurno,nFaixa)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[TURNO_FAIXA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[TURNO_FAIXA] " 
 	cQuery += "(CD_TURNO, " 
 	cQuery += "CD_FAIXA_HORARIA " 
     cQuery += ") "
@@ -3202,7 +3203,7 @@ Return Nil
 
 Static Function INTJORNADA(nTurno)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[JORNADA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[JORNADA] " 
 	cQuery += "(DS_JORNADA, " 
 	cQuery += "TP_JORNADA, " 
 	cQuery += "QT_DIAS_PERIODO " 
@@ -3220,7 +3221,7 @@ Return Nil
 
 Static Function INTUSUSISJORNADA(nJornada)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_JORNADA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_JORNADA] " 
 	cQuery += "(CD_JORNADA, " 
 	cQuery += "CD_USUARIO, " 
     cQuery += "DT_PERSISTENCIA " 
@@ -3238,7 +3239,7 @@ Return Nil
 
 Static Function INTJORDIA(nJornada,nDia,nTurno)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[JORNADA_DIA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[JORNADA_DIA] " 
 	cQuery += "(CD_JORNADA, " 
 	cQuery += "NU_DIA, " 
     cQuery += "CD_TURNO " 
@@ -3256,7 +3257,7 @@ Return Nil
 
 Static Function INTPERAC(nTurno)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PERFIL_ACESSO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[PERFIL_ACESSO] " 
 	cQuery += "(NM_PERFIL_ACESSO, " 
 	cQuery += "TP_PERFIL_ACESSO, " 
     cQuery += "FL_PUBLICO " 
@@ -3274,7 +3275,7 @@ Return Nil
 
 Static Function INTPERACREGRA(nPerfilAcesso,nGRupo,nArea,nTurno,nFaixaHoraria,nFlagAusente,cJornada,nQtdAcesso)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PERFIL_ACESSO_REGRA] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[PERFIL_ACESSO_REGRA] " 
 	cQuery += "(CD_PERFIL_ACESSO, " 
 	cQuery += "CD_GRUPO, " 
 	cQuery += "CD_AREA, " 
@@ -3310,7 +3311,7 @@ Return Nil
 
 Static Function INTPERRESTRICAO(nPerfilAcesso,nGRupo,nArea)
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[PERFIL_ACESSO_RESTRICAO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[PERFIL_ACESSO_RESTRICAO] " 
 	cQuery += "(CD_PERFIL_ACESSO, " 
 	cQuery += "CD_GRUPO, " 
 	cQuery += "CD_AREA, " 
@@ -3334,7 +3335,7 @@ Return Nil
 
 Static Function INTSISPERFILACESSO(nPerfilAcesso)   	      	 	  
 
-	cQuery := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SIST_PERFIL_ACESSO] " 
+	cQuery := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SIST_PERFIL_ACESSO] " 
 	cQuery += "(CD_PERFIL_ACESSO, " 
 	cQuery += "CD_USUARIO, " 
     cQuery += "DT_PERSISTENCIA " 
@@ -3352,7 +3353,7 @@ Return Nil
 
 Static Function UpdPessoa(cCampo1,cCampo2,nMat,nEstOrganizacional,nEstOrgEmpresa)
 
-	cQuery := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
+	cQuery := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] " 
 	cQuery += " SET " + cCampo1 + " = " + "'"  + cCampo2 + "'"
 	cQuery += " WHERE NU_MATRICULA  = " + "" + cvaltochar(nMat) + ""  // chamado 053384 - WILLIAM COSTA - 14/11/2019
    
@@ -3364,7 +3365,7 @@ Return Nil
 
 Static Function UpdPess1(cCampo1,cCampo2,nMat,nEstOrganizacional,nEstOrgEmpresa)
 
-	cQuery := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
+	cQuery := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] " 
 	cQuery += " SET " + cCampo1 + " = " + ""  + cvaltochar(cCampo2) + ""
 	cQuery += " WHERE NU_MATRICULA  = " + "" + cvaltochar(nMat) + "" // chamado 053384 - WILLIAM COSTA - 14/11/2019
     
@@ -3376,7 +3377,7 @@ Return Nil
 
 Static Function UpdPess2(cCampo1,cCampo2,cCdPessoa)
 
-	cQuery := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[PESSOA] " 
+	cQuery := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] " 
 	cQuery += " SET " + cCampo1 + " = " + ""  + cvaltochar(cCampo2) + ""
 	cQuery += " WHERE CD_PESSOA     = " + "" + cvaltochar(cCdPessoa)               + "" 
 
@@ -3388,7 +3389,7 @@ Return Nil
 
 Static Function UpdCredPes(cCampo1,cCdCredencial,cCdPessoa)
 
-	cQuery := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+	cQuery := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 	cQuery += " SET " + cCampo1 + " = NULL " 
 	cQuery += " WHERE CD_CREDENCIAL = " + "" + cvaltochar(cCdCredencial) + " " 
 	cQuery += "   AND CD_PESSOA     = " + "" + cvaltochar(cCdPessoa)     + " " 
@@ -3401,7 +3402,7 @@ Return Nil
 
 Static Function DELSITPESSOAMULTIPLA(cCdPessoa)
 
-	cQuery := "DELETE FROM [DIMEP].[DMPACESSOII].[dbo].[SITUACAO_PESSOA_MULTIPLA] " 
+	cQuery := "DELETE FROM [DMPACESSO].[DMPACESSOII].[dbo].[SITUACAO_PESSOA_MULTIPLA] " 
 	cQuery += "WHERE CD_PESSOA = '" + cCdPessoa + "'"
 
 	If (TCSqlExec(cQuery) < 0)
@@ -3412,7 +3413,7 @@ Return Nil
 
 Static Function DelCredPessoa(cCredencialFace)                
 
-	cQuery := "DELETE FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
+	cQuery := "DELETE FROM [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] " 
 	cQuery += "WHERE CD_CREDENCIAL = '" + cCredencialFace + "'"
 
 	If (TCSqlExec(cQuery) < 0)
@@ -3423,7 +3424,7 @@ Return Nil
 
 Static Function DelUsuSisCredencial(cCredencialFace)                
 
-	cQuery := "DELETE FROM [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_CREDENCIAL] " 
+	cQuery := "DELETE FROM [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_CREDENCIAL] " 
 	cQuery += "WHERE CD_CREDENCIAL = '" + cCredencialFace + "'"
 
 	If (TCSqlExec(cQuery) < 0)
@@ -3480,7 +3481,7 @@ Static Function GetCDCred(nKey, nTpTecno)
 	EndIf
 
 	cQuery := " SELECT CD_CREDENCIAL, TP_TECNOLOGIA
-	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK)
+	cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK)
 	cQuery += " WHERE CRED.NU_CREDENCIAL='"+cValToChar(nKey)+"'
 
 	tcQuery cQuery New Alias "Work"
@@ -3518,7 +3519,7 @@ Static Function ChkAllCred(nCD_PESSOA, nCHAPA, nPTOCREDENCIAL)
 
 		lRet := .t.
 
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
 		cSql += " WHERE CD_PESSOA='"+cValToChar(nCD_PESSOA)+"' 
 
 		TCSqlExec(cSql)
@@ -3530,7 +3531,7 @@ Static Function ChkAllCred(nCD_PESSOA, nCHAPA, nPTOCREDENCIAL)
 		
 		lRet := .t.
 
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
 		cSql += " WHERE CD_PESSOA='"+cValToChar(nCD_PESSOA)+"' 
 
 		TCSqlExec(cSql)
@@ -3577,7 +3578,7 @@ Static Function UpdTecno( nCD_PESSOA, nCHAPA, nPTOCREDENCIAL )
 				
 					cTpTecno := "1"
 				
-					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
+					cSql := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL]
 					cSql += " SET TP_TECNOLOGIA = '" + cTpTecno + "' "
 					cSql += " WHERE CD_CREDENCIAL='" + cValToChar(Work->CD_CREDENCIAL) + "' 
 					If TCSqlExec(cSql) < 0
@@ -3585,7 +3586,7 @@ Static Function UpdTecno( nCD_PESSOA, nCHAPA, nPTOCREDENCIAL )
 
 					EndIf
 
-					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+					cSql := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
 					cSql += " SET TP_TECNOLOGIA = '"+cTpTecno+"' "
 					cSql += " WHERE CD_PESSOA='" + cValToChar(nCD_PESSOA) + "' 
 					cSql += " AND CD_CREDENCIAL='" + cValToChar(Work->CD_CREDENCIAL) + "' 
@@ -3601,7 +3602,7 @@ Static Function UpdTecno( nCD_PESSOA, nCHAPA, nPTOCREDENCIAL )
 				
 					cTpTecno := "3"
 				
-					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL]
+					cSql := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL]
 					cSql += " SET TP_TECNOLOGIA = '" + cTpTecno + "' "
 					cSql += " WHERE CD_CREDENCIAL='" + cValToChar(Work->CD_CREDENCIAL) + "' 
 					If TCSqlExec(cSql) < 0
@@ -3609,7 +3610,7 @@ Static Function UpdTecno( nCD_PESSOA, nCHAPA, nPTOCREDENCIAL )
 
 					EndIf
 
-					cSql := " UPDATE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+					cSql := " UPDATE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
 					cSql += " SET TP_TECNOLOGIA = '" + cTpTecno + "' "
 					cSql += " WHERE CD_PESSOA='" + nCD_PESSOA + "' 
 					cSql += " AND CD_CREDENCIAL='" + cValToChar(Work->CD_CREDENCIAL) + "' 
@@ -3661,7 +3662,7 @@ Static Function carCreden()
 	BeginSQL Alias "D_CRED"
 		%NoPARSER%
 		SELECT CD_CREDENCIAL, NU_CREDENCIAL, TP_TECNOLOGIA 
-		FROM [DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK) ORDER BY CD_CREDENCIAL 
+		FROM [DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL] WITH (NOLOCK) ORDER BY CD_CREDENCIAL 
 	EndSQl
 
 	//
@@ -3714,7 +3715,7 @@ Static Function carPerfil()
 			NM_PERFIL_ACESSO,
 			TP_PERFIL_ACESSO,
 			FL_PUBLICO
-		FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO] WITH (NOLOCK) ORDER BY CD_PERFIL_ACESSO
+		FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO] WITH (NOLOCK) ORDER BY CD_PERFIL_ACESSO
 	EndSQl
 
 	//
@@ -3758,7 +3759,7 @@ Static Function carEstEmp()
 		%NoPARSER%  
 		SELECT 
 			CD_ESTRUTURA_ORGANIZACIONAL, NU_ESTRUTURA
-		FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] ORDER BY CD_ESTRUTURA_ORGANIZACIONAL
+		FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] ORDER BY CD_ESTRUTURA_ORGANIZACIONAL
 	EndSQl
 
 	//
@@ -3858,7 +3859,7 @@ Static Function carCredXPes()
 				FL_PERMANENTE,
 				TP_TECNOLOGIA
 			FROM 
-				[DIMEP].[DMPACESSOII].[DBO].[CREDENCIAL_PESSOA] WITH (NOLOCK) 
+				[DMPACESSO].[DMPACESSOII].[DBO].[CREDENCIAL_PESSOA] WITH (NOLOCK) 
 			ORDER BY 
 				CD_CREDENCIAL, DT_INICIO
  	EndSQl 
@@ -4020,8 +4021,8 @@ Static Function carPesXEst(cEmp)
 		SELECT
 			NU_MATRICULA,
 			NU_ESTRUTURA
-		FROM [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
-			INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
+		FROM [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
+			INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 			ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = PESSOA.CD_ESTRUTURA_ORGANIZACIONAL
 		ORDER BY 
 			NU_MATRICULA
@@ -4085,8 +4086,8 @@ Static Function carCredTec(lReload)
 		SELECT
 			CREDPESS.CD_CREDENCIAL, CREDPESS.TP_TECNOLOGIA, CREDPESS.CD_PESSOA 		
 		FROM 
-			[DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AS CREDPESS WITH (NOLOCK)
-			INNER JOIN [DIMEP].[DMPACESSOII].[dbo].PESSOA AS PESSOA ON
+			[DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AS CREDPESS WITH (NOLOCK)
+			INNER JOIN [DMPACESSO].[DMPACESSOII].[dbo].PESSOA AS PESSOA ON
 			CREDPESS.CD_PESSOA =  PESSOA.CD_PESSOA
 		WHERE 
 			CREDPESS.DT_FIM IS NULL
@@ -4229,7 +4230,7 @@ User Function ExcPessoa(cCPF)
 		EndIf
 
 		cQuery := " SELECT NU_CPF, COUNT(1) TT_DUPL
-		cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
+		cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
 		cQuery += " WHERE NU_CPF IS NOT NULL
 		cQuery += " GROUP BY NU_CPF
 		cQuery += " HAVING COUNT(1) >= 2
@@ -4272,7 +4273,7 @@ Static Function RunExcPessoa(cCPF)
 	EndIf
 
 	cQuery := " SELECT TOP 1 MAX(CD_PESSOA) CD_PESSOA
-	cQuery += " FROM [DIMEP].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
+	cQuery += " FROM [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA] WITH (NOLOCK)
 	cQuery += " WHERE NU_MATRICULA='"+cCPF+"'
 
 	tcQuery cQuery New Alias "Work2"
@@ -4281,26 +4282,26 @@ Static Function RunExcPessoa(cCPF)
 	If Work2->( !EOF() )
 
 		// AUTORIZACAO EXCEP
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[PESSOA_AUTORIZACAO_EXCEP]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA_AUTORIZACAO_EXCEP]
 		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
 		tcSqlExec(cSql)
 
 		// SISTEMA PESSOA
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_PESSOA]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[USUARIO_SISTEMA_PESSOA]
 		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
 		tcSqlExec(cSql)
 
 		// CREDENCIAL
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[CREDENCIAL_PESSOA]
 		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
 		tcSqlExec(cSql)
 
 		// HISTORICO
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[HISTORICO_SITUACAO_PESSOA]
 		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
 
 		// PESSOA
-		cSql := " DELETE [DIMEP].[DMPACESSOII].[dbo].[PESSOA]
+		cSql := " DELETE [DMPACESSO].[DMPACESSOII].[dbo].[PESSOA]
 		cSql += " WHERE CD_PESSOA='"+AllTrim(Str(Work2->CD_PESSOA))+"'
 		tcSqlExec(cSql)
 

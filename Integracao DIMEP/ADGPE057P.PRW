@@ -14,6 +14,7 @@
     @history TICKET  12207  - Adriano Savoine - 14/04/2021 - Inserido novo equipamento para gravar na tabela de terceiros e aparecer no relatorio.
     @history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
 	@history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
+    @history Ticket  77205 - Adriano Savoine  - 27/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 */	
 
 User Function ADGPE057P()
@@ -250,8 +251,8 @@ STATIC FUNCTION SqlMarcacao()
                         TP_EVENTO,
                         TP_SENTIDO_CONSULTA,
                         CONVERT(VARCHAR(23), DT_REQUISICAO, 121) AS DT_REQUISICAO
-                    FROM [DIMEP].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO
-                    INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
+                    FROM [DMPACESSO].[DMPACESSOII].[DBO].[LOG_ACESSO] AS LOG_ACESSO
+                    INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL
 			                ON ESTRUTURA_ORGANIZACIONAL.CD_ESTRUTURA_ORGANIZACIONAL = LOG_ACESSO.CD_ESTRUTURA
                     WHERE CD_EQUIPAMENTO IN ('19','22') // TICKET 12207 - ADRIANO SAVOINE - 14/04/2021
                         AND CD_VISITANTE IS NULL 

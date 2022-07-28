@@ -19,6 +19,7 @@ Static cTitulo      := "Libera Empresas Terceiras para ser visto no Dimep "
 	@history Ticket: TI     - Leonardo P. Monteiro 	- 07/01/2022 - Correção do versionamento do fonte ADGPE047P colocado em base PLEONARDO.
 	@history Ticket TI - Leonardo P. Monteiro - Fontes compilados emergencialmente 13/01/2022 11:44.
 	@history Ticket 72264 - Everson - 03/05/2022. Tratamento para ativar e inativar cadastro de empresa no Dimep.
+	@history Ticket  77205 - Adriano Savoine  - 27/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
 
 User Function ADGPE047P()
@@ -329,7 +330,7 @@ Static Function GPE047In(cFlag)
 
 		If TRC->TMP_OK == cMark .And. cTxt <> TRC->TMP_INATIV
 
-			If TCSQLExec("UPDATE [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] SET AD_INATIVO = '" + cFlag + "' WHERE CD_ESTRUTURA_ORGANIZACIONAL = '" + Alltrim(cValToChar(TRC->TMP_CDESTR)) + "'  AND NU_ESTRUTURA = '" + Alltrim(cValToChar(TRC->TMP_NUESTR)) + "' AND CD_ESTRUTURA_RELACIONADA = 1223") < 0
+			If TCSQLExec("UPDATE [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] SET AD_INATIVO = '" + cFlag + "' WHERE CD_ESTRUTURA_ORGANIZACIONAL = '" + Alltrim(cValToChar(TRC->TMP_CDESTR)) + "'  AND NU_ESTRUTURA = '" + Alltrim(cValToChar(TRC->TMP_NUESTR)) + "' AND CD_ESTRUTURA_RELACIONADA = 1223") < 0
 				MsgInfo("Ocorreu erro na atualização do registro " + Alltrim(cValToChar(TRC->TMP_CDESTR)) + " " + Alltrim(cValToChar(TRC->TMP_NMESTR)) + ". O processo será interrompido." + Chr(13) + Chr(10) + Chr(13) + Chr(10) + TCSQLError(), "Função GPE047In(ADGPE047P)")
 				Exit
 
@@ -342,7 +343,7 @@ Static Function GPE047In(cFlag)
 
 				nCount++
 
-				If cFlag == "X" .And. TCSQLExec("DELETE FROM [DIMEP].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] WHERE CD_ESTRUTURA_ORGANIZACIONAL = '" + Alltrim(cValToChar(TRC->TMP_CDESTR)) + "'") < 0
+				If cFlag == "X" .And. TCSQLExec("DELETE FROM [DMPACESSO].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] WHERE CD_ESTRUTURA_ORGANIZACIONAL = '" + Alltrim(cValToChar(TRC->TMP_CDESTR)) + "'") < 0
 					MsgInfo("Ocorreu erro no processo para desvincular usuários da estrutura " + Alltrim(cValToChar(TRC->TMP_CDESTR)) + " " + Alltrim(cValToChar(TRC->TMP_NMESTR)) + ". O processo será interrompido." + Chr(13) + Chr(10) + Chr(13) + Chr(10) + TCSQLError(), "Função GPE047In(ADGPE047P)")
 					Exit
 
@@ -394,7 +395,7 @@ STATIC FUNCTION SqlEstrutura()
 				   DS_RAZAO_SOCIAL,
 				   CD_ESTRUTURA_ORGANIZACIONAL,
 				   AD_INATIVO
-		     FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL WITH (NOLOCK)
+		     FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORGANIZACIONAL] AS ESTRUTURA_ORGANIZACIONAL WITH (NOLOCK)
 		    WHERE CD_ESTRUTURA_RELACIONADA = 1223
 						
 	EndSQl      
@@ -421,7 +422,7 @@ Static Function SqlUsuDimep(cName)
 	Local cQuery := ''
 
     cQuery := " SELECT CD_USUARIO,DS_LOGIN,DS_NOME   "
-    cQuery += " FROM [DIMEP].[DMPACESSOII].[DBO].[USUARIO_SISTEMA]  WITH (NOLOCK) "
+    cQuery += " FROM [DMPACESSO].[DMPACESSOII].[DBO].[USUARIO_SISTEMA]  WITH (NOLOCK) "
     cQuery += " WHERE DS_LOGIN LIKE '%"+cName+"%' "
 
 	TCQUERY cQuery new alias "TRE"
@@ -434,7 +435,7 @@ STATIC FUNCTION SqlEstUsu(cEstrutura,nUser)
 			%NoPARSER%
 			SELECT CD_ESTRUTURA_ORGANIZACIONAL,
 			        CD_USUARIO 
-		     FROM [DIMEP].[DMPACESSOII].[DBO].[ESTRUTURA_ORG_USUARIO_SISTEMA] AS ESTRUTURA_ORG_USUARIO_SISTEMA WITH (NOLOCK)
+		     FROM [DMPACESSO].[DMPACESSOII].[DBO].[ESTRUTURA_ORG_USUARIO_SISTEMA] AS ESTRUTURA_ORG_USUARIO_SISTEMA WITH (NOLOCK)
 		    WHERE CD_ESTRUTURA_ORGANIZACIONAL = %EXP:cEstrutura%
 		      AND CD_USUARIO                  = %EXP:nUser%
 						
@@ -447,7 +448,7 @@ STATIC FUNCTION INSDIM(nEst,nUsers)
 	Local cQuery1 := ''
 	Local lRet    := .T.
 	
-	cQuery1 := "INSERT INTO [DIMEP].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] " + "(CD_ESTRUTURA_ORGANIZACIONAL, " + "CD_USUARIO " + ") " + "VALUES (" + " '" + CVALTOCHAR(nEst)   + "'," + " '" + CVALTOCHAR(nUsers) + "' )" 
+	cQuery1 := "INSERT INTO [DMPACESSO].[DMPACESSOII].[dbo].[ESTRUTURA_ORG_USUARIO_SISTEMA] " + "(CD_ESTRUTURA_ORGANIZACIONAL, " + "CD_USUARIO " + ") " + "VALUES (" + " '" + CVALTOCHAR(nEst)   + "'," + " '" + CVALTOCHAR(nUsers) + "' )" 
         
     If (TCSQLExec(cQuery1) < 0)
 		lRet := .F.
