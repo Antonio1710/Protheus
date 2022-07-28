@@ -13,6 +13,7 @@
 	@history TICKET  224    - William Costa   - 11/11/2020 - Alteração do Fonte na parte de Funcionários, trocar a integração do Protheus para a Integração do RM
 	@history TICKET  39     - Fernando Macieir- 27/01/2021 - Projeto RM Cloud
 	@history ticket  14365  - Fernando Macieir- 19/05/2021 - Novo Linked Server (de VPSRV17 para DIMEP)
+	@history Ticket  77205 - Adriano Savoine  - 28/07/2022- Alterado o Link de dados de DIMEP para DMPACESSO
 /*/
 User Function ADGPE048R()
 	
@@ -426,7 +427,7 @@ Static Function SqlGeral()
 					INDFIM,
 					BATFIM,
 					CONVERT(DECIMAL(10,2),CONVERT(NUMERIC,BATFIM) / 60) AS HR_FIN
-				FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO]
+				FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO]
 				INNER JOIN [VPSRV16].[CORPORERM].[DBO].[AJORHOR] AS AJORHOR
 						ON AJORHOR.CODCOLIGADA                      = SUBSTRING(NM_PERFIL_ACESSO,1,1) COLLATE Latin1_General_CI_AS
 					   AND AJORHOR.CODHORARIO                       = SUBSTRING(NM_PERFIL_ACESSO,2,4) COLLATE Latin1_General_CI_AS
@@ -457,7 +458,7 @@ Static Function SqlGeral()
 	cQuery += "				INDFIM,
 	cQuery += "				BATFIM,
 	cQuery += "				CONVERT(DECIMAL(10,2),CONVERT(NUMERIC,BATFIM) / 60) AS HR_FIN
-	cQuery += "			FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO]
+	cQuery += "			FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO]
 	cQuery += "			INNER JOIN [" + cLinked + "].[" + cSGBD + "].[DBO].[AJORHOR] AS AJORHOR (NOLOCK)
 	cQuery += "								ON AJORHOR.CODCOLIGADA                      = SUBSTRING(NM_PERFIL_ACESSO,1,1) COLLATE Latin1_General_CI_AS
 	cQuery += "							   AND AJORHOR.CODHORARIO                       = SUBSTRING(NM_PERFIL_ACESSO,2,4) COLLATE Latin1_General_CI_AS
@@ -497,8 +498,8 @@ Static Function SqlPerfEsp()
 					INDFIM,
 					BATFIM,
 					CONVERT(DECIMAL(10,2),CONVERT(NUMERIC,BATFIM) / 60) AS HR_FIN 
-			   FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO] AS PERFIL_ACESSO
-			   INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
+			   FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO] AS PERFIL_ACESSO
+			   INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
 					   ON PESSOA.CD_PERFIL_ACESSO                  = PERFIL_ACESSO.CD_PERFIL_ACESSO
 			   INNER JOIN [VPSRV16].[CORPORERM].[DBO].[PFUNC] 
 				 	   ON PFUNC.PISPASEP = PESSOA.NU_PIS COLLATE Latin1_General_CI_AS
@@ -537,8 +538,8 @@ Static Function SqlPerfEsp()
 	cQuery += "				INDFIM,
 	cQuery += "				BATFIM,
 	cQuery += "				CONVERT(DECIMAL(10,2),CONVERT(NUMERIC,BATFIM) / 60) AS HR_FIN 
-	cQuery += "		   FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO] AS PERFIL_ACESSO
-	cQuery += "		   INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
+	cQuery += "		   FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO] AS PERFIL_ACESSO
+	cQuery += "		   INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA] AS PESSOA
 	cQuery += "				   ON PESSOA.CD_PERFIL_ACESSO                  = PERFIL_ACESSO.CD_PERFIL_ACESSO
 	cQuery += "		   INNER JOIN [" + cLinked + "].[" + cSGBD + "].[DBO].[PFUNC] AS PFUNC (NOLOCK)
 	cQuery += "			 	   ON PFUNC.PISPASEP = PESSOA.NU_PIS COLLATE Latin1_General_CI_AS
@@ -575,8 +576,8 @@ Static Function SqlQtdPessoa(cNomePerfil)
 			       CASE WHEN CD_SITUACAO_PESSOA = '11' THEN COUNT(*) ELSE 0 END AS 'TRABALHANDO',
 			       CASE WHEN CD_SITUACAO_PESSOA = '12' THEN COUNT(*) ELSE 0 END AS 'DEMITIDO',
 			       CASE WHEN CD_SITUACAO_PESSOA > '12' THEN COUNT(*) ELSE 0 END AS 'AUSENTE'
-			  FROM [DIMEP].[DMPACESSOII].[DBO].[PERFIL_ACESSO]
-			  INNER JOIN [DIMEP].[DMPACESSOII].[DBO].[PESSOA]
+			  FROM [DMPACESSO].[DMPACESSOII].[DBO].[PERFIL_ACESSO]
+			  INNER JOIN [DMPACESSO].[DMPACESSOII].[DBO].[PESSOA]
 			          ON PESSOA.CD_PERFIL_ACESSO = PERFIL_ACESSO.CD_PERFIL_ACESSO
 			       WHERE NM_PERFIL_ACESSO = %EXP:cNomePerfil%
 			       
