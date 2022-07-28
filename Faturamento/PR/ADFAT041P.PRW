@@ -48,7 +48,7 @@ User Function ADFAT041P()
         TButton():New( 012, 104, "Legenda"  , oInterface,{|| lngProth() }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
 		
         TButton():New( 042, 004, "Lib. Estoque"    , oInterface,{|| MsAguarde({|| xLibEst() },"Aguarde","Acessando rotina Lib. Estoque...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
-        TButton():New( 042, 049, "Emitir NF"       , oInterface,{|| MsAguarde({|| emitNfGrp( oRegistros:aCols[oRegistros:nat][Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"})] )  },"Aguarde","Acessando rotina Emissão de NF...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
+        TButton():New( 042, 049, "Emitir NF"       , oInterface,{|| MsAguarde({|| emitNfGrp( oRegistros:aCols[oRegistros:nat][Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"})], oRegistros, aHInterface )  },"Aguarde","Acessando rotina Emissão de NF...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
         TButton():New( 042, 094, "SPED"            , oInterface,{|| MsAguarde({|| SPEDNFe()    },"Aguarde","Acessando rotina SPEDNFe..."), MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
         TButton():New( 042, 139, "Boleto"          , oInterface,{|| MsAguarde({|| U_HCRFIBLT() },"Aguarde","Acessando Emissão de Boleto..."), MsAguarde({|| pendenciaNF() },"Aguarde","Carregando registros...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
         TButton():New( 042, 184, "Imprimir NF"     , oInterface,{|| MsAguarde({|| imprimeNF("","") },"Aguarde","Acessando Impressão de NF...") }, 40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
@@ -690,7 +690,7 @@ Return lRet
 	@since 11/03/2022
 	@version 01
 /*/
-Static Function emitNfGrp(cPedProth)
+Static Function emitNfGrp(cPedProth, oRegistros, aHInterface)
 
 	//Variáveis.	
 	Local aArea		:= GetArea() 
@@ -707,6 +707,8 @@ Static Function emitNfGrp(cPedProth)
 	Local aNFTrans	:= {}
 	Local cNFErro	:= ""
 	Local cAliasF2	:= ""
+	Local nAux      := 1
+	Local cPedTela  := ""
 	
 	Private aNfGerada 	:= {}
 	
@@ -754,6 +756,17 @@ Static Function emitNfGrp(cPedProth)
     // cQuery += " AND C5_NUM >= '" + cNumIni + "' " 
     // cQuery += " AND C5_NUM <= '" + cNumFim + "' " 
 
+	If Len(oRegistros:aCols) > 0
+
+		For nAux := 1 To Len(oRegistros:aCols)
+			cPedTela += "'" + Alltrim(cValToChar(oRegistros:aCols[nAux][Ascan(aHInterface,{|x| AllTrim(x[2]) == "PED"})] )) + "',"
+
+		Next nAux
+
+		cPedTela := Substr(cPedTela, 1, Len(cPedTela) -1)
+
+	EndIf
+
 	cQuery := ""
 	cQuery += " SELECT  " 
         cQuery += "  DISTINCT C5_FILIAL, CONVERT(VARCHAR(10),CAST(C5_EMISSAO AS DATE),103) AS C5_EMISSAO, C5_NUM, C5_PEDSAG, C5_CLIENTE, C5_LOJACLI, C5_NOMECLI, C5_PLACA, C5_TRANSP "
@@ -777,6 +790,7 @@ Static Function emitNfGrp(cPedProth)
 		
 		EndIf
 
+		cQuery += " AND C5_NUM IN (" + cPedTela + ") " 
 		cQuery += " AND C5_NUM >= '" + cNumIni + "' " 
 		cQuery += " AND C5_NUM <= '" + cNumFim + "' "
 
@@ -830,7 +844,7 @@ Static Function emitNfGrp(cPedProth)
 	EndIf
 	
 	If Len(aNFTrans) > 0
-	 	//MsAguarde({|| transmNF(@aNFTrans,cSerie,.F.) },"Função emitNfGrp(ADFAT041P)","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI
+	 	MsAguarde({|| transmNF(@aNFTrans,cSerie,.F.) },"Função emitNfGrp(ADFAT041P)","Transmitindo NF's") //Everson - 10/07/2022. Chamado TI
 
 	EndIf
 	
@@ -868,6 +882,9 @@ Static Function transmNF(aNFTrans,cSerie,lAut)
 	Default lAut	:= .F.
 	
 	MsgInfo("Notas geradas de " + cNFIni + " até " + cNFFim + ".","Função transmNF(ADFAT041P)")
+
+	RestArea(aArea)
+	Return Nil
 
     If ! CTIsReady()
 		Conout( DToC(Date()) + " " + Time() + " ADFAT041P - transmNF - CTIsReady retornou .F. " )
