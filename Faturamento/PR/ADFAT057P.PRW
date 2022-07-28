@@ -890,7 +890,7 @@ User Function ADFAT57E(nOpc)
     U_TExTelaMen("Geração de NF de Devolução e Pedido de Saída", cRegistros, "Arial",10,,.F.,.F.)
 
     //Geração de nota fiscal.
-    If Len(aPedInc) > 0 .And. MsgYesNo("Deseja emitir nota(s) fiscal(is)?", "Função ADFAT57E(ADFAT057P)")
+    If Len(aPedInc) > 0
 
 		For nAux := 1 To Len(aPedInc)
 			cPedProth += "'" + aPedInc[nAux] + "',"
@@ -1827,6 +1827,9 @@ User Function ADFAT574(cPedProth)
 		
 		If lRetNf
 			Aadd(aNFTrans, {cNota, cSerie, (cAliasF2)->C5_NUM})
+
+            U_GrLogZBE(Date(), Time(), cUserName, "PEDIDO " + (cAliasF2)->C5_NUM + " NF " + cNota + cSerie, "EMISSAO NF", "ADFAT057P",;
+                "", ComputerName(), LogUserName())
 			
 		EndIf
 		
