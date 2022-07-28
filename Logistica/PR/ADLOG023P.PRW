@@ -16,6 +16,7 @@ Static cAltera := "N"  //Essa variavel é utilizada na pornto de entrada MALTCLI
 	@version 01
 	@history WILLIAM COSTA 15/08/2019 - 050799 || OS 052114 || EXPORTACAO || CICERO || 8360 || A1_CEPE E PB3_CEPE - Adicionado tratativa do CEP de Entrega para clientes nacionais ser obrigado a informar para salvar o Cliente
 	@history Ticket 76086 - 13/07/2022 - Antonio Domingos - Validação dos campos A1_XLONGIT e A1_XLATITU.. 
+	@history Ticket 77217 - 28/07/2022 - Antonio Domingos - TRATAMENTO MASCARA CAMPOS SA1- CAD CLIENTES
 */
 User Function MA030TOK()  
 
@@ -283,18 +284,25 @@ Return (.T.)
 */
 Static Function _fVldLongLat(_cCampo,_cNome)
 	Local _lRet := .T.
-	Local _lCpoSinal     := AT("-",_cCampo,1) > 0 .OR. AT("+",_cCampo,1) > 0 
-	Local _cCpoMsgSinal   := If(!_lCpoSinal,CRLF+"Obrigatorio informar sinal no campo de "+_cNome+"."," ")
-	Local _nTamCpo        := LEN(ALLTRIM(_cCampo))
-	Local _nPosCpoDec     := AT(".",_cCampo)
+	Local _nValMaxDec     := SUPERGETMV("MV_XLOG23A",.F.,50)
+	Local _nValMinDec	  := SUPERGETMV("MV_XLOG23B",.F.,10)
+	Local _lCpoSinal      := AT("-",_cCampo) == 1 .And. AT("-",_cCampo) <> 0 .OR. AT("+",_cCampo) == 1 .And. AT("+",_cCampo) <> 0 //Verifica se existe sinal na primeira posição
+	Local _cCpoMsgSinal   := If(!_lCpoSinal,CRLF+"Obrigatorio informar sinal na primeira posição do campo de "+_cNome+"."," ")
+	Local _nTamCpo        := LEN(ALLTRIM(_cCampo)) 
+	Local _nPosCpoDec     := AT(".",_cCampo)//Verifica se Existe ponto
 	Local _nTamCasaDec    := Len(Substr(Alltrim(_cCampo),_nPosCpoDec+1,_nTamCpo-(_nPosCpoDec)))
-	Local _cCpoZeroMsgDec := If(_nPosCpoDec<1,CRLF+"Obrigatorio informar casas decimais no campo de "+_cNome+"."," ")
-	Local _cCpoTresMsgDec := If(_nTamCasaDec<3,CRLF+"Obrigatorio informar pelo menos seis (6) casas decimais no campo de "+_cNome+"."," ")
+	Local _cPosDif4MsgDec := If(_nPosCpoDec<>4,CRLF+"Obrigatorio informar casas decimais (ponto decimal na 4a Posição) no campo de "+_cNome+"."," ")
+	Local _cTamCpoMsg     := If(_nTamCpo<>10,CRLF+"Obrigatorio informar Campo com 10 digitos (formato -99.999999) no campo de "+_cNome+"."," ")
+	Local _cSeisDigMsgDec := If(_nTamCasaDec<3,CRLF+"Obrigatorio informar seis (6) casas decimais após ponto decimal no campo de "+_cNome+"."," ")
 	Local _cMsgParametro  := CRLF+"ATENÇÃO!!! O parâmetro MV_XVDLGLT desativa a validação."
 	Local _lCpoTemAlfa    :=  _fVerAlpha(_cCampo) 
 	Local _cMsgTemAlfa    := If(_lCpoTemAlfa,CRLF+" Proibido digitar letra(s)!!!"," ")
-	If !_lCpoSinal .OR. _nPosCpoDec < 1 .OR. _nTamCasaDec < 6 .OR. _lCpoTemAlfa
-		Alert(_cNome+" "+_cCampo+" inválida! "+alltrim(_cCpoMsgSinal)+alltrim(_cCpoZeroMsgDec)+alltrim(_cCpoTresMsgDec)+alltrim(_cMsgTemAlfa)+CRLF+"Favor verificar."+_cMsgParametro+CRLF+"(PE MA030TOK-09)")  
+	Local _nVlAntDec      := Val(SubStr(_cCampo,2,2))
+	Local _nVlPosDec      := Val(SubStr(_cCampo,5,6))
+	Local _cMsgVlAntDec   := If(_nVlAntDec < _nValMinDec .OR. _nVlAntDec > _nValMaxDec,CRLF+"Valor Depois do sinal não pode ser menor do que 10 ou maior do que 50 "," ")
+	Local _cMsgVlPosDec   := If(_nVlPosDec == 0,CRLF+"Valor Decimal não pode ser zerado"," ")
+	If !_lCpoSinal .OR. _nTamCasaDec <> 6 .OR. _lCpoTemAlfa .Or._nPosCpoDec <> 4 .or.  _nVlAntDec < _nValMinDec .OR. _nVlAntDec > _nValMaxDec .OR. _nVlPosDec == 0
+		Alert(_cNome+" "+_cCampo+" inválida! "+alltrim(_cMsgVlPosDec)+alltrim(_cMsgVlAntDec)+alltrim(_cPosDif4MsgDec)+alltrim(_cTamCpoMsg)+alltrim(_cCpoMsgSinal)+alltrim(_cSeisDigMsgDec)+alltrim(_cMsgTemAlfa)+CRLF+"Favor verificar."+_cMsgParametro+CRLF+"(PE MA030TOK-09)")  
 		_lRet := .F.
 	EndIf
 Return(_lRet)
