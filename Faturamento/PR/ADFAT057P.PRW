@@ -224,6 +224,7 @@ Static Function vldPos(oModel)
     Local cQtdDes    := Val(cValToChar(oModel:GetValue("ADFAT57TOT","ZHR_QTDTOT")))
     Local cMsgError  := ""
     Local cOperacao  := ""
+    Local cUsrApv    := Alltrim(cValToChar(GetMv("MV_#ADF572",,"")))
 
     If lRet .And. (nOperation == MODEL_OPERATION_INSERT .Or. nOperation == MODEL_OPERATION_UPDATE)
 
@@ -305,7 +306,7 @@ Static Function vldPos(oModel)
 
     If lRet .And. nOperation == MODEL_OPERATION_DELETE
 
-        If lRet .And. cStatus $"3/4"
+        If lRet .And. cStatus $"3/4" .And. ! FWIsAdmin() .And. ! (__cUserID $cUsrApv)
             lRet := .F.
             Help(Nil, Nil, "Função vldPos(ADFAT057P)", Nil, "Registro não pode ser excluído.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         
