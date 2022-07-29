@@ -35,6 +35,8 @@ Static Function BrowseDef()
     oBrowse:SetAlias(cTbMast)
     oBrowse:SetDescription(cTitulo)
 
+    oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
+
     oBrowse:SetMenuDef("ADQUA003P")
 
 Return oBrowse
@@ -69,10 +71,17 @@ User Function ADQUA31()
     Local lAgrupa   := Iif(!Empty(ZIF->ZIF_AGRUPA), .T., .F.)
     Local cLote     := ""
 
+    If ZIF->ZIF_TPMOVI <> "E" //Ordem de entrada.
+        MsgInfo("Tipo de ordem de pesagem inválida.", "Função ADQUA31(ADQUA003P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
     DbSelectArea("ZIG")
     ZIG->(DbSetOrder(2))
     If ZIG->( DbSeek( FWxFilial("ZIG") + cNmOrdem ) )
-        If ZIG->ZIG_INICIA $"3/4/5" //Pesagem final, pesagem sequestrada, sequestro liberado.
+        If ZIG->ZIG_INICIA <> "1"
             MsgInfo("Ordem de pesagem não pode ter o lote alterado.", "Função ADQUA31(ADQUA003P)")
             RestArea(aArea)
             Return Nil
@@ -96,17 +105,7 @@ User Function ADQUA31()
 
     EndIf
 
-    DbSelectArea("ZI8")
-    ZI8->(DbSetOrder(1))
-    If ! ZI8->( DbSeek( FWxFilial("ZI8") + cLote ) )
-        MsgInfo("Lote não localizado " + cLote + ".", "Função ADQUA31(ADQUA003P)")
-        RestArea(aArea)
-        Return Nil
-
-    EndIf
-
-    If ZI8->ZI8_PRDPRT <> ZIF->ZIF_PRDPRO
-        MsgInfo("Lote " + cLote + " inválido para o produto " + ZIF->ZIF_PRDPRO + ".", "Função ADQUA31(ADQUA003P)")
+    If ! U_ADFAT18D(cLote, ZIF->ZIF_PRDSAG , ZIF->ZIF_PRDPRO)
         RestArea(aArea)
         Return Nil
 
@@ -116,10 +115,9 @@ User Function ADQUA31()
         U_ADFAT165(ZIF->ZIF_NUMERO, "ZIF_LOTE", cLote, "")
 
     Else
-        DbSelectArea("ZIF")
-        ZIF->(DbSetOrder(3))
-        If ! ZIF->( DbSeek( FWxFilial("ZIF") + cNmOrdem ) )
-            MsgInfo("Ordem de pesagem não localizada " + cNmOrdem + ".", "Função ADQUA31(ADQUA003P)")
+  
+        If ! U_ADFAT16F(cNmOrdem)
+            MsgInfo("Agrupador " + cNmOrdem + " não localizado.", "Função ADQUA31(ADQUA003P)")
             RestArea(aArea)
             Return Nil
 
