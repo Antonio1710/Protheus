@@ -108,6 +108,7 @@ Static Function Executa(oProcess)
     Local cAlias2    := GetNextAlias()
     Local _cCusto1   := SuperGetMv("MV_XMNT141",.F.,"5213/5217/5304")
     Local _cCusto2   := SuperGetMv("MV_XMNT142",.F.,"5304")
+    Local _cTitulo   := " "
     //Private oExcel  	:= FwMsExcel():New() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
     Private oExcel  	:= FwMsExcelXlsx():New() // @history Ticket 76312  - 19/07/2022 - Fernando Macieira - ERROR LOG 
     
@@ -129,12 +130,14 @@ Static Function Executa(oProcess)
         czFIL       := cFilAnt  
     EndIf
 
+    _cTitulo   := "Rel.Custo Req. Almox."+" De "+Dtoc(dMVPAR01)+" a "+Dtoc(dMVPAR02)+" - Da Filial "+cMVPAR03+" Até "+cMVPAR04
+
     oExcel:AddworkSheet("Custo") // Planilha
-    oExcel:AddTable ("Custo","RelCusto") // Titulo da Planilha (CabeÃ§alho)
-    oExcel:AddColumn("Custo","RelCusto","FILIAL"         ,1,1)
-    oExcel:AddColumn("Custo","RelCusto","GRUPO"	         ,1,1)
-    oExcel:AddColumn("Custo","RelCusto","DESCRIÇÃO"	     ,1,1)
-    oExcel:AddColumn("Custo","RelCusto","CUSTO"		     ,3,3,.T.)
+    oExcel:AddTable ("Custo",_cTitulo) // Titulo da Planilha (CabeÃ§alho)
+    oExcel:AddColumn("Custo",_cTitulo,"FILIAL"         ,1,1)
+    oExcel:AddColumn("Custo",_cTitulo,"GRUPO"	         ,1,1)
+    oExcel:AddColumn("Custo",_cTitulo,"DESCRIÇÃO"	     ,1,1)
+    oExcel:AddColumn("Custo",_cTitulo,"CUSTO"		     ,3,3,.T.)
 
     _cCusto1 := STRTRAN(_cCusto1,"/","','")
 
@@ -170,7 +173,7 @@ Static Function Executa(oProcess)
 
     If (cAlias1)->(!EOF())
         While (cAlias1)->(!EOF())
-            oExcel:AddRow("Custo","RelCusto",{	(cAlias1)->D3_FILIAL,;
+            oExcel:AddRow("Custo",_cTitulo,{	(cAlias1)->D3_FILIAL,;
                                                 (cAlias1)->D3_GRUPO     ,;
                                                 (cAlias1)->BM_DESC	   ,;
                                                 (cAlias1)->D3_CUSTO1	    ;
@@ -182,11 +185,11 @@ Static Function Executa(oProcess)
     EndIf
 
     oExcel:AddworkSheet("TRFMAN") // Planilha
-    oExcel:AddTable ("TRFMAN","RelCusto") // Titulo da Planilha (CabeÃ§alho)
-    oExcel:AddColumn("TRFMAN","RelCusto","FILIAL"         ,1,1)
-    oExcel:AddColumn("TRFMAN","RelCusto","GRUPO"	         ,1,1)
-    oExcel:AddColumn("TRFMAN","RelCusto","DESCRIÇÃO"	     ,1,1)
-    oExcel:AddColumn("TRFMAN","RelCusto","CUSTO"		     ,3,3,.T.)
+    oExcel:AddTable ("TRFMAN",_cTitulo) // Titulo da Planilha (CabeÃ§alho)
+    oExcel:AddColumn("TRFMAN",_cTitulo,"FILIAL"         ,1,1)
+    oExcel:AddColumn("TRFMAN",_cTitulo,"GRUPO"	         ,1,1)
+    oExcel:AddColumn("TRFMAN",_cTitulo,"DESCRIÇÃO"	     ,1,1)
+    oExcel:AddColumn("TRFMAN",_cTitulo,"CUSTO"		     ,3,3,.T.)
 
     _cCusto2 := STRTRAN(_cCusto2,"/","','")
 
@@ -221,7 +224,7 @@ Static Function Executa(oProcess)
 
     If (cAlias2)->(!EOF())
         While (cAlias2)->(!EOF())
-            oExcel:AddRow("TRFMAN","RelCusto",{	(cAlias2)->D3_FILIAL,;
+            oExcel:AddRow("TRFMAN",_cTitulo,{	(cAlias2)->D3_FILIAL,;
                                                 (cAlias2)->D3_GRUPO     ,;
                                                 (cAlias2)->BM_DESC	   ,;
                                                 (cAlias2)->D3_CUSTO1	    ;
