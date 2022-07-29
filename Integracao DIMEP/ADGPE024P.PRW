@@ -49,7 +49,7 @@
 	@histori Ticket  74756  - ADRIANO SAVOINE - 15/06/2022 - Efetuado o ajuste para as filiais colocar zero ex: 02,03 etc.
 	@history Ticket: 71562  - ADRIANO SAVOINE - 16/06/2022 - Corrigido a query para resolver os valores do RM.
 	@history Ticket: 75521  - ADRIANO SAVOINE - 30/06/2022 - Adicionado para integrar Torniquete portaria em novos perfis de acesso.
-	@history Ticket: 77205  - ADRIANO SAVOINE - 27/07/2022 - Alterado DIMEP por DMPACESSO no link de dados.
+	@history Ticket: 75521  - FERNANDO SIGOLI - 28/07/2022 - Alterado DIMEP por DMPACESSO no link de dados. - OPENQUERY
 /*/
 User Function ADGPE024P(aParam) // U_ADGPE024P()
 
@@ -4131,7 +4131,7 @@ Static Function carChkDpCr()
 	EndIf
 
 	cQuery := ""
-	cQuery += " SELECT * FROM OPENQUERY(DIMEP,' " 
+	cQuery += " SELECT * FROM OPENQUERY(DMPACESSO,' " 
 	cQuery += " SELECT  " 
 	cQuery += " AMARRA.CD_PESSOA, CRED.NU_CREDENCIAL, COUNT(1) TT_CREDENCIAL " 
 	cQuery += " FROM  " 
@@ -4175,7 +4175,7 @@ Static Function carChk2DpCr()
 	EndIf
 
 	cQuery := ""
-	cQuery += " SELECT * FROM OPENQUERY(DIMEP,' " 
+	cQuery += " SELECT * FROM OPENQUERY(DMPACESSO,' " 
 	cQuery += " SELECT AMARRA.CD_CREDENCIAL, AMARRA.CD_PESSOA, AMARRA.TP_TECNOLOGIA, CRED.NU_CREDENCIAL " 
 	cQuery += " FROM [DMPACESSOII].[dbo].[CREDENCIAL_PESSOA] AMARRA (NOLOCK) " 
 	cQuery += " INNER JOIN [DMPACESSOII].[dbo].[CREDENCIAL] CRED (NOLOCK) ON AMARRA.CD_CREDENCIAL=CRED.CD_CREDENCIAL " 
