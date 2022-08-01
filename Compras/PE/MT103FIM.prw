@@ -59,6 +59,7 @@ STATIC cResponsavel  := SPACE(60)
   @hisotry Ticket 76436   - Everson           - 14/07/2022 - Tratamento para envio incorreto de e-mail.
   @history Ticket 18465   - Everson           - 19/07/2022 - Envio de registro para o barramento.
   @history Ticket 18465   - Everson           - 21/07/2022 - Envio de registro para o barramento.
+  @history Ticket 72925   - Abel Babini       - 27/06/2022 - Corrigir Sequencial da tabela CDA para não ter problemas no reprocessamento fiscal
 /*/
 User Function MT103FIM()
 
@@ -509,8 +510,8 @@ User Function MT103FIM()
 
   EndIf
   // 
-
-  //Everson - 19/07/2022. Chamado 18465.
+    
+    //Everson - 19/07/2022. Chamado 18465.
   If FieldPos("F1_XPOSORD") > 0 .And. nConfirma == 1 .And. SF1->F1_XPOSORD == "1"
     grvBarr(nOpcao, SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
 
@@ -1742,6 +1743,24 @@ Static Function atlzCDA()
   Local cEstICM   := GETMV("MV_ESTICM") //Ticket 1794 por Adriana em 23/09/2020
   //Ticket 11265   - Abel Babini     - 19/03/2021 - Ajuste na rotina que gera os registros C197 para gravar o campo D1_ITEM. A não gravação do campo causava a delação do registro no reprocessamento dos livros. Correção na formula da aliquota interestadual
   // Local cEst      := SF1->F1_EST //Ticket 1794 por Adriana em 23/09/2020
+  Local cQryCDA   := '' //Ticket 72925   - Abel Babini       - 27/06/2022 - Corrigir Sequencial da tabela CDA para não ter problemas no reprocessamento fiscal
+  Local nRegCDA   := 1
+
+  cQryCDA   := GetNextAlias()
+  BeginSQL Alias cQryCDA
+    SELECT COUNT(*) as QTREGCDA
+    FROM %TABLE:CDA% CDA
+    WHERE 
+      CDA.CDA_FILIAL = %Exp:SF1->F1_FILIAL% AND
+      CDA.CDA_NUMERO = %Exp:SF1->F1_DOC% AND
+      CDA.CDA_SERIE = %Exp:SF1->F1_SERIE% AND
+      CDA.CDA_CLIFOR = %Exp:SF1->F1_FORNECE% AND
+      CDA.CDA_LOJA = %Exp:SF1->F1_LOJA% AND
+      CDA.CDA_ESPECI = %Exp:SF1->F1_ESPECIE% AND
+      CDA.%notDel%
+  EndSQL
+  nRegCDA := IIF((cQryCDA)->QTREGCDA>0,(cQryCDA)->QTREGCDA,1)
+  (cQryCDA)->(dbCloseArea())
 
   //Inicio - Chamado 058821 - Adriana Oliveira- 30/07/2020
   If SD1->D1_ITEM = '0001'
@@ -1764,7 +1783,7 @@ Static Function atlzCDA()
 		CDA->CDA_CLIFOR		:= cForn
 		CDA->CDA_LOJA		  := cLoja
     CDA->CDA_NUMITE		:= SD1->D1_ITEM //Ticket 11265   - Abel Babini     - 19/03/2021 - Ajuste na rotina que gera os registros C197 para gravar o campo D1_ITEM. A não gravação do campo causava a delação do registro no reprocessamento dos livros. Correção na formula da aliquota interestadual
-		CDA->CDA_SEQ		  := PadL(cValToChar(nIx), TamSX3("CDA_SEQ")[1], "0")
+		CDA->CDA_SEQ		  := PadL(cValToChar(nRegCDA+1), TamSX3("CDA_SEQ")[1], "0") //PadL(cValToChar(nIx), TamSX3("CDA_SEQ")[1], "0")
 		CDA->CDA_CODLAN		:= cCodLan
 		CDA->CDA_ALIQ		  := nAliqICMS
 		CDA->CDA_VALOR		:= nValICMS
@@ -1778,6 +1797,23 @@ Static Function atlzCDA()
 		CDA->(MsUnlock())
     nIx := nIx + 1 //Ticket 11265   - Abel Babini     - 19/03/2021 - Ajuste na rotina que gera os registros C197 para gravar o campo D1_ITEM. A não gravação do campo causava a delação do registro no reprocessamento dos livros. Correção na formula da aliquota interestadual
 	EndIf
+  nRegCDA := 1
+  cQryCDA   := GetNextAlias()
+  BeginSQL Alias cQryCDA
+    SELECT COUNT(*) as QTREGCDA
+    FROM %TABLE:CDA% CDA
+    WHERE 
+      CDA.CDA_FILIAL = %Exp:SF1->F1_FILIAL% AND
+      CDA.CDA_NUMERO = %Exp:SF1->F1_DOC% AND
+      CDA.CDA_SERIE = %Exp:SF1->F1_SERIE% AND
+      CDA.CDA_CLIFOR = %Exp:SF1->F1_FORNECE% AND
+      CDA.CDA_LOJA = %Exp:SF1->F1_LOJA% AND
+      CDA.CDA_ESPECI = %Exp:SF1->F1_ESPECIE% AND
+      CDA.%notDel%
+  EndSQL
+  nRegCDA := IIF((cQryCDA)->QTREGCDA>0,(cQryCDA)->QTREGCDA,1)
+  (cQryCDA)->(dbCloseArea())
+
 	RecLock("CDA", .T.)
 	cCodLan		:= "SP10090718"
 	nAliqICMS	:= SD1->D1_PICM 
@@ -1808,7 +1844,7 @@ Static Function atlzCDA()
 	CDA->CDA_CLIFOR		:= cForn
 	CDA->CDA_LOJA		  := cLoja
 	CDA->CDA_NUMITE		:= SD1->D1_ITEM
-	CDA->CDA_SEQ		  := PadL(cValToChar(nIx), TamSX3("CDA_SEQ")[1], "0")
+	CDA->CDA_SEQ		  := PadL(cValToChar(nRegCDA+1), TamSX3("CDA_SEQ")[1], "0")//PadL(cValToChar(nIx), TamSX3("CDA_SEQ")[1], "0")
 	CDA->CDA_CODLAN		:= cCodLan
 	CDA->CDA_ALIQ		  := nAliqICMS
 	CDA->CDA_VALOR		:= nValICMS 
