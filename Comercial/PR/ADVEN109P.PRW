@@ -291,6 +291,8 @@ User Function ADVN1092(lTSucess, cUrl, cToken,;
         cQuery += " " + RetSqlName("ZHT") + " (NOLOCK) AS ZHT " 
     cQuery += " WHERE " 
         cQuery += " ZHT_FILIAL = '" + FWxFilial("ZHT") + "' " 
+        cQuery += " ZHT_CLIENT = '" + cCliente + "' " 
+        cQuery += " ZHT_LOJA   = '" + cLoja + "' " 
         cQuery += " AND ZHT.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY ZHT_ITEM " 
 

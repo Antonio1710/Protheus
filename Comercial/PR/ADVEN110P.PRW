@@ -57,7 +57,7 @@ Static Function MenuDef()
 	ADD OPTION aRotina TITLE "Incluir" 	    ACTION "U_ADVN1105()" 	    OPERATION MODEL_OPERATION_INSERT    ACCESS 0
 	ADD OPTION aRotina TITLE "Alterar"      ACTION "U_ADVN1103(4)" 	    OPERATION MODEL_OPERATION_UPDATE    ACCESS 0
 	ADD OPTION aRotina TITLE "Excluir" 	    ACTION "U_ADVN1103(5)" 	    OPERATION MODEL_OPERATION_DELETE    ACCESS 0
-    // ADD OPTION aRotina TITLE "Proc Integr." ACTION "U_ADVN1101()"       OPERATION 10  ACCESS 0
+    ADD OPTION aRotina TITLE "Proc Integr." ACTION "U_ADVN1101()"       OPERATION 10  ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} User Function ADVN1105
@@ -218,6 +218,8 @@ User Function ADVN1101()
     Local cTipo     := ""
     Local cHInicio  := ""
     Local cHFim     := ""
+    Local cDiaSema  := ""
+    Local cData     := ""
 
     MsAguarde({|| lReRest := U_ADVEN592(cUrl, @cToken, @cMsgError) }, "Função ADVN1101(ADVEN110P)", "Efetuando login...")
 
@@ -228,37 +230,83 @@ User Function ADVN1101()
 
 	EndIf
 
+    cDiaSema := cValToChar(Dow(Date()+1))
+
     cQuery := ""
+    cQuery += " SELECT *, " 
 
 
-	If Select("D_VISESP") > 0
-		D_VISESP->(DbCloseArea())
+    If cDiaSema == "2"
+        cQuery += " ZHY_SEGUND AS HORARIO " 
+
+    ElseIf cDiaSema == "3"
+        cQuery += " ZHY_TERCA AS HORARIO " 
+
+    ElseIf cDiaSema == "4"
+        cQuery += " ZHY_QUARTA AS HORARIO' " 
+
+    ElseIf cDiaSema == "5"
+        cQuery += " ZHY_QUINTA AS HORARIO " 
+
+    ElseIf cDiaSema == "6"
+        cQuery += " ZHY_SEXTA AS HORARIO " 
+
+    EndIf
+
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("ZHY") + " (NOLOCK) AS ZHY " 
+    cQuery += " WHERE " 
+        cQuery += " ZHY_FILIAL = '" + FWxFilial("ZHY") + "' " 
+
+    If cDiaSema == "2"
+        cQuery += " AND ZHY_SEGUND <> '' " 
+
+    ElseIf cDiaSema == "3"
+        cQuery += " AND ZHY_TERCA <> '' " 
+
+    ElseIf cDiaSema == "4"
+        cQuery += " AND ZHY_QUARTA <> '' " 
+
+    ElseIf cDiaSema == "5"
+        cQuery += " AND ZHY_QUINTA <> '' " 
+
+    ElseIf cDiaSema == "6"
+        cQuery += " AND ZHY_SEXTA <> '' " 
+
+    EndIf
+
+    cQuery += " AND D_E_L_E_T_ = '' " 
+
+	If Select("D_VISPRO") > 0
+		D_VISPRO->(DbCloseArea())
 
 	EndIf
 
-	TcQuery cQuery New Alias "D_VISESP"
-	DbSelectArea("D_VISESP")
-	D_VISESP->(DbGoTop())
+	TcQuery cQuery New Alias "D_VISPRO"
+	DbSelectArea("D_VISPRO")
+	D_VISPRO->(DbGoTop())
 
-    While ! D_VISESP->(Eof())
+    While ! D_VISPRO->(Eof())
 
-        data      := SubStr(D_VISESP->ZHX_DATAIN, 1, 4) + "-" + Padl(SubStr(D_VISESP->ZHX_DATAIN, 5, 2), 2, "0") + "-" + Padl(SubStr(D_VISESP->ZHX_DATAIN, 8, 2), 2, "0")
-        portfolio := Alltrim(cValToChar(D_VISESP->ZHX_PROMOT))
-        cCliente  := Alltrim(cValToChar(D_VISESP->ZHX_CLIENT))
-        cLoja     := Alltrim(cValToChar(D_VISESP->ZHX_LOJA))
+        cData    := DToS(Date()+1)
+
+        data      := SubStr(cData, 1, 4) + "-" + Padl(SubStr(cData, 5, 2), 2, "0") + "-" + Padl(SubStr(cData, 8, 2), 2, "0")
+        portfolio := Alltrim(cValToChar(D_VISPRO->ZHY_PROMOT))
+        cCliente  := Alltrim(cValToChar(D_VISPRO->ZHY_CLIENT))
+        cLoja     := Alltrim(cValToChar(D_VISPRO->ZHY_LOJA))
         cTopico   := "Visita de Rotina"
         cTipo     := "programed"
-        cHInicio  := Padl(Alltrim(cValToChar(D_VISESP->ZHX_HORARI)), 2, "0") + ":00" 
-        cHFim     := Padl(Alltrim(cValToChar(Val(D_VISESP->ZHX_HORARI)+1)), 2, "0") + ":00" 
+        cHInicio  := Padl(Alltrim(cValToChar(D_VISPRO->HORARIO)), 2, "0") + ":00" 
+        cHFim     := Padl(Alltrim(cValToChar(Val(D_VISPRO->HORARIO)+1)), 2, "0") + ":00" 
 
         MsAguarde({|| U_ADVN1092(.F., cUrl, cToken,;
                                  data, portfolio, cCliente, cLoja, cTopico, cTipo, cHInicio, cHFim) }, "Função ADVN1101(ADVEN110P)", "Enviando visitas...")
 
-        D_VISESP->(DbSkip())
+        D_VISPRO->(DbSkip())
 
 	End
 
-	D_VISESP->(DbCloseArea())
+	D_VISPRO->(DbCloseArea())
 
     RestArea(aArea)
 
