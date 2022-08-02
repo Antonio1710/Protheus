@@ -170,9 +170,9 @@ Static Function ViewDef()
     oView:AddGrid("VW_DETAIL", oStrDeta, "MD_DETAIL")
     oView:AddGrid("VW_DETAI2", oStrDet2, "MD_DETAI2")
 
-    oView:CreateHorizontalBox("BOX_SUPERIOR", 40)
-    oView:CreateHorizontalBox("BOX_MEIO", 30)
-    oView:CreateHorizontalBox("BOX_INFERIOR", 30)
+    oView:CreateHorizontalBox("BOX_SUPERIOR", 30)
+    oView:CreateHorizontalBox("BOX_MEIO", 50)
+    oView:CreateHorizontalBox("BOX_INFERIOR", 20)
 
     oView:SetOwnerView("VW_MASTER", "BOX_SUPERIOR")
     oView:SetOwnerView("VW_DETAIL", "BOX_MEIO")
@@ -184,6 +184,11 @@ Static Function ViewDef()
     oView:EnableTitleView("MD_MASTER", cTiMast)
     oView:EnableTitleView("MD_DETAIL", cTiDeta)
     oView:EnableTitleView("MD_DETAI2", cTiDet2)
+
+    oView:SetViewProperty( "VW_DETAIL" , "ENABLENEWGRID" ) 
+    oView:SetViewProperty( "VW_DETAIL", "GRIDNOORDER")
+    oView:SetViewProperty( "VW_DETAIL", "GRIDFILTER", {.T.}) 
+    oView:SetViewProperty( "VW_DETAIL", "GRIDSEEK", {.T.})
 
 Return oView
 /*/{Protheus.doc} ADFAT15A
