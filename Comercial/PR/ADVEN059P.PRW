@@ -48,7 +48,7 @@ Return Nil
 Static Function ViewDef()
 
 	Local oModel := ModelDef()
-	Local oStruct:= FwFormStruct(2,cAliasB)
+	Local oStruct:= FwFormStruct(2,'ZC4')
 	Local oView  := FwFormView():New()
 	
 	oView:SetModel(oModel)
