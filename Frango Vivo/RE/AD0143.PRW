@@ -22,8 +22,9 @@ static lAuto
 	@hisotry Ticket 76414 - Everson           - 13/07/2022 - Adiciona opção para o usuário selecionar a filial de origem.
 	@history Ticket 76430 - ADRIANO SAVOINE   - 14/07/2022 - Os Pedidos de complemento só irá gerar apos a integração do SAG.
 	@history Ticket 76964 - Fernando Macieira - 27/07/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+	@history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
 /*/ 
-User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
+User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto, cFilUpd)
 
 	// FWNM - 16/04/2018 - CHAMADO 037729
 	Default cNFNot  := ""
@@ -31,6 +32,7 @@ User Function AD0143(cNFNot, nTtPLO, cSql, nTtPLP, lAuto)
 	Default cSql    := ""
 	Default nTtPLP  := 0
 	Default lAuto   := .F.
+	Default cFilUpd := ""
 	//
 
 	// Define lAuto
@@ -1234,11 +1236,11 @@ _cTurAbt  :=BuscaTur(ROC->ZV1_NUMOC)       //Turno de abate  //Chamado:049564 - 
 
 
 
-&&Chamado 006667 - Mauricio - Busco numero do C5_PEDXML.
+//&&Chamado 006667 - Mauricio - Busco numero do C5_PEDXML.
 DbSelectArea("SC5")
 DbSetOrder(15)
-if Dbseek("03"+STRZERO(Val(Alltrim(_nNUMNFS)),9)+"01")  &&Conforme informado toda NF vem sempre da filial 03(Frango vivo) e devera sempre procurar por serie 01.
-	&&if Dbseek("03"+STRZERO(Val(Alltrim(_nNUMNFS)),9)+_cSerie)
+if Dbseek("03"+STRZERO(Val(Alltrim(_nNUMNFS)),9)+"01")  //&&Conforme informado toda NF vem sempre da filial 03(Frango vivo) e devera sempre procurar por serie 01.
+	//&&if Dbseek("03"+STRZERO(Val(Alltrim(_nNUMNFS)),9)+_cSerie)
 	_cPEDXML := SC5->C5_PEDXML
 else
 	_cPedXML := space(06)
@@ -1283,7 +1285,7 @@ DbSelectArea("ROC")//valotano para areal atual
 dbSkip() // Avanca o ponteiro do registro no arquivo
 _dDTBatF:=ROC->ZV1_DTABAT//RECEBENDO PROXIMO REGISTRO
 DbSelectArea("ROC")//valotano para areal atual
-&&MsgAlert("OS : "+_cNUMOC+" Abate: "+_dDTBatF)
+//&&MsgAlert("OS : "+_cNUMOC+" Abate: "+_dDTBatF)
 
 Return(xLin)
 
@@ -1412,8 +1414,8 @@ If AllTrim(FunName()) == "AD0130" .or. AllTrim(FunName()) == "ADLFV010P" .or. lA
 		nTtPLP += SD2->D2_QUANT
 		nTtPLO += _nMulPemRav
 		
-		//cNFNot += AllTrim(_nNUMNFS) + "|" -- apenas debug
-		
+		cFilUpd += AllTrim(_cNumOC) + "|" // @history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+
 		GrvArquivo( .T., "", _cNumOC, _dDatEntr, _nMulPemRav, _nNUMNFS, "", SD2->D2_QUANT, "" )
 		
 	Else
@@ -1694,13 +1696,13 @@ If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
 				IF _lReduz == 2
 					@ xLin,038 PSAY _nQtdave
 					//@ xLin,061 PSAY _nQtdPeso  PICTURE "99999999"     //PESO LIQ. DO APANHA
-					&& Chamado 005105 - 01/10/09
+					//&& Chamado 005105 - 01/10/09
 					@ xLin,061 PSAY ROUND((_nQtdPeso)+ (_nQtdPeso*(_nContud/100)),0) PICTURE "99999999"     //PESO LIQ. DO APANHA
 					_nTotPesOri   += ROUND((_nQtdPeso)+ (_nQtdPeso*(_nContud/100)),0) //Chamado 005138.
 					
 					//Alterado conforme chamado 004841
 					//@ xLin,072 PSAY (_nQtdPeso*0.93)  PICTURE "99999999"     //PESO LIQ. DO APANHA
-					&& Chamado 005105 - 01/10/09
+					//&& Chamado 005105 - 01/10/09
 					@ xLin,072 PSAY (_nQtdPeso)  PICTURE "99999999"     //PESO LIQ. DO APANHA
 					
 					@ xLin,087 PSAY ROUND((_nQtdPeso*(_nContud/100)),0)    //QUEBRA
@@ -1752,6 +1754,8 @@ If DbSeek(xFilial("ZV5")+_cNUMOC ,.T.)
 				nTtPLP += SD2->D2_QUANT
 				nTtPLO += ( (_nQtdPeso) + (_nQtdPeso*(_nContud/100)) )
 				
+				cFilUpd += AllTrim(_cNumOC) + "|" // @history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+				
 				GrvArquivo( .T., "", "APANHA", _dDatEntr, ( (_nQtdPeso) + (_nQtdPeso*(_nContud/100)) ), cNroFiscal, "", SD2->D2_QUANT, "" )
 				
 			Else
@@ -1780,7 +1784,7 @@ Return (xLin)
 
 
 Static function ApanhaSint()
-&&Chamado 005271. Quando relatorio sintetico nao inclui a linha do apanha no total do peso origem. Mauricio - HC Consys.
+//&&Chamado 005271. Quando relatorio sintetico nao inclui a linha do apanha no total do peso origem. Mauricio - HC Consys.
 _nQtdave  := 0
 _nQtdPeso := 0
 DbSelectArea("ZV5")

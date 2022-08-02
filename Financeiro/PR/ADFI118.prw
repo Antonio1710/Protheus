@@ -28,6 +28,7 @@ Static cTitulo := "RM Acordos Trabalhistas - Despesas de Processos"
     @ticket 68607 - Fernando Macieira - 26/04/2022 - RM - Acordos - Lembrete de preenchimento do percentual para despesa parcelamento CPC
     @ticket 72277 - Fernando Macieira - 10/05/2022 - RM - Acordos - Despesa perito
     @ticket 72340 - Fernando Macieira - 12/05/2022 - RM - Acordos - Inclusao de filial
+    @ticket 76965 - Fernando Macieira - 01/08/2022 - RM - Acordos - Gerar o PR na saída da rotina
 /*/
 User Function ADFI118()
 
@@ -52,13 +53,21 @@ User Function ADFI118()
     oBrowse:SetAlias("ZHB")
     oBrowse:SetDescription(cTitulo)
     oBrowse:Activate()
-      
+
+    // @ticket 76965 - Fernando Macieira - 01/08/2022 - RM - Acordos - Gerar o PR na saída da rotina
+	FWMsgRun(, {|| u_ADFIN120P() }, "Aguarde", "Gerando acordos trabalhistas para aprovação ["+Time()+"] ...")
+    u_Run121P(.f.) // gera parcelas do PR aprovado
+    //
+
     SetFunName(cFunBkp)
     RestArea(aArea)
 
+    // @ticket 76965 - Fernando Macieira - 01/08/2022 - RM - Acordos - Gerar o PR na saída da rotina
+    /*
     // @history ticket 18141   - Fernando Macieira - 21/12/2021 - RM - Acordos - Integração Protheus
 	FWMsgRun(, {|| u_ADFIN120P() }, "Aguarde", "Gerando acordos trabalhistas para aprovação ["+Time()+"] ...")
-    u_Run121P(.f.)
+    u_Run121P(.f.) // gera parcelas do PR aprovado
+    */
 
 Return Nil
  
