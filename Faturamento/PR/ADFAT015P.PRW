@@ -186,7 +186,7 @@ Static Function ViewDef()
     oView:EnableTitleView("MD_DETAI2", cTiDet2)
 
     oView:SetViewProperty( "VW_DETAIL" , "ENABLENEWGRID" ) 
-    oView:SetViewProperty( "VW_DETAIL", "GRIDNOORDER")
+    //oView:SetViewProperty( "VW_DETAIL", "GRIDNOORDER")
     oView:SetViewProperty( "VW_DETAIL", "GRIDFILTER", {.T.}) 
     oView:SetViewProperty( "VW_DETAIL", "GRIDSEEK", {.T.})
 
