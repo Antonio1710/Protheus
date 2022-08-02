@@ -219,14 +219,19 @@ Static Function ViewDef()
     oView:AddField("VW_MASTER", oStrMast, "MD_MASTER")
     oView:AddGrid("VW_GRID",    oStrGrid, "MD_GRID",,{|| gridFocus(oView) })
  
-    oView:CreateHorizontalBox("MAIN", 25)
-    oView:CreateHorizontalBox("GRID", 75)
+    oView:CreateHorizontalBox("MAIN", 20)
+    oView:CreateHorizontalBox("GRID", 80)
 
-    oView:SetOwnerView("VW_MASTER", 'MAIN')
-    oView:SetOwnerView("VW_GRID", 'GRID')
+    oView:SetOwnerView("VW_MASTER", "MAIN")
+    oView:SetOwnerView("VW_GRID", "GRID")
     oView:EnableControlBar(.T.)
  
     oView:AddIncrementField("VW_GRID", "ZHY_ITEM")
+
+    oView:SetViewProperty( "VW_GRID" , "ENABLENEWGRID" ) 
+    // oView:SetViewProperty( "VW_GRID", "GRIDNOORDER")
+    oView:SetViewProperty( "VW_GRID", "GRIDFILTER", {.T.}) 
+    oView:SetViewProperty( "VW_GRID", "GRIDSEEK", {.T.})
 
 Return oView
 /*/{Protheus.doc} gridFocus

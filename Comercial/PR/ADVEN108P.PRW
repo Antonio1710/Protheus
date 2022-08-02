@@ -161,6 +161,11 @@ Static Function ViewDef()
 
     oView:AddUserButton("Carregar Produtos","",{|oView| carProd() } ,"",, {MODEL_OPERATION_INSERT} , .T. )  
 
+    oView:SetViewProperty( "VW_GRID" , "ENABLENEWGRID" ) 
+    // oView:SetViewProperty( "VW_GRID", "GRIDNOORDER")
+    oView:SetViewProperty( "VW_GRID", "GRIDFILTER", {.T.}) 
+    oView:SetViewProperty( "VW_GRID", "GRIDSEEK", {.T.})
+
 Return oView
 /*/{Protheus.doc} gridFocus
     Função executada quando a grid ganha foco.
