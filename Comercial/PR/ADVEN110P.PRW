@@ -294,6 +294,33 @@ User Function ADVN1101()
     Local cData     := ""
     Local lRetEnv   := .F.
 
+    cQuery:= ""
+    cQuery += " SELECT " 
+        cQuery += " * " 
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("ZHY") + " (NOLOCK) AS ZHY " 
+    cQuery += " WHERE " 
+    cQuery += " ZHY_FILIAL = '" + FWxFilial("ZHY") + "' " 
+    cQuery += " AND ZHY_TIPO = '1' " 
+    cQuery += " AND CAST(ZHY_DTINI AS DATE) = CAST(GETDATE()+1 AS DATE) " 
+    cQuery += " AND D_E_L_E_T_ = '' " 
+
+    If Select("D_CHANGE") > 0
+        D_CHANGE->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_CHANGE"
+    DbSelectArea("D_CHANGE")
+    If ! D_CHANGE->(Eof())
+
+        TcSqlExec(" UPDATE " + RetSqlName("ZHY") + " SET ZHY_TIPO = '2' WHERE ZHY_FILIAL = '" + FWxFilial("ZHY") + "' AND ZHY_NUMERO = '" + D_CHANGE->ZHY_NUMERO + "' AND D_E_L_E_T_ = '' ")
+   
+        TcSqlExec(" UPDATE " + RetSqlName("ZHY") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE ZHY_FILIAL = '" + FWxFilial("ZHY") + "' AND ZHY_NUMERO <> '" + D_CHANGE->ZHY_NUMERO + "' AND D_E_L_E_T_ = '' ")
+
+    EndIf
+    D_CHANGE->(DbCloseArea())
+
     MsAguarde({|| lReRest := U_ADVEN592(cUrl, @cToken, @cMsgError) }, "Função ADVN1101(ADVEN110P)", "Efetuando login...")
 
 	If ! lReRest
@@ -316,7 +343,7 @@ User Function ADVN1101()
         cQuery += " ZHY_TERCA AS HORARIO " 
 
     ElseIf cDiaSema == "4"
-        cQuery += " ZHY_QUARTA AS HORARIO' " 
+        cQuery += " ZHY_QUARTA AS HORARIO " 
 
     ElseIf cDiaSema == "5"
         cQuery += " ZHY_QUINTA AS HORARIO " 
@@ -330,6 +357,7 @@ User Function ADVN1101()
         cQuery += " " + RetSqlName("ZHY") + " (NOLOCK) AS ZHY " 
     cQuery += " WHERE " 
         cQuery += " ZHY_FILIAL = '" + FWxFilial("ZHY") + "' " 
+        cQuery += " AND ZHY_TIPO = '2' " 
 
     If cDiaSema == "2"
         cQuery += " AND ZHY_SEGUND <> '' " 
