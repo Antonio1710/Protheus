@@ -1773,6 +1773,27 @@ Return Nil
 User Function ADFAT29L() // U_ADFAT29L()
 
     //Variáveis.
+
+    RPCClearEnv()
+	RPCSetType(3)
+	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
+
+        U_ADFAT29M()
+
+    RpcClearEnv()
+
+Return Nil
+/*/{Protheus.doc} ADFAT29L
+    Processa marca registros como processados.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 08/02/2022
+    @version 01
+/*/
+User Function ADFAT29M() // U_ADFAT29M()
+
+    //Variáveis.
     Local aArea     := ""
     Local cAliasAux := ""
     Local cQuery    := ""
@@ -1780,52 +1801,45 @@ User Function ADFAT29L() // U_ADFAT29L()
     Local cId       := ""
     // Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
 
-    
-    RPCClearEnv()
-	RPCSetType(3)
-	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
+    aArea     := GetArea()
+    cAliasAux := GetNextAlias()
 
-        aArea     := GetArea()
-        cAliasAux := GetNextAlias()
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'marcar_registro_processado' " 
+    cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO " 
 
-        cQuery += " SELECT  " 
-        cQuery += " ZIQ_UUID, "
-        cQuery += " ZIQ_OPERAC, "
-        cQuery += " R_E_C_N_O_ AS RECNO "
-        cQuery += " FROM  " 
-        cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
-        cQuery += " WHERE  " 
-        cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
-        cQuery += " AND ZIQ_TIPO = 'E' " 
-        cQuery += " AND ZIQ_TOPICO = 'marcar_registro_processado' " 
-        cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
-        cQuery += " AND ZIQ_PROCES = '2' " 
-        cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
-        cQuery += " ORDER BY RECNO " 
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
 
-        DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
-        (cAliasAux)->(DbGoTop())
+    While ! (cAliasAux)->(Eof())
 
-        While ! (cAliasAux)->(Eof())
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
 
-            ZIQ->(DbGoto((cAliasAux)->RECNO))
-            
-            cIdProc   := Alltrim(cValToChar(ZIQ->ZIQ_DADOS))
-            
-            cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        cIdProc   := Alltrim(cValToChar(ZIQ->ZIQ_DADOS))
+        
+        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
 
+        TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1', ZIQ_STATPR = '1' WHERE ZIQ_UUID = '" + cIdProc + "'")
 
-            U_ADFAT29D(cIdProc, "1", "")
-            U_ADFAT29D(cId, "1", "")
+        TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1', ZIQ_STATPR = '1' WHERE ZIQ_UUID = '" + cId + "'")
 
-            (cAliasAux)->(DbSkip())
+        (cAliasAux)->(DbSkip())
 
-        End
+    End
 
-        (cAliasAux)->(DbCloseArea())
+    (cAliasAux)->(DbCloseArea())
 
-        RestArea(aArea)
-
-    RpcClearEnv()
+    RestArea(aArea)
 
 Return Nil
