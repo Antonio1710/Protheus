@@ -8,7 +8,7 @@
 	@author Rogerio Eduardi Nutti
 	@since 06/08/2002
 	@version version
-	@history ticket 77133 - Antonio Domingos - 01/08/2022 - MAPA DE CARREGAMENTO
+	@history ticket 77133 - Antonio Domingos - 01/08/2022 - MAPA DE CARREGAMENTO.
 /*/
 
 User Function ADLOG080R() // U_ADLOG080R()

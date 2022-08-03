@@ -20,7 +20,7 @@ Static cTitulo      := "Bloqueio de clientes"
 	Rotina para selecionar e permitir ao usuário efetuar      
 	bloqueio de uma faixa de clientes escolhidos via parâmetro.
 	@type  Function
-	@author HC CONSYS
+	@author HC CONSYS 
 	@since 28/04/2009
 	@version 01
 	@history Adriana, 24/05/2019, TI-Devido a substituicao email para shared relay, substituido MV_RELACNT p/ MV_RELFROM.
@@ -30,6 +30,7 @@ Static cTitulo      := "Bloqueio de clientes"
 	@history Everson, 29/07/2020, Chamado 060134 - Tratamento para não bloquear cliente com pedido em aberto.
 	@history Everson, 03/12/2020, Chamado 6009 - Correção de validação de bloqueio de cliente com pedido em aberto.
 	@history Ticket 74275  - Everson, 14/06/2022, tratamento para bloqueio de cliente a partir do número de pedidos em aberto.
+	@history Ticket 77222 - Everson, 03/08/2022 - Tratamento para a rotina de bloqueio verificar se há pedido em aberto em todas a filiais.
 /*/
 User Function HCFU001()  // U_HCFU001()
 
@@ -44,6 +45,15 @@ User Function HCFU001()  // U_HCFU001()
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Rotina para selecionar e permitir ao usuário efetuar bloqueio de uma faixa de clientes escolhidos via parâmetro.')
 
+
+	//Everson - 03/08/2022. Chamado 77222.
+	If Alltrim(cValToChar(RetSqlName("SA1"))) == "SA1010" .And. cEmpAnt <> "01"
+		Alert("Bloqueio de clientes da Ad'oro somente pode ser realizado na empresa 01.")
+		return
+
+	EndIf
+	//
+	
 	validPerg()
 
 	if !pergunte(cPerg,.T.)
@@ -215,8 +225,11 @@ Static Function BLOQCLI()
 	cQry += " FROM " 
 	cQry += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
 	cQry += " WHERE " 
-	cQry += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
-	cQry += " AND SC5.D_E_L_E_T_ = '' " 
+
+	//cQry += " C5_FILIAL = '" + FWxFilial("SC5") + "' " //Everson - 03/08/2022. Chamado 77222. Removido o filtro por filial, pois o cliente não pode ter pedido em aberto em nenhuma filial.
+	// cQry += " AND SC5.D_E_L_E_T_ = '' " 
+	
+	cQry += " SC5.D_E_L_E_T_ = '' " 
 	cQry += " AND C5_NOTA = '' " 
 	cQry += " AND C5_SERIE = '' "
 

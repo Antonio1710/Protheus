@@ -7,7 +7,7 @@
 	@author Antonio Fomingos
 	@since 25/07/2022
 	@version version
-	@history, Antonio Domingos, 29/07/2022, ticket 77061 - Solicitação relatório de roteiro
+	@history, Antonio Domingos, 29/07/2022, ticket 77061 - Solicitação relatório de roteiro.
 /*/
 User Function ADEST080R() 
 
