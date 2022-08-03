@@ -2,7 +2,7 @@
 #include "rwmake.ch"
 #include "topconn.ch"
 
-/*/{Protheus.doc} User Function ROTLOG
+/*/{Protheus.doc} User Function ADLOG080R
 	Relatorio PEDIDOS POR ROTEIRO
 	@type  Function
 	@author Rogerio Eduardi Nutti
@@ -11,7 +11,7 @@
 	@history ticket 77133 - Antonio Domingos - 01/08/2022 - MAPA DE CARREGAMENTO
 /*/
 
-User Function ADLOG080R() // U_ROTLOG()
+User Function ADLOG080R() // U_ADLOG080R()
 
 	//Everson - 19/10/2021. Chamado 55129.
 	Private aDados		:= {}
@@ -25,14 +25,14 @@ User Function ADLOG080R() // U_ROTLOG()
 	Private _Prodedata 	:= SPACE(06)
 	Private _DESCRI    	:= SPACE(60)
 
-	MsAguarde({|| oPrdEdt := getPrdEdt() }, "ROTLOG", "Carregando produtos do Edata...", .F.) //Everson - 19/10/2021. Chamado 55129.
+	MsAguarde({|| oPrdEdt := getPrdEdt() }, "ADLOG080R", "Carregando produtos do Edata...", .F.) //Everson - 19/10/2021. Chamado 55129.
 
 	aOrd             := {}
 	tamanho          := "M"
 	//limite           := 132
 	limite           := 132
-	WNREL            := "ROTLOG"
-	nomeprog         := "ROTLOG"
+	WNREL            := "ADLOG080R"
+	nomeprog         := "ADLOG080R"
 	mv_tabpr         := ""
 	nTipo            := 18
 	aReturn          := { "Zebrado", 1,"Administracao", 2, 2, 1,"",1}
@@ -56,7 +56,7 @@ User Function ADLOG080R() // U_ROTLOG()
 	cDesc2  := "Venda por Roteiro."
 	cDesc3  := ""
 	_cPag	:=	0
-	nomerel := "ROTLOG"
+	nomerel := "ADLOG080R"
 	nomerel := SetPrint(cString,Nomerel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho)
 
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Relatorio PEDIDOS POR ROTEIRO')
@@ -100,24 +100,43 @@ User Function ADLOG080R() // U_ROTLOG()
 	// *** INICIO ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
 	// Ambas as maneiras devem proceder estes comandos abaixo:
 	// Criar fisicamente o arquivo.
-	_cNomTRB := CriaTrab( _aStru, .T. )
-	cInd1 := Left( _cNomTRB, 7 ) + "1"
-	cInd2 := Left( _cNomTRB, 7 ) + "2"
+	_cNomTRB1 := CriaTrab( _aStru, .T. )
+	cTRB1Ind1 := Left( _cNomTRB1, 7 ) + "1"
+	cTRB1Ind2 := Left( _cNomTRB1, 7 ) + "2"
 	// Acessar o arquivo e coloca-lo na lista de arquivos abertos.
-	dbUseArea( .T., __LocalDriver, _cNomTRB, "TEMP", .F., .F. )
+	dbUseArea( .T., __LocalDriver, _cNomTRB1, "TEMP1", .F., .F. )
 	// Criar os índices.
-	IndRegua( "TEMP", cInd1, "TP_ROTEIRO+TP_SEQUENC+TP_PRODUTO", , , "Criando índices (Prefixo + Ordem)...")
-	IndRegua( "TEMP", cInd2, "TP_ROTEIRO+TP_SEQUENC+TP_XCATEG+DESCEND(STR(TP_CAIXAS,6))", , , "Criando índices (Descrição)...")
+	IndRegua( "TEMP1", cTRB1Ind1, "TP_ROTEIRO+TP_SEQUENC+TP_PRODUTO", , , "Criando índices (Prefixo + Ordem)...")
+	IndRegua( "TEMP1", cTRB1Ind2, "TP_ROTEIRO+TP_SEQUENC+TP_XCATEG+DESCEND(STR(TP_CAIXAS,6))", , , "Criando índices (Descrição)...")
 	// Libera os índices.
-	dbClearIndex()
+	TEMP1->(dbClearIndex())
 	// Agrega a lista dos índices da tabela (arquivo).
-	dbSetIndex( cInd1 + OrdBagExt() )
-	dbSetIndex( cInd2 + OrdBagExt() )                                     
+	dbSetIndex( cTRB1Ind1 + OrdBagExt() )
+	dbSetIndex( cTRB1Ind2 + OrdBagExt() )                                     
 	
 	// *** FINAL ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
 	
-	dbSelectArea("TEMP") ; dbSetOrder(1)
+	dbSelectArea("TEMP1") ; dbSetOrder(1)
 	
+	// Ambas as maneiras devem proceder estes comandos abaixo:
+	// Criar fisicamente o arquivo.
+	_cNomTRB2 := CriaTrab( _aStru, .T. )
+	cTRB2Ind1 := Left( _cNomTRB2, 7 ) + "1"
+	cTRB2Ind2 := Left( _cNomTRB2, 7 ) + "2"
+	// Acessar o arquivo e coloca-lo na lista de arquivos abertos.
+	dbUseArea( .T., __LocalDriver, _cNomTRB2, "TEMP2", .F., .F. )
+	// Criar os índices.
+	IndRegua( "TEMP2", cTRB2Ind1, "TP_ROTEIRO+TP_PRODUTO", , , "Criando índices (Prefixo + Ordem)...")
+	IndRegua( "TEMP2", cTRB2Ind2, "TP_ROTEIRO+TP_XCATEG+DESCEND(STR(TP_CAIXAS,6))", , , "Criando índices (Descrição)...")
+	// Libera os índices.
+	TEMP2->(dbClearIndex())
+	// Agrega a lista dos índices da tabela (arquivo).
+	dbSetIndex( cTRB2Ind1 + OrdBagExt() )
+	dbSetIndex( cTRB2Ind2 + OrdBagExt() )
+	// *** FINAL ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
+	
+	dbSelectArea("TEMP2") ; dbSetOrder(1)
+
 	dbSelectArea("SB1") ; dbSetOrder(1)
 	dbSelectArea("SB2") ; dbSetOrder(1)
 	dbSelectArea("SA3") ; dbSetOrder(1)
@@ -174,7 +193,7 @@ User Function ADLOG080R() // U_ROTLOG()
 		
 	//Everson - 03/07/2020. Chamado 059401.
 	cQuery	:=	sqlRel() + " ORDER BY C5_ROTEIRO, C5_SEQUENC"
-	MEMOWRITE( "c:\temp\adlog080r_1.sql", cQuery )
+	MEMOWRITE( "c:\TEMP1\adlog080r_1.sql", cQuery )
 	TCQUERY cQuery new alias "XC5"
 	dbSelectArea("XC5")
 	dbGotop()
@@ -284,7 +303,7 @@ User Function ADLOG080R() // U_ROTLOG()
 	
 			_cPag++
 			nLin := 1
-			@ nLin,001 PSAY "ROTLOG"
+			@ nLin,001 PSAY "ADLOG080R"
 			if mv_par12 == 2
 				@ nLin,025 PSAY  " R E L A T O R I O   D E   C O N F E R E N C I A    D E   P E D I D O"
 			else
@@ -308,7 +327,7 @@ User Function ADLOG080R() // U_ROTLOG()
 
 			_cPag++
 			nLin := 1
-			@ nLin,001 PSAY "ROTLOG"
+			@ nLin,001 PSAY "ADLOG080R"
 			if mv_par12 == 2
 				@ nLin,025 PSAY  " R E L A T O R I O   D E   C O N F E R E N C I A    D E   P E D I D O"
 			else
@@ -469,12 +488,12 @@ User Function ADLOG080R() // U_ROTLOG()
 						If  !(SUBSTR(C6_CF,2,3) $ ALLTRIM(GETMV("MV_NOSC6C1")))     
 							
 							//Incluido por roteiro
-							dbSelectArea("TEMP")
+							dbSelectArea("TEMP1")
 							dbSetOrder(1)
 							If !dbSeek(XC5->C5_ROTEIRO+XC5->C5_SEQUENC+_Produto)
-								RecLock("TEMP",.T.)
+								RecLock("TEMP1",.T.)
 							Else
-								RecLock("TEMP",.F.)
+								RecLock("TEMP1",.F.)
 							Endif
 							
 							Replace TP_PEDIDO    With XC5->C5_NUM
@@ -539,12 +558,12 @@ User Function ADLOG080R() // U_ROTLOG()
 							_nTotkilos  := _nTotKilos  + SC6->C6_QTDVEN
 							_nTotValTot := _nTotValtot + SC6->C6_VALOR 
 							
-							dbSelectArea("TEMP")
+							dbSelectArea("TEMP1")
 							dbSetOrder(1)
 							If !dbSeek(XC5->C5_ROTEIRO+XC5->C5_SEQUENC+_Produto)
-								RecLock("TEMP",.T.)
+								RecLock("TEMP1",.T.)
 							Else
-								RecLock("TEMP",.F.)
+								RecLock("TEMP1",.F.)
 							Endif  
 							Replace TP_PEDIDO    With XC5->C5_NUM
 							Replace TP_ROTEIRO   With XC5->C5_ROTEIRO
@@ -681,12 +700,12 @@ User Function ADLOG080R() // U_ROTLOG()
 						If  !(SUBSTR(C6_CF,2,3) $ ALLTRIM(GETMV("MV_NOSC6C1")))     
 							                     
 							//Incluido por roteiro
-							dbSelectArea("TEMP")
+							dbSelectArea("TEMP1")
 							dbSetOrder(1)
-							If !dbSeek(XC5->C5_ROTEIRO+XC5_SEQUENC+_Produto)
-								RecLock("TEMP",.T.)
+							If !dbSeek(XC5->C5_ROTEIRO+XC5->C5_SEQUENC+_Produto)
+								RecLock("TEMP1",.T.)
 							Else
-								RecLock("TEMP",.F.)
+								RecLock("TEMP1",.F.)
 							Endif                                              
 							Replace TP_PEDIDO    With XC5->C5_NUM
 							Replace TP_ROTEIRO   With XC5->C5_ROTEIRO
@@ -741,12 +760,12 @@ User Function ADLOG080R() // U_ROTLOG()
 							_nTotkilos  := _nTotKilos  + SC6->C6_QTDVEN
 							_nTotValTot := _nTotValtot + SC6->C6_VALOR 
 							
-							dbSelectArea("TEMP")
+							dbSelectArea("TEMP1")
 							dbSetOrder(1)
-							If !dbSeek(XC5->C5_ROTEIRO+XC5_SEQUENC+_Produto)
-								RecLock("TEMP",.T.)
+							If !dbSeek(XC5->C5_ROTEIRO+XC5->C5_SEQUENC+_Produto)
+								RecLock("TEMP1",.T.)
 							Else
-								RecLock("TEMP",.F.)
+								RecLock("TEMP1",.F.)
 							Endif  
 							Replace TP_PEDIDO    With XC5->C5_NUM
 							Replace TP_ROTEIRO   With XC5->C5_ROTEIRO
@@ -824,9 +843,9 @@ User Function ADLOG080R() // U_ROTLOG()
 	
 	MS_FLUSH()
 	
-	dbSelectArea("TEMP")
-	TEMP->(dbclosearea()) 
-	fErase(_cNomTRB+'.*')
+	dbSelectArea("TEMP1")
+	TEMP1->(dbclosearea()) 
+	fErase(_cNomTRB1+'.*')
 	DBSELECTAREA("XC5")
 	XC5->(dbclosearea())
 
@@ -881,7 +900,7 @@ Condicao Pagamento: 999-XXXXXXXXXXXXXXX                 TOTAL PEDIDO:  999999   
 |        |         |       |
 219   CORTES TP CG FRANGO (PEITO)   IND.15 KG                            30     450.00         459.00   |        |         |       |
 |--------------------------|
-53    FRANGO TEMP CG SV LV                                               30     540.00         549.60   |CONFERENTE:               |
+53    FRANGO TEMP1 CG SV LV                                               30     540.00         549.60   |CONFERENTE:               |
 |                          |
 59    MIUDO CONG DE AVES  (MOELA)CP                                       5      90.00          91.50   |                          |
 |--------------------------|
@@ -901,16 +920,66 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	Local i			  := 1
     Local _nTmpRecno  := 0
 	Local _nPriRoteiro:= 1
-    
-	_lEntrou := .F.         
-    DBSELECTAREA("TEMP")                
-    TEMP->(dbsetorder(2)) //*** INICIO ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
-    TEMP->(dbgotop())                       
+	lEntrou := .F.         
+    DBSELECTAREA("TEMP1")                
+    TEMP1->(dbsetorder(2)) //*** INICIO ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
+    TEMP1->(dbgotop())                       
     DBSEEK(_cRoteiro+"01",.T.)
-    cTipoOld := SUBSTR(TEMP->TP_X5_DESC,1,4)
-	While TEMP->(!EOF()) .And. Alltrim(TEMP->TP_ROTEIRO) == _cRoteiro 
+    cTipoOld := SUBSTR(TEMP1->TP_X5_DESC,1,4)
+	While TEMP1->(!EOF()) .And. Alltrim(TEMP1->TP_ROTEIRO) == _cRoteiro 
+
+		//Armazena o Recno para imprimir no final
+		If _nPriRoteiro == 1
+			_nTmpRecno := TEMP1->(Recno())
+			dbSelectArea("TEMP1")
+			_cChave:=Alltrim(TEMP1->TP_ROTEIRO)+Alltrim(TEMP1->TP_SEQUENC)
+			While TEMP1->(!EOF()) .And. Alltrim(TEMP1->TP_ROTEIRO)+Alltrim(TEMP1->TP_SEQUENC) == _cChave 
+				TEMP1->(dbskip())
+				_nPriRoteiro++
+			EndDo
+			Loop
+		EndIf
+	
+		//Incluido por roteiro
+		dbSelectArea("TEMP2")
+		dbSetOrder(1)
+		If !dbSeek(TEMP1->TP_ROTEIRO+TEMP1->TP_PRODUTO)
+			RecLock("TEMP2",.T.)
+			TEMP2->TP_ROTEIRO  := TEMP1->TP_ROTEIRO
+			TEMP2->TP_PRODUTO  := TEMP1->TP_PRODUTO
+		Else
+			RecLock("TEMP2",.F.)
+		EndIf
+		TEMP2->TP_PEDIDO   := TEMP1->TP_PEDIDO
+		TEMP2->TP_REPROG   := TEMP1->TP_REPROG
+		TEMP2->TP_TES      := TEMP1->TP_TES
+		TEMP2->TP_DESCRI   := TEMP1->TP_DESCRI
+		TEMP2->TP_CAIXAS   := TEMP2->TP_CAIXAS + TEMP1->TP_CAIXAS
+		TEMP2->TP_KILOS    := TEMP2->TP_KILOS  + TEMP1->TP_KILOS
+		TEMP2->TP_TARA     := TEMP1->TP_TARA
+		TEMP2->TP_VALTOT   := TEMP2->TP_VALTOT + TEMP1->TP_VALTOT
+		TEMP2->TP_PLACA    := TEMP1->TP_PLACA					
+		TEMP2->TP_DTENTR   := TEMP1->TP_DTENTR
+		TEMP2->TP_XCATEG   := TEMP1->TP_XCATEG
+		TEMP2->TP_X5_DESC  := TEMP1->TP_X5_DESC
+		TEMP2->TP_PRODEDA  := TEMP1->TP_PRODEDA
+		MsUnlock() 					
+
+		DbSelectArea("TEMP1")
+		TEMP1->(dbSkip())
+	
+	EndDo
+	
+	_lEntrou := .F.         
+    DBSELECTAREA("TEMP2")                
+    TEMP2->(dbsetorder(2)) //*** INICIO ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
+    TEMP2->(dbgotop())                       
+    DBSEEK(_cRoteiro,.T.)
+    cTipoOld := SUBSTR(TEMP2->TP_X5_DESC,1,4)
+	While TEMP2->(!EOF()) .And. Alltrim(TEMP2->TP_ROTEIRO) == _cRoteiro 
 		
-		If !_lEntrou .OR. nLin > 60
+		If !_lEntrou //.OR. nLin > 60
+
 		
 			_n2TTotCaixas := 0
 			_n2TTotKilos  := 0
@@ -940,7 +1009,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 			nLin := 1
 		
 			nlin := nLin + 2
-			@ nLin,000 PSAY " ROTLOG"
+			@ nLin,000 PSAY " ADLOG080R"
 			@ nLin,040 PSAY "R E S U M O   D E   C A R R E G A M E N T O "
 			nlin := nLin + 1
 			@ nLin, 000 PSAY Repl("-",limite)
@@ -948,15 +1017,15 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 			&&Mauricio - 04/08/17 - Chamado 036478 - 
 
 			// Chamado n. 049495 || OS 050775 || ADM.LOG || MARCEL || 8365 || ROMANEIO ENTREGAS - FWNM - 02/08/2019
-			cRotZFN   := Alltrim(TEMP->TP_ROTEIRO)
+			cRotZFN   := Alltrim(TEMP2->TP_ROTEIRO)
 			UpRotAtend(cRotZFN, @nLin)
 			//
 			
-	        IF Alltrim(TEMP->TP_REPROG) == "R"	   
-	           //@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP->TP_PLACA
-	           @ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + SPACE(05)+ "REPROGRAMADO"+SPACE(10)+ " DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP->TP_PLACA
+	        IF Alltrim(TEMP2->TP_REPROG) == "R"	   
+	           //@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP1->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP1->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP1->TP_PLACA
+	           @ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP2->TP_ROTEIRO + SPACE(05)+ "REPROGRAMADO"+SPACE(10)+ " DATA ENTREGA : " + DTOC(TEMP2->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP2->TP_PLACA
 	        Else
-	           @ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP->TP_PLACA 
+	           @ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP2->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP2->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP2->TP_PLACA 
 	        ENDIF
 			
 			cShelife := 'N'			
@@ -971,21 +1040,9 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 			nLin := nLin + 2
 				
 		Endif  
-		
-		//Armazena o Recno para imprimir no final
-		If _nPriRoteiro == 1
-			_nTmpRecno := TEMP->(Recno())
-			dbSelectArea("TEMP")
-			_cChave:=Alltrim(TEMP->TP_ROTEIRO)+Alltrim(TEMP->TP_SEQUENC)
-			While TEMP->(!EOF()) .And. Alltrim(TEMP->TP_ROTEIRO)+Alltrim(TEMP->TP_SEQUENC) == _cChave 
-				TEMP->(dbskip())
-				_nPriRoteiro++
-			EndDo
-			Loop
-		EndIf
-	
+
 		nLin := nLin + 1				
-		cTipo := SUBSTR(TEMP->TP_X5_DESC,1,4)
+		cTipo := SUBSTR(TEMP2->TP_X5_DESC,1,4)
 		IF cTipoOld <> cTipo
 		    
 		 	cTipoOld := cTipo
@@ -1001,49 +1058,49 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 			nLin := nLin + 1
 		Endif                                 
 
-		@nLin,000 PSAY AllTrim(TEMP->TP_PRODEDA)
-		@nLin,011 PSAY AllTrim(TEMP->TP_PRODUTO)
-		@nLin,025 PSAY SUBSTR(TEMP->TP_DESCRI,1,40)
-		@nLin,066 PSAY ALLTRIM(TEMP->TP_TES)
-		@nLin,070 PSAY SUBSTR(TEMP->TP_X5_DESC,1,4)
-		@nLin,075 PSAY TEMP->TP_CAIXAS PICTURE "@E 999999"
-		@nLin,085 PSAY TEMP->TP_KILOS  PICTURE "@E 999999.99"
+		@nLin,000 PSAY AllTrim(TEMP2->TP_PRODEDA)
+		@nLin,011 PSAY AllTrim(TEMP2->TP_PRODUTO)
+		@nLin,025 PSAY SUBSTR(TEMP2->TP_DESCRI,1,40)
+		@nLin,066 PSAY ALLTRIM(TEMP2->TP_TES)
+		@nLin,070 PSAY SUBSTR(TEMP2->TP_X5_DESC,1,4)
+		@nLin,075 PSAY TEMP2->TP_CAIXAS PICTURE "@E 999999"
+		@nLin,085 PSAY TEMP2->TP_KILOS  PICTURE "@E 999999.99"
 		
 		dbSelectArea("SZC")
 		dbSetOrder(1)
-		If dbSeek(xFilial("SZC")+ TEMP->TP_TARA)
+		If dbSeek(xFilial("SZC")+ TEMP2->TP_TARA)
 			_nTara := ZC_TARA
 		Endif
 					
-		_nTTotPbr := ((TEMP->TP_CAIXAS * _nTara) + TEMP->TP_KILOS)
+		_nTTotPbr := ((TEMP2->TP_CAIXAS * _nTara) + TEMP2->TP_KILOS)
 					
 		@ nLin, 095 PSAY _nTTotPbr  PICTURE "999,999.99"
-		_n2TTotCaixas 	+= TEMP->TP_CAIXAS
-		_n2TTotKilos  	+= TEMP->TP_KILOS  
+		_n2TTotCaixas 	+= TEMP2->TP_CAIXAS
+		_n2TTotKilos  	+= TEMP2->TP_KILOS  
 		
 		dbSelectArea("SZC")
 		dbSetOrder(1)
-		If dbSeek(xFilial("SZC")+ TEMP->TP_TARA)
+		If dbSeek(xFilial("SZC")+ TEMP2->TP_TARA)
 			_nTara := ZC_TARA
 		Endif
 					
-		_n2TTotPbr := ((TEMP->TP_CAIXAS * _nTara) + TEMP->TP_KILOS)	
+		_n2TTotPbr := ((TEMP2->TP_CAIXAS * _nTara) + TEMP2->TP_KILOS)	
 		
 		_n2TTotPGer  	+= _n2TTotPbr
-		_n2TTotVal		+= TEMP->TP_VALTOT
+		_n2TTotVal		+= TEMP2->TP_VALTOT
 				
 		//guardo os dados do roteiro
-		_ROTEIRO := TEMP->TP_ROTEIRO
-		_SEQUENC := TEMP->TP_SEQUENC
-		_PLACA   := TEMP->TP_PLACA
-		_DTENTR  := TEMP->TP_DTENTR
-		_PEDIDO  := TRMP->TP_PEDIDO
+		_ROTEIRO := TEMP2->TP_ROTEIRO
+		_SEQUENC := TEMP2->TP_SEQUENC
+		_PLACA   := TEMP2->TP_PLACA
+		_DTENTR  := TEMP2->TP_DTENTR
+		_PEDIDO  := TEMP2->TP_PEDIDO
 		_nI += 1
 		If _nI <= 15 
 			@ nLin, 105 PSAY _aLinha[_nI][1]
 		Endif			
 		
-		dbSelectArea("TEMP")
+		dbSelectArea("TEMP2")
 		dbskip()
 	
 	Enddo	           
@@ -1053,7 +1110,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				nLin := 1
 			
 				nlin := nLin + 2
-				@ nLin,000 PSAY " ROTLOG"
+				@ nLin,000 PSAY " ADLOG080R"
 				@ nLin,040 PSAY "R E S U M O   D E   C A R R E G A M E N T O "
 				nlin := nLin + 1
 				@ nLin, 000 PSAY Repl("-",limite)
@@ -1065,8 +1122,8 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				UpRotAtend(cRotZFN,@nLin)
 				//
 				
-				IF Alltrim(TEMP->TP_REPROG) == "R"	   
-				//@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP->TP_PLACA
+				IF Alltrim(TEMP1->TP_REPROG) == "R"	   
+				//@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP1->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP1->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP1->TP_PLACA
 				@ nLin,000 PSAY "ROTEIRO NUMERO " + _ROTEIRO + SPACE(05)+  "REPROGRAMADO"+SPACE(10)+" DATA ENTREGA : " + DTOC(_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + _PLACA
 				Else
 				@ nLin,000 PSAY "ROTEIRO NUMERO " + _ROTEIRO + SPACE(15)+" DATA ENTREGA : " + DTOC(_DTENTR) + SPACE(10)+ "       PLACA VEICULO : " + _PLACA 
@@ -1086,6 +1143,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	EndIf
 	
 	If _lEntrou
+		
 		If _nI <= 15
 			For i:=_nI to 15 
 				@ nLin, 105 PSAY _aLinha[i][1]
@@ -1110,13 +1168,14 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	//inicio da Impressão da Sequencia 01 do Roteiro
 	If _nTmpRecno <> 0	
 		_lEntrou := .F.         
-		DBSELECTAREA("TEMP")                
-		TEMP->(dbsetorder(2)) //*** INICIO ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
-		TEMP->(dbgoto(_nTMPRecno))                       
-		cTipoOld := SUBSTR(TEMP->TP_X5_DESC,1,4)
-		_cChave:=Alltrim(TEMP->TP_ROTEIRO)+Alltrim(TEMP->TP_SEQUENC)
+		_aLinha:={}
+		DBSELECTAREA("TEMP1")                
+		TEMP1->(dbsetorder(2)) //*** INICIO ALTERACAO WILL PARA CRIAR INDICES CHAMADO 030812  *** //
+		TEMP1->(dbgoto(_nTMPRecno))                       
+		cTipoOld := SUBSTR(TEMP1->TP_X5_DESC,1,4)
+		_cChave:=Alltrim(TEMP1->TP_ROTEIRO)+Alltrim(TEMP1->TP_SEQUENC)
 		
-		While TEMP->(!EOF()) .And. Alltrim(TEMP->TP_ROTEIRO)+Alltrim(TEMP->TP_SEQUENC) == _cChave 
+		While TEMP1->(!EOF()) .And. Alltrim(TEMP1->TP_ROTEIRO)+Alltrim(TEMP1->TP_SEQUENC) == _cChave 
 			
 			If !_lEntrou
 			
@@ -1129,6 +1188,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				_nI           := 0
 				_lEntrou      := .T.
 			
+				/*
 				aAdd(_aLinha,{" |INICIO:                 |"}) 	//1
 				aAdd(_aLinha,{" |                        |"})	//2
 				aAdd(_aLinha,{" |TERMINO:                |"})	//3
@@ -1144,11 +1204,11 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				aAdd(_aLinha,{" |                        |"})	//13
 				aAdd(_aLinha,{" |                        |"})	//14
 				aAdd(_aLinha,{" |------------------------|"})	//15
-			
+				*/
 				nLin := 1
 			
 				nlin := nLin + 2
-				@ nLin,000 PSAY " ROTLOG"
+				@ nLin,000 PSAY " ADLOG080R"
 				@ nLin,040 PSAY "R E S U M O   D E   C A R R E G A M E N T O "
 				nlin := nLin + 1
 				@ nLin, 000 PSAY Repl("-",limite)
@@ -1156,15 +1216,15 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				&&Mauricio - 04/08/17 - Chamado 036478 - 
 
 				// Chamado n. 049495 || OS 050775 || ADM.LOG || MARCEL || 8365 || ROMANEIO ENTREGAS - FWNM - 02/08/2019
-				cRotZFN   := Alltrim(TEMP->TP_ROTEIRO)
+				cRotZFN   := Alltrim(TEMP1->TP_ROTEIRO)
 				UpRotAtend(cRotZFN,@nLin)
 				//
 				
-				IF Alltrim(TEMP->TP_REPROG) == "R"	   
-				//@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP->TP_PLACA
-				@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + " PEDIDO "+TEMP->TP_PEDIDO+SPACE(5)+" REPROGRAMADO "+" DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(19)+ "       PLACA VEICULO : " + TEMP->TP_PLACA
+				IF Alltrim(TEMP1->TP_REPROG) == "R"	   
+				//@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP1->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP1->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP1->TP_PLACA
+				@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP1->TP_ROTEIRO + " PEDIDO "+TEMP1->TP_PEDIDO+SPACE(5)+" REPROGRAMADO "+" DATA ENTREGA : " + DTOC(TEMP1->TP_DTENTR) + SPACE(19)+ "       PLACA VEICULO : " + TEMP1->TP_PLACA
 				Else
-				@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP->TP_ROTEIRO + " PEDIDO "+TEMP->TP_PEDIDO+SPACE(1)+" DATA ENTREGA : " + DTOC(TEMP->TP_DTENTR) + SPACE(2)+ "       PLACA VEICULO : " + TEMP->TP_PLACA 
+				@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP1->TP_ROTEIRO + " PEDIDO "+TEMP1->TP_PEDIDO+SPACE(1)+" DATA ENTREGA : " + DTOC(TEMP1->TP_DTENTR) + SPACE(2)+ "       PLACA VEICULO : " + TEMP1->TP_PLACA 
 				ENDIF
 				
 				cShelife := 'N'			
@@ -1181,14 +1241,14 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 			Endif  
 					
 			nLin := nLin + 1				
-			cTipo := SUBSTR(TEMP->TP_X5_DESC,1,4)
+			cTipo := SUBSTR(TEMP1->TP_X5_DESC,1,4)
 			IF cTipoOld <> cTipo
 				
 				cTipoOld := cTipo
 				@ nLin, 000 PSAY Repl("-",105)
-				
+				nLin := nLin + 1
 			ENDIF	
-			
+			/*
 			If MOD(_nI,2) != 0
 				_nI += 1
 				If _nI <= 15 
@@ -1196,50 +1256,54 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				Endif
 				nLin := nLin + 1
 			Endif                                 
-			
-			@nLin,000 PSAY AllTrim(TEMP->TP_PRODEDA)
-			@nLin,011 PSAY AllTrim(TEMP->TP_PRODUTO)
-			@nLin,025 PSAY SUBSTR(TEMP->TP_DESCRI,1,40)
-			@nLin,066 PSAY ALLTRIM(TEMP->TP_TES)
-			@nLin,070 PSAY SUBSTR(TEMP->TP_X5_DESC,1,4)
-			@nLin,075 PSAY TEMP->TP_CAIXAS PICTURE "@E 999999"
-			@nLin,085 PSAY TEMP->TP_KILOS  PICTURE "@E 999999.99"
-			
+			*/
+			@nLin,000 PSAY AllTrim(TEMP1->TP_PRODEDA)
+			@nLin,011 PSAY AllTrim(TEMP1->TP_PRODUTO)
+			@nLin,025 PSAY SUBSTR(TEMP1->TP_DESCRI,1,40)
+			@nLin,066 PSAY ALLTRIM(TEMP1->TP_TES)
+			@nLin,070 PSAY SUBSTR(TEMP1->TP_X5_DESC,1,4)
+			@nLin,075 PSAY TEMP1->TP_CAIXAS PICTURE "@E 999999"
+			@nLin,085 PSAY TEMP1->TP_KILOS  PICTURE "@E 999999.99"
+						
 			dbSelectArea("SZC")
 			dbSetOrder(1)
-			If dbSeek(xFilial("SZC")+ TEMP->TP_TARA)
+			If dbSeek(xFilial("SZC")+ TEMP1->TP_TARA)
 				_nTara := ZC_TARA
 			Endif
 						
-			_nTTotPbr := ((TEMP->TP_CAIXAS * _nTara) + TEMP->TP_KILOS)
+			_nTTotPbr := ((TEMP1->TP_CAIXAS * _nTara) + TEMP1->TP_KILOS)
 						
 			@ nLin, 095 PSAY _nTTotPbr  PICTURE "999,999.99"
-			_nPTTotCaixas 	+= TEMP->TP_CAIXAS
-			_nPTTotKilos  	+= TEMP->TP_KILOS  
+			nLin := nLin + 1
+
+			_nPTTotCaixas 	+= TEMP1->TP_CAIXAS
+			_nPTTotKilos  	+= TEMP1->TP_KILOS  
 			
 			dbSelectArea("SZC")
 			dbSetOrder(1)
-			If dbSeek(xFilial("SZC")+ TEMP->TP_TARA)
+			If dbSeek(xFilial("SZC")+ TEMP1->TP_TARA)
 				_nTara := ZC_TARA
 			Endif
 						
-			_nPTTotPbr := ((TEMP->TP_CAIXAS * _nTara) + TEMP->TP_KILOS)	
+			_nPTTotPbr := ((TEMP1->TP_CAIXAS * _nTara) + TEMP1->TP_KILOS)	
 			
-			_nPTTotPGer  	+= _n2TTotPbr
-			_nPTTotVal		+= TEMP->TP_VALTOT
+			_nPTTotPGer  	+= _nPTTotPbr
+			_nPTTotVal		+= TEMP1->TP_VALTOT
 					
 			//guardo os dados do roteiro
-			_ROTEIRO := TEMP->TP_ROTEIRO
-			_SEQUENC := TEMP->TP_SEQUENC
-			_PLACA   := TEMP->TP_PLACA
-			_DTENTR  := TEMP->TP_DTENTR
+			_ROTEIRO := TEMP1->TP_ROTEIRO
+			_SEQUENC := TEMP1->TP_SEQUENC
+			_PLACA   := TEMP1->TP_PLACA
+			_DTENTR  := TEMP1->TP_DTENTR
 			
+			/*
 			_nI += 1
 			If _nI <= 15 
 				@ nLin, 105 PSAY _aLinha[_nI][1]
 			Endif			
-			
-	       	TEMP->(dbSkip())
+			*/
+
+	       	TEMP1->(dbSkip())
 		
 		Enddo	           
 		
@@ -1247,13 +1311,14 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	//fim da Impressão da Sequencia 01 do Roteiro
 
 	If _lEntrou
+		/*
 		If _nI <= 15
 			For i:=_nI to 15 
 				@ nLin, 105 PSAY _aLinha[i][1]
 				nLin += 1
 			Next
 		Endif
-		
+		*/
 		nLin := nLin + 2
 		@ nLin, 000 PSAY Repl("-",limite)
 		nLin := nLin + 2   		
@@ -1328,7 +1393,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				
 				nLin := 1
 
-				@ nLin,001 PSAY "ROTLOG"
+				@ nLin,001 PSAY "ADLOG080R"
 				@ nLin,040 PSAY "R E S U M O   D E   C A R R E G A M E N T O "
 				@ nLin,120 PSAY date()		
 
@@ -1395,7 +1460,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 				
 				nLin := 1
 		
-				@ nLin,001 PSAY "ROTLOG"
+				@ nLin,001 PSAY "ADLOG080R"
 				@ nLin,040 PSAY "R E S U M O   D E   C A R R E G A M E N T O "
 				@ nLin,120 PSAY date()		
 
@@ -1633,8 +1698,8 @@ Static Function vlPlte()
 	Local cQuery := sqlVlPlt()
 
 	//
-	//MsAguarde({|| Static Call(ADROMENT,vlPalete,"","","","","","",cQuery) },"Função vlPlte(ROTLOG)","Gerando vale palete...")
-	MsAguarde({|| u_ROMENTA0("","","","","","",cQuery) },"Função vlPlte(ROTLOG)","Gerando vale palete...")
+	//MsAguarde({|| Static Call(ADROMENT,vlPalete,"","","","","","",cQuery) },"Função vlPlte(ADLOG080R)","Gerando vale palete...")
+	MsAguarde({|| u_ROMENTA0("","","","","","",cQuery) },"Função vlPlte(ADLOG080R)","Gerando vale palete...")
 
 Return cQuery
 /*/{Protheus.doc} sqlVlPlt
