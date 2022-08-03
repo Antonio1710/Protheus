@@ -60,6 +60,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Ticket 74275  - Everson, 13/06/2022, tratamento para bloqueio de cliente a partir do número de pedidos em aberto.
 	@history Ticket TI  - Everson, 14/06/2022, tratamento para error log.
 	@history Ticket 73694 - Everson, 29/06/2022, tratamento para aprovação de crédito.
+	@history Ticket 77222 - Everson, 03/08/2022 - Tratamento para a rotina de bloqueio verificar se há pedido em aberto em todas a filiais.
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -4098,6 +4099,14 @@ Static Function AdoBloq( cCliente, cLoja )
 	Local cMsgPed		:= ""
 	//
 
+	//Everson - 03/08/2022. Chamado 77222.
+	If Alltrim(cValToChar(RetSqlName("SA1"))) == "SA1010" .And. cEmpAnt <> "01"
+		Alert("Bloqueio de clientes da Ad'oro somente pode ser realizado na empresa 01.")
+		return
+
+	EndIf
+	//
+
 	DbSelectArea( 'PB3' )
 	PB3->( dbSetOrder( 1 ))
 	PB3->( dbSeek( xFilial( 'PB3' ) + cCliente + cLoja ))
@@ -4308,8 +4317,11 @@ Static Function getNumPed(cCod,cLoja)
 	cQuery += " FROM " 
 	cQuery += " " + RetSqlName("SC5") + " (NOLOCK) AS SC5 " 
 	cQuery += " WHERE " 
-	cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' " 
-	cQuery += " AND C5_CLIENTE = '" + cCod + "' " 
+
+	//cQuery += " C5_FILIAL = '" + FWxFilial("SC5") + "' "  //Everson - 03/08/2022. Chamado 77222. Removido o filtro por filial, pois o cliente não pode ter pedido em aberto em nenhuma filial.
+	// cQuery += " AND C5_CLIENTE = '" + cCod + "' " 
+	
+	cQuery += " C5_CLIENTE = '" + cCod + "' " 
 	cQuery += " AND C5_LOJACLI = '" + cLoja + "' " 
 	
 	cQuery += " AND CAST(C5_DTENTR AS DATE) >= CAST(GETDATE() - " + cDias + " AS DATE) " 
@@ -7348,6 +7360,7 @@ Static Function AdoBloqLt(cCliente, cLoja, cMotBlq1, cMotBlq2, cCC)
 	Local aAreaAtu  := GetArea() 
 	Local aAreaPB3  := PBE->( GetArea() )
 	Local cCNPJRaiz := Left(AllTrim(Posicione("PB3",1,FWxFilial("PB3")+cCliente+cLoja,"PB3_CGC")),8)
+	Local nNumPed	:= 0 //Everson - 03/08/2022. Chamado 77222.
 
     If msgYesNo("Tem certeza de que deseja bloquear (em lote) todos os clientes com CNPJ Raiz = " + cCNPJRaiz + " ?")
         
@@ -7357,7 +7370,7 @@ Static Function AdoBloqLt(cCliente, cLoja, cMotBlq1, cMotBlq2, cCC)
 			Work->( dbCloseArea() )
 		EndIf
 		
-		cQuery := " SELECT PB3_CGC, PB3_COD, PB3_LOJA "
+		cQuery := " SELECT PB3_CGC, PB3_COD, PB3_LOJA, PB3_CODSA1, PB3_LOJSA1 " //Everson - 03/08/2022. Chamado 77222.
 		cQuery += " FROM " + RetSqlName("PB3") + " PB3 (NOLOCK) "
 		cQuery += " WHERE PB3_FILIAL='"+FWxFilial("PB3")+"' "
 		cQuery += " AND PB3_CGC LIKE '"+cCNPJRaiz+"%' "
@@ -7368,6 +7381,20 @@ Static Function AdoBloqLt(cCliente, cLoja, cMotBlq1, cMotBlq2, cCC)
 		
 		Work->( dbGoTop() )
 		Do While Work->( !EOF() )
+
+			//Everson - 03/08/2022. Chamado 77222.
+			If ! Empty(Work->PB3_CODSA1) .And. ! Empty(Work->PB3_LOJSA1)
+
+				nNumPed := getNumPed(Work->PB3_CODSA1, Work->PB3_LOJSA1)
+
+				If nNumPed > 0
+					MsgStop('Cliente '+Work->PB3_CODSA1+"-"+Work->PB3_LOJSA1 + " possui " + cValtoChar(nNumPed) + " pedido(s) em aberto(s)" + ". Não será possível bloqueá-lo.")
+					Work->( dbSkip() )	
+					Loop
+
+				EndIf
+
+			EndIf
 				
 			MsAguarde( {|| AdoGrvBloq( Work->PB3_COD, Work->PB3_LOJA, cMotBlq1, cMotBlq2, cCC)}, "Aguarde... Bloqueando em lote...","Clientes com CNPJ Raiz = " + cCNPJRaiz )
 			//AdoGrvBloq( Work->PB3_COD, Work->PB3_LOJA, cMotBlq1, cMotBlq2, cCC )
