@@ -45,6 +45,9 @@ User Function ADFAT29A()
 
     EndIf
 
+    //Processa registros lidos por outros sistemas.
+    U_ADFAT29L()
+
     //Análise laboratorial.
     U_ADFAT29K()
 
@@ -1749,6 +1752,65 @@ User Function ADFAT29K()
 
         FreeObj(oJson)
         oJson := Nil
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    (cAliasAux)->(DbCloseArea())
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADFAT29L
+    Marca registros como processados.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 08/02/2022
+    @version 01
+/*/
+User Function ADFAT29L()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cAliasAux := GetNextAlias()
+    Local cQuery    := ""
+    Local cIdProc   := ""
+    Local cId       := ""
+    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+
+    cQuery += " SELECT  " 
+    cQuery += " ZIQ_UUID, "
+    cQuery += " ZIQ_OPERAC, "
+    cQuery += " R_E_C_N_O_ AS RECNO "
+    cQuery += " FROM  " 
+    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+    cQuery += " WHERE  " 
+    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
+    cQuery += " AND ZIQ_TIPO = 'E' " 
+    cQuery += " AND ZIQ_TOPICO = 'marcar_registro_processado' " 
+    cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
+    cQuery += " AND ZIQ_PROCES = '2' " 
+    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
+    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
+    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY RECNO " 
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        ZIQ->(DbGoto((cAliasAux)->RECNO))
+        
+        cIdProc   := Alltrim(cValToChar(ZIQ->ZIQ_DADOS))
+        
+        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+
+
+        U_ADFAT29D(cIdProc, "1", "")
+        U_ADFAT29D(cId, "1", "")
 
         (cAliasAux)->(DbSkip())
 
