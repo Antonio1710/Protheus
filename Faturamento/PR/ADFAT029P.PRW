@@ -45,6 +45,9 @@ User Function ADFAT29A()
 
     EndIf
 
+    //Processa registros lidos por outros sistemas.
+    U_ADFAT29L()
+
     //Análise laboratorial.
     U_ADFAT29K()
 
