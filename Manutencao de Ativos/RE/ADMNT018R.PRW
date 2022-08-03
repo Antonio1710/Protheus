@@ -14,7 +14,7 @@ Relatorio horas Disponivel X Realizadas - baseado na Consulta MNTC905
 @since 18/05/2022
 @version undefined
 @type User Function. 
-@Ticket 63356, Data 21/07/2022, Antonio Domingos, SIGAMNT - E-mail - Homem Hora. Solicitado por DEBORA ROSILAI DA SILVA.
+@Ticket 63356, Data 21/07/2022, Antonio Domingos, SIGAMNT - E-mail - Homem Hora. Solicitado por DEBORA ROSILAI DA SILVA..
 /*/
 //---------------------------------------------------------------------
 User Function ADMNT018R(cParam)
