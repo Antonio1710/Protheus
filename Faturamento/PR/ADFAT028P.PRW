@@ -320,7 +320,9 @@ User Function ADFAT28C(aParametros, aRetErro)
     //Variáveis.
     Local aArea     := GetArea()
     Local cUuid     := ""
-    Local nTmpSleep := Val(cValToChar(GetMv("MV_#FAT283",,3)))
+    // Local cMsgError := ""
+    Local nTmpSleep := Val(cValToChar(GetMv("MV_#FAT284",,0)))
+    Local cQuery    := ""
 
     If Len(aParametros) == 0
         Aadd(aRetErro, {400, EncodeUtf8("Necessário informar o uuid do registro.")})
@@ -333,7 +335,35 @@ User Function ADFAT28C(aParametros, aRetErro)
     
     Sleep(Random(0, nTmpSleep)*1000) //Everson - 06/06/2022.
 
-    TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1' WHERE ZIQ_UUID = '" + cUuid + "'")
+    // TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1' WHERE ZIQ_UUID = '" + cUuid + "'")
+
+    cQuery := " SELECT ZIQ_EMPRES, ZIQ_FILINT, ZIQ_PROCES FROM " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ WHERE ZIQ_FILIAL = '" + FWxfilial("ZIQ") + "' AND ZIQ_UUID = '" + cUuid + "'  AND ZIQ.D_E_L_E_T_ = '' "
+
+    If Select("D_CHECK") > 0
+        D_CHECK->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_CHECK"
+    DbSelectArea("D_CHECK")
+
+    If D_CHECK->(Eof())
+        Aadd(aRetErro, {404, EncodeUtf8("Id " + cUuid + " não localizado")})
+        D_CHECK->(DbCloseArea())
+        Return .F.
+
+    EndIf
+
+    If D_CHECK->ZIQ_PROCES == "1"
+        D_CHECK->(DbCloseArea())
+        RestArea(aArea)
+        Return .T.
+
+    EndIf
+
+    U_ADFAT27B("I", "marcar_registro_processado", FWUUIDV1(.T.), cUuid, DToS(Date()), Time(), "E", "", D_CHECK->ZIQ_EMPRES, D_CHECK->ZIQ_FILINT)
+
+    D_CHECK->(DbCloseArea())
 
     // If ! U_ADFAT29D(cUuid, "1", "", @cMsgError)
     //     Aadd(aRetErro, {400, cMsgError})
