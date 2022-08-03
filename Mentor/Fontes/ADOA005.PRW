@@ -60,6 +60,7 @@ STATIC cModuloZBE := "LIMITE_CREDITO_LOTE"
 	@history Ticket 74275  - Everson, 13/06/2022, tratamento para bloqueio de cliente a partir do número de pedidos em aberto.
 	@history Ticket TI  - Everson, 14/06/2022, tratamento para error log.
 	@history Ticket 73694 - Everson, 29/06/2022, tratamento para aprovação de crédito.
+	@history Ticket 77553 - Fernando Macieira, 03/08/2022, Erro Rotina Aumento de Limites em lote
 /*/
 User Function ADOA005() // U_ADOA005()
 
@@ -7733,7 +7734,10 @@ Static Function RunFixLimits()
 			lRede := .t.
 			cMsgLim := "Ajuste de Limites em lote - Redes "
 		Else
-            Aviso("RunFixLimits-02", "A importação não será realizada! As colunas do excel precisam ser " + cVerTab, {"&Ok"},, "Versão/Leiaute da planilha incorreta!")
+            //Aviso("RunFixLimits-02", "A importação não será realizada! As colunas do excel precisam ser " + cVerTab, {"&Ok"},, "Versão/Leiaute da planilha incorreta!") // @history Ticket 77553 - Fernando Macieira, 03/08/2022, Erro Rotina Aumento de Limites em lote
+			Aviso("RunFixLimits-02", "A importação não será realizada pois as colunas do excel precisam bater com um destes 2 leiates: " + chr(13)+chr(10)+;
+			"Clientes: " + cVerCli + chr(13)+chr(10) +;
+			"Redes: " + cVerRed, {"&Ok"},, "Versão/Leiaute da planilha incorreta!") // @history Ticket 77553 - Fernando Macieira, 03/08/2022, Erro Rotina Aumento de Limites em lote
 			Return
 		EndIf
             
