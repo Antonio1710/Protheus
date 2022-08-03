@@ -1770,54 +1770,62 @@ Return Nil
     @since 08/02/2022
     @version 01
 /*/
-User Function ADFAT29L()
+User Function ADFAT29L() // U_ADFAT29L()
 
     //Variáveis.
-    Local aArea     := GetArea()
-    Local cAliasAux := GetNextAlias()
+    Local aArea     := ""
+    Local cAliasAux := ""
     Local cQuery    := ""
     Local cIdProc   := ""
     Local cId       := ""
-    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    // Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
 
-    cQuery += " SELECT  " 
-    cQuery += " ZIQ_UUID, "
-    cQuery += " ZIQ_OPERAC, "
-    cQuery += " R_E_C_N_O_ AS RECNO "
-    cQuery += " FROM  " 
-    cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
-    cQuery += " WHERE  " 
-    cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
-    cQuery += " AND ZIQ_TIPO = 'E' " 
-    cQuery += " AND ZIQ_TOPICO = 'marcar_registro_processado' " 
-    cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
-    cQuery += " AND ZIQ_PROCES = '2' " 
-    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
-    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
-    cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
-    cQuery += " ORDER BY RECNO " 
+    
+    RPCClearEnv()
+	RPCSetType(3)
+	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
 
-    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
-    (cAliasAux)->(DbGoTop())
+        aArea     := GetArea()
+        cAliasAux := GetNextAlias()
 
-    While ! (cAliasAux)->(Eof())
+        cQuery += " SELECT  " 
+        cQuery += " ZIQ_UUID, "
+        cQuery += " ZIQ_OPERAC, "
+        cQuery += " R_E_C_N_O_ AS RECNO "
+        cQuery += " FROM  " 
+        cQuery += " " + RetSqlName("ZIQ") + " (NOLOCK) AS ZIQ  " 
+        cQuery += " WHERE  " 
+        cQuery += " ZIQ_FILIAL = '" + FWxFilial("ZIQ") + "'  " 
+        cQuery += " AND ZIQ_TIPO = 'E' " 
+        cQuery += " AND ZIQ_TOPICO = 'marcar_registro_processado' " 
+        cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
+        cQuery += " AND ZIQ_PROCES = '2' " 
+        cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
+        cQuery += " ORDER BY RECNO " 
 
-        ZIQ->(DbGoto((cAliasAux)->RECNO))
-        
-        cIdProc   := Alltrim(cValToChar(ZIQ->ZIQ_DADOS))
-        
-        cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
+        DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+        (cAliasAux)->(DbGoTop())
+
+        While ! (cAliasAux)->(Eof())
+
+            ZIQ->(DbGoto((cAliasAux)->RECNO))
+            
+            cIdProc   := Alltrim(cValToChar(ZIQ->ZIQ_DADOS))
+            
+            cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
 
 
-        U_ADFAT29D(cIdProc, "1", "")
-        U_ADFAT29D(cId, "1", "")
+            U_ADFAT29D(cIdProc, "1", "")
+            U_ADFAT29D(cId, "1", "")
 
-        (cAliasAux)->(DbSkip())
+            (cAliasAux)->(DbSkip())
 
-    End
+        End
 
-    (cAliasAux)->(DbCloseArea())
+        (cAliasAux)->(DbCloseArea())
 
-    RestArea(aArea)
+        RestArea(aArea)
+
+    RpcClearEnv()
 
 Return Nil
