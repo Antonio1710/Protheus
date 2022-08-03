@@ -35,6 +35,7 @@ Static cPCMot := ""
 	@history ticket  10588  - Fernando Maci - 08/03/2021 - Liberação de pedidos - Intercompany (novas regras)
 	@history Ticket  74070  - Jonathan      - 08/06/2021 - Atualizar o C7_UM de acordo com o cadastro do produto B1_UM    
 	@history Ticket  76847  - Fernando Macieira - 20/07/2021 - falha aprovação pedido de compra.
+	@history Ticket  77519  - Fernando Macieira - 03/08/2022 - Item Conta pedidos com dados copiados de um pedido anterior - Empresa Ceres
 /*/
 User Function MT120CPE
 	
@@ -143,12 +144,14 @@ User Function MT120F(_cParam) //cParam somente vai ter conteudo quando pedido de
 	Local cFilSC7	:= ""
 	Local cPedido	:= ""
 	Local cQry		:= "" 
-	
+
 	Local cLogParam := "" //Everson - 29/01/2019. Chamado 046783.
 	
 	Local cFilGFrt	:= Alltrim(SuperGetMv( "MV_#M46F5" , .F. , '' ,  )) //Everson-CH:044314-06/08/2019.
 	Local cEmpFrt	:= Alltrim(SuperGetMv( "MV_#M46F6" , .F. , '' ,  )) //Everson-CH:044314-06/08/2019. 
-	
+
+	Local cB1ItemCta := ""	
+
 	// RICARDO LIMA - 13/11/17
 	/*
 	Local nPosItem := aScan(aHeader,{|x| AllTrim(x[2]) == 'C7_ITEM'})
@@ -383,6 +386,15 @@ User Function MT120F(_cParam) //cParam somente vai ter conteudo quando pedido de
 								 	
 									//Ticket  74070  - Jonathan - 08/06/2021 - Atualizar o C7_UM de acordo com o cadastro do produto B1_UM 
 									SC7->C7_UM := Posicione("SB1",1,xFilial("SB1") + SC7->C7_PRODUTO , "B1_UM")
+
+									// @history Ticket  77519  - Fernando Macieira - 03/08/2022 - Item Conta pedidos com dados copiados de um pedido anterior - Empresa Ceres
+									If AllTrim(FWCodEmp()) == "02" .and. IsInCallStack("A120Copia")
+										cB1ItemCta := Posicione("SB1", 1, FWxFilial("SB1")+SC7->C7_PRODUTO, "B1_ITEMCC")
+										If !Empty(cB1ItemCta)
+											SC7->C7_ITEMCTA := cB1ItemCta
+										EndIf
+									EndIf
+									//
 
 								MsUnlock() // chamado 042931 
 							ENDIF
