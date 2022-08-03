@@ -46,7 +46,7 @@ User Function ADFAT29A()
     EndIf
 
     //Processa registros lidos por outros sistemas.
-    U_ADFAT29L()
+    // U_ADFAT29L()
 
     //Análise laboratorial.
     U_ADFAT29K()
@@ -1770,15 +1770,39 @@ Return Nil
     @since 08/02/2022
     @version 01
 /*/
-User Function ADFAT29L()
+User Function ADFAT29L() // U_ADFAT29L()
 
     //Variáveis.
-    Local aArea     := GetArea()
-    Local cAliasAux := GetNextAlias()
+
+    RPCClearEnv()
+	RPCSetType(3)
+	RpcSetEnv("01","03",,,,GetEnvServer(),{ })
+
+        U_ADFAT29M()
+
+    RpcClearEnv()
+
+Return Nil
+/*/{Protheus.doc} ADFAT29L
+    Processa marca registros como processados.
+    Chamado 18465.
+    @type  Function
+    @author Everson
+    @since 08/02/2022
+    @version 01
+/*/
+User Function ADFAT29M() // U_ADFAT29M()
+
+    //Variáveis.
+    Local aArea     := ""
+    Local cAliasAux := ""
     Local cQuery    := ""
     Local cIdProc   := ""
     Local cId       := ""
-    Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+    // Local aEmpFil   := deParaSAG(cEmpAnt, cFilAnt)
+
+    aArea     := GetArea()
+    cAliasAux := GetNextAlias()
 
     cQuery += " SELECT  " 
     cQuery += " ZIQ_UUID, "
@@ -1792,8 +1816,6 @@ User Function ADFAT29L()
     cQuery += " AND ZIQ_TOPICO = 'marcar_registro_processado' " 
     cQuery += " AND ZIQ_SISGER = 'PROTHEUS' " 
     cQuery += " AND ZIQ_PROCES = '2' " 
-    cQuery += " AND ZIQ_EMPRES = '" + aEmpFil[1][1] + "' " 
-    cQuery += " AND ZIQ_FILINT = '" + aEmpFil[1][2] + "' " 
     cQuery += " AND ZIQ.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY RECNO " 
 
@@ -1803,14 +1825,14 @@ User Function ADFAT29L()
     While ! (cAliasAux)->(Eof())
 
         ZIQ->(DbGoto((cAliasAux)->RECNO))
-        
+
         cIdProc   := Alltrim(cValToChar(ZIQ->ZIQ_DADOS))
         
         cId       := Alltrim(cValToChar(ZIQ->ZIQ_UUID))
 
+        TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1', ZIQ_STATPR = '1' WHERE ZIQ_UUID = '" + cIdProc + "'")
 
-        U_ADFAT29D(cIdProc, "1", "")
-        U_ADFAT29D(cId, "1", "")
+        TcSqlExec("UPDATE " + RetSqlName("ZIQ") + " SET ZIQ_PROCES = '1', ZIQ_STATPR = '1' WHERE ZIQ_UUID = '" + cId + "'")
 
         (cAliasAux)->(DbSkip())
 
