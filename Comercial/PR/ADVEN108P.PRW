@@ -49,11 +49,12 @@ Static Function MenuDef()
     //Variáveis
     Local aRotina := {}
 
-    ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.ADVEN108P" OPERATION 2 ACCESS 0
-    ADD OPTION aRotina TITLE "Incluir"    ACTION "VIEWDEF.ADVEN108P" OPERATION 3 ACCESS 0
-    ADD OPTION aRotina TITLE "Alterar"    ACTION "VIEWDEF.ADVEN108P" OPERATION 4 ACCESS 0
-    ADD OPTION aRotina TITLE "Excluir"    ACTION "VIEWDEF.ADVEN108P" OPERATION 5 ACCESS 0
-    ADD OPTION aRotina TITLE "Imprimir"   ACTION "VIEWDEF.ADVEN108P" OPERATION 8 ACCESS 0
+    ADD OPTION aRotina TITLE "Visualizar"       ACTION "VIEWDEF.ADVEN108P" OPERATION 2 ACCESS 0
+    ADD OPTION aRotina TITLE "Incluir"          ACTION "VIEWDEF.ADVEN108P" OPERATION 3 ACCESS 0
+    ADD OPTION aRotina TITLE "Alterar"          ACTION "VIEWDEF.ADVEN108P" OPERATION 4 ACCESS 0
+    ADD OPTION aRotina TITLE "Excluir"          ACTION "VIEWDEF.ADVEN108P" OPERATION 5 ACCESS 0
+    ADD OPTION aRotina TITLE "Imprimir"         ACTION "VIEWDEF.ADVEN108P" OPERATION 8 ACCESS 0
+    ADD OPTION aRotina TITLE "Inc Automática"   ACTION "U_ADVN1082()"      OPERATION 10 ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} ModelDef
@@ -333,3 +334,202 @@ User Function ADVN1081()
     oView:refresh()
 
 Return oGrid:length() == 1
+/*/{Protheus.doc} ADVN1082
+    Replica / insere produtos.
+    @type  User Function
+    @author Everson
+    @since 03/08/2022
+    @version 01
+/*/
+User Function ADVN1082()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cCliAtu   := ZHT->ZHT_CLIENT
+    Local cLjaAtu   := ZHT->ZHT_LOJA
+    Local nTipo     := ""
+    Local cCliDe    := ""
+    Local cLojDe    := ""
+    Local cCliAt    := ""
+    Local cLojAt    := ""
+    Local cRedDe    := ""
+    Local cRedAt    := ""
+    Local aProdutos := {}
+    Local cQuery    := ""
+    Local cAliasAux := ""
+
+    If ! Pergunte("ADVEN1082", .T.)
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    nTipo  := MV_PAR01
+    cCliDe := MV_PAR02
+    cLojDe := MV_PAR03
+    cCliAt := MV_PAR04
+    cLojAt := MV_PAR05
+    cRedDe := MV_PAR06
+    cRedAt := MV_PAR07
+
+    DbSelectArea("ZHT")
+    ZHT->(DbSetOrder(1))
+    ZHT->(DbGoTop())
+
+    If ! ZHT->( DbSeek( FWxFilial("ZHT") + cCliAtu + cLjaAtu ) )
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    While ! ZHT->(Eof()) .And. ZHT->ZHT_CLIENT == cCliAtu .And. ZHT->ZHT_LOJA == cLjaAtu
+
+        Aadd(aProdutos,{ ZHT->ZHT_PRODUT, ZHT->ZHT_DESC })
+
+        ZHT->(DbSkip())
+
+    End
+
+    If Len(aProdutos) <= 0
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    cQuery := ""
+    cQuery += " SELECT " 
+        cQuery += " A1_COD, A1_LOJA, A1_NOME " 
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("SA1") + " (NOLOCK) AS SA1 " 
+    cQuery += " WHERE " 
+        cQuery += " A1_FILIAL = '" + FWxFilial("SA1") + "' " 
+        cQuery += " AND A1_MSBLQL = '2' " 
+        // cQuery += " AND A1_XPROMOT <> '' " 
+        cQuery += " AND A1_COD BETWEEN '" + MV_PAR02 + "' AND '" + MV_PAR04 + "' " 
+        cQuery += " AND A1_LOJA BETWEEN '" + MV_PAR03 + "' AND '" + MV_PAR05 + "' " 
+        cQuery += " AND A1_REDE BETWEEN '" + MV_PAR06 + "' AND '" + MV_PAR07 + "' " 
+        cQuery += " AND SA1.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY A1_COD, A1_LOJA " 
+
+    cAliasAux := GetNextAlias()
+
+    DbUseArea(.T., "TOPCONN", TcGenQry(,, cQuery), cAliasAux, .F., .T.)
+    (cAliasAux)->(DbGoTop())
+
+    While ! (cAliasAux)->(Eof())
+
+        If cCliAtu == (cAliasAux)->A1_COD .And. cLjaAtu == (cAliasAux)->A1_LOJA
+            (cAliasAux)->(DbSkip())
+            Loop
+
+        EndIf
+
+        process(nTipo, (cAliasAux)->A1_COD, (cAliasAux)->A1_LOJA, (cAliasAux)->A1_NOME, aProdutos)
+
+        (cAliasAux)->(DbSkip())
+
+    End
+
+    MsgInfo("Processo finalizado.", "Função ADVN1082(ADVEN108P)")
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} process
+    Insere os produtos.
+    @type  Static Function
+    @author Everson
+    @since 03/08/2022
+    @version 01
+/*/
+Static Function process(nTipo, cCliente, cLoja, cNome, aProdutos)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local oModel    := Nil    
+    Local nAux      := 1
+    Local aError    := {}
+    Local cMsgError := ""
+    Local cItem     := "001"
+    Local cCodPrd   := ""
+    Local cDesPrd   := ""
+
+    cNome := Alltrim(cValToChar(cNome))
+
+    If nTipo == 1
+        TcSqlExec(" UPDATE " + RetSqlName("ZHT") + " SET D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ WHERE ZHT_FILIAL = '" + FWxFilial("ZHT") + "' AND ZHT_CLIENT = '" + cCliente + "' AND ZHT_LOJA = '" + cLoja + "' AND D_E_L_E_T_ = '' ")
+
+    ElseIf nTipo == 2
+
+        If ZHT->( DbSeek( FWxFilial("ZHT") + cCliente + cLoja ) )
+
+            While ! ZHT->(Eof()) .And. ZHT->ZHT_CLIENT == cCliente .And. ZHT->ZHT_LOJA == cLoja
+
+                If ZHT->ZHT_ITEM > cItem
+
+                    cItem := ZHT->ZHT_ITEM 
+
+                EndIf
+
+                ZHT->(DbSkip())
+
+            End
+
+            cItem := Soma1(cItem)
+
+        EndIf
+
+    Else
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    For nAux := 1 To Len(aProdutos)
+
+        cCodPrd  := Alltrim(cValToChar(aProdutos[nAux][1]))
+        cDesPrd  := Alltrim(cValToChar(aProdutos[nAux][2]))
+        
+        If nTipo == 2 .And. ZHT->( DbSeek( FWxFilial("ZHT") + cCliente + cLoja + cCodPrd ) )
+            Loop
+
+        EndIf
+
+        oModel := FwLoadModel("ADVEN108P")
+        oModel:SetOperation(MODEL_OPERATION_INSERT)
+        oModel:Activate()
+
+        oModel:SetValue("MD_MASTER", "ZHT_CLIENT" , cCliente)
+        oModel:SetValue("MD_MASTER", "ZHT_LOJA"   , cLoja)
+        oModel:SetValue("MD_MASTER", "ZHT_NOME"   , cNome)
+        oModel:SetValue("MD_GRID"  , "ZHT_ITEM"   , cItem)
+        oModel:SetValue("MD_GRID"  , "ZHT_PRODUT" , cCodPrd)
+        oModel:SetValue("MD_GRID"  , "ZHT_DESC"   , cDesPrd)
+
+        If oModel:VldData()
+            oModel:CommitData()
+
+        Else
+            aError := oModel:GetErrorMessage()
+            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+
+        EndIf
+
+        oModel:DeActivate()
+        oModel:Destroy()
+        oModel := Nil
+
+
+        If ! Empty(cMsgError)
+            MsgInfo("Ocorreu erro ao incluir o produto " + cCodPrd + " " + cDesPrd + " para o cliente " + cCliente + " " + cLoja + " " + cNome, cTitle)
+
+        EndIf
+        
+        cMsgError:= ""
+        cItem := Soma1(cItem)
+
+    Next nAux
+
+    RestArea(aArea)
+
+Return Nil
