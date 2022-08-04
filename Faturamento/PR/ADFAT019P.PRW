@@ -73,6 +73,8 @@ Static Function MenuDef()
 
     ADD OPTION aRotina TITLE "Abrir Pesagem" ACTION "U_ADFAT19B()"       OPERATION 10  ACCESS 0
 
+    ADD OPTION aRotina TITLE "Env Barramento" ACTION 'MsAguarde({|| U_ADFAT19D() }, "Aguarde", "Enviando...")'       OPERATION 11  ACCESS 0
+
 Return aRotina
 /*/{Protheus.doc} ModelDef
     @type  Static Function
@@ -1246,4 +1248,24 @@ User Function ADFAT19C(cCP, cNmOrdem)
     RestArea(aArea)
 
 Return lRet
-/*/{Protheu
+/*/{Protheus.doc} ADFAT19D
+    Envia ticket para o barramento.
+    @type  Static Function
+    @author Everson
+    @since 04/08/2022
+    @version 01
+/*/
+User Function ADFAT19D()
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local cNumero  := ZIG->ZIG_NUMERO
+
+    If ! MsgYesNo("Deseja enviar o ticket " + cNumero + "?", "Função ADFAT19D(ADFAT019P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    grvBarr("A", cNumero)
+
+Return Nil

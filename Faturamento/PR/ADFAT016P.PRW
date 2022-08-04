@@ -48,7 +48,18 @@ Return oBrowse
     @version 01
 /*/
 Static Function MenuDef()
-Return (FwMVCMenu("ADFAT016P"))
+
+    //Variáveis.
+	Local aRotina 	:= {}
+
+	ADD OPTION aRotina TITLE "Pesquisar"      ACTION "PesqBrw"          	OPERATION 1   ACCESS 0
+	ADD OPTION aRotina TITLE "Visualizar"     ACTION "VIEWDEF.ADFAT016P" 	OPERATION MODEL_OPERATION_VIEW      ACCESS 0
+	ADD OPTION aRotina TITLE "Incluir" 	      ACTION "VIEWDEF.ADFAT016P" 	OPERATION MODEL_OPERATION_INSERT    ACCESS 0
+	ADD OPTION aRotina TITLE "Alterar"        ACTION "VIEWDEF.ADFAT016P" 	OPERATION MODEL_OPERATION_UPDATE    ACCESS 0
+	ADD OPTION aRotina TITLE "Excluir" 	      ACTION "VIEWDEF.ADFAT016P" 	OPERATION MODEL_OPERATION_DELETE    ACCESS 0
+    ADD OPTION aRotina TITLE "Env Barramento" ACTION 'MsAguarde({|| U_ADFAT16J() }, "Aguarde", "Enviando...")'       OPERATION 10  ACCESS 0
+
+Return aRotina
 /*/{Protheus.doc} ModelDef
     @type  Static Function
     @author Everson
@@ -1523,3 +1534,27 @@ User Function ADFAT16G(cAgrupador)
     RestArea(aArea)
 
 Return {nTotOrd, nPesoT}
+/*/{Protheus.doc} User Function ADFAT16J
+    Envia ordem para o barramento.
+    @type  Function
+    @author Everson
+    @since 04/08/2022
+    @version 01
+/*/
+User Function ADFAT16J()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cNmOrdem  := ZIF->ZIF_NUMERO
+
+    If ! MsgYesNo("Deseja enviar a ordem de pesagem " + cNmOrdem + "?", "Função ADFAT16J(ADFAT016P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    grvBarr("A", cNmOrdem)
+
+    RestArea(aArea)
+    
+Return Nil
