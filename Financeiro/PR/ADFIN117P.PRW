@@ -12,6 +12,7 @@
 	@history Ticket 18035 - Leonardo P. Monteiro - 27/12/2021 - Ajustes na rotina e separação referente ao ponto de entrada F050ROT.
     @history Ticket 14558 - Fernando Macieira    - 18/04/2022 - Rotina para lançamentos de NDFs - Ajuste R$
     @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
+    @history Ticket 76402 - Fernando Macieira    - 03/08/2022 - CSV - NDF - Está trazendo a informação do campo C custo Crédito
 /*/
 User Function ADFIN117P()
 
@@ -139,7 +140,8 @@ Static Function Converte()
                     cE2_ITEMC   := Alltrim(PadR(aLinha[nPosIteCre]	, TamSX3("E2_ITEMC")		[1]))
                     cE2_CCC     := Alltrim(PadR(aLinha[nPosCCusto]	, TamSX3("E2_CCC")		    [1]))
                     cE2_HIST	:= Alltrim(PadR(aLinha[nPosHistor]	, TamSX3("E2_HIST")		    [1]))
-                    cE2_CCSOLIC := Alltrim(PadR(aLinha[nPosCCusto]	, TamSX3("E2_CCSOLIC")		[1])) // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
+                    cE2_CCSOLIC := Alltrim(PadR(aLinha[nPosCCSol]	, TamSX3("E2_CCSOLIC")		[1])) // @history Ticket 76402 - Fernando Macieira    - 03/08/2022 - CSV - NDF - Está trazendo a informação do campo C custo Crédito
+                    //cE2_CCSOLIC := Alltrim(PadR(aLinha[nPosCCusto]	, TamSX3("E2_CCSOLIC")		[1])) // @history Ticket 76402 - Fernando Macieira    - 13/07/2022 - CSV - NDF
                     
                     SE2->(DbSetOrder(1))
                     SED->(DbSetOrder(1))

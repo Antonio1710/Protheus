@@ -24,22 +24,17 @@ Local cPerg 		:= "ADMNT018R"
 Local aInfoCustom 	:= {}
 Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL do Relatorio Horas Disponiveis x Realizadas"
 local lSetEnv       := .f.
+Local _aEmpFil      := {{"01","02"},{"02","01"}}
+Local _n1
 
-Private cPara      := SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br") 
+Private lJob       := IsBlind()
+Private cPara      := "pcm@adoro.com.br" 
 Private cAssunto   := "Relatorio de Horas Disponiveis x Realizadas"
 Private cCorpo     := "Relatorio de Horas Disponiveis x Realizadas"
 Private aAnexos    := {}
 Private lMostraLog := .F.
 Private lUsaTLS    := .T.
 Private cHtml		:= ""
-//Local cEmp 		:= "01"
-//Local cFil 		:= "02"
-
-		//RPCClearEnv()
-		//RPCSetType(3)
-		//RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })		
-
-Private lJob          := IsBlind()
 Private oProcess
 Private dPeriodoDe  //Do Periodo
 Private dPeriodoAte //Ate Periodo
@@ -51,24 +46,42 @@ Private cFuncioDe   //Do Funcionario
 Private cFuncioAte  //Ate Funcionario
 Private nTipoRel    //Tipo 1=Por Centro Cust, 2=Por Especialid., 3=Por Funcionario
 Private nTipoOrd    //Tipo de Ordens 1=Corretiva, 2=Preventiva, 3=Outros, 4=Todas
-Private czEMP	:= cEmpAnt
-Private czFIL   := cFilAnt
-Private cNivel  := SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
-Private _cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
+Private czEMP	
+Private czFIL   
+Private cNivel  := "4" 
+Private _cNomeEmpFil := " "
+
 //Aadd(aInfoCustom,{"Visualizar",{|oCenterPanel| visualiza(oCenterPanel)},"WATCH" })
 //Aadd(aInfoCustom,{"Relatorio" ,{|oCenterPanel| Relat(oCenterPanel) },"RELATORIO"})
 
+If SELECT("SX6") == 0
+	lJob := .t.
+else
+	lJob := .f.
+EndIf
+
 If lJob
-	RpcSetType(3)
-	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
-    czEMP    := aParam[1]   
-    czFIL    := aParam[2]   
-    
-    PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
-    cPara      :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br" ) 
-    
-    oProcess := Executa()
+	
+	For _n1 := 1 To Len(_aEmpFil)
+
+		RpcSetType(3)
+		lSetEnv  := RpcSetEnv(_aEmpFil[_n1,1],_aEmpFil[_n1,2],,,"")
+		czEMP    := _aEmpFil[_n1,1]   
+		czFIL    := _aEmpFil[_n1,2]   
+		
+		PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "MNT"
+		_cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
+		cPara        :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br;antonio.filho@adoro.com.br" ) 
+		cNivel  	 :=  SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
+
+		oProcess := Executa()
+
+	Next
+
 Else
+	_cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
+	cPara    :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br;antonio.filho@adoro.com.br" ) 
+    cNivel   :=  SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
     oProcess := tNewProcess():New("ADMNT018R","Relação HDR",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Relação HDR", .T. )
 Endif
 
@@ -358,14 +371,19 @@ Static Function C905PROC()
 	Local nHoraExtra 	:= 0
 	Local nX         	:= 1
 	Local aHrsBloq   	:= {}
-
+	Local _cFilST0      := If(lJob,czFil,xFilial("ST0"))
+	Local _cFilST1      := If(lJob,czFil,xFilial("ST1"))
+	Local _cFilST2      := If(lJob,czFil,xFilial("ST2"))
+	Local _cFilST3      := If(lJob,czFil,xFilial("ST3"))
+	Local _cFilSRA      := If(lJob,czFil,xFilial("SRA"))
+	
 	Private aARRCALE := {}, aDtExcRH := {}
 
 	DbselectArea( "ST1" )
 	Dbsetorder( 01 )
-	Dbseek( xFilial( "ST1" )+cFuncioDe,.T. )
+	Dbseek( _cFilST1+cFuncioDe,.T. )
 	ProcRegua(LastRec())
-	While !Eof() .And. xfilial( "ST1" ) = ST1->T1_FILIAL .And. ST1->T1_CODFUNC <= cFuncioAte
+	While !Eof() .And. _cFilST1 = ST1->T1_FILIAL .And. ST1->T1_CODFUNC <= cFuncioAte
 		IncProc()
 
 		If lMNTC9051
@@ -391,8 +409,8 @@ Static Function C905PROC()
 
 			DbselectArea('ST2')
 			Dbsetorder(01)
-			DbSeek(xFilial("ST2")+ST1->T1_CODFUNC)
-			While !Eof() .And. xfilial("ST2") = ST2->T2_FILIAL .And. ST2->T2_CODFUNC = ST1->T1_CODFUNC
+			DbSeek(_cFilST2+ST1->T1_CODFUNC)
+			While !Eof() .And. _cFilST2 = ST2->T2_FILIAL .And. ST2->T2_CODFUNC = ST1->T1_CODFUNC
 				If ST2->T2_ESPECIA >= cEspeciDe .AND. ST2->T2_ESPECIA <= cEspeciAte
 					lESPECIA := .T.
 					Exit
@@ -403,7 +421,7 @@ Static Function C905PROC()
 			If lESPECIA
 				If nTipoRel == 1
 					cSeek := ST1->T1_CCUSTO
-					cNOME := If(SI3->(DbSeek(xFilial("SI3") + cSEEK)), SI3->I3_DESC, Space(15) )
+					cNOME := If(SI3->(DbSeek(_cFilST3 + cSEEK)), SI3->I3_DESC, Space(15) )
 					If lFstSeek
 						If cOldSeek <> cSeek
 							nHorasBlq := 0
@@ -411,7 +429,7 @@ Static Function C905PROC()
 					EndIf
 				ElseIf nTipoRel == 2
 					cSeek := ST2->T2_ESPECIA+Space(Len(stj->tj_ccusto)-Len(st2->t2_especia))
-					cNOME := If(ST0->(DbSeek(xFilial("ST0") + cSEEK)), ST0->T0_NOME, Space(15) )
+					cNOME := If(ST0->(DbSeek(_cFilST0 + cSEEK)), ST0->T0_NOME, Space(15) )
 					If lFstSeek
 						If cOldSeek <> cSeek
 							nHorasBlq := 0
@@ -1673,6 +1691,8 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 	DbSelectArea(cTabela)
 	DbGoTop()
 
+	anexos:={}
+
 	If cNivel = "1" .OR. cNivel = "4"
 		Titulo   := STR0055 //"Horas Disponiveis X Trabalhadas - " + AllTrim(cRelDet1) //"Analisede utilizacao de MDO - Disponivel X Realizado"
 		Tamanho  := "M"
@@ -1716,13 +1736,14 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 
         //fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq})
      	//@Ticket 13242 ini
-        cDIRREDE :="\rel_mnt\"
+        /*
+		cDIRREDE :="\rel_mnt\"
         nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 		
 		If FError() == 25 //Arquivo já existe na pasta destino
 			FERASE(cDIRREDE+cNomArq) 
             nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
 		EndIf
-
+		*/
     Endif
     // oExcel:WorkBooks:Open(cNomArq) 	// Abre uma planilha
 	// oExcel:SetVisible(.T.) 			// visualiza a planilha
@@ -1785,6 +1806,7 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
     Else
         aAdd(aAnexos, cDIRREDE+cNomArq)
         fEnvMail(cPara, cAssunto, cHtml, aAnexos, lMostraLog, lUsaTLS)
+		FERASE(cDIRREDE+cNomArq) 
 	EndIf
 
 Return NIL
@@ -2286,13 +2308,20 @@ Static Function fLoadDados( aTRB9051, aHrsBloq )
 	Else
 		aAdd(aFirstVet,aTRB9051[1])
 	EndIf
+	
+	If !lJob
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'1',aFirstVet,cThread1,aThread1 )
 
-	//Executa a função "GrvTRT9051()" em uma thread sem interface.
-	StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'1',aFirstVet,cThread1,aThread1 )
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'2',aSecondVt,cThread2,aThread2 )
+	else
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,czEmp,czFil,'1',aFirstVet,cThread1,aThread1 )
 
-	//Executa a função "GrvTRT9051()" em uma thread sem interface.
-	StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'2',aSecondVt,cThread2,aThread2 )
-
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,czEmp,czFil,'2',aSecondVt,cThread2,aThread2 )
+	EndIf
 	//-------------------------------------------------------
 	// Garante que a threads foi executada de forma perfeita
 	//-------------------------------------------------------

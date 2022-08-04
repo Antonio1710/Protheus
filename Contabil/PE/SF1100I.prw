@@ -3,7 +3,7 @@
 #include "protheus.ch"        
 #INCLUDE "TOPCONN.CH"
 
-/*{Protheus.doc} User Function SF1100I
+/*/{Protheus.doc} User Function SF1100I
 	Grava dados referente nota fiscal original na nota devolucao de vendas para ser utilizado na contabilizacao.
 	@type  Function
 	@author hcconsys
@@ -11,8 +11,8 @@
 	@version 01
 	@history Chamado 020821 - Heverson      - 31/08/2009 - Alteracao referente a mensagens na nota fiscal de entrada proprio e alteracao para nf de importacao de SC
 	@history Chamado 058391 - William Costa - 29/05/2020 - Devido falha na gravação do campo F1_TPCTE atráves do ponto de entrada na PRÉ-NOTA DE ENTRADA, foi adicionado também o RECLOCK no DOCUMENTO DE ENTRADA para garantir o processo
-*/	
-
+	@history ticket 77543 - Fernando Macieira - 03/08/2022 - SD1 sem endereçamento automático apartir de 25/07/2022
+/*/	
 User Function SF1100I()
 
 	Local  _aArea   := GetArea()
@@ -31,6 +31,7 @@ User Function SF1100I()
 	Local _aAlias   := GetArea()
 	Local cAlameda  := ""
 	Local cCodSAG	:= "" //Everson - 28/11/2018. 045465
+
 	Private _cMensA		:= ""
 	Private _cMensB		:= ""
 	Private _nPesol		:= 0
@@ -58,9 +59,10 @@ User Function SF1100I()
 			IF dbSeek(xFilial("SD2")+SD1->(D1_NFORI + D1_SERIORI + D1_FORNECE + D1_LOJA + D1_COD + D1_ITEMORI),.T.)			
 
 				Reclock("SD1",.F.)
-				SD1->D1_ITEMCTA 	:= SD2->D2_ITEMCC
-				SD1->D1_CLVL		:= SD2->D2_CLVL			
+					SD1->D1_ITEMCTA 	:= SD2->D2_ITEMCC
+					SD1->D1_CLVL		:= SD2->D2_CLVL			
 				MsUnlock("SD1")			
+
 				dbSelectArea("SD1")
 				dbSkip()
 
@@ -96,9 +98,10 @@ User Function SF1100I()
 
 			_nPDescR  	:= Posicione("SC7",1,xFilial("SC7")+SD1->D1_PEDIDO,"C7_XPDESCR")    
 			_cUser  	:= Posicione("SC7",1,xFilial("SC7")+SD1->D1_PEDIDO,"C7_USER")		 
+
 			dbSelectArea("SF1")
 			RecLock("SF1",.F.)			
-			SF1->F1_XPDESCR	:= _nPDescR
+				SF1->F1_XPDESCR	:= _nPDescR
 			MsUnlock("SF1")						
 
 		ENDIF               //fim - chamado 035167
@@ -503,7 +506,8 @@ User Function SF1100I()
 
 	IF SuperGetMV("MV_LOCALIZ",.F.,"N")=="S" .AND. SF1->F1_TIPO == "N" 
 
-		GerSldSDB ()	// Função especifica pace para endereçamento
+		// Função especifica pace para endereçamento
+		FWMsgRun(, {|| GerSldSDB() }, "Endereçando", "Checando produtos com endereçamento ["+Time()+"] ...")
 
 	ENDIF
 		
@@ -542,14 +546,13 @@ STATIC FUNCTION gravaDados()
 
 RETURN(.T.)
 
-/*{Protheus.doc} Static Function GerSldSDB
+/*/{Protheus.doc} Static Function GerSldSDB
 	Gera o Saldo por Endereco para notas fiscais de entrada
 	@type  Function
 	@author hcconsys
 	@since 19/07/2006
 	@version 01
-*/	
-
+/*/	
 Static Function GerSldSDB()
 
 	Local cArea       := GetArea()
@@ -565,6 +568,11 @@ Static Function GerSldSDB()
 	Local aCab        := {}
 	Local aItem       := {}
 	
+	// @history ticket 77543 - Fernando Macieira - 03/08/2022 - SD1 sem endereçamento automático apartir de 25/07/2022
+	Local nx
+	Local aLog := {}
+	Local aDadSBE := {}
+	
 	cQuery := " SELECT DA_PRODUTO, "
 	cQuery += "        DA_DOC,     "
 	cQuery += "        DA_SERIE,   "
@@ -574,7 +582,7 @@ Static Function GerSldSDB()
 	cQuery += "        DA_SALDO,   "
 	cQuery += "        DA_LOCAL,   "
 	cQuery += "        DA_DATA     "
-	cQuery += " FROM " + RetSQLName( "SDA" ) + " SDA "
+	cQuery += " FROM " + RetSQLName("SDA") + " SDA (NOLOCK) "
 	cQuery += " WHERE DA_FILIAL      = '" + xFilial("SDA") + "' "
 	cQuery += "   AND DA_DOC         = '" + cNota          + "' "
 	cQuery += "   AND DA_SERIE       = '" + cSerie         + "' "
@@ -585,10 +593,8 @@ Static Function GerSldSDB()
 	cQuery += " ORDER BY DA_NUMSEQ "
 	
 	IF Select("TRBSDA") > 0
-
 		dbSelectArea("TRBSDA")
 		dbCloseArea()
-
 	ENDIF
 	
 	TCQUERY cQuery NEW ALIAS "TRBSDA"
@@ -603,6 +609,7 @@ Static Function GerSldSDB()
 			
 				TRBSDA->(DbCloseArea())
 				RestArea(cArea)
+
 				RETURN
 
 			ENDIF
@@ -610,11 +617,21 @@ Static Function GerSldSDB()
 			cEndereco := ''
 			cProduto  := ''
 			cLocal    := ''
+			
+			// @history ticket 77543 - Fernando Macieira - 03/08/2022 - SD1 sem endereçamento automático apartir de 25/07/2022
+			aDadSBE := u_GetSBE(TRBSDA->DA_PRODUTO,TRBSDA->DA_LOCAL)
+
+			cEndereco := aDadSBE[1]
+			cProduto  := aDadSBE[2]
+			cLocal    := aDadSBE[3]
+
+			/*
 			cEndereco := Posicione("SBE",10,xFilial("SBE")+TRBSDA->DA_PRODUTO+TRBSDA->DA_LOCAL,"BE_LOCALIZ")
 			cProduto  := Posicione("SBE",10,xFilial("SBE")+TRBSDA->DA_PRODUTO+TRBSDA->DA_LOCAL,"BE_CODPRO")
 			cLocal    := Posicione("SBE",10,xFilial("SBE")+TRBSDA->DA_PRODUTO+TRBSDA->DA_LOCAL,"BE_LOCAL") 
-			// se nao encontrar/criar o endereco
-			
+			*/
+			//
+
 			IF ALLTRIM(cEndereco) <> '' .AND. ;
 			   ALLTRIM(cProduto)  <> '' .AND. ;
 			   ALLTRIM(cLocal)    <> '' 
@@ -637,21 +654,38 @@ Static Function GerSldSDB()
 				            {"DB_QUANT"  , TRBSDA->DA_SALDO      ,NIL}} ) // Quantidade
 				
 				Begin Transaction
-				lMSErroAuto := .F.
-				MSExecAuto({|x,y,z| Mata265(x,y,z)},aCab,aItem,3)
-				
-				IF lMSErroAuto  // Se der erro
 
-					DisarmTransaction()
-					MostraErro()
-					RETURN .F.
+					lMSErroAuto := .F.
+					MSExecAuto({|x,y,z| Mata265(x,y,z)},aCab,aItem,3)
+					
+					IF lMSErroAuto  // Se der erro
 
-				ELSE // naum deu erro
+						// @history ticket 77543 - Fernando Macieira - 03/08/2022 - SD1 sem endereçamento automático apartir de 25/07/2022
+						aLog := GetAutoGrLog()
 
-					EvalTrigger()
-					Commit
+						//grava as informações de log no arquivo especificado
+						For nX := 1 To Len(aLog)
+						u_GrLogZBE( msDate(), TIME(), cUserName,"ENDERECAMENTO AUTOMATICO PRODUTOS ALMOXARIFADO NAO REALIZADO - MATA265 - NF/SERIE/FORNECE " + TRBSDA->DA_DOC + "/" + TRBSDA->DA_SERIE + "/" + TRBSDA->DA_CLIFOR + " PRODUTO/ARMAZEM/ENDERECO " + cProduto + "/" + cLocal + "/" + cEndereco,"CONTROLADORIA","SF1100I",;
+						"Linha Error log " + AllTrim(Str(nX)) + " - Erro " + aLog[nX], ComputerName(), LogUserName() )
+						Next nX			
+						//
 
-				ENDIF
+						DisarmTransaction()
+						MostraErro()
+
+						RETURN .F.
+
+					ELSE // naum deu erro
+
+						// @history ticket 77543 - Fernando Macieira - 03/08/2022 - SD1 sem endereçamento automático apartir de 25/07/2022
+						u_GrLogZBE( msDate(), TIME(), cUserName,"ENDERECAMENTO AUTOMATICO PRODUTOS ALMOXARIFADO - MATA265","CONTROLADORIA","SF1100I",;
+						"NF/SERIE/FORNECE " + TRBSDA->DA_DOC + "/" + TRBSDA->DA_SERIE + "/" + TRBSDA->DA_CLIFOR + " PRODUTO/ARMAZEM/ENDERECO " + cProduto + "/" + cLocal + "/" + cEndereco, ComputerName(), LogUserName() )
+						//
+
+						EvalTrigger()
+						Commit
+
+					ENDIF
 				
 				END Transaction
 				
@@ -668,3 +702,50 @@ Static Function GerSldSDB()
 	RestArea(cArea)
 
 RETURN()
+
+/*/{Protheus.doc} nomeStaticFunction
+	Função para buscar endereço do armazém/produto
+	@type  Static Function
+	@author FWNM
+	@since 03/08/2022
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	@history ticket 77543 - Fernando Macieira - 03/08/2022 - SD1 sem endereçamento automático apartir de 25/07/2022
+/*/
+User Function GetSBE(cDA_PRODUTO,cDA_LOCAL)
+
+	Local aDados := Array(3)
+	Local cQuery := ""
+
+	Default cDA_PRODUTO := ""
+	Default cDA_LOCAL   := ""
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+	cQuery := " SELECT BE_LOCALIZ, BE_CODPRO, BE_LOCAL
+	cQuery += " FROM " + RetSqlName("SBE") + " (NOLOCK)
+	cQuery += " WHERE BE_FILIAL='"+FWxFilial("SBE")+"' 
+	cQuery += " AND BE_CODPRO='"+cDA_PRODUTO+"'
+	cQuery += " AND BE_LOCAL='"+cDA_LOCAL+"'
+	cQuery += " AND D_E_L_E_T_=''
+
+	tcQuery cQuery New Alias "Work"
+
+	Work->( dbGoTop() )
+	If Work->( !EOF() )
+		aDados[1] := AllTrim(Work->BE_LOCALIZ)
+		aDados[2] := AllTrim(Work->BE_CODPRO)
+		aDados[3] := AllTrim(Work->BE_LOCAL)
+	EndIf
+
+	If Select("Work")
+		Work->( dbCloseArea() )
+	EndIf
+
+Return aDados
