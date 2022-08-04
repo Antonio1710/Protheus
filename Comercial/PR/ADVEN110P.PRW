@@ -233,6 +233,8 @@ Static Function ViewDef()
     oView:SetViewProperty( "VW_GRID", "GRIDFILTER", {.T.}) 
     oView:SetViewProperty( "VW_GRID", "GRIDSEEK", {.T.})
 
+    oView:AddUserButton("Carga Inicial","",{|oView| MsAguarde({|| carProd() }, "Aguarde", "Processando...") } ,"",, {MODEL_OPERATION_INSERT} , .T. ) 
+
 Return oView
 /*/{Protheus.doc} gridFocus
     Função executada quando a grid ganha foco.
@@ -247,13 +249,13 @@ Static Function gridFocus(oView)
     Local aArea   := GetArea()
     Local oModel  := oView:GetModel()
     Local cDesc   := oModel:GetValue("MD_MASTER","ZHY_DESC")
-    Local cDtIni  := oModel:GetValue("MD_MASTER","ZHY_DTINI")
+    Local dDtIni  := oModel:GetValue("MD_MASTER","ZHY_DTINI")
 
     If Empty(cDesc)
         Help(Nil, Nil, "Função gridFocus(ADVEN110P)", Nil, "Necessário informar a descrição.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHY_DESC"):OCtrl:SetFocus()
 
-    ElseIf Empty(cDtIni)
+    ElseIf Empty(dDtIni)
         Help(Nil, Nil, "Função gridFocus(ADVEN110P)", Nil, "Necessário informar a data de início.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         oView:GetViewObj("VW_MASTER")[3]:GetFWEditCTRL("ZHY_DTINI"):OCtrl:SetFocus()
 
@@ -489,3 +491,140 @@ User Function ADVN1102() // U_ADVN1102()
 	RpcClearEnv()
 
 Return Nil
+/*/{Protheus.doc} carProd
+    Carrega produtos do cliente.
+    @type  Static Function
+    @author Everson
+    @since 03/08/2022
+    @version 01
+/*/
+Static Function carProd()
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local oView     := FWViewActive()
+    Local oHeader   := oView:GetModel("MD_MASTER")
+    Local oGrid     := oView:GetModel("MD_GRID")
+    Local cQuery    := ""
+    Local cNumero   := oHeader:GetValue("ZHY_NUMERO")
+    Local cDesc     := oHeader:GetValue("ZHY_DESC")
+    Local dDtIni    := oHeader:GetValue("ZHY_DTINI")
+    Local cTipo     := oHeader:GetValue("ZHY_TIPO")
+
+    If Empty(cDesc) .Or. Empty(dDtIni)
+        MsgInfo("Necessário informar a descrição e a data inicial.", "Função carProd(ADVEN110P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    cQuery := ""
+    cQuery += " SELECT " 
+        cQuery += " A1_XPROMOT, A1_COD, A1_LOJA, A1_NOME, A1_REDE, A1_VEND " 
+    cQuery += " FROM " 
+        cQuery += " " + RetSqlName("SA1") + " (NOLOCK) AS SA1 " 
+    cQuery += " WHERE " 
+        cQuery += " A1_FILIAL = '" + FWxFilial("SA1") + "' " 
+        cQuery += " AND A1_MSBLQL = '2' " 
+        cQuery += " AND A1_XPROMOT <> '' " 
+        cQuery += " AND SA1.D_E_L_E_T_ = '' " 
+    cQuery += " ORDER BY A1_XPROMOT, A1_REDE, A1_COD, A1_LOJA " 
+
+    If Select("D_PROMOT") > 0
+        D_PROMOT->(DbCloseArea())
+
+    EndIf
+
+    TcQuery cQuery New Alias "D_PROMOT"
+    DbSelectArea("D_PROMOT")
+
+    U_ADVN1104()
+
+    If ! D_PROMOT->(Eof())
+
+        FWFldPut("ZHY_NUMERO" , cNumero)
+        FWFldPut("ZHY_DESC"   , cDesc)
+        FWFldPut("ZHY_DTINI"  , dDtIni)
+        FWFldPut("ZHY_TIPO"   , cTipo)
+
+        oGrid:setValue("ZHY_FILIAL", FWxFilial("ZHY"))
+        oGrid:setValue("ZHY_NUMERO", cNumero)
+        oGrid:setValue("ZHY_DESC"  , cDesc)
+        oGrid:setValue("ZHY_DTINI" , dDtIni)
+        oGrid:setValue("ZHY_TIPO"  , cTipo)
+
+        oGrid:setValue("ZHY_PROMOT", D_PROMOT->A1_XPROMOT)
+        oGrid:setValue("ZHY_CLIENT", D_PROMOT->A1_COD)
+        oGrid:setValue("ZHY_LOJA"  , D_PROMOT->A1_LOJA)
+        oGrid:setValue("ZHY_NOME"  , D_PROMOT->A1_NOME)
+        oGrid:setValue("ZHY_REDE"  , D_PROMOT->A1_REDE)
+        oGrid:setValue("ZHY_VEND"  , D_PROMOT->A1_VEND)
+
+        oGrid:setValue("ZHY_SEGUND"  , Space(TamSX3("ZHY_SEGUNDA")[1]))
+        oGrid:setValue("ZHY_TERCA"   , Space(TamSX3("ZHY_TERCA")[1]))
+        oGrid:setValue("ZHY_QUARTA"  , Space(TamSX3("ZHY_QUARTA")[1]))
+        oGrid:setValue("ZHY_QUINTA"  , Space(TamSX3("ZHY_QUINTA")[1]))
+        oGrid:setValue("ZHY_SEXTA"   , Space(TamSX3("ZHY_SEXTA")[1]))
+        oGrid:setValue("ZHY_SABADO"  , Space(TamSX3("ZHY_SABADO")[1]))
+
+        While ! D_PROMOT->(Eof())
+
+            oGrid:addLine()
+
+            oGrid:setValue("ZHY_FILIAL", FWxFilial("ZHY"))
+            oGrid:setValue("ZHY_NUMERO", cNumero)
+            oGrid:setValue("ZHY_DESC"  , cDesc)
+            oGrid:setValue("ZHY_DTINI" , dDtIni)
+            oGrid:setValue("ZHY_TIPO"  , cTipo)
+
+            oGrid:setValue("ZHY_PROMOT", D_PROMOT->A1_XPROMOT)
+            oGrid:setValue("ZHY_CLIENT", D_PROMOT->A1_COD)
+            oGrid:setValue("ZHY_LOJA"  , D_PROMOT->A1_LOJA)
+            oGrid:setValue("ZHY_NOME"  , D_PROMOT->A1_NOME)
+            oGrid:setValue("ZHY_REDE"  , D_PROMOT->A1_REDE)
+            oGrid:setValue("ZHY_VEND"  , D_PROMOT->A1_VEND)
+
+            oGrid:setValue("ZHY_SEGUND"  , Space(TamSX3("ZHY_SEGUNDA")[1]))
+            oGrid:setValue("ZHY_TERCA"   , Space(TamSX3("ZHY_TERCA")[1]))
+            oGrid:setValue("ZHY_QUARTA"  , Space(TamSX3("ZHY_QUARTA")[1]))
+            oGrid:setValue("ZHY_QUINTA"  , Space(TamSX3("ZHY_QUINTA")[1]))
+            oGrid:setValue("ZHY_SEXTA"   , Space(TamSX3("ZHY_SEXTA")[1]))
+            oGrid:setValue("ZHY_SABADO"  , Space(TamSX3("ZHY_SABADO")[1]))
+
+            D_PROMOT->(DbSkip())
+
+        End
+
+    Else
+        oGrid:addLine()
+
+    EndIf
+
+    D_PROMOT->(DbCloseArea())
+
+    oGrid:goLine(1)
+
+    oView:refresh()
+
+    RestArea(aArea)
+
+Return Nil
+/*/{Protheus.doc} ADVN1104
+    Apaga dados da grid.
+    @type  User Function
+    @author Everson
+    @since 03/08/2022
+    @version 01
+/*/
+User Function ADVN1104()
+
+    //Variáveis.
+    Local oView  := FWViewActive()
+    Local oGrid  := Nil
+
+    oGrid := oView:GetModel("MD_GRID")
+    oGrid:ClearData()
+
+    oView:refresh()
+
+Return oGrid:length() == 1
