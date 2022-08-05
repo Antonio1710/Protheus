@@ -37,6 +37,7 @@
 	@history ticket 74270 - Fernando Macieira - 22/06/2022 - Desativação
 	@history ticket 76490 - Abel Babini       - 18/07/2022 - Descontar valor do FunRural (GILRAT) da validação da duplicata
 	@history ticket 76490 - Abel Babini       - 19/07/2022 - Corrigir arredondamento igual do calculo da duplicata.
+	@history ticket 76118 - Antonio Domingos  - 05/08/2022 - Local Padrão notas filial 0A - Pintinho
 /*/
 User Function MT100TOK()
 
@@ -267,6 +268,24 @@ User Function MT100TOK()
 
 					EndIf
 					//
+					//***INICIO ticket 76118 - Antonio Domingos  - 18/07/2022 - Local Padrão notas filial 0A - Pintinho
+					If 	cEmpAnt $ GetMV("MV_#1151EP",,"01") .AND.;
+						cFilAnt $ GetMV("MV_#1151FL",,"0A") .AND.;
+						ALLTRIM(gdFieldGet("D1_COD",nCont))    $ GetMV("MV_#1151PR",,"386914") .AND.;
+					    ALLTRIM(gdFieldGet("D1_CF",nCont))     $ GetMV("MV_#1151CF",,"1151") .AND.;
+						!ALLTRIM(gdFieldGet("D1_LOCAL",nCont)) $ GetMV("MV_#1151LC",,"A1360/A1361/A1362/A1363/A1364")
+						_lRet := .f.
+						_cMsg1151 := "[MT100TOK-31] - Para "
+						_cMsg1151 := " Empresa " + cEmpAnt
+						_cMsg1151 := " Filial " + cFilAnt
+						_cMsg1151 := " Produto " + ALLTRIM(gdFieldGet("D1_COD",nCont))
+						_cMsg1151 := " CFOP " + ALLTRIM(gdFieldGet("D1_CF",nCont))
+						_cMsg1151 := " O Local deve ser um destes locais: "+ALLTRIM(GetMV("MV_#1151LC",,"A1360/A1361/A1362/A1363/A1364"))
+						_cMsg1151 := " Local " + ALLTRIM(gdFieldGet("D1_LOCAL",nCont))+ " do Item da Nota "+gdFieldGet("D1_LOCAL",nCont)+" Invalido!!!"
+						Alert(_cMsg1151)
+							Return _lRet
+					EndIf					
+					//***FIM ticket 76118 - Antonio Domingos  - 18/07/2022 - Local Padrão notas filial 0A - Pintinho
 				
 				EndIf
 
