@@ -593,14 +593,14 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			SA3B.A3_COD = SA3.A3_SUPER
 			AND SA3B.%notDel%
     WHERE C5_FILIAL = %xFilial:SC5%
+			AND SC5.C5_DTENTR BETWEEN %Exp:DTOS(dDtIni)% AND %Exp:DTOS(dDtFim)%
 			AND SC5.C5_NUM BETWEEN %Exp:cPedDe% AND %Exp:cPedAte%
 			AND SC5.C5_CLIENTE BETWEEN %Exp:cCliDe% AND %Exp:cCliAte%
 			AND SC5.C5_LOJACLI BETWEEN %Exp:cLojDe% AND %Exp:cLojAte%
-			AND SC5.C5_DTENTR BETWEEN %Exp:DTOS(dDtIni)% AND %Exp:DTOS(dDtFim)%
+			AND SA1.A1_CODRED BETWEEN %Exp:cRedDe% AND %Exp:cRedAte%
 			AND C5_NOTA = ''
 			AND C5_TIPO = 'N'
 			AND SC5.%notDel%
-			AND SA1.A1_CODRED BETWEEN %Exp:cRedDe% AND %Exp:cRedAte%
 			%Exp:cFilRPd%
 		GROUP BY 
 			SC5.C5_FILIAL,
