@@ -80,6 +80,8 @@ Static Function ModelDef()
             {"ZHV_NOME"  , "ZHV_NOME"};
         }, (cTbMast)->(IndexKey(1)))
 
+    oModel:GetModel("MD_GRID"):SetUniqueLine({"ZHV_CODITE"})
+
     oModel:SetDescription(cTiMast)
     oModel:SetPrimaryKey({"ZHV_FILIAL","ZHV_NUMERO"})
 

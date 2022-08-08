@@ -37,6 +37,7 @@
 	@history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
 	@history ticket 73655 - Fernando Macieira - 26/05/2022 - PEDIDO VENDA COMPLEMENTO FRANGO VIVO - NÃO FOI GERADO
 	@history ticket 73501 - Fernando Macieira - 27/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO - SELECT * FROM SCHDTSK WHERE TSK_ROTINA LIKE '%ADLFV010%'
+	@history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
 /*/
 User Function ADLFV010P()
 
@@ -189,6 +190,7 @@ Static Function GeraPV(lAuto, cFilGranja)
 	Private cArquivo
 	Private oFuDimep
 	Private cFilOrig // @history ticket 71972 - Fernando Macieira - 28/04/2022 - Complemento Frango Vivo - Granja HH - Filial 0A
+	Private cFilUpd := "" // @history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
 
 	// @history ticket 73501 - Fernando Macieira - 24/05/2022 - DUPLICIDADE NO PEDIDO DE COMPLEMENTO DE FRANGO VIVO
 	If lAuto
@@ -206,7 +208,8 @@ Static Function GeraPV(lAuto, cFilGranja)
 	CriaTMP()
 
 	// Chama relatório de relação diária ordem de carregamento do frango vivo
-	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto, cFilGranja)
+	//u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto, cFilGranja)
+	u_AD0143(@cNFNot, @nTtPLO, @cSql, @nTtPLP, lAuto, cFilGranja, @cFilUpd) // @history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
 
 	// Efetua cálculo da DIFERENCA para gerar o PV
 	nQtdPV := (nTtPLO - nTtPLP)
@@ -311,6 +314,7 @@ Static Function GeraPV(lAuto, cFilGranja)
 
 		// Atualizo com o número do PV gerado os regitros utilizados para composição do mesmo visando impedir a geração de duplicidade
 		cFiltro := ""
+		cFiltro2 := "" // @history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
 		If !Empty(cNFNot)
 			cNFNotQry := ""
 			cNFNotQry := Left(AllTrim(cNFNot),Len(cNFNot)-1)
@@ -319,9 +323,16 @@ Static Function GeraPV(lAuto, cFilGranja)
 		EndIf
 		
 		cUpd    := " UPDATE " + RetSqlName("ZV1") + " SET ZV1_FLAGPV = '"+cNumPV+"' "
+		
+		// @history ticket 76964 - Fernando Macieira - 01/08/2022 - Pedido Complemento Filial 0A - Continuação do Ticket 74568
+		If !Empty(cFilUpd)
+			cFilUpd := Left(AllTrim(cFilUpd),Len(cFilUpd)-1)
+			cFiltro2 := " AND ZV1_NUMOC IN " + FormatIn(cFilUpd,"|")
+		EndIf
+		//
 											
-		If !Empty(cFiltro)
-			cSql := cUpd + Subs(cSql, At("FROM", cSql)-1, Len(cSql)) + cFiltro
+		If !Empty(cFiltro) .or. !Empty(cFiltro2)
+			cSql := cUpd + Subs(cSql, At("FROM", cSql)-1, Len(cSql)) + cFiltro + cFiltro2
 		Else
 			cSql := cUpd + Subs(cSql, At("FROM", cSql)-1, Len(cSql))
 		EndIf

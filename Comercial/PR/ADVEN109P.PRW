@@ -188,10 +188,10 @@ User Function ADVN1091()
         portfolio := Alltrim(cValToChar(D_VISESP->ZHX_PROMOT))
         cCliente  := Alltrim(cValToChar(D_VISESP->ZHX_CLIENT))
         cLoja     := Alltrim(cValToChar(D_VISESP->ZHX_LOJA))
-        cTopico   := "Visita Esporádica"
+        cTopico   := Alltrim(cValToChar(D_VISESP->ZHX_MOTIVO))
         cTipo     := "sporadic"
-        cHInicio  := Padl(Alltrim(cValToChar(D_VISESP->ZHX_HORARI)), 2, "0") + ":00" 
-        cHFim     := Padl(Alltrim(cValToChar(Val(D_VISESP->ZHX_HORARI)+1)), 2, "0") + ":00" 
+        cHInicio  := U_ADVN113(D_VISESP->ZHX_HORARI)
+        cHFim     := U_ADVN113(cValToChar(Val(D_VISESP->ZHX_HORARI)+1))
 
         MsAguarde({|| U_ADVN1092(.T., cUrl, cToken,;
                                  data, portfolio, cCliente, cLoja, cTopico, cTipo, cHInicio, cHFim) }, "Função ADVN1091(ADVEN109P)", "Enviando visitas...")
@@ -213,13 +213,12 @@ Return Nil
 	@version 01
 /*/
 User Function ADVN1092(lTSucess, cUrl, cToken,;
-                       data, portfolio, cCliente, cLoja, cTopico, cTipo, cHInicio, cHFim)
+                       data, portfolio, cCliente, cLoja, cTopico, cTipo, cHInicio, cHFim, lRetEnv)
 
 	//Variáveis.
 	Local aArea 	:= GetArea()
 	Local cBody		:= ""
 	Local cMsg		:= ""
-	Local lRetEnv	:= .F.
     Local cMetodo   := "Post"
     Local cServico  := "/events"
 	Local oJson     := Nil
@@ -231,6 +230,8 @@ User Function ADVN1092(lTSucess, cUrl, cToken,;
     Local cEnd      := ""
     Local cNumero   := ""
     Local cPosVirg  := 0
+	
+    Default lRetEnv	:= .F.
 
     DbSelectArea("SA1")
     SA1->(DbSetOrder(1))
@@ -291,8 +292,8 @@ User Function ADVN1092(lTSucess, cUrl, cToken,;
         cQuery += " " + RetSqlName("ZHT") + " (NOLOCK) AS ZHT " 
     cQuery += " WHERE " 
         cQuery += " ZHT_FILIAL = '" + FWxFilial("ZHT") + "' " 
-        cQuery += " ZHT_CLIENT = '" + cCliente + "' " 
-        cQuery += " ZHT_LOJA   = '" + cLoja + "' " 
+        cQuery += " AND ZHT_CLIENT = '" + cCliente + "' " 
+        cQuery += " AND ZHT_LOJA   = '" + cLoja + "' " 
         cQuery += " AND ZHT.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY ZHT_ITEM " 
 

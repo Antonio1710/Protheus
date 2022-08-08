@@ -31,8 +31,8 @@ Static cTitulo  := "Acordos Trabalhistas"
     @see (links_or_references)
     @ticket 72346
     @history Ticket 70142 	- Rodrigo Mello | Flek - 22/03/2022 - Substituicao de funcao PTInternal por FWMonitorMsg MP 12.1.33
-    
     @ticket 72346 - Fernando Macieira - 20/05/2022 - Conferência títulos
+    @ticket 76965 - Fernando Macieira - 01/08/2022 - RM - Acordos - Incluir no relatório diário a informação de quando o título é lançado mas não foi gerado o número
 /*/
 User Function ADFIN132P()
 
@@ -209,6 +209,34 @@ User Function ADFIN132P()
 
         EndDo
 
+        // @ticket 76965 - Fernando Macieira - 01/08/2022 - RM - Acordos - Incluir no relatório diário a informação de quando o título é lançado mas não foi gerado o número
+        If Select("Work") > 0
+            Work->( dbCloseArea() )
+        EndIf
+
+        cQuery := " SELECT R_E_C_N_O_ RECNO
+        cQuery += " FROM " + RetSqlName("ZHB") + " ZHB (NOLOCK)
+        cQuery += " WHERE ZHB_FILIAL='"+FWxFilial("ZHB")+"' 
+        cQuery += " AND ZHB_NUM=''
+		cQuery += " AND ZHB.D_E_L_E_T_=''
+
+        tcQuery cQuery New Alias "Work"
+
+        Work->( dbGoTop() )
+        If Work->( EOF() )
+            logZBN("Job nao encontrou nenhum acordo sem número de título para ser analisado (Filtro = ZHB_NUM<>'')") 
+        EndIf
+
+        Work->( dbGoTop() )
+        Do While Work->( !EOF() )
+
+            GrvTRB(5) // acordo sem número de título
+
+            Work->( dbSkip() )
+
+        EndDo
+        //
+
         If Select("Work") > 0
             Work->( dbCloseArea() )
         EndIf
@@ -259,6 +287,8 @@ Static Function GrvTRB(nCodLog, nVlrPR, nTotNDI, cTipo, cParcela, dVencrea, nVlr
         cStatus := "Total das parcelas (NDI) não bate com o total aprovado (PR) " + " - Total NDI: " + AllTrim(Transform(nTotNDI,PesqPict("SE2","E2_VALOR"))) + " - Valor PR: " + AllTrim(Transform(nVlrPR,PesqPict("SE2","E2_VALOR")))
     ElseIf nCodLog == 4
         cStatus := "Parcela aberta e vencida - " + " Parcela: " + cParcela + " - Vencto: " + DtoC(dVencrea) + " - Valor: " + AllTrim(Transform(nVlr,PesqPict("SE2","E2_VALOR")))
+    ElseIf nCodLog == 5 // @ticket 76965 - Fernando Macieira - 01/08/2022 - RM - Acordos - Incluir no relatório diário a informação de quando o título é lançado mas não foi gerado o número
+        cStatus := "Despesa lançada mas sistema não gerou número de título " + AllTrim(ZHB->ZHB_NOMDES) + " do processo " + AllTrim(ZHB->ZHB_PROCES) + " - Vencto: " + DtoC(ZHB->ZHB_VENCTO) + " - Valor: " + AllTrim(Transform(ZHB->ZHB_VALOR,PesqPict("SE2","E2_VALOR"))) + " - Status: " + AllTrim(ZHB->ZHB_STATUS)
     EndIf
 
     RecLock("TRB", .T.)

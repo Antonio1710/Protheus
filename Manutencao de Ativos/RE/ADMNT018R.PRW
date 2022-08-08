@@ -14,7 +14,7 @@ Relatorio horas Disponivel X Realizadas - baseado na Consulta MNTC905
 @since 18/05/2022
 @version undefined
 @type User Function. 
-@Ticket 63356, Data 21/07/2022, Antonio Domingos, SIGAMNT - E-mail - Homem Hora. Solicitado por DEBORA ROSILAI DA SILVA.
+@Ticket 63356, Data 21/07/2022, Antonio Domingos, SIGAMNT - E-mail - Homem Hora. Solicitado por DEBORA ROSILAI DA SILVA..
 /*/
 //---------------------------------------------------------------------
 User Function ADMNT018R(cParam)
@@ -24,22 +24,17 @@ Local cPerg 		:= "ADMNT018R"
 Local aInfoCustom 	:= {}
 Local cTxtIntro	    := "Rotina responsável pela extracao EXCEL do Relatorio Horas Disponiveis x Realizadas"
 local lSetEnv       := .f.
+Local _aEmpFil      := {{"01","02"},{"02","01"}}
+Local _n1
 
-Private cPara      := SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br") 
+Private lJob       := IsBlind()
+Private cPara      := "pcm@adoro.com.br" 
 Private cAssunto   := "Relatorio de Horas Disponiveis x Realizadas"
 Private cCorpo     := "Relatorio de Horas Disponiveis x Realizadas"
 Private aAnexos    := {}
 Private lMostraLog := .F.
 Private lUsaTLS    := .T.
 Private cHtml		:= ""
-//Local cEmp 		:= "01"
-//Local cFil 		:= "02"
-
-		//RPCClearEnv()
-		//RPCSetType(3)
-		//RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{ })		
-
-Private lJob          := IsBlind()
 Private oProcess
 Private dPeriodoDe  //Do Periodo
 Private dPeriodoAte //Ate Periodo
@@ -51,24 +46,42 @@ Private cFuncioDe   //Do Funcionario
 Private cFuncioAte  //Ate Funcionario
 Private nTipoRel    //Tipo 1=Por Centro Cust, 2=Por Especialid., 3=Por Funcionario
 Private nTipoOrd    //Tipo de Ordens 1=Corretiva, 2=Preventiva, 3=Outros, 4=Todas
-Private czEMP	:= cEmpAnt
-Private czFIL   := cFilAnt
-Private cNivel  := SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
-Private _cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
+Private czEMP	
+Private czFIL   
+Private cNivel  := "4" 
+Private _cNomeEmpFil := " "
+
 //Aadd(aInfoCustom,{"Visualizar",{|oCenterPanel| visualiza(oCenterPanel)},"WATCH" })
 //Aadd(aInfoCustom,{"Relatorio" ,{|oCenterPanel| Relat(oCenterPanel) },"RELATORIO"})
 
+If SELECT("SX6") == 0
+	lJob := .t.
+else
+	lJob := .f.
+EndIf
+
 If lJob
-	RpcSetType(3)
-	lSetEnv  := RpcSetEnv(aParam[1],aParam[2],,,"")
-    czEMP    := aParam[1]   
-    czFIL    := aParam[2]   
-    
-    PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "EST"
-    cPara      :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br" ) 
-    
-    oProcess := Executa()
+	
+	For _n1 := 1 To Len(_aEmpFil)
+
+		RpcSetType(3)
+		lSetEnv  := RpcSetEnv(_aEmpFil[_n1,1],_aEmpFil[_n1,2],,,"")
+		czEMP    := _aEmpFil[_n1,1]   
+		czFIL    := _aEmpFil[_n1,2]   
+		
+		PREPARE ENVIRONMENT EMPRESA czEMP FILIAL czFIL MODULO "MNT"
+		_cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
+		cPara        :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br;antonio.filho@adoro.com.br" ) 
+		cNivel  	 :=  SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
+
+		oProcess := Executa()
+
+	Next
+
 Else
+	_cNomeEmpFil := ALLTRIM(SM0->M0_NOME)+'-'+ALLTRIM(SM0->M0_FILIAL)
+	cPara    :=  SuperGetMv('ZZ_MNT018B', .f. ,"pcm@adoro.com.br;antonio.filho@adoro.com.br" ) 
+    cNivel   :=  SuperGetMv('ZZ_MNT018A', .f. ,"4" ) //1=Imprimir Nivel1,2=Imprimir Nivel2,3=Imprimir Nivel3,4= Imprimir Todos os Niveis
     oProcess := tNewProcess():New("ADMNT018R","Relação HDR",bProcess,cTxtIntro,cPerg,aInfoCustom, .T.,5, "Relação HDR", .T. )
 Endif
 
@@ -84,10 +97,6 @@ Static Function Executa(oProcess)
 	// Armazena variaveis p/ devolucao (NGRIGHTCLICK)
 	//------------------------------------------------
 	Local aNGBEGINPRM	:= NGBEGINPRM()
-	Local oFont			:= TFont():New( "Arial",8,14,,.T.,,.F.,,.F.,.F. )
-	Local aSize			:= MsAdvSize(,.F.,430)
-	Local nLargura		:= aSize[5]
-	Local nAltura		:= aSize[6]
 	Local nPercent		:= 	0
 
 	//Tabelas Temporárias
@@ -289,17 +298,8 @@ Static Function Executa(oProcess)
 
 	cTIT := If(nTipoRel = 1,STR0016,If(nTipoRel = 2,STR0017,STR0018)) //"Centro Custo"###"Especialidade"###"Funcionario"
 
-	//If nTipoRel == 1 .Or. nTipoRel == 2
-
-		//Define MsDialog oDlg1 Title STR0019 From aSize[7],0 To nAltura,nLargura Of oMainWnd Pixel //"Horas Disponiveis X Horas Realizadas"
-
-			//oDlg1:lMaximized := .T.
-			//oPanelTop := TPanel():New(01,01,,oDlg1,,,,,,40,40,.F.,.F.)
-			//oPanelTop:Align := CONTROL_ALIGN_TOP
-
-			cRelDet1 := STR0046 + " " + If(nTipoRel = 1,STR0016,If(nTipoRel = 2,STR0017,STR0018))
-			//cRelCab  := STR0047 + " " + DToC(dPeriodoDe) + "  -  " + STR0048 + " " + DToC(dPeriodoAte) + ""
-            cDataInicio := DToC(dPeriodoDe)
+	cRelDet1 := STR0046 + " " + If(nTipoRel = 1,STR0016,If(nTipoRel = 2,STR0017,STR0018))
+	cDataInicio := DToC(dPeriodoDe)
 			cDataFinal  := DToC(dPeriodoAte)
 
 			DbselectArea(cTRB)
@@ -319,7 +319,7 @@ Static Function Executa(oProcess)
 			nPercent := PADR(Transform( nPercent,"@!" ),6)
 
 			RestArea( aAreaTRB )
-
+			
 			C905PRINT(cNivel,(cTRB),(cTRB)->CALEND,(cTRB)->BLOQUE,(cTRB)->DISPON,(cTRB)->REALIZ ,oprocess)
 
 	SET CENTURY OFF
@@ -349,23 +349,25 @@ Static Function C905PROC()
 	Local lESPECIA   	:= .F.
 	Local lFuncDem   	:= .F.
 	Local lFstSeek   	:= .F.
-	Local lBloqueio  	:= .T.
 	Local lMNTC9051	 	:= ExistBlock("MNTC9051")
 	Local DtPar02    	:= dPeriodoAte
 	Local nExcRh     	:= 0
-	Local i          	:= 0
 	Local nIndisp    	:= 0
 	Local nHoraExtra 	:= 0
-	Local nX         	:= 1
 	Local aHrsBloq   	:= {}
-
+	Local _cFilST0      := If(lJob,czFil,xFilial("ST0"))
+	Local _cFilST1      := If(lJob,czFil,xFilial("ST1"))
+	Local _cFilST2      := If(lJob,czFil,xFilial("ST2"))
+	Local _cFilST3      := If(lJob,czFil,xFilial("ST3"))
+	//Local _cFilSRA      := If(lJob,czFil,xFilial("SRA"))
+	
 	Private aARRCALE := {}, aDtExcRH := {}
 
 	DbselectArea( "ST1" )
 	Dbsetorder( 01 )
-	Dbseek( xFilial( "ST1" )+cFuncioDe,.T. )
+	Dbseek( _cFilST1+cFuncioDe,.T. )
 	ProcRegua(LastRec())
-	While !Eof() .And. xfilial( "ST1" ) = ST1->T1_FILIAL .And. ST1->T1_CODFUNC <= cFuncioAte
+	While !Eof() .And. _cFilST1 = ST1->T1_FILIAL .And. ST1->T1_CODFUNC <= cFuncioAte
 		IncProc()
 
 		If lMNTC9051
@@ -391,8 +393,8 @@ Static Function C905PROC()
 
 			DbselectArea('ST2')
 			Dbsetorder(01)
-			DbSeek(xFilial("ST2")+ST1->T1_CODFUNC)
-			While !Eof() .And. xfilial("ST2") = ST2->T2_FILIAL .And. ST2->T2_CODFUNC = ST1->T1_CODFUNC
+			DbSeek(_cFilST2+ST1->T1_CODFUNC)
+			While !Eof() .And. _cFilST2 = ST2->T2_FILIAL .And. ST2->T2_CODFUNC = ST1->T1_CODFUNC
 				If ST2->T2_ESPECIA >= cEspeciDe .AND. ST2->T2_ESPECIA <= cEspeciAte
 					lESPECIA := .T.
 					Exit
@@ -403,7 +405,7 @@ Static Function C905PROC()
 			If lESPECIA
 				If nTipoRel == 1
 					cSeek := ST1->T1_CCUSTO
-					cNOME := If(SI3->(DbSeek(xFilial("SI3") + cSEEK)), SI3->I3_DESC, Space(15) )
+					cNOME := If(SI3->(DbSeek(_cFilST3 + cSEEK)), SI3->I3_DESC, Space(15) )
 					If lFstSeek
 						If cOldSeek <> cSeek
 							nHorasBlq := 0
@@ -411,7 +413,7 @@ Static Function C905PROC()
 					EndIf
 				ElseIf nTipoRel == 2
 					cSeek := ST2->T2_ESPECIA+Space(Len(stj->tj_ccusto)-Len(st2->t2_especia))
-					cNOME := If(ST0->(DbSeek(xFilial("ST0") + cSEEK)), ST0->T0_NOME, Space(15) )
+					cNOME := If(ST0->(DbSeek(_cFilST0 + cSEEK)), ST0->T0_NOME, Space(15) )
 					If lFstSeek
 						If cOldSeek <> cSeek
 							nHorasBlq := 0
@@ -683,56 +685,12 @@ Melhoria realizada:
 
 Static Function G905DET1( cTipo,cCodFun )
 
-	Local oFont		:= TFont():New( "Arial",8,14,,.T.,,.F.,,.F.,.F. )
-	Local aSize		:= MsAdvSize(,.F.,430)
-	Local nLargura	:= aSize[5]
-	Local nAltura	:= aSize[6]
 	Local nPerce	:= 0
 
 	DbselectArea(cTRB9051)
 	SET FILTER TO (cTRB9051)->TIPO = cTipo .And. (cTRB9051)->CODFUN = cCodFun
 	DbGotop()
-	/*
-	Define MsDialog oDlg1 Title STR0050 From aSize[7],0 To nAltura,nLargura Of oMainWnd Pixel //"Horas Disponiveis X Horas Realizadas (por Funcionario/Data)"
-
-	oDlg1:lMaximized := .T.
-	oPanelTop := TPanel():New(01,01,,oDlg1,,,,,,40,40,.F.,.F.)
-	oPanelTop:Align := CONTROL_ALIGN_TOP
-
-	cRelDet3:=STR0051 + " (" + Alltrim((cTRB9051)->CODFUN) + " - " + Alltrim((cTRB9051)->NOME) + ")" //"Utilizacao do Funcionario.:"
-	cRelCab :=STR0047 + " " + DToC(dPeriodoDe) + "  -  " + STR0048 + " " + DToC(dPeriodoAte) + "" //"Data Inicio:"###"Data Fim:"
-
-	@ 04,005 Button STR0021 Of oPanelTop Size 40,09 Pixel Action (C905PRINT(3, (cTRB9051), (cTRB9052)->CALEND, (cTRB9052)->BLOQUE, (cTRB9052)->DISPON, (cTRB9052)->REALIZ)) //"&Imprimir"
-
-	@ 20,005 Say cRelDet3 SIZE 200,12 Of oPanelTop Pixel Font oFont
-	@ 30,005 Say cRelCab  SIZE 200,12 Of oPanelTop Pixel Font oFont
-
-	oPnlList := TPanel():New(01,01,,oDlg1,,,,,,70,70,.F.,.F.)
-	oPnlList:Align := CONTROL_ALIGN_ALLCLIENT
-
-	@ 3,0.3 ListBox OLIST1 Fields	DATAF,; //"Data"
-	PADL( CALEND, 12 ),; //"Carga horária"
-	PADL( BLOQUE, 12 ),; //"Bloqueios"
-	PADL( DISPON, 12 ),; //"Disponibilidade"
-	PADL( REALIZ, 12 ),; //"Hr.Realizadas"
-	PADR( DIFERE, 12 ),; //"Diferenca"
-	PADR( PERCEN, 12 ),; //"Percentual"
-	PADL( EXTRA , 10 );  //"Hr. Extras"
-	HEADERS STR0052,;	 //"Data"
-	STR0023,;	//"Carga horária"
-	STR0062,;   //"Bloqueios"
-	STR0063,;	//"Disponibilidade"
-	STR0024,;	//"Hr.Realizadas"
-	STR0049,;   //"Diferenca"
-	STR0065,;   //"Percentual (%)"
-	STR0060;	//"Hr. Extras"
-	Of oPnlList Size 610,350 FieldSizes 70,70,70,70,70,70,70
-
-	OLIST1:Align := CONTROL_ALIGN_ALLCLIENT
-
-	oPanelUnder := TPanel():New(01,01,,oDlg1,,,,,,40,40,.F.,.F.)
-	oPanelUnder:Align := CONTROL_ALIGN_BOTTOM
-	*/
+	
 	aAreaTRB := GetArea()
 
 	DbSelectArea(cTRB9051)
@@ -744,19 +702,6 @@ Static Function G905DET1( cTipo,cCodFun )
 	End While
 
 	RestArea( aAreaTRB )
-	/*
-	@ 05,010 Say STR0038 SIZE 60,10 Of oPanelUnder  Pixel  Font oFont  //"TOTAL GERAL"
-	@ 05,075 Say AllTrim( (cTRB9052)->CALEND ) SIZE 60,10 Of oPanelUnder  Pixel  Font oFont
-	@ 05,145 Say AllTrim( (cTRB9052)->BLOQUE ) SIZE 60,10 Of oPanelUnder  Pixel  Font oFont
-	@ 05,213 Say AllTrim( (cTRB9052)->DISPON ) SIZE 60,10 Of oPanelUnder  Pixel  Font oFont
-	@ 05,286 Say AllTrim( (cTRB9052)->REALIZ ) SIZE 60,10 Of oPanelUnder  Pixel  Font oFont
-	@ 05,350 Say AllTrim( (cTRB9052)->DIFERE ) SIZE 60,10 Of oPanelUnder  Pixel  Font oFont
-	@ 05,435 Say PADR( Transform( nPerce,"@!" ),6 )	SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-	@ 05,501 Say (cTRB9052)->EXTRA             SIZE 60,10 Of oPanelUnder  Pixel  Font oFont
-
-	OLIST1:Refresh()
-	Activate Dialog oDlg1
-	*/
 	DbselectArea(cTRB9052)
 	
 Return .T.
@@ -773,61 +718,8 @@ Melhoria realizada:
 //---------------------------------------------------------------------
 Static Function G905DET2( cDescri,cTipo,cTipoD )
 
-	Local oFont		:= TFont():New( "Arial",8,14,,.T.,,.F.,,.F.,.F. )
-	Local aSize		:= MsAdvSize(,.F.,430)
-	Local nLargura	:= aSize[5]
-	Local nAltura	:= aSize[6]
 	Local nPerce	:= 0
 	
-	/*
-	Define MsDialog oDlg1 Title STR0053 From aSize[7],0 To nAltura,nLargura Of oMainWnd Pixel //"Horas Disponiveis X Horas Realizadas (por Funcionario)"
-
-	If nTipoRel = 1 .Or. nTipoRel = 2
-		cRelDet2:=STR0054 + " " + cDescri + ".: (" + Alltrim(cTipo) + " - " + Alltrim(cTipoD) + ")" //"Utilizacao por"
-		cRelCab :=STR0047 + " " + DToC(dPeriodoDe) + "  -  " + STR0048 + " " + DToC(dPeriodoAte) + "" //"Data Inicio:"###"Data Fim:"
-	Else
-		cRelDet2:=STR0046 + " " + If(nTipoRel = 1,STR0016,If(nTipoRel = 2,STR0017,STR0018)) //"MDO por"###"Centro Custo"###"Especialidade"###"Funcionario"
-		cRelCab :=STR0047 + " " + DToC(dPeriodoDe) + "  -  " + STR0048 + " " + DToC(dPeriodoAte) + "" //"Data Inicio:"###"Data Fim:"
-	EndIf
-
-	oDlg1:lMaximized := .T.
-	oPanelTop := TPanel():New(01,01,,oDlg1,,,,,,40,40,.F.,.F.)
-	oPanelTop:Align := CONTROL_ALIGN_TOP
-
-	@ 04,005 Button STR0020 Of oPanelTop Size 40,09 Pixel Action (C905GRAFI(2)) //"&Grafico"
-	@ 04,045 Button STR0021 Of oPanelTop Size 40,09 Pixel Action (C905PRINT(2, (cTRB9051), (cTRB)->CALEND, (cTRB)->BLOQUE, (cTRB)->DISPON, (cTRB)->REALIZ )) //"&Imprimir"
-
-	@ 20,005 Say cRelDet2 SIZE 388,12 Of oPanelTop Pixel Font oFont
-	@ 30,005 Say cRelCab  SIZE 200,12 Of oPanelTop Pixel Font oFont
-
-	oPnlList := TPanel():New(01,01,,oDlg1,,,,,,70,70,.F.,.F.)
-	oPnlList:Align := CONTROL_ALIGN_ALLCLIENT
-
-	@ 3,0.3 ListBox OLIST2 Fields	CODFUN,;
-	NOME,;
-	PADL( CALEND, 12 ),; //"Carga horária"
-	PADL( BLOQUE, 12 ),; //"Bloqueios"
-	PADL( DISPON, 12 ),; //"Disponibilidade"
-	PADL( REALIZ, 12 ),; //"Hr.Realizadas"
-	PADR( DIFERE, 12 ),; //"Diferenca"
-	PADR( PERCEN, 12 ),; //"Percentual"
-	PADL( EXTRA , 10 );  //"Hr. Extras"
-	HEADERS	STR0018,; //"Funcionario"
-	STR0022,; //"Nome"
-	STR0023,; //"Carga horária"
-	STR0062,; //"Bloqueios"
-	STR0063,; //"Disponibilidade"
-	STR0024,; //"Hr.Realizadas"
-	STR0049,; //"Diferenca"
-	STR0065,; //"Percentual (%)"
-	STR0060;  //"Hr. Extras"
-	Of oPnlList Size 610,350 FieldSizes 70,70,70,70,70,70,70 On DblClick(G905DET1((cTRB9052)->TIPO, (cTRB9052)->CODFUN))
-
-	OLIST2:Align := CONTROL_ALIGN_ALLCLIENT
-
-	oPanelUnder := TPanel():New(01,01,,oDlg1,,,,,,40,40,.F.,.F.)
-	oPanelUnder:Align := CONTROL_ALIGN_BOTTOM
-	*/
 	If nTipoRel = 1 .Or. nTipoRel = 2
 
 		aAreaTRB := GetArea()
@@ -839,38 +731,8 @@ Static Function G905DET2( cDescri,cTipo,cTipoD )
 			DbSkip()
 		End While
 		RestArea( aAreaTRB )
-		/*
-		@ 05,050 Say STR0038 SIZE 60,10 OF oPanelUnder  Pixel  Font oFont  //"TOTAL GERAL"
-		@ 05,146 Say AllTrim( (cTRB)->CALEND ) SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-		@ 05,213 Say AllTrim( (cTRB)->BLOQUE ) SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-		@ 05,286 Say AllTrim( (cTRB)->DISPON ) SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-		@ 05,359 Say AllTrim( (cTRB)->REALIZ ) SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-		@ 05,425 Say AllTrim( (cTRB)->DIFERE ) SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-		@ 05,503 Say PADR( Transform( nPerce,"@!" ),6 )	SIZE 60,10 OF oPanelUnder  PIXEL  Font oFont
-		@ 05,560 Say (cTRB)->EXTRA             SIZE 60,10 OF oPanelUnder  Pixel  Font oFont
-		*/
 	EndIf
-	*/
 	
-			//oPnlList := TPanel():New(01,01,,oDlg1,,,,,,70,70,.F.,.F.)
-			//oPnlList:Align := CONTROL_ALIGN_ALLCLIENT
-
-/*
-		@ 05,050 Say STR0038   SIZE 60,10 OF oPanelUnder Pixel Font oFont  //"TOTAL GERAL"
-		@ 05,146 Say nTotalCal SIZE 60,10 OF oPanelUnder Pixel Font oFont
-		@ 05,213 Say nTotalBlo SIZE 60,10 OF oPanelUnder Pixel Font oFont
-		@ 05,286 Say nTotalDis SIZE 60,10 OF oPanelUnder Pixel Font oFont
-		@ 05,359 Say nTotalRel SIZE 60,10 OF oPanelUnder Pixel Font oFont
-		@ 05,425 Say nTotalDif SIZE 60,10 OF oPanelUnder Pixel Font oFont
-		@ 05,503 Say PADR( Transform( nTotalPer,"@!" ),6 )	SIZE 60,10 OF oPanelUnder Pixel Font oFont
-		@ 05,560 Say nTotalExt SIZE 60,10 OF oPanelUnder Pixel Font oFont
-*/	
-	//@ 05,050 Say STR0038	Size 60,10 Of oPanelUnder Pixel Font oFont //"TOTAL GERAL"
-			
-	//EndIf
-
-	//OLIST2:Refresh()
-	//Activate Dialog oDlg1
 	DbselectArea(cTRB)
 
 Return .T.
@@ -884,7 +746,6 @@ Gravacao dos detalhes das horas dos funcionarios
 //---------------------------------------------------------------------
 Static Function GrvTRB9051(cTipo, cCodFun, cNome, cDataF, nDispon, nReali, aDtExcRH, nHoraExtra)
 
-	Local i, nPosRH
 	Local nX	    := 0
 	Local nTime	    := 0
 	Local nQtdHrBlq := 0.0
@@ -1511,7 +1372,6 @@ Função que executa a gravação dos totais do agrupamentos por funcionarios.
 //---------------------------------------------------------------------
 Static Function GrvTRT9052( aHrsBloq )
 
-	Local nX := 1
 	Local nPosFunc
 
 	DbselectArea(cTRB9052)
@@ -1656,12 +1516,9 @@ Impressão das Horas Trabalhadas.
 @Since:  19/06/2014
 /*/
 //---------------------------------------------------------------------
-Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDifer  )
+Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDifer,oProcess)
 
-	Local cString	:= cTabela
 	Local cDesc1	:= ""
-	Local cDesc2	:= ""
-	Local cDesc3	:= ""
 	Local wnrel	:= "MNTC905"
 
 	Private aReturn  := {STR0030, 1,STR0031, 1, 2, 1, "",1 } //"Zebrado"###"Administracao"
@@ -1672,6 +1529,8 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 
 	DbSelectArea(cTabela)
 	DbGoTop()
+
+	anexos:={}
 
 	If cNivel = "1" .OR. cNivel = "4"
 		Titulo   := STR0055 //"Horas Disponiveis X Trabalhadas - " + AllTrim(cRelDet1) //"Analisede utilizacao de MDO - Disponivel X Realizado"
@@ -1716,13 +1575,14 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
 
         //fZip(cDIRARQ+cNomZip,{cDIRARQ+cNomArq})
      	//@Ticket 13242 ini
-        cDIRREDE :="\rel_mnt\"
+
+		cDIRREDE :="\rel_mnt\"
         nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 		
 		If FError() == 25 //Arquivo já existe na pasta destino
 			FERASE(cDIRREDE+cNomArq) 
             nStatus:= __CopyFile((cDIRARQ+cNomArq),(cDIRREDE+cNomArq)) 
 		EndIf
-
+		
     Endif
     // oExcel:WorkBooks:Open(cNomArq) 	// Abre uma planilha
 	// oExcel:SetVisible(.T.) 			// visualiza a planilha
@@ -1785,6 +1645,7 @@ Static Function C905PRINT( cNivel,cTabela,nHrsCalen,nHrsBloqu,nHrsReali,nHrsDife
     Else
         aAdd(aAnexos, cDIRREDE+cNomArq)
         fEnvMail(cPara, cAssunto, cHtml, aAnexos, lMostraLog, lUsaTLS)
+		FERASE(cDIRREDE+cNomArq) 
 	EndIf
 
 Return NIL
@@ -1798,8 +1659,6 @@ Chamada do Relat¢rio
 //---------------------------------------------------------------------
 Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 
-	Local cRodaTxt := ""
-	Local nCntImpr := 0
 	Local nTotalRel := 0
 	Local _cPlanilha := "HDR_N1"
 	Local _cTitulo   := _cNomeEmpFil+" Relação de Horas Disponiveis x Realizadas "
@@ -1871,8 +1730,6 @@ Chamada do Relat¢rio de detalhamento por funcionario
 //---------------------------------------------------------------------
 Static Function C9052Imp(lEnd,wnRel,titulo,tamanho,oprocess)
 
-	Local cRodaTxt := ""
-	Local nCntImpr := 0
 	Local _cPlanilha := "HDR_N2"
 	Local _cTitulo   := _cNomeEmpFil+" Relação de Horas Disponiveis x Realizadas "
 
@@ -1959,8 +1816,6 @@ Chamada do Relat¢rio de detalhamento por funcionario/data
 //---------------------------------------------------------------------
 Static Function C9053Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 
-	Local cRodaTxt := ""
-	Local nCntImpr := 0
 	Local _cPlanilha := "HDR_N3"
 	Local _cTitulo   := _cNomeEmpFil+" Relação de Horas Disponiveis x Realizadas "
 	
@@ -2286,13 +2141,20 @@ Static Function fLoadDados( aTRB9051, aHrsBloq )
 	Else
 		aAdd(aFirstVet,aTRB9051[1])
 	EndIf
+	
+	If !lJob
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'1',aFirstVet,cThread1,aThread1 )
 
-	//Executa a função "GrvTRT9051()" em uma thread sem interface.
-	StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'1',aFirstVet,cThread1,aThread1 )
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'2',aSecondVt,cThread2,aThread2 )
+	else
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,czEmp,czFil,'1',aFirstVet,cThread1,aThread1 )
 
-	//Executa a função "GrvTRT9051()" em uma thread sem interface.
-	StartJob( "GrvTRT9051",GetEnvServer(),.F.,cEmpAnt,cFilAnt,'2',aSecondVt,cThread2,aThread2 )
-
+		//Executa a função "GrvTRT9051()" em uma thread sem interface.
+		StartJob( "GrvTRT9051",GetEnvServer(),.F.,czEmp,czFil,'2',aSecondVt,cThread2,aThread2 )
+	EndIf
 	//-------------------------------------------------------
 	// Garante que a threads foi executada de forma perfeita
 	//-------------------------------------------------------
