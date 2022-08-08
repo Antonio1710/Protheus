@@ -24,6 +24,7 @@
     @history ticket   15402 - Fernando Maci	- 10/06/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5131 FILIAL 03
 	@history ticket   19122 - Sigoli	    - 21/09/2021 - REQUISIÇÕES ALMOXARIFADO - CC 5318 - item contabil 111 - FILIAL 03
 	@history ticket 71057 - Fernando Macieira - 08/04/2022 - Item contábil Lançamentos da Filial 0B - Itapira
+	@history ticket 77603 - Fernando Macieira - 04/08/2022 - Ceres - Solicitação Almoxarifado - Requisições - Vinculação item contábil 124
 /*/
 User Function MTA105LIN()
 
@@ -674,6 +675,11 @@ User Function MTA105LIN()
 	ENDIF
 	
 	// *** FINAL WILLIAM COSTA 26/08/2019 CHAMADO 050722 || OS 052025 || MANUTENCAO || DEBORA || 8935 || DEBORA MANUTENCAO *** //
+
+	// @history ticket 77603 - Fernando Macieira - 04/08/2022 - Ceres - Solicitação Almoxarifado - Requisições - Vinculação item contábil 124
+	If AllTrim(FWCodEmp()) == "02"
+		gdFieldPut("CP_ITEMCTA", GetMV("MV_#CPIT02",,"124"), n)
+	EndIf
 
 	RestArea(_AreaSCP)
 	RestArea(_aArea)

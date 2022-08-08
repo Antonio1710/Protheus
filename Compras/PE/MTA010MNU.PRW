@@ -12,6 +12,7 @@
 	@history 29/11/2019, Everson, Chamado T.I. rotina para aprovação de cadastro bloqueado.
 	@history 11/12/2019, Everson, Chamado 053902. Incluída validação para bloqueio e desbloqueio pela opção nas ações relacionadas.
 	@history 07/05/2021, Everson, Chamado 13414. Tratamento para ocorrer liberação e desbloqueio de produto apenas pela controladoria.
+	@history Ticket 77743 - ADRIANO SAVOINE - 05/08/2022 - Ajuste na mensagem para Orientar o que fazer.
 	/*/
 User Function MTA010MNU()
 
@@ -150,8 +151,15 @@ User Function MTA10_05()
 	D_CHKEDT2->(DbCloseArea())
 
 	//
-	If Alltrim(cValToChar(SB1->B1_TIPO)) <> "PA" .Or. ! lProEdt //Everson - 11/12/2019 - Chamado 053902.
-		MsgStop("Efetue o bloqueio/desbloqueio pelo cadastro do produto.","Função MTA10_05(MTA010MNU)")
+	If Alltrim(cValToChar(SB1->B1_TIPO)) <> "PA" //Ticket 77743 - ADRIANO SAVOINE - 05/08/2022
+		MsgStop('Produto Diferente de <font color="#FF0000">PA</font>, não irá para o EDATA.',"Função MTA10_05 - 1 (MTA010MNU).")
+		RestArea(aArea)
+		Return Nil 
+
+	EndIf
+
+	If ! lProEdt //Everson - 11/12/2019 - Chamado 053902.
+		MsgStop("Não existe esse cadastro de Produto no Edata, verifique com o PCP.","Função MTA10_05 - 2 (MTA010MNU).")  //Ticket 77743 - ADRIANO SAVOINE - 05/08/2022
 		RestArea(aArea)
 		Return Nil 
 

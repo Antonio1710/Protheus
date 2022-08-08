@@ -28,6 +28,7 @@
 	@history Chamado 17407 - Leonardo P. Monteiro - 26/07/2021. - Adição de validação na confirmação do produto para checar se existe outro código EAN vinculado a outro produto.
 	@history Ticket 69574 - Abel Babini           - 25/04/2022 - Projeto FAI
 	@history Ticket 76157 - Antonio Domingos 	  - 13/07/2022 - Gravação do historico das Alterações na descrição do produto (Tabela ZBE)
+	@history TICKET 77743 - ADRIANO SAVOINE       - 05/08/2022 - Retirado o filtro de Filial para encontrar todos os Produtos do protheus para liberar no Edata.
 	/*/
 User Function A010TOK()  
 
@@ -352,8 +353,8 @@ User Function A10_02(cCodPrd)
 	cQuery += " JOIN   " 
 	cQuery += " ["+cLnkSrv+"].[SMART].[dbo].[MATERIAL] MA  " 
 	cQuery += " ON MA.ID_MATERIAL = MED.ID_MATERIAL   " 
-	cQuery += " WHERE  MEF.FILIAL = 2   " 
-	cQuery += " AND MED.IE_DEFIMATEEMBA ='" + cValToChar(cCodPrd) + "'  " 
+	//cQuery += " WHERE  MEF.FILIAL = 2   "  // TICKET 77743 - ADRIANO SAVOINE - 05/08/2022
+	cQuery += " WHERE MED.IE_DEFIMATEEMBA ='" + cValToChar(cCodPrd) + "'  " 
 	cQuery += " ) AS FONTE " 	
 
 	//

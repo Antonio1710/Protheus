@@ -1,7 +1,7 @@
 #Include "Protheus.ch"
 #include "TopConn.CH"
 
-/*/{Protheus.doc} User Function ADVEN108R
+/*/{Protheus.doc} User Function ADVEN111R
 	Relatorio AgriStats.
 	@type  Function
 	@author Jonathan
@@ -9,12 +9,12 @@
 	@version version
 	@history, Jonathan 30/07/2022, ticket 10921 - Relatorio Agristas
 /*/
-User Function ADVEN108R() 
+User Function ADVEN111R() 
 
     //Variáveis.
     Local aArea := GetArea()
 	Local oReport := Nil
-	Local cPerg := "ADVEN108R" 
+	Local cPerg := "ADVEN111R" 
 	
 	If ! Pergunte(cPerg,.T.)
         RestArea(aArea)
@@ -38,7 +38,7 @@ Return Nil
 Static Function RPTStruc(cPerg)
 
     //Variáveis.
-    Local cNome     := "ADVEN108R"
+    Local cNome     := "ADVEN111R"
     Local cTitulo   := "Relatorio AgriStats"
 	Local oReport   := Nil
 	Local oSection1 := Nil
