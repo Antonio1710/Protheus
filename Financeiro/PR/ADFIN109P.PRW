@@ -23,6 +23,7 @@
 	@history Ticket 73547  - Everson     - 25/05/2022 - Tratamento para errorlog variable does not exist CPEDDE. 
 	@history Ticket 72835  - Abel Babini - 14/06/2022 - Atualiza valores de Rede
 	@hsitory Ticket TI     - Abel Babini - 11/07/2022 - Error.log na Ceres no campo E4_CTRADT
+	@history Ticket 8      - Abel Babini - 08/08/2022 - Ajustes na tela de liberação de crédito
 /*/
 
 User Function ADFIN109P()
@@ -592,14 +593,14 @@ Static Function xTotPeds(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRed
 			SA3B.A3_COD = SA3.A3_SUPER
 			AND SA3B.%notDel%
     WHERE C5_FILIAL = %xFilial:SC5%
-			AND SC5.C5_DTENTR BETWEEN %Exp:DTOS(dDtIni)% AND %Exp:DTOS(dDtFim)%
 			AND SC5.C5_NUM BETWEEN %Exp:cPedDe% AND %Exp:cPedAte%
 			AND SC5.C5_CLIENTE BETWEEN %Exp:cCliDe% AND %Exp:cCliAte%
 			AND SC5.C5_LOJACLI BETWEEN %Exp:cLojDe% AND %Exp:cLojAte%
-			AND SA1.A1_CODRED BETWEEN %Exp:cRedDe% AND %Exp:cRedAte%
+			AND SC5.C5_DTENTR BETWEEN %Exp:DTOS(dDtIni)% AND %Exp:DTOS(dDtFim)%
 			AND C5_NOTA = ''
 			AND C5_TIPO = 'N'
 			AND SC5.%notDel%
+			AND SA1.A1_CODRED BETWEEN %Exp:cRedDe% AND %Exp:cRedAte%
 			%Exp:cFilRPd%
 		GROUP BY 
 			SC5.C5_FILIAL,
@@ -1072,15 +1073,23 @@ Static Function xGrdLib()
 
 	ELSE //VAREJO
 		//Valores em aberto , incluindo os valores em atraso
+		//Ticket 8      - Abel Babini - 08/08/2022 - Ajustes na tela de liberação de crédito
 		cQryVAbr := GetNextAlias()
+		_dDT  := Date()
+		_dDTA := (Date() + 1)
 		BeginSQL alias cQryVAbr
 			SELECT 
-				SUM(E1_SALDO) AS E1_SALDO
+				SUM(E1_SALDO) AS E1_SALDO,
+				SUM(CASE WHEN E1_TIPO = 'RA' THEN E1_SALDO*(-1) ELSE E1_SALDO END) AS SALDO,
+				SUM(CASE WHEN E1_TIPO = 'RA' AND E1_VENCREA < %Exp:DTOS(_dDT)% THEN E1_SALDO*(-1) ELSE 0 END) AS VENC1,
+				SUM(CASE WHEN E1_TIPO <> 'RA' AND E1_VENCREA < %Exp:DTOS(_dDT)% THEN E1_SALDO ELSE 0 END) AS VENC2,
+				SUM(CASE WHEN E1_TIPO = 'RA' AND (E1_VENCREA BETWEEN %Exp:DTOS(_dDT)% AND %Exp:DTOS(_dDTA)%) THEN E1_SALDO*(-1) ELSE 0 END) AS AVENC1,
+				SUM(CASE WHEN E1_TIPO <> 'RA' AND (E1_VENCREA BETWEEN %Exp:DTOS(_dDT)% AND %Exp:DTOS(_dDTA)%) THEN E1_SALDO ELSE 0  END) AS AVENC2 
 			FROM %TABLE:SE1% SE1 (NOLOCK)
 			WHERE SE1.E1_CLIENTE = %Exp:(cTbClie)->CODIGO%
 				AND SE1.E1_LOJA = %Exp:(cTbClie)->LOJA%
 				AND SE1.E1_SALDO > 0 
-				AND SE1.E1_TIPO NOT IN ('NCC','RA') 
+				AND SE1.E1_TIPO NOT IN ('NCC','RA','AB-','PR') 
 				AND SE1.E1_PORTADO NOT IN ('P00','P01','P02','P03','P14') 
 				AND SE1.%notDel% 
 			GROUP BY E1_CLIENTE,E1_LOJA
@@ -1088,6 +1097,7 @@ Static Function xGrdLib()
 		EndSQL
 
 		_nTotSdRede := (cQryVAbr)->E1_SALDO
+		_nTotAvenc := (cQryVAbr)->AVENC1 + (cQryVAbr)->AVENC2 //Ticket 8      - Abel Babini - 08/08/2022 - Ajustes na tela de liberação de crédito
 		(cQryVAbr)->(dbCloseArea())
 
 		//Valores em atraso
@@ -1110,7 +1120,7 @@ Static Function xGrdLib()
 		_nTotVenci := (cQryVAtr)->E1_SALDO
 		(cQryVAtr)->(dbCloseArea())
 
-		_nTotAvenc := _nTotSdRede - _nTotVenci //Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
+		// _nTotAvenc := _nTotSdRede - _nTotVenci //Ticket 8      - Abel Babini - 08/03/2022 - Ajustes na tela e inclusão de novas funcionalidades
 		//Pedidos colocados com data de entrega posterior ao período selecionado
 		cQryPFtr := GetNextAlias()
 		BeginSQL alias cQryPFtr
@@ -2509,7 +2519,8 @@ Static Function xAnPedCl(aSize, cPedDe,cPedAte, cCliDe, cLojDe, cCliAte, cLojAte
 			@ aBtnPos[8],000 BUTTON OemToAnsi('Parecer')										SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xParecer()) OF oPnLb01 PIXEL 
 			@ aBtnPos[7],000 BUTTON OemToAnsi('Próximo Cliente Ctrl+N')			SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xProxCli(),oDlgPed:End()) 			OF oPnLb01 PIXEL 
 			//@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda..."),oDlgPed:End()) 			OF oPnLb01 PIXEL
-			@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION {|| bActLib} 			OF oPnLb01 PIXEL
+			//Ticket 8      - Abel Babini - 08/08/2022 - Ajustes na tela de liberação de crédito
+			@ aBtnPos[6],000 BUTTON OemToAnsi('Libera Pedido Ctrl+L')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (MsAguarde({|| xAprvPed() },"Aguarde","Liberando o Pedido de venda..."),oDlgPed:End()) 			OF oPnLb01 PIXEL
 
 			@ aBtnPos[5],000 BUTTON OemToAnsi('Posição do Cliente')					SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (PosicCli((cTbPed)->CODIGO,(cTbPed)->LOJA)) 																		OF oPnLb01 PIXEL
 			@ aBtnPos[4],000 BUTTON OemToAnsi('Liberação de Estoque')				SIZE 085,nBtnAlt FONT oPnLb01:oFont ACTION (xFcLbEst(cPedDe, cPedAte, cCliDe, cLojDe, cCliAte, cLojAte, cRedDe, cRedAte)) OF oPnLb01 PIXEL
