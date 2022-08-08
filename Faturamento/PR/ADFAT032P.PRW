@@ -72,6 +72,8 @@ Static Function MenuDef()
 	ADD OPTION aRotina TITLE "Alterar"      ACTION "U_ADFAT32B(4)" 	    OPERATION MODEL_OPERATION_UPDATE    ACCESS 0
 	ADD OPTION aRotina TITLE "Excluir" 	    ACTION "U_ADFAT32B(5)" 	    OPERATION MODEL_OPERATION_DELETE    ACCESS 0
 
+    ADD OPTION aRotina TITLE "Env Barramento" ACTION 'MsAguarde({|| U_ADFAT32I() }, "Aguarde", "Enviando...")'       OPERATION 10  ACCESS 0
+
 Return aRotina
 /*/{Protheus.doc} ModelDef
     @type  Static Function
@@ -713,3 +715,24 @@ User Function ADFAT32H(cOrdemC, cMsgError)
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} ADFAT32I
+    Envia ordem de carregamento para o barramento.
+    @type  Static Function
+    @author Everson
+    @since 08/08/2022
+    @version 01
+/*/
+User Function ADFAT32I()
+    //Variáveis.
+    Local aArea    := GetArea()
+    Local cNumero  := ZIR->ZIR_NUMERO
+
+    If ! MsgYesNo("Deseja enviar a ordem de carregamento de ração " + cNumero + "?", "Função ADFAT32I(ADFAT032P)")
+        RestArea(aArea)
+        Return Nil
+
+    EndIf
+
+    grvBarr("A", cNumero)
+
+Return Nil
