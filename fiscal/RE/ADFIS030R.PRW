@@ -18,7 +18,7 @@
 	@history Chamado 051633 - ABEL - 22/11/2019 - Ajustado o relatório de Benfeitoria para acrescentar planilhas de resumo
 	@history Ticket  13124 - Abel Babini - 14/05/2021 - Criar rotina de fechamento do período, gravando valores e parâmetros utilizados no calculo
 	@history Ticket  63556 - Abel Babini - 09/11/2021 - Acrescentar condição para filtrar bens totalmente devolvidos no relatório de crédito de pis/cofins - benfeitorias
-
+	@history Ticket  77760 - Abel Babini - 08/08/2022 - Considerar transferência de bens no relatório
 	/*/
 User Function ADFIS030R()
 
@@ -3239,6 +3239,9 @@ Static Function xABrw26()
 	Local nBPrj	:= 0
 	Local nPProd := 0
 	Local _i := 0
+	Local cAlsTrfA := ''
+	Local nVOrgN3 := 0
+	Local nVlOrig := 0
 	
 	If Select(cAlsB26Dt) > 0
 		(cAlsB26Dt)->(dbCloseArea())
@@ -3332,11 +3335,57 @@ Static Function xABrw26()
 	
 	(cAlsB26Dt)->(dbGoTop())
 	While !(cAlsB26Dt)->(Eof())
+		//Ticket  77760 - Abel Babini - 08/08/2022 - Considerar transferência de bens no relatório
+		//Verifica se o Bem foi transferido
+		nVlOrig := 0
+		IF (cAlsB26Dt)->N3_VORIG1 == 0
+			cAlsTrfA := GetNextAlias()
+			BeginSQL alias cAlsTrfA
+				column N1_BAIXA as Date
+				SELECT
+					N1_BAIXA,
+					FT_BASEPIS AS N3_VORIG1
+				FROM %TABLE:SN1% SN1
+				LEFT JOIN %TABLE:SFT% SFT ON
+					SFT.%notDel%
+					AND SFT.FT_FILIAL = SN1.N1_FILIAL
+					AND SFT.FT_NFISCAL = SN1.N1_NFISCAL
+					AND SFT.FT_SERIE = SN1.N1_NSERIE
+					AND SFT.FT_CLIEFOR = SN1.N1_FORNEC
+					AND SFT.FT_LOJA = SN1.N1_LOJA
+					AND SFT.FT_ITEM = SN1.N1_NFITEM
+				WHERE 
+					N1_FILIAL <> %Exp:(cAlsB26Dt)->N1_FILIAL%
+					AND N1_CBASE = %Exp:(cAlsB26Dt)->N1_CBASE%
+					AND N1_ITEM = %Exp:(cAlsB26Dt)->N1_ITEM%
+					AND N1_BAIXA <> ''
+					AND SN1.%notDel%
+				ORDER BY N1_BAIXA DESC
+			EndSQL
+
+			WHILE !(cAlsTrfA)->(eof())
+				IF (cAlsTrfA)->N3_VORIG1 != 0
+					nVlOrig := (cAlsTrfA)->N3_VORIG1
+				ENDIF
+				(cAlsTrfA)->(dbSkip())
+			ENDDO
+
+			(cAlsTrfA)->(dbCloseArea())
+		ENDIF
+
 		//Quantidade de Itens
 		nQItens += 1
+
+		
+		IF (cAlsB26Dt)->N3_VORIG1 == 0
+			nVOrgN3 := nVlOrig
+		ELSE
+			nVOrgN3 := (cAlsB26Dt)->N3_VORIG1
+		ENDIF
 		//Total do Valor Original das Mercadorias
-		nVlTOrig	+= (cAlsB26Dt)->N3_VORIG1
-			
+		nVlTOrig	+= nVOrgN3 //(cAlsB26Dt)->N3_VORIG1
+		
+
 		//Adiciona linhas ao Array de Detalhes
 		AADD(aBrw26Dt,{;
 			(cAlsB26Dt)->N1_FILIAL,;
@@ -3369,12 +3418,12 @@ Static Function xABrw26()
 			(cAlsB26Dt)->N1_CODBCC,;
 			(cAlsB26Dt)->N1_CBCPIS,;
 			(cAlsB26Dt)->N3_TIPO,;//30
-			(cAlsB26Dt)->N3_VORIG1,;
+			IIF((cAlsB26Dt)->N3_VORIG1!=0,(cAlsB26Dt)->N3_VORIG1,nVlOrig),;
 			(cAlsB26Dt)->A2_NOME,;
 			(cAlsB26Dt)->XATFBEN})//33
 
-
 		//Calcula valor da parcela do crédito
+		/*
 		nVlCPCBC	:= Round((cAlsB26Dt)->N3_VORIG1 / (cAlsB26Dt)->N1_MESCPIS,2)
 		
 		nVlCPCBP	:= Round((cAlsB26Dt)->N3_VORIG1 * (cAlsB26Dt)->N1_ALIQPIS /100 / (cAlsB26Dt)->N1_MESCPIS,2)
@@ -3382,6 +3431,14 @@ Static Function xABrw26()
 
 		nVlCCCBP	:= Round((cAlsB26Dt)->N3_VORIG1 * (cAlsB26Dt)->N1_ALIQCOF /100 / (cAlsB26Dt)->N1_MESCPIS,2)
 		nVlCCCBT	:= Round((cAlsB26Dt)->N3_VORIG1 * (cAlsB26Dt)->N1_ALIQCOF /100 ,2)
+		*/
+		nVlCPCBC	:= Round(nVOrgN3 / (cAlsB26Dt)->N1_MESCPIS,2)
+		
+		nVlCPCBP	:= Round(nVOrgN3 * (cAlsB26Dt)->N1_ALIQPIS /100 / (cAlsB26Dt)->N1_MESCPIS,2)
+		nVlCPCBT	:= Round(nVOrgN3 * (cAlsB26Dt)->N1_ALIQPIS /100 ,2)
+
+		nVlCCCBP	:= Round(nVOrgN3 * (cAlsB26Dt)->N1_ALIQCOF /100 / (cAlsB26Dt)->N1_MESCPIS,2)
+		nVlCCCBT	:= Round(nVOrgN3 * (cAlsB26Dt)->N1_ALIQCOF /100 ,2)
 
 		nQMes		:= ((cAlsB26Dt)->N1_MESCPIS-(cAlsB26Dt)->QTMES2)
 
