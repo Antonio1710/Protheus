@@ -74,13 +74,15 @@ Static Function MenuDef()
     ADD OPTION aRotina TITLE "Env Aprovacao"  ACTION "U_ADCOM427()" OPERATION 10  ACCESS 0
     
     If FWIsAdmin() .Or. __cUserID $cAprova
-        ADD OPTION aRotina TITLE "Aprovar" ACTION "U_ADCOM424(ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 11  ACCESS 0
+        ADD OPTION aRotina TITLE "Aprovar"   ACTION "U_ADCOM424('A', ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 11  ACCESS 0
+
+        ADD OPTION aRotina TITLE "Reprovar"  ACTION "U_ADCOM424('R', ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 12  ACCESS 0
 
     EndIf
 
-    ADD OPTION aRotina TITLE "Ger Ped Compra" ACTION "U_ADCOM429()" OPERATION 12  ACCESS 0
+    ADD OPTION aRotina TITLE "Ger Ped Compra" ACTION "MsAguarde({|| U_ADCOM429() }, 'Aguarde', 'Processando...')" OPERATION 13  ACCESS 0
 
-    ADD OPTION aRotina TITLE "Encerrar Manual" ACTION "U_ADCOM42A(.T., ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 13  ACCESS 0
+    ADD OPTION aRotina TITLE "Encerrar Manual" ACTION "U_ADCOM42A(.T., ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 14  ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} ModelDef
@@ -159,7 +161,7 @@ Static Function ViewDef()
     oView:SetViewProperty( "VW_GRID", "GRIDFILTER", {.T.}) 
     oView:SetViewProperty( "VW_GRID", "GRIDSEEK", {.T.})
 
-    oView:AddUserButton("Padrão Para Compra","",{|oView| U_ADCOM428(oView) } ,"",, {MODEL_OPERATION_INSERT ,MODEL_OPERATION_UPDATE} , .T. )   
+    oView:AddUserButton("Padrão Para Compra","",{|oView| U_ADCOM417(), U_ADCOM428(oView) } ,"",, {MODEL_OPERATION_INSERT ,MODEL_OPERATION_UPDATE} , .T. )   
 
 Return oView
 /*/{Protheus.doc} getCmps
@@ -193,10 +195,11 @@ Static Function fValidGrid(oModelGRID)
             If Empty(oModelGRID:GetValue("ZIO_CODPRO")) .Or. Empty(oModelGRID:GetValue("ZIO_DESPRD"));
                .Or. oModelGRID:GetValue("ZIO_VLUNIT") <= 0 .Or. oModelGRID:GetValue("ZIO_QUANT") <= 0;
                .Or. oModelGRID:GetValue("ZIO_VLRTOT") <= 0 .Or. Empty(oModelGRID:GetValue("ZIO_CODFOR"));
-               .Or. Empty(oModelGRID:GetValue("ZIO_LJFORN")) .Or. Empty(oModelGRID:GetValue("ZIO_CONDPA"))
+               .Or. Empty(oModelGRID:GetValue("ZIO_LJFORN")) .Or. Empty(oModelGRID:GetValue("ZIO_CONDPA"));
+               .Or. Empty(oModelGRID:GetValue("ZIO_CC"))
 
                 lRet := .F.
-                Help(Nil, Nil, "fValidGrid vldPos(ADCOM042P)", Nil, "Necessário informar o produto, valor unitário, quantidade, fornecedor e condição de pagamento.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+                Help(Nil, Nil, "fValidGrid vldPos(ADCOM042P)", Nil, "Necessário informar o produto, valor unitário, quantidade, fornecedor, condição de pagamento e centro de custo.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
                 Exit
                 
             EndIf
@@ -304,8 +307,25 @@ Return Nil
 User Function ADCOM421()
 
     //Variáveis.
+    Local aEnableButtons := {}
 
-    FWExecView("", "ADCOM042P", 3)
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.T., "Confirmar"})
+    Aadd(aEnableButtons, {.T., "Cancelar"})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+
+    FWExecView("", "ADCOM042P", 3, , , , , aEnableButtons)
 
 Return Nil
 /*/{Protheus.doc} User Function ADCOM422
@@ -320,6 +340,23 @@ User Function ADCOM422()
     //Variáveis.
     Local aArea  := GetArea()
     Local cVerAnt:= ""
+    Local aEnableButtons := {}
+
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.T., "Confirmar"})
+    Aadd(aEnableButtons, {.T., "Cancelar"})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
 
     If ZIO_STATUS $ "6/8"
         Help(Nil, Nil, "Função ADCOM422(ADCOM042P)", Nil, "Operação não permitida, contrato encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -330,7 +367,7 @@ User Function ADCOM422()
 
     If ZIO->ZIO_STATUS $"1/2/3/4" //Aberto, enviado para aprovação, aprovado, reprovado.
     
-        FWExecView("", "ADCOM042P", 4)
+        FWExecView("", "ADCOM042P", 4, , , , , aEnableButtons)
 
     Else
 
@@ -349,7 +386,7 @@ User Function ADCOM422()
 
         EndIf
 
-        FWExecView("", "ADCOM042P", 9)
+        FWExecView("", "ADCOM042P", 9, , , , , aEnableButtons)
 
     EndIf
     
@@ -387,14 +424,15 @@ Return Nil
     @since 04/08/2022
     @version 01
 /*/
-User Function ADCOM424(cContrato, cVersao, lAut, cMsgError)
+User Function ADCOM424(cAcao, cContrato, cVersao, lAut, cMsgError)
 
     //Variáveis.
-    Local aArea  := GetArea()
-    Local lRet   := .F.
-    Local oModel := Nil
-    Local aError := {}
-    Local cVerAnt:= ""
+    Local aArea    := GetArea()
+    Local lRet     := .F.
+    Local oModel   := Nil
+    Local aError   := {}
+    Local cVerAnt  := ""
+    Local cTxtAcao := Iif(cAcao == "A", "aprovar", "reprovar")
 
     Default lAut      := .F.
     Default cMsgError := ""
@@ -415,7 +453,7 @@ User Function ADCOM424(cContrato, cVersao, lAut, cMsgError)
 
     EndIf
 
-    If ! lAut .And. ! MsgYesNo("Deseja aprovar o contrato " + cContrato + " versão " + cVersao + "?", "Função ADCOM424(ADCOM042P)")
+    If ! lAut .And. ! MsgYesNo("Deseja " + cTxtAcao + " o contrato " + cContrato + " versão " + cVersao + "?", "Função ADCOM424(ADCOM042P)")
         RestArea(aArea)
         Return .F.
 
@@ -431,7 +469,7 @@ User Function ADCOM424(cContrato, cVersao, lAut, cMsgError)
         oModel:SetValue("MD_MASTER", "ZIO_HRAPRO"   , Time())
         oModel:SetValue("MD_MASTER", "ZIO_CODAPR"   , __cUserID)
         oModel:SetValue("MD_MASTER", "ZIO_NMAPRO"   , cUserName)
-        oModel:SetValue("MD_MASTER", "ZIO_STATUS"   , "3")
+        oModel:SetValue("MD_MASTER", "ZIO_STATUS"   , Iif(cAcao == "A", "3", "4"))
 
         If oModel:VldData()
         
@@ -652,6 +690,7 @@ User Function ADCOM428(oView)
     Local cFornece  := oGrid:GetValue("ZIO_CODFOR")
     Local cLoja     := oGrid:GetValue("ZIO_LJFORN")
     Local cNmFornec := oGrid:GetValue("ZIO_NMFORN")
+    Local aEnableButtons := {}
 
     If ! fValidGrid(oGrid)
         RestArea(aArea)
@@ -678,9 +717,25 @@ User Function ADCOM428(oView)
         Return .F.
 
     EndIf
+
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.T., "Confirmar"})
+    Aadd(aEnableButtons, {.T., "Cancelar"})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
+    Aadd(aEnableButtons, {.F., Nil})
     
     If U_ADCOM412(cContrato, cVersao, cItemCT, cFornece, cLoja, cProduto) 
-        FWExecView("", "ADCOM041P", 4)
+        FWExecView("", "ADCOM041P", 4, , , , , aEnableButtons)
 
     Else
         Help(Nil, Nil, "Função ADCOM428(ADCOM042P)", Nil, "Não foi possível carregar os registros.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -704,7 +759,6 @@ User Function ADCOM429()
     //Variáveis.
     Local aArea     := GetArea()
     Local lRet      := .F.
-    Local cMsgError := ""
     Local cContrato := ZIO->ZIO_NUMERO
     Local cVersao   := ZIO->ZIO_VERSAO
     Local aCab      := {}
@@ -738,6 +792,12 @@ User Function ADCOM429()
 
     EndIf
 
+    If ! MsgYesNo("Deseja gerar pedido(s) de compra para o contrato " + cContrato + " versão " + cVersao + "?", "Função ADCOM429(ADCOM042P)")
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
 	DbSelectArea("SA2")
 	SA2->(DbSetOrder(1))
 
@@ -765,7 +825,7 @@ User Function ADCOM429()
             nQuant   := ZIO->ZIO_QUANT
             nPrcUnt  := ZIO->ZIO_VLUNIT
             nVlrTot  := ZIO->ZIO_VLRTOT
-            cCC      := ""
+            cCC      := ZIO->ZIO_CC
             cObs     := ZIO->ZIO_OBS
             
             Aadd(aCab,{"C7_FILENT"	, FWxFilial("SC7")})
@@ -833,13 +893,7 @@ User Function ADCOM429()
 
     End Transaction
 
-    If Empty(cMsgError)
-        MsgInfo("Processo finalizado.", "Função ADCOM429(ADCOM042P)")
-
-    Else
-        Help(Nil, Nil, "Função ADCOM429(ADCOM042P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-
-    EndIf
+    MsgInfo("Processo finalizado.", "Função ADCOM429(ADCOM042P)")
 
     RestArea(aArea)
 
@@ -946,11 +1000,13 @@ User Function ADCOM42()
     Local oObj      := "" 
     Local cIdPonto  := "" 
     Local cIdModel  := "" 
-    Local oModelX   := nil
+    Local oModelX   := Nil
     Local oView     := Nil
+    Local oGrid     := Nil
     Local cNumero   := ""
+    Local nAux      := 1
 
-    If aParam <> NIL
+    If aParam <> Nil
     
         oObj     := aParam[1]
         cIdPonto := aParam[2]
@@ -959,6 +1015,7 @@ User Function ADCOM42()
         If cIdPonto == "BUTTONBAR"
     
             oModelX := FwModelActive()
+            oGrid   := oModelX:GetModel("MD_GRID")
 
             cNumero := oModelX:GetValue("MD_MASTER","ZIO_NUMERO")
         
@@ -968,6 +1025,12 @@ User Function ADCOM42()
                 FWFldPut("ZIO_STATUS", "1")
                 FWFldPut("ZIO_DTINI" , CToD(" / /"))
                 FWFldPut("ZIO_DTFIM" , CToD(" / /"))
+
+                For nAux := 1 To oGrid:Length() 
+                    oGrid:GoLine(nAux) 
+                    oGrid:LoadValue("ZIO_PEDCOM", "")
+
+                Next nAux
                 
                 oView := FWViewActive()
                 oView:Refresh()
