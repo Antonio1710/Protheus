@@ -162,6 +162,8 @@ Static Function ViewDef()
     oView:SetViewProperty( "VW_GRID", "GRIDSEEK", {.T.})
 
     oView:AddUserButton("Padrão Para Compra","",{|oView| U_ADCOM417(), U_ADCOM428(oView) } ,"",, {MODEL_OPERATION_INSERT ,MODEL_OPERATION_UPDATE} , .T. )   
+    
+    oView:AddUserButton("Entregas","",{|oView| U_ADCOM417(), U_ADCOM428(oView) } ,"",, {MODEL_OPERATION_VIEW} , .T. )   
 
 Return oView
 /*/{Protheus.doc} getCmps
@@ -1004,15 +1006,41 @@ User Function ADCOM42()
     Local oView     := Nil
     Local oGrid     := Nil
     Local cNumero   := ""
+    Local cVersao   := ""
     Local nAux      := 1
+    Local cOperacao := ""
+    Local nOperation:= 0
 
     If aParam <> Nil
     
         oObj     := aParam[1]
         cIdPonto := aParam[2]
         cIdModel := aParam[3]
+
+        If cIdPonto == "MODELCOMMITNTTS"
+
+            oModelx := FWModelActive()
+            nOperation  := oObj:GetOperation()
+            cNumero := oModelx:GetValue("MD_MASTER", "ZIO_NUMERO")
+            cVersao := oModelx:GetValue("MD_MASTER", "ZIO_VERSAO")
+
+            If nOperation == MODEL_OPERATION_INSERT
+                cOperacao := "I"
+
+            ElseIf nOperation == MODEL_OPERATION_UPDATE
+                cOperacao := "A"
+
+            ElseIf nOperation == MODEL_OPERATION_DELETE
+                cOperacao := "D"
+
+            EndIf
+
+            If ! Empty(cOperacao) .And. ! Empty(cNumero) .And. ! Empty(cVersao)
+                grvBarr(cOperacao, cNumero, cVersao)
+
+            EndIf
     
-        If cIdPonto == "BUTTONBAR"
+        ElseIf cIdPonto == "BUTTONBAR"
     
             oModelX := FwModelActive()
             oGrid   := oModelX:GetModel("MD_GRID")
@@ -1043,6 +1071,32 @@ User Function ADCOM42()
     EndIf
 
 Return xRet
+/*/{Protheus.doc} grvBarr
+    Salva o registro para enviar ao barramento.
+    @type  Static Function
+    @author Everson
+    @since 26/07/2022
+    @version 01
+/*/
+Static Function grvBarr(cOperacao, cNumero, cVersao)
+
+    //Variáveis.
+    Local aArea     := GetArea()
+    Local cFilter   := ""
+    Local cCmp      := getCmps()
+    Local cTopico   := "contrato_de_compra_de_mp_protheus"
+
+    cFilter := " ZIO_FILIAL ='" + FWxFilial("ZIO") + "' .And. ZIO_NUMERO = '" + cNumero + "' .And. ZIO_VERSAO = '" + cVersao + "' "
+
+    U_ADFAT27D("ZIO", 2, FWxFilial("ZIO") + cNumero + cVersao,;
+        "ZIO", 4, FWxFilial("ZIO") + cNumero + cVersao, "ZIO_ITEM", cFilter,;
+        cTopico, cOperacao,;
+        .T., .T., .T.,;
+        cCmp) 
+
+    RestArea(aArea)
+
+Return Nil
 /*/{Protheus.doc} Function obtVersao
     Obtém próximo número de versão.
     @type  Static Function
@@ -1076,3 +1130,20 @@ Static Function obtVersao(cContrato)
     RestArea(aArea)
 
 Return cVersao
+/*/{Protheus.doc} User Function ADCOM42A
+    Posiciona no registro pelo pedido de compra.
+    @type  Function
+    @author Everson
+    @since 09/08/2022
+    @version 01
+/*/
+User Function ADCOM42B(cPedido)
+
+    //Variáveis.
+    Local lRet := .F.
+
+    DbSelectArea("ZIO")
+    ZIO->(DbSetOrder(5))
+    lRet := ZIO->( DbSeek( FWxFilial("ZIO") + cPedido ) )
+
+Return lRet
