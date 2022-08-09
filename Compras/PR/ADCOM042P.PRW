@@ -46,9 +46,9 @@ Static Function BrowseDef()
     oBrowse:AddLegend("ZIO->ZIO_STATUS = '3'", "BR_VERDE"    , "Aprovado")
     oBrowse:AddLegend("ZIO->ZIO_STATUS = '4'", "BR_VERMELHO" , "Reprovado")
     oBrowse:AddLegend("ZIO->ZIO_STATUS = '5'", "BR_MARROM"   , "Ped Gerado")
-    oBrowse:AddLegend("ZIO->ZIO_STATUS = '6'", "BR_PRETO"    , "Encerrado")
     oBrowse:AddLegend("ZIO->ZIO_STATUS = '7'", "BR_LARANJA"  , "Parcialmente Atendido")
     oBrowse:AddLegend("ZIO->ZIO_STATUS = '8'", "BR_PINK"     , "Encerrado Manual")
+    oBrowse:AddLegend("ZIO->ZIO_STATUS = '6'", "BR_PRETO"    , "Encerrado")
 
     // oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
 
@@ -71,16 +71,16 @@ Static Function MenuDef()
     ADD OPTION aRotina TITLE "Alterar"    ACTION "U_ADCOM422()"   	    OPERATION MODEL_OPERATION_UPDATE    ACCESS 0
     ADD OPTION aRotina TITLE "Excluir" 	  ACTION "U_ADCOM423()"   	    OPERATION MODEL_OPERATION_DELETE    ACCESS 0
 
+    ADD OPTION aRotina TITLE "Env Aprovacao"  ACTION "U_ADCOM427()" OPERATION 10  ACCESS 0
+    
     If FWIsAdmin() .Or. __cUserID $cAprova
-        ADD OPTION aRotina TITLE "Aprovar" ACTION "U_ADCOM424(ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 10  ACCESS 0
+        ADD OPTION aRotina TITLE "Aprovar" ACTION "U_ADCOM424(ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 11  ACCESS 0
 
     EndIf
 
-    ADD OPTION aRotina TITLE "Env Aprovacao"  ACTION "U_ADCOM427()" OPERATION 10  ACCESS 0
+    ADD OPTION aRotina TITLE "Ger Ped Compra" ACTION "U_ADCOM429()" OPERATION 12  ACCESS 0
 
-    ADD OPTION aRotina TITLE "Ger Ped Compra" ACTION "U_ADCOM429()" OPERATION 11  ACCESS 0
-
-    ADD OPTION aRotina TITLE "Encerrar Manual" ACTION "U_ADCOM429()" OPERATION 12  ACCESS 0
+    ADD OPTION aRotina TITLE "Encerrar Manual" ACTION "U_ADCOM42A(.T., ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO)" OPERATION 13  ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} ModelDef
@@ -244,12 +244,17 @@ Static Function vldPos(oModel)
 
         oModel:SetValue("MD_MASTER", "ZIO_ALTERA", DToC(Date()) + " " + Time() + " " + Alltrim(cUserName))
 
-        If lRet .And. ! IsInCallStack("U_ADCOM427") .And. ! IsInCallStack("U_ADCOM427")
-            oModel:SetValue("MD_MASTER", "ZIO_DTAPRO"   , CToD(" / / "))
-            oModel:SetValue("MD_MASTER", "ZIO_HRAPRO"   , "")
-            oModel:SetValue("MD_MASTER", "ZIO_CODAPR"   , "")
-            oModel:SetValue("MD_MASTER", "ZIO_NMAPRO"   , "")
-            oModel:SetValue("MD_MASTER", "ZIO_STATUS"   , "1")
+        If lRet .And.; 
+           ! IsInCallStack("U_ADCOM427") .And.; //Envia contrato para aprovação.
+           ! IsInCallStack("U_ADCOM424") .And.; //Aprova contrato.
+           ! IsInCallStack("U_ADCOM429") .And.; //Gera pedido de compra.
+           ! IsInCallStack("U_ADCOM42A")        //Encerra contrato manualmente.
+
+            oModel:SetValue("MD_MASTER", "ZIO_DTAPRO", CToD(" / / "))
+            oModel:SetValue("MD_MASTER", "ZIO_HRAPRO", "")
+            oModel:SetValue("MD_MASTER", "ZIO_CODAPR", "")
+            oModel:SetValue("MD_MASTER", "ZIO_NMAPRO", "")
+            oModel:SetValue("MD_MASTER", "ZIO_STATUS", "1")
 
         EndIf
 
@@ -314,6 +319,7 @@ User Function ADCOM422()
 
     //Variáveis.
     Local aArea  := GetArea()
+    Local cVerAnt:= ""
 
     If ZIO_STATUS $ "6/8"
         Help(Nil, Nil, "Função ADCOM422(ADCOM042P)", Nil, "Operação não permitida, contrato encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -332,6 +338,15 @@ User Function ADCOM422()
             RestArea(aArea)
             Return Nil
         
+        EndIf
+
+        cVerAnt := obtVerAnt(ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO, .T.)
+
+        If ! Empty(cVerAnt)
+            Help(Nil, Nil, "Função ADCOM422(ADCOM042P)", Nil, "Já há a versao " + cVerAnt + " do contrato " + ZIO->ZIO_NUMERO + " em aberto. Altere esta versão ou exclua a mesma.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+            RestArea(aArea)
+            Return Nil
+
         EndIf
 
         FWExecView("", "ADCOM042P", 9)
@@ -379,6 +394,7 @@ User Function ADCOM424(cContrato, cVersao, lAut, cMsgError)
     Local lRet   := .F.
     Local oModel := Nil
     Local aError := {}
+    Local cVerAnt:= ""
 
     Default lAut      := .F.
     Default cMsgError := ""
@@ -404,26 +420,46 @@ User Function ADCOM424(cContrato, cVersao, lAut, cMsgError)
         Return .F.
 
     EndIf
+    
+    Begin Transaction
 
-    oModel := FwLoadModel("ADCOM042P")
-    oModel:SetOperation(MODEL_OPERATION_UPDATE)
-    oModel:Activate()
+        oModel := FwLoadModel("ADCOM042P")
+        oModel:SetOperation(MODEL_OPERATION_UPDATE)
+        oModel:Activate()
 
-    oModel:SetValue("MD_MASTER", "ZIO_DTAPRO"   , Date())
-    oModel:SetValue("MD_MASTER", "ZIO_HRAPRO"   , Time())
-    oModel:SetValue("MD_MASTER", "ZIO_CODAPR"   , __cUserID)
-    oModel:SetValue("MD_MASTER", "ZIO_NMAPRO"   , cUserName)
-    oModel:SetValue("MD_MASTER", "ZIO_STATUS"   , "3")
+        oModel:SetValue("MD_MASTER", "ZIO_DTAPRO"   , Date())
+        oModel:SetValue("MD_MASTER", "ZIO_HRAPRO"   , Time())
+        oModel:SetValue("MD_MASTER", "ZIO_CODAPR"   , __cUserID)
+        oModel:SetValue("MD_MASTER", "ZIO_NMAPRO"   , cUserName)
+        oModel:SetValue("MD_MASTER", "ZIO_STATUS"   , "3")
 
-    If oModel:VldData()
-        oModel:CommitData()
-        lRet := .T.
+        If oModel:VldData()
+        
+            oModel:CommitData()
 
-    Else
-        aError := oModel:GetErrorMessage()
-        cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+            cVerAnt := obtVerAnt(cContrato, cVersao, .F.)
 
-    EndIf
+            If ! Empty(cVerAnt)
+
+                If ! U_ADCOM42A(.F., cContrato, cVerAnt)
+                    DisarmTransaction()
+                    Break
+
+                EndIf
+
+            EndIf
+
+            lRet := .T.
+
+        Else
+            aError := oModel:GetErrorMessage()
+            cMsgError := Alltrim(cValToChar(aError[MODEL_MSGERR_MESSAGE]))
+            DisarmTransaction()
+            Break
+
+        EndIf
+
+    End Transaction
 
     oModel:DeActivate()
     oModel:Destroy()
@@ -437,6 +473,62 @@ User Function ADCOM424(cContrato, cVersao, lAut, cMsgError)
     RestArea(aArea)
 
 Return lRet
+/*/{Protheus.doc} User Function obtVerAnt
+    Obtém a versao anterior em aberta do contrato.
+    @type  Function
+    @author Everson
+    @since 04/08/2022
+    @version 01
+/*/
+Static Function obtVerAnt(cContrato, cVersao, lAberto)
+
+    //Variáveis
+    Local aArea   := GetArea()
+    Local cVerAnt := Iif(lAberto, "0", "9999")
+
+    Default lAberto := .F.
+
+    If ! U_ADCOM425(cContrato)
+        RestArea(aArea)
+        Return ""
+
+    EndIF
+
+    While ! ZIO->(Eof()) .And. ZIO->ZIO_FILIAL == FWxFilial("ZIO") .And. ZIO->ZIO_NUMERO == cContrato
+
+        If lAberto
+            
+            If ZIO->ZIO_STATUS $ "1/2/3/4" .And. ZIO->ZIO_VERSAO <> cVersao
+                cVerAnt := ZIO->ZIO_VERSAO
+                Exit
+
+            EndIf
+
+        Else
+
+            If ZIO->ZIO_STATUS $ "5/7" .And. ZIO->ZIO_VERSAO <> cVersao
+                cVerAnt := ZIO->ZIO_VERSAO
+                Exit
+                
+            EndIf
+
+        EndIf
+
+        ZIO->(DbSkip())
+
+    End
+
+    If lAberto .And. cVerAnt == "0"
+        cVerAnt := ""
+
+    ElseIf ! lAberto .And. cVerAnt == "9999"
+        cVerAnt := ""
+
+    EndIf
+
+    RestArea(aArea)
+
+Return cVerAnt
 /*/{Protheus.doc} User Function ADCOM424
     Posiciona no registro.
     @type  Function
@@ -487,7 +579,6 @@ User Function ADCOM426(cContrato, cVersao, cCampo, xValor, cMsgError)
     oModel:Activate()
 
     oModel:SetValue("MD_MASTER", cCampo, xValor)
-    oModel:SetValue("MD_MASTER", cCampo, xValor)
 
     If oModel:VldData()
         oModel:CommitData()
@@ -510,7 +601,7 @@ User Function ADCOM426(cContrato, cVersao, cCampo, xValor, cMsgError)
 
     RestArea(aArea)
 
-Return Nil
+Return lRet
 /*/{Protheus.doc} User Function ADCOM427
     Envia para aprovação.
     @type  Function
@@ -544,7 +635,7 @@ Return lRet
 /*/{Protheus.doc} User Function ADCOM428
     Lançamento de padrão de compra.
     @type  Function
-    @author user
+    @author Everson
     @since 04/08/2022
     @version 01
 /*/
@@ -601,27 +692,6 @@ User Function ADCOM428(oView)
     RestArea(aArea)
     
 Return .T.
-/*/{Protheus.doc} lmpPdr
-    Apaga lançamentos de padrão de compra.
-    @type  Static Function
-    @author Everson
-    @since 04/08/2022
-    @version 01
-/*/
-Static Function lmpPdr(cContrato, cVersao)
-
-    //Variáveis.
-    Local aArea  := GetArea()
-
-    If ! U_ADCOM425(cContrato, cVersao) //Verifica se padrão de compra vinculado ao contrato.
-
-        U_ADCOM414(cContrato, cVersao)  //Exclui os registros de padrão de compra.
-
-    EndIf
-
-    RestArea(aArea)
-
-Return Nil
 /*/{Protheus.doc} ADCOM429
     Gera pedido de compra.
     @type  Static Function
@@ -633,8 +703,26 @@ User Function ADCOM429()
 
     //Variáveis.
     Local aArea     := GetArea()
+    Local lRet      := .F.
+    Local cMsgError := ""
     Local cContrato := ZIO->ZIO_NUMERO
     Local cVersao   := ZIO->ZIO_VERSAO
+    Local aCab      := {}
+    Local aLinha    := {}
+    Local aItens    := {}
+    Local cFornece  := ""
+    Local cLoja     := ""
+    Local cCond     := ""
+    Local cNumPc    := ""
+    Local cProduto  := ""
+    Local nQuant    := 0
+    Local nPrcUnt   := 0
+    Local nVlrTot   := 0
+    Local cCC       := ""
+    Local cResp     := Alltrim(cValToChar(GetMv("MV_#COM421",,"FERNANDO LUTFALLA")))
+    Local cObs      := ""
+
+    Private lMsErroAuto := .F.
 
     If ! U_ADCOM425(cContrato, cVersao)
         Help(Nil, Nil, "Função ADCOM429(ADCOM042P)", Nil, "Contrato " + cContrato + " versão " + cVersao + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
@@ -650,31 +738,142 @@ User Function ADCOM429()
 
     EndIf
 
-    MsgInfo("Processo finalizado.", "Função ADCOM429(ADCOM042P)")
+	DbSelectArea("SA2")
+	SA2->(DbSetOrder(1))
 
-    RestArea(aArea)
+	DbSelectArea("SC7")
+	SC7->(DbSetOrder(1))
 
-Return .T.
-/*/{Protheus.doc} User Function ADCOM430
-    Encerrar contrato manualmente.
-    @type  Function
-    @author user
-    @since 05/08/2022
-    @version 01
-/*/
-User Function ADCOM430()
+    Begin Transaction
 
-    //Variáveis.
-    Local aArea  := GetArea()
+        While ! ZIO->(Eof()) .And. ZIO->ZIO_FILIAL == FWxFilial("ZIO") .And. ZIO->ZIO_NUMERO == cContrato .And. ZIO->ZIO_VERSAO == cVersao
 
-    If ZIO->ZIO_STATUS <> "5/7"
-        Help(Nil, Nil, "Função ADCOM430(ADCOM042P)", Nil, "Para ser encerrado, o contrato precisa estar com status de 'Ped Gerado' ou 'Parcialmente Atendido'.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
-        RestArea(aArea)
-        Return .T.
+            aCab   := {}
+            aLinha := {}
+            aItens := {}
+
+            If ! Empty(ZIO->ZIO_PEDCOM)
+                ZIO->(DbSkip())
+                Loop
+
+            EndIf
+
+            cFornece := ZIO->ZIO_CODFOR
+            cLoja    := ZIO->ZIO_LJFORN
+            cCond    := ZIO->ZIO_CONDPA
+            cProduto := ZIO->ZIO_CODPRO
+            nQuant   := ZIO->ZIO_QUANT
+            nPrcUnt  := ZIO->ZIO_VLUNIT
+            nVlrTot  := ZIO->ZIO_VLRTOT
+            cCC      := ""
+            cObs     := ZIO->ZIO_OBS
+            
+            Aadd(aCab,{"C7_FILENT"	, FWxFilial("SC7")})
+            Aadd(aCab,{"C7_EMISSAO"	, Date()	})
+            Aadd(aCab,{"C7_FORNECE"	, cFornece  })
+            Aadd(aCab,{"C7_LOJA" 	, cLoja  	})
+            Aadd(aCab,{"C7_COND"	, cCond   	})
+            Aadd(aCab,{"C7_CONTATO"	, ""        })
+
+            Aadd(aLinha,{"C7_PRODUTO" , cProduto, Nil})
+            Aadd(aLinha,{"C7_QUANT"   , nQuant  , Nil})
+            Aadd(aLinha,{"C7_PRECO"   , nPrcUnt , Nil})
+            Aadd(aLinha,{"C7_TOTAL"   , nVlrTot , Nil})
+            Aadd(aLinha,{"C7_CC" 	  , cCC     , Nil})
+            Aadd(aLinha,{"C7_XRESPON" , cResp   , Nil})
+            Aadd(aLinha,{"C7_OBS" 	  , cObs    , Nil}) 
+
+            Aadd(aItens,aLinha)
+            
+            cNumPc := u_SXESXF("SC7")
+            SC7->( DbGoTop() )
+            Do While .T.
+
+                SC7->( DbSetOrder(1) )
+
+                If SC7->( DbSeek( FwxFilial("SC7") + cNumPc ) )
+                    cNumPc := u_SXESXF("SC7")
+
+                Else
+                    Exit
+
+                EndIf
+
+            EndDo
+
+            Aadd(aCab,{"C7_NUM", cNumPc}) 
+
+            lMsErroAuto := .F.                    
+            SetFunName("MATA120")
+            MSExecAuto({|u,v,x,y| MATA120(u,v,x,y)}, 1, aCab, aItens, 3) 
+
+            If lMsErroAuto 
+                lRet := .F.
+                MostraErro()
+                DisarmTransaction()
+                Break
+
+            Else 
+                lRet := .T.
+                RecLock("ZIO", .F.)
+                    ZIO->ZIO_PEDCOM := SC7->C7_NUM
+                MsUnlock()
+
+            EndIf
+
+            ZIO->(DbSkip())
+
+        End
+
+        If lRet .And. ! U_ADCOM426(cContrato, cVersao, "ZIO_STATUS", "5")
+            DisarmTransaction()
+            Break
+            
+        EndIf
+
+    End Transaction
+
+    If Empty(cMsgError)
+        MsgInfo("Processo finalizado.", "Função ADCOM429(ADCOM042P)")
+
+    Else
+        Help(Nil, Nil, "Função ADCOM429(ADCOM042P)", Nil, cMsgError, 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
 
     EndIf
 
-    If ! MsgYesNo("Deseja encerrar o contrato " + ZIO->ZIO_NUMERO + " versão " + ZIO->ZIO_VERSAO + "?", "Função ADCOM430(ADCOM042P)")
+    RestArea(aArea)
+
+Return lRet
+/*/{Protheus.doc} User Function ADCOM42A
+    Encerrar contrato manualmente.
+    @type  Function
+    @author Everson
+    @since 05/08/2022
+    @version 01
+/*/
+User Function ADCOM42A(lPergunta, cContrato, cVersao)
+
+    //Variáveis.
+    Local aArea      := GetArea()
+    Local lRet       := .F.
+
+    Default lPergunta  := .F.
+
+    If ! U_ADCOM425(cContrato, cVersao)
+        Help(Nil, Nil, "Função ADCOM42A(ADCOM042P)", Nil, "Contrato " + cContrato + " versão " + cVersao + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If !(ZIO->ZIO_STATUS $"5/7")
+        Help(Nil, Nil, "Função ADCOM42A(ADCOM042P)", Nil, "Contrato precisa estar com status 'Ped Gerado' ou 'Parcialmente Atendido', para ser encerrado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
+        RestArea(aArea)
+        Return .F.
+
+    EndIf
+
+    If lPergunta .And. ! MsgYesNo("Deseja encerrar o contrato " + cContrato + " versão " + cVersao + "?", "Função ADCOM42A(ADCOM042P)")
         RestArea(aArea)
         Return .F.
 
@@ -682,19 +881,23 @@ User Function ADCOM430()
 
     Begin Transaction
 
-        If ! cncPdCom()
+        If ! cncPdCom(cContrato, cVersao)
             DisarmTransaction()
             Break
 
         EndIf
 
-        If U_ADCOM426(ZIO->ZIO_NUMERO, ZIO->ZIO_VERSAO, "ZIO_STATUS", "7")
+        If ! U_ADCOM426(cContrato, cVersao, "ZIO_STATUS", "8")
             DisarmTransaction()
             Break
 
         EndIf
+
+        lRet := .T.
 
     End Transaction
+
+    MsgInfo("Processo finalizado", "Função ADCOM42A(ADCOM042P)")
 
     RestArea(aArea)
 
@@ -711,7 +914,7 @@ Static Function cncPdCom(cContrato, cVersao)
     //Variáveis.
     Local aArea  := GetArea()
 
-    If U_ADCOM425(cContrato, cVersao)
+    If ! U_ADCOM425(cContrato, cVersao)
         Help(Nil, Nil, "Função cncPdCom(ADCOM042P)", Nil, "Contrato " + cContrato + " versão " + cVersao + " não localizado.", 1, 0, Nil, Nil, Nil, Nil, Nil, {""})
         RestArea(aArea)
         Return .F.
