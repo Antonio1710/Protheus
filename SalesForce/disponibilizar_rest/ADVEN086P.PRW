@@ -207,8 +207,9 @@ WsMethod Post WsService pedidosdevenda
 		cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI "
 	cQuery += " WHERE "
 		cQuery += " ZCI.D_E_L_E_T_ = '' "
+		cQuery += " AND ZCI_NUMP <> '' "
 		cQuery += " AND ZCI_METD = 'POST' "
-		cQuery += " AND ZCI_IDSF = '" +  Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)) + "' "
+		cQuery += " AND ZCI_IDSF = '" +  Alltrim(cValToChar(cIdSFBkp)) + "' "
 
 	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
@@ -219,7 +220,7 @@ WsMethod Post WsService pedidosdevenda
 		
 		Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Post - duplicidade " + (cNewAlias)->ZCI_NUMP )
 
-		cJsonResp := '{"msg":"Sequencial ' + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)) + ' já utilizado.","C5_NUM":"'+ Alltrim(cValToChar((cNewAlias)->ZCI_NUMP)) + '"}'
+		cJsonResp := '{"msg":"Sequencial ' + Alltrim(cValToChar(cIdSFBkp)) + ' já utilizado.","C5_NUM":"'+ Alltrim(cValToChar((cNewAlias)->ZCI_NUMP)) + '"}'
 
 		//Everson - 15/09/2021. Chamado T.I.
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,cJsonResp,cUrlServ,"POST",,cNumSF)
