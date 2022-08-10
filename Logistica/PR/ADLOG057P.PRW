@@ -60,6 +60,7 @@
 	@history Ticket 70142 - Edvar / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	@history ticket 71619 - Everson - 20/04/2022 - Tratamento para emissão de MDF-e para transportadoras com CNPJ (SC) mesmo quando há mais de 4 notas na carga.
 	@history ticket 70593 - Everson - 20/04/2022 - Adicionado MVs na interface de configuração.
+    @history ticket 77749 - Antonio Domingos - 09/08/2022 - invalid property _AMBIENTE on RETCONSCTE(ADLOG057P.PRW) 
 /*/
 User Function ADLOG057P(nOPc,nTpVa) // U_ADLOG057P()
 
@@ -7759,8 +7760,10 @@ Static Function retConsCTE(oXml,cHash,lExibMsg)
 		//Número e série do CT-e.
 		cNumCte		:= Alltrim(cValToChar(oXml:_retConsulta:_dadosCTe:_numero:Text))
 		cSerieCte	:= Alltrim(cValToChar(oXml:_retConsulta:_dadosCTe:_serie:Text))
-
-		cAmbiente	:= Alltrim(cValToChar(oXml:_retConsulta:_ambiente:Text))
+		//ticket 77749 - Antonio Domingos - 09/08/2022 - invalid property _AMBIENTE on RETCONSCTE(ADLOG057P.PRW) 
+		If Type("oXml:_retConsulta:_ambiente:Text")<>"U"
+			cAmbiente	:= Alltrim(cValToChar(oXml:_retConsulta:_ambiente:Text))
+		EndIf
 		cDataEmis	:= Alltrim(cValToChar(oXml:_retConsulta:_dadosCTe:_dataEmissao:Text))
 		cCFOP		:= Alltrim(cValToChar(oXml:_retConsulta:_dadosCTe:_cfop:Text))
 		cNatureza	:= Alltrim(cValToChar(oXml:_retConsulta:_dadosCTe:_natureza:Text))
