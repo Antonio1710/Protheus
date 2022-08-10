@@ -1191,7 +1191,12 @@ Static Function exclPedVend(cErro, cNumPed, nRecno, cCodUsuario, cUrlServ)
 	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	nRecno := u_VEN075A0(cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
 
-	cQuery := obPost(cNumPed)
+	DbSelectArea("ZCI")
+	DbGoTo( Val(cValToChar(nRecno)) )
+
+	Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - consulta pedido " +  ZCI->ZCI_NUMP)
+
+	cQuery := " SELECT * FROM " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI WHERE ZCI_FILIAL = '" + FWxFilial("ZCI") + "' AND ZCI_NUMP = '" + ZCI->ZCI_NUMP + "' AND ZCI_METD = 'POST' AND ZCI.D_E_L_E_T_ = '' "
 
 	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
@@ -1201,12 +1206,12 @@ Static Function exclPedVend(cErro, cNumPed, nRecno, cCodUsuario, cUrlServ)
 	If (cNewAlias)->(Eof())
 		cRobo := (cNewAlias)->ZCI_ROBO
 
+		Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - consulta pedido " +  ZCI->ZCI_NUMP + " robo " + cRobo)
+
 	EndIf
 
 	(cNewAlias)->(DbCloseArea())
 
-	DbSelectArea("ZCI")
-	DbGoTo( Val(cValToChar(nRecno)) )
 	If RecLock("ZCI",.F.)
 			ZCI->ZCI_TMPR := "PENDPROC"
 			ZCI->ZCI_ROBO := cRobo
