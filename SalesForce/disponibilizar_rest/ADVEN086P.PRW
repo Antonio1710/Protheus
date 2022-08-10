@@ -210,7 +210,7 @@ WsMethod Post WsService pedidosdevenda
 		cQuery += " AND ZCI_METD = 'POST' "
 		cQuery += " AND ZCI_IDSF = '" +  Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)) + "' "
 
-	cNewAlias := GetNexAlias()
+	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
 
 	(cNewAlias)->(DbGoTop())
@@ -432,7 +432,7 @@ WsMethod Put WsService pedidosdevenda
 	
 	cQuery := obPost(cNumPed)
 
-	cNewAlias := GetNexAlias()
+	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
 
 	(cNewAlias)->(DbGoTop())
@@ -522,7 +522,7 @@ WsMethod Put WsService pedidosdevenda
 		cQuery += " AND D_E_L_E_T_ = ''   " 
 	cQuery += " ORDER BY R_E_C_N_O_ DESC "
 
-	cNewAlias := GetNexAlias()
+	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
 
 	(cNewAlias)->(DbGoTop())
@@ -1192,7 +1192,7 @@ Static Function exclPedVend(cErro, cNumPed, nRecno, cCodUsuario, cUrlServ)
 
 	cQuery := obPost(cNumPed)
 
-	cNewAlias := GetNexAlias()
+	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
 	
 	(cNewAlias)->(DbGoTop())
