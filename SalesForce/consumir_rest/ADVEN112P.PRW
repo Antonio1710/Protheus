@@ -15,7 +15,7 @@ Static cFil := "02"
 	@since 09/05/2018
 	@version 01
 /*/
-User Function ADVEN112P(cEmp, cFil) // U_ADVEN112P()
+User Function ADVEN112P(aXEmpFil) // U_ADVEN112P()
 
 	//Declaração de variávies
 	Local cDiaS		:= ""
@@ -24,9 +24,8 @@ User Function ADVEN112P(cEmp, cFil) // U_ADVEN112P()
 	Local lAutoJob  := .T.
 	local cRobo		:= "B"
     Local lRobo     := .F.
-
-	Default cEmp	:= "01"
-	Default cFil	:= "02"
+	Local cEmp	    := aXEmpFil[1]
+	Local cFil	    := aXEmpFil[2]
 
 	//Inicia o ambiente.
 	If Select("SX6") == 0
@@ -41,7 +40,7 @@ User Function ADVEN112P(cEmp, cFil) // U_ADVEN112P()
 	if lAutoJob
 		RPCClearEnv()
 		RPCSetType(3)
-		RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{})
+		RpcSetEnv(cEmp, cFil,,,,GetEnvServer(),{})
 
 	Else
 		MsgInfo("Modo debug Início", "Modo Debug")
