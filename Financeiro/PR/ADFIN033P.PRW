@@ -25,6 +25,7 @@
 	@history chamado n. 054604 - FWNM          - 03/01/2020 - OS 055999 || FINANCAS || FLAVIA || 8461 || REL. PAGAMENTOS
 	@history Chamado n. 058206 - WILLIAM COSTA - 19/05/2020 - Adicionado campo Nr do Cheque
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 78007   - Antonio Domingos - 10/08/2022 - ADFIN030P - Apagar Geração de arquivos Temporarios
 /*/
 User Function ADFIN033P()
 
@@ -33,7 +34,8 @@ User Function ADFIN033P()
 	Local oConfDiPag
 	
 	Local oFechar
-
+	Private   cArqCPD
+	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Painel Contas Pagar')
 	
 	oTelMenu			:= MsDialog():Create()
@@ -53,6 +55,9 @@ User Function ADFIN033P()
 	oFechar := TButton():New(120,075,"Fechar",oTelMenu,{|| oTelMenu:End() },040,010,,,.F.,.T.,.F.,,.F.,,,.F. )
 	
 	oTelMenu:Activate(,,,.T.,{||.T.},,{||  })
+	
+	//Ticket 78007   - Antonio Domingos - 10/08/2022 - ADFIN030P - Apagar Geração de arquivos Temporarios
+	Iif(File(cArqCPD + GetDBExtension()),FErase(cArqCPD  + GetDBExtension()) ,Nil)
 	
 	RestArea(aArea)
 	
@@ -228,7 +233,7 @@ Static Function carrCPD(oBase,aHBase,oAnalise,dDataDe,dDataAte,oTFLCPD,oCSVA)
 	Local aColsAnalise	:= {}
 	
 	Local aStru		:= {}
-	Local cArqCPD	:= ""
+	//Local cArqCPD	:= ""
 	Local cIndex	:= ""
 	
 	Local nTotFilG	:= 0

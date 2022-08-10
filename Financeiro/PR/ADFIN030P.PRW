@@ -23,6 +23,7 @@
 	@history Ticket  62143  - Everson         - 19/10/2021 - Tratamento para melhorar a performace da rotina cobDia.
 	@history Chamado 63394 - Leonardo P. Monteiro - 08/11/2021 - Reformulação da rotina ADFIN071R para melhoramento de performance e atualização das funções.
 	@history Ticket 70142   - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+	@history Ticket 78007   - Antonio Domingos - 10/08/2022 - ADFIN030P - Geração de arquivos Temporarios
 /*/
 User Function ADFIN030P() // U_ADFIN030P()
 
@@ -37,7 +38,9 @@ User Function ADFIN030P() // U_ADFIN030P()
 	
 
 	Local oFechar
-
+	Private cArLCRF
+	Private cArEmail
+	
 	U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Painel do Contas a Receber - Funções do contas a receber. ')
 
 	oTelMenu		   := MsDialog():Create()
@@ -89,6 +92,16 @@ User Function ADFIN030P() // U_ADFIN030P()
 
 	oTelMenu:Activate(,,,.T.,{||.T.},,{||  })
 
+	//Ticket 78007   - Antonio Domingos - 10/08/2022 - ADFIN030P - Apagar Geração de arquivos Temporarios
+	Iif(File("T_ADFIN030P_CC_*" + GetDBExtension()),FErase("T_ADFIN030P_CC_*" + GetDBExtension()) ,Nil)
+	Iif(File("T_ADFIN030P_CC_*" + OrdBagExt()),FErase("T_ADFIN030P_CC_*" + OrdBagExt()) ,Nil)
+	
+	Iif(File(cArLCRF + GetDBExtension()),FErase(cArLCRF + GetDBExtension()) ,Nil)
+	Iif(File(cArLCRF + OrdBagExt()),FErase(cArLCRF + OrdBagExt()) ,Nil)
+	
+	Iif(File(cArEmail + GetDBExtension()),FErase(cArEmail + GetDBExtension()) ,Nil)
+	Iif(File(cArEmail + OrdBagExt()),FErase(cArEmail + OrdBagExt()) ,Nil)
+	
 	RestArea(aArea)
 
 Return Nil
@@ -4114,7 +4127,7 @@ Static Function atlLCRF(oBase,aHBase,oAnalise,aHAnalise)
 
 	Local aArea		:= GetArea()
 	Local cQuery	:= ""
-	Local cArLCRF	:= ""
+	//Local cArLCRF	:= ""
 	Local cIndex	:= ""
 	Local aStru		:= {}
 
