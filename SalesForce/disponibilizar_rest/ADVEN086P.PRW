@@ -1196,14 +1196,14 @@ Static Function exclPedVend(cErro, cNumPed, nRecno, cCodUsuario, cUrlServ)
 
 	Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - consulta pedido " +  ZCI->ZCI_NUMP)
 
-	cQuery := " SELECT * FROM " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI WHERE ZCI_FILIAL = '" + FWxFilial("ZCI") + "' AND ZCI_NUMP = '" + ZCI->ZCI_NUMP + "' AND ZCI_METD = 'POST' AND ZCI.D_E_L_E_T_ = '' "
+	cQuery := obPost(ZCI->ZCI_NUMP)
 
 	cNewAlias := GetNextAlias()
 	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
 	
 	(cNewAlias)->(DbGoTop())
 	
-	If (cNewAlias)->(Eof())
+	If ! (cNewAlias)->(Eof())
 		cRobo := (cNewAlias)->ZCI_ROBO
 
 		Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - consulta pedido " +  ZCI->ZCI_NUMP + " robo " + cRobo)
