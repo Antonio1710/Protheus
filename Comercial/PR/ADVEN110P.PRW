@@ -9,7 +9,7 @@ Static cTiMast := "Dados da visita promotor"
 Static xPula := Chr(13) + Chr(10)
 
 /*/{Protheus.doc} User Function ADVEN110P
-    Visita Esporadica Promotor
+    Visita Programada Promotor
     @type  Function
     @author Everson
     @since 31/07/2022
@@ -403,7 +403,7 @@ User Function ADVN1101()
         lRetEnv  := .F.
         cData    := DToS(Date()+1)
 
-        data      := SubStr(cData, 1, 4) + "-" + Padl(SubStr(cData, 5, 2), 2, "0") + "-" + Padl(SubStr(cData, 8, 2), 2, "0")
+        data      := SubStr(cData, 1, 4) + "-" + Padl(SubStr(cData, 5, 2), 2, "0") + "-" + Padl(SubStr(cData, 7, 2), 2, "0")
         portfolio := Alltrim(cValToChar(D_VISPRO->ZHY_PROMOT))
         cCliente  := Alltrim(cValToChar(D_VISPRO->ZHY_CLIENT))
         cLoja     := Alltrim(cValToChar(D_VISPRO->ZHY_LOJA))
