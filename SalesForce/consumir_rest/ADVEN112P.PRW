@@ -67,8 +67,6 @@ User Function ADVEN112P(aXEmpFil) // U_ADVEN112P()
 		
 		Conout(DToC(Date()) + " " + Time() + " ADVEN112P - Fim inclusão/atualização/exclusão de pedido de venda SalesForce.")
 
-		UnLockByName("ADVEN112P")
-
 	RpcClearEnv()
 
 	if lAutoJob

@@ -90,8 +90,6 @@ User Function ADVEN090P(cEmp, cFil) // U_ADVEN090P()
 		
 		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Fim inclusão/atualização/exclusão de pedido de venda SalesForce.")
 
-		UnLockByName("ADVEN090P")
-
 	RpcClearEnv()
 
 	if lAutoJob
