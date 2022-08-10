@@ -37,8 +37,8 @@ Static Function BrowseDef()
     oBrowse:SetAlias(cTbMast)
     oBrowse:SetDescription(cTitulo)
 
-    oBrowse:AddLegend("ZII->ZII_PARAMF <> ''" , "BR_VERDE" , "Informado Padrão Fornecedor")
-    oBrowse:AddLegend("ZII->ZII_PARAMF = ''"  , "BR_AZUL"  , "Não Informado Padrão Fornecedor")
+    // oBrowse:AddLegend("ZII->ZII_PARAMF <> ''" , "BR_VERDE" , "Informado Padrão Fornecedor")
+    // oBrowse:AddLegend("ZII->ZII_PARAMF = ''"  , "BR_AZUL"  , "Não Informado Padrão Fornecedor")
 
     oBrowse:SetFilterDefault(" " + cTbMast + "_FILIAL = '" + FWxFilial(cTbMast) + "' ")
 
@@ -68,6 +68,8 @@ Static Function ModelDef()
  
     oModel:AddFields("MD_MASTER", NIL, oStrMast)
     oModel:AddGrid("MD_GRID", "MD_MASTER", oStrGrid,,,)
+    oModel:GetModel("MD_GRID"):SetNoInsertLine(.T.)
+    oModel:GetModel("MD_GRID"):SetNoDeleteLine(.T.)
  
     oModel:SetRelation("MD_GRID", {;
             {"ZII_FILIAL"  , 'FWxFilial("' + cTbMast + '")'},;
@@ -112,7 +114,7 @@ Static Function ViewDef()
 
     oView:SetOwnerView("VW_MASTER", 'MAIN')
     oView:SetOwnerView("VW_GRID", 'GRID')
-    oView:EnableControlBar(.T.)
+    oView:EnableControlBar(.T.) 
  
     oView:AddIncrementField("VW_GRID", "ZII_ITEM")
 
@@ -148,11 +150,13 @@ User Function ADCOM411(cContrato, cVersao, cItemCT, cFornece, cLoja, cNmFornec, 
     Local cQuery    := ""
     Local cItem     := "001"
     Local cNxtAlias := ""
+    Local cParamA   := ""
     
     Default cMsgError := ""
 
     cQuery += " SELECT  " 
-        cQuery += " DISTINCT ZHW_PRODUT, ZHW_DESC, ZHV_NUMERO, ZHV_NOME, ZHV_ITEM, ZHV_CODITE, ZHV_DESCIT, ZHV_ANITEM, ZHU_TPDADO, ZHU_VLRTXT, ZHU_MAXIMO, ZHU_MINIMO " 
+        cQuery += " DISTINCT ZHW_PRODUT, ZHW_DESC, ZHV_NUMERO, ZHV_NOME, ZHV_ITEM, "
+        cQuery += " ZHV_CODITE, ZHV_DESCIT, ZHV_ANITEM, ZHU_TPDADO, ZHU_VLRTXT, ZHU_MINIMO, ZHU_MAXIMO " 
     cQuery += " FROM " 
         cQuery += " " + RetSqlName("ZHW") + " (NOLOCK) AS ZHW " 
         cQuery += " INNER JOIN " 
@@ -167,6 +171,7 @@ User Function ADCOM411(cContrato, cVersao, cItemCT, cFornece, cLoja, cNmFornec, 
         cQuery += " ZHW_FILIAL = '" + FWxFilial("ZII") + "' " 
         cQuery += " AND ZHW_PRODUT = '" + cProduto + "' " 
         cQuery += " AND ZHU_RESULT = '2' " 
+        cQuery += " AND ZHU_TPDADO = '2' " 
         cQuery += " AND ZHW.D_E_L_E_T_ = '' " 
         cQuery += " AND ZHV.D_E_L_E_T_ = '' " 
         cQuery += " AND ZHU.D_E_L_E_T_ = '' " 
@@ -181,6 +186,8 @@ User Function ADCOM411(cContrato, cVersao, cItemCT, cFornece, cLoja, cNmFornec, 
     Begin Transaction
 
         While ! (cNxtAlias)->(Eof())
+
+            cParamA := Transform(Val(cValToChar((cNxtAlias)->ZHU_MINIMO)), "@E 999,999.99") + " - " + Transform(Val(cValToChar((cNxtAlias)->ZHU_MAXIMO)), "@E 999,999.99")
 
             oModel := FwLoadModel("ADCOM041P")
             oModel:SetOperation(MODEL_OPERATION_INSERT)
@@ -202,8 +209,7 @@ User Function ADCOM411(cContrato, cVersao, cItemCT, cFornece, cLoja, cNmFornec, 
             oModel:SetValue("MD_GRID", "ZII_NUMANA", (cNxtAlias)->ZHV_CODITE)
             oModel:SetValue("MD_GRID", "ZII_NMANAL", (cNxtAlias)->ZHV_DESCIT)
             oModel:SetValue("MD_GRID", "ZII_ITEANA", (cNxtAlias)->ZHV_ANITEM)
-            oModel:SetValue("MD_GRID", "ZII_PARAMA", "")
-            oModel:SetValue("MD_GRID", "ZII_PARAMF", "")
+            oModel:SetValue("MD_GRID", "ZII_PARAMA", cParamA)
 
             If oModel:VldData()
                 oModel:CommitData()
