@@ -13,7 +13,7 @@ Static xPula := Chr(13) + Chr(10)
     @type  Function
     @author Everson
     @since 31/07/2022
-    /*/
+/*/
 User Function ADVEN110P() // U_ADVEN110P()
 
     //Variáveis
@@ -57,8 +57,7 @@ Static Function MenuDef()
 	ADD OPTION aRotina TITLE "Incluir" 	    ACTION "U_ADVN1105()" 	    OPERATION MODEL_OPERATION_INSERT    ACCESS 0
 	ADD OPTION aRotina TITLE "Alterar"      ACTION "U_ADVN1103(4)" 	    OPERATION MODEL_OPERATION_UPDATE    ACCESS 0
 	ADD OPTION aRotina TITLE "Excluir" 	    ACTION "U_ADVN1103(5)" 	    OPERATION MODEL_OPERATION_DELETE    ACCESS 0
-	// ADD OPTION aRotina TITLE "Copia" 	    ACTION "VIEWDEF.ADVEN110P" 	OPERATION 9    ACCESS 0
-    //ADD OPTION aRotina TITLE "Proc Integr." ACTION "U_ADVN1101()"       OPERATION 10  ACCESS 0
+    ADD OPTION aRotina TITLE "Proc Integr." ACTION "U_ADVN1101(.F.)"       OPERATION 10  ACCESS 0
 
 Return aRotina
 /*/{Protheus.doc} User Function ADVN1105
@@ -280,7 +279,7 @@ Return "ZHY_FILIAL;ZHY_NUMERO;ZHY_DESC;ZHY_DTINI;ZHY_TIPO;"
     @since 31/07/2022
     @version 01
 /*/
-User Function ADVN1101()
+User Function ADVN1101(lAut)
 
     //Variáveis
     Local aArea     := GetArea()
@@ -300,6 +299,27 @@ User Function ADVN1101()
     Local cDiaSema  := ""
     Local cData     := ""
     Local lRetEnv   := .F.
+    Local dData     := Date()+1
+
+    Default lAut    := .T.
+
+    If ! lAut
+
+        If ! Pergunte("ADVEN1101")
+            RestArea(aArea)
+            Return Nil
+
+        EndIf
+
+        If Empty(MV_PAR01)
+            RestArea(aArea)
+            Return Nil
+
+        EndIF
+
+        dData := MV_PAR01
+
+    EndIf
 
     cQuery:= ""
     cQuery += " SELECT " 
@@ -309,7 +329,7 @@ User Function ADVN1101()
     cQuery += " WHERE " 
     cQuery += " ZHY_FILIAL = '" + FWxFilial("ZHY") + "' " 
     cQuery += " AND ZHY_TIPO = '1' " 
-    cQuery += " AND CAST(ZHY_DTINI AS DATE) = CAST(GETDATE()+1 AS DATE) " 
+    cQuery += " AND ZHY_DTINI = '" + DToS(dData) + "' " 
     cQuery += " AND D_E_L_E_T_ = '' " 
 
     If Select("D_CHANGE") > 0
@@ -337,7 +357,7 @@ User Function ADVN1101()
 
 	EndIf
 
-    cDiaSema := cValToChar(Dow(Date()+1))
+    cDiaSema := cValToChar(Dow(dData))
 
     cQuery := ""
     cQuery += " SELECT *, " 
@@ -401,7 +421,7 @@ User Function ADVN1101()
     While ! D_VISPRO->(Eof())
 
         lRetEnv  := .F.
-        cData    := DToS(Date()+1)
+        cData    := DToS(dData)
 
         data      := SubStr(cData, 1, 4) + "-" + Padl(SubStr(cData, 5, 2), 2, "0") + "-" + Padl(SubStr(cData, 7, 2), 2, "0")
         portfolio := Alltrim(cValToChar(D_VISPRO->ZHY_PROMOT))
