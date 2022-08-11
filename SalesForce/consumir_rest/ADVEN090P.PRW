@@ -49,10 +49,9 @@ User Function ADVEN090P(cEmp, cFil) // U_ADVEN090P()
 	Local cHDe		:= ""
 	Local cHAt		:= ""
 	Local lAutoJob  := .T.
-	local cRobo		:= "A"
-
 	Default cEmp	:= "01"
 	Default cFil	:= "02"
+
 
 	//Inicia o ambiente.
 	If Select("SX6") == 0
@@ -66,50 +65,116 @@ User Function ADVEN090P(cEmp, cFil) // U_ADVEN090P()
 		RPCClearEnv()
 		RPCSetType(3)
 		RpcSetEnv(cEmp,cFil,,,,GetEnvServer(),{})
-
 	else
 		MsgInfo("Modo debug Início", "Modo Debug")
-
 	endif
 
+	//U_ADINF009P(SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))) + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Job para processamento de alteração de pedido de venda SalesForce. Chamado 037261.')
+	/*
+	If !LockByName("ADVEN090P", .T., .T.) .AND. SuperGetMV("MV_XVEN090",,.T.)
+		u_GrLogZBE(Date(),TIME(),cUserName,"Rotina ADVEN090P em execução.","ADVEN090P",;
+				"Não foi possível executar a rotina por já ter outra execução em andamento. ",ComputerName(),LogUserName())
+		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Rotina sendo executada por outro usuário ou agendamento. Aguarde o término da execução.")
+	else
+	*/
+		//
 		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Início inclusão/atualização/exclusão de pedido de venda SalesForce.")
 		
+		//
 		cDiaS := Alltrim(cValToChar(GetMv("MV_#SFDSEM")))
 		cHDe  := Alltrim(cValToChar(GetMv("MV_#SFHDE")))
 		cHAt  := Alltrim(cValToChar(GetMv("MV_#SFHATE")))
 		
 		If (cValToChar(DOW(Date()))) $cDiaS //.And. Time() >= cHDe .And. Time() <= cHAt
-			
 			logZBN("1") //Log início.
-
-				U_ADVEN90A(cRobo)
-
+			obterReg()
 			logZBN("2") //Log início.
-
 		EndIf
 		
+		//
 		Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Fim inclusão/atualização/exclusão de pedido de venda SalesForce.")
+
+		UnLockByName("ADVEN090P")
+	//ENDIF
 
 	RpcClearEnv()
 
+
+
 	if lAutoJob
 		RpcClearEnv()
-
 	else
 		MsgInfo("Modo debug Término", "Modo Debug")
-
 	endif
-
 Return Nil
-/*/{Protheus.doc} ADVEN90A
+
+/*/{Protheus.doc} sqlTScript
+	Script sql para processamento de registros.
+	@type  Static Function
+	@author user
+	@since 28/10/2021
+	@version 01
+/*/
+Static Function sqlTScript(nRePThe, nTotThe)
+
+	//Variáveis.
+	Local cQuery 	:= ""
+	Local cEOL		:= Chr(13)+chr(10)
+	Local nTotReg	:= nRePThe * nTotThe
+
+	//Inclusão de pedido de venda.
+	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( " +cEOL
+
+	cQuery += " SELECT ZCI_FILIAL, ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC "  +cEOL
+	cQuery += " FROM " + RetSqlName("ZCI") + " (NOLOCK) ZCI "  +cEOL
+	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
+	cQuery += " AND ZCI_TMPR = 'PENDPROC' "  +cEOL
+	cQuery += " AND ZCI_METD = 'POST' "  +cEOL
+	cQuery += " GROUP BY ZCI_FILIAL, ZCI_NUMP "  +cEOL
+
+	cQuery += " UNION ALL " +cEOL
+
+	//Exclusão de pedido de venda.
+	cQuery += " SELECT ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   "  +cEOL
+	cQuery += " FROM  " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI "  +cEOL
+	cQuery += " INNER JOIN "  +cEOL
+	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST "  +cEOL
+	cQuery += " ON ZCI.ZCI_FILIAL=POST.ZCI_FILIAL AND ZCI.ZCI_NUMP = POST.ZCI_NUMP "  +cEOL
+	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI.ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
+	cQuery += " AND ZCI.ZCI_TMPR = 'PENDPROC'   "  +cEOL
+	cQuery += " AND ZCI.ZCI_METD = 'DELETE'   "  +cEOL
+	
+	cQuery += " GROUP BY ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP "  +cEOL
+
+	cQuery += " UNION ALL " +cEOL
+
+	//Alteração de pedido de venda.
+	cQuery += " SELECT ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC   "  +cEOL
+	cQuery += " FROM   "  +cEOL
+	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI "  +cEOL
+	cQuery += " INNER JOIN "  +cEOL
+	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST "  +cEOL
+	cQuery += " ON ZCI.ZCI_FILIAL=POST.ZCI_FILIAL AND ZCI.ZCI_NUMP = POST.ZCI_NUMP "  +cEOL
+	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI.ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
+	cQuery += " AND ZCI.ZCI_TMPR = 'PENDPROC'   "  +cEOL
+	cQuery += " AND ZCI.ZCI_METD = 'PUT'   "  +cEOL
+	
+	cQuery += " GROUP BY ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP "  +cEOL
+
+	//
+	cQuery += " ) AS FONTE " +cEOL
+	cQuery += " ORDER BY FONTE.ANTECI, FONTE.DTENTR, FONTE.ZCI_NUMP, FONTE.REC "
+
+Return cQuery
+
+/*/{Protheus.doc} obterReg
 	Obtém registros de pedidos de venda pendentes de alteração. Chamado 037261.
-	@type  User Function
+	@type  Static Function
 	@author Everson
 	@since 09/05/2018
 	@version 01
 /*/
-User Function ADVEN90A(cRobo)
-
+Static Function obterReg()
 	//Declaracao de Variaveis
 	Local cQuery 	:= ""
 	Local nTotThe	:= Val(cValToChar(GetMv("MV_#SFQTHR",,1)))
@@ -119,6 +184,7 @@ User Function ADVEN90A(cRobo)
 	Local nAux	 	:= 0
 	Local nTotG	 	:= 0
 	Local cJobAux	:= ""
+	//Local aJobs	:={}
 	Local i		 	:= 1
 	Local lCont	 	:= .T.
 	Local nRecErro 	:= 0
@@ -132,7 +198,7 @@ User Function ADVEN90A(cRobo)
 		A_REG->(DbCloseArea())
 	EndIf
 
-	cQuery := sqlTScript(nRePThe, nTotThe, cRobo)
+	cQuery := sqlTScript(nRePThe, nTotThe)
 	//
 	TcQuery cQuery New Alias "A_REG"
 	DbSelectArea("A_REG")
@@ -150,15 +216,23 @@ User Function ADVEN90A(cRobo)
 		cRecnos += Alltrim(cValToChar( A_REG->REC )) + ","
 
 		If nAux == nRePThe .Or. nAux == nTotal .Or. nTotG == nTotal
-	
+			//Remove a última vírgula da string.
 			cRecnos := Substr(cRecnos,1,Len(cRecnos) -1)
 			i++
+			//SF + Número do Job + Qtd de registros + Qtd total do job principal.
+			//cJobAux	:= "SF_" + cValToChar(i) + "_" + cValToChar(nAux) + "_" + cValToChar(nTotal)
+			//Aadd(aJobs,cJobAux)
 
+			/*//Cria variável global.
+			PutGlbValue(cJobAux,"0")
+			GlbUnlock()*/
+
+			//Inicia um Job.
+			//StartJob("U_ProcAltSF",GetEnvServer(),.F.,cRecnos,cJobAux)
+			
 			//Gera log na tabela ZBE.
 			logZBE("Início Processamento JOB " + Iif(Empty(cJobAux),"_ERRO",cValToChar(cJobAux)),"RECNOS " + cValToChar(cRecnos))
-
 			Conout(DToC(Date()) + " " + Time() + " ADVEN090P - Inicio do Execproc.")
-
 			//Everson - 25/09/20219. Chamado T.I.
 			nRecErro := 0
 			cGrvErro := ""
@@ -182,72 +256,7 @@ User Function ADVEN90A(cRobo)
 	EndDo
 
 Return Nil
-/*/{Protheus.doc} sqlTScript
-	Script sql para processamento de registros.
-	@type  Static Function
-	@author user
-	@since 28/10/2021
-	@version 01
-/*/
-Static Function sqlTScript(nRePThe, nTotThe, cRobo)
 
-	//Variáveis.
-	Local cQuery 	:= ""
-	Local cEOL		:= Chr(13)+chr(10)
-	Local nTotReg	:= nRePThe * nTotThe
-	Local lRobo 	:= GetMv("MV_#VEN901",,.F.)
-
-	//Inclusão de pedido de venda.
-	cQuery += " SELECT TOP " + cValToChar(nTotReg) + " * FROM ( " +cEOL
-
-	cQuery += " SELECT ZCI_FILIAL, ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC, ZCI_ROBO "  +cEOL
-	cQuery += " FROM " + RetSqlName("ZCI") + " (NOLOCK) ZCI "  +cEOL
-	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
-	cQuery += " AND ZCI_TMPR = 'PENDPROC' "  +cEOL
-	cQuery += " AND ZCI_METD = 'POST' "  +cEOL
-	cQuery += " GROUP BY ZCI_FILIAL, ZCI_NUMP, ZCI_ROBO "  +cEOL
-
-	cQuery += " UNION ALL " +cEOL
-
-	//Exclusão de pedido de venda.
-	cQuery += " SELECT ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC, ZCI_ROBO   "  +cEOL
-	cQuery += " FROM  " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI "  +cEOL
-	cQuery += " INNER JOIN "  +cEOL
-	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST "  +cEOL
-	cQuery += " ON ZCI.ZCI_FILIAL=POST.ZCI_FILIAL AND ZCI.ZCI_NUMP = POST.ZCI_NUMP "  +cEOL
-	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI.ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
-	cQuery += " AND ZCI.ZCI_TMPR = 'PENDPROC'   "  +cEOL
-	cQuery += " AND ZCI.ZCI_METD = 'DELETE'   "  +cEOL
-	cQuery += " GROUP BY ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, ZCI_ROBO "  +cEOL
-
-	cQuery += " UNION ALL " +cEOL
-
-	//Alteração de pedido de venda.
-	cQuery += " SELECT ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, MIN(ZCI.ZCI_ANTECI) ANTECI, MAX(ZCI.ZCI_DTENTR) DTENTR, MAX(R_E_C_N_O_) AS REC, ZCI_ROBO   "  +cEOL
-	cQuery += " FROM   "  +cEOL
-	cQuery += " " + RetSqlName("ZCI") + " (NOLOCK)  AS ZCI "  +cEOL
-	cQuery += " INNER JOIN "  +cEOL
-	cQuery += " (SELECT ZCI_FILIAL, ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI_METD = 'POST' AND ZCI_TPALT = '5' AND ZCI.D_E_L_E_T_ = ''  ) AS POST "  +cEOL
-	cQuery += " ON ZCI.ZCI_FILIAL=POST.ZCI_FILIAL AND ZCI.ZCI_NUMP = POST.ZCI_NUMP "  +cEOL
-	cQuery += " WHERE D_E_L_E_T_ = '' AND ZCI.ZCI_FILIAL='"+ xFilial("ZCI") +"' "  +cEOL
-	cQuery += " AND ZCI.ZCI_TMPR = 'PENDPROC'   "  +cEOL
-	cQuery += " AND ZCI.ZCI_METD = 'PUT'   "  +cEOL
-	cQuery += " GROUP BY ZCI.ZCI_FILIAL, ZCI.ZCI_NUMP, ZCI_ROBO "  +cEOL
-
-	//
-	cQuery += " ) AS FONTE " +cEOL
-
-	If lRobo .And. cRobo == "A"
-		cQuery += " WHERE FONTE.ZCI_ROBO IN ('A', '') "
-
-	ElseIf lRobo .And. cRobo == "B"
-		cQuery += " WHERE FONTE.ZCI_ROBO = 'B' "
-
-	EndIF
-	
-	cQuery += " ORDER BY FONTE.ANTECI, FONTE.DTENTR, FONTE.ZCI_NUMP, FONTE.REC "
-
-Return cQuery
 /*/{Protheus.doc} User Function ADVEN901
 	Job para processar os registros. Chamado T.I.
 	@type  Function
@@ -374,7 +383,7 @@ Static Function execProc(cRecnos,nRecGetErr,cGrvErro) //Everson - 25/09/20219. C
 	Local cError	 := ""
 	Local lContinua	 := .T. //Everson - 25/09/20219. Chamado T.I.
 	Local nRecErro	 := "" //Everson - 25/09/20219. Chamado T.I.
-
+	Local i
 	Default cRecnos	 := ""
 
 	Private aPedidos := {}
@@ -2082,7 +2091,11 @@ Static Function exclPedVend(cErro,cNumPed)
 	Local aItem			:= {}
 	Local aErroLog		:= {}
 	Local k				:= 1
+	Local i				:= 1
+	Local cPulaLinha	:= Chr(13) + Chr(10)
 	Local nAuxInvalido	:= 0
+	Local cProduto		:= ""
+	Local nVlTot		:= 0
 
 	Private lMsErroAuto		:= .F.
 	Private lAutoErrNoFile 	:= .T.

@@ -1,8 +1,8 @@
 #Include "Protheus.ch"
-#include "Fileio.ch"
-#Include "Totvs.ch"
-#Include "Restful.ch"
-#Include "Topconn.ch"
+#include 'Fileio.ch'
+#Include 'Totvs.ch'
+#Include 'Restful.ch'
+#Include 'Topconn.ch'
 
 /*/{Protheus.doc} User Function ADVEN086P
 	Serviço Rest para manipulação de pedidos de venda. Chamado 037261.
@@ -33,7 +33,7 @@ User Function ADVEN086P()
 
 Return Nil
 
-WsRestFul pedidosdevenda Description "Serviço REST para processamento de pedidos de venda."
+WsRestFul pedidosdevenda Description "Serviço REST para manipulação de pedidos de venda."
 
 	WsMethod Post    Description "Inclusão de pedido de venda."  WsSyntax "/pedidosdevenda"
 	WsMethod Put     Description "Alteração de pedido de venda." WsSyntax "/pedidosdevenda/{pedido}"
@@ -49,7 +49,8 @@ End WsRestFul
 	/*/
 WsMethod Post WsService pedidosdevenda
 
-	//Variáveis.
+	// Declaracao de Variaveis                                             
+	
 	Local aArea			:= GetArea()
 	Local cFormatAceito := "application/json"
 	Local cBody 		:= Self:GetContent()
@@ -58,11 +59,13 @@ WsMethod Post WsService pedidosdevenda
 	Local cContentType	:= Self:GetHeader("Content-Type")
 	Local cPath			:= ""
 	Local cNumPed		:= ""
-	Local oParseJSON	:= Nil
+	Local oParseJSON
 	Local cJsonResp		:= ""
 	Local cErroPE		:= ""
 	Local i				:= 1
+	Local cNumChkPedsal	:= ""
 	Local cCodUsuario	:= Self:GetHeader("UsrVend")
+	//Local cJobAux		:= ""
 	Local cUrlServ		:= Self:GetPath()
 	Local cIdSFBkp		:= ""
 	Local cNumSF		:= ""
@@ -72,66 +75,30 @@ WsMethod Post WsService pedidosdevenda
 	Local cTagFil		:= ""
 	Local cEmpJson		:= cEmpAnt
 	Local cFilJson		:= cFilAnt
-	Local cNewAlias		:= ""
 
 	Private aPedidos	:= {}
 
-	Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Início Post")
+	//U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
 
+	//
 	Self:SetContentType(cFormatAceito)
-	
-	If Empty(cBody)
 
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0( cCodUsuario, cIdSFBkp, cNumPed, cBody,"Json não encontrado no corpo da requisição.", cUrlServ, "POST",, cNumSF)
-		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
-		RestArea(aArea)
-		Return .F.
-
-	EndIf
-
-	If cFormato <> cFormatAceito
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario, cIdSFBkp, cNumPed, cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF )
-		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
-		RestArea(aArea)
-		Return .F.
-
-	EndIf
-
-	If cContentType <> cFormatAceito
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF)
-		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
-		RestArea(aArea)
-		Return .F.
-
-	EndIf
-
+	//
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"POST",,cNumSF )
+
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
-
-	EndIf
-
-	If ValType(oParseJSON) <> "O" 
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Json inválido.",cUrlServ,"POST",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario,"","",cBody,"Json inválido.",cUrlServ,"POST",,cNumSF)
-		SetRestFault(400, EncodeUtf8("Json inválido.") )
-		RestArea(aArea)
-		Return .F.			
 
 	EndIf
 
@@ -140,44 +107,54 @@ WsMethod Post WsService pedidosdevenda
 	//*******************************************************//
 	//conout("tYPE: "+ Type("oParseJSON:cabecalho:C5_EXPEDITION"))
 	// Ativar, caso necessário.
-	If "C5_EXPEDITION" $cBody .And. ValType(oParseJSON:cabecalho:C5_EXPEDITION) != "U"
+	if "C5_EXPEDITION"$cBody
+        if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
 
-		cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
-		
-		If Len(cTagFil) >= 4
-			cEmpJson := left(cTagFil,2)
-			cFilJson := Substring(cTagFil,3,2)
-
-		EndIf
-		
-	EndIf
+			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
+			
+			if Len(cTagFil) >=4
+				cEmpJson := left(cTagFil,2)
+				cFilJson := Substring(cTagFil,3,2)
+			endif
+		endif	
+	endif
 	
-	If cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
+	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
 		RpcClearEnv() 
 		RPCSetType(3) 
 		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
-		Conout("cEmpAnt  cFilAnt: "+ cEmpAnt+"/"+cFilAnt)
-
-	EndIf
+		conout("cEmpAnt  cFilAnt: "+ cEmpAnt+"/"+cFilAnt)
+	endif
 
 	cPath	:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
 
+	//
 	cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
 	cNumSF   	:= oParseJSON:cabecalho:C5_XSFPED
 	cDtEntreg   := oParseJSON:cabecalho:C5_DTENTR
 	cCondPag    := oParseJSON:cabecalho:C5_CONDPAG
 
+	//
 	If Empty(cCodUsuario)
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST",,cNumSF )
+		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"POST",,cNumSF )
+
+
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
 
+	//
 	//nRecno := Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"POST",,cNumSF)
 	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	nRecno := u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"POST",,cNumSF )
@@ -185,96 +162,208 @@ WsMethod Post WsService pedidosdevenda
 	//Atribui usuário.
 	__cUserId := cCodUsuario
 
-	//Checa se foi informado o sequencial do SalesForce.
-	If Empty(Alltrim(cValToChar(cIdSFBkp)))
+	//
+	If cFormato <> cFormatAceito
 
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Número do pedido do SalesForce não informado.",cUrlServ,"POST",,cNumSF)
+		//
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Número do pedido do SalesForce não informado.",cUrlServ,"POST",,cNumSF )
-		SetRestFault(400, EncodeUtf8("Número do pedido do SalesForce não informado." ) )
-		FreeObj(oParseJSON)
-		oParseJSON := Nil
+		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF )
+
+		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
 		RestArea(aArea)
+		Return .F.
+
+	ElseIf cContentType <> cFormatAceito
+
+		//
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"POST",,cNumSF)
+
+		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
+		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
+		Return .F.
+
+	ElseIf Empty(cBody)
+
+		//
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST",,cNumSF)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"POST",,cNumSF )
+
+		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
+		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
 
-	//Valida se o número sequencial informado já foi utilizado.
-	cQuery := ""
-	cQuery += " SELECT "
+	//
+	If ValType(oParseJSON) == "O" //Inclui apenas um pedido.
+
+		//Checa se foi informado o sequencial do SalesForce.
+		If Empty(Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)))
+
+			//
+			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Número do pedido do SalesForce não informado.",cUrlServ,"POST",,cNumSF)
+			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+			u_VEN075A0( cCodUsuario,cIdSFBkp,cNumPed,cBody,"Número do pedido do SalesForce não informado.",cUrlServ,"POST",,cNumSF )
+
+			SetRestFault(400, EncodeUtf8("Número do pedido do SalesForce não informado." ) )
+
+			FreeObj(oParseJSON)
+			oParseJSON := Nil
+			RestArea(aArea)
+
+			//
+			MSUnlockAll()
+
+			Return .F.
+
+		EndIf
+
+		//Valida se o número sequencial informado já foi utilizado.
+		cNumChkPedsal := ""
+		cQuery := ""
+		cQuery += " SELECT "
 		cQuery += " ZCI_NUMP "
-	cQuery += " FROM "
+		cQuery += " FROM "
 		cQuery += " " + RetSqlName("ZCI") + " (NOLOCK) AS ZCI "
-	cQuery += " WHERE "
+		cQuery += " WHERE "
 		cQuery += " ZCI.D_E_L_E_T_ = '' "
 		cQuery += " AND ZCI_NUMP <> '' "
 		cQuery += " AND ZCI_METD = 'POST' "
-		cQuery += " AND ZCI_IDSF = '" +  Alltrim(cValToChar(cIdSFBkp)) + "' "
-
-	cNewAlias := GetNextAlias()
-	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
-
-	(cNewAlias)->(DbGoTop())
-
-	If ! (cNewAlias)->(Eof())
+		cQuery += " AND ZCI_IDSF = '" +  Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)) + "' "
 		
-		Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Post - duplicidade " + (cNewAlias)->ZCI_NUMP )
+		If Select("NUM_SC5") > 0
+			NUM_SC5->(DbCloseArea())
+			
+		EndIf
+		
+		TcQuery cQuery New Alias "NUM_SC5"
+		DbSelectArea("NUM_SC5")
+		NUM_SC5->(DbGoTop())
+			cNumChkPedsal := Alltrim(cValToChar(NUM_SC5->ZCI_NUMP))
+		NUM_SC5->(DbCloseArea())
+		Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Post - cNumChkPedsal >>>>>>> " + cNumChkPedsal )
+		If ! Empty(cNumChkPedsal)
 
-		cJsonResp := '{"msg":"Sequencial ' + Alltrim(cValToChar(cIdSFBkp)) + ' já utilizado.","C5_NUM":"'+ Alltrim(cValToChar((cNewAlias)->ZCI_NUMP)) + '"}'
+			cJsonResp := '{"msg":"Sequencial ' + Alltrim(cValToChar(oParseJSON:cabecalho:C5_XPEDSAL)) + ' já utilizado.","C5_NUM":"'+ Alltrim(cValToChar(cNumChkPedsal)) + '"}'
 
-		//Everson - 15/09/2021. Chamado T.I.
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,cJsonResp,cUrlServ,"POST",,cNumSF)
-		(cNewAlias)->(DbCloseArea())
-		SetRestFault(400,EncodeUtf8(cJsonResp))
-		FreeObj(oParseJSON)
+			//Everson - 15/09/2021. Chamado T.I.
+			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,cJsonResp,cUrlServ,"POST",,cNumSF)
+
+			Self:SetHeader("location",cValToChar(cPath) + "/" + cNumChkPedsal)
+
+			SetRestFault(400,EncodeUtf8(cJsonResp))
+
+			FreeObj(oParseJSON)
+			oParseJSON := Nil
+			RestArea(aArea)
+
+			//
+			MSUnlockAll()
+
+			Return .F.
+
+		EndIf
+
+		//Processa a requisição.
+		aPedidos := {}
+		If geraRegistro(oParseJSON,@cErro,@cNumPed,,nRecno,3,@cSintegra) .And. Len(aPedidos) == 0 //Gerou pedido de venda.
+
+			cJsonResp := '{"cabecalho":{"C5_NUM":"'+ Alltrim(cValToChar(cNumPed)) + '"}}'
+
+			SC5->(DbCloseArea())
+
+			Self:SetResponse(cJsonResp)
+			Self:SetHeader("location",cValToChar(cPath) + "/" + cNumPed)
+
+			FreeObj(oParseJSON)
+			oParseJSON := Nil
+
+			RestArea(aArea)
+
+			//
+			MSUnlockAll()
+
+			Return .T.
+
+		Else
+
+			cErroPE := ""
+			For i := 1 To Len(aPedidos)
+
+				cErroPE += aPedidos[i][1] + " / "
+
+			Next i
+
+			//Everson - 15/09/2021. Chamado T.I.
+				Conout("ADVEN086P " + "Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE))
+				DbSelectArea("ZCI")
+				DbGoTo( Val(cValToChar(nRecno)) )
+				RecLock("ZCI",.F.)
+					ZCI->ZCI_ERRO := "Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) //Everson - 07/10/2021.
+				ZCI->(MsUnlock())
+
+				//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"POST",,cNumSF)
+			//
+			
+			SetRestFault(400,EncodeUtf8("Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ))
+
+			FreeObj(oParseJSON)
+			oParseJSON := Nil
+
+			RestArea(aArea)
+
+			//
+			MSUnlockAll()
+
+			Return .F.	
+
+		EndIf
+
+		//
+		If ValType(oParseJSON) == "O"
+			FreeObj(oParseJSON)
+
+		EndIf
 		oParseJSON := Nil
-		RestArea(aArea)
-		Return .F.
-
-	EndIf
-
-	(cNewAlias)->(DbCloseArea())
-
-	//Processa a requisição.
-	aPedidos := {}
-
-	If geraRegistro(oParseJSON,@cErro,@cNumPed,,nRecno,3,@cSintegra) .And. Len(aPedidos) == 0 //Gerou pedido de venda.
-
-		Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Post pedido gerado " + cNumPed)
-
-		cJsonResp := '{"cabecalho":{"C5_NUM":"'+ Alltrim(cValToChar(cNumPed)) + '"}}'
-		Self:SetResponse(cJsonResp)
-		FreeObj(oParseJSON)
-		oParseJSON := Nil
-		RestArea(aArea)
-		Return .T.
 
 	Else
 
-		For i := 1 To Len(aPedidos)
-			cErroPE += aPedidos[i][1] + " / "
+		//
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"","",cBody,"Json inválido.",cUrlServ,"POST",,cNumSF)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"","",cBody,"Json inválido.",cUrlServ,"POST",,cNumSF)
 
-		Next i
-
-		//Everson - 15/09/2021. Chamado T.I.
-			Conout("ADVEN086P " + "Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE))
-			DbSelectArea("ZCI")
-			DbGoTo( Val(cValToChar(nRecno)) )
-			RecLock("ZCI",.F.)
-				ZCI->ZCI_ERRO := "Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) //Everson - 07/10/2021.
-			ZCI->(MsUnlock())
-
-			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"POST",,cNumSF)
-
-		SetRestFault(400,EncodeUtf8("Erro na inclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ))
-		FreeObj(oParseJSON)
+		SetRestFault(400, EncodeUtf8("Json inválido.") )
 		oParseJSON := Nil
+
 		RestArea(aArea)
-		Return .F.	
+
+		//
+		MSUnlockAll()
+
+		Return .F.			
 
 	EndIf
 
+	//
 	RestArea(aArea)
+
+	//
+	MSUnlockAll()
+
+	//RpcClearEnv()
 
 Return .T.
 /*/{Protheus.doc} User Function Put
@@ -283,22 +372,26 @@ Return .T.
 	@author Everson
 	@since 11/09/2017
 	@version 01
-/*/
+	/*/
 WsMethod Put WsService pedidosdevenda
 
-	//Variáveis.	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracao de Variaveis                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea			:= GetArea()
 	Local cFormatAceito := "application/json"
 	Local cBody 		:= Self:GetContent()
 	Local cErro			:= ""
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local aProp			:= {}
 	Local cContentType	:= Self:GetHeader("Content-Type")
 	Local cPath			:= ""
 	Local cNumPed		:= ""
-	Local oParseJSON	:= Nil
+	Local oParseJSON
 	Local aParametros	:= Self:aURLParms
 	Local cErroPE		:= ""
 	Local cCodUsuario	:= Self:GetHeader("UsrVend")
+	//Local cJsonResp		:= ""
 	Local i				:= 1
 	Local cFlagApr		:= ""
 	Local cUrlServ		:= Self:GetPath()
@@ -311,63 +404,68 @@ WsMethod Put WsService pedidosdevenda
 	Local cTagFil		:= ""
 	Local cEmpJson		:= cEmpAnt
 	Local cFilJson		:= cFilAnt
-	Local cRobo			:= ""
-	Local cNewAlias		:= ""
 
 	Private aPedidos	:= {}
 	Private cHoraExec	:= Time()
 
-	Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Início Put")
+	//U_ADINF009P('ADVEN086P' + '.PRW',SUBSTRING(ALLTRIM(PROCNAME()),3,LEN(ALLTRIM(PROCNAME()))),'Serviço Rest para manipulação de pedidos de venda')
 
+	//
 	If Len(aParametros) == 0
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Obrigatório informar o número do pedido de venda na URL.",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Obrigatório informar o número do pedido de venda na URL.",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(400,EncodeUtf8("Obrigatório informar o número do pedido de venda na URL."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
-
-	cNumPed := Alltrim(cValToChar(aParametros[1]))
 	
+	//
 	If Empty(cCodUsuario)
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Código de usuário não informado (UsrVend).",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
+	
+	//
+	cNumPed := Alltrim(cValToChar(aParametros[1]))
 
-	If Empty(cBody)
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT",,cNumSF)
-		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
-		RestArea(aArea)
-		Return .F.
-
-	EndIf
-
+	//
 	If ! FWJsonDeserialize(cBody, @oParseJSON)
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
-		RestArea(aArea)
-		Return .F.
 
-	EndIf
-
-	If ValType(oParseJSON) <> "O"
-		SetRestFault(400,EncodeUtf8("Verificar se o json da requisição está condizente com a operação (alteração ou corte)."))
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
@@ -376,274 +474,411 @@ WsMethod Put WsService pedidosdevenda
 	// Define a filial de inclusão da requisição.
 	//*******************************************************//
 	// Ativar, caso necessário.
-	If "C5_EXPEDITION" $cBody .And. ValType(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
+	if "C5_EXPEDITION"$cBody
+        if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
+			
+			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
+			
+			if Len(cTagFil) >=4
+				cEmpJson := left(cTagFil,2)
+				cFilJson := Substring(cTagFil,3,2)
+			endif
+		endif
+	endif
 
-		cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
-		
-		If Len(cTagFil) >= 4
-			cEmpJson := left(cTagFil,2)
-			cFilJson := Substring(cTagFil,3,2)
-
-		EndIf
-
-	EndIf
-
-	If cEmpAnt <> cEmpJson .Or. cFilAnt <> cFilJson
+	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
 		RpcClearEnv() 
 		RPCSetType(3) 
 		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
-
-	EndIf
+	endif
 
 	cPath	:= Alltrim(cValToChar(GetMv("MV_#URLRES"))) + Self:GetPath()
 
+	//
 	cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
 	cNumSF   	:= oParseJSON:cabecalho:C5_XSFPED
 	cDtEntreg   := oParseJSON:cabecalho:C5_DTENTR
 	cCondPag    := oParseJSON:cabecalho:C5_CONDPAG
 
+	//
 	DbSelectArea("SC5")
 	SC5->(DbSetOrder(1))
 	SC5->(DbGoTop())
 	If SC5->(DbSeek(xFilial("SC5") + cNumPed))
 
+		//
 		If ! Empty(Alltrim(cValToChar(SC5->C5_PLACA)))
 	
+			//
 			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido de venda número " + cNumPed + " já está com veículo associado (placa).",cUrlServ,"PUT",,cNumSF)
 			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 			u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido de venda número " + cNumPed + " já está com veículo associado (placa).",cUrlServ,"PUT",,cNumSF)
+	
 			SetRestFault(400,EncodeUtf8("Pedido de venda número " + cNumPed + " já está com veículo associado (placa)."))
+			SC5->(DbCloseArea())
+	
 			RestArea(aArea)
+	
+			//
+			MSUnlockAll()
+	
 			Return .F.
 	
 		EndIf
 		
+		//
 		If ! Empty(Alltrim(cValToChar(SC5->C5_NOTA)))
 	
+			//
 			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido de venda número " + cNumPed + " já está com nota fiscal.",cUrlServ,"PUT",,cNumSF)
 			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 			u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido de venda número " + cNumPed + " já está com nota fiscal.",cUrlServ,"PUT",,cNumSF)
+	
 			SetRestFault(400,EncodeUtf8("Pedido de venda número " + cNumPed + " já está com nota fiscal."))
+			SC5->(DbCloseArea())
+	
 			RestArea(aArea)
+	
+			//
+			MSUnlockAll()
+	
 			Return .F.
 	
 		EndIf
 
 	EndIf
 	
-	cQuery := obPost(cNumPed)
-
-	cNewAlias := GetNextAlias()
-	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
-
-	(cNewAlias)->(DbGoTop())
+	//
+	cQuery := ""
+	cQuery += " SELECT " 
+	cQuery += " DISTINCT ZCI.ZCI_NUMP AS ZCIPOST, DEL.ZCI_NUMP AS ZCIDEL " 
+	cQuery += " FROM " 
+	cQuery += " " + RetSqlName("ZCI") + " AS ZCI " 
+	cQuery += " LEFT OUTER JOIN " 
+	cQuery += " (SELECT ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI.D_E_L_E_T_ = '' AND ZCI_METD = 'DELETE' AND ZCI_NUMP = '" + cNumPed + "') AS DEL " 
+	cQuery += " ON ZCI.ZCI_NUMP = DEL.ZCI_NUMP " 
+	cQuery += " WHERE " 
+	cQuery += " ZCI.D_E_L_E_T_ = '' " 
+	cQuery += " AND ZCI.ZCI_METD = 'POST' " 
+	cQuery += " AND ZCI.ZCI_NUMP = '" + cNumPed + "' " 
 	
-	If (cNewAlias)->(Eof())
+	//
+	If Select("CHK_ZCI") > 0
+		CHK_ZCI->(DbCloseArea())
+		
+	EndIf
+	
+	//
+	TcQuery cQuery New Alias "CHK_ZCI"
+	DbSelectArea("CHK_ZCI")
+	CHK_ZCI->(DbGoTop())
+	
+	If CHK_ZCI->(Eof())
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido " + cNumPed + " não encontrado.",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido " + cNumPed + " não encontrado.",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(404,EncodeUtf8("Pedido " + cNumPed + " não encontrado."))
-		(cNewAlias)->(DbCloseArea())
+		CHK_ZCI->(DbCloseArea())
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 			
 	EndIf
 	
-	If Empty(Alltrim(cValToChar((cNewAlias)->ZCIPOST)))
+	//
+	If Empty(Alltrim(cValToChar(CHK_ZCI->ZCIPOST)))
 	
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido " + cNumPed + " não encontrado.",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido " + cNumPed + " não encontrado.",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(404,EncodeUtf8("Pedido " + cNumPed + " não encontrado."))
-		(cNewAlias)->(DbCloseArea())
+		CHK_ZCI->(DbCloseArea())
+
 		RestArea(aArea)
+
+		//
 		MSUnlockAll()
+
 		Return .F.		
 		
 	EndIf
 	
-	If ! Empty(Alltrim(cValToChar((cNewAlias)->ZCIDEL)))
+	//
+	If ! Empty(Alltrim(cValToChar(CHK_ZCI->ZCIDEL)))
 	
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido não encontrado (excluído).",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Pedido não encontrado (excluído).",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(404,EncodeUtf8("Pedido " + cNumPed + " não encontrado (requisição de exclusão)."))
-		(cNewAlias)->(DbCloseArea())
+		CHK_ZCI->(DbCloseArea())
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.		
 		
 	EndIf
-
-	cRobo := (cNewAlias)->ZCI_ROBO
 	
-	(cNewAlias)->(DbCloseArea())
+	CHK_ZCI->(DbCloseArea())
 
+	//
 	//nRecno := Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF)
 	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	nRecno := u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF)
 
+	//
 	Self:SetContentType(cFormatAceito)
 
+	//Atribui usuário.
 	__cUserId := cCodUsuario
 
+	//
 	If cFormato <> cFormatAceito
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
-	EndIf
+	ElseIf cContentType <> cFormatAceito
 
-	If cContentType <> cFormatAceito
-
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"PUT",,cNumSF)
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado.",cUrlServ,"PUT",,cNumSF)
+
 		SetRestFault(400,EncodeUtf8("Formato de dados " + cContentType + ", no Content-Type do cabeçalho da requisição, não suportado."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
+		Return .F.
+
+	ElseIf Empty(cBody)
+
+		//
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT",,cNumSF)
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Json não encontrado no corpo da requisição.",cUrlServ,"PUT",,cNumSF)
+
+		SetRestFault(400,EncodeUtf8("Json não encontrado no corpo da requisição."))
+
+		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
 	
-	cQuery := ""
-	cQuery += " SELECT TOP 1  " 
+	//
+	If ValType(oParseJSON) == "O"
+
+		//
+		cQuery := ""
+		cQuery += " SELECT TOP 1  " 
 		cQuery += " R_E_C_N_O_ AS REC " 
-	cQuery += " FROM  " 
+		cQuery += " FROM  " 
 		cQuery += " " + RetSqlName("ZCI") + "  " 
-	cQuery += " WHERE  " 
+		cQuery += " WHERE  " 
 		cQuery += " ZCI_FILIAL = '" + cFilAnt + "'  " 
 		cQuery += " AND ZCI_NUMP = '" + cNumPed + "'  " 
 		cQuery += " AND ZCI_DATA = '" + DToS(Date()) + "'  " 
 		cQuery += " AND ZCI_METD = 'PUT'  " 
+		//cQuery += " AND ZCI_TMPR <> '' "
 		cQuery += " AND R_E_C_N_O_ < '" + cValToChar(nRecno) + "'  " 
 		cQuery += " AND D_E_L_E_T_ = ''   " 
-	cQuery += " ORDER BY R_E_C_N_O_ DESC "
+		cQuery += " ORDER BY R_E_C_N_O_ DESC "
 
-	cNewAlias := GetNextAlias()
-	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
+		//
+		If Select("CHK_REG") > 0
+			CHK_REG->(DbCloseArea())
 
-	(cNewAlias)->(DbGoTop())
+		EndIf 
 
-	If ! (cNewAlias)->(Eof())
+		//
+		TcQuery cQuery New Alias "CHK_REG"
+		DbSelectArea("CHK_REG")
+		CHK_REG->(DbGoTop())
+		If ! CHK_REG->(Eof())
 
-		DbSelectArea("ZCI")
-		ZCI->( DbGoTo(Val(cValToChar((cNewAlias)->REC))) )
+			DbSelectArea("ZCI")
+			ZCI->( DbGoTo(Val(cValToChar(CHK_REG->REC))) )
 
-		If Alltrim(cValToChar(ZCI->ZCI_JSON)) == Alltrim(cValToChar(cBody)) .And. ! ("já está com veículo associado (placa)" $ Alltrim(cValToChar(ZCI->ZCI_ERRO)))
+			If Alltrim(cValToChar(ZCI->ZCI_JSON)) == Alltrim(cValToChar(cBody))
 
-			cHoraExec := ELAPTIME(cHoraExec, Time())
-			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Alteração enviada em duplicidade, pedido " + cNumPed,cUrlServ,"PUT",cHoraExec,,cNumSF)
-			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-			u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Alteração enviada em duplicidade, pedido " + cNumPed,cUrlServ,"PUT",cHoraExec,,cNumSF)
-			Self:SetResponse("")
-			(cNewAlias)->(DbCloseArea())
-			RestArea(aArea)
-			Return .T.
+				//
+				cHoraExec := ELAPTIME(cHoraExec, Time())
+				//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Alteração enviada em duplicidade, pedido " + cNumPed,cUrlServ,"PUT",cHoraExec,,cNumSF)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Alteração enviada em duplicidade, pedido " + cNumPed,cUrlServ,"PUT",cHoraExec,,cNumSF)
+
+				Self:SetResponse("")
+
+				//
+				CHK_REG->(DbCloseArea())
+				ZCI->(DbCloseArea())
+				SC5->(DbCloseArea())
+
+				RestArea(aArea)
+
+				//
+				MSUnlockAll()
+
+				Return .T.
+
+			EndIf
 
 		EndIf
 
-	EndIf
+		CHK_REG->(DbCloseArea())
 
-	(cNewAlias)->(DbCloseArea())
+		//
+		cFlagApr := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))
 
-	cFlagApr := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ))
+		If cFlagApr <> "R" //Se for diferente de rejeitado pelo comercial.
+			
+			If geraRegistro(oParseJSON,@cErro,@cNumPed,"",nRecno,4) .And. Len(aPedidos) == 0
 
-	If cFlagApr <> "R" //Se for diferente de rejeitado pelo comercial.
-		
-		If geraRegistro(oParseJSON, @cErro, @cNumPed, "", nRecno, 4, "", cRobo) .And. Len(aPedidos) == 0
+				Self:SetResponse("")
 
-			Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Put pedido atualizado " + cNumPed)
+			Else
 
+				cErroPE := ""
+				For i := 1 To Len(aPedidos)
+
+					cErroPE += aPedidos[i][1] + " / "
+
+				Next i
+
+				//
+				//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
+
+				SetRestFault(400,EncodeUtf8("Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
+
+				//
+				If ValType(oParseJSON) == "O"
+					FreeObj(oParseJSON)
+
+				Else
+					oParseJSON := Nil
+
+				EndIf
+
+				RestArea(aArea)
+
+				//
+				MSUnlockAll()
+
+				Return .F.
+
+			EndIf
+
+		Else
+
+			//
+			cErro := ""
+			If exclPedVend(@cErro,@cNumPed,0,cCodUsuario,cUrlServ)
+
+				//
+				//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF)
+
+				Self:SetResponse("")
+
+			Else
+
+				cErroPE := ""
+				For i := 1 To Len(aPedidos)
+
+					cErroPE += aPedidos[i][1] + " / "
+
+				Next i
+
+				//
+				//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
+				//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+				u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
+
+				SetRestFault(400,EncodeUtf8("Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
+
+				//
+				If ValType(oParseJSON) == "O"
+					FreeObj(oParseJSON)
+
+				Else
+					oParseJSON := Nil
+
+				EndIf
+
+				RestArea(aArea)
+
+				//
+				MSUnlockAll()
+
+				Return .F.
+
+			EndIf
+
+		EndIf
+
+		//
+		If ValType(oParseJSON) == "O"
 			FreeObj(oParseJSON)
-			oParseJSON := Nil
-			Self:SetResponse("")
-			RestArea(aArea)
-			Return .T.
 
 		EndIf
-
-		For i := 1 To Len(aPedidos)
-			cErroPE += aPedidos[i][1] + " / "
-
-		Next i
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
-		SetRestFault(400,EncodeUtf8("Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
-		FreeObj(oParseJSON)
 		oParseJSON := Nil
+
+	Else
+
+		SetRestFault(400,EncodeUtf8("Verificar se o json da requisição está condizente com a operação (alteração ou corte)."))
+
 		RestArea(aArea)
+
+		//
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
 
-	If cFlagApr == "R" //Rejeitado comercial.
-
-		If exclPedVend(@cErro,@cNumPed,0,cCodUsuario,cUrlServ)
-
-			Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Put pedido rejeitado " + cNumPed)
-
-			//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF)
-			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-			u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"",cUrlServ,"PUT",,cNumSF)
-			FreeObj(oParseJSON)
-			oParseJSON := Nil
-			Self:SetResponse("")
-			RestArea(aArea)
-			Return .T.
-
-		EndIf
-
-		For i := 1 To Len(aPedidos)
-			cErroPE += aPedidos[i][1] + " / "
-
-		Next i
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario,cIdSFBkp,cNumPed,cBody,"Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE) ,cUrlServ,"PUT",,cNumSF)
-		SetRestFault(400,EncodeUtf8("Erro na alteração do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
-		FreeObj(oParseJSON)
-		oParseJSON := Nil
-		RestArea(aArea)
-		Return .F.
-
-	EndIf
-
+	//
 	RestArea(aArea)
 
+	//
+	MSUnlockAll()
+
+	//RpcClearEnv()
+
 Return .T.
-/*/{Protheus.doc} Static Function obPost
-	Script sql.
-	@type  Function
-	@author Everson
-	@since 11/09/2017
-	@version 01
-/*/
-Static Function obPost(cNumPed)
-
-	//Variáveis.
-	Local cQuery := ""
-
-	cQuery := ""
-	cQuery += " SELECT " 
-		cQuery += " DISTINCT ZCI.ZCI_NUMP AS ZCIPOST, DEL.ZCI_NUMP AS ZCIDEL, ZCI.ZCI_ROBO " 
-	cQuery += " FROM " 
-		cQuery += " " + RetSqlName("ZCI") + " AS ZCI " 
-		cQuery += " LEFT OUTER JOIN " 
-		cQuery += " (SELECT ZCI_NUMP FROM " + RetSqlName("ZCI") + " AS ZCI WHERE ZCI.D_E_L_E_T_ = '' AND ZCI_METD = 'DELETE' AND ZCI_NUMP = '" + cNumPed + "') AS DEL " 
-		cQuery += " ON ZCI.ZCI_NUMP = DEL.ZCI_NUMP " 
-	cQuery += " WHERE " 
-		cQuery += " ZCI.D_E_L_E_T_ = '' " 
-		cQuery += " AND ZCI.ZCI_METD = 'POST' " 
-		cQuery += " AND ZCI.ZCI_NUMP = '" + cNumPed + "' " 
-
-Return cQuery
 /*/{Protheus.doc} User Function Delete
 	Método DELETE. Chamado 037261.
 	@type  Function
@@ -653,13 +888,16 @@ Return cQuery
 	/*/
 WsMethod Delete WsService pedidosdevenda
 
-	//Variáveis.
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracao de Variaveis                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
 	Local aArea			:= GetArea()
 	Local cFormatAceito := "application/json"
 	Local cBody 		:= Alltrim(cValToChar(Self:GetContent()))
 	Local cErro			:= ""
-	Local oParseJSON	:= Nil
+	Local oParseJSON
 	Local cFormato		:= Alltrim(cValToChar(Self:GetAccept()))
+	//Local aProp			:= {}
 	Local cNumPed		:= ""
 	Local aParametros	:= Self:aURLParms
 	Local cErroPE		:= ""
@@ -676,17 +914,21 @@ WsMethod Delete WsService pedidosdevenda
 	
 	Private aPedidos	:= {}
 
-	Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Início Delete")
-
 	Self:SetContentType(cFormatAceito)
 
 	If Len(aParametros) == 0
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Obrigatório informar o número do pedido de venda.",cUrlServ,"DELETE")
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,"",cNumPed,"","Obrigatório informar o número do pedido de venda.",cUrlServ,"DELETE")
+
 		SetRestFault(400,EncodeUtf8("Obrigatório informar o número do pedido de venda."))
+
 		RestArea(aArea)
+
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
@@ -694,31 +936,19 @@ WsMethod Delete WsService pedidosdevenda
 	cNumPed := cValToChar(aParametros[1])
 	cPedBkp := cValToChar(aParametros[1])
 
-	If Empty(cNumPed)
-		Self:SetResponse("")
-		RestArea(aArea)		
-		Return .T.
-			
-	EndIf
-
 	If Empty(cCodUsuario)
 
+		//
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Código de usuário não informado (UsrVend).",cUrlServ,"DELETE")
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,"",cNumPed,"","Código de usuário não informado (UsrVend).",cUrlServ,"DELETE")
+
 		SetRestFault(403,EncodeUtf8("Código de usuário não informado (UsrVend)."))
+
 		RestArea(aArea)
-		Return .F.
 
-	EndIf
+		MSUnlockAll()
 
-	If cFormato <> cFormatAceito
-
-		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
-		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-		u_VEN075A0(cCodUsuario,"",cNumPed,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
-		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
-		RestArea(aArea)
 		Return .F.
 
 	EndIf
@@ -727,65 +957,89 @@ WsMethod Delete WsService pedidosdevenda
 	// Define a filial de inclusão da requisição.
 	//*******************************************************//
 	// Ativar, caso necessário.
-	If "C5_EXPEDITION" $cBody
+	if "C5_EXPEDITION"$cBody
 
 		//*******************************************************//
 		// Define a filial de inclusão da requisição.
 		//*******************************************************//
 		If ! FWJsonDeserialize(cBody, @oParseJSON) //Everson - 13/04/2022. Chamado 69520.
 
+			//
 			//CONOUT("ADVEN075P,grvLog 13"+cBody)
 			//StaticCall(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"DELETE")
 			//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 			u_VEN075A0(cCodUsuario,"",cNumPed,cBody,"Ocorreu erro na desserialização do Json.",cUrlServ,"DELETE")
+
 			SetRestFault(400,EncodeUtf8("Ocorreu erro na desserialização do Json."))
+
 			RestArea(aArea)
+
+			MSUnlockAll()
+
 			Return .F.
 
 		EndIf
 
-		If ValType(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
+		if valtype(oParseJSON:cabecalho:C5_EXPEDITION) !='U'
 			
 			cTagFil := Alltrim(cValtochar(oParseJSON:cabecalho:C5_EXPEDITION))
 			
-			If Len(cTagFil) >=4
+			if Len(cTagFil) >=4
 				cEmpJson := left(cTagFil,2)
 				cFilJson := Substring(cTagFil,3,2)
+			endif
+		endif
 
-			EndIf
-		
-		EndIf
+		cIdSFBkp 	:= oParseJSON:cabecalho:C5_XPEDSAL
 
-		cIdSFBkp := oParseJSON:cabecalho:C5_XPEDSAL
+	endif
 
-	EndIf
 
-	If cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
+	if cEmpAnt <> cEmpJson .OR. cFilAnt <> cFilJson
 		RpcClearEnv() 
 		RPCSetType(3) 
 		RpcSetEnv(cEmpJson,cFilJson,,,,GetEnvServer(),{ })
+	endif
 
-	EndIf
-
+	//
 	//nRecno := Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
 	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 	nRecno := u_VEN075A0(cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
-
 	//Atribui usuário.
 	__cUserId := cCodUsuario
 
+	//
+	If cFormato <> cFormatAceito
+
+		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		u_VEN075A0(cCodUsuario,"",cNumPed,"","Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado.",cUrlServ,"DELETE")
+
+		SetRestFault(400,EncodeUtf8("Formato de dados " + cFormato + ", no Accept do cabeçalho da requisição, não suportado."))
+
+		RestArea(aArea)
+
+		MSUnlockAll()
+
+		Return .F.
+
+	EndIf
+	
+	If Empty(cNumPed)
+	
+		Self:SetResponse("")
+
+		RestArea(aArea)
+
+		MSUnlockAll()
+		
+		Return .T.
+			
+	EndIf
+
 	If exclPedVend(@cErro,@cNumPed,nRecno,cCodUsuario,cUrlServ) .And. Len(aPedidos) == 0
 
-		Conout( DToC(Date()) + " " + Time() + " ADVEN086P - Delete pedido excluído " + cNumPed)
-
-		If ValType(oParseJSON) == "O"
-			FreeObj(oParseJSON)
-
-		EndIf
-
 		Self:SetResponse("")
-		RestArea(aArea)		
-		Return .T.
 
 	Else
 
@@ -799,21 +1053,25 @@ WsMethod Delete WsService pedidosdevenda
 		//Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"DELETE")
 		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
 		u_VEN075A0(cCodUsuario,"",cNumPed,"","Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE),cUrlServ,"DELETE")
+
 		SetRestFault(400,EncodeUtf8("Erro na exclusão do pedido: " + Iif(Empty(cErroPE),cErro,cErroPE)) )
 
-		If ValType(oParseJSON) == "O"
-			FreeObj(oParseJSON)
-
-		EndIf
-
 		RestArea(aArea)
+
+		MSUnlockAll()
+
 		Return .F.
 
 	EndIf
 
 	RestArea(aArea)
 
+	MSUnlockAll()
+
+	//RpcClearEnv()
+
 Return .T.
+
 /*/{Protheus.doc} geraRegistro
 	MsExecauto pedido de venda (criação). Chamado 037261.
 	@type  Static Function
@@ -821,12 +1079,27 @@ Return .T.
 	@since 11/09/2017
 	@version 01
 	/*/
-Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, cSintegra, cRobo)
+Static Function geraRegistro(oParseJSON,cErro,cNumPed,cJobAux,nRecno,nOPc,cSintegra)
 
-	//Variáveis.
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracao de Variaveis                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	Local aArea			:= GetArea()
+	Local lRet			:= .F.	
+	//Local cQuery		:= ""
+	//Local cDoc			:= ""
+	//Local aCabec		:= {}
+	//Local aItens		:= {}
+	//Local aItem			:= {}
+	//Local aErroLog		:= {}
+	//Local k				:= 1
 	Local i				:= 1
+	//Local cPulaLinha	:= Chr(13) + Chr(10)
+	//Local nAuxInvalido	:= 0
 	Local cProduto		:= ""
+
+	//Local cErroPE		:= ""
+	//Local cNumChkPedsal	:= ""
 	Local cVendCdCli	:= ""
 
 	Local cObrPdCp		:= ""
@@ -846,8 +1119,8 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 	Default cJobAux		:= ""
 	Default nOPc        := 4
 	Default cSintegra	:= ""
-	Default cRobo		:= ""
 
+	//
 	cErro    := ""
 	cNumPed  := ""
 	
@@ -855,78 +1128,90 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 	If ! ( Alltrim(cValToChar(oParseJSON:CABECALHO:tpSaida )) $("VE|BO|VO|RO|EF") )
 		cErro := "Tipo de saída inválido " + Alltrim(cValToChar(oParseJSON:CABECALHO:tpSaida )) + "."
 		RestArea(aArea)
-		Return .F.	
+		Return lRet	
 
 	EndIF
 	
+	//
 	If Empty(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_BLQ)))
 		cErro := "Tag C5_BLQ não está preenchida."
+		lRet  := .F.
 		RestArea(aArea)
-		Return .F.
+		Return lRet
 
 	EndIf
 	
+	//
 	cCliente := Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI))
 
-	DbSelectArea("SA1")
-	SA1->(DbSetOrder(1))
+	//Everson - 30/10/2019,. Chamado 052760.
+	If lChkSint
 
-	//Valida se cliente existe.
-	If ! SA1->(DbSeek( FWxFilial("SA1") + cCliente ))
-		cErro := "Cliente " + cCliente + " inexistente."
-		RestArea(aArea)
-		Return .F.
+		//
+		If nOPc == 3
+			
+			//
+			cUF := Alltrim(Posicione("SA1",1,xFilial("SA1") + cCliente,"A1_EST" ))
+			cIE := StrTran(StrTran(StrTran(Alltrim(Posicione("SA1",1,xFilial("SA1") + cCliente,"A1_INSCR" )),".",""),"-",""),"/","")
+			cRetCons := ConsIE(cIE,cUF)
+			If cRetCons = "0"
+				cSintegra := "Bloqueado Sintegra " + DToC(Date()) + " " + Time()
+				cErro := "Cliente " + cCliente + " bloqueado Sintegra. " + DToC(Date()) + " " + Time()
+				lRet  := .F.
+				RestArea(aArea)
+				Return lRet	
+				
+			ElseIf cRetCons = "1"
+				cSintegra := "Liberado Sintegra " + DToC(Date()) + " " + Time()
+
+			ElseIf cRetCons = "X"
+				cSintegra := "Erro consuta Sintegra " + DToC(Date()) + " " + Time()
+
+			ElseIf cRetCons = "Y"
+				cSintegra := "Isento ou Exportação " + DToC(Date()) + " " + Time()
+
+			EndIf 
+
+		EndIf
 
 	EndIf
 
-	//Valida se cliente está bloqueado.
-	If nOPc == 3 .And. SA1->A1_MSBLQL == "1"
-		cErro := "Cliente " + cCliente + " bloqueado."
+	//Everson - 30/10/2019,. Chamado 052760.
+	Conout(DToc(Date()) + " " + Time() + " ADVEN086P - geraRegistro - Sintegra - cRetCons/cSintegra " + cValToChar(cRetCons) + " " + cValToChar(cSintegra) )
+	
+	//Valida se cliente existe.
+	If Empty(Alltrim(cValToChar(Posicione("SA1",1,xFilial("SA1") + cCliente,"A1_MSBLQL" ))))
+		cErro := "Cliente " + cCliente + " inexistente."
+		lRet  := .F.
 		RestArea(aArea)
-		Return .F.	
+		Return lRet	
 
 	EndIf 
+	
+	//Valida se cliente está bloqueado.
+	If Alltrim(cValToChar(Posicione("SA1",1,xFilial("SA1") + cCliente,"A1_MSBLQL" ))) == "1"
+		cErro := "Cliente " + cCliente + " bloqueado."
+		lRet  := .F.
+		RestArea(aArea)
+		Return lRet	
 
-	//Everson - 30/10/2019,. Chamado 052760. Consulta sintegra.
-	If nOPc == 3 .And. lChkSint
-			
-		cUF := SA1->A1_EST
-		cIE := StrTran(StrTran(StrTran(Alltrim(SA1->A1_INSCR),".",""),"-",""),"/","")
-		cRetCons := ConsIE(cIE,cUF)
-		If cRetCons = "0"
-			cSintegra := "Bloqueado Sintegra " + DToC(Date()) + " " + Time()
-			cErro := "Cliente " + cCliente + " bloqueado Sintegra. " + DToC(Date()) + " " + Time()
-			RestArea(aArea)
-			Return .F.	
-			
-		ElseIf cRetCons = "1"
-			cSintegra := "Liberado Sintegra " + DToC(Date()) + " " + Time()
-
-		ElseIf cRetCons = "X"
-			cSintegra := "Erro consuta Sintegra " + DToC(Date()) + " " + Time()
-
-		ElseIf cRetCons = "Y"
-			cSintegra := "Isento ou Exportação " + DToC(Date()) + " " + Time()
-
-		EndIf 
-
-		Conout(DToc(Date()) + " " + Time() + " ADVEN086P - geraRegistro - Sintegra - cRetCons/cSintegra " + cValToChar(cRetCons) + " " + cValToChar(cSintegra) )
-
-	EndIf
+	EndIf 
 
 	//Valida pedido de remessa de venda a ordem.
 	If Alltrim(cValToChar(oParseJSON:CABECALHO:tpSaida )) == "RO" .And. Empty(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_XPEDORD)))
 		cErro := "Para remessa de venda a ordem é necessário informar o pedido de origem (C5_XPEDORD)."
+		lRet  := .F.
 		RestArea(aArea)
-		Return .F.	
+		Return lRet	
 
 	Endif
 	
 	//Valida se o pedido de origem está preenchido sem necessidade.
 	If Alltrim(cValToChar(oParseJSON:CABECALHO:tpSaida )) <> "RO" .And. ! Empty(Alltrim(cValToChar(oParseJSON:CABECALHO:C5_XPEDORD)))
 		cErro := "Pedidos que não sejam de remessa à ordem não podem ter a tag C5_XPEDORD preenchida."
+		lRet := .F.
 		RestArea(aArea)
-		Return .F.	
+		Return lRet	
 	
 	EndIf
 	
@@ -938,6 +1223,7 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 	cMsgNF += Alltrim(cValToChar(oParseJSON:CABECALHO:C5_MENNOT4))
 	cMsgNF += Alltrim(cValToChar(oParseJSON:CABECALHO:C5_MENNOT5))
 	
+	//
 	If ! Empty(cMsgNF)
 		cMsgNF := DecodeUTF8(cMsgNF)
 
@@ -945,12 +1231,14 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 		If Empty(cMsgNF)
 			cErro := "Mensagem para nota fiscal possui caractere especial."
 			RestArea(aArea)
-			Return .F.
+			Return lRet
 					
 		EndIf
 		
 	EndIf
 
+	
+	//
 	cVendCdCli := Posicione("SA1",1,xFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_VEND")
 
 	cObrPdCp   := Posicione("SA1",1,xFilial("SA1") + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_CLIENTE)) + Alltrim(cValToChar(oParseJSON:CABECALHO:C5_LOJACLI)),"A1_XOBRPC")
@@ -961,7 +1249,7 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 	If lRedeOp .And. Empty( Alltrim(cValToChar(oParseJSON:CABECALHO:C5_OPLOG )) )
 		cErro := "Necessário informar o operador logístico."
 		RestArea(aArea)
-		Return .F.
+		Return lRet
 				
 	EndIf
 	
@@ -969,14 +1257,11 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 	If Len(oParseJSON:ITENS) <= 0
 		cErro := "Pedido sem itens."
 		RestArea(aArea)
-		Return .F.		
+		Return lRet		
 		
 	EndIf
 
-	DbSelectArea("SB1")
-	SB1->(DbSetOrder(1))
-	SB1->(DbGoTop())
-
+	//
 	For i := 1 To Len(oParseJSON:ITENS)
 
 		//Registros excluídos no SalesForce são desconsiderados.
@@ -985,37 +1270,41 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 
 		EndIf 
 		
+		//
 		cProduto := Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_PRODUTO ))
-
+		
 		//Valida se o produto existe.
-		If ! SB1->(DbSeek( FWxFilial("SB1") + cProduto ))
+		If Empty(Alltrim(cValToChar(Posicione("SB1",1,xFilial("SB1") + cProduto,"B1_MSBLQL" ))))
 			cErro := "Produto " + cProduto + " inexistente."
 			RestArea(aArea)
-			Return .F.	
-
-		EndIf
-		
-		//Valida se o produto está bloqueado.
-		If SB1->B1_MSBLQL == "1"
-			cErro := "Produto " + cProduto + " bloqueado."
-			RestArea(aArea)
-			Return .F.	
+			Return lRet	
 
 		EndIf 
 		
+		//Valida se o produto está bloqueado.
+		If Alltrim(cValToChar(Posicione("SB1",1,xFilial("SB1") + cProduto,"B1_MSBLQL" ))) == "1"
+			cErro := "Produto " + cProduto + " bloqueado."
+			RestArea(aArea)
+			Return lRet	
+
+		EndIf 
+		
+		//
 		cPedidoPC := Iif( Empty(Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_PEDCLI ))), Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_NUMPCOM )) ,Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_PEDCLI )) )
 		
+		//
 		If lRedeOp .And. Empty(cPedidoPC)
 			cErro := "Necessário informar o número do pedido de compra do cliente."
 			RestArea(aArea)
-			Return .F.
+			Return lRet
 			
 		End
 		
+		//
 		If cObrPdCp == "1" .And. ( Empty(cPedidoPC) .Or. Empty(Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_ITEMPC))) )
 			cErro := "Necessário informar o número do pedido de compra do cliente e o item."
 			RestArea(aArea)
-			Return .F.
+			Return lRet
 
 		EndIf
 		
@@ -1024,7 +1313,7 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 		If Alltrim(Transform(Val(Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_ITEMPC))),"9999999999")) <> Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_ITEMPC)) .And. ! Empty(Alltrim(cValToChar(oParseJSON:ITENS[i]:C6_ITEMPC)))
 			cErro := "Campo ITEM PED.COM só pode ser preenchido com números 0-9, no item do Pedido !!! C6_ITEMPC."
 			RestArea(aArea)
-			Return .F.
+			Return lRet
 					
 		EndIf
 		
@@ -1035,8 +1324,9 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 	//Everson - 08/07/2019. Chamado T.I.
 	If nAuxTot <= 0
 		cErro := "Pedido sem itens."
+		lRet := .F.
 		RestArea(aArea)
-		Return .F.		
+		Return lRet		
 		
 	EndIf
 	
@@ -1047,49 +1337,60 @@ Static Function geraRegistro(oParseJSON, cErro, cNumPed, cJobAux, nRecno, nOPc, 
 		cNumProth := getSC5()
 		If cNumProth <= cNmUltPed
 			cErro := "Sequêncial do pedido está incorreto. Retorno: " + cNumProth
+			lRet := .F.
 			RestArea(aArea)
-			Return .F.	
+			Return lRet	
 
 		EndIf
+		//
+
+		//
+		Begin Transaction
 		
-		DbSelectArea("ZCI")
-		DbGoTo( Val(cValToChar(nRecno)) )
-
-		If RecLock("ZCI",.F.)
-				ZCI->ZCI_NUMP   := cNumProth
-				ZCI->ZCI_TMPR   := "PENDPROC"
-				ZCI->ZCI_CONSIN := cSintegra //Everson - 30/10/2019,. Chamado 052760. 
-				ZCI->ZCI_ROBO   := Iif(mod(nRecno, 2) == 0, "A", "B") //Everson - 09/08/2022. Chamado TI.
-			ZCI->(MsUnlock())
-
-			ConfirmSX8()
-			
-			Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  geraRegistro - Requisição de inclusão " +  cNumPed + " Robo " + Iif(mod(nRecno, 2) == 0, "A", "B"))
-
-			cNumPed := cNumProth
-
-		Else
-			RollBackSx8()
-			cErro += EncodeUtf8("Erro reclock ZCI.")
-			RestArea(aArea)
-			Return .F.	
+			DbSelectArea("ZCI")
+			DbGoTo( Val(cValToChar(nRecno)) )
+			If RecLock("ZCI",.F.)
+					ZCI->ZCI_NUMP   := cNumProth
+					ZCI->ZCI_TMPR   := "PENDPROC"
+					ZCI->ZCI_CONSIN := cSintegra //Everson - 30/10/2019,. Chamado 052760. 
+				ZCI->(MsUnlock())
 	
-		EndIf
+			Else
+				RollBackSx8()
+				DisarmTransaction()
+				cErro += EncodeUtf8("Erro reclock ZCI.")
+				lRet := .F.
+				Break
+				Return lRet	
 		
+			EndIf
+			
+			//
+			cNumPed := cNumProth
+			
+			//
+			ConfirmSX8()
+		
+		End Transaction 
+		
+		//
+		Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  geraRegistro - Requisição de inclusão " +  cNumPed)
+	
 	Else
 		
+		//
 		DbSelectArea("ZCI")
 		DbGoTo( Val(cValToChar(nRecno)) )
 		RecLock("ZCI",.F.)
 			ZCI->ZCI_TMPR := "PENDPROC"
-			ZCI->ZCI_ROBO := cRobo
 		ZCI->(MsUnlock())	
-
-		Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  geraRegistro - Requisição de alteração " +  ZCI->ZCI_NUMP + " Robo " + cRobo)
 	
 	EndIf
 	
-Return .T.
+	//
+	lRet := .T.
+	
+Return lRet
 /*/{Protheus.doc} getSC5
 	Obtém número do Protheus. Chamado 037261.
 	@type  Static Function
@@ -1153,78 +1454,95 @@ Return cPedido
 	@author Everson
 	@since 13/09/2017
 	@version 01
-/*/
-Static Function exclPedVend(cErro, cNumPed, nRecno, cCodUsuario, cUrlServ)
+	/*/
+Static Function exclPedVend(cErro,cNumPed,nRecno,cCodUsuario,cUrlServ)
 
-	//Variáveis.
-	Local aArea	 	:= GetArea()
-	Local lRet	 	:= .F.	
-	Local cRobo	 	:= ""
-	Local cQuery 	:= ""
-	Local cNewAlias	:= ""
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracao de Variaveis                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	Local aArea			:= GetArea()
+	Local lRet			:= .F.	
+	//Local cDoc			:= ""
+	//Local aCabec		:= {}
+	//Local aItens		:= {}
+	//Local aItem			:= {}
+	//Local aErroLog		:= {}
+	//Local k				:= 1
+	//Local i				:= 1
+	//Local cPulaLinha	:= Chr(13) + Chr(10)
+	//Local nAuxInvalido	:= 0
+	//Local cProduto		:= ""
 
-	Default cErro	:= ""
-	Default nRecno	:= 0
+	Default cErro		:= ""
+	Default nRecno		:= 0
 	
+	//
 	DbSelectArea("SC5")
 	SC5->(DbSetOrder(1))
 	SC5->(DbGoTop())
 	If SC5->(DbSeek(xFilial("SC5") + cNumPed))
 
+		//
 		If ! Empty(Alltrim(cValToChar(SC5->C5_PLACA)))
+	
+			//
 			cErro += EncodeUtf8("Pedido de venda número " + cNumPed + " já associado a veículo.")
+			SC5->(DbCloseArea())
+	
 			RestArea(aArea)
+	
 			Return .F.
 	
 		EndIF
-
-		If ! Empty(Alltrim(cValToChar(SC5->C5_NOTA)))
-			cErro +=  EncodeUtf8("Pedido de venda número " + cNumPed + " já possui nota fiscal.")
-			RestArea(aArea)
-			Return .F.
-	
-		EndIF
-
-	EndIf
-	
-	//nRecno := Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
-	//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
-	nRecno := u_VEN075A0(cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
-
-	DbSelectArea("ZCI")
-	DbGoTo( Val(cValToChar(nRecno)) )
-
-	Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - consulta pedido " +  ZCI->ZCI_NUMP)
-
-	cQuery := obPost(ZCI->ZCI_NUMP)
-
-	cNewAlias := GetNextAlias()
-	DbUseArea(.T., "TOPCONN", TcGenQry( ,, cQuery ), cNewAlias, .F., .T.)
-	
-	(cNewAlias)->(DbGoTop())
-	
-	If ! (cNewAlias)->(Eof())
-		cRobo := (cNewAlias)->ZCI_ROBO
-
-		Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - consulta pedido " +  ZCI->ZCI_NUMP + " robo " + cRobo)
-
-	EndIf
-
-	(cNewAlias)->(DbCloseArea())
-
-	If RecLock("ZCI",.F.)
-			ZCI->ZCI_TMPR := "PENDPROC"
-			ZCI->ZCI_ROBO := cRobo
-		ZCI->(MsUnlock())
-
-		lRet := .T.
-
-		Conout(DToC(Date()) + " " + Time() + " ADVEN086P -  exclPedVend - Requisição de exclusão " +  ZCI->ZCI_NUMP + " Robo " + cRobo)
 		
-	Else
-		cErro += EncodeUtf8("Erro reclock ZCI.")
+		//
+		If ! Empty(Alltrim(cValToChar(SC5->C5_NOTA)))
+	
+			//
+			cErro +=  EncodeUtf8("Pedido de venda número " + cNumPed + " já possui nota fiscal.")
+			SC5->(DbCloseArea())
+	
+			RestArea(aArea)
+	
+			Return .F.
+	
+		EndIF
 
 	EndIf
+
+	SC5->(DbCloseArea())
+	
+	If nRecno == 0
+	
+		//nRecno := Static Call(ADVEN075P,grvLog,cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
+		//@history Ticket 70142  - Edvar   / Flek Solution - 23/03/2022 - Substituicao de funcao Static Call por User Function MP 12.1.33
+		nRecno := u_VEN075A0(cCodUsuario,"",cNumPed,"","",cUrlServ,"DELETE")
+	
+	EndIf
+	
+	//Coloca pedido como pendente de processamento.
+	Begin Transaction
+		
+		//
+		DbSelectArea("ZCI")
+		DbGoTo( Val(cValToChar(nRecno)) )
+		If RecLock("ZCI",.F.)
+				ZCI->ZCI_TMPR := "PENDPROC"
+			ZCI->(MsUnlock())
+			
+		Else
+			DisarmTransaction()
+			cErro += EncodeUtf8("Erro reclock ZCI.")
+			Break
+			RestArea(aArea)
+			Return lRet	
+	
+		EndIf
+	
+	End Transaction 
+
+	//
+	lRet := .T.
 
 Return lRet
 /*/{Protheus.doc} ConsIE
