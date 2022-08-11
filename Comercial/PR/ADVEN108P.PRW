@@ -7,7 +7,7 @@ Static cTitulo  := "Cliente x Produto Foco"
 Static cTiMast  := "Dados do cliente x produto foco"
 
 /*/{Protheus.doc} User Function ADVEN108P
-    Exame laboratorial
+    Cliente x Produto Foco
     @type  Function
     @author Everson
     @since 31/07/2022
@@ -408,6 +408,7 @@ User Function ADVN1082()
         cQuery += " AND A1_COD BETWEEN '" + MV_PAR02 + "' AND '" + MV_PAR04 + "' " 
         cQuery += " AND A1_LOJA BETWEEN '" + MV_PAR03 + "' AND '" + MV_PAR05 + "' " 
         cQuery += " AND A1_REDE BETWEEN '" + MV_PAR06 + "' AND '" + MV_PAR07 + "' " 
+        cQuery += " AND A1_COD + A1_LOJA <> '" + cCliAtu + cLjaAtu + "' " 
         cQuery += " AND SA1.D_E_L_E_T_ = '' " 
     cQuery += " ORDER BY A1_COD, A1_LOJA " 
 
