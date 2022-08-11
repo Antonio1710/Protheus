@@ -125,6 +125,7 @@ Static Function Executa(oProcess)
 	Private nTotalDis := 0
 	Private nTotalRel := 0
 	Private nTotalDif := 0
+	//Private nTotalHdp := 0
 	Private nTotalPer := 0
 	Private nTotalExt := 0
 	Private nHorasBlq := 0
@@ -201,6 +202,7 @@ Static Function Executa(oProcess)
 
 	aDBF := {{"TIPO"  , "C", Len(STJ->TJ_CCUSTO),0},;
 			 {"NOME"  , "C", 15,0},;
+			 {"DISPO" , "C", 12,2},;
 			 {"DIFERE", "C", 10,0},;
 			 {"DISPON", "C", 10,0},;
 			 {"CALEND", "C", 10,0},;
@@ -355,19 +357,13 @@ Static Function C905PROC()
 	Local nIndisp    	:= 0
 	Local nHoraExtra 	:= 0
 	Local aHrsBloq   	:= {}
-	Local _cFilST0      := If(lJob,czFil,xFilial("ST0"))
-	Local _cFilST1      := If(lJob,czFil,xFilial("ST1"))
-	Local _cFilST2      := If(lJob,czFil,xFilial("ST2"))
-	Local _cFilST3      := If(lJob,czFil,xFilial("ST3"))
-	//Local _cFilSRA      := If(lJob,czFil,xFilial("SRA"))
-	
 	Private aARRCALE := {}, aDtExcRH := {}
 
 	DbselectArea( "ST1" )
 	Dbsetorder( 01 )
-	Dbseek( _cFilST1+cFuncioDe,.T. )
+	Dbseek( xFilial("ST1")+cFuncioDe,.T. )
 	ProcRegua(LastRec())
-	While !Eof() .And. _cFilST1 = ST1->T1_FILIAL .And. ST1->T1_CODFUNC <= cFuncioAte
+	While !Eof() .And. xFilial("ST1") = ST1->T1_FILIAL .And. ST1->T1_CODFUNC <= cFuncioAte
 		IncProc()
 
 		If lMNTC9051
@@ -393,8 +389,8 @@ Static Function C905PROC()
 
 			DbselectArea('ST2')
 			Dbsetorder(01)
-			DbSeek(_cFilST2+ST1->T1_CODFUNC)
-			While !Eof() .And. _cFilST2 = ST2->T2_FILIAL .And. ST2->T2_CODFUNC = ST1->T1_CODFUNC
+			DbSeek(xFilial("ST2")+ST1->T1_CODFUNC)
+			While !Eof() .And. xFilial("ST2") = ST2->T2_FILIAL .And. ST2->T2_CODFUNC = ST1->T1_CODFUNC
 				If ST2->T2_ESPECIA >= cEspeciDe .AND. ST2->T2_ESPECIA <= cEspeciAte
 					lESPECIA := .T.
 					Exit
@@ -405,7 +401,7 @@ Static Function C905PROC()
 			If lESPECIA
 				If nTipoRel == 1
 					cSeek := ST1->T1_CCUSTO
-					cNOME := If(SI3->(DbSeek(_cFilST3 + cSEEK)), SI3->I3_DESC, Space(15) )
+					cNOME := If(SI3->(DbSeek(xFilial("ST3") + cSEEK)), SI3->I3_DESC, Space(15) )
 					If lFstSeek
 						If cOldSeek <> cSeek
 							nHorasBlq := 0
@@ -413,7 +409,7 @@ Static Function C905PROC()
 					EndIf
 				ElseIf nTipoRel == 2
 					cSeek := ST2->T2_ESPECIA+Space(Len(stj->tj_ccusto)-Len(st2->t2_especia))
-					cNOME := If(ST0->(DbSeek(_cFilST0 + cSEEK)), ST0->T0_NOME, Space(15) )
+					cNOME := If(ST0->(DbSeek(xFilial("ST0") + cSEEK)), ST0->T0_NOME, Space(15) )
 					If lFstSeek
 						If cOldSeek <> cSeek
 							nHorasBlq := 0
@@ -899,7 +895,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 						aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 						aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 						aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+						//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 						nHrsFuBlo := 0
 						dbSkip()
 					End While
@@ -939,7 +935,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 						aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 						aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 						aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+						//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 
 						nQtdHoras := SubHoras( nQtdHoras,nHoras ) // Subtrai a qtd total de horas pelas horas trabalhadas (dia-a-dia).
 						nHrsFuBlo := 0
@@ -973,7 +969,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 							aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 							aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 							aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+							//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 							nHrsFuBlo := 0
 							dbSkip()
 						End While
@@ -997,7 +993,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 						aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 						aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 						aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+						//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 						nHoras		:= 0
 						nHrsDisp	:= 0
 						nHrsFuBlo	:= 0
@@ -1044,7 +1040,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 							aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 							aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 							aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+							//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 							nQtdHoras	:= SubHoras( nQtdHoras,nHrsDisp ) //Subtrai a qtd de horas, com as hora trabalhada no sábado/domingo.
 							nTotal		:= Somahoras( nTotal,nHrsDisp ) //Incrementa ao Total de horas trabalhadas, as hrs do sábado/domingo.
 						Else
@@ -1075,6 +1071,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 							aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 							aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 							aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
+							//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 						EndIf
 
 						nHrsFuBlo := 0
@@ -1107,7 +1104,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 							aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 							aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 							aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+							//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 							If nQtdHoras > HtoN( nHrsFds )
 								nQtdHoras := SubHoras( nQtdHoras, NtoH( Val( nHrsFds ))) //Subtrai a qtd de horas, com as hora trabalhada (dia-a-dia).
 							Else
@@ -1129,7 +1126,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 							aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 							aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 							aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+							//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 							nQtdHoras	:= SubHoras( nQtdHoras,nHrsInRel ) //Subtrai da qtd total de horas a hora do primeiro dia de trabalho da semana.
 							nTotal		:= nHrsInRel
 							nHrsInRel	:= 0
@@ -1171,7 +1168,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 								aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 								aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 								aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+								//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 								If nQtdHoras > HtoN( nHrsFds )
 									nQtdHoras := SubHoras( nQtdHoras,nHrsFds )//Subtrai da qtd total de horas a hora trabalhada por dia.
 								Else
@@ -1202,6 +1199,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 								aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 								aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 								aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
+								//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 							EndIf
 
 							nHrsFuBlo := 0
@@ -1227,7 +1225,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 						aArrayTRB[Len( aArrayTRB )][5] := NTOH(HTON( aArrayTRB[nX][3] ) - HTON( aArrayTRB[nX][4] ))
 						aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 						aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+						//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 						nHoras		:= 0
 						nHrsDisp	:= 0
 						nHrsFuBlo	:= 0
@@ -1279,7 +1277,7 @@ Static Function GrvTRT9051( cEmp,cFil,cEmpAnt,aTRB9051,cThread1,aThread1 )
 		aArrayTRB[Len( aArrayTRB )][5] := nDiferenc //Diferença -- Disponiveis - (Bloqueio + Realizadas)
 		aArrayTRB[Len( aArrayTRB )][6] := Round(( NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][4] ),'D','S') * 100 ) / NGCONVERHORA( HTON( aArrayTRB[Len( aArrayTRB )][1] ),'D','S'),5 )
 		aArrayTRB[Len( aArrayTRB )][7] := aTRB9051[nX][1] // Funcionario
-
+		//aArrayTRB[Len( aArrayTRB )][8] := nHrsDisp
 		nHrsFuBlo	:= 0
 		nHoras		:= 0
 		nHrsDisp	:= 0
@@ -1674,11 +1672,12 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	oExcel:AddTable (_cPlanilha,_cTitulo) // Titulo da Planilha (Cabeçalho)
 	oExcel:AddColumn(_cPlanilha,_cTitulo,"Tipo"         ,1,1)
 	oExcel:AddColumn(_cPlanilha,_cTitulo,"Nome"		    ,1,1)
-	oExcel:AddColumn(_cPlanilha,_cTitulo,"Bloqueio"	        ,1,1)
-	oExcel:AddColumn(_cPlanilha,_cTitulo,"Disponíveis"	        ,1,1)
-	oExcel:AddColumn(_cPlanilha,_cTitulo,"Realizadas"		    ,1,1)
-	oExcel:AddColumn(_cPlanilha,_cTitulo,"Diferenças"		    ,1,1)
-	oExcel:AddColumn(_cPlanilha,_cTitulo,"Percentual"		    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"hrs.Dispon."  ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Bloqueio"	    ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Disponíveis"  ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Realizadas"   ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Diferenças"   ,1,1)
+	oExcel:AddColumn(_cPlanilha,_cTitulo,"Percentual"   ,1,1)
 	oExcel:AddColumn(_cPlanilha,_cTitulo,"Extras"	    ,1,1)
 
 	DbSelectArea(cTRB)
@@ -1690,6 +1689,7 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 		NGSOMALI(58)
 		oExcel:AddRow(_cPlanilha,_cTitulo,{(cTRB)->TIPO ,;
 				                        (cTRB)->NOME   ,;
+										(cTRB)->CALEND  ,;
 		                        		(cTRB)->BLOQUE ,;
 		                        		(cTRB)->DISPON ,;
 		                        		(cTRB)->REALIZ ,;
@@ -1697,8 +1697,15 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 		                        		(cTRB)->PERCEN ,;
 		                        		(cTRB)->EXTRA})	// Linha
 
-		nTotalRel := NgTraNtoH( SomaHoras( (cTRB)->REALIZ, nTotalRel ) ) //Soma as horas realizadas de cada linha.
-
+		//nTotalRel := NgTraNtoH( SomaHoras( (cTRB)->REALIZ, nTotalRel ) ) //Soma as horas realizadas de cada linha.
+		nTotalCal := If(SomaHoras((cTRB9052)->CALEND,nTotalCal) == 0,MTOH(0),NgTraNtoH(SomaHoras((cTRB9052)->CALEND,nTotalCal)))
+		nTotalBlo := If(SomaHoras((cTRB9052)->BLOQUE,nTotalBlo) == 0,MTOH(0),NgTraNtoH(SomaHoras((cTRB9052)->BLOQUE,nTotalBlo)))
+		nTotalDis := If(SomaHoras((cTRB9052)->DISPON,nTotalDis) == 0,MTOH(0),NgTraNtoH(SomaHoras((cTRB9052)->DISPON,nTotalDis)))
+		nTotalReL := If(SomaHoras((cTRB9052)->REALIZ,nTotalRel) == 0,MTOH(0),NgTraNtoH(SomaHoras((cTRB9052)->REALIZ,nTotalRel)))
+		nTotalDif := If(SomaHoras((cTRB9052)->DIFERE,nTotalDif) == 0,MTOH(0),NgTraNtoH(SomaHoras((cTRB9052)->DIFERE,nTotalDif)))
+		nTotalPer := Round((NGCONVERHORA(HTON(nTotalRel),'D','S') * 100 ) / NGCONVERHORA(HTON(nTotalCal),'D','S'),5)
+		nTotalExt := If(SomaHoras((cTRB9052)->EXTRA,nTotalExt ) == 0,MTOH(0),NgTraNtoH(SomaHoras((cTRB9052)->EXTRA,nTotalExt )))
+		
 		(cTRB)->(DbSkip())
 	End While
 
@@ -1709,7 +1716,8 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	nTotalPer := Round(( NGCONVERHORA( HTON( nTotalRel ),'D','S') * 100 ) / NGCONVERHORA( HTON( nTotalCal ),'D','S'),5 )//Variavel que verifica percentual realizado.
 
 	oExcel:AddRow(_cPlanilha,_cTitulo,{	STR0038   ,;
-			                        " "		  ,;
+			                        		" ",;
+									nTotalCal ,;
 	                        		nTotalBlo ,;
 	                        		nTotalDis ,;
 	                        		nTotalRel ,;
@@ -1718,6 +1726,17 @@ Static Function C9051Imp( lEnd,wnRel,titulo,tamanho,oprocess)
 	                        		nTotalExt})	// Linha
 
 	DBgotop()
+	
+	nTotalCal := 0
+	nTotalBlo := 0
+	nTotalDis := 0
+	nTotalRel := 0
+	nTotalDif := 0
+	nTotalPer := 0
+	nTotalExt := 0
+
+   	DBgotop()
+
 
 Return Nil
 //---------------------------------------------------------------------
@@ -2340,3 +2359,5 @@ Static Function fEnvMail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS)
  
     RestArea(aArea)
 Return lRet
+
+

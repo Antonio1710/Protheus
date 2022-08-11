@@ -24,6 +24,8 @@ User Function ADLOG080R() // U_ADLOG080R()
 	Private limite
 	Private _Prodedata 	:= SPACE(06)
 	Private _DESCRI    	:= SPACE(60)
+	Private _nTTotGGCaixas, _ntTotCaixas
+	Private _nTTotGGKilos,  _ntTotKilos
 
 	MsAguarde({|| oPrdEdt := getPrdEdt() }, "ADLOG080R", "Carregando produtos do Edata...", .F.) //Everson - 19/10/2021. Chamado 55129.
 
@@ -198,6 +200,8 @@ User Function ADLOG080R() // U_ADLOG080R()
 	dbSelectArea("XC5")
 	dbGotop()
 	
+	_nTTotGGCaixas := 0
+	_nTTotGGKilos  := 0
 	_nTTotCaixas := 0
 	_nTTotKilos  := 0
 	_nTTotValTot := 0
@@ -817,15 +821,6 @@ User Function ADLOG080R() // U_ADLOG080R()
 	Enddo
 	
 	FResumoC(_cRotAnt,_cSeqAnt)		
-	
-	nLin := nLin + 2         
-	@ nLin, 001 PSAY Repl("#",limite)
-	nLin := nLin + 1
-	@ nLin, 049 PSAY "TOTAL GERAL  "
-	@ nLin, 075  PSAY Transform(_ntTotCaixas ,"@Z 999999")           // Total Qtd UM2
-	@ nLin, 085  PSAY Transform(_ntTotKilos  ,"@Z 999999.99")        // Total Qtd UM1
-	nLin := nLin + 1
-	@ nLin, 001 PSAY Repl("#",limite)
 
 	//Everson - 03/07/2020. Chamado 059401.
 	If MV_PAR16 == 1
@@ -979,7 +974,6 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	While TEMP2->(!EOF()) .And. Alltrim(TEMP2->TP_ROTEIRO) == _cRoteiro 
 		
 		If !_lEntrou //.OR. nLin > 60
-
 		
 			_n2TTotCaixas := 0
 			_n2TTotKilos  := 0
@@ -1164,7 +1158,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	Endif
 	nLin := nLin + 1 
 	nCtn := 1
-	
+
 	//inicio da Impressão da Sequencia 01 do Roteiro
 	If _nTmpRecno <> 0	
 		_lEntrou := .F.         
@@ -1332,7 +1326,58 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	Endif
 	nLin := nLin + 1 
 	nCtn := 1
+
+	nLin := nLin + 2         
 	
+	If nLin > 60	
+	
+		nLin := 1
+
+		nlin := nLin + 2
+		@ nLin,000 PSAY " ADLOG080R"
+		@ nLin,040 PSAY "R E S U M O   D E   C A R R E G A M E N T O "
+		nlin := nLin + 1
+		@ nLin, 000 PSAY Repl("-",limite)
+		nLin := nLin + 1
+		&&Mauricio - 04/08/17 - Chamado 036478 - 
+
+		// Chamado n. 049495 || OS 050775 || ADM.LOG || MARCEL || 8365 || ROMANEIO ENTREGAS - FWNM - 02/08/2019
+		cRotZFN   := Alltrim(_ROTEIRO)
+		UpRotAtend(cRotZFN,@nLin)
+		//
+		
+		IF Alltrim(TEMP1->TP_REPROG) == "R"	   
+		//@ nLin,000 PSAY "ROTEIRO NUMERO " + TEMP1->TP_ROTEIRO + SPACE(15)+ " DATA ENTREGA : " + DTOC(TEMP1->TP_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + TEMP1->TP_PLACA
+		@ nLin,000 PSAY "ROTEIRO NUMERO " + _ROTEIRO + SPACE(05)+  "REPROGRAMADO"+SPACE(10)+" DATA ENTREGA : " + DTOC(_DTENTR) + SPACE(20)+ "       PLACA VEICULO : " + _PLACA
+		Else
+		@ nLin,000 PSAY "ROTEIRO NUMERO " + _ROTEIRO + SPACE(15)+" DATA ENTREGA : " + DTOC(_DTENTR) + SPACE(10)+ "       PLACA VEICULO : " + _PLACA 
+		ENDIF
+	
+		cShelife := 'N'
+		nlin     := nLin + 1  
+			//0         1         2         3         4         5         6         7         8         9       100       110       120       130
+			//0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+		@ nLin, 000 PSAY "Prod Edata Prod Protheus          Descricao                       TES TIPO QTD Caixa   Pes Liq  Pes Bruto " //"Produto    Descricao do Produto                                  TES Qtde        Peso       Peso "
+		nLin := nLin + 1
+		
+		//
+		@ nLin, 000 PSAY Repl("-",limite)
+		nLin := nLin + 1
+		
+	EndIf
+
+	@ nLin, 001 PSAY Repl("#",limite)
+	nLin := nLin + 1
+	@ nLin, 049 PSAY "TOTAL GERAL DO ROTEIRO "
+	@ nLin, 075  PSAY Transform(_ntTotCaixas ,"@Z 999999")           // Total Qtd UM2
+	@ nLin, 085  PSAY Transform(_ntTotKilos  ,"@Z 999999.99")        // Total Qtd UM1
+	nLin := nLin + 1
+	@ nLin, 001 PSAY Repl("#",limite)
+	_nTTotGGCaixas += _ntTotCaixas
+	_nTTotGGKilos  += _ntTotKilos
+	_ntTotCaixas := 0 
+	_ntTotKilos  := 0
+
 	cShelife := Valshel(_ROTEIRO,_PLACA,DTOS(_DTENTR))
 
 	If Select("QEXT") > 0
@@ -1491,6 +1536,7 @@ Static Function FResumoC(_cRoteiro,_cSeqAnt)
 	QEXT->(DBCLOSEAREA())
 					
 Return
+
 /*/{Protheus.doc} getPrdEdt
 	Função retorna produtos Edata.
 	@type  Static Function
