@@ -9,6 +9,7 @@
 	@since 06/08/2002
 	@version version
 	@history ticket 77133 - Antonio Domingos - 01/08/2022 - MAPA DE CARREGAMENTO.
+	@history TICKET 77947 - Antonio Domingos - 11/08/2022 - Mapas de Carregamento
 /*/
 
 User Function ADLOG080R() // U_ADLOG080R()
